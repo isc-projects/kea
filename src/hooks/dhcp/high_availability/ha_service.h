@@ -53,6 +53,9 @@ public:
     /// ha-maintenance-notify command received.
     static const int HA_MAINTENANCE_NOTIFY_EVT = SM_DERIVED_EVENT_MIN + 5;
 
+    /// ha-maintenance-start command received.
+    static const int HA_MAINTENANCE_START_EVT = SM_DERIVED_EVENT_MIN + 6;
+
 protected:
 
     /// @brief Callback invoked when request was sent and a response received
@@ -779,6 +782,21 @@ public:
     ///
     /// @return Pointer to the reponse to the ha-maintenance-notify.
     data::ConstElementPtr processMaintenanceNotify();
+
+    /// @brief Processes ha-maintenance-start command and returns a response.
+    ///
+    /// The server receiving this command will try to send the
+    /// ha-maintenance-notify command to the partner to instruct the partner
+    /// to transition to the maintained state. In this state the partner will
+    /// not respond to any DHCP queries. Next, this server will transition to
+    /// the ha-partner-maintained state and therefore will start responding
+    /// to all DHCP queries. If the partner responds to the ha-maintenance-notify
+    /// with an error, this server won't transition to the partner-maintained
+    /// state and signal an error to the caller. If the partner is unavailable,
+    /// this server will directly transition to the partner-down state.
+    ///
+    /// @return Pointer to the response to the ha-maintenance-start.
+    data::ConstElementPtr processMaintenanceStart();
 
 protected:
 

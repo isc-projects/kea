@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -390,6 +390,20 @@ TEST(CommandCreatorTest, createLease6GetPageAddress) {
 TEST(CommandCreatorTest, createLease6GetPageZeroLimit) {
     Lease6Ptr lease6;
     EXPECT_THROW(CommandCreator::createLease6GetPage(lease6, 0), BadValue);
+}
+
+// This test verifies that the ha-maintenance-notify command is correct
+// while being sent to the DHCPv4 server.
+TEST(CommandCreatorTest, createMaintenanceNotify4) {
+    ConstElementPtr command = CommandCreator::createMaintenanceNotify(HAServerType::DHCPv4);
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-maintenance-notify", "dhcp4"));
+}
+
+// This test verifies that the ha-maintenance-notify command is correct
+// while being sent to the DHCPv6 server.
+TEST(CommandCreatorTest, createMaintenanceNotify6) {
+    ConstElementPtr command = CommandCreator::createMaintenanceNotify(HAServerType::DHCPv6);
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-maintenance-notify", "dhcp6"));
 }
 
 }

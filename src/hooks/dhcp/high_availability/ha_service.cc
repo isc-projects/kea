@@ -42,6 +42,8 @@ const int HAService::HA_HEARTBEAT_COMPLETE_EVT;
 const int HAService::HA_LEASE_UPDATES_COMPLETE_EVT;
 const int HAService::HA_SYNCING_FAILED_EVT;
 const int HAService::HA_SYNCING_SUCCEEDED_EVT;
+const int HAService::HA_MAINTENANCE_NOTIFY_EVT;
+const int HAService::HA_MAINTENANCE_START_EVT;
 
 HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& network_state,
                      const HAConfigPtr& config, const HAServerType& server_type)
@@ -72,6 +74,7 @@ HAService::defineEvents() {
     defineEvent(HA_SYNCING_FAILED_EVT, "HA_SYNCING_FAILED_EVT");
     defineEvent(HA_SYNCING_SUCCEEDED_EVT, "HA_SYNCING_SUCCEEDED_EVT");
     defineEvent(HA_MAINTENANCE_NOTIFY_EVT, "HA_MAINTENANCE_NOTIFY_EVT");
+    defineEvent(HA_MAINTENANCE_START_EVT, "HA_MAINTENANCE_START_EVT");
 }
 
 void
@@ -83,6 +86,7 @@ HAService::verifyEvents() {
     getEvent(HA_SYNCING_FAILED_EVT);
     getEvent(HA_SYNCING_SUCCEEDED_EVT);
     getEvent(HA_MAINTENANCE_NOTIFY_EVT);
+    getEvent(HA_MAINTENANCE_START_EVT);
 }
 
 void
@@ -216,6 +220,8 @@ HAService::maintainedStateHandler() {
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
+
+        LOG_INFO(ha_logger, HA_MAINTENANCE_SHUTDOWN_SAFE);
     }
 
     scheduleHeartbeat();
@@ -232,11 +238,16 @@ HAService::partnerDownStateHandler() {
     // serving scopes appropriate for the new state. We don't do it if
     // we remain in this state.
     if (doOnEntry()) {
+
+        bool maintenance = (getLastEvent() == HA_MAINTENANCE_START_EVT);
+
         // It may be administratively disabled to handle partner's scope
         // in case of failure. If this is the case we'll just handle our
         // default scope (or no scope at all). The user will need to
         // manually enable this server to handle partner's scope.
-        if (config_->getThisServerConfig()->isAutoFailover()) {
+        // If we're in the maintenance mode we serve all scopes because
+        // it is not a failover situation.
+        if (maintenance || config_->getThisServerConfig()->isAutoFailover()) {
             query_filter_.serveFailoverScopes();
         } else {
             query_filter_.serveDefaultScopes();
@@ -245,6 +256,12 @@ HAService::partnerDownStateHandler() {
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
+
+        if (maintenance) {
+            // If we ended up in the partner-down state as a result of
+            // receiving the ha-maintenance-start command let's log it.
+            LOG_INFO(ha_logger, HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN);
+        }
     }
 
     scheduleHeartbeat();
@@ -289,19 +306,14 @@ HAService::partnerMaintainedStateHandler() {
     // serving scopes appropriate for the new state. We don't do it if
     // we remain in this state.
     if (doOnEntry()) {
-        // It may be administratively disabled to handle partner's scope
-        // in case of failure. If this is the case we'll just handle our
-        // default scope (or no scope at all). The user will need to
-        // manually enable this server to handle partner's scope.
-        if (config_->getThisServerConfig()->isAutoFailover()) {
-            query_filter_.serveFailoverScopes();
-        } else {
-            query_filter_.serveDefaultScopes();
-        }
+        query_filter_.serveFailoverScopes();
+
         adjustNetworkState();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
+
+        LOG_INFO(ha_logger, HA_MAINTENANCE_STARTED);
     }
 
     scheduleHeartbeat();
@@ -1754,7 +1766,7 @@ HAService::processScopes(const std::vector<std::string>& scopes) {
     return (createAnswer(CONTROL_RESULT_SUCCESS, "New HA scopes configured."));
 }
 
-data::ConstElementPtr
+ConstElementPtr
 HAService::processContinue() {
     if (unpause()) {
         return (createAnswer(CONTROL_RESULT_SUCCESS, "HA state machine continues."));
@@ -1762,7 +1774,7 @@ HAService::processContinue() {
     return (createAnswer(CONTROL_RESULT_SUCCESS, "HA state machine is not paused."));
 }
 
-data::ConstElementPtr
+ConstElementPtr
 HAService::processMaintenanceNotify() {
     switch (getCurrState()) {
     case HA_BACKUP_ST:
@@ -1776,6 +1788,127 @@ HAService::processMaintenanceNotify() {
         runModel(HA_MAINTENANCE_NOTIFY_EVT);
     }
     return (createAnswer(CONTROL_RESULT_SUCCESS, "Server is in maintained state."));
+}
+
+ConstElementPtr
+HAService::processMaintenanceStart() {
+    switch (getCurrState()) {
+    case HA_BACKUP_ST:
+    case HA_MAINTAINED_ST:
+    case HA_PARTNER_MAINTAINED_ST:
+    case HA_TERMINATED_ST:
+        return (createAnswer(CONTROL_RESULT_ERROR, "Unable to transition the server from"
+                             " the " + stateToString(getCurrState()) + " to"
+                             " partner-maintained state."));
+    default:
+        ;
+    }
+
+    HAConfig::PeerConfigPtr remote_config = config_->getFailoverPeerConfig();
+
+    // Create HTTP/1.1 request including our command.
+    PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
+        (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
+         HostHttpHeader(remote_config->getUrl().getHostname()));
+    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(server_type_));
+    request->finalize();
+
+    // Response object should also be created because the HTTP client needs
+    // to know the type of the expected response.
+    HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
+
+    IOService io_service;
+    HttpClient client(io_service);
+
+    boost::system::error_code captured_ec;
+    std::string captured_error_message;
+
+    // Schedule asynchronous HTTP request.
+    client.asyncSendRequest(remote_config->getUrl(), request, response,
+        [this, remote_config, &io_service, &captured_ec, &captured_error_message]
+            (const boost::system::error_code& ec,
+             const HttpResponsePtr& response,
+             const std::string& error_str) {
+
+             io_service.stop();
+
+             // There are three possible groups of errors. One is the IO error
+             // causing issues in communication with the peer. Another one is
+             // an HTTP parsing error. The last type of error is when non-success
+             // error code is returned in the response carried in the HTTP message
+             // or if the JSON response is otherwise broken.
+
+             std::string error_message;
+
+             // Handle first two groups of errors.
+             if (ec || !error_str.empty()) {
+                 error_message = (ec ? ec.message() : error_str);
+                 LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED)
+                     .arg(remote_config->getLogLabel())
+                     .arg(error_message);
+
+             } else {
+
+                 // Handle third group of errors.
+                 try {
+                     static_cast<void>(verifyAsyncResponse(response));
+
+                 } catch (const std::exception& ex) {
+                     error_message = ex.what();
+                     LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_FAILED)
+                         .arg(remote_config->getLogLabel())
+                         .arg(error_message);
+                 }
+             }
+
+             // If there was an error communicating with the partner, mark the
+             // partner as unavailable.
+             if (!error_message.empty()) {
+                 communication_state_->setPartnerState("unavailable");
+             }
+
+             captured_ec = ec;
+             captured_error_message = error_message;
+        },
+        HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
+
+    // Run the IO service until it is stopped by any of the callbacks. This
+    // makes it synchronous.
+    io_service.run();
+
+    // If there was a communication problem with the partner we assume that
+    // the partner is already down while we receive this command.
+    if (captured_ec) {
+        verboseTransition(HA_PARTNER_DOWN_ST);
+        runModel(HA_MAINTENANCE_START_EVT);
+        return (createAnswer(CONTROL_RESULT_SUCCESS,
+                             "Server is now in the partner-down state as its"
+                             " partner appears to be offline for maintenance."));
+
+
+    } else if (captured_error_message.empty()) {
+        // If the partner responded indicating no error it means that the
+        // partner has been transitioned to the maintained state. In that
+        // case we transition to the partner-maintained state.
+        verboseTransition(HA_PARTNER_MAINTAINED_ST);
+        runModel(HA_MAINTENANCE_START_EVT);
+
+    } else {
+        // Partner server returned an error so this server can't transition to
+        // the partner-maintained mode.
+        return (createAnswer(CONTROL_RESULT_ERROR, "Partner server responded with"
+                             " the following error to the ha-maintenance-notify"
+                             " commmand: " + captured_error_message + "."));
+
+    }
+
+    return (createAnswer(CONTROL_RESULT_SUCCESS,
+                         "Server is now in the partner-maintained state"
+                         " and its partner is in the maintained state. The partner"
+                         " can be now safely shut down."));
 }
 
 ConstElementPtr

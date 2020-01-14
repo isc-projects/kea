@@ -221,6 +221,18 @@ int maintenance_notify_command(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief ha-maintenance-start command handler implementation.
+int maintenance_start_command(CalloutHandle& handle) {
+    try {
+        impl->maintenanceStartHandler(handle);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_MAINTENANCE_START_HANDLER_FAILED)
+            .arg(ex.what());
+    }
+
+    return (0);
+}
 
 /// @brief This function is called when the library is loaded.
 ///
@@ -257,6 +269,7 @@ int load(LibraryHandle& handle) {
         handle.registerCommandCallout("ha-scopes", scopes_command);
         handle.registerCommandCallout("ha-continue", continue_command);
         handle.registerCommandCallout("ha-maintenance-notify", maintenance_notify_command);
+        handle.registerCommandCallout("ha-maintenance-start", maintenance_start_command);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_CONFIGURATION_FAILED)

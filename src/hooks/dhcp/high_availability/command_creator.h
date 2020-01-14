@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -131,6 +131,12 @@ public:
     static data::ConstElementPtr
     createLease6GetPage(const dhcp::Lease6Ptr& lease6,
                         const uint32_t limit);
+
+    /// @brief Creates ha-maintenance-notify command.
+    ///
+    /// @return Pointer to the JSON representation of the command.
+    static data::ConstElementPtr
+    createMaintenanceNotify(const HAServerType& server_typ);
 
 private:
 

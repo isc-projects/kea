@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Tue Jan 14 2020 12:44
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Tue Jan 14 2020 18:59
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -58,7 +58,13 @@ extern const isc::log::MessageID HA_LOAD_BALANCING_DUID_MISSING = "HA_LOAD_BALAN
 extern const isc::log::MessageID HA_LOAD_BALANCING_IDENTIFIER_MISSING = "HA_LOAD_BALANCING_IDENTIFIER_MISSING";
 extern const isc::log::MessageID HA_LOCAL_DHCP_DISABLE = "HA_LOCAL_DHCP_DISABLE";
 extern const isc::log::MessageID HA_LOCAL_DHCP_ENABLE = "HA_LOCAL_DHCP_ENABLE";
+extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED = "HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED";
+extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_FAILED = "HA_MAINTENANCE_NOTIFY_FAILED";
 extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_HANDLER_FAILED = "HA_MAINTENANCE_NOTIFY_HANDLER_FAILED";
+extern const isc::log::MessageID HA_MAINTENANCE_SHUTDOWN_SAFE = "HA_MAINTENANCE_SHUTDOWN_SAFE";
+extern const isc::log::MessageID HA_MAINTENANCE_STARTED = "HA_MAINTENANCE_STARTED";
+extern const isc::log::MessageID HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN = "HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN";
+extern const isc::log::MessageID HA_MAINTENANCE_START_HANDLER_FAILED = "HA_MAINTENANCE_START_HANDLER_FAILED";
 extern const isc::log::MessageID HA_MISSING_CONFIGURATION = "HA_MISSING_CONFIGURATION";
 extern const isc::log::MessageID HA_SCOPES_HANDLER_FAILED = "HA_SCOPES_HANDLER_FAILED";
 extern const isc::log::MessageID HA_SERVICE_STARTED = "HA_SERVICE_STARTED";
@@ -128,7 +134,13 @@ const char* values[] = {
     "HA_LOAD_BALANCING_IDENTIFIER_MISSING", "load balancing failed for the DHCPv4 message (transaction id: %1) because HW address and client identifier are missing",
     "HA_LOCAL_DHCP_DISABLE", "local DHCP service is disabled while the %1 is in the %2 state",
     "HA_LOCAL_DHCP_ENABLE", "local DHCP service is enabled while the %1 is in the %2 state",
+    "HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED", "failed to send ha-maintenance-notify to %1: %2",
+    "HA_MAINTENANCE_NOTIFY_FAILED", "error returned while processing ha-maintenance-notify by %1: %2",
     "HA_MAINTENANCE_NOTIFY_HANDLER_FAILED", "ha-maintenance-notify command failed: %1",
+    "HA_MAINTENANCE_SHUTDOWN_SAFE", "the server can now be shutdown for maintenance as the partner has taken over the DHCP traffic",
+    "HA_MAINTENANCE_STARTED", "the server is now in the partner-maintained mode and the partner is in the maintained mode",
+    "HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN", "the server is now in the partner-down mode as a result of requested maintenance",
+    "HA_MAINTENANCE_START_HANDLER_FAILED", "ha-maintenance-start command failed: %1",
     "HA_MISSING_CONFIGURATION", "high-availability parameter not specified for High Availability hooks library",
     "HA_SCOPES_HANDLER_FAILED", "ha-scopes command failed: %1",
     "HA_SERVICE_STARTED", "started high availability service in %1 mode as %2 server",

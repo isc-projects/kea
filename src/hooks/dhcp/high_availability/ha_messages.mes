@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 
 $NAMESPACE isc::ha
 
@@ -302,10 +302,55 @@ is enabled because the server remains in a state in which it should
 respond to the DHCP clients. The first argument specifies server name.
 The second argument specifies server's state.
 
+% HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED failed to send ha-maintenance-notify to %1: %2
+This warning message indicates that there was a problem in communication with a
+HA peer while sending the ha-maintenance-notify command. The first argument provides the
+remote server's name. The second argument provides a reason for failure.
+
+% HA_MAINTENANCE_NOTIFY_FAILED error returned while processing ha-maintenance-notify by %1: %2
+This warning message indicates that a peer returned an error status code
+in response to a ha-maintenance-notify command.  The first argument provides the
+remote server's name. The second argument provides a reason for failure.
+
 % HA_MAINTENANCE_NOTIFY_HANDLER_FAILED ha-maintenance-notify command failed: %1
 This error message is issued to indicate that the ha-maintenance-notify command
 handler failed while processing the command. The argument provides the reason for
 failure.
+
+% HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN the server is now in the partner-down mode as a result of requested maintenance
+This informational message is displayed when the server receiving the
+ha-maintenance-start command transitions to the partner-down state
+because it was unable to communicate with the partner while receiving
+the command. It is assumed that in such situation the partner is
+already offline for the maintenance. Note that in this case the
+normal failover procedure does not take place. The server does not wait
+for a heartbeat to fail several times, nor it monitors the DHCP traffic
+for not responded queries. In the maintenance case the server transitions
+to the partner-down state when it first encounters a communication
+problem with the partner.
+
+% HA_MAINTENANCE_START_HANDLER_FAILED ha-maintenance-start command failed: %1
+This error message is issued to indicate that the ha-maintenance-start command
+handler failed while processing the command. The argument provides the reason for
+failure.
+
+% HA_MAINTENANCE_STARTED the server is now in the partner-maintained mode and the partner is in the maintained mode
+This informational message is displayed when the server receiving the
+ha-maintenance-start command transitions to the partner-maintained
+state. The server does it after sending the ha-maintenance-notify to
+its partner to put the partner in the maintained state. From now on,
+the server in the partner-maintained state will be responding to all
+queries and the partner will respond to no queries. The partner may be
+safely shut down for maintenance in which case this server will
+automatically transition from the partner-maintained state to the
+partner-down state.
+
+% HA_MAINTENANCE_SHUTDOWN_SAFE the server can now be shutdown for maintenance as the partner has taken over the DHCP traffic
+This informational message is displayed after the server transitions to the
+maintained state. This server no longer responds to any DHCP queries and its
+partner being in the partner-maintained has taken over the DHCP traffic.
+When the server being in the maintained state is shut down, the partner
+will move to the partner-down imediatelly.
 
 % HA_MISSING_CONFIGURATION high-availability parameter not specified for High Availability hooks library
 This error message is issued to indicate that the configuration for the

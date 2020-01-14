@@ -149,6 +149,11 @@ public:
     /// @param callout_handle Callout handle provided to the callout.
     void maintenanceNotifyHandler(hooks::CalloutHandle& callout_handle);
 
+    /// @brief Implements handler for the ha-maintenance-start command.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
+    void maintenanceStartHandler(hooks::CalloutHandle& callout_handle);
+
 protected:
 
     /// @brief Holds parsed configuration.

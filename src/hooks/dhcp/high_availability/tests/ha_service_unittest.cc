@@ -2627,6 +2627,135 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
                 " partner-maintained to maintained state.");
 }
 
+// This test verifies the case when the server receiving the ha-maintenance-start
+// command successfully transitions to the partner-maintained state and its
+// partner transitions to the maintained state.
+TEST_F(HAServiceTest, processMaintenanceStartSuccess) {
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    HAService service(io_service_, network_state_, config_storage);
+
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-start command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceStart());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->get_io_service().reset();
+    io_service_->poll();
+
+    // The partner of our server is online and should have responded with
+    // the success status. Therefore, this server should have transitioned
+    // to the partner-maintained state.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server is now in the partner-maintained state"
+                " and its partner is in the maintained state. The partner can be now safely"
+                " shut down.");
+
+    EXPECT_EQ(HA_PARTNER_MAINTAINED_ST, service.getCurrState());
+}
+
+// This test verifies the case that the server transitions to the partner-down
+// state after receiving the ha-maintenance-start command. This is the case
+// when the communication with the partner server fails while this command
+// is received. It is assumed that the partner server is already terminated
+// for maintenance.
+TEST_F(HAServiceTest, processMaintenanceStartPartnerDown) {
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    // Start the server, but don't start the partner. This simulates
+    // the case that the partner is already down for maintenance.
+    ASSERT_NO_THROW({
+        listener_->start();
+    });
+
+    HAService service(io_service_, network_state_, config_storage);
+
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-start command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceStart());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->get_io_service().reset();
+    io_service_->poll();
+
+    // The partner of our server is online and should have responded with
+    // the success status. Therefore, this server should have transitioned
+    // to the partner-maintained state.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS,
+                "Server is now in the partner-down state as its"
+                " partner appears to be offline for maintenance.");
+
+    EXPECT_EQ(HA_PARTNER_DOWN_ST, service.getCurrState());
+}
+
+// This test verifies the case when the server is receiving
+// ha-maintenance-start command and tries to notify the partner
+// which returns an error.
+TEST_F(HAServiceTest, processMaintenanceStartPartnerError) {
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    // Simulate an error returned by the partner.
+    factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    HAService service(io_service_, network_state_, config_storage);
+
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-start command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceStart());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->get_io_service().reset();
+    io_service_->poll();
+
+    // The partner of our server is online and should have responded with
+    // the success status. Therefore, this server should have transitioned
+    // to the partner-maintained state.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR, "Partner server responded with"
+                " the following error to the ha-maintenance-notify commmand:"
+                " response returned, error code 1.");
+
+    // The state shouldn't change.
+    EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
+}
+
 /// @brief HA partner to the server under test.
 ///
 /// This is a wrapper class around @c HttpListener which simulates a
@@ -3024,8 +3153,9 @@ public:
     /// state.
     /// @param dhcp_enabled Indicates whether DHCP service is expected to be enabled
     /// or disabled in the given state.
+    /// @param event Event to be passed to the tested handler.
     void expectScopes(const MyState& my_state, const std::vector<std::string>& scopes,
-                      const bool dhcp_enabled) {
+                      const bool dhcp_enabled, const int event = TestHAService::NOP_EVT) {
 
         // If expecting no scopes, let's enable some scope to make sure that the
         // code changes this setting.
@@ -3048,6 +3178,7 @@ public:
         }
 
         // Transition to the desired state.
+        service_->postNextEvent(event);
         service_->verboseTransition(my_state.state_);
         // Run the handler.
         service_->runModel(TestHAService::NOP_EVT);
@@ -4254,10 +4385,15 @@ TEST_F(HAServiceStateMachineTest, scopesServingLoadBalancingNoFailover) {
     expectScopes(MyState(HA_LOAD_BALANCING_ST), { "server1" }, true);
     expectScopes(MyState(HA_TERMINATED_ST), { "server1" }, true);
 
-    // PARTNER MAINTAINED & PARTNER DOWN: still serving my own scope
-    // because auto-failover is disabled.
+    // PARTNER DOWN: still serving my own scope because auto-failover is disabled.
     expectScopes(MyState(HA_PARTNER_DOWN_ST), { "server1" }, true);
-    expectScopes(MyState(HA_PARTNER_MAINTAINED_ST), { "server1" }, true);
+
+    // PARTNER MAINTAINED: always serving all scopes.
+    expectScopes(MyState(HA_PARTNER_MAINTAINED_ST), { "server1", "server2" }, true);
+
+    // Same for the partner-down case during maintenance.
+    expectScopes(MyState(HA_PARTNER_DOWN_ST), { "server1", "server2" }, true,
+                 HAService::HA_MAINTENANCE_START_EVT);
 
     // MAINTAINED, READY & WAITING: serving no scopes.
     expectScopes(MyState(HA_MAINTAINED_ST), { }, false);
@@ -4949,10 +5085,15 @@ TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyStandbyNoFailover) {
     // TERMINATED: serving no scopes because the primary is active.
     expectScopes(MyState(HA_TERMINATED_ST), { }, true);
 
-    // PARTNER MAINTAINED & PARTNER DOWN: still serving no scopes because auto-failover is
-    // set to false.
+    // PARTNER DOWN: still serving no scopes because auto-failover is set to false.
     expectScopes(MyState(HA_PARTNER_DOWN_ST), { }, true);
-    expectScopes(MyState(HA_PARTNER_MAINTAINED_ST), { }, true);
+
+    // PARTNER MAINTAINED: serving partner's scopes.
+    expectScopes(MyState(HA_PARTNER_MAINTAINED_ST), { "server1" }, true);
+
+    // Same for the partner-down case during maintenance.
+    expectScopes(MyState(HA_PARTNER_DOWN_ST), { "server1" }, true,
+                 HAService::HA_MAINTENANCE_START_EVT);
 
     // MAINTAINED, READY & WAITING: serving no scopes.
     expectScopes(MyState(HA_MAINTAINED_ST), { }, false);
