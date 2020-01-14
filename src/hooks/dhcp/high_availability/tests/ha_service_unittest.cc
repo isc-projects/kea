@@ -4045,10 +4045,12 @@ TEST_F(HAServiceStateMachineTest, scopesServingLoadBalancing) {
     expectScopes(MyState(HA_LOAD_BALANCING_ST), { "server1" }, true);
     expectScopes(MyState(HA_TERMINATED_ST), { "server1" }, true);
 
-    // PARTNER DOWN: serving both scopes.
+    // PARTNER DOWN and PARTNER MAINTAINED: serving both scopes.
     expectScopes(MyState(HA_PARTNER_DOWN_ST), { "server1", "server2" }, true);
+    expectScopes(MyState(HA_PARTNER_MAINTAINED_ST), { "server1", "server2" }, true);
 
-    // READY & WAITING: serving no scopes.
+    // MAINTAINED, READY & WAITING: serving no scopes.
+    expectScopes(MyState(HA_MAINTAINED_ST), { }, false);
     expectScopes(MyState(HA_READY_ST), { }, false);
     expectScopes(MyState(HA_WAITING_ST), { }, false);
 }
@@ -4064,11 +4066,13 @@ TEST_F(HAServiceStateMachineTest, scopesServingLoadBalancingNoFailover) {
     expectScopes(MyState(HA_LOAD_BALANCING_ST), { "server1" }, true);
     expectScopes(MyState(HA_TERMINATED_ST), { "server1" }, true);
 
-    // PARTNER DOWN: still serving my own scope because auto-failover
-    // is disabled.
+    // PARTNER MAINTAINED & PARTNER DOWN: still serving my own scope
+    // because auto-failover is disabled.
     expectScopes(MyState(HA_PARTNER_DOWN_ST), { "server1" }, true);
+    expectScopes(MyState(HA_PARTNER_MAINTAINED_ST), { "server1" }, true);
 
-    // READY & WAITING: serving no scopes.
+    // MAINTAINED, READY & WAITING: serving no scopes.
+    expectScopes(MyState(HA_MAINTAINED_ST), { }, false);
     expectScopes(MyState(HA_READY_ST), { }, false);
     expectScopes(MyState(HA_WAITING_ST), { }, false);
 }
@@ -4082,7 +4086,9 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesLoadBalancing) {
     HAConfig::PeerConfigPtr peer_config = valid_config->getFailoverPeerConfig();
 
     EXPECT_TRUE(expectLeaseUpdates(MyState(HA_LOAD_BALANCING_ST), peer_config));
+    EXPECT_FALSE(expectLeaseUpdates(MyState(HA_MAINTAINED_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_PARTNER_DOWN_ST), peer_config));
+    EXPECT_TRUE(expectLeaseUpdates(MyState(HA_PARTNER_MAINTAINED_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_READY_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_SYNCING_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_TERMINATED_ST), peer_config));
@@ -4100,7 +4106,9 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesDisabledLoadBalancing) {
     HAConfig::PeerConfigPtr peer_config = valid_config->getFailoverPeerConfig();
 
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_LOAD_BALANCING_ST), peer_config));
+    EXPECT_FALSE(expectLeaseUpdates(MyState(HA_MAINTAINED_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_PARTNER_DOWN_ST), peer_config));
+    EXPECT_FALSE(expectLeaseUpdates(MyState(HA_PARTNER_MAINTAINED_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_READY_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_SYNCING_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_TERMINATED_ST), peer_config));
@@ -4114,7 +4122,9 @@ TEST_F(HAServiceStateMachineTest, heartbeatLoadBalancing) {
     startService(valid_config);
 
     EXPECT_TRUE(expectHeartbeat(MyState(HA_LOAD_BALANCING_ST)));
+    EXPECT_TRUE(expectHeartbeat(MyState(HA_MAINTAINED_ST)));
     EXPECT_TRUE(expectHeartbeat(MyState(HA_PARTNER_DOWN_ST)));
+    EXPECT_TRUE(expectHeartbeat(MyState(HA_PARTNER_MAINTAINED_ST)));
     EXPECT_TRUE(expectHeartbeat(MyState(HA_READY_ST)));
     EXPECT_FALSE(expectHeartbeat(MyState(HA_TERMINATED_ST)));
     EXPECT_TRUE(expectHeartbeat(MyState(HA_WAITING_ST)));
@@ -4519,10 +4529,12 @@ TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyPrimary) {
     expectScopes(MyState(HA_HOT_STANDBY_ST), { "server1" }, true);
     expectScopes(MyState(HA_TERMINATED_ST), { "server1" }, true);
 
-    // PARTNER DOWN: still serving my own scope.
+    // PARTNER DOWN and PARTNER MAINTAINED: still serving my own scope.
     expectScopes(MyState(HA_PARTNER_DOWN_ST), { "server1" }, true);
+    expectScopes(MyState(HA_PARTNER_MAINTAINED_ST), { "server1" }, true);
 
-    // READY & WAITING: serving no scopes.
+    // MAINTAINED, READY & WAITING: serving no scopes.
+    expectScopes(MyState(HA_MAINTAINED_ST), { }, false);
     expectScopes(MyState(HA_READY_ST), { }, false);
     expectScopes(MyState(HA_WAITING_ST), { }, false);
 }
@@ -4544,10 +4556,12 @@ TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyPrimaryNoFailover) {
     expectScopes(MyState(HA_HOT_STANDBY_ST), { "server1" }, true);
     expectScopes(MyState(HA_TERMINATED_ST), { "server1" }, true);
 
-    // PARTNER DOWN: still serving my own scope.
+    // PARTNER MAINTAINED & PARTNER DOWN: still serving my own scope.
     expectScopes(MyState(HA_PARTNER_DOWN_ST), { "server1" }, true);
+    expectScopes(MyState(HA_PARTNER_MAINTAINED_ST), { "server1" }, true);
 
-    // READY & WAITING: serving no scopes.
+    // MAINTAINED, READY & WAITING: serving no scopes.
+    expectScopes(MyState(HA_MAINTAINED_ST), { }, false);
     expectScopes(MyState(HA_READY_ST), { }, false);
     expectScopes(MyState(HA_WAITING_ST), { }, false);
 }
@@ -4567,7 +4581,9 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesHotStandbyPrimary) {
     HAConfig::PeerConfigPtr peer_config = valid_config->getFailoverPeerConfig();
 
     EXPECT_TRUE(expectLeaseUpdates(MyState(HA_HOT_STANDBY_ST), peer_config));
+    EXPECT_FALSE(expectLeaseUpdates(MyState(HA_MAINTAINED_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_PARTNER_DOWN_ST), peer_config));
+    EXPECT_TRUE(expectLeaseUpdates(MyState(HA_PARTNER_MAINTAINED_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_READY_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_SYNCING_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_TERMINATED_ST), peer_config));
@@ -4576,7 +4592,7 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesHotStandbyPrimary) {
 
 // This test verifies if the server would send heartbeat to the partner
 // while being in various states. The HA configuration is hot standby.
-TEST_F(HAServiceStateMachineTest, heartbeatHotstandby) {
+TEST_F(HAServiceStateMachineTest, heartbeatHotStandby) {
     HAConfigPtr valid_config = createValidConfiguration();
 
     // Turn it into hot-standby configuration.
@@ -4586,7 +4602,9 @@ TEST_F(HAServiceStateMachineTest, heartbeatHotstandby) {
     startService(valid_config);
 
     EXPECT_TRUE(expectHeartbeat(MyState(HA_HOT_STANDBY_ST)));
+    EXPECT_TRUE(expectHeartbeat(MyState(HA_MAINTAINED_ST)));
     EXPECT_TRUE(expectHeartbeat(MyState(HA_PARTNER_DOWN_ST)));
+    EXPECT_TRUE(expectHeartbeat(MyState(HA_PARTNER_MAINTAINED_ST)));
     EXPECT_TRUE(expectHeartbeat(MyState(HA_READY_ST)));
     EXPECT_FALSE(expectHeartbeat(MyState(HA_TERMINATED_ST)));
     EXPECT_TRUE(expectHeartbeat(MyState(HA_WAITING_ST)));
@@ -4613,10 +4631,12 @@ TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyStandby) {
     // TERMINATED: serving no scopes because the primary is active.
     expectScopes(MyState(HA_TERMINATED_ST), { }, true);
 
-    // PARTNER DOWN: serving server1's scope.
+    // PARTNER MAINTAINED & PARTNER DOWN: serving server1's scope.
     expectScopes(MyState(HA_PARTNER_DOWN_ST), { "server1" }, true);
+    expectScopes(MyState(HA_PARTNER_MAINTAINED_ST), { "server1" }, true);
 
-    // READY & WAITING: serving no scopes.
+    // MAINTAINED, READY & WAITING: serving no scopes.
+    expectScopes(MyState(HA_MAINTAINED_ST), { }, false);
     expectScopes(MyState(HA_READY_ST), { }, false);
     expectScopes(MyState(HA_WAITING_ST), { }, false);
 }
@@ -4644,11 +4664,13 @@ TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyStandbyNoFailover) {
     // TERMINATED: serving no scopes because the primary is active.
     expectScopes(MyState(HA_TERMINATED_ST), { }, true);
 
-    // PARTNER DOWN: still serving no scopes because auto-failover is
+    // PARTNER MAINTAINED & PARTNER DOWN: still serving no scopes because auto-failover is
     // set to false.
     expectScopes(MyState(HA_PARTNER_DOWN_ST), { }, true);
+    expectScopes(MyState(HA_PARTNER_MAINTAINED_ST), { }, true);
 
-    // READY & WAITING: serving no scopes.
+    // MAINTAINED, READY & WAITING: serving no scopes.
+    expectScopes(MyState(HA_MAINTAINED_ST), { }, false);
     expectScopes(MyState(HA_READY_ST), { }, false);
     expectScopes(MyState(HA_WAITING_ST), { }, false);
 }
@@ -4669,7 +4691,9 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesHotStandbyStandby) {
     HAConfig::PeerConfigPtr peer_config = valid_config->getFailoverPeerConfig();
 
     EXPECT_TRUE(expectLeaseUpdates(MyState(HA_HOT_STANDBY_ST), peer_config));
+    EXPECT_FALSE(expectLeaseUpdates(MyState(HA_MAINTAINED_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_PARTNER_DOWN_ST), peer_config));
+    EXPECT_TRUE(expectLeaseUpdates(MyState(HA_PARTNER_MAINTAINED_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_READY_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_SYNCING_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_TERMINATED_ST), peer_config));

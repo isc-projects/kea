@@ -203,6 +203,24 @@ HAService::normalStateHandler() {
 
 void
 HAService::maintainedStateHandler() {
+    // If we are transitioning from another state, we have to define new
+    // serving scopes appropriate for the new state. We don't do it if
+    // we remain in this state.
+    if (doOnEntry()) {
+        // In this state the server remains silent and waits for being
+        // shutdown.
+        query_filter_.serveNoScopes();
+        adjustNetworkState();
+
+        // Log if the state machine is paused.
+        conditionalLogPausedState();
+    }
+
+    scheduleHeartbeat();
+
+    // We don't transition out of this state unless explicitly mandated
+    // by the administrator via a dedicated command which cancels
+    // the maintenance.
     postNextEvent(NOP_EVT);
 }
 
@@ -265,7 +283,46 @@ HAService::partnerDownStateHandler() {
 
 void
 HAService::partnerMaintainedStateHandler() {
-    postNextEvent(NOP_EVT);
+    // If we are transitioning from another state, we have to define new
+    // serving scopes appropriate for the new state. We don't do it if
+    // we remain in this state.
+    if (doOnEntry()) {
+        // It may be administratively disabled to handle partner's scope
+        // in case of failure. If this is the case we'll just handle our
+        // default scope (or no scope at all). The user will need to
+        // manually enable this server to handle partner's scope.
+        if (config_->getThisServerConfig()->isAutoFailover()) {
+            query_filter_.serveFailoverScopes();
+        } else {
+            query_filter_.serveDefaultScopes();
+        }
+        adjustNetworkState();
+
+        // Log if the state machine is paused.
+        conditionalLogPausedState();
+    }
+
+    scheduleHeartbeat();
+
+    if (isModelPaused()) {
+        postNextEvent(NOP_EVT);
+        return;
+    }
+
+    // Check if the clock skew is still acceptable. If not, transition to
+    // the terminated state.
+    if (shouldTerminate()) {
+        verboseTransition(HA_TERMINATED_ST);
+        return;
+    }
+
+    switch (communication_state_->getPartnerState()) {
+    case HA_UNAVAILABLE_ST:
+        verboseTransition(HA_PARTNER_DOWN_ST);
+
+    default:
+        postNextEvent(NOP_EVT);
+    }
 }
 
 void
@@ -645,6 +702,7 @@ HAService::adjustNetworkState() {
     const bool should_enable = ((getCurrState() == HA_LOAD_BALANCING_ST) ||
                                 (getCurrState() == HA_HOT_STANDBY_ST) ||
                                 (getCurrState() == HA_PARTNER_DOWN_ST) ||
+                                (getCurrState() == HA_PARTNER_MAINTAINED_ST) ||
                                 (getCurrState() == HA_TERMINATED_ST));
 
     if (!should_enable && network_state_->isServiceEnabled()) {
@@ -928,6 +986,7 @@ HAService::shouldSendLeaseUpdates(const HAConfig::PeerConfigPtr& peer_config) co
     switch (getCurrState()) {
     case HA_HOT_STANDBY_ST:
     case HA_LOAD_BALANCING_ST:
+    case HA_PARTNER_MAINTAINED_ST:
         return (true);
 
     default:
