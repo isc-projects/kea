@@ -38,7 +38,7 @@ namespace ha {
 class HAService : public boost::noncopyable, public util::StateModel {
 public:
 
-    /// Finished heartbeat commannd.
+    /// Finished heartbeat command.
     static const int HA_HEARTBEAT_COMPLETE_EVT = SM_DERIVED_EVENT_MIN + 1;
 
     /// Finished lease updates commands.
@@ -49,6 +49,9 @@ public:
 
     /// Lease database synchroniation succeeded.
     static const int HA_SYNCING_SUCCEEDED_EVT = SM_DERIVED_EVENT_MIN + 4;
+
+    /// ha-maintenance-notify command received.
+    static const int HA_MAINTENANCE_NOTIFY_EVT = SM_DERIVED_EVENT_MIN + 5;
 
 protected:
 
@@ -762,6 +765,20 @@ public:
     ///
     /// @return Pointer to the response to the ha-continue command.
     data::ConstElementPtr processContinue();
+
+    /// @brief Processes ha-maintenance-notify command and returns a response.
+    ///
+    /// This command attempts to tramsition the server to the maintained state.
+    /// Such transition is not allowed if the server is currently in one of the
+    /// following states:
+    /// - backup: becase maintenance is not supported for backup servers,
+    /// - partner-maintained: because only one server is maintained while the
+    ///   partner must be in parter-maintained state,
+    /// - terminated: because the only way to resume HA service is by shutting
+    ///   down the server, fixing the clock skew and restarting.
+    ///
+    /// @return Pointer to the reponse to the ha-maintenance-notify.
+    data::ConstElementPtr processMaintenanceNotify();
 
 protected:
 

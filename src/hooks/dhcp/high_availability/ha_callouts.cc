@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -208,6 +208,20 @@ int continue_command(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief ha-maintenance-notify command handler implementation.
+int maintenance_notify_command(CalloutHandle& handle) {
+    try {
+        impl->maintenanceNotifyHandler(handle);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_HANDLER_FAILED)
+            .arg(ex.what());
+    }
+
+    return (0);
+}
+
+
 /// @brief This function is called when the library is loaded.
 ///
 /// @param handle library handle
@@ -242,6 +256,7 @@ int load(LibraryHandle& handle) {
         handle.registerCommandCallout("ha-sync", sync_command);
         handle.registerCommandCallout("ha-scopes", scopes_command);
         handle.registerCommandCallout("ha-continue", continue_command);
+        handle.registerCommandCallout("ha-maintenance-notify", maintenance_notify_command);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_CONFIGURATION_FAILED)

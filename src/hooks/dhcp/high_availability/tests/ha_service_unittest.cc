@@ -2570,6 +2570,63 @@ TEST_F(HAServiceTest, processContinue) {
     EXPECT_FALSE(rsp->get("arguments"));
 }
 
+// This test verifies that the ha-maintenance-notify command is processed
+// successfully and transitions the state machine to the maintained state.
+// It also verifies that this command fails to transition the state machine
+// for some selected states for which it is unsupported.
+TEST_F(HAServiceTest, processMaintenanceNotify) {
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    TestHAService service(io_service_, network_state_, config_storage);
+    EXPECT_NO_THROW(service.transition(HA_WAITING_ST, HAService::NOP_EVT));
+
+    // Process ha-maintenance-notify command that should transition the
+    // state machine to the maintained state.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify());
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server is in maintained state.");
+
+    // The state machine should have been transitioned to the maintained state.
+    EXPECT_EQ(HA_MAINTAINED_ST, service.getCurrState());
+
+
+    // Make sure that the transition from the terminated state is not allowed.
+    EXPECT_NO_THROW(service.transition(HA_TERMINATED_ST, HAService::NOP_EVT));
+    EXPECT_NO_THROW(service.runModel(HAService::NOP_EVT));
+
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify());
+
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR, "Unable to transition the server from the"
+                " terminated to maintained state.");
+
+    // The transition from the backup state is also not allowed.
+    EXPECT_NO_THROW(service.transition(HA_BACKUP_ST, HAService::NOP_EVT));
+    EXPECT_NO_THROW(service.runModel(HAService::NOP_EVT));
+
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify());
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR, "Unable to transition the server from the"
+                " backup to maintained state.");
+
+    // Finally, it is not allowed to transition the server from the partner-maintained
+    // to the maintained state.
+    EXPECT_NO_THROW(service.transition(HA_PARTNER_MAINTAINED_ST, HAService::NOP_EVT));
+    EXPECT_NO_THROW(service.runModel(HAService::NOP_EVT));
+
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify());
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR, "Unable to transition the server from the"
+                " partner-maintained to maintained state.");
+}
+
 /// @brief HA partner to the server under test.
 ///
 /// This is a wrapper class around @c HttpListener which simulates a

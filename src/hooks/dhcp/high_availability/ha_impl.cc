@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -410,6 +410,12 @@ HAImpl::scopesHandler(hooks::CalloutHandle& callout_handle) {
 void
 HAImpl::continueHandler(hooks::CalloutHandle& callout_handle) {
     ConstElementPtr response = service_->processContinue();
+    callout_handle.setArgument("response", response);
+}
+
+void
+HAImpl::maintenanceNotifyHandler(hooks::CalloutHandle& callout_handle) {
+    ConstElementPtr response = service_->processMaintenanceNotify();
     callout_handle.setArgument("response", response);
 }
 

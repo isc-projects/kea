@@ -71,6 +71,7 @@ HAService::defineEvents() {
     defineEvent(HA_LEASE_UPDATES_COMPLETE_EVT, "HA_LEASE_UPDATES_COMPLETE_EVT");
     defineEvent(HA_SYNCING_FAILED_EVT, "HA_SYNCING_FAILED_EVT");
     defineEvent(HA_SYNCING_SUCCEEDED_EVT, "HA_SYNCING_SUCCEEDED_EVT");
+    defineEvent(HA_MAINTENANCE_NOTIFY_EVT, "HA_MAINTENANCE_NOTIFY_EVT");
 }
 
 void
@@ -81,6 +82,7 @@ HAService::verifyEvents() {
     getEvent(HA_LEASE_UPDATES_COMPLETE_EVT);
     getEvent(HA_SYNCING_FAILED_EVT);
     getEvent(HA_SYNCING_SUCCEEDED_EVT);
+    getEvent(HA_MAINTENANCE_NOTIFY_EVT);
 }
 
 void
@@ -1758,6 +1760,22 @@ HAService::processContinue() {
         return (createAnswer(CONTROL_RESULT_SUCCESS, "HA state machine continues."));
     }
     return (createAnswer(CONTROL_RESULT_SUCCESS, "HA state machine is not paused."));
+}
+
+data::ConstElementPtr
+HAService::processMaintenanceNotify() {
+    switch (getCurrState()) {
+    case HA_BACKUP_ST:
+    case HA_PARTNER_MAINTAINED_ST:
+    case HA_TERMINATED_ST:
+        return (createAnswer(CONTROL_RESULT_ERROR, "Unable to transition the server from"
+                             " the " + stateToString(getCurrState()) + " to"
+                             " maintained state."));
+    default:
+        verboseTransition(HA_MAINTAINED_ST);
+        runModel(HA_MAINTENANCE_NOTIFY_EVT);
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Server is in maintained state."));
 }
 
 ConstElementPtr

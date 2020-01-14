@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -143,6 +143,11 @@ public:
     ///
     /// @param callout_handle Callout handle provided to the callout.
     void continueHandler(hooks::CalloutHandle& callout_handle);
+
+    /// @brief Implements handler for the ha-maintenance-notify command.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
+    void maintenanceNotifyHandler(hooks::CalloutHandle& callout_handle);
 
 protected:
 
