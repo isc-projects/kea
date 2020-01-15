@@ -578,7 +578,7 @@ CqlConnection::openDatabase() {
         isc_throw(DbOpenError, "CqlConnection::openDatabase(): "
                                "!cass_schema_meta_keyspace_by_name()");
     }
-    LOG_INFO(database_logger,  "Successfully connected to Cassandra database");
+    LOG_DEBUG(database_logger, isc::log::DBGLVL_TRACE_BASIC, "Successfully connected to Cassandra database.");
 }
 
 void
