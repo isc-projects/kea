@@ -611,6 +611,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_STRING("ssl-ca", driver.loc_);
     }
 }
+
 \"ssl-cert\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
