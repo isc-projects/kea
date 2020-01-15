@@ -363,6 +363,8 @@ public:
     /// @return vendor id.
     static uint32_t optionSpaceToVendorId(const std::string& option_space);
 
+private:
+
     /// Initialize DHCP option definitions.
     ///
     /// The method creates option definitions for all DHCP options.
@@ -372,7 +374,8 @@ public:
     /// are incorrect. This is programming error.
     static bool initOptionDefs();
 
-private:
+    /// flag which indicates initialization state
+    static bool initialized_;
 
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v4factories_;

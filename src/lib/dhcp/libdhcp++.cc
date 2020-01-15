@@ -88,21 +88,15 @@ void initOptionSpace(OptionDefContainerPtr& defs,
                      const OptionDefParams* params,
                      size_t params_size);
 
-bool initialized = LibDHCP::initOptionDefs();
+bool LibDHCP::initialized_ = LibDHCP::initOptionDefs();
 
 const OptionDefContainerPtr
 LibDHCP::getOptionDefs(const std::string& space) {
-    // If any of the containers is not initialized, it means that we haven't
-    // initialized option definitions at all.
-    if (option_defs_.end() == option_defs_.find(space)) {
-        isc_throw(isc::Unexpected, "option definitions should have been "
-                  "automatically initialized at process startup");
-    }
-
     OptionDefContainers::const_iterator container = option_defs_.find(space);
     if (container != option_defs_.end()) {
         return (container->second);
     }
+
     return (null_option_def_container_);
 }
 
@@ -119,6 +113,7 @@ LibDHCP::getVendorOptionDefs(const Option::Universe u, const uint32_t vendor_id)
             return getOptionDefs(ISC_V6_OPTION_SPACE);
         }
     }
+
     return (null_option_def_container_);
 }
 
@@ -130,6 +125,7 @@ LibDHCP::getOptionDef(const std::string& space, const uint16_t code) {
     if (range.first != range.second) {
         return (*range.first);
     }
+
     return (OptionDefinitionPtr());
 }
 
@@ -141,6 +137,7 @@ LibDHCP::getOptionDef(const std::string& space, const std::string& name) {
     if (range.first != range.second) {
         return (*range.first);
     }
+
     return (OptionDefinitionPtr());
 }
 
@@ -158,6 +155,7 @@ LibDHCP::getVendorOptionDef(const Option::Universe u, const uint32_t vendor_id,
     if (range.first != range.second) {
         return (*range.first);
     }
+
     return (OptionDefinitionPtr());
 }
 
@@ -178,6 +176,7 @@ LibDHCP::getVendorOptionDef(const Option::Universe u, const uint32_t vendor_id,
     if (range.first != range.second) {
         return (*range.first);
     }
+
     return (OptionDefinitionPtr());
 }
 
@@ -270,6 +269,7 @@ LibDHCP::getLastResortOptionDefs(const std::string& space) {
     if (space == DHCP4_OPTION_SPACE) {
         return getOptionDefs(LAST_RESORT_V4_OPTION_SPACE);
     }
+
     return (null_option_def_container_);
 }
 
@@ -907,7 +907,8 @@ LibDHCP::initOptionDefs() {
                         OPTION_DEF_PARAMS[i].optionDefParams,
                         OPTION_DEF_PARAMS[i].size);
     }
-    return true;
+
+    return (true);
 }
 
 uint32_t
