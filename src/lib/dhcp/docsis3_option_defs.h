@@ -10,6 +10,10 @@
 #include <dhcp/std_option_defs.h>
 #include <dhcp/option_data_types.h>
 
+/// @brief global docsis3 option spaces
+#define DOCSIS3_V4_OPTION_SPACE          "docsis3-v4"
+#define DOCSIS3_V6_OPTION_SPACE          "docsis3-v6"
+
 namespace isc {
 namespace dhcp {
 
