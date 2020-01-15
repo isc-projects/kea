@@ -37,7 +37,7 @@ public:
     /// @param space Option space.
     ///
     /// @return Pointer to a collection of option definitions.
-    static const OptionDefContainerPtr& getOptionDefs(const std::string& space);
+    static const OptionDefContainerPtr getOptionDefs(const std::string& space);
 
     /// @brief Return the first option definition matching a
     /// particular option code.
@@ -111,8 +111,7 @@ public:
     /// @param space Option space name.
     ///
     /// @return Pointer to the container holding option definitions or NULL.
-    static OptionDefContainerPtr
-    getRuntimeOptionDefs(const std::string& space);
+    static OptionDefContainerPtr getRuntimeOptionDefs(const std::string& space);
 
     /// @brief Returns last resort option definition by space and option code.
     ///
@@ -138,8 +137,7 @@ public:
     /// @param space Option space name.
     ///
     /// @return Pointer to the container holding option definitions or NULL.
-    static OptionDefContainerPtr
-    getLastResortOptionDefs(const std::string& space);
+    static OptionDefContainerPtr getLastResortOptionDefs(const std::string& space);
 
     /// @brief Checks if an option unpacking has to be deferred.
     ///
@@ -289,8 +287,8 @@ public:
     ///
     /// @return a container for a given vendor (or NULL if no option
     ///         definitions are defined)
-    static const OptionDefContainerPtr
-    getVendorOptionDefs(Option::Universe u, const uint32_t vendor_id);
+    static const OptionDefContainerPtr getVendorOptionDefs(Option::Universe u,
+                                                           const uint32_t vendor_id);
 
     /// @brief Parses provided buffer as DHCPv6 vendor options and creates
     ///        Option objects.
@@ -365,8 +363,6 @@ public:
     /// @return vendor id.
     static uint32_t optionSpaceToVendorId(const std::string& option_space);
 
-private:
-
     /// Initialize DHCP option definitions.
     ///
     /// The method creates option definitions for all DHCP options.
@@ -376,12 +372,13 @@ private:
     /// are incorrect. This is programming error.
     static bool initOptionDefs();
 
+private:
+
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v4factories_;
 
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v6factories_;
-
 
     /// Container that holds option definitions for various option spaces.
     static OptionDefContainers option_defs_;
