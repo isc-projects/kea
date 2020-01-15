@@ -366,15 +366,6 @@ public:
     static uint32_t optionSpaceToVendorId(const std::string& option_space);
 
 private:
-    /// @brief Returns collection of option definitions.
-    ///
-    /// This method returns a collection of option definitions for a specified
-    /// option space. It must be called in a thread safe scope when MT is enabled.
-    ///
-    /// @param space Option space.
-    ///
-    /// @return Pointer to a collection of option definitions.
-    static const OptionDefContainerPtr& getOptionDefsInternal(const std::string& space);
 
     /// Initialize DHCP option definitions.
     ///
@@ -383,7 +374,7 @@ private:
     /// @throw std::bad alloc if system went out of memory.
     /// @throw MalformedOptionDefinition if any of the definitions
     /// are incorrect. This is programming error.
-    static void initOptionDefs(const std::string& space);
+    static bool initOptionDefs();
 
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v4factories_;
