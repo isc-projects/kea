@@ -8,13 +8,37 @@
 
  @page unitTests Building Kea with Unit Tests
 
+By default, Kea is built without unit-tests as they're used mostly by
+developers and prospective contributors. Kea's unit-tests are using
+<a href="https://github.com/google/googletest">gtest framework</a> from
+Google. Google's approach has changed over the years. For some time,
+they were very keen on not installing gtest as a normal software would
+be, but rather provide gtest as sources. This was further complicated
+with the fact that some Linux distributions packaged gtest and tried
+to mimic its installation. Kea tries its best to accommodate all typical
+situations and provides two switches to point to gtest. You can use
+`--with-gtest` or `--with-gtest-source`. Both attempt to locate gtest
+on their own. However, if neither of them can find it, you can specify
+the path explicitly. For example, on ubuntu with googletest package installed,
+you can do the following for Kea to find it:
+
+@code
+sudo apt install googletest
+./configure --with-gtest-source=/usr/src/googletest
+@endcode
+
 Depending on how you compiled or installed \c gtest (e.g. from sources
 or using some package management system) one of those two switches will
 find \c gtest. After that you make and run the unit-tests with:
 
 @code
+make
 make check
 @endcode
+
+As usual, using \c -jX option will speed up compilation. This parameter is
+even more useful for unit-tests as there are over 6000 unit-tests and their
+compilation is significantly slower than just the production Kea sources.
 
 @section unitTestsEnvironmentVariables Environment Variables
 
