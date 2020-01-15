@@ -334,7 +334,7 @@ This error message is issued to indicate that the ha-maintenance-start command
 handler failed while processing the command. The argument provides the reason for
 failure.
 
-% HA_MAINTENANCE_STARTED the server is now in the partner-maintained mode and the partner is in the maintained mode
+% HA_MAINTENANCE_STARTED the server is now in the partner-maintained state and the partner is in the maintained state
 This informational message is displayed when the server receiving the
 ha-maintenance-start command transitions to the partner-maintained
 state. The server does it after sending the ha-maintenance-notify to

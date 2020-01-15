@@ -56,6 +56,10 @@ public:
     /// ha-maintenance-start command received.
     static const int HA_MAINTENANCE_START_EVT = SM_DERIVED_EVENT_MIN + 6;
 
+
+    /// Control result returned in response to ha-maintenance-notify.
+    static const int HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED = 1001;
+
 protected:
 
     /// @brief Callback invoked when request was sent and a response received
@@ -806,9 +810,11 @@ protected:
     /// contain a success status code.
     ///
     /// @param response pointer to the received response.
+    /// @param [out] rcode result found in the response.
     /// @return Pointer to the response arguments.
     /// @throw CtrlChannelError if response is invalid or contains an error.
-    data::ConstElementPtr verifyAsyncResponse(const http::HttpResponsePtr& response);
+    data::ConstElementPtr verifyAsyncResponse(const http::HttpResponsePtr& response,
+                                              int& rcode);
 
     /// @brief HttpClient connect callback handler
     ///

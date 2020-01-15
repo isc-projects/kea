@@ -44,6 +44,7 @@ const int HAService::HA_SYNCING_FAILED_EVT;
 const int HAService::HA_SYNCING_SUCCEEDED_EVT;
 const int HAService::HA_MAINTENANCE_NOTIFY_EVT;
 const int HAService::HA_MAINTENANCE_START_EVT;
+const int HAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED;
 
 HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& network_state,
                      const HAConfigPtr& config, const HAServerType& server_type)
@@ -911,7 +912,8 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
 
                 // Handle third group of errors.
                 try {
-                    auto args = verifyAsyncResponse(response);
+                    int rcode = 0;
+                    auto args = verifyAsyncResponse(response, rcode);
                     // In the v6 case the server may return a list of failed lease
                     // updates and we should log them.
                     logFailedLeaseUpdates(query, args);
@@ -1194,7 +1196,8 @@ HAService::asyncSendHeartbeat() {
                 try {
                     // Response must contain arguments and the arguments must
                     // be a map.
-                    ConstElementPtr args = verifyAsyncResponse(response);
+                    int rcode = 0;
+                    ConstElementPtr args = verifyAsyncResponse(response, rcode);
                     if (!args || args->getType() != Element::map) {
                         isc_throw(CtrlChannelError, "returned arguments in the response"
                                   " must be a map");
@@ -1325,7 +1328,8 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
 
                  // Handle third group of errors.
                  try {
-                     static_cast<void>(verifyAsyncResponse(response));
+                     int rcode = 0;
+                     static_cast<void>(verifyAsyncResponse(response, rcode));
 
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
@@ -1396,7 +1400,8 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
 
                  // Handle third group of errors.
                  try {
-                     static_cast<void>(verifyAsyncResponse(response));
+                     int rcode = 0;
+                     static_cast<void>(verifyAsyncResponse(response, rcode));
 
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
@@ -1539,7 +1544,8 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
             } else {
                 // Handle third group of errors.
                 try {
-                    ConstElementPtr args = verifyAsyncResponse(response);
+                    int rcode = 0;
+                    ConstElementPtr args = verifyAsyncResponse(response, rcode);
 
                     // Arguments must be a map.
                     if (args && (args->getType() != Element::map)) {
@@ -1780,8 +1786,15 @@ HAService::processMaintenanceNotify() {
     case HA_BACKUP_ST:
     case HA_PARTNER_MAINTAINED_ST:
     case HA_TERMINATED_ST:
-        return (createAnswer(CONTROL_RESULT_ERROR, "Unable to transition the server from"
-                             " the " + stateToString(getCurrState()) + " to"
+        // The reason why we don't return an error result here is that we have to
+        // have a way to distinguish between the errors caused by the communication
+        // issues and the cases when there is no communication error but the server
+        // is not allowed to enter the maintained state. In the former case, the
+        // parter would go to partner-down. In the case signaled by the special
+        // result code entering the maintenance state is not allowed.
+        return (createAnswer(HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED,
+                             "Unable to transition the server from the "
+                             + stateToString(getCurrState()) + " to"
                              " maintained state."));
     default:
         verboseTransition(HA_MAINTAINED_ST);
@@ -1822,10 +1835,12 @@ HAService::processMaintenanceStart() {
 
     boost::system::error_code captured_ec;
     std::string captured_error_message;
+    int captured_rcode = 0;
 
     // Schedule asynchronous HTTP request.
     client.asyncSendRequest(remote_config->getUrl(), request, response,
-        [this, remote_config, &io_service, &captured_ec, &captured_error_message]
+        [this, remote_config, &io_service, &captured_ec, &captured_error_message,
+         &captured_rcode]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
              const std::string& error_str) {
@@ -1851,7 +1866,7 @@ HAService::processMaintenanceStart() {
 
                  // Handle third group of errors.
                  try {
-                     static_cast<void>(verifyAsyncResponse(response));
+                     static_cast<void>(verifyAsyncResponse(response, captured_rcode));
 
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
@@ -1881,7 +1896,7 @@ HAService::processMaintenanceStart() {
 
     // If there was a communication problem with the partner we assume that
     // the partner is already down while we receive this command.
-    if (captured_ec) {
+    if (captured_ec || (captured_rcode == CONTROL_RESULT_ERROR)) {
         verboseTransition(HA_PARTNER_DOWN_ST);
         runModel(HA_MAINTENANCE_START_EVT);
         return (createAnswer(CONTROL_RESULT_SUCCESS,
@@ -1889,7 +1904,7 @@ HAService::processMaintenanceStart() {
                              " partner appears to be offline for maintenance."));
 
 
-    } else if (captured_error_message.empty()) {
+    } else if (captured_rcode == CONTROL_RESULT_SUCCESS) {
         // If the partner responded indicating no error it means that the
         // partner has been transitioned to the maintained state. In that
         // case we transition to the partner-maintained state.
@@ -1897,10 +1912,11 @@ HAService::processMaintenanceStart() {
         runModel(HA_MAINTENANCE_START_EVT);
 
     } else {
-        // Partner server returned an error so this server can't transition to
-        // the partner-maintained mode.
-        return (createAnswer(CONTROL_RESULT_ERROR, "Partner server responded with"
-                             " the following error to the ha-maintenance-notify"
+        // Partner server returned a special status code which means that it can't
+        // transition to the partner-maintained state.
+        return (createAnswer(CONTROL_RESULT_ERROR, "Unable to transition to the"
+                             " partner-maintained state. The partner server responded"
+                             " with the following message to the ha-maintenance-notify"
                              " commmand: " + captured_error_message + "."));
 
     }
@@ -1912,7 +1928,7 @@ HAService::processMaintenanceStart() {
 }
 
 ConstElementPtr
-HAService::verifyAsyncResponse(const HttpResponsePtr& response) {
+HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
     // The response must cast to JSON type.
     HttpResponseJsonPtr json_response =
         boost::dynamic_pointer_cast<HttpResponseJson>(response);
@@ -1938,7 +1954,6 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response) {
 
     // Check if the status code of the first response. We don't support multiple
     // at this time, because we always send a request to a single location.
-    int rcode = 0;
     ConstElementPtr args = parseAnswer(rcode, body->get(0));
     if ((rcode != CONTROL_RESULT_SUCCESS) &&
         (rcode != CONTROL_RESULT_EMPTY)) {

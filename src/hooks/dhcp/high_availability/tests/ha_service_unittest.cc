@@ -2600,8 +2600,9 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
     ASSERT_NO_THROW(rsp = service.processMaintenanceNotify());
 
     ASSERT_TRUE(rsp);
-    checkAnswer(rsp, CONTROL_RESULT_ERROR, "Unable to transition the server from the"
-                " terminated to maintained state.");
+    checkAnswer(rsp, TestHAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED,
+                "Unable to transition the server from the terminated to"
+                " maintained state.");
 
     // The transition from the backup state is also not allowed.
     EXPECT_NO_THROW(service.transition(HA_BACKUP_ST, HAService::NOP_EVT));
@@ -2611,8 +2612,9 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
 
     // The server should have responded.
     ASSERT_TRUE(rsp);
-    checkAnswer(rsp, CONTROL_RESULT_ERROR, "Unable to transition the server from the"
-                " backup to maintained state.");
+    checkAnswer(rsp, TestHAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED,
+                "Unable to transition the server from the backup to maintained"
+                " state.");
 
     // Finally, it is not allowed to transition the server from the partner-maintained
     // to the maintained state.
@@ -2623,8 +2625,9 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
 
     // The server should have responded.
     ASSERT_TRUE(rsp);
-    checkAnswer(rsp, CONTROL_RESULT_ERROR, "Unable to transition the server from the"
-                " partner-maintained to maintained state.");
+    checkAnswer(rsp, TestHAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED,
+                "Unable to transition the server from the partner-maintained to"
+                " maintained state.");
 }
 
 // This test verifies the case when the server receiving the ha-maintenance-start
@@ -2744,15 +2747,58 @@ TEST_F(HAServiceTest, processMaintenanceStartPartnerError) {
     io_service_->get_io_service().reset();
     io_service_->poll();
 
-    // The partner of our server is online and should have responded with
-    // the success status. Therefore, this server should have transitioned
-    // to the partner-maintained state.
     ASSERT_TRUE(rsp);
-    checkAnswer(rsp, CONTROL_RESULT_ERROR, "Partner server responded with"
-                " the following error to the ha-maintenance-notify commmand:"
-                " response returned, error code 1.");
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS,
+                "Server is now in the partner-down state as its"
+                " partner appears to be offline for maintenance.");
 
-    // The state shouldn't change.
+    EXPECT_EQ(HA_PARTNER_DOWN_ST, service.getCurrState());
+}
+
+// This test verifies the case when the server is receiving
+// ha-maintenance-start command and tries to notify the partner
+// which returns a special result indicating that it can't enter
+// the maintained state.
+TEST_F(HAServiceTest, processMaintenanceStartNotAllowed) {
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    // Simulate an error returned by the partner.
+    factory2_->getResponseCreator()->
+        setControlResult(TestHAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    HAService service(io_service_, network_state_, config_storage);
+
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-start command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceStart());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->get_io_service().reset();
+    io_service_->poll();
+
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR,
+                "Unable to transition to the partner-maintained state."
+                " The partner server responded with the following message"
+                " to the ha-maintenance-notify commmand: response returned,"
+                " error code 1001.");
+
+    // The partner's state precludes entering the maintained state. Thus, this
+    // server must not change its state either.
     EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
 }
 

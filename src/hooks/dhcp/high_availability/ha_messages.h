@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Tue Jan 14 2020 18:59
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Wed Jan 15 2020 11:05
 
 #ifndef HA_MESSAGES_H
 #define HA_MESSAGES_H
