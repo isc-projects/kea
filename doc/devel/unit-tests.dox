@@ -40,6 +40,9 @@ As usual, using \c -jX option will speed up compilation. This parameter is
 even more useful for unit-tests as there are over 6000 unit-tests and their
 compilation is significantly slower than just the production Kea sources.
 
+Kea should work with reasonably recent gtest versions. We recently tried
+with 1.7.0, 1.8.0, 1.8.1 and 1.10.0.
+
 @section unitTestsEnvironmentVariables Environment Variables
 
 The following environment variable can affect the unit tests:
