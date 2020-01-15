@@ -1186,6 +1186,33 @@ hot-standby state. The maintenance can now be performed for the server1.
 It should be initiated by sending the ``ha-maintenance-start`` to the
 server2.
 
+Upgrading from Older HA Versions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The maintenance mechanism was first introduced in the Kea 1.7.4 release.
+In order to upgrade the HA hooks library from the older version the
+administrator must shut down one of the servers and rely on the
+failover mechanism to get the online server to transition to the
+partner-down state and start serving all DHCP clients. After the
+successful upgrade of one of the servers to the version supporting
+the maintenance mechanism it is possible to benefit from this
+mechanism during the upgrade of the second server.
+
+In such case, shut down the server running the old version. Next,
+send the ``ha-maintenance-start`` to the server that has been
+upgraded and supports the maintenance mechanism. This server should
+immediately transition to the partner-down state as it cannot
+communicate with the partner being offline. In the partner-down
+state the server will be responding to all DHCP requests.
+
+.. note::
+
+   Do not send the ``ha-maintenance-start`` command while the server
+   running the old version is still online. The server receiving
+   this command will return an error seeing that the partner does
+   not support the maintenance mechanism.
+
+
 .. _ha-control-commands:
 
 Control Commands for High Availability
