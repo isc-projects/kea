@@ -21,6 +21,8 @@ dhcp-disable
 dhcp-enable
 ha-continue
 ha-heartbeat
+ha-maintenance-notify
+ha-maintenance-start
 ha-scopes
 ha-sync
 lease4-add

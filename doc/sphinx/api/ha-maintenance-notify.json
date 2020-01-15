@@ -1,0 +1,20 @@
+{
+    "avail": "1.7.4",
+    "brief": [
+        "This command is sent by the server receiving the ha-maintenance-start",
+        "to its partner to cause the partner to transition to the maintained",
+        "state"
+    ],
+    "cmd-comment": [ "This command takes no arguments." ],
+    "description": [ "See <xref linkend=\"command-ha-maintenance-notify\"/>" ],
+    "hook": "high_availability",
+    "name": "ha-maintenance-notify",
+    "resp-comment": [
+        "The response may include a special error code of 1001",
+        "to indicate that the partner refused to enter the maintenance state"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

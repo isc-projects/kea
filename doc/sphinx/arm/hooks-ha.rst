@@ -164,12 +164,36 @@ The following is the list of all possible server states:
    to DHCP queries and send lease updates to each other and to any
    backup servers that are present.
 
+-  ``maintained`` - an active server transitions to this state as a result
+   of being notified by its partner that the administrator requested
+   maintenance of the HA setup. The administrator requests the maintenance
+   by sending the ``ha-maintenance-start`` to the server which is supposed
+   to take over the responsibility for responding to the DHCP clients while
+   the other server is taken offline for maintenance. If the server is
+   in the ``maintained`` state it can be safely shut down. The partner
+   is in the ``partner-maintained`` state from which it will transition
+   to the ``partner-down`` state immediately after it finds that the
+   maintained server was shut down.
+
 -  ``partner-down`` - an active server transitions to this state after
    detecting that its partner (another active server) is offline. The
    server does not transition to this state if only a backup server is
    unavailable. In the ``partner-down`` state the active server responds
    to all DHCP queries, including those queries which are normally
    handled by the server that is now unavailable.
+
+-  ``partner-maintained`` - an active server transitions to this state
+   after receiving a ``ha-maintenance-start`` command from the
+   administrator. The server being in this state becomes responsible
+   for responding to all DHCP requests. The server sends
+   ``ha-maintenance-notify`` command to the partner which is supposed
+   to enter the ``maintained`` state. If that is the case, the server
+   remaining in the ``partner-maintained`` state keeps sending lease
+   updates to the partner until it finds that the parter stops
+   responding to those lease updates, heartbeats or any other commands.
+   In this case, the server being in the ``partner-maintained`` state
+   transitions to the ``partner-down`` state and keeps responding to
+   the queries, but no longer sends lease updates.
 
 -  ``ready`` - an active server transitions to this state after
    synchronizing its lease database with an active partner. This state
@@ -239,35 +263,39 @@ the scopes can be found below.
 
 .. table:: Default Behavior of the Server in Various HA States
 
-   +-----------------+-----------------+-----------------+-----------------+
-   | State           | Server Type     | DHCP Service    | DHCP Service    |
-   |                 |                 |                 | Scopes          |
-   +=================+=================+=================+=================+
-   | backup          | backup server   | disabled        | none            |
-   +-----------------+-----------------+-----------------+-----------------+
-   | hot-standby     | primary or      | enabled         | ``HA_server1``  |
-   |                 | standby         |                 | if primary,     |
-   |                 | (hot-standby    |                 | none otherwise  |
-   |                 | mode)           |                 |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | load-balancing  | primary or      | enabled         | ``HA_server1``  |
-   |                 | secondary       |                 | or              |
-   |                 | (load-balancing |                 | ``HA_server2``  |
-   |                 | mode)           |                 |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | partner-down    | active server   | enabled         | all scopes      |
-   +-----------------+-----------------+-----------------+-----------------+
-   | ready           | active server   | disabled        | none            |
-   +-----------------+-----------------+-----------------+-----------------+
-   | syncing         | active server   | disabled        | none            |
-   +-----------------+-----------------+-----------------+-----------------+
-   | terminated      | active server   | enabled         | same as in the  |
-   |                 |                 |                 | load-balancing  |
-   |                 |                 |                 | or hot-standby  |
-   |                 |                 |                 | state           |
-   +-----------------+-----------------+-----------------+-----------------+
-   | waiting         | any server      | disabled        | none            |
-   +-----------------+-----------------+-----------------+-----------------+
+   +--------------------+-----------------+-----------------+-----------------+
+   | State              | Server Type     | DHCP Service    | DHCP Service    |
+   |                    |                 |                 | Scopes          |
+   +====================+=================+=================+=================+
+   | backup             | backup server   | disabled        | none            |
+   +--------------------+-----------------+-----------------+-----------------+
+   | hot-standby        | primary or      | enabled         | ``HA_server1``  |
+   |                    | standby         |                 | if primary,     |
+   |                    | (hot-standby    |                 | none otherwise  |
+   |                    | mode)           |                 |                 |
+   +--------------------+-----------------+-----------------+-----------------+
+   | load-balancing     | primary or      | enabled         | ``HA_server1``  |
+   |                    | secondary       |                 | or              |
+   |                    | (load-balancing |                 | ``HA_server2``  |
+   |                    | mode)           |                 |                 |
+   +--------------------+-----------------+-----------------+-----------------+
+   | maintained         | active server   | disabled        | none            |
+   +--------------------+-----------------+-----------------+-----------------+
+   | partner-down       | active server   | enabled         | all scopes      |
+   +--------------------+-----------------+-----------------+-----------------+
+   | partner-maintained | active server   | enabled         | all scopes      |
+   +--------------------+-----------------+-----------------+-----------------+
+   | ready              | active server   | disabled        | none            |
+   +--------------------+-----------------+-----------------+-----------------+
+   | syncing            | active server   | disabled        | none            |
+   +--------------------+-----------------+-----------------+-----------------+
+   | terminated         | active server   | enabled         | same as in the  |
+   |                    |                 |                 | load-balancing  |
+   |                    |                 |                 | or hot-standby  |
+   |                    |                 |                 | state           |
+   +--------------------+-----------------+-----------------+-----------------+
+   | waiting            | any server      | disabled        | none            |
+   +--------------------+-----------------+-----------------+-----------------+
 
 The DHCP service scopes require some explanation. The HA configuration
 must specify a unique name for each server within the HA setup. This
@@ -1097,6 +1125,67 @@ load-balancing and the hot-standby cases presented in previous sections.
    }
    }
 
+.. _ha-maintenance:
+
+Controlled Shutdown and Maintenance of DHCP servers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Having a pair of servers providing High Availability allows for controlled
+shutdown and maintenance of those servers without disrupting the DHCP
+service. For example, an administrator can perform an upgrade of one of
+the servers while the other one continues to respond to the DHCP queries.
+When the upgraded server is back online, the upgrade can be performed for
+the second server. The typical problem reported for the earlier versions
+of the High Availability hooks library was that the administrator did not
+have a direct control over the state of the DHCP server. Shutting down
+one of the servers for maintenance didn't necessarily cause the other
+server to start reponding to all DHCP queries because the failure
+detection algorithm described in :ref:`ha-scope-transition` requires that
+the partner does not respond for a configured period of time and,
+depending on the configuration, may also require that a number of DHCP
+requests are not responded for a configured period of time. The
+maintenance procedure, however, requires that the administrator is able
+to instruct one of the servers to instantly start serving all DHCP clients
+and the other server to instantly stop serving any DHCP clients so as it
+can be safely shut down.
+
+The maintenance feature of the High Availability hooks library addresses
+this problem. The ``ha-maintenance-start`` command was introduced to allow
+the administrator to put the pair of the active servers in states in which
+one of them is responding to all DHCP queries and the other one is awaiting
+a shutdown.
+
+Suppose that the HA setup includes two active servers, e.g. ``server1``
+and ``server2`` and the latter needs to be shut down for the maintenance.
+The administrator should send the ``ha-maintenance-start`` to the server1,
+as this is the server which is going to handle the DHCP traffic while the
+other one is offline. The server1 may respond with an error if its state
+or the partner's state does not allow for the maintenance. For example,
+the maintenance is not supported for the backup server or the server being
+in the terminated state. Also, an error will be returned if the maintenance
+request was already sent to the other server.
+
+Upon receiving the ``ha-maintenance-start`` command, the server1 will
+send the ``ha-maintenance-notify`` command to the server2 to put this
+server in the ``maintained`` state. If the server2 confirms, the server1
+will transition to the ``partner-maintained`` state. This is similar
+to the ``partner-down`` state, except that in the ``partner-maintained``
+state the server1 continues to send lease updates to the server2 until
+the administrator shuts down the server2. The server1 now responds to all
+DHCP queries.
+
+The administrator may safely shut down the server2 being in the
+``maintained`` state and perform necessary maintenance actions. When
+the server2 is offline, the server1 will encounter communication issues
+with the partner and will immediately transition to the ``partner-down``
+state in which it will continue to respond to all DHCP queries but will
+no longer send lease updates to the server2. Starting the server2 after
+the maintenance will trigger normal state negotiation, lease database
+synchronization and, ultimately, a transition to the load-balancing or
+hot-standby state. The maintenance can now be performed for the server1.
+It should be initiated by sending the ``ha-maintenance-start`` to the
+server2.
+
 .. _ha-control-commands:
 
 Control Commands for High Availability
@@ -1217,7 +1306,6 @@ command structure is as simple as:
        "command": "ha-continue",
        "service": [ "dhcp4" ]
    }
-
 
 .. _command-ha-heartbeat:
 
@@ -1362,3 +1450,45 @@ send the ``status-get`` command to the partner server directly to check
 its current state. The ``age`` parameter specifies the number of seconds
 since the information from the partner was gathered (the age of this
 information).
+
+.. _command-ha-maintenance-start:
+
+The ha-maintenance-start Command
+--------------------------------
+
+This command is used to initiate transition of the server's partner into
+the ``maintained`` state and the transition of the server receiving the
+command into the ``partner-maintained`` state. See the
+:ref:`ha-maintenance` for the details.
+
+
+::
+
+   {
+       "command": "ha-maintenance-start",
+       "service": [ "dhcp4" ]
+   }
+
+
+.. _command-ha-maintenance-notify:
+
+The ha-maintenance-notify Command
+---------------------------------
+
+This command is send by the server receiving the ``ha-maintenance-start``
+command to its partner to cause the partner to transition to the
+``maintained`` state.  See the :ref:`ha-maintenance` for the details.
+
+::
+
+   {
+       "command": "ha-maintenance-notify",
+       "service": [ "dhcp4" ]
+   }
+
+.. note::
+
+   The ``ha-maintenance-notify`` command is not meant to be used by the
+   system administrators. It is used for internal communication between
+   a pair of HA enabled DHCP servers.
+
