@@ -176,8 +176,10 @@ CommandCreator::createLease6GetPage(const Lease6Ptr& last_lease6,
 }
 
 ConstElementPtr
-CommandCreator::createMaintenanceNotify(const HAServerType& server_type) {
-    auto command = config::createCommand("ha-maintenance-notify");
+CommandCreator::createMaintenanceNotify(const bool cancel, const HAServerType& server_type) {
+    auto args = Element::createMap();
+    args->set("cancel", Element::create(cancel));
+    auto command = config::createCommand("ha-maintenance-notify", args);
     insertService(command, server_type);
     return (command);
 }

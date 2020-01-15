@@ -775,17 +775,25 @@ public:
 
     /// @brief Processes ha-maintenance-notify command and returns a response.
     ///
-    /// This command attempts to tramsition the server to the maintained state.
-    /// Such transition is not allowed if the server is currently in one of the
-    /// following states:
+    /// This command attempts to tramsition the server to the maintained state
+    /// if the cancel flag is set to false. Such transition is not allowed if
+    /// the server is currently in one of the following states:
     /// - backup: becase maintenance is not supported for backup servers,
     /// - partner-maintained: because only one server is maintained while the
     ///   partner must be in parter-maintained state,
     /// - terminated: because the only way to resume HA service is by shutting
     ///   down the server, fixing the clock skew and restarting.
     ///
+    /// If the cancel flag is set to true, the server will be transitioned from
+    /// the maintained state to the previous state it was in before entering the
+    /// maintained state.
+    ///
+    /// @param cancel boolean value indicating if the maintenance is being
+    /// cancelled with this operation. If it is set to false the maintenance
+    /// is being started.
+    ///
     /// @return Pointer to the reponse to the ha-maintenance-notify.
-    data::ConstElementPtr processMaintenanceNotify();
+    data::ConstElementPtr processMaintenanceNotify(const bool cancel);
 
     /// @brief Processes ha-maintenance-start command and returns a response.
     ///

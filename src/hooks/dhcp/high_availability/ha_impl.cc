@@ -415,7 +415,24 @@ HAImpl::continueHandler(hooks::CalloutHandle& callout_handle) {
 
 void
 HAImpl::maintenanceNotifyHandler(hooks::CalloutHandle& callout_handle) {
-    ConstElementPtr response = service_->processMaintenanceNotify();
+    // Command must always be provided.
+    ConstElementPtr command;
+    callout_handle.getArgument("command", command);
+
+    // Retrieve arguments.
+    ConstElementPtr args;
+    static_cast<void>(parseCommandWithArgs(args, command));
+
+    ConstElementPtr cancel_op = args->get("cancel");
+    if (!cancel_op) {
+        isc_throw(BadValue, "'cancel' is mandatory for the 'ha-maintenance-notify' command");
+    }
+
+    if (cancel_op->getType() != Element::boolean) {
+        isc_throw(BadValue, "'cancel' must be a boolean in the 'ha-maintenance-notify' command");
+    }
+
+    ConstElementPtr response = service_->processMaintenanceNotify(cancel_op->boolValue());
     callout_handle.setArgument("response", response);
 }
 

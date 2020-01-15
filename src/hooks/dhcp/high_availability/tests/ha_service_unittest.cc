@@ -2571,7 +2571,8 @@ TEST_F(HAServiceTest, processContinue) {
 }
 
 // This test verifies that the ha-maintenance-notify command is processed
-// successfully and transitions the state machine to the maintained state.
+// successfully and transitions the state machine to the maintained state
+// and that it is possible to revert to the previous state.
 // It also verifies that this command fails to transition the state machine
 // for some selected states for which it is unsupported.
 TEST_F(HAServiceTest, processMaintenanceNotify) {
@@ -2583,7 +2584,7 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
     // Process ha-maintenance-notify command that should transition the
     // state machine to the maintained state.
     ConstElementPtr rsp;
-    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify());
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(false));
 
     // The server should have responded.
     ASSERT_TRUE(rsp);
@@ -2592,12 +2593,22 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
     // The state machine should have been transitioned to the maintained state.
     EXPECT_EQ(HA_MAINTAINED_ST, service.getCurrState());
 
+    // Try to cancel the maintenance.
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(true));
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server maintenance cancelled.");
+
+    // The state machine should have been transitioned to the state it was in
+    // prior to transitioning to the maintained state.
+    EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
 
     // Make sure that the transition from the terminated state is not allowed.
     EXPECT_NO_THROW(service.transition(HA_TERMINATED_ST, HAService::NOP_EVT));
     EXPECT_NO_THROW(service.runModel(HAService::NOP_EVT));
 
-    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify());
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(false));
 
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, TestHAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED,
@@ -2608,7 +2619,7 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
     EXPECT_NO_THROW(service.transition(HA_BACKUP_ST, HAService::NOP_EVT));
     EXPECT_NO_THROW(service.runModel(HAService::NOP_EVT));
 
-    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify());
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(false));
 
     // The server should have responded.
     ASSERT_TRUE(rsp);
@@ -2621,7 +2632,7 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
     EXPECT_NO_THROW(service.transition(HA_PARTNER_MAINTAINED_ST, HAService::NOP_EVT));
     EXPECT_NO_THROW(service.runModel(HAService::NOP_EVT));
 
-    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify());
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(false));
 
     // The server should have responded.
     ASSERT_TRUE(rsp);

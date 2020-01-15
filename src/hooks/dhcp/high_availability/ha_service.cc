@@ -1781,7 +1781,19 @@ HAService::processContinue() {
 }
 
 ConstElementPtr
-HAService::processMaintenanceNotify() {
+HAService::processMaintenanceNotify(const bool cancel) {
+    if (cancel) {
+        if (getCurrState() != HA_MAINTAINED_ST) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "Unable to cancel the"
+                                 " maintenance for the server not being in the"
+                                 " maintained state."));
+        }
+
+        verboseTransition(getPrevState());
+        runModel(NOP_EVT);
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "Server maintenance cancelled."));
+    }
+
     switch (getCurrState()) {
     case HA_BACKUP_ST:
     case HA_PARTNER_MAINTAINED_ST:
@@ -1823,7 +1835,7 @@ HAService::processMaintenanceStart() {
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getHostname()));
-    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(server_type_));
+    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(false, server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs

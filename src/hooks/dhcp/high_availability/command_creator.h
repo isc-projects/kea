@@ -134,9 +134,12 @@ public:
 
     /// @brief Creates ha-maintenance-notify command.
     ///
+    /// @param cancel boolean value indicating if the maintenance
+    /// is being cancelled (true) or requested (false).
+    /// @param server_type type of the DHCP server, i.e. v4 or v6.
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createMaintenanceNotify(const HAServerType& server_typ);
+    createMaintenanceNotify(const bool cancel, const HAServerType& server_type);
 
 private:
 

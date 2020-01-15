@@ -584,4 +584,36 @@ TEST_F(HAImplTest, statusGet) {
     EXPECT_TRUE(isEquivalent(got, Element::fromJSON(expected)));
 }
 
+// Test ha-maintenance-notify command handler.
+TEST_F(HAImplTest, maintenanceNotify) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
+                                         HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-maintenance-notify\","
+        "    \"arguments\": {"
+        "        \"cancel\": false"
+        "    }"
+         "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.maintenanceNotifyHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "Server is in maintained state.");
+
+}
+
 }
