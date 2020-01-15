@@ -1,9 +1,27 @@
 #!/bin/sh
 
+# This is the branch name (e.g. 29-something or master)
 BRANCH=`git branch | grep '^\*' | cut -b3-`
+
+# This is the beginning of the branch name (e.g. 29 for branch being named 29-something).
+# It's supposed to start with a issue number.
 ISSUE=`git branch | grep -o '^\* [0-9]*' | cut -b3-`
 
-if test "$BRANCH" == "master"; then
+# This is trying to get issue (e.g. 29) from the existing commit message.
+# This may be return "" if there commit message doesn't start with [#123]
+ISSUEINMSG=`head -n 1 $1 | grep -o '^\[#[0-9]*' | cut -b3-`
+
+# This is for debugging purposes only.
+#echo "BRANCH=[$BRANCH] ISSUE=[$ISSUE] ISSUEINMSG=[$ISSUEINMSG]"
+
+if test "$ISSUEINMSG" != ""; then
+    # There's an issue defined there. It may be different than the branch name,
+    # but we assume the user knows best *cough*. If we revise this in the future,
+    # the test could be tightened to "$ISSUEINMSG" != "$ISSUE"
+    exit 0
+fi
+
+if test "$BRANCH" = "master"; then
     echo "ERROR: You are on branch $BRANCH"
     echo "ERROR: You are not allowed to commit to master directly. Please follow the process"
     echo "ERROR: (create issue, then MR for it, ...)"
