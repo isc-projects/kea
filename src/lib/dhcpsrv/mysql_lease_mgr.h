@@ -667,6 +667,7 @@ public:
     };
 
 private:
+
     /// @brief Add Lease Common Code
     ///
     /// This method performs the common actions for both flavours (V4 and V6)
@@ -899,6 +900,7 @@ private:
         MySqlLeaseContextPtr ctx_;
 
     private:
+
         /// @brief The manager
         const MySqlLeaseMgr& mgr_;
     };

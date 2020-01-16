@@ -116,11 +116,22 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// Expressed as number of seconds since cltt.
     uint32_t valid_lft_;
 
+    /// @brief Old valid lifetime
+    ///
+    /// Expressed as number of seconds since cltt before update.
+    uint32_t old_valid_lft_;
+
     /// @brief Client last transmission time
     ///
     /// Specifies a timestamp giving the time when the last transmission from a
     /// client was received.
     time_t cltt_;
+
+    /// @brief Old client last transmission time
+    ///
+    /// Specifies a timestamp giving the time when the last transmission from a
+    /// client was received before update.
+    time_t old_cltt_;
 
     /// @brief Subnet identifier
     ///

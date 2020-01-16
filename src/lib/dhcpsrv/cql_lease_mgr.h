@@ -41,6 +41,7 @@ namespace dhcp {
 /// and that the Kea schema has been created within it.
 class CqlLeaseMgr : public LeaseMgr {
 public:
+
     /// @brief Constructor
     ///
     /// Uses the following keywords in the parameters passed to it to
@@ -581,6 +582,7 @@ public:
     virtual void rollback() override;
 
 private:
+
     /// @brief Connection parameters
     db::DatabaseConnection::ParameterMap parameters_;
 

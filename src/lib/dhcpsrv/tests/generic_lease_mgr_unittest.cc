@@ -1923,13 +1923,13 @@ GenericLeaseMgrTest::testRecreateLease4() {
     Lease4Ptr lease(new Lease4(*leases[0]));
 
     // Add a lease.
-    EXPECT_TRUE(lmptr_->addLease(lease));
+    EXPECT_TRUE(lmptr_->addLease(leases[0]));
     lmptr_->commit();
 
     // Check that the lease has been successfully added.
     Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[0]);
     ASSERT_TRUE(l_returned);
-    detailCompareLease(lease, l_returned);
+    detailCompareLease(leases[0], l_returned);
 
     // Delete a lease, check that it's gone.
     EXPECT_TRUE(lmptr_->deleteLease(leases[0]));
@@ -1963,13 +1963,13 @@ GenericLeaseMgrTest::testRecreateLease6() {
     Lease6Ptr lease(new Lease6(*leases[0]));
 
     // Add a lease.
-    EXPECT_TRUE(lmptr_->addLease(lease));
+    EXPECT_TRUE(lmptr_->addLease(leases[0]));
     lmptr_->commit();
 
     // Check that the lease has been successfully added.
     Lease6Ptr l_returned = lmptr_->getLease6(Lease::TYPE_NA, ioaddress6_[0]);
     ASSERT_TRUE(l_returned);
-    detailCompareLease(lease, l_returned);
+    detailCompareLease(leases[0], l_returned);
 
     // Delete a lease, check that it's gone.
     EXPECT_TRUE(lmptr_->deleteLease(leases[0]));

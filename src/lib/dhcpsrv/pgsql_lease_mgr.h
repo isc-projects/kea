@@ -642,6 +642,7 @@ public:
     };
 
 private:
+
     /// @brief Add Lease Common Code
     ///
     /// This method performs the common actions for both flavours (V4 and V6)
@@ -857,6 +858,7 @@ private:
         PgSqlLeaseContextPtr ctx_;
 
     private:
+
         /// @brief The manager
         const PgSqlLeaseMgr& mgr_;
     };

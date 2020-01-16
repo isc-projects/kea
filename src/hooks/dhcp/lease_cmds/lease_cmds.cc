@@ -107,8 +107,8 @@ public:
 
         /// @brief Default constructor.
         Parameters()
-            :addr("::"), query_type(TYPE_ADDR), lease_type(Lease::TYPE_NA),
-             iaid(0) {
+            : addr("::"), query_type(TYPE_ADDR), lease_type(Lease::TYPE_NA),
+              iaid(0) {
         }
     };
 
@@ -303,11 +303,12 @@ public:
     ///
     /// @param parameters parameters extracted from the command.
     ///
-    /// @return Address of the lease to be deleted.
+    /// @return Lease of the lease to be deleted.
+    ///
     /// @throw InvalidParameter if the DUID is not found when needed to
     /// find the lease or if the query type is by HW address.
     /// @throw InvalidOperation if the query type is unknown.
-    IOAddress getIPv6AddressForDelete(const Parameters& parameters) const;
+    Lease6Ptr getIPv6LeaseForDelete(const Parameters& parameters) const;
 
     /// @brief Returns a map holding brief information about a lease which
     /// failed to be deleted, updated or added.
@@ -1018,19 +1019,21 @@ int
 LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
     Parameters p;
     Lease4Ptr lease4;
-    IOAddress addr(IOAddress::IPV4_ZERO_ADDRESS());
     try {
         extractCommand(handle);
         p = getParameters(false, cmd_args_);
 
         switch (p.query_type) {
         case Parameters::TYPE_ADDR: {
-
             // If address was specified explicitly, let's use it as is.
-            addr = p.addr;
+            lease4 = LeaseMgrFactory::instance().getLease4(p.addr);
+            if (!lease4) {
+                setErrorResponse(handle, "IPv4 lease not found.", CONTROL_RESULT_EMPTY);
+                return (0);
+            }
             break;
         }
-        case Parameters::TYPE_HWADDR:
+        case Parameters::TYPE_HWADDR: {
             if (!p.hwaddr) {
                 isc_throw(InvalidParameter, "Program error: Query by hw-address "
                                             "requires hwaddr to be specified");
@@ -1042,12 +1045,9 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
                 setErrorResponse(handle, "IPv4 lease not found.", CONTROL_RESULT_EMPTY);
                 return (0);
             }
-
-            // Found it, can use it as is.
-            addr = lease4->addr_;
             break;
-
-        case Parameters::TYPE_CLIENT_ID:
+        }
+        case Parameters::TYPE_CLIENT_ID: {
             if (!p.client_id) {
                 isc_throw(InvalidParameter, "Program error: Query by client-id "
                                             "requires client-id to be specified");
@@ -1059,25 +1059,19 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
                 setErrorResponse(handle, "IPv4 lease not found.", CONTROL_RESULT_EMPTY);
                 return (0);
             }
-
-            // Found it, can use it as is.
-            addr = lease4->addr_;
             break;
-
-        case Parameters::TYPE_DUID:
+        }
+        case Parameters::TYPE_DUID: {
             isc_throw(InvalidParameter, "Delete by duid is not allowed in v4.");
             break;
-
+        }
         default: {
             isc_throw(InvalidOperation, "Unknown query type: " << static_cast<int>(p.query_type));
             break;
         }
         }
 
-        Lease4Ptr lease(new Lease4());
-        lease->addr_ = addr;
-
-        if (LeaseMgrFactory::instance().deleteLease(lease)) {
+        if (LeaseMgrFactory::instance().deleteLease(lease4)) {
             setSuccessResponse(handle, "IPv4 lease deleted.");
         } else {
             setErrorResponse (handle, "IPv4 lease not found.", CONTROL_RESULT_EMPTY);
@@ -1122,7 +1116,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
         // Parse deleted leases without deleting them from the database
         // yet. If any of the deleted leases or new leases appears to be
         // malformed we can easily rollback.
-        std::list<std::pair<Parameters, IOAddress> > parsed_deleted_list;
+        std::list<std::pair<Parameters, Lease6Ptr> > parsed_deleted_list;
         if (deleted_leases) {
             auto leases_list = deleted_leases->listValue();
 
@@ -1130,9 +1124,9 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
             for (auto lease_params : leases_list) {
                 // Parsing the lease may throw and it means that the lease
                 // information is malformed.
-                Parameters  p = getParameters(true, lease_params);
-                auto lease_addr = getIPv6AddressForDelete(p);
-                parsed_deleted_list.push_back(std::make_pair(p, lease_addr));
+                Parameters p = getParameters(true, lease_params);
+                auto lease = getIPv6AddressForDelete(p);
+                parsed_deleted_list.push_back(std::make_pair(p, lease));
             }
         }
 
@@ -1167,17 +1161,14 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
 
                 // This part is outside of the try-catch because an exception
                 // indicates that the command is malformed.
-                Parameters  p = lease_params_pair.first;
-                auto lease_addr = lease_params_pair.second;
+                Parameters p = lease_params_pair.first;
+                auto lease = lease_params_pair.second;
 
                 try {
-                    if (!lease_addr.isV6Zero()) {
+                    if (lease) {
                         // This may throw if the lease couldn't be deleted for
                         // any reason, but we still want to proceed with other
                         // leases.
-                        Lease6Ptr lease(new Lease6());
-                        lease->addr_ = lease_addr;
-
                         if (LeaseMgrFactory::instance().deleteLease(lease)) {
                             ++success_count;
 
@@ -1292,16 +1283,21 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
 
         switch (p.query_type) {
         case Parameters::TYPE_ADDR: {
-
             // If address was specified explicitly, let's use it as is.
-            addr = p.addr;
+
+            // Let's see if there's such a lease at all.
+            lease6 = LeaseMgrFactory::instance().getLease6(p.lease_type, p.addr);
+            if (!lease6) {
+                setErrorResponse(handle, "IPv6 lease not found.", CONTROL_RESULT_EMPTY);
+                return (0);
+            }
             break;
         }
-        case Parameters::TYPE_HWADDR:
+        case Parameters::TYPE_HWADDR: {
             isc_throw(InvalidParameter, "Delete by hw-address is not allowed in v6.");
             break;
-
-        case Parameters::TYPE_DUID:
+        }
+        case Parameters::TYPE_DUID: {
             if (!p.duid) {
                 isc_throw(InvalidParameter, "Program error: Query by duid "
                                             "requires duid to be specified");
@@ -1314,21 +1310,15 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
                 setErrorResponse(handle, "IPv6 lease not found.", CONTROL_RESULT_EMPTY);
                 return (0);
             }
-
-            // Found it, can use it as is.
-            addr = lease6->addr_;
             break;
-
+        }
         default: {
             isc_throw(InvalidOperation, "Unknown query type: " << static_cast<int>(p.query_type));
             break;
         }
         }
 
-        Lease6Ptr lease(new Lease6());
-        lease->addr_ = addr;
-
-        if (LeaseMgrFactory::instance().deleteLease(lease)) {
+        if (LeaseMgrFactory::instance().deleteLease(lease6)) {
             setSuccessResponse(handle, "IPv6 lease deleted.");
         } else {
             setErrorResponse (handle, "IPv6 lease not found.", CONTROL_RESULT_EMPTY);
@@ -1509,23 +1499,28 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
     return (0);
 }
 
-IOAddress
-LeaseCmdsImpl::getIPv6AddressForDelete(const Parameters& parameters) const {
-    IOAddress addr = IOAddress::IPV6_ZERO_ADDRESS();
+Lease6Ptr
+LeaseCmdsImpl::getIPv6LeaseForDelete(const Parameters& parameters) const {
     Lease6Ptr lease6;
 
     switch (parameters.query_type) {
     case Parameters::TYPE_ADDR: {
-
         // If address was specified explicitly, let's use it as is.
-        addr = parameters.addr;
+
+        // Let's see if there's such a lease at all.
+        lease6 = LeaseMgrFactory::instance().getLease6(parameters.lease_type,
+                                                       parameters.addr);
+        if (!lease6) {
+            lease6.reset(new Lease6());
+            lease6->addr_ = parameters.addr;
+        }
         break;
     }
-    case Parameters::TYPE_HWADDR:
+    case Parameters::TYPE_HWADDR: {
         isc_throw(InvalidParameter, "Delete by hw-address is not allowed in v6.");
         break;
-
-    case Parameters::TYPE_DUID:
+    }
+    case Parameters::TYPE_DUID: {
         if (!parameters.duid) {
             isc_throw(InvalidParameter, "Program error: Query by duid "
                       "requires duid to be specified");
@@ -1536,18 +1531,14 @@ LeaseCmdsImpl::getIPv6AddressForDelete(const Parameters& parameters) const {
                                                        *parameters.duid,
                                                        parameters.iaid,
                                                        parameters.subnet_id);
-        if (lease6) {
-            addr = lease6->addr_;
-        }
-
-       break;
-
+        break;
+    }
     default:
         isc_throw(InvalidOperation, "Unknown query type: "
                   << static_cast<int>(parameters.query_type));
     }
 
-    return (addr);
+    return (lease6);
 }
 
 ElementPtr
