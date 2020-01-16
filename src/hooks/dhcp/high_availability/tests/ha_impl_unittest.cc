@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -613,7 +613,6 @@ TEST_F(HAImplTest, maintenanceNotify) {
     ASSERT_TRUE(response);
 
     checkAnswer(response, CONTROL_RESULT_SUCCESS, "Server is in maintained state.");
-
 }
 
 }

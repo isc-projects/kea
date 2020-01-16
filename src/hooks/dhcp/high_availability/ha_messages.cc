@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Wed Jan 15 2020 11:05
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Thu Jan 16 2020 09:28
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -58,6 +58,9 @@ extern const isc::log::MessageID HA_LOAD_BALANCING_DUID_MISSING = "HA_LOAD_BALAN
 extern const isc::log::MessageID HA_LOAD_BALANCING_IDENTIFIER_MISSING = "HA_LOAD_BALANCING_IDENTIFIER_MISSING";
 extern const isc::log::MessageID HA_LOCAL_DHCP_DISABLE = "HA_LOCAL_DHCP_DISABLE";
 extern const isc::log::MessageID HA_LOCAL_DHCP_ENABLE = "HA_LOCAL_DHCP_ENABLE";
+extern const isc::log::MessageID HA_MAINTENANCE_CANCEL_HANDLER_FAILED = "HA_MAINTENANCE_CANCEL_HANDLER_FAILED";
+extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_CANCEL_COMMUNICATIONS_FAILED = "HA_MAINTENANCE_NOTIFY_CANCEL_COMMUNICATIONS_FAILED";
+extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_CANCEL_FAILED = "HA_MAINTENANCE_NOTIFY_CANCEL_FAILED";
 extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED = "HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED";
 extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_FAILED = "HA_MAINTENANCE_NOTIFY_FAILED";
 extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_HANDLER_FAILED = "HA_MAINTENANCE_NOTIFY_HANDLER_FAILED";
@@ -134,6 +137,9 @@ const char* values[] = {
     "HA_LOAD_BALANCING_IDENTIFIER_MISSING", "load balancing failed for the DHCPv4 message (transaction id: %1) because HW address and client identifier are missing",
     "HA_LOCAL_DHCP_DISABLE", "local DHCP service is disabled while the %1 is in the %2 state",
     "HA_LOCAL_DHCP_ENABLE", "local DHCP service is enabled while the %1 is in the %2 state",
+    "HA_MAINTENANCE_CANCEL_HANDLER_FAILED", "ha-maintenance-cancel command failed: %1",
+    "HA_MAINTENANCE_NOTIFY_CANCEL_COMMUNICATIONS_FAILED", "failed to send ha-maintenance-notify to %1 in attempt to cancel its maintenance: %2",
+    "HA_MAINTENANCE_NOTIFY_CANCEL_FAILED", "error returned while processing ha-maintenance-notify by %1 in attempt to cancel its maintenance: %2",
     "HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED", "failed to send ha-maintenance-notify to %1: %2",
     "HA_MAINTENANCE_NOTIFY_FAILED", "error returned while processing ha-maintenance-notify by %1: %2",
     "HA_MAINTENANCE_NOTIFY_HANDLER_FAILED", "ha-maintenance-notify command failed: %1",

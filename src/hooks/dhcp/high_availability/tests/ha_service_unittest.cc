@@ -2598,7 +2598,7 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
 
     // The server should have responded.
     ASSERT_TRUE(rsp);
-    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server maintenance cancelled.");
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server maintenance canceled.");
 
     // The state machine should have been transitioned to the state it was in
     // prior to transitioning to the maintained state.
@@ -2812,6 +2812,92 @@ TEST_F(HAServiceTest, processMaintenanceStartNotAllowed) {
     // server must not change its state either.
     EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
 }
+
+// This test verifies the case when the server receiving the ha-maintenance-cancel
+// command successfully transitions out of the partner-maintained state.
+TEST_F(HAServiceTest, processMaintenanceCancelSuccess) {
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    ASSERT_NO_THROW(service.verboseTransition(HA_PARTNER_MAINTAINED_ST));
+
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-cancel command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceCancel());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->get_io_service().reset();
+    io_service_->poll();
+
+    // The partner of our server is online and should have responded with
+    // the success status. Therefore, this server should have transitioned
+    // to the partner-maintained state.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server maintenance successfully canceled.");
+
+    EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
+}
+
+// This test verifies that the maintenance is not canceled in case the
+// partner returns an error.
+TEST_F(HAServiceTest, processMaintenanceCancelPartnerError) {
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    // Simulate an error returned by the partner.
+    factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    ASSERT_NO_THROW(service.verboseTransition(HA_PARTNER_MAINTAINED_ST));
+
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-cancel command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceCancel());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->get_io_service().reset();
+    io_service_->poll();
+
+    // The partner should have responded with an error.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR,
+                "Unable to cancel maintenance. The partner server responded"
+                " with the following message to the ha-maintenance-notify"
+                " commmand: response returned, error code 1.");
+
+    // The state of this server should not change.
+    EXPECT_EQ(HA_PARTNER_MAINTAINED_ST, service.getCurrState());
+}
+
 
 /// @brief HA partner to the server under test.
 ///

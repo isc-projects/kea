@@ -442,5 +442,11 @@ HAImpl::maintenanceStartHandler(hooks::CalloutHandle& callout_handle) {
     callout_handle.setArgument("response", response);
 }
 
+void
+HAImpl::maintenanceCancelHandler(hooks::CalloutHandle& callout_handle) {
+    ConstElementPtr response = service_->processMaintenanceCancel();
+    callout_handle.setArgument("response", response);
+}
+
 } // end of namespace isc::ha
 } // end of namespace isc

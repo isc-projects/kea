@@ -234,6 +234,19 @@ int maintenance_start_command(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief ha-maintenance-cancel command handler implementation.
+int maintenance_cancel_command(CalloutHandle& handle) {
+    try {
+        impl->maintenanceCancelHandler(handle);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_MAINTENANCE_CANCEL_HANDLER_FAILED)
+            .arg(ex.what());
+    }
+
+    return (0);
+}
+
 /// @brief This function is called when the library is loaded.
 ///
 /// @param handle library handle
@@ -270,6 +283,7 @@ int load(LibraryHandle& handle) {
         handle.registerCommandCallout("ha-continue", continue_command);
         handle.registerCommandCallout("ha-maintenance-notify", maintenance_notify_command);
         handle.registerCommandCallout("ha-maintenance-start", maintenance_start_command);
+        handle.registerCommandCallout("ha-maintenance-cancel", maintenance_cancel_command);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_CONFIGURATION_FAILED)

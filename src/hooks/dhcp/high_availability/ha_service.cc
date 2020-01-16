@@ -1791,7 +1791,7 @@ HAService::processMaintenanceNotify(const bool cancel) {
 
         verboseTransition(getPrevState());
         runModel(NOP_EVT);
-        return (createAnswer(CONTROL_RESULT_SUCCESS, "Server maintenance cancelled."));
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "Server maintenance canceled."));
     }
 
     switch (getCurrState()) {
@@ -1831,7 +1831,8 @@ HAService::processMaintenanceStart() {
 
     HAConfig::PeerConfigPtr remote_config = config_->getFailoverPeerConfig();
 
-    // Create HTTP/1.1 request including our command.
+    // Create HTTP/1.1 request including ha-maintenance-notify command
+    // with the cancel flag set to false.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getHostname()));
@@ -1937,6 +1938,97 @@ HAService::processMaintenanceStart() {
                          "Server is now in the partner-maintained state"
                          " and its partner is in the maintained state. The partner"
                          " can be now safely shut down."));
+}
+
+ConstElementPtr
+HAService::processMaintenanceCancel() {
+    if (getCurrState() != HA_PARTNER_MAINTAINED_ST) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "Unable to cancel maintenance"
+                             " request because the server is not in the"
+                             " partner-maintained state."));
+    }
+
+    HAConfig::PeerConfigPtr remote_config = config_->getFailoverPeerConfig();
+
+    // Create HTTP/1.1 request including ha-maintenance-notify command
+    // with the cancel flag set to true.
+    PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
+        (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
+         HostHttpHeader(remote_config->getUrl().getHostname()));
+    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(true, server_type_));
+    request->finalize();
+
+    // Response object should also be created because the HTTP client needs
+    // to know the type of the expected response.
+    HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
+
+    IOService io_service;
+    HttpClient client(io_service);
+
+    std::string error_message;
+
+    // Schedule asynchronous HTTP request.
+    client.asyncSendRequest(remote_config->getUrl(), request, response,
+        [this, remote_config, &io_service, &error_message]
+            (const boost::system::error_code& ec,
+             const HttpResponsePtr& response,
+             const std::string& error_str) {
+
+             io_service.stop();
+
+             // Handle first two groups of errors.
+             if (ec || !error_str.empty()) {
+                 error_message = (ec ? ec.message() : error_str);
+                 LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_CANCEL_COMMUNICATIONS_FAILED)
+                     .arg(remote_config->getLogLabel())
+                     .arg(error_message);
+
+             } else {
+
+                 // Handle third group of errors.
+                 try {
+                     int rcode = 0;
+                     static_cast<void>(verifyAsyncResponse(response, rcode));
+
+                 } catch (const std::exception& ex) {
+                     error_message = ex.what();
+                     LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_CANCEL_FAILED)
+                         .arg(remote_config->getLogLabel())
+                         .arg(error_message);
+                 }
+             }
+
+             // If there was an error communicating with the partner, mark the
+             // partner as unavailable.
+             if (!error_message.empty()) {
+                 communication_state_->setPartnerState("unavailable");
+             }
+        },
+        HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
+
+    // Run the IO service until it is stopped by any of the callbacks. This
+    // makes it synchronous.
+    io_service.run();
+
+    // There was an error in communication with the partner or the
+    // partner was unable to revert its state.
+    if (!error_message.empty()) {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Unable to cancel maintenance. The partner server responded"
+                             " with the following message to the ha-maintenance-notify"
+                             " commmand: " + error_message + "."));
+    }
+
+    // Successfully reverted partner's state. Let's also revert our state to the
+    // previous one.
+    verboseTransition(getPrevState());
+    runModel(NOP_EVT);
+
+    return (createAnswer(CONTROL_RESULT_SUCCESS,
+                         "Server maintenance successfully canceled."));
 }
 
 ConstElementPtr

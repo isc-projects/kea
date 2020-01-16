@@ -302,6 +302,23 @@ is enabled because the server remains in a state in which it should
 respond to the DHCP clients. The first argument specifies server name.
 The second argument specifies server's state.
 
+% HA_MAINTENANCE_CANCEL_HANDLER_FAILED ha-maintenance-cancel command failed: %1
+This error message is issued to indicate that the ha-maintenance-cancel command
+handler failed while processing the command. The argument provides the reason for
+failure.
+
+% HA_MAINTENANCE_NOTIFY_CANCEL_COMMUNICATIONS_FAILED failed to send ha-maintenance-notify to %1 in attempt to cancel its maintenance: %2
+This warning message indicates that there was a problem in communication with a
+HA peer while sending the ha-maintenance-notify command with the cancel flag
+set to true. The first argument provides the remote server's name. The second
+argument provides a reason for failure.
+
+% HA_MAINTENANCE_NOTIFY_CANCEL_FAILED error returned while processing ha-maintenance-notify by %1 in attempt to cancel its maintenance: %2
+This warning message indicates that a peer returned an error status code
+in response to a ha-maintenance-notify command with the cancel flag set to
+true. The first argument provides the remote server's name. The second
+argument provides a reason for failure.
+
 % HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED failed to send ha-maintenance-notify to %1: %2
 This warning message indicates that there was a problem in communication with a
 HA peer while sending the ha-maintenance-notify command. The first argument provides the

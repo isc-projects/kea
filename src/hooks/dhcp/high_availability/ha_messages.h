@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Wed Jan 15 2020 11:05
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Thu Jan 16 2020 09:28
 
 #ifndef HA_MESSAGES_H
 #define HA_MESSAGES_H
@@ -59,6 +59,9 @@ extern const isc::log::MessageID HA_LOAD_BALANCING_DUID_MISSING;
 extern const isc::log::MessageID HA_LOAD_BALANCING_IDENTIFIER_MISSING;
 extern const isc::log::MessageID HA_LOCAL_DHCP_DISABLE;
 extern const isc::log::MessageID HA_LOCAL_DHCP_ENABLE;
+extern const isc::log::MessageID HA_MAINTENANCE_CANCEL_HANDLER_FAILED;
+extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_CANCEL_COMMUNICATIONS_FAILED;
+extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_CANCEL_FAILED;
 extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED;
 extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_FAILED;
 extern const isc::log::MessageID HA_MAINTENANCE_NOTIFY_HANDLER_FAILED;

@@ -789,7 +789,7 @@ public:
     /// maintained state.
     ///
     /// @param cancel boolean value indicating if the maintenance is being
-    /// cancelled with this operation. If it is set to false the maintenance
+    /// canceled with this operation. If it is set to false the maintenance
     /// is being started.
     ///
     /// @return Pointer to the reponse to the ha-maintenance-notify.
@@ -809,6 +809,22 @@ public:
     ///
     /// @return Pointer to the response to the ha-maintenance-start.
     data::ConstElementPtr processMaintenanceStart();
+
+    /// @brief Processes ha-maintenance-cancel command and returns a response.
+    ///
+    /// The server receiving this command will try to revert the partner's
+    /// state from maintained to the previous state, and also it will try to
+    /// revert its own state from partner-maintained to the previous state.
+    /// It effectively means canceling the request for maintenance signaled
+    /// with the ha-maintenance-start command.
+    ///
+    /// In some cases canceling the maintenace is no longer possible, e.g.
+    /// if the server has already got into the partner-down state. Generally,
+    /// canceling the maintenance is only possible if this server is in the
+    /// partner-maintained state and the partner is in the maintained state.
+    ///
+    /// @return Pointer to the response to the ha-maintenance-cancel.
+    data::ConstElementPtr processMaintenanceCancel();
 
 protected:
 
