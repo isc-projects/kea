@@ -221,6 +221,7 @@ TEST(PgSqlOpenTest, OpenDatabaseMultiThreading) {
 
     // Tidy up after the test
     destroyPgSQLSchema();
+    LeaseMgrFactory::destroy();
 
     // Disable Multi-Threading.
     MultiThreadingMgr::instance().setMode(false);

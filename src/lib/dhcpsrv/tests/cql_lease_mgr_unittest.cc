@@ -336,7 +336,6 @@ public:
 /// only if the database can be opened.  Note that this is not part of the
 /// CqlLeaseMgr test fixure set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
-
 TEST(CqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
@@ -361,7 +360,7 @@ TEST(CqlOpenTest, OpenDatabase) {
         // CQL specifies the timeout values in ms, not seconds. Therefore
         // we need to add extra 000 to the "connect-timeout=10" string.
         string connection_string = validCqlConnectionString() + string(" ") +
-            string(VALID_TIMEOUT) + "000";
+                                   string(VALID_TIMEOUT) + "000";
         LeaseMgrFactory::create(connection_string);
         EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
         LeaseMgrFactory::destroy();
@@ -525,10 +524,10 @@ TEST_F(CqlLeaseMgrTest, getLease4HWAddr2) {
     testGetLease4HWAddr2();
 }
 
-// @brief Get lease4 by hardware address (2)
-//
-// Check that the system can cope with getting a hardware address of
-// any size.
+/// @brief Get lease4 by hardware address (2)
+///
+/// Check that the system can cope with getting a hardware address of
+/// any size.
 TEST_F(CqlLeaseMgrTest, getLease4HWAddrSize) {
     testGetLease4HWAddrSize();
 }
@@ -541,15 +540,15 @@ TEST_F(CqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     testGetLease4HWAddrSubnetId();
 }
 
-// @brief Get lease4 by hardware address and subnet ID (2)
-//
-// Check that the system can cope with getting a hardware address of
-// any size.
+/// @brief Get lease4 by hardware address and subnet ID (2)
+///
+/// Check that the system can cope with getting a hardware address of
+/// any size.
 TEST_F(CqlLeaseMgrTest, getLease4HWAddrSubnetIdSize) {
     testGetLease4HWAddrSubnetIdSize();
 }
 
-// This test was derived from memfile.
+/// @brief This test was derived from memfile.
 TEST_F(CqlLeaseMgrTest, getLease4ClientId) {
     testGetLease4ClientId();
 }
@@ -562,9 +561,9 @@ TEST_F(CqlLeaseMgrTest, getLease4ClientId2) {
     testGetLease4ClientId2();
 }
 
-// @brief Get Lease4 by client ID (2)
-//
-// Check that the system can cope with a client ID of any size.
+/// @brief Get Lease4 by client ID (2)
+///
+/// Check that the system can cope with a client ID of any size.
 TEST_F(CqlLeaseMgrTest, getLease4ClientIdSize) {
     testGetLease4ClientIdSize();
 }
@@ -577,24 +576,47 @@ TEST_F(CqlLeaseMgrTest, getLease4ClientIdSubnetId) {
     testGetLease4ClientIdSubnetId();
 }
 
-// This test checks that all IPv4 leases for a specified subnet id are returned.
+
+/// @brief This test checks that all IPv4 leases for a specified subnet id are returned.
 TEST_F(CqlLeaseMgrTest, getLeases4SubnetId) {
     testGetLeases4SubnetId();
 }
 
-// This test checks that all IPv4 leases with a specified hostname are returned.
+
+/// @brief This test checks that all IPv4 leases with a specified hostname are returned.
 TEST_F(CqlLeaseMgrTest, getLeases4Hostname) {
     testGetLeases4Hostname();
 }
 
-// This test checks that all IPv4 leases are returned.
+
+/// @brief This test checks that all IPv4 leases are returned.
 TEST_F(CqlLeaseMgrTest, getLeases4) {
     testGetLeases4();
 }
 
-// Test that a range of IPv4 leases is returned with paging.
+/// @brief Test that a range of IPv4 leases is returned with paging.
 TEST_F(CqlLeaseMgrTest, getLeases4Paged) {
     testGetLeases4Paged();
+}
+
+/// @brief This test checks that all IPv6 leases for a specified subnet id are returned.
+TEST_F(CqlLeaseMgrTest, getLeases6SubnetId) {
+    testGetLeases6SubnetId();
+}
+
+/// @brief This test checks that all IPv6 leases with a specified hostname are returned.
+TEST_F(CqlLeaseMgrTest, getLeases6Hostname) {
+    testGetLeases6Hostname();
+}
+
+/// @brief This test checks that all IPv6 leases are returned.
+TEST_F(CqlLeaseMgrTest, getLeases6) {
+    testGetLeases6();
+}
+
+/// @brief Test that a range of IPv6 leases is returned with paging.
+TEST_F(CqlLeaseMgrTest, getLeases6Paged) {
+    testGetLeases6Paged();
 }
 
 /// @brief Basic Lease4 Checks
@@ -640,8 +662,8 @@ TEST_F(CqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
 /// LEASE6 /////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-// Test checks whether simple add, get and delete operations are possible
-// on Lease6
+/// @brief Test checks whether simple add, get and delete operations
+/// are possible on Lease6
 TEST_F(CqlLeaseMgrTest, testAddGetDelete6) {
     testAddGetDelete6();
 }
@@ -683,7 +705,7 @@ TEST_F(CqlLeaseMgrTest, getLeases6DuidIaid) {
     testGetLeases6DuidIaid();
 }
 
-// Check that the system can cope with a DUID of allowed size.
+/// @brief Check that the system can cope with a DUID of allowed size.
 TEST_F(CqlLeaseMgrTest, getLeases6DuidSize) {
     testGetLeases6DuidSize();
 }
@@ -698,14 +720,6 @@ TEST_F(CqlLeaseMgrTest, lease6LeaseTypeCheck) {
     testLease6LeaseTypeCheck();
 }
 
-/// @brief Verifies the getLeases6(DUID) method
-///
-/// Adds 3 lease and verifies fetch by DUID.
-/// Verifies retrival of non existant DUID fails
-TEST_F(CqlLeaseMgrTest, getLeases6Duid) {
-    testGetLeases6Duid();
-}
-
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
 ///
 /// Adds leases to the database and checks that they can be accessed via
@@ -714,19 +728,18 @@ TEST_F(CqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
     testGetLease6DuidIaidSubnetId();
 }
 
-// Test checks that getLease6() works with different DUID sizes
+
+/// @brief Test checks that getLease6() works with different DUID sizes
 TEST_F(CqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     testGetLease6DuidIaidSubnetIdSize();
 }
 
-// This test checks that all IPv6 leases with a specified hostname are returned.
-TEST_F(CqlLeaseMgrTest, getLeases6Hostname) {
-    testGetLeases6Hostname();
-}
-
-// Test that a range of IPv6 leases is returned with paging.
-TEST_F(CqlLeaseMgrTest, getLeases6Paged) {
-    testGetLeases6Paged();
+/// @brief check leases could be retrieved by DUID
+///
+/// Create leases, add them to backend and verify if it can be queried
+/// using DUID index
+TEST_F(CqlLeaseMgrTest, getLeases6Duid) {
+    testGetLeases6Duid();
 }
 
 /// @brief Lease6 update tests
@@ -815,12 +828,13 @@ TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }
 
-// Tests v4 lease stats query variants.
+/// @brief Tests v4 lease stats query variants.
 TEST_F(CqlLeaseMgrTest, leaseStatsQuery4) {
     testLeaseStatsQuery4();
 }
 
-// Tests v6 lease stats query variants.
+
+/// @brief Tests v6 lease stats query variants.
 TEST_F(CqlLeaseMgrTest, leaseStatsQuery6) {
     testLeaseStatsQuery6();
 }
