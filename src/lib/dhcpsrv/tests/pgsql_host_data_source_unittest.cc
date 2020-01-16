@@ -263,7 +263,7 @@ TEST(PgSqlHostDataSource, NoCallbackOnOpenFail) {
 }
 
 // This test verifies that database backend can operate in Read-Only mode.
-TEST_F(PgSqlHostDataSourceTest, testReadOnlyDatabase) {
+TEST_F(PgSqlHostDataSourceTest, DISABLED_testReadOnlyDatabase) {
     testReadOnlyDatabase(PGSQL_VALID_TYPE);
 }
 

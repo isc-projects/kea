@@ -1812,6 +1812,11 @@ GenericLeaseMgrTest::testUpdateLease4() {
     for (size_t i = 0; i < leases.size(); ++i) {
         EXPECT_TRUE(lmptr_->addLease(leases[i]));
     }
+    lmptr_->commit();
+
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
 
     // Modify some fields in lease 1 (not the address) and update it.
     ++leases[1]->subnet_id_;
@@ -1823,7 +1828,7 @@ GenericLeaseMgrTest::testUpdateLease4() {
     lmptr_->updateLease4(leases[1]);
 
     // ... and check what is returned is what is expected.
-    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    l_returned = lmptr_->getLease4(ioaddress4_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
@@ -1857,6 +1862,41 @@ GenericLeaseMgrTest::testUpdateLease4() {
 }
 
 void
+GenericLeaseMgrTest::testConcurrentUpdateLease4() {
+    // Get the leases to be used for the test and add them to the database.
+    vector<Lease4Ptr> leases = createLeases4();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+    lmptr_->commit();
+
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+
+    // Save initial lease to be used for concurrent update
+    Lease4Ptr initialLease = boost::make_shared<Lease4>(*leases[1]);
+    detailCompareLease(leases[1], initialLease);
+
+    // Modify some fields in lease 1 (not the address) and update it.
+    ++leases[1]->subnet_id_;
+    leases[1]->valid_lft_ *= 2;
+    leases[1]->hostname_ = "modified.hostname.";
+    leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
+    leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
+    leases[1]->setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
+    lmptr_->updateLease4(leases[1]);
+
+    // ... and check what is returned is what is expected.
+    l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+
+    // Concurrently updating lease should fail
+    EXPECT_THROW(lmptr_->updateLease4(initialLease), isc::dhcp::NoSuchLease);
+}
+
+void
 GenericLeaseMgrTest::testUpdateLease6() {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
@@ -1879,7 +1919,6 @@ GenericLeaseMgrTest::testUpdateLease6() {
     leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
     leases[1]->setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
     lmptr_->updateLease6(leases[1]);
-    lmptr_->commit();
 
     // ... and check what is returned is what is expected.
     l_returned.reset();
@@ -1913,6 +1952,44 @@ GenericLeaseMgrTest::testUpdateLease6() {
 
     // Try updating a lease not in the database.
     EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::dhcp::NoSuchLease);
+}
+
+void
+GenericLeaseMgrTest::testConcurrentUpdateLease6() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+    ASSERT_LE(3, leases.size());    // Expect to access leases 0 through 2
+
+    // Add a lease to the database and check that the lease is there.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    lmptr_->commit();
+
+    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+
+    // Save initial lease to be used for concurrent update
+    Lease6Ptr initialLease = boost::make_shared<Lease6>(*leases[1]);
+    detailCompareLease(leases[1], initialLease);
+
+    // Modify some fields in lease 1 (not the address) and update it.
+    ++leases[1]->iaid_;
+    leases[1]->type_ = Lease::TYPE_PD;
+    leases[1]->valid_lft_ *= 2;
+    leases[1]->hostname_ = "modified.hostname.v6.";
+    leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
+    leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
+    leases[1]->setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
+    lmptr_->updateLease6(leases[1]);
+
+    // ... and check what is returned is what is expected.
+    l_returned.reset();
+    l_returned = lmptr_->getLease6(Lease::TYPE_PD, ioaddress6_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+
+    // Concurrently updating lease should fail
+    EXPECT_THROW(lmptr_->updateLease6(initialLease), isc::dhcp::NoSuchLease);
 }
 
 void

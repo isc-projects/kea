@@ -514,6 +514,13 @@ TEST_F(CqlLeaseMgrTest, updateLease4) {
     testUpdateLease4();
 }
 
+/// @brief Lease4 concurrent update tests
+///
+/// Checks that we are not able to concurrently update a lease in the database.
+TEST_F(CqlLeaseMgrTest, concurrentUpdateLease4) {
+    testConcurrentUpdateLease4();
+}
+
 /// @brief Check GetLease4 methods - access by Hardware Address
 TEST_F(CqlLeaseMgrTest, getLease4HWAddr1) {
     testGetLease4HWAddr1();
@@ -747,6 +754,13 @@ TEST_F(CqlLeaseMgrTest, getLeases6Duid) {
 /// Checks that we are able to update a lease in the database.
 TEST_F(CqlLeaseMgrTest, updateLease6) {
     testUpdateLease6();
+}
+
+/// @brief Lease6 concurrent update tests
+///
+/// Checks that we are not able to concurrently update a lease in the database.
+TEST_F(CqlLeaseMgrTest, concurrentUpdateLease6) {
+    testConcurrentUpdateLease6();
 }
 
 /// @brief DHCPv4 Lease recreation tests

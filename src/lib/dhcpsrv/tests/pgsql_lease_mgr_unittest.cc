@@ -290,6 +290,13 @@ TEST_F(PgSqlLeaseMgrTest, updateLease4) {
     testUpdateLease4();
 }
 
+/// @brief Lease4 concurrent update tests
+///
+/// Checks that we are not able to concurrently update a lease in the database.
+TEST_F(PgSqlLeaseMgrTest, concurrentUpdateLease4) {
+    testConcurrentUpdateLease4();
+}
+
 /// @brief Lease4 update tests
 TEST_F(PgSqlLeaseMgrTest, updateLease4MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
@@ -723,6 +730,13 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6DuidMultiThreading) {
 /// Checks that we are able to update a lease in the database.
 TEST_F(PgSqlLeaseMgrTest, updateLease6) {
     testUpdateLease6();
+}
+
+/// @brief Lease6 concurrent update tests
+///
+/// Checks that we are not able to concurrently update a lease in the database.
+TEST_F(PgSqlLeaseMgrTest, concurrentUpdateLease6) {
+    testConcurrentUpdateLease6();
 }
 
 /// @brief Lease6 update tests

@@ -320,10 +320,22 @@ public:
     /// Checks that the code is able to update an IPv4 lease in the database.
     void testUpdateLease4();
 
+    /// @brief Lease4 concurrent update test
+    ///
+    /// Checks that the code is not able to concurrently update an IPv4 lease in
+    /// the database.
+    void testConcurrentUpdateLease4();
+
     /// @brief Lease6 update test
     ///
     /// Checks that the code is able to update an IPv6 lease in the database.
     void testUpdateLease6();
+
+    /// @brief Lease6 concurrent update test
+    ///
+    /// Checks that the code is not able to concurrently update an IPv6 lease in
+    /// the database.
+    void testConcurrentUpdateLease6();
 
     /// @brief Check that the IPv6 lease can be added, removed and recreated.
     ///
