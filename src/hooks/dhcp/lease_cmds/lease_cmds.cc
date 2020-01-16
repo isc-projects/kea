@@ -1125,7 +1125,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                 // Parsing the lease may throw and it means that the lease
                 // information is malformed.
                 Parameters p = getParameters(true, lease_params);
-                auto lease = getIPv6AddressForDelete(p);
+                auto lease = getIPv6LeaseForDelete(p);
                 parsed_deleted_list.push_back(std::make_pair(p, lease));
             }
         }

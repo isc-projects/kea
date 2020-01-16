@@ -29,6 +29,7 @@ using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::util;
+using namespace std;
 
 namespace {
 
@@ -1546,7 +1547,7 @@ PgSqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 }
 
 Lease4Collection
-PgSqlLeaseMgr::getLeases4(const string& hostname) const {
+PgSqlLeaseMgr::getLeases4(const std::string& hostname) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_HOSTNAME4)
         .arg(hostname);
 
@@ -1773,7 +1774,7 @@ PgSqlLeaseMgr::getLeases6(const DUID& duid) const {
 }
 
 Lease6Collection
-PgSqlLeaseMgr::getLeases6(const string& hostname) const {
+PgSqlLeaseMgr::getLeases6(const std::string& hostname) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_HOSTNAME6)
         .arg(hostname);
 
@@ -2182,13 +2183,13 @@ PgSqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
     isc_throw(NotImplemented, "wipeLeases6 is not implemented for PostgreSQL backend");
 }
 
-string
+std::string
 PgSqlLeaseMgr::getName() const {
     // Get a context
     PgSqlLeaseContextAlloc get_context(*this);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
-    string name = "";
+    std::string name = "";
     try {
         name = ctx->conn_.getParameter("name");
     } catch (...) {
@@ -2197,12 +2198,12 @@ PgSqlLeaseMgr::getName() const {
     return (name);
 }
 
-string
+std::string
 PgSqlLeaseMgr::getDescription() const {
-    return (string("PostgreSQL Database"));
+    return (std::string("PostgreSQL Database"));
 }
 
-pair<uint32_t, uint32_t>
+std::pair<uint32_t, uint32_t>
 PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_VERSION);
 

@@ -615,7 +615,7 @@ public:
             ConstElementPtr ctx = lease->getContext();
             if (ctx) {
                 bind_[10].buffer_type = MYSQL_TYPE_STRING;
-                string ctx_txt = ctx->str();
+                std::string ctx_txt = ctx->str();
                 strncpy(user_context_, ctx_txt.c_str(), USER_CONTEXT_MAX_LEN - 1);
                 bind_[10].buffer = user_context_;
                 bind_[10].buffer_length = ctx_txt.length();
@@ -1158,7 +1158,7 @@ public:
             ConstElementPtr ctx = lease->getContext();
             if (ctx) {
                 bind_[16].buffer_type = MYSQL_TYPE_STRING;
-                string ctx_txt = ctx->str();
+                std::string ctx_txt = ctx->str();
                 strncpy(user_context_, ctx_txt.c_str(), USER_CONTEXT_MAX_LEN - 1);
                 bind_[16].buffer = user_context_;
                 bind_[16].buffer_length = ctx_txt.length();
@@ -2254,7 +2254,7 @@ MySqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 }
 
 Lease4Collection
-MySqlLeaseMgr::getLeases4(const string& hostname) const {
+MySqlLeaseMgr::getLeases4(const std::string& hostname) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_HOSTNAME4)
         .arg(hostname);
 
@@ -2557,7 +2557,7 @@ MySqlLeaseMgr::getLeases6(const DUID& duid) const {
 }
 
 Lease6Collection
-MySqlLeaseMgr::getLeases6(const string& hostname) const {
+MySqlLeaseMgr::getLeases6(const std::string& hostname) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_HOSTNAME6)
         .arg(hostname);
 
