@@ -56,6 +56,8 @@ public:
     /// ha-maintenance-start command received.
     static const int HA_MAINTENANCE_START_EVT = SM_DERIVED_EVENT_MIN + 6;
 
+    /// ha-maintenance-cancel command received.
+    static const int HA_MAINTENANCE_CANCEL_EVT = SM_DERIVED_EVENT_MIN + 7;
 
     /// Control result returned in response to ha-maintenance-notify.
     static const int HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED = 1001;
@@ -414,6 +416,12 @@ protected:
     /// @return true if the server should transition to the terminated state,
     /// false otherwise.
     bool shouldTerminate() const;
+
+    /// @brief Convenience method checking if the current state is a result
+    /// of canceling the maintenance.
+    ///
+    /// @return true if the maintenance was canceled, false otherwise.
+    bool isMaintenanceCanceled() const;
 
 public:
 

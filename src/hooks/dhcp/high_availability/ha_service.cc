@@ -44,6 +44,7 @@ const int HAService::HA_SYNCING_FAILED_EVT;
 const int HAService::HA_SYNCING_SUCCEEDED_EVT;
 const int HAService::HA_MAINTENANCE_NOTIFY_EVT;
 const int HAService::HA_MAINTENANCE_START_EVT;
+const int HAService::HA_MAINTENANCE_CANCEL_EVT;
 const int HAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED;
 
 HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& network_state,
@@ -76,6 +77,7 @@ HAService::defineEvents() {
     defineEvent(HA_SYNCING_SUCCEEDED_EVT, "HA_SYNCING_SUCCEEDED_EVT");
     defineEvent(HA_MAINTENANCE_NOTIFY_EVT, "HA_MAINTENANCE_NOTIFY_EVT");
     defineEvent(HA_MAINTENANCE_START_EVT, "HA_MAINTENANCE_START_EVT");
+    defineEvent(HA_MAINTENANCE_CANCEL_EVT, "HA_MAINTENANCE_CANCEL_EVT");
 }
 
 void
@@ -88,6 +90,7 @@ HAService::verifyEvents() {
     getEvent(HA_SYNCING_SUCCEEDED_EVT);
     getEvent(HA_MAINTENANCE_NOTIFY_EVT);
     getEvent(HA_MAINTENANCE_START_EVT);
+    getEvent(HA_MAINTENANCE_CANCEL_EVT);
 }
 
 void
@@ -165,7 +168,7 @@ HAService::normalStateHandler() {
 
     scheduleHeartbeat();
 
-    if (isModelPaused()) {
+    if (isMaintenanceCanceled() || isModelPaused()) {
         postNextEvent(NOP_EVT);
         return;
     }
@@ -267,7 +270,7 @@ HAService::partnerDownStateHandler() {
 
     scheduleHeartbeat();
 
-    if (isModelPaused()) {
+    if (isMaintenanceCanceled() || isModelPaused()) {
         postNextEvent(NOP_EVT);
         return;
     }
@@ -355,7 +358,7 @@ HAService::readyStateHandler() {
 
     scheduleHeartbeat();
 
-    if (isModelPaused()) {
+    if (isMaintenanceCanceled() || isModelPaused()) {
         postNextEvent(NOP_EVT);
         return;
     }
@@ -426,7 +429,7 @@ HAService::syncingStateHandler() {
         conditionalLogPausedState();
     }
 
-    if (isModelPaused()) {
+    if (isMaintenanceCanceled() || isModelPaused()) {
         postNextEvent(NOP_EVT);
         return;
     }
@@ -533,7 +536,7 @@ HAService::waitingStateHandler() {
         scheduleHeartbeat();
     }
 
-    if (isModelPaused()) {
+    if (isMaintenanceCanceled() || isModelPaused()) {
         postNextEvent(NOP_EVT);
         return;
     }
@@ -778,6 +781,11 @@ HAService::shouldTerminate() const {
     }
 
     return (false);
+}
+
+bool
+HAService::isMaintenanceCanceled() const {
+    return (getLastEvent() == HA_MAINTENANCE_CANCEL_EVT);
 }
 
 size_t
@@ -1789,6 +1797,7 @@ HAService::processMaintenanceNotify(const bool cancel) {
                                  " maintained state."));
         }
 
+        postNextEvent(HA_MAINTENANCE_CANCEL_EVT);
         verboseTransition(getPrevState());
         runModel(NOP_EVT);
         return (createAnswer(CONTROL_RESULT_SUCCESS, "Server maintenance canceled."));
@@ -1910,8 +1919,9 @@ HAService::processMaintenanceStart() {
     // If there was a communication problem with the partner we assume that
     // the partner is already down while we receive this command.
     if (captured_ec || (captured_rcode == CONTROL_RESULT_ERROR)) {
+        postNextEvent(HA_MAINTENANCE_START_EVT);
         verboseTransition(HA_PARTNER_DOWN_ST);
-        runModel(HA_MAINTENANCE_START_EVT);
+        runModel(NOP_EVT);
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                              "Server is now in the partner-down state as its"
                              " partner appears to be offline for maintenance."));
@@ -1921,8 +1931,9 @@ HAService::processMaintenanceStart() {
         // If the partner responded indicating no error it means that the
         // partner has been transitioned to the maintained state. In that
         // case we transition to the partner-maintained state.
+        postNextEvent(HA_MAINTENANCE_START_EVT);
         verboseTransition(HA_PARTNER_MAINTAINED_ST);
-        runModel(HA_MAINTENANCE_START_EVT);
+        runModel(NOP_EVT);
 
     } else {
         // Partner server returned a special status code which means that it can't
@@ -2024,6 +2035,7 @@ HAService::processMaintenanceCancel() {
 
     // Successfully reverted partner's state. Let's also revert our state to the
     // previous one.
+    postNextEvent(HA_MAINTENANCE_CANCEL_EVT);
     verboseTransition(getPrevState());
     runModel(NOP_EVT);
 
