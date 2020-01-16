@@ -1186,6 +1186,16 @@ hot-standby state. The maintenance can now be performed for the server1.
 It should be initiated by sending the ``ha-maintenance-start`` to the
 server2.
 
+If the ``ha-maintenance-start`` command was sent to the server and the
+server has transitioned to the ``partner-maintained`` state it is
+possible to transition it and its partner back to the previous states
+to resume the normal operation of the HA pair. This is achieved by
+sending the ``ha-maintenance-cancel`` command to the server being
+in the ``partner-maintaned`` state. However, if the server has
+already transitioned to the ``partner-down`` state as a result of
+detecting that the partner is offline, canceling the maintenance
+is no longer possible.
+
 Upgrading from Older HA Versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1497,20 +1507,44 @@ command into the ``partner-maintained`` state. See the
    }
 
 
+.. _command-ha-maintenance-cancel:
+
+The ha-maintenance-cancel Command
+---------------------------------
+
+This command is used to cancel the maintenance previously initiated using
+the ``ha-maintenance-start`` command. The server receiving this command
+will first send the ``ha-maintenance-notify`` with the cancel flag set
+to true to its partner. Next, the server will revert from the
+``partner-maintained`` state to the previous state. See the
+:ref:`ha-maintenance` for the details.
+
+::
+
+   {
+       "command": "ha-maintenance-cancel",
+       "service": [ "dhcp4" ]
+   }
+
+
 .. _command-ha-maintenance-notify:
 
 The ha-maintenance-notify Command
 ---------------------------------
 
-This command is send by the server receiving the ``ha-maintenance-start``
-command to its partner to cause the partner to transition to the
-``maintained`` state.  See the :ref:`ha-maintenance` for the details.
+This command is sent by the server receiving the ``ha-maintenance-start``
+or the ``ha-maintenance-cancel`` command to its partner to cause the
+partner to transition to the ``maintained`` state or to revert from this
+state to a previous state. See the :ref:`ha-maintenance` for the details.
 
 ::
 
    {
        "command": "ha-maintenance-notify",
-       "service": [ "dhcp4" ]
+       "service": [ "dhcp4" ],
+       "arguments": {
+           "cancel": false
+       }
    }
 
 .. note::

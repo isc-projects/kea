@@ -22,6 +22,7 @@ api/dhcp-disable.json
 api/dhcp-enable.json
 api/ha-continue.json
 api/ha-heartbeat.json
+api/ha-maintenance-cancel.json
 api/ha-maintenance-notify.json
 api/ha-maintenance-start.json
 api/ha-scopes.json

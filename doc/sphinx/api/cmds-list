@@ -21,6 +21,7 @@ dhcp-disable
 dhcp-enable
 ha-continue
 ha-heartbeat
+ha-maintenance-cancel
 ha-maintenance-notify
 ha-maintenance-start
 ha-scopes
