@@ -184,14 +184,14 @@ The following is the list of all possible server states:
 
 -  ``partner-in-maintenance`` - an active server transitions to this state
    after receiving a ``ha-maintenance-start`` command from the
-   administrator. The server being in this state becomes responsible
+   administrator. The server in this state becomes responsible
    for responding to all DHCP requests. The server sends
    ``ha-maintenance-notify`` command to the partner which is supposed
    to enter the ``in-maintenance`` state. If that is the case, the server
    remaining in the ``partner-in-maintenance`` state keeps sending lease
    updates to the partner until it finds that the parter stops
    responding to those lease updates, heartbeats or any other commands.
-   In this case, the server being in the ``partner-in-maintenance`` state
+   In this case, the server in the ``partner-in-maintenance`` state
    transitions to the ``partner-down`` state and keeps responding to
    the queries, but no longer sends lease updates.
 
@@ -1157,7 +1157,7 @@ a shutdown.
 
 Suppose that the HA setup includes two active servers, e.g. ``server1``
 and ``server2`` and the latter needs to be shut down for the maintenance.
-The administrator should send the ``ha-maintenance-start`` to the server1,
+The administrator should send the ``ha-maintenance-start`` to server1,
 as this is the server which is going to handle the DHCP traffic while the
 other one is offline. The server1 may respond with an error if its state
 or the partner's state does not allow for the maintenance. For example,
