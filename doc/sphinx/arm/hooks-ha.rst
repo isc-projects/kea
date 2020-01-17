@@ -164,16 +164,16 @@ The following is the list of all possible server states:
    to DHCP queries and send lease updates to each other and to any
    backup servers that are present.
 
--  ``maintained`` - an active server transitions to this state as a result
+-  ``in-maintenance`` - an active server transitions to this state as a result
    of being notified by its partner that the administrator requested
    maintenance of the HA setup. The administrator requests the maintenance
    by sending the ``ha-maintenance-start`` to the server which is supposed
    to take over the responsibility for responding to the DHCP clients while
    the other server is taken offline for maintenance. If the server is
-   in the ``maintained`` state it can be safely shut down. The partner
-   is in the ``partner-maintained`` state from which it will transition
+   in the ``in-maintenance`` state it can be safely shut down. The partner
+   is in the ``partner-in-maintenance`` state from which it will transition
    to the ``partner-down`` state immediately after it finds that the
-   maintained server was shut down.
+   server in maintenance was shut down.
 
 -  ``partner-down`` - an active server transitions to this state after
    detecting that its partner (another active server) is offline. The
@@ -182,16 +182,16 @@ The following is the list of all possible server states:
    to all DHCP queries, including those queries which are normally
    handled by the server that is now unavailable.
 
--  ``partner-maintained`` - an active server transitions to this state
+-  ``partner-in-maintenance`` - an active server transitions to this state
    after receiving a ``ha-maintenance-start`` command from the
    administrator. The server being in this state becomes responsible
    for responding to all DHCP requests. The server sends
    ``ha-maintenance-notify`` command to the partner which is supposed
-   to enter the ``maintained`` state. If that is the case, the server
-   remaining in the ``partner-maintained`` state keeps sending lease
+   to enter the ``in-maintenance`` state. If that is the case, the server
+   remaining in the ``partner-in-maintenance`` state keeps sending lease
    updates to the partner until it finds that the parter stops
    responding to those lease updates, heartbeats or any other commands.
-   In this case, the server being in the ``partner-maintained`` state
+   In this case, the server being in the ``partner-in-maintenance`` state
    transitions to the ``partner-down`` state and keeps responding to
    the queries, but no longer sends lease updates.
 
@@ -263,39 +263,39 @@ the scopes can be found below.
 
 .. table:: Default Behavior of the Server in Various HA States
 
-   +--------------------+-----------------+-----------------+-----------------+
-   | State              | Server Type     | DHCP Service    | DHCP Service    |
-   |                    |                 |                 | Scopes          |
-   +====================+=================+=================+=================+
-   | backup             | backup server   | disabled        | none            |
-   +--------------------+-----------------+-----------------+-----------------+
-   | hot-standby        | primary or      | enabled         | ``HA_server1``  |
-   |                    | standby         |                 | if primary,     |
-   |                    | (hot-standby    |                 | none otherwise  |
-   |                    | mode)           |                 |                 |
-   +--------------------+-----------------+-----------------+-----------------+
-   | load-balancing     | primary or      | enabled         | ``HA_server1``  |
-   |                    | secondary       |                 | or              |
-   |                    | (load-balancing |                 | ``HA_server2``  |
-   |                    | mode)           |                 |                 |
-   +--------------------+-----------------+-----------------+-----------------+
-   | maintained         | active server   | disabled        | none            |
-   +--------------------+-----------------+-----------------+-----------------+
-   | partner-down       | active server   | enabled         | all scopes      |
-   +--------------------+-----------------+-----------------+-----------------+
-   | partner-maintained | active server   | enabled         | all scopes      |
-   +--------------------+-----------------+-----------------+-----------------+
-   | ready              | active server   | disabled        | none            |
-   +--------------------+-----------------+-----------------+-----------------+
-   | syncing            | active server   | disabled        | none            |
-   +--------------------+-----------------+-----------------+-----------------+
-   | terminated         | active server   | enabled         | same as in the  |
-   |                    |                 |                 | load-balancing  |
-   |                    |                 |                 | or hot-standby  |
-   |                    |                 |                 | state           |
-   +--------------------+-----------------+-----------------+-----------------+
-   | waiting            | any server      | disabled        | none            |
-   +--------------------+-----------------+-----------------+-----------------+
+   +------------------------+-----------------+-----------------+-----------------+
+   | State                  | Server Type     | DHCP Service    | DHCP Service    |
+   |                        |                 |                 | Scopes          |
+   +========================+=================+=================+=================+
+   | backup                 | backup server   | disabled        | none            |
+   +------------------------+-----------------+-----------------+-----------------+
+   | hot-standby            | primary or      | enabled         | ``HA_server1``  |
+   |                        | standby         |                 | if primary,     |
+   |                        | (hot-standby    |                 | none otherwise  |
+   |                        | mode)           |                 |                 |
+   +------------------------+-----------------+-----------------+-----------------+
+   | load-balancing         | primary or      | enabled         | ``HA_server1``  |
+   |                        | secondary       |                 | or              |
+   |                        | (load-balancing |                 | ``HA_server2``  |
+   |                        | mode)           |                 |                 |
+   +------------------------+-----------------+-----------------+-----------------+
+   | in-maintenance         | active server   | disabled        | none            |
+   +------------------------+-----------------+-----------------+-----------------+
+   | partner-down           | active server   | enabled         | all scopes      |
+   +------------------------+-----------------+-----------------+-----------------+
+   | partner-in-maintenance | active server   | enabled         | all scopes      |
+   +------------------------+-----------------+-----------------+-----------------+
+   | ready                  | active server   | disabled        | none            |
+   +------------------------+-----------------+-----------------+-----------------+
+   | syncing                | active server   | disabled        | none            |
+   +------------------------+-----------------+-----------------+-----------------+
+   | terminated             | active server   | enabled         | same as in the  |
+   |                        |                 |                 | load-balancing  |
+   |                        |                 |                 | or hot-standby  |
+   |                        |                 |                 | state           |
+   +------------------------+-----------------+-----------------+-----------------+
+   | waiting                | any server      | disabled        | none            |
+   +------------------------+-----------------+-----------------+-----------------+
 
 The DHCP service scopes require some explanation. The HA configuration
 must specify a unique name for each server within the HA setup. This
@@ -1167,15 +1167,15 @@ request was already sent to the other server.
 
 Upon receiving the ``ha-maintenance-start`` command, the server1 will
 send the ``ha-maintenance-notify`` command to the server2 to put this
-server in the ``maintained`` state. If the server2 confirms, the server1
-will transition to the ``partner-maintained`` state. This is similar
-to the ``partner-down`` state, except that in the ``partner-maintained``
+server in the ``in-maintenance`` state. If the server2 confirms, the server1
+will transition to the ``partner-in-maintenance`` state. This is similar
+to the ``partner-down`` state, except that in the ``partner-in-maintenance``
 state the server1 continues to send lease updates to the server2 until
 the administrator shuts down the server2. The server1 now responds to all
 DHCP queries.
 
 The administrator may safely shut down the server2 being in the
-``maintained`` state and perform necessary maintenance actions. When
+``in-maintenance`` state and perform necessary maintenance actions. When
 the server2 is offline, the server1 will encounter communication issues
 with the partner and will immediately transition to the ``partner-down``
 state in which it will continue to respond to all DHCP queries but will
@@ -1187,11 +1187,11 @@ It should be initiated by sending the ``ha-maintenance-start`` to the
 server2.
 
 If the ``ha-maintenance-start`` command was sent to the server and the
-server has transitioned to the ``partner-maintained`` state it is
+server has transitioned to the ``partner-in-maintenance`` state it is
 possible to transition it and its partner back to the previous states
 to resume the normal operation of the HA pair. This is achieved by
 sending the ``ha-maintenance-cancel`` command to the server being
-in the ``partner-maintaned`` state. However, if the server has
+in the ``partner-in-maintenance`` state. However, if the server has
 already transitioned to the ``partner-down`` state as a result of
 detecting that the partner is offline, canceling the maintenance
 is no longer possible.
@@ -1494,8 +1494,8 @@ The ha-maintenance-start Command
 --------------------------------
 
 This command is used to initiate transition of the server's partner into
-the ``maintained`` state and the transition of the server receiving the
-command into the ``partner-maintained`` state. See the
+the ``in-maintenance`` state and the transition of the server receiving the
+command into the ``partner-in-maintenance`` state. See the
 :ref:`ha-maintenance` for the details.
 
 
@@ -1516,7 +1516,7 @@ This command is used to cancel the maintenance previously initiated using
 the ``ha-maintenance-start`` command. The server receiving this command
 will first send the ``ha-maintenance-notify`` with the cancel flag set
 to true to its partner. Next, the server will revert from the
-``partner-maintained`` state to the previous state. See the
+``partner-in-maintenance`` state to the previous state. See the
 :ref:`ha-maintenance` for the details.
 
 ::
@@ -1534,7 +1534,7 @@ The ha-maintenance-notify Command
 
 This command is sent by the server receiving the ``ha-maintenance-start``
 or the ``ha-maintenance-cancel`` command to its partner to cause the
-partner to transition to the ``maintained`` state or to revert from this
+partner to transition to the ``in-maintenance`` state or to revert from this
 state to a previous state. See the :ref:`ha-maintenance` for the details.
 
 ::

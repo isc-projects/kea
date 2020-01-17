@@ -612,7 +612,7 @@ TEST_F(HAImplTest, maintenanceNotify) {
     callout_handle->getArgument("response", response);
     ASSERT_TRUE(response);
 
-    checkAnswer(response, CONTROL_RESULT_SUCCESS, "Server is in maintained state.");
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "Server is in-maintenance state.");
 }
 
 }

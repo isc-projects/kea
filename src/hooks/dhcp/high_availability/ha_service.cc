@@ -109,17 +109,17 @@ HAService::defineStates() {
                 boost::bind(&HAService::normalStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_LOAD_BALANCING_ST)->getPausing());
 
-    defineState(HA_MAINTAINED_ST, stateToString(HA_MAINTAINED_ST),
-                boost::bind(&HAService::maintainedStateHandler, this),
-                config_->getStateMachineConfig()->getStateConfig(HA_MAINTAINED_ST)->getPausing());
+    defineState(HA_IN_MAINTENANCE_ST, stateToString(HA_IN_MAINTENANCE_ST),
+                boost::bind(&HAService::inMaintenanceStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_IN_MAINTENANCE_ST)->getPausing());
 
     defineState(HA_PARTNER_DOWN_ST, stateToString(HA_PARTNER_DOWN_ST),
                 boost::bind(&HAService::partnerDownStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_PARTNER_DOWN_ST)->getPausing());
 
-    defineState(HA_PARTNER_MAINTAINED_ST, stateToString(HA_PARTNER_MAINTAINED_ST),
-                boost::bind(&HAService::partnerMaintainedStateHandler, this),
-                config_->getStateMachineConfig()->getStateConfig(HA_PARTNER_MAINTAINED_ST)->getPausing());
+    defineState(HA_PARTNER_IN_MAINTENANCE_ST, stateToString(HA_PARTNER_IN_MAINTENANCE_ST),
+                boost::bind(&HAService::partnerInMaintenanceStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_PARTNER_IN_MAINTENANCE_ST)->getPausing());
 
     defineState(HA_READY_ST, stateToString(HA_READY_ST),
                 boost::bind(&HAService::readyStateHandler, this),
@@ -181,16 +181,16 @@ HAService::normalStateHandler() {
     }
 
     switch (communication_state_->getPartnerState()) {
-    case HA_MAINTAINED_ST:
-        verboseTransition(HA_PARTNER_MAINTAINED_ST);
+    case HA_IN_MAINTENANCE_ST:
+        verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST);
         break;
 
     case HA_PARTNER_DOWN_ST:
         verboseTransition(HA_WAITING_ST);
         break;
 
-    case HA_PARTNER_MAINTAINED_ST:
-        verboseTransition(HA_MAINTAINED_ST);
+    case HA_PARTNER_IN_MAINTENANCE_ST:
+        verboseTransition(HA_IN_MAINTENANCE_ST);
         break;
 
     case HA_TERMINATED_ST:
@@ -212,7 +212,7 @@ HAService::normalStateHandler() {
 }
 
 void
-HAService::maintainedStateHandler() {
+HAService::inMaintenanceStateHandler() {
     // If we are transitioning from another state, we have to define new
     // serving scopes appropriate for the new state. We don't do it if
     // we remain in this state.
@@ -286,7 +286,7 @@ HAService::partnerDownStateHandler() {
     case HA_HOT_STANDBY_ST:
     case HA_LOAD_BALANCING_ST:
     case HA_PARTNER_DOWN_ST:
-    case HA_PARTNER_MAINTAINED_ST:
+    case HA_PARTNER_IN_MAINTENANCE_ST:
         verboseTransition(HA_WAITING_ST);
         break;
 
@@ -305,7 +305,7 @@ HAService::partnerDownStateHandler() {
 }
 
 void
-HAService::partnerMaintainedStateHandler() {
+HAService::partnerInMaintenanceStateHandler() {
     // If we are transitioning from another state, we have to define new
     // serving scopes appropriate for the new state. We don't do it if
     // we remain in this state.
@@ -379,12 +379,12 @@ HAService::readyStateHandler() {
         verboseTransition(HA_LOAD_BALANCING_ST);
         break;
 
-    case HA_MAINTAINED_ST:
-        verboseTransition(HA_PARTNER_MAINTAINED_ST);
+    case HA_IN_MAINTENANCE_ST:
+        verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST);
         break;
 
-    case HA_PARTNER_MAINTAINED_ST:
-        verboseTransition(HA_MAINTAINED_ST);
+    case HA_PARTNER_IN_MAINTENANCE_ST:
+        verboseTransition(HA_IN_MAINTENANCE_ST);
         break;
 
     case HA_READY_ST:
@@ -557,9 +557,9 @@ HAService::waitingStateHandler() {
     switch (communication_state_->getPartnerState()) {
     case HA_HOT_STANDBY_ST:
     case HA_LOAD_BALANCING_ST:
-    case HA_MAINTAINED_ST:
+    case HA_IN_MAINTENANCE_ST:
     case HA_PARTNER_DOWN_ST:
-    case HA_PARTNER_MAINTAINED_ST:
+    case HA_PARTNER_IN_MAINTENANCE_ST:
     case HA_READY_ST:
         // If we're configured to not synchronize lease database, proceed directly
         // to the "ready" state.
@@ -720,7 +720,7 @@ HAService::adjustNetworkState() {
     const bool should_enable = ((getCurrState() == HA_LOAD_BALANCING_ST) ||
                                 (getCurrState() == HA_HOT_STANDBY_ST) ||
                                 (getCurrState() == HA_PARTNER_DOWN_ST) ||
-                                (getCurrState() == HA_PARTNER_MAINTAINED_ST) ||
+                                (getCurrState() == HA_PARTNER_IN_MAINTENANCE_ST) ||
                                 (getCurrState() == HA_TERMINATED_ST));
 
     if (!should_enable && network_state_->isServiceEnabled()) {
@@ -1010,7 +1010,7 @@ HAService::shouldSendLeaseUpdates(const HAConfig::PeerConfigPtr& peer_config) co
     switch (getCurrState()) {
     case HA_HOT_STANDBY_ST:
     case HA_LOAD_BALANCING_ST:
-    case HA_PARTNER_MAINTAINED_ST:
+    case HA_PARTNER_IN_MAINTENANCE_ST:
         return (true);
 
     default:
@@ -1791,10 +1791,10 @@ HAService::processContinue() {
 ConstElementPtr
 HAService::processMaintenanceNotify(const bool cancel) {
     if (cancel) {
-        if (getCurrState() != HA_MAINTAINED_ST) {
+        if (getCurrState() != HA_IN_MAINTENANCE_ST) {
             return (createAnswer(CONTROL_RESULT_ERROR, "Unable to cancel the"
-                                 " maintenance for the server not being in the"
-                                 " maintained state."));
+                                 " maintenance for the server not in the"
+                                 " in-maintenance state."));
         }
 
         postNextEvent(HA_MAINTENANCE_CANCEL_EVT);
@@ -1805,35 +1805,35 @@ HAService::processMaintenanceNotify(const bool cancel) {
 
     switch (getCurrState()) {
     case HA_BACKUP_ST:
-    case HA_PARTNER_MAINTAINED_ST:
+    case HA_PARTNER_IN_MAINTENANCE_ST:
     case HA_TERMINATED_ST:
         // The reason why we don't return an error result here is that we have to
         // have a way to distinguish between the errors caused by the communication
         // issues and the cases when there is no communication error but the server
-        // is not allowed to enter the maintained state. In the former case, the
+        // is not allowed to enter the in-maintenance state. In the former case, the
         // parter would go to partner-down. In the case signaled by the special
         // result code entering the maintenance state is not allowed.
         return (createAnswer(HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED,
                              "Unable to transition the server from the "
                              + stateToString(getCurrState()) + " to"
-                             " maintained state."));
+                             " in-maintenance state."));
     default:
-        verboseTransition(HA_MAINTAINED_ST);
+        verboseTransition(HA_IN_MAINTENANCE_ST);
         runModel(HA_MAINTENANCE_NOTIFY_EVT);
     }
-    return (createAnswer(CONTROL_RESULT_SUCCESS, "Server is in maintained state."));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Server is in-maintenance state."));
 }
 
 ConstElementPtr
 HAService::processMaintenanceStart() {
     switch (getCurrState()) {
     case HA_BACKUP_ST:
-    case HA_MAINTAINED_ST:
-    case HA_PARTNER_MAINTAINED_ST:
+    case HA_IN_MAINTENANCE_ST:
+    case HA_PARTNER_IN_MAINTENANCE_ST:
     case HA_TERMINATED_ST:
         return (createAnswer(CONTROL_RESULT_ERROR, "Unable to transition the server from"
                              " the " + stateToString(getCurrState()) + " to"
-                             " partner-maintained state."));
+                             " partner-in-maintenance state."));
     default:
         ;
     }
@@ -1929,34 +1929,34 @@ HAService::processMaintenanceStart() {
 
     } else if (captured_rcode == CONTROL_RESULT_SUCCESS) {
         // If the partner responded indicating no error it means that the
-        // partner has been transitioned to the maintained state. In that
-        // case we transition to the partner-maintained state.
+        // partner has been transitioned to the in-maintenance state. In that
+        // case we transition to the partner-in-maintenance state.
         postNextEvent(HA_MAINTENANCE_START_EVT);
-        verboseTransition(HA_PARTNER_MAINTAINED_ST);
+        verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST);
         runModel(NOP_EVT);
 
     } else {
         // Partner server returned a special status code which means that it can't
-        // transition to the partner-maintained state.
+        // transition to the partner-in-maintenance state.
         return (createAnswer(CONTROL_RESULT_ERROR, "Unable to transition to the"
-                             " partner-maintained state. The partner server responded"
+                             " partner-in-maintenance state. The partner server responded"
                              " with the following message to the ha-maintenance-notify"
                              " commmand: " + captured_error_message + "."));
 
     }
 
     return (createAnswer(CONTROL_RESULT_SUCCESS,
-                         "Server is now in the partner-maintained state"
-                         " and its partner is in the maintained state. The partner"
+                         "Server is now in the partner-in-maintenance state"
+                         " and its partner is in-maintenance state. The partner"
                          " can be now safely shut down."));
 }
 
 ConstElementPtr
 HAService::processMaintenanceCancel() {
-    if (getCurrState() != HA_PARTNER_MAINTAINED_ST) {
+    if (getCurrState() != HA_PARTNER_IN_MAINTENANCE_ST) {
         return (createAnswer(CONTROL_RESULT_ERROR, "Unable to cancel maintenance"
                              " request because the server is not in the"
-                             " partner-maintained state."));
+                             " partner-in-maintenance state."));
     }
 
     HAConfig::PeerConfigPtr remote_config = config_->getFailoverPeerConfig();

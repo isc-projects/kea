@@ -23,13 +23,13 @@ const int HA_HOT_STANDBY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 2;
 const int HA_LOAD_BALANCING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 3;
 
 /// Maintainedo state.
-const int HA_MAINTAINED_ST = util::StateModel::SM_DERIVED_STATE_MIN + 4;
+const int HA_IN_MAINTENANCE_ST = util::StateModel::SM_DERIVED_STATE_MIN + 4;
 
 /// Partner down state.
 const int HA_PARTNER_DOWN_ST = util::StateModel::SM_DERIVED_STATE_MIN + 5;
 
-/// Partner maintained state.
-const int HA_PARTNER_MAINTAINED_ST = util::StateModel::SM_DERIVED_STATE_MIN + 6;
+/// Partner in-maintenance state.
+const int HA_PARTNER_IN_MAINTENANCE_ST = util::StateModel::SM_DERIVED_STATE_MIN + 6;
 
 /// Server ready state, i.e. synchronized database, can enable DHCP service.
 const int HA_READY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 7;

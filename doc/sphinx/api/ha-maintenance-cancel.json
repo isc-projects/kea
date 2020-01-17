@@ -1,8 +1,8 @@
 {
     "avail": "1.7.4",
     "brief": [
-        "This command is sent to instruct a server being in the partner-maintained",
-        "to transition back to the previous state, effectively canceling the",
+        "This command is sent to instruct a server in the partner-in-maintenance",
+        "state to transition back to the previous state, effectively canceling the",
         "maintenance."
     ],
     "cmd-comment": [ "This command takes no arguments." ],

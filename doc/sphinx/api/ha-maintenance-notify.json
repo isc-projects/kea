@@ -2,15 +2,15 @@
     "avail": "1.7.4",
     "brief": [
         "This command is sent by the server receiving the ha-maintenance-start",
-        "to its partner to cause the partner to transition to the maintained",
-        "state or to revert it from the maintained state as a result of",
+        "to its partner to cause the partner to transition to the in-maintenance",
+        "state or to revert it from the in-maintenance state as a result of",
         "receiving the ha-maintenance-cancel command."
     ],
     "cmd-comment": [
         "This command includes a boolean argument which, if false, indicates",
-        "that the server should transition to the maintained state.",
+        "that the server should transition to the in-maintenance state.",
         "If the argument is set to true it instructs the server to revert from",
-        "the maintained state to its previous state.",
+        "the in-maintenance state to its previous state.",
         "This command is not meant to be used by the administrator. It is",
         "merely used for internal communication between the HA partners."
     ],

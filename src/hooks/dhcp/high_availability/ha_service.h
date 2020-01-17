@@ -141,28 +141,27 @@ public:
     /// If any of the servers detects a failure of its partner,
     /// it transitions to the "partner-down" state.
     ///
-    /// If any of the servers being in the "hot-standby" or
-    /// "load-balancing" state detects that its partner is in the
-    /// "partner-down" state, the server transitions to the
-    /// "waiting" state. Such situation may occur if the Control
-    /// Agent of this server crashes but the DHCP daemon continues
-    /// to run. The partner will transition to the "partner-down"
-    /// state if the failure detection algorithm (based on "secs"
-    /// field or "elapsed time" option monitoring) and this server
-    /// is considered to be offline based solely on the fact that
-    /// it doesn't respond to heartbeats.
+    /// If any of the servers in the "hot-standby" or "load-balancing"
+    /// state detects that its partner is in the "partner-down" state,
+    /// the server transitions to the "waiting" state. Such situation
+    /// may occur if the Control Agent of this server crashes but the
+    /// DHCP daemon continues to run. The partner will transition to
+    /// the "partner-down" state if the failure detection algorithm
+    /// (based on "secs" field or "elapsed time" option monitoring)
+    /// and this server is considered to be offline based solely on
+    /// the fact that it doesn't respond to heartbeats.
     void normalStateHandler();
 
-    /// @brief Handler for the "maintained" state.
+    /// @brief Handler for the "in-maintenance" state.
     ///
     /// This is a handler invoked when one of the servers detected that
-    /// its partner is in the "partner-maintained" state. The server
-    /// being in this state is awaiting the shutdown by the administrator.
+    /// its partner is in the "partner-in-maintenance" state. The server
+    /// in this state is awaiting the shutdown by the administrator.
     /// The administrator shuts down the server to perform some planned
-    /// maintenance. Meanwhile, the partner being in the "partner-maintained"
-    /// state responds to all DHCP queries. The server being in the
-    /// "maintained" state responds to no DHCP queries.
-    void maintainedStateHandler();
+    /// maintenance. Meanwhile, the partner in the "partner-in-maintenance"
+    /// state responds to all DHCP queries. The server in the
+    /// "in-maintenance" state responds to no DHCP queries.
+    void inMaintenanceStateHandler();
 
     /// @brief Handler for "partner-down" state.
     ///
@@ -190,10 +189,10 @@ public:
     /// to the "waiting" state to try to resolve the conflict with the partner.
     void partnerDownStateHandler();
 
-    /// @brief Handler for "partner-maintained" state.
+    /// @brief Handler for "partner-in-maintenance" state.
     ///
     /// This is a handler invoked for the server which was administratively
-    /// transitioned to the "partner-maintained" state. This is the case
+    /// transitioned to the "partner-in-maintenance" state. This is the case
     /// when the partner needs to be shutdown for some planned maintenance.
     ///
     /// The server receiving ha-maintenance-start command transitions to this
@@ -203,21 +202,21 @@ public:
     /// administrator to safely shutdown the partner as it is no longer
     /// responsible for any portion of the DHCP traffic.
     ///
-    /// The server being in the "partner-maintained" state remains in this
-    /// state until the first unsuccessful lease update, ha-heartbeat or any
+    /// The server in the "partner-in-maintenance" state remains in this state
+    /// until the first unsuccessful lease update, ha-heartbeat or any
     /// other command send to the partner due to the issues with communication.
     /// In that case the server assumes that the partner has been shutdown
     /// and transitions to the "partner-down" state in which it still responds
     /// to all DHCP queries but doesn't attempt to send lease updates to the
     /// offline partner.
-    void partnerMaintainedStateHandler();
+    void partnerInMaintenanceStateHandler();
 
     /// @brief Handler for "ready" state.
     ///
     /// This a handler invoked for the server which finished synchronizing
     /// its lease database with the partner and is indicating readiness to
     /// start normal operation, i.e. load balancing or hot standby. The
-    /// partner being in the "partner-down" state will transition to the
+    /// partner in the "partner-down" state will transition to the
     /// "load-balancing" or "hot-standby" state. The "ready" server will
     /// also transition to one of these states following the transition
     /// of the partner.
@@ -232,7 +231,7 @@ public:
     /// @brief Handler for "syncing" state.
     ///
     /// This is a handler invoked for the server in the "syncing" state.
-    /// The server being in this state is trying to retrieve leases from
+    /// The server in this state is trying to retrieve leases from
     /// the partner's database and update its local database. Every
     /// primary, secondary and standby server must transition via this
     /// state to retrieve up to date lease information from the active
@@ -260,7 +259,7 @@ public:
     /// DHCP server. In the future, we will provide a command to restart
     /// the HA service.
     ///
-    /// The server being in the "terminated" state will respond to DHCP clients
+    /// The server in the "terminated" state will respond to DHCP clients
     /// as if it was in a hot-standby or load-balancing state. However, it will
     /// neither send nor receive lease updates. It also won't send heartbeats
     /// to the partner.
@@ -783,18 +782,18 @@ public:
 
     /// @brief Processes ha-maintenance-notify command and returns a response.
     ///
-    /// This command attempts to tramsition the server to the maintained state
+    /// This command attempts to tramsition the server to the in-maintenance state
     /// if the cancel flag is set to false. Such transition is not allowed if
     /// the server is currently in one of the following states:
     /// - backup: becase maintenance is not supported for backup servers,
-    /// - partner-maintained: because only one server is maintained while the
-    ///   partner must be in parter-maintained state,
+    /// - partner-in-maintenance: because only one server is in maintenance while
+    ///   the partner must be in parter-in-maintenance state,
     /// - terminated: because the only way to resume HA service is by shutting
     ///   down the server, fixing the clock skew and restarting.
     ///
     /// If the cancel flag is set to true, the server will be transitioned from
-    /// the maintained state to the previous state it was in before entering the
-    /// maintained state.
+    /// the in-maintenance state to the previous state it was in before entering
+    /// the in-maintenance state.
     ///
     /// @param cancel boolean value indicating if the maintenance is being
     /// canceled with this operation. If it is set to false the maintenance
@@ -807,11 +806,11 @@ public:
     ///
     /// The server receiving this command will try to send the
     /// ha-maintenance-notify command to the partner to instruct the partner
-    /// to transition to the maintained state. In this state the partner will
+    /// to transition to the in-maintenance state. In this state the partner will
     /// not respond to any DHCP queries. Next, this server will transition to
-    /// the ha-partner-maintained state and therefore will start responding
+    /// the partner-in-maintenance state and therefore will start responding
     /// to all DHCP queries. If the partner responds to the ha-maintenance-notify
-    /// with an error, this server won't transition to the partner-maintained
+    /// with an error, this server won't transition to the partner-in-maintenance
     /// state and signal an error to the caller. If the partner is unavailable,
     /// this server will directly transition to the partner-down state.
     ///
@@ -821,15 +820,16 @@ public:
     /// @brief Processes ha-maintenance-cancel command and returns a response.
     ///
     /// The server receiving this command will try to revert the partner's
-    /// state from maintained to the previous state, and also it will try to
-    /// revert its own state from partner-maintained to the previous state.
-    /// It effectively means canceling the request for maintenance signaled
-    /// with the ha-maintenance-start command.
+    /// state from the in-maintenance to the previous state, and also it will
+    /// try to revert its own state from the partner-in-maintenance to the
+    /// previous state. It effectively means canceling the request for
+    /// maintenance signaled with the ha-maintenance-start command.
     ///
     /// In some cases canceling the maintenace is no longer possible, e.g.
     /// if the server has already got into the partner-down state. Generally,
     /// canceling the maintenance is only possible if this server is in the
-    /// partner-maintained state and the partner is in the maintained state.
+    /// partner-in-maintenance state and the partner is in the in-maintenance
+    /// state.
     ///
     /// @return Pointer to the response to the ha-maintenance-cancel.
     data::ConstElementPtr processMaintenanceCancel();
