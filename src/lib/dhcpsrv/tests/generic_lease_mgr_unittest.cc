@@ -91,6 +91,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x08), HTYPE_ETHER));
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x42)));
         lease->valid_lft_ = 8677;
+        lease->old_valid_lft_ = 8677;
         lease->cltt_ = 168256;
         lease->old_cltt_ = 168256;
         lease->subnet_id_ = 23;
@@ -103,6 +104,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));
         lease->valid_lft_ = 3677;
+        lease->old_valid_lft_ = 3677;
         lease->cltt_ = 123456;
         lease->old_cltt_ = 123456;
         lease->subnet_id_ = 73;
@@ -114,6 +116,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x2a), HTYPE_ETHER));
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x64)));
         lease->valid_lft_ = 5412;
+        lease->old_valid_lft_ = 5412;
         lease->cltt_ = 234567;
         lease->old_cltt_ = 234567;
         lease->subnet_id_ = 73;                         // Same as lease 1
@@ -132,6 +135,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         //  However, this will lead to overflows.
         // @TODO: test overflow conditions when code has been fixed.
         lease->valid_lft_ = 7000;
+        lease->old_valid_lft_ = 7000;
         lease->cltt_ = 234567;
         lease->old_cltt_ = 234567;
         lease->subnet_id_ = 37;
@@ -145,6 +149,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 7736;
+        lease->old_valid_lft_ = 7736;
         lease->cltt_ = 222456;
         lease->old_cltt_ = 222456;
         lease->subnet_id_ = 85;
@@ -159,6 +164,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 7832;
+        lease->old_valid_lft_ = 7832;
         lease->cltt_ = 227476;
         lease->old_cltt_ = 227476;
         lease->subnet_id_ = 175;
@@ -173,6 +179,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 1832;
+        lease->old_valid_lft_ = 1832;
         lease->cltt_ = 627476;
         lease->old_cltt_ = 627476;
         lease->subnet_id_ = 112;
@@ -185,6 +192,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x77)));
         lease->valid_lft_ = 7975;
+        lease->old_valid_lft_ = 7975;
         lease->cltt_ = 213876;
         lease->old_cltt_ = 213876;
         lease->subnet_id_ = 19;
@@ -217,6 +225,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x77)));
         lease->preferred_lft_ = 900;
         lease->valid_lft_ = 8677;
+        lease->old_valid_lft_ = 8677;
         lease->cltt_ = 168256;
         lease->old_cltt_ = 168256;
         lease->subnet_id_ = 23;
@@ -231,6 +240,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         lease->preferred_lft_ = 3600;
         lease->valid_lft_ = 3677;
+        lease->old_valid_lft_ = 3677;
         lease->cltt_ = 123456;
         lease->old_cltt_ = 123456;
         lease->subnet_id_ = 73;
@@ -245,6 +255,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x3a)));
         lease->preferred_lft_ = 1800;
         lease->valid_lft_ = 5412;
+        lease->old_valid_lft_ = 5412;
         lease->cltt_ = 234567;
         lease->old_cltt_ = 234567;
         lease->subnet_id_ = 73;                     // Same as lease 1
@@ -268,6 +279,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         // @TODO: test overflow conditions when code has been fixed.
         lease->preferred_lft_ = 7200;
         lease->valid_lft_ = 7000;
+        lease->old_valid_lft_ = 7000;
         lease->cltt_ = 234567;
         lease->old_cltt_ = 234567;
         lease->subnet_id_ = 37;
@@ -283,6 +295,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         lease->preferred_lft_ = 4800;
         lease->valid_lft_ = 7736;
+        lease->old_valid_lft_ = 7736;
         lease->cltt_ = 222456;
         lease->old_cltt_ = 222456;
         lease->subnet_id_ = 671;
@@ -299,6 +312,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         // Same as lease 4
         lease->preferred_lft_ = 5400;
         lease->valid_lft_ = 7832;
+        lease->old_valid_lft_ = 7832;
         lease->cltt_ = 227476;
         lease->old_cltt_ = 227476;
         lease->subnet_id_ = 175;
@@ -316,6 +330,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         // Same as lease 4
         lease->preferred_lft_ = 5400;
         lease->valid_lft_ = 1832;
+        lease->old_valid_lft_ = 1832;
         lease->cltt_ = 627476;
         lease->old_cltt_ = 627476;
         lease->subnet_id_ = 112;
@@ -331,6 +346,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0xe5)));
         lease->preferred_lft_ = 5600;
         lease->valid_lft_ = 7975;
+        lease->old_valid_lft_ = 7975;
         lease->cltt_ = 213876;
         lease->old_cltt_ = 213876;
         lease->subnet_id_ = 19;
