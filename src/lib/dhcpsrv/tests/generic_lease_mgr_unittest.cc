@@ -92,6 +92,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x42)));
         lease->valid_lft_ = 8677;
         lease->cltt_ = 168256;
+        lease->old_cltt_ = 168256;
         lease->subnet_id_ = 23;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = false;
@@ -103,6 +104,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
             new ClientId(vector<uint8_t>(8, 0x53)));
         lease->valid_lft_ = 3677;
         lease->cltt_ = 123456;
+        lease->old_cltt_ = 123456;
         lease->subnet_id_ = 73;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -113,6 +115,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x64)));
         lease->valid_lft_ = 5412;
         lease->cltt_ = 234567;
+        lease->old_cltt_ = 234567;
         lease->subnet_id_ = 73;                         // Same as lease 1
         lease->fqdn_rev_ = false;
         lease->fqdn_fwd_ = false;
@@ -130,6 +133,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         // @TODO: test overflow conditions when code has been fixed.
         lease->valid_lft_ = 7000;
         lease->cltt_ = 234567;
+        lease->old_cltt_ = 234567;
         lease->subnet_id_ = 37;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -142,6 +146,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 7736;
         lease->cltt_ = 222456;
+        lease->old_cltt_ = 222456;
         lease->subnet_id_ = 85;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -155,6 +160,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 7832;
         lease->cltt_ = 227476;
+        lease->old_cltt_ = 227476;
         lease->subnet_id_ = 175;
         lease->fqdn_rev_ = false;
         lease->fqdn_fwd_ = false;
@@ -168,6 +174,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 1832;
         lease->cltt_ = 627476;
+        lease->old_cltt_ = 627476;
         lease->subnet_id_ = 112;
         lease->fqdn_rev_ = false;
         lease->fqdn_fwd_ = true;
@@ -179,6 +186,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
             new ClientId(vector<uint8_t>(8, 0x77)));
         lease->valid_lft_ = 7975;
         lease->cltt_ = 213876;
+        lease->old_cltt_ = 213876;
         lease->subnet_id_ = 19;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -210,6 +218,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 900;
         lease->valid_lft_ = 8677;
         lease->cltt_ = 168256;
+        lease->old_cltt_ = 168256;
         lease->subnet_id_ = 23;
         lease->fqdn_fwd_ = true;
         lease->fqdn_rev_ = true;
@@ -223,6 +232,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 3600;
         lease->valid_lft_ = 3677;
         lease->cltt_ = 123456;
+        lease->old_cltt_ = 123456;
         lease->subnet_id_ = 73;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -236,6 +246,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 1800;
         lease->valid_lft_ = 5412;
         lease->cltt_ = 234567;
+        lease->old_cltt_ = 234567;
         lease->subnet_id_ = 73;                     // Same as lease 1
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = false;
@@ -258,6 +269,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 7200;
         lease->valid_lft_ = 7000;
         lease->cltt_ = 234567;
+        lease->old_cltt_ = 234567;
         lease->subnet_id_ = 37;
         lease->fqdn_fwd_ = true;
         lease->fqdn_rev_ = false;
@@ -272,6 +284,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 4800;
         lease->valid_lft_ = 7736;
         lease->cltt_ = 222456;
+        lease->old_cltt_ = 222456;
         lease->subnet_id_ = 671;
         lease->fqdn_fwd_ = true;
         lease->fqdn_rev_ = true;
@@ -287,6 +300,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 5400;
         lease->valid_lft_ = 7832;
         lease->cltt_ = 227476;
+        lease->old_cltt_ = 227476;
         lease->subnet_id_ = 175;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -303,6 +317,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 5400;
         lease->valid_lft_ = 1832;
         lease->cltt_ = 627476;
+        lease->old_cltt_ = 627476;
         lease->subnet_id_ = 112;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -317,6 +332,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 5600;
         lease->valid_lft_ = 7975;
         lease->cltt_ = 213876;
+        lease->old_cltt_ = 213876;
         lease->subnet_id_ = 19;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -2000,13 +2016,13 @@ GenericLeaseMgrTest::testRecreateLease4() {
     Lease4Ptr lease(new Lease4(*leases[0]));
 
     // Add a lease.
-    EXPECT_TRUE(lmptr_->addLease(leases[0]));
+    EXPECT_TRUE(lmptr_->addLease(lease));
     lmptr_->commit();
 
     // Check that the lease has been successfully added.
     Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[0]);
     ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[0], l_returned);
+    detailCompareLease(lease, l_returned);
 
     // Delete a lease, check that it's gone.
     EXPECT_TRUE(lmptr_->deleteLease(leases[0]));
@@ -2040,13 +2056,13 @@ GenericLeaseMgrTest::testRecreateLease6() {
     Lease6Ptr lease(new Lease6(*leases[0]));
 
     // Add a lease.
-    EXPECT_TRUE(lmptr_->addLease(leases[0]));
+    EXPECT_TRUE(lmptr_->addLease(lease));
     lmptr_->commit();
 
     // Check that the lease has been successfully added.
     Lease6Ptr l_returned = lmptr_->getLease6(Lease::TYPE_NA, ioaddress6_[0]);
     ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[0], l_returned);
+    detailCompareLease(lease, l_returned);
 
     // Delete a lease, check that it's gone.
     EXPECT_TRUE(lmptr_->deleteLease(leases[0]));

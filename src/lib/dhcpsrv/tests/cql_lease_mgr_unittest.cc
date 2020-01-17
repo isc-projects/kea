@@ -608,6 +608,8 @@ TEST_F(CqlLeaseMgrTest, getLeases4Paged) {
 }
 
 /// @brief This test checks that all IPv6 leases for a specified subnet id are returned.
+/// @todo: uncomment this once getLeases6SubnetId is implemented
+/// for Cassandra (see #1086)
 TEST_F(CqlLeaseMgrTest, DISABLED_getLeases6SubnetId) {
     testGetLeases6SubnetId();
 }
@@ -618,6 +620,8 @@ TEST_F(CqlLeaseMgrTest, getLeases6Hostname) {
 }
 
 /// @brief This test checks that all IPv6 leases are returned.
+/// @todo: uncomment this once getLeases6 is implemented
+/// for Cassandra (see #1086)
 TEST_F(CqlLeaseMgrTest, DISABLED_getLeases6) {
     testGetLeases6();
 }
