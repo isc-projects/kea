@@ -765,7 +765,8 @@ public:
             iaid_str_ = iaid_u_.dbInputString();
             bind_array.add(iaid_str_);
 
-            prefix_len_str_ = boost::lexical_cast<std::string>(static_cast<unsigned int>(lease_->prefixlen_));
+            prefix_len_str_ = boost::lexical_cast<std::string>
+                              (static_cast<unsigned int>(lease_->prefixlen_));
             bind_array.add(prefix_len_str_);
 
             bind_array.add(lease->fqdn_fwd_);
@@ -789,12 +790,15 @@ public:
             }
 
             if (lease->hwaddr_) {
-                hwtype_str_ = boost::lexical_cast<std::string>(static_cast<unsigned int>(lease_->hwaddr_->htype_));
+                hwtype_str_ = boost::lexical_cast<std::string>
+                              (static_cast<unsigned int>(lease_->hwaddr_->htype_));
                 hwaddr_source_str_ = boost::lexical_cast<std::string>
                                      (static_cast<unsigned int>(lease_->hwaddr_->source_));
             } else {
-                hwtype_str_ = boost::lexical_cast<std::string>(static_cast<unsigned int>(HTYPE_UNDEFINED));
-                hwaddr_source_str_ = boost::lexical_cast<std::string>(static_cast<unsigned int>(HWAddr::HWADDR_SOURCE_UNKNOWN));
+                hwtype_str_ = boost::lexical_cast<std::string>
+                              (static_cast<unsigned int>(HTYPE_UNDEFINED));
+                hwaddr_source_str_ = boost::lexical_cast<std::string>
+                                     (static_cast<unsigned int>(HWAddr::HWADDR_SOURCE_UNKNOWN));
             }
 
             bind_array.add(hwtype_str_);
@@ -2080,7 +2084,8 @@ PgSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
     bind_array.add(state_str);
 
     // Expiration timestamp.
-    std::string expiration_str = PgSqlLeaseExchange::convertToDatabaseTime(time(NULL) - static_cast<time_t>(secs));
+    std::string expiration_str = PgSqlLeaseExchange::convertToDatabaseTime(time(NULL) -
+        static_cast<time_t>(secs));
     bind_array.add(expiration_str);
 
     // Delete leases.
