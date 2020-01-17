@@ -483,7 +483,8 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                           expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -585,7 +586,8 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                           expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -631,7 +633,8 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         data.add(&user_context_);
         data.add(&address_);
 
-        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_, old_expire_);
+        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_,
+                                           old_expire_);
         data.add(&old_expire_);
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
@@ -661,7 +664,8 @@ CqlLease4Exchange::createBindForDelete(const Lease4Ptr &lease, AnyArray &data,
         data.clear();
         data.add(&address_);
 
-        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_, old_expire_);
+        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_,
+                                           old_expire_);
         data.add(&old_expire_);
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
@@ -1179,7 +1183,8 @@ CqlLease6Exchange::createBindForInsert(const Lease6Ptr &lease, AnyArray &data) {
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                           expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -1314,7 +1319,8 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                           expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -1417,7 +1423,8 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
         data.add(&user_context_);
         data.add(&address_);
 
-        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_, old_expire_);
+        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_,
+                                           old_expire_);
         data.add(&old_expire_);
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
@@ -1453,7 +1460,8 @@ CqlLease6Exchange::createBindForDelete(const Lease6Ptr &lease, AnyArray &data,
         data.clear();
         data.add(&address_);
 
-        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_, old_expire_);
+        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_,
+                                           old_expire_);
         data.add(&old_expire_);
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
