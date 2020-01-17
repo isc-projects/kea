@@ -443,6 +443,7 @@ TEST(CqlOpenTest, OpenDatabase) {
 
     // Tidy up after the test
     destroyCqlSchema();
+    LeaseMgrFactory::destroy();
 }
 
 /// @brief Check the getType() method

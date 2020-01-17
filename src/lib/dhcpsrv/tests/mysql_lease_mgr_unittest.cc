@@ -335,6 +335,12 @@ TEST_F(MySqlLeaseMgrTest, updateLease4) {
     testUpdateLease4();
 }
 
+/// @brief Lease4 update tests
+TEST_F(MySqlLeaseMgrTest, updateLease4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testUpdateLease4();
+}
+
 /// @brief Lease4 concurrent update tests
 ///
 /// Checks that we are not able to concurrently update a lease in the database.
@@ -342,10 +348,12 @@ TEST_F(MySqlLeaseMgrTest, concurrentUpdateLease4) {
     testConcurrentUpdateLease4();
 }
 
-/// @brief Lease4 update tests
-TEST_F(MySqlLeaseMgrTest, updateLease4MultiThreading) {
+/// @brief Lease4 concurrent update tests
+///
+/// Checks that we are not able to concurrently update a lease in the database.
+TEST_F(MySqlLeaseMgrTest, concurrentUpdateLease4MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    testUpdateLease4();
+    testConcurrentUpdateLease4();
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address
@@ -777,6 +785,12 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
     testUpdateLease6();
 }
 
+/// @brief Lease6 update tests
+TEST_F(MySqlLeaseMgrTest, updateLease6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testUpdateLease6();
+}
+
 /// @brief Lease6 concurrent update tests
 ///
 /// Checks that we are not able to concurrently update a lease in the database.
@@ -784,10 +798,12 @@ TEST_F(MySqlLeaseMgrTest, concurrentUpdateLease6) {
     testConcurrentUpdateLease6();
 }
 
-/// @brief Lease6 update tests
-TEST_F(MySqlLeaseMgrTest, updateLease6MultiThreading) {
+/// @brief Lease6 concurrent update tests
+///
+/// Checks that we are not able to concurrently update a lease in the database.
+TEST_F(MySqlLeaseMgrTest, concurrentUpdateLease6MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    testUpdateLease6();
+    testConcurrentUpdateLease6();
 }
 
 /// @brief DHCPv4 Lease recreation tests

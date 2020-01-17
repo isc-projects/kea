@@ -196,6 +196,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Tidy up after the test
     destroyPgSQLSchema();
+    LeaseMgrFactory::destroy();
 }
 
 /// @brief Check that database can be opened with Multi-Threading
@@ -290,6 +291,12 @@ TEST_F(PgSqlLeaseMgrTest, updateLease4) {
     testUpdateLease4();
 }
 
+/// @brief Lease4 update tests
+TEST_F(PgSqlLeaseMgrTest, updateLease4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testUpdateLease4();
+}
+
 /// @brief Lease4 concurrent update tests
 ///
 /// Checks that we are not able to concurrently update a lease in the database.
@@ -297,10 +304,12 @@ TEST_F(PgSqlLeaseMgrTest, concurrentUpdateLease4) {
     testConcurrentUpdateLease4();
 }
 
-/// @brief Lease4 update tests
-TEST_F(PgSqlLeaseMgrTest, updateLease4MultiThreading) {
+/// @brief Lease4 concurrent update tests
+///
+/// Checks that we are not able to concurrently update a lease in the database.
+TEST_F(PgSqlLeaseMgrTest, concurrentUpdateLease4MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    testUpdateLease4();
+    testConcurrentUpdateLease4();
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address
@@ -732,6 +741,12 @@ TEST_F(PgSqlLeaseMgrTest, updateLease6) {
     testUpdateLease6();
 }
 
+/// @brief Lease6 update tests
+TEST_F(PgSqlLeaseMgrTest, updateLease6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testUpdateLease6();
+}
+
 /// @brief Lease6 concurrent update tests
 ///
 /// Checks that we are not able to concurrently update a lease in the database.
@@ -739,10 +754,12 @@ TEST_F(PgSqlLeaseMgrTest, concurrentUpdateLease6) {
     testConcurrentUpdateLease6();
 }
 
-/// @brief Lease6 update tests
-TEST_F(PgSqlLeaseMgrTest, updateLease6MultiThreading) {
+/// @brief Lease6 concurrent update tests
+///
+/// Checks that we are not able to concurrently update a lease in the database.
+TEST_F(PgSqlLeaseMgrTest, concurrentUpdateLease6MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    testUpdateLease6();
+    testConcurrentUpdateLease6();
 }
 
 /// @brief DHCPv4 Lease recreation tests
