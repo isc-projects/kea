@@ -1503,7 +1503,7 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
 bool
 Memfile_LeaseMgr::deleteLease(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_DELETE_ADDR).arg(addr.toText());
+              DHCPSRV_MEMFILE_DELETE_ADDR).arg(lease->addr_.toText());
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
@@ -1542,7 +1542,7 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
 bool
 Memfile_LeaseMgr::deleteLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_DELETE_ADDR).arg(addr.toText());
+              DHCPSRV_MEMFILE_DELETE_ADDR).arg(lease->addr_.toText());
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
