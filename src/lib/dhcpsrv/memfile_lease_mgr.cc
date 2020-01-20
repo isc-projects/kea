@@ -404,7 +404,7 @@ public:
         SubnetID cur_id = 0;
         int64_t assigned = 0;
         int64_t declined = 0;
-        for(Lease4StorageSubnetIdIndex::const_iterator lease = lower;
+        for (Lease4StorageSubnetIdIndex::const_iterator lease = lower;
             lease != upper; ++lease) {
             // If we've hit the next subnet, add rows for the current subnet
             // and wipe the accumulators
@@ -547,7 +547,7 @@ public:
         int64_t assigned = 0;
         int64_t declined = 0;
         int64_t assigned_pds = 0;
-        for(Lease6StorageSubnetIdIndex::const_iterator lease = lower;
+        for (Lease6StorageSubnetIdIndex::const_iterator lease = lower;
             lease != upper; ++lease) {
             // If we've hit the next subnet, add rows for the current subnet
             // and wipe the accumulators
@@ -786,7 +786,7 @@ Memfile_LeaseMgr::getLease4Internal(const HWAddr& hwaddr,
               Lease4StorageHWAddressSubnetIdIndex::const_iterator> l
         = idx.equal_range(boost::make_tuple(hwaddr.hwaddr_));
 
-    for(auto lease = l.first; lease != l.second; ++lease) {
+    for (auto lease = l.first; lease != l.second; ++lease) {
         collection.push_back(Lease4Ptr(new Lease4(**lease)));
     }
 }
@@ -795,8 +795,8 @@ Lease4Collection
 Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_HWADDR).arg(hwaddr.toText());
-    Lease4Collection collection;
 
+    Lease4Collection collection;
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
         getLease4Internal(hwaddr, collection);
@@ -826,7 +826,8 @@ Memfile_LeaseMgr::getLease4Internal(const HWAddr& hwaddr,
 }
 
 Lease4Ptr
-Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
+Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr,
+                            SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_SUBID_HWADDR).arg(subnet_id)
         .arg(hwaddr.toText());
@@ -859,6 +860,7 @@ Lease4Collection
 Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_CLIENTID).arg(client_id.toText());
+
     Lease4Collection collection;
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
@@ -1000,7 +1002,7 @@ Memfile_LeaseMgr::getLeases4(const std::string& hostname) const {
 
 void
 Memfile_LeaseMgr::getLeases4Internal(Lease4Collection& collection) const {
-   for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease ) {
+   for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease) {
        collection.push_back(Lease4Ptr(new Lease4(**lease)));
    }
 }
@@ -1083,6 +1085,7 @@ Memfile_LeaseMgr::getLease6(Lease::Type type,
               DHCPSRV_MEMFILE_GET_ADDR6)
         .arg(addr.toText())
         .arg(Lease::typeToText(type));
+
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
         return (getLease6Internal(type, addr));
@@ -1110,7 +1113,8 @@ Memfile_LeaseMgr::getLeases6Internal(Lease::Type type,
 
 Lease6Collection
 Memfile_LeaseMgr::getLeases6(Lease::Type type,
-                            const DUID& duid, uint32_t iaid) const {
+                            const DUID& duid,
+                            uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_IAID_DUID)
         .arg(iaid)
@@ -1151,7 +1155,8 @@ Memfile_LeaseMgr::getLeases6Internal(Lease::Type type,
 
 Lease6Collection
 Memfile_LeaseMgr::getLeases6(Lease::Type type,
-                             const DUID& duid, uint32_t iaid,
+                             const DUID& duid,
+                             uint32_t iaid,
                              SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID)
@@ -1231,7 +1236,7 @@ Memfile_LeaseMgr::getLeases6(const std::string& hostname) const {
 
 void
 Memfile_LeaseMgr::getLeases6Internal(Lease6Collection& collection) const {
-   for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease ) {
+   for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease) {
        collection.push_back(Lease6Ptr(new Lease6(**lease)));
    }
 }
@@ -1499,6 +1504,7 @@ bool
 Memfile_LeaseMgr::deleteLease(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_DELETE_ADDR).arg(addr.toText());
+
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
         return (deleteLeaseInternal(lease));
@@ -1537,6 +1543,7 @@ bool
 Memfile_LeaseMgr::deleteLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_DELETE_ADDR).arg(addr.toText());
+
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
         return (deleteLeaseInternal(lease));
@@ -1550,6 +1557,7 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4)
         .arg(secs);
+
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
         return (deleteExpiredReclaimedLeases<
@@ -1567,6 +1575,7 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6)
         .arg(secs);
+
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
         return (deleteExpiredReclaimedLeases<
@@ -1746,9 +1755,10 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
 }
 
 template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
-bool Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
-                                           boost::shared_ptr<LeaseFileType>& lease_file,
-                                           StorageType& storage) {
+bool
+Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
+                                      boost::shared_ptr<LeaseFileType>& lease_file,
+                                      StorageType& storage) {
     // Check if the instance of the LFC is running right now. If it is
     // running, we refuse to load leases as the LFC may be writing to the
     // lease files right now. When the user retries server configuration
@@ -1865,7 +1875,8 @@ Memfile_LeaseMgr::lfcSetup(bool conversion_needed) {
 }
 
 template<typename LeaseFileType>
-void Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) {
+void
+Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) {
     bool do_lfc = true;
 
     // Check the status of the LFC instance.
@@ -1970,7 +1981,8 @@ Memfile_LeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_
     return(query);
 }
 
-size_t Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
+size_t
+Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES4)
         .arg(subnet_id);
 
@@ -1984,7 +1996,7 @@ size_t Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
 
     // Let's collect all leases.
     Lease4Collection leases;
-    for(auto lease = l.first; lease != l.second; ++lease) {
+    for (auto lease = l.first; lease != l.second; ++lease) {
         leases.push_back(*lease);
     }
 
@@ -1998,7 +2010,8 @@ size_t Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
     return (num);
 }
 
-size_t Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
+size_t
+Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES6)
         .arg(subnet_id);
 
@@ -2012,7 +2025,7 @@ size_t Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
 
     // Let's collect all leases.
     Lease6Collection leases;
-    for(auto lease = l.first; lease != l.second; ++lease) {
+    for (auto lease = l.first; lease != l.second; ++lease) {
         leases.push_back(*lease);
     }
 

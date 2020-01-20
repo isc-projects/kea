@@ -144,11 +144,15 @@ public:
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
+    ///
+    /// @result true if the lease was added, false if not
     virtual bool addLease(const Lease4Ptr& lease);
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
+    ///
+    /// @result true if the lease was added, false if not
     virtual bool addLease(const Lease6Ptr& lease);
 
     /// @brief Returns existing IPv4 lease for specified IPv4 address.
@@ -158,7 +162,7 @@ public:
     ///
     /// @param addr An address of the searched lease.
     ///
-    /// @return a collection of leases
+    /// @return a pointer to the lease (or NULL if a lease is not found)
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
@@ -192,6 +196,8 @@ public:
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
     /// @param client_id client identifier
+    ///
+    /// @return lease collection
     virtual Lease4Collection getLease4(const ClientId& client_id) const;
 
     /// @brief Returns IPv4 lease for specified client-id/hwaddr/subnet-id tuple
@@ -267,9 +273,8 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection
-    getLeases4(const asiolink::IOAddress& lower_bound_address,
-               const LeasePageSize& page_size) const;
+    virtual Lease4Collection getLeases4(const asiolink::IOAddress& lower_bound_address,
+                                        const LeasePageSize& page_size) const;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
@@ -279,7 +284,7 @@ public:
     /// @param type specifies lease type: (NA, TA or PD)
     /// @param addr An address of the searched lease.
     ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    /// @return a pointer to the lease (or NULL if a lease is not found)
     virtual Lease6Ptr getLease6(Lease::Type type,
                                 const isc::asiolink::IOAddress& addr) const;
 
@@ -292,7 +297,8 @@ public:
     ///
     /// @return collection of IPv6 leases
     virtual Lease6Collection getLeases6(Lease::Type type,
-                                        const DUID& duid, uint32_t iaid) const;
+                                        const DUID& duid,
+                                        uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID + IA + subnet-id +
     /// lease type combination.
@@ -306,7 +312,8 @@ public:
     /// @param subnet_id identifier of the subnet the lease must belong to
     ///
     /// @return lease collection (may be empty if no lease is found)
-    virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
+    virtual Lease6Collection getLeases6(Lease::Type type,
+                                        const DUID& duid,
                                         uint32_t iaid,
                                         SubnetID subnet_id) const;
 
@@ -358,9 +365,8 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection
-    getLeases6(const asiolink::IOAddress& lower_bound_address,
-               const LeasePageSize& page_size) const;
+    virtual Lease6Collection getLeases6(const asiolink::IOAddress& lower_bound_address,
+                                        const LeasePageSize& page_size) const;
 
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
@@ -446,6 +452,7 @@ public:
     /// subnet.
     ///
     /// @param subnet_id identifier of the subnet
+    ///
     /// @return number of leases removed.
     virtual size_t wipeLeases4(const SubnetID& subnet_id);
 
@@ -455,6 +462,7 @@ public:
     /// subnet.
     ///
     /// @param subnet_id identifier of the subnet
+    ///
     /// @return number of leases removed.
     virtual size_t wipeLeases6(const SubnetID& subnet_id);
 
@@ -467,16 +475,22 @@ private:
     /// @brief Adds an IPv4 lease,
     ///
     /// @param lease lease to be added
+    ///
+    /// @result true if the lease was added, false if not
     bool addLeaseInternal(const Lease4Ptr& lease);
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
+    ///
+    /// @result true if the lease was added, false if not
     bool addLeaseInternal(const Lease6Ptr& lease);
 
     /// @brief Returns existing IPv4 lease for specified IPv4 address.
     ///
     /// @param addr An address of the searched lease.
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
     Lease4Ptr getLease4Internal(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Gets existing IPv4 leases for specified hardware address.
@@ -491,6 +505,8 @@ private:
     ///
     /// @param hwaddr hardware address of the client
     /// @param subnet_id identifier of the subnet that lease must belong to
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
     Lease4Ptr getLease4Internal(const HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
 
@@ -506,6 +522,8 @@ private:
     /// @param clientid client identifier
     /// @param hwaddr hardware address of the client
     /// @param subnet_id identifier of the subnet that lease must belong to
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
     Lease4Ptr getLease4Internal(const ClientId& clientid,
                                 const HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
@@ -514,6 +532,8 @@ private:
     ///
     /// @param clientid client identifier
     /// @param subnet_id identifier of the subnet that lease must belong to
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
     Lease4Ptr getLease4Internal(const ClientId& clientid,
                                 SubnetID subnet_id) const;
 
@@ -550,6 +570,8 @@ private:
     ///
     /// @param type specifies lease type: (NA, TA or PD)
     /// @param addr An address of the searched lease.
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
     Lease6Ptr getLease6Internal(Lease::Type type,
                                 const isc::asiolink::IOAddress& addr) const;
 
@@ -590,8 +612,8 @@ private:
     ///
     /// @param hostname hostname in lower case.
     /// @param collection lease collection
-    void  getLeases6Internal(const std::string& hostname,
-                             Lease6Collection& collection) const;
+    void getLeases6Internal(const std::string& hostname,
+                            Lease6Collection& collection) const;
 
     /// @brief Returns all IPv6 leases.
     ///
@@ -643,20 +665,32 @@ private:
     /// @param lease6 The lease to be updated.
     void updateLease6Internal(const Lease6Ptr& lease6);
 
-    /// @brief Deletes a lease.
+    /// @brief Deletes an IPv4 lease.
     ///
-    /// @param addr Address of the lease to be deleted. (This can be IPv4 or
-    ///        IPv6.)
-    bool deleteLeaseInternal(const isc::asiolink::IOAddress& addr);
+    /// @param lease IPv4 lease being deleted.
+    ///
+    /// @return true if deletion was successful, false if no such lease exists.
+    bool deleteLeaseInternal(const Lease4Ptr& addr);
+
+    /// @brief Deletes an IPv6 lease.
+    ///
+    /// @param lease IPv6 lease being deleted.
+    ///
+    /// @return true if deletion was successful, false if no such lease exists.
+    bool deleteLeaseInternal(const Lease6Ptr& addr);
 
     /// @brief Removes specified IPv4 leases.
     ///
     /// @param subnet_id identifier of the subnet
+    ///
+    /// @return The number of deleted leases
     size_t wipeLeases4Internal(const SubnetID& subnet_id);
 
     /// @brief Removed specified IPv6 leases.
     ///
     /// @param subnet_id identifier of the subnet
+    ///
+    /// @return The number of deleted leases
     size_t wipeLeases6Internal(const SubnetID& subnet_id);
     ///@}
 

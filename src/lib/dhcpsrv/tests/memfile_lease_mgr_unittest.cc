@@ -148,7 +148,6 @@ public:
         MultiThreadingMgr::instance().setMode(false);
     }
 
-
     /// @brief Remove files being products of Lease File Cleanup.
     ///
     /// @param base_name Path to the lease file name. This file is removed
@@ -354,8 +353,8 @@ public:
     TimerMgrPtr timer_mgr_;
 };
 
-// This test checks if the LeaseMgr can be instantiated and that it
-// parses parameters string properly.
+/// @brief This test checks if the LeaseMgr can be instantiated and that it
+/// parses parameters string properly.
 TEST_F(MemfileLeaseMgrTest, constructor) {
     DatabaseConnection::ParameterMap pmap;
     pmap["universe"] = "4";
@@ -392,20 +391,20 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 }
 
-// Checks if there is no lease manager NoLeaseManager is thrown.
+/// @brief Checks if there is no lease manager NoLeaseManager is thrown.
 TEST_F(MemfileLeaseMgrTest, noLeaseManager) {
     LeaseMgrFactory::destroy();
     EXPECT_THROW(LeaseMgrFactory::instance(), NoLeaseManager);
 }
 
-// Checks if the getType() and getName() methods both return "memfile".
+/// @brief Checks if the getType() and getName() methods both return "memfile".
 TEST_F(MemfileLeaseMgrTest, getTypeAndName) {
     startBackend(V4);
     EXPECT_EQ(std::string("memfile"), lmptr_->getType());
     EXPECT_EQ(std::string("memory"),  lmptr_->getName());
 }
 
-// Checks if the path to the lease files is initialized correctly.
+/// @brief Checks if the path to the lease files is initialized correctly.
 TEST_F(MemfileLeaseMgrTest, getLeaseFilePath) {
     // Initialize IO objects, so as the test csv files get removed after the
     // test (when destructors are called).
@@ -426,8 +425,8 @@ TEST_F(MemfileLeaseMgrTest, getLeaseFilePath) {
     EXPECT_TRUE(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6).empty());
 }
 
-// Check if the persistLeases correctly checks that leases should not be written
-// to disk when disabled through configuration.
+/// @brief Check if the persistLeases correctly checks that leases should not be written
+/// to disk when disabled through configuration.
 TEST_F(MemfileLeaseMgrTest, persistLeases) {
     // Initialize IO objects, so as the test csv files get removed after the
     // test (when destructors are called).
@@ -458,8 +457,8 @@ TEST_F(MemfileLeaseMgrTest, persistLeases) {
     EXPECT_FALSE(lease_mgr->persistLeases(Memfile_LeaseMgr::V6));
 }
 
-// Check if it is possible to schedule the timer to perform the Lease
-// File Cleanup periodically.
+/// @brief Check if it is possible to schedule the timer to perform the Lease
+/// File Cleanup periodically.
 TEST_F(MemfileLeaseMgrTest, lfcTimer) {
     DatabaseConnection::ParameterMap pmap;
     pmap["type"] = "memfile";
@@ -478,9 +477,8 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
     EXPECT_EQ(2, lease_mgr->getLFCCount());
 }
 
-
-// This test checks if the LFC timer is disabled (doesn't trigger)
-// cleanups when the lfc-interval is set to 0.
+/// @brief This test checks if the LFC timer is disabled (doesn't trigger)
+/// cleanups when the lfc-interval is set to 0.
 TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
     DatabaseConnection::ParameterMap pmap;
     pmap["type"] = "memfile";
@@ -499,8 +497,8 @@ TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
     EXPECT_EQ(0, lease_mgr->getLFCCount());
 }
 
-// This test checks that the callback function executing the cleanup of the
-// DHCPv4 lease file works as expected.
+/// @brief This test checks that the callback function executing the cleanup of the
+/// DHCPv4 lease file works as expected.
 TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     // This string contains the lease file header, which matches
     // the contents of the new file in which no leases have been
@@ -575,8 +573,8 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     EXPECT_EQ(result_file_contents, input_file.readFile());
 }
 
-// This test checks that the callback function executing the cleanup of the
-// DHCPv6 lease file works as expected.
+/// @brief This test checks that the callback function executing the cleanup of the
+/// DHCPv6 lease file works as expected.
 TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     // This string contains the lease file header, which matches
     // the contents of the new file in which no leases have been
@@ -629,7 +627,6 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
         << "Executing the LFC process failed: make sure that"
         " the kea-lfc program has been compiled.";
 
-
     // Check if we can still write to the lease file.
     std::vector<uint8_t> duid_vec(13);
     DuidPtr duid(new DUID(duid_vec));
@@ -660,8 +657,8 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     EXPECT_EQ(result_file_contents, input_file.readFile());
 }
 
-// This test verifies that EXIT_FAILURE status code is returned when
-// the LFC process fails to start.
+/// @brief This test verifies that EXIT_FAILURE status code is returned when
+/// the LFC process fails to start.
 TEST_F(MemfileLeaseMgrTest, leaseFileCleanupStartFail) {
     // This string contains the lease file header, which matches
     // the contents of the new file in which no leases have been
@@ -700,8 +697,8 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanupStartFail) {
         " the kea-lfc program has been compiled.";
 }
 
-// This test checks that the callback function executing the cleanup of the
-// files doesn't move the current file if the finish file exists
+/// @brief This test checks that the callback function executing the cleanup of the
+/// files doesn't move the current file if the finish file exists
 TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     // This string contains the lease file header, which matches
     // the contents of the new file in which no leases have been
@@ -763,8 +760,8 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     ASSERT_FALSE(finish_file.exists());
 }
 
-// This test checks that the callback function executing the cleanup of the
-// files doesn't move the current file if the copy file exists
+/// @brief This test checks that the callback function executing the cleanup of the
+/// files doesn't move the current file if the copy file exists
 TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     // This string contains the lease file header, which matches
     // the contents of the new file in which no leases have been
@@ -828,13 +825,13 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     ASSERT_FALSE(input_file.exists());
 }
 
-// Checks that adding/getting/deleting a Lease6 object works.
+/// @brief Checks that adding/getting/deleting a Lease6 object works.
 TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
     startBackend(V6);
     testAddGetDelete6();
 }
 
-// Checks that adding/getting/deleting a Lease6 object works.
+/// @brief Checks that adding/getting/deleting a Lease6 object works.
 TEST_F(MemfileLeaseMgrTest, addGetDelete6MultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
@@ -859,39 +856,39 @@ TEST_F(MemfileLeaseMgrTest, basicLease4MultiThread) {
 
 /// @todo Write more memfile tests
 
-// Simple test about lease4 retrieval through client id method
+/// @brief Simple test about lease4 retrieval through client id method
 TEST_F(MemfileLeaseMgrTest, getLease4ClientId) {
     startBackend(V4);
     testGetLease4ClientId();
 }
 
-// Simple test about lease4 retrieval through client id method
+/// @brief Simple test about lease4 retrieval through client id method
 TEST_F(MemfileLeaseMgrTest, getLease4ClientIdMultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
     testGetLease4ClientId();
 }
 
-// Checks that lease4 retrieval client id is null is working
+/// @brief Checks that lease4 retrieval client id is null is working
 TEST_F(MemfileLeaseMgrTest, getLease4NullClientId) {
     startBackend(V4);
     testGetLease4NullClientId();
 }
 
-// Checks that lease4 retrieval client id is null is working
+/// @brief Checks that lease4 retrieval client id is null is working
 TEST_F(MemfileLeaseMgrTest, getLease4NullClientIdMultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
     testGetLease4NullClientId();
 }
 
-// Checks lease4 retrieval through HWAddr
+/// @brief Checks lease4 retrieval through HWAddr
 TEST_F(MemfileLeaseMgrTest, getLease4HWAddr1) {
     startBackend(V4);
     testGetLease4HWAddr1();
 }
 
-// Checks lease4 retrieval through HWAddr
+/// @brief Checks lease4 retrieval through HWAddr
 TEST_F(MemfileLeaseMgrTest, getLease4HWAddr1MultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
@@ -914,13 +911,13 @@ TEST_F(MemfileLeaseMgrTest, getLease4HWAddr2MultiThread) {
     testGetLease4HWAddr2();
 }
 
-// Checks lease4 retrieval with clientId, HWAddr and subnet_id
+/// @brief Checks lease4 retrieval with clientId, HWAddr and subnet_id
 TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetId) {
     startBackend(V4);
     testGetLease4ClientIdHWAddrSubnetId();
 }
 
-// Checks lease4 retrieval with clientId, HWAddr and subnet_id
+/// @brief Checks lease4 retrieval with clientId, HWAddr and subnet_id
 TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetIdMultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
@@ -949,7 +946,6 @@ TEST_F(MemfileLeaseMgrTest, lease4NullClientIdMultiThread) {
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of hardware address and subnet ID
 TEST_F(MemfileLeaseMgrTest, DISABLED_getLease4HwaddrSubnetId) {
-
     /// @todo: fails on memfile. It's probably a memfile bug.
     startBackend(V4);
     testGetLease4HWAddrSubnetId();
@@ -957,7 +953,6 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_getLease4HwaddrSubnetId) {
 
 /// @brief Check GetLease4 methods - access by Hardware Address & Subnet ID
 TEST_F(MemfileLeaseMgrTest, DISABLED_getLease4HwaddrSubnetIdMultiThread) {
-
     /// @todo: fails on memfile. It's probably a memfile bug.
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
@@ -980,15 +975,15 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientId2MultiThread) {
     testGetLease4ClientId2();
 }
 
-// @brief Get Lease4 by client ID
-//
-// Check that the system can cope with a client ID of any size.
+/// @brief Get Lease4 by client ID
+///
+/// Check that the system can cope with a client ID of any size.
 TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSize) {
     startBackend(V4);
     testGetLease4ClientIdSize();
 }
 
-// @brief Get Lease4 by client ID
+/// @brief Get Lease4 by client ID
 TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSizeMultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
@@ -1011,118 +1006,118 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSubnetIdMultiThread) {
     testGetLease4ClientIdSubnetId();
 }
 
-// This test checks that all IPv4 leases for a specified subnet id are returned.
+/// @brief This test checks that all IPv4 leases for a specified subnet id are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases4SubnetId) {
     startBackend(V4);
     testGetLeases4SubnetId();
 }
 
-// This test checks that all IPv4 leases for a specified subnet id are returned.
+/// @brief This test checks that all IPv4 leases for a specified subnet id are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases4SubnetIdMultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
     testGetLeases4SubnetId();
 }
 
-// This test checks that all IPv4 leases with a specified hostname are returned.
+/// @brief This test checks that all IPv4 leases with a specified hostname are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases4Hostname) {
     startBackend(V4);
     testGetLeases4Hostname();
 }
 
-// This test checks that all IPv4 leases with a specified hostname are returned.
+/// @brief This test checks that all IPv4 leases with a specified hostname are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases4HostnameMultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
     testGetLeases4Hostname();
 }
 
-// This test checks that all IPv4 leases are returned.
+/// @brief This test checks that all IPv4 leases are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases4) {
     startBackend(V4);
     testGetLeases4();
 }
 
-// This test checks that all IPv4 leases are returned.
+/// @brief This test checks that all IPv4 leases are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases4MultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
     testGetLeases4();
 }
 
-// Test that a range of IPv4 leases is returned with paging.
+/// @brief Test that a range of IPv4 leases is returned with paging.
 TEST_F(MemfileLeaseMgrTest, getLeases4Paged) {
     startBackend(V4);
     testGetLeases4Paged();
 }
 
-// Test that a range of IPv4 leases is returned with paging.
+/// @brief Test that a range of IPv4 leases is returned with paging.
 TEST_F(MemfileLeaseMgrTest, getLeases4PagedMultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
     testGetLeases4Paged();
 }
 
-// This test checks that all IPv6 leases for a specified subnet id are returned.
+/// @brief This test checks that all IPv6 leases for a specified subnet id are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6SubnetId) {
     startBackend(V6);
     testGetLeases6SubnetId();
 }
 
-// This test checks that all IPv6 leases for a specified subnet id are returned.
+/// @brief This test checks that all IPv6 leases for a specified subnet id are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6SubnetIdMultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
     testGetLeases6SubnetId();
 }
 
-// This test checks that all IPv6 leases with a specified hostname are returned.
+/// @brief This test checks that all IPv6 leases with a specified hostname are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6Hostname) {
     startBackend(V6);
     testGetLeases6Hostname();
 }
 
-// This test checks that all IPv6 leases with a specified hostname are returned.
+/// @brief This test checks that all IPv6 leases with a specified hostname are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6HostnameMultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
     testGetLeases6Hostname();
 }
 
-// This test adds 3 leases  and verifies fetch by DUID.
-// Verifies retrival of non existant DUID fails
+/// @brief This test adds 3 leases  and verifies fetch by DUID.
+/// Verifies retrival of non existant DUID fails
 TEST_F(MemfileLeaseMgrTest, getLeases6Duid) {
     startBackend(V6);
     testGetLeases6Duid();
 }
 
-// This test adds 3 leases  and verifies fetch by DUID.
+/// @brief This test adds 3 leases  and verifies fetch by DUID.
 TEST_F(MemfileLeaseMgrTest, getLeases6DuidMultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
     testGetLeases6Duid();
 }
 
-// This test checks that all IPv6 leases are returned.
+/// @brief This test checks that all IPv6 leases are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6) {
     startBackend(V6);
     testGetLeases6();
 }
 
-// This test checks that all IPv6 leases are returned.
+/// @brief This test checks that all IPv6 leases are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6MultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
     testGetLeases6();
 }
 
-// Test that a range of IPv6 leases is returned with paging.
+/// @brief Test that a range of IPv6 leases is returned with paging.
 TEST_F(MemfileLeaseMgrTest, getLeases6Paged) {
     startBackend(V6);
     testGetLeases6Paged();
 }
 
-// Test that a range of IPv6 leases is returned with paging.
+/// @brief Test that a range of IPv6 leases is returned with paging.
 TEST_F(MemfileLeaseMgrTest, getLeases6PagedMultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
@@ -1144,7 +1139,6 @@ TEST_F(MemfileLeaseMgrTest, basicLease6MultiThread) {
     MultiThreadingMgr::instance().setMode(true);
     testBasicLease6();
 }
-
 
 /// @brief Check GetLease6 methods - access by DUID/IAID
 ///
@@ -1277,14 +1271,14 @@ TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetIdMultiThread) {
     testGetLease6DuidIaidSubnetId();
 }
 
-/// Checks that getLease6(type, duid, iaid, subnet-id) works with different
+/// @brief Checks that getLease6(type, duid, iaid, subnet-id) works with different
 /// DUID sizes
 TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     startBackend(V6);
     testGetLease6DuidIaidSubnetIdSize();
 }
 
-/// Checks that getLease6(type, duid, iaid, subnet-id) works with different
+/// @brief Checks that getLease6(type, duid, iaid, subnet-id) works with different
 /// DUID sizes
 TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetIdSizeMultiThread) {
     startBackend(V6);
@@ -1402,9 +1396,8 @@ TEST_F(MemfileLeaseMgrTest, testLease6MacMultiThread) {
     testLease6MAC();
 }
 
-// Check that memfile reports version correctly.
+/// @brief Check that memfile reports version correctly.
 TEST_F(MemfileLeaseMgrTest, versionCheck) {
-
     // Check that V4 backend reports versions correctly.
     startBackend(V4);
     testVersion(Memfile_LeaseMgr::MAJOR_VERSION,
@@ -1418,34 +1411,34 @@ TEST_F(MemfileLeaseMgrTest, versionCheck) {
     LeaseMgrFactory::destroy();
 }
 
-// Checks that declined IPv4 leases can be returned correctly.
+/// @brief Checks that declined IPv4 leases can be returned correctly.
 TEST_F(MemfileLeaseMgrTest, getDeclined4) {
     startBackend(V4);
     testGetDeclinedLeases4();
 }
 
-// Checks that declined IPv4 leases can be returned correctly.
+/// @brief Checks that declined IPv4 leases can be returned correctly.
 TEST_F(MemfileLeaseMgrTest, getDeclined4MultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
     testGetDeclinedLeases4();
 }
 
-// Checks that declined IPv6 leases can be returned correctly.
+/// @brief Checks that declined IPv6 leases can be returned correctly.
 TEST_F(MemfileLeaseMgrTest, getDeclined6) {
     startBackend(V6);
     testGetDeclinedLeases6();
 }
 
-// Checks that declined IPv6 leases can be returned correctly.
+/// @brief Checks that declined IPv6 leases can be returned correctly.
 TEST_F(MemfileLeaseMgrTest, getDeclined6MultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
     testGetDeclinedLeases6();
 }
 
-// This test checks that the backend reads DHCPv4 lease data from multiple
-// files.
+/// @brief This test checks that the backend reads DHCPv4 lease data from multiple
+/// files.
 TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
     LeaseFileIO io2(getLeaseFilePath("leasefile4_0.csv.2"));
     io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
@@ -1501,9 +1494,9 @@ TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
     EXPECT_EQ(200, lease->cltt_);
 }
 
-// This test checks that the lease database backend loads the file with
-// the .completed postfix instead of files with postfixes .1 and .2 if
-// the file with .completed postfix exists.
+/// @brief This test checks that the lease database backend loads the file with
+/// the .completed postfix instead of files with postfixes .1 and .2 if
+/// the file with .completed postfix exists.
 TEST_F(MemfileLeaseMgrTest, load4CompletedFile) {
     LeaseFileIO io2(getLeaseFilePath("leasefile4_0.csv.2"));
     io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
@@ -1551,8 +1544,8 @@ TEST_F(MemfileLeaseMgrTest, load4CompletedFile) {
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
 }
 
-// This test checks that backend constructor refuses to load leases from the
-// lease files if the LFC is in progress.
+/// @brief This test checks that backend constructor refuses to load leases from the
+/// lease files if the LFC is in progress.
 TEST_F(MemfileLeaseMgrTest, load4LFCInProgress) {
     // Create the backend configuration.
     DatabaseConnection::ParameterMap pmap;
@@ -1578,8 +1571,8 @@ TEST_F(MemfileLeaseMgrTest, load4LFCInProgress) {
     ASSERT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
 }
 
-// This test checks that the backend reads DHCPv6 lease data from multiple
-// files.
+/// @brief This test checks that the backend reads DHCPv6 lease data from multiple
+/// files.
 TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
@@ -1643,9 +1636,9 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
     EXPECT_EQ(0, lease->cltt_);
 }
 
-// This test checks that the backend reads DHCPv6 lease data from the
-// leasefile without the postfix and the file with a .1 postfix when
-// the file with the .2 postfix is missing.
+/// @brief This test checks that the backend reads DHCPv6 lease data from the
+/// leasefile without the postfix and the file with a .1 postfix when
+/// the file with the .2 postfix is missing.
 TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
     LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
@@ -1691,9 +1684,9 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
 }
 
-// This test checks that the backend reads DHCPv6 lease data from the
-// leasefile without the postfix and the file with a .2 postfix when
-// the file with the .1 postfix is missing.
+/// @brief This test checks that the backend reads DHCPv6 lease data from the
+/// leasefile without the postfix and the file with a .2 postfix when
+/// the file with the .1 postfix is missing.
 TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
@@ -1738,10 +1731,9 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3")));
 }
 
-
-// This test checks that the lease database backend loads the file with
-// the .completed postfix instead of files with postfixes .1 and .2 if
-// the file with .completed postfix exists.
+/// @brief This test checks that the lease database backend loads the file with
+/// the .completed postfix instead of files with postfixes .1 and .2 if
+/// the file with .completed postfix exists.
 TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
@@ -1801,8 +1793,8 @@ TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3")));
 }
 
-// This test checks that backend constructor refuses to load leases from the
-// lease files if the LFC is in progress.
+/// @brief This test checks that backend constructor refuses to load leases from the
+/// lease files if the LFC is in progress.
 TEST_F(MemfileLeaseMgrTest, load6LFCInProgress) {
     // Create the backend configuration.
     DatabaseConnection::ParameterMap pmap;
@@ -1828,8 +1820,8 @@ TEST_F(MemfileLeaseMgrTest, load6LFCInProgress) {
     ASSERT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
 }
 
-// Verifies that LFC is automatically run during MemfileLeasemMgr construction
-// when the lease file(s) being loaded need to be upgraded.
+/// @brief Verifies that LFC is automatically run during MemfileLeasemMgr construction
+/// when the lease file(s) being loaded need to be upgraded.
 TEST_F(MemfileLeaseMgrTest, leaseUpgrade4) {
     // Create header strings for each schema
     std::string header_1_0 =
@@ -1889,6 +1881,8 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade4) {
     EXPECT_EQ(result_file_contents, input_file.readFile());
 }
 
+/// @brief Verifies that LFC is automatically run during MemfileLeasemMgr construction
+/// when the lease file(s) being loaded need to be upgraded.
 TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
     // Create header strings for all three schemas
     std::string header_1_0 =
@@ -1961,8 +1955,8 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
     EXPECT_EQ(result_file_contents, input_file.readFile());
 }
 
-// This test verifies that the indexes of the container holding
-// DHCPv4 leases are updated correctly when a lease is updated.
+/// @brief This test verifies that the indexes of the container holding
+/// DHCPv4 leases are updated correctly when a lease is updated.
 TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
 
     const uint32_t seed = 12345678; // Used to initialize the random generator
@@ -2101,8 +2095,8 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
     }
 }
 
-// This test verifies that the indexes of the container holding
-// DHCPv4 leases are updated correctly when a lease is updated.
+/// @brief This test verifies that the indexes of the container holding
+/// DHCPv4 leases are updated correctly when a lease is updated.
 TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
 
     const uint32_t seed = 12345678; // Used to initialize the random generator
@@ -2228,41 +2222,40 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
     }
 }
 
-// Verifies that IPv4 lease statistics can be recalculated.
+/// @brief Verifies that IPv4 lease statistics can be recalculated.
 TEST_F(MemfileLeaseMgrTest, recountLeaseStats4) {
     startBackend(V4);
     testRecountLeaseStats4();
 }
 
-// Verifies that IPv6 lease statistics can be recalculated.
+/// @brief Verifies that IPv6 lease statistics can be recalculated.
 TEST_F(MemfileLeaseMgrTest, recountLeaseStats6) {
     startBackend(V6);
     testRecountLeaseStats6();
 }
 
-// Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(MemfileLeaseMgrTest, wipeLeases4) {
     startBackend(V4);
     testWipeLeases4();
 }
 
-// Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(MemfileLeaseMgrTest, wipeLeases6) {
     startBackend(V6);
     testWipeLeases6();
 }
 
-// Tests v4 lease stats query variants.
+/// @brief Tests v4 lease stats query variants.
 TEST_F(MemfileLeaseMgrTest, leaseStatsQuery4) {
     startBackend(V4);
     testLeaseStatsQuery4();
 }
 
-// Tests v6 lease stats query variants.
+/// @brief Tests v6 lease stats query variants.
 TEST_F(MemfileLeaseMgrTest, leaseStatsQuery6) {
     startBackend(V6);
     testLeaseStatsQuery6();
 }
-
 
 }  // namespace
