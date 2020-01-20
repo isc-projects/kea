@@ -1,17 +1,25 @@
-# Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 
-% BOOTP_ADDED_CLASS added BOOTP class to a BOOTP query: %1
-This debug message is printed when the BOOTP client class was added to
-a BOOTP query.  The query client and transaction identification are
-displayed.
-
-% BOOTP_ADDED_MSGTYPE added DHCPREQUEST message type to a BOOTP query: %1
-This debug message is printed when the DHCPREQUEST message type was
-added to a BOOTP query.  The query client and transaction
-identification are displayed.
+% BOOTP_BOOTP_QUERY recognized a BOOTP query: %1
+This debug message is printed when the BOOTP query was recognized. The
+BOOTP client class was added and the message type set to DHCPREQUEST.
+The query client and transaction identification are displayed.
 
 % BOOTP_LOAD Bootp hooks library has been loaded
 This info message indicates that the Bootp hooks library has been loaded.
+
+% BOOTP_PACKET_OPTIONS_SKIPPED an error upacking an option, caused subsequent options to be skipped: %1
+A debug message issued when an option failed to unpack correctly, making it
+impossible to unpack the remaining options in the DHCPv4 query. The server
+will still attempt to service the packet. The sole argument provides a
+reason for unpacking error.
+
+% BOOTP_PACKET_UNPACK_FAILED failed to parse query from %1 to %2, received over interface %3, reason: %4
+This debug message is issued when received DHCPv4 query is malformed and
+can't be parsed by the buffer4_receive callout. The query will be
+dropped by the server. The first three arguments specify source IP address,
+destination IP address and the interface. The last argument provides a
+reason for failure.
 
 % BOOTP_UNLOAD Bootp hooks library has been unloaded
 This info message indicates that the Bootp hooks library has been unloaded.

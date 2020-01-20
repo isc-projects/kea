@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,6 @@ using namespace isc::util;
 
 extern "C" {
 extern int buffer4_receive(CalloutHandle& handle);
-extern int pkt4_receive(CalloutHandle& handle);
 }
 
 namespace {
@@ -48,7 +47,7 @@ public:
         return(co_manager_);
     }
 
-    /// @brief Tests buffer4_receive and pkt4_receive callout.
+    /// @brief Tests buffer4_receive callout.
     ///
     /// @param pkt The packet to submit.
     /// @param processed True if the packet must be processed, false otherwise.
@@ -56,38 +55,32 @@ public:
         // Get callout handle.
         CalloutHandle handle(getCalloutManager());
 
-        // Fill data so it becomes possible to unpack a copy of it.
+        // Get type.
+        uint8_t type = pkt->getType();
+
+        // Get data so it becomes possible to reset it to unpacked state.
         ASSERT_NO_THROW(pkt->pack());
         const OutputBuffer& buffer = pkt->getBuffer();
-        pkt->data_.resize(buffer.getLength());
-        memmove(&pkt->data_[0], buffer.getData(), pkt->data_.size());
+        pkt.reset(new Pkt4(reinterpret_cast<const uint8_t*>(buffer.getData()),
+                           buffer.getLength()));
 
         // Set query.
         handle.setArgument("query4", pkt);
-
-        // Get type.
-        uint8_t type = pkt->getType();
 
         // Execute buffer4_receive callout.
         int ret;
         ASSERT_NO_THROW(ret = buffer4_receive(handle));
         EXPECT_EQ(0, ret);
 
+        // Verify status (SKIP means unpacked).
+        EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, handle.getStatus());
+
         // Verify processing.
         if (processed) {
             EXPECT_TRUE(pkt->inClass("BOOTP"));
-        } else {
-            EXPECT_FALSE(pkt->inClass("BOOTP"));
-        }
-
-        // Execute pkt4_receive callout.
-        ASSERT_NO_THROW(ret = pkt4_receive(handle));
-        EXPECT_EQ(0, ret);
-
-        // Verify processing.
-        if (processed) {
             EXPECT_EQ(DHCPREQUEST, pkt->getType());
         } else {
+            EXPECT_FALSE(pkt->inClass("BOOTP"));
             EXPECT_EQ(type, pkt->getType());
         }
     }
