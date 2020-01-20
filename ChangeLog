@@ -1,3 +1,14 @@
+1702.	[func]		razvan
+	Update and delete operations on database back-ends use lease old
+	expire value (internal storage) to detect concurrent actions on
+	the same lease.
+	(Gitlab #1040)
+
+1701.	[func]		razvan
+	Initialize all option definitions at program startup instead of
+	using lazy initialization to make access thread safe and lock-less.
+	(Gitlab #889)
+
 1700.	[func]		godfryd
 	Enabled checking Kea merge request in GitLab CI by Danger tool
 	(see https://danger.systems/guides/dangerfile.html).
