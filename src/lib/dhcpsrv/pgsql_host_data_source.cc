@@ -2059,7 +2059,6 @@ PgSqlHostDataSourceImpl::createContext() const {
     if (!ctx->is_readonly_) {
         ctx->conn_.prepareStatements(tagged_statements.begin() + WRITE_STMTS_BEGIN,
                                      tagged_statements.end());
-
     } else {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB_READONLY);
     }

@@ -381,7 +381,7 @@ public:
     ///         integers. "first" is the major version number, "second" the
     ///         minor number.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database
+    /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
