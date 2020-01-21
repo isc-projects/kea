@@ -1917,7 +1917,7 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
 
 template <typename Exchange, typename LeaseCollection>
 void
-MySqlLeaseMgr::getLeaseCollection(MySqlLeaseContextPtr ctx,
+MySqlLeaseMgr::getLeaseCollection(MySqlLeaseContextPtr& ctx,
                                   StatementIndex stindex,
                                   MYSQL_BIND* bind,
                                   Exchange& exchange,
@@ -1981,7 +1981,7 @@ MySqlLeaseMgr::getLeaseCollection(MySqlLeaseContextPtr ctx,
 }
 
 void
-MySqlLeaseMgr::getLease(MySqlLeaseContextPtr ctx,
+MySqlLeaseMgr::getLease(MySqlLeaseContextPtr& ctx,
                         StatementIndex stindex, MYSQL_BIND* bind,
                         Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
@@ -2001,7 +2001,7 @@ MySqlLeaseMgr::getLease(MySqlLeaseContextPtr ctx,
 }
 
 void
-MySqlLeaseMgr::getLease(MySqlLeaseContextPtr ctx,
+MySqlLeaseMgr::getLease(MySqlLeaseContextPtr& ctx,
                         StatementIndex stindex, MYSQL_BIND* bind,
                         Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
