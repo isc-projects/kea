@@ -77,7 +77,7 @@ As of January, 2020, Kea is officially supported on CentOS, Fedora, Ubuntu, Debi
 FreeBSD systems. Kea-|release| builds have been tested on:
 
 * CentOS Linux — 7, 8
-* Fedora — 29, 30
+* Fedora — 30, 31
 * Ubuntu — 16.04, 18.04, 19.04
 * Debian GNU/Linux — 9, 10
 
