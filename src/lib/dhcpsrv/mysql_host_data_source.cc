@@ -2809,7 +2809,7 @@ MySqlHostDataSourceImpl::getHostCollection(MySqlHostContextPtr& ctx,
         } catch (const isc::BadValue& ex) {
             // Rethrow the exception with a bit more data.
             isc_throw(BadValue, ex.what() << ". Statement is <" <<
-                    ctx->conn_.text_statements_[stindex] << ">");
+                      ctx->conn_.text_statements_[stindex] << ">");
         }
 
         if (single && (result.size() > 1)) {
