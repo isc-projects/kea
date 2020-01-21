@@ -1484,9 +1484,11 @@ public:
     /// @param single A boolean value indicating if a single host is
     /// expected to be returned, or multiple hosts.
     void getHostCollection(PgSqlHostContextPtr& ctx,
-                           StatementIndex stindex, PsqlBindArrayPtr bind,
+                           StatementIndex stindex,
+                           PsqlBindArrayPtr bind,
                            boost::shared_ptr<PgSqlHostExchange> exchange,
-                           ConstHostCollection& result, bool single) const;
+                           ConstHostCollection& result,
+                           bool single) const;
 
     /// @brief Retrieves a host by subnet and client's unique identifier.
     ///
@@ -2315,7 +2317,8 @@ PgSqlHostDataSource::add(const HostPtr& host) {
 }
 
 bool
-PgSqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
+PgSqlHostDataSource::del(const SubnetID& subnet_id,
+                         const asiolink::IOAddress& addr) {
     // Get a context
     PgSqlHostContextAlloc get_context(*impl_);
     PgSqlHostContextPtr ctx = get_context.ctx_;
