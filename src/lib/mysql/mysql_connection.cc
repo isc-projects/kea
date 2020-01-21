@@ -23,7 +23,7 @@ using namespace std;
 namespace isc {
 namespace db {
 
-bool MySqlHolder::atexit_ = false;
+bool MySqlHolder::atexit_ = []{atexit([]{mysql_library_end();});return true;};
 
 /// @todo: Migrate this default value to src/bin/dhcpX/simple_parserX.cc
 const int MYSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
