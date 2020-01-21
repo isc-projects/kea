@@ -1288,7 +1288,7 @@ public:
 
     /// @brief Pointer to the object representing an exchange which
     /// can be used to retrieve hosts and DHCPv4 options.
-    boost::shared_ptr<PgSqlHostWithOptionsExchange> host_exchange_;
+    boost::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange_;
 
     /// @brief Pointer to an object representing an exchange which can
     /// be used to retrieve hosts, DHCPv6 options and IPv6 reservations.
@@ -2063,7 +2063,7 @@ PgSqlHostDataSourceImpl::createContext() const {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB_READONLY);
     }
 
-    ctx->host_exchange_.reset(new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
+    ctx->host_ipv4_exchange_.reset(new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
     ctx->host_ipv6_exchange_.reset(new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
     ctx->host_ipv46_exchange_.reset(new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP4_AND_DHCP6));
     ctx->host_ipv6_reservation_exchange_.reset(new PgSqlIPv6ReservationExchange());
@@ -2282,7 +2282,7 @@ PgSqlHostDataSource::add(const HostPtr& host) {
     PgSqlTransaction transaction(ctx->conn_);
 
     // Create the PgSQL Bind array for the host
-    PsqlBindArrayPtr bind_array = ctx->host_exchange_->createBindForSend(host);
+    PsqlBindArrayPtr bind_array = ctx->host_ipv4_exchange_->createBindForSend(host);
 
     // ... and insert the host.
     uint32_t host_id = impl_->addStatement(ctx, PgSqlHostDataSourceImpl::INSERT_HOST,
@@ -2434,7 +2434,7 @@ PgSqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_SUBID4,
-                             bind_array, ctx->host_exchange_, result, false);
+                             bind_array, ctx->host_ipv4_exchange_, result, false);
 
     return (result);
 }
@@ -2495,7 +2495,7 @@ PgSqlHostDataSource::getAllbyHostname4(const std::string& hostname,
 
     ConstHostCollection result;
     impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_HOSTNAME_SUBID4,
-                             bind_array, ctx->host_exchange_, result, false);
+                             bind_array, ctx->host_ipv4_exchange_, result, false);
 
     return (result);
 }
@@ -2548,7 +2548,7 @@ PgSqlHostDataSource::getPage4(const SubnetID& subnet_id,
 
     ConstHostCollection result;
     impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE,
-                             bind_array, ctx->host_exchange_, result, false);
+                             bind_array, ctx->host_ipv4_exchange_, result, false);
 
     return (result);
 }
@@ -2597,7 +2597,7 @@ PgSqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_ADDR,
-                             bind_array, ctx->host_exchange_, result, false);
+                             bind_array, ctx->host_ipv4_exchange_, result, false);
 
     return (result);
 }
@@ -2613,7 +2613,7 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
 
     return (impl_->getHost(ctx, subnet_id, identifier_type, identifier_begin, identifier_len,
                            PgSqlHostDataSourceImpl::GET_HOST_SUBID4_DHCPID,
-                           ctx->host_exchange_));
+                           ctx->host_ipv4_exchange_));
 }
 
 ConstHostPtr
@@ -2639,7 +2639,7 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
 
     ConstHostCollection collection;
     impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_SUBID_ADDR,
-                             bind_array, ctx->host_exchange_, collection, true);
+                             bind_array, ctx->host_ipv4_exchange_, collection, true);
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
