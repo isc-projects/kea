@@ -1180,7 +1180,7 @@ private:
         size_t persistent_index_;
         //@}
 
-        /// @brief User context;
+        /// @brief User context
         size_t user_context_index_;
 
         /// @brief Option id for last processed row.
@@ -1904,7 +1904,7 @@ private:
     MYSQL_BIND bind_[OPTION_COLUMNS];
 };
 
-} // end of anonymous namespace
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -2554,7 +2554,7 @@ TaggedStatementArray tagged_statements = { {
     }
 };
 
-}; // anonymous namespace
+}  // namespace
 
 // MySqlHostContext Constructor
 
@@ -3507,7 +3507,8 @@ MySqlHostDataSource::getDescription() const {
                         "in MySQL database"));
 }
 
-std::pair<uint32_t, uint32_t> MySqlHostDataSource::getVersion() const {
+std::pair<uint32_t, uint32_t>
+MySqlHostDataSource::getVersion() const {
     return(impl_->getVersion());
 }
 
