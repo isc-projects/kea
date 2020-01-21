@@ -189,11 +189,7 @@ public:
                                    std::vector<my_bools>& error) {
         for (size_t i = 0; i < error.size(); ++i) {
             error[i] = MLM_FALSE;
-#ifdef HAVE_MYSQL_MY_BOOL
-            bind[i].error = reinterpret_cast<char*>(&error[i]);
-#else
-            bind[i].error = reinterpret_cast<bool*>(&error[i]);
-#endif
+            bind[i].error = reinterpret_cast<my_bool*>(&error[i]);
         }
     };
 
