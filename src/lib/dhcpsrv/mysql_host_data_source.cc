@@ -1925,9 +1925,9 @@ public:
     /// while the rest of this object does not.  (At alternative would be to
     /// declare them as "mutable".)
 
-    /// @brief Pointer to the object representing an exchange which
-    /// can be used to retrieve hosts and DHCPv4 options.
-    boost::shared_ptr<MySqlHostWithOptionsExchange> host_exchange_;
+    /// @brief Pointer to an object representing an exchange which can
+    /// be used to retrieve hosts and DHCPv4 options.
+    boost::shared_ptr<MySqlHostWithOptionsExchange> host_ipv4_exchange_;
 
     /// @brief Pointer to an object representing an exchange which can
     /// be used to retrieve hosts, DHCPv6 options and IPv6 reservations.
@@ -2656,7 +2656,7 @@ MySqlHostDataSourceImpl::createContext() const {
 
     // Create the exchange objects for use in exchanging data between the
     // program and the database.
-    ctx->host_exchange_.reset(new MySqlHostWithOptionsExchange(MySqlHostWithOptionsExchange::DHCP4_ONLY));
+    ctx->host_ipv4_exchange_.reset(new MySqlHostWithOptionsExchange(MySqlHostWithOptionsExchange::DHCP4_ONLY));
     ctx->host_ipv6_exchange_.reset(new MySqlHostIPv6Exchange(MySqlHostWithOptionsExchange::DHCP6_ONLY));
     ctx->host_ipv46_exchange_.reset(new MySqlHostIPv6Exchange(MySqlHostWithOptionsExchange::DHCP4_AND_DHCP6));
     ctx->host_ipv6_reservation_exchange_.reset(new MySqlIPv6ReservationExchange());
@@ -2910,7 +2910,7 @@ MySqlHostDataSource::add(const HostPtr& host) {
     MySqlTransaction transaction(ctx->conn_);
 
     // Create the MYSQL_BIND array for the host
-    std::vector<MYSQL_BIND> bind = ctx->host_exchange_->createBindForSend(host);
+    std::vector<MYSQL_BIND> bind = ctx->host_ipv4_exchange_->createBindForSend(host);
 
     // ... and insert the host.
     impl_->addStatement(ctx, MySqlHostDataSourceImpl::INSERT_HOST, bind);
@@ -3117,7 +3117,7 @@ MySqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(ctx, MySqlHostDataSourceImpl::GET_HOST_SUBID4, inbind,
-                             ctx->host_exchange_, result, false);
+                             ctx->host_ipv4_exchange_, result, false);
 
     return (result);
 }
@@ -3197,7 +3197,7 @@ MySqlHostDataSource::getAllbyHostname4(const std::string& hostname,
 
     ConstHostCollection result;
     impl_->getHostCollection(ctx, MySqlHostDataSourceImpl::GET_HOST_HOSTNAME_SUBID4, inbind,
-                             ctx->host_exchange_, result, false);
+                             ctx->host_ipv4_exchange_, result, false);
 
     return (result);
 }
@@ -3268,7 +3268,7 @@ MySqlHostDataSource::getPage4(const SubnetID& subnet_id,
 
     ConstHostCollection result;
     impl_->getHostCollection(ctx, MySqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE, inbind,
-                             ctx->host_exchange_, result, false);
+                             ctx->host_ipv4_exchange_, result, false);
 
     return (result);
 }
@@ -3328,7 +3328,7 @@ MySqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(ctx, MySqlHostDataSourceImpl::GET_HOST_ADDR, inbind,
-                             ctx->host_exchange_, result, false);
+                             ctx->host_ipv4_exchange_, result, false);
 
     return (result);
 }
@@ -3344,7 +3344,7 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
 
     return (impl_->getHost(ctx, subnet_id, identifier_type, identifier_begin, identifier_len,
                            MySqlHostDataSourceImpl::GET_HOST_SUBID4_DHCPID,
-                           ctx->host_exchange_));
+                           ctx->host_ipv4_exchange_));
 }
 
 ConstHostPtr
@@ -3374,7 +3374,7 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
 
     ConstHostCollection collection;
     impl_->getHostCollection(ctx, MySqlHostDataSourceImpl::GET_HOST_SUBID_ADDR, inbind,
-                             ctx->host_exchange_, collection, true);
+                             ctx->host_ipv4_exchange_, collection, true);
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
