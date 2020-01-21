@@ -2690,7 +2690,8 @@ MySqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
 template <typename LeasePtr>
 void
 MySqlLeaseMgr::updateLeaseCommon(MySqlLeaseContextPtr& ctx,
-                                 StatementIndex stindex, MYSQL_BIND* bind,
+                                 StatementIndex stindex,
+                                 MYSQL_BIND* bind,
                                  const LeasePtr& lease) {
 
     // Bind the parameters to the statement
@@ -2816,7 +2817,8 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 // handles the common processing.
 
 uint64_t
-MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
+MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
+                                 MYSQL_BIND* bind) {
 
     // Get a context
     MySqlLeaseContextAlloc get_context(*this);

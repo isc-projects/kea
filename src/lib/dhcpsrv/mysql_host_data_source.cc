@@ -1990,17 +1990,17 @@ public:
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
         GET_HOST_PREFIX,        // Gets host by IPv6 prefix
         GET_HOST_SUBID6_ADDR,   // Gets host by IPv6 SubnetID and IPv6 prefix
-        GET_HOST_SUBID4,        // Get hosts by IPv4 SubnetID
-        GET_HOST_SUBID6,        // Get hosts by IPv6 SubnetID
-        GET_HOST_HOSTNAME,      // Get host by hostname
-        GET_HOST_HOSTNAME_SUBID4, // Get host by hostname and IPv4 SubnetID
-        GET_HOST_HOSTNAME_SUBID6, // Get host by hostname and IPv6 SubnetID
-        GET_HOST_SUBID4_PAGE,   // Get hosts by IPv4 SubnetID beginning by HID
-        GET_HOST_SUBID6_PAGE,   // Get hosts by IPv6 SubnetID beginning by HID
+        GET_HOST_SUBID4,        // Gets hosts by IPv4 SubnetID
+        GET_HOST_SUBID6,        // Gets hosts by IPv6 SubnetID
+        GET_HOST_HOSTNAME,      // Gets hosts by hostname
+        GET_HOST_HOSTNAME_SUBID4, // Gets hosts by hostname and IPv4 SubnetID
+        GET_HOST_HOSTNAME_SUBID6, // Gets hosts by hostname and IPv6 SubnetID
+        GET_HOST_SUBID4_PAGE,   // Gets hosts by IPv4 SubnetID beginning by HID
+        GET_HOST_SUBID6_PAGE,   // Gets hosts by IPv6 SubnetID beginning by HID
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
-        INSERT_V4_OPTION,       // Insert DHCPv4 option
-        INSERT_V6_OPTION,       // Insert DHCPv6 option
+        INSERT_V4_HOST_OPTION,  // Insert DHCPv4 option
+        INSERT_V6_HOST_OPTION,  // Insert DHCPv6 option
         DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
         DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
         DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
@@ -2332,7 +2332,7 @@ TaggedStatementArray tagged_statements = { {
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
     // Retrieves host information, IPv6 reservations and DHCPv6 options
-    // associated with a host using subnet id and prefix. This query
+    // associated with a host using IPv6 subnet id and prefix. This query
     // returns host information for a single host. However, multiple rows
     // are returned due to left joining IPv6 reservations and DHCPv6 options.
     // The number of rows returned is multiplication of number of existing
@@ -2526,14 +2526,14 @@ TaggedStatementArray tagged_statements = { {
 
     // Inserts a single DHCPv4 option into 'dhcp4_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
-    {MySqlHostDataSourceImpl::INSERT_V4_OPTION,
+    {MySqlHostDataSourceImpl::INSERT_V4_HOST_OPTION,
             "INSERT INTO dhcp4_options(option_id, code, value, formatted_value, space, "
                 "persistent, user_context, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
 
     // Inserts a single DHCPv6 option into 'dhcp6_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
-    {MySqlHostDataSourceImpl::INSERT_V6_OPTION,
+    {MySqlHostDataSourceImpl::INSERT_V6_HOST_OPTION,
             "INSERT INTO dhcp6_options(option_id, code, value, formatted_value, space, "
                 "persistent, user_context, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
@@ -2596,15 +2596,16 @@ MySqlHostDataSource::MySqlHostContextAlloc::~MySqlHostContextAlloc() {
 MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
     : parameters_(parameters) {
 
-    // Test schema version first.
+    // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);
     std::pair<uint32_t, uint32_t> db_version = getVersion();
     if (code_version != db_version) {
-        isc_throw(DbOpenError, "MySQL schema version mismatch: need version: "
-                  << code_version.first << "." << code_version.second
-                  << " found version: " << db_version.first << "."
-                  << db_version.second);
+        isc_throw(DbOpenError,
+                  "MySQL schema version mismatch: need version: "
+                      << code_version.first << "." << code_version.second
+                      << " found version: " << db_version.first << "."
+                      << db_version.second);
     }
 
     // Create an initial context.
@@ -2920,14 +2921,14 @@ MySqlHostDataSource::add(const HostPtr& host) {
     // Insert DHCPv4 options.
     ConstCfgOptionPtr cfg_option4 = host->getCfgOption4();
     if (cfg_option4) {
-        impl_->addOptions(ctx, MySqlHostDataSourceImpl::INSERT_V4_OPTION,
+        impl_->addOptions(ctx, MySqlHostDataSourceImpl::INSERT_V4_HOST_OPTION,
                           cfg_option4, host_id);
     }
 
     // Insert DHCPv6 options.
     ConstCfgOptionPtr cfg_option6 = host->getCfgOption6();
     if (cfg_option6) {
-        impl_->addOptions(ctx, MySqlHostDataSourceImpl::INSERT_V6_OPTION,
+        impl_->addOptions(ctx, MySqlHostDataSourceImpl::INSERT_V6_HOST_OPTION,
                           cfg_option6, host_id);
     }
 
