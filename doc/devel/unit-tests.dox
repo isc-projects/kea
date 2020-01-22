@@ -93,7 +93,7 @@ increase the time it takes each unit test to execute.
   some tests always fail when it is used, experiments are run with
   different versions of Tsan).
 
-  The simplest way to enable a sanitizer is to add it to the CXX
+  The simplest way to enable a sanitizer is to add it to the CXXFLAGS
   environment variable in .configure by e.g. <i>-fsanitize=thread</i>.
 
 @section unitTestsDatabaseConfig Databases Configuration for Unit Tests
