@@ -127,7 +127,7 @@ int pkt4_send(CalloutHandle& handle) {
 
     // Check if it is a BOOTP query.
     if (!query->inClass("BOOTP")) {
-	return (0);
+        return (0);
     }
 
     // Get the response message.
@@ -137,28 +137,28 @@ int pkt4_send(CalloutHandle& handle) {
     // @todo check if exists and/or already packed.
 
     for (uint16_t code : DHCP_SPECIFIC_OPTIONS) {
-	while (response->delOption(code))
-	    ;
+        while (response->delOption(code))
+            ;
     }
 
     // Pack the response.
     try {
-	LOG_DEBUG(bootp_logger, DBGLVL_TRACE_BASIC, BOOTP_PACKET_PACK)
-	    .arg(response->getLabel());
-	response->pack();
+        LOG_DEBUG(bootp_logger, DBGLVL_TRACE_BASIC, BOOTP_PACKET_PACK)
+            .arg(response->getLabel());
+        response->pack();
 
-	// The pack method adds a DHO_END option at the end.
-	isc::util::OutputBuffer& buffer = response->getBuffer();
-	size_t size = buffer.getLength();
-	if (size < BOOT_MIN_SIZE) {
-	    size_t delta = BOOT_MIN_SIZE - size;
-	    std::vector<uint8_t> zeros(delta, 0);
-	    buffer.writeData(&zeros[0], delta);
-	}
+        // The pack method adds a DHO_END option at the end.
+        isc::util::OutputBuffer& buffer = response->getBuffer();
+        size_t size = buffer.getLength();
+        if (size < BOOT_MIN_SIZE) {
+            size_t delta = BOOT_MIN_SIZE - size;
+            std::vector<uint8_t> zeros(delta, 0);
+            buffer.writeData(&zeros[0], delta);
+        }
     } catch (const std::exception& ex) {
-	LOG_ERROR(bootp_logger, BOOTP_PACKET_PACK_FAIL)
-	    .arg(response->getLabel())
-	    .arg(ex.what());
+        LOG_ERROR(bootp_logger, BOOTP_PACKET_PACK_FAIL)
+            .arg(response->getLabel())
+            .arg(ex.what());
     }
 
     // Avoid to pack it a second time!

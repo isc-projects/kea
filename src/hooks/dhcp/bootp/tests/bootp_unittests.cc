@@ -24,6 +24,7 @@ using namespace isc::util;
 
 extern "C" {
 extern int buffer4_receive(CalloutHandle& handle);
+extern int pkt4_send(CalloutHandle& handle);
 }
 
 namespace {
@@ -51,7 +52,7 @@ public:
     ///
     /// @param pkt The packet to submit.
     /// @param processed True if the packet must be processed, false otherwise.
-    void calloutsCall(Pkt4Ptr& pkt, bool processed) {
+    void buffer4ReceiveCalloutCall(Pkt4Ptr& pkt, bool processed) {
         // Get callout handle.
         CalloutHandle handle(getCalloutManager());
 
@@ -85,6 +86,43 @@ public:
         }
     }
 
+    /// @brief Tests pkt4_send callout.
+    ///
+    /// @param pkt The packet to submit.
+    /// @param bootp True if the query is in the BOOT class.
+    /// @param processed True if the packet must be processed, false otherwise.
+    void pkt4SendCalloutCall(Pkt4Ptr& pkt, bool bootp, bool processed) {
+        // Get callout handle.
+        CalloutHandle handle(getCalloutManager());
+
+        // Set query.
+        Pkt4Ptr query(new Pkt4(DHCPREQUEST, 12345));
+        if (bootp) {
+            query->addClass("BOOTP");
+        }
+        handle.setArgument("query4", query);
+
+        // Set response.
+        handle.setArgument("response4", pkt);
+
+        // Execute buffer4_receive callout.
+        int ret;
+        ASSERT_NO_THROW(ret = pkt4_send(handle));
+        EXPECT_EQ(0, ret);
+
+        // Verify processing.
+        if (processed) {
+            EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, handle.getStatus());
+            EXPECT_FALSE(pkt->getOption(DHO_DHCP_MESSAGE_TYPE));
+            EXPECT_LE(300, pkt->getBuffer().getLength());
+        } else {
+            EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle.getStatus());
+            EXPECT_TRUE(pkt->getOption(DHO_DHCP_MESSAGE_TYPE));
+            // This works because we did not add options to the response.
+            EXPECT_GT(300, pkt->getBuffer().getLength());
+        }
+    }
+
     /// @brief Callout manager accessed by this CalloutHandle.
     boost::shared_ptr<CalloutManager> co_manager_;
 };
@@ -92,19 +130,19 @@ public:
 // Verifies that DHCPDISCOVER goes through unmodified.
 TEST_F(BootpTest, dhcpDiscover) {
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 12345));
-    calloutsCall(pkt, false);
+    buffer4ReceiveCalloutCall(pkt, false);
 }
 
 // Verifies that DHCPREQUEST goes through unmodified.
 TEST_F(BootpTest, dhcpRequest) {
     Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 12345));
-    calloutsCall(pkt, false);
+    buffer4ReceiveCalloutCall(pkt, false);
 }
 
 // Verifies that DHCPOFFER goes through unmodified.
 TEST_F(BootpTest, dhcpOffer) {
     Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 12345));
-    calloutsCall(pkt, false);
+    buffer4ReceiveCalloutCall(pkt, false);
 }
 
 // Verifies that BOOTREPLY goes through unmodified.
@@ -114,7 +152,7 @@ TEST_F(BootpTest, bootReply) {
     pkt->setType(DHCP_NOTYPE);
     pkt->delOption(DHO_DHCP_MESSAGE_TYPE);
     ASSERT_EQ(BOOTREPLY, pkt->getOp());
-    calloutsCall(pkt, false);
+    buffer4ReceiveCalloutCall(pkt, false);
 }
 
 // Verifies that BOOTREQUEST is recognized and processed.
@@ -124,7 +162,31 @@ TEST_F(BootpTest, bootRequest) {
     pkt->setType(DHCP_NOTYPE);
     pkt->delOption(DHO_DHCP_MESSAGE_TYPE);
     ASSERT_EQ(BOOTREQUEST, pkt->getOp());
-    calloutsCall(pkt, true);
+    buffer4ReceiveCalloutCall(pkt, true);
+}
+
+// Verifies that pure DHCPACK goes through unmodified.
+TEST_F(BootpTest, dhcpAck) {
+    Pkt4Ptr pkt(new Pkt4(DHCPACK, 12345));
+    pkt4SendCalloutCall(pkt, false, false);
+}
+
+// Verifies that BOOTP ACK is processed.
+TEST_F(BootpTest, bootpAck) {
+    Pkt4Ptr pkt(new Pkt4(DHCPACK, 12345));
+    pkt4SendCalloutCall(pkt, true, true);
+}
+
+// Verifies that pure DHCPNAK goes through unmodified.
+TEST_F(BootpTest, dhcpNak) {
+    Pkt4Ptr pkt(new Pkt4(DHCPNAK, 12345));
+    pkt4SendCalloutCall(pkt, false, false);
+}
+
+// Verifies that BOOTP NAK is processed.
+TEST_F(BootpTest, bootpNak) {
+    Pkt4Ptr pkt(new Pkt4(DHCPNAK, 12345));
+    pkt4SendCalloutCall(pkt, true, true);
 }
 
 } // end of anonymous namespace
