@@ -14,6 +14,16 @@ impossible to unpack the remaining options in the DHCPv4 query. The server
 will still attempt to service the packet. The sole argument provides a
 reason for unpacking error.
 
+% BOOTP_PACKET_PACK %1: preparing on-wire format of the packet to be sent
+This debug message is issued when the server starts preparing the on-wire
+format of the packet to be sent back to the client. The argument specifies
+the client and the transaction identification information.
+
+% BOOTP_PACKET_PACK_FAIL %1: preparing on-wire-format of the packet to be sent failed %2
+This error message is issued when preparing an on-wire format of the
+packet has failed. The first argument identifies the client and the
+BOOTP transaction.  The second argument includes the error string.
+
 % BOOTP_PACKET_UNPACK_FAILED failed to parse query from %1 to %2, received over interface %3, reason: %4
 This debug message is issued when received DHCPv4 query is malformed and
 can't be parsed by the buffer4_receive callout. The query will be
