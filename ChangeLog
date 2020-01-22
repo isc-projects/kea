@@ -1,3 +1,9 @@
+1703.	[bug]		niclas rozenvik
+	A fix in the --with-gtest option. It is now able to detect the
+	libgtest.a. Thank you to Niclas Rozenvik for reporting the issue
+	and proposing a fix!
+	(Gitlab #1080)
+
 1702.	[func]		razvan
 	Update and delete operations on database back-ends use lease old
 	expire value (internal storage) to detect concurrent actions on

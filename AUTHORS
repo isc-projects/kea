@@ -205,3 +205,6 @@ We have received the following contributions:
 
  - Kristoffer Larsen
    2019-10: Changes in alloc_engine_messages.mes are now picked up correctly.
+
+ - Niclas Rosenvik
+   2020-01: Fix in the gtest detection scripts.
