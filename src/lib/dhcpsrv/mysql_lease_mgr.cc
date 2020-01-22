@@ -355,7 +355,6 @@ public:
                                    size_t count) {
         for (size_t i = 0; i < count; ++i) {
             error[i] = MLM_FALSE;
-#endif
             bind[i].error = reinterpret_cast<my_bool*>(&error[i]);
         }
     }
