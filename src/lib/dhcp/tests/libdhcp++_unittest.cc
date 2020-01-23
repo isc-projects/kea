@@ -780,7 +780,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 
     ASSERT_NO_THROW(
         LibDHCP::unpackOptions4(v4packed, DHCP4_OPTION_SPACE, options,
-				deferred false);
+                                deferred, false);
     );
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
@@ -1133,7 +1133,8 @@ TEST_F(LibDhcpTest, option43Pad) {
     ASSERT_NO_THROW(offset = LibDHCP::unpackOptions4(buf, space,
                                                      options, deferred, true));
 
-    // There should be 2 suboptions (1 and 2).
+    // There should be 2 suboptions (1 and 2) because no sub-option 0
+    // was defined so code 0 means PAD.
     ASSERT_EQ(2, options.size());
 
     // Get suboption 1.
@@ -1233,7 +1234,9 @@ TEST_F(LibDhcpTest, option43End) {
     EXPECT_EQ(2, sub255->getValue());
 }
 
-// Verify the option 43 END bug is fixed.
+// Verify the option 43 END bug is fixed (#950: option code 255 was not
+// parse at END, now it is not parse at END only when an option code 255
+// is defined in the corresponding option space).
 TEST_F(LibDhcpTest, option43Factory) {
     // Create the buffer holding the structure of option 43 content.
     OptionBuffer buf = {

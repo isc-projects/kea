@@ -2152,13 +2152,14 @@ The definition used to decode a VSI option is:
 
 .. note::
 
-   In the Vendor-Specific Information option (code 43) sub-option code 0
-   and 255 mean PAD and END respectively according to
-   `RFC 2132 <https://tools.ietf.org/html/rfc2132>`_. Kea allows to
-   configured sub-options with codes from 0 to 255: when an VSI option
-   is parsed in an incoming query and the sub-option 0 is configured
-   sub-option code 0 is no longer parsed as a PAD. Same for sub-option 255
-   and END.
+   By default, in the Vendor-Specific Information option (code 43)
+   sub-option code 0 and 255 mean PAD and END respectively according to
+   `RFC 2132 <https://tools.ietf.org/html/rfc2132>`_. In other words, the
+   sub-option code values of 0 and 255 are reserved. Kea does, however,
+   allow you to define sub-option codes from 0 to 255.  If you define
+   sub-options with codes 0 and/or 255, bytes with that value will
+   no longer be treated as a PAD or an END, but as the sub-option code
+   when parsing a VSI option in an incoming query.
 
 .. note::
 

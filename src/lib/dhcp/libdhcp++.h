@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -269,7 +269,7 @@ public:
                                  const std::string& option_space,
                                  isc::dhcp::OptionCollection& options,
                                  std::list<uint16_t>& deferred,
-                                 bool flexible_pad_end);
+                                 bool flexible_pad_end = false);
 
     /// Registers factory method that produces options of specific option types.
     ///
