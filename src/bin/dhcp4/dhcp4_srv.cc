@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3599,9 +3599,8 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
         if (!opt) {
             // should not happen but do not crash anyway
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
-                      DHCP4_PACKET_OPTION_UNPACK_FAIL)
-                .arg(code)
-                .arg("can't find the option in the query");
+                      DHCP4_DEFERRED_OPTION_MISSING)
+                .arg(code);
             continue;
         }
         const OptionBuffer buf = opt->getData();
@@ -3611,7 +3610,7 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
         } catch (const std::exception& e) {
             // Failed to parse the option.
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
-                      DHCP4_PACKET_OPTION_UNPACK_FAIL)
+                      DHCP4_DEFERRED_OPTION_UNPACK_FAIL)
                 .arg(code)
                 .arg(e.what());
             continue;

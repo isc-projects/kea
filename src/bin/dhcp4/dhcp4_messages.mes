@@ -247,6 +247,15 @@ detected as a duplicate (i.e. another device in the network is using this addres
 However, the server does not have a record for this address. This may indicate
 a client's error or a server's purged database.
 
+% DHCP4_DEFERRED_OPTION_MISSING can find deferred option code %1 in the query
+This debug message is printed when a deferred option cannot be found in
+the query.
+
+% DHCP4_DEFERRED_OPTION_UNPACK_FAIL An error unpacking the deferred option %1: %2
+A debug message issued when deferred unpacking of an option failed, making it
+to be left unpacked in the packet. The first argument is the option code,
+the second the error.
+
 % DHCP4_DHCP4O6_BAD_PACKET received malformed DHCPv4o6 packet: %1
 A malformed DHCPv4o6 packet was received.
 
