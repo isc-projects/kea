@@ -1,3 +1,7 @@
+1704.	[func]		fdupont
+	Prepared memfile lease manager to be used with multi-threading.
+	(Gitlab #894)
+
 1703.	[bug]		niclas rozenvik
 	A fix in the --with-gtest option. It is now able to detect the
 	libgtest.a. Thank you to Niclas Rozenvik for reporting the issue
