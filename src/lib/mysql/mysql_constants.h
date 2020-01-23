@@ -18,7 +18,7 @@ namespace db {
 
 #ifdef HAVE_MYSQL_MY_BOOL
 /// @brief my_bools type for vectors.
-typedef my_bool my_bools;
+typedef char my_bools;
 
 /// @brief MySQL false value.
 const my_bool MLM_FALSE = 0;
