@@ -2836,9 +2836,7 @@ MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
 
     // See how many rows were affected.  Note that the statement may delete
     // multiple rows.
-    int affected_rows = mysql_stmt_affected_rows(ctx->conn_.statements_[stindex]);
-
-    return (static_cast<uint64_t>(affected_rows));
+    return (static_cast<uint64_t>(mysql_stmt_affected_rows(ctx->conn_.statements_[stindex])));
 }
 
 bool

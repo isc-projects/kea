@@ -1474,9 +1474,7 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
 
         // Remove this lease from LeaseMgr as it is reserved to someone
         // else or doesn't belong to a pool.
-        bool success = LeaseMgrFactory::instance().deleteLease(candidate);
-
-        if (!success) {
+        if (!LeaseMgrFactory::instance().deleteLease(candidate)) {
             continue;
         }
 
@@ -1521,9 +1519,7 @@ AllocEngine::removeNonmatchingReservedNoHostLeases6(ClientContext6& ctx,
         }
 
         // Remove this lease from LeaseMgr as it doesn't belong to a pool.
-        bool success = LeaseMgrFactory::instance().deleteLease(candidate);
-
-        if (!success) {
+        if (!LeaseMgrFactory::instance().deleteLease(candidate)) {
             continue;
         }
 
@@ -1592,9 +1588,7 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
         // simply remove it from the list.
         // We have reservations, but not for this lease. Release it.
         // Remove this lease from LeaseMgr
-        bool success = LeaseMgrFactory::instance().deleteLease(*lease);
-
-        if (!success) {
+        if (!LeaseMgrFactory::instance().deleteLease(*lease)) {
             continue;
         }
 
@@ -1996,9 +1990,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         // Oh dear, the lease is no longer valid. We need to get rid of it.
 
         // Remove this lease from LeaseMgr
-        bool success = LeaseMgrFactory::instance().deleteLease(lease);
-
-        if (!success) {
+        if (!LeaseMgrFactory::instance().deleteLease(lease)) {
             return;
         }
 
@@ -3539,9 +3531,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
             .arg(ctx.query_->getLabel())
             .arg(client_lease->addr_.toText());
 
-        bool success = lease_mgr.deleteLease(client_lease);
-
-        if (success) {
+        if (lease_mgr.deleteLease(client_lease)) {
             // Need to decrease statistic for assigned addresses.
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", client_lease->subnet_id_,
