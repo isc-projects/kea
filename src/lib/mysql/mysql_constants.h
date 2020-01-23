@@ -16,10 +16,12 @@ namespace db {
 ///
 //@{
 
-#ifdef HAVE_MYSQL_MY_BOOL
 /// @brief my_bools type for vectors.
+/// @note vector<bool> is specialized into a bitset, so vector<char>
+/// must be used instead
 typedef char my_bools;
 
+#ifdef HAVE_MYSQL_MY_BOOL
 /// @brief MySQL false value.
 const my_bool MLM_FALSE = 0;
 
@@ -27,15 +29,8 @@ const my_bool MLM_FALSE = 0;
 const my_bool MLM_TRUE = 1;
 
 #else
-///@brief check for bool size
-static_assert(sizeof(bool) == 1, "unsupported bool size");
-
 /// @brief my_bool type in MySQL 8.x.
 typedef bool my_bool;
-
-/// @brief my_bools type for vectors in MySQL 8.x.
-/// @note vector<my_bool> is specialized into a bitset.
-typedef char my_bools;
 
 /// @brief MySQL false value.
 const my_bool MLM_FALSE = false;
@@ -43,6 +38,9 @@ const my_bool MLM_FALSE = false;
 /// @brief MySQL true value.
 const my_bool MLM_TRUE = true;
 #endif
+
+///@brief check for bool size
+static_assert(sizeof(my_bool) == sizeof(char), "unsupported bool size");
 
 /// @brief MySQL fetch success code.
 const int MLM_MYSQL_FETCH_SUCCESS = 0;
