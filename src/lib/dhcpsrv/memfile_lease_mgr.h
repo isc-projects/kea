@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -273,8 +273,9 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4(const asiolink::IOAddress& lower_bound_address,
-                                        const LeasePageSize& page_size) const;
+    virtual Lease4Collection
+    getLeases4(const asiolink::IOAddress& lower_bound_address,
+               const LeasePageSize& page_size) const;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
@@ -365,8 +366,9 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6(const asiolink::IOAddress& lower_bound_address,
-                                        const LeasePageSize& page_size) const;
+    virtual Lease6Collection
+    getLeases6(const asiolink::IOAddress& lower_bound_address,
+               const LeasePageSize& page_size) const;
 
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
