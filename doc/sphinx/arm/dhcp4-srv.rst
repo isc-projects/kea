@@ -2167,12 +2167,17 @@ The definition used to decode a VSI option is:
    is determined as follows:
 
    - If defined at the global scope this definition is used
-   - If defined at client class scope and the packet belongs to this class the client class definition is used
-   - If not defined at global scope nor in a client class to which the packet belongs, the built-in last resort definition is used. This definition only says the sub-option space is "vendor-encapsulated-options-space"
+   - If defined at client class scope and the packet belongs to this
+     class the client class definition is used
+   - If not defined at global scope nor in a client class to which the
+     packet belongs, the built-in last resort definition is used. This
+     definition only says the sub-option space is
+     "vendor-encapsulated-options-space"
 
    The output definition selection  is a bit simpler:
 
-   - If the packet belongs to a client class which defines the option 43 use this definition
+   - If the packet belongs to a client class which defines the option
+     43 use this definition
    - If defined at the global scope use this definition
    - Otherwise use the built-in last resot definition.
 
