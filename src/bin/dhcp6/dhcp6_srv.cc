@@ -3395,11 +3395,6 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
         }
     }
 
-    // Check if a lease has flags indicating that the FQDN update has
-    // been performed. If so, create NameChangeRequest which removes
-    // the entries. This method does all necessary checks.
-    queueNCR(CHG_REMOVE, lease);
-
     // @todo: Call hooks.
 
     // We need to disassociate the lease from the client. Once we move a lease
@@ -3408,6 +3403,11 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
 
     LeaseMgrFactory::instance().updateLease6(lease);
+
+    // Check if a lease has flags indicating that the FQDN update has
+    // been performed. If so, create NameChangeRequest which removes
+    // the entries. This method does all necessary checks.
+    queueNCR(CHG_REMOVE, lease);
 
     // Bump up the subnet-specific statistic.
     StatsMgr::instance().addValue(
@@ -3774,9 +3774,9 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer,
         // Set the generated FQDN in the Client FQDN option.
         fqdn->setDomainName(generated_name, Option6ClientFqdn::FULL);
 
-       answer->delOption(D6O_CLIENT_FQDN);
-       answer->addOption(fqdn);
-       ctx.hostname_ = generated_name;
+        answer->delOption(D6O_CLIENT_FQDN);
+        answer->addOption(fqdn);
+        ctx.hostname_ = generated_name;
     } catch (const Exception& ex) {
         LOG_ERROR(ddns6_logger, DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL)
             .arg(answer->getLabel())

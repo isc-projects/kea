@@ -3039,10 +3039,6 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
         }
     }
 
-    // Remove existing DNS entries for the lease, if any.
-    // queueNCR will do the necessary checks and will skip the update, if not needed.
-    queueNCR(CHG_REMOVE, lease);
-
     // @todo: Call hooks.
 
     // We need to disassociate the lease from the client. Once we move a lease
@@ -3051,6 +3047,10 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
     lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
 
     LeaseMgrFactory::instance().updateLease4(lease);
+
+    // Remove existing DNS entries for the lease, if any.
+    // queueNCR will do the necessary checks and will skip the update, if not needed.
+    queueNCR(CHG_REMOVE, lease);
 
     // Bump up the statistics.
 
