@@ -27,6 +27,9 @@ const my_bool MLM_FALSE = 0;
 const my_bool MLM_TRUE = 1;
 
 #else
+///@brief check for bool size
+static_assert(sizeof(bool) == 1, "unsupported bool size");
+
 /// @brief my_bool type in MySQL 8.x.
 typedef bool my_bool;
 
