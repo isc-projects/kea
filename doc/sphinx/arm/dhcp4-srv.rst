@@ -2161,6 +2161,26 @@ The definition used to decode a VSI option is:
    no longer be treated as a PAD or an END, but as the sub-option code
    when parsing a VSI option in an incoming query.
 
+   A short summary of the option 43 input processing:
+
+   the processing (aka unpacking) is deferred to happen after
+   classification (this means you can't classify using option 43
+   sub-options) if defined at global scope this definition is used if
+   defined at client class scope and the packet belongs to this class
+   the client class definition is used if not defined at global scope
+   nor in a client class the packet belongs to the built-in last
+   resort definition is used: this definition only says the sub-option
+   space is "vendor-encapsulated-options-space"
+
+   The output processing is a bit simpler:
+
+   if the query belongs to a client class which defines the option 43
+   this definition is used else the global scope definition if it is
+   configured is used else the last resort definition is used
+
+   Note as they use a specific/per vendor option space the sub-options
+   are defined at the global scope.
+
 .. note::
 
    Option definitions in client classes are allowed only for this
