@@ -3400,6 +3400,15 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     // the entries. This method does all necessary checks.
     queueNCR(CHG_REMOVE, lease);
 
+    // @todo: Call hooks.
+
+    // We need to disassociate the lease from the client. Once we move a lease
+    // to declined state, it is no longer associated with the client in any
+    // way.
+    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
+
+    LeaseMgrFactory::instance().updateLease6(lease);
+
     // Bump up the subnet-specific statistic.
     StatsMgr::instance().addValue(
         StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
@@ -3407,12 +3416,6 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
 
     // Global declined addresses counter.
     StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
-
-    // We need to disassociate the lease from the client. Once we move a lease
-    // to declined state, it is no longer associated with the client in any
-    // way.
-    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
-    LeaseMgrFactory::instance().updateLease6(lease);
 
     LOG_INFO(lease6_logger, DHCP6_DECLINE_LEASE).arg(decline->getLabel())
         .arg(lease->addr_.toText()).arg(lease->valid_lft_);

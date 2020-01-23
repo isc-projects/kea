@@ -405,7 +405,7 @@ public:
         int64_t assigned = 0;
         int64_t declined = 0;
         for (Lease4StorageSubnetIdIndex::const_iterator lease = lower;
-            lease != upper; ++lease) {
+             lease != upper; ++lease) {
             // If we've hit the next subnet, add rows for the current subnet
             // and wipe the accumulators
             if ((*lease)->subnet_id_ != cur_id) {
@@ -548,7 +548,7 @@ public:
         int64_t declined = 0;
         int64_t assigned_pds = 0;
         for (Lease6StorageSubnetIdIndex::const_iterator lease = lower;
-            lease != upper; ++lease) {
+             lease != upper; ++lease) {
             // If we've hit the next subnet, add rows for the current subnet
             // and wipe the accumulators
             if ((*lease)->subnet_id_ != cur_id) {
@@ -1105,8 +1105,9 @@ Memfile_LeaseMgr::getLeases6Internal(Lease::Type type,
     std::pair<Lease6StorageDuidIaidTypeIndex::const_iterator,
               Lease6StorageDuidIaidTypeIndex::const_iterator> l =
         idx.equal_range(boost::make_tuple(duid.getDuid(), iaid, type));
+
     for (Lease6StorageDuidIaidTypeIndex::const_iterator lease =
-            l.first; lease != l.second; ++lease) {
+         l.first; lease != l.second; ++lease) {
         collection.push_back(Lease6Ptr(new Lease6(**lease)));
     }
 }
@@ -1144,8 +1145,9 @@ Memfile_LeaseMgr::getLeases6Internal(Lease::Type type,
     std::pair<Lease6StorageDuidIaidTypeIndex::const_iterator,
               Lease6StorageDuidIaidTypeIndex::const_iterator> l =
         idx.equal_range(boost::make_tuple(duid.getDuid(), iaid, type));
+
     for (Lease6StorageDuidIaidTypeIndex::const_iterator lease =
-            l.first; lease != l.second; ++lease) {
+         l.first; lease != l.second; ++lease) {
         // Filter out the leases which subnet id doesn't match.
         if ((*lease)->subnet_id_ == subnet_id) {
             collection.push_back(Lease6Ptr(new Lease6(**lease)));

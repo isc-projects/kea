@@ -344,7 +344,7 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
             // We still need to throw so caller can error out of the current
             // processing.
             isc_throw(DbOperationError,
-                      "fatal database errror or connectivity lost");
+                      "fatal database error or connectivity lost");
         }
 
         // Apparently it wasn't fatal, so we throw with a helpful message.

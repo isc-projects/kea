@@ -3043,6 +3043,15 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
     // queueNCR will do the necessary checks and will skip the update, if not needed.
     queueNCR(CHG_REMOVE, lease);
 
+    // @todo: Call hooks.
+
+    // We need to disassociate the lease from the client. Once we move a lease
+    // to declined state, it is no longer associated with the client in any
+    // way.
+    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
+
+    LeaseMgrFactory::instance().updateLease4(lease);
+
     // Bump up the statistics.
 
     // Per subnet declined addresses counter.
@@ -3061,15 +3070,6 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
     // towards under-representing pool utilization, if we decreased allocated
     // immediately after receiving DHCPDECLINE, rather than later when we recover
     // the address.
-
-    // @todo: Call hooks.
-
-    // We need to disassociate the lease from the client. Once we move a lease
-    // to declined state, it is no longer associated with the client in any
-    // way.
-    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
-
-    LeaseMgrFactory::instance().updateLease4(lease);
 
     context.reset(new AllocEngine::ClientContext4());
     context->new_lease_ = lease;

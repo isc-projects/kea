@@ -2037,7 +2037,22 @@ PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
                                                                        lease->old_valid_lft_);
     bind_array.add(expire_str);
 
-    return (deleteLeaseCommon(DELETE_LEASE4, bind_array) > 0);
+    auto affected_rows = deleteLeaseCommon(DELETE_LEASE4, bind_array);
+
+    // Check success case first as it is the most likely outcome.
+    if (affected_rows == 1) {
+        return (true);
+    }
+
+    // If no rows affected, lease doesn't exist.
+    if (affected_rows == 0) {
+        return (false);
+    }
+
+    // Should not happen - primary key constraint should only have selected
+    // one row.
+    isc_throw(DbOperationError, "apparently deleted more than one lease "
+              "that had the address " << lease->addr_.toText());
 }
 
 bool
@@ -2057,7 +2072,22 @@ PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
                                                                        lease->old_valid_lft_);
     bind_array.add(expire_str);
 
-    return (deleteLeaseCommon(DELETE_LEASE6, bind_array) > 0);
+    auto affected_rows = deleteLeaseCommon(DELETE_LEASE6, bind_array);
+
+    // Check success case first as it is the most likely outcome.
+    if (affected_rows == 1) {
+        return (true);
+    }
+
+    // If no rows affected, lease doesn't exist.
+    if (affected_rows == 0) {
+        return (false);
+    }
+
+    // Should not happen - primary key constraint should only have selected
+    // one row.
+    isc_throw(DbOperationError, "apparently deleted more than one lease "
+              "that had the address " << lease->addr_.toText());
 }
 
 uint64_t

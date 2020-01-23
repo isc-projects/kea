@@ -291,7 +291,6 @@ AllocEngine::HashedAllocator::HashedAllocator(Lease::Type lease_type)
     isc_throw(NotImplemented, "Hashed allocator is not implemented");
 }
 
-
 isc::asiolink::IOAddress
 AllocEngine::HashedAllocator::pickAddress(const SubnetPtr&,
                                           const ClientClasses&,
@@ -305,7 +304,6 @@ AllocEngine::RandomAllocator::RandomAllocator(Lease::Type lease_type)
     isc_throw(NotImplemented, "Random allocator is not implemented");
 }
 
-
 isc::asiolink::IOAddress
 AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
                                           const ClientClasses&,
@@ -313,7 +311,6 @@ AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
                                           const IOAddress&) {
     isc_throw(NotImplemented, "Random allocator is not implemented");
 }
-
 
 AllocEngine::AllocEngine(AllocType engine_type, uint64_t attempts,
                          bool ipv6)
@@ -419,7 +416,6 @@ inAllowedPool(AllocEngine::ClientContext6& ctx, const Lease::Type& lease_type,
 }
 
 }
-
 
 // ##########################################################################
 // #    DHCPv6 lease allocation code starts here.
@@ -665,7 +661,6 @@ AllocEngine::findGlobalReservation(ClientContext6& ctx) {
     return (host);
 }
 
-
 Lease6Collection
 AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
@@ -834,7 +829,6 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             }
             return (leases);
         }
-
 
     } catch (const isc::Exception& e) {
 
@@ -1264,7 +1258,6 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
 
                 // ... and add it to the existing leases list.
                 existing_leases.push_back(lease);
-
 
                 if (ctx.currentIA().type_ == Lease::TYPE_NA) {
                     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_HR_ADDR_GRANTED)
@@ -1889,7 +1882,6 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
             subnet = subnet->getNextSubnet(ctx.subnet_);
         }
 
-
         if (!leases.empty()) {
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED)
@@ -2090,25 +2082,31 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     }
 
     if (!skip) {
+        bool update_stats = false;
+
         // If the lease we're renewing has expired, we need to reclaim this
         // lease before we can renew it.
         if (old_data->expired()) {
             reclaimExpiredLease(old_data, ctx.callout_handle_);
 
             // If the lease is in the current subnet we need to account
-            // for the re-assignment of The lease.
+            // for the re-assignment of the lease.
             if (ctx.subnet_->inPool(ctx.currentIA().type_, old_data->addr_)) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", ctx.subnet_->getID(),
-                                       ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                       "assigned-nas" : "assigned-pds"),
-                    static_cast<int64_t>(1));
+                update_stats = true;
             }
         }
 
         // Now that the lease has been reclaimed, we can go ahead and update it
         // in the lease database.
         LeaseMgrFactory::instance().updateLease6(lease);
+
+        if (update_stats) {
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                       "assigned-nas" : "assigned-pds"),
+                static_cast<int64_t>(1));
+        }
 
     } else {
         // Copy back the original date to the lease. For MySQL it doesn't make
@@ -2123,7 +2121,6 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     ctx.currentIA().changed_leases_.push_back(old_data);
 }
 
-
 Lease6Collection
 AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases) {
     Lease6Collection updated_leases;
@@ -2134,20 +2131,17 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
         lease->fqdn_rev_ = ctx.rev_dns_update_;
         lease->hostname_ = ctx.hostname_;
         if (!ctx.fake_allocation_) {
+            bool update_stats = false;
 
             if (lease->state_ == Lease::STATE_EXPIRED_RECLAIMED) {
                 // Transition lease state to default (aka assigned)
                 lease->state_ = Lease::STATE_DEFAULT;
 
                 // If the lease is in the current subnet we need to account
-                // for the re-assignment of The lease.
+                // for the re-assignment of the lease.
                 if (inAllowedPool(ctx, ctx.currentIA().type_,
                                   lease->addr_, true)) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", lease->subnet_id_,
-                                               ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                               "assigned-nas" : "assigned-pds"),
-                        static_cast<int64_t>(1));
+                    update_stats = true;
                 }
             }
 
@@ -2157,6 +2151,14 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
             if (conditionalExtendLifetime(*lease) || fqdn_changed) {
                 ctx.currentIA().changed_leases_.push_back(*lease_it);
                 LeaseMgrFactory::instance().updateLease6(lease);
+            }
+
+            if (update_stats) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_,
+                                           ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                           "assigned-nas" : "assigned-pds"),
+                    static_cast<int64_t>(1));
             }
         }
 
@@ -2304,7 +2306,6 @@ AllocEngine::deleteExpiredReclaimedLeases6(const uint32_t secs) {
         .arg(deleted_leases);
 }
 
-
 void
 AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
                                    const bool remove_lease,
@@ -2346,7 +2347,6 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
         // reclamation just yet.
         lease_mgr.getExpiredLeases4(leases, max_leases);
     }
-
 
     // Do not initialize the callout handle until we know if there are any
     // lease4_expire callouts installed.
@@ -2770,7 +2770,6 @@ AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
     return (true);
 }
 
-
 template<typename LeasePtrType>
 void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
                                          const bool remove_lease,
@@ -2801,7 +2800,6 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
               ALLOC_ENGINE_LEASE_RECLAIMED)
         .arg(lease->addr_.toText());
 }
-
 
 }  // namespace dhcp
 }  // namespace isc
@@ -3241,7 +3239,6 @@ AllocEngine::findGlobalReservation(ClientContext4& ctx) {
 
     return (host);
 }
-
 
 Lease4Ptr
 AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
