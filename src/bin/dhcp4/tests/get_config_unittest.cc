@@ -68,7 +68,6 @@ namespace {
 ///@{
 /// @brief extracted configurations
 const char* EXTRACTED_CONFIGS[] = {
-/// put this after const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
 "        \"interfaces-config\": {\n"
@@ -2137,7 +2136,6 @@ const char* EXTRACTED_CONFIGS[] = {
 
 /// @brief unparsed configurations
 const char* UNPARSED_CONFIGS[] = {
-///put this after const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
 "        \"authoritative\": false,\n"
@@ -8956,7 +8954,6 @@ const char* UNPARSED_CONFIGS[] = {
 "            {\n"
 "                \"comment\": \"A shared network\",\n"
 "                \"calculate-tee-times\": false,\n"
-"                \"match-client-id\": true,\n"
 "                \"name\": \"foo\",\n"
 "                \"option-data\": [ ],\n"
 "                \"relay\": {\n"
@@ -9246,7 +9243,6 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [\n"
 "            {\n"
 "                \"calculate-tee-times\": true,\n"
-"                \"match-client-id\": true,\n"
 "                \"name\": \"foo\",\n"
 "                \"option-data\": [ ],\n"
 "                \"relay\": {\n"
@@ -9331,7 +9327,6 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n"
-    
 };
 
 /// @brief the number of configurations
