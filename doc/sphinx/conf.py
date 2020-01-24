@@ -25,6 +25,7 @@ sys.setrecursionlimit(5000)
 project = 'Kea'
 copyright = '2019, Internet Systems Consortium'
 author = 'Internet Systems Consortium'
+today = '29 Jan, 2020'
 
 # get current kea version
 config_ac_path = '../../configure.ac'
