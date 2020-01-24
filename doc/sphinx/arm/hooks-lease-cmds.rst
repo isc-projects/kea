@@ -222,7 +222,7 @@ The commands can take several additional optional parameters:
    corresponding to the specified subnet-id is used. This parameter is
    not used when adding an IPv4 lease.
 
-- ``state`` - specify state of added lease, can be 0 for ``default``
+-  ``state`` - specify the state of added lease, can be 0 for ``default``,
    1 for ``declined`` and 2 for ``expired-reclaimed`` state. Any other
    value will cause error.
 
