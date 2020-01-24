@@ -1475,6 +1475,8 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // Remove this lease from LeaseMgr as it is reserved to someone
         // else or doesn't belong to a pool.
         if (!LeaseMgrFactory::instance().deleteLease(candidate)) {
+            // Concurrent delete performed by other instance which should
+            // properly handle dns and stats updates.
             continue;
         }
 
@@ -1520,6 +1522,8 @@ AllocEngine::removeNonmatchingReservedNoHostLeases6(ClientContext6& ctx,
 
         // Remove this lease from LeaseMgr as it doesn't belong to a pool.
         if (!LeaseMgrFactory::instance().deleteLease(candidate)) {
+            // Concurrent delete performed by other instance which should
+            // properly handle dns and stats updates.
             continue;
         }
 
@@ -1589,6 +1593,8 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
         // We have reservations, but not for this lease. Release it.
         // Remove this lease from LeaseMgr
         if (!LeaseMgrFactory::instance().deleteLease(*lease)) {
+            // Concurrent delete performed by other instance which should
+            // properly handle dns and stats updates.
             continue;
         }
 
@@ -1991,6 +1997,8 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 
         // Remove this lease from LeaseMgr
         if (!LeaseMgrFactory::instance().deleteLease(lease)) {
+            // Concurrent delete performed by other instance which should
+            // properly handle dns and stats updates.
             return;
         }
 
