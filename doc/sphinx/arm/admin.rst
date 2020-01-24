@@ -349,12 +349,14 @@ Changing MySQL internal value ``innodb_flush_log_at_trx_commit`` from default va
 ``1`` to ``2`` can result with huge gain in Kea performance. It can be set per session for testing:
 
 .. code-block:: mysql
+
     mysql> SET GLOBAL innodb_flush_log_at_trx_commit=2;
     mysql> SHOW SESSION VARIABLES LIKE 'innodb_flush_log%';
 
 or permanently in ``/etc/mysql/my.cnf``:
 
 .. code-block:: mysql
+
     [mysqld]
     innodb_flush_log_at_trx_commit=2
 
