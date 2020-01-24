@@ -343,11 +343,12 @@ public:
             // row, it means that we have to construct new subnet object.
             if (!last_subnet || (last_subnet->getID() != out_bindings[0]->getInteger<uint32_t>())) {
 
-                // Reset pool id, because current row defines new subnet. Subsequent
-                // rows will contain pool information.
+                // Reset per subnet component tracking and server tag because
+                // we're now starting to process a new subnet.
                 last_pool_id = 0;
-
-                // Reset last server tag as we're now starting to process new subnet.
+                last_pool_option_id = 0;
+                last_option_id = 0;
+                last_pool.reset();
                 last_tag.clear();
 
                 // subnet_id
@@ -1281,8 +1282,9 @@ public:
             // row to create the new shared network instance.
             if (last_network_id != out_bindings[0]->getInteger<uint64_t>()) {
 
-                // Reset last server tag as we're now starting to process new
-                // shared network.
+                // Reset per shared network subnet component tracking and server tag because
+                // we're now starting to process a new shared network.
+                last_option_id = 0;
                 last_tag.clear();
 
                 last_network_id = out_bindings[0]->getInteger<uint64_t>();
