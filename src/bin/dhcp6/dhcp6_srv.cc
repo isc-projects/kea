@@ -3395,10 +3395,7 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
         }
     }
 
-    // Check if a lease has flags indicating that the FQDN update has
-    // been performed. If so, create NameChangeRequest which removes
-    // the entries. This method does all necessary checks.
-    queueNCR(CHG_REMOVE, lease);
+    Lease6Ptr old_values = boost::make_shared<Lease6>(*lease);
 
     // @todo: Call hooks.
 
@@ -3408,6 +3405,11 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
 
     LeaseMgrFactory::instance().updateLease6(lease);
+
+    // Check if a lease has flags indicating that the FQDN update has
+    // been performed. If so, create NameChangeRequest which removes
+    // the entries. This method does all necessary checks.
+    queueNCR(CHG_REMOVE, old_values);
 
     // Bump up the subnet-specific statistic.
     StatsMgr::instance().addValue(

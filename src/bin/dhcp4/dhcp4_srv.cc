@@ -3039,9 +3039,7 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
         }
     }
 
-    // Remove existing DNS entries for the lease, if any.
-    // queueNCR will do the necessary checks and will skip the update, if not needed.
-    queueNCR(CHG_REMOVE, lease);
+    Lease4Ptr old_values = boost::make_shared<Lease4>(*lease);
 
     // @todo: Call hooks.
 
@@ -3051,6 +3049,10 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
     lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
 
     LeaseMgrFactory::instance().updateLease4(lease);
+
+    // Remove existing DNS entries for the lease, if any.
+    // queueNCR will do the necessary checks and will skip the update, if not needed.
+    queueNCR(CHG_REMOVE, old_values);
 
     // Bump up the statistics.
 
