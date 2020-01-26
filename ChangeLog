@@ -1,3 +1,8 @@
+1706.	[bug]		fdupont
+	Fixed BOOTP hook. It now properly handles BOOTP packets and sends
+	valid responses.
+	(Gitlab #1064)
+
 1705.	[bug]		fdupont
 	Modified option 43 parsing to interpret sub-option codes 0 and 255
 	as PAD and END when no sub-option with these codes are defined.
