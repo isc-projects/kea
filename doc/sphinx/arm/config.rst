@@ -112,6 +112,83 @@ and Logging) are present, but they are omitted for clarity. Usually,
 locations where extra parameters may appear are denoted by an ellipsis
 (...).
 
+.. _user-context:
+
+Comments and User Context
+-------------------------
+
+You can specify shell, C or C++ style comments in the JSON configuration file if
+you use the file locally. This is convenient and works in simple cases where
+your configuration is kept statically using local file. However, since comments
+are not part of JSON syntax, most JSON tools will detect them as
+errors. Another problem with them is once Kea loads its configuration, the
+shell, C and C++ style comments are ignored. If you use commands such as
+`config-get` or `config-write`, those comments will be lost. An example of such
+comments has been presented in the previous section.
+
+Historically, to address the problem Kea code allowed to put `comment` strings
+as valid JSON entities. This had the benefit of being retained through various
+operations (such as `config-get`) or allowed processing by JSON tools. An
+example JSON comment looks like this:
+
+::
+
+   "Dhcp4": {
+       "subnet4": [{
+           "subnet": "192.0.2.0/24",
+           "pools": [{ "pool": "192.0.2.10 - 192.0.2.20" }],
+           "comment": "second floor"
+       }]
+   }
+
+However, users complained that the comment is only a single line and it's not
+possible to add any other information in more structured form. One specific
+example was a request to add floor levels and building numbers to subnets. This
+was one of the reasons why the concept of user context has been introduced. It
+allows adding arbitrary JSON structure to most Kea configuration structures. It
+has a number of benefits compared to earlier approaches. First, it is fully
+compatible with JSON tools and Kea commands. Second, it allows storing simple
+comment strings if you want to, but it can store much more complex data, such as
+multiple lines (as string array), extra typed data (such as floor numbers being
+actual numbers) and more. Third, the data is exposed to hooks, so it's possible
+to develop third party hooks that take advantage of that extra information. An
+example user context would look like this:
+
+::
+
+   "Dhcp4": {
+       "subnet4": [{
+           "subnet": "192.0.2.0/24",
+           "pools": [{ "pool": "192.0.2.10 - 192.0.2.20" }],
+           "user-context": {
+               "comment": "second floor",
+               "floor": 2
+           }
+       }]
+   }
+
+User contexts can store an arbitrary data file as long as it has valid JSON
+syntax and its top-level element is a map (i.e. the data must be
+enclosed in curly brackets). However, some hook libraries may expect
+specific formatting; please consult the specific hook library
+documentation for details.
+
+In a sense the user context mechanism has superseeded the JSON comment
+capabilities. ISC would like to encourage people to use user-context in favor of
+the older mechanisms and we hope to deprecate JSON comments one day in the
+future. To promote this way of storing comments, Kea code is able to undestand
+JSON comments, but converts them to user context on the fly.
+
+The is one side effect, however. If your configuration uses the old JSON
+comment, the `config-get` command will return a slightly modified
+configuration. Don't be surpised if you call `config-set` followed by a
+`config-get` and receive a slightly different value. If this bothers you, the
+best way to avoid this problem is simply abandon JSON comments and start using
+user-context.
+
+For a discussion about user context used in hooks, see :ref:`user-context-hooks`.
+
+
 Simplified Notation
 -------------------
 

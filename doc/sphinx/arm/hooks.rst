@@ -2813,10 +2813,10 @@ both the command and the response.
 .. include:: hooks-host-cache.rst
 
 
-.. _user-context:
+.. _user-context-hooks:
 
-User Contexts
-=============
+User Contexts in Hooks
+======================
 
 Hooks libraries can have their own configuration parameters, which is
 convenient if the parameter applies to the whole library. However,

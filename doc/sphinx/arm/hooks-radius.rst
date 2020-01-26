@@ -536,8 +536,8 @@ received during the initial Discover/Offer exchanges and use it again
 later when sending accounting messages.
 
 This mechanism is implemented based on user context in host
-reservations. (See :ref:`user-context` for details.)
-The host cache mechanism allows the information retrieved by
+reservations. (See :ref:`user-context` and :ref:`user-context-hooks` for
+details.) The host cache mechanism allows the information retrieved by
 RADIUS to be stored and later used for sending accounting and access
 queries to the RADIUS server. In other words, the host-cache mechanism
 is mandatory, unless administrators do not want RADIUS communication for messages

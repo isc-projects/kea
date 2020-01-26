@@ -5600,11 +5600,9 @@ library, it is typically defined as a parameter for the hook library.
 However, sometimes there is a need to specify parameters that are
 different for each pool.
 
-User contexts can store an arbitrary data file as long as it has valid JSON
-syntax and its top-level element is a map (i.e. the data must be
-enclosed in curly brackets). However, some hook libraries may expect
-specific formatting; please consult the specific hook library
-documentation for details.
+See :ref:`user-context` for additional background regarding the user
+context idea. See :ref:`user-context-hooks` for a discussion from the
+hooks perspective.
 
 User contexts can be specified at global scope, shared network, subnet,
 pool, client class, option data, or definition level, and via host
@@ -5649,8 +5647,6 @@ available to the hook libraries. It is up to each hook library to
 extract that information and use it. The parser translates a "comment"
 entry into a user context with the entry, which allows a comment to be
 attached inside the configuration itself.
-
-For more background information, see :ref:`user-context`.
 
 .. _dhcp4-std:
 

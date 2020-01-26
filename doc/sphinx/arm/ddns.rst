@@ -669,9 +669,8 @@ User Contexts in DDNS
    User contexts were designed for hook libraries, which are not yet
    supported for DHCP-DDNS server configuration.
 
-User contexts can store arbitrary data as long as the file has valid JSON
-syntax and the top-level element is a map (i.e. the data must be
-enclosed in curly brackets).
+See :ref:`user-context` for additional background regarding the user
+context idea.
 
 User contexts can be specified on global scope, DDNS domain, DNS server,
 TSIG key, and loggers. One other useful usage is the ability to store
