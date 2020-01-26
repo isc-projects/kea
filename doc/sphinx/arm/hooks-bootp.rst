@@ -15,9 +15,9 @@ a dhcp-message-type option and put into the "BOOTP" client class.
 Members of this class get infinite lifetime leases but the class can
 be used too for instance to guard a pool of addresses.
 
-On output dhcp-message-type and other DHCP specific options are removed
-and responses shorter than the BOOTP minimum size (300 octets) are
-padded to this size.
+The DHCP specific options, such as dhcp-message-type, are removed from
+the server's responses and responses shorter than the BOOTP minimum
+size (300 octets) are padded to this size.
 
 The library is available since Kea 1.7.2 and can be loaded in a
 similar way as other hook libraries by the ``kea-dhcp4`` process.
