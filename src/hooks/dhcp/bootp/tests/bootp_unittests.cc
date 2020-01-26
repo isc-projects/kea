@@ -89,7 +89,7 @@ public:
     /// @brief Tests pkt4_send callout.
     ///
     /// @param pkt The packet to submit.
-    /// @param bootp True if the query is in the BOOT class.
+    /// @param bootp True if the query is in the BOOTP class.
     /// @param processed True if the packet must be processed, false otherwise.
     void pkt4SendCalloutCall(Pkt4Ptr& pkt, bool bootp, bool processed) {
         // Get callout handle.
@@ -171,7 +171,11 @@ TEST_F(BootpTest, dhcpAck) {
     pkt4SendCalloutCall(pkt, false, false);
 }
 
-// Verifies that BOOTP ACK is processed.
+// Verifies that ACK is processed when responding to BOOTP packet.  There's no
+// such thing as BOOTP ACK. This test checks that when the server responding to
+// BOOTPREQUEST (modified by the hook to look like a DHCPREQUEST), it will
+// send back an ACK. The hooks is supposed to strip down the DHCP specific stuff,
+// so the response looks like a BOOTPREPLY.
 TEST_F(BootpTest, bootpAck) {
     Pkt4Ptr pkt(new Pkt4(DHCPACK, 12345));
     pkt4SendCalloutCall(pkt, true, true);
@@ -184,6 +188,11 @@ TEST_F(BootpTest, dhcpNak) {
 }
 
 // Verifies that BOOTP NAK is processed.
+// This particular scenario doesn't make much sense. Since there's not way to
+// convey back to the BOOTP client that its request has been declined (and
+// IIRC the BOOTP client never sends its address), so there are no cases of
+// the server responding with NAK), this scenario seems mostly theoretical.
+// But it's good to check that the code is robust.
 TEST_F(BootpTest, bootpNak) {
     Pkt4Ptr pkt(new Pkt4(DHCPNAK, 12345));
     pkt4SendCalloutCall(pkt, true, true);
