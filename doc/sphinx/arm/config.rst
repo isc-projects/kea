@@ -168,23 +168,24 @@ example user context would look like this:
    }
 
 User contexts can store an arbitrary data file as long as it has valid JSON
-syntax and its top-level element is a map (i.e. the data must be
-enclosed in curly brackets). However, some hook libraries may expect
-specific formatting; please consult the specific hook library
-documentation for details.
+syntax and its top-level element is a map (i.e. the data must be enclosed in
+curly brackets). However, some hook libraries may expect specific formatting;
+please consult the specific hook library documentation for details.
 
 In a sense the user context mechanism has superseeded the JSON comment
 capabilities. ISC would like to encourage people to use user-context in favor of
 the older mechanisms and we hope to deprecate JSON comments one day in the
 future. To promote this way of storing comments, Kea code is able to undestand
-JSON comments, but converts them to user context on the fly.
+JSON comments, but converts them to user context on the fly. For the time being,
+the comments entries in user-context are converted back to JSON comments to keep
+backward compatibility, but that conversion is expected to go away soon.
 
 The is one side effect, however. If your configuration uses the old JSON
 comment, the `config-get` command will return a slightly modified
 configuration. Don't be surpised if you call `config-set` followed by a
-`config-get` and receive a slightly different value. If this bothers you, the
-best way to avoid this problem is simply abandon JSON comments and start using
-user-context.
+`config-get` and receive a slightly different structure. If this bothers you,
+the best way to avoid this problem is simply abandon JSON comments and start
+using user-context.
 
 For a discussion about user context used in hooks, see :ref:`user-context-hooks`.
 
