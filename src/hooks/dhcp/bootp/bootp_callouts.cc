@@ -22,7 +22,7 @@ using namespace isc::stats;
 namespace {
 
 // DHCP Specific options listed in RFC 1533 section 9 and with a code name
-// beginning by DH0_DHCP_.
+// beginning by DHO_DHCP_.
 const std::vector<uint16_t> DHCP_SPECIFIC_OPTIONS = {
     DHO_DHCP_REQUESTED_ADDRESS,
     DHO_DHCP_LEASE_TIME,
