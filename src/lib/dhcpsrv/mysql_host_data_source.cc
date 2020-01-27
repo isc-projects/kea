@@ -1020,13 +1020,14 @@ private:
 
         /// @brief Initialize binding table fields for options.
         ///
-        /// Resets most_recent_option_id_ value to 0.
+        /// Resets most_recent_option_id_ to 0 and other exchange members to
+        /// default values.
         ///
         /// @param [out] bind Binding table.
         void setBindFields(std::vector<MYSQL_BIND>& bind) {
             // This method is called just before making a new query, so we
-            // reset the most_recent_option_id_ to start over with options
-            // processing.
+            // reset the most_recent_option_id_ and other exchage members to
+            // start over with options processing.
             most_recent_option_id_ = 0;
 
             option_id_ = 0;
