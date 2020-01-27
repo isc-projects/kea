@@ -1,3 +1,9 @@
+1712.	[bug]		tmark
+	Corrected an issue in the MySQL CB hook library which could
+	cause subnet and shared-network options, properly added to
+	the CB database, to be discarded when fetched from the backend.
+	(Gitlab #1093)
+
 1711.	[func]		razvan
 	Prepared MySqlHostMgr to be used with multi-threading by using a
 	connection pool with thread context.

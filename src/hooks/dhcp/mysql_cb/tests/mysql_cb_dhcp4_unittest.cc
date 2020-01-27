@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3995,5 +3995,101 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     EXPECT_EQ(0, countRows("dhcp4_options"));
 }
 
+// This test verifies that option id values in one subnet do
+// not impact options returned in subsequent subnets when
+// fetching subnets from the backend.
+TEST_F(MySqlConfigBackendDHCPv4Test, subnetOptionIdOrder) {
+
+    // Add a subnet with two pools with one option each.
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[1]));
+    EXPECT_EQ(2, countRows("dhcp4_pool"));
+    EXPECT_EQ(2, countRows("dhcp4_options"));
+
+    // Add a second subnet with a single option. The number of options in the database
+    // should now be 3.
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[2]));
+    EXPECT_EQ(2, countRows("dhcp4_pool"));
+    EXPECT_EQ(3, countRows("dhcp4_options"));
+
+    // Now replace the first subnet with three options and two pools.  This will cause
+    // the option id values for this subnet to be larger than those in the second
+    // subnet.
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]));
+    EXPECT_EQ(2, countRows("dhcp4_pool"));
+    EXPECT_EQ(4, countRows("dhcp4_options"));
+
+    // Now fetch all subnets.
+    Subnet4Collection subnets;
+    EXPECT_NO_THROW(subnets = cbptr_->getAllSubnets4(ServerSelector::ALL()));
+    ASSERT_EQ(2, subnets.size());
+
+    // Verify that the subnets returned are as expected.
+    for (auto subnet : subnets) {
+        ASSERT_EQ(1, subnet->getServerTags().size());
+        EXPECT_EQ("all", subnet->getServerTags().begin()->get());
+        if (subnet->getID() == 1024) {
+            EXPECT_EQ(test_subnets_[0]->toElement()->str(), subnet->toElement()->str());
+        } else if (subnet->getID() == 2048) {
+            EXPECT_EQ(test_subnets_[2]->toElement()->str(), subnet->toElement()->str());
+        } else {
+            ADD_FAILURE() << "unexpected subnet id:" << subnet->getID();
+        }
+    }
+}
+
+// This test verifies that option id values in one shared network do
+// not impact options returned in subsequent shared networks when
+// fetching shared networks from the backend.
+TEST_F(MySqlConfigBackendDHCPv4Test, sharedNetworkOptionIdOrder) {
+    auto level1_options = test_networks_[0];
+    auto level1_no_options = test_networks_[1];
+    auto level2 = test_networks_[2];
+
+    // Insert two shared networks. We inset level1 without options first,
+    // then level2.
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(),
+                                                       level1_no_options));
+
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(),
+                                                       level2));
+    // Fetch all shared networks.
+    SharedNetwork4Collection networks =
+        cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
+
+    ASSERT_EQ(2, networks.size());
+
+    // See if shared networks are returned ok.
+    for (auto i = 0; i < networks.size(); ++i) {
+        if (i == 0) {
+            // level1_no_options
+            EXPECT_EQ(level1_no_options->toElement()->str(),
+                  networks[i]->toElement()->str());
+        } else {
+            // bar
+            EXPECT_EQ(level2->toElement()->str(),
+                  networks[i]->toElement()->str());
+        }
+    }
+
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(),
+                                                       level1_options));
+
+    // Fetch all shared networks.
+    networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
+    ASSERT_EQ(2, networks.size());
+
+    // See if shared networks are returned ok.
+    for (auto i = 0; i < networks.size(); ++i) {
+        if (i == 0) {
+            // level1_no_options
+            EXPECT_EQ(level1_options->toElement()->str(),
+                  networks[i]->toElement()->str());
+        } else {
+            // bar
+            EXPECT_EQ(level2->toElement()->str(),
+                  networks[i]->toElement()->str());
+        }
+    }
+}
 
 }
