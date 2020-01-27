@@ -1547,9 +1547,10 @@ state to a previous state. See the :ref:`ha-maintenance` for the details.
        }
    }
 
-.. note::
+.. warning::
 
    The ``ha-maintenance-notify`` command is not meant to be used by the
    system administrators. It is used for internal communication between
-   a pair of HA enabled DHCP servers.
+   a pair of HA enabled DHCP servers. Direct use of this command is not
+   supported and may produce unintended consequences.
 
