@@ -18,7 +18,7 @@ FreeBSD systems. It is also likely to work on many other systems.
 Kea-|release| builds have been tested on:
 
 -  CentOS Linux — 7, 8
--  Fedora — 29, 30
+-  Fedora — 30, 31
 -  Ubuntu — 16.04, 18.04, 19.04
 -  Debian GNU/Linux — 9, 10
 -  FreeBSD — 11.3, 12.0
