@@ -30,6 +30,12 @@ class PgSqlLease6Exchange;
 /// @brief PostgreSQL Lease Context
 ///
 /// This class stores the thread context for the manager pool.
+/// The class is needed by all get/update/delete functions which must use one
+/// or more exchanges to perform database operations.
+/// Each context provides a set of such exchanges for each thread.
+/// The context instances are lazy initialized by the requesting thread by using
+/// the manager's createContext function and are destroyed when the manager's
+/// pool instance is destroyed.
 class PgSqlLeaseContext {
 public:
 
@@ -55,6 +61,9 @@ typedef boost::shared_ptr<PgSqlLeaseContext> PgSqlLeaseContextPtr;
 /// @brief PostgreSQL Lease Context Pool
 ///
 /// This class provides a pool of contexts.
+/// The manager will use this class to handle avalilable contexts.
+/// There is only one ContextPool per manager per back-end, which is created
+/// and destroyed by the respective manager factory class.
 class PgSqlLeaseContextPool {
 public:
 

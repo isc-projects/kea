@@ -1912,6 +1912,12 @@ namespace dhcp {
 /// @brief MySQL Host Context
 ///
 /// This class stores the thread context for the manager pool.
+/// The class is needed by all get/update/delete functions which must use one
+/// or more exchanges to perform database operations.
+/// Each context provides a set of such exchanges for each thread.
+/// The context instances are lazy initialized by the requesting thread by using
+/// the manager's createContext function and are destroyed when the manager's
+/// pool instance is destroyed.
 class MySqlHostContext {
 public:
 
@@ -1957,6 +1963,9 @@ public:
 /// @brief MySQL Host Context Pool
 ///
 /// This class provides a pool of contexts.
+/// The manager will use this class to handle avalilable contexts.
+/// There is only one ContextPool per manager per back-end, which is created
+/// and destroyed by the respective manager factory class.
 class MySqlHostContextPool {
 public:
 
@@ -2581,7 +2590,7 @@ MySqlHostDataSource::MySqlHostContextAlloc::MySqlHostContextAlloc(
             ctx_ = mgr_.createContext();
         }
     } else {
-        // single threaded
+        // single-threaded
         if (mgr_.pool_->pool_.empty()) {
             isc_throw(Unexpected, "No available MySQL lease context?!");
         }
