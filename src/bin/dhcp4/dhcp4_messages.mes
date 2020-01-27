@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -567,15 +567,15 @@ identification information. The second argument contains the IPv4 address
 in the ciaddr field. The third argument contains the IPv4 address in the
 requested-ip-address option (if present).
 
-% DHCP4_PACKET_OPTION_UNPACK_FAIL An error unpacking the option %1: %2
-A debug message issued when an option failed to unpack correctly, making it
-to be left unpacked in the packet. The first argument is the option code,
-the second the error.
-
 % DHCP4_PACKET_OPTIONS_SKIPPED An error unpacking an option, caused subsequent options to be skipped: %1
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
 server will still attempt to service the packet.
+
+% DHCP4_PACKET_OPTION_UNPACK_FAIL An error unpacking the option %1: %2
+A debug message issued when an option failed to unpack correctly, making it
+to be left unpacked in the packet. The first argument is the option code,
+the second the error.
 
 % DHCP4_PACKET_PACK %1: preparing on-wire format of the packet to be sent
 This debug message is issued when the server starts preparing the on-wire
