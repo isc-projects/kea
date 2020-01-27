@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,6 @@
 #include <cc/user_context.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <exceptions/exceptions.h>
-#include <util/strutil.h>
 #include <util/optional.h>
 
 #include <boost/shared_ptr.hpp>

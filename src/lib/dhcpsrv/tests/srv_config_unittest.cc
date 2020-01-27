@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1377,12 +1377,49 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_TRUE(params->getEnableUpdates());
 }
 
+// Verifies that the fallback values for DDNS parameters when
+// no Subnet4 has been selected.  In theory, we should never want
+// these values without a selected subnet.
+TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest4) {
+    DdnsParamsPtr params;
+
+    CfgMgr::instance().setFamily(AF_INET);
+    SrvConfig conf(32);
+
+    // Enable D2 connectivity.
+    enableD2Client(true);
+
+    // Give all of the parameters a global value.
+    conf.addConfiguredGlobal("ddns-send-updates", Element::create(true));
+    conf.addConfiguredGlobal("ddns-override-no-update", Element::create(true));
+    conf.addConfiguredGlobal("ddns-override-client-update", Element::create(true));
+    conf.addConfiguredGlobal("ddns-replace-client-name", Element::create("always"));
+    conf.addConfiguredGlobal("ddns-generated-prefix", Element::create("some_prefix"));
+    conf.addConfiguredGlobal("ddns-qualifying-suffix", Element::create("example.com"));
+    conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
+    conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
+
+    // Get DDNS params for no subnet.
+    Subnet4Ptr subnet4;
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet4));
+
+    // Verify fallback values are right. Note, updates should be disabled.
+    EXPECT_FALSE(params->getEnableUpdates());
+    EXPECT_FALSE(params->getOverrideNoUpdate());
+    EXPECT_FALSE(params->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->getReplaceClientNameMode());
+    EXPECT_TRUE(params->getGeneratedPrefix().empty());
+    EXPECT_TRUE(params->getQualifyingSuffix().empty());
+    EXPECT_TRUE(params->getHostnameCharSet().empty());
+    EXPECT_TRUE(params->getHostnameCharReplacement().empty());
+}
+
 // Verifies that the scoped values for DDNS parameters can be fetched
 // for a given Subnet6.
 TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     DdnsParamsPtr params;
 
-    CfgMgr::instance().setFamily(AF_INET);
+    CfgMgr::instance().setFamily(AF_INET6);
     SrvConfig conf(32);
 
     // This disables D2 connectivity. When it is false, updates
@@ -1486,5 +1523,43 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
     EXPECT_TRUE(params->getEnableUpdates());
 }
+
+// Verifies that the fallback values for DDNS parameters when
+// no Subnet6 has been selected.  In theory, we should never want
+// these values without a selected subnet.
+TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest6) {
+    DdnsParamsPtr params;
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    SrvConfig conf(32);
+
+    // Enable D2 connectivity.
+    enableD2Client(true);
+
+    // Give all of the parameters a global value.
+    conf.addConfiguredGlobal("ddns-send-updates", Element::create(true));
+    conf.addConfiguredGlobal("ddns-override-no-update", Element::create(true));
+    conf.addConfiguredGlobal("ddns-override-client-update", Element::create(true));
+    conf.addConfiguredGlobal("ddns-replace-client-name", Element::create("always"));
+    conf.addConfiguredGlobal("ddns-generated-prefix", Element::create("some_prefix"));
+    conf.addConfiguredGlobal("ddns-qualifying-suffix", Element::create("example.com"));
+    conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
+    conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
+
+    // Get DDNS params for no subnet.
+    Subnet6Ptr subnet6;
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet6));
+
+    // Verify fallback values are right. Note, updates should be disabled.
+    EXPECT_FALSE(params->getEnableUpdates());
+    EXPECT_FALSE(params->getOverrideNoUpdate());
+    EXPECT_FALSE(params->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->getReplaceClientNameMode());
+    EXPECT_TRUE(params->getGeneratedPrefix().empty());
+    EXPECT_TRUE(params->getQualifyingSuffix().empty());
+    EXPECT_TRUE(params->getHostnameCharSet().empty());
+    EXPECT_TRUE(params->getHostnameCharReplacement().empty());
+}
+
 
 } // end of anonymous namespace
