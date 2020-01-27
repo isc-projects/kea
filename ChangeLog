@@ -1,3 +1,14 @@
+1710.	[bug]		fdupont
+	The code that handles default parameters and parameters
+	inheritance, such as applying global values to subnet level,
+	has been updated slightly. Although unlikely, there is small
+	possibility this may affect boot-file-name, client-class,
+	interface, match-client-id, authoritative, next-server,
+	reservation-mode, and server-hostname values in Subnet4 and
+	client-class, interface, interface-id, rapid-commit, and
+	reservation-mode in Subnet6.
+	(Gitlab #724)
+
 1709.	[func]		fdupont
 	MySQL Configuration Backend now allows for storing DDNS related
 	configuration in the database.
