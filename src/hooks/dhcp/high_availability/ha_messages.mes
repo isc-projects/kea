@@ -334,6 +334,24 @@ This error message is issued to indicate that the ha-maintenance-notify command
 handler failed while processing the command. The argument provides the reason for
 failure.
 
+% HA_MAINTENANCE_SHUTDOWN_SAFE the server can now be shutdown for maintenance as the partner has taken over the DHCP traffic
+This informational message is displayed after the server transitions to the
+in-maintenance state. This server no longer responds to any DHCP queries and its
+partner being in the partner-in-maintenance state has taken over the DHCP traffic.
+When the server in-maintenance state is shut down, the partner will move to
+the partner-down imediatelly.
+
+% HA_MAINTENANCE_STARTED the server is now in the partner-in-maintenance state and the partner is in-maintenance state
+This informational message is displayed when the server receiving the
+ha-maintenance-start command transitions to the partner-in-maintenance
+state. The server does it after sending the ha-maintenance-notify to
+its partner to put the partner in the in-maintenance state. From now on,
+the server in the partner-in-maintenance state will be responding to all
+queries and the partner will respond to no queries. The partner may be
+safely shut down for maintenance in which case this server will
+automatically transition from the partner-in-maintenance state to the
+partner-down state.
+
 % HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN the server is now in the partner-down mode as a result of requested maintenance
 This informational message is displayed when the server receiving the
 ha-maintenance-start command transitions to the partner-down state
@@ -350,24 +368,6 @@ problem with the partner.
 This error message is issued to indicate that the ha-maintenance-start command
 handler failed while processing the command. The argument provides the reason for
 failure.
-
-% HA_MAINTENANCE_STARTED the server is now in the partner-in-maintenance state and the partner is in-maintenance state
-This informational message is displayed when the server receiving the
-ha-maintenance-start command transitions to the partner-in-maintenance
-state. The server does it after sending the ha-maintenance-notify to
-its partner to put the partner in the in-maintenance state. From now on,
-the server in the partner-in-maintenance state will be responding to all
-queries and the partner will respond to no queries. The partner may be
-safely shut down for maintenance in which case this server will
-automatically transition from the partner-in-maintenance state to the
-partner-down state.
-
-% HA_MAINTENANCE_SHUTDOWN_SAFE the server can now be shutdown for maintenance as the partner has taken over the DHCP traffic
-This informational message is displayed after the server transitions to the
-in-maintenance state. This server no longer responds to any DHCP queries and its
-partner being in the partner-in-maintenance state has taken over the DHCP traffic.
-When the server in-maintenance state is shut down, the partner will move to
-the partner-down imediatelly.
 
 % HA_MISSING_CONFIGURATION high-availability parameter not specified for High Availability hooks library
 This error message is issued to indicate that the configuration for the
