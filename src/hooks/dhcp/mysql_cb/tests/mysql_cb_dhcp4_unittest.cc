@@ -4045,7 +4045,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, sharedNetworkOptionIdOrder) {
     auto level1_no_options = test_networks_[1];
     auto level2 = test_networks_[2];
 
-    // Insert two shared networks. We inset level1 without options first,
+    // Insert two shared networks. We insert level1 without options first,
     // then level2.
     EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(),
                                                        level1_no_options));
