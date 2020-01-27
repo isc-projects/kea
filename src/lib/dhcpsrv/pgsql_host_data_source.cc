@@ -1273,6 +1273,12 @@ namespace dhcp {
 /// @brief PostgreSQL Host Context
 ///
 /// This class stores the thread context for the manager pool.
+/// The class is needed by all get/update/delete functions which must use one
+/// or more exchanges to perform database operations.
+/// Each context provides a set of such exchanges for each thread.
+/// The context instances are lazy initialized by the requesting thread by using
+/// the manager's createContext function and are destroyed when the manager's
+/// pool instance is destroyed.
 class PgSqlHostContext {
 public:
 
@@ -1318,6 +1324,9 @@ public:
 /// @brief PostgreSQL Host Context Pool
 ///
 /// This class provides a pool of contexts.
+/// The manager will use this class to handle avalilable contexts.
+/// There is only one ContextPool per manager per back-end, which is created
+/// and destroyed by the respective manager factory class.
 class PgSqlHostContextPool {
 public:
 
@@ -1992,7 +2001,9 @@ PgSqlHostDataSource::PgSqlHostContextAlloc::PgSqlHostContextAlloc(
     const PgSqlHostDataSourceImpl& mgr) : ctx_(), mgr_(mgr) {
 
     if (MultiThreadingMgr::instance().getMode()) {
+        // multi-threaded
         {
+            // we need to protect the whole pool_ operation, hence extra scope {}
             lock_guard<mutex> lock(mgr_.pool_->mutex_);
             if (!mgr_.pool_->pool_.empty()) {
                 ctx_ = mgr_.pool_->pool_.back();
@@ -2003,6 +2014,7 @@ PgSqlHostDataSource::PgSqlHostContextAlloc::PgSqlHostContextAlloc(
             ctx_ = mgr_.createContext();
         }
     } else {
+        // single-threaded
         if (mgr_.pool_->pool_.empty()) {
             isc_throw(Unexpected, "No available PostgreSQL lease context?!");
         }
@@ -2012,9 +2024,11 @@ PgSqlHostDataSource::PgSqlHostContextAlloc::PgSqlHostContextAlloc(
 
 PgSqlHostDataSource::PgSqlHostContextAlloc::~PgSqlHostContextAlloc() {
     if (MultiThreadingMgr::instance().getMode()) {
+        // multi-threaded
         lock_guard<mutex> lock(mgr_.pool_->mutex_);
         mgr_.pool_->pool_.push_back(ctx_);
     }
+    // If running in single-threaded mode, there's nothing to do here.
 }
 
 PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
