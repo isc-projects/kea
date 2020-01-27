@@ -1026,7 +1026,7 @@ private:
         /// @param [out] bind Binding table.
         void setBindFields(std::vector<MYSQL_BIND>& bind) {
             // This method is called just before making a new query, so we
-            // reset the most_recent_option_id_ and other exchage members to
+            // reset the most_recent_option_id_ and other exchange members to
             // start over with options processing.
             most_recent_option_id_ = 0;
 

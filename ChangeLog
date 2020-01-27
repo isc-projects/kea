@@ -1,3 +1,8 @@
+1711.	[func]		razvan
+	Prepared MySqlHostMgr to be used with multi-threading by using a
+	connection pool with thread context.
+	(Gitlab #1073)
+
 1710.	[bug]		fdupont
 	The code that handles default parameters and parameters
 	inheritance, such as applying global values to subnet level,
