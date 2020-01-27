@@ -2568,7 +2568,9 @@ MySqlHostDataSource::MySqlHostContextAlloc::MySqlHostContextAlloc(
     const MySqlHostDataSourceImpl& mgr) : ctx_(), mgr_(mgr) {
 
     if (MultiThreadingMgr::instance().getMode()) {
+        // multi-threaded
         {
+            // we need to protect the whole pool_ operation, hence extra scope {}
             lock_guard<mutex> lock(mgr_.pool_->mutex_);
             if (!mgr_.pool_->pool_.empty()) {
                 ctx_ = mgr_.pool_->pool_.back();
@@ -2579,6 +2581,7 @@ MySqlHostDataSource::MySqlHostContextAlloc::MySqlHostContextAlloc(
             ctx_ = mgr_.createContext();
         }
     } else {
+        // single threaded
         if (mgr_.pool_->pool_.empty()) {
             isc_throw(Unexpected, "No available MySQL lease context?!");
         }
@@ -2588,9 +2591,11 @@ MySqlHostDataSource::MySqlHostContextAlloc::MySqlHostContextAlloc(
 
 MySqlHostDataSource::MySqlHostContextAlloc::~MySqlHostContextAlloc() {
     if (MultiThreadingMgr::instance().getMode()) {
+        // multi-threaded
         lock_guard<mutex> lock(mgr_.pool_->mutex_);
         mgr_.pool_->pool_.push_back(ctx_);
     }
+    // If running in single-threaded mode, there's nothing to do here.
 }
 
 MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
