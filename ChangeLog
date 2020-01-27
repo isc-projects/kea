@@ -1,3 +1,7 @@
+1708.	[doc]		tomek
+	Clarified the relationship between comments and user context.
+	(Gitlab #1079)
+
 1707.	[func]		marcin
 	High Availability hooks library supports controlled maintenance
 	of the servers. The new ha-maintenance-start command puts one
