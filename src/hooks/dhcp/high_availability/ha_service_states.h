@@ -22,7 +22,7 @@ const int HA_HOT_STANDBY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 2;
 /// Load balancing state.
 const int HA_LOAD_BALANCING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 3;
 
-/// Maintainedo state.
+/// In maintenance state.
 const int HA_IN_MAINTENANCE_ST = util::StateModel::SM_DERIVED_STATE_MIN + 4;
 
 /// Partner down state.
