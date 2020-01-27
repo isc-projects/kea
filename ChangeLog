@@ -1,3 +1,8 @@
+1709.	[func]		fdupont
+	MySQL Configuration Backend now allows for storing DDNS related
+	configuration in the database.
+	(Gitlab #946)
+
 1708.	[doc]		tomek
 	Clarified the relationship between comments and user context.
 	(Gitlab #1079)
