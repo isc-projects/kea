@@ -1,7 +1,7 @@
 Kea 1.7.4 released on Jan 29, 2020
 
 1714.	[build]		razvan
-	Bumped up library version numbers for Kea 1.7.4 final release.
+	Bumped up library version numbers for Kea 1.7.4 release.
 	(Gitlab #1101)
 
 1713.	[bug]*		tmark

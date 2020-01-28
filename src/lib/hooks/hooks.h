@@ -12,7 +12,7 @@
 
 namespace {
 
-// Version 10 of the hooks framework, set for Kea 1.7.4
+// Version 13 of the hooks framework, set for Kea 1.7.4
 const int KEA_HOOKS_VERSION = 13;
 
 // Names of the framework functions.
