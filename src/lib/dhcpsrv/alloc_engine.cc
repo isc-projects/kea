@@ -34,18 +34,20 @@
 
 #include <algorithm>
 #include <cstring>
-#include <sstream>
 #include <limits>
-#include <vector>
+#include <sstream>
 #include <stdint.h>
 #include <string.h>
 #include <utility>
+#include <vector>
+
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::stats;
+using namespace isc::util;
 
 namespace {
 
@@ -87,7 +89,7 @@ namespace isc {
 namespace dhcp {
 
 AllocEngine::IterativeAllocator::IterativeAllocator(Lease::Type lease_type)
-    :Allocator(lease_type) {
+    : Allocator(lease_type) {
 }
 
 isc::asiolink::IOAddress
@@ -106,17 +108,14 @@ AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& 
                   << prefix_len);
     }
 
-    // Brief explanation what happens here:
-    // http://www.youtube.com/watch?v=NFQCYpIHLNQ
-
     uint8_t n_bytes = (prefix_len - 1)/8;
     uint8_t n_bits = 8 - (prefix_len - n_bytes*8);
     uint8_t mask = 1 << n_bits;
 
-    // Longer explanation: n_bytes specifies number of full bytes that are
-    // in-prefix. They can also be used as an offset for the first byte that
-    // is not in prefix. n_bits specifies number of bits on the last byte that
-    // is (often partially) in prefix. For example for a /125 prefix, the values
+    // Explanation: n_bytes specifies number of full bytes that are in-prefix.
+    // They can also be used as an offset for the first byte that is not in
+    // prefix. n_bits specifies number of bits on the last byte that is
+    // (often partially) in prefix. For example for a /125 prefix, the values
     // are 15 and 3, respectively. Mask is a bitmask that has the least
     // significant bit from the prefix set.
 
@@ -158,11 +157,10 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
 }
 
 isc::asiolink::IOAddress
-AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
-                                             const ClientClasses& client_classes,
-                                             const DuidPtr&,
-                                             const IOAddress&) {
-
+AllocEngine::IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
+                                                     const ClientClasses& client_classes,
+                                                     const DuidPtr&,
+                                                     const IOAddress&) {
     // Is this prefix allocation?
     bool prefix = pool_type_ == Lease::TYPE_PD;
     uint8_t prefix_len = 0;
@@ -287,28 +285,28 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
 }
 
 AllocEngine::HashedAllocator::HashedAllocator(Lease::Type lease_type)
-    :Allocator(lease_type) {
+    : Allocator(lease_type) {
     isc_throw(NotImplemented, "Hashed allocator is not implemented");
 }
 
 isc::asiolink::IOAddress
-AllocEngine::HashedAllocator::pickAddress(const SubnetPtr&,
-                                          const ClientClasses&,
-                                          const DuidPtr&,
-                                          const IOAddress&) {
+AllocEngine::HashedAllocator::pickAddressInternal(const SubnetPtr&,
+                                                  const ClientClasses&,
+                                                  const DuidPtr&,
+                                                  const IOAddress&) {
     isc_throw(NotImplemented, "Hashed allocator is not implemented");
 }
 
 AllocEngine::RandomAllocator::RandomAllocator(Lease::Type lease_type)
-    :Allocator(lease_type) {
+    : Allocator(lease_type) {
     isc_throw(NotImplemented, "Random allocator is not implemented");
 }
 
 isc::asiolink::IOAddress
-AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
-                                          const ClientClasses&,
-                                          const DuidPtr&,
-                                          const IOAddress&) {
+AllocEngine::RandomAllocator::pickAddressInternal(const SubnetPtr&,
+                                                  const ClientClasses&,
+                                                  const DuidPtr&,
+                                                  const IOAddress&) {
     isc_throw(NotImplemented, "Random allocator is not implemented");
 }
 
@@ -1058,7 +1056,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             }
 
             Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
-                                                                   candidate);
+                                                                       candidate);
             if (!existing) {
 
                 // there's no existing lease for selected candidate, so it is
@@ -3375,9 +3373,6 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     Lease4Ptr client_lease;
     findClientLease(ctx, client_lease);
 
-    // Obtain the sole instance of the LeaseMgr.
-    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
-
     // When the client sends the DHCPREQUEST, it should always specify the
     // address which it is requesting or renewing. That is, the client should
     // either use the requested IP address option or set the ciaddr. However,
@@ -3539,7 +3534,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
             .arg(ctx.query_->getLabel())
             .arg(client_lease->addr_.toText());
 
-        if (lease_mgr.deleteLease(client_lease)) {
+        if (LeaseMgrFactory::instance().deleteLease(client_lease)) {
             // Need to decrease statistic for assigned addresses.
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", client_lease->subnet_id_,
@@ -3583,14 +3578,12 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
 
     time_t now = time(NULL);
 
-    // @todo: remove this kludge?
-    std::vector<uint8_t> local_copy;
-    if (ctx.clientid_ && ctx.subnet_->getMatchClientId()) {
-        local_copy = ctx.clientid_->getDuid();
+    ClientIdPtr client_id;
+    if (ctx.subnet_->getMatchClientId()) {
+        client_id = ctx.clientid_;
     }
-    const uint8_t* local_copy0 = local_copy.empty() ? 0 : &local_copy[0];
 
-    Lease4Ptr lease(new Lease4(addr, ctx.hwaddr_, local_copy0, local_copy.size(),
+    Lease4Ptr lease(new Lease4(addr, ctx.hwaddr_, client_id,
                                valid_lft, now, ctx.subnet_->getID()));
 
     // Set FQDN specific lease parameters.
