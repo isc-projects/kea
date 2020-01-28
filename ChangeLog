@@ -1,5 +1,9 @@
 Kea 1.7.4 released on Jan 29, 2020
 
+1714.	[build]		razvan
+	Bumped up library version numbers for Kea 1.7.4 final release.
+	(Gitlab #1101)
+
 1713.	[bug]*		tmark
 	Code added under #35 to permit scoping of DDNS behavioral parameters
 	was refactored to improve performance.
