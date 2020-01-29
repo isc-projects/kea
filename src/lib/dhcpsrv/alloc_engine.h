@@ -99,6 +99,7 @@ protected:
                     const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) {
             if (isc::util::MultiThreadingMgr::instance().getMode()) {
+                std::lock_guard<std::mutex> lock(mutex_);
                 return pickAddressInternal(subnet, client_classes, duid, hint);
             } else {
                 return pickAddressInternal(subnet, client_classes, duid, hint);
