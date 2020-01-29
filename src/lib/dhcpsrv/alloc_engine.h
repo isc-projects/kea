@@ -98,8 +98,11 @@ protected:
                     const ClientClasses& client_classes,
                     const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) {
-            return util::MultiThreadingMgr::call(
-                mutex_, [&]() {return pickAddressInternal(subnet, client_classes, duid, hint);});
+            if (MultiThreadingMgr::instance().getMode()) {
+                return pickAddressInternal(subnet, client_classes, duid, hint);
+            } else {
+                return pickAddressInternal(subnet, client_classes, duid, hint);
+            }
         }
 
         /// @brief Default constructor.
