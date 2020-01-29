@@ -719,14 +719,14 @@ private:
                                   uint32_t& max_samples,
                                   std::string& reason);
 
-    // This is a global context. All statistics will initially be stored here.
+    /// @brief This is a global context. All statistics will initially be stored here.
     StatContextPtr global_;
 
-    /// @brief Mutex used to protect internal state
+    /// @brief The mutex used to protect internal state.
     const boost::scoped_ptr<std::mutex> mutex_;
 };
 
-};
-};
+}  // namespace stats
+}  // namespace isc
 
 #endif // STATS_MGR

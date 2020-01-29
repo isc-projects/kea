@@ -8,7 +8,6 @@
 #define MULTI_THREADING_MGR_H
 
 #include <boost/noncopyable.hpp>
-#include <mutex>
 
 namespace isc {
 namespace util {
@@ -29,14 +28,18 @@ namespace util {
 /// For instance for a class protected by its mutex:
 /// @code
 /// namespace locked {
-///     int foo() { ... }
+///     void foo() { ... }
 /// } // end of locked namespace
 ///
-/// int foo() {
-///     return MultiThreadingMgr::call(mutex_, []() {return locked::foo()});
+/// void foo() {
+///     if (MultiThreadingMgr::instance().getMode()) {
+///         lock_guard<mutex> lock(mutex_);
+///         locked::foo();
+///     } else {
+///         locked::foo();
+///     }
 /// }
 /// @endcode
-
 class MultiThreadingMgr : public boost::noncopyable {
 public:
 
@@ -58,23 +61,6 @@ public:
     ///
     /// @param enabled The new mode.
     void setMode(bool enabled);
-
-    /// @brief Call a Functor in MT or ST mode
-    ///
-    /// @tparam Lockable a lock which is used to create a thread safe context
-    /// @tparam Callable a functor which will be called in MT or ST mode
-    /// @param lk the lock object to perform lock in MT mode
-    /// @param f the functor to call
-    /// @result the result of the functor call
-    template<typename Lockable, typename Callable>
-    static auto call(Lockable& lk, const Callable& f) -> decltype(f()) {
-        if (MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<Lockable> lock(lk);
-            return f();
-        } else {
-            return f();
-        }
-    }
 
 protected:
 
