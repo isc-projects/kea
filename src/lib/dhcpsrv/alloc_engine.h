@@ -42,7 +42,7 @@ namespace dhcp {
 class AllocFailed : public isc::Exception {
 public:
 
-    /// @brief constructor
+    /// @brief Constructor
     ///
     /// @param file name of the file, where exception occurred
     /// @param line line of the file, where exception occurred
@@ -62,14 +62,14 @@ public:
 class AllocEngine : public boost::noncopyable {
 protected:
 
-    /// @brief base class for all address/prefix allocation algorithms
+    /// @brief Base class for all address/prefix allocation algorithms
     ///
     /// This is an abstract class that should not be used directly, but rather
     /// specialized implementations should be used instead.
     class Allocator {
     public:
 
-        /// @brief picks one address out of available pools in a given subnet
+        /// @brief Picks one address out of available pools in a given subnet
         ///
         /// This method returns one address from the available pools in the
         /// specified subnet. It should not check if the address is used or
@@ -106,14 +106,14 @@ protected:
             }
         }
 
-        /// @brief Default constructor.
+        /// @brief Default constructor
         ///
         /// Specifies which type of leases this allocator will assign
         /// @param pool_type specifies pool type (addresses, temp. addr or prefixes)
         Allocator(Lease::Type pool_type) : pool_type_(pool_type) {
         }
 
-        /// @brief virtual destructor
+        /// @brief Virtual destructor
         virtual ~Allocator() {
         }
 
@@ -126,11 +126,12 @@ protected:
 
     protected:
 
-        /// @brief defines pool type allocation
+        /// @brief Defines pool type allocation
         Lease::Type pool_type_;
 
     private:
 
+        /// @brief The mutex to protect the allocated lease
         std::mutex mutex_;
     };
 
@@ -146,7 +147,7 @@ protected:
     class IterativeAllocator : public Allocator {
     public:
 
-        /// @brief default constructor
+        /// @brief Default constructor
         ///
         /// Does not do anything
         /// @param type - specifies allocation type
@@ -154,7 +155,7 @@ protected:
 
     private:
 
-        /// @brief returns the next address from pools in a subnet
+        /// @brief Returns the next address from pools in a subnet
         ///
         /// @param subnet next address will be returned from pool of that subnet
         /// @param client_classes list of classes client belongs to
@@ -206,13 +207,14 @@ protected:
     class HashedAllocator : public Allocator {
     public:
 
-        /// @brief default constructor (does nothing)
+        /// @brief Default constructor (does nothing)
+        ///
         /// @param type - specifies allocation type
         HashedAllocator(Lease::Type type);
 
     private:
 
-        /// @brief returns an address based on hash calculated from client's DUID.
+        /// @brief Returns an address based on hash calculated from client's DUID.
         ///
         /// @todo: Implement this method
         ///
@@ -235,13 +237,14 @@ protected:
     class RandomAllocator : public Allocator {
     public:
 
-        /// @brief default constructor (does nothing)
+        /// @brief Default constructor (does nothing)
+        ///
         /// @param type - specifies allocation type
         RandomAllocator(Lease::Type type);
 
     private:
 
-        /// @brief returns a random address from pool of specified subnet
+        /// @brief Returns a random address from pool of specified subnet
         ///
         /// @todo: Implement this method
         ///
@@ -260,7 +263,7 @@ protected:
 
 public:
 
-    /// @brief specifies allocation type
+    /// @brief Specifies allocation type
     typedef enum {
         ALLOC_ITERATIVE, // iterative - one address after another
         ALLOC_HASHED,    // hashed - client's DUID/client-id is hashed
@@ -294,7 +297,7 @@ public:
 
 private:
 
-    /// @brief a pointer to currently used allocator
+    /// @brief A pointer to currently used allocator
     ///
     /// For IPv4, there will be only one allocator: TYPE_V4
     /// For IPv6, there will be 3 allocators: TYPE_NA, TYPE_TA, TYPE_PD
@@ -303,7 +306,7 @@ private:
     /// @brief number of attempts before we give up lease allocation (0=unlimited)
     uint64_t attempts_;
 
-    // hook name indexes (used in hooks callouts)
+    /// @brief Hook name indexes (used in hooks callouts)
     int hook_index_lease4_select_; ///< index for lease4_select hook
     int hook_index_lease6_select_; ///< index for lease6_select hook
 
@@ -524,14 +527,14 @@ public:
         /// @brief Parameters pertaining to individual IAs.
         struct IAContext {
 
-            /// @brief iaid IAID field from IA_NA or IA_PD that is being
+            /// @brief The IAID field from IA_NA or IA_PD that is being
             /// processed
             uint32_t iaid_;
 
             /// @brief Lease type (IA or PD)
             Lease::Type type_;
 
-            /// @brief client's hints
+            /// @brief Client's hints
             ///
             /// There will typically be just one address, but the protocol
             /// allows more than one address or prefix for each IA container.
@@ -966,7 +969,7 @@ public:
 
 private:
 
-    /// @brief creates a lease and inserts it in LeaseMgr if necessary
+    /// @brief Creates a lease and inserts it in LeaseMgr if necessary
     ///
     /// Creates a lease based on specified parameters and tries to insert it
     /// into the database. That may fail in some cases, i.e. when there is another
