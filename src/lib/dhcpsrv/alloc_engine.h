@@ -98,7 +98,7 @@ protected:
                     const ClientClasses& client_classes,
                     const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) {
-            if (MultiThreadingMgr::instance().getMode()) {
+            if (isc::util::MultiThreadingMgr::instance().getMode()) {
                 return pickAddressInternal(subnet, client_classes, duid, hint);
             } else {
                 return pickAddressInternal(subnet, client_classes, duid, hint);
