@@ -1,3 +1,10 @@
+1715.	[bug]		tmark
+	Kea servers now detect and remove orphaned control channel
+	sockets.  This corrects a failure of the servers to restart
+	with an error of "address already in use" following a fatal
+	loss of database connecivity.
+	(Gitlab #1097)
+
 Kea 1.7.4 released on Jan 29, 2020
 
 1714.	[build]		razvan

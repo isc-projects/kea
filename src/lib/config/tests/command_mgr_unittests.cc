@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/callout_handle.h>
 #include <hooks/library_handle.h>
+#include <testutils/gtest_utils.h>
 #include <string>
 #include <vector>
 
@@ -542,4 +543,29 @@ TEST_F(CommandMgrTest, commandProcessedHookReplaceResponse) {
     EXPECT_EQ("change-response:[ \"just\", \"some\", \"data\" ]:"
              "{ \"result\": 2, \"text\": \"'change-response' command not supported.\" }",
               processed_log_);
+}
+
+// Verifies that a socket cannot be concurrently opened more than once.
+TEST_F(CommandMgrTest, exclusiveOpen) {
+    // Pass in valid parameters.
+    ElementPtr socket_info = Element::createMap();
+    socket_info->set("socket-type", Element::create("unix"));
+    socket_info->set("socket-name", Element::create(getSocketPath()));
+
+    EXPECT_NO_THROW(CommandMgr::instance().openCommandSocket(socket_info));
+    EXPECT_GE(CommandMgr::instance().getControlSocketFD(), 0);
+
+    // Should not be able to open it twice.
+    EXPECT_THROW(CommandMgr::instance().openCommandSocket(socket_info),
+                 isc::config::SocketError);
+
+    // Now let's close it.
+    EXPECT_NO_THROW(CommandMgr::instance().closeCommandSocket());
+
+    // Should be able to re-open it now.
+    EXPECT_NO_THROW(CommandMgr::instance().openCommandSocket(socket_info));
+    EXPECT_GE(CommandMgr::instance().getControlSocketFD(), 0);
+
+    // Now let's close it.
+    EXPECT_NO_THROW(CommandMgr::instance().closeCommandSocket());
 }
