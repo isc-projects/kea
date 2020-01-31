@@ -336,9 +336,10 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
                 .arg(sqlstate ? sqlstate : "<sqlstate null>");
 
             // If there's no lost db callback or it returns false,
-            // then we're not attempting to recover so we're done
+            // then we're not attempting to recover so we're done.
             if (!invokeDbLostCallback()) {
-                exit (-1);
+                isc_throw(db::DbUnrecoverableError,
+                          "database connectivity cannot be recovered");
             }
 
             // We still need to throw so caller can error out of the current

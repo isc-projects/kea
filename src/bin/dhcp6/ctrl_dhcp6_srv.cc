@@ -1110,6 +1110,7 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_DISABLED)
             .arg(db_reconnect_ctl->retriesLeft())
             .arg(db_reconnect_ctl->retryInterval());
+        ControlledDhcpv6Srv::processCommand("shutdown", ConstElementPtr());
         return(false);
     }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1086,12 +1086,14 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         return (false);
     }
 
-    // If reconnect isn't enabled, log it and return false
+    // If reconnect isn't enabled or we're out of retries,
+    // log it, schedule a shutdown,  and return false
     if (!db_reconnect_ctl->retriesLeft() ||
         !db_reconnect_ctl->retryInterval()) {
         LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_DISABLED)
             .arg(db_reconnect_ctl->retriesLeft())
             .arg(db_reconnect_ctl->retryInterval());
+        ControlledDhcpv4Srv::processCommand("shutdown", ConstElementPtr());
         return(false);
     }
 
