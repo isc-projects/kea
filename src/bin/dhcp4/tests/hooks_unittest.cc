@@ -1391,13 +1391,8 @@ TEST_F(HooksDhcpv4SrvTest, drop_pkt4_send) {
     // In particular, it should call registered pkt4_send callback.
     srv_->run();
 
-    // Check that the server sent the message
-    ASSERT_EQ(1, srv_->fake_sent_.size());
-
-    // Get the first packet and check that it has zero length (i.e. the server
-    // did not do packing on its own)
-    Pkt4Ptr sent = srv_->fake_sent_.front();
-    EXPECT_EQ(0, sent->getBuffer().getLength());
+    // Check that the server did not the message
+    ASSERT_EQ(0, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);

@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu Jan 23 2020 15:28
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Jan 31 2020 15:04
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -73,6 +73,7 @@ extern const isc::log::MessageID DHCP4_HOOK_LEASE4_RELEASE_SKIP;
 extern const isc::log::MessageID DHCP4_HOOK_LEASES4_COMMITTED_DROP;
 extern const isc::log::MessageID DHCP4_HOOK_LEASES4_COMMITTED_PARK;
 extern const isc::log::MessageID DHCP4_HOOK_PACKET_RCVD_SKIP;
+extern const isc::log::MessageID DHCP4_HOOK_PACKET_SEND_DROP;
 extern const isc::log::MessageID DHCP4_HOOK_PACKET_SEND_SKIP;
 extern const isc::log::MessageID DHCP4_HOOK_SUBNET4_SELECT_DROP;
 extern const isc::log::MessageID DHCP4_HOOK_SUBNET4_SELECT_SKIP;

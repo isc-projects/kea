@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu Jan 23 2020 15:28
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Jan 31 2020 15:04
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -72,6 +72,7 @@ extern const isc::log::MessageID DHCP4_HOOK_LEASE4_RELEASE_SKIP = "DHCP4_HOOK_LE
 extern const isc::log::MessageID DHCP4_HOOK_LEASES4_COMMITTED_DROP = "DHCP4_HOOK_LEASES4_COMMITTED_DROP";
 extern const isc::log::MessageID DHCP4_HOOK_LEASES4_COMMITTED_PARK = "DHCP4_HOOK_LEASES4_COMMITTED_PARK";
 extern const isc::log::MessageID DHCP4_HOOK_PACKET_RCVD_SKIP = "DHCP4_HOOK_PACKET_RCVD_SKIP";
+extern const isc::log::MessageID DHCP4_HOOK_PACKET_SEND_DROP = "DHCP4_HOOK_PACKET_SEND_DROP";
 extern const isc::log::MessageID DHCP4_HOOK_PACKET_SEND_SKIP = "DHCP4_HOOK_PACKET_SEND_SKIP";
 extern const isc::log::MessageID DHCP4_HOOK_SUBNET4_SELECT_DROP = "DHCP4_HOOK_SUBNET4_SELECT_DROP";
 extern const isc::log::MessageID DHCP4_HOOK_SUBNET4_SELECT_SKIP = "DHCP4_HOOK_SUBNET4_SELECT_SKIP";
@@ -213,6 +214,7 @@ const char* values[] = {
     "DHCP4_HOOK_LEASES4_COMMITTED_DROP", "%1: packet is dropped, because a callout set the next step to DROP",
     "DHCP4_HOOK_LEASES4_COMMITTED_PARK", "%1: packet is parked, because a callout set the next step to PARK",
     "DHCP4_HOOK_PACKET_RCVD_SKIP", "%1: packet is dropped, because a callout set the next step to SKIP",
+    "DHCP4_HOOK_PACKET_SEND_DROP", "%1: prepared DHCPv4 response was not sent because a callout set the next ste to DROP",
     "DHCP4_HOOK_PACKET_SEND_SKIP", "%1: prepared response is not sent, because a callout set the next stp to SKIP",
     "DHCP4_HOOK_SUBNET4_SELECT_DROP", "%1: packet was dropped, because a callout set the next step to 'drop'",
     "DHCP4_HOOK_SUBNET4_SELECT_SKIP", "%1: no subnet was selected, because a callout set the next skip flag",

@@ -372,6 +372,15 @@ This debug message is printed when a callout installed on the pkt4_receive
 hook point sets the next step to SKIP. For this particular hook point, the
 value setting of the flag instructs the server to drop the packet.
 
+% DHCP4_HOOK_PACKET_SEND_DROP %1: prepared DHCPv4 response was not sent because a callout set the next ste to DROP
+This debug message is printed when a callout installed on the pkt4_send
+hook point set the next step to DROP. For this particular hook point, the setting
+of the value by a callout instructs the server to drop the packet. This
+effectively means that the client will not get any response, even though
+the server processed client's request and acted on it (e.g. possibly
+allocated a lease). The argument specifies the client and transaction
+identification information.
+
 % DHCP4_HOOK_PACKET_SEND_SKIP %1: prepared response is not sent, because a callout set the next stp to SKIP
 This debug message is printed when a callout installed on the pkt4_send
 hook point sets the next step to SKIP. For this particular hook point, this

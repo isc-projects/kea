@@ -298,10 +298,11 @@ to the end of this list.
    cannot be modified.
 
  - <b>Next step action</b>: if any callout installed on the "pkt4_send" hook
-   sets the next step action to SKIP or DROP, the server will not construct the raw
+   sets the next step action to SKIP, the server will not construct the raw
    buffer. The expectation is that if the callout set skip flag, it is
    responsible for constructing raw form on its own. Otherwise the output
-   packet will be sent with zero length.
+   packet will be sent with zero length. If any callout set the next step action
+   to DROP, the server will drop the packet.
 
 @subsection dhcpv4HooksBuffer4Send buffer4_send
 

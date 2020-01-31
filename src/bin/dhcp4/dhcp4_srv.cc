@@ -1226,15 +1226,24 @@ Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
                                    *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to pack the packet, so skip at this
-        // stage means "skip packing, the hook already did that".
-        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
-            (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
-                      DHCP4_HOOK_PACKET_SEND_SKIP)
+        // processing step would to pack the packet (create wire data).
+        // That step will be skipped if any callout sets skip flag.
+        // It essentially means that the callout already did packing,
+        // so the server does not have to do it again.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_SKIP)
                 .arg(query->getLabel());
             skip_pack = true;
         }
+
+        /// Callouts decided to drop the packet.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_DROP)
+                .arg(rsp->getLabel());
+            rsp.reset();
+            return;
+        }
+
     }
 
     if (!skip_pack) {
