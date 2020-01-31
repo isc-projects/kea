@@ -228,7 +228,7 @@ struct CqlHostDataSourceInit {
     // Factory class method
     static HostDataSourcePtr
     factory(const DatabaseConnection::ParameterMap& parameters) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_CQL_HOST_DB)
+        LOG_INFO(hosts_logger, DHCPSRV_CQL_HOST_DB)
             .arg(DatabaseConnection::redactedAccessString(parameters));
         return (HostDataSourcePtr(new CqlHostDataSource(parameters)));
     }
