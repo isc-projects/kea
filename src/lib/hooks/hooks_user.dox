@@ -60,12 +60,14 @@ of some of the classes and structures referenced by the user code may
 change between versions of Kea.  These changes have to be reflected
 in the compiled version of the software, hence the need for a rebuild.
 
+
 @subsection hooksdgLanguages Languages
 
 The core of Kea is written in C++.  While it is the intention to
 provide interfaces into user code written in other languages, the initial
 versions of the Hooks system requires that user code be written in C++.
 All examples in this guide are in that language.
+
 
 @subsection hooksdgTerminology Terminology
 
@@ -241,7 +243,7 @@ warning. (The LibraryHandle and its use is discussed in the section
 any configuration information to the "load" function.  The name of the log
 file must therefore be hard-coded as an absolute path name or communicated
 to the user code by some other means.
-- "load" must 0 on success and non-zero on error.  The hooks framework
+- "load" must return 0 on success and non-zero on error.  The hooks framework
 will abandon the loading of the library if "load" returns an error status.
 (In this example, "interesting" can be tested as a boolean value,
 returning "true" if the file opened successfully.)
@@ -260,6 +262,7 @@ in process/daemon.h header against "kea-dhcp4" and "kea-dhcp6"
 If you'd like to check the address family too it is returned in DHCP servers
 by isc::dhcp::CfgMgr::instance().getFamily() declared in dhcpsrv/cfgmgr.h
 with AF_INET and AF_INET6 values.
+
 
 @subsection hooksdgCallouts Callouts
 
@@ -510,6 +513,7 @@ as arguments, being accessed by the pair of methods @c setContext and
 
 The example in the next section illustrates their use.
 
+
 @subsection hooksdgExampleCallouts Example Callouts
 
 Continuing with the tutorial, the requirements need us to retrieve the
@@ -639,6 +643,7 @@ int pkt4_send(CalloutHandle& handle) {
 }
 @endcode
 
+
 @subsection hooksdgLogging Logging in the Hooks Library
 
 Hooks libraries take part in the DHCP message processing. They also often
@@ -751,6 +756,7 @@ configuration file will be "kea-dhcp4.packet-capture". The
 configuration specified for this logger will override the default
 configuration derived from the root logger.
 
+
 @subsection hooksdgBuild Building the Library
 
 Building the code requires building a sharable library.  This requires
@@ -780,6 +786,7 @@ for details.
 depends on the functionality used by the hook code and the module to
 which they are attached. Depending on operating system, you may also need
 to explicitly list libraries on which the Kea libraries you link against depend.
+
 
 @subsection hooksdgConfiguration Configuring the Hooks Library
 
@@ -823,6 +830,7 @@ running hooks libraries against a statically-linked Kea, see @ref
 hooksdgStaticallyLinkedKea.
 
 @section hooksdgAdvancedTopics Advanced Topics
+
 
 @subsection hooksdgContextCreateDestroy Context Creation and Destruction
 
@@ -985,6 +993,7 @@ bookkeeping required to create a library of callouts.
 However, the hooks system is flexible in this area: callouts can have
 non-standard names, and multiple callouts can be registered on a hook.
 
+
 @subsubsection hooksdgLibraryHandle The LibraryHandle Object
 
 The way into the part of the hooks framework that allows callout
@@ -1117,7 +1126,6 @@ handlers for the same command. They are invoked sequentially and each of them
 can freely modify a response set by a previous callout. This includes entirely
 replacing the response provided by previous callouts, if necessary.
 
-
 @subsubsection hooksdgMultipleCallouts Multiple Callouts on a Hook
 
 The Kea hooks framework allows multiple callouts to be attached to
@@ -1137,93 +1145,6 @@ registered.  The same @c CalloutHandle is passed between them, so any
 change made to the CalloutHandle's arguments, "skip" flag, or per-request
 context by the first is visible to the second.
 
-@subsubsection hooksdgDynamicRegistration Dynamic Registration and Re-registration of Callouts
-
-The previous sections have dealt with callouts being registered during
-the call to "load".  The hooks framework is more flexible than that
-in that callouts can be registered and deregistered within a callout.
-In fact, a callout is able to register or deregister itself, and a callout
-is able to be registered on a hook multiple times.
-
-Using our contrived example again, the DHCPv4 server processes one request
-to completion before it starts processing the next.  With this knowledge,
-we could alter the logic of the code so that the callout attached to the
-"pkt4_receive" hook registers the callout doing the logging when it detects
-an interesting packet, and the callout doing the logging deregisters
-itself in its execution.  The relevant modifications to the code in
-the tutorial are shown below:
-
-@code
-// pkt4_receive.cc
-//      :
-
-int pkt4_receive(CalloutHandle& handle) {
-
-            :
-            :
-
-    // Classify it.
-    if (sum % 4 == 0) {
-        // Store the text form of the hardware address in the context to pass
-        // to the next callout.
-        handle.setContext("hwaddr", hwaddr_ptr->hwaddr_.toText());
-
-        // Register the callback to log the data.
-        handle.getLibraryHandle().registerCallout("pkt4_send", write_data);
-    }
-
-    return (0);
-};
-@endcode
-
-@code
-// pkt4_send.cc
-        :
-
-int write_data(CalloutHandle& handle) {
-
-    // Obtain the hardware address of the "interesting" client. As the
-    // callback is only registered when interesting data is present, we
-    // know that the context contains the hardware address so an exception
-    // will not be thrown when we call getArgument().
-    string hwaddr;
-    handle.getArgument("hwaddr", hwaddr);
-
-    // The pointer to the reply.
-    ConstPkt4Ptr reply;
-    handle.getArgument("reply", reply);
-
-    // Get the string form of the IP address.
-    string ipaddr = reply->getYiaddr().toText():
-
-    // Write the information to the log file and flush.
-    interesting << hwaddr << " " << ipaddr << "\n";
-    flush(interesting);
-
-    // We've logged the data, so deregister ourself.  This callout will not
-    // be called again until it is registered by "pkt4_receive".
-
-    handle.getLibraryHandle().deregisterCallout("pkt4_send", write_data);
-
-    return (0);
-}
-@endcode
-
-Note that the above example used a non-standard name for the callout
-that wrote the data.  Had the name been a standard one, it would have been
-registered when the library was loaded and called for the first request,
-regardless of whether that was defined as "interesting".  (Although as
-callouts with standard names are always registered before "load" gets called,
-we could have got round that problem by deregistering that particular
-callout in the "load" function.)
-
-
-@note Deregistration of a callout on the hook that is currently
-being called only takes effect when the server next calls the hook.
-To illustrate this, suppose the callouts attached to a hook are A, B and C
-(in that order), and during execution, A deregisters B and C and adds D.
-When callout A returns, B and C will still run.  The next time the server
-calls the hook's callouts, A and D will run (in that order).
 
 @subsection hooksdgMultipleLibraries Multiple User Libraries
 
@@ -1300,6 +1221,7 @@ as separate elements of the hooks-libraries configuration element, e.g.,
 }
 @endcode
 
+
 @subsection hooksdgInterLibraryData Passing Data Between Libraries
 
 In rare cases, it is possible that one library may want to pass
@@ -1318,22 +1240,6 @@ values passed between the libraries include a special character such as
 the dollar symbol or percent sign.  In this way there is no danger that
 a name will conflict with any existing or future Kea argument names.
 
-
-@subsection hooksdgRegisterMultipleLibraries Dynamic Callout Registration and Multiple Libraries
-
-On a particular hook, callouts are called in the order the libraries appear
-in the configuration and, within a library, in the order the callouts
-are registered.
-
-This order applies to dynamically-registered callouts as well.  As an
-example, consider the diagram above where for hook "beta", callout "check"
-is followed by callout "validate".  Suppose that when "authorize" is run,
-it registers a new callout ("double_check") on hook "beta".  That
-callout will be inserted at the end of the callouts registered by
-library 1 and before any registered by library 2.  It would therefore
-appear between "check" and "validate".  On the other hand, if it were
-"logpkt" that registered the new callout, "double_check" would appear
-after "validate".
 
 @subsection hooksdgStaticallyLinkedKea Running Against a Statically-Linked Kea
 
@@ -1370,6 +1276,7 @@ int load() {
 
 }
 @endcode
+
 
 @subsection hooksdgHooksConfig Configuring Hooks Libraries
 

@@ -349,6 +349,20 @@ public:
     /// @return pointer to the parking lot handle
     ParkingLotHandlePtr getParkingLotHandlePtr() const;
 
+    /// @brief Current library.
+    ///
+    /// When a call is made to @ref CalloutManager::callCallouts, this holds
+    /// the index of the current library.  It is set to an invalid value (-1)
+    /// otherwise.
+    int current_library_;
+
+    /// @brief Current hook.
+    ///
+    /// When a call is made to @ref CalloutManager::callCallouts, this holds
+    /// the index of the current hook.  It is set to an invalid value  (-1)
+    /// otherwise.
+    int current_hook_;
+
 private:
 
     /// @brief Check index

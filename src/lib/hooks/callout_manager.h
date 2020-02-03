@@ -166,11 +166,14 @@ public:
     ///
     /// @param name Name of the hook to which the callout is added.
     /// @param callout Pointer to the callout function to be registered.
+    /// @param library_index Library index used for registering the callout.
     ///
     /// @throw NoSuchHook The hook name is unrecognized.
     /// @throw Unexpected The hook name is valid but an internal data structure
     ///        is of the wrong size.
-    void registerCallout(const std::string& name, CalloutPtr callout);
+    void registerCallout(const std::string& name,
+                         CalloutPtr callout,
+                         int library_index);
 
     /// @brief De-Register a callout on a hook for the current library
     ///
@@ -181,13 +184,16 @@ public:
     ///
     /// @param name Name of the hook from which the callout is removed.
     /// @param callout Pointer to the callout function to be removed.
+    /// @param library_index Library index used for registering the callout.
     ///
     /// @return true if a one or more callouts were deregistered.
     ///
     /// @throw NoSuchHook The hook name is unrecognized.
     /// @throw Unexpected The hook name is valid but an internal data structure
     ///        is of the wrong size.
-    bool deregisterCallout(const std::string& name, CalloutPtr callout);
+    bool deregisterCallout(const std::string& name,
+                           CalloutPtr callout,
+                           int library_index);
 
     /// @brief Removes all callouts on a hook for the current library
     ///
@@ -196,11 +202,12 @@ public:
     /// by the current_library_ member).
     ///
     /// @param name Name of the hook from which the callouts are removed.
+    /// @param library_index Library index used for registering the callout.
     ///
     /// @return true if one or more callouts were deregistered.
     ///
     /// @throw NoSuchHook Thrown if the hook name is unrecognized.
-    bool deregisterAllCallouts(const std::string& name);
+    bool deregisterAllCallouts(const std::string& name, int library_index);
 
     /// @brief Checks if callouts are present on a hook
     ///
@@ -265,14 +272,6 @@ public:
     /// @param command_name Command name for which the hook point should be
     ///        registered.
     void registerCommandHook(const std::string& command_name);
-
-    /// @brief Get current hook index
-    ///
-    /// Made available during callCallouts, this is the index of the hook
-    /// on which callouts are being called.
-    int getHookIndex() const {
-        return (current_hook_);
-    }
 
     /// @brief Get number of libraries
     ///
@@ -401,7 +400,7 @@ private:
     /// the hook registration functions.
     ///
     /// @param library_index Value to check for validity as a library index.
-    ///        Valid values are 0 - numlib+1 and -1: see @ref setLibraryIndex
+    ///        Valid values are 0 -> numlib + 1 and -1: see @ref setLibraryIndex
     ///        for the meaning of the various values.
     ///
     /// @throw NoSuchLibrary Library index is not valid.
@@ -413,11 +412,6 @@ private:
     /// @ref hooksmgMaintenanceGuide for information as to why the class holds
     /// a reference instead of accessing the singleton within the code.
     ServerHooks& server_hooks_;
-
-    /// Current hook.  When a call is made to callCallouts, this holds the
-    /// index of the current hook.  It is set to an invalid value (-1)
-    /// otherwise.
-    int current_hook_;
 
     /// Current library index.  When a call is made to any of the callout
     /// registration methods, this variable indicates the index of the user

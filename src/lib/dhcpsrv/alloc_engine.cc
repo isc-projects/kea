@@ -2663,19 +2663,12 @@ AllocEngine::deleteExpiredReclaimedLeases4(const uint32_t secs) {
 
 bool
 AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
-
     if (!lease || (lease->state_ != Lease::STATE_DECLINED) ) {
         return (true);
     }
 
     if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_recover_)) {
-
-        // Let's use a static callout handle. It will be initialized the first
-        // time lease4_recover is called and will keep to that value.
-        static CalloutHandlePtr callout_handle;
-        if (!callout_handle) {
-            callout_handle = HooksManager::createCalloutHandle();
-        }
+        CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do
@@ -2724,19 +2717,12 @@ AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
 
 bool
 AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
-
     if (!lease || (lease->state_ != Lease::STATE_DECLINED) ) {
         return (true);
     }
 
     if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_recover_)) {
-
-        // Let's use a static callout handle. It will be initialized the first
-        // time lease6_recover is called and will keep to that value.
-        static CalloutHandlePtr callout_handle;
-        if (!callout_handle) {
-            callout_handle = HooksManager::createCalloutHandle();
-        }
+        CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do

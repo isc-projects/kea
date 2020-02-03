@@ -62,24 +62,20 @@ public:
 
     /// @brief Constructor
     ///
-    /// @param manager Back pointer to the containing CalloutManager.
-    ///        This pointer is used to access appropriate methods in that
-    ///        object.  Note that the "raw" pointer is safe - the only
-    ///        instance of the LibraryHandle in the system is as a member of
-    ///        the CalloutManager to which it points.
+    /// @param manager Back reference to the containing CalloutManager.
+    ///        This reference is used to access appropriate methods in that
+    ///        object.  Note that the reference is safe - the only instance
+    ///        of the LibraryHandle in the system is as a member of the
+    ///        CalloutManager to which it points.
     ///
     /// @param index Index of the library to which the LibraryHandle applies.
     ///        If negative, the library index as set in the CalloutManager is
-    ///        used.  Otherwise the current library index is saved, this value
-    ///        is set as the current index, the registration call is made, and
-    ///        the CalloutManager's library index is reset.  Note: although -1
-    ///        is a valid argument value for
-    ///        isc::hooks::CalloutManager::setLibraryIndex(), in this class is
-    ///        is used as a sentinel to indicate that the library index in
-    ///        isc::util::CalloutManager should not be set or reset.
-    LibraryHandle(CalloutManager* manager, int index = -1)
-        : callout_manager_(manager), index_(index)
-    {}
+    ///        used.  Note: although -1 is a valid argument value for
+    ///        @ref isc::hooks::CalloutManager::setLibraryIndex(), in this class
+    ///        it is used as a sentinel to indicate that the library index in
+    ///        @ref isc::util::CalloutManager should not be set or reset.
+    LibraryHandle(CalloutManager& manager, int index = -1)
+        : callout_manager_(manager), index_(index) {}
 
     /// @brief Register a callout on a hook
     ///
@@ -231,7 +227,7 @@ private:
     isc::data::ConstElementPtr getParameters();
 
     /// Back pointer to the collection object for the library
-    CalloutManager* callout_manager_;
+    CalloutManager& callout_manager_;
 
     /// Library index to which this handle applies.  -1 indicates that it
     /// applies to whatever index is current in the CalloutManager.

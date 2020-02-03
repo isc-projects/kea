@@ -329,7 +329,7 @@ LibraryManager::unloadLibrary() {
         vector<string> hooks = ServerHooks::getServerHooks().getHookNames();
         manager_->setLibraryIndex(index_);
         for (size_t i = 0; i < hooks.size(); ++i) {
-            bool removed = manager_->deregisterAllCallouts(hooks[i]);
+            bool removed = manager_->deregisterAllCallouts(hooks[i], index_);
             if (removed) {
                 LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_REMOVED)
                     .arg(hooks[i]).arg(library_name_);

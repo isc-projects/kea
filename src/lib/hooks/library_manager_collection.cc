@@ -70,7 +70,7 @@ LibraryManagerCollection::loadLibraries() {
     // If the list of libraries is not empty, re-create the callout manager.
     // This deletes all callouts (including the pre-library and post-
     // library) ones.  It is up to the libraries to re-register their callouts.
-    //  The pre-library and post-library callouts will also need to be
+    // The pre-library and post-library callouts will also need to be
     // re-registered.
     //
     // If the list of libraries stays empty (as in the case of a reconfiguration

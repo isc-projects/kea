@@ -26,12 +26,10 @@ namespace hooks {
 
 // Constructor
 CalloutManager::CalloutManager(int num_libraries)
-    : server_hooks_(ServerHooks::getServerHooks()),
-      current_hook_(-1), current_library_(-1),
+    : server_hooks_(ServerHooks::getServerHooks()), current_library_(-1),
       hook_vector_(ServerHooks::getServerHooks().getCount()),
-      library_handle_(this), pre_library_handle_(this, 0),
-      post_library_handle_(this, INT_MAX), num_libraries_(num_libraries)
-{
+      library_handle_(*this), pre_library_handle_(*this, 0),
+      post_library_handle_(*this, INT_MAX), num_libraries_(num_libraries) {
     if (num_libraries < 0) {
         isc_throw(isc::BadValue, "number of libraries passed to the "
                   "CalloutManager must be >= 0");
@@ -58,13 +56,15 @@ CalloutManager::checkLibraryIndex(int library_index) const {
 // Register a callout for the current library.
 
 void
-CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
+CalloutManager::registerCallout(const std::string& name,
+                                CalloutPtr callout,
+                                int library_index) {
     // Note the registration.
     LOG_DEBUG(callouts_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUT_REGISTRATION)
-        .arg(current_library_).arg(name);
+        .arg(library_index).arg(name);
 
     // Sanity check that the current library index is set to a valid value.
-    checkLibraryIndex(current_library_);
+    checkLibraryIndex(library_index);
 
     // New hooks could have been registered since the manager was constructed.
     ensureHookLibsVectorSize();
@@ -78,10 +78,10 @@ CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
     // the present index.
     for (CalloutVector::iterator i = hook_vector_[hook_index].begin();
          i != hook_vector_[hook_index].end(); ++i) {
-        if (i->first > current_library_) {
+        if (i->first > library_index) {
             // Found an element whose library index number is greater than the
             // current index, so insert the new element ahead of this one.
-            hook_vector_[hook_index].insert(i, make_pair(current_library_,
+            hook_vector_[hook_index].insert(i, make_pair(library_index,
                                                          callout));
             return;
         }
@@ -90,7 +90,7 @@ CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
     // Reached the end of the vector, so there is no element in the (possibly
     // empty) set of callouts with a library index greater than the current
     // library index.  Inset the callout at the end of the list.
-    hook_vector_[hook_index].push_back(make_pair(current_library_, callout));
+    hook_vector_[hook_index].push_back(make_pair(library_index, callout));
 }
 
 // Check if callouts are present for a given hook index.
@@ -132,7 +132,6 @@ CalloutManager::commandHandlersPresent(const std::string& command_name) const {
 
 void
 CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
-
     // Clear the "skip" flag so we don't carry state from a previous call.
     // This is done regardless of whether callouts are present to avoid passing
     // any state from the previous call of callCallouts().
@@ -144,7 +143,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
 
         // Set the current hook index.  This is used should a callout wish to
         // determine to what hook it is attached.
-        current_hook_ = hook_index;
+        callout_handle.current_hook_ = hook_index;
 
         // Duplicate the callout vector for this hook and work through that.
         // This step is needed because we allow dynamic registration and
@@ -159,7 +158,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
 
         // Mark that the callouts begin for the hook.
         LOG_DEBUG(callouts_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_BEGIN)
-            .arg(server_hooks_.getName(current_hook_));
+            .arg(server_hooks_.getName(callout_handle.current_hook_));
 
         // Call all the callouts.
         for (CalloutVector::const_iterator i = callouts.begin();
@@ -167,7 +166,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
             // In case the callout tries to register or deregister a callout,
             // set the current library index to the index associated with the
             // library that registered the callout being called.
-            current_library_ = i->first;
+            callout_handle.current_library_ = i->first;
 
             // Call the callout
             try {
@@ -176,14 +175,15 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                 stopwatch.stop();
                 if (status == 0) {
                     LOG_DEBUG(callouts_logger, HOOKS_DBG_EXTENDED_CALLS,
-                              HOOKS_CALLOUT_CALLED).arg(current_library_)
-                        .arg(server_hooks_.getName(current_hook_))
+                              HOOKS_CALLOUT_CALLED)
+                        .arg(callout_handle.current_library_)
+                        .arg(server_hooks_.getName(callout_handle.current_hook_))
                         .arg(PointerConverter(i->second).dlsymPtr())
                         .arg(stopwatch.logFormatLastDuration());
                 } else {
                     LOG_ERROR(callouts_logger, HOOKS_CALLOUT_ERROR)
-                        .arg(current_library_)
-                        .arg(server_hooks_.getName(current_hook_))
+                        .arg(callout_handle.current_library_)
+                        .arg(server_hooks_.getName(callout_handle.current_hook_))
                         .arg(PointerConverter(i->second).dlsymPtr())
                         .arg(stopwatch.logFormatLastDuration());
                 }
@@ -194,7 +194,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                 // Any exception, not just ones based on isc::Exception
                 LOG_ERROR(callouts_logger, HOOKS_CALLOUT_EXCEPTION)
                     .arg(current_library_)
-                    .arg(server_hooks_.getName(current_hook_))
+                    .arg(server_hooks_.getName(callout_handle.current_hook_))
                     .arg(PointerConverter(i->second).dlsymPtr())
                     .arg(e.what())
                     .arg(stopwatch.logFormatLastDuration());
@@ -205,13 +205,13 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
         // Mark end of callout execution. Include the total execution
         // time for callouts.
         LOG_DEBUG(callouts_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_COMPLETE)
-            .arg(server_hooks_.getName(current_hook_))
+            .arg(server_hooks_.getName(callout_handle.current_hook_))
             .arg(stopwatch.logFormatTotalDuration());
 
         // Reset the current hook and library indexes to an invalid value to
         // catch any programming errors.
-        current_hook_ = -1;
-        current_library_ = -1;
+        callout_handle.current_hook_ = -1;
+        callout_handle.current_library_ = -1;
     }
 }
 
@@ -232,9 +232,10 @@ CalloutManager::callCommandHandlers(const std::string& command_name,
 // Deregister a callout registered by the current library on a particular hook.
 
 bool
-CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
+CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout,
+                                  int library_index) {
     // Sanity check that the current library index is set to a valid value.
-    checkLibraryIndex(current_library_);
+    checkLibraryIndex(library_index);
 
     // New hooks could have been registered since the manager was constructed.
     ensureHookLibsVectorSize();
@@ -250,7 +251,7 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
 
     /// Construct a CalloutEntry matching the current library and the callout
     /// we want to remove.
-    CalloutEntry target(current_library_, callout);
+    CalloutEntry target(library_index, callout);
 
     /// To decide if any entries were removed, we'll record the initial size
     /// of the callout vector for the hook, and compare it with the size after
@@ -276,7 +277,7 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
     bool removed = initial_size != hook_vector_[hook_index].size();
     if (removed) {
         LOG_DEBUG(callouts_logger, HOOKS_DBG_EXTENDED_CALLS,
-                  HOOKS_CALLOUT_DEREGISTERED).arg(current_library_).arg(name);
+                  HOOKS_CALLOUT_DEREGISTERED).arg(library_index).arg(name);
     }
 
     return (removed);
@@ -285,8 +286,8 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
 // Deregister all callouts on a given hook.
 
 bool
-CalloutManager::deregisterAllCallouts(const std::string& name) {
-
+CalloutManager::deregisterAllCallouts(const std::string& name,
+                                      int library_index) {
     // New hooks could have been registered since the manager was constructed.
     ensureHookLibsVectorSize();
 
@@ -296,7 +297,7 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
 
     /// Construct a CalloutEntry matching the current library (the callout
     /// pointer is NULL as we are not checking that).
-    CalloutEntry target(current_library_, static_cast<CalloutPtr>(0));
+    CalloutEntry target(library_index, static_cast<CalloutPtr>(0));
 
     /// To decide if any entries were removed, we'll record the initial size
     /// of the callout vector for the hook, and compare it with the size after
@@ -315,8 +316,7 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
     bool removed = initial_size != hook_vector_[hook_index].size();
     if (removed) {
         LOG_DEBUG(callouts_logger, HOOKS_DBG_EXTENDED_CALLS,
-                  HOOKS_ALL_CALLOUTS_DEREGISTERED).arg(current_library_)
-                                                .arg(name);
+                  HOOKS_ALL_CALLOUTS_DEREGISTERED).arg(library_index).arg(name);
     }
 
     return (removed);
@@ -324,7 +324,6 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
 
 void
 CalloutManager::registerCommandHook(const std::string& command_name) {
-
     // New hooks could have been registered since the manager was constructed.
     ensureHookLibsVectorSize();
 

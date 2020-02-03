@@ -19,29 +19,24 @@ namespace hooks {
 
 void
 LibraryHandle::registerCallout(const std::string& name, CalloutPtr callout) {
-    // Reset library index if required, saving the current value.
-    int saved_index = callout_manager_->getLibraryIndex();
-    if (index_ >= 0) {
-        callout_manager_->setLibraryIndex(index_);
+    int index = index_;
+
+    if (index_ == -1) {
+        // -1 means that current index is stored in CalloutManager.
+        // So let's get the index from there. See comment for
+        // LibraryHandle::index_.
+        index = callout_manager_.getLibraryIndex();
     }
 
     // Register the callout.
-    callout_manager_->registerCallout(name, callout);
-
-    // Restore the library index if required.  We know that the saved index
-    // is valid for the number of libraries (or is -1, which is an internal
-    // state indicating there is no current library index) as we obtained it
-    // from the callout manager.
-    if (index_ >= 0) {
-        callout_manager_->setLibraryIndex(saved_index);
-    }
+    callout_manager_.registerCallout(name, callout, index);
 }
 
 void
 LibraryHandle::registerCommandCallout(const std::string& command_name,
                                       CalloutPtr callout) {
     // Register hook point for this command, if one doesn't exist.
-    callout_manager_->registerCommandHook(command_name);
+    callout_manager_.registerCommandHook(command_name);
     // Register the command handler as a callout.
     registerCallout(ServerHooks::commandToHookName(command_name), callout);
 }
@@ -49,34 +44,30 @@ LibraryHandle::registerCommandCallout(const std::string& command_name,
 
 bool
 LibraryHandle::deregisterCallout(const std::string& name, CalloutPtr callout) {
-    int saved_index = callout_manager_->getLibraryIndex();
-    if (index_ >= 0) {
-        callout_manager_->setLibraryIndex(index_);
+    int index = index_;
+
+    if (index_ == -1) {
+        // -1 means that current index is stored in CalloutManager.
+        // So let's get the index from there. See comment for
+        // LibraryHandle::index_.
+        index = callout_manager_.getLibraryIndex();
     }
 
-    bool status = callout_manager_->deregisterCallout(name, callout);
-
-    if (index_ >= 0) {
-        callout_manager_->setLibraryIndex(saved_index);
-    }
-
-    return (status);
+    return (callout_manager_.deregisterCallout(name, callout, index));
 }
 
 bool
 LibraryHandle::deregisterAllCallouts(const std::string& name) {
-    int saved_index = callout_manager_->getLibraryIndex();
-    if (index_ >= 0) {
-        callout_manager_->setLibraryIndex(index_);
+    int index = index_;
+
+    if (index_ == -1) {
+        // -1 means that current index is stored in CalloutManager.
+        // So let's get the index from there. See comment for
+        // LibraryHandle::index_.
+        index = callout_manager_.getLibraryIndex();
     }
 
-    bool status = callout_manager_->deregisterAllCallouts(name);
-
-    if (index_ >= 0) {
-        callout_manager_->setLibraryIndex(saved_index);
-    }
-
-    return (status);
+    return (callout_manager_.deregisterAllCallouts(name, index));
 }
 
 isc::data::ConstElementPtr
@@ -89,7 +80,7 @@ LibraryHandle::getParameters() {
         // -1 means that current index is stored in CalloutManager.
         // So let's get the index from there. See comment for
         // LibraryHandle::index_.
-        index = callout_manager_->getLibraryIndex();
+        index = callout_manager_.getLibraryIndex();
     }
 
     if ((index > libinfo.size()) || (index <= 0)) {
@@ -99,9 +90,9 @@ LibraryHandle::getParameters() {
     }
 
     // Some indexes have special meaning:
-    // * 0 - pre-user library callout
-    // * 1..numlib - indexes for actual libraries
-    // * INT_MAX - post-user library callout
+    // * 0           - pre-user library callout
+    // * 1 -> numlib - indexes for actual libraries
+    // * INT_MAX     - post-user library callout
 
     return (libinfo[index - 1].second);
 }
