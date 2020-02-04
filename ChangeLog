@@ -1,3 +1,10 @@
+1665.	[bug]		tmark
+	Modified option 43 parsing to interpret sub-option codes 0 and 255
+	as PAD and END when no sub-option with these codes are defined.
+	This adds control of illegal but common use of these reserved
+	code points in option 43.
+	(Gitlab #1111,#950)
+
 1664.	[bug]		tmark
 	Corrected an issue in the MySQL CB hook library which could
 	cause subnet and shared-network options, properly added to

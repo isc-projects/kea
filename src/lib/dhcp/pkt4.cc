@@ -205,7 +205,7 @@ Pkt4::unpack() {
     // a vector as an input.
     buffer_in.readVector(opts_buffer, opts_len);
 
-    size_t offset = LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE, options_, deferred_options_);
+    size_t offset = LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE, options_, deferred_options_, false);
 
     // If offset is not equal to the size and there is no DHO_END,
     // then something is wrong here. We either parsed past input

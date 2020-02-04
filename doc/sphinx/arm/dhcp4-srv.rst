@@ -2152,6 +2152,40 @@ The definition used to decode a VSI option is:
 
 .. note::
 
+   By default, in the Vendor-Specific Information option (code 43)
+   sub-option code 0 and 255 mean PAD and END respectively according to
+   `RFC 2132 <https://tools.ietf.org/html/rfc2132>`_. In other words, the
+   sub-option code values of 0 and 255 are reserved. Kea does, however,
+   allow you to define sub-option codes from 0 to 255.  If you define
+   sub-options with codes 0 and/or 255, bytes with that value will
+   no longer be treated as a PAD or an END, but as the sub-option code
+   when parsing a VSI option in an incoming query.
+
+   Option 43 input processing (aka unpacking) is deferred so that it
+   happens after classification.  This means you cannot classify clients
+   using option 43 suboptions.  The definition used to unpack option 43
+   is determined as follows:
+
+   - If defined at the global scope this definition is used
+   - If defined at client class scope and the packet belongs to this
+     class the client class definition is used
+   - If not defined at global scope nor in a client class to which the
+     packet belongs, the built-in last resort definition is used. This
+     definition only says the sub-option space is
+     "vendor-encapsulated-options-space"
+
+   The output definition selection  is a bit simpler:
+
+   - If the packet belongs to a client class which defines the option
+     43 use this definition
+   - If defined at the global scope use this definition
+   - Otherwise use the built-in last resot definition.
+
+   Note as they use a specific/per vendor option space the sub-options
+   are defined at the global scope.
+
+.. note::
+
    Option definitions in client classes are allowed only for this
    limited option set (codes 43 and from 224 to 254), and only for
    DHCPv4.
