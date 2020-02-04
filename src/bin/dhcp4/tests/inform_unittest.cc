@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -175,6 +175,8 @@ TEST_F(InformTest, directClientBroadcast) {
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Response should have been unicast to the ciaddr.
     EXPECT_EQ(IOAddress("10.0.0.56"), resp->getLocalAddr());
+    // The ciaddr should have been copied.
+    EXPECT_EQ(IOAddress("10.0.0.56"), resp->getCiaddr());
     // Response must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
     // Make sure that the server id is present.
@@ -214,6 +216,8 @@ TEST_F(InformTest, directClientBroadcast) {
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Response should have been unicast to the ciaddr.
     EXPECT_EQ(IOAddress("10.0.0.12"), resp->getLocalAddr());
+    // The ciaddr should have been copied.
+    EXPECT_EQ(IOAddress("10.0.0.12"), resp->getCiaddr());
     // Response must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
 
@@ -265,6 +269,8 @@ TEST_F(InformTest, directClientUnicast) {
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Response should have been unicast to the ciaddr.
     EXPECT_EQ(IOAddress("10.0.0.56"), resp->getLocalAddr());
+    // The ciaddr should have been copied.
+    EXPECT_EQ(IOAddress("10.0.0.56"), resp->getCiaddr());
     // Response must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
     // Make sure that the server id is present.
@@ -295,8 +301,10 @@ TEST_F(InformTest, directClientNoCiaddr) {
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-    // Response should have been unicast to the ciaddr.
+    // Response should have been unicast to the client address.
     EXPECT_EQ(IOAddress("10.0.0.56"), resp->getLocalAddr());
+    // The ciaddr should be 0.
+    EXPECT_EQ(IOAddress("0.0.0.0"), resp->getCiaddr());
     // Response must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
     EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getLocalPort());
@@ -334,6 +342,8 @@ TEST_F(InformTest, relayedClient) {
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Response should have been unicast to the ciaddr.
     EXPECT_EQ(IOAddress("192.0.2.56"), resp->getLocalAddr());
+    // The ciaddr should have been copied.
+    EXPECT_EQ(IOAddress("192.0.2.56"), resp->getCiaddr());
     // Response is unicast to the client, so it must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
     EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getLocalPort());

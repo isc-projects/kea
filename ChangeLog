@@ -1,3 +1,8 @@
+1663.	[func]		tmark
+	Client supplied ciaddr is now sent back when responding to
+	DHCPINFORM
+	(Gitlab #1112,#992)
+
 1662.	[bug]		tmark
 	kea-dhcp4 and kea-dhcp6 now shutdown gracefully by executing
 	the shutdown command, if connectivity with a backend database
