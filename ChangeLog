@@ -1,3 +1,9 @@
+1664.	[bug]		tmark
+	Corrected an issue in the MySQL CB hook library which could
+	cause subnet and shared-network options, properly added to
+	the CB database, to be discarded when fetched from the backend.
+	(Gitlab #1110,#1093)
+
 1663.	[func]		tmark
 	Client supplied ciaddr is now sent back when responding to
 	DHCPINFORM
