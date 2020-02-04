@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <array>
 #include <unistd.h>
+#include <sys/file.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -487,6 +488,11 @@ public:
     /// @brief Asynchronously accepts next connection.
     void doAccept();
 
+    /// @brief Returns the lock file name
+    std::string getLockName() {
+        return (std::string(socket_name_ + ".lock"));
+    }
+
     /// @brief Pointer to the IO service used by the server process for running
     /// asynchronous tasks.
     IOServicePtr io_service_;
@@ -541,6 +547,28 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
 
     socket_name_ = name->stringValue();
 
+    // First let's open lock file.
+    std::string lock_name = getLockName();
+    int lock_fd = open(lock_name.c_str(), O_RDONLY | O_CREAT, 0600);
+    if (lock_fd == -1) {
+        std::string errmsg = strerror(errno);
+        isc_throw(SocketError, "cannot create socket lockfile, "
+                  << lock_name  << ", : " << errmsg);
+    }
+
+    // Try to acquire lock. If we can't somebody else is actively
+    // using it.
+    int ret = flock(lock_fd, LOCK_EX | LOCK_NB);
+    if (ret != 0) {
+        std::string errmsg = strerror(errno);
+        isc_throw(SocketError, "cannot lock socket lockfile, "
+                  << lock_name  << ", : " << errmsg);
+    }
+
+    // We have the lock, so let's remove the pre-existing socket
+    // file if it exists.
+    static_cast<void>(::remove(socket_name_.c_str()));
+
     LOG_INFO(command_logger, COMMAND_ACCEPTOR_START)
         .arg(socket_name_);
 
@@ -551,7 +579,6 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
         acceptor_->open(endpoint);
         acceptor_->bind(endpoint);
         acceptor_->listen();
-
         // Install this socket in Interface Manager.
         isc::dhcp::IfaceMgr::instance().addExternalSocket(acceptor_->getNative(), 0);
 
@@ -601,6 +628,7 @@ void CommandMgr::closeCommandSocket() {
         isc::dhcp::IfaceMgr::instance().deleteExternalSocket(impl_->acceptor_->getNative());
         impl_->acceptor_->close();
         static_cast<void>(::remove(impl_->socket_name_.c_str()));
+        static_cast<void>(::remove(impl_->getLockName().c_str()));
     }
 
     // Stop all connections which can be closed. The only connection that won't
