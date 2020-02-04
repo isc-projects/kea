@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Jul 10 2019 15:10
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Tue Feb 04 2020 11:15
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -48,6 +48,8 @@ extern const isc::log::MessageID DHCP4_DEACTIVATE_INTERFACE;
 extern const isc::log::MessageID DHCP4_DECLINE_LEASE;
 extern const isc::log::MessageID DHCP4_DECLINE_LEASE_MISMATCH;
 extern const isc::log::MessageID DHCP4_DECLINE_LEASE_NOT_FOUND;
+extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_MISSING;
+extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_UNPACK_FAIL;
 extern const isc::log::MessageID DHCP4_DHCP4O6_BAD_PACKET;
 extern const isc::log::MessageID DHCP4_DHCP4O6_PACKET_RECEIVED;
 extern const isc::log::MessageID DHCP4_DHCP4O6_PACKET_SEND;
@@ -101,6 +103,7 @@ extern const isc::log::MessageID DHCP4_PACKET_NAK_0002;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0003;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0004;
 extern const isc::log::MessageID DHCP4_PACKET_OPTIONS_SKIPPED;
+extern const isc::log::MessageID DHCP4_PACKET_OPTION_UNPACK_FAIL;
 extern const isc::log::MessageID DHCP4_PACKET_PACK;
 extern const isc::log::MessageID DHCP4_PACKET_PACK_FAIL;
 extern const isc::log::MessageID DHCP4_PACKET_PROCESS_EXCEPTION;
