@@ -490,7 +490,7 @@ public:
 
     /// @brief Returns the lock file name
     std::string getLockName() {
-	return(std::string(socket_name_ + ".lock"));
+        return (std::string(socket_name_ + ".lock"));
     }
 
     /// @brief Pointer to the IO service used by the server process for running
@@ -549,7 +549,6 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
 
     // First let's open lock file.
     std::string lock_name = getLockName();
-    errno = 0;
     int lock_fd = open(lock_name.c_str(), O_RDONLY | O_CREAT, 0600);
     if (lock_fd == -1) {
         std::string errmsg = strerror(errno);
@@ -559,7 +558,6 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
 
     // Try to acquire lock. If we can't somebody else is actively
     // using it.
-    errno = 0;
     int ret = flock(lock_fd, LOCK_EX | LOCK_NB);
     if (ret != 0) {
         std::string errmsg = strerror(errno);
@@ -568,7 +566,7 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
     }
 
     // We have the lock, so let's remove the pre-existing socket
-    // file if it's exists.
+    // file if it exists.
     static_cast<void>(::remove(socket_name_.c_str()));
 
     LOG_INFO(command_logger, COMMAND_ACCEPTOR_START)

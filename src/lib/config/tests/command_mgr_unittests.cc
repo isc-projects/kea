@@ -17,7 +17,6 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/callout_handle.h>
 #include <hooks/library_handle.h>
-#include <testutils/gtest_utils.h>
 #include <string>
 #include <vector>
 
