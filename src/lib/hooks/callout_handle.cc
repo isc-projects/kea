@@ -78,14 +78,6 @@ CalloutHandle::getParkingLotHandlePtr() const {
     return (boost::make_shared<ParkingLotHandle>(server_hooks_.getParkingLotPtr(current_hook_)));
 }
 
-// Return the library handle allowing the callout to access the CalloutManager
-// registration/deregistration functions.
-
-LibraryHandle&
-CalloutHandle::getLibraryHandle() const {
-    return (manager_->getLibraryHandle());
-}
-
 // Return the context for the currently pointed-to library.  This version is
 // used by the "setContext()" method and creates a context for the current
 // library if it does not exist.

@@ -248,21 +248,6 @@ public:
         return (next_step_);
     }
 
-    /// @brief Access current library handle
-    ///
-    /// Returns a reference to the current library handle.  This function is
-    /// only available when called by a callout (which in turn is called
-    /// through the "callCallouts" method), as it is only then that the current
-    /// library index is valid.  A callout uses the library handle to
-    /// dynamically register or deregister callouts.
-    ///
-    /// @return Reference to the library handle.
-    ///
-    /// @throw InvalidIndex thrown if this method is called when the current
-    ///        library index is invalid (typically if it is called outside of
-    ///        the active callout).
-    LibraryHandle& getLibraryHandle() const;
-
     /// @brief Set context
     ///
     /// Sets an element in the context associated with the current library.  If
