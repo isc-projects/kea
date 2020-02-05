@@ -161,8 +161,8 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     destroyPgSQLSchema();
     createPgSQLSchema();
 
-    // Check that host manager open the database opens correctly and tidy up.
-    //  If it fails, print the error message.
+    // Check that host manager opens the database correctly and tidy up.  If it
+    // fails, print the error message.
     try {
         HostMgr::create();
         EXPECT_NO_THROW(HostMgr::addBackend(validPgSQLConnectionString()));
@@ -174,7 +174,7 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that host manager open the database opens correctly with a longer
+    // Check that host manager opens the database correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         string connection_string = validPgSQLConnectionString() + string(" ") +
@@ -190,7 +190,7 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     }
 
     // Check that attempting to get an instance of the host data source when
-    // none is set throws an exception.
+    // none is set returns empty pointer.
     EXPECT_FALSE(HostMgr::instance().getHostDataSource());
 
     // Check that wrong specification of backend throws an exception.
@@ -246,8 +246,8 @@ TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
     destroyPgSQLSchema();
     createPgSQLSchema();
 
-    // Check that host manager open the database opens correctly and tidy up.
-    //  If it fails, print the error message.
+    // Check that host manager opens the database correctly and tidy up.  If it
+    // fails, print the error message.
     try {
         HostMgr::create();
         EXPECT_NO_THROW(HostMgr::addBackend(validPgSQLConnectionString()));
@@ -259,7 +259,7 @@ TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that host manager open the database opens correctly with a longer
+    // Check that host manager opens the database correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         string connection_string = validPgSQLConnectionString() + string(" ") +
@@ -275,7 +275,7 @@ TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
     }
 
     // Check that attempting to get an instance of the host data source when
-    // none is set throws an exception.
+    // none is set returns empty pointer.
     EXPECT_FALSE(HostMgr::instance().getHostDataSource());
 
     // Check that wrong specification of backend throws an exception.
