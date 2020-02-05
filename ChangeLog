@@ -1,3 +1,12 @@
+1717.	[func]		razvan
+	Prepared PgSqlHostMgr to be used with multi-threading by using a
+	connection pool with thread context.
+	(Gitlab #1074)
+
+1716.	[func]		razvan
+	Implemented thread safe stats manager and stats context.
+	(Gitlab #891)
+
 1715.	[bug]		tmark
 	Kea servers now detect and remove orphaned control channel
 	sockets.  This corrects a failure of the servers to restart
