@@ -22,6 +22,8 @@
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
+#include <util/multi_threading_mgr.h>
+
 #include <signal.h>
 
 #include <sstream>
@@ -550,7 +552,7 @@ ControlledDhcpv4Srv::commandServerTagGetHandler(const std::string&,
 
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigBackendPullHandler(const std::string&,
-                                                      ConstElementPtr) {
+                                                     ConstElementPtr) {
     auto ctl_info = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo();
     if (!ctl_info) {
         return (createAnswer(CONTROL_RESULT_EMPTY, "No config backend."));
@@ -753,7 +755,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
         if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, qc)) {
             LOG_INFO(dhcp4_logger, DHCP4_CONFIG_PACKET_QUEUE)
-                      .arg(IfaceMgr::instance().getPacketQueue4()->getInfoStr());
+                     .arg(IfaceMgr::instance().getPacketQueue4()->getInfoStr());
         }
 
     } catch (const std::exception& ex) {

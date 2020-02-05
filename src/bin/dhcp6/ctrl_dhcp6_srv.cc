@@ -22,6 +22,8 @@
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
+#include <util/multi_threading_mgr.h>
+
 #include <signal.h>
 
 #include <sstream>
@@ -867,7 +869,7 @@ isc::data::ConstElementPtr
 ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
-        .arg(config->str());
+              .arg(config->str());
 
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
