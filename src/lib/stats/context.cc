@@ -17,7 +17,8 @@ using namespace isc::util;
 namespace isc {
 namespace stats {
 
-ObservationPtr StatContext::get(const std::string& name) const {
+ObservationPtr
+StatContext::get(const std::string& name) const {
     auto obs = stats_.find(name);
     if (obs != stats_.end()) {
         return (obs->second);
@@ -25,7 +26,8 @@ ObservationPtr StatContext::get(const std::string& name) const {
     return (ObservationPtr());
 }
 
-void StatContext::add(const ObservationPtr& obs) {
+void
+StatContext::add(const ObservationPtr& obs) {
     auto existing = stats_.find(obs->getName());
     if (existing == stats_.end()) {
         stats_.insert(make_pair(obs->getName() ,obs));
@@ -35,7 +37,8 @@ void StatContext::add(const ObservationPtr& obs) {
     }
 }
 
-bool StatContext::del(const std::string& name) {
+bool
+StatContext::del(const std::string& name) {
     auto obs = stats_.find(name);
     if (obs != stats_.end()) {
         stats_.erase(obs);
@@ -44,15 +47,18 @@ bool StatContext::del(const std::string& name) {
     return (false);
 }
 
-size_t StatContext::size() {
+size_t
+StatContext::size() {
     return (stats_.size());
 }
 
-void StatContext::clear() {
+void
+StatContext::clear() {
     stats_.clear();
 }
 
-void StatContext::resetAll() {
+void
+StatContext::resetAll() {
     // Let's iterate over all stored statistics...
     for (auto s : stats_) {
         // ... and reset each statistic.
@@ -60,7 +66,8 @@ void StatContext::resetAll() {
     }
 }
 
-ConstElementPtr StatContext::getAll() const {
+ConstElementPtr
+StatContext::getAll() const {
     ElementPtr map = Element::createMap(); // a map
     // Let's iterate over all stored statistics...
     for (auto s : stats_) {
@@ -70,7 +77,8 @@ ConstElementPtr StatContext::getAll() const {
     return (map);
 }
 
-void StatContext::setMaxSampleCountAll(uint32_t max_samples) {
+void
+StatContext::setMaxSampleCountAll(uint32_t max_samples) {
     // Let's iterate over all stored statistics...
     for (auto s : stats_) {
         // ... and set count limit for each statistic.
@@ -78,7 +86,8 @@ void StatContext::setMaxSampleCountAll(uint32_t max_samples) {
     }
 }
 
-void StatContext::setMaxSampleAgeAll(const StatsDuration& duration) {
+void
+StatContext::setMaxSampleAgeAll(const StatsDuration& duration) {
     // Let's iterate over all stored statistics...
     for (auto s : stats_) {
         // ... and set duration limit for each statistic.
@@ -86,5 +95,5 @@ void StatContext::setMaxSampleAgeAll(const StatsDuration& duration) {
     }
 }
 
-};
-};
+}  // namespace stats
+}  // namespace isc
