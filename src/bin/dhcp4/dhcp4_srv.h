@@ -9,23 +9,22 @@
 
 #include <asiolink/io_service.h>
 #include <dhcp/dhcp4.h>
-#include <dhcp/pkt4.h>
 #include <dhcp/option.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_custom.h>
+#include <dhcp/pkt4.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
 #include <process/daemon.h>
-
-#include <boost/noncopyable.hpp>
+#include <util/thread_pool.h>
 
 #include <functional>
 #include <iostream>
@@ -164,12 +163,16 @@ private:
 
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
+
     /// @brief Pointer to the DHCPv4 message sent by the client.
     Pkt4Ptr query_;
+
     /// @brief Pointer to the DHCPv4 message to be sent to the client.
     Pkt4Ptr resp_;
+
     /// @brief Context for use with allocation engine.
     AllocEngine::ClientContext4Ptr context_;
+
     /// @brief Configured option list.
     /// @note The configured option list is an *ordered* list of
     /// @c CfgOption objects used to append options to the response.
@@ -234,9 +237,9 @@ public:
     /// @brief Destructor. Used during DHCPv4 service shutdown.
     virtual ~Dhcpv4Srv();
 
-    /// @brief Checks if the server is running in a test mode.
+    /// @brief Checks if the server is running in unit test mode.
     ///
-    /// @return true if the server is running in the test mode,
+    /// @return true if the server is running in unit test mode,
     /// false otherwise.
     bool inTestMode() const {
         return (server_port_ == 0);
@@ -265,6 +268,12 @@ public:
     /// redeclaration/redefinition. @ref isc::process::Daemon::getVersion()
     static std::string getVersion(bool extended);
 
+    /// @brief returns Kea DHCPv4 server thread count.
+    static uint32_t threadCount();
+
+    /// @brief returns Kea DHCPv4 server max thread queue size.
+    static uint32_t maxThreadQueueSize();
+
     /// @brief Main server processing loop.
     ///
     /// Main server processing loop. Call the processing step routine
@@ -279,6 +288,24 @@ public:
     /// the processing packet routing and (if necessary) transmits
     /// a response.
     void run_one();
+
+    /// @brief Process a single incoming DHCPv4 packet and sends the response.
+    ///
+    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// methods, generates appropriate answer, sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response
+    void processPacketAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp);
+
+    /// @brief Process a single incoming DHCPv4 packet and sends the response.
+    ///
+    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// methods, generates appropriate answer, sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response
+    void processPacketAndSendResponseNoThrow(Pkt4Ptr& query, Pkt4Ptr& rsp);
 
     /// @brief Process a single incoming DHCPv4 packet.
     ///
@@ -351,7 +378,9 @@ public:
                                       NameChangeSender::Result result,
                                       dhcp_ddns::NameChangeRequestPtr& ncr);
 
-    /// @brief Discard all in-progress packets
+    /// @brief Discards cached and parked packets
+    /// Clears the call_handle store and packet parking lots
+    /// of all packets.  Called during reconfigure and shutdown.
     void discardPackets();
 
 protected:
@@ -879,10 +908,6 @@ protected:
                                           bool& drop,
                                           bool sanity_only = false) const;
 
-    /// indicates if shutdown is in progress. Setting it to true will
-    /// initiate server shutdown procedure.
-    volatile bool shutdown_;
-
     /// @brief dummy wrapper around IfaceMgr::receive4
     ///
     /// This method is useful for testing purposes, where its replacement
@@ -961,11 +986,6 @@ protected:
     void processPacketBufferSend(hooks::CalloutHandlePtr& callout_handle,
                                  Pkt4Ptr& rsp);
 
-    /// @brief Allocation Engine.
-    /// Pointer to the allocation engine that we are currently using
-    /// It must be a pointer, because we will support changing engines
-    /// during normal operation (e.g. to use different allocators)
-    boost::shared_ptr<AllocEngine> alloc_engine_;
 
 private:
 
@@ -984,16 +1004,26 @@ private:
     /// @return Option that contains netmask information
     static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
 
-    /// Should broadcast be enabled on sockets (if true).
-    bool use_bcast_;
-
 protected:
 
     /// UDP port number on which server listens.
     uint16_t server_port_;
 
-    /// UDP port number to which server sends responses.
+    /// UDP port number to which server sends all responses.
     uint16_t client_port_;
+
+    /// Indicates if shutdown is in progress. Setting it to true will
+    /// initiate server shutdown procedure.
+    volatile bool shutdown_;
+
+    /// @brief Allocation Engine.
+    /// Pointer to the allocation engine that we are currently using
+    /// It must be a pointer, because we will support changing engines
+    /// during normal operation (e.g. to use different allocators)
+    boost::shared_ptr<AllocEngine> alloc_engine_;
+
+    /// Should broadcast be enabled on sockets (if true).
+    bool use_bcast_;
 
     /// @brief Holds information about disabled DHCP service and/or
     /// disabled subnet/network scopes.
@@ -1001,6 +1031,9 @@ protected:
 
     /// @brief Controls access to the configuration backends.
     CBControlDHCPv4Ptr cb_control_;
+
+    /// @brief Packet processing thread pool
+    isc::util::ThreadPool<std::function<void()>> pkt_thread_pool_;
 
 public:
     /// Class methods for DHCPv4-over-DHCPv6 handler
@@ -1042,7 +1075,7 @@ public:
     static int getHookIndexLease4Decline();
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCP4_SRV_H

@@ -5,30 +5,34 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <cc/data.h>
+
 #include <cc/command_interpreter.h>
+#include <cc/data.h>
+#include <cfgrpt/config_report.h>
 #include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/cfg_db_access.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4to6_ipc.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/parser_context.h>
+#include <dhcpsrv/cfg_db_access.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/db_type.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
-#include <cfgrpt/config_report.h>
 #include <signal.h>
+
 #include <sstream>
 
 using namespace isc::config;
-using namespace isc::db;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::stats;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -124,8 +128,6 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
     // configuration from a JSON file.
 
     isc::data::ConstElementPtr json;
-    isc::data::ConstElementPtr dhcp4;
-    isc::data::ConstElementPtr logger;
     isc::data::ConstElementPtr result;
 
     // Basic sanity check: file name must not be empty.
@@ -204,7 +206,6 @@ ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr) {
 
 ConstElementPtr
 ControlledDhcpv4Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
-
     /// @todo delete any stored CalloutHandles referring to the old libraries
     /// Get list of currently loaded libraries and reload them.
     HookLibsCollection loaded = HooksManager::getLibraryInfo();
@@ -223,7 +224,6 @@ ControlledDhcpv4Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
                                                 ConstElementPtr /*args*/) {
-
     // Get configuration file name.
     std::string file = ControlledDhcpv4Srv::getInstance()->getConfigFile();
     try {
@@ -269,6 +269,7 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
 
     if (filename.empty()) {
         // filename parameter was not specified, so let's use whatever we remember
+        // from the command-line
         filename = getConfigFile();
     }
 
@@ -303,7 +304,7 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
                                              ConstElementPtr args) {
-    const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
+    const int status_code = CONTROL_RESULT_ERROR;
     ConstElementPtr dhcp4;
     string message;
 
@@ -618,6 +619,16 @@ ControlledDhcpv4Srv::processCommand(const string& command,
         return (no_srv);
     }
 
+    if (Dhcpv4Srv::threadCount()) {
+        if (srv->pkt_thread_pool_.size()) {
+            srv->pkt_thread_pool_.stop();
+        }
+        MultiThreadingMgr::instance().setMode(true);
+        srv->pkt_thread_pool_.start(Dhcpv4Srv::threadCount());
+    } else {
+        MultiThreadingMgr::instance().setMode(false);
+    }
+
     try {
         if (command == "shutdown") {
             return (srv->commandShutdownHandler(command, args));
@@ -776,6 +787,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    // Setup config backend polling, if configured for it.
     auto ctl_info = CfgMgr::instance().getStagingCfg()->getConfigControlInfo();
     if (ctl_info) {
         long fetch_time = static_cast<long>(ctl_info->getConfigFetchWaitTime());
@@ -966,8 +978,8 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("build-report");
         CommandMgr::instance().deregisterCommand("config-backend-pull");
         CommandMgr::instance().deregisterCommand("config-get");
-        CommandMgr::instance().deregisterCommand("config-reload");
         CommandMgr::instance().deregisterCommand("config-set");
+        CommandMgr::instance().deregisterCommand("config-reload");
         CommandMgr::instance().deregisterCommand("config-test");
         CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("dhcp-disable");
@@ -995,8 +1007,8 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         ;
     }
 
-    server_ = NULL; // forget this instance. Noone should call any handlers at
-                    // this stage.
+    server_ = NULL; // forget this instance. There should be no callback anymore
+                    // at this stage anyway.
 }
 
 void ControlledDhcpv4Srv::sessionReader(void) {
@@ -1133,5 +1145,5 @@ ControlledDhcpv4Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
     }
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

@@ -7,15 +7,16 @@
 #include <config.h>
 #include <kea_version.h>
 
+#include <cfgrpt/config_report.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/parser_context.h>
 #include <dhcp4/json_config_parser.h>
-#include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
-#include <cfgrpt/config_report.h>
+#include <process/daemon.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -31,6 +32,9 @@ using namespace std;
 /// instantiates ControlledDhcpv4Srv class that is responsible for establishing
 /// connection with msgq (receiving commands and configuration) and also
 /// creating Dhcpv4 server object as well.
+///
+/// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
+/// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 
 namespace {
 
@@ -55,9 +59,11 @@ usage() {
          << "(useful for testing only)" << endl;
     cerr << "  -P number: specify non-standard client port number 1-65535 "
          << "(useful for testing only)" << endl;
+    cerr << "  -N number: specify thread count 0-65535 "
+         << "(0 means multi-threading disabled)" << endl;
     exit(EXIT_FAILURE);
 }
-} // end of anonymous namespace
+}  // namespace
 
 int
 main(int argc, char* argv[]) {
@@ -66,6 +72,8 @@ main(int argc, char* argv[]) {
     int server_port_number = DHCP4_SERVER_PORT;
     // Not zero values are useful for testing only.
     int client_port_number = 0;
+    // Number of threads. 0 means multi-threading disabled
+    int thread_count = 0;
     bool verbose_mode = false; // Should server be verbose?
     bool check_mode = false;   // Check syntax
 
@@ -98,7 +106,7 @@ main(int argc, char* argv[]) {
             config_file = optarg;
             break;
 
-        case 'p':
+        case 'p': // server port number
             try {
                 server_port_number = boost::lexical_cast<int>(optarg);
             } catch (const boost::bad_lexical_cast &) {
@@ -113,7 +121,7 @@ main(int argc, char* argv[]) {
             }
             break;
 
-        case 'P':
+        case 'P': // client port number
             try {
                 client_port_number = boost::lexical_cast<int>(optarg);
             } catch (const boost::bad_lexical_cast &) {
@@ -128,6 +136,21 @@ main(int argc, char* argv[]) {
             }
             break;
 
+        case 'N': // number of threads
+            try {
+                thread_count = boost::lexical_cast<int>(optarg);
+            } catch (const boost::bad_lexical_cast &) {
+                cerr << "Failed to parse thread count number: [" << optarg
+                     << "], 0-65535 allowed." << endl;
+                usage();
+            }
+            if (thread_count < 0 || thread_count > 65535) {
+                cerr << "Failed to parse thread count number: [" << optarg
+                     << "], 0-65535 allowed." << endl;
+                usage();
+            }
+            break;
+
         default:
             usage();
         }
@@ -137,7 +160,6 @@ main(int argc, char* argv[]) {
     if (argc > optind) {
         usage();
     }
-
 
     // Configuration file is required.
     if (config_file.empty()) {
@@ -150,7 +172,6 @@ main(int argc, char* argv[]) {
 
     if (check_mode) {
         try {
-
             // We need to initialize logging, in case any error messages are to be printed.
             // This is just a test, so we don't care about lockfile.
             setenv("KEA_LOCKFILE_DIR", "none", 0);

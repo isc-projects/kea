@@ -8,13 +8,15 @@
 #define DHCPV6_SRV_H
 
 #include <asiolink/io_service.h>
-#include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
+#include <dhcp/option_string.h>
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/callout_handle_store.h>
@@ -25,6 +27,7 @@
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
 #include <process/daemon.h>
+#include <util/thread_pool.h>
 
 #include <functional>
 #include <iostream>
@@ -51,12 +54,16 @@ public:
 
 /// @brief DHCPv6 server service.
 ///
-/// This class represents DHCPv6 server. It contains all
+/// This singleton class represents DHCPv6 server. It contains all
 /// top-level methods and routines necessary for server operation.
 /// In particular, it instantiates IfaceMgr, loads or generates DUID
 /// that is going to be used as server-identifier, receives incoming
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
+///
+/// This class does not support any controlling mechanisms directly.
+/// See the derived \ref ControlledDhcpv6Srv class for support for
+/// command and configuration updates over msgq.
 class Dhcpv6Srv : public process::Daemon {
 private:
 
@@ -79,10 +86,13 @@ public:
     /// Instantiates necessary services, required to run DHCPv6 server.
     /// In particular, creates IfaceMgr that will be responsible for
     /// network interaction. Will instantiate lease manager, and load
-    /// old or create new DUID.
+    /// old or create new DUID. It is possible to specify alternate
+    /// port on which DHCPv6 server will listen on and alternate port
+    /// where DHCPv6 server sends all responses to. Those are mostly useful
+    /// for testing purposes.
     ///
-    /// @param server_port port on which all sockets will listen
-    /// @param client_port port to which all responses will be sent
+    /// @param server_port specifies port number to listen on
+    /// @param client_port specifies port number to send to
     Dhcpv6Srv(uint16_t server_port = DHCP6_SERVER_PORT,
               uint16_t client_port = 0);
 
@@ -120,6 +130,12 @@ public:
     /// redeclaration/redefinition. @ref isc::process::Daemon::getVersion()
     static std::string getVersion(bool extended);
 
+    /// @brief returns Kea DHCPv6 server thread count.
+    static uint32_t threadCount();
+
+    /// @brief returns Kea DHCPv6 server max thread queue size.
+    static uint32_t maxThreadQueueSize();
+
     /// @brief Returns server-identifier option.
     ///
     /// @return server-id option
@@ -140,6 +156,24 @@ public:
     /// a response.
     void run_one();
 
+    /// @brief Process a single incoming DHCPv6 packet and sends the response.
+    ///
+    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// methods, generates appropriate answer, sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response
+    void processPacketAndSendResponse(Pkt6Ptr& query, Pkt6Ptr& rsp);
+
+    /// @brief Process a single incoming DHCPv6 packet and sends the response.
+    ///
+    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// methods, generates appropriate answer, sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response
+    void processPacketAndSendResponseNoThrow(Pkt6Ptr& query, Pkt6Ptr& rsp);
+
     /// @brief Process a single incoming DHCPv6 packet.
     ///
     /// It verifies correctness of the passed packet, call per-type processXXX
@@ -152,15 +186,21 @@ public:
     /// @brief Instructs the server to shut down.
     void shutdown();
 
+    ///
+    /// @name Public accessors returning values required to (re)open sockets.
+    ///
+    //@{
+    ///
     /// @brief Get UDP port on which server should listen.
     ///
-    /// Typically, server listens on UDP port 547. Other ports are only
-    /// used for testing purposes.
+    /// Typically, server listens on UDP port number 547. Other ports are used
+    /// for testing purposes only.
     ///
     /// @return UDP port on which server should listen.
     uint16_t getServerPort() const {
         return (server_port_);
     }
+    //@}
 
     /// @brief Starts DHCP_DDNS client IO if DDNS updates are enabled.
     ///
@@ -1057,9 +1097,12 @@ protected:
 
     /// @brief Controls access to the configuration backends.
     CBControlDHCPv6Ptr cb_control_;
+
+    /// @brief Packet processing thread pool
+    isc::util::ThreadPool<std::function<void()>> pkt_thread_pool_;
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCP6_SRV_H

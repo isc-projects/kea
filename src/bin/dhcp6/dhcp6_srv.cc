@@ -46,7 +46,6 @@
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
-
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
 #include <util/pointer_util.h>
@@ -472,6 +471,11 @@ bool Dhcpv6Srv::run() {
         }
     }
 
+    // destroying the thread pool
+    if (Dhcpv6Srv::threadCount()) {
+        pkt_thread_pool_.reset();
+    }
+
     return (true);
 }
 
@@ -481,6 +485,17 @@ void Dhcpv6Srv::run_one() {
     Pkt6Ptr rsp;
 
     try {
+
+        // Do not read more packets from socket if there are enough
+        // packets to be processed in the packet thread pool queue
+        const int max_queued_pkt_per_thread = Dhcpv6Srv::maxThreadQueueSize();
+        const auto queue_full_wait = std::chrono::milliseconds(1);
+        size_t pkt_queue_size = pkt_thread_pool_.count();
+        if (pkt_queue_size >= Dhcpv6Srv::threadCount() *
+            max_queued_pkt_per_thread) {
+            return;
+        }
+
         // Set select() timeout to 1s. This value should not be modified
         // because it is important that the select() returns control
         // frequently so as the IOService can be polled for ready handlers.
@@ -558,9 +573,33 @@ void Dhcpv6Srv::run_one() {
             .arg(query->getLabel());
         return;
     } else {
-        processPacket(query, rsp);
+        if (Dhcpv6Srv::threadCount()) {
+            typedef function<void()> CallBack;
+            boost::shared_ptr<CallBack> call_back =
+                boost::make_shared<CallBack>(std::bind(&Dhcpv6Srv::processPacketAndSendResponseNoThrow,
+                                                       this, query, rsp));
+            pkt_thread_pool_.add(call_back);
+        } else {
+            processPacketAndSendResponse(query, rsp);
+        }
     }
+}
 
+void
+Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+    try {
+        processPacketAndSendResponse(query, rsp);
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(e.what());
+    } catch (...) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
+    }
+}
+
+void
+Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+    processPacket(query, rsp);
     if (!rsp) {
         return;
     }
@@ -3995,6 +4034,23 @@ Dhcpv6Srv::requestedInORO(const Pkt6Ptr& query, const uint16_t code) const {
     }
 
     return (false);
+}
+
+uint32_t Dhcpv6Srv::threadCount() {
+    uint32_t sys_threads = CfgMgr::instance().getCurrentCfg()->getServerThreadCount();
+    if (sys_threads) {
+        return sys_threads;
+    }
+    sys_threads = std::thread::hardware_concurrency();
+    return sys_threads * 0;
+}
+
+uint32_t Dhcpv6Srv::maxThreadQueueSize() {
+    uint32_t max_thread_queue_size = CfgMgr::instance().getCurrentCfg()->getServerMaxThreadQueueSize();
+    if (max_thread_queue_size) {
+        return max_thread_queue_size;
+    }
+    return 4;
 }
 
 void Dhcpv6Srv::discardPackets() {

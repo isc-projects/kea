@@ -5,30 +5,34 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <cc/data.h>
+
 #include <cc/command_interpreter.h>
+#include <cc/data.h>
+#include <cfgrpt/config_report.h>
 #include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/cfg_db_access.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/parser_context.h>
+#include <dhcpsrv/cfg_db_access.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/db_type.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
-#include <cfgrpt/config_report.h>
 #include <signal.h>
+
 #include <sstream>
 
 using namespace isc::config;
-using namespace isc::db;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::stats;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -96,8 +100,6 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
     // configuration from a JSON file.
 
     isc::data::ConstElementPtr json;
-    isc::data::ConstElementPtr dhcp6;
-    isc::data::ConstElementPtr logger;
     isc::data::ConstElementPtr result;
 
     // Basic sanity check: file name must not be empty.
@@ -160,7 +162,6 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
     return (result);
 }
 
-
 void
 ControlledDhcpv6Srv::init(const std::string& file_name) {
     // Keep the call timestamp.
@@ -168,6 +169,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
 
     // Configure the server using JSON file.
     ConstElementPtr result = loadConfigFile(file_name);
+
     int rcode;
     ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
     if (rcode != 0) {
@@ -192,11 +194,10 @@ void ControlledDhcpv6Srv::cleanup() {
     // Nothing to do here. No need to disconnect from anything.
 }
 
-
 ConstElementPtr
 ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr) {
-    if (ControlledDhcpv6Srv::server_) {
-        ControlledDhcpv6Srv::server_->shutdown();
+    if (ControlledDhcpv6Srv::getInstance()) {
+        ControlledDhcpv6Srv::getInstance()->shutdown();
     } else {
         LOG_WARN(dhcp6_logger, DHCP6_NOT_RUNNING);
         ConstElementPtr answer = isc::config::createAnswer(1, "Shutdown failure.");
@@ -378,6 +379,7 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     isc::config::parseAnswer(rcode, result);
     if (rcode == CONTROL_RESULT_SUCCESS) {
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
         // Use new configuration.
         CfgMgr::instance().commit();
     } else {
@@ -616,6 +618,16 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
           "Server object not initialized, can't process command '" +
           command + "', arguments: '" + txt + "'.");
         return (no_srv);
+    }
+
+    if (Dhcpv6Srv::threadCount()) {
+        if (srv->pkt_thread_pool_.size()) {
+            srv->pkt_thread_pool_.stop();
+        }
+        MultiThreadingMgr::instance().setMode(true);
+        srv->pkt_thread_pool_.start(Dhcpv6Srv::threadCount());
+    } else {
+        MultiThreadingMgr::instance().setMode(false);
     }
 
     try {
@@ -872,11 +884,11 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
                                          uint16_t client_port)
     : Dhcpv6Srv(server_port, client_port), io_service_(),
       timer_mgr_(TimerMgr::instance()) {
-    if (server_) {
+    if (getInstance()) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv6Srv instance already.");
     }
-    server_ = this; // remember this instance for use in callback
+    server_ = this; // remember this instance for later use in handlers
 
     // TimerMgr uses IO service to run asynchronous timers.
     TimerMgr::instance()->setIOService(getIOService());
@@ -1021,8 +1033,8 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
 void ControlledDhcpv6Srv::sessionReader(void) {
     // Process one asio event. If there are more events, iface_mgr will call
     // this callback more than once.
-    if (server_) {
-        server_->io_service_.run_one();
+    if (getInstance()) {
+        getInstance()->io_service_.run_one();
     }
 }
 
@@ -1061,12 +1073,13 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     if (reopened) {
         // Cancel the timer.
         if (TimerMgr::instance()->isTimerRegistered("Dhcp6DbReconnectTimer")) {
-            TimerMgr::instance()->cancel("Dhcp6DbReconnectTimer"); }
+            TimerMgr::instance()->cancel("Dhcp6DbReconnectTimer");
+        }
 
         // Set network state to service enabled
         network_state_->enableService();
 
-        // Toss the reconnct control, we're done with it
+        // Toss the reconnect control, we're done with it
         db_reconnect_ctl.reset();
     } else {
         if (!db_reconnect_ctl->checkRetries()) {
@@ -1084,7 +1097,7 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         if (!TimerMgr::instance()->isTimerRegistered("Dhcp6DbReconnectTimer")) {
             TimerMgr::instance()->registerTimer("Dhcp6DbReconnectTimer",
                             boost::bind(&ControlledDhcpv6Srv::dbReconnect, this,
-                            db_reconnect_ctl),
+                                        db_reconnect_ctl),
                             db_reconnect_ctl->retryInterval(),
                             asiolink::IntervalTimer::ONE_SHOT);
         }
@@ -1150,5 +1163,5 @@ ControlledDhcpv6Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
     }
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
