@@ -117,8 +117,8 @@ TEST(MySqlOpenTest, OpenDatabase) {
     // Schema needs to be created for the test to work.
     createMySQLSchema(true);
 
-    // Check that lease manager open the database opens correctly and tidy up.
-    // If it fails, print the error message.
+    // Check that lease manager opens the database correctly and tidy up.  If it
+    // fails, print the error message.
     try {
         LeaseMgrFactory::create(validMySQLConnectionString());
         EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
@@ -130,7 +130,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
-    // Check that lease manager open the database opens correctly with a longer
+    // Check that lease manager opens the database correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         string connection_string = validMySQLConnectionString() + string(" ") +
@@ -210,8 +210,8 @@ TEST(MySqlOpenTest, OpenDatabaseMultiThreading) {
     // Schema needs to be created for the test to work.
     createMySQLSchema(true);
 
-    // Check that lease manager open the database opens correctly and tidy up.
-    // If it fails, print the error message.
+    // Check that lease manager opens the database correctly and tidy up.  If it
+    // fails, print the error message.
     try {
         LeaseMgrFactory::create(validMySQLConnectionString());
         EXPECT_NO_THROW((void)LeaseMgrFactory::instance());

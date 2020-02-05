@@ -117,8 +117,8 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     // Schema needs to be created for the test to work.
     createPgSQLSchema();
 
-    // Check that lease manager open the database opens correctly and tidy up.
-    // If it fails, print the error message.
+    // Check that lease manager opens the database correctly and tidy up.  If it
+    // fails, print the error message.
     try {
         LeaseMgrFactory::create(validPgSQLConnectionString());
         EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
@@ -130,7 +130,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that lease manager open the database opens correctly with a longer
+    // Check that lease manager opens the database correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         string connection_string = validPgSQLConnectionString() + string(" ") +
@@ -207,8 +207,8 @@ TEST(PgSqlOpenTest, OpenDatabaseMultiThreading) {
     // Schema needs to be created for the test to work.
     createPgSQLSchema();
 
-    // Check that lease manager open the database opens correctly and tidy up.
-    // If it fails, print the error message.
+    // Check that lease manager opens the database correctly and tidy up.  If it
+    // fails, print the error message.
     try {
         LeaseMgrFactory::create(validPgSQLConnectionString());
         EXPECT_NO_THROW((void)LeaseMgrFactory::instance());

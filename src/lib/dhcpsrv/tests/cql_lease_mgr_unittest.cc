@@ -341,8 +341,8 @@ TEST(CqlOpenTest, OpenDatabase) {
     // Schema needs to be created for the test to work.
     createCqlSchema();
 
-    // Check that lease manager open the database opens correctly and tidy up.
-    // If it fails, print the error message.
+    // Check that lease manager opens the database correctly and tidy up.  If it
+    // fails, print the error message.
     try {
         LeaseMgrFactory::create(validCqlConnectionString());
         EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
@@ -354,7 +354,7 @@ TEST(CqlOpenTest, OpenDatabase) {
                << "*** before the CQL tests will run correctly.\n";
     }
 
-    // Check that lease manager open the database opens correctly with a longer
+    // Check that lease manager opens the database correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         // CQL specifies the timeout values in ms, not seconds. Therefore
