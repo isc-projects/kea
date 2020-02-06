@@ -485,22 +485,24 @@ void Dhcpv6Srv::run_one() {
     Pkt6Ptr rsp;
 
     try {
+        bool read_pkt = true;
 
         // Do not read more packets from socket if there are enough
         // packets to be processed in the packet thread pool queue
-        const int max_queued_pkt_per_thread = Dhcpv6Srv::maxThreadQueueSize();
-        const auto queue_full_wait = std::chrono::milliseconds(1);
+        const int max_queue_size = Dhcpv6Srv::maxThreadQueueSize();
+        const int thread_count = Dhcpv6Srv::threadCount();
         size_t pkt_queue_size = pkt_thread_pool_.count();
-        if (pkt_queue_size >= Dhcpv6Srv::threadCount() *
-            max_queued_pkt_per_thread) {
-            return;
+        if (thread_count && (pkt_queue_size >= thread_count * max_queue_size)) {
+            read_pkt = false;
         }
 
-        // Set select() timeout to 1s. This value should not be modified
-        // because it is important that the select() returns control
-        // frequently so as the IOService can be polled for ready handlers.
-        uint32_t timeout = 1;
-        query = receivePacket(timeout);
+        if (read_pkt) {
+            // Set select() timeout to 1s. This value should not be modified
+            // because it is important that the select() returns control
+            // frequently so as the IOService can be polled for ready handlers.
+            uint32_t timeout = 1;
+            query = receivePacket(timeout);
+        }
 
         // Log if packet has arrived. We can't log the detailed information
         // about the DHCP message because it hasn't been unpacked/parsed
@@ -977,8 +979,15 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         // library unparks the packet.
         HooksManager::park("leases6_committed", query,
         [this, callout_handle, query, rsp]() mutable {
-            processPacketPktSend(callout_handle, query, rsp);
-            processPacketBufferSend(callout_handle, rsp);
+            if (Dhcpv6Srv::threadCount()) {
+                ThreadPool::WorkItemCallBack call_back =
+                    std::bind(&Dhcpv6Srv::processPacketSendResponseNoThrow,
+                              this, callout_handle, query, rsp);
+                pkt_thread_pool_.add(call_back);
+            } else {
+                processPacketPktSend(callout_handle, query, rsp);
+                processPacketBufferSend(callout_handle, rsp);
+            }
         });
 
         // If we have parked the packet, let's reset the pointer to the
@@ -988,6 +997,20 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
     } else {
         processPacketPktSend(callout_handle, query, rsp);
+    }
+}
+
+void
+Dhcpv6Srv::processPacketSendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
+                                            Pkt6Ptr& query, Pkt6Ptr& rsp) {
+    try {
+            processPacketPktSend(callout_handle, query, rsp);
+            processPacketBufferSend(callout_handle, rsp);
+        } catch (const std::exception& e) {
+            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
+                .arg(e.what());
+    } catch (...) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
     }
 }
 
