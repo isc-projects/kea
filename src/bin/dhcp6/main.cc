@@ -80,7 +80,7 @@ main(int argc, char* argv[]) {
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWc:p:P:N:t:")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
