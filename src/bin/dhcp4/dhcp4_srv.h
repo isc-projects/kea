@@ -24,7 +24,6 @@
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
 #include <process/daemon.h>
-#include <util/thread_pool.h>
 
 #include <functional>
 #include <iostream>
@@ -267,12 +266,6 @@ public:
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref isc::process::Daemon::getVersion()
     static std::string getVersion(bool extended);
-
-    /// @brief returns Kea DHCPv4 server thread count.
-    static uint32_t threadCount();
-
-    /// @brief returns Kea DHCPv4 server max thread queue size.
-    static uint32_t maxThreadQueueSize();
 
     /// @brief Main server processing loop.
     ///
@@ -1038,9 +1031,6 @@ protected:
 
     /// @brief Controls access to the configuration backends.
     CBControlDHCPv4Ptr cb_control_;
-
-    /// @brief Packet processing thread pool
-    isc::util::ThreadPool<std::function<void()>> pkt_thread_pool_;
 
 public:
     /// Class methods for DHCPv4-over-DHCPv6 handler

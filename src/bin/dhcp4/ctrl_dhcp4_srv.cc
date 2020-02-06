@@ -19,6 +19,7 @@
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/multi_threading_utils.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
@@ -166,6 +167,17 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
             // theoretically possible that it will return NULL.
             isc_throw(isc::BadValue, "undefined result of "
                       "processCommand(\"config-set\", json)");
+        }
+
+        if (MultiThreadingUtil::threadCount()) {
+            auto& thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
+            if (thread_pool.size()) {
+                thread_pool.stop();
+            }
+            MultiThreadingMgr::instance().setMode(true);
+            thread_pool.start(MultiThreadingUtil::threadCount());
+        } else {
+            MultiThreadingMgr::instance().setMode(false);
         }
 
         // Now check is the returned result is successful (rcode=0) or not
@@ -619,16 +631,6 @@ ControlledDhcpv4Srv::processCommand(const string& command,
           "Server object not initialized, so can't process command '" +
           command + "', arguments: '" + txt + "'.");
         return (no_srv);
-    }
-
-    if (Dhcpv4Srv::threadCount()) {
-        if (srv->pkt_thread_pool_.size()) {
-            srv->pkt_thread_pool_.stop();
-        }
-        MultiThreadingMgr::instance().setMode(true);
-        srv->pkt_thread_pool_.start(Dhcpv4Srv::threadCount());
-    } else {
-        MultiThreadingMgr::instance().setMode(false);
     }
 
     try {

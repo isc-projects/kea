@@ -35,6 +35,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/multi_threading_utils.h>
 #include <dhcpsrv/ncr_generator.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
@@ -472,8 +473,8 @@ bool Dhcpv6Srv::run() {
     }
 
     // destroying the thread pool
-    if (Dhcpv6Srv::threadCount()) {
-        pkt_thread_pool_.reset();
+    if (MultiThreadingUtil::threadCount()) {
+        MultiThreadingMgr::instance().getPktThreadPool().reset();
     }
 
     return (true);
@@ -489,9 +490,9 @@ void Dhcpv6Srv::run_one() {
 
         // Do not read more packets from socket if there are enough
         // packets to be processed in the packet thread pool queue
-        const int max_queue_size = Dhcpv6Srv::maxThreadQueueSize();
-        const int thread_count = Dhcpv6Srv::threadCount();
-        size_t pkt_queue_size = pkt_thread_pool_.count();
+        const int max_queue_size = MultiThreadingUtil::maxThreadQueueSize();
+        const int thread_count = MultiThreadingUtil::threadCount();
+        size_t pkt_queue_size = MultiThreadingMgr::instance().getPktThreadPool().count();
         if (thread_count && (pkt_queue_size >= thread_count * max_queue_size)) {
             read_pkt = false;
         }
@@ -575,12 +576,12 @@ void Dhcpv6Srv::run_one() {
             .arg(query->getLabel());
         return;
     } else {
-        if (Dhcpv6Srv::threadCount()) {
+        if (MultiThreadingUtil::threadCount()) {
             typedef function<void()> CallBack;
             boost::shared_ptr<CallBack> call_back =
                 boost::make_shared<CallBack>(std::bind(&Dhcpv6Srv::processPacketAndSendResponseNoThrow,
                                                        this, query, rsp));
-            pkt_thread_pool_.add(call_back);
+            MultiThreadingMgr::instance().getPktThreadPool().add(call_back);
         } else {
             processPacketAndSendResponse(query, rsp);
         }
@@ -979,12 +980,12 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         // library unparks the packet.
         HooksManager::park("leases6_committed", query,
         [this, callout_handle, query, rsp]() mutable {
-            if (Dhcpv6Srv::threadCount()) {
+            if (MultiThreadingUtil::threadCount()) {
                 typedef function<void()> CallBack;
                 boost::shared_ptr<CallBack> call_back =
                     boost::make_shared<CallBack>(std::bind(&Dhcpv6Srv::sendResponseNoThrow,
                                                            this, callout_handle, query, rsp));
-                pkt_thread_pool_.add(call_back);
+                MultiThreadingMgr::instance().getPktThreadPool().add(call_back);
             } else {
                 processPacketPktSend(callout_handle, query, rsp);
                 processPacketBufferSend(callout_handle, rsp);
@@ -4058,23 +4059,6 @@ Dhcpv6Srv::requestedInORO(const Pkt6Ptr& query, const uint16_t code) const {
     }
 
     return (false);
-}
-
-uint32_t Dhcpv6Srv::threadCount() {
-    uint32_t sys_threads = CfgMgr::instance().getCurrentCfg()->getServerThreadCount();
-    if (sys_threads) {
-        return sys_threads;
-    }
-    sys_threads = std::thread::hardware_concurrency();
-    return sys_threads * 0;
-}
-
-uint32_t Dhcpv6Srv::maxThreadQueueSize() {
-    uint32_t max_thread_queue_size = CfgMgr::instance().getCurrentCfg()->getServerMaxThreadQueueSize();
-    if (max_thread_queue_size) {
-        return max_thread_queue_size;
-    }
-    return 4;
 }
 
 void Dhcpv6Srv::discardPackets() {

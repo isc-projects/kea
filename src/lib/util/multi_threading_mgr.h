@@ -7,7 +7,11 @@
 #ifndef MULTI_THREADING_MGR_H
 #define MULTI_THREADING_MGR_H
 
+#include <util/thread_pool.h>
+
 #include <boost/noncopyable.hpp>
+
+#include <stdint.h>
 
 namespace isc {
 namespace util {
@@ -62,6 +66,21 @@ public:
     /// @param enabled The new mode.
     void setMode(bool enabled);
 
+    /// @brief Get the packet thread pool.
+    ///
+    /// @return The packet thread pool of this binary instance.
+    ThreadPool<std::function<void()>>& getPktThreadPool();
+
+    /// @brief Get the configured packet thread pool size.
+    ///
+    /// @return The packet thread pool size of this binary instance.
+    uint32_t getPktThreadPoolSize() const;
+
+    /// @brief Set the configured packet thread pool size.
+    ///
+    /// @param size The packet thread pool size of this binary instance.
+    void setPktThreadPoolSize(uint32_t size);
+
 protected:
 
     /// @brief Constructor.
@@ -71,11 +90,18 @@ protected:
     virtual ~MultiThreadingMgr();
 
 private:
-    /// @brief the current mode.
+
+    /// @brief The current mode.
     bool enabled_;
+
+    /// @brief The configured size of the packet thread pool.
+    uint32_t pkt_thread_pool_size_;
+
+    /// @brief Packet processing thread pool.
+    ThreadPool<std::function<void()>> pkt_thread_pool_;
 };
 
-} // namespace isc::util
-} // namespace isc
+}  // namespace util
+}  // namespace isc
 
 #endif // MULTI_THREADING_MGR_H

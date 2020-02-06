@@ -19,6 +19,7 @@
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/multi_threading_utils.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
@@ -140,6 +141,17 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
                       "processCommand(\"config-set\", json)");
         }
 
+        if (MultiThreadingUtil::threadCount()) {
+            auto& thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
+            if (thread_pool.size()) {
+                thread_pool.stop();
+            }
+            MultiThreadingMgr::instance().setMode(true);
+            thread_pool.start(MultiThreadingUtil::threadCount());
+        } else {
+            MultiThreadingMgr::instance().setMode(false);
+        }
+
         // Now check is the returned result is successful (rcode=0) or not
         // (see @ref isc::config::parseAnswer).
         int rcode;
@@ -254,7 +266,8 @@ ControlledDhcpv6Srv::commandConfigGetHandler(const string&,
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandConfigWriteHandler(const string&, ConstElementPtr args) {
+ControlledDhcpv6Srv::commandConfigWriteHandler(const string&,
+                                               ConstElementPtr args) {
     string filename;
 
     if (args) {
@@ -508,7 +521,8 @@ ControlledDhcpv6Srv::commandVersionGetHandler(const string&, ConstElementPtr) {
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandBuildReportHandler(const string&, ConstElementPtr) {
+ControlledDhcpv6Srv::commandBuildReportHandler(const string&,
+                                               ConstElementPtr) {
     ConstElementPtr answer =
         isc::config::createAnswer(0, isc::detail::getConfigReport());
     return (answer);
@@ -605,9 +619,9 @@ ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
     return (createAnswer(0, status));
 }
 
-isc::data::ConstElementPtr
-ControlledDhcpv6Srv::processCommand(const std::string& command,
-                                    isc::data::ConstElementPtr args) {
+ConstElementPtr
+ControlledDhcpv6Srv::processCommand(const string& command,
+                                    ConstElementPtr args) {
     string txt = args ? args->str() : "(none)";
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_COMMAND_RECEIVED)
@@ -620,16 +634,6 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
           "Server object not initialized, can't process command '" +
           command + "', arguments: '" + txt + "'.");
         return (no_srv);
-    }
-
-    if (Dhcpv6Srv::threadCount()) {
-        if (srv->pkt_thread_pool_.size()) {
-            srv->pkt_thread_pool_.stop();
-        }
-        MultiThreadingMgr::instance().setMode(true);
-        srv->pkt_thread_pool_.start(Dhcpv6Srv::threadCount());
-    } else {
-        MultiThreadingMgr::instance().setMode(false);
     }
 
     try {

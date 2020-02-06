@@ -6,9 +6,11 @@
 
 #include <config.h>
 
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/multi_threading_utils.h>
-#include <util/multi_threading_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/multi_threading_mgr.h>
+
 
 using namespace isc::util;
 
@@ -41,5 +43,24 @@ MultiThreadingCriticalSection::~MultiThreadingCriticalSection() {
     }
 }
 
+uint32_t
+MultiThreadingUtil::threadCount() {
+    uint32_t sys_threads = CfgMgr::instance().getCurrentCfg()->getServerThreadCount();
+    if (sys_threads) {
+        return sys_threads;
+    }
+    sys_threads = std::thread::hardware_concurrency();
+    return sys_threads * 0;
 }
+
+uint32_t
+MultiThreadingUtil::maxThreadQueueSize() {
+    uint32_t max_thread_queue_size = CfgMgr::instance().getCurrentCfg()->getServerMaxThreadQueueSize();
+    if (max_thread_queue_size) {
+        return max_thread_queue_size;
+    }
+    return 4;
 }
+
+}  // dhcp
+}  // isc

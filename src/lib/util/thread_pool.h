@@ -230,7 +230,7 @@ private:
         /// @return the state
         bool enabled() {
             return (enabled_);
-	}
+        }
 
     private:
         /// @brief underlying queue container

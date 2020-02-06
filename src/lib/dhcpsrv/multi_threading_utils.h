@@ -9,6 +9,8 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <stdint.h>
+
 namespace isc {
 namespace dhcp {
 
@@ -44,6 +46,16 @@ public:
     /// @brief Class method (re)starting threads of the pool.
     /// @throw isc::NotImplemented until is implemented.
     static void startPktProcessing();
+};
+
+class MultiThreadingUtil {
+public:
+
+    /// @brief returns Kea DHCPv4 server thread count.
+    static uint32_t threadCount();
+
+    /// @brief returns Kea DHCPv4 server max thread queue size.
+    static uint32_t maxThreadQueueSize();
 };
 
 }

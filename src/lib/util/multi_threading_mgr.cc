@@ -31,5 +31,20 @@ MultiThreadingMgr::setMode(bool enabled) {
     enabled_ = enabled;
 }
 
-} // namespace isc::util
-} // namespace isc
+ThreadPool<std::function<void()>>&
+MultiThreadingMgr::getPktThreadPool() {
+    return pkt_thread_pool_;
+}
+
+uint32_t
+MultiThreadingMgr::getPktThreadPoolSize() const {
+    return (pkt_thread_pool_size_);
+}
+
+void
+MultiThreadingMgr::setPktThreadPoolSize(uint32_t size) {
+    pkt_thread_pool_size_ = size;
+}
+
+}  // namespace util
+}  // namespace isc
