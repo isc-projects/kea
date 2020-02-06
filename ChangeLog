@@ -1,3 +1,12 @@
+1662.	[bug]		tmark
+	kea-dhcp4 and kea-dhcp6 now shutdown gracefully by executing
+	the shutdown command, if connectivity with a backend database
+	has been lost and retries are either disabled or have been
+	exhausted. Prior to this they simply invoked exit() which
+	could orphan control socket files or cause segfaults unloading
+	the CB Cmds hook library.
+	(Gitlab #1114,#1108)
+
 1661.	[bug]		tmark
 	Kea servers now detect and remove orphaned control channel
 	sockets.  This corrects a failure of the servers to restart

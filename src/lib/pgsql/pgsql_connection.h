@@ -386,8 +386,8 @@ public:
     /// If the error is deemed unrecoverable, such as a loss of connectivity
     /// with the server, the function will call invokeDbLostCallback(). If the
     /// invocation returns false then either there is no callback registered
-    /// or the callback has elected not to attempt to reconnect, and exit(-1)
-    /// is called;
+    /// or the callback has elected not to attempt to reconnect, and a
+    /// DbUnrecoverableError is thrown.
     ///
     /// If the invocation returns true, this indicates the calling layer will
     /// attempt recovery, and the function throws a DbOperationError to allow

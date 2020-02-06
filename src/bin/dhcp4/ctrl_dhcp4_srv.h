@@ -362,8 +362,8 @@ private:
     /// between retry attempts.
     ///
     /// If either value is zero, reconnect is presumed to be disabled and
-    /// the function will returns false.  This instructs the DB backend
-    /// layer (the caller) to treat the connectivity loss as fatal.
+    /// the function will schedule a shutdown and return false.  This instructs
+    /// the DB backend layer (the caller) to treat the connectivity loss as fatal.
     ///
     /// Otherwise, the function saves db_reconnect_ctl and invokes
     /// dbReconnect to initiate the reconnect process.
