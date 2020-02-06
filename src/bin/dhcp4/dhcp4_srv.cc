@@ -1221,9 +1221,10 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         HooksManager::park("leases4_committed", query,
         [this, callout_handle, query, rsp]() mutable {
             if (Dhcpv4Srv::threadCount()) {
-                ThreadPool::WorkItemCallBack call_back =
-                    std::bind(&Dhcpv4Srv::processPacketSendResponseNoThrow,
-                              this, callout_handle, query, rsp);
+                typedef function<void()> CallBack;
+                boost::shared_ptr<CallBack> call_back =
+                    boost::make_shared<CallBack>(std::bind(&Dhcpv4Srv::sendResponseNoThrow,
+                                                           this, callout_handle, query, rsp));
                 pkt_thread_pool_.add(call_back);
             } else {
                 processPacketPktSend(callout_handle, query, rsp);
@@ -1242,8 +1243,8 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
 }
 
 void
-Dhcpv4Srv::processPacketSendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                                            Pkt4Ptr& query, Pkt4Ptr& rsp) {
+Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
+                               Pkt4Ptr& query, Pkt4Ptr& rsp) {
     try {
             processPacketPktSend(callout_handle, query, rsp);
             processPacketBufferSend(callout_handle, rsp);

@@ -307,6 +307,14 @@ public:
     /// @param rsp A pointer to the response
     void processPacketAndSendResponseNoThrow(Pkt4Ptr& query, Pkt4Ptr& rsp);
 
+    /// @brief Process an unparked DHCPv4 packet and sends the response.
+    ///
+    /// @param callout_handle pointer to the callout handle.
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response
+    void sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
+                             Pkt4Ptr& query, Pkt4Ptr& rsp);
+
     /// @brief Process a single incoming DHCPv4 packet.
     ///
     /// It verifies correctness of the passed packet, call per-type processXXX
@@ -985,7 +993,6 @@ protected:
     /// @param rsp pointer to a response.
     void processPacketBufferSend(hooks::CalloutHandlePtr& callout_handle,
                                  Pkt4Ptr& rsp);
-
 
 private:
 

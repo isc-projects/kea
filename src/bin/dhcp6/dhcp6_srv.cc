@@ -980,9 +980,10 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         HooksManager::park("leases6_committed", query,
         [this, callout_handle, query, rsp]() mutable {
             if (Dhcpv6Srv::threadCount()) {
-                ThreadPool::WorkItemCallBack call_back =
-                    std::bind(&Dhcpv6Srv::processPacketSendResponseNoThrow,
-                              this, callout_handle, query, rsp);
+                typedef function<void()> CallBack;
+                boost::shared_ptr<CallBack> call_back =
+                    boost::make_shared<CallBack>(std::bind(&Dhcpv6Srv::sendResponseNoThrow,
+                                                           this, callout_handle, query, rsp));
                 pkt_thread_pool_.add(call_back);
             } else {
                 processPacketPktSend(callout_handle, query, rsp);
@@ -1001,8 +1002,8 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 }
 
 void
-Dhcpv6Srv::processPacketSendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                                            Pkt6Ptr& query, Pkt6Ptr& rsp) {
+Dhcpv6Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
+                               Pkt6Ptr& query, Pkt6Ptr& rsp) {
     try {
             processPacketPktSend(callout_handle, query, rsp);
             processPacketBufferSend(callout_handle, rsp);
