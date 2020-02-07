@@ -176,7 +176,7 @@ public:
     ///
     /// @param name Name of the hook from which the callout is removed.
     /// @param callout Pointer to the callout function to be removed.
-    /// @param library_index Library index used for registering the callout.
+    /// @param library_index Library index used for deregistering the callout.
     ///
     /// @return true if a one or more callouts were deregistered.
     ///
@@ -193,7 +193,7 @@ public:
     /// by the current library.
     ///
     /// @param name Name of the hook from which the callouts are removed.
-    /// @param library_index Library index used for registering the callout.
+    /// @param library_index Library index used for deregistering all callouts.
     ///
     /// @return true if one or more callouts were deregistered.
     ///
