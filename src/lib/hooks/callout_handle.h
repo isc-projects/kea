@@ -334,7 +334,7 @@ public:
         return (current_library_);
     }
 
-    /// @brief Set cureent library index
+    /// @brief Set current library index
     ///
     /// @param library_index The library index
     void setCurrentLibrary(int library_index) {
@@ -348,7 +348,7 @@ public:
         return (current_hook_);
     }
 
-    /// @brief Set cureent hook index
+    /// @brief Set current hook index
     ///
     /// @param hook_index The hook index
     void setCurrentHook(int hook_index) {
