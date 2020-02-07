@@ -58,6 +58,6 @@ public:
     static uint32_t maxThreadQueueSize();
 };
 
-}
-}
+}  // namespace dhcp
+}  // namespace isc
 #endif // MULTI_THREADING_UTIL_H

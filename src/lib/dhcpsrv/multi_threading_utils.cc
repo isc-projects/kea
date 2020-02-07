@@ -62,5 +62,5 @@ MultiThreadingUtil::maxThreadQueueSize() {
     return 4;
 }
 
-}  // dhcp
-}  // isc
+}  // namespace dhcp
+}  // namespace isc
