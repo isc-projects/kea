@@ -1,3 +1,11 @@
+1719.	[func]		razvan
+	Prepared CalloutManager to be used in multi-threading by moving
+	the current library index and hook index to the CallbackHandle.
+	This change removes the CallountHandle::getLibraryHandle, along
+	with the possibility of dynamically registering/deregistering
+	callouts inside callouts.
+	(Gitlab #957)
+
 1718.	[bug]		tmark
 	kea-dhcp4 and kea-dhcp6 now shutdown gracefully by executing
 	the shutdown command, if connectivity with a backend database
