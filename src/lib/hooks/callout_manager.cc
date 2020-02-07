@@ -143,14 +143,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
 
         // Set the current hook index.  This is used should a callout wish to
         // determine to what hook it is attached.
-        callout_handle.current_hook_ = hook_index;
-
-        // Duplicate the callout vector for this hook and work through that.
-        // This step is needed because we allow dynamic registration and
-        // deregistration of callouts.  If a callout attached to a hook modified
-        // the list of callouts on that hook, the underlying CalloutVector would
-        // change and potentially affect the iteration through that vector.
-        CalloutVector callouts(hook_vector_[hook_index]);
+        callout_handle.setCurrentHook(hook_index);
 
         // This object will be used to measure execution time of each callout
         // and the total time spent in callouts for this hook point.
@@ -158,15 +151,16 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
 
         // Mark that the callouts begin for the hook.
         LOG_DEBUG(callouts_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_BEGIN)
-            .arg(server_hooks_.getName(callout_handle.current_hook_));
+            .arg(server_hooks_.getName(callout_handle.getCurrentHook()));
 
         // Call all the callouts.
-        for (CalloutVector::const_iterator i = callouts.begin();
-             i != callouts.end(); ++i) {
-            // In case the callout tries to register or deregister a callout,
-            // set the current library index to the index associated with the
-            // library that registered the callout being called.
-            callout_handle.current_library_ = i->first;
+        for (CalloutVector::const_iterator i = hook_vector_[hook_index].begin();
+             i != hook_vector_[hook_index].end(); ++i) {
+            // In case the callout requires access to the context associated
+            // with the library, set the current library index to the index
+            // associated with the library that registered the callout being
+            // called.
+            callout_handle.setCurrentLibrary(i->first);
 
             // Call the callout
             try {
@@ -176,14 +170,14 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                 if (status == 0) {
                     LOG_DEBUG(callouts_logger, HOOKS_DBG_EXTENDED_CALLS,
                               HOOKS_CALLOUT_CALLED)
-                        .arg(callout_handle.current_library_)
-                        .arg(server_hooks_.getName(callout_handle.current_hook_))
+                        .arg(callout_handle.getCurrentLibrary())
+                        .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
                         .arg(PointerConverter(i->second).dlsymPtr())
                         .arg(stopwatch.logFormatLastDuration());
                 } else {
                     LOG_ERROR(callouts_logger, HOOKS_CALLOUT_ERROR)
-                        .arg(callout_handle.current_library_)
-                        .arg(server_hooks_.getName(callout_handle.current_hook_))
+                        .arg(callout_handle.getCurrentLibrary())
+                        .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
                         .arg(PointerConverter(i->second).dlsymPtr())
                         .arg(stopwatch.logFormatLastDuration());
                 }
@@ -193,8 +187,8 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                 stopwatch.stop();
                 // Any exception, not just ones based on isc::Exception
                 LOG_ERROR(callouts_logger, HOOKS_CALLOUT_EXCEPTION)
-                    .arg(current_library_)
-                    .arg(server_hooks_.getName(callout_handle.current_hook_))
+                    .arg(callout_handle.getCurrentLibrary())
+                    .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
                     .arg(PointerConverter(i->second).dlsymPtr())
                     .arg(e.what())
                     .arg(stopwatch.logFormatLastDuration());
@@ -205,13 +199,13 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
         // Mark end of callout execution. Include the total execution
         // time for callouts.
         LOG_DEBUG(callouts_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_COMPLETE)
-            .arg(server_hooks_.getName(callout_handle.current_hook_))
+            .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
             .arg(stopwatch.logFormatTotalDuration());
 
         // Reset the current hook and library indexes to an invalid value to
         // catch any programming errors.
-        callout_handle.current_hook_ = -1;
-        callout_handle.current_library_ = -1;
+        callout_handle.setCurrentHook(-1);
+        callout_handle.setCurrentLibrary(-1);
     }
 }
 

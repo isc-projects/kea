@@ -536,18 +536,6 @@ TEST_F(HandlesTest, ConstructionDestructionCallouts) {
     EXPECT_EQ((110 + 120), resultCalloutInt(0));
 }
 
-// Dynamic callout registration and deregistration.
-// The following are the dynamic registration/deregistration callouts.
-
-
-// Add callout_78_alpha - adds a callout to hook alpha that appends "78x"
-// (where "x" is the callout handle) to the current output.
-
-int
-callout78(CalloutHandle& callout_handle) {
-    return (execute(callout_handle, 7, 8));
-}
-
 // Testing the operation of the "skip" flag.  Callouts print the value
 // they see in the flag and either leave it unchanged, set it or clear it.
 int
@@ -610,7 +598,7 @@ TEST_F(HandlesTest, ReturnSkipSet) {
     CalloutHandle callout_handle(getCalloutManager());
     getCalloutManager()->callCallouts(alpha_index_, callout_handle);
 
-    // Check result.  For each of visual checking, the expected string is
+    // Check result.  For ease of visual checking, the expected string is
     // divided into sections corresponding to the blocks of callouts above.
     EXPECT_EQ(std::string("NNYY" "NNYYN" "NNYN"), common_string_);
 
@@ -639,7 +627,7 @@ TEST_F(HandlesTest, ReturnSkipClear) {
     CalloutHandle callout_handle(getCalloutManager());
     getCalloutManager()->callCallouts(alpha_index_, callout_handle);
 
-    // Check result.  For each of visual checking, the expected string is
+    // Check result.  For ease of visual checking, the expected string is
     // divided into sections corresponding to the blocks of callouts above.
     EXPECT_EQ(std::string("NYY" "NNYNYN" "NNNY"), common_string_);
 

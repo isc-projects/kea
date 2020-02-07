@@ -48,7 +48,6 @@ public:
 // Forward declaration of the library handle and related collection classes.
 
 class CalloutManager;
-class LibraryHandle;
 class LibraryManagerCollection;
 
 /// @brief Per-packet callout handle
@@ -74,12 +73,6 @@ class LibraryManagerCollection;
 ///   is created in the "context_create" callout and destroyed in the
 ///   "context_destroy" callout.  The information is accessed through the
 ///   {get,set}Context() methods.
-///
-/// - Per-library handle (LibraryHandle). The library handle allows the
-///   callout to dynamically register and deregister callouts. In the latter
-///   case, only functions registered by functions in the same library as the
-///   callout doing the deregistration can be removed: callouts registered by
-///   other libraries cannot be modified.
 
 class CalloutHandle {
 public:
@@ -334,19 +327,33 @@ public:
     /// @return pointer to the parking lot handle
     ParkingLotHandlePtr getParkingLotHandlePtr() const;
 
-    /// @brief Current library.
+    /// @brief Get current library index
     ///
-    /// When a call is made to @ref CalloutManager::callCallouts, this holds
-    /// the index of the current library.  It is set to an invalid value (-1)
-    /// otherwise.
-    int current_library_;
+    /// @return The current library index
+    int getCurrentLibrary() const {
+        return (current_library_);
+    }
 
-    /// @brief Current hook.
+    /// @brief Set cureent library index
     ///
-    /// When a call is made to @ref CalloutManager::callCallouts, this holds
-    /// the index of the current hook.  It is set to an invalid value  (-1)
-    /// otherwise.
-    int current_hook_;
+    /// @param library_index The library index
+    void setCurrentLibrary(int library_index) {
+        current_library_ = library_index;
+    }
+
+    /// @brief Get current hook index
+    ///
+    /// @return The current hook index
+    int getCurrentHook() const {
+        return (current_hook_);
+    }
+
+    /// @brief Set cureent hook index
+    ///
+    /// @param hook_index The hook index
+    void setCurrentHook(int hook_index) {
+        current_hook_ = hook_index;
+    }
 
 private:
 
@@ -406,6 +413,20 @@ private:
     /// @ref hooksmgMaintenanceGuide for information as to why the class holds
     /// a reference instead of accessing the singleton within the code.
     ServerHooks& server_hooks_;
+
+    /// @brief Current library.
+    ///
+    /// When a call is made to @ref CalloutManager::callCallouts, this holds
+    /// the index of the current library.  It is set to an invalid value (-1)
+    /// otherwise.
+    int current_library_;
+
+    /// @brief Current hook.
+    ///
+    /// When a call is made to @ref CalloutManager::callCallouts, this holds
+    /// the index of the current hook.  It is set to an invalid value  (-1)
+    /// otherwise.
+    int current_hook_;
 
     /// Next processing step, indicating what the server should do next.
     CalloutNextStep next_step_;

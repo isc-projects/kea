@@ -23,10 +23,9 @@ namespace hooks {
 // Constructor.
 CalloutHandle::CalloutHandle(const boost::shared_ptr<CalloutManager>& manager,
                     const boost::shared_ptr<LibraryManagerCollection>& lmcoll)
-    : current_library_(-1), current_hook_(-1), lm_collection_(lmcoll),
-      arguments_(), context_collection_(), manager_(manager),
-      server_hooks_(ServerHooks::getServerHooks()),
-      next_step_(NEXT_STEP_CONTINUE) {
+    : lm_collection_(lmcoll), arguments_(), context_collection_(),
+      manager_(manager), server_hooks_(ServerHooks::getServerHooks()),
+      current_library_(-1), current_hook_(-1), next_step_(NEXT_STEP_CONTINUE) {
 
     // Call the "context_create" hook.  We should be OK doing this - although
     // the constructor has not finished running, all the member variables
