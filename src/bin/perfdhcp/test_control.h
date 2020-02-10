@@ -545,6 +545,87 @@ protected:
     /// \return true if the message include correct IA, false otherwise.
     bool validateIA(const dhcp::Pkt6Ptr& pkt6);
 
+    /// \brief Process received v6 address for it's uniqueness
+    ///
+    /// Check if address received from server was previously assigned,
+    /// if not it will be added to list of assigned addresses for next
+    /// compariosion.
+    /// Print out each packet with already assigned/advertised address
+    /// to stdout.
+    ///
+    /// \param pkt6 object representing received DHCPv6 packet
+    /// \param ExhchangeType enum value
+    void address6Uniqueness(const dhcp::Pkt6Ptr& pkt6, ExchangeType xchg_type);
+
+    /// \brief Process received v4 address for it's uniqueness
+    ///
+    /// Check if address received from server was previously assigned,
+    /// if not it will be added to list of assigned addresses for next
+    /// compariosion.
+    /// Print out each packet with already offered/assigned address
+    /// to stdout.
+    ///
+    /// \param pkt4 object representing received DHCPv4 packet
+    /// \param ExhchangeType enum value
+    void address4Uniqueness(const dhcp::Pkt4Ptr& pkt4, ExchangeType xchg_type);
+
+    /// \brief add unique address to already assigned list
+    ///
+    /// If address was designated as unique it will be added to one of
+    /// two deques based on specified echange type.
+    ///
+    /// \param IOAddress holding value of unique address
+    /// \param ExhchangeType enum value
+    void addUniqeAddr(const isc::asiolink::IOAddress addr, ExchangeType xchg_type) {
+        switch(xchg_type) {
+            case ExchangeType::SA:
+                unique_address_.push_back(addr);
+                break;
+            case ExchangeType::RR:
+                unique_reply_address_.push_back(addr);
+                break;
+            case ExchangeType::DO:
+                unique_address_.push_back(addr);
+                break;
+            case ExchangeType::RA:
+                unique_reply_address_.push_back(addr);
+                break;
+            case ExchangeType::RNA:
+                // we do not expect to pass those values at all
+            case ExchangeType::RN:
+            case ExchangeType::RL:
+            default: break;
+        }
+    }
+
+    /// \brief remove unique address from list
+    ///
+    /// If address is released we should remove it from both
+    /// advertised (offered) and assigned dques.
+    ///
+    /// \param IOAddress holding value of unique address
+    void removeUniqueAddr(const isc::asiolink::IOAddress addr) {
+        for (auto it = unique_address_.cbegin();
+            it != unique_address_.cend(); ++it) {
+            if (*it == addr) {
+                unique_address_.erase(it);
+            }
+        }
+        for (auto it = unique_reply_address_.cbegin();
+            it != unique_reply_address_.cend(); ++it) {
+            if (*it == addr) {
+                unique_reply_address_.erase(it);
+            }
+        }
+    }
+
+    std::deque <isc::asiolink::IOAddress> getAllUniqueAddrReply() {
+        return unique_reply_address_;
+    }
+
+    std::deque <isc::asiolink::IOAddress> getAllUniqueAddrAdvert() {
+        return unique_address_;
+    }
     /// \brief Process received DHCPv6 packet.
     ///
     /// Method performs processing of the received DHCPv6 packet,
@@ -927,6 +1008,12 @@ protected:
     /// \throw isc::BadValue if file contains characters other than
     /// spaces or hexadecimal digits.
     void readPacketTemplate(const std::string& file_name);
+
+    /// Keep addresses and prefixes from advertise msg for uniqueness checks
+    std::deque <isc::asiolink::IOAddress> unique_address_;
+
+    /// Keep addresses and prefixes from reply msg for uniqueness checks
+    std::deque <isc::asiolink::IOAddress> unique_reply_address_;
 
     BasePerfSocket &socket_;
     Receiver receiver_;

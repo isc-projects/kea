@@ -193,6 +193,11 @@ public:
     /// \return all base values specified.
     std::vector<std::string> getBase() const { return base_; }
 
+    /// \brief Returns address uniqueness value.
+    ///
+    /// \return address uniqueness specified value
+    bool getAddrUniqe() const { return addr_unique_; }
+
     /// \brief Returns maximum number of exchanges.
     ///
     /// \return number of exchange requests before test is aborted.
@@ -551,6 +556,9 @@ private:
     /// DUID template used to generate unique DUIDs for
     /// simulated clients
     std::vector<uint8_t> duid_template_;
+
+    /// Check address uniqueness
+    bool addr_unique_;
 
     /// Collection of base values specified with -b<value>
     /// options. Supported "bases" are mac=<mac> and duid=<duid>

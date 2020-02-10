@@ -760,6 +760,7 @@ void
 TestControl::processReceivedPacket4(const Pkt4Ptr& pkt4) {
     if (pkt4->getType() == DHCPOFFER) {
         PktPtr pkt = stats_mgr_.passRcvdPacket(ExchangeType::DO, pkt4);
+        address4Uniqueness(pkt4, ExchangeType::DO);
         Pkt4Ptr discover_pkt4(boost::dynamic_pointer_cast<Pkt4>(pkt));
         CommandOptions::ExchangeMode xchg_mode = options_.getExchangeMode();
         if ((xchg_mode == CommandOptions::DORA_SARR) && discover_pkt4) {
@@ -776,6 +777,7 @@ TestControl::processReceivedPacket4(const Pkt4Ptr& pkt4) {
         // a response to 4-way exchange. We'll match this packet with
         // a DHCPREQUEST sent as part of the 4-way exchanges.
         if (stats_mgr_.passRcvdPacket(ExchangeType::RA, pkt4)) {
+            address4Uniqueness(pkt4, ExchangeType::RA);
             // The DHCPACK belongs to DHCPREQUEST-DHCPACK exchange type.
             // So, we may need to keep this DHCPACK in the storage if renews.
             // Note that, DHCPACK messages hold the information about
@@ -793,6 +795,108 @@ TestControl::processReceivedPacket4(const Pkt4Ptr& pkt4) {
         // renew message for the received DHCPACK.
         } else if (stats_mgr_.hasExchangeStats(ExchangeType::RNA)) {
             stats_mgr_.passRcvdPacket(ExchangeType::RNA, pkt4);
+        }
+    }
+}
+
+void
+TestControl::address6Uniqueness(const Pkt6Ptr& pkt6, ExchangeType xchg_type) {
+    // check if received address is unique
+    if(options_.getAddrUniqe()) {
+        std::deque <isc::asiolink::IOAddress> all;
+        std::deque <isc::asiolink::IOAddress> current;
+        // addresses were already checked in validateeIA
+        // we can safely assume that those are correct
+        if (pkt6->getOption(D6O_IA_PD)) {
+            current.push_back(boost::dynamic_pointer_cast<
+                Option6IAPrefix>(pkt6->getOption(D6O_IA_PD)->
+                getOption(D6O_IAPREFIX))->getAddress());
+        }
+        if (pkt6->getOption(D6O_IA_NA)) {
+            current.push_back(boost::dynamic_pointer_cast<
+                Option6IAAddr>(pkt6->getOption(D6O_IA_NA)->
+                getOption(D6O_IAADDR))->getAddress());
+        }
+        for (auto current_addr = current.cbegin();
+            current_addr != current.cend(); ++current_addr) {
+            switch(xchg_type) {
+                case ExchangeType::SA: {
+                    all = getAllUniqueAddrAdvert();
+                    if (std::find(all.begin(), all.end(),
+                        *current_addr) == all.end()) {
+                        addUniqeAddr(*current_addr, xchg_type);
+                    } else {
+                        cout << "In solicit-advertise msg exchange we got "
+                                "address/prefix already advertised!\n"
+                             << pkt6->toText() << "\n";
+                    }
+                    break;
+                }
+                case ExchangeType::RR: {
+                    all = getAllUniqueAddrReply();
+                    if (std::find(all.begin(), all.end(),
+                        *current_addr) == all.end()) {
+                        addUniqeAddr(*current_addr, xchg_type);
+                    } else {
+                        cout << "In request-reply msg exchange we got "
+                                "address/prefix already assigned!\n"
+                             << pkt6->toText() << "\n";
+                    }
+                    break;
+                }
+                case ExchangeType::RL:
+                     removeUniqueAddr(*current_addr);
+                     break;
+                case ExchangeType::DO:
+                    // we do not expect to pass those values at all
+                case ExchangeType::RA:
+                case ExchangeType::RNA:
+                case ExchangeType::RN:
+                default: break;
+             }
+        }
+    }
+}
+
+void
+TestControl::address4Uniqueness(const Pkt4Ptr& pkt4, ExchangeType xchg_type) {
+    // check if received address is unique
+    if(options_.getAddrUniqe()) {
+        std::deque <isc::asiolink::IOAddress> all;
+        // addresses were already checked in validateeIA
+        // we can safely assume that those are correct
+        switch(xchg_type) {
+            case ExchangeType::DO: {
+                all = getAllUniqueAddrAdvert();
+                if (std::find(all.begin(), all.end(),
+                    pkt4->getYiaddr()) == all.end()) {
+                    addUniqeAddr(pkt4->getYiaddr(), xchg_type);
+                } else {
+                    cout << "In discover-offer msg exchange we got "
+                            "address already advertised!\n"
+                         << pkt4->toText() << "\n";
+                }
+                break;
+            }
+            case ExchangeType::RA: {
+                all = getAllUniqueAddrReply();
+                if (std::find(all.begin(), all.end(),
+                    pkt4->getYiaddr()) == all.end()) {
+                    addUniqeAddr(pkt4->getYiaddr(), xchg_type);
+                } else {
+                    cout << "In request-ack msg exchange we got "
+                            "address already assigned!\n"
+                         << pkt4->toText() << "\n";
+                }
+                break;
+            }
+            case ExchangeType::RL:
+                // we do not expect to pass those values at al
+            case ExchangeType::SA:
+            case ExchangeType::RR:
+            case ExchangeType::RNA:
+            case ExchangeType::RN:
+            default: break;
         }
     }
 }
@@ -840,6 +944,7 @@ TestControl::processReceivedPacket6(const Pkt6Ptr& pkt6) {
         CommandOptions::ExchangeMode xchg_mode = options_.getExchangeMode();
         if ((xchg_mode == CommandOptions::DORA_SARR) && solicit_pkt6) {
             if (validateIA(pkt6)) {
+               address6Uniqueness(pkt6, ExchangeType::SA);
                if (template_buffers_.size() < 2) {
                     sendRequest6(pkt6);
                } else {
@@ -863,6 +968,8 @@ TestControl::processReceivedPacket6(const Pkt6Ptr& pkt6) {
             // leases assigned. We use this information to construct Renew and
             // Release messages.
             if (validateIA(pkt6)) {
+                // if address is correct - check uniqueness
+                address6Uniqueness(pkt6, ExchangeType::RR);
                 // check if there is correct IA to continue with Renew/Release
                 if (stats_mgr_.hasExchangeStats(ExchangeType::RN) ||
                     stats_mgr_.hasExchangeStats(ExchangeType::RL)) {
@@ -1117,6 +1224,7 @@ TestControl::sendDiscover4(const bool preload /*= false*/) {
     if (!preload) {
         stats_mgr_.passSentPacket(ExchangeType::DO, pkt4);
     }
+
     saveFirstPacket(pkt4);
 }
 
@@ -1210,6 +1318,7 @@ TestControl::sendMessageFromReply(const uint16_t msg_type) {
     msg->pack();
     // And send it.
     socket_.send(msg);
+    address6Uniqueness(msg, ExchangeType::RL);
     stats_mgr_.passSentPacket((msg_type == DHCPV6_RENEW ? ExchangeType::RN
                                 : ExchangeType::RL), msg);
     return (true);
