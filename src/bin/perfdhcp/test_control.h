@@ -300,6 +300,14 @@ public:
     /// in packet templates and their contents.
     void printTemplates() const;
 
+    std::deque <isc::asiolink::IOAddress> getAllUniqueAddrReply() {
+        return unique_reply_address_;
+    }
+
+    std::deque <isc::asiolink::IOAddress> getAllUniqueAddrAdvert() {
+        return unique_address_;
+    }
+
     // We would really like following methods and members to be private but
     // they have to be accessible for unit-testing. Another, possibly better,
     // solution is to make this class friend of test class but this is not
@@ -619,13 +627,6 @@ protected:
         }
     }
 
-    std::deque <isc::asiolink::IOAddress> getAllUniqueAddrReply() {
-        return unique_reply_address_;
-    }
-
-    std::deque <isc::asiolink::IOAddress> getAllUniqueAddrAdvert() {
-        return unique_address_;
-    }
     /// \brief Process received DHCPv6 packet.
     ///
     /// Method performs processing of the received DHCPv6 packet,
