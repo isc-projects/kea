@@ -1243,7 +1243,6 @@ Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
             rsp.reset();
             return;
         }
-
     }
 
     if (!skip_pack) {
