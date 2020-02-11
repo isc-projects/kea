@@ -803,7 +803,7 @@ Dhcpv4Srv::run() {
     }
 
     // destroying the thread pool
-    if (MultiThreadingUtil::threadCount()) {
+    if (MultiThreadingMgr::instance().getMode()) {
         MultiThreadingMgr::instance().getPktThreadPool().reset();
     }
 
@@ -903,7 +903,7 @@ Dhcpv4Srv::run_one() {
             .arg(query->getLabel());
         return;
     } else {
-        if (MultiThreadingUtil::threadCount()) {
+        if (MultiThreadingMgr::instance().getMode()) {
             typedef function<void()> CallBack;
             boost::shared_ptr<CallBack> call_back =
                 boost::make_shared<CallBack>(std::bind(&Dhcpv4Srv::processPacketAndSendResponseNoThrow,
@@ -1221,7 +1221,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         // library unparks the packet.
         HooksManager::park("leases4_committed", query,
         [this, callout_handle, query, rsp]() mutable {
-            if (MultiThreadingUtil::threadCount()) {
+            if (MultiThreadingMgr::instance().getMode()) {
                 typedef function<void()> CallBack;
                 boost::shared_ptr<CallBack> call_back =
                     boost::make_shared<CallBack>(std::bind(&Dhcpv4Srv::sendResponseNoThrow,
