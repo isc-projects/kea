@@ -198,9 +198,8 @@ and DHCPv6 response might look like this:
 
 @section stat_cmdsMTCompatibility Multi-Threading Compatibility
 
-The Stat Commands Hook library reports it is compatible with
-multi-threading. All commands are executed inside a critical section,
-i.e. with threads stopped. It makes sense to not have lease state
-changes when taking lease counts.
+The Stat Commands Hook library is compatible with multi-threading.
+All commands are executed inside a critical section, i.e. with threads stopped.
+It makes sense to not have lease state changes when retrieving lease counts.
 
 */

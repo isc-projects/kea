@@ -303,10 +303,10 @@ int unload() {
     return (0);
 }
 
-/// @brief This function is called to know the multi-threading compatibility.
+/// @brief This function is called to retrieve the multi-threading compatibility.
 ///
 /// @note: this should be revisited as the library is not essentially
-/// uncompatible.
+/// incompatible.
 ///
 /// @return 0 which means not compatible with multi-threading.
 int multi_threading_compatible() {

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the End User License
 // Agreement. See COPYING file in the premium/ directory.
@@ -284,7 +284,7 @@ int unload() {
     return (0);
 }
 
-/// @brief This function is called to know the multi-threading compatibility.
+/// @brief This function is called to retrieve the multi-threading compatibility.
 ///
 /// @return 1 which means compatible with multi-threading.
 int multi_threading_compatible() {

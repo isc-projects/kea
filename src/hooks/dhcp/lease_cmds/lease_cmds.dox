@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,10 +95,9 @@ commands that remove all leases from specific subnet. As there were no
 queries that could retrieve or otherwise enumerate leases for a specific subnet,
 a new query type and a new index had to be added.
 
-@section lease_cmdsTCompatibility Multi-Threading Compatibility
+@section lease_cmdsMTCompatibility Multi-Threading Compatibility
 
 The Lease Commands Hook library is compatible with multi-threading.
-All commands modifying leases are performed inside a critical section
-i.e. with the DHCP server stopped.
+All commands are executed inside a critical section, i.e. with threads stopped.
 
 */

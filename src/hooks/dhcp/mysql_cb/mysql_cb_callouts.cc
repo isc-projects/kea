@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,7 +45,7 @@ int unload() {
     return (0);
 }
 
-/// @brief This function is called to know the multi-threading compatibility.
+/// @brief This function is called to retrieve the multi-threading compatibility.
 ///
 /// @note: the compatibility is based on the assumption this hook library
 /// is always called from the main thread.

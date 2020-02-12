@@ -112,7 +112,7 @@ applied by the template @c process located in flex_option.h. When
 required the expression is evaluated on the query packet and the result
 is used by the action for instance to add a new option.
 
-@section libdhcp_flex_optionMTCompatibility Multi-Threading Compaibility
+@section libdhcp_flex_optionMTCompatibility Multi-Threading Compatibility
 
 The libdhcp_flex_option hooks library is compatible with multi-threading.
 
