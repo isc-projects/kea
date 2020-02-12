@@ -54,6 +54,7 @@ public:
         static_cast<void>(remove(MARKER_FILE));
 
         // Disable multi-threading.
+        MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Destructor
@@ -61,6 +62,8 @@ public:
     /// Ensures a marker file is removed after each test.
     ~LibraryManagerTest() {
         static_cast<void>(remove(MARKER_FILE));
+
+        // Disable multi-threading.
         MultiThreadingMgr::instance().setMode(false);
     }
 
