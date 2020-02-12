@@ -265,13 +265,13 @@ If you'd like to check the address family too it is returned in DHCP servers
 by isc::dhcp::CfgMgr::instance().getFamily() declared in dhcpsrv/cfgmgr.h
 with AF_INET and AF_INET6 values.
 
-@subsubsection hooksdgMultiThreadingCompatibleFuntion The
+@subsubsection hooksdgMultiThreadingCompatibleFunction The
 "multi_threading_compatible" function
 
 "multi_threading_compatible" is used by the hooks framework to check
 if the libraries it is loading are compatible with the DHCPv4 or DHCPv6
-erver multi-threading configuration. The value 0 means not compatible
-and is the default when the function is not implemented. not 0 values
+server multi-threading configuration. The value 0 means not compatible
+and is the default when the function is not implemented. Non 0 values
 mean compatible.
 
 If your code implements it and returns the value 0 it is recommended
@@ -281,14 +281,14 @@ accident change the code.
 To be compatible means:
 - the code associated with DHCP packet processing callouts e.g.
 pkt4_receive or pkt6_send must be thread safe so the multi-threaded
-DHCP service can simultaneously calls more than once on of these callouts.
-- commands a library registers are not required to be thread safe because
+DHCP service can simultaneously call more than once one of these callouts.
+- commands registered by a library are not required to be thread safe because
 commands are executed by the main thread. Now it is a good idea to make
 them thread safe and to document cases where they are not.
 - when a library implements a thread safe backend API (e.g. host data
-ource) the service methods must be thread safe.
+source) the service methods must be thread safe.
 - a library which modifies the internal configuration of the server,
-e.g. create or delete a subnet, must enter a critical section using
+e.g. creates or deletes a subnet, it must enter a critical section using
 the @c isc::dhcp::MultiThreadingCriticalSection RAII class.
 
 In the tutoral, we'll put "multi_threading_compatible" in its own file,
@@ -300,7 +300,7 @@ multi_threading_compatible.cc. The contents are:
 extern "C" {
 
 int multi_threading_compatible() {
-    return (0);
+    return (1);
 }
 
 }
