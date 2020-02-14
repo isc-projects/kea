@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -351,38 +351,53 @@ public:
 
         return (result.str());
 #else
-        // Iterate over original string, match by match.
-        const char* origStr = original.c_str();
-        const char* startFrom = origStr;
-        const char* endAt = origStr + strlen(origStr);
-        regmatch_t matches[2];  // n matches + 1
+        // In order to handle embedded nuls, we have to process it nul-terminated
+        // chunks.  We iterator over the original data, doing pattern replacement
+        // on each chunk.
+        const char* orig_data = original.data();
+        const char* dead_end = orig_data + original.size();
+        const char* start_from = orig_data;
         stringstream result;
 
-        while (startFrom < endAt) {
-            // Look for the next match
-            if (regexec(&scrub_exp_, startFrom, 1, matches, 0) == REG_NOMATCH) {
-                // No matches, so add in the remainder
-                result << startFrom;
-                break;
+        while (start_from < dead_end) {
+            // Iterate over original string, match by match.
+            regmatch_t matches[2];  // n matches + 1
+            const char* end_at = start_from + strlen(start_from);
+
+            while (start_from < end_at) {
+                // Look for the next match
+                if (regexec(&scrub_exp_, start_from, 1, matches, 0) == REG_NOMATCH) {
+                    // No matches, so add in the remainder
+                    result << start_from;
+                    start_from = end_at + 1;
+                    break;
+                }
+
+                // Shouldn't happen, but one never knows eh?
+                if (matches[0].rm_so == -1) {
+                    isc_throw(isc::Unexpected, "matched but so is -1?");
+                }
+
+                // Add everything from starting point up to the current match
+                const char* match_at = start_from + matches[0].rm_so;
+                while (start_from < match_at) {
+                    result << *start_from;
+                    ++start_from;
+                }
+
+                // Add in the replacement
+                result << char_replacement_;
+
+                // Move past the match.
+                ++start_from;
             }
 
-            // Shouldn't happen, but one never knows eh?
-            if (matches[0].rm_so == -1) {
-                isc_throw(isc::Unexpected, "matched but so is -1?");
+            // if we have an embedded nul, replace it and continue
+            if (start_from < dead_end) {
+                // Add in the replacement
+                result << char_replacement_;
+                start_from = end_at + 1;
             }
-
-            // Add everything from starting point up to the current match
-            const char* matchAt = startFrom + matches[0].rm_so;
-            while (startFrom < matchAt) {
-                result << *startFrom;
-                ++startFrom;
-            }
-
-            // Add in the replacement
-            result << char_replacement_;
-
-            // Move past the match.
-            ++startFrom;
         }
 
         return (result.str());

@@ -1584,6 +1584,13 @@ TEST_F(FqdnDhcpv6SrvTest, sanitizeFqdn) {
              "m%y*host",
              Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
              "mxyxhost.example.com.", false);
+
+    // Verify that a full FQDN with nul chars is cleaned.
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
+             std::string("m\000yhost.exa\000mple.com", 20),
+             Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_S,
+             "mxyhost.exaxmple.com.", false);
+
 }
 
 // Verifies that scoped ddns-parameter handling.

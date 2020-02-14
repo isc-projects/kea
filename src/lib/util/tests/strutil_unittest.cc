@@ -509,7 +509,6 @@ void sanitizeStringTest(
 
 // Verifies StringSantizer class
 TEST(StringUtilTest, stringSanitizer) {
-
     // Bad regular expression should throw.
     StringSanitizerPtr ss;
     ASSERT_THROW (ss.reset(new StringSanitizer("[bogus-regex","")), BadValue);
@@ -517,7 +516,6 @@ TEST(StringUtilTest, stringSanitizer) {
     // List of invalid chars should work: (b,c,2 are invalid)
     sanitizeStringTest("abc.123", "[b-c2]", "*",
                        "a**.1*3");
-
     // Inverted list of valid chars should work: (b,c,2 are valid)
     sanitizeStringTest("abc.123", "[^b-c2]", "*",
                        "*bc**2*");
@@ -549,6 +547,10 @@ TEST(StringUtilTest, stringSanitizer) {
     // Dots as valid chars work.
     sanitizeStringTest("abc.123", "[^A-Za-z0-9_.]", "*",
                        "abc.123");
+
+    std::string withNulls("\000ab\000c.12\0003",10);
+    sanitizeStringTest(withNulls, "[^A-Za-z0-9_.]", "*",
+                       "*ab*c.12*3");
 }
 
 // Verifies templated buffer iterator seekTrimmed() function

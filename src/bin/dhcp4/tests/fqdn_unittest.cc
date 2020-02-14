@@ -15,6 +15,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>
@@ -1844,6 +1845,74 @@ TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 }
 
+// Verifies that default hostname-char-set sanitizes Hostname option
+// values received from clients.
+TEST_F(NameDhcpv4SrvTest, sanitizeHostDefault) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[2], *client.getServer());
+
+    // Make sure that DDNS is not enabled.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    struct Scenario {
+        std::string description_;
+        std::string original_;
+        std::string sanitized_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+            "unqualified host name with invalid characters",
+            "one-&$_-host",
+            "one--host.fake-suffix.isc.org"
+        },
+        {
+            "qualified host name with invalid characters",
+            "two--host.other.org",
+            "two--host.other.org"
+        },
+        {
+            "unqualified host name with all valid characters",
+            "three-ok-host",
+            "three-ok-host.fake-suffix.isc.org"
+        },
+        {
+            "qualified host name with valid characters",
+            "four-ok-host.other.org",
+            "four-ok-host.other.org"
+        },
+        {
+            "qualified host name with nuls",
+            std::string("four-ok-host\000.other.org",23),
+            "four-ok-host.other.org"
+        }
+    };
+
+    Pkt4Ptr resp;
+    OptionStringPtr hostname;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE((scenario).description_);
+        {
+            // Set the hostname option.
+            ASSERT_NO_THROW(client.includeHostname((scenario).original_));
+
+            // Send the DHCPDISCOVER and make sure that the server responded.
+            ASSERT_NO_THROW(client.doDiscover());
+            resp = client.getContext().response_;
+            ASSERT_TRUE(resp);
+            ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+            // Make sure the response hostname is what we expect.
+            hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+            ASSERT_TRUE(hostname);
+            EXPECT_EQ((scenario).sanitized_, hostname->getValue());
+        }
+    }
+}
+
+
 // Verifies that setting hostname-char-set sanitizes Hostname option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
@@ -1882,6 +1951,11 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
             "qualified host name with valid characters",
             "four-ok-host.other.org",
             "four-ok-host.other.org"
+        },
+        {
+            "qualified host name with nuls",
+            std::string("four-ok-host\000.other.org",23),
+            "four-ok-hostx.other.org"
         }
     };
 
@@ -1891,7 +1965,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
         SCOPED_TRACE((scenario).description_);
         {
             // Set the hostname option.
-            ASSERT_NO_THROW(client.includeHostname((scenario).original_));
+            ASSERT_NO_THROW_LOG(client.includeHostname((scenario).original_));
 
             // Send the DHCPDISCOVER and make sure that the server responded.
             ASSERT_NO_THROW(client.doDiscover());
@@ -2080,6 +2154,12 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
             "four-ok-host.other.org",
             Option4ClientFqdn::FULL,
             "four-ok-host.other.org."
+        },
+        {
+            "qualified FQDN name with nuls",
+            std::string("four-ok-host.ot\000\000her.org", 24),
+            Option4ClientFqdn::FULL,
+            "four-ok-host.otxxher.org."
         }
     };
 

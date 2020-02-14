@@ -2964,15 +2964,22 @@ accomplished with the following two parameters:
 
 -  ``hostname-char-set`` - a regular expression describing the invalid
    character set. This can be any valid, regular expression using POSIX
-   extended expression syntax. For example, "[^A-Za-z0-9-]" would
-   replace any character other than the letters A through z, digits 0
-   through 9, and '-'. An empty string, the default value, disables
-   sanitization.
+   extended expression syntax.  Embedded nuls (0x00) will always be
+   considered an invalid character to be replaced (or omitted).
 
 -  ``hostname-char-replacement`` - a string of zero or more characters
-   with which to replace each invalid character in the client value. The
-   default value is an empty string and will cause invalid characters to
-   be OMITTED rather than replaced.
+   with which to replace each invalid character in the host name.  An empty
+   string and will cause invalid characters to be OMITTED rather than replaced.
+
+.. note::
+
+   Starting with Kea 1.7.5, the default values are as follows:
+
+   "hostname-char-set": "[^A-Za-z0-9.-]",
+   "hostname-char-replacement": ""
+
+    This enables sanitizing and will omit any character that is not
+    a letter,digit, hyphen, dot or nul.
 
 The following configuration will replace anything other than a letter,
 digit, hyphen, or dot with the letter 'x':

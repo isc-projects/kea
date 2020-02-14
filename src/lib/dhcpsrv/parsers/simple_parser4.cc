@@ -110,7 +110,9 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "ddns-override-client-update",    Element::boolean, "false" },
     { "ddns-replace-client-name",       Element::string,  "never" },
     { "ddns-generated-prefix",          Element::string,  "myhost" },
-    { "ddns-qualifying-suffix",         Element::string,  "" }
+    { "ddns-qualifying-suffix",         Element::string,  "" },
+    { "hostname-char-set",              Element::string, "[^A-Za-z0-9.-]" },
+    { "hostname-char-replacement",      Element::string, "" }
 };
 
 /// @brief This table defines all option definition parameters.
