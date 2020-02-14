@@ -187,7 +187,6 @@ public:
     /// \brief Checks if one address is smaller than the other
     ///
     /// \param other Address to compare against.
-    ///
     bool operator<(const IOAddress& other) const {
         return (asio_address_ < other.asio_address_);
     }
@@ -195,7 +194,6 @@ public:
     /// \brief Checks if one address is smaller or equal than the other
     ///
     /// \param other Address to compare against.
-    ///
     bool operator<=(const IOAddress& other) const {
         return (asio_address_ <= other.asio_address_);
     }
