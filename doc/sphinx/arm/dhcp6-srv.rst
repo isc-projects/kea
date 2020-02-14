@@ -2973,10 +2973,10 @@ accomplished with the following two parameters:
 
 .. note::
 
-   Starting with Kea 1.7.5, the default values are as follows:
+    Starting with Kea 1.7.5, the default values are as follows:
 
-   "hostname-char-set": "[^A-Za-z0-9.-]",
-   "hostname-char-replacement": ""
+    - "hostname-char-set": "[^A-Za-z0-9.-]",
+    - "hostname-char-replacement": ""
 
     This enables sanitizing and will omit any character that is not
     a letter,digit, hyphen, dot or nul.
