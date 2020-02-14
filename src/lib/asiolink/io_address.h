@@ -188,51 +188,16 @@ public:
     ///
     /// \param other Address to compare against.
     ///
-    /// \return true if this address is smaller than the other address.
-    ///
-    /// It is useful for comparing which address is bigger.
-    /// Operations within one protocol family are obvious.
-    /// Comparisons between v4 and v6 will always return v4
-    /// being smaller. This follows boost::boost::asio::ip implementation
-    bool lessThan(const IOAddress& other) const {
-        if (this->getFamily() == other.getFamily()) {
-            if (this->getFamily() == AF_INET6) {
-                return (this->asio_address_.to_v6() < other.asio_address_.to_v6());
-            } else {
-                return (this->asio_address_.to_v4() < other.asio_address_.to_v4());
-            }
-        }
-        return (this->getFamily() < other.getFamily());
-    }
-
-    /// \brief Checks if one address is smaller or equal than the other
-    ///
-    /// \param other Address to compare against.
-    ///
-    /// \return true if this address is smaller than the other address.
-    bool smallerEqual(const IOAddress& other) const {
-        if (equals(other)) {
-            return (true);
-        }
-        return (lessThan(other));
-    }
-
-    /// \brief Checks if one address is smaller than the other
-    ///
-    /// \param other Address to compare against.
-    ///
-    /// See \ref lessThan method for details.
     bool operator<(const IOAddress& other) const {
-        return (lessThan(other));
+        return (asio_address_ < other.asio_address_);
     }
 
     /// \brief Checks if one address is smaller or equal than the other
     ///
     /// \param other Address to compare against.
     ///
-    /// See \ref smallerEqual method for details.
     bool operator<=(const IOAddress& other) const {
-        return (smallerEqual(other));
+        return (asio_address_ <= other.asio_address_);
     }
 
     /// \brief Compare addresses for inequality

@@ -26,7 +26,7 @@ Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
 }
 
 bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
-    return (first_.smallerEqual(addr) && addr.smallerEqual(last_));
+    return (first_ <= addr && addr <= last_);
 }
 
 bool Pool::clientSupported(const ClientClasses& classes) const {
