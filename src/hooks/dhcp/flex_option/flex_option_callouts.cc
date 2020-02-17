@@ -41,6 +41,12 @@ extern "C" {
 ///
 /// @return 0 upon success, non-zero otherwise
 int pkt4_send(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
     // Sanity.
     if (!impl) {
         return (0);
@@ -73,6 +79,12 @@ int pkt4_send(CalloutHandle& handle) {
 ///
 /// @return 0 upon success, non-zero otherwise
 int pkt6_send(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
     // Sanity.
     if (!impl) {
         return (0);

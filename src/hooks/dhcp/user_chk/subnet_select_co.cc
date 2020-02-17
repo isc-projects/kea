@@ -42,6 +42,12 @@ extern "C" {
 ///
 /// @return 0 upon success, non-zero otherwise.
 int subnet4_select(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
     if (!user_registry) {
         LOG_ERROR(user_chk_logger, USER_CHK_SUBNET4_SELECT_REGISTRY_NULL);
         return (1);
@@ -96,6 +102,12 @@ int subnet4_select(CalloutHandle& handle) {
 ///
 /// @return 0 upon success, non-zero otherwise.
 int subnet6_select(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
     if (!user_registry) {
         LOG_ERROR(user_chk_logger, USER_CHK_SUBNET6_SELECT_REGISTRY_NULL);
         return (1);

@@ -38,6 +38,12 @@ extern "C" {
 ///
 /// @return 0 upon success, non-zero otherwise.
 int pkt4_receive(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
     if (!user_registry) {
         std::cout << "DHCP UserCheckHook : pkt4_receive UserRegistry is null"
                   << std::endl;
@@ -90,6 +96,12 @@ int pkt4_receive(CalloutHandle& handle) {
 ///
 /// @return 0 upon success, non-zero otherwise.
 int pkt6_receive(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
     if (!user_registry) {
         std::cout << "DHCP UserCheckHook : pkt6_receive UserRegistry is null"
                   << std::endl;

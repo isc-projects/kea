@@ -60,6 +60,12 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 ///
 /// @param handle callout handle.
 int buffer4_receive(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
     try {
         impl->buffer4Receive(handle);
 
@@ -76,6 +82,12 @@ int buffer4_receive(CalloutHandle& handle) {
 ///
 /// @param handle callout handle.
 int leases4_committed(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
     try {
         impl->leases4Committed(handle);
 
@@ -111,6 +123,12 @@ int dhcp6_srv_configured(CalloutHandle& handle) {
 ///
 /// @param handle callout handle.
 int buffer6_receive(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
     try {
         impl->buffer6Receive(handle);
 
@@ -127,6 +145,12 @@ int buffer6_receive(CalloutHandle& handle) {
 ///
 /// @param handle callout handle.
 int leases6_committed(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
     try {
         impl->leases6Committed(handle);
 

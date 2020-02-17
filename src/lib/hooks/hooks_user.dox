@@ -479,7 +479,7 @@ usage is intuitive:
 
 @code
     // Get the current setting of the next step status.
-    CalloutHandle::NextStepStatus status = handle.getStatus();
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
 
     if (status == CalloutHandle::NEXT_STEP_DROP)
        // Do something...
@@ -536,7 +536,7 @@ handle.setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
 // Check the status state.
-CalloutHandle::NextStepStatus status = handle.getStatus();
+CalloutHandle::CalloutNextStep status = handle.getStatus();
 if (status == CalloutHandle::NEXT_STEP_SKIP) {
     ...
 }

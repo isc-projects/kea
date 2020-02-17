@@ -305,7 +305,7 @@ TEST_F(CalloutHandleTest, DeleteAllArguments) {
 TEST_F(CalloutHandleTest, StatusField) {
     CalloutHandle handle(getCalloutManager());
 
-    // Should be false on construction.
+    // Should be continue on construction.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle.getStatus());
 
     handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
