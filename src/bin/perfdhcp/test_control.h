@@ -25,6 +25,7 @@
 #include <boost/function.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <mutex>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -300,11 +301,11 @@ public:
     /// in packet templates and their contents.
     void printTemplates() const;
 
-    std::deque <isc::asiolink::IOAddress> getAllUniqueAddrReply() {
+    std::set <std::string> getAllUniqueAddrReply() {
         return unique_reply_address_;
     }
 
-    std::deque <isc::asiolink::IOAddress> getAllUniqueAddrAdvert() {
+    std::set <std::string> getAllUniqueAddrAdvert() {
         return unique_address_;
     }
 
@@ -555,11 +556,7 @@ protected:
 
     /// \brief Process received v6 address for it's uniqueness
     ///
-    /// Check if address received from server was previously assigned,
-    /// if not it will be added to list of assigned addresses for next
-    /// compariosion.
-    /// Print out each packet with already assigned/advertised address
-    /// to stdout.
+    /// Generate list of addresses that should be checked
     ///
     /// \param pkt6 object representing received DHCPv6 packet
     /// \param ExhchangeType enum value
@@ -567,11 +564,7 @@ protected:
 
     /// \brief Process received v4 address for it's uniqueness
     ///
-    /// Check if address received from server was previously assigned,
-    /// if not it will be added to list of assigned addresses for next
-    /// compariosion.
-    /// Print out each packet with already offered/assigned address
-    /// to stdout.
+    /// Generate list of addresses that should be checked
     ///
     /// \param pkt4 object representing received DHCPv4 packet
     /// \param ExhchangeType enum value
@@ -579,29 +572,70 @@ protected:
 
     /// \brief add unique address to already assigned list
     ///
-    /// If address was designated as unique it will be added to one of
-    /// two deques based on specified echange type.
+    /// Add address and/or prefix to unique set if it's not already there,
+    /// if so print out an error.
     ///
-    /// \param IOAddress holding value of unique address
+    /// \param std::set set of addresses that should be added to unique list
     /// \param ExhchangeType enum value
-    void addUniqeAddr(const isc::asiolink::IOAddress addr, ExchangeType xchg_type) {
+    void addUniqeAddr(const std::set <std::string> current, ExchangeType xchg_type) {
         switch(xchg_type) {
-            case ExchangeType::SA:
-                unique_address_.push_back(addr);
-                break;
-            case ExchangeType::RR:
-                unique_reply_address_.push_back(addr);
-                break;
-            case ExchangeType::DO:
-                unique_address_.push_back(addr);
-                break;
-            case ExchangeType::RA:
-                unique_reply_address_.push_back(addr);
-                break;
-            case ExchangeType::RNA:
-                // we do not expect to pass those values at all
-            case ExchangeType::RN:
+            case ExchangeType::SA: {
+                for (auto current_it = current.begin();
+                    current_it != current.end(); ++current_it) {
+                    std::lock_guard<std::mutex> lock(unigue_addr_mutex_);
+                    auto ret = unique_address_.emplace(*current_it);
+                    if (!ret.second) {
+                        std::cout << "In solicit-advertise msg exchange we got "
+                                  << *current_it <<
+                                     " address/prefix already advertised!\n";
+                    }
+                }
+            break;
+            }
+            case ExchangeType::RR: {
+                for (auto current_it = current.begin();
+                    current_it != current.end(); ++current_it) {
+                    std::lock_guard<std::mutex> lock(unigue_reply_addr_mutex_);
+                    auto ret = unique_reply_address_.emplace(*current_it);
+                    if (!ret.second) {
+                    std::cout << "In request-reply msg exchange we got "
+                              << *current_it <<
+                                 " address/prefix already assigned!\n";
+                    }
+                }
+            break;
+            }
             case ExchangeType::RL:
+                removeUniqueAddr(current);
+                break;
+            case ExchangeType::DO: {
+                for (auto current_it = current.begin();
+                    current_it != current.end(); ++current_it) {
+                    std::lock_guard<std::mutex> lock(unigue_addr_mutex_);
+                    auto ret = unique_address_.emplace(*current_it);
+                    if (!ret.second) {
+                        std::cout << "In discover-offer msg exchange we got "
+                                  << *current_it <<
+                                     " address already advertised!\n";
+                    }
+                }
+            break;
+            }
+            case ExchangeType::RA: {
+                for (auto current_it = current.begin();
+                    current_it != current.end(); ++current_it) {
+                    std::lock_guard<std::mutex> lock(unigue_reply_addr_mutex_);
+                    auto ret = unique_reply_address_.emplace(*current_it);
+                    if (!ret.second) {
+                    std::cout << "In request-ack msg exchange we got "
+                              << *current_it <<
+                                 " address already assigned!\n";
+                    }
+                }
+            break;
+            }
+            case ExchangeType::RNA:
+            case ExchangeType::RN:
             default: break;
         }
     }
@@ -609,21 +643,25 @@ protected:
     /// \brief remove unique address from list
     ///
     /// If address is released we should remove it from both
-    /// advertised (offered) and assigned dques.
+    /// advertised (offered) and assigned sets.
     ///
     /// \param IOAddress holding value of unique address
-    void removeUniqueAddr(const isc::asiolink::IOAddress addr) {
-        for (auto it = unique_address_.cbegin();
-            it != unique_address_.cend(); ++it) {
-            if (*it == addr) {
+    void removeUniqueAddr(const std::set <std::string> addr) {
+
+        for (auto addr_it = addr.begin();
+             addr_it != addr.end(); ++addr_it) {
+
+             auto it = unique_address_.find(*addr_it);
+             if (it != unique_address_.end()) {
+                std::lock_guard<std::mutex> lock(unigue_addr_mutex_);
                 unique_address_.erase(it);
-            }
-        }
-        for (auto it = unique_reply_address_.cbegin();
-            it != unique_reply_address_.cend(); ++it) {
-            if (*it == addr) {
-                unique_reply_address_.erase(it);
-            }
+             }
+
+             auto it2 = unique_reply_address_.find(*addr_it);
+             if (it2 != unique_reply_address_.end()) {
+                 std::lock_guard<std::mutex> lock(unigue_reply_addr_mutex_);
+                 unique_reply_address_.erase(it2);
+             }
         }
     }
 
@@ -1011,10 +1049,14 @@ protected:
     void readPacketTemplate(const std::string& file_name);
 
     /// Keep addresses and prefixes from advertise msg for uniqueness checks
-    std::deque <isc::asiolink::IOAddress> unique_address_;
+    std::set <std::string> unique_address_;
+
+    std::mutex unigue_addr_mutex_;
 
     /// Keep addresses and prefixes from reply msg for uniqueness checks
-    std::deque <isc::asiolink::IOAddress> unique_reply_address_;
+    std::set <std::string> unique_reply_address_;
+
+    std::mutex unigue_reply_addr_mutex_;
 
     BasePerfSocket &socket_;
     Receiver receiver_;

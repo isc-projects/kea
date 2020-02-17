@@ -803,58 +803,20 @@ void
 TestControl::address6Uniqueness(const Pkt6Ptr& pkt6, ExchangeType xchg_type) {
     // check if received address is unique
     if(options_.getAddrUniqe()) {
-        std::deque <isc::asiolink::IOAddress> all;
-        std::deque <isc::asiolink::IOAddress> current;
+        std::set <std::string> current;
         // addresses were already checked in validateeIA
         // we can safely assume that those are correct
         if (pkt6->getOption(D6O_IA_PD)) {
-            current.push_back(boost::dynamic_pointer_cast<
+            current.insert(boost::dynamic_pointer_cast<
                 Option6IAPrefix>(pkt6->getOption(D6O_IA_PD)->
-                getOption(D6O_IAPREFIX))->getAddress());
+                getOption(D6O_IAPREFIX))->getAddress().toText());
         }
         if (pkt6->getOption(D6O_IA_NA)) {
-            current.push_back(boost::dynamic_pointer_cast<
+            current.insert(boost::dynamic_pointer_cast<
                 Option6IAAddr>(pkt6->getOption(D6O_IA_NA)->
-                getOption(D6O_IAADDR))->getAddress());
+                getOption(D6O_IAADDR))->getAddress().toText());
         }
-        for (auto current_addr = current.cbegin();
-            current_addr != current.cend(); ++current_addr) {
-            switch(xchg_type) {
-                case ExchangeType::SA: {
-                    all = getAllUniqueAddrAdvert();
-                    if (std::find(all.begin(), all.end(),
-                        *current_addr) == all.end()) {
-                        addUniqeAddr(*current_addr, xchg_type);
-                    } else {
-                        cout << "In solicit-advertise msg exchange we got "
-                                "address/prefix already advertised!\n"
-                             << pkt6->toText() << "\n";
-                    }
-                    break;
-                }
-                case ExchangeType::RR: {
-                    all = getAllUniqueAddrReply();
-                    if (std::find(all.begin(), all.end(),
-                        *current_addr) == all.end()) {
-                        addUniqeAddr(*current_addr, xchg_type);
-                    } else {
-                        cout << "In request-reply msg exchange we got "
-                                "address/prefix already assigned!\n"
-                             << pkt6->toText() << "\n";
-                    }
-                    break;
-                }
-                case ExchangeType::RL:
-                     removeUniqueAddr(*current_addr);
-                     break;
-                case ExchangeType::DO:
-                    // we do not expect to pass those values at all
-                case ExchangeType::RA:
-                case ExchangeType::RNA:
-                case ExchangeType::RN:
-                default: break;
-             }
-        }
+        addUniqeAddr(current, xchg_type);
     }
 }
 
@@ -862,42 +824,11 @@ void
 TestControl::address4Uniqueness(const Pkt4Ptr& pkt4, ExchangeType xchg_type) {
     // check if received address is unique
     if(options_.getAddrUniqe()) {
-        std::deque <isc::asiolink::IOAddress> all;
         // addresses were already checked in validateeIA
         // we can safely assume that those are correct
-        switch(xchg_type) {
-            case ExchangeType::DO: {
-                all = getAllUniqueAddrAdvert();
-                if (std::find(all.begin(), all.end(),
-                    pkt4->getYiaddr()) == all.end()) {
-                    addUniqeAddr(pkt4->getYiaddr(), xchg_type);
-                } else {
-                    cout << "In discover-offer msg exchange we got "
-                            "address already advertised!\n"
-                         << pkt4->toText() << "\n";
-                }
-                break;
-            }
-            case ExchangeType::RA: {
-                all = getAllUniqueAddrReply();
-                if (std::find(all.begin(), all.end(),
-                    pkt4->getYiaddr()) == all.end()) {
-                    addUniqeAddr(pkt4->getYiaddr(), xchg_type);
-                } else {
-                    cout << "In request-ack msg exchange we got "
-                            "address already assigned!\n"
-                         << pkt4->toText() << "\n";
-                }
-                break;
-            }
-            case ExchangeType::RL:
-                // we do not expect to pass those values at al
-            case ExchangeType::SA:
-            case ExchangeType::RR:
-            case ExchangeType::RNA:
-            case ExchangeType::RN:
-            default: break;
-        }
+        std::set <std::string> current;
+        current.insert(pkt4->getYiaddr().toText());
+        addUniqeAddr(current, xchg_type);
     }
 }
 
