@@ -12,5 +12,5 @@
 
 static const int LIBRARY_NUMBER = 1;
 #include <config.h>
-#include <dhcp4/tests/callout_library_common.h>
 
+#include <dhcp4/tests/callout_library_common.h>

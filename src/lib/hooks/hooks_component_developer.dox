@@ -314,7 +314,7 @@ An example of use could be:
 handle->setArgument("query", query);
 handle->setArgument("response", response);
 HooksManager::callCallouts(lease_hook_index, *handle_ptr);
-if (! handle_ptr->getStatus() != CalloutHandle::NEXT_STEP_SKIP) {
+if (handle_ptr->getStatus() != CalloutHandle::NEXT_STEP_SKIP) {
     // Skip flag not set, do the address allocation
     :
 }
@@ -377,7 +377,7 @@ if (HooksManager::calloutsPresent(lease_hook_index)) {
     handle->setArgument("query", query);
     handle->setArgument("response", response);
     HooksManager::callCallouts(lease_hook_index, *handle);
-    if ( handle->getStatus() != CalloutHandle::NEXT_STEP_DROP ) {
+    if (handle->getStatus() != CalloutHandle::NEXT_STEP_DROP) {
         // Next step allows us to continue, do the address allocation
         :
     }

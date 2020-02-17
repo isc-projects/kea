@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /// @file
-/// @brief Callout library for tesing execution of the dhcp6_srv_configured
+/// @brief Callout library for testing execution of the dhcp6_srv_configured
 /// hook point.
 ///
 static const int LIBRARY_NUMBER = 3;

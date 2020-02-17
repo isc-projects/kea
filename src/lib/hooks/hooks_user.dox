@@ -474,14 +474,18 @@ documentation for details. For historic reasons (Kea 0.9.2 used a single
 boolean flag called skip that also doubled in some cases as an indicator
 to drop the packet) several hooks use SKIP status to drop the packet.
 
-The methods to get and set the "skip" flag are getSkip and setSkip. Their
-usage is intuitive:
+The methods to get and set the "skip" or "drop" state are getStatus and
+setStatus. Their usage is intuitive:
 
 @code
     // Get the current setting of the next step status.
     CalloutHandle::CalloutNextStep status = handle.getStatus();
 
     if (status == CalloutHandle::NEXT_STEP_DROP)
+       // Do something...
+       :
+
+    if (status == CalloutHandle::NEXT_STEP_SKIP)
        // Do something...
        :
 
@@ -498,6 +502,21 @@ usage is intuitive:
 
 Like arguments, the next step status is passed to all callouts on a hook.  Callouts
 later in the list are able to examine (and modify) the settings of earlier ones.
+
+If using multiple libraries, when the library wants to drop the current packet,
+the DROP status must be used instead of the SKIP status so that the packet
+processing ends at that specific hook point.
+
+It is recommended for all callouts to check the status before doing any
+processing.  As callouts can modify the status, it is recommended to take good
+care when doing so, because this will have impact on all remaining hooks as well.
+It is highly recommended to not reset the SKIP or DROP status to CONTINUE, even
+though possible, so that the rest of the loaded hooks and the server can check
+and perform the proper action.
+
+As stated before, the order of loading libraries is crucial in achieving the
+desired behavior, so please read @ref hooksdgMultipleLibraries when configuring
+multiple libraries.
 
 @subsubsection hooksdgSkipFlag The "Skip" Flag (deprecated)
 
