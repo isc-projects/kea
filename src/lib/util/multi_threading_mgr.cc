@@ -47,7 +47,7 @@ MultiThreadingMgr::setPktThreadPoolSize(uint32_t size) {
 }
 
 uint32_t
-MultiThreadingMgr::supportedThreadCount(uint32_t thread_count) {
+MultiThreadingMgr::supportedThreadCount() {
     return (std::thread::hardware_concurrency());
 }
 
