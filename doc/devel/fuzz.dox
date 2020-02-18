@@ -159,9 +159,7 @@ for this are:
    everything is working is to look at the "total paths" figure.  Initially,
    this should increase reasonably rapidly.  If not, it is likely that Kea is
    failing to start or initialize properly and the logging output (assuming
-   this has been configured) should be examined.  Some sample seed packets are
-   provided in the "src/bin/dhcp4/tests/fuzz-data" and
-   "src/bin/dhcp6/tests/fuzz-data" directories.
+   this has been configured) should be examined.
 
 @subsection fuzzRunConfig Fuzzing with Configuration Files
 
