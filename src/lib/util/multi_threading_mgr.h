@@ -81,6 +81,21 @@ public:
     /// @param size The packet thread pool size of this binary instance.
     void setPktThreadPoolSize(uint32_t size);
 
+    /// @brief The system current supported hardware concurrency thread count.
+    ///
+    /// This function will return 0 if the value can not be determined.
+    ///
+    /// @return The thread count.
+    static uint32_t supportedThreadCount();
+
+    /// @brief Apply the multi-threading related settings
+    ///
+    /// @param enabled The enabled flag: true if multi-threading is enabled,
+    /// false otherwise.
+    /// @param thread_count The number of desired threads: non 0 if explicitly
+    /// configured, 0 if auto scaling is desired
+    void apply(bool enabled, uint32_t thread_count);
+
 protected:
 
     /// @brief Constructor.

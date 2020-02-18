@@ -141,16 +141,9 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
                       "processCommand(\"config-set\", json)");
         }
 
-        if (MultiThreadingUtil::threadCount()) {
-            auto& thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
-            if (thread_pool.size()) {
-                thread_pool.stop();
-            }
-            MultiThreadingMgr::instance().setMode(true);
-            thread_pool.start(MultiThreadingUtil::threadCount());
-        } else {
-            MultiThreadingMgr::instance().setMode(false);
-        }
+        // @todo enable multi-threading - disabled for now
+        MultiThreadingMgr::instance().apply(false,
+            CfgMgr::instance().getCurrentCfg()->getServerThreadCount());
 
         // Now check is the returned result is successful (rcode=0) or not
         // (see @ref isc::config::parseAnswer).

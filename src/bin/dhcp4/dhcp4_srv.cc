@@ -803,9 +803,7 @@ Dhcpv4Srv::run() {
     }
 
     // destroying the thread pool
-    if (MultiThreadingMgr::instance().getMode()) {
-        MultiThreadingMgr::instance().getPktThreadPool().reset();
-    }
+    MultiThreadingMgr::instance().apply(false, 0);
 
     return (true);
 }
@@ -821,8 +819,8 @@ Dhcpv4Srv::run_one() {
 
         // Do not read more packets from socket if there are enough
         // packets to be processed in the packet thread pool queue
-        const int max_queue_size = MultiThreadingUtil::maxThreadQueueSize();
-        const int thread_count = MultiThreadingUtil::threadCount();
+        const int max_queue_size = CfgMgr::instance().getCurrentCfg()->getServerMaxThreadQueueSize();
+        const int thread_count = MultiThreadingMgr::instance().getPktThreadPoolSize();
         size_t pkt_queue_size = MultiThreadingMgr::instance().getPktThreadPool().count();
         if (thread_count && (pkt_queue_size >= thread_count * max_queue_size)) {
             read_pkt = false;

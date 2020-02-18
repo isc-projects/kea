@@ -46,5 +46,37 @@ MultiThreadingMgr::setPktThreadPoolSize(uint32_t size) {
     pkt_thread_pool_size_ = size;
 }
 
+uint32_t
+MultiThreadingMgr::supportedThreadCount(uint32_t thread_count) {
+    return (std::thread::hardware_concurrency());
+}
+
+void
+MultiThreadingMgr::apply(bool enabled, uint32_t thread_count) {
+    // check the enabled flag
+    if (enabled) {
+        // check for auto scaling (enabled flag true but thread_count 0)
+        if (!thread_count) {
+            // might also return 0
+            thread_count = MultiThreadingMgr::supportedThreadCount();
+        }
+    } else {
+        thread_count = 0;
+    }
+    // check enabled flag and explicit number of threads or system supports
+    // hardware concurrency
+    if (thread_count) {
+        if (pkt_thread_pool_.size()) {
+            pkt_thread_pool_.stop();
+        }
+        setPktThreadPoolSize(thread_count);
+        setMode(true);
+        pkt_thread_pool_.start(thread_count);
+    } else {
+        pkt_thread_pool_.reset();
+        setMode(false);
+    }
+}
+
 }  // namespace util
 }  // namespace isc
