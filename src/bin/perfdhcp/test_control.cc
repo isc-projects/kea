@@ -802,9 +802,9 @@ TestControl::processReceivedPacket4(const Pkt4Ptr& pkt4) {
 void
 TestControl::address6Uniqueness(const Pkt6Ptr& pkt6, ExchangeType xchg_type) {
     // check if received address is unique
-    if(options_.getAddrUniqe()) {
+    if (options_.getAddrUnique()) {
         std::set <std::string> current;
-        // addresses were already checked in validateeIA
+        // addresses were already checked in validateIA
         // we can safely assume that those are correct
         if (pkt6->getOption(D6O_IA_PD)) {
             current.insert(boost::dynamic_pointer_cast<
@@ -812,9 +812,13 @@ TestControl::address6Uniqueness(const Pkt6Ptr& pkt6, ExchangeType xchg_type) {
                 getOption(D6O_IAPREFIX))->getAddress().toText());
         }
         if (pkt6->getOption(D6O_IA_NA)) {
-            current.insert(boost::dynamic_pointer_cast<
+            // add address and check if it's not been assigned via PD
+            auto ret = current.emplace(boost::dynamic_pointer_cast<
                 Option6IAAddr>(pkt6->getOption(D6O_IA_NA)->
                 getOption(D6O_IAADDR))->getAddress().toText());
+            if (!ret.second) {
+                stats_mgr_.updateNonUniqueAddrNum(xchg_type);
+            }
         }
         addUniqeAddr(current, xchg_type);
     }
@@ -823,8 +827,8 @@ TestControl::address6Uniqueness(const Pkt6Ptr& pkt6, ExchangeType xchg_type) {
 void
 TestControl::address4Uniqueness(const Pkt4Ptr& pkt4, ExchangeType xchg_type) {
     // check if received address is unique
-    if(options_.getAddrUniqe()) {
-        // addresses were already checked in validateeIA
+    if (options_.getAddrUnique()) {
+        // addresses were already checked in validateIA
         // we can safely assume that those are correct
         std::set <std::string> current;
         current.insert(pkt4->getYiaddr().toText());
@@ -875,6 +879,7 @@ TestControl::processReceivedPacket6(const Pkt6Ptr& pkt6) {
         CommandOptions::ExchangeMode xchg_mode = options_.getExchangeMode();
         if ((xchg_mode == CommandOptions::DORA_SARR) && solicit_pkt6) {
             if (validateIA(pkt6)) {
+               // if address is correct - check uniqueness
                address6Uniqueness(pkt6, ExchangeType::SA);
                if (template_buffers_.size() < 2) {
                     sendRequest6(pkt6);

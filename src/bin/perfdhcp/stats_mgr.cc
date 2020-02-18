@@ -54,6 +54,7 @@ ExchangeStats::ExchangeStats(const ExchangeType xchg_type,
       ordered_lookups_(0),
       sent_packets_num_(0),
       rcvd_packets_num_(0),
+      non_unique_addr_num_(0),
       rejected_leases_num_(0),
       boot_time_(boot_time)
 {

@@ -238,7 +238,7 @@ TEST_F(CommandOptionsTest, Defaults) {
     EXPECT_FALSE(opt.isBroadcast());
     EXPECT_FALSE(opt.isRapidCommit());
     EXPECT_FALSE(opt.isUseFirst());
-    EXPECT_FALSE(opt.getAddrUniqe());
+    EXPECT_FALSE(opt.getAddrUnique());
     EXPECT_EQ(0, opt.getTemplateFiles().size());
     EXPECT_EQ(0, opt.getTransactionIdOffset().size());
     EXPECT_EQ(0, opt.getRandomOffset().size());
@@ -267,7 +267,7 @@ TEST_F(CommandOptionsTest, HelpVersion) {
 TEST_F(CommandOptionsTest, CheckAddressUniqueness) {
     CommandOptions opt;
     EXPECT_NO_THROW(process(opt, "perfdhcp -6 -a -l ethx all"));
-    EXPECT_TRUE(opt.getAddrUniqe());
+    EXPECT_TRUE(opt.getAddrUnique());
 }
 
 TEST_F(CommandOptionsTest, UseFirst) {

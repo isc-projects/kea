@@ -300,13 +300,19 @@ public:
     /// Method prints information about data offsets
     /// in packet templates and their contents.
     void printTemplates() const;
+    std::mutex unique_addr_mutex_;
+    std::mutex unique_reply_addr_mutex_;
 
     std::set <std::string> getAllUniqueAddrReply() {
-        return unique_reply_address_;
+        std::lock_guard<std::mutex> lock(unique_reply_addr_mutex_);
+        auto result = unique_reply_address_;
+        return result;
     }
 
     std::set <std::string> getAllUniqueAddrAdvert() {
-        return unique_address_;
+        std::lock_guard<std::mutex> lock(unique_addr_mutex_);
+        auto result = unique_address_;
+        return result;
     }
 
     // We would really like following methods and members to be private but
@@ -554,7 +560,7 @@ protected:
     /// \return true if the message include correct IA, false otherwise.
     bool validateIA(const dhcp::Pkt6Ptr& pkt6);
 
-    /// \brief Process received v6 address for it's uniqueness
+    /// \brief Process received v6 address uniqueness
     ///
     /// Generate list of addresses that should be checked
     ///
@@ -562,12 +568,12 @@ protected:
     /// \param ExhchangeType enum value
     void address6Uniqueness(const dhcp::Pkt6Ptr& pkt6, ExchangeType xchg_type);
 
-    /// \brief Process received v4 address for it's uniqueness
+    /// \brief Process received v4 address uniqueness
     ///
     /// Generate list of addresses that should be checked
     ///
     /// \param pkt4 object representing received DHCPv4 packet
-    /// \param ExhchangeType enum value
+    /// \param ExchangeType enum value
     void address4Uniqueness(const dhcp::Pkt4Ptr& pkt4, ExchangeType xchg_type);
 
     /// \brief add unique address to already assigned list
@@ -576,18 +582,16 @@ protected:
     /// if so print out an error.
     ///
     /// \param std::set set of addresses that should be added to unique list
-    /// \param ExhchangeType enum value
+    /// \param ExchangeType enum value
     void addUniqeAddr(const std::set <std::string> current, ExchangeType xchg_type) {
         switch(xchg_type) {
             case ExchangeType::SA: {
                 for (auto current_it = current.begin();
                     current_it != current.end(); ++current_it) {
-                    std::lock_guard<std::mutex> lock(unigue_addr_mutex_);
+                    std::lock_guard<std::mutex> lock(unique_addr_mutex_);
                     auto ret = unique_address_.emplace(*current_it);
                     if (!ret.second) {
-                        std::cout << "In solicit-advertise msg exchange we got "
-                                  << *current_it <<
-                                     " address/prefix already advertised!\n";
+                        stats_mgr_.updateNonUniqueAddrNum(ExchangeType::SA);
                     }
                 }
             break;
@@ -595,12 +599,10 @@ protected:
             case ExchangeType::RR: {
                 for (auto current_it = current.begin();
                     current_it != current.end(); ++current_it) {
-                    std::lock_guard<std::mutex> lock(unigue_reply_addr_mutex_);
+                    std::lock_guard<std::mutex> lock(unique_reply_addr_mutex_);
                     auto ret = unique_reply_address_.emplace(*current_it);
                     if (!ret.second) {
-                    std::cout << "In request-reply msg exchange we got "
-                              << *current_it <<
-                                 " address/prefix already assigned!\n";
+                        stats_mgr_.updateNonUniqueAddrNum(ExchangeType::RR);
                     }
                 }
             break;
@@ -611,12 +613,10 @@ protected:
             case ExchangeType::DO: {
                 for (auto current_it = current.begin();
                     current_it != current.end(); ++current_it) {
-                    std::lock_guard<std::mutex> lock(unigue_addr_mutex_);
+                    std::lock_guard<std::mutex> lock(unique_addr_mutex_);
                     auto ret = unique_address_.emplace(*current_it);
                     if (!ret.second) {
-                        std::cout << "In discover-offer msg exchange we got "
-                                  << *current_it <<
-                                     " address already advertised!\n";
+                        stats_mgr_.updateNonUniqueAddrNum(ExchangeType::DO);
                     }
                 }
             break;
@@ -624,12 +624,10 @@ protected:
             case ExchangeType::RA: {
                 for (auto current_it = current.begin();
                     current_it != current.end(); ++current_it) {
-                    std::lock_guard<std::mutex> lock(unigue_reply_addr_mutex_);
+                    std::lock_guard<std::mutex> lock(unique_reply_addr_mutex_);
                     auto ret = unique_reply_address_.emplace(*current_it);
                     if (!ret.second) {
-                    std::cout << "In request-ack msg exchange we got "
-                              << *current_it <<
-                                 " address already assigned!\n";
+                        stats_mgr_.updateNonUniqueAddrNum(ExchangeType::RA);
                     }
                 }
             break;
@@ -645,21 +643,20 @@ protected:
     /// If address is released we should remove it from both
     /// advertised (offered) and assigned sets.
     ///
-    /// \param IOAddress holding value of unique address
+    /// \param std::string holding value of unique address
     void removeUniqueAddr(const std::set <std::string> addr) {
-
         for (auto addr_it = addr.begin();
              addr_it != addr.end(); ++addr_it) {
 
+             std::lock_guard<std::mutex> lock(unique_addr_mutex_);
              auto it = unique_address_.find(*addr_it);
              if (it != unique_address_.end()) {
-                std::lock_guard<std::mutex> lock(unigue_addr_mutex_);
                 unique_address_.erase(it);
              }
 
+             std::lock_guard<std::mutex> lock2(unique_reply_addr_mutex_);
              auto it2 = unique_reply_address_.find(*addr_it);
              if (it2 != unique_reply_address_.end()) {
-                 std::lock_guard<std::mutex> lock(unigue_reply_addr_mutex_);
                  unique_reply_address_.erase(it2);
              }
         }
@@ -1051,12 +1048,10 @@ protected:
     /// Keep addresses and prefixes from advertise msg for uniqueness checks
     std::set <std::string> unique_address_;
 
-    std::mutex unigue_addr_mutex_;
 
     /// Keep addresses and prefixes from reply msg for uniqueness checks
     std::set <std::string> unique_reply_address_;
 
-    std::mutex unigue_reply_addr_mutex_;
 
     BasePerfSocket &socket_;
     Receiver receiver_;

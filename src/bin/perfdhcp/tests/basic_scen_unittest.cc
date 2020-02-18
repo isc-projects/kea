@@ -253,6 +253,8 @@ TEST_F(BasicScenTest, Address4Unique) {
     EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA), 1);
     EXPECT_GE(bs.tc_.getAllUniqueAddrReply().size(), 1);
     EXPECT_GE(bs.tc_.getAllUniqueAddrAdvert().size(), 1);
+    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::DO), 9);
+    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::RA), 9);
 }
 
 TEST_F(BasicScenTest, Address6Unique) {
@@ -267,6 +269,8 @@ TEST_F(BasicScenTest, Address6Unique) {
     EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 1);
     EXPECT_GE(bs.tc_.getAllUniqueAddrReply().size(), 1);
     EXPECT_GE(bs.tc_.getAllUniqueAddrAdvert().size(), 1);
+    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::SA), 9);
+    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::RR), 9);
 }
 
 TEST_F(BasicScenTest, Packet4ExchangeMaxDrop10Proc) {

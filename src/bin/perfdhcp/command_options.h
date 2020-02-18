@@ -196,7 +196,7 @@ public:
     /// \brief Returns address uniqueness value.
     ///
     /// \return address uniqueness specified value
-    bool getAddrUniqe() const { return addr_unique_; }
+    bool getAddrUnique() const { return addr_unique_; }
 
     /// \brief Returns maximum number of exchanges.
     ///

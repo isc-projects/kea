@@ -466,11 +466,13 @@ public:
     /// \return number of rejected leases.
     uint64_t getRejLeasesNum() const { return(rejected_leases_num_); }
 
+    uint64_t getNonUniqueAddrNum() const { return(non_unique_addr_num_); }
     /// \brief Increase number of rejected leases.
     ///
     /// Method increase total number of rejected leases by one.
     void updateRejLeases() { ++rejected_leases_num_; }
 
+    void updateNonUniqueAddr() { ++non_unique_addr_num_; }
     /// \brief Print main statistics for packet exchange.
     ///
     /// Method prints main statistics for particular exchange.
@@ -495,8 +497,9 @@ public:
              << "drops: " << drops << endl
              << "drops ratio: " << drops_ratio << " %" << endl
              << "orphans: " << getOrphans() << endl
-             << "rejected leases: " << getRejLeasesNum() << endl;
-    }
+             << "rejected leases: " << getRejLeasesNum() << endl
+             << "non unique addressess: " << getNonUniqueAddrNum() << endl;
+   }
 
     /// \brief Print round trip time packets statistics.
     ///
@@ -633,6 +636,8 @@ private:
     uint64_t sent_packets_num_;    ///< Total number of sent packets.
     uint64_t rcvd_packets_num_;    ///< Total number of received packets.
 
+    uint64_t non_unique_addr_num_; ///< Total number of non unique addresses
+                                   ///< offered/advertised.
     uint64_t rejected_leases_num_; ///< Total number of rejected leases
                                    /// (e.g. NoAddrAvail)
     boost::posix_time::ptime boot_time_; ///< Time when test is started.
@@ -985,7 +990,7 @@ public:
     ///
     /// \param xchg_type exchange type.
     /// \throw isc::BadValue if invalid exchange type specified.
-    /// \return number of received packets.
+    /// \return number of rejected leases.
     uint64_t getRejLeasesNum(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         return(xchg_stats->getRejLeasesNum());
@@ -998,6 +1003,28 @@ public:
     void updateRejLeases(const ExchangeType xchg_type) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         xchg_stats->updateRejLeases();
+    }
+
+    /// \brief Increase total number of non unique addresses
+    ///
+    /// Method increase total number of non unique addresses or
+    /// prefixes by one for specified exchange type
+    void updateNonUniqueAddrNum(const ExchangeType xchg_type) {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        xchg_stats->updateNonUniqueAddr();
+    }
+
+    /// \brief Return total number of non unique addresses
+    ///
+    /// Method return total number of non unique addresses and/or
+    /// prefixes of specified exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return number of non unique addresses.
+    uint64_t getNonUniqueAddrNum(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return(xchg_stats->getNonUniqueAddrNum());
     }
 
     /// \brief Get time period since the start of test.
