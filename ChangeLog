@@ -1,3 +1,5 @@
+Kea 1.6.2 released on Feb 19, 2020
+
 1665.	[bug]		tmark
 	Modified option 43 parsing to interpret sub-option codes 0 and 255
 	as PAD and END when no sub-option with these codes are defined.
