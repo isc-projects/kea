@@ -108,8 +108,8 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
     try {
         if (file_name.empty()) {
             // Basic sanity check: file name must not be empty.
-            isc_throw(isc::BadValue, "JSON configuration file not specified. Please "
-                      "use -c command line option.");
+            isc_throw(isc::BadValue, "JSON configuration file not specified."
+                      " Please use -c command line option.");
         }
 
         // Read contents of the file and parse it as JSON
@@ -147,9 +147,8 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
         // Now check is the returned result is successful (rcode=0) or not
         // (see @ref isc::config::parseAnswer).
         int rcode;
-        isc::data::ConstElementPtr comment =
-            isc::config::parseAnswer(rcode, result);
-        if (rcode != 0) {
+        ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
+        if (rcode != CONTROL_RESULT_SUCCESS) {
             string reason = comment ? comment->stringValue() :
                 "no details available";
             isc_throw(isc::BadValue, reason);
@@ -165,6 +164,11 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
                   << file_name << "': " << ex.what());
     }
 
+    LOG_INFO(dhcp6_logger, DHCP6_MULTI_THREADING_INFO)
+        .arg(MultiThreadingMgr::instance().getMode())
+        .arg(MultiThreadingMgr::instance().getPktThreadPoolSize())
+        .arg(CfgMgr::instance().getCurrentCfg()->getServerMaxThreadQueueSize());
+
     return (result);
 }
 
@@ -178,7 +182,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
 
     int rcode;
     ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
-    if (rcode != 0) {
+    if (rcode != CONTROL_RESULT_SUCCESS) {
         string reason = comment ? comment->stringValue() :
             "no details available";
         isc_throw(isc::BadValue, reason);
@@ -523,7 +527,7 @@ ControlledDhcpv6Srv::commandBuildReportHandler(const string&,
 ConstElementPtr
 ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
                                                  ConstElementPtr args) {
-    int status_code = 1;
+    int status_code = CONTROL_RESULT_ERROR;
     string message;
 
     // args must be { "remove": <bool> }
@@ -908,6 +912,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     CommandMgr::instance().registerCommand("config-reload",
         boost::bind(&ControlledDhcpv6Srv::commandConfigReloadHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("config-set",
+        boost::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("config-test",
         boost::bind(&ControlledDhcpv6Srv::commandConfigTestHandler, this, _1, _2));
 
@@ -923,14 +930,11 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("server-tag-get",
-        boost::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, _1, _2));
-
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("config-set",
-        boost::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, _1, _2));
+    CommandMgr::instance().registerCommand("server-tag-get",
+        boost::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
@@ -995,8 +999,8 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("build-report");
         CommandMgr::instance().deregisterCommand("config-backend-pull");
         CommandMgr::instance().deregisterCommand("config-get");
-        CommandMgr::instance().deregisterCommand("config-set");
         CommandMgr::instance().deregisterCommand("config-reload");
+        CommandMgr::instance().deregisterCommand("config-set");
         CommandMgr::instance().deregisterCommand("config-test");
         CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("dhcp-disable");
@@ -1115,7 +1119,8 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         return (false);
     }
 
-    // If reconnect isn't enabled, log it and return false
+    // If reconnect isn't enabled or we're out of retries,
+    // log it, schedule a shutdown,  and return false
     if (!db_reconnect_ctl->retriesLeft() ||
         !db_reconnect_ctl->retryInterval()) {
         LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_DISABLED)

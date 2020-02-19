@@ -90,9 +90,10 @@ ControlledDhcpv4Srv::init(const std::string& file_name) {
 
     // Configure the server using JSON file.
     ConstElementPtr result = loadConfigFile(file_name);
+
     int rcode;
     ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
-    if (rcode != 0) {
+    if (rcode != CONTROL_RESULT_SUCCESS) {
         string reason = comment ? comment->stringValue() :
             "no details available";
         isc_throw(isc::BadValue, reason);
@@ -176,7 +177,7 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
         // (see @ref isc::config::parseAnswer).
         int rcode;
         ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
-        if (rcode != 0) {
+        if (rcode != CONTROL_RESULT_SUCCESS) {
             string reason = comment ? comment->stringValue() :
                 "no details available";
             isc_throw(isc::BadValue, reason);
@@ -192,9 +193,13 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
                   << file_name << "': " << ex.what());
     }
 
+    LOG_INFO(dhcp4_logger, DHCP4_MULTI_THREADING_INFO)
+        .arg(MultiThreadingMgr::instance().getMode())
+        .arg(MultiThreadingMgr::instance().getPktThreadPoolSize())
+        .arg(CfgMgr::instance().getCurrentCfg()->getServerMaxThreadQueueSize());
+
     return (result);
 }
-
 
 ConstElementPtr
 ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr) {
@@ -896,17 +901,17 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("config-write",
         boost::bind(&ControlledDhcpv4Srv::commandConfigWriteHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("dhcp-enable",
-        boost::bind(&ControlledDhcpv4Srv::commandDhcpEnableHandler, this, _1, _2));
-
     CommandMgr::instance().registerCommand("dhcp-disable",
         boost::bind(&ControlledDhcpv4Srv::commandDhcpDisableHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("libreload",
-        boost::bind(&ControlledDhcpv4Srv::commandLibReloadHandler, this, _1, _2));
+    CommandMgr::instance().registerCommand("dhcp-enable",
+        boost::bind(&ControlledDhcpv4Srv::commandDhcpEnableHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("libreload",
+        boost::bind(&ControlledDhcpv4Srv::commandLibReloadHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("server-tag-get",
         boost::bind(&ControlledDhcpv4Srv::commandServerTagGetHandler, this, _1, _2));
@@ -924,17 +929,17 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("statistic-get",
         boost::bind(&StatsMgr::statisticGetHandler, _1, _2));
 
-    CommandMgr::instance().registerCommand("statistic-reset",
-        boost::bind(&StatsMgr::statisticResetHandler, _1, _2));
-
-    CommandMgr::instance().registerCommand("statistic-remove",
-        boost::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
-
     CommandMgr::instance().registerCommand("statistic-get-all",
         boost::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
 
+    CommandMgr::instance().registerCommand("statistic-reset",
+        boost::bind(&StatsMgr::statisticResetHandler, _1, _2));
+
     CommandMgr::instance().registerCommand("statistic-reset-all",
         boost::bind(&StatsMgr::statisticResetAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-remove",
+        boost::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-remove-all",
         boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));

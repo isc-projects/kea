@@ -75,6 +75,7 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count) {
     } else {
         pkt_thread_pool_.reset();
         setMode(false);
+        setPktThreadPoolSize(thread_count);
     }
 }
 
