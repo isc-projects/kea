@@ -232,7 +232,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
     while((opt = getopt_long(argc, argv,
-                             "hv46aA:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
+                             "huv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
                              "T:X:O:o:E:S:I:x:W:w:e:f:F:g:",
                              long_options, NULL)) != -1) {
         stream << " -" << static_cast<char>(opt);
@@ -257,7 +257,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             }
             break;
 
-        case 'a':
+        case 'u':
             addr_unique_ = true;
             break;
 
@@ -1105,7 +1105,7 @@ CommandOptions::printCommandLine() const {
 void
 CommandOptions::usage() const {
     std::cout <<
-        "perfdhcp [-hva] [-4|-6] [-A<encapsulation-level>] [-e<lease-type>]\n"
+        "perfdhcp [-huv] [-4|-6] [-A<encapsulation-level>] [-e<lease-type>]\n"
         "         [-r<rate>] [-f<renew-rate>]\n"
         "         [-F<release-rate>] [-t<report>] [-R<range>] [-b<base>]\n"
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
@@ -1143,7 +1143,7 @@ CommandOptions::usage() const {
         "-1: Take the server-ID option from the first received message.\n"
         "-4: DHCPv4 operation (default). This is incompatible with the -6 option.\n"
         "-6: DHCPv6 operation. This is incompatible with the -4 option.\n"
-        "-a: Enable checking address uniqueness. Lease valid lifetime\n"
+        "-u: Enable checking address uniqueness. Lease valid lifetime\n"
         "    should not be shorter than test duration.\n"
         "-b<base>: The base mac, duid, IP, etc, used to simulate different\n"
         "    clients.  This can be specified multiple times, each instance is\n"

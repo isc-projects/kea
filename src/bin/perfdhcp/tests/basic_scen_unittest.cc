@@ -245,7 +245,7 @@ TEST_F(BasicScenTest, Address4Unique) {
     // send more than 1 discover+request but with the same address
     // counter of a unique addresses should be 1
     CommandOptions opt;
-    processCmdLine(opt, "perfdhcp -a -l fake -r 10 -n 10 -g single 127.0.0.1");
+    processCmdLine(opt, "perfdhcp -u -l fake -r 10 -n 10 -g single 127.0.0.1");
     NakedBasicScen bs(opt);
     bs.run();
     EXPECT_GE(bs.fake_sock_.sent_cnt_, 5); // Discovery + Request
@@ -261,7 +261,7 @@ TEST_F(BasicScenTest, Address6Unique) {
     // send more than 1 solicit+request but with the same address
     // counter of a unique addresses should be 1
     CommandOptions opt;
-    processCmdLine(opt, "perfdhcp -6 -a -l fake -r 10 -n 10 -g single ::1");
+    processCmdLine(opt, "perfdhcp -6 -u -l fake -r 10 -n 10 -g single ::1");
     NakedBasicScen bs(opt);
     bs.run();
     EXPECT_GE(bs.fake_sock_.sent_cnt_, 5); // Solicit + Request

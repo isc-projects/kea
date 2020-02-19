@@ -266,7 +266,7 @@ TEST_F(CommandOptionsTest, HelpVersion) {
 
 TEST_F(CommandOptionsTest, CheckAddressUniqueness) {
     CommandOptions opt;
-    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -a -l ethx all"));
+    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -u -l ethx all"));
     EXPECT_TRUE(opt.getAddrUnique());
 }
 
