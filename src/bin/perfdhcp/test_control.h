@@ -25,7 +25,6 @@
 #include <boost/function.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <mutex>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -300,19 +299,13 @@ public:
     /// Method prints information about data offsets
     /// in packet templates and their contents.
     void printTemplates() const;
-    std::mutex unique_addr_mutex_;
-    std::mutex unique_reply_addr_mutex_;
 
     std::set <std::string> getAllUniqueAddrReply() {
-        std::lock_guard<std::mutex> lock(unique_reply_addr_mutex_);
-        auto result = unique_reply_address_;
-        return result;
+        return unique_reply_address_;
     }
 
     std::set <std::string> getAllUniqueAddrAdvert() {
-        std::lock_guard<std::mutex> lock(unique_addr_mutex_);
-        auto result = unique_address_;
-        return result;
+        return unique_address_;
     }
 
     // We would really like following methods and members to be private but
@@ -588,7 +581,6 @@ protected:
             case ExchangeType::SA: {
                 for (auto current_it = current.begin();
                     current_it != current.end(); ++current_it) {
-                    std::lock_guard<std::mutex> lock(unique_addr_mutex_);
                     auto ret = unique_address_.emplace(*current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::SA);
@@ -599,7 +591,6 @@ protected:
             case ExchangeType::RR: {
                 for (auto current_it = current.begin();
                     current_it != current.end(); ++current_it) {
-                    std::lock_guard<std::mutex> lock(unique_reply_addr_mutex_);
                     auto ret = unique_reply_address_.emplace(*current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::RR);
@@ -613,7 +604,6 @@ protected:
             case ExchangeType::DO: {
                 for (auto current_it = current.begin();
                     current_it != current.end(); ++current_it) {
-                    std::lock_guard<std::mutex> lock(unique_addr_mutex_);
                     auto ret = unique_address_.emplace(*current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::DO);
@@ -624,7 +614,6 @@ protected:
             case ExchangeType::RA: {
                 for (auto current_it = current.begin();
                     current_it != current.end(); ++current_it) {
-                    std::lock_guard<std::mutex> lock(unique_reply_addr_mutex_);
                     auto ret = unique_reply_address_.emplace(*current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::RA);
@@ -648,13 +637,11 @@ protected:
         for (auto addr_it = addr.begin();
              addr_it != addr.end(); ++addr_it) {
 
-             std::lock_guard<std::mutex> lock(unique_addr_mutex_);
              auto it = unique_address_.find(*addr_it);
              if (it != unique_address_.end()) {
                 unique_address_.erase(it);
              }
 
-             std::lock_guard<std::mutex> lock2(unique_reply_addr_mutex_);
              auto it2 = unique_reply_address_.find(*addr_it);
              if (it2 != unique_reply_address_.end()) {
                  unique_reply_address_.erase(it2);
