@@ -257,8 +257,8 @@ main(int argc, char* argv[]) {
                 LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());
             } catch (...) {
                 // The exception thrown during the initialization could
-                // originate from logger subsystem. Therefore LOG_ERROR()
-                // may fail as well.
+                // originate from logger subsystem. Therefore LOG_ERROR() may
+                // fail as well.
                 cerr << "Failed to initialize server: " << ex.what() << endl;
             }
 
