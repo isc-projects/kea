@@ -15,7 +15,7 @@
 	Compilation fix for MySQL/MariaDB on Ubuntu 19.10.
 	(Gitlab #1071)
 
-1721.	[func]		fdupont
+1721.	[func]*		fdupont
 	Added multi_threading_compatible function in hooks to retrieve
 	the compatibility with multi-threading. This function is called
 	when loading libraries and if it reports 0 and multi-threading is
