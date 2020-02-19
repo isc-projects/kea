@@ -264,7 +264,7 @@ TEST_F(BasicScenTest, Address6Unique) {
     processCmdLine(opt, "perfdhcp -6 -a -l fake -r 10 -n 10 -g single ::1");
     NakedBasicScen bs(opt);
     bs.run();
-    EXPECT_GE(bs.fake_sock_.sent_cnt_, 5);
+    EXPECT_GE(bs.fake_sock_.sent_cnt_, 5); // Solicit + Request
     EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 1);
     EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 1);
     EXPECT_GE(bs.tc_.getAllUniqueAddrReply().size(), 1);

@@ -256,6 +256,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                 isc_throw(isc::InvalidParameter, "-A only supports 1 at the moment.");
             }
             break;
+
         case 'a':
             addr_unique_ = true;
             break;

@@ -803,23 +803,37 @@ void
 TestControl::address6Uniqueness(const Pkt6Ptr& pkt6, ExchangeType xchg_type) {
     // check if received address is unique
     if (options_.getAddrUnique()) {
-        std::set <std::string> current;
+        std::set<std::string> current;
         // addresses were already checked in validateIA
         // we can safely assume that those are correct
-        if (pkt6->getOption(D6O_IA_PD)) {
-            current.insert(boost::dynamic_pointer_cast<
-                Option6IAPrefix>(pkt6->getOption(D6O_IA_PD)->
-                getOption(D6O_IAPREFIX))->getAddress().toText());
-        }
-        if (pkt6->getOption(D6O_IA_NA)) {
-            // add address and check if it's not been assigned via PD
-            auto ret = current.emplace(boost::dynamic_pointer_cast<
-                Option6IAAddr>(pkt6->getOption(D6O_IA_NA)->
-                getOption(D6O_IAADDR))->getAddress().toText());
-            if (!ret.second) {
-                stats_mgr_.updateNonUniqueAddrNum(xchg_type);
+        for (OptionCollection::iterator opt = query->options_.begin();
+             opt != query->options_.end(); ++opt) {
+            switch (opt->second->getType()) {
+            case D6O_IA_PD: {
+                // add address and check if it has not been already assigned
+                // addresses should be unique cross options of the packet
+                auto ret = current.emplace(boost::dynamic_pointer_cast<
+                    Option6IAPrefix>(opt->second->getOption(D6O_IAPREFIX))->getAddress().toText());
+                if (!ret.second) {
+                    stats_mgr_.updateNonUniqueAddrNum(xchg_type);
+                }
+                break;
+	    }
+	    case D6O_IA_NA: {
+                // add address and check if it has not been already assigned
+                // addresses should be unique cross options of the packet
+                auto ret = current.emplace(boost::dynamic_pointer_cast<
+                    Option6IAAddr>(opt->second->getOption(D6O_IAADDR))->getAddress().toText());
+                if (!ret.second) {
+                    stats_mgr_.updateNonUniqueAddrNum(xchg_type);
+                }
+                break;
+            }
+            default:
+                break;
             }
         }
+        // addresses should be unique cross packets
         addUniqeAddr(current, xchg_type);
     }
 }
@@ -830,8 +844,9 @@ TestControl::address4Uniqueness(const Pkt4Ptr& pkt4, ExchangeType xchg_type) {
     if (options_.getAddrUnique()) {
         // addresses were already checked in validateIA
         // we can safely assume that those are correct
-        std::set <std::string> current;
+        std::set<std::string> current;
         current.insert(pkt4->getYiaddr().toText());
+        // addresses should be unique cross packets
         addUniqeAddr(current, xchg_type);
     }
 }

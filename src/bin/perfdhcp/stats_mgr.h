@@ -466,13 +466,23 @@ public:
     /// \return number of rejected leases.
     uint64_t getRejLeasesNum() const { return(rejected_leases_num_); }
 
+    /// \brief Return total number of non unique addresses.
+    ///
+    /// Method returns total number of non unique addresses.
+    ///
+    /// \return number of non unique addresses.
     uint64_t getNonUniqueAddrNum() const { return(non_unique_addr_num_); }
+
     /// \brief Increase number of rejected leases.
     ///
-    /// Method increase total number of rejected leases by one.
+    /// Method increases total number of rejected leases by one.
     void updateRejLeases() { ++rejected_leases_num_; }
 
+    /// \brief Increase number of non unique leases.
+    ///
+    /// Method increases total number of non unique addresses by one.
     void updateNonUniqueAddr() { ++non_unique_addr_num_; }
+
     /// \brief Print main statistics for packet exchange.
     ///
     /// Method prints main statistics for particular exchange.
@@ -498,8 +508,8 @@ public:
              << "drops ratio: " << drops_ratio << " %" << endl
              << "orphans: " << getOrphans() << endl
              << "rejected leases: " << getRejLeasesNum() << endl
-             << "non unique addressess: " << getNonUniqueAddrNum() << endl;
-   }
+             << "non unique addresses: " << getNonUniqueAddrNum() << endl;
+    }
 
     /// \brief Print round trip time packets statistics.
     ///
@@ -998,7 +1008,7 @@ public:
 
     /// \brief Increase total number of rejected leases
     ///
-    /// Method increase total number of rejected leases by one
+    /// Method increases total number of rejected leases by one
     /// for specified exchange type
     void updateRejLeases(const ExchangeType xchg_type) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
@@ -1007,7 +1017,7 @@ public:
 
     /// \brief Increase total number of non unique addresses
     ///
-    /// Method increase total number of non unique addresses or
+    /// Method increases total number of non unique addresses or
     /// prefixes by one for specified exchange type
     void updateNonUniqueAddrNum(const ExchangeType xchg_type) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
@@ -1016,7 +1026,7 @@ public:
 
     /// \brief Return total number of non unique addresses
     ///
-    /// Method return total number of non unique addresses and/or
+    /// Method returns total number of non unique addresses and/or
     /// prefixes of specified exchange type.
     ///
     /// \param xchg_type exchange type.

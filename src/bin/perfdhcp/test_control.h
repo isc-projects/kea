@@ -300,11 +300,11 @@ public:
     /// in packet templates and their contents.
     void printTemplates() const;
 
-    std::set <std::string> getAllUniqueAddrReply() {
+    std::set<std::string>& getAllUniqueAddrReply() {
         return unique_reply_address_;
     }
 
-    std::set <std::string> getAllUniqueAddrAdvert() {
+    std::set<std::string>& getAllUniqueAddrAdvert() {
         return unique_address_;
     }
 
@@ -555,7 +555,7 @@ protected:
 
     /// \brief Process received v6 address uniqueness
     ///
-    /// Generate list of addresses that should be checked
+    /// Generate list of addresses and check for uniqueness
     ///
     /// \param pkt6 object representing received DHCPv6 packet
     /// \param ExhchangeType enum value
@@ -563,7 +563,7 @@ protected:
 
     /// \brief Process received v4 address uniqueness
     ///
-    /// Generate list of addresses that should be checked
+    /// Generate list of addresses and check for uniqueness
     ///
     /// \param pkt4 object representing received DHCPv4 packet
     /// \param ExchangeType enum value
@@ -572,58 +572,64 @@ protected:
     /// \brief add unique address to already assigned list
     ///
     /// Add address and/or prefix to unique set if it's not already there,
-    /// if so print out an error.
+    /// otherwise increment the number of non unique addresses.
     ///
     /// \param std::set set of addresses that should be added to unique list
     /// \param ExchangeType enum value
-    void addUniqeAddr(const std::set <std::string> current, ExchangeType xchg_type) {
+    void addUniqeAddr(const std::set<std::string>& current, ExchangeType xchg_type) {
         switch(xchg_type) {
             case ExchangeType::SA: {
                 for (auto current_it = current.begin();
-                    current_it != current.end(); ++current_it) {
+                     current_it != current.end(); ++current_it) {
+                    // addresses should be unique cross packets
                     auto ret = unique_address_.emplace(*current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::SA);
                     }
                 }
-            break;
+                break;
             }
             case ExchangeType::RR: {
                 for (auto current_it = current.begin();
-                    current_it != current.end(); ++current_it) {
+                     current_it != current.end(); ++current_it) {
+                    // addresses should be unique cross packets
                     auto ret = unique_reply_address_.emplace(*current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::RR);
                     }
                 }
-            break;
+                break;
             }
-            case ExchangeType::RL:
+            case ExchangeType::RL: {
                 removeUniqueAddr(current);
                 break;
+            }
             case ExchangeType::DO: {
                 for (auto current_it = current.begin();
-                    current_it != current.end(); ++current_it) {
+                     current_it != current.end(); ++current_it) {
+                    // addresses should be unique cross packets
                     auto ret = unique_address_.emplace(*current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::DO);
                     }
                 }
-            break;
+                break;
             }
             case ExchangeType::RA: {
                 for (auto current_it = current.begin();
-                    current_it != current.end(); ++current_it) {
+                     current_it != current.end(); ++current_it) {
+                    // addresses should be unique cross packets
                     auto ret = unique_reply_address_.emplace(*current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::RA);
                     }
                 }
-            break;
+                break;
             }
             case ExchangeType::RNA:
             case ExchangeType::RN:
-            default: break;
+            default:
+                break;
         }
     }
 
@@ -633,19 +639,18 @@ protected:
     /// advertised (offered) and assigned sets.
     ///
     /// \param std::string holding value of unique address
-    void removeUniqueAddr(const std::set <std::string> addr) {
-        for (auto addr_it = addr.begin();
-             addr_it != addr.end(); ++addr_it) {
+    void removeUniqueAddr(const std::set<std::string>& addr) {
+        for (auto addr_it = addr.begin(); addr_it != addr.end(); ++addr_it) {
 
-             auto it = unique_address_.find(*addr_it);
-             if (it != unique_address_.end()) {
+            auto it = unique_address_.find(*addr_it);
+            if (it != unique_address_.end()) {
                 unique_address_.erase(it);
-             }
+            }
 
-             auto it2 = unique_reply_address_.find(*addr_it);
-             if (it2 != unique_reply_address_.end()) {
-                 unique_reply_address_.erase(it2);
-             }
+            auto it2 = unique_reply_address_.find(*addr_it);
+            if (it2 != unique_reply_address_.end()) {
+                unique_reply_address_.erase(it2);
+            }
         }
     }
 
@@ -684,7 +689,6 @@ protected:
     /// Method registers option factory functions for DHCPv4 or DHCPv6,
     /// depending in which mode test is currently running.
     void registerOptionFactories() const;
-
 
     /// \brief Resets internal state of the object.
     ///
@@ -1033,12 +1037,10 @@ protected:
     void readPacketTemplate(const std::string& file_name);
 
     /// Keep addresses and prefixes from advertise msg for uniqueness checks
-    std::set <std::string> unique_address_;
-
+    std::set<std::string> unique_address_;
 
     /// Keep addresses and prefixes from reply msg for uniqueness checks
-    std::set <std::string> unique_reply_address_;
-
+    std::set<std::string> unique_reply_address_;
 
     BasePerfSocket &socket_;
     Receiver receiver_;
