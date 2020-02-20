@@ -563,7 +563,7 @@ protected:
     /// \return true if the message include correct IA, false otherwise.
     bool validateIA(const dhcp::Pkt6Ptr& pkt6);
 
-    /// \brief Process received v6 address uniqueness.
+    /// \brief Process received v6 addresses uniqueness.
     ///
     /// Generate list of addresses and check for uniqueness.
     ///
@@ -571,7 +571,7 @@ protected:
     /// \param ExhchangeType enum value.
     void address6Uniqueness(const dhcp::Pkt6Ptr& pkt6, ExchangeType xchg_type);
 
-    /// \brief Process received v4 address uniqueness.
+    /// \brief Process received v4 addresses uniqueness.
     ///
     /// Generate list of addresses and check for uniqueness.
     ///
