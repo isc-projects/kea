@@ -18,11 +18,12 @@
 1721.	[func]*		fdupont
 	Added multi_threading_compatible function in hooks to retrieve
 	the compatibility with multi-threading. This function is called
-	when loading libraries and if it reports 0 and multi-threading is
-	enabled, then the library will be ignored. The absence of this
-	function from the library default to incompatibility with
-	multi-threading. All hooks and premium hooks must be updated to
-	be able to be used with multi-threading.
+	when the library is loaded and if it reports 0 (incompatible) and
+	multi-threading is enabled, then the library will be ignored.
+	The absence of this function from the library defaults to
+	incompatibility with multi-threading. All hooks and premium hooks
+	must be updated to be able to be used with multi-threading.
+	However, not all libraries are (or will ever be) compatible.
 	(Gitlab #947)
 
 1720.	[func]*		tomek
