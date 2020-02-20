@@ -3893,23 +3893,33 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
                                                          ctx.query_->getClasses(),
                                                          client_id,
                                                          ctx.requested_address_);
-            // If address is not reserved for another client, try to allocate it.
-            if (!addressReserved(candidate, ctx)) {
-
-                // The call below will return the non-NULL pointer if we
-                // successfully allocate this lease. This means that the
-                // address is not in use by another client.
-                new_lease = allocateOrReuseLease4(candidate, ctx, callout_status);
-                if (new_lease) {
-                    return (new_lease);
-
-                } else if (ctx.callout_handle_ &&
-                           (callout_status != CalloutHandle::NEXT_STEP_CONTINUE)) {
-                    // Don't retry when the callout status is not continue.
-                    subnet.reset();
-                    break;
+            // Check for an existing lease for the candidate address.
+            Lease4Ptr exist_lease = LeaseMgrFactory::instance().getLease4(candidate);
+            if (!exist_lease) {
+                // No existing lease, is it reserved?
+                if (!addressReserved(candidate, ctx)) {
+                    // Not reserved use it.
+                    new_lease = createLease4(ctx, candidate, callout_status);
+                }
+            } else {
+                // An lease exists, is expired, and not reserved use it.
+                if (exist_lease->expired() && (!addressReserved(candidate, ctx))) {
+                    ctx.old_lease_ = Lease4Ptr(new Lease4(*exist_lease));
+                    new_lease = (reuseExpiredLease4(exist_lease, ctx, callout_status));
                 }
             }
+
+            // We found a lease we can use, return it.
+            if (new_lease) {
+                return (new_lease);
+            }
+
+            if (ctx.callout_handle_ && (callout_status != CalloutHandle::NEXT_STEP_CONTINUE)) {
+                // Don't retry when the callout status is not continue.
+               subnet.reset();
+               break;
+            }
+
             ++total_attempts;
         }
 
