@@ -52,7 +52,7 @@ HAImpl::buffer4Receive(hooks::CalloutHandle& callout_handle) {
     callout_handle.getArgument("query4", query4);
 
     bool unpack = true;
-    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    CalloutHandle::CalloutNextStep status = callout_handle.getStatus();
     if (status == CalloutHandle::NEXT_STEP_SKIP) {
         unpack = false;
     }
@@ -165,7 +165,7 @@ HAImpl::buffer6Receive(hooks::CalloutHandle& callout_handle) {
     callout_handle.getArgument("query6", query6);
 
     bool unpack = true;
-    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    CalloutHandle::CalloutNextStep status = callout_handle.getStatus();
     if (status == CalloutHandle::NEXT_STEP_SKIP) {
         unpack = false;
     }
