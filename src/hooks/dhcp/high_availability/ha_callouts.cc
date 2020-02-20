@@ -61,8 +61,7 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 /// @param handle callout handle.
 int buffer4_receive(CalloutHandle& handle) {
     CalloutHandle::CalloutNextStep status = handle.getStatus();
-    if (status == CalloutHandle::NEXT_STEP_DROP ||
-        status == CalloutHandle::NEXT_STEP_SKIP) {
+    if (status == CalloutHandle::NEXT_STEP_DROP) {
         return (0);
     }
 

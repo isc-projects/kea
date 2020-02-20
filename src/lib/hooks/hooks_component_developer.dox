@@ -26,6 +26,7 @@ to load a shared library at run-time and how to call functions in it.
 For information about writing a hooks library containing functions called by Kea
 during its execution, see the document @ref hooksdgDevelopersGuide.
 
+
 @subsection hooksComponentTerminology Terminology
 
 In the remainder of this guide, the following terminology is used:
@@ -47,11 +48,13 @@ user libraries can be loaded at the same time, each containing callouts for
 the same hooks.  The hooks framework calls these libraries one after the
 other. (See the document @ref hooksdgDevelopersGuide for more details.)
 
+
 @subsection hooksComponentLanguages Languages
 
 The core of Kea is written in C++ with some remaining legacy parts in Python.
 While it is the intention to provide the hooks framework for all languages,
 the initial version is for C++. All examples in this guide are in that language.
+
 
 @section hooksComponentBasicIdeas Basic Ideas
 
@@ -79,6 +82,7 @@ component.
 
 The following sections will describe these tasks in more detail.
 
+
 @section hooksComponentDefinition Determining the Hook Points
 
 Before any other action takes place, the location of the hook points
@@ -105,6 +109,7 @@ of the following ways:
   author whether the data is validated before being used, but doing so will
   have performance implications.
 
+
 @section hooksComponentRegistration Naming and Registering the Hooks Points
 
 Once the location of the hook point has been determined, it should be
@@ -129,6 +134,7 @@ be retained - it is needed to call the callouts attached to that hook.
 
 Note that a hook only needs to be registered once.  There is no mechanism for
 unregistering a hook and there is no need to do so.
+
 
 @subsection hooksComponentAutomaticRegistration Automatic Registration of Hooks
 
@@ -182,6 +188,7 @@ void Someclass::someFunction() {
 }
 @endcode
 
+
 @subsection hooksComponentHookNames Hook Names
 
 Hook names are strings and in principle, any string can be used as the
@@ -205,7 +212,9 @@ as a callout).
 - Although hook names can be in any case (including mixed case), the Kea
 convention is that they are lower-case.
 
+
 @section hooksComponentCallingCallouts Calling Callouts on a Hook
+
 
 @subsection hooksComponentArgument The Callout Handle
 
@@ -275,8 +284,8 @@ underlying object is altered through that pointer, the change will be
 reflected in the component even if the callout makes no call to setArgument.
 This can be avoided by passing a pointer to a "const" object.
 
-@subsection hooksComponentSkipFlag The Skip Flag (obsolete)
 
+@subsection hooksComponentSkipFlag The Skip Flag (obsolete)
 
 
 @subsection hooksComponentNextStep The next step status
@@ -345,6 +354,7 @@ pointer to the returned CalloutHandle, so it gets destroyed when the
 shared pointer to it is cleared or destroyed.  However, this may change
 in a future version.)
 
+
 @subsection hooksComponentCallingCallout Calling the Callout
 
 Calling the callout is a simple matter of executing the
@@ -384,6 +394,7 @@ if (HooksManager::calloutsPresent(lease_hook_index)) {
 }
 @endcode
 
+
 @section hooksComponentLoadLibraries Loading the User Libraries
 
 Once hooks are defined, all the hooks code described above will
@@ -415,6 +426,7 @@ of a reconfiguration), all existing libraries are unloaded and a new
 set loaded.  Libraries can be explicitly unloaded either by calling
 @c isc::hooks::HooksManager::unloadLibraries() or by calling
 @c loadLibraries() with an empty vector as an argument.
+
 
 @subsection hooksComponentUnloadIssues Unload and Reload Issues
 
@@ -453,6 +465,7 @@ libraries are reloaded.  In extreme cases this may mean the component
 suspending all processing of incoming requests until all currently
 executing requests have completed and data object destroyed, reloading
 the libraries, then resuming processing.
+
 
 @section hooksComponentCallouts Component-Defined Callouts
 

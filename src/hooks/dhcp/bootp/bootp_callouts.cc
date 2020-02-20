@@ -128,8 +128,7 @@ int buffer4_receive(CalloutHandle& handle) {
 /// @return 0 upon success, non-zero otherwise.
 int pkt4_send(CalloutHandle& handle) {
     CalloutHandle::CalloutNextStep status = handle.getStatus();
-    if (status == CalloutHandle::NEXT_STEP_DROP ||
-        status == CalloutHandle::NEXT_STEP_SKIP) {
+    if (status == CalloutHandle::NEXT_STEP_DROP) {
         return (0);
     }
 
@@ -146,7 +145,9 @@ int pkt4_send(CalloutHandle& handle) {
     Pkt4Ptr response;
     handle.getArgument("response4", response);
 
-    // @todo check if exists and/or already packed.
+    if (status == CalloutHandle::NEXT_STEP_SKIP) {
+        isc_throw(InvalidOperation, "packet pack already handled");
+    }
 
     for (uint16_t code : DHCP_SPECIFIC_OPTIONS) {
         while (response->delOption(code))

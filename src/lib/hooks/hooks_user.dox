@@ -323,6 +323,7 @@ int commandHandler(CalloutHandle& handle) {
 }
 @endcode
 
+
 @subsection hooksdgCallouts Callouts
 
 Having sorted out the framework, we now come to the functions that
@@ -513,6 +514,17 @@ care when doing so, because this will have impact on all remaining hooks as well
 It is highly recommended to not reset the SKIP or DROP status to CONTINUE, even
 though possible, so that the rest of the loaded hooks and the server can check
 and perform the proper action.
+
+Some hook points handle special functionality for the server, like pkt4_receive,
+pkt6_receive, which handle unpacking of the received packet, pkt4_send, pkt6_send,
+which handle packing of the response packet.
+If the hook handles these actions and sets the next step flag to SKIP, it should
+also perform a check for the SKIP flag before anything else.  If it is already
+set, do not pack/unpack the packet (other library, or even the same library, if
+loaded multiple times, has done it already).  Some libraries might also need to
+throw exceptions in such cases because they need to perform specific actions before
+pack/unpack, which have no effect if pack/unpack is done previously by some other
+library.
 
 As stated before, the order of loading libraries is crucial in achieving the
 desired behavior, so please read @ref hooksdgMultipleLibraries when configuring

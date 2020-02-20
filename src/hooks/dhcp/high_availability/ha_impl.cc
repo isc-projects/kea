@@ -51,12 +51,20 @@ HAImpl::buffer4Receive(hooks::CalloutHandle& callout_handle) {
     Pkt4Ptr query4;
     callout_handle.getArgument("query4", query4);
 
+    bool unpack = true;
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_SKIP) {
+        unpack = false;
+    }
+
     /// @todo Add unit tests to verify the behavior for different
     /// malformed packets.
     try {
         // We have to unpack the query to get access into HW address which is
         // used to load balance the packet.
-        query4->unpack();
+        if (unpack) {
+            query4->unpack();
+        }
 
     } catch (const SkipRemainingOptionsError& ex) {
         // An option failed to unpack but we are to attempt to process it
@@ -156,12 +164,20 @@ HAImpl::buffer6Receive(hooks::CalloutHandle& callout_handle) {
     Pkt6Ptr query6;
     callout_handle.getArgument("query6", query6);
 
+    bool unpack = true;
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_SKIP) {
+        unpack = false;
+    }
+
     /// @todo Add unit tests to verify the behavior for different
     /// malformed packets.
     try {
         // We have to unpack the query to get access into DUID which is
         // used to load balance the packet.
-        query6->unpack();
+        if (unpack) {
+            query6->unpack();
+        }
 
     } catch (const SkipRemainingOptionsError& ex) {
         // An option failed to unpack but we are to attempt to process it
