@@ -1009,7 +1009,7 @@ public:
     /// \brief Increase total number of rejected leases.
     ///
     /// Method increases total number of rejected leases by one
-    /// for specified exchange type
+    /// for specified exchange type.
     void updateRejLeases(const ExchangeType xchg_type) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         xchg_stats->updateRejLeases();
