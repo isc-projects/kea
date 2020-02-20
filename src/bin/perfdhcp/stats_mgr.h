@@ -107,7 +107,7 @@ private:
     CustomCounter() { };
 
     uint64_t counter_;  ///< Counter's value.
-    std::string name_;            ///< Counter's name.
+    std::string name_;  ///< Counter's name.
 };
 
 typedef typename boost::shared_ptr<CustomCounter> CustomCounterPtr;
@@ -411,7 +411,7 @@ public:
                static_cast<double>(unordered_lookups_));
     }
 
-    /// \brief Return number of unordered sent packets lookups
+    /// \brief Return number of unordered sent packets lookups.
     ///
     /// Method returns number of unordered sent packet lookups.
     /// Unordered lookup is used when received packet was sent
@@ -421,7 +421,7 @@ public:
     /// \return number of unordered lookups.
     uint64_t getUnorderedLookups() const { return(unordered_lookups_); }
 
-    /// \brief Return number of ordered sent packets lookups
+    /// \brief Return number of ordered sent packets lookups.
     ///
     /// Method returns number of ordered sent packet lookups.
     /// Ordered lookup is used when packets are received in the
@@ -432,14 +432,14 @@ public:
     /// \return number of ordered lookups.
     uint64_t getOrderedLookups() const { return(ordered_lookups_); }
 
-    /// \brief Return total number of sent packets
+    /// \brief Return total number of sent packets.
     ///
     /// Method returns total number of sent packets.
     ///
     /// \return number of sent packets.
     uint64_t getSentPacketsNum() const { return(sent_packets_num_); }
 
-    /// \brief Return total number of received packets
+    /// \brief Return total number of received packets.
     ///
     /// Method returns total number of received packets.
     ///
@@ -478,7 +478,7 @@ public:
     /// Method increases total number of rejected leases by one.
     void updateRejLeases() { ++rejected_leases_num_; }
 
-    /// \brief Increase number of non unique leases.
+    /// \brief Increase number of non unique addresses.
     ///
     /// Method increases total number of non unique addresses by one.
     void updateNonUniqueAddr() { ++non_unique_addr_num_; }
@@ -659,7 +659,7 @@ typedef boost::shared_ptr<ExchangeStats> ExchangeStatsPtr;
 /// Map containing all specified exchange types.
 typedef typename std::map<ExchangeType, ExchangeStatsPtr> ExchangesMap;
 
-/// Iterator pointing to \ref ExchangesMap
+/// Iterator pointing to \ref ExchangesMap.
 typedef typename ExchangesMap::const_iterator ExchangesMapIterator;
 
 
@@ -908,7 +908,7 @@ public:
         return(xchg_stats->getAvgUnorderedLookupSetSize());
     }
 
-    /// \brief Return number of unordered sent packets lookups
+    /// \brief Return number of unordered sent packets lookups.
     ///
     /// Method returns number of unordered sent packet lookups.
     /// Unordered lookup is used when received packet was sent
@@ -923,7 +923,7 @@ public:
         return(xchg_stats->getUnorderedLookups());
     }
 
-    /// \brief Return number of ordered sent packets lookups
+    /// \brief Return number of ordered sent packets lookups.
     ///
     /// Method returns number of ordered sent packet lookups.
     /// Ordered lookup is used when packets are received in the
@@ -939,7 +939,7 @@ public:
         return(xchg_stats->getOrderedLookups());
     }
 
-    /// \brief Return total number of sent packets
+    /// \brief Return total number of sent packets.
     ///
     /// Method returns total number of sent packets for specified
     /// exchange type.
@@ -952,7 +952,7 @@ public:
         return(xchg_stats->getSentPacketsNum());
     }
 
-    /// \brief Return total number of received packets
+    /// \brief Return total number of received packets.
     ///
     /// Method returns total number of received packets for specified
     /// exchange type.
@@ -993,7 +993,7 @@ public:
         return(xchg_stats->getCollectedNum());
     }
 
-    /// \brief Return total number of rejected leases
+    /// \brief Return total number of rejected leases.
     ///
     /// Method returns total number of rejected leases for specified
     /// exchange type.
@@ -1006,7 +1006,7 @@ public:
         return(xchg_stats->getRejLeasesNum());
     }
 
-    /// \brief Increase total number of rejected leases
+    /// \brief Increase total number of rejected leases.
     ///
     /// Method increases total number of rejected leases by one
     /// for specified exchange type
@@ -1015,19 +1015,19 @@ public:
         xchg_stats->updateRejLeases();
     }
 
-    /// \brief Increase total number of non unique addresses
+    /// \brief Increase total number of non unique addresses.
     ///
     /// Method increases total number of non unique addresses or
-    /// prefixes by one for specified exchange type
+    /// prefixes by one for specified exchange type.
     void updateNonUniqueAddrNum(const ExchangeType xchg_type) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         xchg_stats->updateNonUniqueAddr();
     }
 
-    /// \brief Return total number of non unique addresses
+    /// \brief Return total number of non unique addresses.
     ///
     /// Method returns total number of non unique addresses and/or
-    /// prefixes of specified exchange type.
+    /// prefixes for specified exchange type.
     ///
     /// \param xchg_type exchange type.
     /// \throw isc::BadValue if invalid exchange type specified.
@@ -1166,7 +1166,7 @@ public:
 
 private:
 
-    /// \brief Return exchange stats object for given exchange type
+    /// \brief Return exchange stats object for given exchange type.
     ///
     /// Method returns exchange stats object for given exchange type.
     ///

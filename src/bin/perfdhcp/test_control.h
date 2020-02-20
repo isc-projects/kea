@@ -221,11 +221,16 @@ public:
     /// has been reached.
     void cleanCachedPackets();
 
+    /// \brief Get interrupted flag.
     bool interrupted() const { return interrupted_; }
 
+    /// \brief Get stats manager.
     StatsMgr& getStatsMgr() { return stats_mgr_; };
 
+    /// \brief Start receiver.
     void start() { receiver_.start(); }
+
+    /// \brief Stop receiver.
     void stop() { receiver_.stop(); }
 
     /// \brief Run wrapped command.
@@ -233,7 +238,10 @@ public:
     /// \param do_stop execute wrapped command with "stop" argument.
     void runWrapped(bool do_stop = false) const;
 
+    /// \brief Get received server id flag.
     bool serverIdReceived() const { return first_packet_serverid_.size() > 0; }
+
+    /// \brief Get received server id.
     std::string getServerId() const { return vector2Hex(first_packet_serverid_); }
 
     /// \brief Send number of packets to initiate new exchanges.
@@ -300,10 +308,12 @@ public:
     /// in packet templates and their contents.
     void printTemplates() const;
 
+    /// \brief Get set of unique replied addresses.
     std::set<std::string>& getAllUniqueAddrReply() {
         return unique_reply_address_;
     }
 
+    /// \brief Get set of unique advertised addresses.
     std::set<std::string>& getAllUniqueAddrAdvert() {
         return unique_address_;
     }
@@ -553,29 +563,29 @@ protected:
     /// \return true if the message include correct IA, false otherwise.
     bool validateIA(const dhcp::Pkt6Ptr& pkt6);
 
-    /// \brief Process received v6 address uniqueness
+    /// \brief Process received v6 address uniqueness.
     ///
-    /// Generate list of addresses and check for uniqueness
+    /// Generate list of addresses and check for uniqueness.
     ///
     /// \param pkt6 object representing received DHCPv6 packet
-    /// \param ExhchangeType enum value
+    /// \param ExhchangeType enum value.
     void address6Uniqueness(const dhcp::Pkt6Ptr& pkt6, ExchangeType xchg_type);
 
-    /// \brief Process received v4 address uniqueness
+    /// \brief Process received v4 address uniqueness.
     ///
-    /// Generate list of addresses and check for uniqueness
+    /// Generate list of addresses and check for uniqueness.
     ///
     /// \param pkt4 object representing received DHCPv4 packet
-    /// \param ExchangeType enum value
+    /// \param ExchangeType enum value.
     void address4Uniqueness(const dhcp::Pkt4Ptr& pkt4, ExchangeType xchg_type);
 
-    /// \brief add unique address to already assigned list
+    /// \brief add unique address to already assigned list.
     ///
     /// Add address and/or prefix to unique set if it's not already there,
     /// otherwise increment the number of non unique addresses.
     ///
     /// \param std::set set of addresses that should be added to unique list
-    /// \param ExchangeType enum value
+    /// \param ExchangeType enum value.
     void addUniqeAddr(const std::set<std::string>& current, ExchangeType xchg_type) {
         switch(xchg_type) {
             case ExchangeType::SA: {
@@ -633,12 +643,12 @@ protected:
         }
     }
 
-    /// \brief remove unique address from list
+    /// \brief remove unique address from list.
     ///
     /// If address is released we should remove it from both
     /// advertised (offered) and assigned sets.
     ///
-    /// \param std::string holding value of unique address
+    /// \param std::string holding value of unique address.
     void removeUniqueAddr(const std::set<std::string>& addr) {
         for (auto addr_it = addr.begin(); addr_it != addr.end(); ++addr_it) {
 
@@ -666,7 +676,7 @@ protected:
     /// \throw isc::Unexpected if unexpected error occurred.
     void processReceivedPacket6(const dhcp::Pkt6Ptr& pkt6);
 
-    /// \brief Register option factory functions for DHCPv4
+    /// \brief Register option factory functions for DHCPv4.
     ///
     /// Method registers option factory functions for DHCPv4.
     /// These functions are called to create instances of DHCPv4
@@ -675,7 +685,7 @@ protected:
     /// Use \ref registerOptionFactories instead.
     void registerOptionFactories4() const;
 
-    /// \brief Register option factory functions for DHCPv6
+    /// \brief Register option factory functions for DHCPv6.
     ///
     /// Method registers option factory functions for DHCPv6.
     /// These functions are called to create instances of DHCPv6
@@ -906,7 +916,7 @@ protected:
     /// and that would create dependency between test_control.h and
     /// command_options.h.
     ///
-    /// @param pkt4 options will be added here
+    /// @param pkt4 options will be added here.
     void addExtraOpts(const dhcp::Pkt4Ptr& pkt4);
 
     /// @brief Inserts extra options specified by user.
@@ -916,7 +926,7 @@ protected:
     /// and that would create dependency between test_control.h and
     /// command_options.h.
     ///
-    /// @param pkt6 options will be added here
+    /// @param pkt6 options will be added here.
     void addExtraOpts(const dhcp::Pkt6Ptr& pkt6);
 
     /// \brief Copies IA_NA or IA_PD option from one packet to another.
@@ -1002,7 +1012,7 @@ protected:
     /// Function handles child signal by waiting for
     /// the process to complete.
     ///
-    /// \param sig signal (ignored)
+    /// \param sig signal (ignored).
     static void handleChild(int sig);
 
     /// \brief Handle interrupt signal.
@@ -1010,7 +1020,7 @@ protected:
     /// Function sets flag indicating that program has been
     /// interrupted.
     ///
-    /// \param sig signal (ignored)
+    /// \param sig signal (ignored).
     static void handleInterrupt(int sig);
 
     /// \brief Print main diagnostics data.
@@ -1018,7 +1028,7 @@ protected:
     /// Method prints main diagnostics data.
     void printDiagnostics() const;
 
-    /// \brief Print template information
+    /// \brief Print template information.
     ///
     /// \param packet_type packet type.
     void printTemplate(const uint8_t packet_type) const;
@@ -1036,38 +1046,55 @@ protected:
     /// spaces or hexadecimal digits.
     void readPacketTemplate(const std::string& file_name);
 
-    /// Keep addresses and prefixes from advertise msg for uniqueness checks
+    /// \brief Keep addresses and prefixes from advertise msg for uniqueness checks.
     std::set<std::string> unique_address_;
 
-    /// Keep addresses and prefixes from reply msg for uniqueness checks
+    /// \brief Keep addresses and prefixes from reply msg for uniqueness checks.
     std::set<std::string> unique_reply_address_;
 
+    /// \brief Socket used for DHCP traffic.
     BasePerfSocket &socket_;
+
+    /// \brief Receiver used to receive DHCP traffic.
     Receiver receiver_;
 
-    boost::posix_time::ptime last_report_; ///< Last intermediate report time.
+    /// \brief Last intermediate report time.
+    boost::posix_time::ptime last_report_;
 
-    StatsMgr stats_mgr_;  ///< Statistics Manager.
+    /// \brief Statistics Manager.
+    StatsMgr stats_mgr_;
 
-    PacketStorage<dhcp::Pkt4> ack_storage_; ///< A storage for DHCPACK messages.
-    PacketStorage<dhcp::Pkt6> reply_storage_; ///< A storage for reply messages.
+    /// \brief Storage for DHCPACK messages.
+    PacketStorage<dhcp::Pkt4> ack_storage_;
 
-    NumberGeneratorPtr transid_gen_; ///< Transaction id generator.
-    NumberGeneratorPtr macaddr_gen_; ///< Numbers generator for MAC address.
+    /// \brief Storage for reply messages.
+    PacketStorage<dhcp::Pkt6> reply_storage_;
 
-    /// Buffer holding server id received in first packet
+    /// \brief Transaction id generator.
+    NumberGeneratorPtr transid_gen_;
+
+    /// \brief Numbers generator for MAC address.
+    NumberGeneratorPtr macaddr_gen_;
+
+    /// \brief Buffer holding server id received in first packet
     dhcp::OptionBuffer first_packet_serverid_;
 
-    /// Packet template buffers.
+    /// \brief Packet template buffers.
     TemplateBufferCollection template_buffers_;
 
     /// First packets send. They are used at the end of the test
     /// to print packet templates when diagnostics flag T is specified.
+
+    /// \brief Template for v4.
     std::map<uint8_t, dhcp::Pkt4Ptr> template_packets_v4_;
+
+    /// \brief Template for v6.
     std::map<uint8_t, dhcp::Pkt6Ptr> template_packets_v6_;
 
-    static bool interrupted_;  ///< Is program interrupted.
+    /// \brief Program interrupted flag.
+    static bool interrupted_;
 
+    /// \brief Command options.
     CommandOptions& options_;
 };
 

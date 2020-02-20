@@ -119,7 +119,7 @@ public:
         DORA_SARR
     };
 
-    /// \brief Reset to defaults
+    /// \brief Reset to defaults.
     ///
     /// Reset data members to default values. This is specifically
     /// useful when unit tests are performed using different
@@ -195,7 +195,7 @@ public:
 
     /// \brief Returns address uniqueness value.
     ///
-    /// \return address uniqueness specified value
+    /// \return address uniqueness specified value.
     bool getAddrUnique() const { return addr_unique_; }
 
     /// \brief Returns maximum number of exchanges.
@@ -208,7 +208,7 @@ public:
     /// \return test period before it is aborted.
     int getPeriod() const { return period_; }
 
-    /// \brief Returns drop time
+    /// \brief Returns drop time.
     ///
     /// The method returns maximum time elapsed from
     /// sending the packet before it is assumed dropped.
@@ -352,7 +352,7 @@ public:
 
     /// @brief Returns extra options to be inserted.
     ///
-    /// @return container with options
+    /// @return container with options.
     const isc::dhcp::OptionCollection& getExtraOpts() const { return extra_opts_; }
 
     /// \brief Check if single-threaded mode is enabled.
@@ -525,16 +525,16 @@ private:
     bool decodeMacString(const std::string& line);
 
     /// IP protocol version to be used, expected values are:
-    /// 4 for IPv4 and 6 for IPv6, default value 0 means "not set"
+    /// 4 for IPv4 and 6 for IPv6, default value 0 means "not set".
     uint8_t ipversion_;
 
-    /// Packet exchange mode (e.g. DORA/SARR)
+    /// Packet exchange mode (e.g. DORA/SARR).
     ExchangeMode exchange_mode_;
 
     /// Lease Type to be obtained: address only, IPv6 prefix only.
     LeaseType lease_type_;
 
-    /// Rate in exchange per second
+    /// Rate in exchange per second.
     unsigned int rate_;
 
     /// A rate at which DHCPv6 Renew messages are sent.
@@ -543,7 +543,7 @@ private:
     /// A rate at which DHCPv6 Release messages are sent.
     unsigned int release_rate_;
 
-    /// Delay between generation of two consecutive performance reports
+    /// Delay between generation of two consecutive performance reports.
     int report_delay_;
 
     /// Number of simulated clients (aka randomization range).
@@ -554,23 +554,23 @@ private:
     std::vector<uint8_t> mac_template_;
 
     /// DUID template used to generate unique DUIDs for
-    /// simulated clients
+    /// simulated clients.
     std::vector<uint8_t> duid_template_;
 
-    /// Check address uniqueness
+    /// Check address uniqueness.
     bool addr_unique_;
 
     /// Collection of base values specified with -b<value>
-    /// options. Supported "bases" are mac=<mac> and duid=<duid>
+    /// options. Supported "bases" are mac=<mac> and duid=<duid>.
     std::vector<std::string> base_;
 
-    /// Number of microseconds by which you should delay the exit
+    /// Number of microseconds by which you should delay the exit.
     int exit_wait_time_;
 
     /// Number of 2 or 4-way exchanges to perform.
     std::vector<int> num_request_;
 
-    /// Test period in seconds
+    /// Test period in seconds.
     int period_;
 
     /// Indicates number of -d<value> parameters specified by user.
@@ -579,7 +579,7 @@ private:
 
     /// Time to elapse before request is lost. The first value of
     /// two-element vector refers to DO/SA exchanges,
-    /// second value refers to RA/RR. Default values are { 1, 1 }
+    /// second value refers to RA/RR. Default values are { 1, 1 }.
     std::vector<double> drop_time_;
 
     /// Maximum number of drops request before aborting test.
@@ -597,7 +597,7 @@ private:
     std::string localname_;
 
     /// Indicates that specified value with -l<value> is
-    /// rather interface (not address)
+    /// rather interface (not address).
     bool is_interface_;
 
     /// Number of preload packets. Preload packets are used to
@@ -605,10 +605,10 @@ private:
     /// measurements.
     int preload_;
 
-    /// Local port number (host endian)
+    /// Local port number (host endian).
     int local_port_;
 
-    /// Remote port number (host endian)
+    /// Remote port number (host endian).
     int remote_port_;
 
     /// Randomization seed.
@@ -644,7 +644,7 @@ private:
     /// Offset of transaction id in template files. First vector
     /// element points to offset for DISCOVER/SOLICIT messages,
     /// second element points to transaction id offset for
-    /// REQUEST messages
+    /// REQUEST messages.
     std::vector<int> xid_offset_;
 
     /// Random value offset in templates. Random value offset
@@ -658,7 +658,7 @@ private:
     /// Offset of server id option in template packet.
     int sid_offset_;
 
-    /// Offset of requested ip data in template packet
+    /// Offset of requested ip data in template packet.
     int rip_offset_;
 
     /// String representing diagnostic selectors specified
