@@ -651,7 +651,6 @@ protected:
     /// \param std::string holding value of unique address.
     void removeUniqueAddr(const std::set<std::string>& addr) {
         for (auto addr_it = addr.begin(); addr_it != addr.end(); ++addr_it) {
-
             auto it = unique_address_.find(*addr_it);
             if (it != unique_address_.end()) {
                 unique_address_.erase(it);
