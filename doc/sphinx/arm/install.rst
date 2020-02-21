@@ -516,3 +516,82 @@ code, at the "configure" step (see :ref:`configure`), enter:
 
 
 .. include:: hammer.rst
+
+Running Kea from non-root account on Linux
+==========================================
+
+Both Kea DHCPv4 and DHCPv6 servers perform operations that in general require root access
+privileges. In particular, DHCPv4 opens raw sockets and both DHCPv4 and DHCPv6 open UDP sockets on
+privileged ports. However, with some extra system configuration, it is possible to run Kea from
+non-root accounts.
+
+First, a regular user account must be created:
+
+.. code-block:: console
+
+   useradd admin
+
+Then, change the binaries ownership and group to new user. Note your path may be different. Please
+refer to the ``--prefix`` parameter passed to the configure script.:
+
+.. code-block:: console
+
+   chown -R admin /opt/kea
+   chgrp -R admin /opt/kea
+   chown -R admin /var/log/kea-dhcp4.log
+   chgrp -R admin /var/log/kea-dhcp4.log
+   chown -R admin /var/log/kea-dhcp6.log
+   chgrp -R admin /var/log/kea-dhcp6.log
+
+Assuming you are using systemd, you also should modify its service file
+(e.g. /etc/systemd/system/kea-dhcp6.service):
+
+.. code-block:: console
+
+   User=admin
+   Group=admin
+
+The most important step is to set capabilities of the binaries. Refer to `man capabilities` to get
+more information.
+
+.. code-block:: console
+
+   setcap 'cap_net_bind_service=+ep' /opt/kea/sbin/kea-dhcp4
+   setcap 'cap_net_raw=+ep' /opt/kea/sbin/kea-dhcp4
+   setcap 'cap_net_bind_service=+ep' /opt/kea/sbin/kea-dhcp6
+
+After this step is complete, the admin user should be able to run Kea. Note that DHCPv4 server by
+default opens raw sockets. If your network is only using relayed traffic, you can instruct Kea to
+use regular UDP sockets (refer to ``dhcp-socket-type`` parameter in the
+:ref:`dhcp4-interface-configuration` section) and the ``cap_net_raw`` capability can be skipped.
+
+.. note::
+
+   An alternative approach to avoiding running Kea with root privileges assumes instructing Kea to
+   use non-privileged (greater than 1024) posts and redirecting traffic. This, however, will work
+   only for relayed traffic. This approach in general is considered experimental and not tested
+   enough for deployment in production environment. Use with care!
+
+
+To use this approach, configure the server to listen on other non privileged port (eg: 1547
+and 1548) by running the process with ``-p`` option in ``/etc/systemd/system/kea-dhcp4.service``:
+
+.. code-block:: console
+
+   ExecStart=/opt/kea/sbin/kea-dhcp4 -d -c /etc/kea/kea-dhcp4.conf -p 2067
+
+and ``/etc/systemd/system/kea-dhcp4.service``:
+
+.. code-block:: console
+
+   ExecStart=/opt/kea/sbin/kea-dhcp6 -d -c /etc/kea/kea-dhcp6.conf -p 1547
+
+and then configure port redirection with iptables and ip6tables for new ports (eg: 1547
+and 1548). Make sure you replace ens4 with your specific interface name.
+
+.. code-block:: console
+
+   iptables -t nat -A PREROUTING -i ens4 -p udp --dport 67 -j REDIRECT --to-port 2067
+   ip6tables -t nat -A PREROUTING -i ens4 -p udp --dport 2068 -j REDIRECT --to-port 68
+   ip6tables -t nat -A PREROUTING -i ens4 -p udp --dport 547 -j REDIRECT --to-port 1547
+   ip6tables -t nat -A PREROUTING -i ens4 -p udp --dport 1548 -j REDIRECT --to-port 548
