@@ -901,17 +901,17 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("config-write",
         boost::bind(&ControlledDhcpv4Srv::commandConfigWriteHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("dhcp-disable",
-        boost::bind(&ControlledDhcpv4Srv::commandDhcpDisableHandler, this, _1, _2));
-
     CommandMgr::instance().registerCommand("dhcp-enable",
         boost::bind(&ControlledDhcpv4Srv::commandDhcpEnableHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("leases-reclaim",
-        boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
+    CommandMgr::instance().registerCommand("dhcp-disable",
+        boost::bind(&ControlledDhcpv4Srv::commandDhcpDisableHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv4Srv::commandLibReloadHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("leases-reclaim",
+        boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("server-tag-get",
         boost::bind(&ControlledDhcpv4Srv::commandServerTagGetHandler, this, _1, _2));
@@ -929,17 +929,17 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("statistic-get",
         boost::bind(&StatsMgr::statisticGetHandler, _1, _2));
 
-    CommandMgr::instance().registerCommand("statistic-get-all",
-        boost::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
-
     CommandMgr::instance().registerCommand("statistic-reset",
         boost::bind(&StatsMgr::statisticResetHandler, _1, _2));
 
-    CommandMgr::instance().registerCommand("statistic-reset-all",
-        boost::bind(&StatsMgr::statisticResetAllHandler, _1, _2));
-
     CommandMgr::instance().registerCommand("statistic-remove",
         boost::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-get-all",
+        boost::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-reset-all",
+        boost::bind(&StatsMgr::statisticResetAllHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-remove-all",
         boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
