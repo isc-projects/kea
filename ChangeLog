@@ -1,3 +1,11 @@
+1723.	[func]		razvan
+	Added packet thread pool in dhcpv4 and dhcpv6 servers. It adds
+	the ability to handle processPacket function on multiple threads.
+	When enabled, parked packets are also added to the queue of items
+	to be handles by the thread pool. The packet thread pool is
+	currently disabled and there is no option to enable this yet.
+	(Gitlab #892)
+
 1722.	[func]		tmark
 	Hostname sanitizing is now globally enabled by default.  Prior
 	to this it was disabled.
