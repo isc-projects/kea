@@ -122,7 +122,7 @@ for an NTP server and a POP3 server (option 70 in DHCPv4). The server
 examines the three options - NTP, SMTP, and POP3 - and returns any that
 the client requested. As the NTP server was defined twice, the server
 chooses only one of the values for the reply; the class from which the
-value is obtained is unspecified.
+value is obtained determined as explained in the previous paragraph.
 
 .. note::
 
