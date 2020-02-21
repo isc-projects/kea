@@ -1,3 +1,8 @@
+1722.	[func]		tmark
+	Hostname sanitizing is now globally enabled by default.  Prior
+	to this it was disabled.
+	(Gitlab #1048)
+
 1721.	[bug]		razvan
 	Compilation fix for MySQL/MariaDB on Ubuntu 19.10.
 	(Gitlab #1071)
