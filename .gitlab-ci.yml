@@ -16,6 +16,9 @@ stages:
 shellcheck:
   stage: test
   image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
+  tags:
+    - linux
+    - amd64
   before_script:
     - sudo apt-get update
     - sudo apt-get -y install shellcheck
