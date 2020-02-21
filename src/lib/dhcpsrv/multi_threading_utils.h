@@ -27,21 +27,29 @@ void startPktProcessing();
 ///
 /// @note: the multi-threading mode MUST NOT be changed in the RAII
 /// @c MultiThreadingCriticalSection body.
+/// @note: starting and stopping the packet thread pool should be handled
+/// in the main thread, if done on one of the processing threads will cause a
+/// dead-lock
 class MultiThreadingCriticalSection : public boost::noncopyable {
 public:
+
     /// @brief Constructor.
+    ///
     /// Entering the critical section.
     MultiThreadingCriticalSection();
 
     /// @brief Destructor.
+    ///
     /// Leaving the critical section.
     virtual ~MultiThreadingCriticalSection();
 
     /// @brief Class method stopping and joining all threads of the pool.
+    ///
     /// @throw isc::NotImplemented until is implemented.
     static void stopPktProcessing();
 
     /// @brief Class method (re)starting threads of the pool.
+    ///
     /// @throw isc::NotImplemented until is implemented.
     static void startPktProcessing();
 };

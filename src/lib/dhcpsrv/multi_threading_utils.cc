@@ -18,16 +18,20 @@ namespace dhcp {
 
 void
 MultiThreadingCriticalSection::stopPktProcessing() {
-    isc_throw(NotImplemented,
-              "MultiThreadingCriticalSection::stopPktProcessing "
-              "is not yet implemented");
+    auto& thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
+    auto size = MultiThreadingMgr::instance().getPktThreadPoolSize();
+    if (size) {
+        thread_pool.stop();
+    }
 }
 
 void
 MultiThreadingCriticalSection::startPktProcessing() {
-    isc_throw(NotImplemented,
-              "MultiThreadingCriticalSection::startPktProcessing "
-              "is not yet implemented");
+    auto& thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
+    auto size = MultiThreadingMgr::instance().getPktThreadPoolSize();
+    if (size) {
+        thread_pool.start(size);
+    }
 }
 
 MultiThreadingCriticalSection::MultiThreadingCriticalSection() {
