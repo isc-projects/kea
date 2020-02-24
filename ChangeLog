@@ -1,3 +1,9 @@
+1728.	[bug]		tmark
+	Memfile now supports commas in the hostname and user-context
+	columns.  Commas in either column now escaped as "&#x2c" when
+	written out, and unescaped when read back in.
+	(Gitlab #608)
+
 1727.	[bug]		tmark
 	When shutting down due to lost backend database connetivity,
 	kea-dhcp4 and kea-dhcp6 processes will exit with a non-zero value.
