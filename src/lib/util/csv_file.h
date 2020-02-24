@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -109,6 +109,27 @@ public:
     /// @c CSVRow::getValuesCount.
     std::string readAt(const size_t at) const;
 
+    /// @brief Retrieves a value from the internal container, free of escaped
+    /// characters.
+    ///
+    /// Returns a copy of the internal container value at the given index
+    /// which has had all escaped characters replaced with their unesacped
+    /// values. Escaped characters embedded using the following format:
+    ///
+    /// This function fetches the value at the given index and passes it
+    /// into CSVRow::unesacpeCharacters which replaces any escaped special
+    /// characters with their unescaped form.
+    ///
+    /// @param at Index of the value in the container. The values are indexed
+    /// from 0, where 0 corresponds to the left-most value in the CSV file row.
+    ///
+    /// @return Value at specified index in the text form.
+    ///
+    /// @throw CSVFileError if the index is out of range. The number of elements
+    /// being held by the container can be obtained using
+    /// @c CSVRow::getValuesCount.
+    std::string readAtEscaped(const size_t at) const;
+
     /// @brief Trims a given number of elements from the end of a row
     ///
     /// @param count number of elements to trim
@@ -178,6 +199,19 @@ public:
         writeAt(at, value.c_str());
     }
 
+    /// @brief Replaces the value at specified index with a value that has
+    /// had special characters escaped
+    ///
+    /// This function first calls @c CSVRow::esacpeCharacters to replace
+    /// special characters with their escaped form.  It then sets the value
+    /// to be rendered using @c CSVRow::render function.
+    ///
+    /// @param at Index of the value to be replaced.
+    /// @param value Value to be written given as string.
+    ///
+    /// @throw CSVFileError if index is out of range.
+    void writeAtEscaped(const size_t at, const std::string& value);
+
     /// @brief Appends the value as a new column.
     ///
     /// @param value Value to be written.
@@ -234,6 +268,33 @@ public:
         return (render() != other.render());
     }
 
+    /// @brief Returns a copy of a string with special characters escaped
+    ///
+    /// @param orig_str string which may contain characters that require
+    /// escaping.
+    /// @param characters list of characters which require escaping.
+    ///
+    /// The escaped characters will use the followin format:
+    ///
+    /// &#x{xx}
+    ///
+    /// where {xx} is the two digit hexadecimal ASCII value of the character
+    /// escaped. A comma, for example is: &#x2c
+    ///
+    /// @return A copy of the original string with special characters escaped.
+    static std::string escapeCharacters(const std::string& orig_str,
+                                        const std::string& characters);
+
+    /// @brief Returns a copy of a string with special characters unescaped
+    ///
+    /// This function reverses the escaping of characters done by @c
+    /// CSVRow::escapeCharacters.
+    ///
+    /// @param escaped_str string which may contain escaped characters.
+    ///
+    /// @return A string free of escaped characters
+    static std::string unescapeCharacters(const std::string& escaped_str);
+
 private:
 
     /// @brief Check if the specified index of the value is in range.
@@ -254,6 +315,9 @@ private:
 
     /// @brief Internal container holding values that belong to the row.
     std::vector<std::string> values_;
+
+    /// @brief Prefix used to escape special characters.
+    static const std::string escape_tag;
 };
 
 /// @brief Overrides standard output stream operator for @c CSVRow object.

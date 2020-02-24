@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,18 @@ namespace {
 
 using namespace isc::util;
 
+// This test exercizes escaping and unescaping of characters.
+TEST(CSVRowTest, escapeUnescape) {
+    std::string orig(",FO^O\\,B?,AR,");
+
+    // We'll escape commas, question marks, and carets.
+    std::string escaped = CSVRow::escapeCharacters(orig, ",?^");
+    EXPECT_EQ ("&#x2cFO&#x5eO\\&#x2cB&#x3f&#x2cAR&#x2c", escaped); 
+
+    std::string unescaped = CSVRow::unescapeCharacters(escaped);
+    EXPECT_EQ (orig, unescaped);
+}
+
 // This test checks that the single data row is parsed.
 TEST(CSVRow, parse) {
     CSVRow row0("foo,bar,foo-bar");
@@ -30,6 +42,13 @@ TEST(CSVRow, parse) {
     EXPECT_TRUE(row0.readAt(1).empty());
     EXPECT_EQ("foo-bar", row0.readAt(2));
 
+    row0.parse("bar,foo&#x2c-bar");
+    ASSERT_EQ(2, row0.getValuesCount());
+    EXPECT_EQ("bar", row0.readAt(0));
+    // Read the second column as-is and escaped
+    EXPECT_EQ("foo&#x2c-bar", row0.readAt(1));
+    EXPECT_EQ("foo,-bar", row0.readAtEscaped(1));
+
     CSVRow row1("foo-bar|foo|bar|", '|');
     ASSERT_EQ(4, row1.getValuesCount());
     EXPECT_EQ("foo-bar", row1.readAt(0));
@@ -40,6 +59,25 @@ TEST(CSVRow, parse) {
     row1.parse("");
     ASSERT_EQ(1, row1.getValuesCount());
     EXPECT_TRUE(row1.readAt(0).empty());
+}
+
+// Verifies that empty columns are handled correctly.
+TEST(CSVRow, emptyColumns) {
+    // Should get four columns, all blank except column the second one.
+    CSVRow row(",one,,");
+    ASSERT_EQ(4, row.getValuesCount());
+    EXPECT_EQ("", row.readAt(0));
+    EXPECT_EQ("one", row.readAt(1));
+    EXPECT_EQ("", row.readAt(2));
+    EXPECT_EQ("", row.readAt(3));
+}
+
+// Verifies that empty columns are handled correctly.
+TEST(CSVRow, oneColumn) {
+    // Should get one column
+    CSVRow row("zero");
+    ASSERT_EQ(1, row.getValuesCount());
+    EXPECT_EQ("zero", row.readAt(0));
 }
 
 // This test checks that the text representation of the CSV row
@@ -69,17 +107,21 @@ TEST(CSVRow, render) {
 
 // This test checks that the data values can be set for the CSV row.
 TEST(CSVRow, writeAt) {
-    CSVRow row(3);
+    CSVRow row(4);
     row.writeAt(0, 10);
     row.writeAt(1, "foo");
     row.writeAt(2, "bar");
+    row.writeAtEscaped(3, "bar,one,two");
 
     EXPECT_EQ("10", row.readAt(0));
     EXPECT_EQ("foo", row.readAt(1));
     EXPECT_EQ("bar", row.readAt(2));
+    // Read third column as-is and unescaped
+    EXPECT_EQ("bar&#x2cone&#x2ctwo", row.readAt(3));
+    EXPECT_EQ("bar,one,two", row.readAtEscaped(3));
 
-    EXPECT_THROW(row.writeAt(3, 20), CSVFileError);
-    EXPECT_THROW(row.writeAt(3, "foo"), CSVFileError);
+    EXPECT_THROW(row.writeAt(4, 20), CSVFileError);
+    EXPECT_THROW(row.writeAt(4, "foo"), CSVFileError);
 }
 
 // Checks whether writeAt() and append() can be mixed together.
@@ -128,7 +170,6 @@ TEST(CSVRow, trim) {
     EXPECT_EQ("zero", row.readAt(0));
     EXPECT_EQ("one", row.readAt(1));
 }
-
 
 /// @brief Test fixture class for testing operations on CSV file.
 ///
@@ -522,6 +563,5 @@ TEST_F(CSVFileTest, exists) {
     // The file should not exist.
     EXPECT_FALSE(csv->exists());
 }
-
 
 } // end of anonymous namespace

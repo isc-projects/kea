@@ -1,18 +1,17 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-
 #include <util/csv_file.h>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/constants.hpp>
-#include <boost/algorithm/string/split.hpp>
+
 #include <algorithm>
+#include <iostream>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
 namespace isc {
 namespace util {
@@ -29,16 +28,43 @@ CSVRow::CSVRow(const std::string& text, const char separator)
 
 void
 CSVRow::parse(const std::string& line) {
-    // Tokenize the string using a specified separator. Disable compression,
-    // so as the two consecutive separators mark an empty value.
-    boost::split(values_, line, boost::is_any_of(separator_),
-                 boost::algorithm::token_compress_off);
+    size_t sep_pos = 0;
+    size_t prev_pos = 0;
+    size_t len = 0;
+
+    // In case someone is reusing the row.
+    values_.clear();
+
+    // Iterate over line, splitting on separators.
+    while (prev_pos < line.size()) {
+        // Find the next separator.
+        sep_pos = line.find_first_of(separator_, prev_pos);
+        if (sep_pos == std::string::npos) {
+            break;
+        }
+
+        // Extract the value for the previous column.
+        len = sep_pos - prev_pos;
+        values_.push_back(line.substr(prev_pos, len));
+
+        // Move past the separator.
+        prev_pos = sep_pos + 1;
+    };
+
+    // Extract the last column.
+    len = line.size() - prev_pos;
+    values_.push_back(line.substr(prev_pos, len));
 }
 
 std::string
 CSVRow::readAt(const size_t at) const {
     checkIndex(at);
     return (values_[at]);
+}
+
+std::string
+CSVRow::readAtEscaped(const size_t at) const {
+    return (unescapeCharacters(readAt(at)));
 }
 
 std::string
@@ -58,6 +84,11 @@ void
 CSVRow::writeAt(const size_t at, const char* value) {
     checkIndex(at);
     values_[at] = value;
+}
+
+void
+CSVRow::writeAtEscaped(const size_t at, const std::string& value) {
+    writeAt(at, escapeCharacters(value, separator_));
 }
 
 void
@@ -391,6 +422,125 @@ CSVFile::validateHeader(const CSVRow& header) {
     }
     return (true);
 }
+
+const std::string CSVRow::escape_tag("&#x");
+
+std::string
+CSVRow::escapeCharacters(const std::string& orig_str, const std::string& characters) {
+    size_t char_pos = 0;
+    size_t prev_pos = 0;
+
+    // Check for a first occurance. If none, just return a
+    // copy of the original.
+    char_pos = orig_str.find_first_of(characters, prev_pos);
+    if (char_pos == std::string::npos) {
+        return(orig_str);
+    }
+
+    std::stringstream ss;
+    while (char_pos < orig_str.size()) {
+        // Copy everything upto the charcater to escape.
+        ss << orig_str.substr(prev_pos, char_pos - prev_pos);
+
+        // Copy the escape tag followed by the hex digits of the character.
+        ss << escape_tag << std::hex << std::setw(2)
+           << (uint16_t)(orig_str[char_pos]);
+
+        ++char_pos;
+        prev_pos = char_pos;
+
+        // Find the next character to escape.
+        char_pos = orig_str.find_first_of(characters, prev_pos);
+
+        // If no more, copy the remainder of the string.
+        if (char_pos == std::string::npos) {
+            ss << orig_str.substr(prev_pos, char_pos - prev_pos);
+            break;
+        }
+
+    };
+
+    // Return the escaped string.
+    return(ss.str());
+}
+
+std::string
+CSVRow::unescapeCharacters(const std::string& escaped_str) {
+    size_t esc_pos = 0;
+    size_t start_pos = 0;
+
+    // Look for the escape tag.
+    esc_pos = escaped_str.find(escape_tag, start_pos);
+    if (esc_pos == std::string::npos) {
+        // No escape tags at all, we're done.
+        return(escaped_str);
+    }
+
+    // We have at least one escape tag.
+    std::stringstream ss;
+    while (esc_pos < escaped_str.size()) {
+        // Save everything up to the tag.
+        ss << escaped_str.substr(start_pos, esc_pos - start_pos);
+
+        // Now we need to see if we have valid hex digits
+        // following the tag.
+        unsigned int escaped_char = 0;
+        bool converted = true;
+        size_t dig_pos = esc_pos + escape_tag.size();
+        if (dig_pos <= escaped_str.size() - 2) {
+            for (int i = 0; i < 2; ++i) {
+                uint8_t digit = escaped_str[dig_pos];
+
+                if (digit >= 'a' && digit <= 'f') {
+                    digit = (digit - 'a' + 10);
+                } else if (digit >= 'A' && digit <= 'F') {
+                    digit = (digit - 'A' + 10);
+                } else if (digit >= '0' && digit <= '9') {
+                    digit -= '0';
+                } else {
+                    converted = false;
+                    break;
+                }
+
+                if (i == 0) {
+                    escaped_char = (digit << 4);
+                } else {
+                    escaped_char |= digit;
+                }
+
+                ++dig_pos;
+            }
+        }
+
+        // If we converted an escaped character, add it.
+        if (converted) {
+            ss << static_cast<unsigned char>(escaped_char);
+            esc_pos = dig_pos;
+        } else {
+            // Apparently the escape_tag was not followed by two valid hex
+            // digits. We'll assume it just happens to be in the string, so
+            // we'll include it in the output.
+            ss << escape_tag;
+            esc_pos += escape_tag.size();
+        }
+
+        // Set the new start of search.
+        start_pos = esc_pos;
+
+        // Look for the next escape tag.
+        esc_pos = escaped_str.find(escape_tag, start_pos);
+
+        // If we're at the end we're done.
+        if (esc_pos == std::string::npos) {
+            // Make sure we grab the remnant.
+            ss << escaped_str.substr(start_pos, esc_pos - start_pos);
+            break;
+        }
+    };
+
+    return(ss.str());
+}
+
 
 } // end of isc::util namespace
 } // end of isc namespace

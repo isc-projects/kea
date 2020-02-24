@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -555,6 +555,48 @@ TEST_F(CSVLeaseFile4Test, emptyHWAddrDefaultStateOnly) {
     // The valid lifetime and the cltt should match with the original lease.
     EXPECT_EQ(lease->valid_lft_, lease_read->valid_lft_);
     EXPECT_EQ(lease->cltt_, lease_read->cltt_);
+}
+
+// Verifies that it is possible to write and read a lease with commas
+// in hostname and user context.
+TEST_F(CSVLeaseFile4Test, embeddedCommas) {
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_NO_THROW(lf.recreate());
+    ASSERT_TRUE(io_.exists());
+
+    std::string hostname("host,example,com");
+    std::string context_str("{ \"bar\": true, \"foo\": false, \"x\": \"factor\" }");
+
+    // Create a lease with commas in the hostname.
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.3.2"),
+                               hwaddr0_,
+                               NULL, 0,
+                               0xFFFFFFFF, time(0),
+                               8, true, true,
+                               hostname));
+
+    // Add the user context with commas.
+    lease->setContext(Element::fromJSON(context_str));
+
+    // Write this lease out to the lease file.
+    ASSERT_NO_THROW(lf.append(*lease));
+
+    // Close the lease file.
+    lf.close();
+
+    Lease4Ptr lease_read;
+
+    // Re-open the file for reading.
+    ASSERT_NO_THROW(lf.open());
+
+    // Read the lease and make sure it is successful.
+    EXPECT_TRUE(lf.next(lease_read));
+    ASSERT_TRUE(lease_read);
+
+    // Expect the hostname and user context to retain the commas
+    // they started with.
+    EXPECT_EQ(hostname, lease->hostname_);
+    EXPECT_EQ(context_str, lease->getContext()->str());
 }
 
 /// @todo Currently we don't check invalid lease attributes, such as invalid
