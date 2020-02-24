@@ -112,6 +112,12 @@ applied by the template @c process located in flex_option.h. When
 required the expression is evaluated on the query packet and the result
 is used by the action for instance to add a new option.
 
+In case any other library sets the SKIP flag before pkt4_send or pkt6_send, an
+exception with the message "the packet pack already handled" will be thrown, to
+indicate that the action can not be properly performed.
+To fix this, all other libraries which might set the SKIP flag must appear in the
+server configuration after this library.
+
 @section libdhcp_flex_optionMTCompatibility Multi-Threading Compatibility
 
 The libdhcp_flex_option hooks library is compatible with multi-threading.

@@ -65,4 +65,10 @@ are removed from the response. When the packed response is shorter than
 the BOOTP minimum size (300 octets) it is padded after the END option
 by nuls up to this size.
 
+In case any other library sets the SKIP flag before pkt4_send, an exception
+with the message "the packet pack already handled" will be thrown, to
+indicate that the action can not be properly performed.
+To fix this, all other libraries which might set the SKIP flag must appear
+in the server configuration after this library.
+
 */

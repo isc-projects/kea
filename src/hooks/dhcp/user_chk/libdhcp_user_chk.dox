@@ -82,6 +82,12 @@ flow upon receipt of an inbound request is the same and is as follows:
     This final step is what produces the real time record, referred to as the
     "user check outcome" file.
 
+In case any other library sets the SKIP flag before pkt4_send or pkt6_send, an
+exception with the message "the packet pack already handled" will be thrown, to
+indicate that the action can not be properly performed.
+To fix this, all other libraries which might set the SKIP flag must appear in the
+server configuration after this library.
+
 ## Using the library
 Two steps are required in order to use the library:
 -# The user registry file must be created and deployed
