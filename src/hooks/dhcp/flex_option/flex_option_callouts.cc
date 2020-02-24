@@ -42,8 +42,7 @@ extern "C" {
 /// @return 0 upon success, non-zero otherwise
 int pkt4_send(CalloutHandle& handle) {
     CalloutHandle::CalloutNextStep status = handle.getStatus();
-    if (status == CalloutHandle::NEXT_STEP_DROP ||
-        status == CalloutHandle::NEXT_STEP_SKIP) {
+    if (status == CalloutHandle::NEXT_STEP_DROP) {
         return (0);
     }
 
@@ -57,6 +56,10 @@ int pkt4_send(CalloutHandle& handle) {
     Pkt4Ptr response;
     handle.getArgument("query4", query);
     handle.getArgument("response4", response);
+
+    if (status == CalloutHandle::NEXT_STEP_SKIP) {
+        isc_throw(InvalidOperation, "packet pack already handled");
+    }
 
     try {
         impl->process<Pkt4Ptr>(Option::V4, query, response);
@@ -80,14 +83,17 @@ int pkt4_send(CalloutHandle& handle) {
 /// @return 0 upon success, non-zero otherwise
 int pkt6_send(CalloutHandle& handle) {
     CalloutHandle::CalloutNextStep status = handle.getStatus();
-    if (status == CalloutHandle::NEXT_STEP_DROP ||
-        status == CalloutHandle::NEXT_STEP_SKIP) {
+    if (status == CalloutHandle::NEXT_STEP_DROP) {
         return (0);
     }
 
     // Sanity.
     if (!impl) {
         return (0);
+    }
+
+    if (status == CalloutHandle::NEXT_STEP_SKIP) {
+        isc_throw(InvalidOperation, "packet pack already handled");
     }
 
     // Get the parameters.

@@ -64,8 +64,7 @@ extern "C" {
 /// @return 0 upon success, non-zero otherwise.
 int buffer4_receive(CalloutHandle& handle) {
     CalloutHandle::CalloutNextStep status = handle.getStatus();
-    if (status == CalloutHandle::NEXT_STEP_DROP ||
-        status == CalloutHandle::NEXT_STEP_SKIP) {
+    if (status == CalloutHandle::NEXT_STEP_DROP) {
         return (0);
     }
 
@@ -74,8 +73,9 @@ int buffer4_receive(CalloutHandle& handle) {
     handle.getArgument("query4", query);
 
     try {
-        // Unpack it (TODO check if it was already unpacked).
-        query->unpack();
+        if (handle.getStatus() != CalloutHandle::NEXT_STEP_SKIP) {
+            query->unpack();
+        }
 
         // Not DHCP query nor BOOTP response?
         if ((query->getType() == DHCP_NOTYPE) &&

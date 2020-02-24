@@ -51,18 +51,12 @@ HAImpl::buffer4Receive(hooks::CalloutHandle& callout_handle) {
     Pkt4Ptr query4;
     callout_handle.getArgument("query4", query4);
 
-    bool unpack = true;
-    CalloutHandle::CalloutNextStep status = callout_handle.getStatus();
-    if (status == CalloutHandle::NEXT_STEP_SKIP) {
-        unpack = false;
-    }
-
     /// @todo Add unit tests to verify the behavior for different
     /// malformed packets.
     try {
         // We have to unpack the query to get access into HW address which is
         // used to load balance the packet.
-        if (unpack) {
+        if (callout_handle.getStatus() != CalloutHandle::NEXT_STEP_SKIP) {
             query4->unpack();
         }
 
@@ -164,18 +158,12 @@ HAImpl::buffer6Receive(hooks::CalloutHandle& callout_handle) {
     Pkt6Ptr query6;
     callout_handle.getArgument("query6", query6);
 
-    bool unpack = true;
-    CalloutHandle::CalloutNextStep status = callout_handle.getStatus();
-    if (status == CalloutHandle::NEXT_STEP_SKIP) {
-        unpack = false;
-    }
-
     /// @todo Add unit tests to verify the behavior for different
     /// malformed packets.
     try {
         // We have to unpack the query to get access into DUID which is
         // used to load balance the packet.
-        if (unpack) {
+        if (callout_handle.getStatus() != CalloutHandle::NEXT_STEP_SKIP) {
             query6->unpack();
         }
 

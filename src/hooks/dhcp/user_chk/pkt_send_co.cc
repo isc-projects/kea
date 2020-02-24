@@ -68,9 +68,12 @@ extern "C" {
 /// @return 0 upon success, non-zero otherwise.
 int pkt4_send(CalloutHandle& handle) {
     CalloutHandle::CalloutNextStep status = handle.getStatus();
-    if (status == CalloutHandle::NEXT_STEP_DROP ||
-        status == CalloutHandle::NEXT_STEP_SKIP) {
+    if (status == CalloutHandle::NEXT_STEP_DROP) {
         return (0);
+    }
+
+    if (status == CalloutHandle::NEXT_STEP_SKIP) {
+        isc_throw(InvalidOperation, "packet pack already handled");
     }
 
     try {
@@ -145,9 +148,12 @@ int pkt4_send(CalloutHandle& handle) {
 /// @return 0 upon success, non-zero otherwise.
 int pkt6_send(CalloutHandle& handle) {
     CalloutHandle::CalloutNextStep status = handle.getStatus();
-    if (status == CalloutHandle::NEXT_STEP_DROP ||
-        status == CalloutHandle::NEXT_STEP_SKIP) {
+    if (status == CalloutHandle::NEXT_STEP_DROP) {
         return (0);
+    }
+
+    if (status == CalloutHandle::NEXT_STEP_SKIP) {
+        isc_throw(InvalidOperation, "packet pack already handled");
     }
 
     try {

@@ -480,7 +480,7 @@ setStatus. Their usage is intuitive:
 
 @code
     // Get the current setting of the next step status.
-    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    auto status = handle.getStatus();
 
     if (status == CalloutHandle::NEXT_STEP_DROP)
        // Do something...
@@ -523,8 +523,8 @@ also perform a check for the SKIP flag before anything else.  If it is already
 set, do not pack/unpack the packet (other library, or even the same library, if
 loaded multiple times, has done it already).  Some libraries might also need to
 throw exceptions in such cases because they need to perform specific actions before
-pack/unpack, which have no effect if pack/unpack is done previously by some other
-library.
+pack/unpack (eg. addOption/delOption before pack action), which have no effect if
+pack/unpack action is done previously by some other library.
 
 As stated before, the order of loading libraries is crucial in achieving the
 desired behavior, so please read @ref hooksdgMultipleLibraries when configuring
@@ -567,7 +567,7 @@ handle.setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
 // Check the status state.
-CalloutHandle::CalloutNextStep status = handle.getStatus();
+auto status = handle.getStatus();
 if (status == CalloutHandle::NEXT_STEP_SKIP) {
     ...
 }
