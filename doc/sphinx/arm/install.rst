@@ -570,7 +570,7 @@ use regular UDP sockets (refer to ``dhcp-socket-type`` parameter in the
    An alternative approach to avoiding running Kea with root privileges assumes instructing Kea to
    use non-privileged (greater than 1024) posts and redirecting traffic. This, however, will work
    only for relayed traffic. This approach in general is considered experimental and not tested
-   enough for deployment in production environment. Use with care!
+   enough for deployment in production environment. Use with caution!
 
 
 To use this approach, configure the server to listen on other non privileged port (eg: 1547
@@ -592,6 +592,6 @@ and 1548). Make sure you replace ens4 with your specific interface name.
 .. code-block:: console
 
    iptables -t nat -A PREROUTING -i ens4 -p udp --dport 67 -j REDIRECT --to-port 2067
-   ip6tables -t nat -A PREROUTING -i ens4 -p udp --dport 2068 -j REDIRECT --to-port 68
+   iptables -t nat -A PREROUTING -i ens4 -p udp --dport 2068 -j REDIRECT --to-port 68
    ip6tables -t nat -A PREROUTING -i ens4 -p udp --dport 547 -j REDIRECT --to-port 1547
    ip6tables -t nat -A PREROUTING -i ens4 -p udp --dport 1548 -j REDIRECT --to-port 548
