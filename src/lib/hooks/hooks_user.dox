@@ -526,7 +526,15 @@ throw exceptions in such cases because they need to perform specific actions bef
 pack/unpack (eg. addOption/delOption before pack action), which have no effect if
 pack/unpack action is done previously by some other library.
 
-As stated before, the order of loading libraries is crucial in achieving the
+@code
+// Check the status state.
+auto status = handle.getStatus();
+if (status == CalloutHandle::NEXT_STEP_SKIP) {
+    isc_throw(InvalidOperation, "packet pack already handled");
+}
+@endcode
+
+As stated before, the order of loading libraries is critical in achieving the
 desired behavior, so please read @ref hooksdgMultipleLibraries when configuring
 multiple libraries.
 
@@ -559,7 +567,6 @@ if (skip) {
 with this:
 
 @code
-
 // This is the default.
 handle.setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 
