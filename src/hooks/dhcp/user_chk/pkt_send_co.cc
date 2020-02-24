@@ -73,7 +73,7 @@ int pkt4_send(CalloutHandle& handle) {
     }
 
     if (status == CalloutHandle::NEXT_STEP_SKIP) {
-        isc_throw(InvalidOperation, "packet pack already handled");
+        isc_throw(isc::InvalidOperation, "packet pack already handled");
     }
 
     try {
@@ -153,7 +153,7 @@ int pkt6_send(CalloutHandle& handle) {
     }
 
     if (status == CalloutHandle::NEXT_STEP_SKIP) {
-        isc_throw(InvalidOperation, "packet pack already handled");
+        isc_throw(isc::InvalidOperation, "packet pack already handled");
     }
 
     try {
