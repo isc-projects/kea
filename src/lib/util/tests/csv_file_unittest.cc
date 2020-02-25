@@ -22,9 +22,16 @@ TEST(CSVRowTest, escapeUnescape) {
 
     // We'll escape commas, question marks, and carets.
     std::string escaped = CSVRow::escapeCharacters(orig, ",?^");
-    EXPECT_EQ ("&#x2cFO&#x5eO\\&#x2cB&#x3f&#x2cAR&#x2c", escaped); 
+    EXPECT_EQ ("&#x2cFO&#x5eO\\&#x2cB&#x3f&#x2cAR&#x2c", escaped);
 
+    // Now make sure we can unescape it correctly.
     std::string unescaped = CSVRow::unescapeCharacters(escaped);
+    EXPECT_EQ (orig, unescaped);
+
+    // Make sure that an incident occurance of the escape tag
+    // characters is left intact.
+    orig = ("no&#xescape");
+    unescaped = CSVRow::unescapeCharacters(orig);
     EXPECT_EQ (orig, unescaped);
 }
 
