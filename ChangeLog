@@ -1,3 +1,10 @@
+Kea 1.7.5 released on Feb 26, 2020
+
+1725.	[func]		wlodek
+	Added perfdhcp command option to enable checking address
+	and/or prefix uniqueness.
+	(Gitlab #1021)
+
 1724.	[func]		razvan
 	Added packet thread pool in dhcpv4 and dhcpv6 servers. It adds
 	the ability to handle processPacket function on multiple threads.

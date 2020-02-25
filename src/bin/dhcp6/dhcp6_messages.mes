@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -484,6 +484,10 @@ The first argument includes the client and transaction identification
 information. The remaining arguments hold the allocated address and
 IAID.
 
+% DHCP6_MULTI_THREADING_INFO enabled: %1, number of threads: %2, queue size per thread: %3
+This is a message listing some information about the multi-threading parameters
+with which the server is running.
+
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
 IPv6 DHCP server but it is not running.
@@ -821,10 +825,6 @@ is also printed.
 This is a debug message issued during the IPv6 DHCP server startup.
 It lists some information about the parameters with which the server
 is running.
-
-% DHCP6_MULTI_THREADING_INFO enabled: %1, number of threads: %2, queue size per thread: %3
-This is a message listing some information about the multi-threading parameters
-with which the server is running.
 
 % DHCP6_SUBNET_DATA %1: the selected subnet details: %2
 This debug message includes the details of the subnet selected for
