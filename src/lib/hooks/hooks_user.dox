@@ -518,6 +518,7 @@ and perform the proper action.
 Some hook points handle special functionality for the server, like pkt4_receive,
 pkt6_receive, which handle unpacking of the received packet, pkt4_send, pkt6_send,
 which handle packing of the response packet.
+
 If the hook handles these actions and sets the next step flag to SKIP, it should
 also perform a check for the SKIP flag before anything else.  If it is already
 set, do not pack/unpack the packet (other library, or even the same library, if
@@ -527,11 +528,25 @@ pack/unpack (eg. addOption/delOption before pack action), which have no effect i
 pack/unpack action is done previously by some other library.
 
 @code
-// Check the status state.
-auto status = handle.getStatus();
-if (status == CalloutHandle::NEXT_STEP_SKIP) {
-    isc_throw(InvalidOperation, "packet pack already handled");
-}
+    // Check if other library has already set SKIP flag and performed unpack
+    // so that unpack is skipped
+    if (handle.getStatus() != CalloutHandle::NEXT_STEP_SKIP) {
+        query->unpack();
+    }
+@endcode
+
+@code
+    // Check the status state.
+    auto status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_SKIP) {
+        isc_throw(InvalidOperation, "packet pack already handled");
+    }
+    ...
+    response->delOption(DEL_OPTION_CODE);
+    ...
+    response->addOption(ADD_OPTION_CODE);
+    ...
+    response->pack();
 @endcode
 
 As stated before, the order of loading libraries is critical in achieving the
