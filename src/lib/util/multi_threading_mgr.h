@@ -133,7 +133,7 @@ private:
     /// @ref MultiThreadingCriticalSection, the thread pool should not be
     /// started until the section is over.
     /// This also handles multiple interleaved sections.
-    int override_;
+    uint32_t override_;
 
     /// @brief The configured size of the packet thread pool.
     uint32_t pkt_thread_pool_size_;
