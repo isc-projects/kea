@@ -1,3 +1,10 @@
+1726.	[func]		razvan
+	Handling SKIP and DROP state in hooks so that the same operation
+	is not performed multiple times. Some hooks will throw exceptions
+	if the pktX_receive or pktX_send is handled by other hooks, in
+	such case, the configuration order of the hooks must be changed.
+	(Gitlab #1088)
+
 Kea 1.7.5 released on Feb 26, 2020
 
 1725.	[func]		wlodek
@@ -43,7 +50,7 @@ Kea 1.7.5 released on Feb 26, 2020
 
 1719.	[func]		razvan
 	Prepared CalloutManager to be used in multi-threading by moving
-	the current library index and hook index to the CallbackHandle.
+	the current library index and hook index to the CalloutHandle.
 	This change removes the CallountHandle::getLibraryHandle, along
 	with the possibility of dynamically registering/deregistering
 	callouts inside callouts.
@@ -71,7 +78,7 @@ Kea 1.7.5 released on Feb 26, 2020
 	Kea servers now detect and remove orphaned control channel
 	sockets.  This corrects a failure of the servers to restart
 	with an error of "address already in use" following a fatal
-	loss of database connecivity.
+	loss of database connectivity.
 	(Gitlab #1097)
 
 Kea 1.7.4 released on Jan 29, 2020
