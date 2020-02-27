@@ -66,6 +66,24 @@ public:
     /// @param enabled The new mode.
     void setMode(bool enabled);
 
+    /// @brief Increment override
+    ///
+    /// When entering @ref MultiThreadingCriticalSection, increment override
+    /// so that any configuration change that might start the packet thread pool
+    /// is delayed until exiting the respective section
+    void incrementOverride();
+
+    /// @brief Decrement override
+    ///
+    /// When exiting @ref MultiThreadingCriticalSection, decrement override
+    /// so that the packet thread pool can be started according to configuration
+    void decrementOverride();
+
+    /// @brief Get override
+    ///
+    /// Get the override flag
+    bool getOverride();
+
     /// @brief Get the packet thread pool.
     ///
     /// @return The packet thread pool of this binary instance.
@@ -108,6 +126,14 @@ private:
 
     /// @brief The current mode.
     bool enabled_;
+
+    /// @brief The override mode.
+    ///
+    /// In case the configuration is applied within a
+    /// @ref MultiThreadingCriticalSection, the thread pool should not be
+    /// started until the section is over.
+    /// This also handles multiple interleaved sections.
+    int override_;
 
     /// @brief The configured size of the packet thread pool.
     uint32_t pkt_thread_pool_size_;

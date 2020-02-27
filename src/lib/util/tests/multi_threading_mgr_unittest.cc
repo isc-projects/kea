@@ -6,11 +6,13 @@
 
 #include <config.h>
 
+#include <exceptions/exceptions.h>
 #include <util/multi_threading_mgr.h>
 
 #include <gtest/gtest.h>
 
 using namespace isc::util;
+using namespace isc;
 
 /// @brief Verifies that the default mode is false (MT disabled).
 TEST(MultiThreadingMgrTest, default) {
@@ -100,3 +102,42 @@ TEST(MultiThreadingMgrTest, applyConfig) {
     EXPECT_EQ(thread_pool.size(), 0);
 }
 
+/// @brief Verifies that override flag works.
+TEST(MultiThreadingMgrTest, override) {
+    // get the thread pool
+    auto& thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
+    // MT should be disabled
+    EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
+    // override should be disabled
+    EXPECT_FALSE(MultiThreadingMgr::instance().getOverride());
+    // thread count should be 0
+    EXPECT_EQ(MultiThreadingMgr::instance().getPktThreadPoolSize(), 0);
+    // thread pool should be stopped
+    EXPECT_EQ(thread_pool.size(), 0);
+    // increment override
+    EXPECT_NO_THROW(MultiThreadingMgr::instance().incrementOverride());
+    // override should be enabled
+    EXPECT_TRUE(MultiThreadingMgr::instance().getOverride());
+    // enable MT with 16 threads
+    EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(true, 16));
+    // MT should be enabled
+    EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
+    // thread count should be 16
+    EXPECT_EQ(MultiThreadingMgr::instance().getPktThreadPoolSize(), 16);
+    // thread pool should be stopped
+    EXPECT_EQ(thread_pool.size(), 0);
+    // decrement override
+    EXPECT_NO_THROW(MultiThreadingMgr::instance().decrementOverride());
+    // override should be disabled
+    EXPECT_FALSE(MultiThreadingMgr::instance().getOverride());
+    // decrement override
+    EXPECT_THROW(MultiThreadingMgr::instance().decrementOverride(), InvalidOperation);
+    // disable MT
+    EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(false, 0));
+    // MT should be disabled
+    EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
+    // thread count should be 0
+    EXPECT_EQ(MultiThreadingMgr::instance().getPktThreadPoolSize(), 0);
+    // thread pool should be stopped
+    EXPECT_EQ(thread_pool.size(), 0);
+}

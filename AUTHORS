@@ -13,12 +13,12 @@ Primary developers:
                      control agent, shared networks, high availability,
                      config backend)
  - Thomas Markwalder (DDNS, user_chk, global host reservations, stat commands,
-                     congestion handling, config backend)
+                      congestion handling, config backend)
  - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
                    radius, netconf, config backend)
- - Brian Reid     (logo design)
+ - Brian Reid (logo design)
  - Shawn Routhier (lease file cleanup)
  - Michal Nowikowski (testing, hammer, release engineering)
  - Razvan Becheriu (cassandra, sysrepo)
