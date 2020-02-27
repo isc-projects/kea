@@ -114,6 +114,10 @@ TEST(MultiThreadingMgrTest, override) {
     EXPECT_EQ(MultiThreadingMgr::instance().getPktThreadPoolSize(), 0);
     // thread pool should be stopped
     EXPECT_EQ(thread_pool.size(), 0);
+    // decrement override
+    EXPECT_THROW(MultiThreadingMgr::instance().decrementOverride(), InvalidOperation);
+    // override should be disabled
+    EXPECT_FALSE(MultiThreadingMgr::instance().getOverride());
     // increment override
     EXPECT_NO_THROW(MultiThreadingMgr::instance().incrementOverride());
     // override should be enabled
@@ -132,6 +136,8 @@ TEST(MultiThreadingMgrTest, override) {
     EXPECT_FALSE(MultiThreadingMgr::instance().getOverride());
     // decrement override
     EXPECT_THROW(MultiThreadingMgr::instance().decrementOverride(), InvalidOperation);
+    // override should be disabled
+    EXPECT_FALSE(MultiThreadingMgr::instance().getOverride());
     // disable MT
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(false, 0));
     // MT should be disabled
