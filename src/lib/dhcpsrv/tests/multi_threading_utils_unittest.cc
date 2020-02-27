@@ -90,9 +90,7 @@ TEST(MultiThreadingUtil, constructorAndDestructor) {
     // thread count should match
     EXPECT_EQ(thread_pool.size(), 64);
     // apply multi-threading configuration with 0 threads
-    MultiThreadingMgr::instance().apply(false, 64);
-    // thread pool should be stopped
-    EXPECT_EQ(thread_pool.size(), 0);
+    MultiThreadingMgr::instance().apply(false, 0);
 }
 
 }  // namespace

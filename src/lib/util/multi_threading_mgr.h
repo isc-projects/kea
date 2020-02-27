@@ -66,22 +66,23 @@ public:
     /// @param enabled The new mode.
     void setMode(bool enabled);
 
-    /// @brief Increment override
+    /// @brief Increment override.
     ///
     /// When entering @ref MultiThreadingCriticalSection, increment override
     /// so that any configuration change that might start the packet thread pool
-    /// is delayed until exiting the respective section
+    /// is delayed until exiting the respective section.
     void incrementOverride();
 
-    /// @brief Decrement override
+    /// @brief Decrement override.
     ///
     /// When exiting @ref MultiThreadingCriticalSection, decrement override
-    /// so that the packet thread pool can be started according to configuration
+    /// so that the packet thread pool can be started according to the new
+    /// configuration.
     void decrementOverride();
 
-    /// @brief Get override
+    /// @brief Get override.
     ///
-    /// Get the override flag
+    /// Get the override flag.
     bool getOverride();
 
     /// @brief Get the packet thread pool.
@@ -106,7 +107,7 @@ public:
     /// @return The thread count.
     static uint32_t supportedThreadCount();
 
-    /// @brief Apply the multi-threading related settings
+    /// @brief Apply the multi-threading related settings.
     ///
     /// @param enabled The enabled flag: true if multi-threading is enabled,
     /// false otherwise.
@@ -131,7 +132,7 @@ private:
     ///
     /// In case the configuration is applied within a
     /// @ref MultiThreadingCriticalSection, the thread pool should not be
-    /// started until the section is over.
+    /// started until leaving the respective section.
     /// This also handles multiple interleaved sections.
     uint32_t override_;
 

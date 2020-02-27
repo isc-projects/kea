@@ -21,7 +21,7 @@ namespace dhcp {
 /// @c MultiThreadingCriticalSection body.
 /// @note: starting and stopping the packet thread pool should be handled
 /// in the main thread, if done on one of the processing threads will cause a
-/// deadlock
+/// deadlock.
 /// This is mainly useful in hook commands which handle configuration
 /// changes.
 class MultiThreadingCriticalSection : public boost::noncopyable {
@@ -30,13 +30,13 @@ public:
     /// @brief Constructor.
     ///
     /// Entering the critical section. The packet thread pool instance will be
-    /// stopped so that configuration changes can be safely applied.
+    /// stopped so that all configuration changes can be safely applied.
     MultiThreadingCriticalSection();
 
     /// @brief Destructor.
     ///
     /// Leaving the critical section. The packet thread pool instance will be
-    /// started according to new configuration.
+    /// started according to the new configuration.
     virtual ~MultiThreadingCriticalSection();
 
 private:
