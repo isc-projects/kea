@@ -202,17 +202,32 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr) {
-    if (ControlledDhcpv4Srv::getInstance()) {
-        ControlledDhcpv4Srv::getInstance()->shutdown();
-    } else {
+ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr args) {
+    if (!ControlledDhcpv4Srv::getInstance()) {
         LOG_WARN(dhcp4_logger, DHCP4_NOT_RUNNING);
-        ConstElementPtr answer = isc::config::createAnswer(1,
-                                              "Shutdown failure.");
-        return (answer);
+        return(createAnswer(CONTROL_RESULT_ERROR, "Shutdown failure."));
     }
-    ConstElementPtr answer = isc::config::createAnswer(0, "Shutting down.");
-    return (answer);
+
+    int exit_value = 0;
+    if (args) {
+        // @todo Should we go ahead and shutdown even if the args are invalid?
+        if (args->getType() != Element::map) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "Argument must be a map"));
+        }
+
+        ConstElementPtr param = args->get("exit-value");
+        if (param)  {
+            if (param->getType() != Element::integer) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "parameter 'exit-value' is not an integer"));
+            }
+
+            exit_value = param->intValue();
+        }
+    }
+
+    ControlledDhcpv4Srv::getInstance()->shutdown(exit_value);
+    return(createAnswer(CONTROL_RESULT_SUCCESS, "Shutting down."));
 }
 
 ConstElementPtr
@@ -957,9 +972,10 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
         boost::bind(&StatsMgr::statisticSetMaxSampleCountAllHandler, _1, _2));
 }
 
-void ControlledDhcpv4Srv::shutdown() {
-    io_service_.stop(); // Stop ASIO transmissions
-    Dhcpv4Srv::shutdown(); // Initiate DHCPv4 shutdown procedure.
+void ControlledDhcpv4Srv::shutdown(int exit_value) {
+    setExitValue(exit_value);
+    io_service_.stop();       // Stop ASIO transmissions
+    Dhcpv4Srv::shutdown();    // Initiate DHCPv4 shutdown procedure.
 }
 
 ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
@@ -1065,9 +1081,10 @@ ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         db_reconnect_ctl.reset();
     } else {
         if (!db_reconnect_ctl->checkRetries()) {
+            // We're out of retries, log it and initiate shutdown.
             LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED)
             .arg(db_reconnect_ctl->maxRetries());
-            shutdown();
+            shutdown(EXIT_FAILURE);
             return;
         }
 
@@ -1099,14 +1116,14 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         return (false);
     }
 
-    // If reconnect isn't enabled or we're out of retries,
-    // log it, schedule a shutdown,  and return false
+    // If reconnect isn't enabled log it,
+    // initiate a shutdown and return false.
     if (!db_reconnect_ctl->retriesLeft() ||
         !db_reconnect_ctl->retryInterval()) {
         LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_DISABLED)
             .arg(db_reconnect_ctl->retriesLeft())
             .arg(db_reconnect_ctl->retryInterval());
-        ControlledDhcpv4Srv::processCommand("shutdown", ConstElementPtr());
+        shutdown(EXIT_FAILURE);
         return(false);
     }
 

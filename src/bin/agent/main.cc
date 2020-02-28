@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
         DControllerBasePtr& controller = CtrlAgentController::instance();
 
         // 'false' value disables test mode.
-        controller->launch(argc, argv, false);
+        ret = controller->launch(argc, argv, false);
     } catch (const VersionMessage& ex) {
         std::string msg(ex.what());
         if (!msg.empty()) {

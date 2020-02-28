@@ -401,15 +401,19 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commands) {
     result = ControlledDhcpv4Srv::processCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
+    // Exit value should default to 0.
+    EXPECT_EQ(0, server_->getExitValue());
 
-    const pid_t pid(getpid());
-    ConstElementPtr x(new isc::data::IntElement(pid));
-    params->set("pid", x);
+    // Case 3: send shutdown command with exit-value parameter.
+    ConstElementPtr x(new isc::data::IntElement(77));
+    params->set("exit-value", x);
 
-    // Case 3: send shutdown command with 1 parameter: pid
     result = ControlledDhcpv4Srv::processCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
+
+    // Exit value should match.
+    EXPECT_EQ(77, server_->getExitValue());
 }
 
 // Check that the "libreload" command will reload libraries

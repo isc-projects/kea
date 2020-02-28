@@ -149,7 +149,7 @@ public:
     /// process object.
     /// ProcessRunError - A fatal error occurred while in the application
     /// process event loop.
-    virtual void launch(int argc, char* argv[], const bool test_mode);
+    virtual int launch(int argc, char* argv[], const bool test_mode);
 
     /// @brief Instance method invoked by the configuration event handler and
     /// which processes the actual configuration update.  Provides behavioral

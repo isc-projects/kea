@@ -53,7 +53,7 @@ DControllerBase::parseFile(const std::string&) {
     return (elements);
 }
 
-void
+int
 DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 
     // Step 1 is to parse the command line arguments.
@@ -69,7 +69,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 
     if (isCheckOnly()) {
         checkConfigOnly();
-        return;
+        return(EXIT_SUCCESS);
     }
 
     // It is important that we set a default logger name because this name
@@ -154,6 +154,8 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     // All done, so bail out.
     LOG_INFO(dctl_logger, DCTL_SHUTDOWN)
         .arg(app_name_).arg(getpid()).arg(VERSION);
+
+    return(getExitValue());
 }
 
 void
@@ -682,6 +684,26 @@ DControllerBase::shutdownHandler(const std::string&, ConstElementPtr args) {
     // a custom command supported by the derivation.  If that
     // doesn't pan out either, than send to it the application
     // as it may be supported there.
+
+    int exit_value = EXIT_SUCCESS;
+    if (args) {
+        // @todo Should we go ahead and shutdown even if the args are invalid?
+        if (args->getType() != Element::map) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "Argument must be a map"));
+        }
+
+        ConstElementPtr param = args->get("exit-value");
+        if (param)  {
+            if (param->getType() != Element::integer) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "parameter 'exit-value' is not an integer"));
+            }
+
+            exit_value = param->intValue();
+        }
+    }
+
+    setExitValue(exit_value);
     return (shutdownProcess(args));
 }
 

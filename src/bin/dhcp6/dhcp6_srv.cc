@@ -442,7 +442,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     evaluateClasses(pkt, true);
 }
 
-bool Dhcpv6Srv::run() {
+int Dhcpv6Srv::run() {
 #ifdef ENABLE_AFL
     // Set up structures needed for fuzzing.
     Fuzz fuzzer(6, server_port_);
@@ -475,7 +475,7 @@ bool Dhcpv6Srv::run() {
     // destroying the thread pool
     MultiThreadingMgr::instance().apply(false, 0);
 
-    return (true);
+    return (getExitValue());
 }
 
 void Dhcpv6Srv::run_one() {

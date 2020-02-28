@@ -362,6 +362,13 @@ TEST_F(DaemonTest, parsingConsoleOutput) {
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
 }
 
+TEST_F(DaemonTest, exitValue) {
+    DaemonImpl instance;
+
+    EXPECT_EQ(EXIT_SUCCESS, instance.getExitValue());
+    instance.setExitValue(77);
+    EXPECT_EQ(77, instance.getExitValue());
+}
 
 
 // More tests will appear here as we develop Daemon class.

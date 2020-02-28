@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,8 +72,8 @@ public:
     /// configuration updates as it is in final stages of shutdown.
     virtual void cleanup();
 
-    /// @brief Initiates shutdown procedure for the whole DHCPv6 server.
-    virtual void shutdown();
+    /// @brief Initiates shutdown procedure for the whole server.
+    void shutdown();
 
     /// @brief Initializes logger
     ///
@@ -230,6 +230,18 @@ public:
         default_logger_name_ = logger;
     }
 
+    /// @brief Fetches the exit value.
+    int getExitValue() {
+        return (exit_value_);
+    }
+
+    /// @brief Sets the exit value.
+    ///
+    /// @param value new exit value.
+    void setExitValue(int value) {
+        exit_value_ = value;
+    }
+
 protected:
 
     /// @brief Invokes handler for the next received signal.
@@ -286,6 +298,10 @@ private:
 
     /// @brief Flag indicating if this instance created the file
     bool am_file_author_;
+
+    /// @brief Exit value the process should use.  Typically set
+    /// by the application during a controlled shutdown.
+    int exit_value_;
 };
 
 }; // end of isc::dhcp namespace

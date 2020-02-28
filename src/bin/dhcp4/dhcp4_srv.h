@@ -272,8 +272,8 @@ public:
     /// Main server processing loop. Call the processing step routine
     /// until shut down.
     ///
-    /// @return true, if being shut down gracefully, never fail.
-    bool run();
+    /// @return The value returned by @c Daemon::getExitValue().
+    int run();
 
     /// @brief Main server processing step.
     ///
@@ -318,7 +318,6 @@ public:
     /// @param allow_packet_park Indicates if parking a packet is allowed.
     void processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp,
                        bool allow_packet_park = true);
-
 
     /// @brief Instructs the server to shut down.
     void shutdown();

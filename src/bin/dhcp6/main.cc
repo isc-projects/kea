@@ -269,7 +269,7 @@ main(int argc, char* argv[]) {
         LOG_INFO(dhcp6_logger, DHCP6_STARTED).arg(VERSION);
 
         // And run the main loop of the server.
-        server.run();
+        ret = server.run();
 
         LOG_INFO(dhcp6_logger, DHCP6_SHUTDOWN);
 

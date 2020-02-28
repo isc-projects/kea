@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -565,7 +565,7 @@ TEST_F(CtrlChannelD2Test, invalid) {
               response);
 }
 
-// Tests that the server properly responds to shtudown command.
+// Tests that the server properly responds to shutdown command.
 TEST_F(CtrlChannelD2Test, shutdown) {
     EXPECT_NO_THROW(createUnixChannelServer());
     string response;
@@ -573,6 +573,23 @@ TEST_F(CtrlChannelD2Test, shutdown) {
     sendUnixCommand("{ \"command\": \"shutdown\" }", response);
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutdown initiated, type is: normal\" }",
               response);
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
+}
+
+// Tests that the server sets exit value supplied as argument
+// to shutdown command.
+TEST_F(CtrlChannelD2Test, shutdownExitValue) {
+    EXPECT_NO_THROW(createUnixChannelServer());
+    string response;
+
+    sendUnixCommand("{ \"command\": \"shutdown\", "
+                    "\"arguments\": { \"exit-value\": 77 }}"
+                    , response);
+
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutdown initiated, type is: normal\" }",
+              response);
+
+    EXPECT_EQ(77, server_->getExitValue());
 }
 
 // This test verifies that the DHCP server handles version-get commands.

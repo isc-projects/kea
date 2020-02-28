@@ -771,7 +771,7 @@ Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
     IfaceMgr::instance().send(packet);
 }
 
-bool
+int
 Dhcpv4Srv::run() {
 #ifdef ENABLE_AFL
     // Set up structures needed for fuzzing.
@@ -805,7 +805,7 @@ Dhcpv4Srv::run() {
     // destroying the thread pool
     MultiThreadingMgr::instance().apply(false, 0);
 
-    return (true);
+    return (getExitValue());
 }
 
 void

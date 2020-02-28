@@ -205,16 +205,33 @@ void ControlledDhcpv6Srv::cleanup() {
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr) {
-    if (ControlledDhcpv6Srv::getInstance()) {
-        ControlledDhcpv6Srv::getInstance()->shutdown();
-    } else {
+ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr args) {
+
+    if (!ControlledDhcpv6Srv::getInstance()) {
         LOG_WARN(dhcp6_logger, DHCP6_NOT_RUNNING);
-        ConstElementPtr answer = isc::config::createAnswer(1, "Shutdown failure.");
-        return (answer);
+        return(createAnswer(CONTROL_RESULT_ERROR, "Shutdown failure."));
     }
-    ConstElementPtr answer = isc::config::createAnswer(0, "Shutting down.");
-    return (answer);
+
+    int exit_value = 0;
+    if (args) {
+        // @todo Should we go ahead and shutdown even if the args are invalid?
+        if (args->getType() != Element::map) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "Argument must be a map"));
+        }
+
+        ConstElementPtr param = args->get("exit-value");
+        if (param)  {
+            if (param->getType() != Element::integer) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "parameter 'exit-value' is not an integer"));
+            }
+
+            exit_value = param->intValue();
+        }
+    }
+
+    ControlledDhcpv6Srv::getInstance()->shutdown(exit_value);
+    return(createAnswer(CONTROL_RESULT_SUCCESS, "Shutting down."));
 }
 
 ConstElementPtr
@@ -977,8 +994,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
         boost::bind(&StatsMgr::statisticSetMaxSampleCountAllHandler, _1, _2));
 }
 
-void ControlledDhcpv6Srv::shutdown() {
-    io_service_.stop(); // Stop ASIO transmissions
+void ControlledDhcpv6Srv::shutdown(int exit_value) {
+    setExitValue(exit_value);
+    io_service_.stop();    // Stop ASIO transmissions
     Dhcpv6Srv::shutdown(); // Initiate DHCPv6 shutdown procedure.
 }
 
@@ -1085,9 +1103,10 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         db_reconnect_ctl.reset();
     } else {
         if (!db_reconnect_ctl->checkRetries()) {
+            // We're out of retries, log it and initiate shutdown.
             LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_RETRIES_EXHAUSTED)
             .arg(db_reconnect_ctl->maxRetries());
-            shutdown();
+            shutdown(EXIT_FAILURE);
             return;
         }
 
@@ -1119,14 +1138,13 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         return (false);
     }
 
-    // If reconnect isn't enabled or we're out of retries,
-    // log it, schedule a shutdown,  and return false
+    // If reconnect isn't enabled log it and initiate a shutdown.
     if (!db_reconnect_ctl->retriesLeft() ||
         !db_reconnect_ctl->retryInterval()) {
         LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_DISABLED)
             .arg(db_reconnect_ctl->retriesLeft())
             .arg(db_reconnect_ctl->retryInterval());
-        ControlledDhcpv6Srv::processCommand("shutdown", ConstElementPtr());
+        shutdown(EXIT_FAILURE);
         return(false);
     }
 

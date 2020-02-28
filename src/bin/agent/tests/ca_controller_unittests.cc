@@ -697,4 +697,56 @@ TEST_F(CtrlAgentControllerTest, statusGet) {
     EXPECT_GE(found_reload->intValue(), 0);
 }
 
+TEST_F(CtrlAgentControllerTest, shutdownExitValue) {
+    ASSERT_NO_THROW(initProcess());
+    EXPECT_TRUE(checkProcess());
+
+    // The framework available makes it very difficult to test the actual
+    // code as CtrlAgentController is not initialized the same way it is
+    // in production code. In particular, the way CtrlAgentController
+    // is initialized in tests does not call registerCommands().
+    // This is a crude workaround for this problem. Proper solution should
+    // be developed sooner rather than later.
+    const DControllerBasePtr& base = getController();
+    const CtrlAgentControllerPtr& ctrl
+        = boost::dynamic_pointer_cast<CtrlAgentController>(base);
+    ASSERT_TRUE(ctrl);
+    // Now clean up after ourselves.
+    ctrl->registerCommands();
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    getController()->setConfigFile("testvalid.json");
+
+    // Ok, enough fooling around. Let's create a valid config.
+    ofstream f("testvalid.json", ios::trunc);
+    f << "{ \"Control-agent\": "
+      << string(valid_agent_config)
+      << " }" << endl;
+    f.close();
+
+    // Build and execute the command.
+
+    ConstElementPtr cmd = Element::fromJSON("{ \"command\": \"shutdown\"}");
+    ConstElementPtr params = Element::fromJSON("{ \"exit-value\": 77 }");
+    ConstElementPtr answer;
+    answer = CtrlAgentCommandMgr::instance().handleCommand("shutdown",
+                                                           params, cmd);
+
+    // Verify the reload was successful.
+    string expected = "[ { \"result\": 0, \"text\": "
+                      "\"Control Agent is shutting down\" } ]";
+
+    EXPECT_EQ(expected, answer->str());
+
+    int exit_value = ctrl->getExitValue();
+    EXPECT_EQ(77, exit_value);
+
+    // Remove the file.
+    ::remove("testvalid.json");
+
+    // Now clean up after ourselves.
+    ctrl->deregisterCommands();
+}
+
 }

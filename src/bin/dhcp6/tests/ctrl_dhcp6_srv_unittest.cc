@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -419,14 +419,16 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
 
-    const pid_t pid(getpid());
-    ConstElementPtr x(new isc::data::IntElement(pid));
-    params->set("pid", x);
+    // Case 3: send shutdown command with exit-value parameter.
+    ConstElementPtr x(new isc::data::IntElement(77));
+    params->set("exit-value", x);
 
-    // Case 3: send shutdown command with 1 parameter: pid
     result = ControlledDhcpv6Srv::processCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
+
+    // Exit value should match.
+    EXPECT_EQ(77, srv->getExitValue());
 }
 
 // Check that the "libreload" command will reload libraries
