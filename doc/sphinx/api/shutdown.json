@@ -9,6 +9,9 @@
     "cmd-syntax": [
         "{",
         "    \"command\": \"shutdown\"",
+        "    \"arguments\": {",
+        "        \"exit-value\": 123",
+        "    }",
         "}"
     ],
     "description": "See <xref linkend=\"command-shutdown\"/>",

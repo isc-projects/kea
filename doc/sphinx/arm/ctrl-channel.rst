@@ -496,10 +496,15 @@ may look like this:
 
    {
        "command": "shutdown"
+       "arguments": {
+           "exit-value": 3
+       }
    }
 
 The server responds with a confirmation that the shutdown procedure has
-been initiated.
+been initiated.  The optional parameter, "exit-value", specifies the
+numeric value with which the server process will exit to the OS.  The
+default value is zero.
 
 .. _command-dhcp-disable:
 

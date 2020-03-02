@@ -1,3 +1,10 @@
+1727.	[bug]		tmark
+	When shutting down due to lost backend database connetivity,
+	kea-dhcp4 and kea-dhcp6 processes will exit with a non-zero value.
+	This was temporarily altered by #1108. In addition, the "shutdown"
+	command now supports an "exit-value" argument.
+	(Gitlab #1115)
+
 1726.	[func]		razvan
 	Handling SKIP and DROP state in hooks so that the same operation
 	is not performed multiple times. Some hooks will throw exceptions
