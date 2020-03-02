@@ -370,6 +370,25 @@ public:
     /// \return server name.
     std::string getServerName() const { return server_name_; }
 
+    /// \brief Returns giaddr file location.
+    ///
+    /// \return giaddr list file location.
+    std::string getGiaddrListFile() const { return giaddr_list_file_; }
+
+    /// \brief Returns list of giaddr addresses.
+    ///
+    /// \return list of giaddr.
+    std::vector<std::string> getGiaddrList() const { return giaddr_list_; }
+
+    /// \brief Returns random giaddr.
+    ///
+    /// \return single string containing giaddr.
+    std::string getRandGiaddr() { return giaddr_list_[rand() % giaddr_list_.size()];}
+
+    /// \brief Check if multi subnet mode is enabled
+    ///
+    /// \return true if multisubnet mode is enabled.
+    bool checkMultiSubnet() { return multi_subnet_; }
 
     /// \brief Find if diagnostic flag has been set.
     ///
@@ -524,6 +543,15 @@ private:
     /// mac_list_ vector.
     bool decodeMacString(const std::string& line);
 
+    /// \brief Opens the text file containgin list of addresses (one per line).
+    void loadGiaddr();
+
+    /// \brief Checks if loaded giaddr from text file are correct,
+    /// adds them to giaddr_list_.
+    ///
+    /// \return true if address is incorrect
+    bool validateIP(const std::string& line);
+
     /// IP protocol version to be used, expected values are:
     /// 4 for IPv4 and 6 for IPv6, default value 0 means "not set".
     uint8_t ipversion_;
@@ -641,6 +669,11 @@ private:
     /// List of MAC addresses loaded from a file.
     std::vector<std::vector<uint8_t> > mac_list_;
 
+    std::string giaddr_list_file_;
+
+    std::vector<std::string> giaddr_list_;
+
+    bool multi_subnet_;
     /// Offset of transaction id in template files. First vector
     /// element points to offset for DISCOVER/SOLICIT messages,
     /// second element points to transaction id offset for

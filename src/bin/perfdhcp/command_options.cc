@@ -14,6 +14,7 @@
 #include <dhcp/option.h>
 #include <cfgrpt/config_report.h>
 #include <util/encode/hex.h>
+#include <asiolink/io_error.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -123,6 +124,9 @@ CommandOptions::reset() {
     addr_unique_ = false;
     mac_list_file_.clear();
     mac_list_.clear();
+    giaddr_list_file_.clear();
+    giaddr_list_.clear();
+    multi_subnet_ = false;
     num_request_.clear();
     exit_wait_time_ = 0;
     period_ = 0;
@@ -233,7 +237,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // they will be tuned and validated elsewhere
     while((opt = getopt_long(argc, argv,
                              "huv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
-                             "T:X:O:o:E:S:I:x:W:w:e:f:F:g:",
+                             "J:T:X:O:o:E:S:I:x:W:w:e:f:F:g:",
                              long_options, NULL)) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
@@ -371,6 +375,11 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             rip_offset_ = positiveInteger("value of ip address offset:"
                                           " -I<value> must be a"
                                           " positive integer");
+            break;
+
+        case 'J':
+            giaddr_list_file_ = std::string(optarg);
+            loadGiaddr();
             break;
 
         case 'l':
@@ -816,6 +825,31 @@ CommandOptions::convertHexString(const std::string& text) const {
     return ui;
 }
 
+bool CommandOptions::validateIP(const std::string& line) {
+    try {
+        asiolink::IOAddress ip_address_ = isc::asiolink::IOAddress(line);
+        // let's silence not used warning
+        (void) ip_address_;
+    } catch (const isc::asiolink::IOError& e) {
+        return (true);
+    }
+    giaddr_list_.push_back(line);
+    multi_subnet_ = true;
+    return (false);
+}
+
+void CommandOptions::loadGiaddr() {
+    std::string line;
+    std::ifstream infile(giaddr_list_file_.c_str());
+    size_t cnt = 0;
+    while (std::getline(infile, line)) {
+        cnt++;
+        stringstream tmp;
+        tmp << "invalid address in line: "<< cnt;
+        check(validateIP(line), tmp.str());
+    }
+}
+
 void CommandOptions::loadMacs() {
     std::string line;
     std::ifstream infile(mac_list_file_.c_str());
@@ -1177,6 +1211,9 @@ CommandOptions::usage() const {
         "    whether -6 is given.\n"
         "-I<ip-offset>: Offset of the (DHCPv4) IP address in the requested-IP\n"
         "    option / (DHCPv6) IA_NA option in the (second/request) template.\n"
+        "-J<giaddr-list-file>: Text file that include multiple addresses.\n"
+        "    If provided perfdhcp will choose randomly one of addresses for each\n"
+        "    exchange.\n"
         "-l<local-addr|interface>: For DHCPv4 operation, specify the local\n"
         "    hostname/address to use when communicating with the server.  By\n"
         "    default, the interface address through which traffic would\n"

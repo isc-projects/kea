@@ -1315,10 +1315,10 @@ TestControl::sendRequest4(const dhcp::Pkt4Ptr& discover_pkt4,
     OptionPtr opt_parameter_list =
         Option::factory(Option::V4, DHO_DHCP_PARAMETER_REQUEST_LIST);
     pkt4->addOption(opt_parameter_list);
-    // Set client's and server's ports as well as server's address,
-    // and local (relay) address.
+    // Set client's and server's ports as well as server's address
     setDefaults4(pkt4);
-
+    // Override relay address
+    pkt4->setGiaddr(offer_pkt4->getGiaddr());
     // Add any extra options that user may have specified.
     addExtraOpts(pkt4);
 
@@ -1721,8 +1721,13 @@ TestControl::setDefaults4(const Pkt4Ptr& pkt) {
     pkt->setRemoteAddr(IOAddress(options_.getServerName()));
     // Set local address.
     pkt->setLocalAddr(IOAddress(socket_.addr_));
-    // Set relay (GIADDR) address to local address.
-    pkt->setGiaddr(IOAddress(socket_.addr_));
+    // Set relay (GIADDR) address to local address if multiple
+    // subnet mode is not enabled
+    if (!options_.checkMultiSubnet()) {
+        pkt->setGiaddr(IOAddress(socket_.addr_));
+    } else {
+        pkt->setGiaddr(IOAddress(options_.getRandGiaddr()));
+    }
     // Pretend that we have one relay (which is us).
     pkt->setHops(1);
 }

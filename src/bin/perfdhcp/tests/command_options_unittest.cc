@@ -832,6 +832,17 @@ TEST_F(CommandOptionsTest, LoadMacsFromFile) {
     EXPECT_EQ(4, m.size());
 }
 
+TEST_F(CommandOptionsTest, LoadGiaddrFromFile) {
+    CommandOptions opt;
+    std::string giaddr_list_full_path = getFullPath("giaddr");
+    std::ostringstream cmd;
+    cmd << "perfdhcp -J " << giaddr_list_full_path << " abc";
+    EXPECT_NO_THROW(process(opt, cmd.str()));
+    EXPECT_EQ(giaddr_list_full_path, opt.getGiaddrListFile());
+    EXPECT_TRUE(opt.checkMultiSubnet());
+    EXPECT_EQ(5, opt.getGiaddrList().size());
+}
+
 TEST_F(CommandOptionsTest, LoadMacsFromFileNegativeCases) {
     CommandOptions opt;
     // Negative test cases
