@@ -64,7 +64,7 @@ public:
 
     /// @brief Initiates shutdown procedure for the whole DHCPv6 server.
     /// @param exit_value integer value to the process should exit with.
-    virtual void shutdown(int exit_value);
+    virtual void shutdownServer(int exit_value);
 
     /// @brief Command processor
     ///

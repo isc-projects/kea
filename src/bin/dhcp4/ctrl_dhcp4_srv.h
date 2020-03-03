@@ -64,7 +64,7 @@ public:
 
     /// @brief Initiates shutdown procedure for the whole DHCPv4 server.
     /// @param exit_value integer value to the process should exit with.
-    void shutdown(int exit_value);
+    void shutdownServer(int exit_value);
 
     /// @brief Command processor
     ///

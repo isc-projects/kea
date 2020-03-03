@@ -230,7 +230,7 @@ ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr args)
         }
     }
 
-    ControlledDhcpv6Srv::getInstance()->shutdown(exit_value);
+    ControlledDhcpv6Srv::getInstance()->shutdownServer(exit_value);
     return(createAnswer(CONTROL_RESULT_SUCCESS, "Shutting down."));
 }
 
@@ -994,10 +994,10 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
         boost::bind(&StatsMgr::statisticSetMaxSampleCountAllHandler, _1, _2));
 }
 
-void ControlledDhcpv6Srv::shutdown(int exit_value) {
+void ControlledDhcpv6Srv::shutdownServer(int exit_value) {
     setExitValue(exit_value);
     io_service_.stop();    // Stop ASIO transmissions
-    Dhcpv6Srv::shutdown(); // Initiate DHCPv6 shutdown procedure.
+    shutdown();            // Initiate DHCPv6 shutdown procedure.
 }
 
 ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
@@ -1106,7 +1106,7 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             // We're out of retries, log it and initiate shutdown.
             LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_RETRIES_EXHAUSTED)
             .arg(db_reconnect_ctl->maxRetries());
-            shutdown(EXIT_FAILURE);
+            shutdownServer(EXIT_FAILURE);
             return;
         }
 
@@ -1144,7 +1144,7 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_DISABLED)
             .arg(db_reconnect_ctl->retriesLeft())
             .arg(db_reconnect_ctl->retryInterval());
-        shutdown(EXIT_FAILURE);
+        shutdownServer(EXIT_FAILURE);
         return(false);
     }
 

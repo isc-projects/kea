@@ -226,7 +226,7 @@ ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr args)
         }
     }
 
-    ControlledDhcpv4Srv::getInstance()->shutdown(exit_value);
+    ControlledDhcpv4Srv::getInstance()->shutdownServer(exit_value);
     return (createAnswer(CONTROL_RESULT_SUCCESS, "Shutting down."));
 }
 
@@ -972,10 +972,10 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
         boost::bind(&StatsMgr::statisticSetMaxSampleCountAllHandler, _1, _2));
 }
 
-void ControlledDhcpv4Srv::shutdown(int exit_value) {
+void ControlledDhcpv4Srv::shutdownServer(int exit_value) {
     setExitValue(exit_value);
     io_service_.stop();       // Stop ASIO transmissions
-    Dhcpv4Srv::shutdown();    // Initiate DHCPv4 shutdown procedure.
+    shutdown();               // Initiate DHCPv4 shutdown procedure.
 }
 
 ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
@@ -1084,7 +1084,7 @@ ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             // We're out of retries, log it and initiate shutdown.
             LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED)
             .arg(db_reconnect_ctl->maxRetries());
-            shutdown(EXIT_FAILURE);
+            shutdownServer(EXIT_FAILURE);
             return;
         }
 
@@ -1123,7 +1123,7 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_DISABLED)
             .arg(db_reconnect_ctl->retriesLeft())
             .arg(db_reconnect_ctl->retryInterval());
-        shutdown(EXIT_FAILURE);
+        shutdownServer(EXIT_FAILURE);
         return(false);
     }
 
