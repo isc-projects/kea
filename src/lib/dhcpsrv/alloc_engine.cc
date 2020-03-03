@@ -3940,7 +3940,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
                 // An lease exists, is expired, and not reserved use it.
                 if (exist_lease->expired() && (!addressReserved(candidate, ctx))) {
                     ctx.old_lease_ = Lease4Ptr(new Lease4(*exist_lease));
-                    new_lease = (reuseExpiredLease4(exist_lease, ctx, callout_status));
+                    new_lease = reuseExpiredLease4(exist_lease, ctx, callout_status);
                 }
             }
 
