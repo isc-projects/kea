@@ -149,6 +149,7 @@ public:
     /// process object.
     /// ProcessRunError - A fatal error occurred while in the application
     /// process event loop.
+    /// @return The value from @c Daemon::getExitValue().
     virtual int launch(int argc, char* argv[], const bool test_mode);
 
     /// @brief Instance method invoked by the configuration event handler and

@@ -73,7 +73,7 @@ public:
     virtual void cleanup();
 
     /// @brief Initiates shutdown procedure for the whole server.
-    void shutdown();
+    virtual void shutdown();
 
     /// @brief Initializes logger
     ///

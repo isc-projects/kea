@@ -227,7 +227,7 @@ ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr args)
     }
 
     ControlledDhcpv4Srv::getInstance()->shutdown(exit_value);
-    return(createAnswer(CONTROL_RESULT_SUCCESS, "Shutting down."));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Shutting down."));
 }
 
 ConstElementPtr

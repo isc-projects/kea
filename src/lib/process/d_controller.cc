@@ -69,7 +69,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 
     if (isCheckOnly()) {
         checkConfigOnly();
-        return(EXIT_SUCCESS);
+        return (EXIT_SUCCESS);
     }
 
     // It is important that we set a default logger name because this name
@@ -155,7 +155,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     LOG_INFO(dctl_logger, DCTL_SHUTDOWN)
         .arg(app_name_).arg(getpid()).arg(VERSION);
 
-    return(getExitValue());
+    return (getExitValue());
 }
 
 void

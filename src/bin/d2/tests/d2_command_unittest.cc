@@ -583,8 +583,8 @@ TEST_F(CtrlChannelD2Test, shutdownExitValue) {
     string response;
 
     sendUnixCommand("{ \"command\": \"shutdown\", "
-                    "\"arguments\": { \"exit-value\": 77 }}"
-                    , response);
+                    "\"arguments\": { \"exit-value\": 77 }}",
+                    response);
 
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutdown initiated, type is: normal\" }",
               response);
