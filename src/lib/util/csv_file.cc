@@ -430,27 +430,32 @@ CSVRow::escapeCharacters(const std::string& orig_str, const std::string& charact
     size_t char_pos = 0;
     size_t prev_pos = 0;
 
-    // Check for a first occurance. If none, just return a
+    // We add the first character of the escape tag to the list of
+    // characters to escape.  This ensures input which happens to
+    // be valid esacpe sequences will be escaped.
+    std::string escape_chars(characters + escape_tag[0]);
+
+    // Check for a first occurence. If none, just return a
     // copy of the original.
-    char_pos = orig_str.find_first_of(characters, prev_pos);
+    char_pos = orig_str.find_first_of(escape_chars, prev_pos);
     if (char_pos == std::string::npos) {
         return(orig_str);
     }
 
     std::stringstream ss;
     while (char_pos < orig_str.size()) {
-        // Copy everything upto the charcater to escape.
+        // Copy everything upto the character to escape.
         ss << orig_str.substr(prev_pos, char_pos - prev_pos);
 
         // Copy the escape tag followed by the hex digits of the character.
         ss << escape_tag << std::hex << std::setw(2)
-           << (uint16_t)(orig_str[char_pos]);
+           << static_cast<uint16_t>(orig_str[char_pos]);
 
         ++char_pos;
         prev_pos = char_pos;
 
         // Find the next character to escape.
-        char_pos = orig_str.find_first_of(characters, prev_pos);
+        char_pos = orig_str.find_first_of(escape_chars, prev_pos);
 
         // If no more, copy the remainder of the string.
         if (char_pos == std::string::npos) {
@@ -492,9 +497,9 @@ CSVRow::unescapeCharacters(const std::string& escaped_str) {
                 uint8_t digit = escaped_str[dig_pos];
 
                 if (digit >= 'a' && digit <= 'f') {
-                    digit = (digit - 'a' + 10);
+                    digit = digit - 'a' + 10;
                 } else if (digit >= 'A' && digit <= 'F') {
-                    digit = (digit - 'A' + 10);
+                    digit = digit - 'A' + 10;
                 } else if (digit >= '0' && digit <= '9') {
                     digit -= '0';
                 } else {
@@ -503,7 +508,7 @@ CSVRow::unescapeCharacters(const std::string& escaped_str) {
                 }
 
                 if (i == 0) {
-                    escaped_char = (digit << 4);
+                    escaped_char = digit << 4;
                 } else {
                     escaped_char |= digit;
                 }

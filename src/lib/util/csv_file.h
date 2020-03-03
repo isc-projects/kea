@@ -113,7 +113,7 @@ public:
     /// characters.
     ///
     /// Returns a copy of the internal container value at the given index
-    /// which has had all escaped characters replaced with their unesacped
+    /// which has had all escaped characters replaced with their unescaped
     /// values. Escaped characters embedded using the following format:
     ///
     /// This function fetches the value at the given index and passes it
@@ -199,7 +199,7 @@ public:
         writeAt(at, value.c_str());
     }
 
-    /// @brief Replaces the value at specified index with a value that has
+    /// @brief Replaces the value at the specified index with a value that has
     /// had special characters escaped
     ///
     /// This function first calls @c CSVRow::esacpeCharacters to replace
@@ -274,7 +274,7 @@ public:
     /// escaping.
     /// @param characters list of characters which require escaping.
     ///
-    /// The escaped characters will use the followin format:
+    /// The escaped characters will use the following format:
     ///
     /// &#x{xx}
     ///

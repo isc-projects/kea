@@ -599,6 +599,48 @@ TEST_F(CSVLeaseFile4Test, embeddedCommas) {
     EXPECT_EQ(context_str, lease->getContext()->str());
 }
 
+// Verifies that it is possible to write and read a lease with
+// escape tags and sequences in hostname and user context.
+TEST_F(CSVLeaseFile4Test, embeddedEscapes) {
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_NO_THROW(lf.recreate());
+    ASSERT_TRUE(io_.exists());
+
+    std::string hostname("host&#xexample&#x2ccom");
+    std::string context_str("{ \"&#xbar\": true, \"foo\": false, \"x\": \"fac&#x2ctor\" }");
+
+    // Create a lease with commas in the hostname.
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.3.2"),
+                               hwaddr0_,
+                               NULL, 0,
+                               0xFFFFFFFF, time(0),
+                               8, true, true,
+                               hostname));
+
+    // Add the user context with commas.
+    lease->setContext(Element::fromJSON(context_str));
+
+    // Write this lease out to the lease file.
+    ASSERT_NO_THROW(lf.append(*lease));
+
+    // Close the lease file.
+    lf.close();
+
+    Lease4Ptr lease_read;
+
+    // Re-open the file for reading.
+    ASSERT_NO_THROW(lf.open());
+
+    // Read the lease and make sure it is successful.
+    EXPECT_TRUE(lf.next(lease_read));
+    ASSERT_TRUE(lease_read);
+
+    // Expect the hostname and user context to retain the commas
+    // they started with.
+    EXPECT_EQ(hostname, lease->hostname_);
+    EXPECT_EQ(context_str, lease->getContext()->str());
+}
+
 /// @todo Currently we don't check invalid lease attributes, such as invalid
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6
 /// should be extended with the function that validates lease attributes. Once

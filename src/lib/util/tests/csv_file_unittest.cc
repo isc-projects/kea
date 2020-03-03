@@ -28,10 +28,18 @@ TEST(CSVRowTest, escapeUnescape) {
     std::string unescaped = CSVRow::unescapeCharacters(escaped);
     EXPECT_EQ (orig, unescaped);
 
-    // Make sure that an incident occurance of the escape tag
-    // characters is left intact.
+    // Make sure that an incident occurrence of just the escape tag
+    // is left intact.
     orig = ("no&#xescape");
+    escaped = CSVRow::escapeCharacters(orig, ",");
     unescaped = CSVRow::unescapeCharacters(orig);
+    EXPECT_EQ (orig, unescaped);
+
+    // Make sure that an incidental occurrence of a valid
+    // escape tag sequence left intact.
+    orig = ("no&#x2cescape");
+    escaped = CSVRow::escapeCharacters(orig, ",");
+    unescaped = CSVRow::unescapeCharacters(escaped);
     EXPECT_EQ (orig, unescaped);
 }
 
