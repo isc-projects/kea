@@ -1409,6 +1409,16 @@ public:
         /// @return Pointer to the host object.
         ConstHostPtr currentHost() const;
 
+        /// @brief Returns global host reservation if there is one
+        ///
+        /// If the current subnet's reservation mode is global and
+        /// there is a global host (i.e. reservation belonging to
+        /// the global subnet), return it.  Otherwise return an
+        /// empty pointer.
+        ///
+        /// @return Pointer to the host object.
+        ConstHostPtr globalHost() const;
+
         /// @brief Default constructor.
         ClientContext4();
 

@@ -3075,6 +3075,18 @@ AllocEngine::ClientContext4::currentHost() const {
     return (ConstHostPtr());
 }
 
+ConstHostPtr
+AllocEngine::ClientContext4::globalHost() const {
+    if (subnet_ && subnet_->getHostReservationMode() == Network::HR_GLOBAL) {
+        auto host = hosts_.find(SUBNET_ID_GLOBAL);
+        if (host != hosts_.cend()) {
+            return (host->second);
+        }
+    }
+
+    return (ConstHostPtr());
+}
+
 DdnsParamsPtr
 AllocEngine::ClientContext4::getDdnsParams() {
     // We already have it, return it.
