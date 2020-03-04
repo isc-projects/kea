@@ -117,7 +117,7 @@ public:
     /// values. Escaped characters embedded using the following format:
     ///
     /// This function fetches the value at the given index and passes it
-    /// into CSVRow::unesacpeCharacters which replaces any escaped special
+    /// into CSVRow::unescapeCharacters which replaces any escaped special
     /// characters with their unescaped form.
     ///
     /// @param at Index of the value in the container. The values are indexed
@@ -202,7 +202,7 @@ public:
     /// @brief Replaces the value at the specified index with a value that has
     /// had special characters escaped
     ///
-    /// This function first calls @c CSVRow::esacpeCharacters to replace
+    /// This function first calls @c CSVRow::escapeCharacters to replace
     /// special characters with their escaped form.  It then sets the value
     /// to be rendered using @c CSVRow::render function.
     ///

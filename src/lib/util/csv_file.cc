@@ -432,10 +432,10 @@ CSVRow::escapeCharacters(const std::string& orig_str, const std::string& charact
 
     // We add the first character of the escape tag to the list of
     // characters to escape.  This ensures input which happens to
-    // be valid esacpe sequences will be escaped.
+    // be valid escape sequences will be escaped.
     std::string escape_chars(characters + escape_tag[0]);
 
-    // Check for a first occurence. If none, just return a
+    // Check for a first occurrence. If none, just return a
     // copy of the original.
     char_pos = orig_str.find_first_of(escape_chars, prev_pos);
     if (char_pos == std::string::npos) {

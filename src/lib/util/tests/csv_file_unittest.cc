@@ -16,7 +16,7 @@ namespace {
 
 using namespace isc::util;
 
-// This test exercizes escaping and unescaping of characters.
+// This test exercises escaping and unescaping of characters.
 TEST(CSVRowTest, escapeUnescape) {
     std::string orig(",FO^O\\,B?,AR,");
 
