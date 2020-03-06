@@ -4,13 +4,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef MULTI_THREADING_UTIL_H
-#define MULTI_THREADING_UTIL_H
+#ifndef MULTI_THREADING_UTILS_H
+#define MULTI_THREADING_UTILS_H
 
 #include <boost/noncopyable.hpp>
 
 namespace isc {
-namespace dhcp {
+namespace util {
 
 /// @note: everything here MUST be used ONLY from the main thread.
 /// When called from a thread of the pool it can deadlock.
@@ -52,7 +52,7 @@ private:
     static void startPktProcessing();
 };
 
-}  // namespace dhcp
+}  // namespace util
 }  // namespace isc
 
-#endif // MULTI_THREADING_UTIL_H
+#endif // MULTI_THREADING_UTILS_H

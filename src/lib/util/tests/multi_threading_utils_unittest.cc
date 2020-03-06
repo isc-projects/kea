@@ -6,12 +6,11 @@
 
 #include <config.h>
 
-#include <dhcpsrv/multi_threading_utils.h>
 #include <util/multi_threading_mgr.h>
+#include <util/multi_threading_utils.h>
 
 #include <gtest/gtest.h>
 
-using namespace isc::dhcp;
 using namespace isc::util;
 
 namespace {
@@ -36,6 +35,8 @@ TEST(MultiThreadingUtil, constructorAndDestructor) {
             // thread pool should be stopped
             EXPECT_EQ(thread_pool.size(), 0);
         }
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
     }
     // thread count should match
     EXPECT_EQ(thread_pool.size(), 16);
@@ -74,6 +75,8 @@ TEST(MultiThreadingUtil, constructorAndDestructor) {
             // thread pool should be stopped
             EXPECT_EQ(thread_pool.size(), 0);
         }
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
     }
     // thread count should match
     EXPECT_EQ(thread_pool.size(), 0);

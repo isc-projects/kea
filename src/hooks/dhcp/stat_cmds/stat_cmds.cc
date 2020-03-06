@@ -12,7 +12,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/multi_threading_utils.h>
 #include <dhcpsrv/subnet_id.h>
 #include <hooks/hooks.h>
 #include <exceptions/exceptions.h>
@@ -20,6 +19,7 @@
 #include <stat_cmds_log.h>
 #include <stats/stats_mgr.h>
 #include <util/boost_time_utils.h>
+#include <util/multi_threading_utils.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <string>
@@ -30,6 +30,7 @@ using namespace isc::config;
 using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::stats;
+using namespace isc::util;
 using namespace std;
 
 namespace isc {

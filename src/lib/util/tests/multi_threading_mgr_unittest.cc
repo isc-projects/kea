@@ -102,26 +102,26 @@ TEST(MultiThreadingMgrTest, applyConfig) {
     EXPECT_EQ(thread_pool.size(), 0);
 }
 
-/// @brief Verifies that override flag works.
-TEST(MultiThreadingMgrTest, override) {
+/// @brief Verifies that the critical section flag works.
+TEST(MultiThreadingMgrTest, criticalSection) {
     // get the thread pool
     auto& thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
     // MT should be disabled
     EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
-    // override should be disabled
-    EXPECT_FALSE(MultiThreadingMgr::instance().getOverride());
+    // critical section should be disabled
+    EXPECT_FALSE(MultiThreadingMgr::instance().isInCriticalSection());
     // thread count should be 0
     EXPECT_EQ(MultiThreadingMgr::instance().getPktThreadPoolSize(), 0);
     // thread pool should be stopped
     EXPECT_EQ(thread_pool.size(), 0);
-    // decrement override
-    EXPECT_THROW(MultiThreadingMgr::instance().decrementOverride(), InvalidOperation);
-    // override should be disabled
-    EXPECT_FALSE(MultiThreadingMgr::instance().getOverride());
-    // increment override
-    EXPECT_NO_THROW(MultiThreadingMgr::instance().incrementOverride());
-    // override should be enabled
-    EXPECT_TRUE(MultiThreadingMgr::instance().getOverride());
+    // exit critical section
+    EXPECT_THROW(MultiThreadingMgr::instance().exitCriticalSection(), InvalidOperation);
+    // critical section should be disabled
+    EXPECT_FALSE(MultiThreadingMgr::instance().isInCriticalSection());
+    // enter critical section
+    EXPECT_NO_THROW(MultiThreadingMgr::instance().enterCriticalSection());
+    // critical section should be enabled
+    EXPECT_TRUE(MultiThreadingMgr::instance().isInCriticalSection());
     // enable MT with 16 threads
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(true, 16));
     // MT should be enabled
@@ -130,14 +130,14 @@ TEST(MultiThreadingMgrTest, override) {
     EXPECT_EQ(MultiThreadingMgr::instance().getPktThreadPoolSize(), 16);
     // thread pool should be stopped
     EXPECT_EQ(thread_pool.size(), 0);
-    // decrement override
-    EXPECT_NO_THROW(MultiThreadingMgr::instance().decrementOverride());
-    // override should be disabled
-    EXPECT_FALSE(MultiThreadingMgr::instance().getOverride());
-    // decrement override
-    EXPECT_THROW(MultiThreadingMgr::instance().decrementOverride(), InvalidOperation);
-    // override should be disabled
-    EXPECT_FALSE(MultiThreadingMgr::instance().getOverride());
+    // exit critical section
+    EXPECT_NO_THROW(MultiThreadingMgr::instance().exitCriticalSection());
+    // critical section should be disabled
+    EXPECT_FALSE(MultiThreadingMgr::instance().isInCriticalSection());
+    // exit critical section
+    EXPECT_THROW(MultiThreadingMgr::instance().exitCriticalSection(), InvalidOperation);
+    // critical section should be disabled
+    EXPECT_FALSE(MultiThreadingMgr::instance().isInCriticalSection());
     // disable MT
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(false, 0));
     // MT should be disabled

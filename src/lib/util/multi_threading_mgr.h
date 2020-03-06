@@ -55,35 +55,35 @@ public:
     /// @return the single instance.
     static MultiThreadingMgr& instance();
 
-    /// @brief Get the mode.
+    /// @brief Get the multi-threading mode.
     ///
-    /// @return the current mode: true if multi-threading is enabled,
-    /// false otherwise.
+    /// @return The current multi-threading mode: true if multi-threading is
+    /// enabled, false otherwise.
     bool getMode() const;
 
-    /// @brief Set the mode.
+    /// @brief Set the multi-threading mode.
     ///
     /// @param enabled The new mode.
     void setMode(bool enabled);
 
-    /// @brief Increment override.
+    /// @brief Enter critical section.
     ///
-    /// When entering @ref MultiThreadingCriticalSection, increment override
-    /// so that any configuration change that might start the packet thread pool
-    /// is delayed until exiting the respective section.
-    void incrementOverride();
+    /// When entering @ref MultiThreadingCriticalSection, increment internal
+    /// counter so that any configuration change that might start the packet
+    /// thread pool is delayed until exiting the respective section.
+    void enterCriticalSection();
 
-    /// @brief Decrement override.
+    /// @brief Exit critical section.
     ///
-    /// When exiting @ref MultiThreadingCriticalSection, decrement override
-    /// so that the packet thread pool can be started according to the new
-    /// configuration.
-    void decrementOverride();
+    /// When exiting @ref MultiThreadingCriticalSection, decrement internal
+    /// counter so that the packet thread pool can be started according to the
+    /// new configuration.
+    void exitCriticalSection();
 
-    /// @brief Get override.
+    /// @brief Is in critical section flag.
     ///
-    /// Get the override flag.
-    bool getOverride();
+    /// @return The critical section flag.
+    bool isInCriticalSection();
 
     /// @brief Get the packet thread pool.
     ///
@@ -125,16 +125,19 @@ protected:
 
 private:
 
-    /// @brief The current mode.
+    /// @brief The current multi-threading mode.
+    ///
+    /// The multi-threading flag: true if multi-threading is enabled, false
+    /// otherwise
     bool enabled_;
 
-    /// @brief The override mode.
+    /// @brief The critical section count.
     ///
     /// In case the configuration is applied within a
     /// @ref MultiThreadingCriticalSection, the thread pool should not be
     /// started until leaving the respective section.
-    /// This also handles multiple interleaved sections.
-    uint32_t override_;
+    /// This handles multiple interleaved sections.
+    uint32_t critical_section_count_;
 
     /// @brief The configured size of the packet thread pool.
     uint32_t pkt_thread_pool_size_;

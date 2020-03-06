@@ -6,22 +6,20 @@
 
 #include <config.h>
 
-#include <dhcpsrv/multi_threading_utils.h>
 #include <exceptions/exceptions.h>
 #include <util/multi_threading_mgr.h>
+#include <util/multi_threading_utils.h>
 
-
-using namespace isc::util;
 
 namespace isc {
-namespace dhcp {
+namespace util {
 
 void
 MultiThreadingCriticalSection::stopPktProcessing() {
     auto& thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
-    bool override = MultiThreadingMgr::instance().getOverride();
+    bool flag = MultiThreadingMgr::instance().isInCriticalSection();
     auto size = MultiThreadingMgr::instance().getPktThreadPoolSize();
-    if (size && !override) {
+    if (size && !flag) {
         thread_pool.stop();
     }
 }
@@ -29,9 +27,9 @@ MultiThreadingCriticalSection::stopPktProcessing() {
 void
 MultiThreadingCriticalSection::startPktProcessing() {
     auto& thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
-    bool override = MultiThreadingMgr::instance().getOverride();
+    bool flag = MultiThreadingMgr::instance().isInCriticalSection();
     auto size = MultiThreadingMgr::instance().getPktThreadPoolSize();
-    if (size && !override) {
+    if (size && !flag) {
         thread_pool.start(size);
     }
 }
@@ -40,15 +38,15 @@ MultiThreadingCriticalSection::MultiThreadingCriticalSection() {
     if (MultiThreadingMgr::instance().getMode()) {
         stopPktProcessing();
     }
-    MultiThreadingMgr::instance().incrementOverride();
+    MultiThreadingMgr::instance().enterCriticalSection();
 }
 
 MultiThreadingCriticalSection::~MultiThreadingCriticalSection() {
-    MultiThreadingMgr::instance().decrementOverride();
+    MultiThreadingMgr::instance().exitCriticalSection();
     if (MultiThreadingMgr::instance().getMode()) {
         startPktProcessing();
     }
 }
 
-}  // namespace dhcp
+}  // namespace util
 }  // namespace isc

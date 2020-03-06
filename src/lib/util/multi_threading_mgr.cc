@@ -9,7 +9,8 @@
 namespace isc {
 namespace util {
 
-MultiThreadingMgr::MultiThreadingMgr() : enabled_(false), override_(0) {
+MultiThreadingMgr::MultiThreadingMgr()
+    : enabled_(false), critical_section_count_(0) {
 }
 
 MultiThreadingMgr::~MultiThreadingMgr() {
@@ -32,21 +33,21 @@ MultiThreadingMgr::setMode(bool enabled) {
 }
 
 void
-MultiThreadingMgr::incrementOverride() {
-    override_++;
+MultiThreadingMgr::enterCriticalSection() {
+    ++critical_section_count_;
 }
 
 void
-MultiThreadingMgr::decrementOverride() {
-    if (override_ == 0) {
+MultiThreadingMgr::exitCriticalSection() {
+    if (critical_section_count_ == 0) {
         isc_throw(InvalidOperation, "invalid negative value for override");
     }
-    override_--;
+    --critical_section_count_;
 }
 
 bool
-MultiThreadingMgr::getOverride() {
-    return (override_ != 0);
+MultiThreadingMgr::isInCriticalSection() {
+    return (critical_section_count_ != 0);
 }
 
 ThreadPool<std::function<void()>>&
@@ -89,7 +90,7 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count) {
         }
         setPktThreadPoolSize(thread_count);
         setMode(true);
-        if (!getOverride()) {
+        if (!isInCriticalSection()) {
             pkt_thread_pool_.start(thread_count);
         }
     } else {

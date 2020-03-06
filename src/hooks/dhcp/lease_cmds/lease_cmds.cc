@@ -14,7 +14,6 @@
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/multi_threading_utils.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/sanity_checker.h>
 #include <dhcp/duid.h>
@@ -24,6 +23,7 @@
 #include <lease_parser.h>
 #include <lease_cmds_log.h>
 #include <util/encode/hex.h>
+#include <util/multi_threading_utils.h>
 #include <util/strutil.h>
 
 #include <boost/bind.hpp>
@@ -37,6 +37,7 @@ using namespace isc::data;
 using namespace isc::config;
 using namespace isc::asiolink;
 using namespace isc::hooks;
+using namespace isc::util;
 using namespace std;
 
 namespace isc {

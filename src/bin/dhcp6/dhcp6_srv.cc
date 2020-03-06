@@ -35,7 +35,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/multi_threading_utils.h>
 #include <dhcpsrv/ncr_generator.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
