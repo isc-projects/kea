@@ -186,6 +186,17 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
         }
     }
 
+    // Global host reservations are independent of a selected subnet. If the
+    // global reservations contain client classes we should use them in case
+    // they are meant to affect pool selection.
+    auto global_host = context_->globalHost();
+    if (global_host && !global_host->getClientClasses4().empty()) {
+        // Previously evaluated classes must be ignored because having new
+        // classes fetched from the hosts db may eliminate some of them.
+        query->classes_.clear();
+        setReservedClientClasses();
+    }
+
     // Set KNOWN builtin class if something was found, UNKNOWN if not.
     if (!context_->hosts_.empty()) {
         query->addClass("KNOWN");
@@ -2784,8 +2795,12 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
-        // Assign reserved classes.
-        ex.setReservedClientClasses();
+        // If this is global reservation we have already fetched it and
+        // evaluated the classes.
+        if (!ex.getContext()->globalHost()) {
+            // Assign reserved classes.
+            ex.setReservedClientClasses();
+        }
         // Required classification
         requiredClassify(ex);
 
@@ -2852,8 +2867,12 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
 
     // Adding any other options makes sense only when we got the lease.
     if (!response->getYiaddr().isV4Zero()) {
-        // Assign reserved classes.
-        ex.setReservedClientClasses();
+        // If this is global reservation we have already fetched it and
+        // evaluated the classes.
+        if (!ex.getContext()->globalHost()) {
+            // Assign reserved classes.
+            ex.setReservedClientClasses();
+        }
         // Required classification
         requiredClassify(ex);
 
@@ -3166,7 +3185,11 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 
     Pkt4Ptr ack = ex.getResponse();
 
-    ex.setReservedClientClasses();
+    // If this is global reservation we have already fetched it and
+    // evaluated the classes.
+    if (!ex.getContext()->globalHost()) {
+        ex.setReservedClientClasses();
+    }
     requiredClassify(ex);
 
     buildCfgOptionList(ex);
