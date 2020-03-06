@@ -424,6 +424,17 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
         alloc_engine_->findReservation(ctx);
     }
 
+    // Global host reservations are independent of a selected subnet. If the
+    // global reservations contain client classes we should use them in case
+    // they are meant to affect pool selection.
+    auto global_host = ctx.globalHost();
+    if (global_host && !global_host->getClientClasses6().empty()) {
+        // Previously evaluated classes must be ignored because having new
+        // classes fetched from the hosts db may eliminate some of them.
+        pkt->classes_.clear();
+        setReservedClientClasses(pkt, ctx);
+    }
+
     // Set KNOWN builtin class if something was found, UNKNOWN if not.
     if (!ctx.hosts_.empty()) {
         pkt->addClass("KNOWN");
@@ -2979,7 +2990,7 @@ Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(solicit, response, ctx);
     assignLeases(solicit, response, ctx);
 
-    setReservedClientClasses(solicit, ctx);
+    setNonGlobalReservedClientClasses(solicit, ctx);
     requiredClassify(solicit, ctx);
 
     copyClientOptions(solicit, response);
@@ -3009,7 +3020,7 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(request, reply, ctx);
     assignLeases(request, reply, ctx);
 
-    setReservedClientClasses(request, ctx);
+    setNonGlobalReservedClientClasses(request, ctx);
     requiredClassify(request, ctx);
 
     copyClientOptions(request, reply);
@@ -3035,7 +3046,7 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(renew, reply, ctx);
     extendLeases(renew, reply, ctx);
 
-    setReservedClientClasses(renew, ctx);
+    setNonGlobalReservedClientClasses(renew, ctx);
     requiredClassify(renew, ctx);
 
     copyClientOptions(renew, reply);
@@ -3061,7 +3072,7 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(rebind, reply, ctx);
     extendLeases(rebind, reply, ctx);
 
-    setReservedClientClasses(rebind, ctx);
+    setNonGlobalReservedClientClasses(rebind, ctx);
     requiredClassify(rebind, ctx);
 
     copyClientOptions(rebind, reply);
@@ -3082,7 +3093,7 @@ Pkt6Ptr
 Dhcpv6Srv::processConfirm(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr confirm = ctx.query_;
-    setReservedClientClasses(confirm, ctx);
+    setNonGlobalReservedClientClasses(confirm, ctx);
     requiredClassify(confirm, ctx);
 
     // Get IA_NAs from the Confirm. If there are none, the message is
@@ -3172,7 +3183,7 @@ Pkt6Ptr
 Dhcpv6Srv::processRelease(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr release = ctx.query_;
-    setReservedClientClasses(release, ctx);
+    setNonGlobalReservedClientClasses(release, ctx);
     requiredClassify(release, ctx);
 
     // Create an empty Reply message.
@@ -3198,7 +3209,7 @@ Pkt6Ptr
 Dhcpv6Srv::processDecline(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr decline = ctx.query_;
-    setReservedClientClasses(decline, ctx);
+    setNonGlobalReservedClientClasses(decline, ctx);
     requiredClassify(decline, ctx);
 
     // Create an empty Reply message.
@@ -3493,7 +3504,7 @@ Pkt6Ptr
 Dhcpv6Srv::processInfRequest(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr inf_request = ctx.query_;
-    setReservedClientClasses(inf_request, ctx);
+    setNonGlobalReservedClientClasses(inf_request, ctx);
     requiredClassify(inf_request, ctx);
 
     // Create a Reply packet, with the same trans-id as the client's.
@@ -3641,6 +3652,14 @@ Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
             .arg(pkt->getLabel())
             .arg(classes.toText());
+    }
+}
+
+void
+Dhcpv6Srv::setNonGlobalReservedClientClasses(const Pkt6Ptr& pkt,
+                                             const AllocEngine::ClientContext6& ctx) {
+    if (!ctx.globalHost()) {
+        setReservedClientClasses(pkt, ctx);
     }
 }
 

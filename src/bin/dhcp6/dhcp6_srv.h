@@ -821,6 +821,14 @@ protected:
     void setReservedClientClasses(const Pkt6Ptr& pkt,
                                   const AllocEngine::ClientContext6& ctx);
 
+    /// @brief Assigns non-global classes retrieved from host reservation
+    /// database.
+    ///
+    /// @param pkt Pointer to the packet to which classes will be assigned.
+    /// @param ctx Reference to the client context.
+    void setNonGlobalReservedClientClasses(const Pkt6Ptr& pkt,
+                                           const AllocEngine::ClientContext6& ctx);
+
     /// @brief Assigns incoming packet to zero or more classes (required pass).
     ///
     /// @note This required classification evaluates all classes which
