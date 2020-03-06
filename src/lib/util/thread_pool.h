@@ -110,11 +110,27 @@ private:
 
     /// @brief stop all the threads
     void stopInternal() {
+        auto id = std::this_thread::get_id();
+        if (checkThreadId(id)) {
+            isc_throw(InvalidOperation, "thread pool stop called by owned thread");
+        }
         queue_.disable();
         for (auto thread : threads_) {
             thread->join();
         }
         threads_.clear();
+    }
+
+    /// @brief check specified thread id against own threads
+    ///
+    /// @return true if thread is owned, false otherwise
+    bool checkThreadId(std::thread::id id) {
+        for (auto thread : threads_) {
+            if (id == thread->get_id()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// @brief Defines a generic thread pool queue.
