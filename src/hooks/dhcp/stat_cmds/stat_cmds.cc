@@ -19,7 +19,7 @@
 #include <stat_cmds_log.h>
 #include <stats/stats_mgr.h>
 #include <util/boost_time_utils.h>
-#include <util/multi_threading_utils.h>
+#include <util/multi_threading_mgr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <string>

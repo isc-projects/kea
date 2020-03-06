@@ -309,7 +309,7 @@ int multi_threading_compatible() {
 and for a command creating a new subnet:
 
 @code
-#include <util/multi_threading_utils.h>
+#include <util/multi_threading_mgr.h>
 
 int commandHandler(CalloutHandle& handle) {
     ...

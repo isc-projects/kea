@@ -23,7 +23,7 @@
 #include <lease_parser.h>
 #include <lease_cmds_log.h>
 #include <util/encode/hex.h>
-#include <util/multi_threading_utils.h>
+#include <util/multi_threading_mgr.h>
 #include <util/strutil.h>
 
 #include <boost/bind.hpp>
