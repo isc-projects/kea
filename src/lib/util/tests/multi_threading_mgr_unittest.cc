@@ -103,7 +103,7 @@ TEST(MultiThreadingMgrTest, applyConfig) {
 }
 
 /// @brief Verifies that the critical section flag works.
-TEST(MultiThreadingMgrTest, criticalSection) {
+TEST(MultiThreadingMgrTest, criticalSectionFlag) {
     // get the thread pool
     auto& thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
     // MT should be disabled
@@ -148,9 +148,10 @@ TEST(MultiThreadingMgrTest, criticalSection) {
     EXPECT_EQ(thread_pool.size(), 0);
 }
 
+/// @brief Verifies that the critical section works.
 TEST(MultiThreadingMgrTest, criticalSection) {
     // get the thread pool instance
-    auto & thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
+    auto& thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
     // thread pool should be stopped
     EXPECT_EQ(thread_pool.size(), 0);
     // apply multi-threading configuration with 16 threads
