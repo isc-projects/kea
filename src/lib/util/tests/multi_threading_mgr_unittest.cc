@@ -15,7 +15,7 @@ using namespace isc::util;
 using namespace isc;
 
 /// @brief Verifies that the default mode is false (MT disabled).
-TEST(MultiThreadingMgrTest, default) {
+TEST(MultiThreadingMgrTest, defaultMode) {
     // MT should be disabled
     EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
 }
@@ -146,4 +146,85 @@ TEST(MultiThreadingMgrTest, criticalSection) {
     EXPECT_EQ(MultiThreadingMgr::instance().getPktThreadPoolSize(), 0);
     // thread pool should be stopped
     EXPECT_EQ(thread_pool.size(), 0);
+}
+
+TEST(MultiThreadingMgrTest, criticalSection) {
+    // get the thread pool instance
+    auto & thread_pool = MultiThreadingMgr::instance().getPktThreadPool();
+    // thread pool should be stopped
+    EXPECT_EQ(thread_pool.size(), 0);
+    // apply multi-threading configuration with 16 threads
+    MultiThreadingMgr::instance().apply(true, 16);
+    // thread count should match
+    EXPECT_EQ(thread_pool.size(), 16);
+    // use scope to test constructor and destructor
+    {
+        MultiThreadingCriticalSection cs;
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
+        // use scope to test constructor and destructor
+        {
+            MultiThreadingCriticalSection inner_cs;
+            // thread pool should be stopped
+            EXPECT_EQ(thread_pool.size(), 0);
+        }
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
+    }
+    // thread count should match
+    EXPECT_EQ(thread_pool.size(), 16);
+    // use scope to test constructor and destructor
+    {
+        MultiThreadingCriticalSection cs;
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
+        // apply multi-threading configuration with 64 threads
+        MultiThreadingMgr::instance().apply(true, 64);
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
+    }
+    // thread count should match
+    EXPECT_EQ(thread_pool.size(), 64);
+    // use scope to test constructor and destructor
+    {
+        MultiThreadingCriticalSection cs;
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
+        // apply multi-threading configuration with 0 threads
+        MultiThreadingMgr::instance().apply(false, 64);
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
+    }
+    // thread count should match
+    EXPECT_EQ(thread_pool.size(), 0);
+    // use scope to test constructor and destructor
+    {
+        MultiThreadingCriticalSection cs;
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
+        // use scope to test constructor and destructor
+        {
+            MultiThreadingCriticalSection inner_cs;
+            // thread pool should be stopped
+            EXPECT_EQ(thread_pool.size(), 0);
+        }
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
+    }
+    // thread count should match
+    EXPECT_EQ(thread_pool.size(), 0);
+    // use scope to test constructor and destructor
+    {
+        MultiThreadingCriticalSection cs;
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
+        // apply multi-threading configuration with 64 threads
+        MultiThreadingMgr::instance().apply(true, 64);
+        // thread pool should be stopped
+        EXPECT_EQ(thread_pool.size(), 0);
+    }
+    // thread count should match
+    EXPECT_EQ(thread_pool.size(), 64);
+    // apply multi-threading configuration with 0 threads
+    MultiThreadingMgr::instance().apply(false, 0);
 }

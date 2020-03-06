@@ -100,5 +100,29 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count) {
     }
 }
 
+void
+MultiThreadingMgr::stopPktProcessing() {
+    if (getMode() && getPktThreadPoolSize() && !isInCriticalSection()) {
+        pkt_thread_pool_.stop();
+    }
+}
+
+void
+MultiThreadingMgr::startPktProcessing() {
+    if (getMode() && getPktThreadPoolSize() && !isInCriticalSection()) {
+        pkt_thread_pool_.start(getPktThreadPoolSize());
+    }
+}
+
+MultiThreadingCriticalSection::MultiThreadingCriticalSection() {
+    MultiThreadingMgr::instance().stopPktProcessing();
+    MultiThreadingMgr::instance().enterCriticalSection();
+}
+
+MultiThreadingCriticalSection::~MultiThreadingCriticalSection() {
+    MultiThreadingMgr::instance().exitCriticalSection();
+    MultiThreadingMgr::instance().startPktProcessing();
+}
+
 }  // namespace util
 }  // namespace isc
