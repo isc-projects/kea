@@ -34,6 +34,7 @@ MultiThreadingMgr::setMode(bool enabled) {
 
 void
 MultiThreadingMgr::enterCriticalSection() {
+    stopPktProcessing();
     ++critical_section_count_;
 }
 
@@ -43,6 +44,7 @@ MultiThreadingMgr::exitCriticalSection() {
         isc_throw(InvalidOperation, "invalid negative value for override");
     }
     --critical_section_count_;
+    startPktProcessing();
 }
 
 bool
@@ -115,13 +117,11 @@ MultiThreadingMgr::startPktProcessing() {
 }
 
 MultiThreadingCriticalSection::MultiThreadingCriticalSection() {
-    MultiThreadingMgr::instance().stopPktProcessing();
     MultiThreadingMgr::instance().enterCriticalSection();
 }
 
 MultiThreadingCriticalSection::~MultiThreadingCriticalSection() {
     MultiThreadingMgr::instance().exitCriticalSection();
-    MultiThreadingMgr::instance().startPktProcessing();
 }
 
 }  // namespace util

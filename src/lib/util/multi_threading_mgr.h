@@ -115,16 +115,6 @@ public:
     /// configured, 0 if auto scaling is desired
     void apply(bool enabled, uint32_t thread_count);
 
-    /// @brief Class method stopping and joining all threads of the pool.
-    ///
-    /// Stop the packet thread pool if running.
-    void stopPktProcessing();
-
-    /// @brief Class method (re)starting threads of the pool.
-    ///
-    /// Start the packet thread pool according to current configuration.
-    void startPktProcessing();
-
 protected:
 
     /// @brief Constructor.
@@ -134,6 +124,16 @@ protected:
     virtual ~MultiThreadingMgr();
 
 private:
+
+    /// @brief Class method stopping and joining all threads of the pool.
+    ///
+    /// Stop the packet thread pool if running.
+    void stopPktProcessing();
+
+    /// @brief Class method (re)starting threads of the pool.
+    ///
+    /// Start the packet thread pool according to current configuration.
+    void startPktProcessing();
 
     /// @brief The current multi-threading mode.
     ///
