@@ -71,6 +71,7 @@ public:
     /// When entering @ref MultiThreadingCriticalSection, increment internal
     /// counter so that any configuration change that might start the packet
     /// thread pool is delayed until exiting the respective section.
+    /// If the internal counter is 0, then stop the thread pool.
     void enterCriticalSection();
 
     /// @brief Exit critical section.
@@ -78,6 +79,7 @@ public:
     /// When exiting @ref MultiThreadingCriticalSection, decrement internal
     /// counter so that the packet thread pool can be started according to the
     /// new configuration.
+    /// If the internal counter is 0, then start the thread pool.
     void exitCriticalSection();
 
     /// @brief Is in critical section flag.
