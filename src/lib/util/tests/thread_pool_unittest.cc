@@ -59,8 +59,9 @@ public:
 
     /// @brief task function which tries to stop the thread pool and then calls
     /// @ref runAndWait
-    void runTryStopAndWait(ThreadPool<CallBack>* thread_pool) {
+    void runStopResetAndWait(ThreadPool<CallBack>* thread_pool) {
         EXPECT_THROW(thread_pool->stop(), InvalidOperation);
+        EXPECT_THROW(thread_pool->reset(), InvalidOperation);
         EXPECT_NO_THROW(runAndWait());
     }
 
@@ -402,7 +403,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     // create tasks which try to stop the thread pool and then block thread pool
     // threads until signaled by main thread to force all threads of the thread
     // pool to run exactly one task
-    call_back = std::bind(&ThreadPoolTest::runTryStopAndWait, this, &thread_pool);
+    call_back = std::bind(&ThreadPoolTest::runStopResetAndWait, this, &thread_pool);
 
     // calling start should create the threads and should keep the queued items
     EXPECT_NO_THROW(thread_pool.start(thread_count));
