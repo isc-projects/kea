@@ -29,12 +29,6 @@ public:
     ThreadPoolTest() : thread_count_(0), count_(0), wait_(false) {
     }
 
-    /// @brief task function
-    void runTryStopAndWait(ThreadPool<CallBack> &thread_pool) {
-        EXPECT_THROW(thread_pool.stop(), InvalidOperation);
-        EXPECT_NO_THROW(runAndWait());
-    }
-
     /// @brief task function which registers the thread id and signals main
     /// thread to stop waiting and then waits for main thread to signal to exit
     void runAndWait() {
@@ -61,6 +55,13 @@ public:
         }
         // wake main thread if it is waiting for this thread to process
         cv_.notify_all();
+    }
+
+    /// @brief task function which tries to stop the thread pool and then calls
+    /// @ref runAndWait
+    void runTryStopAndWait(ThreadPool<CallBack>* thread_pool) {
+        EXPECT_THROW(thread_pool->stop(), InvalidOperation);
+        EXPECT_NO_THROW(runAndWait());
     }
 
     /// @brief reset all counters and internal test state
@@ -393,10 +394,15 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     // the thread count should be 0
     ASSERT_EQ(thread_pool.size(), 0);
 
+    items_count = 16;
+    thread_count = 16;
+    // prepare setup
+    reset(thread_count);
+
     // create tasks which try to stop the thread pool and then block thread pool
     // threads until signaled by main thread to force all threads of the thread
     // pool to run exactly one task
-    call_back = std::bind(&ThreadPoolTest::runTryStopAndWait, this, thread_pool);
+    call_back = std::bind(&ThreadPoolTest::runTryStopAndWait, this, &thread_pool);
 
     // calling start should create the threads and should keep the queued items
     EXPECT_NO_THROW(thread_pool.start(thread_count));
