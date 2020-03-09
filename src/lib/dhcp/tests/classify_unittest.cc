@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -130,4 +130,22 @@ TEST(ClassifyTest, ClientClassesToText) {
 
     // Check non-standard separator.
     EXPECT_EQ("alpha.gamma.beta", classes.toText("."));
+}
+
+// Check that selected class can be erased.
+TEST(ClassifyTest, Erase) {
+    ClientClasses classes;
+
+    classes.insert("alpha");
+    classes.insert("beta");
+    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_TRUE(classes.contains("beta"));
+
+    classes.erase("beta");
+    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_FALSE(classes.contains("beta"));
+
+    classes.erase("alpha");
+    EXPECT_FALSE(classes.contains("alpha"));
+    EXPECT_FALSE(classes.contains("beta"));
 }

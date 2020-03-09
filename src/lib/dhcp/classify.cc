@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,6 +28,12 @@ ClientClasses::ClientClasses(const std::string& class_names)
             insert(ClientClass(trimmed));
         }
     }
+}
+
+void
+ClientClasses::erase(const ClientClass& class_name) {
+    list_.remove(class_name);
+    static_cast<void>(set_.erase(class_name));
 }
 
 std::string
