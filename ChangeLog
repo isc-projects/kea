@@ -1,3 +1,9 @@
+1732.	[func]		marcin
+	Client classes specified within host reservations can be used
+	to influence subnet selection within a shared network and pool
+	selection within a subnet.
+	(Gitlab #1139)
+
 1731.	[func]		razvan
 	The NameChangeSender class is thread safe, making DNS updates
 	compatible with multi-threading packet processing.
