@@ -523,6 +523,43 @@ const char* CONFIGS[] = {
         "        }\n"
         "    ]\n"
         "}]\n"
+    "}",
+
+    // Configuration 12 client-class reservation and client-class guarded pools.
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"client-classes\": ["
+        "{"
+        "     \"name\": \"reserved_class\""
+        "},"
+        "{"
+        "     \"name\": \"unreserved_class\","
+        "     \"test\": \"not member('reserved_class')\""
+        "}"
+        "],\n"
+        "\"valid-lifetime\": 4000,\n"
+        "\"subnet6\": [\n"
+        "    {\n"
+        "        \"subnet\": \"2001:db8:1::/64\", \n"
+        "        \"id\": 10,"
+        "        \"reservations\": [{ \n"
+        "            \"duid\": \"01:02:03:05\",\n"
+        "            \"client-classes\": [ \"reserved_class\" ]\n"
+        "        }],\n"
+        "        \"pools\": ["
+        "            {"
+        "                \"pool\": \"2001:db8:1::10-2001:db8:1::11\","
+        "                \"client-class\": \"reserved_class\""
+        "            },"
+        "            {"
+        "                \"pool\": \"2001:db8:1::20-2001:db8:1::21\","
+        "                \"client-class\": \"unreserved_class\""
+        "            }"
+        "        ],\n"
+        "        \"interface\": \"eth0\"\n"
+        "    }\n"
+        "]\n"
     "}"
 };
 
@@ -924,7 +961,13 @@ public:
     ///
     /// @param config_idx Index of the server configuration from the
     /// @c CONFIGS array.
-    void testGlobalClassSubnetPoolSelection(const int config_idx);
+    /// @param first_address Address to be allocated from the pool having
+    /// a reservation.
+    /// @param second_address Address to be allocated from the pool not
+    /// having a reservation.
+    void testGlobalClassSubnetPoolSelection(const int config_idx,
+                                            const std::string& first_address = "2001:db8:1::10",
+                                            const std::string& second_address = "2001:db8:2::10");
 
     /// @brief Configures client to include 6 IAs without hints.
     ///
@@ -1272,7 +1315,9 @@ HostTest::testOverrideVendorOptions(const uint16_t msg_type) {
 }
 
 void
-HostTest::testGlobalClassSubnetPoolSelection(const int config_idx) {
+HostTest::testGlobalClassSubnetPoolSelection(const int config_idx,
+                                             const std::string& first_address,
+                                             const std::string& second_address) {
     Dhcp6Client client_resrv;
 
     // Use DUID for which we have host reservation including client class.
@@ -1284,11 +1329,11 @@ HostTest::testGlobalClassSubnetPoolSelection(const int config_idx) {
     // Let's use the 2001:db8:2::10 as a hint to make sure that the server
     // refuses allocating it and uses the sole pool available for this
     // client.
-    client_resrv.requestAddress(1, IOAddress("2001:db8:2::10"));
+    client_resrv.requestAddress(1, IOAddress(second_address));
     ASSERT_NO_THROW(client_resrv.doSARR());
     ASSERT_EQ(1, client_resrv.getLeaseNum());
     Lease6 lease_client = client_resrv.getLease(0);
-    EXPECT_EQ("2001:db8:1::10", lease_client.addr_.toText());
+    EXPECT_EQ(first_address, lease_client.addr_.toText());
 
     // This client has no reservation and therefore should be
     // assigned to the unreserved_class and be given an address
@@ -1298,11 +1343,11 @@ HostTest::testGlobalClassSubnetPoolSelection(const int config_idx) {
 
     // Let's use the address of 2001:db8:1::10 as a hint to make sure that the
     // server refuses it in favor of the 2001:db8:2::10.
-    client_no_resrv.requestAddress(1, IOAddress("2001:db8:1::10"));
+    client_no_resrv.requestAddress(1, IOAddress(first_address));
     ASSERT_NO_THROW(client_no_resrv.doSARR());
     ASSERT_EQ(1, client_no_resrv.getLeaseNum());
     lease_client = client_no_resrv.getLease(0);
-    EXPECT_EQ("2001:db8:2::10", lease_client.addr_.toText());
+    EXPECT_EQ(second_address, lease_client.addr_.toText());
 }
 
 void
@@ -2304,6 +2349,13 @@ TEST_F(HostTest, clientClassGlobalPoolSelection) {
 // may be used to influence subnet selection within shared network.
 TEST_F(HostTest, clientClassGlobalSubnetSelection) {
     ASSERT_NO_FATAL_FAILURE(testGlobalClassSubnetPoolSelection(11));
+}
+
+// Verifies that client class specified in the reservation may be
+// used to influence pool selection within a subnet.
+TEST_F(HostTest, clientClassPoolSelection) {
+    ASSERT_NO_FATAL_FAILURE(testGlobalClassSubnetPoolSelection(12, "2001:db8:1::10",
+                                                               "2001:db8:1::20"));
 }
 
 } // end of anonymous namespace

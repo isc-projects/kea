@@ -360,6 +360,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     // Collect host identifiers if host reservations enabled. The identifiers
     // are stored in order of preference. The server will use them in that
     // order to search for host reservations.
+    SharedNetwork6Ptr sn;
     if (ctx.subnet_) {
         const ConstCfgHostOperationsPtr cfg =
             CfgMgr::instance().getCurrentCfg()->getCfgHostOperations6();
@@ -422,17 +423,34 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
 
         // Find host reservations using specified identifiers.
         alloc_engine_->findReservation(ctx);
+
+        // Get shared network to see if it is set for a subnet.
+        ctx.subnet_->getSharedNetwork(sn);
     }
 
     // Global host reservations are independent of a selected subnet. If the
     // global reservations contain client classes we should use them in case
-    // they are meant to affect pool selection.
+    // they are meant to affect pool selection. Also, if the subnet does not
+    // belong to a shared network we can use the reserved client classes
+    // because there is no way our subnet could change. Such classes may
+    // affect selection of a pool within the selected subnet.
     auto global_host = ctx.globalHost();
-    if (global_host && !global_host->getClientClasses6().empty()) {
-        // Previously evaluated classes must be ignored because having new
-        // classes fetched from the hosts db may eliminate some of them.
-        pkt->classes_.clear();
+    auto current_host = ctx.currentHost();
+    if ((global_host && !global_host->getClientClasses6().empty()) ||
+        (!sn && current_host && !current_host->getClientClasses6().empty())) {
+        // We have already evaluated client classes and some of them may
+        // be in conflict with the reserved classes. Therefore, we need to
+        // remove those that were assigned as a result of evaluation.
+        // That preserves built-in classes and the classes set explicitly
+        // by the hooks libraries.
+        const ClientClassDictionaryPtr& dict =
+            CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+        const ClientClassDefListPtr& defs_ptr = dict->getClasses();
+        for (auto def : *defs_ptr) {
+            ctx.query_->classes_.erase(def->getName());
+        }
         setReservedClientClasses(pkt, ctx);
+        evaluateClasses(pkt,  false);
     }
 
     // Set KNOWN builtin class if something was found, UNKNOWN if not.
@@ -2990,7 +3008,7 @@ Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(solicit, response, ctx);
     assignLeases(solicit, response, ctx);
 
-    setNonGlobalReservedClientClasses(solicit, ctx);
+    conditionallySetReservedClientClasses(solicit, ctx);
     requiredClassify(solicit, ctx);
 
     copyClientOptions(solicit, response);
@@ -3020,7 +3038,7 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(request, reply, ctx);
     assignLeases(request, reply, ctx);
 
-    setNonGlobalReservedClientClasses(request, ctx);
+    conditionallySetReservedClientClasses(request, ctx);
     requiredClassify(request, ctx);
 
     copyClientOptions(request, reply);
@@ -3046,7 +3064,7 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(renew, reply, ctx);
     extendLeases(renew, reply, ctx);
 
-    setNonGlobalReservedClientClasses(renew, ctx);
+    conditionallySetReservedClientClasses(renew, ctx);
     requiredClassify(renew, ctx);
 
     copyClientOptions(renew, reply);
@@ -3072,7 +3090,7 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(rebind, reply, ctx);
     extendLeases(rebind, reply, ctx);
 
-    setNonGlobalReservedClientClasses(rebind, ctx);
+    conditionallySetReservedClientClasses(rebind, ctx);
     requiredClassify(rebind, ctx);
 
     copyClientOptions(rebind, reply);
@@ -3093,7 +3111,7 @@ Pkt6Ptr
 Dhcpv6Srv::processConfirm(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr confirm = ctx.query_;
-    setNonGlobalReservedClientClasses(confirm, ctx);
+    conditionallySetReservedClientClasses(confirm, ctx);
     requiredClassify(confirm, ctx);
 
     // Get IA_NAs from the Confirm. If there are none, the message is
@@ -3183,7 +3201,7 @@ Pkt6Ptr
 Dhcpv6Srv::processRelease(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr release = ctx.query_;
-    setNonGlobalReservedClientClasses(release, ctx);
+    conditionallySetReservedClientClasses(release, ctx);
     requiredClassify(release, ctx);
 
     // Create an empty Reply message.
@@ -3209,7 +3227,7 @@ Pkt6Ptr
 Dhcpv6Srv::processDecline(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr decline = ctx.query_;
-    setNonGlobalReservedClientClasses(decline, ctx);
+    conditionallySetReservedClientClasses(decline, ctx);
     requiredClassify(decline, ctx);
 
     // Create an empty Reply message.
@@ -3504,7 +3522,7 @@ Pkt6Ptr
 Dhcpv6Srv::processInfRequest(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr inf_request = ctx.query_;
-    setNonGlobalReservedClientClasses(inf_request, ctx);
+    conditionallySetReservedClientClasses(inf_request, ctx);
     requiredClassify(inf_request, ctx);
 
     // Create a Reply packet, with the same trans-id as the client's.
@@ -3656,10 +3674,14 @@ Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
 }
 
 void
-Dhcpv6Srv::setNonGlobalReservedClientClasses(const Pkt6Ptr& pkt,
-                                             const AllocEngine::ClientContext6& ctx) {
-    if (!ctx.globalHost()) {
-        setReservedClientClasses(pkt, ctx);
+Dhcpv6Srv::conditionallySetReservedClientClasses(const Pkt6Ptr& pkt,
+                                                 const AllocEngine::ClientContext6& ctx) {
+    if (ctx.subnet_) {
+        SharedNetwork6Ptr shared_network;
+        ctx.subnet_->getSharedNetwork(shared_network);
+        if (shared_network && !ctx.globalHost()) {
+            setReservedClientClasses(pkt, ctx);
+        }
     }
 }
 
