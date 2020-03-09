@@ -3525,11 +3525,11 @@ Reserving Client Classes in DHCPv6
 the server to assign classes to a client, based on the content of the
 options that this client sends to the server. Host reservations
 mechanisms also allow for the static assignment of classes to clients.
-The definitions of these classes are placed in the Kea configuration.
-The following configuration snippet shows how to specify that the client
-belongs to classes ``reserved-class1`` and ``reserved-class2``. Those
-classes are associated with specific options that are sent to the clients
-which belong to them.
+The definitions of these classes are placed in the Kea configuration or
+a database. The following configuration snippet shows how to specify that
+a client belongs to classes ``reserved-class1`` and ``reserved-class2``. Those
+classes are associated with specific options sent to the clients which belong
+to them.
 
 ::
 
@@ -3567,30 +3567,51 @@ which belong to them.
         } ]
     }
 
-Static class assignments, as shown above, can be used in conjunction
-with classification, using expressions. The "KNOWN" or "UNKNOWN" built-in
-class is added to the packet and any class depending on it (directly or
-indirectly) and not only-if-required is evaluated.
+In some cases the host reservations can be used in conjuction with client
+classes specified within the Kea configuration. In particular, when a
+host reservation exists for a client within a given subnet, the "KNOWN"
+built-in class is assigned to the client. Conversely, when there is no
+static assignment for the client, the "UNKNOWN" class is assigned to the
+client. Class expressions within the Kea configuration file can
+refer to "KNOWN" or "UNKNOWN" classes using using the "member" operator.
+For example:
+
+::
+
+    {
+        "client-classes": [
+            {
+                "name": "dependent-class",
+                "test": "member('KNOWN')",
+                "only-if-required": true
+            }
+        ]
+    }
+
+Note that the ``only-if-required`` parameter is needed here to force
+evaluation of the class after the lease has been allocated and thus the
+reserved class has been also assigned.
 
 .. note::
-
-   To force the evaluation of a class expression after the
-   host reservation lookup, for instance because of a dependency on
-   "reserved-class1" from the previous example, add a
-   "member('KNOWN')" statement in the expression.
+   Beware that the classes specified in non global host reservations
+   are assigned to the processed packet after all classes with the
+   ``only-if-required`` parameter set to ``false`` have been evaluated.
+   This has an implication that these classes must not depend on the
+   statically assigned classes from the host reservations. If there
+   is a need to create such dependency, the ``only-if-required`` must
+   be set to ``true`` for the dependent classes. Such classes are
+   evaluated after the static classes have been assigned to the packet.
+   This, however, imposes additional configuration overhead, because
+   all classes marked as ``only-if-required`` must be listed in the
+   ``require-client-classes`` list for every subnet where they are used.
 
 .. note::
-   Beware that the reserved classes are assigned to the processed
-   packet after all classes with the ``only-if-required`` parameter
-   set to ``false`` have been evaluated. This has an implication that
-   these classes must not depend on the statically assigned classes
-   from the host reservations. If there is a need to create such
-   dependency, the ``only-if-required`` must be set to ``true`` for
-   the dependent classes. Such classes are evaluated after the static
-   classes have been assigned to the packet. This, however, imposes
-   additional configuration overhead, because all classes marked as
-   ``only-if-required`` must be listed in the ``require-client-classes``
-   list for every subnet where they are used.
+   Client classes specified within the Kea configuration file may
+   depend on the classes specified within the global host reservations.
+   In such case the ``only-if-required`` parameter is not needed.
+   Refer to the :ref:`pool-selection-with-class-reservations6` and
+   :ref:`subnet-selection-with-class-reservations6`
+   for the specific use cases.
 
 .. _reservations6-mysql-pgsql-cql:
 
@@ -3818,6 +3839,140 @@ following can be used:
 When using database backends, the global host reservations are
 distinguished from regular reservations by using subnet-id value of
 zero.
+
+.. _pool-selection-with-class-reservations6:
+
+Pool Selection with Client Class Reservations
+---------------------------------------------
+
+Client classes can be specified both in the Kea configuration file and/or
+host reservations. The classes specified in the Kea configuration file are
+evaluated immediately after receiving the DHCP packet and therefore can be
+used to influence subnet selection using the ``client-class`` parameter
+specified in the subnet scope. The classes specified within the host
+reservations are fetched and assigned to the packet after the server has
+already selected a subnet for the client. This implies that the client
+class specified within a host reservation cannot be used to influence
+subnet assignment for this client, unless the subnet belongs to a
+shared network. If the subnet belongs to a shared network, the server may
+dynamically change the subnet assignment while trying to allocate a lease.
+If the subnet does not belong to a shared network, once selected subnet
+is not changed.
+
+If the subnet does not belong to a shared network, it is possible to
+use host reservation based client classification to select an address pool
+within the subnet as follows:
+
+::
+
+    "Dhcp6": {
+        "client-classes": [
+            {
+                "name": "reserved_class"
+            },
+            {
+                "name": "unreserved_class",
+                "test": "not member('reserved_class')"
+            }
+        ],
+        "subnet6": [
+            {
+                "subnet": "2001:db8:1::/64",
+                "reservations": [{"
+                    "hw-address": "aa:bb:cc:dd:ee:fe",
+                    "client-classes": [ "reserved_class" ]
+                 }],
+                "pools": [
+                    {
+                        "pool": "2001:db8:1::10-2001:db8:1::20",
+                        "client-class": "reserved_class"
+                    },
+                    {
+                        "pool": "2001:db8:1::30-2001:db8:1::40",
+                        "client-class": "unreserved_class"
+                    }
+                ]
+            }
+        ]
+    }
+
+The ``unreserved_class`` is declared without the ``test`` parameter because
+it may be only assigned to the client via host reservation mechanism. The
+second class ``unreserved_class`` is assigned to the clients which do not
+belong to the ``reserved_class``.  The first pool within the subnet is only
+used for the clients having a reservation for the ``reserved_class``. The
+second pool is used for the clients not having such reservation. The
+configuration snippet includes one host reservation which causes the client
+having the MAC address of aa:bb:cc:dd:ee:fe to be assigned to the
+``reserved_class``. Thus, this client will be given an IP address from the
+first address pool.
+
+.. _subnet-selection-with-class-reservations6:
+
+Subnet Selection with Client Class Reservations
+-----------------------------------------------
+
+There is one specific use case when subnet selection may be influenced by
+client classes specified within host reservations. This is the case when the
+client belongs to a shared network. In such case it is possible to use
+classification to select a subnet within this shared network. Consider the
+following example:
+
+::
+
+    "Dhcp6": {
+        "client-classes": [
+            {
+                "name": "reserved_class"
+            },
+            {
+                "name: "unreserved_class",
+                "test": "not member('reserved_class")
+            }
+        ],
+        "reservations": [{"
+            "hw-address": "aa:bb:cc:dd:ee:fe",
+            "client-classes": [ "reserved_class" ]
+        }],
+        "reservation-mode": "global",
+        "shared-networks": [{
+            "subnet6": [
+                {
+                    "subnet": "2001:db8:1::/64",
+                    "pools": [
+                        {
+                            "pool": "2001:db8:1::10-2001:db8:1::20",
+                            "client-class": "reserved_class"
+                        }
+                    ]
+                },
+                {
+                    "subnet": "2001:db8:2::/64",
+                    "pools": [
+                        {
+                            "pool": "2001:db8:2::10-2001:db8:2::20",
+                            "client-class": "unreserved_class"
+                        }
+                    ]
+                }
+            ]
+        }]
+    }
+
+This is similar to the example described in the
+:ref:`subnet-selection-with-class-reservations6`. This time, however, there
+are two subnets, each of them having a pool associated with a different
+class. The clients which don't have a reservation for the ``reserved_class``
+will be assigned an address from the subnet 2001:db8:2::/64. Clients having
+a reservation for the ``reserved_class`` will be assigned an address from
+the subnet 2001:db8:1::/64. The subnets must belong to the same shared network.
+In addition, the reservation for the client class must be specified at the
+global scope (global reservation) and the ``reservation-mode`` must be
+set to ``global``.
+
+In the example above the ``client-class`` could be as well specified at the
+subnet level rather than pool level yielding the same effect.
+
 
 .. _shared-network6:
 
