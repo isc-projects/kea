@@ -1,3 +1,10 @@
+1729.	[func]		razvan
+	The RAII MultiThreadingCriticalSection class is now able to
+	automatically stop and start the packet thread pool in order to
+	perform server configuration and avoid race conditions in non
+	thread safe code.
+	(Gitlab #1016)
+
 1728.	[bug]		tmark
 	Memfile now supports commas in the hostname and user-context
 	columns.  Commas in either column now escaped as "&#x2c" when
