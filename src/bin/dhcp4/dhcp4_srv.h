@@ -126,9 +126,51 @@ public:
     void setReservedMessageFields();
 
     /// @brief Assigns classes retrieved from host reservation database.
-    void setReservedClientClasses();
+    ///
+    /// @param context pointer to the context.
+    static void setReservedClientClasses(AllocEngine::ClientContext4Ptr context);
+
+    /// @brief Assigns classes retrieved from host reservation database
+    /// if they haven't been yet set.
+    ///
+    /// This function sets reserved client classes in case they haven't
+    /// been set after fetching host reservations from the database.
+    /// This is the case when the client has non-global host reservation
+    /// and the selected subnet belongs to a shared network.
+    void conditionallySetReservedClientClasses();
+
+    /// @brief Assigns incoming packet to zero or more classes.
+    ///
+    /// @note This is done in two phases: first the content of the
+    /// vendor-class-identifier option is used as a class, by
+    /// calling @ref classifyByVendor(). Second classification match
+    /// expressions are evaluated. The resulting classes will be stored
+    /// in the packet (see @ref isc::dhcp::Pkt4::classes_ and
+    /// @ref isc::dhcp::Pkt4::inClass).
+    ///
+    /// @param pkt packet to be classified
+    static void classifyPacket(const Pkt4Ptr& pkt);
 
 private:
+
+    /// @brief Assign class using vendor-class-identifier option
+    ///
+    /// @note This is the first part of @ref classifyPacket
+    ///
+    /// @param pkt packet to be classified
+    static void classifyByVendor(const Pkt4Ptr& pkt);
+
+    /// @brief Evaluate classes.
+    ///
+    /// @note Second part of the classification.
+    ///
+    /// Evaluate expressions of client classes: if it returns true the class
+    /// is added to the incoming packet.
+    ///
+    /// @param pkt packet to be classified.
+    /// @param depend_on_known if false classes depending on the KNOWN or
+    /// UNKNOWN classes are skipped, if true only these classes are evaluated.
+    static void evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known);
 
     /// @brief Copies default parameters from client's to server's message
     ///
@@ -689,6 +731,8 @@ protected:
     /// constructor.
     void setPacketStatisticsDefaults();
 
+public:
+
     /// @brief this is a prefix added to the content of vendor-class option
     ///
     /// If incoming packet has a vendor class option, its content is
@@ -932,20 +976,6 @@ protected:
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
 
-public:
-
-    /// @brief Evaluate classes.
-    ///
-    /// @note Second part of the classification.
-    ///
-    /// Evaluate expressions of client classes: if it returns true the class
-    /// is added to the incoming packet.
-    ///
-    /// @param pkt packet to be classified.
-    /// @param depend_on_known if false classes depending on the KNOWN or
-    /// UNKNOWN classes are skipped, if true only these classes are evaluated.
-    static void evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known);
-
 protected:
 
     /// @brief Assigns incoming packet to zero or more classes (required pass).
@@ -988,7 +1018,6 @@ protected:
 
 private:
 
-    /// @public
     /// @brief Assign class using vendor-class-identifier option
     ///
     /// @note This is the first part of @ref classifyPacket

@@ -268,6 +268,43 @@ const char* CONFIGS[] = {
         "        }\n"
         "    ]\n"
         "}]\n"
+    "}",
+
+    // Configuration 6 client-class reservation and client-class guarded pools.
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"client-classes\": ["
+        "{"
+        "     \"name\": \"reserved_class\""
+        "},"
+        "{"
+        "     \"name\": \"unreserved_class\","
+        "     \"test\": \"not member('reserved_class')\""
+        "}"
+        "],\n"
+        "\"valid-lifetime\": 600,\n"
+        "\"subnet4\": [\n"
+        "    {\n"
+        "        \"subnet\": \"10.0.0.0/24\", \n"
+        "        \"id\": 10,"
+        "        \"reservations\": [{ \n"
+        "            \"hw-address\": \"aa:bb:cc:dd:ee:fe\",\n"
+        "            \"client-classes\": [ \"reserved_class\" ]\n"
+        "        }],\n"
+        "        \"pools\": ["
+        "            {"
+        "                \"pool\": \"10.0.0.10-10.0.0.11\","
+        "                \"client-class\": \"reserved_class\""
+        "            },"
+        "            {"
+        "                \"pool\": \"10.0.0.20-10.0.0.21\","
+        "                \"client-class\": \"unreserved_class\""
+        "            }"
+        "        ],\n"
+        "        \"interface\": \"eth0\"\n"
+        "    }\n"
+        "]\n"
     "}"
 };
 
@@ -352,7 +389,13 @@ public:
     ///
     /// @param config_idx Index of the server configuration from the
     /// @c CONFIGS array.
-    void testGlobalClassSubnetPoolSelection(const int config_idx) {
+    /// @param first_address Address to be allocated from the pool having
+    /// a reservation.
+    /// @param second_address Address to be allocated from the pool not
+    /// having a reservation.
+    void testGlobalClassSubnetPoolSelection(const int config_idx,
+                                            const std::string& first_address = "10.0.0.10",
+                                            const std::string& second_address = "192.0.3.10") {
         Dhcp4Client client_resrv(Dhcp4Client::SELECTING);
 
         // Use HW address for which we have host reservation including
@@ -366,11 +409,11 @@ public:
         // Let's use the 192.0.3.10 as a hint to make sure that the server
         // refuses allocating it and uses the sole pool available for this
         // client.
-        ASSERT_NO_THROW(client_resrv.doDORA(boost::make_shared<IOAddress>("192.0.3.10")));
+        ASSERT_NO_THROW(client_resrv.doDORA(boost::make_shared<IOAddress>(second_address)));
         ASSERT_TRUE(client_resrv.getContext().response_);
         auto resp = client_resrv.getContext().response_;
         ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-        EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
+        EXPECT_EQ(first_address, resp->getYiaddr().toText());
 
         // This client has no reservation and therefore should be
         // assigned to the unreserved_class and be given an address
@@ -381,11 +424,11 @@ public:
 
         // Let's use the address of 10.0.0.10 as a hint to make sure that the
         // server refuses it in favor of the 192.0.3.10.
-        ASSERT_NO_THROW(client_no_resrv.doDORA(boost::make_shared<IOAddress>("10.0.0.10")));
+        ASSERT_NO_THROW(client_no_resrv.doDORA(boost::make_shared<IOAddress>(first_address)));
         ASSERT_TRUE(client_no_resrv.getContext().response_);
         resp = client_no_resrv.getContext().response_;
         ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-        EXPECT_EQ("192.0.3.10", resp->getYiaddr().toText());
+        EXPECT_EQ(second_address, resp->getYiaddr().toText());
     }
 };
 
@@ -536,6 +579,12 @@ TEST_F(HostTest, clientClassGlobalPoolSelection) {
 // may be used to influence subnet selection within shared network.
 TEST_F(HostTest, clientClassGlobalSubnetSelection) {
     ASSERT_NO_FATAL_FAILURE(testGlobalClassSubnetPoolSelection(5));
+}
+
+// Verifies that client class specified in the reservation may be
+// used to influence pool selection within a subnet.
+TEST_F(HostTest, clientClassPoolSelection) {
+    ASSERT_NO_FATAL_FAILURE(testGlobalClassSubnetPoolSelection(6, "10.0.0.10", "10.0.0.20"));
 }
 
 } // end of anonymous namespace
