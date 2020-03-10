@@ -834,7 +834,7 @@ TEST_F(CommandOptionsTest, LoadMacsFromFile) {
 
 TEST_F(CommandOptionsTest, LoadGiaddrFromFile) {
     CommandOptions opt;
-    std::string giaddr_list_full_path = getFullPath("giaddr");
+    std::string giaddr_list_full_path = getFullPath("giaddr.txt");
     std::ostringstream cmd;
     cmd << "perfdhcp -J " << giaddr_list_full_path << " abc";
     EXPECT_NO_THROW(process(opt, cmd.str()));

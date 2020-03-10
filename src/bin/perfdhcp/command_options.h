@@ -387,7 +387,7 @@ public:
 
     /// \brief Check if multi subnet mode is enabled
     ///
-    /// \return true if multisubnet mode is enabled.
+    /// \return true if multi subnet mode is enabled.
     bool checkMultiSubnet() { return multi_subnet_; }
 
     /// \brief Find if diagnostic flag has been set.
@@ -543,7 +543,7 @@ private:
     /// mac_list_ vector.
     bool decodeMacString(const std::string& line);
 
-    /// \brief Opens the text file containgin list of addresses (one per line).
+    /// \brief Opens the text file containing list of addresses (one per line).
     void loadGiaddr();
 
     /// \brief Checks if loaded giaddr from text file are correct,
@@ -669,8 +669,10 @@ private:
     /// List of MAC addresses loaded from a file.
     std::vector<std::vector<uint8_t> > mac_list_;
 
+    /// Location of a file containing a list of subnet addresses, one per line.
     std::string giaddr_list_file_;
 
+    /// List of validated subnet addresses.
     std::vector<std::string> giaddr_list_;
 
     bool multi_subnet_;

@@ -1237,6 +1237,9 @@ TestControl::sendRequestFromAck() {
     Pkt4Ptr msg = createRequestFromAck(ack);
     setDefaults4(msg);
 
+    // Override relay address
+    msg->setGiaddr(ack->getGiaddr());
+
     // Add any extra options that user may have specified.
     addExtraOpts(msg);
 

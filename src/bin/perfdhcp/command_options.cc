@@ -227,6 +227,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     std::ostringstream stream;
     stream << "perfdhcp";
     int num_mac_list_files = 0;
+    int num_subnet_list_files = 0;
 
     struct option long_options[] = {
         {"scenario", required_argument, 0, LONG_OPT_SCENARIO},
@@ -378,6 +379,8 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             break;
 
         case 'J':
+            check(num_subnet_list_files >= 1, "only one -J option can be specified");
+            num_subnet_list_files++;
             giaddr_list_file_ = std::string(optarg);
             loadGiaddr();
             break;
@@ -408,7 +411,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             break;
 
         case 'M':
-            check(num_mac_list_files >= 1, "only -M option can be specified");
+            check(num_mac_list_files >= 1, "only one -M option can be specified");
             num_mac_list_files++;
             mac_list_file_ = std::string(optarg);
             loadMacs();
