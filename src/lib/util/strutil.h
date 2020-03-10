@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +42,6 @@ public:
 ///
 /// \param name Name to be substituted
 void normalizeSlash(std::string& name);
-
 
 /// \brief Trim Leading and Trailing Spaces
 ///
@@ -106,7 +105,6 @@ std::vector<std::string> tokens(const std::string& text,
         const std::string& delim = std::string(" \t\n"),
         bool escape = false);
 
-
 /// \brief Uppercase Character
 ///
 /// Used in uppercase() to pass as an argument to std::transform().  The
@@ -120,7 +118,6 @@ std::vector<std::string> tokens(const std::string& text,
 inline char toUpper(char chr) {
     return (static_cast<char>(std::toupper(static_cast<int>(chr))));
 }
-
 
 /// \brief Uppercase String
 ///
@@ -155,7 +152,6 @@ inline void lowercase(std::string& text) {
     std::transform(text.begin(), text.end(), text.begin(),
         isc::util::str::toLower);
 }
-
 
 /// \brief Apply Formatting
 ///
@@ -342,6 +338,36 @@ private:
 };
 
 typedef boost::shared_ptr<StringSanitizer> StringSanitizerPtr;
+
+/// \brief Check if a string is printable
+///
+/// \param content String to check for printable characters
+/// \return True if empty or contains only printable characters, False otherwise
+inline bool
+isPrintable(const std::string& content)
+{
+    for (const unsigned char& ch : content) {
+        if (isprint(ch) == 0) {
+            return (false);
+        }
+    }
+    return (true);
+}
+
+/// \brief Check if a byte vector is printable
+///
+/// \param content Vector to check for printable characters
+/// \return True if empty or contains only printable characters, False otherwise
+inline bool
+isPrintable(const std::vector<uint8_t>& content)
+{
+    for (const unsigned char& ch : content) {
+        if (isprint(ch) == 0) {
+            return (false);
+        }
+    }
+    return (true);
+}
 
 } // namespace str
 } // namespace util

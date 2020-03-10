@@ -599,4 +599,36 @@ TEST(StringUtilTest, seekTrimmed) {
     EXPECT_EQ(8, std::distance(begin, end));
 }
 
+// Verifies isPrintable predicate on strings.
+TEST(StringUtilTest, stringIsPrintable) {
+    string content;
+
+    // Empty is printable.
+    EXPECT_TRUE(isPrintable(content));
+
+    // Check Abcd.
+    content = "Abcd";
+    EXPECT_TRUE(isPrintable(content));
+
+    // Add a control character (not printable).
+    content += "\a";
+    EXPECT_FALSE(isPrintable(content));
+}
+
+// Verifies isPrintable predicate on byte vectors.
+TEST(StringUtilTest, vectorIsPrintable) {
+    vector<uint8_t> content;
+
+    // Empty is printable.
+    EXPECT_TRUE(isPrintable(content));
+
+    // Check Abcd.
+    content = { 0x41, 0x62, 0x63, 0x64 };
+    EXPECT_TRUE(isPrintable(content));
+
+    // Add a control character (not printable).
+    content.push_back('\a');
+    EXPECT_FALSE(isPrintable(content));
+}
+
 } // end of anonymous namespace

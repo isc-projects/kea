@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <flex_option.h>
 #include <flex_option_log.h>
+#include <util/strutil.h>
 #include <cc/simple_parser.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
@@ -22,6 +23,7 @@ using namespace isc::dhcp;
 using namespace isc::eval;
 using namespace isc::flex_option;
 using namespace isc::log;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -221,15 +223,8 @@ FlexOptionImpl::logAction(Action action, uint16_t code,
             .arg(code);
         return;
     }
-    bool printable = true;
-    for (const unsigned char& ch : value) {
-        if (isprint(ch) == 0) {
-            printable = false;
-            break;
-        }
-    }
     ostringstream repr;
-    if (printable) {
+    if (str::isPrintable(value)) {
         repr << "'" << value << "'";
     } else {
         repr << "0x" << hex;
