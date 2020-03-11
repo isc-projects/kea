@@ -614,12 +614,12 @@ Where:
    hex digit string.
 
 -  client-info - the DHCP client id option (61) if present, shown as a
-   hex string.
+   hex string. When its content is printable it is displayed.
 
 -  relay-info - for relayed packets the giaddr and the RAI circuit-id,
    remote-id, and subscriber-id options (option 82 sub options: 1, 2 and
    6) if present. The circuit id and remote id are presented as hex
-   strings.
+   strings and when printable with their content.
 
 -  user-context - the optional user context associated with the lease.
 
@@ -630,7 +630,7 @@ present in the log file):
 
    2018-01-06 01:02:03 CET Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with hardware address:
    hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33,
-   identified by circuit-id: 68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
+   identified by circuit-id: 68:6f:77:64:79 (howdy) and remote-id: 87:f6:79:77:ef
 
 In addition to logging lease activity driven by DHCPv4 client traffic,
 the hooks library also logs entries for the following lease management control channel
