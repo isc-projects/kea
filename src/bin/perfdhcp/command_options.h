@@ -385,7 +385,7 @@ public:
     /// \return single string containing giaddr.
     std::string getRandGiaddr() { return giaddr_list_[rand() % giaddr_list_.size()];}
 
-    /// \brief Check if multi subnet mode is enabled
+    /// \brief Check if multi subnet mode is enabled.
     ///
     /// \return true if multi subnet mode is enabled.
     bool checkMultiSubnet() { return multi_subnet_; }
@@ -549,7 +549,7 @@ private:
     /// \brief Checks if loaded giaddr from text file are correct,
     /// adds them to giaddr_list_.
     ///
-    /// \return true if address is incorrect
+    /// \return true if address is incorrect.
     bool validateIP(const std::string& line);
 
     /// IP protocol version to be used, expected values are:
@@ -675,7 +675,9 @@ private:
     /// List of validated subnet addresses.
     std::vector<std::string> giaddr_list_;
 
+    /// Flag to indicate multiple subnets testing.
     bool multi_subnet_;
+
     /// Offset of transaction id in template files. First vector
     /// element points to offset for DISCOVER/SOLICIT messages,
     /// second element points to transaction id offset for
