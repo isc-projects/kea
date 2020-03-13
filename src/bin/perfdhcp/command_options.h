@@ -383,7 +383,7 @@ public:
     /// \brief Returns random giaddr.
     ///
     /// \return single string containing giaddr.
-    std::string getRandGiaddr() { return giaddr_list_[rand() % giaddr_list_.size()];}
+    std::string getRandGiaddr() { return giaddr_list_[rand() % giaddr_list_.size()]; }
 
     /// \brief Check if multi subnet mode is enabled.
     ///
