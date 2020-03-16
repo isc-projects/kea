@@ -49,3 +49,19 @@ the log message.
 % LEASE_CMDS_INIT_OK loading Lease Commands hooks library successful
 This info message indicates that the Lease Commands hooks library has been
 loaded successfully. Enjoy!
+
+% LEASE_CMDS_RESEND_DDNS4 lease6-resend-ddns command successful: %1
+A request to update DNS for the requested IPv4 lease address has been 
+successfully queued for transmission to kea-dhcp-ddns.  
+
+% LEASE_CMDS_RESEND_DDNS4_FAILED lease6-resend-ddns command failed: %1
+A request to update DNS for the requested IPv4 lease has failed.  The
+reason for the failure is logged.
+
+% LEASE_CMDS_RESEND_DDNS6 lease6-resend-ddns command successful: %1
+A request to update DNS for the requested IPv6 lease address has been 
+successfully queued for transmission to kea-dhcp-ddns.  
+
+% LEASE_CMDS_RESEND_DDNS6_FAILED lease6-resend-ddns command failed: %1
+A request to update DNS for the requested IPv6 lease has failed.  The
+reason for the failure is logged.

@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes on Fri Feb 08 2019 20:34
+// File created from ../../../../src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes on Fri Mar 13 2020 14:35
 
 #ifndef LEASE_CMDS_MESSAGES_H
 #define LEASE_CMDS_MESSAGES_H
@@ -17,5 +17,9 @@ extern const isc::log::MessageID LEASE_CMDS_DEL6;
 extern const isc::log::MessageID LEASE_CMDS_DEL6_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_INIT_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_INIT_OK;
+extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4;
+extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4_FAILED;
+extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS6;
+extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS6_FAILED;
 
 #endif // LEASE_CMDS_MESSAGES_H

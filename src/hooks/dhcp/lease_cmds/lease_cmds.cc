@@ -14,6 +14,7 @@
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/ncr_generator.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/sanity_checker.h>
 #include <dhcp/duid.h>
@@ -34,6 +35,7 @@
 
 using namespace isc::dhcp;
 using namespace isc::data;
+using namespace isc::dhcp_ddns;
 using namespace isc::config;
 using namespace isc::asiolink;
 using namespace isc::hooks;
@@ -282,6 +284,24 @@ public:
     int
     lease6WipeHandler(CalloutHandle& handle);
 
+    /// @brief lease4-resend-ddns handler
+    ///
+    /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::lease4ResendDdnsHandler
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// wipe command JSON text in the "command" argument
+    /// @return 0 upon success, non-zero otherwise
+    int lease4ResendDdnsHandler(CalloutHandle& handle);
+
+    /// @brief lease6-resend-ddns handler
+    ///
+    /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::lease6ResendDdnsHandler
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// wipe command JSON text in the "command" argument
+    /// @return 0 upon success, non-zero otherwise
+    int lease6ResendDdnsHandler(CalloutHandle& handle);
+
     /// @brief Extracts parameters required for reservation-get and reservation-del
     ///
     /// See @ref Parameters class for detailed description of what is expected
@@ -329,6 +349,16 @@ public:
                                     const DuidPtr& duid,
                                     const int control_result,
                                     const std::string& error_message) const;
+
+    /// @brief Fetches an IP address parameter from a map of parameters
+    /// @param map of parameters in which to look
+    /// @name name of the parameter desired
+    /// @family expected protocol family of the address parameter, AF_INET
+    /// or AF_INET6
+    /// @return IOAddress containing the value of the parameter.
+    /// @throw BadValue if the parameter is missing or invalid
+    IOAddress getAddressParam(ConstElementPtr params, const std::string name,
+                              short family = AF_INET) const;
 };
 
 int
@@ -1543,6 +1573,121 @@ LeaseCmdsImpl::getIPv6LeaseForDelete(const Parameters& parameters) const {
     return (lease6);
 }
 
+IOAddress
+LeaseCmdsImpl::getAddressParam(ConstElementPtr params, const std::string name,
+                               short family) const {
+    ConstElementPtr param = params->get(name);
+    if (!param) {
+        isc_throw(BadValue, "'" << name << "' parameter is missing.");
+    }
+
+    if (param->getType() != Element::string) {
+        isc_throw(BadValue, "'" << name << "' is not a string.");
+    }
+
+    IOAddress addr(0);
+    try {
+        addr = IOAddress(param->stringValue());
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "'" << param->stringValue()
+                                << "' is not a valid IP address.");
+    }
+
+    if (addr.getFamily() != family) {
+        isc_throw(BadValue, "Invalid "
+                  << (family == AF_INET6 ? "IPv6" : "IPv4")
+                  << " address specified: " << param->stringValue());
+    }
+
+    return (addr);
+}
+
+int
+LeaseCmdsImpl::lease4ResendDdnsHandler(CalloutHandle& handle) {
+    Lease4Ptr lease;
+    std::stringstream ss;
+
+    try {
+        extractCommand(handle);
+
+        // Get the target lease address. Invalid value will throw.
+        IOAddress addr = getAddressParam(cmd_args_, "ip-address", AF_INET);
+
+        // Find the lease.
+        lease = LeaseMgrFactory::instance().getLease4(addr);
+        if (!lease) {
+            ss << "No lease found for: " << addr.toText();
+        } else if (lease->hostname_.empty()) {
+            ss << "Lease for: " << addr.toText()
+               << ", has no hostname, nothing to update";
+        } else if (!lease->fqdn_fwd_ && !lease->fqdn_rev_) {
+            ss << "Neither forward nor reverse updates enabled for lease for: "
+               << addr.toText();
+        } else if (!CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
+            ss << "DDNS updating is not enabled";
+        } else {
+            // We have a lease with a hostname and updates in at least
+            // one direction enabled.  Queue an NCR for it.
+            queueNCR(CHG_ADD, lease);
+            ss << "NCR generated for: " << addr.toText()
+               << ", hostname: " << lease->hostname_;
+            setSuccessResponse(handle, ss.str());
+            LOG_INFO(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS4).arg(ss.str());
+            return (CONTROL_RESULT_SUCCESS);
+        }
+    } catch (const std::exception& ex) {
+        ss << ex.what();
+    }
+
+    LOG_ERROR(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS4_FAILED).arg(ss.str());
+    setErrorResponse(handle, ss.str());
+    return (CONTROL_RESULT_ERROR);
+}
+
+int
+LeaseCmdsImpl::lease6ResendDdnsHandler(CalloutHandle& handle) {
+    Lease6Ptr lease;
+    std::stringstream ss;
+
+    try {
+        extractCommand(handle);
+
+        // Get the target lease address. Invalid value will throw.
+        IOAddress addr = getAddressParam(cmd_args_, "ip-address", AF_INET6);
+
+        // Find the lease.
+        lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+        if (!lease) {
+            ss << "No lease found for: " << addr.toText();
+        } else if (lease->hostname_.empty()) {
+            ss << "Lease for: " << addr.toText()
+               << ", has no hostname, nothing to update";
+        } else if (!lease->fqdn_fwd_ && !lease->fqdn_rev_) {
+            ss << "Neither forward nor reverse updates enabled for lease for: "
+               << addr.toText();
+        } else if (!CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
+            ss << "DDNS updating is not enabled";
+        } else {
+            // We have a lease with a hostname and updates in at least
+            // one direction enabled.  Queue an NCR for it.
+            queueNCR(CHG_ADD, lease);
+            ss << "NCR generated for: " << addr.toText()
+               << ", hostname: " << lease->hostname_;
+            setSuccessResponse(handle, ss.str());
+            LOG_INFO(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS6).arg(ss.str());
+            return (CONTROL_RESULT_SUCCESS);
+        }
+    } catch (const std::exception& ex) {
+        ss << ex.what();
+    }
+
+    LOG_ERROR(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS6_FAILED).arg(ss.str());
+    setErrorResponse(handle, ss.str());
+    return (CONTROL_RESULT_ERROR);
+}
+
+
+
 ElementPtr
 LeaseCmdsImpl::createFailedLeaseMap(const Lease::Type& lease_type,
                                     const IOAddress& lease_address,
@@ -1649,6 +1794,16 @@ int
 LeaseCmds::lease6WipeHandler(CalloutHandle& handle) {
     MultiThreadingCriticalSection cs;
     return (impl_->lease6WipeHandler(handle));
+}
+
+int
+LeaseCmds::lease4ResendDdnsHandler(CalloutHandle& handle) {
+    return (impl_->lease4ResendDdnsHandler(handle));
+}
+
+int
+LeaseCmds::lease6ResendDdnsHandler(CalloutHandle& handle) {
+    return (impl_->lease6ResendDdnsHandler(handle));
 }
 
 LeaseCmds::LeaseCmds()

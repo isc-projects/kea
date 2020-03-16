@@ -525,6 +525,56 @@ public:
     int
     lease6WipeHandler(hooks::CalloutHandle& handle);
 
+    /// @brief lease4-resend-ddns command handler
+    ///
+    /// This command attempts to resend the DDNS updates for the IPv4 lease that
+    /// matches the selection criteria.
+    ///
+    /// It extracts the command name and arguments from the given Callouthandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// argument accordingly.
+    ///
+    /// A single parameter is supported: ip-address:
+    ///
+    /// Example command to resend DDNS based on existing FDQN and flags
+    /// {
+    ///     "command": "lease4-resend-ddns",
+    ///     "arguments": {
+    ///         "ip-address": "192.0.2.202"
+    ///     }
+    /// }
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// delete command JSON text in the "command" argument
+    /// @return result of the operation
+    int
+    lease4ResendDdnsHandler(hooks::CalloutHandle& handle);
+
+    /// @brief lease6-resend-ddns command handler
+    ///
+    /// This command attempts to resend the DDNS updates for the IPv6 lease that
+    /// matches the selection criteria.
+    ///
+    /// It extracts the command name and arguments from the given Callouthandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// argument accordingly.
+    ///
+    /// A single parameter is supported: ip-address:
+    ///
+    /// Example command to resend DDNS based on existing FDQN and flags
+    /// {
+    ///     "command": "lease6-resend-ddns",
+    ///     "arguments": {
+    ///         "ip-address": "2001:db8:abcd::",
+    ///     }
+    /// }
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// delete command JSON text in the "command" argument
+    /// @return result of the operation
+    int
+    lease6ResendDdnsHandler(hooks::CalloutHandle& handle);
+
 private:
     /// Pointer to the actual implementation
     boost::shared_ptr<LeaseCmdsImpl> impl_;
