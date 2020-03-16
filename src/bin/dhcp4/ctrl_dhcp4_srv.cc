@@ -177,6 +177,7 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
         if (enabled) {
             CfgMgr::instance().getCurrentCfg()->setServerThreadCount(srv_thread_count);
             CfgMgr::instance().getCurrentCfg()->setServerMaxThreadQueueSize(4);
+            LOG_FATAL(dhcp4_logger, DHCP4_MULTI_THREADING_WARNING);
         }
         MultiThreadingMgr::instance().apply(enabled,
             CfgMgr::instance().getCurrentCfg()->getServerThreadCount());
@@ -204,7 +205,7 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
     LOG_WARN(dhcp4_logger, DHCP4_MULTI_THREADING_INFO)
         .arg(MultiThreadingMgr::instance().getMode() ? "yes" : "no")
         .arg(MultiThreadingMgr::instance().getPktThreadPoolSize())
-        .arg(CfgMgr::instance().getCurrentCfg()->getPktThreadQueueSize());
+        .arg(CfgMgr::instance().getCurrentCfg()->getServerMaxThreadQueueSize());
 
     return (result);
 }

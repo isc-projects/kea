@@ -488,6 +488,9 @@ IAID.
 This is a message listing some information about the multi-threading parameters
 with which the server is running.
 
+% DHCP6_MULTI_THREADING_WARNING Multi-threading support is experimental. Don't use in production environment.
+This is a message warning about the experimental multi-threading feature.
+
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
 IPv6 DHCP server but it is not running.
