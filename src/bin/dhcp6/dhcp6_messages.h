@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed Feb 19 2020 16:59
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Mon Mar 16 2020 18:36
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -85,6 +85,7 @@ extern const isc::log::MessageID DHCP6_LEASE_NA_WITHOUT_DUID;
 extern const isc::log::MessageID DHCP6_LEASE_PD_WITHOUT_DUID;
 extern const isc::log::MessageID DHCP6_LEASE_RENEW;
 extern const isc::log::MessageID DHCP6_MULTI_THREADING_INFO;
+extern const isc::log::MessageID DHCP6_MULTI_THREADING_WARNING;
 extern const isc::log::MessageID DHCP6_NOT_RUNNING;
 extern const isc::log::MessageID DHCP6_NO_INTERFACES;
 extern const isc::log::MessageID DHCP6_NO_SOCKETS_OPEN;

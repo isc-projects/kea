@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed Feb 19 2020 16:59
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Mon Mar 16 2020 18:36
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -84,6 +84,7 @@ extern const isc::log::MessageID DHCP6_LEASE_NA_WITHOUT_DUID = "DHCP6_LEASE_NA_W
 extern const isc::log::MessageID DHCP6_LEASE_PD_WITHOUT_DUID = "DHCP6_LEASE_PD_WITHOUT_DUID";
 extern const isc::log::MessageID DHCP6_LEASE_RENEW = "DHCP6_LEASE_RENEW";
 extern const isc::log::MessageID DHCP6_MULTI_THREADING_INFO = "DHCP6_MULTI_THREADING_INFO";
+extern const isc::log::MessageID DHCP6_MULTI_THREADING_WARNING = "DHCP6_MULTI_THREADING_WARNING";
 extern const isc::log::MessageID DHCP6_NOT_RUNNING = "DHCP6_NOT_RUNNING";
 extern const isc::log::MessageID DHCP6_NO_INTERFACES = "DHCP6_NO_INTERFACES";
 extern const isc::log::MessageID DHCP6_NO_SOCKETS_OPEN = "DHCP6_NO_SOCKETS_OPEN";
@@ -229,6 +230,7 @@ const char* values[] = {
     "DHCP6_LEASE_PD_WITHOUT_DUID", "%1: lease for prefix %2/%3 does not have a DUID",
     "DHCP6_LEASE_RENEW", "%1: lease for address %2 and iaid=%3 has been allocated",
     "DHCP6_MULTI_THREADING_INFO", "enabled: %1, number of threads: %2, queue size per thread: %3",
+    "DHCP6_MULTI_THREADING_WARNING", "multi-threading support is experimental. Don't use in production environment.",
     "DHCP6_NOT_RUNNING", "IPv6 DHCP server is not running",
     "DHCP6_NO_INTERFACES", "failed to detect any network interfaces",
     "DHCP6_NO_SOCKETS_OPEN", "no interface configured to listen to DHCP traffic",

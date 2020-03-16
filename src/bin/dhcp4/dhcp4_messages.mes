@@ -441,7 +441,7 @@ lifetime.
 This is a message listing some information about the multi-threading parameters
 with which the server is running.
 
-% DHCP4_MULTI_THREADING_WARNING Multi-threading support is experimental. Don't use in production environment.
+% DHCP4_MULTI_THREADING_WARNING multi-threading support is experimental. Don't use in production environment.
 This is a message warning about the experimental multi-threading feature.
 
 % DHCP4_NCR_CREATE %1: DDNS updates enabled, therefore sending name change requests
