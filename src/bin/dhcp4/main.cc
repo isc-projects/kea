@@ -59,8 +59,8 @@ usage() {
          << "(useful for testing only)" << endl;
     cerr << "  -P number: specify non-standard client port number 1-65535 "
          << "(useful for testing only)" << endl;
-    cerr << "  -N number: specify thread count 0-65535 "
-         << "(0 means multi-threading disabled)" << endl;
+    cerr << "  -N number: enable multi-threading and set thread count 0-65535 "
+         << "(0 means auto detect)" << endl;
     exit(EXIT_FAILURE);
 }
 }  // namespace
@@ -148,6 +148,8 @@ main(int argc, char* argv[]) {
                 cerr << "Failed to parse thread count number: [" << optarg
                      << "], 0-65535 allowed." << endl;
                 usage();
+            } else {
+                srv_thread_count = thread_count;
             }
             break;
 

@@ -841,5 +841,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     return (answer);
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+int srv_thread_count = -1;
+
+}  // namespace dhcp
+}  // namespace isc

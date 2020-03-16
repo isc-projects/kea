@@ -44,7 +44,9 @@ isc::data::ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                      bool check_only = false);
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+extern int srv_thread_count;
+
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCP6_CONFIG_PARSER_H
