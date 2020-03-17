@@ -323,7 +323,7 @@ public:
     /// IO service attempting to invoke methods on objects that are no longer
     /// valid.
     ///
-    /// @return The pending flag.
+    /// @return The IO pending flag.
     bool isIoPending() const {
         return (io_pending_);
     }
