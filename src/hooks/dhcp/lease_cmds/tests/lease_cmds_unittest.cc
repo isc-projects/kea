@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <config/command_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/ncr_generator.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
@@ -25,6 +26,7 @@ using namespace isc::hooks;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp_ddns;
 using namespace isc::asiolink;
 using namespace isc::test;
 
@@ -205,6 +207,40 @@ public:
         EXPECT_NO_THROW(unloadLibs());
     }
 
+    /// @brief Verify that NameChangeRequest holds valid values.
+    ///
+    /// This function picks first NameChangeRequest from the internal server's
+    /// queue and checks that it holds valid parameters. The NameChangeRequest
+    /// is removed from the queue.
+    ///
+    /// @param type An expected type of the NameChangeRequest (Add or Remove).
+    /// @param reverse An expected setting of the reverse update flag.
+    /// @param forward An expected setting of the forward update flag.
+    /// @param addr A string representation of the IPv6 address held in the
+    /// NameChangeRequest.
+    /// @param fqdn The expected string value of the FQDN, if blank the
+    /// check is skipped
+    void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
+                                 const bool reverse, const bool forward,
+                                 const std::string& addr,
+                                 const std::string& fqdn="") {
+        NameChangeRequestPtr ncr;
+        ASSERT_NO_THROW(ncr = CfgMgr::instance().getD2ClientMgr().peekAt(0));
+        ASSERT_TRUE(ncr);
+
+        EXPECT_EQ(type, ncr->getChangeType());
+        EXPECT_EQ(forward, ncr->isForwardChange());
+        EXPECT_EQ(reverse, ncr->isReverseChange());
+        EXPECT_EQ(addr, ncr->getIpAddress());
+
+        if (!fqdn.empty()) {
+           EXPECT_EQ(fqdn, ncr->getFqdn());
+        }
+
+        // Process the message off the queue
+        ASSERT_NO_THROW(CfgMgr::instance().getD2ClientMgr().runReadyIO());
+    }
+
     /// List of libraries to be/being loaded (usually just one)
     HookLibsCollection libraries_;
 
@@ -222,14 +258,19 @@ public:
     /// @brief Pointer to the lease manager
     LeaseMgr* lmptr_;
 
+    /// @brief Reference to the D2 client manager.
+    D2ClientMgr& d2_mgr_;
+
     /// @brief Constructor
     ///
     /// Sets the library filename and clears the lease manager pointer.
     /// Also ensured there is no lease manager leftovers from previous
     /// test.
     LeaseCmdsTest()
-        :LibLoadTest(LEASE_CMDS_LIB_SO) {
+        :LibLoadTest(LEASE_CMDS_LIB_SO),
+        d2_mgr_(CfgMgr::instance().getD2ClientMgr()) {
         LeaseMgrFactory::destroy();
+        enableD2();
         lmptr_ = 0;
     }
 
@@ -240,6 +281,7 @@ public:
         // destroys lease manager first because the other order triggers
         // a clang/boost bug
         LeaseMgrFactory::destroy();
+        disableD2();
         unloadLibs();
         lmptr_ = 0;
     }
@@ -546,6 +588,42 @@ public:
 
         ADD_FAILURE() << "expected lease not found";
     }
+
+    /// @brief Enables DHCP-DDNS updates.
+    void enableD2() {
+        D2ClientConfigPtr cfg(new D2ClientConfig());
+        ASSERT_NO_THROW(cfg->enableUpdates(true));
+        ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
+        d2_mgr_.startSender(boost::bind(&LeaseCmdsTest::d2ErrorHandler, this,
+                                        _1, _2));
+    }
+
+    /// @brief Disables DHCP-DDNS updates.
+    void disableD2() {
+        d2_mgr_.stopSender();
+        // Default constructor creates a config with DHCP-DDNS updates
+        // disabled.
+        D2ClientConfigPtr cfg(new D2ClientConfig());
+        CfgMgr::instance().setD2ClientConfig(cfg);
+    }
+
+    /// @brief No-op error handler for D2.
+    void d2ErrorHandler(const NameChangeSender::Result, NameChangeRequestPtr&) {
+        // no-op
+    }
+
+    /// @brief Fetches the number of entries in the NCR sender queue.
+    int ncrQueueSize() {
+        int size = -1;
+        try {
+            size = d2_mgr_.getQueueSize();
+        } catch (...) {
+            // If d2_mgr_ isn't in sending, it will throw.
+            // Swallow the exception and return -1.
+        }
+
+        return (size);
+    }
 };
 
 // Simple test that checks the library really registers the commands.
@@ -561,7 +639,8 @@ TEST_F(LeaseCmdsTest, commands) {
         "lease4-get-by-hostname",   "lease6-get-by-hostname",
         "lease4-del",               "lease6-del",
         "lease4-update",            "lease6-update",
-        "lease4-wipe",              "lease6-wipe"
+        "lease4-wipe",              "lease6-wipe",
+        "lease4-resend-ddns",       "lease6-resend-ddns"
     };
     testCommands(cmds);
 }
@@ -4714,5 +4793,382 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyRollback) {
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
 }
 
+// Checks that lease4-resend-ddns sanitizes its input.
+TEST_F(LeaseCmdsTest, Lease4ResendDdnsBadParam) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Invalid address family.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-resend-ddns\",\n"
+        "    \"arguments\": {\n"
+        "        \"ip-address\": \"2001:db8:1::1\"\n"
+        "    }\n"
+        "}\n";
+
+    string exp_rsp = "Invalid IPv4 address specified: 2001:db8:1::1";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // ip-address is not an address at all.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-resend-ddns\",\n"
+        "    \"arguments\": {\n"
+        "        \"ip-address\": \"221B Baker St.\"\n"
+        "    }\n"
+        "}\n";
+
+    exp_rsp = "'221B Baker St.' is not a valid IP address.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease4-resend-ddns does not generate an NCR for
+// when there is no matching lease.
+TEST_F(LeaseCmdsTest, lease4ResendDdnsNoLease) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Invalid
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-resend-ddns\",\n"
+        "    \"arguments\": {\n"
+        "        \"ip-address\": \"192.0.2.5\"\n"
+        "    }\n"
+        "}\n";
+    string exp_rsp = "No lease found for: 192.0.2.5";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease4-resend-ddns does not generate an NCR for given lease
+// when DDNS updating is disabled.
+TEST_F(LeaseCmdsTest, lease4ResendDdnsDisabled) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+    disableD2();
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-resend-ddns\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\""
+        "    }\n"
+        "}";
+
+    string exp_rsp = "DDNS updating is not enabled";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    // With D2 disabled there is no queue, size should come back as -1.
+    EXPECT_EQ(ncrQueueSize(), -1);
+}
+
+// Checks that lease4-resend-ddns does not generate an NCR for given lease
+// when updates are enabled but Lease::hostname_ is blank.
+TEST_F(LeaseCmdsTest, lease4ResendNoHostname) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // NCR sender queue should be empty.
+    ASSERT_EQ(ncrQueueSize(), 0);
+
+    // Fetch the lease so we can replace the hostname with "".
+    Lease4Ptr lease = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(lease);
+    lease->hostname_ = "";
+    lmptr_->updateLease4(lease);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-resend-ddns\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\""
+        "    }\n"
+        "}";
+
+    string exp_rsp = "Lease for: 192.0.2.1, has no hostname, nothing to update";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // There should not any NCRs queued.
+    EXPECT_EQ(ncrQueueSize(), 0);
+}
+
+// Checks that lease4-resend-ddns does not generate an NCR for given lease
+// when updates are enabled, Lease::hostname_ is not blank, but both
+// Lease::fqdn_fwd_ and fdqn_rev_ are false.
+TEST_F(LeaseCmdsTest, lease4ResendNoDirectionsEnabled) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // NCR sender queue should be empty.
+    ASSERT_EQ(ncrQueueSize(), 0);
+
+    // Fetch the lease so we can replace the hostname with "".
+    Lease4Ptr lease = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(lease);
+    lease->fqdn_fwd_ = false;
+    lease->fqdn_rev_ = false;
+    lmptr_->updateLease4(lease);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-resend-ddns\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\""
+        "    }\n"
+        "}";
+
+    string exp_rsp = "Neither forward nor reverse updates enabled for lease for: 192.0.2.1";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // There should not any NCRs queued.
+    EXPECT_EQ(ncrQueueSize(), 0);
+}
+
+// Checks that lease4-resend-ddns can generate an NCR for given lease
+// when updates are enabled, Lease::hostname_ is not blank, and at least
+// one of Lease::fqdn_fwd_ or fdqn_rev_ are true.
+TEST_F(LeaseCmdsTest, lease4ResendDdnsEnabled) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Structure detailing a test scenario.
+    struct Scenario {
+        std::string description_;
+        bool fqdn_fwd_;
+        bool fqdn_rev_;
+    };
+
+    // Three test scenarios to verify each combination of true flags.
+    std::vector<Scenario> scenarios = {
+       { "fwd_only", true,  false },
+       { "rev_only", false, true},
+       { "both",     true,  true},
+    };
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-resend-ddns\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\""
+        "    }\n"
+        "}";
+
+    // Expected response string.
+    string exp_rsp = "NCR generated for: 192.0.2.1, hostname: myhost.example.com.";
+
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        // Fetch the lease so we can update the DDNS direction flags.
+        Lease4Ptr lease = lmptr_->getLease4(IOAddress("192.0.2.1"));
+        ASSERT_TRUE(lease);
+        lease->fqdn_rev_ = scenario.fqdn_rev_;
+        lease->fqdn_fwd_ = scenario.fqdn_fwd_;
+        lmptr_->updateLease4(lease);
+
+        // Queue should be empty.
+        ASSERT_EQ(ncrQueueSize(), 0);
+        ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+        // We should have one entry in the queue.
+        ASSERT_EQ(ncrQueueSize(), 1);
+        verifyNameChangeRequest(CHG_ADD, scenario.fqdn_rev_, scenario.fqdn_fwd_,
+                                "192.0.2.1", "myhost.example.com.");
+    }
+}
+
+// Checks that lease6-resend-ddns sanitizes its input.
+TEST_F(LeaseCmdsTest, Lease6ResendDdnsBadParam) {
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Invalid address family.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-resend-ddns\",\n"
+        "    \"arguments\": {\n"
+        "        \"ip-address\": \"192.0.2.1\"\n"
+        "    }\n"
+        "}\n";
+
+    string exp_rsp = "Invalid IPv6 address specified: 192.0.2.1";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // ip-address is not an address at all.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-resend-ddns\",\n"
+        "    \"arguments\": {\n"
+        "        \"ip-address\": \"221B Baker St.\"\n"
+        "    }\n"
+        "}\n";
+
+    exp_rsp = "'221B Baker St.' is not a valid IP address.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease6-resend-ddns does not generate an NCR for
+// when there is no matching lease.
+TEST_F(LeaseCmdsTest, lease6ResendDdnsNoLease) {
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Invalid
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-resend-ddns\",\n"
+        "    \"arguments\": {\n"
+        "        \"ip-address\": \"2001::dead:beef\"\n"
+        "    }\n"
+        "}\n";
+    string exp_rsp = "No lease found for: 2001::dead:beef";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease6-resend-ddns does not generate an NCR for given lease
+// when DDNS updating is disabled.
+TEST_F(LeaseCmdsTest, lease6ResendDdnsDisabled) {
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Disable DDNS updating.
+    disableD2();
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-resend-ddns\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\""
+        "    }\n"
+        "}";
+
+    string exp_rsp = "DDNS updating is not enabled";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    // With D2 disabled there is no queue, size should come back as -1.
+    EXPECT_EQ(ncrQueueSize(), -1);
+}
+
+// Checks that lease6-resend-ddns does not generate an NCR for given lease
+// when updates are enabled but Lease::hostname_ is blank.
+TEST_F(LeaseCmdsTest, lease6ResendNoHostname) {
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // NCR sender queue should be empty.
+    ASSERT_EQ(ncrQueueSize(), 0);
+
+    // Fetch the lease so we can replace the hostname with "".
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    lease->hostname_ = "";
+    lmptr_->updateLease6(lease);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-resend-ddns\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\""
+        "    }\n"
+        "}";
+
+    string exp_rsp = "Lease for: 2001:db8:1::1, has no hostname, nothing to update";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // There should not any NCRs queued.
+    EXPECT_EQ(ncrQueueSize(), 0);
+}
+
+// Checks that lease6-resend-ddns does not generate an NCR for given lease
+// when updates are enabled, Lease::hostname_ is not blank, but both
+// Lease::fqdn_fwd_ and fdqn_rev_ are false.
+TEST_F(LeaseCmdsTest, lease6ResendNoDirectionsEnabled) {
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // NCR sender queue should be empty.
+    ASSERT_EQ(ncrQueueSize(), 0);
+
+    // Fetch the lease so we can replace the hostname with "".
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    lease->fqdn_fwd_ = false;
+    lease->fqdn_rev_ = false;
+    lmptr_->updateLease6(lease);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-resend-ddns\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\""
+        "    }\n"
+        "}";
+
+    string exp_rsp = "Neither forward nor reverse updates enabled for lease for: 2001:db8:1::1";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // There should not any NCRs queued.
+    EXPECT_EQ(ncrQueueSize(), 0);
+}
+
+// Checks that lease6-resend-ddns can generate an NCR for given lease
+// when updates are enabled, Lease::hostname_ is not blank, and at least
+// one of Lease::fqdn_fwd_ or fdqn_rev_ are true.
+TEST_F(LeaseCmdsTest, lease6ResendDdnsEnabled) {
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Structure detailing a test scenario.
+    struct Scenario {
+        std::string description_;
+        bool fqdn_fwd_;
+        bool fqdn_rev_;
+    };
+
+    // Three test scenarios to verify each combination of true flags.
+    std::vector<Scenario> scenarios = {
+       { "fwd_only", true,  false },
+       { "rev_only", false, true},
+       { "both",     true,  true},
+    };
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-resend-ddns\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\""
+        "    }\n"
+        "}";
+
+    // Expected response string.
+    string exp_rsp = "NCR generated for: 2001:db8:1::1, hostname: myhost.example.com.";
+
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        // Fetch the lease so we can update the DDNS direction flags.
+        Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+        ASSERT_TRUE(lease);
+        lease->fqdn_rev_ = scenario.fqdn_rev_;
+        lease->fqdn_fwd_ = scenario.fqdn_fwd_;
+        lmptr_->updateLease6(lease);
+
+        // Queue should be empty.
+        ASSERT_EQ(ncrQueueSize(), 0);
+        ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+        // We should have one entry in the queue.
+        ASSERT_EQ(ncrQueueSize(), 1);
+        verifyNameChangeRequest(CHG_ADD, scenario.fqdn_rev_, scenario.fqdn_fwd_,
+                                "2001:db8:1::1", "myhost.example.com.");
+    }
+}
 
 } // end of anonymous namespace

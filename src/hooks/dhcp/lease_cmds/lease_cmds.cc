@@ -1606,6 +1606,7 @@ int
 LeaseCmdsImpl::lease4ResendDdnsHandler(CalloutHandle& handle) {
     Lease4Ptr lease;
     std::stringstream ss;
+    int ret = CONTROL_RESULT_ERROR;
 
     try {
         extractCommand(handle);
@@ -1617,6 +1618,7 @@ LeaseCmdsImpl::lease4ResendDdnsHandler(CalloutHandle& handle) {
         lease = LeaseMgrFactory::instance().getLease4(addr);
         if (!lease) {
             ss << "No lease found for: " << addr.toText();
+            ret = CONTROL_RESULT_EMPTY;
         } else if (lease->hostname_.empty()) {
             ss << "Lease for: " << addr.toText()
                << ", has no hostname, nothing to update";
@@ -1641,13 +1643,14 @@ LeaseCmdsImpl::lease4ResendDdnsHandler(CalloutHandle& handle) {
 
     LOG_ERROR(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS4_FAILED).arg(ss.str());
     setErrorResponse(handle, ss.str());
-    return (CONTROL_RESULT_ERROR);
+    return (ret);
 }
 
 int
 LeaseCmdsImpl::lease6ResendDdnsHandler(CalloutHandle& handle) {
     Lease6Ptr lease;
     std::stringstream ss;
+    int ret = CONTROL_RESULT_ERROR;
 
     try {
         extractCommand(handle);
@@ -1659,6 +1662,7 @@ LeaseCmdsImpl::lease6ResendDdnsHandler(CalloutHandle& handle) {
         lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
         if (!lease) {
             ss << "No lease found for: " << addr.toText();
+            ret = CONTROL_RESULT_EMPTY;
         } else if (lease->hostname_.empty()) {
             ss << "Lease for: " << addr.toText()
                << ", has no hostname, nothing to update";
@@ -1683,7 +1687,7 @@ LeaseCmdsImpl::lease6ResendDdnsHandler(CalloutHandle& handle) {
 
     LOG_ERROR(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS6_FAILED).arg(ss.str());
     setErrorResponse(handle, ss.str());
-    return (CONTROL_RESULT_ERROR);
+    return (ret);
 }
 
 
