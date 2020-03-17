@@ -46,14 +46,16 @@
 /// communications that is independent of the IO layer mechanisms.  While the
 /// type and details of the IO mechanism are not relevant to either class, it
 /// is presumed to use isc::asiolink library for asynchronous event processing.
-///
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <deque>
+#include <mutex>
 
 namespace isc {
 namespace dhcp_ddns {
@@ -68,7 +70,7 @@ enum NameChangeProtocol {
   NCR_TCP
 };
 
-/// @brief Function which converts labels to  NameChangeProtocol enum values.
+/// @brief Function which converts text labels to @ref NameChangeProtocol enums.
 ///
 /// @param protocol_str text to convert to an enum.
 /// Valid string values: "UDP", "TCP"
@@ -79,7 +81,7 @@ enum NameChangeProtocol {
 /// enum value.
 extern NameChangeProtocol stringToNcrProtocol(const std::string& protocol_str);
 
-/// @brief Function which converts NameChangeProtocol enums to text labels.
+/// @brief Function which converts @ref NameChangeProtocol enums to text labels.
 ///
 /// @param protocol enum value to convert to label
 ///
@@ -167,10 +169,10 @@ public:
 
     /// @brief Defines the outcome of an asynchronous NCR receive
     enum Result {
-      SUCCESS,
-      TIME_OUT,
-      STOPPED,
-      ERROR
+        SUCCESS,
+        TIME_OUT,
+        STOPPED,
+        ERROR
     };
 
     /// @brief Abstract class for defining application layer receive callbacks.
@@ -179,7 +181,8 @@ public:
     /// derivation of this class to the listener constructor in order to
     /// receive NameChangeRequests.
     class RequestReceiveHandler {
-      public:
+    public:
+
         /// @brief Function operator implementing a NCR receive callback.
         ///
         /// This method allows the application to receive the inbound
@@ -190,6 +193,7 @@ public:
         /// @param ncr is a pointer to the newly received NameChangeRequest if
         /// result is NameChangeListener::SUCCESS.  It is indeterminate other
         /// wise.
+        ///
         /// @throw This method MUST NOT throw.
         virtual void operator ()(const Result result,
                                  NameChangeRequestPtr& ncr) = 0;
@@ -296,12 +300,15 @@ protected:
     virtual void doReceive() = 0;
 
 public:
+
     /// @brief Returns true if the listener is listening, false otherwise.
     ///
     /// A true value indicates that the IO source has been opened successfully,
     /// and that receive loop logic is active.  This implies that closing the
     /// IO source will interrupt that operation, resulting in a callback
     /// invocation.
+    ///
+    /// @return The listening mode.
     bool amListening() const {
         return (listening_);
     }
@@ -315,6 +322,8 @@ public:
     /// deleted while there is an IO call pending.  This can result in the
     /// IO service attempting to invoke methods on objects that are no longer
     /// valid.
+    ///
+    /// @return The pending flag.
     bool isIoPending() const {
         return (io_pending_);
     }
@@ -477,7 +486,8 @@ public:
     /// derivation of this class to the sender constructor in order to
     /// receive send outcome notifications.
     class RequestSendHandler {
-      public:
+    public:
+
         /// @brief Function operator implementing a NCR send callback.
         ///
         /// This method allows the application to receive the outcome of
@@ -504,7 +514,7 @@ public:
     /// send queue.  Once the maximum number is reached, all calls to
     /// sendRequest will fail with an exception.
     NameChangeSender(RequestSendHandler& send_handler,
-            size_t send_queue_max = MAX_QUEUE_DEFAULT);
+                     size_t send_queue_max = MAX_QUEUE_DEFAULT);
 
     /// @brief Destructor
     virtual ~NameChangeSender() {
@@ -573,13 +583,61 @@ public:
     /// @return true if the sender has at IO ready, false otherwise.
     virtual bool ioReady() = 0;
 
+private:
+
+    /// @brief Prepares the IO for transmission in a thread safe context.
+    ///
+    /// @param io_service is the IOService that will handle IO event processing.
+    void startSendingInternal(isc::asiolink::IOService & io_service);
+
+    /// @brief Queues the given request to be sent in a thread safe context.
+    ///
+    /// @param ncr is the NameChangeRequest to send.
+    ///
+    /// @throw NcrSenderQueueFull if the send queue has reached capacity.
+    void sendRequestInternal(NameChangeRequestPtr& ncr);
+
+    /// @brief Move all queued requests from a given sender into the send queue
+    /// in a thread safe context.
+    ///
+    /// @param source_sender from whom the queued messages will be taken
+    ///
+    /// @throw NcrSenderError if this sender's queue is not empty.
+    void assumeQueueInternal(NameChangeSender& source_sender);
+
+    /// @brief Calls the NCR send completion handler registered with the
+    /// sender in a thread safe context.
+    ///
+    /// @param result contains that send outcome status.
+    void invokeSendHandlerInternal(const NameChangeSender::Result result);
+
+    /// @brief Removes the request at the front of the send queue in a thread
+    /// safe context.
+    void skipNextInternal();
+
+    /// @brief Returns the number of entries currently in the send queue in a
+    /// thread safe context.
+    ///
+    /// @return the queue size.
+    size_t getQueueSizeInternal() const;
+
+    /// @brief Returns the entry at a given position in the queue in a thread
+    /// safe context.
+    ///
+    /// @return Pointer reference to the queue entry.
+    ///
+    /// @throw NcrSenderError if the given index is beyond the
+    /// end of the queue.
+    const NameChangeRequestPtr& peekAtInternal(const size_t index) const;
+
 protected:
-    /// @brief Dequeues and sends the next request on the send queue.
+
+    /// @brief Dequeues and sends the next request on the send queue in a thread
+    /// safe context.
     ///
     /// If there is already a send in progress just return. If there is not
     /// a send in progress and the send queue is not empty the grab the next
     /// message on the front of the queue and call doSend().
-    ///
     void sendNext();
 
     /// @brief Calls the NCR send completion handler registered with the
@@ -587,8 +645,8 @@ protected:
     ///
     /// This is the hook by which the sender's caller's NCR send completion
     /// handler is called.  This method MUST be invoked by the derivation's
-    /// implementation of doSend.   Note that if the send was a success,
-    /// the entry at the front of the queue is removed from the queue.
+    /// implementation of doSend.  Note that if the send was a success, the
+    /// entry at the front of the queue is removed from the queue.
     /// If not we leave it there so we can retry it.  After we invoke the
     /// handler we clear the pending ncr value and queue up the next send.
     ///
@@ -643,6 +701,7 @@ protected:
     virtual void doSend(NameChangeRequestPtr& ncr) = 0;
 
 public:
+
     /// @brief Removes the request at the front of the send queue
     ///
     /// This method can be used to avoid further retries of a failed
@@ -653,7 +712,7 @@ public:
     /// It is presumed that sends will only fail due to some sort of
     /// communications issue. In the unlikely event that a request is
     /// somehow tainted and causes an send failure based on its content,
-    /// this method provides a means to remove th message.
+    /// this method provides a means to remove the message.
     void skipNext();
 
     /// @brief Flushes all entries in the send queue
@@ -661,6 +720,7 @@ public:
     /// This method can be used to discard all of the NCRs currently in the
     /// the send queue.  Note it may not be called while the sender is in
     /// the sending state.
+    ///
     /// @throw NcrSenderError if called and sender is in sending state.
     void clearSendQueue();
 
@@ -668,6 +728,8 @@ public:
     ///
     /// A true value indicates that the IO sink has been opened successfully,
     /// and that send loop logic is active.
+    ///
+    /// @return The send mode.
     bool amSending() const {
         return (sending_);
     }
@@ -676,11 +738,13 @@ public:
     ///
     /// A true value indicates that a request is actively in the process of
     /// being delivered.
-    bool isSendInProgress() const {
-        return ((ncr_to_send_) ? true : false);
-    }
+    ///
+    /// @return The send in progress flag.
+    bool isSendInProgress() const;
 
     /// @brief Returns the maximum number of entries allowed in the send queue.
+    ///
+    /// @return The queue maximum size.
     size_t getQueueMaxSize() const  {
         return (send_queue_max_);
     }
@@ -696,13 +760,14 @@ public:
     void setQueueMaxSize(const size_t new_max);
 
     /// @brief Returns the number of entries currently in the send queue.
-    size_t getQueueSize() const {
-        return (send_queue_.size());
-    }
+    ///
+    /// @return The queue size.
+    size_t getQueueSize() const;
 
     /// @brief Returns the entry at a given position in the queue.
     ///
     /// Note that the entry is not removed from the queue.
+    ///
     /// @param index the index of the entry in the queue to fetch.
     /// Valid values are 0 (front of the queue) to (queue size - 1).
     ///
@@ -731,16 +796,19 @@ public:
     /// By running only one handler at time, we ensure that NCR IO activity
     /// doesn't starve other processing.  It is unclear how much of a real
     /// threat this poses but for now it is best to err on the side of caution.
-    ///
     virtual void runReadyIO();
 
 protected:
+
     /// @brief Returns a reference to the send queue.
+    ///
+    /// @return The send queue.
     SendQueue& getSendQueue() {
         return (send_queue_);
     }
 
 private:
+
     /// @brief Sets the sending indicator to the given value.
     ///
     /// Note, this method is private as it is used the base class is solely
@@ -748,7 +816,7 @@ private:
     ///
     /// @param value is the new value to assign to the indicator.
     void setSending(bool value) {
-            sending_ = value;
+        sending_ = value;
     }
 
     /// @brief Boolean indicator which tracks sending status.
@@ -771,12 +839,15 @@ private:
     /// reference.  Use a raw pointer to store it.  This value should never be
     /// exposed and is only valid while in send mode.
     asiolink::IOService* io_service_;
+
+    /// @brief The mutex used to protect internal state.
+    const boost::scoped_ptr<std::mutex> mutex_;
 };
 
 /// @brief Defines a smart pointer to an instance of a sender.
 typedef boost::shared_ptr<NameChangeSender> NameChangeSenderPtr;
 
-} // namespace isc::dhcp_ddns
-} // namespace isc
+}  // namespace dhcp_ddns
+}  // namespace isc
 
 #endif
