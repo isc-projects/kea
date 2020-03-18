@@ -51,11 +51,12 @@ cannot guarantee that we will accept them.  All contributions will be
 assessed against the risk of adverse effect on officially supported
 platforms.
 
-* Platforms past or close to their respective EOL dates, such as:
-    * Ubuntu 14.04, 18.10
-    * CentOS 6
-    * Debian Jessie
-    * FreeBSD 10.x
+Platforms past or close to their respective EOL dates, such as:
+
+* Ubuntu 14.04, 18.10
+* CentOS 6
+* Debian 8 (Jessie)
+* FreeBSD 10.x
 
 Unsupported platforms
 ---------------------
