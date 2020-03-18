@@ -117,6 +117,7 @@ CommandOptions::reset() {
     renew_rate_ = 0;
     release_rate_ = 0;
     report_delay_ = 0;
+    clean_report_ = false;
     clients_num_ = 0;
     mac_template_.assign(mac, mac + 6);
     duid_template_.clear();
@@ -238,7 +239,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // they will be tuned and validated elsewhere
     while((opt = getopt_long(argc, argv,
                              "huv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
-                             "J:T:X:O:o:E:S:I:x:W:w:e:f:F:g:",
+                             "J:T:X:O:o:E:S:I:x:W:w:e:f:F:g:C",
                              long_options, NULL)) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
@@ -289,6 +290,10 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
         case 'c':
             rapid_commit_ = true;
+            break;
+
+        case 'C':
+            clean_report_ = true;
             break;
 
         case 'd':
@@ -622,19 +627,20 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             server_name_ = ALL_DHCP_SERVERS;
         }
     }
+    if (!getCleanReport()) {
+        if (print_cmd_line) {
+            std::cout << "Running: " << stream.str() << std::endl;
+        }
 
-    if (print_cmd_line) {
-        std::cout << "Running: " << stream.str() << std::endl;
-    }
+        if (scenario_ == Scenario::BASIC) {
+            std::cout << "Scenario: basic." << std::endl;
+        } else if (scenario_ == Scenario::AVALANCHE) {
+            std::cout << "Scenario: avalanche." << std::endl;
+        }
 
-    if (scenario_ == Scenario::BASIC) {
-        std::cout << "Scenario: basic." << std::endl;
-    } else if (scenario_ == Scenario::AVALANCHE) {
-        std::cout << "Scenario: avalanche." << std::endl;
-    }
-
-    if (!isSingleThreaded()) {
-        std::cout << "Multi-thread mode enabled." << std::endl;
+        if (!isSingleThreaded()) {
+            std::cout << "Multi-thread mode enabled." << std::endl;
+        }
     }
 
     // Handle the local '-l' address/interface
@@ -1142,7 +1148,7 @@ CommandOptions::printCommandLine() const {
 void
 CommandOptions::usage() const {
     std::cout <<
-        "perfdhcp [-huv] [-4|-6] [-A<encapsulation-level>] [-e<lease-type>]\n"
+        "perfdhcp [-huvC] [-4|-6] [-A<encapsulation-level>] [-e<lease-type>]\n"
         "         [-r<rate>] [-f<renew-rate>]\n"
         "         [-F<release-rate>] [-t<report>] [-R<range>] [-b<base>]\n"
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
@@ -1298,6 +1304,7 @@ CommandOptions::usage() const {
         "    alternative to -n, or both options can be given, in which case the\n"
         "    testing is completed when either limit is reached.\n"
         "-t<report>: Delay in seconds between two periodic reports.\n"
+        "-C: Output reduced, periodic reports generated in easy parsable mode.\n"
         "\n"
         "Errors:\n"
         "- tooshort: received a too short message\n"

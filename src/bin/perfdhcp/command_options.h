@@ -173,6 +173,11 @@ public:
     /// \return delay between two consecutive performance reports.
     int getReportDelay() const { return report_delay_; }
 
+    /// \brief Returns clean report mode.
+    ///
+    /// \return true if cleaner report is enabled.
+    int getCleanReport() const { return clean_report_; }
+
     /// \brief Returns number of simulated clients.
     ///
     /// \return number of simulated clients.
@@ -573,6 +578,9 @@ private:
 
     /// Delay between generation of two consecutive performance reports.
     int report_delay_;
+
+    /// Enable cleaner, easy to parse, output of performance reports.
+    bool clean_report_;
 
     /// Number of simulated clients (aka randomization range).
     uint32_t clients_num_;

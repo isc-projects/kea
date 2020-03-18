@@ -1087,7 +1087,9 @@ public:
     /// Method prints intermediate statistics for all exchanges.
     /// Statistics includes sent, received and dropped packets
     /// counters.
-    void printIntermediateStats() const {
+    ///
+    /// \param clean_report value to generate easy to parse report.
+    void printIntermediateStats(bool clean_report) const {
         std::ostringstream stream_sent;
         std::ostringstream stream_rcvd;
         std::ostringstream stream_drops;
@@ -1097,18 +1099,32 @@ public:
              it != exchanges_.end(); ++it) {
 
             if (it != exchanges_.begin()) {
-                sep = "/";
+                if (clean_report) {
+                    sep = " ";
+                } else {
+                    sep = "/";
+                }
             }
             stream_sent << sep << it->second->getSentPacketsNum();
             stream_rcvd << sep << it->second->getRcvdPacketsNum();
             stream_drops << sep << it->second->getDroppedPacketsNum();
             stream_reject << sep << it->second->getRejLeasesNum();
-        }
+        }//teraz
+
+        if (clean_report) {
+        std::cout << stream_sent.str()
+                  << " " << stream_rcvd.str()
+                  << " " << stream_drops.str()
+                  << " " << stream_reject.str()
+                  << std::endl;
+
+        } else {
         std::cout << "sent: " << stream_sent.str()
                   << "; received: " << stream_rcvd.str()
                   << "; drops: " << stream_drops.str()
                   << "; rejected: " << stream_reject.str()
                   << std::endl;
+        }
     }
 
     /// \brief Print timestamps of all packets.
