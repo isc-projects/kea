@@ -10,7 +10,9 @@ e.g. prefix delegation and dynamic updates to DNS.
 
 This guide covers Kea version |release|.
 
-For information about supported platforms see <insert reference>.
+For information about supported platforms see :ref:`platforms`.
+
+.. include:: platforms.rst
 
 .. _kea_software:
 

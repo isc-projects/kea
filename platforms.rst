@@ -1,14 +1,8 @@
-<!--
- - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
- -
- - This Source Code Form is subject to the terms of the Mozilla Public
- - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
- -
- - See the COPYRIGHT file distributed with this work for additional
- - information regarding copyright ownership.
--->
-## Supported platforms
+
+.. _platforms:
+
+Supported platforms
+===================
 
 In general, this version of Kea will build and run on any POSIX-compliant
 system with a C++ compiler (with C++11 support), the Botan cryptographic library, 
@@ -17,6 +11,63 @@ the log4cplus logging library and the Boost system library.
 The Kea build has been checked with GCC g++ 4.8.5 and some later versions,
 and Clang 800.0.38 and some later versions.
 
+ISC regularly tests Kea on many operating systems and architectures, but
+lacks the resources to test all of them. Consequently, ISC is only able to
+offer support on a "best effort" basis for some.
+
+Regularly tested platforms
+--------------------------
+
+As of January, 2020, Kea is officially supported on CentOS, Fedora, Ubuntu, Debian, and
+FreeBSD systems. Kea-|release| builds have been tested on:
+
+* CentOS Linux — 7, 8
+* Fedora — 30, 31
+* Ubuntu — 16.04, 18.04, 19.04
+* Debian GNU/Linux — 9, 10
+
+There are currently no plans to port Kea to Windows systems.
+
+Best effort
+-----------
+
+The following are platforms on which Kea is known to build and run.
+ISC makes every effort to fix bugs on these platforms, but may be unable to
+do so quickly due to lack of hardware, less familiarity on the part of
+engineering staff, and other constraints. 
+
+* FreeBSD — 11.3, 12.0
+* Alpine Linux — 3.10
+* macOS — 10.13, 10.14
+
+Community maintained
+--------------------
+
+These systems may not all have the required dependencies for building Kea
+easily available, although it will be possible in many cases to compile
+those directly from source. The community and interested parties may wish
+to help with maintenance, and we welcome patch contributions, although we
+cannot guarantee that we will accept them.  All contributions will be
+assessed against the risk of adverse effect on officially supported
+platforms.
+
+* Platforms past or close to their respective EOL dates, such as:
+    * Ubuntu 14.04, 18.10
+    * CentOS 6
+    * Debian Jessie
+    * FreeBSD 10.x
+
+Unsupported platforms
+---------------------
+
+These are platforms on which Kea 1.7+ is known *not* to build or run:
+
+* Windows (all versions)
+* Windows Server (all versions)
+* Any platform with OpenSSL 1.0.1 or earlier, which does not also have Botan as an alternative
+* Any platform with log4cplus version 1.0.2 or earlier.
+
+.. _required-software:
 
 Required Software at Run-Time
 =============================
@@ -68,60 +119,4 @@ Some optional features of Kea have additional dependencies.
    requires many dependencies to be installed, which are described in
    more detail in :ref:`netconf-install`.
 
----
-
-ISC regularly tests Kea on many operating systems and architectures, but
-lacks the resources to test all of them. Consequently, ISC is only able to
-offer support on a "best effort" basis for some.
-
-
-### Regularly tested platforms
-
-As of January, 2020, Kea is officially supported on CentOS, Fedora, Ubuntu, Debian, and
-FreeBSD systems. Kea-|release| builds have been tested on:
-
-* CentOS Linux — 7, 8
-* Fedora — 30, 31
-* Ubuntu — 16.04, 18.04, 19.04
-* Debian GNU/Linux — 9, 10
-
-There are currently no plans to port Kea to Windows systems.
-
-
-### Best effort
-
-The following are platforms on which Kea is known to build and run.
-ISC makes every effort to fix bugs on these platforms, but may be unable to
-do so quickly due to lack of hardware, less familiarity on the part of
-engineering staff, and other constraints. 
-
-* FreeBSD — 11.3, 12.0
-* Alpine Linux — 3.10
-* macOS — 10.13, 10.14
-
-    
-
-### Community maintained
-
-These systems may not all have the required dependencies for building Kea
-easily available, although it will be possible in many cases to compile
-those directly from source. The community and interested parties may wish
-to help with maintenance, and we welcome patch contributions, although we
-cannot guarantee that we will accept them.  All contributions will be
-assessed against the risk of adverse effect on officially supported
-platforms.
-
-* Platforms past or close to their respective EOL dates, such as:
-    * Ubuntu 14.04, 18.10
-    * CentOS 6
-    * Debian Jessie
-    * FreeBSD 10.x
-
-## Unsupported platforms
-
-These are platforms on which Kea 1.7+ is known *not* to build or run:
-
-* Windows (all versions)
-* Windows Server (all versions)
-* Any platform with OpenSSL 1.01 or earlier, which does not also have Botan as an alternative
-* Any platform with log4cplus version 1.0.2 or earlier.
+  
