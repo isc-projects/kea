@@ -1,3 +1,8 @@
+1731.	[func]		razvan
+	The NameChangeSender class is thread safe, making DNS updates
+	compatible with multi-threading packet processing.
+	(Gitlab #1148)
+
 1730.	[func]		razvan
 	Added -N command line switch that enables experimental multi-threading
 	support. Number of threads can be specified (e.g. -N8) or Kea can be
