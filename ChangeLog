@@ -1,3 +1,11 @@
+1730.	[func]		razvan
+	Added -N command line switch that enables experimental multi-threading
+	support. Number of threads can be specified (e.g. -N8) or Kea can be
+	told to autodetect number of CPU threads (-N0). This feature is
+	experimental. It hasn't been tested extensively and is known to cause
+	problems with DDNS and HA. Do not use in production!
+	(Gitlab #893)
+
 1729.	[func]		razvan
 	The RAII MultiThreadingCriticalSection class is now able to
 	automatically stop and start the packet thread pool in order to

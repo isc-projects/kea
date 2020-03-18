@@ -169,7 +169,6 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
                       "processCommand(\"config-set\", json)");
         }
 
-        // @todo enable multi-threading - disabled for now
         bool enabled = false;
         if (srv_thread_count >= 0) {
             enabled = true;
