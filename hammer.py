@@ -41,7 +41,7 @@ import xml.etree.ElementTree as ET
 SYSTEMS = {
     'fedora': [#'27',  # EOLed
                #'28',  # EOLed
-               '29',
+               #'29',  # EOLed
                '30',
                '31'],
     'centos': ['7', '8'],
@@ -49,7 +49,7 @@ SYSTEMS = {
     'ubuntu': [#'16.04',
                '18.04',
                #'18.10',  # EOLed
-               '19.04',
+               '19.04',  # EOLed
                '19.10'],
     'debian': [#'8',
                '9',
@@ -1610,25 +1610,20 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     execute(cmd)
     frc = []
     if system == 'fedora' and revision == '28':
-        frc.append('freeradius-client-1.1.7-isc20190916210635.fc28')
-        frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc28')
+        frc_version = 'isc20190916210635.fc28'
     elif system == 'fedora' and revision == '29':
-        frc.append('freeradius-client-1.1.7-isc20190916210635.fc29')
-        frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc29')
+        frc_version = 'isc20190916210635.fc29'
     elif system == 'fedora' and revision == '30':
-        frc.append('freeradius-client-1.1.7-isc20190916210635.fc30')
-        frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc30')
+        frc_version = 'isc20200318150024.fc30'
     elif system == 'fedora' and revision == '31':
-        frc.append('freeradius-client-1.1.7-isc20191219090215.fc31')
-        frc.append('freeradius-client-devel-1.1.7-isc20191219090215.fc31')
+        frc_version = 'isc20200318122047.fc31'
     elif system == 'centos' and revision == '7':
-        frc.append('freeradius-client-1.1.7-isc20190916210635.el7')
-        frc.append('freeradius-client-devel-1.1.7-isc20190916210635.el7')
+        frc_version = 'isc20200318122047.el7'
     elif system == 'centos' and revision == '8':
-        frc.append('freeradius-client-1.1.7-isc20191010071948.el8')
-        frc.append('freeradius-client-devel-1.1.7-isc20191010071948.el8')
-    if frc:
-        install_pkgs(frc, env=env, check_times=check_times)
+        frc_version = 'isc20200318134606.el8'
+    frc.append('freeradius-client-1.1.7-%s' % frc_version)
+    frc.append('freeradius-client-devel-1.1.7-%s' % frc_version)
+    install_pkgs(frc, env=env, check_times=check_times)
 
     # unpack kea sources tarball
     execute('sudo rm -rf kea-src', dry_run=dry_run)
@@ -1660,6 +1655,8 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     execute('cp %s rpm-root/SPECS' % os.path.join(rpm_dir, 'kea.spec'), check_times=check_times, dry_run=dry_run)
     execute('cp %s rpm-root/SOURCES' % tarball_path, check_times=check_times, dry_run=dry_run)
 
+    execute('sed -i -e s/{FREERADIUS_CLIENT_VERSION}/%s/g rpm-root/SPECS/kea.spec' % frc_version, check_times=check_times, dry_run=dry_run)
+
     # do rpm build
     cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba rpm-root/SPECS/kea.spec"
     cmd += " -D'_topdir /home/vagrant/rpm-root'"
@@ -1690,7 +1687,12 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         if 'Bad header data' not in out:
             break
         time.sleep(4)
-    install_pkgs('libfreeradius-client=1.1.7-isc20190916210635 libfreeradius-client-dev=1.1.7-isc20190916210635', env=env, check_times=check_times)
+    if system == 'ubuntu' and revision == '19.04':
+        frc_version = 'isc20200319090824'
+    else:
+        frc_version = 'isc20200318122047'
+    install_pkgs('libfreeradius-client=1.1.7-{0} libfreeradius-client-dev=1.1.7-{0}'.format(frc_version),
+                 env=env, check_times=check_times)
 
     # unpack tarball
     execute('sudo rm -rf kea-src', check_times=check_times, dry_run=dry_run)
@@ -1701,6 +1703,7 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     # update version, etc
     execute('sed -i -e s/{VERSION}/%s/ changelog' % pkg_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
     execute('sed -i -e s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
+    execute('sed -i -e s/{FREERADIUS_CLIENT_VERSION}/%s/g control' % frc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
 
     # do deb build
     env['LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
