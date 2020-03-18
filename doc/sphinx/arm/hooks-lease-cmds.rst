@@ -87,10 +87,10 @@ This library provides the following commands:
 -  ``lease6-wipe`` - removes all leases from a specific IPv6 subnet or
    from all subnets.
 
--  ``lease4-resend-ddns`` - resend a request to udpate DNS entries for
+-  ``lease4-resend-ddns`` - resend a request to update DNS entries for
    and existing lease.
 
--  ``lease6-resend-ddns`` - resend a request to udpate DNS entries for
+-  ``lease6-resend-ddns`` - resend a request to update DNS entries for
    and existing lease.
 
 The lease commands library is part of the open source code and is
@@ -897,24 +897,34 @@ An example of ``lease6-wipe`` is:
      }
    }
 
+The commands return a text description of the number of leases removed,
+plus the status code 0 (success) if any leases were removed or 2 (empty)
+if there were no leases. Status code 1 (error) may be returned if the
+parameters are incorrect or some other exception is encountered.
+
+Subnet-id 0 has a special meaning; it tells Kea to delete leases from
+all configured subnets. Also, the subnet-id parameter may be omitted. If
+not specified, leases from all subnets are wiped.
+
+Note: not all backends support this command.
+
 .. _command-lease4-resend-ddns:
 
 .. _command-lease6-resend-ddns:
 
 The lease4-resend-ddns, lease6-resend-ddns Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``lease4-resend-ddns`` or ``lease6-resend-ddns`` can be used to generate
 a request to kea-dhcp-ddns to update the DNS entries for an existing
 lease.  The desired lease is selected by a single parameter, "ip-address".
 In order for an update request to be generated, DDNS updating must be enabled
-and DNS must entries must have been made (or attempted) on the lease. In
-other words all of the following must be true:
+and DNS must entries must have already been made (or attempted) for the lease.
+In other words all of the following must be true:
 
 - DDNS updating must be enabled. (i.e. "dhcp-ddns":{ "enable-updates": true"})
-- The hostname on the lease must not be blank.
-- At least one of the DNS direction flags (fdqn_fwd or fdqn_rev) on the lease
-must be true.
+- The lease's hostname must not be blank.
+- At least one of the lease's DNS direction flags (fdqn_fwd or fdqn_rev) must be true.
 
 An example ``lease4-resend-ddns`` command for getting a lease using an IPv4
 address is:
@@ -935,7 +945,7 @@ An example of the ``lease6-resend-ddns`` query is:
    {
      "command": "lease6-resend-ddns",
      "arguments": {
-       "ip-address": "2001:db8:1234:ab::"
+       "ip-address": "2001:db8:1::1"
      }
    }
 
@@ -944,9 +954,9 @@ It has one of the following values: 0 (success), 1 (error), or 2 (empty). An emp
 result means that a query has been completed properly, but the object (a lease in
 this case) has not been found.
 
-A successful result does not mean that DNS has been successfully updates. Rather it
-indicates that a request to update DNS has been created and queued for transmission
-to kea-dhcp-ddns.
+A successful result does not mean that DNS has been successfully updated. It
+indicates that a request to update DNS has been successfully created and
+queued for transmission to kea-dhcp-ddns.
 
 An example result returned when the lease was found:
 
@@ -957,18 +967,3 @@ An example result returned when the lease was found:
      "text": "NCR generated for: 2001:db8:1::1, hostname: example.com."
    }
 
-.. _command-lease4-get-all:
-
-.. _command-lease6-get-all:
-
-
-The commands return a text description of the number of leases removed,
-plus the status code 0 (success) if any leases were removed or 2 (empty)
-if there were no leases. Status code 1 (error) may be returned if the
-parameters are incorrect or some other exception is encountered.
-
-Subnet-id 0 has a special meaning; it tells Kea to delete leases from
-all configured subnets. Also, the subnet-id parameter may be omitted. If
-not specified, leases from all subnets are wiped.
-
-Note: not all backends support this command.

@@ -36,6 +36,7 @@ api/lease4-get-by-hw-address.json
 api/lease4-get.json
 api/lease4-update.json
 api/lease4-wipe.json
+api/lease4-resend-ddns.json
 api/lease6-add.json
 api/lease6-bulk-apply.json
 api/lease6-del.json
@@ -45,6 +46,7 @@ api/lease6-get-by-hostname.json
 api/lease6-get.json
 api/lease6-update.json
 api/lease6-wipe.json
+api/lease6-resend-ddns.json
 api/leases-reclaim.json
 api/libreload.json
 api/list-commands.json
