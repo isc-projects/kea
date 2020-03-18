@@ -39,6 +39,8 @@ lease6-get
 lease6-get-all
 lease6-update
 lease6-wipe
+lease4-resend-ddns
+lease6-resend-ddns
 leases-reclaim
 libreload
 list-commands

@@ -545,7 +545,7 @@ public:
     /// }
     ///
     /// @param handle Callout context - which is expected to contain the
-    /// delete command JSON text in the "command" argument
+    /// lease4-resend-ddns command JSON text in the "command" argument
     /// @return result of the operation
     int
     lease4ResendDdnsHandler(hooks::CalloutHandle& handle);
@@ -570,7 +570,7 @@ public:
     /// }
     ///
     /// @param handle Callout context - which is expected to contain the
-    /// delete command JSON text in the "command" argument
+    /// lease6-resend-ddns command JSON text in the "command" argument
     /// @return result of the operation
     int
     lease6ResendDdnsHandler(hooks::CalloutHandle& handle);

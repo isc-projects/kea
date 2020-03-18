@@ -7,7 +7,7 @@
         "{",
         "    \"command\": \"lease6-resend-ddns\",",
         "    \"arguments\": {",
-        "        \"ip-address\": \"2001.db8.0::1\"",
+        "        \"ip-address\": \"2001:db8::1\"",
         "    }",
         "}"
     ],
@@ -22,7 +22,7 @@
         "  \"arguments\": {",
         "  },",
         "  \"result\": 0,",
-        "  \"text\": \"NCR generated for: 2001:db8:0::1, hostname: example.com.\"",
+        "  \"text\": \"NCR generated for: 2001:db8::1, hostname: example.com.\"",
         "}"
     ],
     "support": [

@@ -289,7 +289,7 @@ public:
     /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::lease4ResendDdnsHandler
     ///
     /// @param handle Callout context - which is expected to contain the
-    /// wipe command JSON text in the "command" argument
+    /// lease4-resend-ddns command JSON text in the "command" argument
     /// @return 0 upon success, non-zero otherwise
     int lease4ResendDdnsHandler(CalloutHandle& handle);
 
@@ -298,7 +298,7 @@ public:
     /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::lease6ResendDdnsHandler
     ///
     /// @param handle Callout context - which is expected to contain the
-    /// wipe command JSON text in the "command" argument
+    /// lease6-resend-ddns command JSON text in the "command" argument
     /// @return 0 upon success, non-zero otherwise
     int lease6ResendDdnsHandler(CalloutHandle& handle);
 
@@ -1604,9 +1604,8 @@ LeaseCmdsImpl::getAddressParam(ConstElementPtr params, const std::string name,
 
 int
 LeaseCmdsImpl::lease4ResendDdnsHandler(CalloutHandle& handle) {
-    Lease4Ptr lease;
     std::stringstream ss;
-    int ret = CONTROL_RESULT_ERROR;
+    int resp_code = CONTROL_RESULT_ERROR;
 
     try {
         extractCommand(handle);
@@ -1614,43 +1613,44 @@ LeaseCmdsImpl::lease4ResendDdnsHandler(CalloutHandle& handle) {
         // Get the target lease address. Invalid value will throw.
         IOAddress addr = getAddressParam(cmd_args_, "ip-address", AF_INET);
 
-        // Find the lease.
-        lease = LeaseMgrFactory::instance().getLease4(addr);
-        if (!lease) {
-            ss << "No lease found for: " << addr.toText();
-            ret = CONTROL_RESULT_EMPTY;
-        } else if (lease->hostname_.empty()) {
-            ss << "Lease for: " << addr.toText()
-               << ", has no hostname, nothing to update";
-        } else if (!lease->fqdn_fwd_ && !lease->fqdn_rev_) {
-            ss << "Neither forward nor reverse updates enabled for lease for: "
-               << addr.toText();
-        } else if (!CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
+        if (!CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
             ss << "DDNS updating is not enabled";
         } else {
-            // We have a lease with a hostname and updates in at least
-            // one direction enabled.  Queue an NCR for it.
-            queueNCR(CHG_ADD, lease);
-            ss << "NCR generated for: " << addr.toText()
-               << ", hostname: " << lease->hostname_;
-            setSuccessResponse(handle, ss.str());
-            LOG_INFO(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS4).arg(ss.str());
-            return (CONTROL_RESULT_SUCCESS);
+            // Find the lease.
+            Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
+            if (!lease) {
+                ss << "No lease found for: " << addr.toText();
+                resp_code = CONTROL_RESULT_EMPTY;
+            } else if (lease->hostname_.empty()) {
+                ss << "Lease for: " << addr.toText()
+                   << ", has no hostname, nothing to update";
+            } else if (!lease->fqdn_fwd_ && !lease->fqdn_rev_) {
+                ss << "Neither forward nor reverse updates enabled for lease for: "
+                   << addr.toText();
+            } else {
+                // We have a lease with a hostname and updates in at least
+                // one direction enabled.  Queue an NCR for it.
+                queueNCR(CHG_ADD, lease);
+                ss << "NCR generated for: " << addr.toText()
+                   << ", hostname: " << lease->hostname_;
+                setSuccessResponse(handle, ss.str());
+                LOG_INFO(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS4).arg(ss.str());
+                return (0);
+            }
         }
     } catch (const std::exception& ex) {
         ss << ex.what();
     }
 
     LOG_ERROR(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS4_FAILED).arg(ss.str());
-    setErrorResponse(handle, ss.str());
-    return (ret);
+    setErrorResponse(handle, ss.str(), resp_code);
+    return (resp_code == CONTROL_RESULT_EMPTY ? 0 : 1);
 }
 
 int
 LeaseCmdsImpl::lease6ResendDdnsHandler(CalloutHandle& handle) {
-    Lease6Ptr lease;
     std::stringstream ss;
-    int ret = CONTROL_RESULT_ERROR;
+    int resp_code = CONTROL_RESULT_ERROR;
 
     try {
         extractCommand(handle);
@@ -1658,39 +1658,39 @@ LeaseCmdsImpl::lease6ResendDdnsHandler(CalloutHandle& handle) {
         // Get the target lease address. Invalid value will throw.
         IOAddress addr = getAddressParam(cmd_args_, "ip-address", AF_INET6);
 
-        // Find the lease.
-        lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
-        if (!lease) {
-            ss << "No lease found for: " << addr.toText();
-            ret = CONTROL_RESULT_EMPTY;
-        } else if (lease->hostname_.empty()) {
-            ss << "Lease for: " << addr.toText()
-               << ", has no hostname, nothing to update";
-        } else if (!lease->fqdn_fwd_ && !lease->fqdn_rev_) {
-            ss << "Neither forward nor reverse updates enabled for lease for: "
-               << addr.toText();
-        } else if (!CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
+        if (!CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
             ss << "DDNS updating is not enabled";
         } else {
-            // We have a lease with a hostname and updates in at least
-            // one direction enabled.  Queue an NCR for it.
-            queueNCR(CHG_ADD, lease);
-            ss << "NCR generated for: " << addr.toText()
-               << ", hostname: " << lease->hostname_;
-            setSuccessResponse(handle, ss.str());
-            LOG_INFO(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS6).arg(ss.str());
-            return (CONTROL_RESULT_SUCCESS);
+            // Find the lease.
+            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+            if (!lease) {
+                ss << "No lease found for: " << addr.toText();
+                resp_code = CONTROL_RESULT_EMPTY;
+            } else if (lease->hostname_.empty()) {
+                ss << "Lease for: " << addr.toText()
+                   << ", has no hostname, nothing to update";
+            } else if (!lease->fqdn_fwd_ && !lease->fqdn_rev_) {
+                ss << "Neither forward nor reverse updates enabled for lease for: "
+                   << addr.toText();
+            } else {
+                // We have a lease with a hostname and updates in at least
+                // one direction enabled.  Queue an NCR for it.
+                queueNCR(CHG_ADD, lease);
+                ss << "NCR generated for: " << addr.toText()
+                   << ", hostname: " << lease->hostname_;
+                setSuccessResponse(handle, ss.str());
+                LOG_INFO(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS6).arg(ss.str());
+                return (0);
+            }
         }
     } catch (const std::exception& ex) {
         ss << ex.what();
     }
 
     LOG_ERROR(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS6_FAILED).arg(ss.str());
-    setErrorResponse(handle, ss.str());
-    return (ret);
+    setErrorResponse(handle, ss.str(), resp_code);
+    return (resp_code == CONTROL_RESULT_EMPTY ? 0 : 1);
 }
-
-
 
 ElementPtr
 LeaseCmdsImpl::createFailedLeaseMap(const Lease::Type& lease_type,

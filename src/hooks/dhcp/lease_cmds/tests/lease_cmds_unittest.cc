@@ -223,7 +223,7 @@ public:
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
-                                 const std::string& fqdn="") {
+                                 const std::string& fqdn = "") {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = CfgMgr::instance().getD2ClientMgr().peekAt(0));
         ASSERT_TRUE(ncr);
@@ -4798,8 +4798,19 @@ TEST_F(LeaseCmdsTest, Lease4ResendDdnsBadParam) {
     // Initialize lease manager (false = v4, true = add a lease)
     initLeaseMgr(false, true);
 
-    // Invalid address family.
+    // Missing address parameter.
     string cmd =
+        "{\n"
+        "    \"command\": \"lease4-resend-ddns\",\n"
+        "    \"arguments\": {\n"
+        "    }\n"
+        "}\n";
+
+    string exp_rsp = "'ip-address' parameter is missing.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid address family.
+    cmd =
         "{\n"
         "    \"command\": \"lease4-resend-ddns\",\n"
         "    \"arguments\": {\n"
@@ -4807,7 +4818,7 @@ TEST_F(LeaseCmdsTest, Lease4ResendDdnsBadParam) {
         "    }\n"
         "}\n";
 
-    string exp_rsp = "Invalid IPv4 address specified: 2001:db8:1::1";
+    exp_rsp = "Invalid IPv4 address specified: 2001:db8:1::1";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // ip-address is not an address at all.
@@ -4822,6 +4833,29 @@ TEST_F(LeaseCmdsTest, Lease4ResendDdnsBadParam) {
     exp_rsp = "'221B Baker St.' is not a valid IP address.";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
+
+// Checks that lease4-resend-ddns does not generate an NCR for given lease
+// when DDNS updating is disabled.
+TEST_F(LeaseCmdsTest, lease4ResendDdnsDisabled) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+    disableD2();
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-resend-ddns\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.5\""
+        "    }\n"
+        "}";
+
+    string exp_rsp = "DDNS updating is not enabled";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    // With D2 disabled there is no queue, size should come back as -1.
+    EXPECT_EQ(ncrQueueSize(), -1);
+}
+
 
 // Checks that lease4-resend-ddns does not generate an NCR for
 // when there is no matching lease.
@@ -4838,29 +4872,7 @@ TEST_F(LeaseCmdsTest, lease4ResendDdnsNoLease) {
         "    }\n"
         "}\n";
     string exp_rsp = "No lease found for: 192.0.2.5";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-}
-
-// Checks that lease4-resend-ddns does not generate an NCR for given lease
-// when DDNS updating is disabled.
-TEST_F(LeaseCmdsTest, lease4ResendDdnsDisabled) {
-    // Initialize lease manager (false = v4, true = add a lease)
-    initLeaseMgr(false, true);
-    disableD2();
-
-    // Query for valid, existing lease.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-resend-ddns\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"192.0.2.1\""
-        "    }\n"
-        "}";
-
-    string exp_rsp = "DDNS updating is not enabled";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-    // With D2 disabled there is no queue, size should come back as -1.
-    EXPECT_EQ(ncrQueueSize(), -1);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
 // Checks that lease4-resend-ddns does not generate an NCR for given lease
@@ -4986,8 +4998,19 @@ TEST_F(LeaseCmdsTest, Lease6ResendDdnsBadParam) {
     // Initialize lease manager (true = v6, true = add a lease)
     initLeaseMgr(true, true);
 
-    // Invalid address family.
+    // Missing address parameter.
     string cmd =
+        "{\n"
+        "    \"command\": \"lease6-resend-ddns\",\n"
+        "    \"arguments\": {\n"
+        "    }\n"
+        "}\n";
+
+    string exp_rsp = "'ip-address' parameter is missing.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid address family.
+    cmd =
         "{\n"
         "    \"command\": \"lease6-resend-ddns\",\n"
         "    \"arguments\": {\n"
@@ -4995,7 +5018,7 @@ TEST_F(LeaseCmdsTest, Lease6ResendDdnsBadParam) {
         "    }\n"
         "}\n";
 
-    string exp_rsp = "Invalid IPv6 address specified: 192.0.2.1";
+    exp_rsp = "Invalid IPv6 address specified: 192.0.2.1";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // ip-address is not an address at all.
@@ -5009,6 +5032,30 @@ TEST_F(LeaseCmdsTest, Lease6ResendDdnsBadParam) {
 
     exp_rsp = "'221B Baker St.' is not a valid IP address.";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease6-resend-ddns does not generate an NCR for given lease
+// when DDNS updating is disabled.
+TEST_F(LeaseCmdsTest, lease6ResendDdnsDisabled) {
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Disable DDNS updating.
+    disableD2();
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-resend-ddns\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001::dead:beef\"\n"
+        "    }\n"
+        "}";
+
+    string exp_rsp = "DDNS updating is not enabled";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    // With D2 disabled there is no queue, size should come back as -1.
+    EXPECT_EQ(ncrQueueSize(), -1);
 }
 
 // Checks that lease6-resend-ddns does not generate an NCR for
@@ -5026,32 +5073,9 @@ TEST_F(LeaseCmdsTest, lease6ResendDdnsNoLease) {
         "    }\n"
         "}\n";
     string exp_rsp = "No lease found for: 2001::dead:beef";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
-// Checks that lease6-resend-ddns does not generate an NCR for given lease
-// when DDNS updating is disabled.
-TEST_F(LeaseCmdsTest, lease6ResendDdnsDisabled) {
-    // Initialize lease manager (true = v6, true = add a lease)
-    initLeaseMgr(true, true);
-
-    // Disable DDNS updating.
-    disableD2();
-
-    // Query for valid, existing lease.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-resend-ddns\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"2001:db8:1::1\""
-        "    }\n"
-        "}";
-
-    string exp_rsp = "DDNS updating is not enabled";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-    // With D2 disabled there is no queue, size should come back as -1.
-    EXPECT_EQ(ncrQueueSize(), -1);
-}
 
 // Checks that lease6-resend-ddns does not generate an NCR for given lease
 // when updates are enabled but Lease::hostname_ is blank.

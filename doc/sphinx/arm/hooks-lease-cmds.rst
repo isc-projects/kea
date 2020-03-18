@@ -88,10 +88,10 @@ This library provides the following commands:
    from all subnets.
 
 -  ``lease4-resend-ddns`` - resend a request to update DNS entries for
-   and existing lease.
+   an existing lease.
 
 -  ``lease6-resend-ddns`` - resend a request to update DNS entries for
-   and existing lease.
+   an existing lease.
 
 The lease commands library is part of the open source code and is
 available to every Kea user.
@@ -919,11 +919,11 @@ The lease4-resend-ddns, lease6-resend-ddns Commands
 a request to kea-dhcp-ddns to update the DNS entries for an existing
 lease.  The desired lease is selected by a single parameter, "ip-address".
 In order for an update request to be generated, DDNS updating must be enabled
-and DNS must entries must have already been made (or attempted) for the lease.
+and DNS entries must have already been made (or attempted) for the lease.
 In other words all of the following must be true:
 
 - DDNS updating must be enabled. (i.e. "dhcp-ddns":{ "enable-updates": true"})
-- The lease's hostname must not be blank.
+- The lease's hostname must not be empty.
 - At least one of the lease's DNS direction flags (fdqn_fwd or fdqn_rev) must be true.
 
 An example ``lease4-resend-ddns`` command for getting a lease using an IPv4
