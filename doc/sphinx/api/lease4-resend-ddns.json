@@ -1,0 +1,31 @@
+{
+    "avail": "1.7.6",
+    "brief": [
+        "This command resends request to update DNS for an existing lease."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"lease4-resend-ddns\",",
+        "    \"arguments\": {",
+        "        \"ip-address\": \"192.0.2.1\"",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp58\"/>",
+    "hook": "lease_cmds",
+    "name": "lease4-resend-ddns",
+    "resp-comment": [
+        "lease4-resend-ddns returns a result that indicates the outcome of the operation and lease details, if found. It has one of the following values: 0 (success), 1 (error), or 2 (empty)."
+    ],
+    "resp-syntax": [
+        "{",
+        "  \"arguments\": {",
+        "  },",
+        "  \"result\": 0,",
+        "  \"text\": \"NCR generated for: 192.0.2.1, hostname: example.com.\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}
