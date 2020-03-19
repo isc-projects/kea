@@ -2312,7 +2312,8 @@ def main():
 
     elif args.command == "package-box":
         _check_system_revision(args.system, args.revision)
-        features = _get_features(args)
+        features = set(['docs', 'perfdhcp', 'shell', 'mysql', 'pgsql', 'radius', 'native-pkg'])
+
         log.info('Enabled features: %s', ' '.join(features))
         package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.reuse)
 
