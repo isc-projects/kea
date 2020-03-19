@@ -2897,7 +2897,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
         // If this is global reservation or the subnet doesn't belong to a shared
-        // networkwe have already fetched it and evaluated the classes.
+        // network we have already fetched it and evaluated the classes.
         ex.conditionallySetReservedClientClasses();
 
         // Required classification
@@ -2967,7 +2967,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
     // Adding any other options makes sense only when we got the lease.
     if (!response->getYiaddr().isV4Zero()) {
         // If this is global reservation or the subnet doesn't belong to a shared
-        // networkwe have already fetched it and evaluated the classes.
+        // network we have already fetched it and evaluated the classes.
         ex.conditionallySetReservedClientClasses();
 
         // Required classification
@@ -3283,7 +3283,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     Pkt4Ptr ack = ex.getResponse();
 
     // If this is global reservation or the subnet doesn't belong to a shared
-    // networkwe have already fetched it and evaluated the classes.
+    // network we have already fetched it and evaluated the classes.
     ex.conditionallySetReservedClientClasses();
 
     requiredClassify(ex);
