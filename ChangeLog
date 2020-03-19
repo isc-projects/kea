@@ -1,3 +1,10 @@
+1733.	[func]		tmark
+	Added lease4-resend-ddns and lease6-resend-ddns commands to
+	the Lease Commands hook library.  These commands may be used to
+	instruct kea-dhcp4 or kea-dhcp6 to resend a request to update a
+	lease's DNS entries to kea-dhcp-ddns.
+	(Gitlab #1106)
+
 1732.	[func]		marcin
 	Client classes specified within host reservations can be used
 	to influence subnet selection within a shared network and pool
