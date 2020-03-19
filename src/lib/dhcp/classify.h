@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,6 +63,11 @@ namespace dhcp {
             list_.push_back(class_name);
             set_.insert(class_name);
         }
+
+        /// @brief Erase element by name.
+        ///
+        /// @param class_name The name of the class to erase.
+        void erase(const ClientClass& class_name);
 
         /// @brief Check if classes is empty.
         bool empty() const {

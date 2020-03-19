@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -166,6 +166,146 @@ const char* CONFIGS[] = {
         "    }\n"
         "]\n"
         "}\n"
+    ,
+
+    // Configuration 4 client-class reservation in global, shared network
+    // and client-class guarded pools.
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"client-classes\": ["
+        "{"
+        "     \"name\": \"reserved_class\""
+        "},"
+        "{"
+        "     \"name\": \"unreserved_class\","
+        "     \"test\": \"not member('reserved_class')\""
+        "}"
+        "],\n"
+        "\"reservation-mode\": \"global\","
+        "\"valid-lifetime\": 600,\n"
+        "\"reservations\": [ \n"
+        "{\n"
+        "   \"hw-address\": \"aa:bb:cc:dd:ee:fe\",\n"
+        "   \"client-classes\": [ \"reserved_class\" ]\n"
+        "}\n"
+        "],\n"
+        "\"shared-networks\": [{"
+        "    \"name\": \"frog\",\n"
+        "    \"subnet4\": [\n"
+        "        {\n"
+        "            \"subnet\": \"10.0.0.0/24\", \n"
+        "            \"id\": 10,"
+        "            \"pools\": ["
+        "                {"
+        "                    \"pool\": \"10.0.0.10-10.0.0.11\","
+        "                    \"client-class\": \"reserved_class\""
+        "                }"
+        "            ],\n"
+        "            \"interface\": \"eth0\"\n"
+        "        },\n"
+        "        {\n"
+        "            \"subnet\": \"192.0.3.0/24\", \n"
+        "            \"id\": 11,"
+        "            \"pools\": ["
+        "                {"
+        "                    \"pool\": \"192.0.3.10-192.0.3.11\","
+        "                    \"client-class\": \"unreserved_class\""
+        "                }"
+        "            ],\n"
+        "            \"interface\": \"eth0\"\n"
+        "        }\n"
+        "    ]\n"
+        "}]\n"
+    "}",
+
+    // Configuration 5 client-class reservation in global, shared network
+    // and client-class guarded subnets.
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"client-classes\": ["
+        "{"
+        "     \"name\": \"reserved_class\""
+        "},"
+        "{"
+        "     \"name\": \"unreserved_class\","
+        "     \"test\": \"not member('reserved_class')\""
+        "}"
+        "],\n"
+        "\"reservation-mode\": \"global\","
+        "\"valid-lifetime\": 600,\n"
+        "\"reservations\": [ \n"
+        "{\n"
+        "   \"hw-address\": \"aa:bb:cc:dd:ee:fe\",\n"
+        "   \"client-classes\": [ \"reserved_class\" ]\n"
+        "}\n"
+        "],\n"
+        "\"shared-networks\": [{"
+        "    \"name\": \"frog\",\n"
+        "    \"subnet4\": [\n"
+        "        {\n"
+        "            \"subnet\": \"10.0.0.0/24\", \n"
+        "            \"id\": 10,"
+        "            \"client-class\": \"reserved_class\","
+        "            \"pools\": ["
+        "                {"
+        "                    \"pool\": \"10.0.0.10-10.0.0.10\""
+        "                }"
+        "            ],\n"
+        "            \"interface\": \"eth0\"\n"
+        "        },\n"
+        "        {\n"
+        "            \"subnet\": \"192.0.3.0/24\", \n"
+        "            \"id\": 11,"
+        "            \"client-class\": \"unreserved_class\","
+        "            \"pools\": ["
+        "                {"
+        "                    \"pool\": \"192.0.3.10-192.0.3.10\""
+        "                }"
+        "            ],\n"
+        "            \"interface\": \"eth0\"\n"
+        "        }\n"
+        "    ]\n"
+        "}]\n"
+    "}",
+
+    // Configuration 6 client-class reservation and client-class guarded pools.
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"client-classes\": ["
+        "{"
+        "     \"name\": \"reserved_class\""
+        "},"
+        "{"
+        "     \"name\": \"unreserved_class\","
+        "     \"test\": \"not member('reserved_class')\""
+        "}"
+        "],\n"
+        "\"valid-lifetime\": 600,\n"
+        "\"subnet4\": [\n"
+        "    {\n"
+        "        \"subnet\": \"10.0.0.0/24\", \n"
+        "        \"id\": 10,"
+        "        \"reservations\": [{ \n"
+        "            \"hw-address\": \"aa:bb:cc:dd:ee:fe\",\n"
+        "            \"client-classes\": [ \"reserved_class\" ]\n"
+        "        }],\n"
+        "        \"pools\": ["
+        "            {"
+        "                \"pool\": \"10.0.0.10-10.0.0.11\","
+        "                \"client-class\": \"reserved_class\""
+        "            },"
+        "            {"
+        "                \"pool\": \"10.0.0.20-10.0.0.21\","
+        "                \"client-class\": \"unreserved_class\""
+        "            }"
+        "        ],\n"
+        "        \"interface\": \"eth0\"\n"
+        "    }\n"
+        "]\n"
+    "}"
 };
 
 /// @brief Test fixture class for testing global v4 reservations.
@@ -206,7 +346,8 @@ public:
     /// @param expected_addr expected address to be assigned
     void runDoraTest(const std::string& config, Dhcp4Client& client,
                      const std::string& expected_host,
-                     const std::string& expected_addr) {
+                     const std::string& expected_addr,
+                     const std::string& requested_addr = "") {
 
         // Configure DHCP server.
         ASSERT_NO_FATAL_FAILURE(configure(config, *client.getServer()));
@@ -214,7 +355,11 @@ public:
 
         // Perform 4-way exchange with the server but to not request any
         // specific address in the DHCPDISCOVER message.
-        ASSERT_NO_THROW(client.doDORA());
+        boost::shared_ptr<IOAddress> hint; 
+        if (!requested_addr.empty()) {
+            hint = boost::make_shared<IOAddress>(requested_addr);
+        }
+        ASSERT_NO_THROW(client.doDORA(hint));
 
         // Make sure that the server responded.
         ASSERT_TRUE(client.getContext().response_);
@@ -237,7 +382,54 @@ public:
         EXPECT_EQ(client.config_.lease_.addr_.toText(), expected_addr);
     }
 
+    /// @brief Test pool or subnet selection using global class reservation.
+    ///
+    /// Verifies that client class specified in the global reservation
+    /// may be used to influence pool or subnet selection.
+    ///
+    /// @param config_idx Index of the server configuration from the
+    /// @c CONFIGS array.
+    /// @param first_address Address to be allocated from the pool having
+    /// a reservation.
+    /// @param second_address Address to be allocated from the pool not
+    /// having a reservation.
+    void testGlobalClassSubnetPoolSelection(const int config_idx,
+                                            const std::string& first_address = "10.0.0.10",
+                                            const std::string& second_address = "192.0.3.10") {
+        Dhcp4Client client_resrv(Dhcp4Client::SELECTING);
 
+        // Use HW address for which we have host reservation including
+        // client class.
+        client_resrv.setHWAddress("aa:bb:cc:dd:ee:fe");
+        client_resrv.setIfaceName("eth0");
+
+        ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[config_idx], *client_resrv.getServer()));
+
+        // This client should be given an address from the 10.0.0.0/24 pool.
+        // Let's use the 192.0.3.10 as a hint to make sure that the server
+        // refuses allocating it and uses the sole pool available for this
+        // client.
+        ASSERT_NO_THROW(client_resrv.doDORA(boost::make_shared<IOAddress>(second_address)));
+        ASSERT_TRUE(client_resrv.getContext().response_);
+        auto resp = client_resrv.getContext().response_;
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+        EXPECT_EQ(first_address, resp->getYiaddr().toText());
+
+        // This client has no reservation and therefore should be
+        // assigned to the unreserved_class and be given an address
+        // from the other pool.
+        Dhcp4Client client_no_resrv(client_resrv.getServer(), Dhcp4Client::SELECTING);
+        client_no_resrv.setHWAddress("aa:bb:cc:dd:ee:ff");
+        client_no_resrv.setIfaceName("eth0");
+
+        // Let's use the address of 10.0.0.10 as a hint to make sure that the
+        // server refuses it in favor of the 192.0.3.10.
+        ASSERT_NO_THROW(client_no_resrv.doDORA(boost::make_shared<IOAddress>(first_address)));
+        ASSERT_TRUE(client_no_resrv.getContext().response_);
+        resp = client_no_resrv.getContext().response_;
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+        EXPECT_EQ(second_address, resp->getYiaddr().toText());
+    }
 };
 
 // Verifies that a client, which fails to match to a global
@@ -375,6 +567,24 @@ TEST_F(HostTest, allOverGlobal) {
     // Subnet 10 usses default HR mode(i.e. "in-pool"), so its
     // reservation should be used, rather than global.
     runDoraTest(CONFIGS[3], client, "subnet-10-host", "192.0.5.10");
+}
+
+// Verifies that client class specified in the global reservation
+// may be used to influence pool selection.
+TEST_F(HostTest, clientClassGlobalPoolSelection) {
+    ASSERT_NO_FATAL_FAILURE(testGlobalClassSubnetPoolSelection(4));
+}
+
+// Verifies that client class specified in the global reservation
+// may be used to influence subnet selection within shared network.
+TEST_F(HostTest, clientClassGlobalSubnetSelection) {
+    ASSERT_NO_FATAL_FAILURE(testGlobalClassSubnetPoolSelection(5));
+}
+
+// Verifies that client class specified in the reservation may be
+// used to influence pool selection within a subnet.
+TEST_F(HostTest, clientClassPoolSelection) {
+    ASSERT_NO_FATAL_FAILURE(testGlobalClassSubnetPoolSelection(6, "10.0.0.10", "10.0.0.20"));
 }
 
 } // end of anonymous namespace

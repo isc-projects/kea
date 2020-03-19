@@ -148,6 +148,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     // If subnet found, retrieve client identifier which will be needed
     // for allocations and search for reservations associated with a
     // subnet/shared network.
+    SharedNetwork4Ptr sn;
     if (subnet) {
         OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
         if (opt_clientid) {
@@ -162,7 +163,44 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
 
             // Check for static reservations.
             alloc_engine->findReservation(*context_);
+
+            // Get shared network to see if it is set for a subnet.
+            subnet->getSharedNetwork(sn);
         }
+    }
+
+    // Global host reservations are independent of a selected subnet. If the
+    // global reservations contain client classes we should use them in case
+    // they are meant to affect pool selection. Also, if the subnet does not
+    // belong to a shared network we can use the reserved client classes
+    // because there is no way our subnet could change. Such classes may
+    // affect selection of a pool within the selected subnet.
+    auto global_host = context_->globalHost();
+    auto current_host = context_->currentHost();
+    if ((global_host && !global_host->getClientClasses4().empty()) ||
+        (!sn && current_host && !current_host->getClientClasses4().empty())) {
+        // We have already evaluated client classes and some of them may
+        // be in conflict with the reserved classes. Suppose there are
+        // two classes defined in the server configuration: first_class
+        // and second_class and the test for the second_class it looks
+        // like this: "not member('first_class')". If the first_class
+        // initially evaluates to false, the second_class evaluates to
+        // true. If the first_class is now set within the hosts reservations
+        // and we don't remove the previously evaluated second_class we'd
+        // end up with both first_class and second_class evaluated to
+        // true. In order to avoid that, we have to remove the classes
+        // evaluated in the first pass and evaluate them again. As
+        // a result, the first_class set via the host reservation will
+        // replace the second_class because the second_class will this
+        // time evaluate to false as desired.
+        const ClientClassDictionaryPtr& dict =
+            CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+        const ClientClassDefListPtr& defs_ptr = dict->getClasses();
+        for (auto def : *defs_ptr) {
+            context_->query_->classes_.erase(def->getName());
+        }
+        setReservedClientClasses(context_);
+        evaluateClasses(context_->query_, false);
     }
 
     // Set KNOWN builtin class if something was found, UNKNOWN if not.
@@ -179,7 +217,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     }
 
     // Perform second pass of classification.
-    Dhcpv4Srv::evaluateClasses(query, true);
+    evaluateClasses(query, true);
 
     const ClientClasses& classes = query_->getClasses();
     if (!classes.empty()) {
@@ -411,12 +449,23 @@ Dhcpv4Exchange::setHostIdentifiers() {
 }
 
 void
-Dhcpv4Exchange::setReservedClientClasses() {
-    if (context_->currentHost() && query_) {
-        const ClientClasses& classes = context_->currentHost()->getClientClasses4();
+Dhcpv4Exchange::setReservedClientClasses(AllocEngine::ClientContext4Ptr context) {
+    if (context->currentHost() && context->query_) {
+        const ClientClasses& classes = context->currentHost()->getClientClasses4();
         for (ClientClasses::const_iterator cclass = classes.cbegin();
              cclass != classes.cend(); ++cclass) {
-            query_->addClass(*cclass);
+            context->query_->addClass(*cclass);
+        }
+    }
+}
+
+void
+Dhcpv4Exchange::conditionallySetReservedClientClasses() {
+    if (context_->subnet_) {
+        SharedNetwork4Ptr shared_network;
+        context_->subnet_->getSharedNetwork(shared_network);
+        if (shared_network && !context_->globalHost()) {
+            setReservedClientClasses(context_);
         }
     }
 }
@@ -443,6 +492,78 @@ Dhcpv4Exchange::setReservedMessageFields() {
         }
     }
 }
+
+void Dhcpv4Exchange::classifyByVendor(const Pkt4Ptr& pkt) {
+    // Built-in vendor class processing
+    boost::shared_ptr<OptionString> vendor_class =
+        boost::dynamic_pointer_cast<OptionString>(pkt->getOption(DHO_VENDOR_CLASS_IDENTIFIER));
+
+    if (!vendor_class) {
+        return;
+    }
+
+    pkt->addClass(Dhcpv4Srv::VENDOR_CLASS_PREFIX + vendor_class->getValue());
+}
+
+void Dhcpv4Exchange::classifyPacket(const Pkt4Ptr& pkt) {
+    // All packets belongs to ALL.
+    pkt->addClass("ALL");
+
+    // First: built-in vendor class processing.
+    classifyByVendor(pkt);
+
+    // Run match expressions on classes not depending on KNOWN/UNKNOWN.
+    evaluateClasses(pkt, false);
+}
+
+void Dhcpv4Exchange::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
+    // Note getClientClassDictionary() cannot be null
+    const ClientClassDictionaryPtr& dict =
+        CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    const ClientClassDefListPtr& defs_ptr = dict->getClasses();
+    for (ClientClassDefList::const_iterator it = defs_ptr->cbegin();
+         it != defs_ptr->cend(); ++it) {
+        // Note second cannot be null
+        const ExpressionPtr& expr_ptr = (*it)->getMatchExpr();
+        // Nothing to do without an expression to evaluate
+        if (!expr_ptr) {
+            continue;
+        }
+        // Not the right time if only when required
+        if ((*it)->getRequired()) {
+            continue;
+        }
+        // Not the right pass.
+        if ((*it)->getDependOnKnown() != depend_on_known) {
+            continue;
+        }
+        // Evaluate the expression which can return false (no match),
+        // true (match) or raise an exception (error)
+        try {
+            bool status = evaluateBool(*expr_ptr, *pkt);
+            if (status) {
+                LOG_INFO(options4_logger, EVAL_RESULT)
+                    .arg((*it)->getName())
+                    .arg(status);
+                // Matching: add the class
+                pkt->addClass((*it)->getName());
+            } else {
+                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
+                    .arg((*it)->getName())
+                    .arg(status);
+            }
+        } catch (const Exception& ex) {
+            LOG_ERROR(options4_logger, EVAL_RESULT)
+                .arg((*it)->getName())
+                .arg(ex.what());
+        } catch (...) {
+            LOG_ERROR(options4_logger, EVAL_RESULT)
+                .arg((*it)->getName())
+                .arg("get exception?");
+        }
+    }
+}
+
 
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
@@ -2657,8 +2778,10 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
-        // Assign reserved classes.
-        ex.setReservedClientClasses();
+        // If this is global reservation or the subnet doesn't belong to a shared
+        // network we have already fetched it and evaluated the classes.
+        ex.conditionallySetReservedClientClasses();
+
         // Required classification
         requiredClassify(ex);
 
@@ -2720,8 +2843,10 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
 
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
-        // Assign reserved classes.
-        ex.setReservedClientClasses();
+        // If this is global reservation or the subnet doesn't belong to a shared
+        // network we have already fetched it and evaluated the classes.
+        ex.conditionallySetReservedClientClasses();
+
         // Required classification
         requiredClassify(ex);
 
@@ -3031,7 +3156,10 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 
     Pkt4Ptr ack = ex.getResponse();
 
-    ex.setReservedClientClasses();
+    // If this is global reservation or the subnet doesn't belong to a shared
+    // network we have already fetched it and evaluated the classes.
+    ex.conditionallySetReservedClientClasses();
+
     requiredClassify(ex);
 
     buildCfgOptionList(ex);
@@ -3326,75 +3454,8 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
     }
 }
 
-void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt) {
-    // Built-in vendor class processing
-    boost::shared_ptr<OptionString> vendor_class =
-        boost::dynamic_pointer_cast<OptionString>(pkt->getOption(DHO_VENDOR_CLASS_IDENTIFIER));
-
-    if (!vendor_class) {
-        return;
-    }
-
-    pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
-}
-
 void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
-    // All packets belongs to ALL.
-    pkt->addClass("ALL");
-
-    // First: built-in vendor class processing.
-    classifyByVendor(pkt);
-
-    // Run match expressions on classes not depending on KNOWN/UNKNOWN.
-    evaluateClasses(pkt, false);
-}
-
-void Dhcpv4Srv::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
-    // Note getClientClassDictionary() cannot be null
-    const ClientClassDictionaryPtr& dict =
-        CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
-    const ClientClassDefListPtr& defs_ptr = dict->getClasses();
-    for (ClientClassDefList::const_iterator it = defs_ptr->cbegin();
-         it != defs_ptr->cend(); ++it) {
-        // Note second cannot be null
-        const ExpressionPtr& expr_ptr = (*it)->getMatchExpr();
-        // Nothing to do without an expression to evaluate
-        if (!expr_ptr) {
-            continue;
-        }
-        // Not the right time if only when required
-        if ((*it)->getRequired()) {
-            continue;
-        }
-        // Not the right pass.
-        if ((*it)->getDependOnKnown() != depend_on_known) {
-            continue;
-        }
-        // Evaluate the expression which can return false (no match),
-        // true (match) or raise an exception (error)
-        try {
-            bool status = evaluateBool(*expr_ptr, *pkt);
-            if (status) {
-                LOG_INFO(options4_logger, EVAL_RESULT)
-                    .arg((*it)->getName())
-                    .arg(status);
-                // Matching: add the class
-                pkt->addClass((*it)->getName());
-            } else {
-                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
-                    .arg((*it)->getName())
-                    .arg(status);
-            }
-        } catch (const Exception& ex) {
-            LOG_ERROR(options4_logger, EVAL_RESULT)
-                .arg((*it)->getName())
-                .arg(ex.what());
-        } catch (...) {
-            LOG_ERROR(options4_logger, EVAL_RESULT)
-                .arg((*it)->getName())
-                .arg("get exception?");
-        }
-    }
+    Dhcpv4Exchange::classifyPacket(pkt);
 }
 
 void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {

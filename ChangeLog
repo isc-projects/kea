@@ -1,3 +1,9 @@
+1666.	[func]		marcin
+	Client classes specified within host reservations can be used
+	to influence subnet selection within a shared network and pool
+	selection within a subnet.
+	(Gitlab #1155)
+
 Kea 1.6.2 released on Feb 19, 2020
 
 1665.	[bug]		tmark

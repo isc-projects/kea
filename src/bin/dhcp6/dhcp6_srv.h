@@ -745,7 +745,7 @@ protected:
     ///
     /// @note This is done in two phases: first the content of the
     /// vendor-class-identifier option is used as a class, by
-    /// calling @ref classifyByVendor(). Second classification match
+    /// calling @ref classifyByVendor(). Second, the classification match
     /// expressions are evaluated. The resulting classes will be stored
     /// in the packet (see @ref isc::dhcp::Pkt6::classes_ and
     /// @ref isc::dhcp::Pkt6::inClass).
@@ -771,6 +771,19 @@ protected:
     /// @param ctx Reference to the client context.
     void setReservedClientClasses(const Pkt6Ptr& pkt,
                                   const AllocEngine::ClientContext6& ctx);
+
+    /// @brief Assigns classes retrieved from host reservation database
+    /// if they haven't been yet set.
+    ///
+    /// This function sets reserved client classes in case they haven't
+    /// been set after fetching host reservations from the database.
+    /// This is the case when the client has non-global host reservation
+    /// and the selected subnet belongs to a shared network.
+    ///
+    /// @param pkt Pointer to the packet to which classes will be assigned.
+    /// @param ctx Reference to the client context.
+    void conditionallySetReservedClientClasses(const Pkt6Ptr& pkt,
+                                               const AllocEngine::ClientContext6& ctx);
 
     /// @brief Assigns incoming packet to zero or more classes (required pass).
     ///

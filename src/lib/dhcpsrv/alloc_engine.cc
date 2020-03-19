@@ -3040,6 +3040,18 @@ AllocEngine::ClientContext4::currentHost() const {
     return (ConstHostPtr());
 }
 
+ConstHostPtr
+AllocEngine::ClientContext4::globalHost() const {
+    if (subnet_ && subnet_->getHostReservationMode() == Network::HR_GLOBAL) {
+        auto host = hosts_.find(SUBNET_ID_GLOBAL);
+        if (host != hosts_.cend()) {
+            return (host->second);
+        }
+    }
+
+    return (ConstHostPtr());
+}
+
 Lease4Ptr
 AllocEngine::allocateLease4(ClientContext4& ctx) {
     // The NULL pointer indicates that the old lease didn't exist. It may
