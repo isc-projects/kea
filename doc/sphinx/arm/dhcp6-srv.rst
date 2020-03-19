@@ -3593,7 +3593,7 @@ evaluation of the class after the lease has been allocated and thus the
 reserved class has been also assigned.
 
 .. note::
-   Beware that the classes specified in non global host reservations
+   Be aware that the classes specified in non global host reservations
    are assigned to the processed packet after all classes with the
    ``only-if-required`` parameter set to ``false`` have been evaluated.
    This has an implication that these classes must not depend on the
@@ -3851,12 +3851,12 @@ evaluated immediately after receiving the DHCP packet and therefore can be
 used to influence subnet selection using the ``client-class`` parameter
 specified in the subnet scope. The classes specified within the host
 reservations are fetched and assigned to the packet after the server has
-already selected a subnet for the client. This implies that the client
+already selected a subnet for the client. This means that the client
 class specified within a host reservation cannot be used to influence
 subnet assignment for this client, unless the subnet belongs to a
 shared network. If the subnet belongs to a shared network, the server may
 dynamically change the subnet assignment while trying to allocate a lease.
-If the subnet does not belong to a shared network, once selected subnet
+If the subnet does not belong to a shared network, once selected, the subnet
 is not changed.
 
 If the subnet does not belong to a shared network, it is possible to
@@ -3896,9 +3896,9 @@ within the subnet as follows:
         ]
     }
 
-The ``unreserved_class`` is declared without the ``test`` parameter because
+The ``reserved_class`` is declared without the ``test`` parameter because
 it may be only assigned to the client via host reservation mechanism. The
-second class ``unreserved_class`` is assigned to the clients which do not
+second class, ``unreserved_class``, is assigned to the clients which do not
 belong to the ``reserved_class``.  The first pool within the subnet is only
 used for the clients having a reservation for the ``reserved_class``. The
 second pool is used for the clients not having such reservation. The
@@ -3960,7 +3960,7 @@ following example:
     }
 
 This is similar to the example described in the
-:ref:`subnet-selection-with-class-reservations6`. This time, however, there
+:ref:`pool-selection-with-class-reservations6`. This time, however, there
 are two subnets, each of them having a pool associated with a different
 class. The clients which don't have a reservation for the ``reserved_class``
 will be assigned an address from the subnet 2001:db8:2::/64. Clients having
@@ -3970,7 +3970,7 @@ In addition, the reservation for the client class must be specified at the
 global scope (global reservation) and the ``reservation-mode`` must be
 set to ``global``.
 
-In the example above the ``client-class`` could be as well specified at the
+In the example above the ``client-class`` could also be specified at the
 subnet level rather than pool level yielding the same effect.
 
 
