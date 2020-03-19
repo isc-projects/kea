@@ -439,10 +439,19 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     if ((global_host && !global_host->getClientClasses6().empty()) ||
         (!sn && current_host && !current_host->getClientClasses6().empty())) {
         // We have already evaluated client classes and some of them may
-        // be in conflict with the reserved classes. Therefore, we need to
-        // remove those that were assigned as a result of evaluation.
-        // That preserves built-in classes and the classes set explicitly
-        // by the hooks libraries.
+        // be in conflict with the reserved classes. Suppose there are
+        // two classes defined in the server configuration: first_class
+        // and second_class and the test for the second_class it looks
+        // like this: "not member('first_class')". If the first_class
+        // initially evaluates to false, the second_class evaluates to
+        // true. If the first_class is now set within the hosts reservations
+        // and we don't remove the previously evaluated second_class we'd
+        // end up with both first_class and second_class evaluated to
+        // true. In order to avoid that, we have to remove the classes
+        // evaluated in the first pass and evaluate them again. As
+        // a result, the first_class set via the host reservation will
+        // replace the second_class because the second_class will this
+        // time evaluate to false as desired.
         const ClientClassDictionaryPtr& dict =
             CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
         const ClientClassDefListPtr& defs_ptr = dict->getClasses();
