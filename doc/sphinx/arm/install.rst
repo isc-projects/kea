@@ -7,10 +7,16 @@ Installation
 Packages
 ========
 
-Some operating systems or software package vendors may provide
-ready-to-use, pre-built software packages for Kea. Installing a
-pre-built package means you do not need to install the software required
-only to build Kea and do not need to *make* the software.
+Starting with Kea 1.6.0, ISC now publishes native RPM, deb and APK
+packages along with the tarballs with the source code. The packages
+are available on `Cloudsmith <https://cloudsmith.io/~isc/repos/>`_ at
+https://cloudsmith.io/~isc/repos. You can download the native packages
+and install them using the system available in your distribution (such
+as dpkg or rpm). Also, you can add the Kea repository to your system,
+which will make it easier to install updates. For details, please
+go to https://cloudsmith.io/~isc/repos, choose the repository of
+interest and then click the ``Set Me Up`` button for detailed
+instructions.
 
 .. _install-hierarchy:
 
@@ -136,7 +142,7 @@ Download Tar File
 -----------------
 
 The Kea release tarballs may be downloaded from:
-http://ftp.isc.org/isc/kea/ (using FTP or HTTP).
+https://downloads.isc.org/isc/kea/ .
 
 Retrieve from Git
 -----------------
