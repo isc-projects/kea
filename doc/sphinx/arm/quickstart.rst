@@ -175,7 +175,7 @@ Running the Kea Servers Directly
 ================================
 
 The Kea servers can be started directly, without the need to use
-``keactrl``. To start the DHCPv4 server run the following command:
+``keactrl`` or ``systemctl``. To start the DHCPv4 server run the following command:
 
 .. code-block:: console
 
