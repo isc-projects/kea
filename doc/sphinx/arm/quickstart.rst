@@ -105,7 +105,7 @@ Kea using native packages.
 
        # systemctl restart isc-kea-dhcp6-server
 
-   ``keactrl`` is not available in packages.
+   ``keactrl`` is not available in packages as similar functionality is provided by the native systemctl scripts.
 
 .. _quick-start-services:
 
