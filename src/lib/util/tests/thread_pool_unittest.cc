@@ -73,6 +73,7 @@ public:
         thread_count_ = thread_count;
         count_ = 0;
         wait_ = true;
+        ids_.clear();
         history_.clear();
     }
 
