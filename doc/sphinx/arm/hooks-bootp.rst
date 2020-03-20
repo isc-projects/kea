@@ -83,16 +83,10 @@ the following:
 
 .. _hooks-bootp-limitations:
 
-BOOTP Hooks Limitations
-~~~~~~~~~~~~~~~~~~~~~~~
+BOOTP Hooks Limitation
+~~~~~~~~~~~~~~~~~~~~~~
 
-Currently the BOOTP library has the following limitations:
-
-- BOOTP protocol assumes all lease assignments are permanent. Kea does
-  not support infinite leases yet. You may configure arbitrarily long
-  leases (e.g. a year), but after the lease lifetime elapses, Kea will
-  recycle the lease and may assign it to some other device. This
-  limitation will be removed in the near future.
+Currently the BOOTP library has the following limitation:
 
 - A basic BOOTP as defined in `RFC 951
   <https://tools.ietf.org/html/rfc951>`__ is not supported. Kea only
