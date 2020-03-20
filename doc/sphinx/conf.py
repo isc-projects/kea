@@ -214,7 +214,7 @@ def run_generate_docs(_):
     # Sphinx has some limitations. It can't import files from outside its directory, which
     # in our case is src/sphinx. On the other hand, we need to have platforms.rst file
     # in top level directory, so it's easily accessible by prospective and first time
-    # users. Furthermore, ReadTheDocs does not use makefile system at all and they rely
+    # users. Furthermore, ReadTheDocs does not use the makefile system at all and they rely
     # on sphinx-build only. As a result we need to conduct some Makefile-like operations
     # here. This requires us to copy (or link) the file from the top level to sphinx subdir.
     from shutil import copyfile
