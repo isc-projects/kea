@@ -1150,10 +1150,10 @@ CommandOptions::printCommandLine() const {
 void
 CommandOptions::usage() const {
     std::cout <<
-        "perfdhcp [-huvC] [-4|-6] [-A<encapsulation-level>] [-e<lease-type>]\n"
+        "perfdhcp [-huv] [-4|-6] [-A<encapsulation-level>] [-e<lease-type>]\n"
         "         [-r<rate>] [-f<renew-rate>]\n"
-        "         [-F<release-rate>] [-t<report>] [-R<range>] [-b<base>]\n"
-        "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
+        "         [-F<release-rate>] [-t<report>] [-C<separator>] [-R<range>]
+        "         [-b<base>] [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
         "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
         "         [-L<local-port>] [-N<remote-port>]\n"
         "         [-s<seed>] [-i] [-B] [-W<late-exit-delay>]\n"
