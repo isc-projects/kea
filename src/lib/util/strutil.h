@@ -344,9 +344,8 @@ typedef boost::shared_ptr<StringSanitizer> StringSanitizerPtr;
 /// \param content String to check for printable characters
 /// \return True if empty or contains only printable characters, False otherwise
 inline bool
-isPrintable(const std::string& content)
-{
-    for (const unsigned char& ch : content) {
+isPrintable(const std::string& content) {
+    for (const auto& ch : content) {
         if (isprint(ch) == 0) {
             return (false);
         }
@@ -359,9 +358,8 @@ isPrintable(const std::string& content)
 /// \param content Vector to check for printable characters
 /// \return True if empty or contains only printable characters, False otherwise
 inline bool
-isPrintable(const std::vector<uint8_t>& content)
-{
-    for (const unsigned char& ch : content) {
+isPrintable(const std::vector<uint8_t>& content) {
+    for (const auto& ch : content) {
         if (isprint(ch) == 0) {
             return (false);
         }

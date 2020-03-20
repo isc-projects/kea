@@ -619,7 +619,7 @@ Where:
 -  relay-info - for relayed packets the giaddr and the RAI circuit-id,
    remote-id, and subscriber-id options (option 82 sub options: 1, 2 and
    6) if present. The circuit id and remote id are presented as hex
-   strings and when printable with their content.
+   strings. When their content is printable it is displayed.
 
 -  user-context - the optional user context associated with the lease.
 
