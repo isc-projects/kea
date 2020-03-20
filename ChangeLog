@@ -1,3 +1,8 @@
+1735.	[func]		wlodek
+	Added clean output mode to perfdhcp with configurable separator
+	for periodic reports.
+	(Gutlab #1046)
+
 1734.	[doc]		vicky
 	A list of supported OSes is now described in a separate
 	platforms.rst file.

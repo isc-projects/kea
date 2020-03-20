@@ -1111,7 +1111,7 @@ public:
             stream_rcvd << sep << it->second->getRcvdPacketsNum();
             stream_drops << sep << it->second->getDroppedPacketsNum();
             stream_reject << sep << it->second->getRejLeasesNum();
-        }//teraz
+        }
 
         if (clean_report) {
         std::cout << stream_sent.str()
