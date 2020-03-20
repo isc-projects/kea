@@ -211,6 +211,17 @@ def run_generate_docs(_):
     mes_files = [os.path.abspath(os.path.join(src_dir, '../..', mf)) for mf in mes_files]
     mes2doc.generate(mes_files, os.path.join(src_dir, 'kea-messages.rst'))
 
+    # Sphinx has some limitations. It can't import files from outside its directory, which
+    # in our case is src/sphinx. On the other hand, we need to have platforms.rst file
+    # in top level directory, so it's easily accessible by prospective and first time
+    # users. Furthermore, ReadTheDocs does not use makefile system at all and they rely
+    # on sphinx-build only. As a result we need to conduct some Makefile-like operations
+    # here. This requires us to copy (or link) the file from the top level to sphinx subdir.
+    from shutil import copyfile
+    src = os.path.join(src_dir, '../../platforms.rst')
+    dst = os.path.join(src_dir, 'arm/platforms.rst')
+    print("Copying %s to %s" % (src, dst))
+    copyfile(src, dst)
 
 # custom setup hook
 def setup(app):
