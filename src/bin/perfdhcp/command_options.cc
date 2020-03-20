@@ -1152,7 +1152,7 @@ CommandOptions::usage() const {
     std::cout <<
         "perfdhcp [-huv] [-4|-6] [-A<encapsulation-level>] [-e<lease-type>]\n"
         "         [-r<rate>] [-f<renew-rate>]\n"
-        "         [-F<release-rate>] [-t<report>] [-C<separator>] [-R<range>]
+        "         [-F<release-rate>] [-t<report>] [-C<separator>] [-R<range>]\n"
         "         [-b<base>] [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
         "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
         "         [-L<local-port>] [-N<remote-port>]\n"
