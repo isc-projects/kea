@@ -144,6 +144,7 @@ mans: $(man_sources)
 clean-local:
 	rm -rf $(sphinxbuilddir)
 	rm -f $(srcdir)/kea-messages.rst $(srcdir)/api.rst
+	rm -f $(srcdir)/arm/platforms.rst
 
 .PHONY: all pdf html mans
 
