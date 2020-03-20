@@ -346,7 +346,7 @@ typedef boost::shared_ptr<StringSanitizer> StringSanitizerPtr;
 inline bool
 isPrintable(const std::string& content) {
     for (const auto& ch : content) {
-        if (isprint(ch) == 0) {
+        if (isprint(static_cast<int>(ch)) == 0) {
             return (false);
         }
     }
@@ -360,7 +360,7 @@ isPrintable(const std::string& content) {
 inline bool
 isPrintable(const std::vector<uint8_t>& content) {
     for (const auto& ch : content) {
-        if (isprint(ch) == 0) {
+        if (isprint(static_cast<int>(ch)) == 0) {
             return (false);
         }
     }
