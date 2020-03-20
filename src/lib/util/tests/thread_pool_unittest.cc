@@ -318,7 +318,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     EXPECT_NO_THROW(thread_pool.start(thread_count));
     // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
+    // the thread count should match
     ASSERT_EQ(thread_pool.size(), thread_count);
 
     // add items to running thread pool
@@ -409,7 +409,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     EXPECT_NO_THROW(thread_pool.start(thread_count));
     // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
+    // the thread count should match
     ASSERT_EQ(thread_pool.size(), thread_count);
 
     // add items to running thread pool

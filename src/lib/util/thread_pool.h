@@ -127,10 +127,10 @@ private:
     bool checkThreadId(std::thread::id id) {
         for (auto thread : threads_) {
             if (id == thread->get_id()) {
-                return true;
+                return (true);
             }
         }
-        return false;
+        return (false);
     }
 
     /// @brief Defines a generic thread pool queue.
