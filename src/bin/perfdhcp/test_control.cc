@@ -678,7 +678,8 @@ TestControl::printIntermediateStats() {
     ptime now = microsec_clock::universal_time();
     time_period time_since_report(last_report_, now);
     if (time_since_report.length().total_seconds() >= delay) {
-        stats_mgr_.printIntermediateStats(options_.getCleanReport());
+        stats_mgr_.printIntermediateStats(options_.getCleanReport(),
+                                          options_.getCleanReportSeparator());
         last_report_ = now;
     }
 }

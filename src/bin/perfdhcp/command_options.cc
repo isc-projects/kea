@@ -118,6 +118,7 @@ CommandOptions::reset() {
     release_rate_ = 0;
     report_delay_ = 0;
     clean_report_ = false;
+    clean_report_separator_ = "";
     clients_num_ = 0;
     mac_template_.assign(mac, mac + 6);
     duid_template_.clear();
@@ -239,7 +240,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // they will be tuned and validated elsewhere
     while((opt = getopt_long(argc, argv,
                              "huv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
-                             "J:T:X:O:o:E:S:I:x:W:w:e:f:F:g:C",
+                             "J:T:X:O:o:E:S:I:x:W:w:e:f:F:g:C:",
                              long_options, NULL)) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
@@ -294,6 +295,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
         case 'C':
             clean_report_ = true;
+            clean_report_separator_ = optarg;
             break;
 
         case 'd':
@@ -1304,7 +1306,9 @@ CommandOptions::usage() const {
         "    alternative to -n, or both options can be given, in which case the\n"
         "    testing is completed when either limit is reached.\n"
         "-t<report>: Delay in seconds between two periodic reports.\n"
-        "-C: Output reduced, periodic reports generated in easy parsable mode.\n"
+        "-C<separator>: Output reduced, an argument is a separator for periodic\n"
+        "    (-t) reports generated in easy parsable mode. Data output won't be\n"
+        "    changed, remain identical as in -t option.\n"
         "\n"
         "Errors:\n"
         "- tooshort: received a too short message\n"

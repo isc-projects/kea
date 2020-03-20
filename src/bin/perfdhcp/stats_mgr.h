@@ -1089,7 +1089,8 @@ public:
     /// counters.
     ///
     /// \param clean_report value to generate easy to parse report.
-    void printIntermediateStats(bool clean_report) const {
+    /// \param sep_ string used as separator if clean_report enabled..
+    void printIntermediateStats(bool clean_report, std::string sep_) const {
         std::ostringstream stream_sent;
         std::ostringstream stream_rcvd;
         std::ostringstream stream_drops;
@@ -1100,7 +1101,7 @@ public:
 
             if (it != exchanges_.begin()) {
                 if (clean_report) {
-                    sep = " ";
+                    sep = sep_;
                 } else {
                     sep = "/";
                 }
@@ -1113,9 +1114,9 @@ public:
 
         if (clean_report) {
         std::cout << stream_sent.str()
-                  << " " << stream_rcvd.str()
-                  << " " << stream_drops.str()
-                  << " " << stream_reject.str()
+                  << sep_ << stream_rcvd.str()
+                  << sep_ << stream_drops.str()
+                  << sep_ << stream_reject.str()
                   << std::endl;
 
         } else {

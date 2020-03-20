@@ -278,8 +278,9 @@ TEST_F(CommandOptionsTest, UseFirst) {
 
 TEST_F(CommandOptionsTest, UseCleanOutput) {
     CommandOptions opt;
-    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -C -l ethx all"));
+    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -C, -l ethx all"));
     EXPECT_TRUE(opt.getCleanReport());
+    EXPECT_EQ(",", opt.getCleanReportSeparator());
 }
 
 TEST_F(CommandOptionsTest, UseRelayV6) {

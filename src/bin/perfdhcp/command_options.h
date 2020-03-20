@@ -178,6 +178,11 @@ public:
     /// \return true if cleaner report is enabled.
     int getCleanReport() const { return clean_report_; }
 
+    /// \brief Returns clean report separator.
+    ///
+    /// \return returns string which is used as separator for report..
+    std::string getCleanReportSeparator() const { return clean_report_separator_; }
+
     /// \brief Returns number of simulated clients.
     ///
     /// \return number of simulated clients.
@@ -581,6 +586,9 @@ private:
 
     /// Enable cleaner, easy to parse, output of performance reports.
     bool clean_report_;
+
+    /// If clean report is enabled separator for output can be configured.
+    std::string clean_report_separator_;
 
     /// Number of simulated clients (aka randomization range).
     uint32_t clients_num_;
