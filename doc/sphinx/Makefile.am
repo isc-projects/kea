@@ -106,13 +106,13 @@ $(srcdir)/kea-messages.rst: $(mes_files) mes2doc.py
 $(srcdir)/api.rst: $(api_files) api2doc.py
 	$(PYTHON) $(srcdir)/api2doc.py -o $@ $(api_files)
 
-link:
+$(srcdir)/arm/platforms.rst:
 	rm -f $(srcdir)/arm/platforms.rst
-	ln -s $(srcdir)/../../../platforms.rst $(srcdir)/arm/platforms.rst
+	cp $(srcdir)/../../platforms.rst $(srcdir)/arm/platforms.rst
 
 PDFLATEX_AND_OPTS=$(PDFLATEX) -interaction nonstopmode
 
-pdf: $(main_sources) link
+pdf: $(main_sources) $(srcdir)/arm/platforms.rst
 	$(SPHINXBUILD) -M latex $(srcdir) $(sphinxbuilddir) $(sphinxopts)
 	-cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
 	-cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
@@ -127,7 +127,7 @@ pdf: $(main_sources) link
 	-cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
 	cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
 
-html: $(main_sources) link
+html: $(main_sources) $(srcdir)/arm/platforms.rst
 	$(SPHINXBUILD) -M html $(srcdir) $(sphinxbuilddir) $(sphinxopts)
 
 # This target is not used anywhere, but people who prefer single page docs
