@@ -1,3 +1,5 @@
+Kea 1.7.6 released on Mar 25, 2020
+
 1735.	[func]		wlodek
 	Added clean output mode to perfdhcp with configurable separator
 	for periodic reports.
