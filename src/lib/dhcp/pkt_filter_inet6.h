@@ -75,8 +75,7 @@ public:
     /// @return A result of sending the message. It is 0 if successful.
     /// @throw isc::dhcp::SocketWriteError if error occurred when sending a
     /// packet.
-    virtual int send(const Iface& iface, uint16_t sockfd,
-                     const Pkt6Ptr& pkt);
+    virtual int send(const Iface& iface, uint16_t sockfd, const Pkt6Ptr& pkt);
 
 private:
     /// Length of the socket control buffer.
