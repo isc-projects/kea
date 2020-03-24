@@ -243,7 +243,6 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
 
 int
 PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
-
     uint8_t control_buf[CONTROL_BUF_LEN];
     memset(&control_buf[0], 0, CONTROL_BUF_LEN);
 
@@ -324,7 +323,6 @@ PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
 
     return (0);
 }
-
 
 }
 }

@@ -282,7 +282,5 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     return (0);
 }
 
-
-
 } // end of isc::dhcp namespace
 } // end of isc namespace
