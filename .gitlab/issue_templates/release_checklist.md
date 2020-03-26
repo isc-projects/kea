@@ -26,6 +26,7 @@ Some of those checks and updates can be made before actual freeze.
 
 The following steps may involve changing files in the repository.
 
+1. [ ] If not done already, then bump up Kea version in configure.ac (format: `1.x.y-git`, ie. do not drop -git)
 1. [ ] Create a Kea issue for code changes that will be made due to the following checks
 1. Check User's Guide sections:
    1. Chapter 1. Introduction
