@@ -48,6 +48,7 @@ using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace isc::data;
 
 namespace {
 
@@ -3597,6 +3598,9 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;
 
+    // Add(update) the extended information on the lease.
+    updateLease4ExtendedInfo(lease, ctx);
+
     // Let's execute all callouts registered for lease4_select
     if (ctx.callout_handle_ &&
         HooksManager::getHooksManager().calloutsPresent(hook_index_lease4_select_)) {
@@ -4026,9 +4030,46 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
             lease->valid_lft_ = ctx.subnet_->getValid();
         }
     }
+
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;
+
+    // Add(update) the extended information on the lease.
+    updateLease4ExtendedInfo(lease, ctx);
+}
+
+void
+AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
+                                      const AllocEngine::ClientContext4& ctx) const {
+    // Look for relay agent information option (option 82)
+    OptionPtr rai = ctx.query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (!rai) {
+        // Pkt4 doesn't have it, so nothing to store (or update).
+        return;
+    }
+
+    std::stringstream ss;
+    ss << "{"
+       << "\"relay-agent-info\": \""
+       << rai->toHexString()
+       << "\"}";
+
+    ConstElementPtr extended_info = Element::fromJSON(ss.str());
+
+    // Get a writable copy of the lease's current user context.
+    ElementPtr user_context;
+    if (lease->getContext()) {
+        user_context = UserContext::toElement(lease->getContext());
+    } else {
+        user_context = Element::createMap();
+    }
+
+    // Add/replace the extended info entry.
+    user_context->set("ISC", extended_info);
+
+    // Update the lease's user_context.
+    lease->setContext(user_context);
 }
 
 bool

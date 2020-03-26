@@ -63,6 +63,7 @@ public:
     using AllocEngine::Allocator;
     using AllocEngine::IterativeAllocator;
     using AllocEngine::getAllocator;
+    using AllocEngine::updateLease4ExtendedInfo;
 
     /// @brief IterativeAllocator with internal methods exposed
     class NakedIterativeAllocator: public AllocEngine::IterativeAllocator {
@@ -77,6 +78,11 @@ public:
         using AllocEngine::IterativeAllocator::increaseAddress;
         using AllocEngine::IterativeAllocator::increasePrefix;
     };
+
+    void callUpdateLease4ExtendedInfo(const Lease4Ptr& lease,
+                                      AllocEngine::ClientContext4& ctx) const {
+        updateLease4ExtendedInfo(lease,ctx);
+    }
 };
 
 /// @brief Used in Allocation Engine tests for IPv6

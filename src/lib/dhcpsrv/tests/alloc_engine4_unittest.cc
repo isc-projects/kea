@@ -12,6 +12,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <testutils/gtest_utils.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/callout_handle.h>
 #include <stats/stats_mgr.h>
@@ -19,6 +20,7 @@
 using namespace std;
 using namespace isc::hooks;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::stats;
 
 namespace isc {
@@ -3193,6 +3195,342 @@ TEST_F(AllocEngine4Test, globalReservationDynamicRequest) {
     // Client had no lease in the database, so the old lease returned should
     // be NULL.
     EXPECT_FALSE(ctx.old_lease_);
+}
+
+
+// Exercises AllocEnginer4Test::updateExtendedInfo4() through various
+// permutations of client packet content.
+TEST_F(AllocEngine4Test, updateExtendedInfo4) {
+
+    // Structure that defines a test scenario.
+    struct Scenario {
+        std::string description_;       // test description
+        std::string orig_context_json_; // user context the lease begins with
+        std::string rai_data_;          // RAI option the client packet contains
+        std::string exp_context_json_;  // expected user context on the lease
+    };
+
+    // Test scenarios.
+    std::vector<Scenario> scenarios {
+        {
+        "no context, no rai",
+        "",
+        "",
+        ""
+        },
+        {
+        "some original context, no rai",
+        "{\"foo\": 123}",
+        "",
+        "{\"foo\": 123}"
+        },
+        {
+        "no original context, rai",
+        "",
+        "0x52050104aabbccdd",
+        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
+        },
+        {
+        "some original context, rai",
+        "{\"foo\": 123}",
+        "0x52050104aabbccdd",
+        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" }, \"foo\": 123 }"
+        },
+        {
+        "original rai context, no rai",
+        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
+        "",
+        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
+        },
+        {
+        "original rai context, different rai",
+        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
+        "0x52050104ddeeffaa",
+        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104DDEEFFAA\" } }",
+        },
+    };
+
+    // @todo set store-extended-info true.
+
+    // Create the allocation engine, context and lease.
+    NakedAllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress::IPV4_ZERO_ADDRESS(),
+                                    false, false, "", true);
+
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("192.0.2.100", lease->addr_.toText());
+
+    // Verify that the lease begins with no user context.
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_FALSE(user_context);
+
+    // Iterate over the test scenarios.
+    ElementPtr orig_context;
+    ElementPtr exp_context;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        // Create the original user context from JSON.
+        if (scenario.orig_context_json_.empty()) {
+            orig_context.reset();
+        } else {
+            ASSERT_NO_THROW(orig_context = Element::fromJSON(scenario.orig_context_json_))
+                            << "invalid orig_context_json_, test is broken";
+        }
+
+        // Create the expected user context from JSON.
+        if (scenario.exp_context_json_.empty()) {
+            exp_context.reset();
+        } else {
+            ASSERT_NO_THROW(exp_context = Element::fromJSON(scenario.exp_context_json_))
+                            << "invalid exp_context_json_, test is broken";
+        }
+
+        // Initialize lease's user context.
+        lease->setContext(orig_context);
+        if (!orig_context) {
+            ASSERT_FALSE(lease->getContext());
+        }
+        else {
+            ASSERT_TRUE(lease->getContext());
+            ASSERT_TRUE(orig_context->equals(*(lease->getContext())));
+        }
+
+        // Create the client packet and the add RAI option (if one).
+        ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+        if (!scenario.rai_data_.empty()) {
+            std::vector<uint8_t> opt_data;
+            ASSERT_NO_THROW(util::str::decodeFormattedHexString(scenario.rai_data_, opt_data))
+                            << "scenario.rai_data_ is invalid, test is broken";
+            OptionPtr rai;
+            ASSERT_NO_THROW(rai.reset(new Option(Option::V4, 0x52, opt_data)))
+                            << "could not create rai option, test is broken";
+
+            ctx.query_->addOption(rai);
+        }
+
+        // Call AllocEngine::updateLease4ExtendeInfo().
+        ASSERT_NO_THROW_LOG(engine.callUpdateLease4ExtendedInfo(lease, ctx));
+
+        // Verify the lease has the expected user context content.
+        if (!exp_context) {
+            ASSERT_FALSE(lease->getContext());
+        }
+        else {
+            ASSERT_TRUE(lease->getContext());
+            ASSERT_TRUE(exp_context->equals(*(lease->getContext())))
+                << "expected: " << *(exp_context) << std::endl
+                << "  actual: " << *(lease->getContext()) << std::endl;
+        }
+    }
+}
+
+// Verifies that the extended data (e.g. RAI option for now) is
+// added to a V4 lease when leases are created and/or renewed,
+// when store-extended-info is true.
+TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
+
+    // Structure that defines a test scenario.
+    struct Scenario {
+        std::string description_;       // test description
+        std::vector<uint8_t> mac_;      // MAC address
+        std::string rai_data_;          // RAI option the client packet contains
+        std::string exp_context_json_;  // expected user context on the lease
+        std::string exp_address_;        // expected lease address
+    };
+
+    std::vector<uint8_t> mac1 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x01};
+    std::string mac1_addr = "192.0.2.100";
+
+    std::vector<uint8_t> mac2 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x02};
+    std::string mac2_addr = "192.0.2.101";
+
+    // @todo set store-extended-info = true
+
+    // Test scenarios.
+    std::vector<Scenario> scenarios {
+        {
+            "create client one without rai",
+            mac1,
+            "",
+            "",
+            mac1_addr
+        },
+        {
+            "renew client one without rai",
+            {},
+            "",
+            "",
+            mac1_addr
+        },
+        {
+            "create client two with rai",
+            mac2,
+            "0x52050104a1b1c1d1",
+            "{ \"ISC\": { \"relay-agent-info\": \"0x52050104A1B1C1D1\" } }",
+            mac2_addr
+        },
+        {
+            "renew client two without rai",
+            {},
+            "",
+            "{ \"ISC\": { \"relay-agent-info\": \"0x52050104A1B1C1D1\" } }",
+            mac2_addr
+        },
+    };
+
+    // Create the allocation engine, context and lease.
+    NakedAllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+    AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
+                                    IOAddress::IPV4_ZERO_ADDRESS(),
+                                    false, false, "", false);
+
+    Lease4Ptr lease;
+
+    // Iterate over the test scenarios.
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        ElementPtr exp_context;
+        // Create the expected user context from JSON.
+        if (!scenario.exp_context_json_.empty()) {
+            ASSERT_NO_THROW(exp_context = Element::fromJSON(scenario.exp_context_json_))
+                            << "invalid exp_context_json_, test is broken";
+        }
+
+        // If we have a MAC address this scenario is for a new client.
+        if (!scenario.mac_.empty()) {
+            std::cout << "setting mac address" << std::endl;
+            ASSERT_NO_THROW(ctx.hwaddr_.reset(new HWAddr(scenario.mac_, HTYPE_ETHER)))
+                            << "invalid MAC address, test is broken";
+        }
+
+        // Create the client packet and the add RAI option (if one).
+        ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+        if (!scenario.rai_data_.empty()) {
+            std::vector<uint8_t> opt_data;
+            ASSERT_NO_THROW(util::str::decodeFormattedHexString(scenario.rai_data_, opt_data))
+                            << "scenario.rai_data_ is invalid, test is broken";
+            OptionPtr rai;
+            ASSERT_NO_THROW(rai.reset(new Option(Option::V4, 0x52, opt_data)))
+                            << "could not create rai option, test is broken";
+
+            ctx.query_->addOption(rai);
+        }
+
+        // Create or renew the lease.
+        Lease4Ptr lease = engine.allocateLease4(ctx);
+        ASSERT_TRUE(lease);
+        EXPECT_EQ(scenario.exp_address_, lease->addr_.toText());
+
+        // Verify the lease has the expected user context content.
+        if (!exp_context) {
+            ASSERT_FALSE(lease->getContext());
+        }
+        else {
+            ASSERT_TRUE(lease->getContext());
+            ASSERT_TRUE(exp_context->equals(*(lease->getContext())))
+                << "expected: " << *(exp_context) << std::endl
+                << "  actual: " << *(lease->getContext()) << std::endl;
+        }
+    }
+}
+
+// Verifies that the extended data (e.g. RAI option for now) is
+// not added to a V4 lease when leases are created and/or renewed,
+// when store-extended-info is false.
+TEST_F(AllocEngine4Test, storeExtendedInfoDisabled4) {
+
+    // Structure that defines a test scenario.
+    struct Scenario {
+        std::string description_;       // test description
+        std::vector<uint8_t> mac_;      // MAC address
+        std::string rai_data_;          // RAI option the client packet contains
+        std::string exp_address_;       // expected lease address
+    };
+
+    std::vector<uint8_t> mac1 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x01};
+    std::string mac1_addr = "192.0.2.100";
+
+    std::vector<uint8_t> mac2 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x02};
+    std::string mac2_addr = "192.0.2.101";
+
+    // @todo set store-extended-info = false
+
+    // Test scenarios.
+    std::vector<Scenario> scenarios {
+        {
+            "create client one without rai",
+            mac1,
+            "",
+            mac1_addr
+        },
+        {
+            "renew client one without rai",
+            {},
+            "",
+            mac1_addr
+        },
+        {
+            "create client two with rai",
+            mac2,
+            "0x52050104a1b1c1d1",
+            mac2_addr
+        },
+        {
+            "renew client two with rai",
+            {},
+            "0x52050104a1b1c1d1",
+            mac2_addr
+        },
+    };
+
+    // Create the allocation engine, context and lease.
+    NakedAllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+    AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
+                                    IOAddress::IPV4_ZERO_ADDRESS(),
+                                    false, false, "", false);
+
+    Lease4Ptr lease;
+
+    // Iterate over the test scenarios.
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        // If we have a MAC address this scenario is for a new client.
+        if (!scenario.mac_.empty()) {
+            std::cout << "setting mac address" << std::endl;
+            ASSERT_NO_THROW(ctx.hwaddr_.reset(new HWAddr(scenario.mac_, HTYPE_ETHER)))
+                            << "invalid MAC address, test is broken";
+        }
+
+        // Create the client packet and the add RAI option (if one).
+        ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+        if (!scenario.rai_data_.empty()) {
+            std::vector<uint8_t> opt_data;
+            ASSERT_NO_THROW(util::str::decodeFormattedHexString(scenario.rai_data_, opt_data))
+                            << "scenario.rai_data_ is invalid, test is broken";
+            OptionPtr rai;
+            ASSERT_NO_THROW(rai.reset(new Option(Option::V4, 0x52, opt_data)))
+                            << "could not create rai option, test is broken";
+
+            ctx.query_->addOption(rai);
+        }
+
+        // Create or renew the lease.
+        Lease4Ptr lease = engine.allocateLease4(ctx);
+        ASSERT_TRUE(lease);
+        EXPECT_EQ(scenario.exp_address_, lease->addr_.toText());
+
+        // Verify the lease does not have user context content.
+        ASSERT_FALSE(lease->getContext());
+    }
 }
 
 }  // namespace test
