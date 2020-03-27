@@ -11,4 +11,5 @@
 /upgrade_8.0_to_8.1.sh
 /upgrade_8.1_to_8.2.sh
 /upgrade_8.2_to_9.0.sh
+/upgrade_9.0_to_9.1.sh
 /wipe_data.sh
