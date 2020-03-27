@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -195,6 +195,19 @@ PktFilterLPF::openSocket(Iface& iface,
         close(fallback);
         isc_throw(SocketConfigError, "Failed to bind LPF socket '" << sock
                   << "' to interface '" << iface.getName() << "'");
+    }
+
+    // Set socket to non-blocking mode. In theory it is useless but
+    // in real world the socket can block on read...
+    if (fcntl(sock, F_SETFL, O_NONBLOCK) != 0) {
+        // Get the error message immediately after the bind because the
+        // invocation to close() below would override the errno.
+        char* errmsg = strerror(errno);
+        close(sock);
+        close(fallback);
+        isc_throw(SocketConfigError, "failed to set SO_NONBLOCK option on the"
+                  " LPF socket '" << sock << "' to interface '"
+                  << iface.getName() << "'");
     }
 
     return (SocketInfo(addr, port, sock, fallback));
