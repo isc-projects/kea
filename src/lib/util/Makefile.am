@@ -61,6 +61,7 @@ libkea_util_include_HEADERS = \
 	labeled_value.h \
 	memory_segment.h \
 	memory_segment_local.h \
+	multi_threading_mgr.h \
 	optional.h \
 	pid_file.h \
 	pointer_util.h \
@@ -72,6 +73,7 @@ libkea_util_include_HEADERS = \
 	stopwatch.h \
 	stopwatch_impl.h \
 	strutil.h \
+	thread_pool.h \
 	time_utilities.h \
 	versioned_csv_file.h \
 	watch_socket.h \
