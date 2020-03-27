@@ -123,8 +123,8 @@ public:
         MySqlConnection conn(params);
         conn.openDatabase();
 
-        int status = mysql_query(conn.mysql_, query.c_str());
-        if (status !=0) {
+        int status = MysqlQuery(conn.mysql_, query.c_str());
+        if (status != 0) {
             isc_throw(DbOperationError, "Query failed: " << mysql_error(conn.mysql_));
         }
 
@@ -1168,8 +1168,8 @@ TEST_F(MySqlHostDataSourceTest, testAddRollback) {
     MySqlConnection conn(params);
     ASSERT_NO_THROW(conn.openDatabase());
 
-    int status = mysql_query(conn.mysql_,
-                             "DROP TABLE IF EXISTS ipv6_reservations");
+    int status = MysqlQuery(conn.mysql_,
+                            "DROP TABLE IF EXISTS ipv6_reservations");
     ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
 
     // Create a host with a reservation.
@@ -1218,8 +1218,8 @@ TEST_F(MySqlHostDataSourceTest, testAddRollbackMultiThreading) {
     MySqlConnection conn(params);
     ASSERT_NO_THROW(conn.openDatabase());
 
-    int status = mysql_query(conn.mysql_,
-                             "DROP TABLE IF EXISTS ipv6_reservations");
+    int status = MysqlQuery(conn.mysql_,
+                            "DROP TABLE IF EXISTS ipv6_reservations");
     ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
 
     // Create a host with a reservation.

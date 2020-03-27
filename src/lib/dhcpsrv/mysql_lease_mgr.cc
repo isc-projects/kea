@@ -1633,7 +1633,7 @@ public:
         conn_.checkError(status, statement_index_, "outbound binding failed");
 
         // Execute the statement
-        status = mysql_stmt_execute(statement_);
+        status = MysqlExecuteStatement(statement_);
         conn_.checkError(status, statement_index_, "unable to execute");
 
         // Ensure that all the lease information is retrieved in one go to avoid
@@ -1832,7 +1832,7 @@ MySqlLeaseMgr::addLeaseCommon(MySqlLeaseContextPtr& ctx,
     checkError(ctx, status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(ctx->conn_.statements_[stindex]);
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
     if (status != 0) {
 
         // Failure: check for the special case of duplicate entry.  If this is
@@ -1939,7 +1939,7 @@ MySqlLeaseMgr::getLeaseCollection(MySqlLeaseContextPtr& ctx,
     checkError(ctx, status, stindex, "unable to bind SELECT clause parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(ctx->conn_.statements_[stindex]);
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
     checkError(ctx, status, stindex, "unable to execute");
 
     // Ensure that all the lease information is retrieved in one go to avoid
@@ -2700,7 +2700,7 @@ MySqlLeaseMgr::updateLeaseCommon(MySqlLeaseContextPtr& ctx,
     checkError(ctx, status, stindex, "unable to bind parameters");
 
     // Execute
-    status = mysql_stmt_execute(ctx->conn_.statements_[stindex]);
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
     checkError(ctx, status, stindex, "unable to execute");
 
     // See how many rows were affected.  The statement should only update a
@@ -2830,7 +2830,7 @@ MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
     checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
 
     // Execute
-    status = mysql_stmt_execute(ctx->conn_.statements_[stindex]);
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
     checkError(ctx, status, stindex, "unable to execute");
 
     // See how many rows were affected.  Note that the statement may delete

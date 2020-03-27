@@ -241,7 +241,7 @@ MySqlConnection::getVersion(const ParameterMap& parameters) {
         }
 
         // Execute the prepared statement.
-        if (mysql_stmt_execute(stmt) != 0) {
+        if (MysqlExecuteStatement(stmt) != 0) {
             isc_throw(DbOperationError, "cannot execute schema version query <"
                       << version_sql << ">, reason: "
                       << mysql_errno(conn.mysql_));

@@ -76,6 +76,48 @@ struct TaggedStatement {
     const char* text;
 };
 
+/// @brief Retry on innoDB deadlock.
+///
+/// When f(args) returns ER_LOCK_DEADLOCK f(args) is called again up to 5 times.
+///
+/// @tparam Fun Type of the function which must return an int.
+/// @tparam Args Types of arguments.
+/// @param fun The function to call.
+/// @param args Arguments.
+/// @return status (can be ER_LOCK_DEADLOCK after 5 retries).
+template <typename Fun, typename... Args>
+int retryOnDeadlock(Fun& fun, Args... args) {
+    int status;
+    for (unsigned count = 0; count < 5; ++count) {
+        status = fun(args...);
+        if (status != ER_LOCK_DEADLOCK) {
+            break;
+        }
+    }
+    return (status);
+}
+
+/// @brief Execute a prepared statement.
+///
+/// Call mysql_stmt_execute and retry on ER_LOCK_DEADLOCK.
+///
+/// @param stmt Statement to execute.
+/// @return status (can be ER_LOCK_DEADLOCK after 5 retries).
+inline int MysqlExecuteStatement(MYSQL_STMT* stmt) {
+    return (retryOnDeadlock(mysql_stmt_execute, stmt));
+}
+
+/// @brief Execute a literal statement.
+///
+/// Call mysql_query and retry on ER_LOCK_DEADLOCK.
+///
+/// @param mysql MySQL context.
+/// @param stmt Statement to execute.
+/// @return status (can be ER_LOCK_DEADLOCK after 5 retries).
+inline int MysqlQuery(MYSQL* mysql, const char* stmt) {
+    return (retryOnDeadlock(mysql_query, mysql, stmt));
+}
+
 /// @brief MySQL Handle Holder
 ///
 /// Small RAII object for safer initialization, will close the database
@@ -382,7 +424,7 @@ public:
         }
 
         // Execute query.
-        status = mysql_stmt_execute(statements_[index]);
+        status = MysqlExecuteStatement(statements_[index]);
         checkError(status, index, "unable to execute");
 
         status = mysql_stmt_store_result(statements_[index]);
@@ -445,7 +487,7 @@ public:
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
-        status = mysql_stmt_execute(statements_[index]);
+        status = MysqlExecuteStatement(statements_[index]);
 
         if (status != 0) {
             // Failure: check for the special case of duplicate entry.
@@ -488,7 +530,7 @@ public:
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
-        status = mysql_stmt_execute(statements_[index]);
+        status = MysqlExecuteStatement(statements_[index]);
 
         if (status != 0) {
             // Failure: check for the special case of duplicate entry.
