@@ -739,6 +739,17 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"store-extended-info\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_STORE_EXTENDED_INFO(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("store-extended-info", driver.loc_);
+    }
+}
+
 \"shared-networks\" {
     switch (driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

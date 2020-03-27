@@ -575,7 +575,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "ddns-override-client-update") ||
                  (config_pair.first == "ddns-replace-client-name") ||
                  (config_pair.first == "ddns-generated-prefix") ||
-                 (config_pair.first == "ddns-qualifying-suffix")) {
+                 (config_pair.first == "ddns-qualifying-suffix") ||
+                 (config_pair.first == "store-extended-info")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;

@@ -118,6 +118,7 @@ using namespace std;
   DDNS_REPLACE_CLIENT_NAME "ddns-replace-client-name"
   DDNS_GENERATED_PREFIX "ddns-generated-prefix"
   DDNS_QUALIFYING_SUFFIX "ddns-qualifying-suffix"
+  STORE_EXTENDED_INFO "store-extended-info"
   SUBNET4 "subnet4"
   SUBNET_4O6_INTERFACE "4o6-interface"
   SUBNET_4O6_INTERFACE_ID "4o6-interface-id"
@@ -500,6 +501,7 @@ global_param: valid_lifetime
             | ddns_replace_client_name
             | ddns_generated_prefix
             | ddns_qualifying_suffix
+            | store_extended_info 
             | unknown_map_entry
             ;
 
@@ -642,6 +644,11 @@ hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("hostname-char-replacement", s);
     ctx.leave();
+};
+
+store_extended_info: STORE_EXTENDED_INFO COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("store-extended-info", b);
 };
 
 interfaces_config: INTERFACES_CONFIG {
@@ -1230,6 +1237,7 @@ subnet4_param: valid_lifetime
              | ddns_qualifying_suffix
              | hostname_char_set
              | hostname_char_replacement
+             | store_extended_info 
              | unknown_map_entry
              ;
 
@@ -1374,6 +1382,7 @@ shared_network_param: name
                     | ddns_qualifying_suffix
                     | hostname_char_set
                     | hostname_char_replacement
+                    | store_extended_info 
                     | unknown_map_entry
                     ;
 
