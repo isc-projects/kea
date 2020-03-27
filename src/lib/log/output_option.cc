@@ -18,13 +18,13 @@ namespace isc {
 namespace log {
 
 /// Default layout pattern for console logs
-const std::string OutputOption::DEFAULT_CONSOLE_PATTERN = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i] %m\n";
+const std::string OutputOption::DEFAULT_CONSOLE_PATTERN = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i/%t] %m\n";
 
 /// Default layout pattern for file logs
-const std::string OutputOption::DEFAULT_FILE_PATTERN = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i] %m\n";
+const std::string OutputOption::DEFAULT_FILE_PATTERN = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i/%t] %m\n";
 
 /// Default layout pattern for syslog logs
-const std::string OutputOption::DEFAULT_SYSLOG_PATTERN = "%-5p [%c] %m\n";
+const std::string OutputOption::DEFAULT_SYSLOG_PATTERN = "%-5p [%c/%t] %m\n";
 
 OutputOption::Destination
 getDestination(const std::string& dest_str) {

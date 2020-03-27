@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,8 +49,6 @@ public:
         LoggerManager::reset();
     }
 };
-
-
 
 // Convenience class to create the specification for the logger "filelogger",
 // which, as the name suggests, logs to a file.  It remembers the file name and
@@ -133,7 +131,6 @@ private:
     string                  name_;      // Name of the output file
     string                  logname_;   // Name of this logger
 };
-
 
 // Convenience function to read an output log file and check that each line
 // contains the expected message ID
@@ -392,8 +389,8 @@ TEST_F(LoggerManagerTest, checkLayoutPattern) {
                       "[[:digit:]]{2}:[[:digit:]]{2}:[[:digit:]]{2}\\.[[:digit:]]+[[:space:]]"
                       // %-5p
                       "[[:alpha:]]{1,5}[[:space:]]"
-                      // [%c/%i]
-                      "\\[[[:alnum:]\\-\\.]+/[[:digit:]]+\\][[:space:]]"
+                      // [%c/%i/%t]
+                      "\\[[[:alnum:]\\-\\.]+/[[:digit:]]+/(0x)?[[:xdigit:]]+\\][[:space:]]"
                       );
 
     const int re = regexec(*regex, line.c_str(), 0, NULL, 0);

@@ -636,13 +636,13 @@ below:
 
 ::
 
-    "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i] %m\n";
+    "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i/%t] %m\n";
 
 and a typical log produced by this pattern would look somethng like this:
 
 ::
 
-    2019-08-05 14:27:45.871 DEBUG [kea-dhcp4.dhcpsrv/8475] DHCPSRV_TIMERMGR_START_TIMER starting timer: reclaim-expired-leases
+    2019-08-05 14:27:45.871 DEBUG [kea-dhcp4.dhcpsrv/8475/12345] DHCPSRV_TIMERMGR_START_TIMER starting timer: reclaim-expired-leases
 
 That breaks down as like so:
 
@@ -664,6 +664,11 @@ That breaks down as like so:
 
 - %i
     The process ID. From the example log: ``8475``
+
+- %t
+    The thread ID. From the example log: ``12345``.
+    Note the format of the thread ID is OS dependent: e.g. on some systems
+    it is an address so is displayed in hexadecimal.
 
 - %m
     The log message itself. Keg log messages all begin with a message
@@ -699,7 +704,7 @@ The default for pattern for syslog output is as follows:
 
 ::
 
-    "%-5p [%c] %m\n";
+    "%-5p [%c/%t] %m\n";
 
 You can see that it omits the date and time as well the process ID as this
 information is typically output by syslog.  Note that Kea uses the pattern
