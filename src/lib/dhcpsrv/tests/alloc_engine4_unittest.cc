@@ -3250,14 +3250,17 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
         },
     };
 
-    // @todo set store-extended-info true.
-
     // Create the allocation engine, context and lease.
     NakedAllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress::IPV4_ZERO_ADDRESS(),
                                     false, false, "", true);
+
+    // All scenarios require storage to be enabled.
+    ctx.subnet_->setStoreExtendedInfo(true);
 
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
     Lease4Ptr lease = engine.allocateLease4(ctx);
@@ -3349,8 +3352,6 @@ TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
     std::vector<uint8_t> mac2 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x02};
     std::string mac2_addr = "192.0.2.101";
 
-    // @todo set store-extended-info = true
-
     // Test scenarios.
     std::vector<Scenario> scenarios {
         {
@@ -3385,6 +3386,9 @@ TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
 
     // Create the allocation engine, context and lease.
     NakedAllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+    // All of the scenarios require storage to be enabled.
+    subnet_->setStoreExtendedInfo(true);
 
     AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
                                     IOAddress::IPV4_ZERO_ADDRESS(),
@@ -3492,6 +3496,9 @@ TEST_F(AllocEngine4Test, storeExtendedInfoDisabled4) {
 
     // Create the allocation engine, context and lease.
     NakedAllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+    // All of the scenarios require storage to be disabled.
+    subnet_->setStoreExtendedInfo(false);
 
     AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
                                     IOAddress::IPV4_ZERO_ADDRESS(),

@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -181,6 +181,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("ddns-qualifying-suffix", Element::create("gs"));
     globals_->set("hostname-char-set", Element::create("gc"));
     globals_->set("hostname-char-replacement", Element::create("gr"));
+    globals_->set("store-extended-info", Element::create(true));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -316,6 +317,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
         testNetworkInheritance<TestNetwork4>(&Network4::getHostnameCharReplacement,
                                              &Network4::setHostnameCharReplacement,
                                              "nr", "gr");
+    }
+    {
+        SCOPED_TRACE("store-extended-info");
+        testNetworkInheritance<TestNetwork4>(&Network4::getStoreExtendedInfo,
+                                             &Network4::setStoreExtendedInfo,
+                                             false, true);
     }
 }
 

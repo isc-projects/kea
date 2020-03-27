@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -213,6 +213,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
     network2->setT2(Triplet<uint32_t>(200));
     network2->setValid(Triplet<uint32_t>(200, 300, 400));
     network2->setDdnsSendUpdates(false);
+    network2->setStoreExtendedInfo(true);
 
     network3->setIface("eth2");
     network3->setValid(Triplet<uint32_t>(100));
@@ -243,7 +244,8 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"subnet4\": [ ],\n"
         "    \"valid-lifetime\": 300,\n"
         "    \"min-valid-lifetime\": 200,\n"
-        "    \"max-valid-lifetime\": 400\n"
+        "    \"max-valid-lifetime\": 400,\n"
+        "    \"store-extended-info\": true\n"
         "  },\n"
         "  {\n"
         "    \"calculate-tee-times\": true,\n"

@@ -207,7 +207,7 @@ public:
           calculate_tee_times_(), t1_percent_(), t2_percent_(),
           ddns_send_updates_(), ddns_override_no_update_(), ddns_override_client_update_(),
           ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
-          hostname_char_set_(), hostname_char_replacement_() {
+          hostname_char_set_(), hostname_char_replacement_(), store_extended_info_() {
     }
 
     /// @brief Virtual destructor.
@@ -681,6 +681,23 @@ public:
         hostname_char_replacement_ = hostname_char_replacement;
     }
 
+    /// @brief Returns store-extended-info
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<bool>
+    getStoreExtendedInfo(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getStoreExtendedInfo,
+                                     store_extended_info_,
+                                     inheritance, "store-extended-info"));
+    }
+
+    /// @brief Sets new ddns-override-no-update
+    ///
+    /// @param ddns_override_no_update New value to use.
+    void setStoreExtendedInfo(const util::Optional<bool>& store_extended_info) {
+        store_extended_info_ = store_extended_info;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -970,6 +987,10 @@ protected:
     /// @brief A string to replace invalid characters when scrubbing hostnames.
     /// Meaningful only if hostname_char_set_ is not empty.
     util::Optional<std::string> hostname_char_replacement_;
+
+    /// @brief Should Kea store addtional client query data (e.g. relay-agent-info)
+    /// on the lease.
+    util::Optional<bool> store_extended_info_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///

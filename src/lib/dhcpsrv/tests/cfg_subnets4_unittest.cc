@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1021,6 +1021,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet2->setIface("lo");
     subnet2->addRelayAddress(IOAddress("10.0.0.1"));
     subnet2->setValid(Triplet<uint32_t>(100));
+    subnet2->setStoreExtendedInfo(true);
 
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
@@ -1084,7 +1085,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"4o6-subnet\": \"\",\n"
         "    \"user-context\": {},\n"
         "    \"option-data\": [ ],\n"
-        "    \"pools\": [ ]\n"
+        "    \"pools\": [ ],\n"
+        "    \"store-extended-info\": true\n"
         "},{\n"
         "    \"id\": 125,\n"
         "    \"subnet\": \"192.0.2.128/26\",\n"

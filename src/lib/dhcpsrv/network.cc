@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -241,8 +241,7 @@ Network::toElement() const {
     if (!t2_percent_.unspecified()) {
         map->set("t2-percent", Element::create(t2_percent_));
     }
-
-    if (!ddns_send_updates_.unspecified()) {
+if (!ddns_send_updates_.unspecified()) {
         map->set("ddns-send-updates", Element::create(ddns_send_updates_));
     }
 
@@ -274,6 +273,10 @@ Network::toElement() const {
 
     if (!hostname_char_replacement_.unspecified()) {
         map->set("hostname-char-replacement", Element::create(hostname_char_replacement_));
+    }
+
+    if (!store_extended_info_.unspecified()) {
+        map->set("store-extended-info", Element::create(store_extended_info_));
     }
 
     return (map);

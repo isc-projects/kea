@@ -82,7 +82,8 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "ddns-override-client-update",  Element::boolean },
     { "ddns-replace-client-name",     Element::string },
     { "ddns-generated-prefix",        Element::string },
-    { "ddns-qualifying-suffix",       Element::string }
+    { "ddns-qualifying-suffix",       Element::string },
+    { "store-extended-info",          Element::boolean }
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -111,8 +112,9 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "ddns-replace-client-name",       Element::string,  "never" },
     { "ddns-generated-prefix",          Element::string,  "myhost" },
     { "ddns-qualifying-suffix",         Element::string,  "" },
-    { "hostname-char-set",              Element::string, "[^A-Za-z0-9.-]" },
-    { "hostname-char-replacement",      Element::string, "" }
+    { "hostname-char-set",              Element::string,  "[^A-Za-z0-9.-]" },
+    { "hostname-char-replacement",      Element::string,  "" },
+    { "store-extended-info",            Element::boolean, "false" }
 };
 
 /// @brief This table defines all option definition parameters.
@@ -214,7 +216,8 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "ddns-qualifying-suffix",         Element::string },
     { "hostname-char-set",              Element::string },
     { "hostname-char-replacement",      Element::string },
-    { "metadata",                       Element::map },
+    { "store-extended-info",            Element::boolean },
+    { "metadata",                       Element::map }
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -319,7 +322,8 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "ddns-qualifying-suffix",         Element::string },
     { "hostname-char-set",              Element::string },
     { "hostname-char-replacement",      Element::string },
-    { "metadata",                       Element::map },
+    { "store-extended-info",            Element::boolean },
+    { "metadata",                       Element::map }
 };
 
 /// @brief This table defines default values for each IPv4 shared network.

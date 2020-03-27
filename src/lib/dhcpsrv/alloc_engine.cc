@@ -4042,6 +4042,11 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
 void
 AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
                                       const AllocEngine::ClientContext4& ctx) const {
+    // If storage is not enabled then punt.
+    if (!ctx.subnet_->getStoreExtendedInfo()) {
+        return;
+    }
+
     // Look for relay agent information option (option 82)
     OptionPtr rai = ctx.query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (!rai) {
