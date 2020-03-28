@@ -72,6 +72,11 @@ public:
     /// - request-timeout 12000
     /// - tcp-keepalive no
     /// - tcp-nodelay no
+    /// - ssl no
+    /// - ssl-ca
+    /// - ssl-cert
+    /// - ssl-key
+    /// - ssl-password
     ///
     /// For details regarding those paraemters, see
     /// @ref isc::db::CqlConnection::openDatabase.

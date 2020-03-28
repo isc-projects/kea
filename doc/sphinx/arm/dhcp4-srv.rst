@@ -578,6 +578,17 @@ Cassandra also supports a number of optional parameters:
    consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html>`__
    for more details.
 
+-  ``ssl`` - enables cpp-driver SSL support. To configure it see the 
+   ssl parameters below.
+
+-  ``ssl-ca`` - path to the root CA for peer verification
+
+-  ``ssl-cert`` - path to the client certificate for client authentication
+
+-  ``ssl-key`` - path to the client certificate private key
+
+-  ``ssl-password`` - password of the private key (if any)
+
 For example, a complex Cassandra configuration with most parameters
 specified could look as follows:
 

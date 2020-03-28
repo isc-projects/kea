@@ -38,6 +38,11 @@ namespace yang {
 ///     "consistency": <consistency level>,
 ///     "serial-consistency": <serial consistency level>,
 ///     "max-row-errors": <maximum row errors>,
+///     "ssl": <SSL enabled flag>,
+///     "ssl-ca": <SSL Root CA path>,
+///     "ssl-cert": <SSL client cert path>,
+///     "ssl-key": <SSL client cert key path>,
+///     "ssl-password": <SSL private key password>,
 ///     "user-context": { <json map> },
 ///     "comment": <comment>
 /// }
@@ -67,6 +72,11 @@ namespace yang {
 ///    +--rw consistency?          string
 ///    +--rw serial-consistency?   string
 ///    +--rw max-row-errors?       uint32
+///    +--rw ssl?                  boolean
+///    +--rw ssl-ca?               string
+///    +--rw ssl-cert?             string
+///    +--rw ssl-key?              string
+///    +--rw ssl-password?         string
 ///    +--rw user-context?         string
 /// @endcode
 ///

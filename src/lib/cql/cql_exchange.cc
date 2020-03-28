@@ -814,7 +814,6 @@ CqlExchange::executeSelect(const CqlConnection& connection, const AnyArray& data
     }
 
     CqlCommon::bindData(local_data, statement);
-
     // Everything's ready. Call the actual statement.
     future = cass_session_execute(connection.session_, statement);
     if (!future) {
@@ -823,7 +822,6 @@ CqlExchange::executeSelect(const CqlConnection& connection, const AnyArray& data
                   "CqlExchange::executeSelect(): no CassFuture for statement "
                       << tagged_statement.name_);
     }
-
     // Wait for the statement execution to complete.
     cass_future_wait(future);
     const std::string error = connection.checkFutureError(
@@ -835,7 +833,6 @@ CqlExchange::executeSelect(const CqlConnection& connection, const AnyArray& data
         cass_statement_free(statement);
         isc_throw(DbOperationError, error);
     }
-
     // Get column values.
     const CassResult* result_collection = cass_future_get_result(future);
     if (single && cass_result_row_count(result_collection) > 1) {
