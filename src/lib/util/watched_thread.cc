@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,10 @@ WatchedThread::start(const boost::function<void()>& thread_main) {
     clearReady(ERROR);
     clearReady(READY);
     clearReady(TERMINATE);
-    last_error_ = "no error";
+    {
+	std::lock_guard<std::mutex> lock(last_error_mutex_);
+	last_error_ = "no error";
+    }
     thread_.reset(new std::thread(thread_main));
 }
 
@@ -59,17 +62,22 @@ WatchedThread::stop() {
 
     clearReady(ERROR);
     clearReady(READY);
+    std::lock_guard<std::mutex> lock(last_error_mutex_);
     last_error_ = "thread stopped";
 }
 
 void
 WatchedThread::setError(const std::string& error_msg) {
-    last_error_ = error_msg;
+    {
+        std::lock_guard<std::mutex> lock(last_error_mutex_);
+        last_error_ = error_msg;
+    }
     markReady(ERROR);
 }
 
 std::string
 WatchedThread::getLastError() {
+    std::lock_guard<std::mutex> lock(last_error_mutex_);
     return (last_error_);
 }
 } // end of namespace isc::util

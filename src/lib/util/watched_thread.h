@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 
+#include <mutex>
 #include <thread>
 
 namespace isc {
@@ -108,6 +109,9 @@ public:
 
     /// @brief Error message of the last error encountered
     std::string last_error_;
+
+    /// @brief Mutex to protect last error message concurrent access
+    std::mutex last_error_mutex_;
 
     /// @brief WatchSockets that are used to communicate with the owning thread
     /// There are three:
