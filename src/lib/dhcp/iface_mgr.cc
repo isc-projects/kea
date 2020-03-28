@@ -318,6 +318,7 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
         isc_throw(BadValue, "Attempted to install callback for invalid socket "
                   << socketfd);
     }
+    std::lock_guard<std::mutex> lock(callbacks_mutex_);
     BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
         // There's such a socket description there already.
         // Update the callback and we're done
@@ -336,6 +337,12 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
 
 void
 IfaceMgr::deleteExternalSocket(int socketfd) {
+    std::lock_guard<std::mutex> lock(callbacks_mutex_);
+    deleteExternalSocketInternal(socketfd);
+}
+
+void
+IfaceMgr::deleteExternalSocketInternal(int socketfd) {
     for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
         if (s->socket_ == socketfd) {
@@ -347,6 +354,7 @@ IfaceMgr::deleteExternalSocket(int socketfd) {
 
 int
 IfaceMgr::purgeBadSockets() {
+    std::lock_guard<std::mutex> lock(callbacks_mutex_);
     std::vector<int> bad_fds;
     for (SocketCallbackInfo s : callbacks_) {
         errno = 0;
@@ -356,7 +364,7 @@ IfaceMgr::purgeBadSockets() {
     }
 
     for (auto bad_fd : bad_fds) {
-        deleteExternalSocket(bad_fd);
+        deleteExternalSocketInternal(bad_fd);
     }
 
     return (bad_fds.size());
@@ -364,6 +372,7 @@ IfaceMgr::purgeBadSockets() {
 
 void
 IfaceMgr::deleteAllExternalSockets() {
+    std::lock_guard<std::mutex> lock(callbacks_mutex_);
     callbacks_.clear();
 }
 
@@ -1013,9 +1022,12 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     FD_ZERO(&sockets);
 
     // if there are any callbacks for external sockets registered...
-    if (!callbacks_.empty()) {
-        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-            addFDtoSet(s.socket_, maxfd, &sockets);
+    {
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        if (!callbacks_.empty()) {
+            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+                addFDtoSet(s.socket_, maxfd, &sockets);
+            }
         }
     }
 
@@ -1078,6 +1090,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         }
 
         // Let's find out which external socket has the data
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
             if (!FD_ISSET(s.socket_, &sockets)) {
                 continue;
@@ -1132,10 +1145,13 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
 
     // if there are any callbacks for external sockets registered...
-    if (!callbacks_.empty()) {
-        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-            // Add this socket to listening set
-            addFDtoSet(s.socket_, maxfd, &sockets);
+    {
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        if (!callbacks_.empty()) {
+            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+                // Add this socket to listening set
+                addFDtoSet(s.socket_, maxfd, &sockets);
+            }
         }
     }
 
@@ -1173,21 +1189,24 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
 
     // Let's find out which socket has the data
-    BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-        if (!FD_ISSET(s.socket_, &sockets)) {
-            continue;
+    {
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            if (!FD_ISSET(s.socket_, &sockets)) {
+                continue;
+            }
+
+            // something received over external socket
+
+            // Calling the external socket's callback provides its service
+            // layer access without integrating any specific features
+            // in IfaceMgr
+            if (s.callback_) {
+                s.callback_(s.socket_);
+            }
+
+            return (Pkt4Ptr());
         }
-
-        // something received over external socket
-
-        // Calling the external socket's callback provides its service
-        // layer access without integrating any specific features
-        // in IfaceMgr
-        if (s.callback_) {
-            s.callback_(s.socket_);
-        }
-
-        return (Pkt4Ptr());
     }
 
     // Let's find out which interface/socket has the data
@@ -1261,10 +1280,13 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     }
 
     // if there are any callbacks for external sockets registered...
-    if (!callbacks_.empty()) {
-        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-            // Add it to the set as well
-            addFDtoSet(s.socket_, maxfd, &sockets);
+    {
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        if (!callbacks_.empty()) {
+            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+                // Add it to the set as well
+                addFDtoSet(s.socket_, maxfd, &sockets);
+            }
         }
     }
 
@@ -1302,21 +1324,24 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     }
 
     // Let's find out which socket has the data
-    BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-        if (!FD_ISSET(s.socket_, &sockets)) {
-            continue;
+    {
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            if (!FD_ISSET(s.socket_, &sockets)) {
+                continue;
+            }
+
+            // something received over external socket
+
+            // Calling the external socket's callback provides its service
+            // layer access without integrating any specific features
+            // in IfaceMgr
+            if (s.callback_) {
+                s.callback_(s.socket_);
+            }
+
+            return (Pkt6Ptr());
         }
-
-        // something received over external socket
-
-        // Calling the external socket's callback provides its service
-        // layer access without integrating any specific features
-        // in IfaceMgr
-        if (s.callback_) {
-            s.callback_(s.socket_);
-        }
-
-        return (Pkt6Ptr());
     }
 
     // Let's find out which interface/socket has the data
@@ -1353,10 +1378,13 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     FD_ZERO(&sockets);
 
     // if there are any callbacks for external sockets registered...
-    if (!callbacks_.empty()) {
-        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-            // Add it to the set as well
-            addFDtoSet(s.socket_, maxfd, &sockets);
+    {
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        if (!callbacks_.empty()) {
+            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+                // Add it to the set as well
+                addFDtoSet(s.socket_, maxfd, &sockets);
+            }
         }
     }
 
@@ -1419,6 +1447,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         }
 
         // Let's find out which external socket has the data
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
             if (!FD_ISSET(s.socket_, &sockets)) {
                 continue;

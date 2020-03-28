@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,6 +27,7 @@
 
 #include <list>
 #include <vector>
+#include <mutex>
 
 namespace isc {
 
@@ -925,6 +926,8 @@ public:
     void addExternalSocket(int socketfd, SocketCallback callback);
 
     /// @brief Deletes external socket
+    ///
+    /// @param socketfd socket descriptor
     void deleteExternalSocket(int socketfd);
 
     /// @brief Scans registered socket set and removes any that are invalid.
@@ -1354,6 +1357,11 @@ private:
     /// @param socket_info structure holding socket information
     void receiveDHCP6Packet(const SocketInfo& socket_info);
 
+    /// @brief Deletes external socket with the callbacks_mutex_ taken
+    ///
+    /// @param socketfd socket descriptor
+    void deleteExternalSocketInternal(int socketfd);
+
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
     /// sockets. It is possible to supply custom object using
@@ -1372,6 +1380,9 @@ private:
 
     /// @brief Contains list of callbacks for external sockets
     SocketCallbackInfoContainer callbacks_;
+
+    /// @brief Mutex to protect callbacks_ against concurrent access
+    std::mutex callbacks_mutex_;
 
     /// @brief Indicates if the IfaceMgr is in the test mode.
     bool test_mode_;
