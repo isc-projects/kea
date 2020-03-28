@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -91,7 +91,7 @@ StateModel::StateModel() : events_(), states_(), dictionaries_initted_(false),
                            curr_state_(NEW_ST), prev_state_(NEW_ST),
                            last_event_(NOP_EVT), next_event_(NOP_EVT),
                            on_entry_flag_(false), on_exit_flag_(false),
-                           paused_(false) {
+                           paused_(false), mutex_(new std::mutex) {
 }
 
 StateModel::~StateModel(){
@@ -279,6 +279,7 @@ StateModel::abortModel(const std::string& explanation) {
 
 void
 StateModel::setState(unsigned int state) {
+    std::lock_guard<std::mutex> lock(*mutex_);
     if (state != END_ST && !states_.isDefined(state)) {
         isc_throw(StateModelError,
                   "Attempt to set state to an undefined value: " << state );
@@ -309,6 +310,7 @@ StateModel::postNextEvent(unsigned int event_value) {
                   "Attempt to post an undefined event, value: " << event_value);
     }
 
+    std::lock_guard<std::mutex> lock(*mutex_);
     last_event_ = next_event_;
     next_event_ = event_value;
 }
@@ -329,50 +331,61 @@ StateModel::doOnExit() {
 
 unsigned int
 StateModel::getCurrState() const {
+    std::lock_guard<std::mutex> lock(*mutex_);
     return (curr_state_);
 }
 
 unsigned int
 StateModel::getPrevState() const {
+    std::lock_guard<std::mutex> lock(*mutex_);
     return (prev_state_);
 }
 
 unsigned int
 StateModel::getLastEvent() const {
+    std::lock_guard<std::mutex> lock(*mutex_);
     return (last_event_);
 }
 
 unsigned int
 StateModel::getNextEvent() const {
+    std::lock_guard<std::mutex> lock(*mutex_);
     return (next_event_);
 }
 bool
 StateModel::isModelNew() const {
+    std::lock_guard<std::mutex> lock(*mutex_);
     return (curr_state_ == NEW_ST);
 }
 
 bool
 StateModel::isModelRunning() const {
+    std::lock_guard<std::mutex> lock(*mutex_);
     return ((curr_state_ != NEW_ST) && (curr_state_ != END_ST));
 }
 
 bool
 StateModel::isModelWaiting() const {
-    return (isModelRunning() && (next_event_ == NOP_EVT));
+    std::lock_guard<std::mutex> lock(*mutex_);
+    return ((curr_state_ != NEW_ST) && (curr_state_ != END_ST) &&
+            (next_event_ == NOP_EVT));
 }
 
 bool
 StateModel::isModelDone() const {
+    std::lock_guard<std::mutex> lock(*mutex_);
     return (curr_state_ == END_ST);
 }
 
 bool
 StateModel::didModelFail() const {
-    return (isModelDone() && (next_event_ == FAIL_EVT));
+    std::lock_guard<std::mutex> lock(*mutex_);
+    return ((curr_state_ == END_ST) && (next_event_ == FAIL_EVT));
 }
 
 bool
 StateModel::isModelPaused() const {
+    std::lock_guard<std::mutex> lock(*mutex_);
     return (paused_);
 }
 
@@ -388,6 +401,7 @@ StateModel::getEventLabel(const int event) const {
 
 std::string
 StateModel::getContextStr() const {
+    std::lock_guard<std::mutex> lock(*mutex_);
     std::ostringstream stream;
     stream << "current state: [ "
             << curr_state_ << " " << getStateLabel(curr_state_)
@@ -398,6 +412,7 @@ StateModel::getContextStr() const {
 
 std::string
 StateModel::getPrevContextStr() const {
+    std::lock_guard<std::mutex> lock(*mutex_);
     std::ostringstream stream;
     stream << "previous state: [ "
            << prev_state_ << " " << getStateLabel(prev_state_)

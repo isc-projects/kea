@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <map>
+#include <mutex>
 #include <string>
 
 namespace isc {
@@ -721,6 +722,9 @@ private:
 
     /// @brief Indicates if the state model is paused.
     bool paused_;
+
+    /// @brief Protects against concurrent transitions.
+    boost::shared_ptr<std::mutex> mutex_;
 };
 
 /// @brief Defines a pointer to a StateModel.
