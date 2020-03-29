@@ -1090,20 +1090,29 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         }
 
         // Let's find out which external socket has the data
-        std::lock_guard<std::mutex> lock(callbacks_mutex_);
-        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-            if (!FD_ISSET(s.socket_, &sockets)) {
-                continue;
+        SocketCallbackInfo ex_sock;
+        {
+            std::lock_guard<std::mutex> lock(callbacks_mutex_);
+            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+                if (!FD_ISSET(s.socket_, &sockets)) {
+                    continue;
+                }
+
+                // something received over external socket
+                if (s.callback_) {
+                    // Note the external socket to call its callback without
+                    // the lock taken so it can be deleted.
+                    ex_sock = s;
+                    break;
+                }
             }
+        }
 
-            // something received over external socket
-
+        if (ex_sock.callback_) {
             // Calling the external socket's callback provides its service
             // layer access without integrating any specific features
             // in IfaceMgr
-            if (s.callback_) {
-                s.callback_(s.socket_);
-            }
+            ex_sock.callback_(ex_sock.socket_);
 
             return (Pkt4Ptr());
         }
@@ -1189,6 +1198,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
 
     // Let's find out which socket has the data
+    SocketCallbackInfo ex_sock;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
@@ -1197,16 +1207,21 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
             }
 
             // something received over external socket
-
-            // Calling the external socket's callback provides its service
-            // layer access without integrating any specific features
-            // in IfaceMgr
             if (s.callback_) {
-                s.callback_(s.socket_);
-            }
-
-            return (Pkt4Ptr());
+                // Note the external socket to call its callback without
+                // the lock taken so it can be deleted.
+                ex_sock = s;
+                break;            }
         }
+    }
+
+    if (ex_sock.callback_) {
+        // Calling the external socket's callback provides its service
+        // layer access without integrating any specific features
+        // in IfaceMgr
+        ex_sock.callback_(ex_sock.socket_);
+
+        return (Pkt4Ptr());
     }
 
     // Let's find out which interface/socket has the data
@@ -1324,6 +1339,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     }
 
     // Let's find out which socket has the data
+    SocketCallbackInfo ex_sock;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
@@ -1332,16 +1348,22 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
             }
 
             // something received over external socket
-
-            // Calling the external socket's callback provides its service
-            // layer access without integrating any specific features
-            // in IfaceMgr
             if (s.callback_) {
-                s.callback_(s.socket_);
+                // Note the external socket to call its callback without
+                // the lock taken so it can be deleted.
+                ex_sock = s;
+                break;
             }
-
-            return (Pkt6Ptr());
         }
+    }
+
+    if (ex_sock.callback_) {
+        // Calling the external socket's callback provides its service
+        // layer access without integrating any specific features
+        // in IfaceMgr
+        ex_sock.callback_(ex_sock.socket_);
+
+        return (Pkt6Ptr());
     }
 
     // Let's find out which interface/socket has the data
@@ -1447,20 +1469,29 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         }
 
         // Let's find out which external socket has the data
-        std::lock_guard<std::mutex> lock(callbacks_mutex_);
-        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-            if (!FD_ISSET(s.socket_, &sockets)) {
-                continue;
+        SocketCallbackInfo ex_sock;
+        {
+            std::lock_guard<std::mutex> lock(callbacks_mutex_);
+            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+                if (!FD_ISSET(s.socket_, &sockets)) {
+                    continue;
+                }
+
+                // something received over external socket
+                if (s.callback_) {
+                    // Note the external socket to call its callback without
+                    // the lock taken so it can be deleted.
+                    ex_sock = s;
+                    break;
+                }
             }
+        }
 
-            // something received over external socket
-
+        if (ex_sock.callback_) {
             // Calling the external socket's callback provides its service
             // layer access without integrating any specific features
             // in IfaceMgr
-            if (s.callback_) {
-                s.callback_(s.socket_);
-            }
+            ex_sock.callback_(ex_sock.socket_);
 
             return (Pkt6Ptr());
         }
