@@ -32,7 +32,7 @@ DControllerBase::DControllerBase(const char* app_name, const char* bin_name)
     : app_name_(app_name), bin_name_(bin_name),
       verbose_(false), check_only_(false),
       io_service_(new isc::asiolink::IOService()),
-      io_signal_queue_() {
+      io_signal_set_() {
 }
 
 void
@@ -723,37 +723,15 @@ void
 DControllerBase::initSignalHandling() {
     /// @todo block everything we don't handle
 
-    // Create our signal queue.
-    io_signal_queue_.reset(new IOSignalQueue(io_service_));
-
-    // Install the on-receipt handler
-    util::SignalSet::setOnReceiptHandler(boost::bind(&DControllerBase::
-                                                     osSignalHandler,
-                                                     this, _1));
+    // Create our signal set.
+    io_signal_set_.reset(new IOSignalSet(io_service_,
+                                         boost::bind(&DControllerBase::
+                                                     processSignal,
+                                                     this, _1)));
     // Register for the signals we wish to handle.
-    signal_set_.reset(new util::SignalSet(SIGHUP,SIGINT,SIGTERM));
-}
-
-bool
-DControllerBase::osSignalHandler(int signum) {
-    // Create a IOSignal to propagate the signal to IOService.
-    io_signal_queue_->pushSignal(signum, boost::bind(&DControllerBase::
-                                                     ioSignalHandler,
-                                                     this, _1));
-    return (true);
-}
-
-void
-DControllerBase::ioSignalHandler(IOSignalId sequence_id) {
-    // Pop the signal instance off the queue.  This should make us
-    // the only one holding it, so when we leave it should be freed.
-    // (note that popSignal will throw if signal is not found, which
-    // in turn will caught, logged, and swallowed by IOSignal callback
-    // invocation code.)
-    IOSignalPtr io_signal = io_signal_queue_->popSignal(sequence_id);
-
-    // Now call virtual signal processing method.
-    processSignal(io_signal->getSignum());
+    io_signal_set_->add(SIGHUP);
+    io_signal_set_->add(SIGINT);
+    io_signal_set_->add(SIGTERM);
 }
 
 void

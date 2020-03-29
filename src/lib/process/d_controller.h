@@ -407,9 +407,8 @@ protected:
 
     /// @brief Application-level signal processing method.
     ///
-    /// This method is the last step in processing a OS signal occurrence.  It
-    /// is invoked when an IOSignal's internal timer callback is executed by
-    /// IOService.  It currently supports the following signals as follows:
+    /// This method is the last step in processing a OS signal occurrence.
+    /// It currently supports the following signals as follows:
     /// -# SIGHUP - instigates reloading the configuration file
     /// -# SIGINT - instigates a graceful shutdown
     /// -# SIGTERM - instigates a graceful shutdown
@@ -580,32 +579,6 @@ protected:
     /// which listens for SIGHUP, SIGINT, and SIGTERM.
     void initSignalHandling();
 
-    /// @brief Handler for processing OS-level signals
-    ///
-    /// This method is installed as the SignalSet "on-receipt" handler. Upon
-    /// invocation, it uses the controller's IOSignalQueue to schedule an
-    /// IOSignal with for the given signal value.
-    ///
-    /// @param signum OS signal value (e.g. SIGINT, SIGUSR1 ...) to received
-    ///
-    /// @return SignalSet "on-receipt" handlers are required to return a
-    /// boolean indicating if the OS signal has been processed (true) or if it
-    /// should be saved for deferred processing (false).  Currently this
-    /// method processes all received signals, so it always returns true.
-    bool osSignalHandler(int signum);
-
-    /// @brief Handler for processing IOSignals
-    ///
-    /// This method is supplied as the callback when IOSignals are scheduled.
-    /// It fetches the IOSignal for the given sequence_id and then invokes
-    /// the virtual method, @c processSignal() passing it the signal value
-    /// obtained from the IOSignal.  This allows derivations to supply a
-    /// custom signal processing method, while ensuring IOSignalQueue
-    /// integrity.
-    ///
-    /// @param sequence_id id of the IOSignal instance "received"
-    void ioSignalHandler(IOSignalId sequence_id);
-
     /// @brief Fetches the current process
     ///
     /// @return a pointer to the current process instance.
@@ -664,8 +637,8 @@ private:
     /// @brief Shared pointer to an IOService object, used for ASIO operations.
     asiolink::IOServicePtr io_service_;
 
-    /// @brief Queue for propagating caught signals to the IOService.
-    IOSignalQueuePtr io_signal_queue_;
+    /// @brief ASIO signal set.
+    IOSignalSetPtr io_signal_set_;
 
     /// @brief Singleton instance value.
     static DControllerBasePtr controller_;

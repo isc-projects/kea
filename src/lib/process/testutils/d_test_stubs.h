@@ -7,7 +7,7 @@
 #ifndef D_TEST_STUBS_H
 #define D_TEST_STUBS_H
 
-#include <asiolink/io_service.h>
+#include <asiolink/interval_timer.h>
 
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
