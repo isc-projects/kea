@@ -1,7 +1,7 @@
 1736.	[doc]		fdupont
 	A default logging syntax has been updated to reflect recently added
-	multi-threading capabilities. The process is now identifier by
-	name/process-id.thread-id, kea-dhcp4.dhcpsrv/8475.12345, where
+	multi-threading capabilities. The process is now identified by
+	name/process-id.thread-id, e.g. kea-dhcp4.dhcpsrv/8475.12345, where
 	12345 is the thread-id. Its exact syntax is OS dependent. The
 	logging syntax can be tweaked using `pattern` option for logging.
 	(Gitlab #1150)
