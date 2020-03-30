@@ -704,7 +704,7 @@ The default for pattern for syslog output is as follows:
 
 ::
 
-    "%-5p [%c/%t] %m\n";
+    "%-5p [%c.%t] %m\n";
 
 You can see that it omits the date and time as well the process ID as this
 information is typically output by syslog.  Note that Kea uses the pattern
