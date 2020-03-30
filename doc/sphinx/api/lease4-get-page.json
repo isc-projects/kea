@@ -1,0 +1,24 @@
+{
+    "avail": "1.5.0",
+    "brief": [
+        "This command retrieves all IPv4 leases by page."
+    ],
+    "cmd-comment": [
+        "The from address and the page size limit are mandatory."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"lease4-get-page\",",
+        "    \"arguments\": {",
+        "        \"limit\": <integer>,",
+        "        \"from\": <IPv4 address or start>",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-lease4-get-page\"/>",
+    "hook": "lease_cmds",
+    "name": "lease4-get-page",
+    "support": [
+        "kea-dhcp4"
+    ]
+}

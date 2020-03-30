@@ -30,6 +30,7 @@ lease4-add
 lease4-del
 lease4-get
 lease4-get-all
+lease4-get-page
 lease4-update
 lease4-wipe
 lease6-add
@@ -37,6 +38,7 @@ lease6-bulk-apply
 lease6-del
 lease6-get
 lease6-get-all
+lease6-get-page
 lease6-update
 lease6-wipe
 lease4-resend-ddns

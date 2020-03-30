@@ -588,7 +588,9 @@ following format:
    restriction on the number of leases returned as a result of this
    command.
 
-.. _lease-get-page-cmds:
+.. _command-lease4-get-page:
+
+.. _command-lease6-get-page:
 
 The lease4-get-page, lease6-get-page Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

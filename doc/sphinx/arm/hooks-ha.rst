@@ -814,7 +814,8 @@ Controlling Lease-Page Size Limit
 
 An HA-enabled server initiates synchronization of the lease database
 after downtime or upon receiving the ``ha-sync`` command. The server
-uses commands described in :ref:`lease-get-page-cmds` to fetch
+uses commands described in :ref:`command-lease4-get-page` and
+:ref:`command-lease6-get-page` to fetch
 leases from its partner server (lease queries). The size of the results
 page (the maximum number of leases to be returned in a single response
 to one of these commands) can be controlled via configuration of the HA hooks
