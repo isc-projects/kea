@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.4.2.
+// A Bison parser, made by GNU Bison 3.5.3.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015, 2018-2019 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018-2020 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -185,10 +185,11 @@ namespace isc { namespace eval {
 
   /// Build a parser object.
   EvalParser::EvalParser (EvalContext& ctx_yyarg)
-    :
 #if EVALDEBUG
-      yydebug_ (false),
+    : yydebug_ (false),
       yycdebug_ (&std::cerr),
+#else
+    :
 #endif
       ctx (ctx_yyarg)
   {}
@@ -237,7 +238,7 @@ namespace isc { namespace eval {
     if (state == empty_state)
       return empty_symbol;
     else
-      return yystos_[state];
+      return yystos_[+state];
   }
 
   EvalParser::stack_symbol_type::stack_symbol_type ()
@@ -357,6 +358,62 @@ namespace isc { namespace eval {
 
 #if YY_CPLUSPLUS < 201103L
   EvalParser::stack_symbol_type&
+  EvalParser::stack_symbol_type::operator= (const stack_symbol_type& that)
+  {
+    state = that.state;
+    switch (that.type_get ())
+    {
+      case 63: // option_repr_type
+        value.copy< TokenOption::RepresentationType > (that.value);
+        break;
+
+      case 67: // pkt4_field
+        value.copy< TokenPkt4::FieldType > (that.value);
+        break;
+
+      case 68: // pkt6_field
+        value.copy< TokenPkt6::FieldType > (that.value);
+        break;
+
+      case 65: // pkt_metadata
+        value.copy< TokenPkt::MetadataType > (that.value);
+        break;
+
+      case 69: // relay6_field
+        value.copy< TokenRelay6Field::FieldType > (that.value);
+        break;
+
+      case 64: // nest_level
+        value.copy< int8_t > (that.value);
+        break;
+
+      case 50: // "constant string"
+      case 51: // "integer"
+      case 52: // "constant hexstring"
+      case 53: // "option name"
+      case 54: // "ip address"
+        value.copy< std::string > (that.value);
+        break;
+
+      case 61: // option_code
+      case 62: // sub_option_code
+        value.copy< uint16_t > (that.value);
+        break;
+
+      case 60: // integer_expr
+      case 66: // enterprise_id
+        value.copy< uint32_t > (that.value);
+        break;
+
+      default:
+        break;
+    }
+
+    location = that.location;
+    return *this;
+  }
+
+  EvalParser::stack_symbol_type&
   EvalParser::stack_symbol_type::operator= (stack_symbol_type& that)
   {
     state = that.state;
@@ -445,92 +502,92 @@ namespace isc { namespace eval {
     {
       case 50: // "constant string"
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < std::string > (); }
-#line 450 "parser.cc"
+                 { yyoutput << yysym.value.template as < std::string > (); }
+#line 507 "parser.cc"
         break;
 
       case 51: // "integer"
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < std::string > (); }
-#line 456 "parser.cc"
+                 { yyoutput << yysym.value.template as < std::string > (); }
+#line 513 "parser.cc"
         break;
 
       case 52: // "constant hexstring"
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < std::string > (); }
-#line 462 "parser.cc"
+                 { yyoutput << yysym.value.template as < std::string > (); }
+#line 519 "parser.cc"
         break;
 
       case 53: // "option name"
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < std::string > (); }
-#line 468 "parser.cc"
+                 { yyoutput << yysym.value.template as < std::string > (); }
+#line 525 "parser.cc"
         break;
 
       case 54: // "ip address"
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < std::string > (); }
-#line 474 "parser.cc"
+                 { yyoutput << yysym.value.template as < std::string > (); }
+#line 531 "parser.cc"
         break;
 
       case 60: // integer_expr
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < uint32_t > (); }
-#line 480 "parser.cc"
+                 { yyoutput << yysym.value.template as < uint32_t > (); }
+#line 537 "parser.cc"
         break;
 
       case 61: // option_code
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < uint16_t > (); }
-#line 486 "parser.cc"
+                 { yyoutput << yysym.value.template as < uint16_t > (); }
+#line 543 "parser.cc"
         break;
 
       case 62: // sub_option_code
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < uint16_t > (); }
-#line 492 "parser.cc"
+                 { yyoutput << yysym.value.template as < uint16_t > (); }
+#line 549 "parser.cc"
         break;
 
       case 63: // option_repr_type
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < TokenOption::RepresentationType > (); }
-#line 498 "parser.cc"
+                 { yyoutput << yysym.value.template as < TokenOption::RepresentationType > (); }
+#line 555 "parser.cc"
         break;
 
       case 64: // nest_level
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < int8_t > (); }
-#line 504 "parser.cc"
+                 { yyoutput << yysym.value.template as < int8_t > (); }
+#line 561 "parser.cc"
         break;
 
       case 65: // pkt_metadata
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < TokenPkt::MetadataType > (); }
-#line 510 "parser.cc"
+                 { yyoutput << yysym.value.template as < TokenPkt::MetadataType > (); }
+#line 567 "parser.cc"
         break;
 
       case 66: // enterprise_id
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < uint32_t > (); }
-#line 516 "parser.cc"
+                 { yyoutput << yysym.value.template as < uint32_t > (); }
+#line 573 "parser.cc"
         break;
 
       case 67: // pkt4_field
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < TokenPkt4::FieldType > (); }
-#line 522 "parser.cc"
+                 { yyoutput << yysym.value.template as < TokenPkt4::FieldType > (); }
+#line 579 "parser.cc"
         break;
 
       case 68: // pkt6_field
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < TokenPkt6::FieldType > (); }
-#line 528 "parser.cc"
+                 { yyoutput << yysym.value.template as < TokenPkt6::FieldType > (); }
+#line 585 "parser.cc"
         break;
 
       case 69: // relay6_field
 #line 112 "parser.yy"
-        { yyoutput << yysym.value.template as < TokenRelay6Field::FieldType > (); }
-#line 534 "parser.cc"
+                 { yyoutput << yysym.value.template as < TokenRelay6Field::FieldType > (); }
+#line 591 "parser.cc"
         break;
 
       default:
@@ -623,7 +680,6 @@ namespace isc { namespace eval {
   int
   EvalParser::parse ()
   {
-    // State.
     int yyn;
     /// Length of the RHS of the rule being reduced.
     int yylen = 0;
@@ -659,7 +715,7 @@ namespace isc { namespace eval {
   | yynewstate -- push a new symbol on the stack.  |
   `-----------------------------------------------*/
   yynewstate:
-    YYCDEBUG << "Entering state " << yystack_[0].state << '\n';
+    YYCDEBUG << "Entering state " << int (yystack_[0].state) << '\n';
 
     // Accept?
     if (yystack_[0].state == yyfinal_)
@@ -673,7 +729,7 @@ namespace isc { namespace eval {
   `-----------*/
   yybackup:
     // Try to take a decision without lookahead.
-    yyn = yypact_[yystack_[0].state];
+    yyn = yypact_[+yystack_[0].state];
     if (yy_pact_value_is_default_ (yyn))
       goto yydefault;
 
@@ -703,7 +759,9 @@ namespace isc { namespace eval {
        to detect an error, take that action.  */
     yyn += yyla.type_get ();
     if (yyn < 0 || yylast_ < yyn || yycheck_[yyn] != yyla.type_get ())
-      goto yydefault;
+      {
+        goto yydefault;
+      }
 
     // Reduce or error.
     yyn = yytable_[yyn];
@@ -720,7 +778,7 @@ namespace isc { namespace eval {
       --yyerrstatus_;
 
     // Shift the lookahead token.
-    yypush_ ("Shifting", yyn, YY_MOVE (yyla));
+    yypush_ ("Shifting", state_type (yyn), YY_MOVE (yyla));
     goto yynewstate;
 
 
@@ -728,7 +786,7 @@ namespace isc { namespace eval {
   | yydefault -- do the default action for the current state.  |
   `-----------------------------------------------------------*/
   yydefault:
-    yyn = yydefact_[yystack_[0].state];
+    yyn = yydefact_[+yystack_[0].state];
     if (yyn == 0)
       goto yyerrlab;
     goto yyreduce;
@@ -811,61 +869,61 @@ namespace isc { namespace eval {
             {
   case 6:
 #line 132 "parser.yy"
-    {
+                {
                     TokenPtr neg(new TokenNot());
                     ctx.expression.push_back(neg);
                 }
-#line 819 "parser.cc"
+#line 877 "parser.cc"
     break;
 
   case 7:
 #line 137 "parser.yy"
-    {
+                {
                     TokenPtr neg(new TokenAnd());
                     ctx.expression.push_back(neg);
                 }
-#line 828 "parser.cc"
+#line 886 "parser.cc"
     break;
 
   case 8:
 #line 142 "parser.yy"
-    {
+                {
                     TokenPtr neg(new TokenOr());
                     ctx.expression.push_back(neg);
                 }
-#line 837 "parser.cc"
+#line 895 "parser.cc"
     break;
 
   case 9:
 #line 147 "parser.yy"
-    {
+                {
                     TokenPtr eq(new TokenEqual());
                     ctx.expression.push_back(eq);
                 }
-#line 846 "parser.cc"
+#line 904 "parser.cc"
     break;
 
   case 10:
 #line 152 "parser.yy"
-    {
+                {
                     TokenPtr opt(new TokenOption(yystack_[3].value.as < uint16_t > (), TokenOption::EXISTS));
                     ctx.expression.push_back(opt);
                 }
-#line 855 "parser.cc"
+#line 913 "parser.cc"
     break;
 
   case 11:
 #line 157 "parser.yy"
-    {
+                {
                     TokenPtr opt(new TokenSubOption(yystack_[8].value.as < uint16_t > (), yystack_[3].value.as < uint16_t > (), TokenOption::EXISTS));
                     ctx.expression.push_back(opt);
                 }
-#line 864 "parser.cc"
+#line 922 "parser.cc"
     break;
 
   case 12:
 #line 162 "parser.yy"
-    {
+                {
                    switch (ctx.getUniverse()) {
                    case Option::V4:
                    {
@@ -884,12 +942,12 @@ namespace isc { namespace eval {
                        error(yystack_[5].location, "relay4 can only be used in DHCPv4.");
                    }
                 }
-#line 888 "parser.cc"
+#line 946 "parser.cc"
     break;
 
   case 13:
 #line 182 "parser.yy"
-    {
+                {
                     switch (ctx.getUniverse()) {
                     case Option::V6:
                     {
@@ -902,12 +960,12 @@ namespace isc { namespace eval {
                         error(yystack_[10].location, "relay6 can only be used in DHCPv6.");
                     }
                 }
-#line 906 "parser.cc"
+#line 964 "parser.cc"
     break;
 
   case 14:
 #line 196 "parser.yy"
-    {
+              {
                   // Expression: vendor-class[1234].exists
                   //
                   // This token will find option 124 (DHCPv4) or 16 (DHCPv6),
@@ -915,12 +973,12 @@ namespace isc { namespace eval {
                   TokenPtr exist(new TokenVendorClass(ctx.getUniverse(), yystack_[3].value.as < uint32_t > (), TokenOption::EXISTS));
                   ctx.expression.push_back(exist);
               }
-#line 919 "parser.cc"
+#line 977 "parser.cc"
     break;
 
   case 15:
 #line 205 "parser.yy"
-    {
+              {
                   // Expression: vendor[1234].exists
                   //
                   // This token will find option 125 (DHCPv4) or 17 (DHCPv6),
@@ -928,12 +986,12 @@ namespace isc { namespace eval {
                   TokenPtr exist(new TokenVendor(ctx.getUniverse(), yystack_[3].value.as < uint32_t > (), TokenOption::EXISTS));
                   ctx.expression.push_back(exist);
               }
-#line 932 "parser.cc"
+#line 990 "parser.cc"
     break;
 
   case 16:
 #line 214 "parser.yy"
-    {
+              {
                   // Expression vendor[1234].option[123].exists
                   //
                   // This token will check if specified vendor option
@@ -942,12 +1000,12 @@ namespace isc { namespace eval {
                   TokenPtr exist(new TokenVendor(ctx.getUniverse(), yystack_[8].value.as < uint32_t > (), TokenOption::EXISTS, yystack_[3].value.as < uint16_t > ()));
                   ctx.expression.push_back(exist);
                }
-#line 946 "parser.cc"
+#line 1004 "parser.cc"
     break;
 
   case 17:
 #line 224 "parser.yy"
-    {
+              {
                   // Expression member('foo')
                   //
                   // This token will check if the packet is a member of
@@ -961,57 +1019,57 @@ namespace isc { namespace eval {
                   TokenPtr member(new TokenMember(cc));
                   ctx.expression.push_back(member);
               }
-#line 965 "parser.cc"
+#line 1023 "parser.cc"
     break;
 
   case 18:
 #line 241 "parser.yy"
-    {
+                  {
                       TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
                       ctx.expression.push_back(str);
                   }
-#line 974 "parser.cc"
+#line 1032 "parser.cc"
     break;
 
   case 19:
 #line 246 "parser.yy"
-    {
+                  {
                       TokenPtr hex(new TokenHexString(yystack_[0].value.as < std::string > ()));
                       ctx.expression.push_back(hex);
                   }
-#line 983 "parser.cc"
+#line 1041 "parser.cc"
     break;
 
   case 20:
 #line 251 "parser.yy"
-    {
+                  {
                       TokenPtr ip(new TokenIpAddress(yystack_[0].value.as < std::string > ()));
                       ctx.expression.push_back(ip);
                   }
-#line 992 "parser.cc"
+#line 1050 "parser.cc"
     break;
 
   case 21:
 #line 256 "parser.yy"
-    {
+                  {
                       TokenPtr opt(new TokenOption(yystack_[3].value.as < uint16_t > (), yystack_[0].value.as < TokenOption::RepresentationType > ()));
                       ctx.expression.push_back(opt);
                   }
-#line 1001 "parser.cc"
+#line 1059 "parser.cc"
     break;
 
   case 22:
 #line 261 "parser.yy"
-    {
+                  {
                       TokenPtr opt(new TokenSubOption(yystack_[8].value.as < uint16_t > (), yystack_[3].value.as < uint16_t > (), yystack_[0].value.as < TokenOption::RepresentationType > ()));
                       ctx.expression.push_back(opt);
                   }
-#line 1010 "parser.cc"
+#line 1068 "parser.cc"
     break;
 
   case 23:
 #line 266 "parser.yy"
-    {
+                  {
                      switch (ctx.getUniverse()) {
                      case Option::V4:
                      {
@@ -1030,12 +1088,12 @@ namespace isc { namespace eval {
                          error(yystack_[5].location, "relay4 can only be used in DHCPv4.");
                      }
                   }
-#line 1034 "parser.cc"
+#line 1092 "parser.cc"
     break;
 
   case 24:
 #line 287 "parser.yy"
-    {
+                  {
                      switch (ctx.getUniverse()) {
                      case Option::V6:
                      {
@@ -1048,21 +1106,21 @@ namespace isc { namespace eval {
                          error(yystack_[10].location, "relay6 can only be used in DHCPv6.");
                      }
                   }
-#line 1052 "parser.cc"
+#line 1110 "parser.cc"
     break;
 
   case 25:
 #line 302 "parser.yy"
-    {
+                  {
                       TokenPtr pkt_metadata(new TokenPkt(yystack_[0].value.as < TokenPkt::MetadataType > ()));
                       ctx.expression.push_back(pkt_metadata);
                   }
-#line 1061 "parser.cc"
+#line 1119 "parser.cc"
     break;
 
   case 26:
 #line 307 "parser.yy"
-    {
+                  {
                      switch (ctx.getUniverse()) {
                      case Option::V4:
                      {
@@ -1075,12 +1133,12 @@ namespace isc { namespace eval {
                          error(yystack_[2].location, "pkt4 can only be used in DHCPv4.");
                      }
                   }
-#line 1079 "parser.cc"
+#line 1137 "parser.cc"
     break;
 
   case 27:
 #line 321 "parser.yy"
-    {
+                  {
                      switch (ctx.getUniverse()) {
                      case Option::V6:
                      {
@@ -1093,12 +1151,12 @@ namespace isc { namespace eval {
                          error(yystack_[2].location, "pkt6 can only be used in DHCPv6.");
                      }
                   }
-#line 1097 "parser.cc"
+#line 1155 "parser.cc"
     break;
 
   case 28:
 #line 335 "parser.yy"
-    {
+                  {
                      switch (ctx.getUniverse()) {
                      case Option::V6:
                      {
@@ -1111,48 +1169,48 @@ namespace isc { namespace eval {
                          error(yystack_[5].location, "relay6 can only be used in DHCPv6.");
                      }
                   }
-#line 1115 "parser.cc"
+#line 1173 "parser.cc"
     break;
 
   case 29:
 #line 350 "parser.yy"
-    {
+                  {
                       TokenPtr sub(new TokenSubstring());
                       ctx.expression.push_back(sub);
                   }
-#line 1124 "parser.cc"
+#line 1182 "parser.cc"
     break;
 
   case 30:
 #line 355 "parser.yy"
-    {
+                  {
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);
                   }
-#line 1133 "parser.cc"
+#line 1191 "parser.cc"
     break;
 
   case 31:
 #line 360 "parser.yy"
-    {
+                  {
                       TokenPtr cond(new TokenIfElse());
                       ctx.expression.push_back(cond);
                   }
-#line 1142 "parser.cc"
+#line 1200 "parser.cc"
     break;
 
   case 32:
 #line 365 "parser.yy"
-    {
+                  {
                       TokenPtr tohex(new TokenToHexString());
                       ctx.expression.push_back(tohex);
                   }
-#line 1151 "parser.cc"
+#line 1209 "parser.cc"
     break;
 
   case 33:
 #line 370 "parser.yy"
-    {
+                {
                     // expression: vendor.enterprise
                     //
                     // This token will return enterprise-id number of
@@ -1160,12 +1218,12 @@ namespace isc { namespace eval {
                     TokenPtr vendor(new TokenVendor(ctx.getUniverse(), 0, TokenVendor::ENTERPRISE_ID));
                     ctx.expression.push_back(vendor);
                 }
-#line 1164 "parser.cc"
+#line 1222 "parser.cc"
     break;
 
   case 34:
 #line 379 "parser.yy"
-    {
+                {
                     // expression: vendor-class.enterprise
                     //
                     // This token will return enterprise-id number of
@@ -1174,12 +1232,12 @@ namespace isc { namespace eval {
                                                          TokenVendor::ENTERPRISE_ID));
                     ctx.expression.push_back(vendor);
                 }
-#line 1178 "parser.cc"
+#line 1236 "parser.cc"
     break;
 
   case 35:
 #line 389 "parser.yy"
-    {
+                {
                     // This token will search for vendor option with
                     // specified enterprise-id.  If found, will search
                     // for specified suboption and finally will return
@@ -1187,12 +1245,12 @@ namespace isc { namespace eval {
                     TokenPtr opt(new TokenVendor(ctx.getUniverse(), yystack_[8].value.as < uint32_t > (), yystack_[0].value.as < TokenOption::RepresentationType > (), yystack_[3].value.as < uint16_t > ()));
                     ctx.expression.push_back(opt);
                 }
-#line 1191 "parser.cc"
+#line 1249 "parser.cc"
     break;
 
   case 36:
 #line 398 "parser.yy"
-    {
+                {
                     // expression: vendor-class[1234].data
                     //
                     // Vendor class option does not have suboptions,
@@ -1204,12 +1262,12 @@ namespace isc { namespace eval {
                                                                TokenVendor::DATA, 0));
                     ctx.expression.push_back(vendor_class);
                 }
-#line 1208 "parser.cc"
+#line 1266 "parser.cc"
     break;
 
   case 37:
 #line 411 "parser.yy"
-    {
+                {
                     // expression: vendor-class[1234].data[5]
                     //
                     // Vendor class option does not have suboptions,
@@ -1221,255 +1279,255 @@ namespace isc { namespace eval {
                                                                TokenVendor::DATA, index));
                     ctx.expression.push_back(vendor_class);
                 }
-#line 1225 "parser.cc"
+#line 1283 "parser.cc"
     break;
 
   case 38:
 #line 424 "parser.yy"
-    {
+                {
                     TokenPtr integer(new TokenInteger(yystack_[0].value.as < uint32_t > ()));
                     ctx.expression.push_back(integer);
                 }
-#line 1234 "parser.cc"
+#line 1292 "parser.cc"
     break;
 
   case 39:
 #line 431 "parser.yy"
-    {
+                 {
                      yylhs.value.as < uint32_t > () = ctx.convertUint32(yystack_[0].value.as < std::string > (), yystack_[0].location);
                  }
-#line 1242 "parser.cc"
+#line 1300 "parser.cc"
     break;
 
   case 40:
 #line 437 "parser.yy"
-    {
+                 {
                      yylhs.value.as < uint16_t > () = ctx.convertOptionCode(yystack_[0].value.as < std::string > (), yystack_[0].location);
                  }
-#line 1250 "parser.cc"
+#line 1308 "parser.cc"
     break;
 
   case 41:
 #line 441 "parser.yy"
-    {
+                 {
                      yylhs.value.as < uint16_t > () = ctx.convertOptionName(yystack_[0].value.as < std::string > (), yystack_[0].location);
                  }
-#line 1258 "parser.cc"
+#line 1316 "parser.cc"
     break;
 
   case 42:
 #line 447 "parser.yy"
-    {
+                 {
                      yylhs.value.as < uint16_t > () = ctx.convertOptionCode(yystack_[0].value.as < std::string > (), yystack_[0].location);
                  }
-#line 1266 "parser.cc"
+#line 1324 "parser.cc"
     break;
 
   case 43:
 #line 453 "parser.yy"
-    {
+                      {
                           yylhs.value.as < TokenOption::RepresentationType > () = TokenOption::TEXTUAL;
                       }
-#line 1274 "parser.cc"
+#line 1332 "parser.cc"
     break;
 
   case 44:
 #line 457 "parser.yy"
-    {
+                      {
                           yylhs.value.as < TokenOption::RepresentationType > () = TokenOption::HEXADECIMAL;
                       }
-#line 1282 "parser.cc"
+#line 1340 "parser.cc"
     break;
 
   case 45:
 #line 463 "parser.yy"
-    {
+                 {
                      yylhs.value.as < int8_t > () = ctx.convertNestLevelNumber(yystack_[0].value.as < std::string > (), yystack_[0].location);
                  }
-#line 1290 "parser.cc"
+#line 1348 "parser.cc"
     break;
 
   case 46:
 #line 472 "parser.yy"
-    {
+                  {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::IFACE;
                   }
-#line 1298 "parser.cc"
+#line 1356 "parser.cc"
     break;
 
   case 47:
 #line 476 "parser.yy"
-    {
+                  {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::SRC;
                   }
-#line 1306 "parser.cc"
+#line 1364 "parser.cc"
     break;
 
   case 48:
 #line 480 "parser.yy"
-    {
+                  {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::DST;
                   }
-#line 1314 "parser.cc"
+#line 1372 "parser.cc"
     break;
 
   case 49:
 #line 484 "parser.yy"
-    {
+                  {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::LEN;
                   }
-#line 1322 "parser.cc"
+#line 1380 "parser.cc"
     break;
 
   case 50:
 #line 490 "parser.yy"
-    {
+                   {
                        yylhs.value.as < uint32_t > () = ctx.convertUint32(yystack_[0].value.as < std::string > (), yystack_[0].location);
                    }
-#line 1330 "parser.cc"
+#line 1388 "parser.cc"
     break;
 
   case 51:
 #line 494 "parser.yy"
-    {
+                   {
                        yylhs.value.as < uint32_t > () = 0;
                    }
-#line 1338 "parser.cc"
+#line 1396 "parser.cc"
     break;
 
   case 52:
 #line 500 "parser.yy"
-    {
+                {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::CHADDR;
                 }
-#line 1346 "parser.cc"
+#line 1404 "parser.cc"
     break;
 
   case 53:
 #line 504 "parser.yy"
-    {
+                {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::HLEN;
                 }
-#line 1354 "parser.cc"
+#line 1412 "parser.cc"
     break;
 
   case 54:
 #line 508 "parser.yy"
-    {
+                {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::HTYPE;
                 }
-#line 1362 "parser.cc"
+#line 1420 "parser.cc"
     break;
 
   case 55:
 #line 512 "parser.yy"
-    {
+                {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::CIADDR;
                 }
-#line 1370 "parser.cc"
+#line 1428 "parser.cc"
     break;
 
   case 56:
 #line 516 "parser.yy"
-    {
+                {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::GIADDR;
                 }
-#line 1378 "parser.cc"
+#line 1436 "parser.cc"
     break;
 
   case 57:
 #line 520 "parser.yy"
-    {
+                {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::YIADDR;
                 }
-#line 1386 "parser.cc"
+#line 1444 "parser.cc"
     break;
 
   case 58:
 #line 524 "parser.yy"
-    {
+                {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::SIADDR;
                 }
-#line 1394 "parser.cc"
+#line 1452 "parser.cc"
     break;
 
   case 59:
 #line 528 "parser.yy"
-    {
+                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::MSGTYPE;
-                 }
-#line 1402 "parser.cc"
-    break;
-
-  case 60:
-#line 532 "parser.yy"
-    {
-                    yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::TRANSID;
-                 }
-#line 1410 "parser.cc"
-    break;
-
-  case 61:
-#line 538 "parser.yy"
-    {
-                     yylhs.value.as < TokenPkt6::FieldType > () = TokenPkt6::MSGTYPE;
-                 }
-#line 1418 "parser.cc"
-    break;
-
-  case 62:
-#line 542 "parser.yy"
-    {
-                     yylhs.value.as < TokenPkt6::FieldType > () = TokenPkt6::TRANSID;
-                 }
-#line 1426 "parser.cc"
-    break;
-
-  case 63:
-#line 548 "parser.yy"
-    {
-                       yylhs.value.as < TokenRelay6Field::FieldType > () = TokenRelay6Field::PEERADDR;
-                   }
-#line 1434 "parser.cc"
-    break;
-
-  case 64:
-#line 552 "parser.yy"
-    {
-                       yylhs.value.as < TokenRelay6Field::FieldType > () = TokenRelay6Field::LINKADDR;
-                   }
-#line 1442 "parser.cc"
-    break;
-
-  case 65:
-#line 558 "parser.yy"
-    {
-                    TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
-                    ctx.expression.push_back(str);
-                }
-#line 1451 "parser.cc"
-    break;
-
-  case 66:
-#line 565 "parser.yy"
-    {
-                     TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
-                     ctx.expression.push_back(str);
                  }
 #line 1460 "parser.cc"
     break;
 
+  case 60:
+#line 532 "parser.yy"
+                 {
+                    yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::TRANSID;
+                 }
+#line 1468 "parser.cc"
+    break;
+
+  case 61:
+#line 538 "parser.yy"
+                 {
+                     yylhs.value.as < TokenPkt6::FieldType > () = TokenPkt6::MSGTYPE;
+                 }
+#line 1476 "parser.cc"
+    break;
+
+  case 62:
+#line 542 "parser.yy"
+                 {
+                     yylhs.value.as < TokenPkt6::FieldType > () = TokenPkt6::TRANSID;
+                 }
+#line 1484 "parser.cc"
+    break;
+
+  case 63:
+#line 548 "parser.yy"
+                   {
+                       yylhs.value.as < TokenRelay6Field::FieldType > () = TokenRelay6Field::PEERADDR;
+                   }
+#line 1492 "parser.cc"
+    break;
+
+  case 64:
+#line 552 "parser.yy"
+                   {
+                       yylhs.value.as < TokenRelay6Field::FieldType > () = TokenRelay6Field::LINKADDR;
+                   }
+#line 1500 "parser.cc"
+    break;
+
+  case 65:
+#line 558 "parser.yy"
+                {
+                    TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
+                    ctx.expression.push_back(str);
+                }
+#line 1509 "parser.cc"
+    break;
+
+  case 66:
+#line 565 "parser.yy"
+                 {
+                     TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
+                     ctx.expression.push_back(str);
+                 }
+#line 1518 "parser.cc"
+    break;
+
   case 67:
 #line 570 "parser.yy"
-    {
+                 {
                      TokenPtr str(new TokenString("all"));
                      ctx.expression.push_back(str);
                  }
-#line 1469 "parser.cc"
+#line 1527 "parser.cc"
     break;
 
 
-#line 1473 "parser.cc"
+#line 1531 "parser.cc"
 
             default:
               break;
@@ -1551,11 +1609,11 @@ namespace isc { namespace eval {
       stack_symbol_type error_token;
       for (;;)
         {
-          yyn = yypact_[yystack_[0].state];
+          yyn = yypact_[+yystack_[0].state];
           if (!yy_pact_value_is_default_ (yyn))
             {
-              yyn += yyterror_;
-              if (0 <= yyn && yyn <= yylast_ && yycheck_[yyn] == yyterror_)
+              yyn += yy_error_token_;
+              if (0 <= yyn && yyn <= yylast_ && yycheck_[yyn] == yy_error_token_)
                 {
                   yyn = yytable_[yyn];
                   if (0 < yyn)
@@ -1577,7 +1635,7 @@ namespace isc { namespace eval {
       YYLLOC_DEFAULT (error_token.location, yyerror_range, 2);
 
       // Shift the error token.
-      error_token.state = yyn;
+      error_token.state = state_type (yyn);
       yypush_ ("Shifting", YY_MOVE (error_token));
     }
     goto yynewstate;
@@ -1648,7 +1706,7 @@ namespace isc { namespace eval {
   {
     // Number of reported tokens (one for the "unexpected", one per
     // "expected").
-    size_t yycount = 0;
+    std::ptrdiff_t yycount = 0;
     // Its maximum.
     enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
     // Arguments of yyformat.
@@ -1672,18 +1730,18 @@ namespace isc { namespace eval {
        - Of course, the expected token list depends on states to have
          correct lookahead information, and it depends on the parser not
          to perform extra reductions after fetching a lookahead from the
-         scanner and before detecting a syntax error.  Thus, state
-         merging (from LALR or IELR) and default reductions corrupt the
-         expected token list.  However, the list is correct for
-         canonical LR with one exception: it will still contain any
-         token that will not be accepted due to an error action in a
-         later state.
+         scanner and before detecting a syntax error.  Thus, state merging
+         (from LALR or IELR) and default reductions corrupt the expected
+         token list.  However, the list is correct for canonical LR with
+         one exception: it will still contain any token that will not be
+         accepted due to an error action in a later state.
     */
     if (!yyla.empty ())
       {
-        int yytoken = yyla.type_get ();
+        symbol_number_type yytoken = yyla.type_get ();
         yyarg[yycount++] = yytname_[yytoken];
-        int yyn = yypact_[yystate];
+
+        int yyn = yypact_[+yystate];
         if (!yy_pact_value_is_default_ (yyn))
           {
             /* Start YYX at -YYN if negative to avoid negative indexes in
@@ -1694,7 +1752,7 @@ namespace isc { namespace eval {
             int yychecklim = yylast_ - yyn + 1;
             int yyxend = yychecklim < yyntokens_ ? yychecklim : yyntokens_;
             for (int yyx = yyxbegin; yyx < yyxend; ++yyx)
-              if (yycheck_[yyx + yyn] == yyx && yyx != yyterror_
+              if (yycheck_[yyx + yyn] == yyx && yyx != yy_error_token_
                   && !yy_table_value_is_error_ (yytable_[yyx + yyn]))
                 {
                   if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
@@ -1727,7 +1785,7 @@ namespace isc { namespace eval {
 
     std::string yyres;
     // Argument number.
-    size_t yyi = 0;
+    std::ptrdiff_t yyi = 0;
     for (char const* yyp = yyformat; *yyp; ++yyp)
       if (yyp[0] == '%' && yyp[1] == 's' && yyi < yycount)
         {
@@ -1769,7 +1827,7 @@ namespace isc { namespace eval {
     -120,  -120,  -120,  -120,  -120
   };
 
-  const unsigned char
+  const signed char
   EvalParser::yydefact_[] =
   {
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
@@ -1862,7 +1920,7 @@ namespace isc { namespace eval {
       16,    -1,    17,    17,    17,    17,    17,    17
   };
 
-  const unsigned char
+  const signed char
   EvalParser::yystos_[] =
   {
        0,    48,    49,    56,     3,     5,     9,    10,    11,    12,
@@ -1887,7 +1945,7 @@ namespace isc { namespace eval {
       63,    20,    63,    20,    63
   };
 
-  const unsigned char
+  const signed char
   EvalParser::yyr1_[] =
   {
        0,    55,    56,    56,    57,    58,    58,    58,    58,    58,
@@ -1899,7 +1957,7 @@ namespace isc { namespace eval {
       67,    68,    68,    69,    69,    70,    71,    71
   };
 
-  const unsigned char
+  const signed char
   EvalParser::yyr2_[] =
   {
        0,     2,     2,     2,     1,     3,     2,     3,     3,     3,
@@ -1936,7 +1994,7 @@ namespace isc { namespace eval {
   };
 
 #if EVALDEBUG
-  const unsigned short
+  const short
   EvalParser::yyrline_[] =
   {
        0,   121,   121,   122,   127,   130,   131,   136,   141,   146,
@@ -1957,7 +2015,7 @@ namespace isc { namespace eval {
            i = yystack_.begin (),
            i_end = yystack_.end ();
          i != i_end; ++i)
-      *yycdebug_ << ' ' << i->state;
+      *yycdebug_ << ' ' << int (i->state);
     *yycdebug_ << '\n';
   }
 
@@ -1965,7 +2023,7 @@ namespace isc { namespace eval {
   void
   EvalParser::yy_reduce_print_ (int yyrule)
   {
-    unsigned yylno = yyrline_[yyrule];
+    int yylno = yyrline_[yyrule];
     int yynrhs = yyr2_[yyrule];
     // Print the symbols being reduced, and their result.
     *yycdebug_ << "Reducing stack by rule " << yyrule - 1
@@ -1980,7 +2038,7 @@ namespace isc { namespace eval {
 
 #line 14 "parser.yy"
 } } // isc::eval
-#line 1984 "parser.cc"
+#line 2042 "parser.cc"
 
 #line 576 "parser.yy"
 
