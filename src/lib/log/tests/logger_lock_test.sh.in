@@ -30,7 +30,7 @@ LOGGER_LOCK_TEST: UNLOCK
 .
 rm -f $destfile
 KEA_LOGGER_SEVERITY=INFO KEA_LOGGER_DESTINATION=stdout ./logger_lock_test | \
-    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\/\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' > $destfile
+    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
 passfail $?
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,13 +18,13 @@ namespace isc {
 namespace log {
 
 /// Default layout pattern for console logs
-const std::string OutputOption::DEFAULT_CONSOLE_PATTERN = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i/%t] %m\n";
+const std::string OutputOption::DEFAULT_CONSOLE_PATTERN = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i.%t] %m\n";
 
 /// Default layout pattern for file logs
-const std::string OutputOption::DEFAULT_FILE_PATTERN = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i/%t] %m\n";
+const std::string OutputOption::DEFAULT_FILE_PATTERN = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i.%t] %m\n";
 
 /// Default layout pattern for syslog logs
-const std::string OutputOption::DEFAULT_SYSLOG_PATTERN = "%-5p [%c/%t] %m\n";
+const std::string OutputOption::DEFAULT_SYSLOG_PATTERN = "%-5p [%c.%t] %m\n";
 
 OutputOption::Destination
 getDestination(const std::string& dest_str) {

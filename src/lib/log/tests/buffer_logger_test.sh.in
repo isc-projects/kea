@@ -32,7 +32,7 @@ INFO  [buffertest.log] LOG_BAD_SEVERITY unrecognized log severity: info
 INFO  [buffertest.log] LOG_BAD_SEVERITY unrecognized log severity: info
 .
 ./buffer_logger_test 2>&1 | \
-    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\/\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' | \
+    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
 passfail $?
 

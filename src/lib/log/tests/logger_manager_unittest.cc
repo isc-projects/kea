@@ -390,7 +390,7 @@ TEST_F(LoggerManagerTest, checkLayoutPattern) {
                       // %-5p
                       "[[:alpha:]]{1,5}[[:space:]]"
                       // [%c/%i/%t]
-                      "\\[[[:alnum:]\\-\\.]+/[[:digit:]]+/(0x)?[[:xdigit:]]+\\][[:space:]]"
+                      "\\[[[:alnum:]\\-\\.]+/[[:digit:]]+\\.(0x)?[[:xdigit:]]+\\][[:space:]]"
                       );
 
     const int re = regexec(*regex, line.c_str(), 0, NULL, 0);

@@ -636,13 +636,13 @@ below:
 
 ::
 
-    "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i/%t] %m\n";
+    "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i.%t] %m\n";
 
 and a typical log produced by this pattern would look somethng like this:
 
 ::
 
-    2019-08-05 14:27:45.871 DEBUG [kea-dhcp4.dhcpsrv/8475/12345] DHCPSRV_TIMERMGR_START_TIMER starting timer: reclaim-expired-leases
+    2019-08-05 14:27:45.871 DEBUG [kea-dhcp4.dhcpsrv/8475.12345] DHCPSRV_TIMERMGR_START_TIMER starting timer: reclaim-expired-leases
 
 That breaks down as like so:
 
