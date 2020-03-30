@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.4.2.
+// A Bison parser, made by GNU Bison 3.5.3.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015, 2018-2019 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018-2020 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -185,10 +185,11 @@ namespace isc { namespace agent {
 
   /// Build a parser object.
   AgentParser::AgentParser (isc::agent::ParserContext& ctx_yyarg)
-    :
 #if AGENT_DEBUG
-      yydebug_ (false),
+    : yydebug_ (false),
       yycdebug_ (&std::cerr),
+#else
+    :
 #endif
       ctx (ctx_yyarg)
   {}
@@ -237,7 +238,7 @@ namespace isc { namespace agent {
     if (state == empty_state)
       return empty_symbol;
     else
-      return yystos_[state];
+      return yystos_[+state];
   }
 
   AgentParser::stack_symbol_type::stack_symbol_type ()
@@ -317,6 +318,42 @@ namespace isc { namespace agent {
 
 #if YY_CPLUSPLUS < 201103L
   AgentParser::stack_symbol_type&
+  AgentParser::stack_symbol_type::operator= (const stack_symbol_type& that)
+  {
+    state = that.state;
+    switch (that.type_get ())
+    {
+      case 54: // value
+      case 57: // map_value
+      case 108: // socket_type_value
+        value.copy< ElementPtr > (that.value);
+        break;
+
+      case 45: // "boolean"
+        value.copy< bool > (that.value);
+        break;
+
+      case 44: // "floating point"
+        value.copy< double > (that.value);
+        break;
+
+      case 43: // "integer"
+        value.copy< int64_t > (that.value);
+        break;
+
+      case 42: // "constant string"
+        value.copy< std::string > (that.value);
+        break;
+
+      default:
+        break;
+    }
+
+    location = that.location;
+    return *this;
+  }
+
+  AgentParser::stack_symbol_type&
   AgentParser::stack_symbol_type::operator= (stack_symbol_type& that)
   {
     state = that.state;
@@ -385,44 +422,44 @@ namespace isc { namespace agent {
     {
       case 42: // "constant string"
 #line 104 "agent_parser.yy"
-        { yyoutput << yysym.value.template as < std::string > (); }
-#line 390 "agent_parser.cc"
+                 { yyoutput << yysym.value.template as < std::string > (); }
+#line 427 "agent_parser.cc"
         break;
 
       case 43: // "integer"
 #line 104 "agent_parser.yy"
-        { yyoutput << yysym.value.template as < int64_t > (); }
-#line 396 "agent_parser.cc"
+                 { yyoutput << yysym.value.template as < int64_t > (); }
+#line 433 "agent_parser.cc"
         break;
 
       case 44: // "floating point"
 #line 104 "agent_parser.yy"
-        { yyoutput << yysym.value.template as < double > (); }
-#line 402 "agent_parser.cc"
+                 { yyoutput << yysym.value.template as < double > (); }
+#line 439 "agent_parser.cc"
         break;
 
       case 45: // "boolean"
 #line 104 "agent_parser.yy"
-        { yyoutput << yysym.value.template as < bool > (); }
-#line 408 "agent_parser.cc"
+                 { yyoutput << yysym.value.template as < bool > (); }
+#line 445 "agent_parser.cc"
         break;
 
       case 54: // value
 #line 104 "agent_parser.yy"
-        { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 414 "agent_parser.cc"
+                 { yyoutput << yysym.value.template as < ElementPtr > (); }
+#line 451 "agent_parser.cc"
         break;
 
       case 57: // map_value
 #line 104 "agent_parser.yy"
-        { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 420 "agent_parser.cc"
+                 { yyoutput << yysym.value.template as < ElementPtr > (); }
+#line 457 "agent_parser.cc"
         break;
 
       case 108: // socket_type_value
 #line 104 "agent_parser.yy"
-        { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 426 "agent_parser.cc"
+                 { yyoutput << yysym.value.template as < ElementPtr > (); }
+#line 463 "agent_parser.cc"
         break;
 
       default:
@@ -515,7 +552,6 @@ namespace isc { namespace agent {
   int
   AgentParser::parse ()
   {
-    // State.
     int yyn;
     /// Length of the RHS of the rule being reduced.
     int yylen = 0;
@@ -551,7 +587,7 @@ namespace isc { namespace agent {
   | yynewstate -- push a new symbol on the stack.  |
   `-----------------------------------------------*/
   yynewstate:
-    YYCDEBUG << "Entering state " << yystack_[0].state << '\n';
+    YYCDEBUG << "Entering state " << int (yystack_[0].state) << '\n';
 
     // Accept?
     if (yystack_[0].state == yyfinal_)
@@ -565,7 +601,7 @@ namespace isc { namespace agent {
   `-----------*/
   yybackup:
     // Try to take a decision without lookahead.
-    yyn = yypact_[yystack_[0].state];
+    yyn = yypact_[+yystack_[0].state];
     if (yy_pact_value_is_default_ (yyn))
       goto yydefault;
 
@@ -595,7 +631,9 @@ namespace isc { namespace agent {
        to detect an error, take that action.  */
     yyn += yyla.type_get ();
     if (yyn < 0 || yylast_ < yyn || yycheck_[yyn] != yyla.type_get ())
-      goto yydefault;
+      {
+        goto yydefault;
+      }
 
     // Reduce or error.
     yyn = yytable_[yyn];
@@ -612,7 +650,7 @@ namespace isc { namespace agent {
       --yyerrstatus_;
 
     // Shift the lookahead token.
-    yypush_ ("Shifting", yyn, YY_MOVE (yyla));
+    yypush_ ("Shifting", state_type (yyn), YY_MOVE (yyla));
     goto yynewstate;
 
 
@@ -620,7 +658,7 @@ namespace isc { namespace agent {
   | yydefault -- do the default action for the current state.  |
   `-----------------------------------------------------------*/
   yydefault:
-    yyn = yydefact_[yystack_[0].state];
+    yyn = yydefact_[+yystack_[0].state];
     if (yyn == 0)
       goto yyerrlab;
     goto yyreduce;
@@ -683,206 +721,206 @@ namespace isc { namespace agent {
             {
   case 2:
 #line 115 "agent_parser.yy"
-    { ctx.ctx_ = ctx.NO_KEYWORDS; }
-#line 688 "agent_parser.cc"
+                       { ctx.ctx_ = ctx.NO_KEYWORDS; }
+#line 726 "agent_parser.cc"
     break;
 
   case 4:
 #line 116 "agent_parser.yy"
-    { ctx.ctx_ = ctx.CONFIG; }
-#line 694 "agent_parser.cc"
+                       { ctx.ctx_ = ctx.CONFIG; }
+#line 732 "agent_parser.cc"
     break;
 
   case 6:
 #line 117 "agent_parser.yy"
-    { ctx.ctx_ = ctx.AGENT; }
-#line 700 "agent_parser.cc"
+                       { ctx.ctx_ = ctx.AGENT; }
+#line 738 "agent_parser.cc"
     break;
 
   case 8:
 #line 125 "agent_parser.yy"
-    {
+                          {
     // Parse the Control-agent map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 710 "agent_parser.cc"
+#line 748 "agent_parser.cc"
     break;
 
   case 9:
 #line 129 "agent_parser.yy"
-    {
+                               {
     // parsing completed
 }
-#line 718 "agent_parser.cc"
+#line 756 "agent_parser.cc"
     break;
 
   case 10:
 #line 136 "agent_parser.yy"
-    {
+            {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as < ElementPtr > ());
 }
-#line 727 "agent_parser.cc"
+#line 765 "agent_parser.cc"
     break;
 
   case 11:
 #line 142 "agent_parser.yy"
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
-#line 733 "agent_parser.cc"
+               { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
+#line 771 "agent_parser.cc"
     break;
 
   case 12:
 #line 143 "agent_parser.yy"
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
-#line 739 "agent_parser.cc"
+             { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
+#line 777 "agent_parser.cc"
     break;
 
   case 13:
 #line 144 "agent_parser.yy"
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
-#line 745 "agent_parser.cc"
+               { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
+#line 783 "agent_parser.cc"
     break;
 
   case 14:
 #line 145 "agent_parser.yy"
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
-#line 751 "agent_parser.cc"
+              { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
+#line 789 "agent_parser.cc"
     break;
 
   case 15:
 #line 146 "agent_parser.yy"
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
-#line 757 "agent_parser.cc"
+                 { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
+#line 795 "agent_parser.cc"
     break;
 
   case 16:
 #line 147 "agent_parser.yy"
-    { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 763 "agent_parser.cc"
+           { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 801 "agent_parser.cc"
     break;
 
   case 17:
 #line 148 "agent_parser.yy"
-    { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 769 "agent_parser.cc"
+                    { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 807 "agent_parser.cc"
     break;
 
   case 18:
 #line 152 "agent_parser.yy"
-    {
+                    {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 780 "agent_parser.cc"
+#line 818 "agent_parser.cc"
     break;
 
   case 19:
 #line 157 "agent_parser.yy"
-    {
+                             {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 790 "agent_parser.cc"
+#line 828 "agent_parser.cc"
     break;
 
   case 20:
 #line 163 "agent_parser.yy"
-    { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 796 "agent_parser.cc"
+               { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 834 "agent_parser.cc"
     break;
 
   case 23:
 #line 177 "agent_parser.yy"
-    {
+                                  {
                   // map containing a single entry
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 805 "agent_parser.cc"
+#line 843 "agent_parser.cc"
     break;
 
   case 24:
 #line 181 "agent_parser.yy"
-    {
+                                                      {
                   // map consisting of a shorter map followed by
                   // comma and string:value
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 815 "agent_parser.cc"
+#line 853 "agent_parser.cc"
     break;
 
   case 25:
 #line 188 "agent_parser.yy"
-    {
+                              {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 824 "agent_parser.cc"
+#line 862 "agent_parser.cc"
     break;
 
   case 26:
 #line 191 "agent_parser.yy"
-    {
+                               {
 }
-#line 831 "agent_parser.cc"
+#line 869 "agent_parser.cc"
     break;
 
   case 29:
 #line 198 "agent_parser.yy"
-    {
+                      {
                   // List consisting of a single element.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 840 "agent_parser.cc"
+#line 878 "agent_parser.cc"
     break;
 
   case 30:
 #line 202 "agent_parser.yy"
-    {
+                                           {
                   // List ending with , and a value.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 849 "agent_parser.cc"
+#line 887 "agent_parser.cc"
     break;
 
   case 31:
 #line 215 "agent_parser.yy"
-    {
+                                {
     const std::string& where = ctx.contextName();
     const std::string& keyword = yystack_[1].value.as < std::string > ();
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
-#line 860 "agent_parser.cc"
+#line 898 "agent_parser.cc"
     break;
 
   case 32:
 #line 224 "agent_parser.yy"
-    {
+                                 {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 871 "agent_parser.cc"
+#line 909 "agent_parser.cc"
     break;
 
   case 33:
 #line 229 "agent_parser.yy"
-    {
+                                {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 881 "agent_parser.cc"
+#line 919 "agent_parser.cc"
     break;
 
   case 42:
 #line 250 "agent_parser.yy"
-    {
+                            {
 
     // Let's create a MapElement that will represent it, add it to the
     // top level map (that's already on the stack) and put the new map
@@ -893,58 +931,58 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.AGENT);
 }
-#line 897 "agent_parser.cc"
+#line 935 "agent_parser.cc"
     break;
 
   case 43:
 #line 260 "agent_parser.yy"
-    {
+                                                    {
     // Ok, we're done with parsing control-agent. Let's take the map
     // off the stack.
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 908 "agent_parser.cc"
+#line 946 "agent_parser.cc"
     break;
 
   case 54:
 #line 283 "agent_parser.yy"
-    {
+                     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 916 "agent_parser.cc"
+#line 954 "agent_parser.cc"
     break;
 
   case 55:
 #line 285 "agent_parser.yy"
-    {
+               {
     ElementPtr host(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("http-host", host);
     ctx.leave();
 }
-#line 926 "agent_parser.cc"
+#line 964 "agent_parser.cc"
     break;
 
   case 56:
 #line 291 "agent_parser.yy"
-    {
+                                   {
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("http-port", prf);
 }
-#line 935 "agent_parser.cc"
+#line 973 "agent_parser.cc"
     break;
 
   case 57:
 #line 296 "agent_parser.yy"
-    {
+                           {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 943 "agent_parser.cc"
+#line 981 "agent_parser.cc"
     break;
 
   case 58:
 #line 298 "agent_parser.yy"
-    {
+                  {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context = yystack_[0].value.as < ElementPtr > ();
     ConstElementPtr old = parent->get("user-context");
@@ -966,20 +1004,20 @@ namespace isc { namespace agent {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 970 "agent_parser.cc"
+#line 1008 "agent_parser.cc"
     break;
 
   case 59:
 #line 321 "agent_parser.yy"
-    {
+                 {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 978 "agent_parser.cc"
+#line 1016 "agent_parser.cc"
     break;
 
   case 60:
 #line 323 "agent_parser.yy"
-    {
+               {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
     ElementPtr comment(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -1003,460 +1041,460 @@ namespace isc { namespace agent {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1007 "agent_parser.cc"
+#line 1045 "agent_parser.cc"
     break;
 
   case 61:
 #line 349 "agent_parser.yy"
-    {
+                                 {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hooks-libraries", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
 }
-#line 1018 "agent_parser.cc"
+#line 1056 "agent_parser.cc"
     break;
 
   case 62:
 #line 354 "agent_parser.yy"
-    {
+                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1027 "agent_parser.cc"
+#line 1065 "agent_parser.cc"
     break;
 
   case 67:
 #line 367 "agent_parser.yy"
-    {
+                              {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1037 "agent_parser.cc"
+#line 1075 "agent_parser.cc"
     break;
 
   case 68:
 #line 371 "agent_parser.yy"
-    {
+                              {
     ctx.stack_.pop_back();
 }
-#line 1045 "agent_parser.cc"
+#line 1083 "agent_parser.cc"
     break;
 
   case 74:
 #line 384 "agent_parser.yy"
-    {
+                 {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1053 "agent_parser.cc"
+#line 1091 "agent_parser.cc"
     break;
 
   case 75:
 #line 386 "agent_parser.yy"
-    {
+               {
     ElementPtr lib(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
-#line 1063 "agent_parser.cc"
+#line 1101 "agent_parser.cc"
     break;
 
   case 76:
 #line 392 "agent_parser.yy"
-    {
+                       {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1071 "agent_parser.cc"
+#line 1109 "agent_parser.cc"
     break;
 
   case 77:
 #line 394 "agent_parser.yy"
-    {
+              {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1080 "agent_parser.cc"
+#line 1118 "agent_parser.cc"
     break;
 
   case 78:
 #line 402 "agent_parser.yy"
-    {
+                                                      {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[2].location)));
     ctx.stack_.back()->set("control-sockets", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKETS);
 }
-#line 1091 "agent_parser.cc"
+#line 1129 "agent_parser.cc"
     break;
 
   case 79:
 #line 407 "agent_parser.yy"
-    {
+                                        {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1100 "agent_parser.cc"
+#line 1138 "agent_parser.cc"
     break;
 
   case 86:
 #line 428 "agent_parser.yy"
-    {
+                                  {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dhcp4", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1111 "agent_parser.cc"
+#line 1149 "agent_parser.cc"
     break;
 
   case 87:
 #line 433 "agent_parser.yy"
-    {
+                                                            {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1120 "agent_parser.cc"
+#line 1158 "agent_parser.cc"
     break;
 
   case 88:
 #line 439 "agent_parser.yy"
-    {
+                                  {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dhcp6", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1131 "agent_parser.cc"
+#line 1169 "agent_parser.cc"
     break;
 
   case 89:
 #line 444 "agent_parser.yy"
-    {
+                                                            {
     ctx.stack_.pop_back();
-    ctx.leave();
-}
-#line 1140 "agent_parser.cc"
-    break;
-
-  case 90:
-#line 450 "agent_parser.yy"
-    {
-    ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("d2", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.SERVER);
-}
-#line 1151 "agent_parser.cc"
-    break;
-
-  case 91:
-#line 455 "agent_parser.yy"
-    {
-    ctx.stack_.pop_back();
-    ctx.leave();
-}
-#line 1160 "agent_parser.cc"
-    break;
-
-  case 99:
-#line 474 "agent_parser.yy"
-    {
-    ctx.enter(ctx.NO_KEYWORDS);
-}
-#line 1168 "agent_parser.cc"
-    break;
-
-  case 100:
-#line 476 "agent_parser.yy"
-    {
-    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
 #line 1178 "agent_parser.cc"
     break;
 
+  case 90:
+#line 450 "agent_parser.yy"
+                            {
+    ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
+    ctx.stack_.back()->set("d2", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.SERVER);
+}
+#line 1189 "agent_parser.cc"
+    break;
+
+  case 91:
+#line 455 "agent_parser.yy"
+                                                            {
+    ctx.stack_.pop_back();
+    ctx.leave();
+}
+#line 1198 "agent_parser.cc"
+    break;
+
+  case 99:
+#line 474 "agent_parser.yy"
+                         {
+    ctx.enter(ctx.NO_KEYWORDS);
+}
+#line 1206 "agent_parser.cc"
+    break;
+
+  case 100:
+#line 476 "agent_parser.yy"
+               {
+    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ctx.stack_.back()->set("socket-name", name);
+    ctx.leave();
+}
+#line 1216 "agent_parser.cc"
+    break;
+
   case 101:
 #line 483 "agent_parser.yy"
-    {
+                         {
     ctx.enter(ctx.SOCKET_TYPE);
 }
-#line 1186 "agent_parser.cc"
+#line 1224 "agent_parser.cc"
     break;
 
   case 102:
 #line 485 "agent_parser.yy"
-    {
+                          {
     ctx.stack_.back()->set("socket-type", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1195 "agent_parser.cc"
+#line 1233 "agent_parser.cc"
     break;
 
   case 103:
 #line 491 "agent_parser.yy"
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("unix", ctx.loc2pos(yystack_[0].location))); }
-#line 1201 "agent_parser.cc"
+                         { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("unix", ctx.loc2pos(yystack_[0].location))); }
+#line 1239 "agent_parser.cc"
     break;
 
   case 104:
 #line 497 "agent_parser.yy"
-    {
+                         {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1209 "agent_parser.cc"
+#line 1247 "agent_parser.cc"
     break;
 
   case 105:
 #line 499 "agent_parser.yy"
-    {
+              {
     ctx.stack_.back()->set("Dhcp4", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1218 "agent_parser.cc"
+#line 1256 "agent_parser.cc"
     break;
 
   case 106:
 #line 504 "agent_parser.yy"
-    {
+                         {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1226 "agent_parser.cc"
+#line 1264 "agent_parser.cc"
     break;
 
   case 107:
 #line 506 "agent_parser.yy"
-    {
+              {
     ctx.stack_.back()->set("Dhcp6", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1235 "agent_parser.cc"
+#line 1273 "agent_parser.cc"
     break;
 
   case 108:
 #line 511 "agent_parser.yy"
-    {
+                               {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1243 "agent_parser.cc"
+#line 1281 "agent_parser.cc"
     break;
 
   case 109:
 #line 513 "agent_parser.yy"
-    {
+              {
     ctx.stack_.back()->set("DhcpDdns", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1252 "agent_parser.cc"
+#line 1290 "agent_parser.cc"
     break;
 
   case 110:
 #line 523 "agent_parser.yy"
-    {
+                        {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("Logging", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.LOGGING);
 }
-#line 1263 "agent_parser.cc"
+#line 1301 "agent_parser.cc"
     break;
 
   case 111:
 #line 528 "agent_parser.yy"
-    {
+                                                     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1272 "agent_parser.cc"
+#line 1310 "agent_parser.cc"
     break;
 
   case 115:
 #line 545 "agent_parser.yy"
-    {
+                 {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 1283 "agent_parser.cc"
+#line 1321 "agent_parser.cc"
     break;
 
   case 116:
 #line 550 "agent_parser.yy"
-    {
+                                                         {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1292 "agent_parser.cc"
+#line 1330 "agent_parser.cc"
     break;
 
   case 119:
 #line 562 "agent_parser.yy"
-    {
+                             {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 1302 "agent_parser.cc"
+#line 1340 "agent_parser.cc"
     break;
 
   case 120:
 #line 566 "agent_parser.yy"
-    {
+                               {
     ctx.stack_.pop_back();
 }
-#line 1310 "agent_parser.cc"
+#line 1348 "agent_parser.cc"
     break;
 
   case 130:
 #line 583 "agent_parser.yy"
-    {
+           {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1318 "agent_parser.cc"
+#line 1356 "agent_parser.cc"
     break;
 
   case 131:
 #line 585 "agent_parser.yy"
-    {
+               {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1328 "agent_parser.cc"
+#line 1366 "agent_parser.cc"
     break;
 
   case 132:
 #line 591 "agent_parser.yy"
-    {
+                                     {
     ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 1337 "agent_parser.cc"
+#line 1375 "agent_parser.cc"
     break;
 
   case 133:
 #line 596 "agent_parser.yy"
-    {
+                   {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1345 "agent_parser.cc"
+#line 1383 "agent_parser.cc"
     break;
 
   case 134:
 #line 598 "agent_parser.yy"
-    {
+               {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 1355 "agent_parser.cc"
+#line 1393 "agent_parser.cc"
     break;
 
   case 135:
 #line 604 "agent_parser.yy"
-    {
+                                    {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 1366 "agent_parser.cc"
+#line 1404 "agent_parser.cc"
     break;
 
   case 136:
 #line 609 "agent_parser.yy"
-    {
+                                                                    {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1375 "agent_parser.cc"
+#line 1413 "agent_parser.cc"
     break;
 
   case 139:
 #line 618 "agent_parser.yy"
-    {
+                             {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1385 "agent_parser.cc"
+#line 1423 "agent_parser.cc"
     break;
 
   case 140:
 #line 622 "agent_parser.yy"
-    {
+                                    {
     ctx.stack_.pop_back();
 }
-#line 1393 "agent_parser.cc"
+#line 1431 "agent_parser.cc"
     break;
 
   case 148:
 #line 637 "agent_parser.yy"
-    {
+               {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1401 "agent_parser.cc"
+#line 1439 "agent_parser.cc"
     break;
 
   case 149:
 #line 639 "agent_parser.yy"
-    {
+               {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 1411 "agent_parser.cc"
+#line 1449 "agent_parser.cc"
     break;
 
   case 150:
 #line 645 "agent_parser.yy"
-    {
+                           {
     ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 1420 "agent_parser.cc"
+#line 1458 "agent_parser.cc"
     break;
 
   case 151:
 #line 650 "agent_parser.yy"
-    {
+                               {
     ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 1429 "agent_parser.cc"
+#line 1467 "agent_parser.cc"
     break;
 
   case 152:
 #line 655 "agent_parser.yy"
-    {
+                             {
     ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 1438 "agent_parser.cc"
+#line 1476 "agent_parser.cc"
     break;
 
   case 153:
 #line 660 "agent_parser.yy"
-    {
+                 {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1446 "agent_parser.cc"
+#line 1484 "agent_parser.cc"
     break;
 
   case 154:
 #line 662 "agent_parser.yy"
-    {
+               {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
 }
-#line 1456 "agent_parser.cc"
+#line 1494 "agent_parser.cc"
     break;
 
 
-#line 1460 "agent_parser.cc"
+#line 1498 "agent_parser.cc"
 
             default:
               break;
@@ -1538,11 +1576,11 @@ namespace isc { namespace agent {
       stack_symbol_type error_token;
       for (;;)
         {
-          yyn = yypact_[yystack_[0].state];
+          yyn = yypact_[+yystack_[0].state];
           if (!yy_pact_value_is_default_ (yyn))
             {
-              yyn += yyterror_;
-              if (0 <= yyn && yyn <= yylast_ && yycheck_[yyn] == yyterror_)
+              yyn += yy_error_token_;
+              if (0 <= yyn && yyn <= yylast_ && yycheck_[yyn] == yy_error_token_)
                 {
                   yyn = yytable_[yyn];
                   if (0 < yyn)
@@ -1564,7 +1602,7 @@ namespace isc { namespace agent {
       YYLLOC_DEFAULT (error_token.location, yyerror_range, 2);
 
       // Shift the error token.
-      error_token.state = yyn;
+      error_token.state = state_type (yyn);
       yypush_ ("Shifting", YY_MOVE (error_token));
     }
     goto yynewstate;
@@ -1635,7 +1673,7 @@ namespace isc { namespace agent {
   {
     // Number of reported tokens (one for the "unexpected", one per
     // "expected").
-    size_t yycount = 0;
+    std::ptrdiff_t yycount = 0;
     // Its maximum.
     enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
     // Arguments of yyformat.
@@ -1659,18 +1697,18 @@ namespace isc { namespace agent {
        - Of course, the expected token list depends on states to have
          correct lookahead information, and it depends on the parser not
          to perform extra reductions after fetching a lookahead from the
-         scanner and before detecting a syntax error.  Thus, state
-         merging (from LALR or IELR) and default reductions corrupt the
-         expected token list.  However, the list is correct for
-         canonical LR with one exception: it will still contain any
-         token that will not be accepted due to an error action in a
-         later state.
+         scanner and before detecting a syntax error.  Thus, state merging
+         (from LALR or IELR) and default reductions corrupt the expected
+         token list.  However, the list is correct for canonical LR with
+         one exception: it will still contain any token that will not be
+         accepted due to an error action in a later state.
     */
     if (!yyla.empty ())
       {
-        int yytoken = yyla.type_get ();
+        symbol_number_type yytoken = yyla.type_get ();
         yyarg[yycount++] = yytname_[yytoken];
-        int yyn = yypact_[yystate];
+
+        int yyn = yypact_[+yystate];
         if (!yy_pact_value_is_default_ (yyn))
           {
             /* Start YYX at -YYN if negative to avoid negative indexes in
@@ -1681,7 +1719,7 @@ namespace isc { namespace agent {
             int yychecklim = yylast_ - yyn + 1;
             int yyxend = yychecklim < yyntokens_ ? yychecklim : yyntokens_;
             for (int yyx = yyxbegin; yyx < yyxend; ++yyx)
-              if (yycheck_[yyx + yyn] == yyx && yyx != yyterror_
+              if (yycheck_[yyx + yyn] == yyx && yyx != yy_error_token_
                   && !yy_table_value_is_error_ (yytable_[yyx + yyn]))
                 {
                   if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
@@ -1714,7 +1752,7 @@ namespace isc { namespace agent {
 
     std::string yyres;
     // Argument number.
-    size_t yyi = 0;
+    std::ptrdiff_t yyi = 0;
     for (char const* yyp = yyformat; *yyp; ++yyp)
       if (yyp[0] == '%' && yyp[1] == 's' && yyi < yycount)
         {
@@ -1825,7 +1863,7 @@ namespace isc { namespace agent {
      239,   240,   241,   247,   242,   243,   244,   245,   251
   };
 
-  const unsigned short
+  const short
   AgentParser::yytable_[] =
   {
       28,   121,    20,    40,    55,    60,    61,     9,     8,    10,
@@ -1930,7 +1968,7 @@ namespace isc { namespace agent {
      140,   141,   142,   144,   143
   };
 
-  const unsigned char
+  const signed char
   AgentParser::yyr2_[] =
   {
        0,     2,     0,     3,     0,     3,     0,     3,     0,     4,
@@ -1992,7 +2030,7 @@ namespace isc { namespace agent {
   };
 
 #if AGENT_DEBUG
-  const unsigned short
+  const short
   AgentParser::yyrline_[] =
   {
        0,   115,   115,   115,   116,   116,   117,   117,   125,   125,
@@ -2022,7 +2060,7 @@ namespace isc { namespace agent {
            i = yystack_.begin (),
            i_end = yystack_.end ();
          i != i_end; ++i)
-      *yycdebug_ << ' ' << i->state;
+      *yycdebug_ << ' ' << int (i->state);
     *yycdebug_ << '\n';
   }
 
@@ -2030,7 +2068,7 @@ namespace isc { namespace agent {
   void
   AgentParser::yy_reduce_print_ (int yyrule)
   {
-    unsigned yylno = yyrline_[yyrule];
+    int yylno = yyrline_[yyrule];
     int yynrhs = yyr2_[yyrule];
     // Print the symbols being reduced, and their result.
     *yycdebug_ << "Reducing stack by rule " << yyrule - 1
@@ -2045,7 +2083,7 @@ namespace isc { namespace agent {
 
 #line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2049 "agent_parser.cc"
+#line 2087 "agent_parser.cc"
 
 #line 668 "agent_parser.yy"
 
