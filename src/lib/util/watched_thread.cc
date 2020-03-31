@@ -15,10 +15,7 @@ WatchedThread::start(const boost::function<void()>& thread_main) {
     clearReady(ERROR);
     clearReady(READY);
     clearReady(TERMINATE);
-    {
-	std::lock_guard<std::mutex> lock(last_error_mutex_);
-	last_error_ = "no error";
-    }
+    setErrorInternal("no error");
     thread_.reset(new std::thread(thread_main));
 }
 
@@ -62,23 +59,26 @@ WatchedThread::stop() {
 
     clearReady(ERROR);
     clearReady(READY);
-    std::lock_guard<std::mutex> lock(last_error_mutex_);
-    last_error_ = "thread stopped";
+    setErrorInternal("thread stopped");
+}
+
+void
+WatchedThread::setErrorInternal(const std::string& error_msg) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    last_error_ = error_msg;
 }
 
 void
 WatchedThread::setError(const std::string& error_msg) {
-    {
-        std::lock_guard<std::mutex> lock(last_error_mutex_);
-        last_error_ = error_msg;
-    }
+    setErrorInternal(error_msg);
     markReady(ERROR);
 }
 
 std::string
 WatchedThread::getLastError() {
-    std::lock_guard<std::mutex> lock(last_error_mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     return (last_error_);
 }
-} // end of namespace isc::util
-} // end of namespace isc
+
+}  // namespace util
+}  // namespace isc

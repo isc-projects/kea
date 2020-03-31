@@ -60,9 +60,13 @@ public:
     /// @brief task function which tries to stop the thread pool and then calls
     /// @ref runAndWait
     void runStopResetAndWait(ThreadPool<CallBack>* thread_pool) {
-        EXPECT_THROW(thread_pool->stop(), InvalidOperation);
-        EXPECT_THROW(thread_pool->reset(), InvalidOperation);
-        EXPECT_NO_THROW(runAndWait());
+        static std::mutex lock;
+        {
+            std::lock_guard<std::mutex> lk(lock);
+            EXPECT_THROW(thread_pool->stop(), InvalidOperation);
+            EXPECT_THROW(thread_pool->reset(), InvalidOperation);
+        }
+        runAndWait();
     }
 
     /// @brief reset all counters and internal test state
@@ -415,7 +419,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 
     // add items to running thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        thread_pool.add(boost::make_shared<CallBack>(call_back));
     }
 
     // wait for all items to be processed
