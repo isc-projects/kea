@@ -79,10 +79,22 @@ public:
         using AllocEngine::IterativeAllocator::increasePrefix;
     };
 
+    /// @brief Wrapper method for invoking AllocEngine4::updateLease4ExtendedInfo().
+    /// @param lease lease to update
+    /// @param ctx current packet processing context
     void callUpdateLease4ExtendedInfo(const Lease4Ptr& lease,
                                       AllocEngine::ClientContext4& ctx) const {
         updateLease4ExtendedInfo(lease,ctx);
     }
+
+    /// @brief Wrapper method for invoking AllocEngine6::updateLease6ExtendedInfo().
+    /// @param lease lease to update
+    /// @param ctx current packet processing context
+    void callUpdateLease6ExtendedInfo(const Lease6Ptr& lease,
+                                      AllocEngine::ClientContext6& ctx) const {
+        updateLease6ExtendedInfo(lease,ctx);
+    }
+
 };
 
 /// @brief Used in Allocation Engine tests for IPv6

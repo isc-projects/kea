@@ -11,11 +11,13 @@
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <stats/stats_mgr.h>
+#include <testutils/gtest_utils.h>
 
 using namespace std;
 using namespace isc::hooks;
 using namespace isc::asiolink;
 using namespace isc::stats;
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -3440,6 +3442,414 @@ TEST_F(AllocEngine6Test, globalHostReservedPrefix) {
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
         << "Lease lifetime was not extended, but it should";
+}
+
+/// @brief Test fixture class for testing storage of extended lease data.
+/// It primarily creates several configuration items common to the
+/// extended info tests.
+class AllocEngine6ExtendedInfoTest : public AllocEngine6Test {
+public:
+    /// @brief Constructor
+    AllocEngine6ExtendedInfoTest()
+        : engine_(AllocEngine::ALLOC_ITERATIVE, 100, true), duid1_(), duid2_(),
+          relay1_(), relay2_(), duid1_addr_("::"), duid2_addr_("::") {
+        duid1_.reset(new DUID(std::vector<uint8_t>(8, 0x84)));
+        duid2_.reset(new DUID(std::vector<uint8_t>(8, 0x74)));
+
+        relay1_.msg_type_ = DHCPV6_RELAY_FORW;
+        relay1_.hop_count_ = 33;
+        relay1_.linkaddr_ = IOAddress("2001:db8::1");
+        relay1_.peeraddr_ = IOAddress("2001:db8::2");
+        relay1_.relay_msg_len_ = 0;
+
+        uint8_t relay_opt_data[] = { 1, 2, 3, 4, 5, 6, 7, 8};
+        vector<uint8_t> relay_data(relay_opt_data,
+                                   relay_opt_data + sizeof(relay_opt_data));
+        OptionPtr optRelay1(new Option(Option::V6, 200, relay_data));
+
+        relay1_.options_.insert(make_pair(optRelay1->getType(), optRelay1));
+
+        relay2_.msg_type_ = DHCPV6_RELAY_FORW;
+        relay2_.hop_count_ = 77;
+        relay2_.linkaddr_ = IOAddress("2001:db8::3");
+        relay2_.peeraddr_ = IOAddress("2001:db8::4");
+        relay2_.relay_msg_len_ = 0;
+
+        duid1_addr_ = IOAddress("2001:db8:1::10");
+        duid2_addr_ = IOAddress("2001:db8:1::11");
+
+        // Create the allocation engine, context and lease.
+        NakedAllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, true);
+    }
+
+    /// @brief Destructor
+    virtual ~AllocEngine6ExtendedInfoTest(){};
+
+    /// Configuration elements. These are initialized in the constructor
+    /// and are used throughout the tests.
+    NakedAllocEngine engine_;
+    DuidPtr duid1_;
+    DuidPtr duid2_;
+    Pkt6::RelayInfo relay1_;
+    Pkt6::RelayInfo relay2_;
+    IOAddress duid1_addr_;
+    IOAddress duid2_addr_;
+};
+
+
+// Exercises AllocEnginer6Test::updateExtendedInfo6() through various
+// permutations of client packet content.
+TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
+    // Structure that defines a test scenario.
+    struct Scenario {
+        std::string description_;       // test description
+        std::string orig_context_json_; // user context the lease begins with
+        std::vector<Pkt6::RelayInfo> relays_; // vector of relays from pkt
+        std::string exp_context_json_;  // expected user context on the lease
+    };
+
+    // Test scenarios.
+    std::vector<Scenario> scenarios {
+    {
+        "no context, no relay",
+        "",
+        {},
+        ""
+    },
+    {
+        "some original context, no relay",
+        "{\"foo\": 123}",
+        {},
+        "{\"foo\": 123}"
+    },
+    {
+        "no original context, one relay",
+        "",
+        { relay1_ },
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }"
+    },
+    {
+        "some original context, one relay",
+        "{\"foo\": 123}",
+        { relay1_ },
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] },"
+        " \"foo\": 123 }"
+    },
+    {
+        "no original context, two relays",
+        "",
+        { relay1_, relay2_ },
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" },"
+        " {\"hop\": 77, \"link\": \"2001:db8::3\", \"peer\": \"2001:db8::4\" } ] } }"
+    },
+    {
+        "original relay context, no relay",
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
+        {},
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }"
+    },
+    {
+        "original relay context, different relay",
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
+        { relay2_ },
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 77, \"link\": \"2001:db8::3\","
+        " \"peer\": \"2001:db8::4\" } ] } }"
+    }};
+
+    // Allocate a lease.
+    Lease6Ptr lease;
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
+    ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+
+    // All scenarios require storage to be enabled.
+    ctx.subnet_->setStoreExtendedInfo(true);
+
+    // Verify that the lease begins with no user context.
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_FALSE(user_context);
+
+    // Iterate over the test scenarios.
+    ElementPtr orig_context;
+    ElementPtr exp_context;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        // Create the original user context from JSON.
+        if (scenario.orig_context_json_.empty()) {
+            orig_context.reset();
+        } else {
+            ASSERT_NO_THROW(orig_context = Element::fromJSON(scenario.orig_context_json_))
+                            << "invalid orig_context_json_, test is broken";
+        }
+
+        // Create the expected user context from JSON.
+        if (scenario.exp_context_json_.empty()) {
+            exp_context.reset();
+        } else {
+            ASSERT_NO_THROW(exp_context = Element::fromJSON(scenario.exp_context_json_))
+                            << "invalid exp_context_json_, test is broken";
+        }
+
+        // Initialize lease's user context.
+        lease->setContext(orig_context);
+        if (!orig_context) {
+            ASSERT_FALSE(lease->getContext());
+        }
+        else {
+            ASSERT_TRUE(lease->getContext());
+            ASSERT_TRUE(orig_context->equals(*(lease->getContext())));
+        }
+
+        // Set the client packet relay vector from the scenario.
+        ctx.query_->relay_info_ = scenario.relays_;
+
+        // Call AllocEngine::updateLease6ExtendeInfo().
+        ASSERT_NO_THROW_LOG(engine_.callUpdateLease6ExtendedInfo(lease, ctx));
+
+        // Verify the lease has the expected user context content.
+        if (!exp_context) {
+            ASSERT_FALSE(lease->getContext());
+        }
+        else {
+            ASSERT_TRUE(lease->getContext());
+            ASSERT_TRUE(exp_context->equals(*(lease->getContext())))
+                << "expected: " << *(exp_context) << std::endl
+                << "  actual: " << *(lease->getContext()) << std::endl;
+        }
+    }
+}
+
+// Verifies that the extended data (RelayInfos for now) is
+// added to a V6 lease when leases are created and/or renewed,
+// when store-extended-info is true.
+TEST_F(AllocEngine6ExtendedInfoTest, storeExtendedInfoEnabled6) {
+    // Structure that defines a test scenario.
+    struct Scenario {
+        std::string description_;             // test description
+        DuidPtr duid_;                        // client DUID
+        std::vector<Pkt6::RelayInfo> relays_; // vector of relays from pkt
+        std::string exp_context_json_;        // expected user context on the lease
+        IOAddress exp_address_;               // expected lease address
+    };
+
+    // Test scenarios.
+    std::vector<Scenario> scenarios {
+    {
+        "create client one without relays",
+        duid1_,
+        {},
+        "",
+        duid1_addr_
+    },
+    {
+        "renew client one without relays",
+        DuidPtr(),
+        {},
+        "",
+        duid1_addr_
+    },
+    {
+        "create client two with relays",
+        duid2_,
+        { relay1_, relay2_ },
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" },"
+        " { \"hop\": 77, \"link\": \"2001:db8::3\", \"peer\": \"2001:db8::4\" } ] } }",
+        duid2_addr_
+    },
+    {
+        "renew client two without rai",
+        DuidPtr(),
+        {},
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" },"
+        " { \"hop\": 77, \"link\": \"2001:db8::3\", \"peer\": \"2001:db8::4\" } ] } }",
+        duid2_addr_
+    }};
+
+    // All of the scenarios require storage to be enabled.
+    subnet_->setStoreExtendedInfo(true);
+
+    // Iterate over the test scenarios.
+    DuidPtr current_duid;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        ElementPtr exp_context;
+        // Create the expected user context from JSON.
+        if (!scenario.exp_context_json_.empty()) {
+            ASSERT_NO_THROW(exp_context = Element::fromJSON(scenario.exp_context_json_))
+                            << "invalid exp_context_json_, test is broken";
+        }
+
+        Pkt6Ptr pkt;
+        if (scenario.duid_) {
+            current_duid = scenario.duid_;
+            pkt.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+        } else {
+            pkt.reset(new Pkt6(DHCPV6_RENEW, 1234));
+        }
+
+        // Set packet relay vector from the scenario.
+        pkt->relay_info_ = scenario.relays_;
+
+        // Create the context;
+        AllocEngine::ClientContext6 ctx(subnet_, current_duid, false, false, "", false, pkt);
+
+        // Create or renew the lease.
+        Lease6Ptr lease;
+        ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx)));
+        ASSERT_TRUE(lease);
+
+        EXPECT_EQ(scenario.exp_address_, lease->addr_);
+
+        // Verify the lease has the expected user context content.
+        if (!exp_context) {
+            ASSERT_FALSE(lease->getContext());
+        }
+        else {
+            ASSERT_TRUE(lease->getContext());
+            ASSERT_TRUE(exp_context->equals(*(lease->getContext())))
+                << "expected: " << *(exp_context) << std::endl
+                << "  actual: " << *(lease->getContext()) << std::endl;
+        }
+    }
+}
+
+// Verifies that the extended data (RelayInfos for now) is
+// not added to a V6 lease when leases are created and/or renewed,
+// when store-extended-info is false.
+TEST_F(AllocEngine6ExtendedInfoTest, storeExtendedInfoDisabled6) {
+    // Structure that defines a test scenario.
+    struct Scenario {
+        std::string description_;             // test description
+        DuidPtr duid_;                        // client DUID
+        std::vector<Pkt6::RelayInfo> relays_; // vector of relays from pkt
+        IOAddress exp_address_;               // expected lease address
+    };
+
+    // Test scenarios.
+    std::vector<Scenario> scenarios {
+    {
+        "create client one without relays",
+        duid1_,
+        {},
+        duid1_addr_
+    },
+    {
+        "renew client one without relays",
+        DuidPtr(),
+        {},
+        duid1_addr_
+    },
+    {
+        "create client two with relays",
+        duid2_,
+        { relay1_, relay2_ },
+        duid2_addr_
+    },
+    {
+        "renew client two with relays",
+        DuidPtr(),
+        { relay1_, relay2_ },
+        duid2_addr_
+    }
+    };
+
+    // All of the scenarios require storage to be disabled.
+    subnet_->setStoreExtendedInfo(false);
+
+    // Iterate over the test scenarios.
+    DuidPtr current_duid;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        Pkt6Ptr pkt;
+        if (scenario.duid_) {
+            current_duid = scenario.duid_;
+            pkt.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+        } else {
+            pkt.reset(new Pkt6(DHCPV6_RENEW, 1234));
+        }
+
+        // Set packet relay vector from the scenario.
+        pkt->relay_info_ = scenario.relays_;
+
+        // Create the context;
+        AllocEngine::ClientContext6 ctx(subnet_, current_duid, false, false, "", false, pkt);
+
+        // Create or renew the lease.
+        Lease6Ptr lease;
+        ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx)));
+        ASSERT_TRUE(lease);
+
+        EXPECT_EQ(scenario.exp_address_, lease->addr_);
+
+        // Verify the lease had no user context content.
+        ASSERT_FALSE(lease->getContext());
+    }
+}
+
+// Verifies that the extended data (RelayInfos for now) is
+// added to a V6 lease when an expired lease is reused and
+// store-extended-info is true.  We don't bother testing the
+// disabled case as this is tested thoroughly elsewhere.
+TEST_F(AllocEngine6ExtendedInfoTest, reuseExpiredLease6) {
+    // Create one subnet with a pool holding one address.
+    IOAddress addr("2001:db8:1::ad");
+    initSubnet(IOAddress("2001:db8:1::"), addr, addr);
+    subnet_->setPreferred(Triplet<uint32_t>(200, 300, 400));
+    subnet_->setValid(Triplet<uint32_t>(300, 400, 500));
+
+    // Create an expired lease for duid1_.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid1_, 1234,
+                               501, 502, subnet_->getID(),
+                               HWAddrPtr(), 0));
+    lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
+    lease->valid_lft_ = 495;         // Lease was valid for 495 seconds
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Make sure that we really created expired lease
+    ASSERT_TRUE(lease->expired());
+
+    // Asking specifically for this address with zero lifetimes
+    AllocEngine::ClientContext6 ctx(subnet_, duid2_, false, false, "", false,
+                                     Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 5678)));
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().addHint(addr, 128, 0, 0);
+
+    // Add a relay to the packet relay vector.
+    ctx.query_->relay_info_.push_back(relay1_);
+
+    // Enable extended info storage.
+    subnet_->setStoreExtendedInfo(true);
+
+    // Reuse the expired lease.
+    EXPECT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx)));
+
+    // Check that we got that single lease
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // Now let's verify that the extended info is in the user-context.
+    ASSERT_TRUE(lease->getContext());
+    std::string exp_content_json =
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }";
+    ConstElementPtr exp_context;
+    ASSERT_NO_THROW(exp_context = Element::fromJSON(exp_content_json))
+                            << "invalid exp_context_json_, test is broken";
+    ASSERT_TRUE(exp_context->equals(*(lease->getContext())))
+                << "expected: " << *(exp_context) << std::endl
+                << "  actual: " << *(lease->getContext()) << std::endl;
 }
 
 }  // namespace test

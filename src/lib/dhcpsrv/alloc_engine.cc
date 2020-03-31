@@ -25,6 +25,7 @@
 #include <hooks/hooks_manager.h>
 #include <dhcpsrv/callout_handle_store.h>
 #include <stats/stats_mgr.h>
+#include <util/encode/hex.h>
 #include <util/stopwatch.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
@@ -1743,6 +1744,9 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     }
 
     if (!ctx.fake_allocation_) {
+        // Add(update) the extended information on the lease.
+        updateLease6ExtendedInfo(expired, ctx);
+
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease6(expired);
 
@@ -1839,6 +1843,9 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
     }
 
     if (!ctx.fake_allocation_) {
+        // Add(update) the extended information on the lease.
+        updateLease6ExtendedInfo(lease, ctx);
+
         // That is a real (REQUEST) allocation
         bool status = LeaseMgrFactory::instance().addLease(lease);
 
@@ -2118,6 +2125,9 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                 update_stats = true;
             }
         }
+
+        // @todo should we call storeLease6ExtendedInfo() here ?
+        updateLease6ExtendedInfo(lease, ctx);
 
         // Now that the lease has been reclaimed, we can go ahead and update it
         // in the lease database.
@@ -4054,13 +4064,12 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
         return;
     }
 
-    std::stringstream ss;
-    ss << "{"
-       << "\"relay-agent-info\": \""
-       << rai->toHexString()
-       << "\"}";
+    // Create a StringElement with the hex string for relay-agent-info.
+    ElementPtr relay_agent(new StringElement(rai->toHexString()));
 
-    ConstElementPtr extended_info = Element::fromJSON(ss.str());
+    // Now we wrap the agent info in a map.  This allows for future expansion.
+    ElementPtr extended_info = Element::createMap();
+    extended_info->set("relay-agent-info", relay_agent);
 
     // Get a writable copy of the lease's current user context.
     ElementPtr user_context;
@@ -4076,6 +4085,78 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
     // Update the lease's user_context.
     lease->setContext(user_context);
 }
+
+void
+AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
+                                      const AllocEngine::ClientContext6& ctx) const {
+
+    // If storage is not enabled then punt.
+    if (!ctx.subnet_->getStoreExtendedInfo()) {
+        return;
+    }
+
+    // If we do not have relay information, then punt.
+    if (ctx.query_->relay_info_.empty()) {
+        return;
+    }
+
+    // We need to convert the vector of RelayInfo instances in
+    // into an Element hierarchy like this:
+    //  "relay-info": [
+    //   {
+    //       "hop": 123,
+    //       "link": "2001:db8::1",
+    //       "peer": "2001:db8::2",
+    //       "options": "0x..."
+    //   },..]
+    //
+    ElementPtr relay_list = Element::createList();
+    for (auto relay : ctx.query_->relay_info_) {
+        ElementPtr relay_elem = Element::createMap();
+        relay_elem->set("hop", ElementPtr(new IntElement(relay.hop_count_)));
+        relay_elem->set("link", ElementPtr(new StringElement(relay.linkaddr_.toText())));
+        relay_elem->set("peer", ElementPtr(new StringElement(relay.peeraddr_.toText())));
+
+        // If there are relay options, we'll pack them into a buffer and then
+        // convert that into a hex string.  If there are no options, we omit
+        // then entry.
+        if (!relay.options_.empty()) {
+            OutputBuffer buf(128);
+            LibDHCP::packOptions6(buf, relay.options_);
+
+            if (buf.getLength() > 0) {
+                const uint8_t* cp = static_cast<const uint8_t*>(buf.getData());
+                std::vector<uint8_t>bytes;
+                std::stringstream ss;
+
+                bytes.assign(cp, cp + buf.getLength());
+                ss << "0x" << encode::encodeHex(bytes);
+                relay_elem->set("options", ElementPtr(new StringElement(ss.str())));
+            }
+        }
+
+        relay_list->add(relay_elem);
+    }
+
+    // Now we wrap the list of relays in a map.  This allows for future expansion.
+    ElementPtr extended_info = Element::createMap();
+    extended_info->set("relays", relay_list);
+
+    // Get a writable copy of the lease's current user context.
+    ElementPtr user_context;
+    if (lease->getContext()) {
+        user_context = UserContext::toElement(lease->getContext());
+    } else {
+        user_context = Element::createMap();
+    }
+
+    // Add/replace the extended info entry.
+    user_context->set("ISC", extended_info);
+
+    // Update the lease's user_context.
+    lease->setContext(user_context);
+}
+
 
 bool
 AllocEngine::conditionalExtendLifetime(Lease& lease) const {

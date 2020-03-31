@@ -44,9 +44,9 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
         std::string name = getString(shared_network_data, "name");
         shared_network.reset(new SharedNetwork4(name));
 
-        // Parse timers.
+        // Parse parameters common to all Network derivations.
         NetworkPtr network = boost::dynamic_pointer_cast<Network>(shared_network);
-        parseCommonTimers(shared_network_data, network);
+        parseCommon(shared_network_data, network);
 
         // interface is an optional parameter
         if (shared_network_data->contains("interface")) {
@@ -228,8 +228,9 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
         std::string name = getString(shared_network_data, "name");
         shared_network.reset(new SharedNetwork6(name));
 
+        // Parse parameters common to all Network derivations.
         NetworkPtr network = boost::dynamic_pointer_cast<Network>(shared_network);
-        parseCommonTimers(shared_network_data, network);
+        parseCommon(shared_network_data, network);
 
         // preferred-lifetime
         shared_network->setPreferred(parseLifetime(shared_network_data,

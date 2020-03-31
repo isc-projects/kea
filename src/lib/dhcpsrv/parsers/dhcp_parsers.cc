@@ -742,8 +742,9 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
                                    subnet_id));
     subnet_ = subnet4;
 
+    // Parse parameters common to all Network derivations.
     NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet4);
-    parseCommonTimers(params, network);
+    parseCommon(params, network);
 
     stringstream s;
     s << addr << "/" << static_cast<int>(len) << " with params: ";
@@ -1206,9 +1207,9 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
                                    subnet_id);
     subnet_.reset(subnet6);
 
-    // Parse timers that are common for v4 and v6.
+    // Parse parameters common to all Network derivations.
     NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet_);
-    parseCommonTimers(params, network);
+    parseCommon(params, network);
 
     // Enable or disable Rapid Commit option support for the subnet.
     if (!rapid_commit.unspecified()) {

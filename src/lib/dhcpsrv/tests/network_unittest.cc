@@ -340,6 +340,7 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("ddns-qualifying-suffix", Element::create("gs"));
     globals_->set("hostname-char-set", Element::create("gc"));
     globals_->set("hostname-char-replacement", Element::create("gr"));
+    globals_->set("store-extended-info", Element::create(true));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -405,6 +406,12 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork6>(&Network6::getHostnameCharReplacement,
                                              &Network6::setHostnameCharReplacement,
                                              "nr", "gr");
+    }
+    {
+        SCOPED_TRACE("store-extended-info");
+        testNetworkInheritance<TestNetwork4>(&Network6::getStoreExtendedInfo,
+                                             &Network6::setStoreExtendedInfo,
+                                             false, true);
     }
 
     // Interface-id requires special type of test.

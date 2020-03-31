@@ -98,8 +98,8 @@ BaseNetworkParser::parseLifetime(const ConstElementPtr& scope,
 }
 
 void
-BaseNetworkParser::parseCommonTimers(const ConstElementPtr& network_data,
-                                     NetworkPtr& network) {
+BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
+                               NetworkPtr& network) {
     if (network_data->contains("renew-timer")) {
         network->setT1(getInteger(network_data, "renew-timer"));
     }
@@ -109,6 +109,11 @@ BaseNetworkParser::parseCommonTimers(const ConstElementPtr& network_data,
     }
 
     network->setValid(parseLifetime(network_data, "valid-lifetime"));
+
+    if (network_data->contains("store-extended-info")) {
+        network->setStoreExtendedInfo(getBoolean(network_data,
+                                                 "store-extended-info"));
+    }
 }
 
 void

@@ -691,9 +691,9 @@ public:
                                      inheritance, "store-extended-info"));
     }
 
-    /// @brief Sets new ddns-override-no-update
+    /// @brief Sets new store-extended-info
     ///
-    /// @param ddns_override_no_update New value to use.
+    /// @param store-extended-info New value to use.
     void setStoreExtendedInfo(const util::Optional<bool>& store_extended_info) {
         store_extended_info_ = store_extended_info;
     }

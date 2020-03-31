@@ -30,19 +30,20 @@ protected:
     const Triplet<uint32_t> parseLifetime(const data::ConstElementPtr& scope,
                                           const std::string& name);
 
-    /// @brief Parses common DHCP timers.
+    /// @brief Parses common parameters
     ///
     /// The parsed parameters are:
     /// - renew-timer,
     /// - rebind-timer,
     /// - valid-lifetime
+    /// - store-extended-info
     ///
     /// @param network_data Data element holding shared network
     /// configuration to be parsed.
     /// @param [out] network Pointer to a network in which parsed data is
     /// to be stored.
-    void parseCommonTimers(const data::ConstElementPtr& network_data,
-                           NetworkPtr& network);
+    void parseCommon(const data::ConstElementPtr& network_data,
+                     NetworkPtr& network);
 
     /// @brief Parses parameters related to "percent" timers settngs.
     ///

@@ -15,6 +15,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/shared_network_parser.h>
+#include <testutils/gtest_utils.h>
 #include <gtest/gtest.h>
 #include <string>
 
@@ -234,7 +235,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     SharedNetwork4Parser parser;
     SharedNetwork4Ptr network;
 
-    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_NO_THROW_LOG(network = parser.parse(config_element));
     ASSERT_TRUE(network);
 
     // Check basic parameters.
@@ -262,6 +263,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("example.com.", network->getDdnsQualifyingSuffix().get());
     EXPECT_EQ("[^A-Z]", network->getHostnameCharSet().get());
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
+    EXPECT_TRUE(network->getStoreExtendedInfo().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -510,6 +512,7 @@ public:
                 "    \"ddns-qualifying-suffix\": \"example.com.\","
                 "    \"hostname-char-set\": \"[^A-Z]\","
                 "    \"hostname-char-replacement\": \"x\","
+                "    \"store-extended-info\": true,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -613,6 +616,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ("example.com.", network->getDdnsQualifyingSuffix().get());
     EXPECT_EQ("[^A-Z]", network->getHostnameCharSet().get());
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
+    EXPECT_TRUE(network->getStoreExtendedInfo().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();

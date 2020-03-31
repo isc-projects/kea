@@ -267,7 +267,8 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "max-valid-lifetime",
     "calculate-tee-times",
     "t1-percent",
-    "t2-percent"
+    "t2-percent",
+    "store-extended-info"
 };
 
 /// @brief This table defines all pool parameters.

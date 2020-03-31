@@ -1786,7 +1786,7 @@ private:
                                  ClientContext4& ctx) const;
 
 protected:
-    /// @brief Stores additional client query parameters on the lease
+    /// @brief Stores additional client query parameters on a V4 lease
     ///
     /// Extended features such as LeaseQuery require addtional parameters
     /// to be stored for each lease, than we would otherwise retain.
@@ -1801,6 +1801,23 @@ protected:
     /// @param ctx A context containing information from the server about the
     void updateLease4ExtendedInfo(const Lease4Ptr& lease,
                                   const ClientContext4& ctx) const;
+
+    /// @brief Stores additional client query parameters on a V6 lease
+    ///
+    /// Extended features such as LeaseQuery and Reconfigure require
+    /// addtional parameters to be stored for each lease, than we would
+    /// otherwise retain.  This function adds that information to the
+    /// lease's user-context.
+    /// (Note it is protected to facilitate unit testing).
+    ///
+    /// @warning This method doesn't check if the pointer to the lease is
+    /// valid nor if the subnet to the pointer in the @c ctx is valid.
+    /// The caller is responsible for making sure that they are valid.
+    ///
+    /// @param [out] lease A pointer to the lease to be updated.
+    /// @param ctx A context containing information from the server about the
+    void updateLease6ExtendedInfo(const Lease6Ptr& lease,
+                                  const ClientContext6& ctx) const;
 
 private:
 

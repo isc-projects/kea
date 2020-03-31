@@ -3212,43 +3212,42 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
 
     // Test scenarios.
     std::vector<Scenario> scenarios {
-        {
+    {
         "no context, no rai",
         "",
         "",
         ""
-        },
-        {
+    },
+    {
         "some original context, no rai",
         "{\"foo\": 123}",
         "",
         "{\"foo\": 123}"
-        },
-        {
+    },
+    {
         "no original context, rai",
         "",
         "0x52050104aabbccdd",
         "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
-        },
-        {
+    },
+    {
         "some original context, rai",
         "{\"foo\": 123}",
         "0x52050104aabbccdd",
         "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" }, \"foo\": 123 }"
-        },
-        {
+    },
+    {
         "original rai context, no rai",
         "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
         "",
         "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
-        },
-        {
+    },
+    {
         "original rai context, different rai",
         "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
         "0x52050104ddeeffaa",
         "{ \"ISC\": { \"relay-agent-info\": \"0x52050104DDEEFFAA\" } }",
-        },
-    };
+    }};
 
     // Create the allocation engine, context and lease.
     NakedAllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
@@ -3354,35 +3353,34 @@ TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
 
     // Test scenarios.
     std::vector<Scenario> scenarios {
-        {
-            "create client one without rai",
-            mac1,
-            "",
-            "",
-            mac1_addr
-        },
-        {
-            "renew client one without rai",
-            {},
-            "",
-            "",
-            mac1_addr
-        },
-        {
-            "create client two with rai",
-            mac2,
-            "0x52050104a1b1c1d1",
-            "{ \"ISC\": { \"relay-agent-info\": \"0x52050104A1B1C1D1\" } }",
-            mac2_addr
-        },
-        {
-            "renew client two without rai",
-            {},
-            "",
-            "{ \"ISC\": { \"relay-agent-info\": \"0x52050104A1B1C1D1\" } }",
-            mac2_addr
-        },
-    };
+    {
+        "create client one without rai",
+        mac1,
+        "",
+        "",
+        mac1_addr
+    },
+    {
+        "renew client one without rai",
+        {},
+        "",
+        "",
+        mac1_addr
+    },
+    {
+        "create client two with rai",
+        mac2,
+        "0x52050104a1b1c1d1",
+        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104A1B1C1D1\" } }",
+        mac2_addr
+    },
+    {
+        "renew client two without rai",
+        {},
+        "",
+        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104A1B1C1D1\" } }",
+        mac2_addr
+    }};
 
     // Create the allocation engine, context and lease.
     NakedAllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
@@ -3394,9 +3392,8 @@ TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
                                     IOAddress::IPV4_ZERO_ADDRESS(),
                                     false, false, "", false);
 
-    Lease4Ptr lease;
-
     // Iterate over the test scenarios.
+    Lease4Ptr lease;
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
@@ -3464,35 +3461,32 @@ TEST_F(AllocEngine4Test, storeExtendedInfoDisabled4) {
     std::vector<uint8_t> mac2 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x02};
     std::string mac2_addr = "192.0.2.101";
 
-    // @todo set store-extended-info = false
-
     // Test scenarios.
     std::vector<Scenario> scenarios {
-        {
-            "create client one without rai",
-            mac1,
-            "",
-            mac1_addr
-        },
-        {
-            "renew client one without rai",
-            {},
-            "",
-            mac1_addr
-        },
-        {
-            "create client two with rai",
-            mac2,
-            "0x52050104a1b1c1d1",
-            mac2_addr
-        },
-        {
-            "renew client two with rai",
-            {},
-            "0x52050104a1b1c1d1",
-            mac2_addr
-        },
-    };
+    {
+        "create client one without rai",
+        mac1,
+        "",
+        mac1_addr
+    },
+    {
+        "renew client one without rai",
+        {},
+        "",
+        mac1_addr
+    },
+    {
+        "create client two with rai",
+        mac2,
+        "0x52050104a1b1c1d1",
+        mac2_addr
+    },
+    {
+        "renew client two with rai",
+        {},
+        "0x52050104a1b1c1d1",
+        mac2_addr
+    }};
 
     // Create the allocation engine, context and lease.
     NakedAllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);

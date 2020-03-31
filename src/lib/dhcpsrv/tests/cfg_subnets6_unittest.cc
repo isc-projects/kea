@@ -624,6 +624,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet2->addRelayAddress(IOAddress("2001:db8:ff::2"));
     subnet2->setValid(Triplet<uint32_t>(200));
     subnet2->setPreferred(Triplet<uint32_t>(100));
+    subnet2->setStoreExtendedInfo(true);
 
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
@@ -683,7 +684,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"user-context\": { },\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
-        "    \"option-data\": [ ]\n"
+        "    \"option-data\": [ ],\n"
+        "    \"store-extended-info\": true\n"
         "},{\n"
         "    \"id\": 125,\n"
         "    \"subnet\": \"2001:db8:3::/48\",\n"

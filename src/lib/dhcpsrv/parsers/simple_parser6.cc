@@ -82,7 +82,8 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "ddns-override-client-update",  Element::boolean },
     { "ddns-replace-client-name",     Element::string },
     { "ddns-generated-prefix",        Element::string },
-    { "ddns-qualifying-suffix",       Element::string }
+    { "ddns-qualifying-suffix",       Element::string },
+    { "store-extended-info",          Element::boolean }
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -106,8 +107,10 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "ddns-replace-client-name",       Element::string,  "never" },
     { "ddns-generated-prefix",          Element::string,  "myhost" },
     { "ddns-qualifying-suffix",         Element::string,   "" },
-    { "hostname-char-set",              Element::string, "[^A-Za-z0-9.-]" },
-    { "hostname-char-replacement",      Element::string, "" }
+    { "hostname-char-set",              Element::string,   "[^A-Za-z0-9.-]" },
+    { "hostname-char-replacement",      Element::string,   "" },
+    { "store-extended-info",            Element::boolean,  "false" }
+
 };
 
 /// @brief This table defines all option definition parameters.
@@ -207,6 +210,7 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "ddns-qualifying-suffix",         Element::string },
     { "hostname-char-set",              Element::string },
     { "hostname-char-replacement",      Element::string },
+    { "store-extended-info",            Element::boolean },
     { "metadata",                       Element::map }
 };
 
@@ -248,7 +252,8 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "max-valid-lifetime",
     "calculate-tee-times",
     "t1-percent",
-    "t2-percent"
+    "t2-percent",
+    "store-extended-info"
 };
 
 /// @brief This table defines all pool parameters.
@@ -322,6 +327,7 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "ddns-qualifying-suffix",         Element::string },
     { "hostname-char-set",              Element::string },
     { "hostname-char-replacement",      Element::string },
+    { "store-extended-info",            Element::boolean },
     { "metadata",                       Element::map }
 };
 

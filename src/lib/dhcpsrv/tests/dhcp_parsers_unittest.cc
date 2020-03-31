@@ -2787,6 +2787,9 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
 
     EXPECT_TRUE(subnet->getHostnameCharReplacement().unspecified());
     EXPECT_TRUE(subnet->getHostnameCharReplacement().empty());
+
+    EXPECT_TRUE(subnet->getStoreExtendedInfo().unspecified());
+    EXPECT_FALSE(subnet->getStoreExtendedInfo().get());
 }
 
 // This test verifies that it is possible to parse an IPv6 subnet for which
@@ -2864,6 +2867,9 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
 
     EXPECT_TRUE(subnet->getHostnameCharReplacement().unspecified());
     EXPECT_TRUE(subnet->getHostnameCharReplacement().empty());
+
+    EXPECT_TRUE(subnet->getStoreExtendedInfo().unspecified());
+    EXPECT_FALSE(subnet->getStoreExtendedInfo().get());
 }
 
 // This test verifies that it is possible to parse an IPv4 shared network
@@ -2936,6 +2942,9 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
 
     EXPECT_TRUE(network->getDdnsQualifyingSuffix().unspecified());
     EXPECT_TRUE(network->getDdnsQualifyingSuffix().empty());
+
+    EXPECT_TRUE(network->getStoreExtendedInfo().unspecified());
+    EXPECT_FALSE(network->getStoreExtendedInfo().get());
 }
 
 // This test verifies that it is possible to parse an IPv6 shared network
@@ -3008,6 +3017,9 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
 
     EXPECT_TRUE(network->getDdnsQualifyingSuffix().unspecified());
     EXPECT_TRUE(network->getDdnsQualifyingSuffix().empty());
+
+    EXPECT_TRUE(network->getStoreExtendedInfo().unspecified());
+    EXPECT_FALSE(network->getStoreExtendedInfo().get());
 }
 
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
