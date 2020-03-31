@@ -153,7 +153,7 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		 continue])
 
 	AC_MSG_CHECKING(range-for support)
-	feature="constexpr"
+	feature="range-for support"
 	AC_COMPILE_IFELSE(
 		[AC_LANG_PROGRAM(
 			[#include <vector>
@@ -220,11 +220,22 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 			[#include <atomic>
 			 std::atomic_flag flag;],
 			[])],
-		[AC_MSG_RESULT([yes])
-		 break],
+		[AC_MSG_RESULT([yes])],
 		[AC_MSG_RESULT([no])
 		 continue])
 
+	 AC_MSG_CHECKING(chrono support)
+	 feature="chrono"
+	 AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <chrono>
+			 using namespace std::chrono;],
+			[auto now = high_resolution_clock::now();])],
+		[AC_MSG_RESULT([yes])
+                 break],
+                [AC_MSG_RESULT([no])
+                 continue])
+
 done
 
-])dnl AX_ISC_RPATH
+])dnl AX_ISC_CPP11

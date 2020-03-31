@@ -10,8 +10,7 @@
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
-#include <boost/date_time/time_duration.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <chrono>
 #include <list>
 #include <stdint.h>
 
@@ -28,9 +27,13 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Define clock
+///
+typedef std::chrono::system_clock SampleClock;
+
 /// @brief Defines duration resolution
 ///
-typedef boost::posix_time::time_duration StatsDuration;
+typedef std::chrono::system_clock::duration StatsDuration;
 
 /// @defgroup stat_samples Specifies supported observation types.
 ///
@@ -39,16 +42,16 @@ typedef boost::posix_time::time_duration StatsDuration;
 /// @{
 
 /// @brief Integer (implemented as signed 64-bit integer)
-typedef std::pair<int64_t, boost::posix_time::ptime> IntegerSample;
+typedef std::pair<int64_t, SampleClock::time_point> IntegerSample;
 
 /// @brief Float (implemented as double precision)
-typedef std::pair<double, boost::posix_time::ptime> FloatSample;
+typedef std::pair<double, SampleClock::time_point> FloatSample;
 
 /// @brief Time Duration
-typedef std::pair<StatsDuration, boost::posix_time::ptime> DurationSample;
+typedef std::pair<StatsDuration, SampleClock::time_point> DurationSample;
 
 /// @brief String
-typedef std::pair<std::string, boost::posix_time::ptime> StringSample;
+typedef std::pair<std::string, SampleClock::time_point> StringSample;
 
 /// @}
 
@@ -121,9 +124,9 @@ public:
     /// @param duration determines maximum age of samples
     /// Example:
     /// To set a statistic to keep observations for the last 5 minutes, call:
-    /// setMaxSampleAge(time_duration(0, 5, 0, 0));
+    /// setMaxSampleAge(std::chrono::minutes(5));
     /// To revert statistic to a single value, call:
-    /// setMaxSampleAge(time_duration(0, 0, 0, 0));
+    /// setMaxSampleAge(StatsDuration::zero());
     void setMaxSampleAge(const StatsDuration& duration);
 
     /// @brief Determines how many samples of a given statistic should be kept.
@@ -388,7 +391,7 @@ private:
 
     /// @brief Maximum timespan of samples
     /// The limit is represented as a pair
-    /// of bool value and StatsDuration(boost::posix_time::time_duration)
+    /// of bool value and StatsDuration
     /// Only one kind of limit can be active
     /// The bool value informs which limit
     /// is available
@@ -399,7 +402,8 @@ private:
     ///
     /// By default the MaxSampleCount is set to 20
     /// and MaxSampleAge is disabled
-    static std::pair<bool, StatsDuration> default_max_sample_age_;
+    std::pair<bool, StatsDuration> max_sample_age_ = std::make_pair(false,
+        StatsDuration::zero());
 
     /// @defgroup samples_storage Storage for supported observations
     ///

@@ -7,15 +7,14 @@
 #include <config.h>
 
 #include <stats/observation.h>
-#include <util/boost_time_utils.h>
+#include <util/chrono_time_utils.h>
 #include <cc/data.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/date_time/gregorian/gregorian.hpp>
+#include <chrono>
 #include <utility>
 
 using namespace std;
+using namespace std::chrono;
 using namespace isc::data;
-using namespace boost::posix_time;
 
 namespace isc {
 namespace stats {
@@ -195,10 +194,10 @@ void Observation::setValueInternal(SampleType value, StorageType& storage,
     }
 
     if (storage.empty()) {
-        storage.push_back(make_pair(value, microsec_clock::local_time()));
+        storage.push_back(make_pair(value, SampleClock::now()));
     } else {
         // Storing of more than one sample
-        storage.push_front(make_pair(value, microsec_clock::local_time()));
+        storage.push_front(make_pair(value, SampleClock::now()));
 
         if (max_sample_count_.first) {
             // if max_sample_count_ is set to true
@@ -407,7 +406,7 @@ Observation::getJSON() const {
         for (std::list<IntegerSample>::iterator it = s.begin(); it != s.end(); ++it) {
             entry = isc::data::Element::createList();
             value = isc::data::Element::create(static_cast<int64_t>((*it).first));
-            timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
+            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
 
             entry->add(value);
             entry->add(timestamp);
@@ -424,7 +423,7 @@ Observation::getJSON() const {
         for (std::list<FloatSample>::iterator it = s.begin(); it != s.end(); ++it) {
             entry = isc::data::Element::createList();
             value = isc::data::Element::create((*it).first);
-            timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
+            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
 
             entry->add(value);
             entry->add(timestamp);
@@ -441,7 +440,7 @@ Observation::getJSON() const {
         for (std::list<DurationSample>::iterator it = s.begin(); it != s.end(); ++it) {
             entry = isc::data::Element::createList();
             value = isc::data::Element::create(isc::util::durationToText((*it).first));
-            timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
+            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
 
             entry->add(value);
             entry->add(timestamp);
@@ -458,7 +457,7 @@ Observation::getJSON() const {
         for (std::list<StringSample>::iterator it = s.begin(); it != s.end(); ++it) {
             entry = isc::data::Element::createList();
             value = isc::data::Element::create((*it).first);
-            timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
+            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
 
             entry->add(value);
             entry->add(timestamp);
@@ -489,7 +488,7 @@ void Observation::reset() {
     }
     case STAT_DURATION: {
         duration_samples_.clear();
-        setValue(time_duration(0, 0, 0, 0));
+        setValue(StatsDuration::zero());
         return;
     }
     case STAT_STRING: {

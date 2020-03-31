@@ -8,13 +8,13 @@
 
 #include <stats/context.h>
 #include <gtest/gtest.h>
-#include <util/boost_time_utils.h>
+#include <util/chrono_time_utils.h>
 #include <string>
 
 using namespace isc::data;
 using namespace isc::stats;
-using namespace boost::posix_time;
 using namespace std;
+using namespace std::chrono;
 
 // Basic test that checks get, add, del methods
 TEST(ContextTest, basic) {
@@ -109,15 +109,16 @@ TEST(ContextTest, basic) {
     EXPECT_EQ(from_ctx->getMaxSampleCount().second, 50);
 
     // Set sample age for all statistics
-    EXPECT_NO_THROW(ctx.setMaxSampleAgeAll(millisec::time_duration(0, 4, 5, 3)));
+    const StatsDuration& dur(minutes(4) + seconds(5) + milliseconds(3));
+    EXPECT_NO_THROW(ctx.setMaxSampleAgeAll(dur));
 
     EXPECT_NO_THROW(from_ctx = ctx.get("alpha"));
     ASSERT_TRUE(from_ctx);
-    EXPECT_EQ(from_ctx->getMaxSampleAge().second, millisec::time_duration(0, 4, 5, 3));
+    EXPECT_EQ(from_ctx->getMaxSampleAge().second, dur);
 
     EXPECT_NO_THROW(from_ctx = ctx.get("gamma"));
     ASSERT_TRUE(from_ctx);
-    EXPECT_EQ(from_ctx->getMaxSampleAge().second, millisec::time_duration(0, 4, 5, 3));
+    EXPECT_EQ(from_ctx->getMaxSampleAge().second, dur);
 
     // Clear all statistics.
     EXPECT_NO_THROW(ctx.clear());

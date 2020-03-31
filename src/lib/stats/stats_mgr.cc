@@ -10,12 +10,12 @@
 #include <stats/stats_mgr.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
-#include <util/boost_time_utils.h>
 #include <util/multi_threading_mgr.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/make_shared.hpp>
+#include <chrono>
 
 using namespace std;
+using namespace std::chrono;
 using namespace isc::data;
 using namespace isc::config;
 using namespace isc::util;
@@ -615,13 +615,7 @@ StatsMgr::getStatDuration(const ConstElementPtr& params,
         reason = "Missing mandatory 'duration' parameter.";
         return (false);
     }
-    int64_t time_duration = stat_duration->intValue();
-    int64_t hours = time_duration / 3600;
-    time_duration -= hours * 3600;
-    int64_t minutes = time_duration / 60;
-    time_duration -= minutes * 60;
-    int64_t seconds = time_duration;
-    duration = boost::posix_time::time_duration(hours, minutes, seconds, 0);
+    duration = std::chrono::seconds(stat_duration->intValue());
     return (true);
 }
 

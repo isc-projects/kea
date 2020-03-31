@@ -137,9 +137,9 @@ public:
     /// setMaxSampleCount() below.
     /// Example:
     /// To set a statistic to keep observations for the last 5 minutes, call:
-    /// setMaxSampleAge("incoming-packets", time_duration(0, 5, 0, 0));
+    /// setMaxSampleAge("incoming-packets", StatsDuration::minutes(5));
     /// to revert statistic to a single value, call:
-    /// setMaxSampleAge("incoming-packets", time_duration(0, 0, 0, 0));
+    /// setMaxSampleAge("incoming-packets", StatsDuration:zero());
     ///
     /// @param name name of the observation
     /// @param duration determines maximum age of samples

@@ -18,11 +18,11 @@
 #include <hooks/hooks_manager.h>
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
-#include <util/boost_time_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/io_utils.h>
 #include <testutils/unix_control_client.h>
 #include <testutils/sandbox.h>
+#include <util/chrono_time_utils.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
@@ -1191,7 +1191,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
     s << "{ \"arguments\": { ";
     for (auto st = initial_stats.begin(); st != initial_stats.end();) {
         s << "\"" << *st << "\": [ [ 0, \"";
-        s << isc::util::ptimeToText(StatsMgr::instance().getObservation(*st)->getInteger().second);
+        s << isc::util::clockToText(StatsMgr::instance().getObservation(*st)->getInteger().second);
         s << "\" ] ]";
         if (++st != initial_stats.end()) {
             s << ", ";
