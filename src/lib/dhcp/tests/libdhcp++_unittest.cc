@@ -1129,9 +1129,7 @@ TEST_F(LibDhcpTest, option43Pad) {
     // Parse options.
     OptionCollection options;
     list<uint16_t> deferred;
-    size_t offset = 0;
-    ASSERT_NO_THROW(offset = LibDHCP::unpackOptions4(buf, space,
-                                                     options, deferred, true));
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, space, options, deferred, true));
 
     // There should be 2 suboptions (1 and 2) because no sub-option 0
     // was defined so code 0 means PAD.
@@ -1159,9 +1157,7 @@ TEST_F(LibDhcpTest, option43Pad) {
     LibDHCP::commitRuntimeOptionDefs();
 
     options.clear();
-    offset = 0;
-    ASSERT_NO_THROW(offset = LibDHCP::unpackOptions4(buf, space,
-                                                     options, deferred, true));
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, space, options, deferred, true));
 
     // There should be 2 suboptions (0 and 1).
     EXPECT_EQ(2, options.size());

@@ -197,8 +197,7 @@ PktFilterLPF::openSocket(Iface& iface,
                   << "' to interface '" << iface.getName() << "'");
     }
 
-    // Set socket to non-blocking mode. In theory it is useless but
-    // in real world the socket can block on read...
+    // Set socket to non-blocking mode.
     if (fcntl(sock, F_SETFL, O_NONBLOCK) != 0) {
         // Get the error message immediately after the bind because the
         // invocation to close() below would override the errno.
@@ -207,7 +206,7 @@ PktFilterLPF::openSocket(Iface& iface,
         close(fallback);
         isc_throw(SocketConfigError, "failed to set SO_NONBLOCK option on the"
                   " LPF socket '" << sock << "' to interface '"
-                  << iface.getName() << "'");
+                  << iface.getName() << "'" << ", reason: " << errmsg);
     }
 
     return (SocketInfo(addr, port, sock, fallback));
