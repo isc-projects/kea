@@ -28,7 +28,8 @@ isc::util::clockToText(system_clock::time_point t, size_t fsecs_precision) {
     // If the requested precision is less than the maximum native precision
     // we will divide the fractional seconds value by 10^(max - requested)
     if (fsecs_precision) {
-        microseconds frac = t - system_clock::from_time_t(tt);
+        system_clock::duration dur = t - system_clock::from_time_t(tt);
+        microseconds frac = duration_cast<microseconds>(dur);
         auto fsecs = frac.count();
         size_t width = MAX_FSECS_PRECISION;
         if (fsecs_precision < width) {
@@ -63,7 +64,8 @@ isc::util::durationToText(system_clock::duration dur, size_t fsecs_precision) {
     // If the requested precision is less than the maximum native precision
     // we will divide the fractional seconds value by 10^(max - requested)
     if (fsecs_precision) {
-        microseconds frac = dur - unfrac;
+        microseconds frac = duration_cast<microseconds>(dur);
+        frac -= duration_cast<microseconds>(unfrac);
         auto fsecs = frac.count();
         size_t width = MAX_FSECS_PRECISION;
         if (fsecs_precision < width) {
