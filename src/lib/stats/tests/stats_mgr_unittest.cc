@@ -25,11 +25,11 @@ using namespace std::chrono;
 
 namespace {
 
-const StatsDuration& dur1234(hours(1) + minutes(2) + seconds(3) +
-                             milliseconds(4));
-const StatsDuration& dur5678(hours(5) + minutes(6) + seconds(7) +
-                             milliseconds(8));
-const StatsDuration& dur1245(hours(1) + minutes(2) + seconds(45));
+static const StatsDuration& dur1234(hours(1) + minutes(2) + seconds(3) +
+                                    milliseconds(4));
+static const StatsDuration& dur5678(hours(5) + minutes(6) + seconds(7) +
+                                    milliseconds(8));
+static const StatsDuration& dur1245(hours(1) + minutes(2) + seconds(45));
 
 /// @brief Fixture class for StatsMgr testing
 ///

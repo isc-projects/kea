@@ -9,6 +9,7 @@
 #include <util/chrono_time_utils.h>
 
 #include <string.h>
+#include <time.h>
 
 #include <gtest/gtest.h>
 

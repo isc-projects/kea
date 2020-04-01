@@ -23,13 +23,13 @@ using namespace std::chrono;
 
 namespace {
 
-const StatsDuration& dur1234(hours(1) + minutes(2) + seconds(3) +
-                             milliseconds(4));
-const StatsDuration& dur5678(hours(5) + minutes(6) + seconds(7) +
-                             milliseconds(8));
-const StatsDuration& dur681012(hours(6) + minutes(8) + seconds(10) +
-                               milliseconds(12));
-const StatsDuration& dur453(minutes(4) + seconds(5) + milliseconds(3));
+static const StatsDuration& dur1234(hours(1) + minutes(2) + seconds(3) +
+                                    milliseconds(4));
+static const StatsDuration& dur5678(hours(5) + minutes(6) + seconds(7) +
+                                    milliseconds(8));
+static const StatsDuration& dur681012(hours(6) + minutes(8) + seconds(10) +
+                                      milliseconds(12));
+static const StatsDuration& dur453(minutes(4) + seconds(5) + milliseconds(3));
 
 /// @brief Test class for Observation
 ///
