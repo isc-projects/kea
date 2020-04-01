@@ -6630,6 +6630,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
         "    \"min-valid-lifetime\": 30, \n"
         "    \"max-valid-lifetime\": 50, \n"
         "    \"interface-id\": \"oneone\",\n"
+        "    \"store-extended-info\": true,\n"
         "    \"relay\": {\n"
         "        \"ip-address\": \"1111::1\"\n"
         "    },\n"
@@ -6703,6 +6704,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     EXPECT_TRUE(s->hasRelayAddress(IOAddress("1111::1")));
     EXPECT_TRUE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
+    EXPECT_TRUE(s->getStoreExtendedInfo());
 
     // For the second subnet, the renew-timer should be 100, because it
     // was specified explicitly. Other parameters a derived
@@ -6715,6 +6717,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     EXPECT_TRUE(s->hasRelayAddress(IOAddress("2222::2")));
     EXPECT_TRUE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
+    EXPECT_TRUE(s->getStoreExtendedInfo());
 
     // Ok, now check the second shared subnet.
     net = nets->at(1);
@@ -6730,6 +6733,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     EXPECT_FALSE(s->hasRelays());
     EXPECT_FALSE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
+    EXPECT_FALSE(s->getStoreExtendedInfo());
 }
 
 // Since it is not allowed to define both interface-id and interface
@@ -7645,5 +7649,80 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControlInvalid) {
         }
     }
 }
+
+// Verifies the value of store-extended-info for subnets when there
+// is a global value defined.
+TEST_F(Dhcp6ParserTest, storeExtendedInfoGlobal) {
+    const string config = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"store-extended-info\": true,"
+        "\"subnet6\": [ "
+        "{ "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"store-extended-info\": false"
+        "},"
+        "{"
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::ffff\" } ],"
+        "    \"subnet\": \"2001:db8:2::/64\" "
+        "} ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json = parseJSON(config);
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    // First subnet should override the global value.
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    Subnet6Ptr subnet = cfg->selectSubnet(IOAddress("2001:db8:1::"));
+    ASSERT_TRUE(subnet);
+    EXPECT_FALSE(subnet->getStoreExtendedInfo());
+
+    // Second subnet should use the global value.
+    subnet = cfg->selectSubnet(IOAddress("2001:db8:2::"));
+    ASSERT_TRUE(subnet);
+    EXPECT_TRUE(subnet->getStoreExtendedInfo());
+}
+
+// Verifies the value of store-extended-info for subnets when there
+// is no global value defined.
+TEST_F(Dhcp6ParserTest, storeExtendedInfoNoGlobal) {
+    const string config = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        "{ "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        "},"
+        "{"
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::ffff\" } ],"
+        "    \"subnet\": \"2001:db8:2::/64\","
+        "    \"store-extended-info\": true"
+        "} ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json = parseJSON(config);
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    // First subnet should use global default.
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    Subnet6Ptr subnet = cfg->selectSubnet(IOAddress("2001:db8:1::"));
+    ASSERT_TRUE(subnet);
+    EXPECT_FALSE(subnet->getStoreExtendedInfo());
+
+    // Second subnet should use its own value.
+    subnet = cfg->selectSubnet(IOAddress("2001:db8:2::"));
+    ASSERT_TRUE(subnet);
+    EXPECT_TRUE(subnet->getStoreExtendedInfo());
+}
+
+
 
 };

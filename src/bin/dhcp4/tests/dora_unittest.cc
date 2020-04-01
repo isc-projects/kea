@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/subnet_id.h>
+#include <testutils/gtest_utils.h>
 
 #ifdef HAVE_CQL
 #include <cql/testutils/cql_schema.h>
@@ -540,7 +541,29 @@ const char* DORA_CONFIGS[] = {
         "        \"data\": \"10.0.0.200,10.0.0.201\""
         "    } ]"
         " } ]"
+    "}",
+
+// Configuration 17
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": ["
+        "    {"
+        "        \"subnet\": \"10.0.0.0/24\", "
+        "        \"store-extended-info\": true,"
+        "        \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "        \"interface\": \"eth0\""
+        "    },"
+        "    {"
+        "        \"subnet\": \"192.0.2.0/26\", "
+        "        \"store-extended-info\": false,"
+        "        \"pools\": [ { \"pool\": \"192.0.2.10-192.0.2.63\" } ],"
+        "        \"interface\": \"eth1\""
+        "    }"
+        "]"
     "}"
+
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -2188,6 +2211,79 @@ TEST_F(DORATest, changingCircuitId) {
     EXPECT_NE("10.0.0.9", client.config_.lease_.addr_.toText());
 }
 
+// Verifies that extended info is stored on the lease when
+// store-extended-info is enabled.
+TEST_F(DORATest, storeExtendedInfoEnabled) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use relay agent to make sure that the desired subnet is
+    // selected for our client.
+    client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
+    // Specify client identifier.
+    client.includeClientId("01:11:22:33:44:55:66");
+    // Set the circuit id to make relay-agent-info more interesting.
+    client.setCircuitId("charter950");
+
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[17], *client.getServer());
+    // Client A performs 4-way exchange and should obtain a reserved
+    // address.
+    ASSERT_NO_THROW_LOG(client.doDORA(boost::shared_ptr<
+                                      IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
+
+    // The stored lease should have extended info.
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
+    ASSERT_TRUE(lease);
+    ASSERT_TRUE(lease->getContext());
+
+    // Make user the user-context content is correct.
+    std::string expected_context = "{ \"ISC\": { \"relay-agent-info\":"
+                                   " \"0x010A63686172746572393530\" } }";
+    stringstream ss;
+    ss << *(lease->getContext());
+    ASSERT_EQ(expected_context, ss.str());
+}
+
+// Verifies that extended info is not stored on the lease when
+// store-extended-info is disabled.
+TEST_F(DORATest, storeExtendedInfoDisabled) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use relay agent to make sure that the desired subnet is
+    // selected for our client.
+    client.useRelay(true, IOAddress("192.0.2.20"), IOAddress("192.0.2.21"));
+    // Specify client identifier.
+    client.includeClientId("01:11:22:33:44:55:66");
+    // Set the circuit id to make relay-agent-info more interesting.
+    client.setCircuitId("charter950");
+
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[17], *client.getServer());
+    // Client A performs 4-way exchange and should obtain a reserved
+    // address.
+    ASSERT_NO_THROW_LOG(client.doDORA(boost::shared_ptr<
+                                      IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("192.0.2.10", client.config_.lease_.addr_.toText());
+
+    // The stored lease should not have extended info.
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
+    ASSERT_TRUE(lease);
+    ASSERT_FALSE(lease->getContext());
+}
+
+
+
 // Starting tests which require MySQL backend availability. Those tests
 // will not be executed if Kea has been compiled without the
 // --with-mysql.
@@ -2286,7 +2382,6 @@ TEST_F(DORACQLTest, multiStageBoot) {
     // DORA_CONFIGS[10] to be used for server configuration.
     testMultiStageBoot(10);
 }
-
 #endif
 
 } // end of anonymous namespace

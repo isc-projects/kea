@@ -6173,6 +6173,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "    \"next-server\": \"1.2.3.4\",\n"
         "    \"server-hostname\": \"foo\",\n"
         "    \"boot-file-name\": \"bar\",\n"
+        "    \"store-extended-info\": true,\n"
         "    \"relay\": {\n"
         "        \"ip-address\": \"5.6.7.8\"\n"
         "    },\n"
@@ -6249,6 +6250,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ("eth0", s->getIface().get());
     EXPECT_FALSE(s->getMatchClientId());
     EXPECT_TRUE(s->getAuthoritative());
+    EXPECT_TRUE(s->getStoreExtendedInfo());
     EXPECT_EQ(IOAddress("1.2.3.4"), s->getSiaddr());
     EXPECT_EQ("foo", s->getSname().get());
     EXPECT_EQ("bar", s->getFilename().get());
@@ -6265,6 +6267,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ("eth0", s->getIface().get());
     EXPECT_TRUE(s->getMatchClientId());
     EXPECT_TRUE(s->getAuthoritative());
+    EXPECT_TRUE(s->getStoreExtendedInfo());
     EXPECT_EQ(IOAddress("11.22.33.44"), s->getSiaddr().get());
     EXPECT_EQ("some-name.example.org", s->getSname().get());
     EXPECT_EQ("bootfile.efi", s->getFilename().get());
@@ -6285,6 +6288,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ("", s->getIface().get());
     EXPECT_TRUE(s->getMatchClientId());
     EXPECT_FALSE(s->getAuthoritative());
+    EXPECT_FALSE(s->getStoreExtendedInfo());
     EXPECT_EQ(IOAddress("0.0.0.0"), s->getSiaddr());
     EXPECT_TRUE(s->getSname().empty());
     EXPECT_TRUE(s->getFilename().empty());
@@ -7047,5 +7051,95 @@ TEST_F(Dhcp4ParserTest, calculateTeeTimesInheritence) {
     EXPECT_TRUE(util::areDoublesEquivalent(0.875, subnet4->getT2Percent()));
 }
 
+// This test checks that the global store-extended-info parameter is optional
+// and that values under the subnet are used.
+TEST_F(Dhcp4ParserTest, storeExtendedInfoNoGlobal) {
+    std::string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ "
+        "{"
+        "    \"store-extended-info\": true,"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        "},"
+        "{"
+        "    \"store-extended-info\": false,"
+        "    \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\""
+        "} ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 0);
+
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(subnet1);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
+    EXPECT_TRUE(subnet1->getStoreExtendedInfo());
+
+    Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
+    ASSERT_TRUE(subnet2);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
+    EXPECT_FALSE(subnet2->getStoreExtendedInfo());
+}
+
+// This test checks that the global store-extended-info parameter is used
+// when there is no such parameter under subnet and that the parameter
+// specified for a subnet overrides the global setting.
+TEST_F(Dhcp4ParserTest, storeExtendedInfoGlobal) {
+    std::string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"store-extended-info\": true,"
+        "\"subnet4\": [ "
+        "{"
+        "    \"store-extended-info\": false,"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        "},"
+        "{"
+        "    \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\""
+        "} ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 0);
+
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(subnet1);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
+    EXPECT_FALSE(subnet1->getStoreExtendedInfo());
+
+    Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
+    ASSERT_TRUE(subnet2);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
+    EXPECT_TRUE(subnet2->getStoreExtendedInfo());
+}
 
 }

@@ -105,6 +105,7 @@ using namespace std;
   DDNS_REPLACE_CLIENT_NAME "ddns-replace-client-name"
   DDNS_GENERATED_PREFIX "ddns-generated-prefix"
   DDNS_QUALIFYING_SUFFIX "ddns-qualifying-suffix"
+  STORE_EXTENDED_INFO "store-extended-info"
   SUBNET6 "subnet6"
   OPTION_DEF "option-def"
   OPTION_DATA "option-data"
@@ -506,6 +507,7 @@ global_param: data_directory
             | ddns_replace_client_name
             | ddns_generated_prefix
             | ddns_qualifying_suffix
+            | store_extended_info
             | unknown_map_entry
             ;
 
@@ -648,6 +650,11 @@ hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("hostname-char-replacement", s);
     ctx.leave();
+};
+
+store_extended_info: STORE_EXTENDED_INFO COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("store-extended-info", b);
 };
 
 server_tag: SERVER_TAG {
@@ -1238,6 +1245,7 @@ subnet6_param: preferred_lifetime
              | ddns_replace_client_name
              | ddns_generated_prefix
              | ddns_qualifying_suffix
+             | store_extended_info
              | unknown_map_entry
              ;
 
@@ -1372,6 +1380,7 @@ shared_network_param: name
                     | ddns_replace_client_name
                     | ddns_generated_prefix
                     | ddns_qualifying_suffix
+                    | store_extended_info
                     | unknown_map_entry
                     ;
 
