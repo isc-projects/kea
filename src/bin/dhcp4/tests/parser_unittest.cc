@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 #include <dhcp4/parser_context.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
 #include <testutils/user_context_utils.h>
 
@@ -238,7 +239,7 @@ void testFile(const std::string& fname) {
 
     cout << "Parsing file " << fname << " (" << decommented << ")" << endl;
 
-    EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
+    EXPECT_NO_THROW_LOG(json = Element::fromJSONFile(decommented, true));
     reference_json = moveComments(json);
 
     // remove the temporary file

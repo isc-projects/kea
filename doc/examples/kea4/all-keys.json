@@ -513,7 +513,7 @@
 
         // Global value to store extended information (e.g. relay agent
         // information) with each lease.
-        "store-extended-info:" true,
+        "store-extended-info": true,
 
         // Governs how the Kea DHCPv4 server should deal with the invalid
         // data received from the client.
@@ -615,7 +615,7 @@
 
                 // Turn off storage of extended information (e.g. relay agent
                 // information) with each lease for this shared-network.
-                "store-extended-info:" false,
+                "store-extended-info": false,
 
                 // Shared network level server hostname set in 'sname' field.
                 "server-hostname": "",
@@ -682,7 +682,7 @@
 
                         // Turn on storage of extended information (e.g. relay agent
                         // information) with each lease for this subnet.
-                         "store-extended-info:" true,
+                        "store-extended-info": true,
 
                         // Subnet level list of DHCP options.
                         "option-data": [

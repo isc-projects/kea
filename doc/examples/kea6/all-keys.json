@@ -454,7 +454,7 @@
 
         // Global value to store extended information (e.g. relay agent
         // information) with each lease.
-        "store-extended-info:" true,
+        "store-extended-info": true,
 
         // Governs how the Kea DHCPv6 server should deal with the invalid
         // data received from the client.
@@ -580,7 +580,7 @@
 
                 // Turn off storage of extended information (e.g. relay agent
                 // information) with each lease for this shared-network.
-                "store-extended-info:" false,
+                "store-extended-info": false,
 
                 // List of IPv6 subnets belonging to this shared network.
                 "subnet6": [
@@ -628,7 +628,7 @@
 
                         // Turn on storage of extended information (e.g. relay agent
                         // information) with each lease for this subnet.
-                         "store-extended-info:" true,
+                        "store-extended-info": true,
 
                         // Subnet level list of DHCP options.
                         "option-data": [
