@@ -452,6 +452,10 @@
         // DHCP client renews the lease.
         "renew-timer": 30,
 
+        // Global value to store extended information (e.g. relay agent
+        // information) with each lease.
+        "store-extended-info:" true,
+
         // Governs how the Kea DHCPv6 server should deal with the invalid
         // data received from the client.
         "sanity-checks": {
@@ -574,6 +578,10 @@
                 // network is selected for client assignments.
                 "require-client-classes": [ "late" ],
 
+                // Turn off storage of extended information (e.g. relay agent
+                // information) with each lease for this shared-network.
+                "store-extended-info:" false,
+
                 // List of IPv6 subnets belonging to this shared network.
                 "subnet6": [
                     {
@@ -617,6 +625,10 @@
                         // by relays to identify the interface on the relay to
                         // which the response is sent.
                         "interface-id": "",
+
+                        // Turn on storage of extended information (e.g. relay agent
+                        // information) with each lease for this subnet.
+                         "store-extended-info:" true,
 
                         // Subnet level list of DHCP options.
                         "option-data": [

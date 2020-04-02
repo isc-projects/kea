@@ -3693,6 +3693,50 @@ An example configuration that sets this parameter looks as follows:
        ...
    }
 
+.. _dhcp4-store-extended-info:
+
+Storing Extended Lease Information
+----------------------------------
+In order to support such features as DHCP LeaseQuery
+(`RFC 4388 <https://tools.ietf.org/html/rfc4388>`__) it is necessary to
+store additional information with each lease.  Because the amount
+of information stored for each lease has ramifications in terms of
+performance and system resource consumption, storing this additional
+information is configurable through the "store-extended-info" parameter.
+It defaults to false and may be set at the global, shared-network, and
+subnet levels.
+
+::
+
+   "Dhcp4": {
+       "store-extended-info": true,
+       ...
+   }
+
+When enabled, information relevant to the DHCPREQUEST asking for the lease is
+added into the lease's user-context as a map element labeled "ISC".  Currently,
+the map will contain a single value, the relay-agent-info option (DHCP Option 82),
+when the DHCPREQUEST received contains it.  Other values may be added at a
+future date. Since DHCPREQUESTs sent as renewals will likely not contain this
+information, the values taken from the last DHCPREQUEST that did contain it will
+be retained on the lease.  The lease's user-context will look something like this:
+
+::
+
+  { "ISC": { "relay-agent-info": "0x52050104AABBCCDD" } }
+
+.. note::
+    This feature is intended to be used in conjunction with an upcoming LeaseQuery
+    hook library and at this time there is other use for this information within Kea.
+
+.. note::
+    It is possible that other hook libraries are already making use of user-context.
+    Enabling store-extended-info should not interfere with any other user-context
+    content so long as it does not also use an element labled "ISC".  In other
+    words, user-context is intended to be a flexible container serving mulitple
+    purposes.  As long as no other purpose also writes an "ISC" element to
+    user-contex there should not be a conflict.
+
 .. _host-reservation-v4:
 
 Host Reservation in DHCPv4

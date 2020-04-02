@@ -3187,6 +3187,68 @@ An example configuration that sets this parameter looks as follows:
        ...
    }
 
+.. _store-extended-info-v6:
+
+Storing Extended Lease Information
+----------------------------------
+In order to support such features as DHCPv6 Reconfigure
+(`RFC 3315 <https://tools.ietf.org/html/rfc3315>`__) and LeaseQuery
+(`RFC 5007 <https://tools.ietf.org/html/rfc5007>`__) it is necessary to
+store additional information with each lease.  Because the amount
+of information stored for each lease has ramifications in terms of
+performance and system resource consumption, storing this additional
+information is configurable through the "store-extended-info" parameter.
+It defaults to false and may be set at the global, shared-network, and
+subnet levels.
+
+::
+
+   "Dhcp6": {
+       "store-extended-info": true,
+       ...
+   }
+
+When enabled, information relevant to the DHCPv6 query (e.g. REQUEST, RENEW,
+or REBIND) asking for the lease is added into the lease's user-context as a
+map element labeled "ISC".  Currently the information contained in the map
+will be a list of relays, one for each relay message layer that encloses the
+client query. Other values may be added at a future date. The lease's
+user-context for a two-hop query might look something like this (shown
+pretty-printed for clarity):
+
+::
+
+    {
+        "ISC": {
+            "relays": [
+            {
+                "hop": 2,
+                "link": "2001:db8::1",
+                "peer": "2001:db8::2"
+            },
+            {
+                "hop": 1,
+                "link": "2001:db8::3",
+                "options": "0x00C800080102030405060708",
+                "peer": "2001:db8::4"
+            }]
+        }
+    }
+
+
+.. note::
+    This feature is intended to be used in conjunction with an upcoming
+    LeaseQuery hook library and at this time there is other use for this
+    information within Kea.
+
+.. note::
+    It is possible that other hook libraries are already making use of
+    user-context.  Enabling store-extended-info should not interfere with
+    any other user-context content so long as it does not also use an element
+    labled "ISC".  In other words, user-context is intended to be a flexible
+    container serving mulitple purposes.  As long as no other purpose also
+    writes an "ISC" element to user-contex there should not be a conflict.
+
 .. _host-reservation-v6:
 
 Host Reservation in DHCPv6
