@@ -96,6 +96,10 @@ increase the time it takes each unit test to execute.
   The simplest way to enable a sanitizer is to add it to the CXXFLAGS
   environment variable in .configure by e.g. <i>-fsanitize=thread</i>.
 
+  When enabling lcov (code coverage), some gtest functions are detected as
+  not being thread safe. It is recommended to disable lcov when enabling
+  thread sanitizer.
+
 @section unitTestsDatabaseConfig Databases Configuration for Unit Tests
 
   With the use of databases requiring separate authorisation, there are
