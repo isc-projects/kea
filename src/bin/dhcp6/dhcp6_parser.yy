@@ -50,6 +50,7 @@ using namespace std;
   NULL_TYPE "null"
 
   DHCP6 "Dhcp6"
+
   DATA_DIRECTORY "data-directory"
   CONFIG_CONTROL "config-control"
   CONFIG_DATABASES "config-databases"
@@ -190,6 +191,10 @@ using namespace std;
   ENTERPRISE_ID "enterprise-id"
 
   DHCP4O6_PORT "dhcp4o6-port"
+
+  ENABLE_MULTI_THREADING "enable-multi-threading"
+  PACKET_THREAD_POOL_SIZE "packet-thread-pool-size"
+  PACKET_THREAD_QUEUE_SIZE "packet-thread-queue-size"
 
   CONTROL_SOCKET "control-socket"
   SOCKET_TYPE "socket-type"
@@ -417,7 +422,8 @@ syntax_map: LCURLY_BRACKET {
     ctx.require("Dhcp6", ctx.loc2pos(@1), ctx.loc2pos(@4));
 };
 
-// This represents top-level entries: Dhcp6, Dhcp4, DhcpDdns, Logging
+// This represents top-level entries: Control-agent, Dhcp6, Dhcp4,
+// DhcpDdns, Logging
 global_objects: global_object
               | global_objects COMMA global_object
               ;
@@ -513,6 +519,9 @@ global_param: data_directory
             | statistic_default_sample_count
             | statistic_default_sample_age
             | unknown_map_entry
+            | enable_multi_threading
+            | packet_thread_pool_size
+            | packet_thread_queue_size
             ;
 
 data_directory: DATA_DIRECTORY {
@@ -724,7 +733,6 @@ re_detect: RE_DETECT COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("re-detect", b);
 };
-
 
 lease_database: LEASE_DATABASE {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
@@ -1039,6 +1047,21 @@ relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
     ctx.leave();
 };
 
+enable_multi_threading: ENABLE_MULTI_THREADING COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("enable-multi-threading", b);
+};
+
+packet_thread_pool_size: PACKET_THREAD_POOL_SIZE COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("packet-thread-pool-size", prf);
+};
+
+packet_thread_queue_size: PACKET_THREAD_QUEUE_SIZE COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("packet-thread-queue-size", prf);
+};
+
 hooks_libraries: HOOKS_LIBRARIES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("hooks-libraries", l);
@@ -1327,7 +1350,6 @@ rapid_commit: RAPID_COMMIT COLON BOOLEAN {
     ElementPtr rc(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("rapid-commit", rc);
 };
-
 
 // ---- shared-networks ---------------------
 
@@ -1670,6 +1692,7 @@ sub_pool6: LCURLY_BRACKET {
 } pool_params RCURLY_BRACKET {
     // The pool parameter is required.
     ctx.require("pool", ctx.loc2pos(@1), ctx.loc2pos(@4));
+    // parsing completed
 };
 
 pool_params: pool_param
@@ -2158,6 +2181,7 @@ socket_name: SOCKET_NAME {
     ctx.leave();
 };
 
+
 // --- dhcp-queue-control ---------------------------------------------
 
 dhcp_queue_control: DHCP_QUEUE_CONTROL {
@@ -2367,6 +2391,7 @@ dep_hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
     ctx.stack_.back()->set("hostname-char-replacement", s);
     ctx.leave();
 };
+
 
 // JSON entries for Dhcp4 and DhcpDdns
 

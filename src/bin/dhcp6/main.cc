@@ -149,7 +149,7 @@ main(int argc, char* argv[]) {
                      << "], 0-65535 allowed." << endl;
                 usage();
             } else {
-                srv_thread_count = thread_count;
+                Dhcpv6Srv::srv_thread_count_ = thread_count;
             }
             break;
 

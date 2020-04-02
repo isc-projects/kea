@@ -11,11 +11,11 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <database/dbaccess_parser.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
-#include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
-#include <dhcp/iface_mgr.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -40,14 +40,13 @@
 #include <hooks/hooks_parser.h>
 #include <log/logger_support.h>
 #include <process/config_ctl_parser.h>
+
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <iostream>
 #include <limits>
@@ -55,14 +54,15 @@
 #include <netinet/in.h>
 #include <vector>
 
-#include <stdint.h>
-
 using namespace std;
 using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::hooks;
+using namespace isc::process;
+using namespace isc::config;
+using namespace isc::db;
 
 namespace {
 
@@ -188,6 +188,18 @@ public:
         uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
         srv_config->setDhcp4o6Port(dhcp4o6_port);
 
+        // Set enable multi threading flag.
+        bool enable_multi_threading = getBoolean(global, "enable-multi-threading");
+        srv_config->setEnableMultiThreading(enable_multi_threading);
+
+        // Set packet thread pool size.
+        uint32_t packet_thread_pool_size = getUint32(global, "packet-thread-pool-size");
+        srv_config->setPktThreadPoolSize(packet_thread_pool_size);
+
+        // Set packet thread queue size.
+        uint32_t packet_thread_queue_size = getUint32(global, "packet-thread-queue-size");
+        srv_config->setPktThreadQueueSize(packet_thread_queue_size);
+
         // Set the global user context.
         ConstElementPtr user_context = global->get("user-context");
         if (user_context) {
@@ -311,7 +323,6 @@ public:
                         }
                     }
 
-
                     if (iface.empty()) {
                         iface = (*subnet)->getIface();
                         continue;
@@ -349,8 +360,6 @@ public:
 
         }
     }
-
-
 };
 
 } // anonymous namespace
@@ -627,12 +636,11 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "shared-networks") {
-                /// We need to create instance of SharedNetworks4ListParser
+                /// We need to create instance of SharedNetworks6ListParser
                 /// and parse the list of the shared networks into the
-                /// CfgSharedNetworks4 object. One additional step is then to
+                /// CfgSharedNetworks6 object. One additional step is then to
                 /// add subnets from the CfgSharedNetworks6 into CfgSubnets6
                 /// as well.
-
                 SharedNetworks6ListParser parser;
                 CfgSharedNetworks6Ptr cfg = srv_config->getCfgSharedNetworks6();
                 parser.parse(cfg, config_pair.second);
@@ -697,7 +705,10 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "ddns-qualifying-suffix") ||
                  (config_pair.first == "store-extended-info") ||
                  (config_pair.first == "statistic-default-sample-count") ||
-                 (config_pair.first == "statistic-default-sample-age")) {
+                 (config_pair.first == "statistic-default-sample-age") ||
+                 (config_pair.first == "enable-multi-threading") ||
+                 (config_pair.first == "packet-thread-pool-size") ||
+                 (config_pair.first == "packet-thread-queue-size")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;
@@ -728,7 +739,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // defined as part of shared networks.
         global_parser.sanityChecks(srv_config, mutable_cfg);
 
-        // Validate D2 client confuguration.
+        // Validate D2 client configuration.
         if (!d2_client_cfg) {
             d2_client_cfg.reset(new D2ClientConfig());
         }
@@ -843,8 +854,6 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     answer = isc::config::createAnswer(0, "Configuration successful.");
     return (answer);
 }
-
-int srv_thread_count = -1;
 
 }  // namespace dhcp
 }  // namespace isc

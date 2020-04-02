@@ -10,16 +10,17 @@
 #include <database/dbaccess_parser.h>
 #include <database/backend_selector.h>
 #include <database/server_selector.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option_definition.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
-#include <dhcp/libdhcp++.h>
-#include <dhcp/option_definition.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
@@ -31,7 +32,6 @@
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
-#include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <process/config_ctl_parser.h>
 #include <hooks/hooks_parser.h>
@@ -39,21 +39,20 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
 
-#include <limits>
 #include <iostream>
-#include <iomanip>
+#include <limits>
+#include <map>
 #include <netinet/in.h>
 #include <vector>
-#include <map>
 
 using namespace std;
 using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;
@@ -102,6 +101,18 @@ public:
         // Set the DHCPv4-over-DHCPv6 interserver port.
         uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
         cfg->setDhcp4o6Port(dhcp4o6_port);
+
+        // Set enable multi threading flag.
+        bool enable_multi_threading = getBoolean(global, "enable-multi-threading");
+        cfg->setEnableMultiThreading(enable_multi_threading);
+
+        // Set packet thread pool size.
+        uint32_t packet_thread_pool_size = getUint32(global, "packet-thread-pool-size");
+        cfg->setPktThreadPoolSize(packet_thread_pool_size);
+
+        // Set packet thread queue size.
+        uint32_t packet_thread_queue_size = getUint32(global, "packet-thread-queue-size");
+        cfg->setPktThreadQueueSize(packet_thread_queue_size);
 
         // Set the global user context.
         ConstElementPtr user_context = global->get("user-context");
@@ -297,7 +308,6 @@ void configureCommandChannel() {
     }
 }
 
-
 isc::data::ConstElementPtr
 configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                      bool check_only) {
@@ -336,13 +346,13 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // have to be restored to global storages.
     bool rollback = false;
     // config_pair holds the details of the current parser when iterating over
-    // the parsers.  It is declared outside the loops so in case of an error,
-    // the name of the failing parser can be retrieved in the "catch" clause.
+    // the parsers.  It is declared outside the loop so in case of error, the
+    // name of the failing parser can be retrieved within the "catch" clause.
     ConfigPair config_pair;
     ElementPtr mutable_cfg;
     SrvConfigPtr srv_cfg;
     try {
-        // Get the staging configuration
+        // Get the staging configuration.
         srv_cfg = CfgMgr::instance().getStagingCfg();
 
         // This is a way to convert ConstElementPtr to ElementPtr.
@@ -353,7 +363,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // Relocate dhcp-ddns parameters that have moved to global scope.
         // Rule is that a global value overrides the dhcp-ddns value, so
         // we need to do this before we apply global defaults.
-        // Note this is done for backward compatibilty.
+        // Note this is done for backward compatibility.
         srv_cfg->moveDdnsParams(mutable_cfg);
 
         // Set all default values if not specified by the user.
@@ -505,7 +515,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "shared-networks") {
-
                 /// We need to create instance of SharedNetworks4ListParser
                 /// and parse the list of the shared networks into the
                 /// CfgSharedNetworks4 object. One additional step is then to
@@ -578,11 +587,13 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "ddns-qualifying-suffix") ||
                  (config_pair.first == "store-extended-info") ||
                  (config_pair.first == "statistic-default-sample-count") ||
-                 (config_pair.first == "statistic-default-sample-age")) {
+                 (config_pair.first == "statistic-default-sample-age") ||
+                 (config_pair.first == "enable-multi-threading") ||
+                 (config_pair.first == "packet-thread-pool-size") ||
+                 (config_pair.first == "packet-thread-queue-size")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;
-
             }
 
             // Nothing to configure for the user-context.
@@ -604,7 +615,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // defined as part of shared networks.
         global_parser.sanityChecks(srv_cfg, mutable_cfg);
 
-        // Validate D2 client confuguration.
+        // Validate D2 client configuration.
         if (!d2_client_cfg) {
             d2_client_cfg.reset(new D2ClientConfig());
         }
@@ -655,7 +666,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
             CfgMgr::instance().setD2ClientConfig(cfg);
 
-            // This occurs last as if it succeeds, there is no easy way
+            // This occurs last as if it succeeds, there is no easy way to
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
             const HooksConfig& libraries =
@@ -665,12 +676,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                                " parsing error");
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         }
     }
@@ -687,6 +700,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             err << "during update from config backend database: " << ex.what();
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
@@ -695,6 +709,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 << "undefined configuration parsing error";
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         }
     }
@@ -715,8 +730,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful.");
     return (answer);
 }
-
-int srv_thread_count = -1;
 
 }  // namespace dhcp
 }  // namespace isc

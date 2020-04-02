@@ -57,6 +57,7 @@ using namespace isc::hooks;
 using namespace std;
 
 namespace {
+
 const char* PARSER_CONFIGS[] = {
     // CONFIGURATION 0: one subnet with one pool, no user contexts
     "{"
@@ -1483,7 +1484,6 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-
     ConstElementPtr json1;
     ASSERT_NO_THROW(json1 = parseDHCP4(config_bogus1));
     ConstElementPtr json2;
@@ -2763,7 +2763,6 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     EXPECT_EQ(170, def->getCode());
     EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
-
 }
 
 // Goal of this test is to verify that global option data is configured
@@ -3487,7 +3486,6 @@ TEST_F(Dhcp4ParserTest, optionDataMultiplePools) {
     testOption(*range2.first, 23, foo2_expected, sizeof(foo2_expected));
 }
 
-
 // Verify that empty option name is rejected in the configuration.
 TEST_F(Dhcp4ParserTest, optionNameEmpty) {
     // Empty option names not allowed.
@@ -3851,7 +3849,6 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
         " } ]"
         "}";
 
-
     ASSERT_NO_THROW(json = parseDHCP4(config));
     extractConfig(config);
 
@@ -4009,7 +4006,6 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
     ASSERT_FALSE(desc2.option_);
 }
 
-
 // Tests of the hooks libraries configuration.  All tests have the pre-
 // condition (checked in the test fixture's SetUp() method) that no hooks
 // libraries are loaded at the start of the tests.
@@ -4079,7 +4075,6 @@ buildHooksLibrariesConfig(const char* library1 = NULL,
     }
     return (buildHooksLibrariesConfig(libraries));
 }
-
 
 // The goal of this test is to verify the configuration of hooks libraries if
 // none are specified.
@@ -4617,7 +4612,6 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfoList) {
     EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("192.0.3.124")));
 }
 
-
 // Goal of this test is to verify that multiple subnets can be configured
 // with defined client classes.
 TEST_F(Dhcp4ParserTest, classifySubnets) {
@@ -4963,7 +4957,6 @@ TEST_F(Dhcp4ParserTest, reservations) {
                                  &circuit_id[0], circuit_id.size()));
     EXPECT_FALSE(hosts_cfg->get4(234, Host::IDENT_CIRCUIT_ID,
                                  &circuit_id[0], circuit_id.size()));
-
 
     // Repeat the test for the DUID based reservation in this subnet.
     std::vector<uint8_t> duid_r(duid.rbegin(), duid.rend());
@@ -5321,6 +5314,41 @@ TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
     EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 }
 
+/// Check that the multi-threading settings have a default value when not
+/// specified.
+TEST_F(Dhcp4ParserTest, multiThreadingDefaultSettings) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [ ]"
+        "}";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of enable-multi-threading must be equal to the default value
+    // (false). The default value is defined in GLOBAL4_DEFAULTS in
+    // simple_parser4.cc.
+    EXPECT_EQ(false,
+        CfgMgr::instance().getStagingCfg()->getEnableMultiThreading());
+
+    // The value of packet-thread-pool-size must be equal to the default value
+    // (0). The default value is defined in GLOBAL4_DEFAULTS in
+    // simple_parser4.cc.
+    EXPECT_EQ(0, CfgMgr::instance().getStagingCfg()->getPktThreadPoolSize());
+
+    // The value of packet-thread-queue-size must be equal to the default value
+    // (4). The default value is defined in GLOBAL4_DEFAULTS in
+    // simple_parser4.cc.
+    EXPECT_EQ(4, CfgMgr::instance().getStagingCfg()->getPktThreadQueueSize());
+}
+
 /// Check that the decline-probation-period has a default value when not
 /// specified.
 TEST_F(Dhcp4ParserTest, declineTimerDefault) {
@@ -5340,8 +5368,8 @@ TEST_F(Dhcp4ParserTest, declineTimerDefault) {
     checkResult(status, 0);
 
     // The value of decline-probation-period must be equal to the
-    // default value (86400). The default value is defined in GLOBAL6_DEFAULTS in
-    // simple_parser6.cc.
+    // default value (86400). The default value is defined in GLOBAL4_DEFAULTS in
+    // simple_parser4.cc.
     EXPECT_EQ(86400, CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
 }
 
@@ -5367,7 +5395,6 @@ TEST_F(Dhcp4ParserTest, dhcp4o6portDefault) {
     // simple_parser4.cc.
     EXPECT_EQ(0, CfgMgr::instance().getStagingCfg()->getDhcp4o6Port());
 }
-
 
 /// Check that the decline-probation-period value can be set properly.
 TEST_F(Dhcp4ParserTest, declineTimer) {
@@ -5488,7 +5515,6 @@ TEST_F(Dhcp4ParserTest, expiredLeasesProcessingError) {
     // Check that the error contains error position.
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
-
 
 // Checks if the DHCPv4 is able to parse the configuration without 4o6 parameters
 // and does not set 4o6 fields at all.
@@ -5619,7 +5645,6 @@ TEST_F(Dhcp4ParserTest, 4o6subnetBogus) {
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
     checkResult(status, 1);
 }
-
 
 // Checks if the DHCPv4 is able to parse the configuration with 4o6 network
 // interface defined.
@@ -5762,7 +5787,6 @@ TEST_F(Dhcp4ParserTest, validClientClassDictionary) {
         "    \"subnet\": \"192.0.2.0/24\"  \n"
         " } ] \n"
         "} \n";
-
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
@@ -6217,7 +6241,6 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "        \"pools\": [ { \"pool\": \"192.0.3.1-192.0.3.10\" } ]\n"
         "    }\n"
         "    ]\n"
-
         " } ]\n"
         "} \n";
 
@@ -6900,8 +6923,10 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControl) {
 
             // Fetch the queue control info.
             staged_control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+
             // Make sure the staged queue config exists.
             ASSERT_TRUE(staged_control);
+
             // Now build the expected queue control content.
             if (scenario.json_.empty()) {
                 exp_control = Element::createMap();
@@ -7168,6 +7193,36 @@ TEST_F(Dhcp4ParserTest, statsDefaultLimits) {
     EXPECT_EQ(10, stats_mgr.getMaxSampleCountDefault());
     EXPECT_EQ("00:00:05",
               util::durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
+}
+    
+/// Check that the multi threading settings can be set properly.
+TEST_F(Dhcp4ParserTest, multiThreadingSettings) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"enable-multi-threading\": true,"
+        "\"packet-thread-pool-size\": 256,"
+        "\"packet-thread-queue-size\": 256,"
+        "\"subnet4\": [ ]"
+        "}";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of multi-threading settings must be equal to the specified
+    // values
+    EXPECT_EQ(true,
+              CfgMgr::instance().getStagingCfg()->getEnableMultiThreading());
+    EXPECT_EQ(256,
+              CfgMgr::instance().getStagingCfg()->getPktThreadPoolSize());
+    EXPECT_EQ(256,
+              CfgMgr::instance().getStagingCfg()->getPktThreadQueueSize());
 }
 
 }

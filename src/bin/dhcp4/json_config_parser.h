@@ -60,8 +60,6 @@ configureDhcp4Server(Dhcpv4Srv&,
                      isc::data::ConstElementPtr config_set,
                      bool check_only = false);
 
-extern int srv_thread_count;
-
 }  // namespace dhcp
 }  // namespace isc
 

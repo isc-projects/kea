@@ -1418,6 +1418,33 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"enable-multi-threading\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_ENABLE_MULTI_THREADING(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("enable-multi-threading", driver.loc_);
+    }
+}
+
+\"packet-thread-pool-size\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_PACKET_THREAD_POOL_SIZE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("packet-thread-pool-size", driver.loc_);
+    }
+}
+
+\"packet-thread-queue-size\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_PACKET_THREAD_QUEUE_SIZE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("packet-thread-queue-size", driver.loc_);
+    }
+}
+
 \"control-socket\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1844,8 +1871,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_STRING("boot-file-name", driver.loc_);
     }
 }
-
-
 
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.

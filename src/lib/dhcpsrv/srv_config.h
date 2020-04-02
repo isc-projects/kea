@@ -705,32 +705,46 @@ public:
         return (dhcp4o6_port_);
     }
 
-    /// @brief Sets the server thread count.
+    /// @brief Sets the enable multi threading flag.
     ///
-    /// @param threads value of the server thread count
-    void setServerThreadCount(uint32_t threads) {
-        server_threads_ = threads;
+    /// @param size value of the enable multi threading flag
+    void setEnableMultiThreading(bool enabled) {
+        enable_multi_threading_ = enabled;
     }
 
-    /// @brief Retrieves the server thread count.
+    /// @brief Retrieves the enable multi threading flag.
     ///
-    /// @return value of the server thread count
-    uint32_t getServerThreadCount() const {
-        return (server_threads_);
+    /// @return value of the enable multi threading flag
+    uint32_t getEnableMultiThreading() const {
+        return (enable_multi_threading_);
     }
 
-    /// @brief Sets the server max thread queue size.
+    /// @brief Sets the packet thread pool size.
     ///
-    /// @param size max thread queue size
-    void setServerMaxThreadQueueSize(uint32_t size) {
-        server_max_thread_queue_size_ = size;
+    /// @param size value of the packet thread pool size
+    void setPktThreadPoolSize(uint32_t size) {
+        pkt_thread_pool_size_ = size;
     }
 
-    /// @brief Retrieves the server max thread queue size.
+    /// @brief Retrieves the packet thread pool size.
     ///
-    /// @return value of the max thread queue size
-    uint32_t getServerMaxThreadQueueSize() const {
-        return (server_max_thread_queue_size_);
+    /// @return value of the packet thread pool size
+    uint32_t getPktThreadPoolSize() const {
+        return (pkt_thread_pool_size_);
+    }
+
+    /// @brief Sets the packet thread queue size.
+    ///
+    /// @param size value of the packet thread queue size
+    void setPktThreadQueueSize(uint32_t size) {
+        pkt_thread_queue_size_ = size;
+    }
+
+    /// @brief Retrieves the packet thread queue size.
+    ///
+    /// @return value of the packet thread queue size
+    uint32_t getPktThreadQueueSize() const {
+        return (pkt_thread_queue_size_);
     }
 
     /// @brief Returns pointer to the D2 client configuration
@@ -951,11 +965,14 @@ private:
     /// this socket is bound and connected to this port and port + 1
     uint16_t dhcp4o6_port_;
 
-    /// @brief The server thread count.
-    uint32_t server_threads_;
+    /// @brief The enable multi threading flag.
+    bool enable_multi_threading_;
 
-    /// @brief The server max thread queue size.
-    uint32_t server_max_thread_queue_size_;
+    /// @brief The packet thread pool size.
+    uint32_t pkt_thread_pool_size_;
+
+    /// @brief The packet thread queue size.
+    uint32_t pkt_thread_queue_size_;
 
     /// @brief Stores D2 client configuration
     D2ClientConfigPtr d2_client_config_;

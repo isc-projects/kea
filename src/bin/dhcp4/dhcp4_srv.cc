@@ -588,6 +588,8 @@ void Dhcpv4Exchange::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
 
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
+int Dhcpv4Srv::srv_thread_count_ = -1;
+
 Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
                      const bool use_bcast, const bool direct_response_desired)
     : io_service_(new IOService()), server_port_(server_port),
@@ -937,12 +939,13 @@ Dhcpv4Srv::run_one() {
     try {
         bool read_pkt = true;
 
-        // Do not read more packets from socket if there are enough
-        // packets to be processed in the packet thread pool queue
-        const int max_queue_size = CfgMgr::instance().getCurrentCfg()->getServerMaxThreadQueueSize();
+        // Do not read more packets from socket if there are enough packets to
+        // be processed in the packet thread pool queue
+        // max_queue_size = 0 means no limit
+        const int max_queue_size = CfgMgr::instance().getCurrentCfg()->getPktThreadQueueSize();
         const int thread_count = MultiThreadingMgr::instance().getPktThreadPoolSize();
         size_t pkt_queue_size = MultiThreadingMgr::instance().getPktThreadPool().count();
-        if (thread_count && (pkt_queue_size >= thread_count * max_queue_size)) {
+        if (thread_count && max_queue_size && (pkt_queue_size >= thread_count * max_queue_size)) {
             read_pkt = false;
         }
 

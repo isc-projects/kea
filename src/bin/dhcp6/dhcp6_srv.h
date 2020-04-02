@@ -1061,6 +1061,12 @@ protected:
     uint16_t client_port_;
 
 public:
+    /// @brief command line parameter thread count
+    /// when parameter is not specified, the default value is used
+    /// the default value is: -1 means disabled (single-threaded),
+    /// 0 means auto-detect, other values set thread count explicitly
+    static int srv_thread_count_;
+
     /// @note used by DHCPv4-over-DHCPv6 so must be public and static
 
     /// @brief Updates statistics for transmitted packets

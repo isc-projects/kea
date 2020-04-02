@@ -187,6 +187,10 @@ using namespace std;
 
   DHCP4O6_PORT "dhcp4o6-port"
 
+  ENABLE_MULTI_THREADING "enable-multi-threading"
+  PACKET_THREAD_POOL_SIZE "packet-thread-pool-size"
+  PACKET_THREAD_QUEUE_SIZE "packet-thread-queue-size"
+
   CONTROL_SOCKET "control-socket"
   SOCKET_TYPE "socket-type"
   SOCKET_NAME "socket-name"
@@ -507,6 +511,9 @@ global_param: valid_lifetime
             | statistic_default_sample_count
             | statistic_default_sample_age
             | unknown_map_entry
+            | enable_multi_threading
+            | packet_thread_pool_size
+            | packet_thread_queue_size
             ;
 
 valid_lifetime: VALID_LIFETIME COLON INTEGER {
@@ -1027,6 +1034,21 @@ client_id : CLIENT_ID {
 flex_id: FLEX_ID {
     ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(flex_id);
+};
+
+enable_multi_threading: ENABLE_MULTI_THREADING COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("enable-multi-threading", b);
+};
+
+packet_thread_pool_size: PACKET_THREAD_POOL_SIZE COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("packet-thread-pool-size", prf);
+};
+
+packet_thread_queue_size: PACKET_THREAD_QUEUE_SIZE COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("packet-thread-queue-size", prf);
 };
 
 hooks_libraries: HOOKS_LIBRARIES {
@@ -1995,8 +2017,6 @@ only_if_required: ONLY_IF_REQUIRED COLON BOOLEAN {
 
 // --- end of client classes ---------------------------------
 
-// was server-id but in is DHCPv6-only
-
 dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
     ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("dhcp4o6-port", time);
@@ -2277,6 +2297,8 @@ control_agent_json_object: CONTROL_AGENT {
     ctx.leave();
 };
 
+// Config control information element
+
 config_control: CONFIG_CONTROL {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("config-control", i);
@@ -2471,7 +2493,6 @@ pattern: PATTERN {
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
 };
-
 
 %%
 

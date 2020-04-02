@@ -523,6 +523,22 @@
 	// When the maximum count is 0 the maximum age (in seconds) applies.
 	"statistic-default-sample-age": 60,
 
+	// By default Kea processes packets on a single thread (default 'false'
+        // value for this option). To enable multi-threading, this option can be
+        // set ('true' value).
+        "enable-multi-threading": false,
+
+        // When multi-threading is enabled, Kea will process packets on a number of
+        // multiple threads configurable through this option. The value must be a
+        // positive integer (0 means auto detect).
+        "packet-thread-pool-size": 0,
+
+        // When multi-threading is enabled, Kea will read packets from the interface
+        // and append a working item to the thread pool. This option configures the
+        // maximum number of items that can be queued for each processing thread.
+        // The value must be a positive integer (0 means unlimited).
+        "packet-thread-queue-size": 0,
+
         // Governs how the Kea DHCPv4 server should deal with the invalid
         // data received from the client.
         "sanity-checks": {

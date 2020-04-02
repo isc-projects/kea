@@ -169,17 +169,20 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
                       "processCommand(\"config-set\", json)");
         }
 
+        // command line parameters overwrite file and database configuration
         bool enabled = false;
-        if (srv_thread_count >= 0) {
+        if (Dhcpv4Srv::srv_thread_count_ >= 0) {
             enabled = true;
         }
         if (enabled) {
-            CfgMgr::instance().getCurrentCfg()->setServerThreadCount(srv_thread_count);
-            CfgMgr::instance().getCurrentCfg()->setServerMaxThreadQueueSize(4);
+            CfgMgr::instance().getCurrentCfg()->setPktThreadPoolSize(Dhcpv4Srv::srv_thread_count_);
+            CfgMgr::instance().getCurrentCfg()->setPktThreadQueueSize(0);
             LOG_FATAL(dhcp4_logger, DHCP4_MULTI_THREADING_WARNING);
+        } else {
+            enabled = CfgMgr::instance().getCurrentCfg()->getEnableMultiThreading();
         }
         MultiThreadingMgr::instance().apply(enabled,
-            CfgMgr::instance().getCurrentCfg()->getServerThreadCount());
+            CfgMgr::instance().getCurrentCfg()->getPktThreadPoolSize());
 
         // Now check is the returned result is successful (rcode=0) or not
         // (see @ref isc::config::parseAnswer).
@@ -204,7 +207,7 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
     LOG_WARN(dhcp4_logger, DHCP4_MULTI_THREADING_INFO)
         .arg(MultiThreadingMgr::instance().getMode() ? "yes" : "no")
         .arg(MultiThreadingMgr::instance().getPktThreadPoolSize())
-        .arg(CfgMgr::instance().getCurrentCfg()->getServerMaxThreadQueueSize());
+        .arg(CfgMgr::instance().getCurrentCfg()->getPktThreadQueueSize());
 
     return (result);
 }

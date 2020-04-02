@@ -85,7 +85,10 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "ddns-qualifying-suffix",         Element::string },
     { "store-extended-info",            Element::boolean },
     { "statistic-default-sample-count", Element::integer },
-    { "statistic-default-sample-age",   Element::integer }
+    { "statistic-default-sample-age",   Element::integer },
+    { "enable-multi-threading",       Element::boolean },
+    { "packet-thread-pool-size",      Element::integer },
+    { "packet-thread-queue-size",     Element::integer }
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -113,7 +116,10 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "hostname-char-replacement",      Element::string,  "" },
     { "store-extended-info",            Element::boolean, "false" },
     { "statistic-default-sample-count", Element::integer, "20" },
-    { "statistic-default-sample-age",   Element::integer, "0" }
+    { "statistic-default-sample-age",   Element::integer, "0" },
+    { "enable-multi-threading",         Element::boolean, "false" },
+    { "packet-thread-pool-size",        Element::integer, "0" },
+    { "packet-thread-queue-size",       Element::integer, "4" }
 };
 
 /// @brief This table defines all option definition parameters.
@@ -476,5 +482,5 @@ size_t SimpleParser6::deriveParameters(ElementPtr global) {
     return (cnt);
 }
 
-};
-};
+}  // namespace dhcp
+}  // namespace isc
