@@ -531,139 +531,140 @@ namespace isc { namespace dhcp {
         TOKEN_DDNS_REPLACE_CLIENT_NAME = 315,
         TOKEN_DDNS_GENERATED_PREFIX = 316,
         TOKEN_DDNS_QUALIFYING_SUFFIX = 317,
-        TOKEN_SUBNET6 = 318,
-        TOKEN_OPTION_DEF = 319,
-        TOKEN_OPTION_DATA = 320,
-        TOKEN_NAME = 321,
-        TOKEN_DATA = 322,
-        TOKEN_CODE = 323,
-        TOKEN_SPACE = 324,
-        TOKEN_CSV_FORMAT = 325,
-        TOKEN_ALWAYS_SEND = 326,
-        TOKEN_RECORD_TYPES = 327,
-        TOKEN_ENCAPSULATE = 328,
-        TOKEN_ARRAY = 329,
-        TOKEN_POOLS = 330,
-        TOKEN_POOL = 331,
-        TOKEN_PD_POOLS = 332,
-        TOKEN_PREFIX = 333,
-        TOKEN_PREFIX_LEN = 334,
-        TOKEN_EXCLUDED_PREFIX = 335,
-        TOKEN_EXCLUDED_PREFIX_LEN = 336,
-        TOKEN_DELEGATED_LEN = 337,
-        TOKEN_USER_CONTEXT = 338,
-        TOKEN_COMMENT = 339,
-        TOKEN_SUBNET = 340,
-        TOKEN_INTERFACE = 341,
-        TOKEN_INTERFACE_ID = 342,
-        TOKEN_ID = 343,
-        TOKEN_RAPID_COMMIT = 344,
-        TOKEN_RESERVATION_MODE = 345,
-        TOKEN_DISABLED = 346,
-        TOKEN_OUT_OF_POOL = 347,
-        TOKEN_GLOBAL = 348,
-        TOKEN_ALL = 349,
-        TOKEN_SHARED_NETWORKS = 350,
-        TOKEN_MAC_SOURCES = 351,
-        TOKEN_RELAY_SUPPLIED_OPTIONS = 352,
-        TOKEN_HOST_RESERVATION_IDENTIFIERS = 353,
-        TOKEN_SANITY_CHECKS = 354,
-        TOKEN_LEASE_CHECKS = 355,
-        TOKEN_CLIENT_CLASSES = 356,
-        TOKEN_REQUIRE_CLIENT_CLASSES = 357,
-        TOKEN_TEST = 358,
-        TOKEN_ONLY_IF_REQUIRED = 359,
-        TOKEN_CLIENT_CLASS = 360,
-        TOKEN_RESERVATIONS = 361,
-        TOKEN_IP_ADDRESSES = 362,
-        TOKEN_PREFIXES = 363,
-        TOKEN_DUID = 364,
-        TOKEN_HW_ADDRESS = 365,
-        TOKEN_HOSTNAME = 366,
-        TOKEN_FLEX_ID = 367,
-        TOKEN_RELAY = 368,
-        TOKEN_IP_ADDRESS = 369,
-        TOKEN_HOOKS_LIBRARIES = 370,
-        TOKEN_LIBRARY = 371,
-        TOKEN_PARAMETERS = 372,
-        TOKEN_EXPIRED_LEASES_PROCESSING = 373,
-        TOKEN_RECLAIM_TIMER_WAIT_TIME = 374,
-        TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 375,
-        TOKEN_HOLD_RECLAIMED_TIME = 376,
-        TOKEN_MAX_RECLAIM_LEASES = 377,
-        TOKEN_MAX_RECLAIM_TIME = 378,
-        TOKEN_UNWARNED_RECLAIM_CYCLES = 379,
-        TOKEN_SERVER_ID = 380,
-        TOKEN_LLT = 381,
-        TOKEN_EN = 382,
-        TOKEN_LL = 383,
-        TOKEN_IDENTIFIER = 384,
-        TOKEN_HTYPE = 385,
-        TOKEN_TIME = 386,
-        TOKEN_ENTERPRISE_ID = 387,
-        TOKEN_DHCP4O6_PORT = 388,
-        TOKEN_CONTROL_SOCKET = 389,
-        TOKEN_SOCKET_TYPE = 390,
-        TOKEN_SOCKET_NAME = 391,
-        TOKEN_DHCP_QUEUE_CONTROL = 392,
-        TOKEN_ENABLE_QUEUE = 393,
-        TOKEN_QUEUE_TYPE = 394,
-        TOKEN_CAPACITY = 395,
-        TOKEN_DHCP_DDNS = 396,
-        TOKEN_ENABLE_UPDATES = 397,
-        TOKEN_QUALIFYING_SUFFIX = 398,
-        TOKEN_SERVER_IP = 399,
-        TOKEN_SERVER_PORT = 400,
-        TOKEN_SENDER_IP = 401,
-        TOKEN_SENDER_PORT = 402,
-        TOKEN_MAX_QUEUE_SIZE = 403,
-        TOKEN_NCR_PROTOCOL = 404,
-        TOKEN_NCR_FORMAT = 405,
-        TOKEN_OVERRIDE_NO_UPDATE = 406,
-        TOKEN_OVERRIDE_CLIENT_UPDATE = 407,
-        TOKEN_REPLACE_CLIENT_NAME = 408,
-        TOKEN_GENERATED_PREFIX = 409,
-        TOKEN_UDP = 410,
-        TOKEN_TCP = 411,
-        TOKEN_JSON = 412,
-        TOKEN_WHEN_PRESENT = 413,
-        TOKEN_NEVER = 414,
-        TOKEN_ALWAYS = 415,
-        TOKEN_WHEN_NOT_PRESENT = 416,
-        TOKEN_HOSTNAME_CHAR_SET = 417,
-        TOKEN_HOSTNAME_CHAR_REPLACEMENT = 418,
-        TOKEN_LOGGING = 419,
-        TOKEN_LOGGERS = 420,
-        TOKEN_OUTPUT_OPTIONS = 421,
-        TOKEN_OUTPUT = 422,
-        TOKEN_DEBUGLEVEL = 423,
-        TOKEN_SEVERITY = 424,
-        TOKEN_FLUSH = 425,
-        TOKEN_MAXSIZE = 426,
-        TOKEN_MAXVER = 427,
-        TOKEN_PATTERN = 428,
-        TOKEN_DHCP4 = 429,
-        TOKEN_DHCPDDNS = 430,
-        TOKEN_CONTROL_AGENT = 431,
-        TOKEN_TOPLEVEL_JSON = 432,
-        TOKEN_TOPLEVEL_DHCP6 = 433,
-        TOKEN_SUB_DHCP6 = 434,
-        TOKEN_SUB_INTERFACES6 = 435,
-        TOKEN_SUB_SUBNET6 = 436,
-        TOKEN_SUB_POOL6 = 437,
-        TOKEN_SUB_PD_POOL = 438,
-        TOKEN_SUB_RESERVATION = 439,
-        TOKEN_SUB_OPTION_DEFS = 440,
-        TOKEN_SUB_OPTION_DEF = 441,
-        TOKEN_SUB_OPTION_DATA = 442,
-        TOKEN_SUB_HOOKS_LIBRARY = 443,
-        TOKEN_SUB_DHCP_DDNS = 444,
-        TOKEN_SUB_LOGGING = 445,
-        TOKEN_SUB_CONFIG_CONTROL = 446,
-        TOKEN_STRING = 447,
-        TOKEN_INTEGER = 448,
-        TOKEN_FLOAT = 449,
-        TOKEN_BOOLEAN = 450
+        TOKEN_STORE_EXTENDED_INFO = 318,
+        TOKEN_SUBNET6 = 319,
+        TOKEN_OPTION_DEF = 320,
+        TOKEN_OPTION_DATA = 321,
+        TOKEN_NAME = 322,
+        TOKEN_DATA = 323,
+        TOKEN_CODE = 324,
+        TOKEN_SPACE = 325,
+        TOKEN_CSV_FORMAT = 326,
+        TOKEN_ALWAYS_SEND = 327,
+        TOKEN_RECORD_TYPES = 328,
+        TOKEN_ENCAPSULATE = 329,
+        TOKEN_ARRAY = 330,
+        TOKEN_POOLS = 331,
+        TOKEN_POOL = 332,
+        TOKEN_PD_POOLS = 333,
+        TOKEN_PREFIX = 334,
+        TOKEN_PREFIX_LEN = 335,
+        TOKEN_EXCLUDED_PREFIX = 336,
+        TOKEN_EXCLUDED_PREFIX_LEN = 337,
+        TOKEN_DELEGATED_LEN = 338,
+        TOKEN_USER_CONTEXT = 339,
+        TOKEN_COMMENT = 340,
+        TOKEN_SUBNET = 341,
+        TOKEN_INTERFACE = 342,
+        TOKEN_INTERFACE_ID = 343,
+        TOKEN_ID = 344,
+        TOKEN_RAPID_COMMIT = 345,
+        TOKEN_RESERVATION_MODE = 346,
+        TOKEN_DISABLED = 347,
+        TOKEN_OUT_OF_POOL = 348,
+        TOKEN_GLOBAL = 349,
+        TOKEN_ALL = 350,
+        TOKEN_SHARED_NETWORKS = 351,
+        TOKEN_MAC_SOURCES = 352,
+        TOKEN_RELAY_SUPPLIED_OPTIONS = 353,
+        TOKEN_HOST_RESERVATION_IDENTIFIERS = 354,
+        TOKEN_SANITY_CHECKS = 355,
+        TOKEN_LEASE_CHECKS = 356,
+        TOKEN_CLIENT_CLASSES = 357,
+        TOKEN_REQUIRE_CLIENT_CLASSES = 358,
+        TOKEN_TEST = 359,
+        TOKEN_ONLY_IF_REQUIRED = 360,
+        TOKEN_CLIENT_CLASS = 361,
+        TOKEN_RESERVATIONS = 362,
+        TOKEN_IP_ADDRESSES = 363,
+        TOKEN_PREFIXES = 364,
+        TOKEN_DUID = 365,
+        TOKEN_HW_ADDRESS = 366,
+        TOKEN_HOSTNAME = 367,
+        TOKEN_FLEX_ID = 368,
+        TOKEN_RELAY = 369,
+        TOKEN_IP_ADDRESS = 370,
+        TOKEN_HOOKS_LIBRARIES = 371,
+        TOKEN_LIBRARY = 372,
+        TOKEN_PARAMETERS = 373,
+        TOKEN_EXPIRED_LEASES_PROCESSING = 374,
+        TOKEN_RECLAIM_TIMER_WAIT_TIME = 375,
+        TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 376,
+        TOKEN_HOLD_RECLAIMED_TIME = 377,
+        TOKEN_MAX_RECLAIM_LEASES = 378,
+        TOKEN_MAX_RECLAIM_TIME = 379,
+        TOKEN_UNWARNED_RECLAIM_CYCLES = 380,
+        TOKEN_SERVER_ID = 381,
+        TOKEN_LLT = 382,
+        TOKEN_EN = 383,
+        TOKEN_LL = 384,
+        TOKEN_IDENTIFIER = 385,
+        TOKEN_HTYPE = 386,
+        TOKEN_TIME = 387,
+        TOKEN_ENTERPRISE_ID = 388,
+        TOKEN_DHCP4O6_PORT = 389,
+        TOKEN_CONTROL_SOCKET = 390,
+        TOKEN_SOCKET_TYPE = 391,
+        TOKEN_SOCKET_NAME = 392,
+        TOKEN_DHCP_QUEUE_CONTROL = 393,
+        TOKEN_ENABLE_QUEUE = 394,
+        TOKEN_QUEUE_TYPE = 395,
+        TOKEN_CAPACITY = 396,
+        TOKEN_DHCP_DDNS = 397,
+        TOKEN_ENABLE_UPDATES = 398,
+        TOKEN_QUALIFYING_SUFFIX = 399,
+        TOKEN_SERVER_IP = 400,
+        TOKEN_SERVER_PORT = 401,
+        TOKEN_SENDER_IP = 402,
+        TOKEN_SENDER_PORT = 403,
+        TOKEN_MAX_QUEUE_SIZE = 404,
+        TOKEN_NCR_PROTOCOL = 405,
+        TOKEN_NCR_FORMAT = 406,
+        TOKEN_OVERRIDE_NO_UPDATE = 407,
+        TOKEN_OVERRIDE_CLIENT_UPDATE = 408,
+        TOKEN_REPLACE_CLIENT_NAME = 409,
+        TOKEN_GENERATED_PREFIX = 410,
+        TOKEN_UDP = 411,
+        TOKEN_TCP = 412,
+        TOKEN_JSON = 413,
+        TOKEN_WHEN_PRESENT = 414,
+        TOKEN_NEVER = 415,
+        TOKEN_ALWAYS = 416,
+        TOKEN_WHEN_NOT_PRESENT = 417,
+        TOKEN_HOSTNAME_CHAR_SET = 418,
+        TOKEN_HOSTNAME_CHAR_REPLACEMENT = 419,
+        TOKEN_LOGGING = 420,
+        TOKEN_LOGGERS = 421,
+        TOKEN_OUTPUT_OPTIONS = 422,
+        TOKEN_OUTPUT = 423,
+        TOKEN_DEBUGLEVEL = 424,
+        TOKEN_SEVERITY = 425,
+        TOKEN_FLUSH = 426,
+        TOKEN_MAXSIZE = 427,
+        TOKEN_MAXVER = 428,
+        TOKEN_PATTERN = 429,
+        TOKEN_DHCP4 = 430,
+        TOKEN_DHCPDDNS = 431,
+        TOKEN_CONTROL_AGENT = 432,
+        TOKEN_TOPLEVEL_JSON = 433,
+        TOKEN_TOPLEVEL_DHCP6 = 434,
+        TOKEN_SUB_DHCP6 = 435,
+        TOKEN_SUB_INTERFACES6 = 436,
+        TOKEN_SUB_SUBNET6 = 437,
+        TOKEN_SUB_POOL6 = 438,
+        TOKEN_SUB_PD_POOL = 439,
+        TOKEN_SUB_RESERVATION = 440,
+        TOKEN_SUB_OPTION_DEFS = 441,
+        TOKEN_SUB_OPTION_DEF = 442,
+        TOKEN_SUB_OPTION_DATA = 443,
+        TOKEN_SUB_HOOKS_LIBRARY = 444,
+        TOKEN_SUB_DHCP_DDNS = 445,
+        TOKEN_SUB_LOGGING = 446,
+        TOKEN_SUB_CONFIG_CONTROL = 447,
+        TOKEN_STRING = 448,
+        TOKEN_INTEGER = 449,
+        TOKEN_FLOAT = 450,
+        TOKEN_BOOLEAN = 451
       };
     };
 
@@ -805,29 +806,29 @@ namespace isc { namespace dhcp {
         // Type destructor.
 switch (yytype)
     {
-      case 213: // value
-      case 217: // map_value
-      case 258: // ddns_replace_client_name_value
-      case 292: // db_type
-      case 386: // hr_mode
-      case 522: // duid_type
-      case 565: // ncr_protocol_value
+      case 214: // value
+      case 218: // map_value
+      case 259: // ddns_replace_client_name_value
+      case 294: // db_type
+      case 388: // hr_mode
+      case 524: // duid_type
+      case 567: // ncr_protocol_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 195: // "boolean"
+      case 196: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 194: // "floating point"
+      case 195: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 193: // "integer"
+      case 194: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 192: // "constant string"
+      case 193: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -907,13 +908,13 @@ switch (yytype)
       symbol_type (int tok, location_type l)
         : super_type(token_type (tok), std::move (l))
       {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DATA_DIRECTORY || tok == token::TOKEN_CONFIG_CONTROL || tok == token::TOKEN_CONFIG_DATABASES || tok == token::TOKEN_CONFIG_FETCH_WAIT_TIME || tok == token::TOKEN_INTERFACES_CONFIG || tok == token::TOKEN_INTERFACES || tok == token::TOKEN_RE_DETECT || tok == token::TOKEN_LEASE_DATABASE || tok == token::TOKEN_HOSTS_DATABASE || tok == token::TOKEN_HOSTS_DATABASES || tok == token::TOKEN_TYPE || tok == token::TOKEN_MEMFILE || tok == token::TOKEN_MYSQL || tok == token::TOKEN_POSTGRESQL || tok == token::TOKEN_CQL || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_HOST || tok == token::TOKEN_PORT || tok == token::TOKEN_PERSIST || tok == token::TOKEN_LFC_INTERVAL || tok == token::TOKEN_READONLY || tok == token::TOKEN_CONNECT_TIMEOUT || tok == token::TOKEN_CONTACT_POINTS || tok == token::TOKEN_MAX_RECONNECT_TRIES || tok == token::TOKEN_RECONNECT_WAIT_TIME || tok == token::TOKEN_KEYSPACE || tok == token::TOKEN_CONSISTENCY || tok == token::TOKEN_SERIAL_CONSISTENCY || tok == token::TOKEN_REQUEST_TIMEOUT || tok == token::TOKEN_TCP_KEEPALIVE || tok == token::TOKEN_TCP_NODELAY || tok == token::TOKEN_MAX_ROW_ERRORS || tok == token::TOKEN_PREFERRED_LIFETIME || tok == token::TOKEN_MIN_PREFERRED_LIFETIME || tok == token::TOKEN_MAX_PREFERRED_LIFETIME || tok == token::TOKEN_VALID_LIFETIME || tok == token::TOKEN_MIN_VALID_LIFETIME || tok == token::TOKEN_MAX_VALID_LIFETIME || tok == token::TOKEN_RENEW_TIMER || tok == token::TOKEN_REBIND_TIMER || tok == token::TOKEN_CALCULATE_TEE_TIMES || tok == token::TOKEN_T1_PERCENT || tok == token::TOKEN_T2_PERCENT || tok == token::TOKEN_DECLINE_PROBATION_PERIOD || tok == token::TOKEN_SERVER_TAG || tok == token::TOKEN_DDNS_SEND_UPDATES || tok == token::TOKEN_DDNS_OVERRIDE_NO_UPDATE || tok == token::TOKEN_DDNS_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_DDNS_REPLACE_CLIENT_NAME || tok == token::TOKEN_DDNS_GENERATED_PREFIX || tok == token::TOKEN_DDNS_QUALIFYING_SUFFIX || tok == token::TOKEN_SUBNET6 || tok == token::TOKEN_OPTION_DEF || tok == token::TOKEN_OPTION_DATA || tok == token::TOKEN_NAME || tok == token::TOKEN_DATA || tok == token::TOKEN_CODE || tok == token::TOKEN_SPACE || tok == token::TOKEN_CSV_FORMAT || tok == token::TOKEN_ALWAYS_SEND || tok == token::TOKEN_RECORD_TYPES || tok == token::TOKEN_ENCAPSULATE || tok == token::TOKEN_ARRAY || tok == token::TOKEN_POOLS || tok == token::TOKEN_POOL || tok == token::TOKEN_PD_POOLS || tok == token::TOKEN_PREFIX || tok == token::TOKEN_PREFIX_LEN || tok == token::TOKEN_EXCLUDED_PREFIX || tok == token::TOKEN_EXCLUDED_PREFIX_LEN || tok == token::TOKEN_DELEGATED_LEN || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_SUBNET || tok == token::TOKEN_INTERFACE || tok == token::TOKEN_INTERFACE_ID || tok == token::TOKEN_ID || tok == token::TOKEN_RAPID_COMMIT || tok == token::TOKEN_RESERVATION_MODE || tok == token::TOKEN_DISABLED || tok == token::TOKEN_OUT_OF_POOL || tok == token::TOKEN_GLOBAL || tok == token::TOKEN_ALL || tok == token::TOKEN_SHARED_NETWORKS || tok == token::TOKEN_MAC_SOURCES || tok == token::TOKEN_RELAY_SUPPLIED_OPTIONS || tok == token::TOKEN_HOST_RESERVATION_IDENTIFIERS || tok == token::TOKEN_SANITY_CHECKS || tok == token::TOKEN_LEASE_CHECKS || tok == token::TOKEN_CLIENT_CLASSES || tok == token::TOKEN_REQUIRE_CLIENT_CLASSES || tok == token::TOKEN_TEST || tok == token::TOKEN_ONLY_IF_REQUIRED || tok == token::TOKEN_CLIENT_CLASS || tok == token::TOKEN_RESERVATIONS || tok == token::TOKEN_IP_ADDRESSES || tok == token::TOKEN_PREFIXES || tok == token::TOKEN_DUID || tok == token::TOKEN_HW_ADDRESS || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_FLEX_ID || tok == token::TOKEN_RELAY || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_EXPIRED_LEASES_PROCESSING || tok == token::TOKEN_RECLAIM_TIMER_WAIT_TIME || tok == token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME || tok == token::TOKEN_HOLD_RECLAIMED_TIME || tok == token::TOKEN_MAX_RECLAIM_LEASES || tok == token::TOKEN_MAX_RECLAIM_TIME || tok == token::TOKEN_UNWARNED_RECLAIM_CYCLES || tok == token::TOKEN_SERVER_ID || tok == token::TOKEN_LLT || tok == token::TOKEN_EN || tok == token::TOKEN_LL || tok == token::TOKEN_IDENTIFIER || tok == token::TOKEN_HTYPE || tok == token::TOKEN_TIME || tok == token::TOKEN_ENTERPRISE_ID || tok == token::TOKEN_DHCP4O6_PORT || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_DHCP_QUEUE_CONTROL || tok == token::TOKEN_ENABLE_QUEUE || tok == token::TOKEN_QUEUE_TYPE || tok == token::TOKEN_CAPACITY || tok == token::TOKEN_DHCP_DDNS || tok == token::TOKEN_ENABLE_UPDATES || tok == token::TOKEN_QUALIFYING_SUFFIX || tok == token::TOKEN_SERVER_IP || tok == token::TOKEN_SERVER_PORT || tok == token::TOKEN_SENDER_IP || tok == token::TOKEN_SENDER_PORT || tok == token::TOKEN_MAX_QUEUE_SIZE || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_OVERRIDE_NO_UPDATE || tok == token::TOKEN_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_REPLACE_CLIENT_NAME || tok == token::TOKEN_GENERATED_PREFIX || tok == token::TOKEN_UDP || tok == token::TOKEN_TCP || tok == token::TOKEN_JSON || tok == token::TOKEN_WHEN_PRESENT || tok == token::TOKEN_NEVER || tok == token::TOKEN_ALWAYS || tok == token::TOKEN_WHEN_NOT_PRESENT || tok == token::TOKEN_HOSTNAME_CHAR_SET || tok == token::TOKEN_HOSTNAME_CHAR_REPLACEMENT || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCP6 || tok == token::TOKEN_SUB_DHCP6 || tok == token::TOKEN_SUB_INTERFACES6 || tok == token::TOKEN_SUB_SUBNET6 || tok == token::TOKEN_SUB_POOL6 || tok == token::TOKEN_SUB_PD_POOL || tok == token::TOKEN_SUB_RESERVATION || tok == token::TOKEN_SUB_OPTION_DEFS || tok == token::TOKEN_SUB_OPTION_DEF || tok == token::TOKEN_SUB_OPTION_DATA || tok == token::TOKEN_SUB_HOOKS_LIBRARY || tok == token::TOKEN_SUB_DHCP_DDNS || tok == token::TOKEN_SUB_LOGGING || tok == token::TOKEN_SUB_CONFIG_CONTROL);
+        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DATA_DIRECTORY || tok == token::TOKEN_CONFIG_CONTROL || tok == token::TOKEN_CONFIG_DATABASES || tok == token::TOKEN_CONFIG_FETCH_WAIT_TIME || tok == token::TOKEN_INTERFACES_CONFIG || tok == token::TOKEN_INTERFACES || tok == token::TOKEN_RE_DETECT || tok == token::TOKEN_LEASE_DATABASE || tok == token::TOKEN_HOSTS_DATABASE || tok == token::TOKEN_HOSTS_DATABASES || tok == token::TOKEN_TYPE || tok == token::TOKEN_MEMFILE || tok == token::TOKEN_MYSQL || tok == token::TOKEN_POSTGRESQL || tok == token::TOKEN_CQL || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_HOST || tok == token::TOKEN_PORT || tok == token::TOKEN_PERSIST || tok == token::TOKEN_LFC_INTERVAL || tok == token::TOKEN_READONLY || tok == token::TOKEN_CONNECT_TIMEOUT || tok == token::TOKEN_CONTACT_POINTS || tok == token::TOKEN_MAX_RECONNECT_TRIES || tok == token::TOKEN_RECONNECT_WAIT_TIME || tok == token::TOKEN_KEYSPACE || tok == token::TOKEN_CONSISTENCY || tok == token::TOKEN_SERIAL_CONSISTENCY || tok == token::TOKEN_REQUEST_TIMEOUT || tok == token::TOKEN_TCP_KEEPALIVE || tok == token::TOKEN_TCP_NODELAY || tok == token::TOKEN_MAX_ROW_ERRORS || tok == token::TOKEN_PREFERRED_LIFETIME || tok == token::TOKEN_MIN_PREFERRED_LIFETIME || tok == token::TOKEN_MAX_PREFERRED_LIFETIME || tok == token::TOKEN_VALID_LIFETIME || tok == token::TOKEN_MIN_VALID_LIFETIME || tok == token::TOKEN_MAX_VALID_LIFETIME || tok == token::TOKEN_RENEW_TIMER || tok == token::TOKEN_REBIND_TIMER || tok == token::TOKEN_CALCULATE_TEE_TIMES || tok == token::TOKEN_T1_PERCENT || tok == token::TOKEN_T2_PERCENT || tok == token::TOKEN_DECLINE_PROBATION_PERIOD || tok == token::TOKEN_SERVER_TAG || tok == token::TOKEN_DDNS_SEND_UPDATES || tok == token::TOKEN_DDNS_OVERRIDE_NO_UPDATE || tok == token::TOKEN_DDNS_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_DDNS_REPLACE_CLIENT_NAME || tok == token::TOKEN_DDNS_GENERATED_PREFIX || tok == token::TOKEN_DDNS_QUALIFYING_SUFFIX || tok == token::TOKEN_STORE_EXTENDED_INFO || tok == token::TOKEN_SUBNET6 || tok == token::TOKEN_OPTION_DEF || tok == token::TOKEN_OPTION_DATA || tok == token::TOKEN_NAME || tok == token::TOKEN_DATA || tok == token::TOKEN_CODE || tok == token::TOKEN_SPACE || tok == token::TOKEN_CSV_FORMAT || tok == token::TOKEN_ALWAYS_SEND || tok == token::TOKEN_RECORD_TYPES || tok == token::TOKEN_ENCAPSULATE || tok == token::TOKEN_ARRAY || tok == token::TOKEN_POOLS || tok == token::TOKEN_POOL || tok == token::TOKEN_PD_POOLS || tok == token::TOKEN_PREFIX || tok == token::TOKEN_PREFIX_LEN || tok == token::TOKEN_EXCLUDED_PREFIX || tok == token::TOKEN_EXCLUDED_PREFIX_LEN || tok == token::TOKEN_DELEGATED_LEN || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_SUBNET || tok == token::TOKEN_INTERFACE || tok == token::TOKEN_INTERFACE_ID || tok == token::TOKEN_ID || tok == token::TOKEN_RAPID_COMMIT || tok == token::TOKEN_RESERVATION_MODE || tok == token::TOKEN_DISABLED || tok == token::TOKEN_OUT_OF_POOL || tok == token::TOKEN_GLOBAL || tok == token::TOKEN_ALL || tok == token::TOKEN_SHARED_NETWORKS || tok == token::TOKEN_MAC_SOURCES || tok == token::TOKEN_RELAY_SUPPLIED_OPTIONS || tok == token::TOKEN_HOST_RESERVATION_IDENTIFIERS || tok == token::TOKEN_SANITY_CHECKS || tok == token::TOKEN_LEASE_CHECKS || tok == token::TOKEN_CLIENT_CLASSES || tok == token::TOKEN_REQUIRE_CLIENT_CLASSES || tok == token::TOKEN_TEST || tok == token::TOKEN_ONLY_IF_REQUIRED || tok == token::TOKEN_CLIENT_CLASS || tok == token::TOKEN_RESERVATIONS || tok == token::TOKEN_IP_ADDRESSES || tok == token::TOKEN_PREFIXES || tok == token::TOKEN_DUID || tok == token::TOKEN_HW_ADDRESS || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_FLEX_ID || tok == token::TOKEN_RELAY || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_EXPIRED_LEASES_PROCESSING || tok == token::TOKEN_RECLAIM_TIMER_WAIT_TIME || tok == token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME || tok == token::TOKEN_HOLD_RECLAIMED_TIME || tok == token::TOKEN_MAX_RECLAIM_LEASES || tok == token::TOKEN_MAX_RECLAIM_TIME || tok == token::TOKEN_UNWARNED_RECLAIM_CYCLES || tok == token::TOKEN_SERVER_ID || tok == token::TOKEN_LLT || tok == token::TOKEN_EN || tok == token::TOKEN_LL || tok == token::TOKEN_IDENTIFIER || tok == token::TOKEN_HTYPE || tok == token::TOKEN_TIME || tok == token::TOKEN_ENTERPRISE_ID || tok == token::TOKEN_DHCP4O6_PORT || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_DHCP_QUEUE_CONTROL || tok == token::TOKEN_ENABLE_QUEUE || tok == token::TOKEN_QUEUE_TYPE || tok == token::TOKEN_CAPACITY || tok == token::TOKEN_DHCP_DDNS || tok == token::TOKEN_ENABLE_UPDATES || tok == token::TOKEN_QUALIFYING_SUFFIX || tok == token::TOKEN_SERVER_IP || tok == token::TOKEN_SERVER_PORT || tok == token::TOKEN_SENDER_IP || tok == token::TOKEN_SENDER_PORT || tok == token::TOKEN_MAX_QUEUE_SIZE || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_OVERRIDE_NO_UPDATE || tok == token::TOKEN_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_REPLACE_CLIENT_NAME || tok == token::TOKEN_GENERATED_PREFIX || tok == token::TOKEN_UDP || tok == token::TOKEN_TCP || tok == token::TOKEN_JSON || tok == token::TOKEN_WHEN_PRESENT || tok == token::TOKEN_NEVER || tok == token::TOKEN_ALWAYS || tok == token::TOKEN_WHEN_NOT_PRESENT || tok == token::TOKEN_HOSTNAME_CHAR_SET || tok == token::TOKEN_HOSTNAME_CHAR_REPLACEMENT || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCP6 || tok == token::TOKEN_SUB_DHCP6 || tok == token::TOKEN_SUB_INTERFACES6 || tok == token::TOKEN_SUB_SUBNET6 || tok == token::TOKEN_SUB_POOL6 || tok == token::TOKEN_SUB_PD_POOL || tok == token::TOKEN_SUB_RESERVATION || tok == token::TOKEN_SUB_OPTION_DEFS || tok == token::TOKEN_SUB_OPTION_DEF || tok == token::TOKEN_SUB_OPTION_DATA || tok == token::TOKEN_SUB_HOOKS_LIBRARY || tok == token::TOKEN_SUB_DHCP_DDNS || tok == token::TOKEN_SUB_LOGGING || tok == token::TOKEN_SUB_CONFIG_CONTROL);
       }
 #else
       symbol_type (int tok, const location_type& l)
         : super_type(token_type (tok), l)
       {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DATA_DIRECTORY || tok == token::TOKEN_CONFIG_CONTROL || tok == token::TOKEN_CONFIG_DATABASES || tok == token::TOKEN_CONFIG_FETCH_WAIT_TIME || tok == token::TOKEN_INTERFACES_CONFIG || tok == token::TOKEN_INTERFACES || tok == token::TOKEN_RE_DETECT || tok == token::TOKEN_LEASE_DATABASE || tok == token::TOKEN_HOSTS_DATABASE || tok == token::TOKEN_HOSTS_DATABASES || tok == token::TOKEN_TYPE || tok == token::TOKEN_MEMFILE || tok == token::TOKEN_MYSQL || tok == token::TOKEN_POSTGRESQL || tok == token::TOKEN_CQL || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_HOST || tok == token::TOKEN_PORT || tok == token::TOKEN_PERSIST || tok == token::TOKEN_LFC_INTERVAL || tok == token::TOKEN_READONLY || tok == token::TOKEN_CONNECT_TIMEOUT || tok == token::TOKEN_CONTACT_POINTS || tok == token::TOKEN_MAX_RECONNECT_TRIES || tok == token::TOKEN_RECONNECT_WAIT_TIME || tok == token::TOKEN_KEYSPACE || tok == token::TOKEN_CONSISTENCY || tok == token::TOKEN_SERIAL_CONSISTENCY || tok == token::TOKEN_REQUEST_TIMEOUT || tok == token::TOKEN_TCP_KEEPALIVE || tok == token::TOKEN_TCP_NODELAY || tok == token::TOKEN_MAX_ROW_ERRORS || tok == token::TOKEN_PREFERRED_LIFETIME || tok == token::TOKEN_MIN_PREFERRED_LIFETIME || tok == token::TOKEN_MAX_PREFERRED_LIFETIME || tok == token::TOKEN_VALID_LIFETIME || tok == token::TOKEN_MIN_VALID_LIFETIME || tok == token::TOKEN_MAX_VALID_LIFETIME || tok == token::TOKEN_RENEW_TIMER || tok == token::TOKEN_REBIND_TIMER || tok == token::TOKEN_CALCULATE_TEE_TIMES || tok == token::TOKEN_T1_PERCENT || tok == token::TOKEN_T2_PERCENT || tok == token::TOKEN_DECLINE_PROBATION_PERIOD || tok == token::TOKEN_SERVER_TAG || tok == token::TOKEN_DDNS_SEND_UPDATES || tok == token::TOKEN_DDNS_OVERRIDE_NO_UPDATE || tok == token::TOKEN_DDNS_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_DDNS_REPLACE_CLIENT_NAME || tok == token::TOKEN_DDNS_GENERATED_PREFIX || tok == token::TOKEN_DDNS_QUALIFYING_SUFFIX || tok == token::TOKEN_SUBNET6 || tok == token::TOKEN_OPTION_DEF || tok == token::TOKEN_OPTION_DATA || tok == token::TOKEN_NAME || tok == token::TOKEN_DATA || tok == token::TOKEN_CODE || tok == token::TOKEN_SPACE || tok == token::TOKEN_CSV_FORMAT || tok == token::TOKEN_ALWAYS_SEND || tok == token::TOKEN_RECORD_TYPES || tok == token::TOKEN_ENCAPSULATE || tok == token::TOKEN_ARRAY || tok == token::TOKEN_POOLS || tok == token::TOKEN_POOL || tok == token::TOKEN_PD_POOLS || tok == token::TOKEN_PREFIX || tok == token::TOKEN_PREFIX_LEN || tok == token::TOKEN_EXCLUDED_PREFIX || tok == token::TOKEN_EXCLUDED_PREFIX_LEN || tok == token::TOKEN_DELEGATED_LEN || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_SUBNET || tok == token::TOKEN_INTERFACE || tok == token::TOKEN_INTERFACE_ID || tok == token::TOKEN_ID || tok == token::TOKEN_RAPID_COMMIT || tok == token::TOKEN_RESERVATION_MODE || tok == token::TOKEN_DISABLED || tok == token::TOKEN_OUT_OF_POOL || tok == token::TOKEN_GLOBAL || tok == token::TOKEN_ALL || tok == token::TOKEN_SHARED_NETWORKS || tok == token::TOKEN_MAC_SOURCES || tok == token::TOKEN_RELAY_SUPPLIED_OPTIONS || tok == token::TOKEN_HOST_RESERVATION_IDENTIFIERS || tok == token::TOKEN_SANITY_CHECKS || tok == token::TOKEN_LEASE_CHECKS || tok == token::TOKEN_CLIENT_CLASSES || tok == token::TOKEN_REQUIRE_CLIENT_CLASSES || tok == token::TOKEN_TEST || tok == token::TOKEN_ONLY_IF_REQUIRED || tok == token::TOKEN_CLIENT_CLASS || tok == token::TOKEN_RESERVATIONS || tok == token::TOKEN_IP_ADDRESSES || tok == token::TOKEN_PREFIXES || tok == token::TOKEN_DUID || tok == token::TOKEN_HW_ADDRESS || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_FLEX_ID || tok == token::TOKEN_RELAY || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_EXPIRED_LEASES_PROCESSING || tok == token::TOKEN_RECLAIM_TIMER_WAIT_TIME || tok == token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME || tok == token::TOKEN_HOLD_RECLAIMED_TIME || tok == token::TOKEN_MAX_RECLAIM_LEASES || tok == token::TOKEN_MAX_RECLAIM_TIME || tok == token::TOKEN_UNWARNED_RECLAIM_CYCLES || tok == token::TOKEN_SERVER_ID || tok == token::TOKEN_LLT || tok == token::TOKEN_EN || tok == token::TOKEN_LL || tok == token::TOKEN_IDENTIFIER || tok == token::TOKEN_HTYPE || tok == token::TOKEN_TIME || tok == token::TOKEN_ENTERPRISE_ID || tok == token::TOKEN_DHCP4O6_PORT || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_DHCP_QUEUE_CONTROL || tok == token::TOKEN_ENABLE_QUEUE || tok == token::TOKEN_QUEUE_TYPE || tok == token::TOKEN_CAPACITY || tok == token::TOKEN_DHCP_DDNS || tok == token::TOKEN_ENABLE_UPDATES || tok == token::TOKEN_QUALIFYING_SUFFIX || tok == token::TOKEN_SERVER_IP || tok == token::TOKEN_SERVER_PORT || tok == token::TOKEN_SENDER_IP || tok == token::TOKEN_SENDER_PORT || tok == token::TOKEN_MAX_QUEUE_SIZE || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_OVERRIDE_NO_UPDATE || tok == token::TOKEN_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_REPLACE_CLIENT_NAME || tok == token::TOKEN_GENERATED_PREFIX || tok == token::TOKEN_UDP || tok == token::TOKEN_TCP || tok == token::TOKEN_JSON || tok == token::TOKEN_WHEN_PRESENT || tok == token::TOKEN_NEVER || tok == token::TOKEN_ALWAYS || tok == token::TOKEN_WHEN_NOT_PRESENT || tok == token::TOKEN_HOSTNAME_CHAR_SET || tok == token::TOKEN_HOSTNAME_CHAR_REPLACEMENT || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCP6 || tok == token::TOKEN_SUB_DHCP6 || tok == token::TOKEN_SUB_INTERFACES6 || tok == token::TOKEN_SUB_SUBNET6 || tok == token::TOKEN_SUB_POOL6 || tok == token::TOKEN_SUB_PD_POOL || tok == token::TOKEN_SUB_RESERVATION || tok == token::TOKEN_SUB_OPTION_DEFS || tok == token::TOKEN_SUB_OPTION_DEF || tok == token::TOKEN_SUB_OPTION_DATA || tok == token::TOKEN_SUB_HOOKS_LIBRARY || tok == token::TOKEN_SUB_DHCP_DDNS || tok == token::TOKEN_SUB_LOGGING || tok == token::TOKEN_SUB_CONFIG_CONTROL);
+        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DATA_DIRECTORY || tok == token::TOKEN_CONFIG_CONTROL || tok == token::TOKEN_CONFIG_DATABASES || tok == token::TOKEN_CONFIG_FETCH_WAIT_TIME || tok == token::TOKEN_INTERFACES_CONFIG || tok == token::TOKEN_INTERFACES || tok == token::TOKEN_RE_DETECT || tok == token::TOKEN_LEASE_DATABASE || tok == token::TOKEN_HOSTS_DATABASE || tok == token::TOKEN_HOSTS_DATABASES || tok == token::TOKEN_TYPE || tok == token::TOKEN_MEMFILE || tok == token::TOKEN_MYSQL || tok == token::TOKEN_POSTGRESQL || tok == token::TOKEN_CQL || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_HOST || tok == token::TOKEN_PORT || tok == token::TOKEN_PERSIST || tok == token::TOKEN_LFC_INTERVAL || tok == token::TOKEN_READONLY || tok == token::TOKEN_CONNECT_TIMEOUT || tok == token::TOKEN_CONTACT_POINTS || tok == token::TOKEN_MAX_RECONNECT_TRIES || tok == token::TOKEN_RECONNECT_WAIT_TIME || tok == token::TOKEN_KEYSPACE || tok == token::TOKEN_CONSISTENCY || tok == token::TOKEN_SERIAL_CONSISTENCY || tok == token::TOKEN_REQUEST_TIMEOUT || tok == token::TOKEN_TCP_KEEPALIVE || tok == token::TOKEN_TCP_NODELAY || tok == token::TOKEN_MAX_ROW_ERRORS || tok == token::TOKEN_PREFERRED_LIFETIME || tok == token::TOKEN_MIN_PREFERRED_LIFETIME || tok == token::TOKEN_MAX_PREFERRED_LIFETIME || tok == token::TOKEN_VALID_LIFETIME || tok == token::TOKEN_MIN_VALID_LIFETIME || tok == token::TOKEN_MAX_VALID_LIFETIME || tok == token::TOKEN_RENEW_TIMER || tok == token::TOKEN_REBIND_TIMER || tok == token::TOKEN_CALCULATE_TEE_TIMES || tok == token::TOKEN_T1_PERCENT || tok == token::TOKEN_T2_PERCENT || tok == token::TOKEN_DECLINE_PROBATION_PERIOD || tok == token::TOKEN_SERVER_TAG || tok == token::TOKEN_DDNS_SEND_UPDATES || tok == token::TOKEN_DDNS_OVERRIDE_NO_UPDATE || tok == token::TOKEN_DDNS_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_DDNS_REPLACE_CLIENT_NAME || tok == token::TOKEN_DDNS_GENERATED_PREFIX || tok == token::TOKEN_DDNS_QUALIFYING_SUFFIX || tok == token::TOKEN_STORE_EXTENDED_INFO || tok == token::TOKEN_SUBNET6 || tok == token::TOKEN_OPTION_DEF || tok == token::TOKEN_OPTION_DATA || tok == token::TOKEN_NAME || tok == token::TOKEN_DATA || tok == token::TOKEN_CODE || tok == token::TOKEN_SPACE || tok == token::TOKEN_CSV_FORMAT || tok == token::TOKEN_ALWAYS_SEND || tok == token::TOKEN_RECORD_TYPES || tok == token::TOKEN_ENCAPSULATE || tok == token::TOKEN_ARRAY || tok == token::TOKEN_POOLS || tok == token::TOKEN_POOL || tok == token::TOKEN_PD_POOLS || tok == token::TOKEN_PREFIX || tok == token::TOKEN_PREFIX_LEN || tok == token::TOKEN_EXCLUDED_PREFIX || tok == token::TOKEN_EXCLUDED_PREFIX_LEN || tok == token::TOKEN_DELEGATED_LEN || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_SUBNET || tok == token::TOKEN_INTERFACE || tok == token::TOKEN_INTERFACE_ID || tok == token::TOKEN_ID || tok == token::TOKEN_RAPID_COMMIT || tok == token::TOKEN_RESERVATION_MODE || tok == token::TOKEN_DISABLED || tok == token::TOKEN_OUT_OF_POOL || tok == token::TOKEN_GLOBAL || tok == token::TOKEN_ALL || tok == token::TOKEN_SHARED_NETWORKS || tok == token::TOKEN_MAC_SOURCES || tok == token::TOKEN_RELAY_SUPPLIED_OPTIONS || tok == token::TOKEN_HOST_RESERVATION_IDENTIFIERS || tok == token::TOKEN_SANITY_CHECKS || tok == token::TOKEN_LEASE_CHECKS || tok == token::TOKEN_CLIENT_CLASSES || tok == token::TOKEN_REQUIRE_CLIENT_CLASSES || tok == token::TOKEN_TEST || tok == token::TOKEN_ONLY_IF_REQUIRED || tok == token::TOKEN_CLIENT_CLASS || tok == token::TOKEN_RESERVATIONS || tok == token::TOKEN_IP_ADDRESSES || tok == token::TOKEN_PREFIXES || tok == token::TOKEN_DUID || tok == token::TOKEN_HW_ADDRESS || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_FLEX_ID || tok == token::TOKEN_RELAY || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_EXPIRED_LEASES_PROCESSING || tok == token::TOKEN_RECLAIM_TIMER_WAIT_TIME || tok == token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME || tok == token::TOKEN_HOLD_RECLAIMED_TIME || tok == token::TOKEN_MAX_RECLAIM_LEASES || tok == token::TOKEN_MAX_RECLAIM_TIME || tok == token::TOKEN_UNWARNED_RECLAIM_CYCLES || tok == token::TOKEN_SERVER_ID || tok == token::TOKEN_LLT || tok == token::TOKEN_EN || tok == token::TOKEN_LL || tok == token::TOKEN_IDENTIFIER || tok == token::TOKEN_HTYPE || tok == token::TOKEN_TIME || tok == token::TOKEN_ENTERPRISE_ID || tok == token::TOKEN_DHCP4O6_PORT || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_DHCP_QUEUE_CONTROL || tok == token::TOKEN_ENABLE_QUEUE || tok == token::TOKEN_QUEUE_TYPE || tok == token::TOKEN_CAPACITY || tok == token::TOKEN_DHCP_DDNS || tok == token::TOKEN_ENABLE_UPDATES || tok == token::TOKEN_QUALIFYING_SUFFIX || tok == token::TOKEN_SERVER_IP || tok == token::TOKEN_SERVER_PORT || tok == token::TOKEN_SENDER_IP || tok == token::TOKEN_SENDER_PORT || tok == token::TOKEN_MAX_QUEUE_SIZE || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_OVERRIDE_NO_UPDATE || tok == token::TOKEN_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_REPLACE_CLIENT_NAME || tok == token::TOKEN_GENERATED_PREFIX || tok == token::TOKEN_UDP || tok == token::TOKEN_TCP || tok == token::TOKEN_JSON || tok == token::TOKEN_WHEN_PRESENT || tok == token::TOKEN_NEVER || tok == token::TOKEN_ALWAYS || tok == token::TOKEN_WHEN_NOT_PRESENT || tok == token::TOKEN_HOSTNAME_CHAR_SET || tok == token::TOKEN_HOSTNAME_CHAR_REPLACEMENT || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCP6 || tok == token::TOKEN_SUB_DHCP6 || tok == token::TOKEN_SUB_INTERFACES6 || tok == token::TOKEN_SUB_SUBNET6 || tok == token::TOKEN_SUB_POOL6 || tok == token::TOKEN_SUB_PD_POOL || tok == token::TOKEN_SUB_RESERVATION || tok == token::TOKEN_SUB_OPTION_DEFS || tok == token::TOKEN_SUB_OPTION_DEF || tok == token::TOKEN_SUB_OPTION_DATA || tok == token::TOKEN_SUB_HOOKS_LIBRARY || tok == token::TOKEN_SUB_DHCP_DDNS || tok == token::TOKEN_SUB_LOGGING || tok == token::TOKEN_SUB_CONFIG_CONTROL);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1918,6 +1919,21 @@ switch (yytype)
       make_DDNS_QUALIFYING_SUFFIX (const location_type& l)
       {
         return symbol_type (token::TOKEN_DDNS_QUALIFYING_SUFFIX, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_STORE_EXTENDED_INFO (location_type l)
+      {
+        return symbol_type (token::TOKEN_STORE_EXTENDED_INFO, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_STORE_EXTENDED_INFO (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_STORE_EXTENDED_INFO, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -4221,10 +4237,10 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 1199,     ///< Last index in yytable_.
-      yynnts_ = 427,  ///< Number of nonterminal symbols.
+      yylast_ = 1209,     ///< Last index in yytable_.
+      yynnts_ = 428,  ///< Number of nonterminal symbols.
       yyfinal_ = 32, ///< Termination state number.
-      yyntokens_ = 196  ///< Number of tokens.
+      yyntokens_ = 197  ///< Number of tokens.
     };
 
 
@@ -4287,9 +4303,9 @@ switch (yytype)
      165,   166,   167,   168,   169,   170,   171,   172,   173,   174,
      175,   176,   177,   178,   179,   180,   181,   182,   183,   184,
      185,   186,   187,   188,   189,   190,   191,   192,   193,   194,
-     195
+     195,   196
     };
-    const int user_token_number_max_ = 450;
+    const int user_token_number_max_ = 451;
 
     if (t <= 0)
       return yyeof_;
@@ -4309,29 +4325,29 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 213: // value
-      case 217: // map_value
-      case 258: // ddns_replace_client_name_value
-      case 292: // db_type
-      case 386: // hr_mode
-      case 522: // duid_type
-      case 565: // ncr_protocol_value
+      case 214: // value
+      case 218: // map_value
+      case 259: // ddns_replace_client_name_value
+      case 294: // db_type
+      case 388: // hr_mode
+      case 524: // duid_type
+      case 567: // ncr_protocol_value
         value.move< ElementPtr > (std::move (that.value));
         break;
 
-      case 195: // "boolean"
+      case 196: // "boolean"
         value.move< bool > (std::move (that.value));
         break;
 
-      case 194: // "floating point"
+      case 195: // "floating point"
         value.move< double > (std::move (that.value));
         break;
 
-      case 193: // "integer"
+      case 194: // "integer"
         value.move< int64_t > (std::move (that.value));
         break;
 
-      case 192: // "constant string"
+      case 193: // "constant string"
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -4350,29 +4366,29 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 213: // value
-      case 217: // map_value
-      case 258: // ddns_replace_client_name_value
-      case 292: // db_type
-      case 386: // hr_mode
-      case 522: // duid_type
-      case 565: // ncr_protocol_value
+      case 214: // value
+      case 218: // map_value
+      case 259: // ddns_replace_client_name_value
+      case 294: // db_type
+      case 388: // hr_mode
+      case 524: // duid_type
+      case 567: // ncr_protocol_value
         value.copy< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 195: // "boolean"
+      case 196: // "boolean"
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 194: // "floating point"
+      case 195: // "floating point"
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case 193: // "integer"
+      case 194: // "integer"
         value.copy< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 192: // "constant string"
+      case 193: // "constant string"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -4398,29 +4414,29 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 213: // value
-      case 217: // map_value
-      case 258: // ddns_replace_client_name_value
-      case 292: // db_type
-      case 386: // hr_mode
-      case 522: // duid_type
-      case 565: // ncr_protocol_value
+      case 214: // value
+      case 218: // map_value
+      case 259: // ddns_replace_client_name_value
+      case 294: // db_type
+      case 388: // hr_mode
+      case 524: // duid_type
+      case 567: // ncr_protocol_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
-      case 195: // "boolean"
+      case 196: // "boolean"
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 194: // "floating point"
+      case 195: // "floating point"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 193: // "integer"
+      case 194: // "integer"
         value.move< int64_t > (YY_MOVE (s.value));
         break;
 
-      case 192: // "constant string"
+      case 193: // "constant string"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -4480,7 +4496,7 @@ switch (yytype)
 
 #line 14 "dhcp6_parser.yy"
 } } // isc::dhcp
-#line 4484 "dhcp6_parser.h"
+#line 4500 "dhcp6_parser.h"
 
 
 
