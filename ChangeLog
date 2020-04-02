@@ -1,3 +1,9 @@
+1737.   [func]      tmark
+	Added store-extended-info parameter to kea-dhcp4 and kea-dhcp6
+	which enables the storage of additional information per lease.
+	This has been added in anticipation of supporting LeaseQuery.
+	(Gitlab #1010)
+
 1736.	[doc]		fdupont
 	A default logging syntax has been updated to reflect recently added
 	multi-threading capabilities. The process is now identified by
@@ -11,7 +17,7 @@ Kea 1.7.6 released on Mar 25, 2020
 1735.	[func]		wlodek
 	Added clean output mode to perfdhcp with configurable separator
 	for periodic reports.
-	(Gutlab #1046)
+	(Gitlab #1046)
 
 1734.	[doc]		vicky
 	A list of supported OSes is now described in a separate
