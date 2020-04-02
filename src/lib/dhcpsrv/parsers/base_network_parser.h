@@ -35,7 +35,7 @@ protected:
     /// The parsed parameters are:
     /// - renew-timer,
     /// - rebind-timer,
-    /// - valid-lifetime
+    /// - valid-lifetime,
     /// - store-extended-info
     ///
     /// @param network_data Data element holding shared network

@@ -3735,7 +3735,7 @@ be retained on the lease.  The lease's user-context will look something like thi
     content so long as it does not also use an element labled "ISC".  In other
     words, user-context is intended to be a flexible container serving mulitple
     purposes.  As long as no other purpose also writes an "ISC" element to
-    user-contex there should not be a conflict.
+    user-context there should not be a conflict.
 
 .. _host-reservation-v4:
 

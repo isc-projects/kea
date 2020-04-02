@@ -241,7 +241,8 @@ Network::toElement() const {
     if (!t2_percent_.unspecified()) {
         map->set("t2-percent", Element::create(t2_percent_));
     }
-if (!ddns_send_updates_.unspecified()) {
+
+    if (!ddns_send_updates_.unspecified()) {
         map->set("ddns-send-updates", Element::create(ddns_send_updates_));
     }
 
