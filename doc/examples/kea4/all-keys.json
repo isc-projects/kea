@@ -523,7 +523,7 @@
 	// When the maximum count is 0 the maximum age (in seconds) applies.
 	"statistic-default-sample-age": 60,
 
-	// By default Kea processes packets on a single thread (default 'false'
+        // By default Kea processes packets on a single thread (default 'false'
         // value for this option). To enable multi-threading, this option can be
         // set ('true' value).
         "enable-multi-threading": false,

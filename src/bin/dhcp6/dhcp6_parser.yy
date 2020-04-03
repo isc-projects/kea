@@ -518,10 +518,10 @@ global_param: data_directory
             | store_extended_info
             | statistic_default_sample_count
             | statistic_default_sample_age
-            | unknown_map_entry
             | enable_multi_threading
             | packet_thread_pool_size
             | packet_thread_queue_size
+            | unknown_map_entry
             ;
 
 data_directory: DATA_DIRECTORY {

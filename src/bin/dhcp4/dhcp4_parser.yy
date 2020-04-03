@@ -510,10 +510,10 @@ global_param: valid_lifetime
             | store_extended_info
             | statistic_default_sample_count
             | statistic_default_sample_age
-            | unknown_map_entry
             | enable_multi_threading
             | packet_thread_pool_size
             | packet_thread_queue_size
+            | unknown_map_entry
             ;
 
 valid_lifetime: VALID_LIFETIME COLON INTEGER {
