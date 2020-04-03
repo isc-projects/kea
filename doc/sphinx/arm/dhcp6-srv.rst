@@ -3249,6 +3249,36 @@ pretty-printed for clarity):
     container serving mulitple purposes.  As long as no other purpose also
     writes an "ISC" element to user-context there should not be a conflict.
 
+.. _dhcp6-multi-threading-settings:
+
+Multi-threading settings
+------------------------
+
+The Kea server can be configured to process packets in parallel using multiple
+threads. Related setting for this feature are:
+
+-  ``enable-multi-threading`` - use multiple threads to process packets in
+    parallel
+
+-  ``packet-thread-pool-size`` - specify the number of threads to process
+   packets in parallel.  Supported values are: 0 (autodetect), any positive
+   number sets number of threads explicitly.
+
+-  ``packet-thread-queue-size`` - specify the size of the queue used by each
+   thread to process packets.  Supported values are: 0 (unlimited), any positive
+   number sets size explicitly.
+
+An example configuration that sets these parameter looks as follows:
+
+::
+
+   "Dhcp6": {
+       "enable-multi-threading": true,
+       "packet-thread-pool-size": 4,
+       "packet-thread-queue-size": 16,
+       ...
+   }
+
 .. _host-reservation-v6:
 
 Host Reservation in DHCPv6

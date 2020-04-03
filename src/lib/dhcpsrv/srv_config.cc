@@ -443,7 +443,15 @@ SrvConfig::toElement() const {
     // Set dhcp4o6-port
     dhcp->set("dhcp4o6-port",
               Element::create(static_cast<int>(dhcp4o6_port_)));
-
+    // Set enable-multi-threading
+    dhcp->set("enable-multi-threading",
+             Element::create(enable_multi_threading_));
+    // Set packet-thread-pool-size
+    dhcp->set("packet-thread-pool-size",
+             Element::create(static_cast<int>(pkt_thread_pool_size_)));
+    // Set packet-thread-queue-size
+    dhcp->set("packet-thread-queue-size",
+             Element::create(static_cast<int>(pkt_thread_queue_size_)));
     // Set dhcp-ddns
     dhcp->set("dhcp-ddns", d2_client_config_->toElement());
     // Set interfaces-config
