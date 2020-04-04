@@ -3027,6 +3027,9 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 
+    // Check that cumulative global stats always exist.
+    EXPECT_TRUE(StatsMgr::instance().getObservation("cumulative-assigned-addresses"));
+
     // Now let's insert some leases into subnet 1.
     int subnet_id = 1;
 
@@ -3132,6 +3135,10 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+
+    // Check that cumulative global stats always exist.
+    EXPECT_TRUE(StatsMgr::instance().getObservation("cumulative-assigned-nas"));
+    EXPECT_TRUE(StatsMgr::instance().getObservation("cumulative-assigned-pds"));
 
     // Now let's insert some leases into subnet 1.
     subnet_id = 1;

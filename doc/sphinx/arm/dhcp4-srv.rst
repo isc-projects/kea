@@ -5647,6 +5647,15 @@ The DHCPv4 server supports the following statistics:
    |                                          |                | reconfiguration                   |
    |                                          |                | event.                            |
    +------------------------------------------+----------------+-----------------------------------+
+   | cumulative-assigned-addresses            | integer        | Cumulative number of              |
+   |                                          |                | addresses that have been          |
+   |                                          |                | assigned since                    |
+   |                                          |                | server startup. It is             |
+   |                                          |                | incremented each time             |
+   |                                          |                | an address is assigned and        |
+   |                                          |                | is not reset when the server      |
+   |                                          |                | is reconfigured.                  |
+   +------------------------------------------+----------------+-----------------------------------+
    | subnet[id].cumulative-assigned-addresses | integer        | Cumulative number of assigned     |
    |                                          |                | addresses in a given              |
    |                                          |                | subnet. It increases              |

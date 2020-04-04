@@ -1764,6 +1764,10 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
                                        "cumulative-assigned-nas" :
                                        "cumulative-assigned-pds"),
                 static_cast<int64_t>(1));
+            StatsMgr::instance().addValue(ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                          "cumulative-assigned-nas" :
+                                          "cumulative-assigned-pds",
+                                          static_cast<int64_t>(1));
         }
     }
 
@@ -1870,6 +1874,10 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                                            "cumulative-assigned-nas" :
                                            "cumulative-assigned-pds"),
                     static_cast<int64_t>(1));
+                StatsMgr::instance().addValue(ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                              "cumulative-assigned-nas" :
+                                              "cumulative-assigned-pds",
+                                              static_cast<int64_t>(1));
             }
 
             return (lease);
@@ -2157,6 +2165,10 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                                        "cumulative-assigned-nas" :
                                        "cumulative-assigned-pds"),
                 static_cast<int64_t>(1));
+            StatsMgr::instance().addValue(ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                          "cumulative-assigned-nas" :
+                                          "cumulative-assigned-pds",
+                                          static_cast<int64_t>(1));
         }
 
     } else {
@@ -2216,6 +2228,10 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
                                            "cumulative-assigned-nas" :
                                            "cumulative-assigned-pds"),
                     static_cast<int64_t>(1));
+                StatsMgr::instance().addValue(ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                              "cumulative-assigned-nas" :
+                                              "cumulative-assigned-pds",
+                                              static_cast<int64_t>(1));
             }
         }
 
@@ -3697,6 +3713,8 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        "cumulative-assigned-addresses"),
                 static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("cumulative-assigned-addresses",
+                                          static_cast<int64_t>(1));
 
             return (lease);
         } else {
@@ -3812,6 +3830,8 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        "cumulative-assigned-addresses"),
                 static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("cumulative-assigned-addresses",
+                                          static_cast<int64_t>(1));
         }
     }
     if (skip) {
@@ -3915,6 +3935,8 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        "cumulative-assigned-addresses"),
                 static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("cumulative-assigned-addresses",
+                                      static_cast<int64_t>(1));
     }
 
     // We do nothing for SOLICIT. We'll just update database when

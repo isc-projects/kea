@@ -217,10 +217,12 @@ An example response returning all collected statistics:
    {
        "command": "statistic-get-all",
        "arguments": {
+           "cumulative-assigned-addresses": [ [ 0, "2019-07-30 10:04:28.386740" ] ],
            "declined-addresses": [ [ 0, "2019-07-30 10:04:28.386733" ] ],
            "reclaimed-declined-addresses": [ [ 0, "2019-07-30 10:04:28.386735" ] ],
            "reclaimed-leases": [ [ 0, "2019-07-30 10:04:28.386736" ] ],
            "subnet[1].assigned-addresses": [ [ 0, "2019-07-30 10:04:28.386740" ] ],
+           "subnet[1].cumulative-assigned-addresses": [ [ 0, "2019-07-30 10:04:28.386740" ] ],
            "subnet[1].declined-addresses": [ [ 0, "2019-07-30 10:04:28.386743" ] ],
            "subnet[1].reclaimed-declined-addresses": [ [ 0, "2019-07-30 10:04:28.386745" ] ],
            "subnet[1].reclaimed-leases": [ [ 0, "2019-07-30 10:04:28.386747" ] ],

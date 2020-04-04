@@ -5591,6 +5591,16 @@ The DHCPv6 server supports the following statistics:
    |                                         |                       | reconfiguration        |
    |                                         |                       | event.                 |
    +-----------------------------------------+-----------------------+------------------------+
+   | cumulative-assigned-nas                 | integer               | Cumulative number of   |
+   |                                         |                       | NA addresses that      |
+   |                                         |                       | have been assigned     |
+   |                                         |                       | since server startup.  |
+   |                                         |                       | It is incremented      |
+   |                                         |                       | each time a NA address |
+   |                                         |                       | is assigned and is not |
+   |                                         |                       | reset when the server  |
+   |                                         |                       | is reconfigured.       |
+   +-----------------------------------------+-----------------------+------------------------+
    | subnet[id].cumulative-assigned-nas      | integer               | Cumulative number of   |
    |                                         |                       | NA addresses in a      |
    |                                         |                       | given subnet that      |
@@ -5658,6 +5668,16 @@ The DHCPv6 server supports the following statistics:
    |                                         |                       | and is reset during a  |
    |                                         |                       | reconfiguration        |
    |                                         |                       | event.                 |
+   +-----------------------------------------+-----------------------+------------------------+
+   | cumulative-assigned-pds                 | integer               | Cumulative number of   |
+   |                                         |                       | PD prefixes that       |
+   |                                         |                       | have been assigned     |
+   |                                         |                       | since server startup.  |
+   |                                         |                       | It is incremented      |
+   |                                         |                       | each time a PD prefix  |
+   |                                         |                       | is assigned and is not |
+   |                                         |                       | reset when the server  |
+   |                                         |                       | is reconfigured.       |
    +-----------------------------------------+-----------------------+------------------------+
    | subnet[id].cumulative-assigned-pds      | integer               | Cumulative number of   |
    |                                         |                       | PD prefixes in a       |

@@ -74,6 +74,7 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     // Get the cumulative count of assigned addresses.
     int64_t cumulative = getStatistics("cumulative-assigned-addresses",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-addresses");
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
                                     false, true, "somehost.example.com.", false);
@@ -101,6 +102,8 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
 
     // Second allocation starts here.
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -140,6 +143,8 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
 }
 
 // This test checks that simple allocation uses the default valid lifetime.
@@ -344,6 +349,7 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
     // Get the cumulative count of assigned addresses.
     int64_t cumulative = getStatistics("cumulative-assigned-addresses",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-addresses");
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, true,
@@ -369,6 +375,7 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
     EXPECT_EQ(cumulative,
               getStatistics("cumulative-assigned-addresses", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-addresses"));
 }
 
 
@@ -547,6 +554,7 @@ TEST_F(AllocEngine4Test, simpleRenew4) {
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
     int64_t cumulative = getStatistics("cumulative-assigned-addresses",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-addresses");
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
                                     false, true, "somehost.example.com.", false);
@@ -566,6 +574,8 @@ TEST_F(AllocEngine4Test, simpleRenew4) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
 
     // Do it again, this should amount to the renew of an existing lease
     Lease4Ptr lease2 = engine->allocateLease4(ctx);
@@ -581,6 +591,7 @@ TEST_F(AllocEngine4Test, simpleRenew4) {
     EXPECT_TRUE(testStatistics("assigned-addresses", 1, subnet_->getID()));
     EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
                                cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
 }
 
 // This test checks simple renewal uses the default valid lifetime.
@@ -1714,6 +1725,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
     int64_t cumulative = getStatistics("cumulative-assigned-addresses",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-addresses");
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
 
@@ -1764,6 +1776,8 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 1));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 1, subnet_->getID()));
 }
@@ -1825,6 +1839,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
     cfg_mgr.commit(); // so we will recalc stats
     int64_t cumulative = getStatistics("cumulative-assigned-addresses",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-addresses");
 
     // Now create a declined lease, decline it and rewind its cltt, so it
     // is expired.
@@ -1839,6 +1854,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
     EXPECT_EQ(cumulative,
               getStatistics("cumulative-assigned-addresses", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-addresses"));
     EXPECT_TRUE(testStatistics("declined-addresses", 0));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0));
     EXPECT_TRUE(testStatistics("declined-addresses", 0, subnet_->getID()));
@@ -1900,6 +1916,7 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
     cfg_mgr.commit();
     int64_t cumulative = getStatistics("cumulative-assigned-addresses",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-addresses");
 
     // Now create a declined lease, decline it and rewind its cltt, so it
     // is expired.
@@ -1919,6 +1936,8 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
     EXPECT_TRUE(testStatistics("declined-addresses", -1));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1));
     EXPECT_TRUE(testStatistics("declined-addresses", -1, subnet_->getID()));
@@ -2940,6 +2959,7 @@ TEST_F(AllocEngine4Test, simpleAlloc4Stats) {
     StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
     int64_t cumulative = getStatistics("cumulative-assigned-addresses",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-addresses");
 
     Lease4Ptr lease = engine->allocateLease4(ctx);
     // The new lease has been allocated, so the old lease should not exist.
@@ -2955,6 +2975,8 @@ TEST_F(AllocEngine4Test, simpleAlloc4Stats) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
 }
 
 // This test checks if the fake allocation (for DHCPDISCOVER) can succeed
@@ -2976,6 +2998,7 @@ TEST_F(AllocEngine4Test, fakeAlloc4Stat) {
     StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
     int64_t cumulative = getStatistics("cumulative-assigned-addresses",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-addresses");
 
     Lease4Ptr lease = engine->allocateLease4(ctx);
 
@@ -2992,6 +3015,7 @@ TEST_F(AllocEngine4Test, fakeAlloc4Stat) {
     EXPECT_EQ(100, stat->getInteger().first);
     EXPECT_EQ(cumulative,
               getStatistics("cumulative-assigned-addresses", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-addresses"));
 }
 
 // This test checks that the allocated-addresses statistic is decreased when
@@ -3022,6 +3046,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
     StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
     int64_t cumulative = getStatistics("cumulative-assigned-addresses",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-addresses");
 
     // Request allocation of the reserved address.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
@@ -3043,6 +3068,8 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
 
     // Lets' double check that the actual allocation took place.
     EXPECT_FALSE(ctx.fake_allocation_);

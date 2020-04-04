@@ -79,6 +79,11 @@ LeaseMgr::recountLeaseStats4() {
     stats_mgr.setValue("reclaimed-declined-addresses", zero);
     stats_mgr.setValue("reclaimed-leases", zero);
 
+    // Create if it does not exit cumulative global stats.
+    if (!stats_mgr.getObservation("cumulative-assigned-addresses")) {
+        stats_mgr.setValue("cumulative-assigned-addresses", zero);
+    }
+
     // Clear subnet level stats.  This ensures we don't end up with corner
     // cases that leave stale values in place.
     const Subnet4Collection* subnets =
@@ -198,6 +203,14 @@ LeaseMgr::recountLeaseStats6() {
     stats_mgr.setValue("declined-addresses", zero);
     stats_mgr.setValue("reclaimed-declined-addresses", zero);
     stats_mgr.setValue("reclaimed-leases", zero);
+
+    // Create if it does not exit cumulative global stats.
+    if (!stats_mgr.getObservation("cumulative-assigned-nas")) {
+        stats_mgr.setValue("cumulative-assigned-nas", zero);
+    }
+    if (!stats_mgr.getObservation("cumulative-assigned-pds")) {
+        stats_mgr.setValue("cumulative-assigned-pds", zero);
+    }
 
     // Clear subnet level stats.  This ensures we don't end up with corner
     // cases that leave stale values in place.

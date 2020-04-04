@@ -91,6 +91,7 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
     // Get the cumulative count of assigned addresses.
     int64_t cumulative = getStatistics("cumulative-assigned-nas",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
 
     simpleAlloc6Test(pool_, IOAddress("::"), false);
 
@@ -112,6 +113,8 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
     cumulative += 2;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 2;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // This test checks that simple allocation uses default lifetimes.
@@ -143,6 +146,7 @@ TEST_F(AllocEngine6Test, pdSimpleAlloc6) {
     // Get the cumulative count of assigned prefixes.
     int64_t cumulative = getStatistics("cumulative-assigned-pds",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-pds");
 
     simpleAlloc6Test(pd_pool_, IOAddress("::"), false);
 
@@ -151,6 +155,8 @@ TEST_F(AllocEngine6Test, pdSimpleAlloc6) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-pds",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-pds", glbl_cumulative));
 }
 
 // This test checks if the fake allocation (for SOLICIT) can succeed
@@ -162,6 +168,7 @@ TEST_F(AllocEngine6Test, fakeAlloc6) {
     // Get the cumulative count of assigned addresses.
     int64_t cumulative = getStatistics("cumulative-assigned-nas",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
 
     simpleAlloc6Test(pool_, IOAddress("::"), true);
 
@@ -169,6 +176,7 @@ TEST_F(AllocEngine6Test, fakeAlloc6) {
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_EQ(cumulative,
               getStatistics("cumulative-assigned-nas", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
 }
 
 // This test checks if the fake PD allocation (for SOLICIT) can succeed
@@ -180,6 +188,7 @@ TEST_F(AllocEngine6Test, pdFakeAlloc6) {
     // Get the cumulative count of assigned prefixes.
     int64_t cumulative = getStatistics("cumulative-assigned-pds",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-pds");
 
     simpleAlloc6Test(pd_pool_, IOAddress("::"), true);
 
@@ -187,6 +196,7 @@ TEST_F(AllocEngine6Test, pdFakeAlloc6) {
     EXPECT_TRUE(testStatistics("assigned-pds", 0, subnet_->getID()));
     EXPECT_EQ(cumulative,
               getStatistics("cumulative-assigned-pds", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-pds"));
 }
 
 // This test checks if the allocation with a hint that is valid (in range,
@@ -901,6 +911,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     // Get the cumulative count of assigned addresses.
     int64_t cumulative = getStatistics("cumulative-assigned-nas",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
 
     // Just a different duid
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
@@ -944,6 +955,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_EQ(cumulative,
               getStatistics("cumulative-assigned-nas", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
 }
@@ -1150,6 +1162,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     cfg_mgr.commit();
     int64_t cumulative = getStatistics("cumulative-assigned-nas",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
 
     // Let's create an expired lease
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
@@ -1206,6 +1219,8 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
     EXPECT_TRUE(testStatistics("assigned-nas", -1, other_subnetid));
     EXPECT_EQ(other_cumulative,
               getStatistics("cumulative-assigned-nas", other_subnetid));
@@ -1839,6 +1854,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
     // Get the cumulative count of assigned addresses.
     int64_t cumulative = getStatistics("cumulative-assigned-nas",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
 
     // Client gets an address
     Lease6Ptr lease1 = simpleAlloc6Test(pool_, IOAddress("::"), false);
@@ -1849,6 +1865,8 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 
     // Just check that if the client requests again, it will get the same
     // address.
@@ -1860,6 +1878,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 
     // Now admin creates a reservation for this client. This is in-pool
     // reservation, as the pool is 2001:db8:1::10 - 2001:db8:1::20.
@@ -1895,7 +1914,10 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
+
 // In the following situation:
 // - client X is assigned an address A
 // - HR is made for client Y (*other* client) to get A
@@ -1911,6 +1933,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
     // Get the cumulative count of assigned addresses.
     int64_t cumulative = getStatistics("cumulative-assigned-nas",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
 
     // Client gets an address
     Lease6Ptr lease1 = simpleAlloc6Test(pool_, IOAddress("::"), false);
@@ -1921,6 +1944,8 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 
     // Just check that if the client requests again, it will get the same
     // address.
@@ -1932,6 +1957,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 
     // Now admin creates a reservation for this client. Let's use the
     // address client X just received. Let's generate a host, but don't add it
@@ -1972,6 +1998,8 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks that a reserved address for client A is not assigned when
@@ -2601,6 +2629,7 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6Stats) {
     // Get the cumulative count of assigned addresses.
     int64_t cumulative = getStatistics("cumulative-assigned-nas",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
 
     // Now create a declined lease, decline it and rewind its cltt, so it
     // is expired.
@@ -2615,6 +2644,7 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6Stats) {
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_EQ(cumulative,
               getStatistics("cumulative-assigned-nas", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
     EXPECT_TRUE(testStatistics("declined-addresses", 0));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0));
     EXPECT_TRUE(testStatistics("declined-addresses", 0, subnet_->getID()));
@@ -2645,6 +2675,7 @@ TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
     // Get the cumulative count of assigned addresses.
     int64_t cumulative = getStatistics("cumulative-assigned-nas",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
 
     // Now create a declined lease, decline it and rewind its cltt, so it
     // is expired.
@@ -2665,6 +2696,8 @@ TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
     EXPECT_TRUE(testStatistics("declined-addresses", -1));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1));
     EXPECT_TRUE(testStatistics("declined-addresses", -1, subnet_->getID()));
@@ -2700,6 +2733,7 @@ TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
     // Get the cumulative count of assigned addresses.
     int64_t cumulative = getStatistics("cumulative-assigned-nas",
                                        subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
 
     // Let's create an expired lease
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid_,
@@ -2743,6 +2777,8 @@ TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
 }
@@ -3135,6 +3171,7 @@ TEST_F(SharedNetworkAlloc6Test, requestSharedNetworkExistingLeases) {
     // Get the cumulative count of assigned addresses.
     int64_t cumulative = getStatistics("cumulative-assigned-nas",
                                        subnet2_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
 
     // Create a lease in subnet 2 for this client. The lease is in expired
     // reclaimed state initially to allow for checking whether the lease
@@ -3165,6 +3202,8 @@ TEST_F(SharedNetworkAlloc6Test, requestSharedNetworkExistingLeases) {
     cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet2_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 
     // Another interesting case is when there is a reservation in a different
     // subnet than the one from which the ease has been assigned.
