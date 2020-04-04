@@ -5198,14 +5198,14 @@ reclaimed-declined-addresses statistics (again in two variants, global
 and subnet-specific) are increased.
 
 A note about statistics: The server does not decrease the
-assigned-addresses statistics when a DHCPDECLINE message is received and
+assigned-nas statistics when a DHCPDECLINE message is received and
 processed successfully. While technically a declined address is no
-longer assigned, the primary usage of the assigned-addresses statistic
+longer assigned, the primary usage of the assigned-nas statistic
 is to monitor pool utilization. Most people would forget to include
 declined-addresses in the calculation, and simply use
-assigned-addresses/total-addresses. This would cause a bias towards
+assigned-nas/total-nas. This would cause a bias towards
 under-representing pool utilization. As this has a potential for major
-issues, ISC decided not to decrease assigned-addresses immediately after
+issues, ISC decided not to decrease assigned-nas immediately after
 receiving DHCPDECLINE, but to do it later when Kea recovers the address
 back to the available pool.
 
@@ -5591,6 +5591,26 @@ The DHCPv6 server supports the following statistics:
    |                                         |                       | reconfiguration        |
    |                                         |                       | event.                 |
    +-----------------------------------------+-----------------------+------------------------+
+   | subnet[id].cumulative-assigned-nas      | integer               | Cumulative number of   |
+   |                                         |                       | NA addresses in a      |
+   |                                         |                       | given subnet that      |
+   |                                         |                       | were assigned. It      |
+   |                                         |                       | increases every time   |
+   |                                         |                       | a new lease is         |
+   |                                         |                       | allocated (as a        |
+   |                                         |                       | result of receiving a  |
+   |                                         |                       | REQUEST message) and   |
+   |                                         |                       | is never decreased.    |
+   |                                         |                       | The *id* is the        |
+   |                                         |                       | subnet-id of a given   |
+   |                                         |                       | subnet. This           |
+   |                                         |                       | statistic is exposed   |
+   |                                         |                       | for each subnet        |
+   |                                         |                       | separately, and is     |
+   |                                         |                       | reset during a         |
+   |                                         |                       | reconfiguration        |
+   |                                         |                       | event.                 |
+   +-----------------------------------------+-----------------------+------------------------+
    | subnet[id].assigned-nas                 | integer               | Number of NA           |
    |                                         |                       | addresses in a given   |
    |                                         |                       | subnet that are        |
@@ -5636,6 +5656,26 @@ The DHCPv6 server supports the following statistics:
    |                                         |                       | exposed for each       |
    |                                         |                       | subnet separately,     |
    |                                         |                       | and is reset during a  |
+   |                                         |                       | reconfiguration        |
+   |                                         |                       | event.                 |
+   +-----------------------------------------+-----------------------+------------------------+
+   | subnet[id].cumulative-assigned-pds      | integer               | Cumulative number of   |
+   |                                         |                       | PD prefixes in a       |
+   |                                         |                       | given subnet that      |
+   |                                         |                       | were assigned. It      |
+   |                                         |                       | increases every time   |
+   |                                         |                       | a new lease is         |
+   |                                         |                       | allocated (as a        |
+   |                                         |                       | result of receiving a  |
+   |                                         |                       | REQUEST message) and   |
+   |                                         |                       | is never decreased.    |
+   |                                         |                       | The *id* is the        |
+   |                                         |                       | subnet-id of a given   |
+   |                                         |                       | subnet. This           |
+   |                                         |                       | statistic is exposed   |
+   |                                         |                       | for each subnet        |
+   |                                         |                       | separately, and is     |
+   |                                         |                       | reset during a         |
    |                                         |                       | reconfiguration        |
    |                                         |                       | event.                 |
    +-----------------------------------------+-----------------------+------------------------+

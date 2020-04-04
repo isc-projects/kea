@@ -1758,6 +1758,12 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
                                        ctx.currentIA().type_ == Lease::TYPE_NA ?
                                        "assigned-nas" : "assigned-pds"),
                 static_cast<int64_t>(1));
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                       "cumulative-assigned-nas" :
+                                       "cumulative-assigned-pds"),
+                static_cast<int64_t>(1));
         }
     }
 
@@ -1857,6 +1863,12 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                            ctx.currentIA().type_ == Lease::TYPE_NA ?
                                            "assigned-nas" : "assigned-pds"),
+                    static_cast<int64_t>(1));
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                           ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                           "cumulative-assigned-nas" :
+                                           "cumulative-assigned-pds"),
                     static_cast<int64_t>(1));
             }
 
@@ -2139,6 +2151,12 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                                        ctx.currentIA().type_ == Lease::TYPE_NA ?
                                        "assigned-nas" : "assigned-pds"),
                 static_cast<int64_t>(1));
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                       "cumulative-assigned-nas" :
+                                       "cumulative-assigned-pds"),
+                static_cast<int64_t>(1));
         }
 
     } else {
@@ -2191,6 +2209,12 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
                     StatsMgr::generateName("subnet", lease->subnet_id_,
                                            ctx.currentIA().type_ == Lease::TYPE_NA ?
                                            "assigned-nas" : "assigned-pds"),
+                    static_cast<int64_t>(1));
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_,
+                                           ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                           "cumulative-assigned-nas" :
+                                           "cumulative-assigned-pds"),
                     static_cast<int64_t>(1));
             }
         }
@@ -3666,7 +3690,12 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
 
             // The lease insertion succeeded, let's bump up the statistic.
             StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-addresses"),
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       "assigned-addresses"),
+                static_cast<int64_t>(1));
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       "cumulative-assigned-addresses"),
                 static_cast<int64_t>(1));
 
             return (lease);
@@ -3776,7 +3805,12 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         // We need to account for the re-assignment of The lease.
         if (ctx.old_lease_->expired() || ctx.old_lease_->state_ == Lease::STATE_EXPIRED_RECLAIMED) {
             StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-addresses"),
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       "assigned-addresses"),
+                static_cast<int64_t>(1));
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       "cumulative-assigned-addresses"),
                 static_cast<int64_t>(1));
         }
     }
@@ -3874,7 +3908,12 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
 
         // We need to account for the re-assignment of The lease.
         StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-addresses"),
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       "assigned-addresses"),
+                static_cast<int64_t>(1));
+        StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       "cumulative-assigned-addresses"),
                 static_cast<int64_t>(1));
     }
 

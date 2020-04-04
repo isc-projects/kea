@@ -167,13 +167,14 @@ A DHCPv4 response might look like this:
         {
         "result-set\": {
            "columns\": [
-                "subnet-id", "total-addreses",
-                "assigned-addreses", "declined-addreses"
+                "subnet-id", "total-addresses",
+                "cumulative-assigned-addresses",
+                "assigned-addresses", "declined-addresses"
            ],
            "rows\": [
-               [ 30, 256, 100, 2 ],
-               [ 40,  16, 0, 0 ],
-               [ 50, 256, 35, 0 ],
+               [ 30, 256, 300, 100, 2 ],
+               [ 40,  16, 5, 0, 0 ],
+               [ 50, 256, 100, 35, 0 ],
            ],
            timestamp\": \"2018-05-04 15:03:37.000000\" }
         }
@@ -185,12 +186,13 @@ and DHCPv6 response might look like this:
         {
         "result-set": {
            "columns": [
-                "subnet-id", "total-nas", "assigned-nas",
-                "declined-nas", "total-pds", "assigned-pds"
+                "subnet-id", "total-nas", "cumulative-assigned-nas"
+                "assigned-nas", "declined-nas", "total-pds",
+                "cumulative-assigned-pds", "assigned-pds"
            ],
            "rows": [
-               [ 30, 16, 6, 0, 65536, 400 ],
-               [ 40, 16777216, 989837, 0, 0, 0 ]
+               [ 30, 16, 20, 6, 0, 65536, 1000, 400 ],
+               [ 40, 16777216, 1100000, 989837, 0, 0, 0, 0 ]
            ],
            "timestamp": "2018-05-04 15:03:37.000000" }
         }

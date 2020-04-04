@@ -71,6 +71,10 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     // Assigned addresses should be zero.
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-addresses",
+                                       subnet_->getID());
+
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
                                     false, true, "somehost.example.com.", false);
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
@@ -94,6 +98,9 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
 
     // Assigned addresses should have incremented.
     EXPECT_TRUE(testStatistics("assigned-addresses", 1, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
 
     // Second allocation starts here.
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -130,6 +137,9 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
 
     // Assigned addresses should have incremented.
     EXPECT_TRUE(testStatistics("assigned-addresses", 2, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
 }
 
 // This test checks that simple allocation uses the default valid lifetime.
@@ -331,6 +341,10 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
     // Assigned addresses should be zero.
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-addresses",
+                                       subnet_->getID());
+
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, true,
                                     "host.example.com.", true);
@@ -353,6 +367,8 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
 
     // Assigned addresses should still be zero.
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
+    EXPECT_EQ(cumulative,
+              getStatistics("cumulative-assigned-addresses", subnet_->getID()));
 }
 
 
@@ -529,6 +545,8 @@ TEST_F(AllocEngine4Test, simpleRenew4) {
     ASSERT_TRUE(engine);
 
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
+    int64_t cumulative = getStatistics("cumulative-assigned-addresses",
+                                       subnet_->getID());
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
                                     false, true, "somehost.example.com.", false);
@@ -545,6 +563,9 @@ TEST_F(AllocEngine4Test, simpleRenew4) {
 
     // We should have incremented assigned-addresses
     EXPECT_TRUE(testStatistics("assigned-addresses", 1, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
 
     // Do it again, this should amount to the renew of an existing lease
     Lease4Ptr lease2 = engine->allocateLease4(ctx);
@@ -558,6 +579,8 @@ TEST_F(AllocEngine4Test, simpleRenew4) {
 
     // Should NOT have bumped assigned-addresses
     EXPECT_TRUE(testStatistics("assigned-addresses", 1, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
 }
 
 // This test checks simple renewal uses the default valid lifetime.
@@ -1689,6 +1712,8 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     IOAddress addr("192.0.2.105");
 
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
+    int64_t cumulative = getStatistics("cumulative-assigned-addresses",
+                                       subnet_->getID());
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
 
@@ -1736,6 +1761,9 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     // added the lease directly, assigned-leases never bumped to one, so when we
     // reclaim it gets decremented to -1, then on assignment back to 0.
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 1));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 1, subnet_->getID()));
 }
@@ -1795,6 +1823,8 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
     cfg_mgr.commit(); // so we will recalc stats
+    int64_t cumulative = getStatistics("cumulative-assigned-addresses",
+                                       subnet_->getID());
 
     // Now create a declined lease, decline it and rewind its cltt, so it
     // is expired.
@@ -1807,6 +1837,8 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 
     // Check that the stats declined stats were not modified
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
+    EXPECT_EQ(cumulative,
+              getStatistics("cumulative-assigned-addresses", subnet_->getID()));
     EXPECT_TRUE(testStatistics("declined-addresses", 0));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0));
     EXPECT_TRUE(testStatistics("declined-addresses", 0, subnet_->getID()));
@@ -1866,6 +1898,8 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
     cfg_mgr.commit();
+    int64_t cumulative = getStatistics("cumulative-assigned-addresses",
+                                       subnet_->getID());
 
     // Now create a declined lease, decline it and rewind its cltt, so it
     // is expired.
@@ -1882,6 +1916,9 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
     // when it is reused.  Declined address stats will be -1 since
     // lease was created as declined which does not increment the stat.
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
     EXPECT_TRUE(testStatistics("declined-addresses", -1));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1));
     EXPECT_TRUE(testStatistics("declined-addresses", -1, subnet_->getID()));
@@ -2901,6 +2938,8 @@ TEST_F(AllocEngine4Test, simpleAlloc4Stats) {
     string name = StatsMgr::generateName("subnet", subnet_->getID(),
                                          "assigned-addresses");
     StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
+    int64_t cumulative = getStatistics("cumulative-assigned-addresses",
+                                       subnet_->getID());
 
     Lease4Ptr lease = engine->allocateLease4(ctx);
     // The new lease has been allocated, so the old lease should not exist.
@@ -2913,6 +2952,9 @@ TEST_F(AllocEngine4Test, simpleAlloc4Stats) {
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
     EXPECT_EQ(101, stat->getInteger().first);
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
 }
 
 // This test checks if the fake allocation (for DHCPDISCOVER) can succeed
@@ -2932,6 +2974,8 @@ TEST_F(AllocEngine4Test, fakeAlloc4Stat) {
     string name = StatsMgr::generateName("subnet", subnet_->getID(),
                                          "assigned-addresses");
     StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
+    int64_t cumulative = getStatistics("cumulative-assigned-addresses",
+                                       subnet_->getID());
 
     Lease4Ptr lease = engine->allocateLease4(ctx);
 
@@ -2946,6 +2990,8 @@ TEST_F(AllocEngine4Test, fakeAlloc4Stat) {
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
     EXPECT_EQ(100, stat->getInteger().first);
+    EXPECT_EQ(cumulative,
+              getStatistics("cumulative-assigned-addresses", subnet_->getID()));
 }
 
 // This test checks that the allocated-addresses statistic is decreased when
@@ -2974,6 +3020,8 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
     string name = StatsMgr::generateName("subnet", subnet_->getID(),
                                          "assigned-addresses");
     StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
+    int64_t cumulative = getStatistics("cumulative-assigned-addresses",
+                                       subnet_->getID());
 
     // Request allocation of the reserved address.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
@@ -2992,6 +3040,9 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
     EXPECT_EQ(100, stat->getInteger().first);
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
 
     // Lets' double check that the actual allocation took place.
     EXPECT_FALSE(ctx.fake_allocation_);

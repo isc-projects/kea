@@ -154,6 +154,10 @@ The response to either command will contain three elements:
          DHCPv4 management in the subnet. In other words, this is the
          sum of all addresses in all the configured pools in the subnet.
 
+      - ``cumulative-assigned-addresses`` - the cumulative number of addresses
+        in the subnet that have been assigned to a client by the server
+        since it started.
+
       -  ``assigned-addresses`` - the number of addresses in the subnet that
          are currently assigned to a client.
 
@@ -169,6 +173,10 @@ The response to either command will contain three elements:
          all the NA addresses in all the configured NA pools in the
          subnet.
 
+      - ``cumulative-assigned-nas`` - the cumulative number of NA addresses
+        in the subnet that have been assigned to a client by the server
+        since it started.
+
       -  ``assigned-nas`` - the number of NA addresses in the subnet that
          are currently assigned to a client.
 
@@ -178,6 +186,10 @@ The response to either command will contain three elements:
       -  ``total-pds`` - the total number of prefixes available of DHCPv6
          management in the subnet. In other words, this is the sum of
          all prefixes in all the configured prefix pools in the subnet.
+
+      - ``cumulative-assigned-pds`` - the cumulative number of prefixes
+        in the subnet that have been assigned to a client by the server
+        since it started.
 
       -  ``assigned-pds`` - the number of prefixes in the subnet that are
          currently assigned to a client.
@@ -198,10 +210,10 @@ The response to a DHCPv4 command might look as follows:
        "text": "stat-lease4-get: 2 rows found",
        "arguments": {
          "result-set": {
-           "columns": [ "subnet-id", "total-addresses", "assigned-addresses", "declined-addresses" ]
+           "columns": [ "subnet-id", "total-addresses", "cumulative-assigned-addresses", "assigned-addresses", "declined-addresses" ]
            "rows": [
-             [ 10, 256, 111, 0 ],
-             [ 20, 4098, 2034, 4 ]
+             [ 10, 256, 300, 111, 0 ],
+             [ 20, 4098, 2034, 2034, 4 ]
            ],
          "timestamp": "2018-05-04 15:03:37.000000"
          }
@@ -219,11 +231,11 @@ PD pools):
        "text": "stat-lease6-get: 2 rows found",
        "arguments": {
          "result-set": {
-           "columns": [ "subnet-id", "total-nas", "assigned-nas", "declined-nas", "total-pds", "assigned-pds" ]
+           "columns": [ "subnet-id", "total-nas", "cumulative-assigned-nas", "assigned-nas", "declined-nas", "total-pds", "cumulative-assigned-pds", "assigned-pds" ]
            "rows": [
-             [ 10, 4096, 2400, 3, 0, 0],
-             [ 20, 0, 0, 0, 1048, 233 ]
-             [ 30, 256, 60, 0, 1048, 15 ]
+             [ 10, 4096, 5000, 2400, 3, 0, 0, 0],
+             [ 20, 0, 0, 0, 0, 1048, 300, 233 ]
+             [ 30, 256, 60, 60, 0, 1048, 15, 15 ]
            ],
          "timestamp": "2018-05-04 15:03:37.000000"
          }

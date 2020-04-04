@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,6 +45,17 @@ namespace test {
 /// false otherwise.
 bool testStatistics(const std::string& stat_name, const int64_t exp_value,
                     const SubnetID subnet_id = SUBNET_ID_UNUSED);
+
+/// @brief Get a value held by statistic manager.
+///
+/// This function may be used in some allocation tests and there's no
+/// single base class for it. @todo consider moving it src/lib/util.
+///
+/// @param stat_name Statistic name.
+/// @param subnet_id subnet_id of the desired subnet, if not zero.
+/// @return the value held by the statistic manager or zero.
+int64_t getStatistics(const std::string& stat_name,
+                      const SubnetID subnet_id = SUBNET_ID_UNUSED);
 
 /// @brief Allocation engine with some internal methods exposed
 class NakedAllocEngine : public AllocEngine {

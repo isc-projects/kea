@@ -54,9 +54,10 @@ public:
     ///         "result-set": {
     ///             "timestamp": "2018-03-22 09:43:30.815371",
     ///             "columns": ["subnet_id", "total-addresses",
+    ///                         "cumulative-assigned-addresses",
     ///                         "assigned-addresses", "declined-addresses"],
     ///             "rows": [
-    ///                 [1, 600, 450, 3],
+    ///                 [1, 600, 1000, 450, 3],
     ///                 :
     ///             ]
     ///         }
@@ -97,10 +98,12 @@ public:
     ///         "result-set": {
     ///             "timestamp": "2018-03-22 09:43:30.815371",
     ///             "columns": ["subnet_id", "total-nas",
+    ///                         "cumulative-assigned-nas",
     ///                         "assigned-nas", "declined-nas",
-    ///                         "total-pds", "assigned-pds"],
+    ///                         "total-pds", "cumulative-assigned-pds",
+    ///                         "assigned-pds"],
     ///             "rows": [
-    ///                 [1, 600, 450, 3, 64, 10],
+    ///                 [1, 600, 1000, 450, 3, 64, 20, 10],
     ///                 :
     ///             ]
     ///         }

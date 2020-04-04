@@ -67,6 +67,20 @@ bool testStatistics(const std::string& stat_name, const int64_t exp_value,
     return (false);
 }
 
+int64_t getStatistics(const std::string& stat_name, const SubnetID subnet_id) {
+    try {
+        std::string name = (subnet_id == SUBNET_ID_UNUSED ? stat_name :
+                            StatsMgr::generateName("subnet", subnet_id, stat_name));
+        ObservationPtr observation = StatsMgr::instance().getObservation(name);
+        if (observation) {
+            return (observation->getInteger().first);
+        }
+    } catch (...) {
+        ;
+    }
+    return (0);
+}
+
 void
 AllocEngine4Test::testReuseLease4(const AllocEnginePtr& engine,
                                   Lease4Ptr& existing_lease,

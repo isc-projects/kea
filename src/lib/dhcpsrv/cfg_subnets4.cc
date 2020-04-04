@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -485,6 +485,9 @@ CfgSubnets4::removeStatistics() {
                                              "assigned-addresses"));
 
         stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "cumulative-assigned-addresses"));
+
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                              "declined-addresses"));
 
         stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
@@ -509,6 +512,11 @@ CfgSubnets4::updateStatistics() {
                                         static_cast<int64_t>
                                         ((*subnet4)->getPoolCapacity(Lease::
                                                                      TYPE_V4)));
+        const std::string& name =
+            StatsMgr::generateName("subnet", subnet_id, "cumulative-assigned-addresses");
+        if (!stats_mgr.getObservation(name)) {
+            stats_mgr.setValue(name, static_cast<int64_t>(0));
+        }
     }
 
     // Only recount the stats if we have subnets.
