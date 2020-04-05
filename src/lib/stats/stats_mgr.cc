@@ -236,6 +236,66 @@ StatsMgr::setMaxSampleCountAllInternal(uint32_t max_samples) {
     global_->setMaxSampleCountAll(max_samples);
 }
 
+void
+StatsMgr::setMaxSampleAgeDefault(const StatsDuration& duration) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        lock_guard<mutex> lock(*mutex_);
+        setMaxSampleAgeDefaultInternal(duration);
+    } else {
+        setMaxSampleAgeDefaultInternal(duration);
+    }
+}
+
+void
+StatsMgr::setMaxSampleAgeDefaultInternal(const StatsDuration& duration) {
+    Observation::setMaxSampleAgeDefault(duration);
+}
+
+void
+StatsMgr::setMaxSampleCountDefault(uint32_t max_samples) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        lock_guard<mutex> lock(*mutex_);
+        setMaxSampleCountDefaultInternal(max_samples);
+    } else {
+        setMaxSampleCountDefaultInternal(max_samples);
+    }
+}
+
+void
+StatsMgr::setMaxSampleCountDefaultInternal(uint32_t max_samples) {
+    Observation::setMaxSampleCountDefault(max_samples);
+}
+
+const StatsDuration&
+StatsMgr::getMaxSampleAgeDefault() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        lock_guard<mutex> lock(*mutex_);
+        return (getMaxSampleAgeDefaultInternal());
+    } else {
+        return (getMaxSampleAgeDefaultInternal());
+    }
+}
+
+const StatsDuration&
+StatsMgr::getMaxSampleAgeDefaultInternal() const {
+    return (Observation::getMaxSampleAgeDefault());
+}
+
+uint32_t
+StatsMgr::getMaxSampleCountDefault() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        lock_guard<mutex> lock(*mutex_);
+        return (getMaxSampleCountDefaultInternal());
+    } else {
+        return (getMaxSampleCountDefaultInternal());
+    }
+}
+
+uint32_t
+StatsMgr::getMaxSampleCountDefaultInternal() const {
+    return (Observation::getMaxSampleCountDefault());
+}
+
 bool
 StatsMgr::reset(const string& name) {
     if (MultiThreadingMgr::instance().getMode()) {

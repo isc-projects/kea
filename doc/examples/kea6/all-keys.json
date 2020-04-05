@@ -456,6 +456,14 @@
         // information) with each lease.
         "store-extended-info": true,
 
+	// Statistics keep some samples per observation point.
+	// There are two default values: maximum count and maximum age.
+	// Set the maximum count to zero disables it.
+	"statistic-default-sample-count": 0,
+
+	// When the maximum count the maximum age (in seconds) applies.
+	"statistic-default-sample-age": 60,
+
         // Governs how the Kea DHCPv6 server should deal with the invalid
         // data received from the client.
         "sanity-checks": {

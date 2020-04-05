@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,23 +20,38 @@ using namespace boost::posix_time;
 namespace isc {
 namespace stats {
 
+std::pair<bool, uint32_t>
+Observation::default_max_sample_count_ = std::make_pair(true, 20);
+
+std::pair<bool, StatsDuration>
+Observation::default_max_sample_age_ =
+    std::make_pair(false, time_duration(0, 0, 0, 0));
+
 Observation::Observation(const std::string& name, const int64_t value) :
-    name_(name), type_(STAT_INTEGER) {
+    name_(name), type_(STAT_INTEGER),
+    max_sample_count_(default_max_sample_count_),
+    max_sample_age_(default_max_sample_age_) {
     setValue(value);
 }
 
 Observation::Observation(const std::string& name, const double value) :
-    name_(name), type_(STAT_FLOAT) {
+    name_(name), type_(STAT_FLOAT),
+    max_sample_count_(default_max_sample_count_),
+    max_sample_age_(default_max_sample_age_) {
     setValue(value);
 }
 
 Observation::Observation(const std::string& name, const StatsDuration& value) :
-    name_(name), type_(STAT_DURATION) {
+    name_(name), type_(STAT_DURATION),
+    max_sample_count_(default_max_sample_count_),
+    max_sample_age_(default_max_sample_age_) {
     setValue(value);
 }
 
 Observation::Observation(const std::string& name, const std::string& value) :
-    name_(name), type_(STAT_STRING) {
+    name_(name), type_(STAT_STRING),
+    max_sample_count_(default_max_sample_count_),
+    max_sample_age_(default_max_sample_age_) {
     setValue(value);
 }
 
@@ -306,6 +321,7 @@ void Observation::setMaxSampleCountInternal(StorageType& storage,
                   << typeToText(exp_type) << ", but the actual type is "
                   << typeToText(type_));
     }
+    // Should we refuse the max_samples = 0 value here?
     // setting new value of max_sample_count_
     max_sample_count_.first = true;
     max_sample_count_.second = max_samples;
@@ -315,6 +331,37 @@ void Observation::setMaxSampleCountInternal(StorageType& storage,
     while (storage.size() > max_samples) {
         // deleting elements which are exceeding the max_samples limit
         storage.pop_back();
+    }
+}
+
+void Observation::setMaxSampleAgeDefault(const StatsDuration& duration) {
+    // setting new value of default_max_sample_age_
+    default_max_sample_age_.second = duration;
+}
+
+void Observation::setMaxSampleCountDefault(uint32_t max_samples) {
+    if (max_samples == 0) {
+        // deactivating the default_max_sample_count_ limit
+        default_max_sample_count_.first = false;
+        default_max_sample_age_.first = true;
+    } else {
+        // setting new value of default_max_sample_count_
+        default_max_sample_count_.second = max_samples;
+        // deactivating the default_max_sample_age_ limit
+        default_max_sample_age_.first = false;
+        default_max_sample_count_.first = true;
+    }
+}
+
+const StatsDuration& Observation::getMaxSampleAgeDefault() {
+    return (default_max_sample_age_.second);
+}
+
+uint32_t Observation::getMaxSampleCountDefault() {
+    if (default_max_sample_count_.first) {
+        return (default_max_sample_count_.second);
+    } else {
+        return (0);
     }
 }
 
@@ -456,5 +503,5 @@ void Observation::reset() {
     };
 }
 
-};
-};
+} // end of namespace stats
+} // end of namespace isc

@@ -170,6 +170,28 @@ public:
     /// @param max_samples how many samples of a given statistic should be kept
     void setMaxSampleCountAll(uint32_t max_samples);
 
+    /// @brief Set default duration limit.
+    ///
+    /// @param duration determines default maximum age of samples
+    void setMaxSampleAgeDefault(const StatsDuration& duration);
+
+    /// @brief Set default count limit.
+    ///
+    /// @param max_samples default maximum number of samples to keep
+    /// (0 means to disable count limit and enable age limit)
+    void setMaxSampleCountDefault(uint32_t max_samples);
+
+    /// @brief Get default duration limit.
+    ///
+    /// @return default maximum age of samples.
+    const StatsDuration& getMaxSampleAgeDefault() const;
+
+    /// @brief Get default count limit.
+    ///
+    /// @return default maximum number of samples to keep.
+    /// (0 means that count limit was disabled)
+    uint32_t getMaxSampleCountDefault() const;
+
     /// @}
 
     /// @defgroup consumer_methods Methods are used by data consumers.
@@ -586,6 +608,40 @@ private:
     ///
     /// @param max_samples how many samples of a given statistic should be kept
     void setMaxSampleCountAllInternal(uint32_t max_samples);
+
+    /// @private
+
+    /// @brief Set default duration limit.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param duration determines default maximum age of samples
+    void setMaxSampleAgeDefaultInternal(const StatsDuration& duration);
+
+    /// @brief Set default count limit.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param max_samples default maximum number of samples to keep
+    /// (0 means to disable count limit and enable age limit)
+    void setMaxSampleCountDefaultInternal(uint32_t max_samples);
+
+    /// @private
+
+    /// @brief Get default duration limit.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return default maximum age of samples.
+    const StatsDuration& getMaxSampleAgeDefaultInternal() const;
+
+    /// @brief Get default count limit.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return default maximum number of samples to keep.
+    /// (0 means that count limit was disabled)
+    uint32_t getMaxSampleCountDefaultInternal() const;
 
     /// @private
 

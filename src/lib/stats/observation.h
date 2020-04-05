@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -68,7 +68,7 @@ typedef std::pair<std::string, boost::posix_time::ptime> StringSample;
 ///
 /// Since Kea 1.6 multiple samples are stored for the same observation.
 class Observation {
- public:
+public:
 
     /// @brief Type of available statistics
     ///
@@ -139,6 +139,30 @@ class Observation {
     /// To set a statistic to keep the last 100 observations, call:
     /// setMaxSampleCount(100);
     void setMaxSampleCount(uint32_t max_samples);
+
+    /// @brief Determines default maximum age of samples.
+    ///
+    /// @param duration determines default maximum age of samples.
+    static void setMaxSampleAgeDefault(const StatsDuration& duration);
+
+    /// @brief Determines default maximum count of samples.
+    ///
+    /// @param max_samples default maximum count of samples to keep.
+    /// (0 means to disable count limit and enable age limit)
+    static void setMaxSampleCountDefault(uint32_t max_samples);
+
+    /// @brief Get default maximum age of samples.
+    ///
+    /// @return default maximum age of samples.
+    static const StatsDuration& getMaxSampleAgeDefault();
+
+    /// @brief Get default maximum count of samples.
+    ///
+    /// @return max_samples default maximum count of samples to keep.
+    /// (0 means that count limit was disabled)
+    static uint32_t getMaxSampleCountDefault();
+
+    /// @
 
     /// @brief Records absolute integer observation
     ///
@@ -354,9 +378,13 @@ private:
     /// The bool value informs which limit
     /// is available
     /// True means active limit, false means inactive limit
+    std::pair<bool, uint32_t> max_sample_count_;
+
+    /// @brief Default maximum number of samples
+    ///
     /// By default the MaxSampleCount is set to 20
     /// and MaxSampleAge is disabled
-    std::pair<bool, uint32_t> max_sample_count_ = std::make_pair(true, 20);
+    static std::pair<bool, uint32_t> default_max_sample_count_;
 
     /// @brief Maximum timespan of samples
     /// The limit is represented as a pair
@@ -365,10 +393,13 @@ private:
     /// The bool value informs which limit
     /// is available
     /// True means active limit, false means inactive limit
+    std::pair<bool, StatsDuration> max_sample_age_;
+
+    /// @brief Default maximum timespan of samples
+    ///
     /// By default the MaxSampleCount is set to 20
     /// and MaxSampleAge is disabled
-    std::pair<bool, StatsDuration> max_sample_age_ = std::make_pair(false,
-            boost::posix_time::time_duration(0, 0, 0, 0));
+    static std::pair<bool, StatsDuration> default_max_sample_age_;
 
     /// @defgroup samples_storage Storage for supported observations
     ///
