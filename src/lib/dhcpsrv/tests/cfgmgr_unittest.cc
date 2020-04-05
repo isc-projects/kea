@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <process/logging_info.h>
 #include <stats/stats_mgr.h>
+#include <util/boost_time_utils.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -607,8 +608,17 @@ TEST_F(CfgMgrTest, commitStats4) {
     subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
     subnets->add(subnet2);
 
+    // Change the stats default limits.
+    cfg_mgr.getStagingCfg()->addConfiguredGlobal("statistic-default-sample-count",
+                                                 Element::create(15));
+    cfg_mgr.getStagingCfg()->addConfiguredGlobal("statistic-default-sample-age",
+                                                 Element::create(2));
+
     // Let's commit it
     cfg_mgr.commit();
+
+    EXPECT_EQ(15, stats_mgr.getMaxSampleCountDefault());
+    EXPECT_EQ("00:00:02", durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-addresses"));
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-addresses"));
@@ -653,11 +663,19 @@ TEST_F(CfgMgrTest, mergeIntoCurrentStats4) {
     subnets = external_cfg->getCfgSubnets4();
     subnets->add(subnet2);
 
+    external_cfg->addConfiguredGlobal("statistic-default-sample-count",
+                                      Element::create(16));
+    external_cfg->addConfiguredGlobal("statistic-default-sample-age",
+                                      Element::create(3));
+
     // Let's merge it.
     cfg_mgr.mergeIntoCurrentCfg(external_cfg->getSequence());
 
     // The stats should have been updated and so we should be able to get
-    // obeservations for subnet 42.
+    // observations for subnet 42.
+    EXPECT_EQ(16, stats_mgr.getMaxSampleCountDefault());
+    EXPECT_EQ("00:00:03", durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
+
     EXPECT_TRUE(stats_mgr.getObservation("subnet[42].total-addresses"));
     EXPECT_TRUE(stats_mgr.getObservation("subnet[42].assigned-addresses"));
 
@@ -731,8 +749,17 @@ TEST_F(CfgMgrTest, commitStats6) {
     subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
     subnets->add(subnet2);
 
+    // Change the stats default limits.
+    cfg_mgr.getStagingCfg()->addConfiguredGlobal("statistic-default-sample-count",
+                                                 Element::create(14));
+    cfg_mgr.getStagingCfg()->addConfiguredGlobal("statistic-default-sample-age",
+                                                 Element::create(10));
+
     // Let's commit it
     cfg_mgr.commit();
+
+    EXPECT_EQ(14, stats_mgr.getMaxSampleCountDefault());
+    EXPECT_EQ("00:00:10", durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-nas"));
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-nas"));
@@ -792,8 +819,16 @@ TEST_F(CfgMgrTest, DISABLED_mergeIntoCurrentStats6) {
     subnets = external_cfg->getCfgSubnets6();
     subnets->add(subnet2);
 
+    external_cfg->addConfiguredGlobal("statistic-default-sample-count",
+                                      Element::create(17));
+    external_cfg->addConfiguredGlobal("statistic-default-sample-age",
+                                      Element::create(4));
+
     // Let's merge it.
     cfg_mgr.mergeIntoCurrentCfg(external_cfg->getSequence());
+
+    EXPECT_EQ(17, stats_mgr.getMaxSampleCountDefault());
+    EXPECT_EQ("00:00:04", durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 
     EXPECT_TRUE(stats_mgr.getObservation("subnet[42].total-nas"));
     EXPECT_TRUE(stats_mgr.getObservation("subnet[42].assigned-nas"));

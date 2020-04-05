@@ -16,6 +16,7 @@
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
 #include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
+#include <stats/stats_mgr.h>
 #include <util/strutil.h>
 
 #include <list>
@@ -265,6 +266,25 @@ SrvConfig::removeStatistics() {
 
 void
 SrvConfig::updateStatistics() {
+    // Update default sample limits.
+    stats::StatsMgr& stats_mgr = stats::StatsMgr::instance();
+    ConstElementPtr max_samples =
+        getConfiguredGlobal("statistic-default-sample-count");
+    if (max_samples) {
+        stats_mgr.setMaxSampleCountDefault(max_samples->intValue());
+    }
+    ConstElementPtr duration =
+        getConfiguredGlobal("statistic-default-sample-age");
+    if (duration) {
+        int64_t time_duration = duration->intValue();
+        int64_t hours = time_duration / 3600;
+        time_duration -= hours * 3600;
+        int64_t minutes = time_duration / 60;
+        time_duration -= minutes * 60;
+        int64_t seconds = time_duration;
+        stats_mgr.setMaxSampleAgeDefault(boost::posix_time::time_duration(hours, minutes, seconds, 0));
+    }
+
     // Updating subnet statistics involves updating lease statistics, which
     // is done by the LeaseMgr.  Since servers with subnets, must have a
     // LeaseMgr, we do not bother updating subnet stats for servers without
@@ -596,7 +616,7 @@ SrvConfig::toElement() const {
 
 DdnsParamsPtr
 SrvConfig::getDdnsParams(const Subnet4Ptr& subnet) const {
-    return (DdnsParamsPtr(new DdnsParams(subnet, 
+    return (DdnsParamsPtr(new DdnsParams(subnet,
                                          getD2ClientConfig()->getEnableUpdates())));
 }
 

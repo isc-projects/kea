@@ -90,6 +90,12 @@ There are several commands defined that can be used for accessing
 statistic completely (-remove). We can change the statistics time based
 limit (-sample-age-set) and size based limit (-sample-count-set) which
 control how long or how many samples of the given statistic are retained.
+
+This only applies for existing statistics: to change the default limits used
+when a new statistic is created, for instance during server startup,
+the statistic-default-sample-count and statistic-default-sample-age
+global configuration parameters must be used.
+
 The difference between reset and remove is somewhat subtle.
 The reset command sets the value of the statistic to zero or a neutral value,
 so after this operation, the statistic will have a value of 0 (integer),

@@ -1,4 +1,10 @@
-1737.   [func]      tmark
+1738.	[func]		fdupont
+	Added new global parameters statistic-default-sample-count and
+	statistic-default-sample-age to set the default values uses
+	a sample keeping limits in new statistics.
+	(Gitlab #1005)
+
+1737.   [func]		tmark
 	Added store-extended-info parameter to kea-dhcp4 and kea-dhcp6
 	which enables the storage of additional information per lease.
 	This has been added in anticipation of supporting LeaseQuery.

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -238,13 +238,13 @@ TEST_F(ObservationTest, getSize) {
 TEST_F(ObservationTest, setCountLimit) {
     // Preparing of 21 test's samples for each type of storage
     int64_t int_samples[22] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-	    14, 15, 16, 17, 18, 19, 20, 21};
+            14, 15, 16, 17, 18, 19, 20, 21};
     double float_samples[22] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
-	    9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0,
-	    20.0, 21.0};
+            9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0,
+            20.0, 21.0};
     std::string string_samples[22] = {"a", "b", "c", "d", "e", "f", "g", "h",
-	    "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u",
-	    "v"};
+            "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u",
+            "v"};
     millisec::time_duration duration_samples[22];
 
     for (uint32_t i = 0; i < 22; ++i) {
@@ -475,6 +475,8 @@ TEST_F(ObservationTest, getLimits) {
     EXPECT_EQ(c.getMaxSampleCount().second, 20);
     EXPECT_EQ(d.getMaxSampleCount().second, 20);
 }
+
+// limit defaults are tested with StatsMgr.
 
 // Test checks whether timing is reported properly.
 TEST_F(ObservationTest, timers) {

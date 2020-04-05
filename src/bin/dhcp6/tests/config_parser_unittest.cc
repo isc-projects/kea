@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,6 +28,8 @@
 #include <dhcpsrv/testutils/test_config_backend_dhcp6.h>
 #include <hooks/hooks_manager.h>
 #include <process/config_ctl_info.h>
+#include <stats/stats_mgr.h>
+#include <util/boost_time_utils.h>
 
 #include "test_data_files_config.h"
 #include "test_libraries.h"
@@ -7723,6 +7725,32 @@ TEST_F(Dhcp6ParserTest, storeExtendedInfoNoGlobal) {
     EXPECT_TRUE(subnet->getStoreExtendedInfo());
 }
 
+/// This test checks that the statistic-default-sample-count and age
+/// global parameters are committed to the stats manager as expected.
+TEST_F(Dhcp6ParserTest, statsDefaultLimits) {
+    std::string config = "{ " + genIfaceConfig() + "," +
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"statistic-default-sample-count\": 10, "
+        "\"statistic-default-sample-age\": 5, "
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    CfgMgr::instance().commit();
+
+    stats::StatsMgr& stats_mgr = stats::StatsMgr::instance();
+    EXPECT_EQ(10, stats_mgr.getMaxSampleCountDefault());
+    EXPECT_EQ("00:00:05",
+              util::durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
+}
 
 
-};
+}

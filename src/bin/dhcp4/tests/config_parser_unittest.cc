@@ -29,6 +29,8 @@
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
 #include <process/config_ctl_info.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
+#include <util/boost_time_utils.h>
 #include <util/doubles.h>
 
 #include "marker_file.h"
@@ -7140,6 +7142,32 @@ TEST_F(Dhcp4ParserTest, storeExtendedInfoGlobal) {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_TRUE(subnet2->getStoreExtendedInfo());
+}
+
+/// This test checks that the statistic-default-sample-count and age
+/// global parameters are committed to the stats manager as expected.
+TEST_F(Dhcp4ParserTest, statsDefaultLimits) {
+    std::string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"statistic-default-sample-count\": 10, "
+        "\"statistic-default-sample-age\": 5, "
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 0);
+
+    CfgMgr::instance().commit();
+
+    stats::StatsMgr& stats_mgr = stats::StatsMgr::instance();
+    EXPECT_EQ(10, stats_mgr.getMaxSampleCountDefault());
+    EXPECT_EQ("00:00:05",
+              util::durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 }
 
 }
