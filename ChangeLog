@@ -1,3 +1,11 @@
+1742.	[func]		fdupont
+	Added new cumulative statistics: for each assigned IPv4 address,
+	IPv6 NA address or IPv6 PD prefixes cumulative-assigned-addresses,
+	cumulative-assigned-nas or cumulative-assigned-pds global and
+	per subnet is increased. A spelling error in the result-set of
+	the stat-lease4-get of the stat cmds hook library was fixed.
+	(Gitlab #816)
+
 1741.	[func]		fdupont
 	When the MySQL InnoDB reports a deadlock (very rare event)
 	the failed query is rerun.
