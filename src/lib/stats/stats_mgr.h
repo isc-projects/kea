@@ -246,7 +246,8 @@ public:
 
     /// @brief Returns an observation.
     ///
-    /// Used in testing only. Production code should use @ref get() method.
+    /// Used in testing only. Production code should use @ref get() method
+    /// when the value is dereferenced.
     /// Calls @ref getObservationInternal() method in a thread safe context.
     ///
     /// @param name name of the statistic
@@ -255,8 +256,8 @@ public:
 
     /// @brief Returns an observation in a thread safe context.
     ///
-    /// Used in testing only. Production code should use @ref get() method.
-    /// Should be called in a thread safe context.
+    /// Used in testing only. Production code should use @ref get() method
+    /// when the value is dereferenced. Should be called in a thread safe context.
     ///
     /// @param name name of the statistic
     /// @return Pointer to the Observation object
