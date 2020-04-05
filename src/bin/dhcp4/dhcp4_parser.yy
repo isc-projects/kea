@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -112,6 +112,8 @@ using namespace std;
   T2_PERCENT "t2-percent"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
   SERVER_TAG "server-tag"
+  STATISTIC_DEFAULT_SAMPLE_COUNT "statistic-default-sample-count"
+  STATISTIC_DEFAULT_SAMPLE_AGE "statistic-default-sample-age"
   DDNS_SEND_UPDATES "ddns-send-updates"
   DDNS_OVERRIDE_NO_UPDATE "ddns-override-no-update"
   DDNS_OVERRIDE_CLIENT_UPDATE "ddns-override-client-update"
@@ -501,7 +503,9 @@ global_param: valid_lifetime
             | ddns_replace_client_name
             | ddns_generated_prefix
             | ddns_qualifying_suffix
-            | store_extended_info 
+            | store_extended_info
+            | statistic_default_sample_count
+            | statistic_default_sample_age
             | unknown_map_entry
             ;
 
@@ -550,7 +554,7 @@ decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
     ctx.stack_.back()->set("decline-probation-period", dpp);
 };
 
-server_tag: SERVER_TAG  {
+server_tag: SERVER_TAG {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr stag(new StringElement($4, ctx.loc2pos(@4)));
@@ -649,6 +653,16 @@ hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
 store_extended_info: STORE_EXTENDED_INFO COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("store-extended-info", b);
+};
+
+statistic_default_sample_count: STATISTIC_DEFAULT_SAMPLE_COUNT COLON INTEGER {
+    ElementPtr count(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("statistic-default-sample-count", count);
+};
+
+statistic_default_sample_age: STATISTIC_DEFAULT_SAMPLE_AGE COLON INTEGER {
+    ElementPtr age(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("statistic-default-sample-age", age);
 };
 
 interfaces_config: INTERFACES_CONFIG {
@@ -1237,7 +1251,7 @@ subnet4_param: valid_lifetime
              | ddns_qualifying_suffix
              | hostname_char_set
              | hostname_char_replacement
-             | store_extended_info 
+             | store_extended_info
              | unknown_map_entry
              ;
 
@@ -1382,7 +1396,7 @@ shared_network_param: name
                     | ddns_qualifying_suffix
                     | hostname_char_set
                     | hostname_char_replacement
-                    | store_extended_info 
+                    | store_extended_info
                     | unknown_map_entry
                     ;
 

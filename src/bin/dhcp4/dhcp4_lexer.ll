@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -660,6 +660,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_SERVER_TAG(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("server-tag", driver.loc_);
+    }
+}
+
+\"statistic-default-sample-count\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_STATISTIC_DEFAULT_SAMPLE_COUNT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("statistic-default-sample-count", driver.loc_);
+    }
+}
+
+\"statistic-default-sample-age\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_STATISTIC_DEFAULT_SAMPLE_AGE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("statistic-default-sample-age", driver.loc_);
     }
 }
 
