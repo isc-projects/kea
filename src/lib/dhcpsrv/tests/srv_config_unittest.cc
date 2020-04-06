@@ -1568,16 +1568,16 @@ TEST_F(SrvConfigTest, multiThreadingSettings) {
     // Upon construction multi-threading should be disabled, thread pool size
     // and packet queue size should be 0
     ASSERT_FALSE(conf.getEnableMultiThreading());
-    ESSERT_EQ(0, conf.getPktThreadPoolSize())
-    ESSERT_EQ(0, conf.getPktThreadQueueSize())
+    ASSERT_EQ(0, conf.getPktThreadPoolSize());
+    ASSERT_EQ(0, conf.getPktThreadQueueSize());
 
     // Verify we can change default settings.
     ASSERT_NO_THROW(conf.setEnableMultiThreading(true));
     ASSERT_NO_THROW(conf.setPktThreadPoolSize(4));
     ASSERT_NO_THROW(conf.setPktThreadQueueSize(64));
     ASSERT_TRUE(conf.getEnableMultiThreading());
-    ESSERT_EQ(4, conf.getPktThreadPoolSize())
-    ESSERT_EQ(64, conf.getPktThreadQueueSize())
+    ASSERT_EQ(4, conf.getPktThreadPoolSize());
+    ASSERT_EQ(64, conf.getPktThreadQueueSize());
 }
 
 } // end of anonymous namespace
