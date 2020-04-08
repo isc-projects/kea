@@ -13,7 +13,7 @@ This is thoroughly documented on https://wiki.isc.org/bin/view/QA/KeaReleaseProc
 Some of those checks and updates can be made before actual freeze.
 
 1. Check Jenkins results:
-   1. [ ] Check Jenkins jobs if looks ok (distcheck, etc)
+   1. [ ] Check Jenkins jobs if they look ok (distcheck, etc)
    1. [ ] Check Jenkins Tests Report: https://jenkins.isc.org/job/kea-1.7/job/jenkins-tests-report/
    1. [ ] Check tarball check report: https://jenkins.isc.org/job/kea-1.7/job/tarball-internal/Kea_20Build_20Checks/
 1. [ ] Check Perflab for drops in performance there (https://perflab.isc.org/)
