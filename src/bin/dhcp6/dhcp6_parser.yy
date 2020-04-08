@@ -192,9 +192,10 @@ using namespace std;
 
   DHCP4O6_PORT "dhcp4o6-port"
 
+  DHCP_MULTI_THREADING "multi-threading"
   ENABLE_MULTI_THREADING "enable-multi-threading"
-  PACKET_THREAD_POOL_SIZE "packet-thread-pool-size"
-  PACKET_THREAD_QUEUE_SIZE "packet-thread-queue-size"
+  THREAD_POOL_SIZE "thread-pool-size"
+  PACKET_QUEUE_SIZE "packet-queue-size"
 
   CONTROL_SOCKET "control-socket"
   SOCKET_TYPE "socket-type"
@@ -518,9 +519,6 @@ global_param: data_directory
             | store_extended_info
             | statistic_default_sample_count
             | statistic_default_sample_age
-            | enable_multi_threading
-            | packet_thread_pool_size
-            | packet_thread_queue_size
             | unknown_map_entry
             ;
 
@@ -1047,19 +1045,44 @@ relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
     ctx.leave();
 };
 
+// --- multi-threading ------------------------------------------------
+
+dhcp_multi_threading: DHCP_MULTI_THREADING {
+    ElementPtr qc(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("multi-threading", qc);
+    ctx.stack_.push_back(qc);
+    ctx.enter(ctx.DHCP_MULTI_THREADING);
+} COLON LCURLY_BRACKET multi_threading_params RCURLY_BRACKET {
+    // The enable queue parameter is required.
+    ctx.require("enable-multi-threading", ctx.loc2pos(@4), ctx.loc2pos(@6));
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+multi_threading_params: multi_threading_param
+                      | multi_threading_param COMMA multi_threading_param
+                      ;
+
+multi_threading_param: enable_multi_threading
+                     | thread_pool_size
+                     | packet_queue_size
+                     | user_context
+                     | comment
+                     ;
+
 enable_multi_threading: ENABLE_MULTI_THREADING COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("enable-multi-threading", b);
 };
 
-packet_thread_pool_size: PACKET_THREAD_POOL_SIZE COLON INTEGER {
+thread_pool_size: THREAD_POOL_SIZE COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("packet-thread-pool-size", prf);
+    ctx.stack_.back()->set("thread-pool-size", prf);
 };
 
-packet_thread_queue_size: PACKET_THREAD_QUEUE_SIZE COLON INTEGER {
+packet_queue_size: PACKET_QUEUE_SIZE COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("packet-thread-queue-size", prf);
+    ctx.stack_.back()->set("packet-queue-size", prf);
 };
 
 hooks_libraries: HOOKS_LIBRARIES {

@@ -176,6 +176,8 @@ Parser6Context::contextName()
         return ("control-socket");
     case DHCP_QUEUE_CONTROL:
         return ("dhcp-queue-control");
+    case DHCP_MULTI_THREADING:
+        return ("multi-threading");
     case POOLS:
         return ("pools");
     case PD_POOLS:
@@ -209,5 +211,5 @@ Parser6Context::contextName()
     }
 }
 
-};
-};
+}  // namespace dhcp
+}  // namespace isc

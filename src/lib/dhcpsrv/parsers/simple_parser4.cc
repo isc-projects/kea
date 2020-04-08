@@ -6,10 +6,10 @@
 
 #include <config.h>
 
-#include <dhcpsrv/parsers/simple_parser4.h>
 #include <cc/data.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
+
 #include <boost/foreach.hpp>
-#include <iostream>
 
 using namespace isc::data;
 
@@ -85,10 +85,7 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "ddns-qualifying-suffix",         Element::string },
     { "store-extended-info",            Element::boolean },
     { "statistic-default-sample-count", Element::integer },
-    { "statistic-default-sample-age",   Element::integer },
-    { "enable-multi-threading",       Element::boolean },
-    { "packet-thread-pool-size",      Element::integer },
-    { "packet-thread-queue-size",     Element::integer }
+    { "statistic-default-sample-age",   Element::integer }
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -121,10 +118,7 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "hostname-char-replacement",      Element::string,  "" },
     { "store-extended-info",            Element::boolean, "false" },
     { "statistic-default-sample-count", Element::integer, "20" },
-    { "statistic-default-sample-age",   Element::integer, "0" },
-    { "enable-multi-threading",         Element::boolean, "false" },
-    { "packet-thread-pool-size",        Element::integer, "0" },
-    { "packet-thread-queue-size",       Element::integer, "4" }
+    { "statistic-default-sample-age",   Element::integer, "0" }
 };
 
 /// @brief This table defines all option definition parameters.
@@ -249,7 +243,7 @@ const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
 /// @brief This table defines default values for each IPv4 subnet that is
 ///        part of a shared network
 ///
-/// This is mostly the same as @ref SUBNET4_DEFAULTS, except two parameters
+/// This is mostly the same as @ref SUBNET4_DEFAULTS, except the parameters
 /// that can be derived from shared-network, but cannot from global scope.
 /// Those are: interface and reservation-mode.
 const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
@@ -259,7 +253,7 @@ const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
     { "4o6-subnet",       Element::string,  "" },
 };
 
-/// @brief List of parameters that can be inherited to subnet4 scope.
+/// @brief List of parameters that can be inherited from the global to subnet4 scope.
 ///
 /// Some parameters may be defined on both global (directly in Dhcp4) and
 /// subnet (Dhcp4/subnet4/...) scope. If not defined in the subnet scope,
@@ -355,6 +349,13 @@ const SimpleDefaults SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS = {
     { "capacity",       Element::integer, "500"}
 };
 
+/// @brief This table defines default values for multi-threading in DHCPv4.
+const SimpleDefaults SimpleParser4::DHCP_MULTI_THREADING4_DEFAULTS = {
+    { "enable-multi-threading",   Element::boolean, "false" },
+    { "packet-thread-pool-size",  Element::integer, "0" },
+    { "packet-thread-queue-size", Element::integer, "4" }
+};
+
 /// @brief This defines default values for sanity checking for DHCPv4.
 const SimpleDefaults SimpleParser4::SANITY_CHECKS4_DEFAULTS = {
     { "lease-checks", Element::string, "warn" }
@@ -372,12 +373,10 @@ size_t SimpleParser4::setAllDefaults(ElementPtr global) {
     // Set global defaults first.
     cnt = setDefaults(global, GLOBAL4_DEFAULTS);
 
-    // Now set option definition defaults for each specified option definition
+    // Now set the defaults for each specified option definition
     ConstElementPtr option_defs = global->get("option-def");
     if (option_defs) {
-        BOOST_FOREACH(ElementPtr option_def, option_defs->listValue()) {
-            cnt += SimpleParser::setDefaults(option_def, OPTION4_DEF_DEFAULTS);
-        }
+        cnt += setListDefaults(option_defs, OPTION4_DEF_DEFAULTS);
     }
 
     // Set the defaults for option data
@@ -413,8 +412,8 @@ size_t SimpleParser4::setAllDefaults(ElementPtr global) {
         }
     }
 
-    // Set the defaults for dhcp-queue-control.  If the element isn't
-    // there we'll add it.
+    // Set the defaults for dhcp-queue-control.  If the element isn't there
+    // we'll add it.
     ConstElementPtr queue_control = global->get("dhcp-queue-control");
     ElementPtr mutable_cfg;
     if (queue_control) {
@@ -425,6 +424,18 @@ size_t SimpleParser4::setAllDefaults(ElementPtr global) {
     }
 
     cnt += setDefaults(mutable_cfg, DHCP_QUEUE_CONTROL4_DEFAULTS);
+
+    // Set the defaults for multi-threading.  If the element isn't there
+    // we'll add it.
+    ConstElementPtr multi_threading = global->get("multi-threading");
+    if (queue_control) {
+        mutable_cfg = boost::const_pointer_cast<Element>(queue_control);
+    } else {
+        mutable_cfg = Element::createMap();
+        global->set("multi-threading", mutable_cfg);
+    }
+
+    cnt += setDefaults(mutable_cfg, DHCP_MULTI_THREADING4_DEFAULTS);
 
     // Set the defaults for sanity-checks.  If the element isn't
     // there we'll add it.
@@ -473,7 +484,6 @@ size_t SimpleParser4::deriveParameters(ElementPtr global) {
                                                       INHERIT_TO_SUBNET4);
                 }
             }
-
         }
     }
 

@@ -925,7 +925,7 @@ Dhcpv4Srv::run() {
     }
 
     // destroying the thread pool
-    MultiThreadingMgr::instance().apply(false, 0);
+    MultiThreadingMgr::instance().apply(false, 0, 0);
 
     return (getExitValue());
 }
@@ -940,11 +940,11 @@ Dhcpv4Srv::run_one() {
         bool read_pkt = true;
 
         // Do not read more packets from socket if there are enough packets to
-        // be processed in the packet thread pool queue
+        // be processed in the dhcp thread pool queue
         // max_queue_size = 0 means no limit
-        const int max_queue_size = CfgMgr::instance().getCurrentCfg()->getPktThreadQueueSize();
-        const int thread_count = MultiThreadingMgr::instance().getPktThreadPoolSize();
-        size_t pkt_queue_size = MultiThreadingMgr::instance().getPktThreadPool().count();
+        const int max_queue_size = MultiThreadingMgr::instance().getThreadQueueSize();
+        const int thread_count = MultiThreadingMgr::instance().getThreadPoolSize();
+        size_t pkt_queue_size = MultiThreadingMgr::instance().getThreadPool().count();
         if (thread_count && max_queue_size && (pkt_queue_size >= thread_count * max_queue_size)) {
             read_pkt = false;
         }
@@ -1029,7 +1029,7 @@ Dhcpv4Srv::run_one() {
             boost::shared_ptr<CallBack> call_back =
                 boost::make_shared<CallBack>(std::bind(&Dhcpv4Srv::processPacketAndSendResponseNoThrow,
                                                        this, query, rsp));
-            MultiThreadingMgr::instance().getPktThreadPool().add(call_back);
+            MultiThreadingMgr::instance().getThreadPool().add(call_back);
         } else {
             processPacketAndSendResponse(query, rsp);
         }
@@ -1347,7 +1347,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
                 boost::shared_ptr<CallBack> call_back =
                     boost::make_shared<CallBack>(std::bind(&Dhcpv4Srv::sendResponseNoThrow,
                                                            this, callout_handle, query, rsp));
-                MultiThreadingMgr::instance().getPktThreadPool().add(call_back);
+                MultiThreadingMgr::instance().getThreadPool().add(call_back);
             } else {
                 processPacketPktSend(callout_handle, query, rsp);
                 processPacketBufferSend(callout_handle, rsp);

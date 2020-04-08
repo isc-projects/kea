@@ -33,7 +33,7 @@ public:
     ///
     /// This method currently does the following:
     /// - derives global parameters to subnets (lifetimes for now)
-    /// @param global scope to be modified if needed (subnet4 will be extracted)
+    /// @param global scope to be modified if needed (subnet6 will be extracted)
     /// @return number of default values derived
     static size_t deriveParameters(isc::data::ElementPtr global);
 
@@ -60,10 +60,11 @@ public:
 
     static const isc::data::SimpleDefaults IFACE6_DEFAULTS;
     static const isc::data::SimpleDefaults DHCP_QUEUE_CONTROL6_DEFAULTS;
+    static const isc::data::SimpleDefaults DHCP_MULTI_THREADING6_DEFAULTS;
     static const isc::data::SimpleDefaults SANITY_CHECKS6_DEFAULTS;
 };
 
-};
-};
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

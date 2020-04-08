@@ -273,6 +273,9 @@ public:
         /// Used while parsing Dhcp4/dhcp-queue-control structures.
         DHCP_QUEUE_CONTROL,
 
+        /// Used while parsing Dhcp4/multi-threading structures.
+        DHCP_MULTI_THREADING,
+
         /// Used while parsing Dhcp4/subnet4/pools structures.
         POOLS,
 

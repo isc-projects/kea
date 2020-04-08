@@ -20,6 +20,7 @@ namespace dhcp {
 /// For the actual values, see @file simple_parser4.cc
 class SimpleParser4 : public isc::data::SimpleParser {
 public:
+
     /// @brief Sets all defaults for DHCPv4 configuration
     ///
     /// This method sets global, option data and option definitions defaults.
@@ -58,9 +59,11 @@ public:
 
     static const isc::data::SimpleDefaults IFACE4_DEFAULTS;
     static const isc::data::SimpleDefaults DHCP_QUEUE_CONTROL4_DEFAULTS;
+    static const isc::data::SimpleDefaults DHCP_MULTI_THREADING4_DEFAULTS;
     static const isc::data::SimpleDefaults SANITY_CHECKS4_DEFAULTS;
 };
 
-};
-};
+}  // namespace dhcp
+}  // namespace isc
+
 #endif

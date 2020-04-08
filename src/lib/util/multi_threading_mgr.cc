@@ -10,7 +10,8 @@ namespace isc {
 namespace util {
 
 MultiThreadingMgr::MultiThreadingMgr()
-    : enabled_(false), critical_section_count_(0) {
+    : enabled_(false), critical_section_count_(0), thread_pool_size_(0),
+      thread_queue_size_(0) {
 }
 
 MultiThreadingMgr::~MultiThreadingMgr() {
@@ -53,18 +54,28 @@ MultiThreadingMgr::isInCriticalSection() {
 }
 
 ThreadPool<std::function<void()>>&
-MultiThreadingMgr::getPktThreadPool() {
-    return pkt_thread_pool_;
+MultiThreadingMgr::getThreadPool() {
+    return thread_pool_;
 }
 
 uint32_t
-MultiThreadingMgr::getPktThreadPoolSize() const {
-    return (pkt_thread_pool_size_);
+MultiThreadingMgr::getThreadPoolSize() const {
+    return (thread_pool_size_);
 }
 
 void
-MultiThreadingMgr::setPktThreadPoolSize(uint32_t size) {
-    pkt_thread_pool_size_ = size;
+MultiThreadingMgr::setThreadPoolSize(uint32_t size) {
+    thread_pool_size_ = size;
+}
+
+uint32_t
+MultiThreadingMgr::getThreadQueueSize() const {
+    return (thread_queue_size_);
+}
+
+void
+MultiThreadingMgr::setThreadQueueSize(uint32_t size) {
+    thread_queue_size_ = size;
 }
 
 uint32_t
@@ -73,7 +84,7 @@ MultiThreadingMgr::supportedThreadCount() {
 }
 
 void
-MultiThreadingMgr::apply(bool enabled, uint32_t thread_count) {
+MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_size) {
     // check the enabled flag
     if (enabled) {
         // check for auto scaling (enabled flag true but thread_count 0)
@@ -83,36 +94,39 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count) {
         }
     } else {
         thread_count = 0;
+        queue_size = 0;
     }
     // check enabled flag and explicit number of threads or system supports
     // hardware concurrency
     if (thread_count) {
-        if (pkt_thread_pool_.size()) {
-            pkt_thread_pool_.stop();
+        if (thread_pool_.size()) {
+            thread_pool_.stop();
         }
-        setPktThreadPoolSize(thread_count);
+        setThreadPoolSize(thread_count);
+        setThreadQueueSize(queue_size);
         setMode(true);
         if (!isInCriticalSection()) {
-            pkt_thread_pool_.start(thread_count);
+            thread_pool_.start(thread_count);
         }
     } else {
-        pkt_thread_pool_.reset();
+        thread_pool_.reset();
         setMode(false);
-        setPktThreadPoolSize(thread_count);
+        setThreadPoolSize(thread_count);
+        setThreadQueueSize(queue_size);
     }
 }
 
 void
 MultiThreadingMgr::stopPktProcessing() {
-    if (getMode() && getPktThreadPoolSize() && !isInCriticalSection()) {
-        pkt_thread_pool_.stop();
+    if (getMode() && getThreadPoolSize() && !isInCriticalSection()) {
+        thread_pool_.stop();
     }
 }
 
 void
 MultiThreadingMgr::startPktProcessing() {
-    if (getMode() && getPktThreadPoolSize() && !isInCriticalSection()) {
-        pkt_thread_pool_.start(getPktThreadPoolSize());
+    if (getMode() && getThreadPoolSize() && !isInCriticalSection()) {
+        thread_pool_.start(getThreadPoolSize());
     }
 }
 

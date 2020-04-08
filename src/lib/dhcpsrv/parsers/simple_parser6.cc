@@ -8,6 +8,7 @@
 
 #include <cc/data.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
+
 #include <boost/foreach.hpp>
 
 using namespace isc::data;
@@ -85,10 +86,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "ddns-qualifying-suffix",         Element::string },
     { "store-extended-info",            Element::boolean },
     { "statistic-default-sample-count", Element::integer },
-    { "statistic-default-sample-age",   Element::integer },
-    { "enable-multi-threading",       Element::boolean },
-    { "packet-thread-pool-size",      Element::integer },
-    { "packet-thread-queue-size",     Element::integer }
+    { "statistic-default-sample-age",   Element::integer }
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -116,10 +114,7 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "hostname-char-replacement",      Element::string,  "" },
     { "store-extended-info",            Element::boolean, "false" },
     { "statistic-default-sample-count", Element::integer, "20" },
-    { "statistic-default-sample-age",   Element::integer, "0" },
-    { "enable-multi-threading",         Element::boolean, "false" },
-    { "packet-thread-pool-size",        Element::integer, "0" },
-    { "packet-thread-queue-size",       Element::integer, "4" }
+    { "statistic-default-sample-age",   Element::integer, "0" }
 };
 
 /// @brief This table defines all option definition parameters.
@@ -224,6 +219,11 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
+///
+/// Note: When updating this array, please also update SHARED_SUBNET6_DEFAULTS
+/// below. In most cases, those two should be kept in sync, except cases
+/// where a parameter can be derived from shared-networks, but is not
+/// defined on global level.
 const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
     { "id",               Element::integer, "0" }, // 0 means autogenerate
     { "interface",        Element::string,  "" },
@@ -232,7 +232,11 @@ const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
     { "interface-id",     Element::string,  "" }
 };
 
-/// @brief This table defines default values for each IPv6 shared network.
+/// @brief This table defines default values for each IPv6 subnet that is
+///        part of a shared network
+///
+/// This is mostly the same as @ref SUBNET6_DEFAULTS, except the parameters
+/// that can be derived from shared-network, but cannot from global scope.
 const SimpleDefaults SimpleParser6::SHARED_NETWORK6_DEFAULTS = {
     { "client-class",     Element::string,  "" },
     { "interface",        Element::string,  "" },
@@ -350,11 +354,18 @@ const SimpleDefaults SimpleParser6::IFACE6_DEFAULTS = {
     { "re-detect", Element::boolean, "true" }
 };
 
-/// @brief This table defines default values for dhcp-queue-control in DHCPv4.
+/// @brief This table defines default values for dhcp-queue-control in DHCPv6.
 const SimpleDefaults SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS = {
     { "enable-queue",   Element::boolean, "false"},
     { "queue-type",     Element::string,  "kea-ring6"},
     { "capacity",       Element::integer, "500"}
+};
+
+/// @brief This table defines default values for multi-threading in DHCPv6.
+const SimpleDefaults SimpleParser6::DHCP_MULTI_THREADING6_DEFAULTS = {
+    { "enable-multi-threading",   Element::boolean, "false" },
+    { "packet-thread-pool-size",  Element::integer, "0" },
+    { "packet-thread-queue-size", Element::integer, "4" }
 };
 
 /// @brief This defines default values for sanity checking for DHCPv6.
@@ -377,17 +388,13 @@ size_t SimpleParser6::setAllDefaults(ElementPtr global) {
     // Now set the defaults for each specified option definition
     ConstElementPtr option_defs = global->get("option-def");
     if (option_defs) {
-        BOOST_FOREACH(ElementPtr option_def, option_defs->listValue()) {
-            cnt += SimpleParser::setDefaults(option_def, OPTION6_DEF_DEFAULTS);
-        }
+        cnt += setListDefaults(option_defs, OPTION6_DEF_DEFAULTS);
     }
 
     // Set the defaults for option data
     ConstElementPtr options = global->get("option-data");
     if (options) {
-        BOOST_FOREACH(ElementPtr single_option, options->listValue()) {
-            cnt += SimpleParser::setDefaults(single_option, OPTION6_DEFAULTS);
-        }
+        cnt += setListDefaults(options, OPTION6_DEFAULTS);
     }
 
     // Now set the defaults for defined subnets
@@ -430,6 +437,18 @@ size_t SimpleParser6::setAllDefaults(ElementPtr global) {
 
     cnt += setDefaults(mutable_cfg, DHCP_QUEUE_CONTROL6_DEFAULTS);
 
+    // Set the defaults for multi-threading.  If the element isn't there
+    // we'll add it.
+    ConstElementPtr multi_threading = global->get("multi-threading");
+    if (queue_control) {
+        mutable_cfg = boost::const_pointer_cast<Element>(queue_control);
+    } else {
+        mutable_cfg = Element::createMap();
+        global->set("multi-threading", mutable_cfg);
+    }
+
+    cnt += setDefaults(mutable_cfg, DHCP_MULTI_THREADING6_DEFAULTS);
+
     // Set the defaults for sanity-checks.  If the element isn't
     // there we'll add it.
     ConstElementPtr sanity_checks = global->get("sanity-checks");
@@ -447,6 +466,7 @@ size_t SimpleParser6::setAllDefaults(ElementPtr global) {
 
 size_t SimpleParser6::deriveParameters(ElementPtr global) {
     size_t cnt = 0;
+
     // Now derive global parameters into subnets.
     ConstElementPtr subnets = global->get("subnet6");
     if (subnets) {

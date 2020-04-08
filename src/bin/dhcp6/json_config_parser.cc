@@ -188,18 +188,6 @@ public:
         uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
         srv_config->setDhcp4o6Port(dhcp4o6_port);
 
-        // Set enable multi threading flag.
-        bool enable_multi_threading = getBoolean(global, "enable-multi-threading");
-        srv_config->setEnableMultiThreading(enable_multi_threading);
-
-        // Set packet thread pool size.
-        uint32_t packet_thread_pool_size = getUint32(global, "packet-thread-pool-size");
-        srv_config->setPktThreadPoolSize(packet_thread_pool_size);
-
-        // Set packet thread queue size.
-        uint32_t packet_thread_queue_size = getUint32(global, "packet-thread-queue-size");
-        srv_config->setPktThreadQueueSize(packet_thread_queue_size);
-
         // Set the global user context.
         ConstElementPtr user_context = global->get("user-context");
         if (user_context) {
@@ -535,6 +523,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "multi-threading") {
+                //DHCPMultiThreadingParser parser;
+                //srv_config->setDHCPMultiThreading(parser.parse(config_pair.second));
+                continue;
+            }
+
             if (config_pair.first == "host-reservation-identifiers") {
                 HostReservationIdsParser6 parser;
                 parser.parse(config_pair.second);
@@ -705,10 +699,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "ddns-qualifying-suffix") ||
                  (config_pair.first == "store-extended-info") ||
                  (config_pair.first == "statistic-default-sample-count") ||
-                 (config_pair.first == "statistic-default-sample-age") ||
-                 (config_pair.first == "enable-multi-threading") ||
-                 (config_pair.first == "packet-thread-pool-size") ||
-                 (config_pair.first == "packet-thread-queue-size")) {
+                 (config_pair.first == "statistic-default-sample-age")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;

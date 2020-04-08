@@ -5889,41 +5889,6 @@ TEST_F(Dhcp6ParserTest, testDataDir) {
     EXPECT_NE(original_datadir, string(CfgMgr::instance().getDataDir()));
 }
 
-/// Check that the multi-threading settings have a default value when not
-/// specified.
-TEST_F(Dhcp6ParserTest, multiThreadingDefaultSettings) {
-    ConstElementPtr status;
-
-    string config = "{ " + genIfaceConfig() + "," +
-        "\"subnet6\": [ ]"
-        "}";
-
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP6(config));
-    extractConfig(config);
-
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-
-    // returned value should be 0 (success)
-    checkResult(status, 0);
-
-    // The value of enable-multi-threading must be equal to the default value
-    // (false). The default value is defined in GLOBAL6_DEFAULTS in
-    // simple_parser6.cc.
-    EXPECT_EQ(false,
-        CfgMgr::instance().getStagingCfg()->getEnableMultiThreading());
-
-    // The value of packet-thread-pool-size must be equal to the default value
-    // (0). The default value is defined in GLOBAL6_DEFAULTS in
-    // simple_parser6.cc.
-    EXPECT_EQ(0, CfgMgr::instance().getStagingCfg()->getPktThreadPoolSize());
-
-    // The value of packet-thread-queue-size must be equal to the default value
-    // (4). The default value is defined in GLOBAL6_DEFAULTS in
-    // simple_parser6.cc.
-    EXPECT_EQ(4, CfgMgr::instance().getStagingCfg()->getPktThreadQueueSize());
-}
-
 /// Check that the decline-probation-period value has a default value if not
 /// specified explicitly.
 TEST_F(Dhcp6ParserTest, declineTimerDefault) {
@@ -7761,36 +7726,6 @@ TEST_F(Dhcp6ParserTest, statsDefaultLimits) {
     EXPECT_EQ(10, stats_mgr.getMaxSampleCountDefault());
     EXPECT_EQ("00:00:05",
               util::durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
-}
-
-/// Check that the multi threading settings can be set properly.
-TEST_F(Dhcp6ParserTest, multiThreadingSettings) {
-    ConstElementPtr status;
-
-    string config = "{ " + genIfaceConfig() + "," +
-        "\"enable-multi-threading\": true,"
-        "\"packet-thread-pool-size\": 256,"
-        "\"packet-thread-queue-size\": 256,"
-        "\"subnet6\": [ ]"
-        "}";
-
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP6(config));
-    extractConfig(config);
-
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-
-    // returned value should be 0 (success)
-    checkResult(status, 0);
-
-    // The value of multi-threading settings must be equal to the specified
-    // values
-    EXPECT_EQ(true,
-              CfgMgr::instance().getStagingCfg()->getEnableMultiThreading());
-    EXPECT_EQ(256,
-              CfgMgr::instance().getStagingCfg()->getPktThreadPoolSize());
-    EXPECT_EQ(256,
-              CfgMgr::instance().getStagingCfg()->getPktThreadQueueSize());
 }
 
 }

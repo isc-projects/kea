@@ -274,8 +274,11 @@ public:
         /// Used while parsing Dhcp6/control-socket structures.
         CONTROL_SOCKET,
 
-        /// Used while parsing Dhcp4/dhcp-queue-control structures.
+        /// Used while parsing Dhcp6/dhcp-queue-control structures.
         DHCP_QUEUE_CONTROL,
+
+        /// Used while parsing Dhcp6/multi-threading structures.
+        DHCP_MULTI_THREADING,
 
         /// Used while parsing Dhcp6/subnet6/pools structures.
         POOLS,
@@ -307,7 +310,7 @@ public:
         /// Used while parsing Dhcp6/dhcp-ddns/replace-client-name.
         REPLACE_CLIENT_NAME,
 
-        /// Used while parsing Dhcp4/config-control
+        /// Used while parsing Dhcp6/config-control
         CONFIG_CONTROL,
 
         /// Used while parsing config-control/config-databases

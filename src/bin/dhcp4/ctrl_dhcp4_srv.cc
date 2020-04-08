@@ -169,21 +169,6 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
                       "processCommand(\"config-set\", json)");
         }
 
-        // command line parameters overwrite file and database configuration
-        bool enabled = false;
-        if (Dhcpv4Srv::srv_thread_count_ >= 0) {
-            enabled = true;
-        }
-        if (enabled) {
-            CfgMgr::instance().getCurrentCfg()->setPktThreadPoolSize(Dhcpv4Srv::srv_thread_count_);
-            CfgMgr::instance().getCurrentCfg()->setPktThreadQueueSize(0);
-            LOG_FATAL(dhcp4_logger, DHCP4_MULTI_THREADING_WARNING);
-        } else {
-            enabled = CfgMgr::instance().getCurrentCfg()->getEnableMultiThreading();
-        }
-        MultiThreadingMgr::instance().apply(enabled,
-            CfgMgr::instance().getCurrentCfg()->getPktThreadPoolSize());
-
         // Now check is the returned result is successful (rcode=0) or not
         // (see @ref isc::config::parseAnswer).
         int rcode;
@@ -206,8 +191,8 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
 
     LOG_WARN(dhcp4_logger, DHCP4_MULTI_THREADING_INFO)
         .arg(MultiThreadingMgr::instance().getMode() ? "yes" : "no")
-        .arg(MultiThreadingMgr::instance().getPktThreadPoolSize())
-        .arg(CfgMgr::instance().getCurrentCfg()->getPktThreadQueueSize());
+        .arg(MultiThreadingMgr::instance().getThreadPoolSize())
+        .arg(MultiThreadingMgr::instance().getThreadQueueSize());
 
     return (result);
 }
@@ -889,6 +874,32 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
         // Ignore status code as none of them would have an effect on further
         // operation.
+    }
+
+    // Configure multi threading
+    try {
+        data::ConstElementPtr mt;
+        // command line parameters overwrite file and database configuration
+        bool enabled = false;
+        uint32_t thread_pool_size = 0;
+        uint32_t thread_queue_size = 0;
+        if (Dhcpv4Srv::srv_thread_count_ >= 0) {
+            enabled = true;
+        }
+        if (enabled) {
+            thread_pool_size = Dhcpv4Srv::srv_thread_count_;
+            LOG_FATAL(dhcp4_logger, DHCP4_MULTI_THREADING_WARNING);
+        } else {
+            enabled = false; // todo parse
+            thread_pool_size = 0; // todo parse
+            thread_queue_size = 0; // todo parse
+        }
+        MultiThreadingMgr::instance().apply(enabled, thread_pool_size,
+                                            thread_queue_size);
+    } catch (const std::exception& ex) {
+        err << "Error applying multi threading settings: "
+            << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     return (answer);

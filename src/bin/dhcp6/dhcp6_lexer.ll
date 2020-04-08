@@ -1145,16 +1145,17 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::INTERFACES_CONFIG:
     case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::POOLS:
+    case isc::dhcp::Parser6Context::PD_POOLS:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
     case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::OPTION_DATA:
+    case isc::dhcp::Parser6Context::RESERVATIONS:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::SERVER_ID:
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
-    case isc::dhcp::Parser6Context::POOLS:
-    case isc::dhcp::Parser6Context::PD_POOLS:
-    case isc::dhcp::Parser6Context::RESERVATIONS:
     case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
+    case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser6Context::LOGGERS:
     case isc::dhcp::Parser6Context::DHCP_DDNS:
         return isc::dhcp::Dhcp6Parser::make_USER_CONTEXT(driver.loc_);
@@ -1168,16 +1169,17 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::INTERFACES_CONFIG:
     case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::POOLS:
+    case isc::dhcp::Parser6Context::PD_POOLS:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
     case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::OPTION_DATA:
+    case isc::dhcp::Parser6Context::RESERVATIONS:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::SERVER_ID:
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
-    case isc::dhcp::Parser6Context::POOLS:
-    case isc::dhcp::Parser6Context::PD_POOLS:
     case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
-    case isc::dhcp::Parser6Context::RESERVATIONS:
+    case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser6Context::LOGGERS:
     case isc::dhcp::Parser6Context::DHCP_DDNS:
         return isc::dhcp::Dhcp6Parser::make_COMMENT(driver.loc_);
@@ -1809,30 +1811,39 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"enable-multi-threading\" {
+\"multi-threading\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_DHCP_MULTI_THREADING(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("multi-threading", driver.loc_);
+    }
+}
+
+\"enable-multi-threading\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
         return isc::dhcp::Dhcp6Parser::make_ENABLE_MULTI_THREADING(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("enable-multi-threading", driver.loc_);
     }
 }
 
-\"packet-thread-pool-size\" {
+\"thread-pool-size\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_PACKET_THREAD_POOL_SIZE(driver.loc_);
+    case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
+        return isc::dhcp::Dhcp6Parser::make_THREAD_POOL_SIZE(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("packet-thread-pool-size", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("thread-pool-size", driver.loc_);
     }
 }
 
-\"packet-thread-queue-size\" {
+\"packet-queue-size\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_PACKET_THREAD_QUEUE_SIZE(driver.loc_);
+    case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
+        return isc::dhcp::Dhcp6Parser::make_PACKET_QUEUE_SIZE(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("packet-thread-queue-size", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("packet-queue-size", driver.loc_);
     }
 }
 

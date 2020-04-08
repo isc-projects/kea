@@ -42,8 +42,6 @@ SrvConfig::SrvConfig()
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
-      enable_multi_threading_(false),
-      pkt_thread_pool_size_(0), pkt_thread_queue_size_(0),
       d2_client_config_(new D2ClientConfig()),
       configured_globals_(Element::createMap()),
       cfg_consist_(new CfgConsistency()) {
@@ -62,8 +60,6 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
-      enable_multi_threading_(false),
-      pkt_thread_pool_size_(0), pkt_thread_queue_size_(0),
       d2_client_config_(new D2ClientConfig()),
       configured_globals_(Element::createMap()),
       cfg_consist_(new CfgConsistency()) {
@@ -443,15 +439,6 @@ SrvConfig::toElement() const {
     // Set dhcp4o6-port
     dhcp->set("dhcp4o6-port",
               Element::create(static_cast<int>(dhcp4o6_port_)));
-    // Set enable-multi-threading
-    dhcp->set("enable-multi-threading",
-             Element::create(enable_multi_threading_));
-    // Set packet-thread-pool-size
-    dhcp->set("packet-thread-pool-size",
-             Element::create(static_cast<int>(pkt_thread_pool_size_)));
-    // Set packet-thread-queue-size
-    dhcp->set("packet-thread-queue-size",
-             Element::create(static_cast<int>(pkt_thread_queue_size_)));
     // Set dhcp-ddns
     dhcp->set("dhcp-ddns", d2_client_config_->toElement());
     // Set interfaces-config
@@ -626,6 +613,12 @@ SrvConfig::toElement() const {
     data::ConstElementPtr dhcp_queue_control = getDHCPQueueControl();
     if (dhcp_queue_control) {
         dhcp->set("dhcp-queue-control", dhcp_queue_control);
+    }
+
+    // Set multi-threading (if it exists)
+    data::ConstElementPtr dhcp_multi_threading = getDHCPMultiThreading();
+    if (dhcp_multi_threading) {
+        dhcp->set("multi-threading", dhcp_multi_threading);
     }
 
     return (result);

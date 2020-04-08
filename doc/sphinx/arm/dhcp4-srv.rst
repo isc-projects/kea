@@ -3743,27 +3743,30 @@ Multi-threading settings
 ------------------------
 
 The Kea server can be configured to process packets in parallel using multiple
-threads. Related setting for this feature are:
+threads. These settings can be found under ``multi-threading`` structure and are
+represented by:
 
 -  ``enable-multi-threading`` - use multiple threads to process packets in
     parallel
 
--  ``packet-thread-pool-size`` - specify the number of threads to process
-   packets in parallel.  Supported values are: 0 (autodetect), any positive
-   number sets number of threads explicitly.
+-  ``thread-pool-size`` - specify the number of threads to process packets in
+   parallel.  Supported values are: 0 (auto detect), any positive number sets
+   number of threads explicitly.
 
--  ``packet-thread-queue-size`` - specify the size of the queue used by each
-   thread to process packets.  Supported values are: 0 (unlimited), any positive
-   number sets size explicitly.
+-  ``packet-queue-size`` - specify the size of the queue used by each thread to
+   process packets.  Supported values are: 0 (unlimited), any positive number
+   sets size explicitly.
 
 An example configuration that sets these parameter looks as follows:
 
 ::
 
    "Dhcp4": {
-       "enable-multi-threading": true,
-       "packet-thread-pool-size": 4,
-       "packet-thread-queue-size": 16,
+       "multi-threading": {
+          "enable-multi-threading": true,
+          "thread-pool-size": 4,
+          "packet-queue-size": 16
+       }
        ...
    }
 

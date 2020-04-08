@@ -467,6 +467,18 @@ public:
         dhcp_queue_control_ = dhcp_queue_control;
     }
 
+    /// @brief Returns DHCP multi threading information
+    /// @return pointer to the DHCP multi threading information
+    const isc::data::ConstElementPtr getDHCPMultiThreading() const {
+        return (dhcp_multi_threading_);
+    }
+
+    /// @brief Sets information about the dhcp multi threading
+    /// @param dhcp_multi_threading new dhcp multi threading information
+    void setDHCPMultiThreading(const isc::data::ConstElementPtr dhcp_multi_threading) {
+        dhcp_multi_threading_ = dhcp_multi_threading;
+    }
+
     /// @brief Returns pointer to the dictionary of global client
     /// class definitions
     ClientClassDictionaryPtr getClientClassDictionary() {
@@ -705,48 +717,6 @@ public:
         return (dhcp4o6_port_);
     }
 
-    /// @brief Sets the enable multi threading flag.
-    ///
-    /// @param size value of the enable multi threading flag
-    void setEnableMultiThreading(bool enabled) {
-        enable_multi_threading_ = enabled;
-    }
-
-    /// @brief Retrieves the enable multi threading flag.
-    ///
-    /// @return value of the enable multi threading flag
-    uint32_t getEnableMultiThreading() const {
-        return (enable_multi_threading_);
-    }
-
-    /// @brief Sets the packet thread pool size.
-    ///
-    /// @param size value of the packet thread pool size
-    void setPktThreadPoolSize(uint32_t size) {
-        pkt_thread_pool_size_ = size;
-    }
-
-    /// @brief Retrieves the packet thread pool size.
-    ///
-    /// @return value of the packet thread pool size
-    uint32_t getPktThreadPoolSize() const {
-        return (pkt_thread_pool_size_);
-    }
-
-    /// @brief Sets the packet thread queue size.
-    ///
-    /// @param size value of the packet thread queue size
-    void setPktThreadQueueSize(uint32_t size) {
-        pkt_thread_queue_size_ = size;
-    }
-
-    /// @brief Retrieves the packet thread queue size.
-    ///
-    /// @return value of the packet thread queue size
-    uint32_t getPktThreadQueueSize() const {
-        return (pkt_thread_queue_size_);
-    }
-
     /// @brief Returns pointer to the D2 client configuration
     D2ClientConfigPtr getD2ClientConfig() {
         return (d2_client_config_);
@@ -944,6 +914,9 @@ private:
     /// @brief Pointer to the dhcp-queue-control information
     isc::data::ConstElementPtr dhcp_queue_control_;
 
+    /// @brief Pointer to the multi-threading information
+    isc::data::ConstElementPtr dhcp_multi_threading_;
+
     /// @brief Pointer to the dictionary of global client class definitions
     ClientClassDictionaryPtr class_dictionary_;
 
@@ -964,15 +937,6 @@ private:
     /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
     /// this socket is bound and connected to this port and port + 1
     uint16_t dhcp4o6_port_;
-
-    /// @brief The enable multi threading flag.
-    bool enable_multi_threading_;
-
-    /// @brief The packet thread pool size.
-    uint32_t pkt_thread_pool_size_;
-
-    /// @brief The packet thread queue size.
-    uint32_t pkt_thread_queue_size_;
 
     /// @brief Stores D2 client configuration
     D2ClientConfigPtr d2_client_config_;

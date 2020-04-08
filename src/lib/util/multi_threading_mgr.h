@@ -77,7 +77,7 @@ public:
     /// @brief Exit critical section.
     ///
     /// When exiting @ref MultiThreadingCriticalSection, decrement internal
-    /// counter so that the packet thread pool can be started according to the
+    /// counter so that the dhcp thread pool can be started according to the
     /// new configuration.
     /// If the internal counter is 0, then start the thread pool.
     void exitCriticalSection();
@@ -87,20 +87,30 @@ public:
     /// @return The critical section flag.
     bool isInCriticalSection();
 
-    /// @brief Get the packet thread pool.
+    /// @brief Get the dhcp thread pool.
     ///
-    /// @return The packet thread pool of this binary instance.
-    ThreadPool<std::function<void()>>& getPktThreadPool();
+    /// @return The dhcp thread pool of this binary instance.
+    ThreadPool<std::function<void()>>& getThreadPool();
 
-    /// @brief Get the configured packet thread pool size.
+    /// @brief Get the configured dhcp thread pool size.
     ///
-    /// @return The packet thread pool size of this binary instance.
-    uint32_t getPktThreadPoolSize() const;
+    /// @return The dhcp thread pool size of this binary instance.
+    uint32_t getThreadPoolSize() const;
 
-    /// @brief Set the configured packet thread pool size.
+    /// @brief Set the configured dhcp thread pool size.
     ///
-    /// @param size The packet thread pool size of this binary instance.
-    void setPktThreadPoolSize(uint32_t size);
+    /// @param size The dhcp thread pool size of this binary instance.
+    void setThreadPoolSize(uint32_t size);
+
+    /// @brief Get the configured dhcp thread queue size.
+    ///
+    /// @return The dhcp thread queue size of this binary instance.
+    uint32_t getThreadQueueSize() const;
+
+    /// @brief Set the configured dhcp thread queue size.
+    ///
+    /// @param size The dhcp thread queue size of this binary instance.
+    void setThreadQueueSize(uint32_t size);
 
     /// @brief The system current supported hardware concurrency thread count.
     ///
@@ -113,9 +123,11 @@ public:
     ///
     /// @param enabled The enabled flag: true if multi-threading is enabled,
     /// false otherwise.
-    /// @param thread_count The number of desired threads: non 0 if explicitly
+    /// @param thread_count The desired number of threads: non 0 if explicitly
     /// configured, 0 if auto scaling is desired
-    void apply(bool enabled, uint32_t thread_count);
+    /// @param queue_size The desired thread queue size: non 0 if explicitly
+    /// configured, 0 for unlimited size
+    void apply(bool enabled, uint32_t thread_count, uint32_t queue_size);
 
 protected:
 
@@ -129,12 +141,12 @@ private:
 
     /// @brief Class method stopping and joining all threads of the pool.
     ///
-    /// Stop the packet thread pool if running.
+    /// Stop the dhcp thread pool if running.
     void stopPktProcessing();
 
     /// @brief Class method (re)starting threads of the pool.
     ///
-    /// Start the packet thread pool according to current configuration.
+    /// Start the dhcp thread pool according to current configuration.
     void startPktProcessing();
 
     /// @brief The current multi-threading mode.
@@ -151,11 +163,14 @@ private:
     /// This handles multiple interleaved sections.
     uint32_t critical_section_count_;
 
-    /// @brief The configured size of the packet thread pool.
-    uint32_t pkt_thread_pool_size_;
+    /// @brief The configured size of the dhcp thread pool.
+    uint32_t thread_pool_size_;
+
+    /// @brief The configured size of the dhcp thread queue.
+    uint32_t thread_queue_size_;
 
     /// @brief Packet processing thread pool.
-    ThreadPool<std::function<void()>> pkt_thread_pool_;
+    ThreadPool<std::function<void()>> thread_pool_;
 };
 
 /// @note: everything here MUST be used ONLY from the main thread.
@@ -165,7 +180,7 @@ private:
 ///
 /// @note: the multi-threading mode MUST NOT be changed in the RAII
 /// @c MultiThreadingCriticalSection body.
-/// @note: starting and stopping the packet thread pool should be handled
+/// @note: starting and stopping the dhcp thread pool should be handled
 /// in the main thread, if done on one of the processing threads will cause a
 /// deadlock.
 /// This is mainly useful in hook commands which handle configuration
@@ -175,13 +190,13 @@ public:
 
     /// @brief Constructor.
     ///
-    /// Entering the critical section. The packet thread pool instance will be
+    /// Entering the critical section. The dhcp thread pool instance will be
     /// stopped so that all configuration changes can be safely applied.
     MultiThreadingCriticalSection();
 
     /// @brief Destructor.
     ///
-    /// Leaving the critical section. The packet thread pool instance will be
+    /// Leaving the critical section. The dhcp thread pool instance will be
     /// started according to the new configuration.
     virtual ~MultiThreadingCriticalSection();
 };
