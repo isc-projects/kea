@@ -17,6 +17,7 @@
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/parser_context.h>
 #include <dhcpsrv/cfg_db_access.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
 #include <hooks/hooks.h>
@@ -900,24 +901,11 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Configure multi threading
     try {
-        data::ConstElementPtr mt;
-        // command line parameters overwrite file and database configuration
-        bool enabled = false;
-        uint32_t thread_pool_size = 0;
-        uint32_t thread_queue_size = 0;
-        if (Dhcpv6Srv::srv_thread_count_ >= 0) {
-            enabled = true;
-        }
-        if (enabled) {
-            thread_pool_size = Dhcpv6Srv::srv_thread_count_;
+        CfgMultiThreading::apply(Dhcpv6Srv::srv_thread_count_,
+            CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
+        if (MultiThreadingMgr::instance().getMode()) {
             LOG_FATAL(dhcp6_logger, DHCP6_MULTI_THREADING_WARNING);
-        } else {
-            enabled = false; // todo parse
-            thread_pool_size = 0; // todo parse
-            thread_queue_size = 0; // todo parse
         }
-        MultiThreadingMgr::instance().apply(enabled, thread_pool_size,
-                                            thread_queue_size);
     } catch (const std::exception& ex) {
         err << "Error applying multi threading settings: "
             << ex.what();

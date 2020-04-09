@@ -88,6 +88,7 @@ libkea_dhcpsrv_la_SOURCES += cfg_shared_networks.cc cfg_shared_networks.h
 libkea_dhcpsrv_la_SOURCES += cfg_subnets4.cc cfg_subnets4.h
 libkea_dhcpsrv_la_SOURCES += cfg_subnets6.cc cfg_subnets6.h
 libkea_dhcpsrv_la_SOURCES += cfg_mac_source.cc cfg_mac_source.h
+libkea_dhcpsrv_la_SOURCES += cfg_multi_threading.cc cfg_multi_threading.h
 libkea_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
 libkea_dhcpsrv_la_SOURCES += client_class_def.cc client_class_def.h
 libkea_dhcpsrv_la_SOURCES += config_backend_dhcp4.h
@@ -314,6 +315,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	cfg_hosts_util.h \
 	cfg_iface.h \
 	cfg_mac_source.h \
+	cfg_multi_threading.h \
 	cfg_option.h \
 	cfg_option_def.h \
 	cfg_rsoo.h \
