@@ -15,7 +15,8 @@ namespace dhcp  {
 
 /// @brief Simple parser for multi-threading structure
 class MultiThreadingConfigParser : public isc::data::SimpleParser {
- public:
+public:
+
     /// @brief parses JSON structure
     ///
     /// @param value a JSON map that contains multi-threading parameter.

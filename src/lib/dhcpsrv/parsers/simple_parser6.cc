@@ -363,9 +363,9 @@ const SimpleDefaults SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS = {
 
 /// @brief This table defines default values for multi-threading in DHCPv6.
 const SimpleDefaults SimpleParser6::DHCP_MULTI_THREADING6_DEFAULTS = {
-    { "enable-multi-threading",   Element::boolean, "false" },
-    { "packet-thread-pool-size",  Element::integer, "0" },
-    { "packet-thread-queue-size", Element::integer, "4" }
+    { "enable-multi-threading", Element::boolean, "false" },
+    { "thread-pool-size",       Element::integer, "0" },
+    { "packet-queue-size",      Element::integer, "4" }
 };
 
 /// @brief This defines default values for sanity checking for DHCPv6.
