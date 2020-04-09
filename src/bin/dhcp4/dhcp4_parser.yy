@@ -511,6 +511,7 @@ global_param: valid_lifetime
             | store_extended_info
             | statistic_default_sample_count
             | statistic_default_sample_age
+            | dhcp_multi_threading
             | unknown_map_entry
             ;
 
@@ -1057,6 +1058,7 @@ multi_threading_param: enable_multi_threading
                      | packet_queue_size
                      | user_context
                      | comment
+                     | unknown_map_entry
                      ;
 
 enable_multi_threading: ENABLE_MULTI_THREADING COLON BOOLEAN {

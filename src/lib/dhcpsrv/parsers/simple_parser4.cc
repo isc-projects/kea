@@ -428,8 +428,8 @@ size_t SimpleParser4::setAllDefaults(ElementPtr global) {
     // Set the defaults for multi-threading.  If the element isn't there
     // we'll add it.
     ConstElementPtr multi_threading = global->get("multi-threading");
-    if (queue_control) {
-        mutable_cfg = boost::const_pointer_cast<Element>(queue_control);
+    if (multi_threading) {
+        mutable_cfg = boost::const_pointer_cast<Element>(multi_threading);
     } else {
         mutable_cfg = Element::createMap();
         global->set("multi-threading", mutable_cfg);
