@@ -22,6 +22,10 @@ MultiThreadingConfigParser::parse(const ConstElementPtr& value) {
         isc_throw(DhcpConfigError, "multi-threading is supposed to be a map");
     }
 
+    // enable-multi-threading is mandatory
+    getBoolean(value, "enable-multi-threading");
+
+    // thread-pool-size is not mandatory
     if (value->get("thread-pool-size")) {
         auto thread_pool_size = getInteger(value, "thread-pool-size");
         uint32_t max_size = std::numeric_limits<uint16_t>::max();
@@ -38,6 +42,7 @@ MultiThreadingConfigParser::parse(const ConstElementPtr& value) {
         }
     }
 
+    // packet-queue-size is not mandatory
     if (value->get("packet-queue-size")) {
         auto packet_queue_size = getInteger(value, "packet-queue-size");
         uint32_t max_size = std::numeric_limits<uint16_t>::max();

@@ -7701,6 +7701,7 @@ TEST_F(Dhcp6ParserTest, storeExtendedInfoNoGlobal) {
     EXPECT_TRUE(subnet->getStoreExtendedInfo());
 }
 
+<<<<<<< HEAD
 /// This test checks that the statistic-default-sample-count and age
 /// global parameters are committed to the stats manager as expected.
 TEST_F(Dhcp6ParserTest, statsDefaultLimits) {
@@ -7728,4 +7729,26 @@ TEST_F(Dhcp6ParserTest, statsDefaultLimits) {
               util::durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 }
 
+// This test checks that adding multi threadding settings works.
+TEST_F(Dhcp6ParserTest, multiThreadingSettings) {
+    std::string config = "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [  ], "
+        "\"multi-threading\": { "
+        "    \"enable-multi-threading\": false,"
+        "    \"thread-pool-size\": 0,"
+        "    \"packet-queue-size\": 0 }"
+        "}";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    ASSERT_TRUE(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
+    ASSERT_EQ(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading()->size(), 3);
 }
+
+}  // namespace

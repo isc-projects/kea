@@ -71,6 +71,7 @@ libdhcpsrv_unittests_SOURCES += cfg_host_operations_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_hosts_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_iface_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_mac_source_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_multi_threading_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_def_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_rsoo_unittest.cc
@@ -102,6 +103,7 @@ libdhcpsrv_unittests_SOURCES += lease_mgr_factory_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += generic_lease_mgr_unittest.cc generic_lease_mgr_unittest.h
 libdhcpsrv_unittests_SOURCES += memfile_lease_mgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += multi_threading_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp_parsers_unittest.cc
 libdhcpsrv_unittests_SOURCES += ncr_generator_unittest.cc
 if HAVE_MYSQL

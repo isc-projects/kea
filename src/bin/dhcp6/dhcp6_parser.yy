@@ -1049,19 +1049,19 @@ relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
 // --- multi-threading ------------------------------------------------
 
 dhcp_multi_threading: DHCP_MULTI_THREADING {
-    ElementPtr qc(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("multi-threading", qc);
-    ctx.stack_.push_back(qc);
+    ElementPtr mt(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("multi-threading", mt);
+    ctx.stack_.push_back(mt);
     ctx.enter(ctx.DHCP_MULTI_THREADING);
 } COLON LCURLY_BRACKET multi_threading_params RCURLY_BRACKET {
-    // The enable queue parameter is required.
+    // The enable parameter is required.
     ctx.require("enable-multi-threading", ctx.loc2pos(@4), ctx.loc2pos(@6));
     ctx.stack_.pop_back();
     ctx.leave();
 };
 
 multi_threading_params: multi_threading_param
-                      | multi_threading_param COMMA multi_threading_param
+                      | multi_threading_params COMMA multi_threading_param
                       ;
 
 multi_threading_param: enable_multi_threading

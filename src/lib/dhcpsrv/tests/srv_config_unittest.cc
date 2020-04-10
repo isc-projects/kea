@@ -12,6 +12,7 @@
 #include <dhcpsrv/subnet.h>
 #include <process/logging_info.h>
 #include <testutils/test_to_element.h>
+
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink;
@@ -1559,6 +1560,15 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest6) {
     EXPECT_TRUE(params->getQualifyingSuffix().empty());
     EXPECT_TRUE(params->getHostnameCharSet().empty());
     EXPECT_TRUE(params->getHostnameCharReplacement().empty());
+}
+
+// Verifies that adding multi threading settings works
+TEST_F(SrvConfigTest, multiThreadingSettings) {
+    SrvConfig conf(32);
+    ElementPtr param = Element::createMap();
+    param->set("enable-multi-threading", Element::create(true));
+    conf.setDHCPMultiThreading(param);
+    EXPECT_TRUE(isEquivalent(param, conf.getDHCPMultiThreading()));
 }
 
 } // end of anonymous namespace

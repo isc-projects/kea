@@ -1,0 +1,164 @@
+// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
+
+#include <cc/data.h>
+#include <dhcpsrv/parsers/multi_threading_config_parser.h>
+#include <testutils/test_to_element.h>
+
+#include <gtest/gtest.h>
+
+using namespace isc::data;
+using namespace isc::dhcp;
+using namespace isc::test;
+
+namespace {
+
+/// @brief Test fixture class for @c MultiThreadingConfigParser
+class MultiThreadingConfigParserTest : public ::testing::Test {
+protected:
+
+    /// @brief Setup for each test.
+    virtual void SetUp();
+
+    /// @brief Cleans up after each test.
+    virtual void TearDown();
+};
+
+void
+MultiThreadingConfigParserTest::SetUp() {
+}
+
+void
+MultiThreadingConfigParserTest::TearDown() {
+}
+
+// Verifies that MultiThreadingConfigParser handles
+// expected valid content
+TEST_F(MultiThreadingConfigParserTest, validContent) {
+    struct Scenario {
+        std::string description_;
+        std::string json_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+        "enable-multi-threading disabled",
+        "{ \n"
+        "   \"enable-multi-threading\": false \n"
+        "} \n"
+        },
+        {
+        "enable-multi-threading, with thread-pool-size and packet-queue-size",
+        "{ \n"
+        "   \"enable-multi-threading\": true, \n"
+        "   \"thread-pool-size\": 4, \n"
+        "   \"packet-queue-size\": 64 \n"
+        "} \n"
+        }
+    };
+
+    // Iterate over the valid scenarios and verify they succeed.
+    ConstElementPtr config_elems;
+    ConstElementPtr multi_threading_config;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+        {
+            // Construct the config JSON
+            ASSERT_NO_THROW(config_elems = Element::fromJSON(scenario.json_))
+                            << "invalid JSON, test is broken";
+
+            // Parsing config should succeed.
+            MultiThreadingConfigParser parser;
+            try {
+                multi_threading_config = parser.parse(config_elems);
+            } catch (const std::exception& ex) {
+                ADD_FAILURE() << "parser threw an exception: " << ex.what();
+            }
+
+            // Verify the resultant configuration.
+            ASSERT_TRUE(multi_threading_config);
+
+            // The parser should have created a duplicate of the
+            // configuration elements.
+            ASSERT_TRUE(multi_threading_config.get() != config_elems.get());
+            EXPECT_TRUE(multi_threading_config->equals(*config_elems));
+        }
+    }
+}
+
+// Verifies that MultiThreadingConfigParser correctly catches
+// invalid content
+TEST_F(MultiThreadingConfigParserTest, invalidContent) {
+    struct Scenario {
+        std::string description_;
+        std::string json_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+        "enable-multi-threading not boolean",
+        "{ \n"
+        "   \"enable-multi-threading\": \"always\" \n"
+        "} \n"
+        },
+        {
+        "thread-pool-size not integer",
+        "{ \n"
+        "   \"thread-pool-size\": true \n"
+        "} \n"
+        },
+        {
+        "thread-pool-size negative",
+        "{ \n"
+        "   \"thread-pool-size\": -1 \n"
+        "} \n"
+        },
+        {
+        "thread-pool-size too large",
+        "{ \n"
+        "   \"thread-pool-size\": 200000 \n"
+        "} \n"
+        },
+        {
+        "packet-queue-size not integer",
+        "{ \n"
+        "   \"packet-queue-size\": true \n"
+        "} \n"
+        },
+        {
+        "packet-queue-size-size negative",
+        "{ \n"
+        "   \"packet-queue-size\": -1 \n"
+        "} \n"
+        },
+        {
+        "packet-queue-size too large",
+        "{ \n"
+        "   \"packet-queue-size\": 200000 \n"
+        "} \n"
+        }
+    };
+
+    // Iterate over the valid scenarios and verify they succeed.
+    ConstElementPtr config_elems;
+    ConstElementPtr queue_control;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+        {
+            // Construct the config JSON
+            ASSERT_NO_THROW(config_elems = Element::fromJSON(scenario.json_))
+                            << "invalid JSON, test is broken";
+
+            // Parsing config into a queue control should succeed.
+            MultiThreadingConfigParser parser;
+            EXPECT_THROW(parser.parse(config_elems), DhcpConfigError);
+        }
+    }
+}
+
+}  // namespace
