@@ -67,6 +67,12 @@ AC_SUBST(SEP)
 # pkg-config can be required.
 AC_PATH_PROG([PKG_CONFIG], [pkg-config])
 
+# check against BusyBox ps not supporting ps -p.
+ps -p 1234 2>&1 > /dev/null | grep 'unrecognized option: p'
+if test $? -eq 0; then
+	AC_MSG_WARN("ps does not support -p. It is likely the BusyBox ps: please install a full ps like procps")
+fi
+
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
 # by default.
