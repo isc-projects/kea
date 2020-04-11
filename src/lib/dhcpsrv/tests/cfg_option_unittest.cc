@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1097,13 +1097,12 @@ TEST_F(CfgOptionTest, unparse) {
         "    \"data\": \"12121212\",\n"
         "    \"always-send\": false\n"
         "},{\n"
-        "    \"comment\": \"foo\",\n"
         "    \"code\": 101,\n"
         "    \"space\": \"dns\",\n"
         "    \"csv-format\": true,\n"
         "    \"data\": \"12, 12, 12, 12\",\n"
         "    \"always-send\": false,\n"
-        "    \"user-context\": { \"bar\": 1 }\n"
+        "    \"user-context\": { \"comment\": \"foo\", \"bar\": 1 }\n"
         "},{\n"
         "    \"code\": 13,\n"
         "    \"name\": \"status-code\",\n"

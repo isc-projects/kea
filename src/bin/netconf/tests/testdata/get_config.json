@@ -4,7 +4,6 @@
         "hooks-libraries": [ ],
         "managed-servers": {
             "dhcp4": {
-                "comment": "Kea DHCP4 server serving network on floor 13",
                 "boot-update": true,
                 "control-socket": {
                     "socket-name": "/tmp/kea4-ctrl-socket",
@@ -13,6 +12,9 @@
                 },
                 "model": "kea-dhcp4-server",
                 "subscribe-changes": true,
+                "user-context": {
+                    "comment": "Kea DHCP4 server serving network on floor 13"
+                },
                 "validate-changes": false
             }
         },

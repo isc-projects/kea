@@ -118,7 +118,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
 
     // Verify what toElement returns.
     std::string expected = "{\n"
-        "\"comment\": \"bar\",\n"
         "\"enable-updates\": true,\n"
         "\"server-ip\": \"127.0.0.1\",\n"
         "\"server-port\": 477,\n"
@@ -127,7 +126,7 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
         "\"max-queue-size\": 2048,\n"
         "\"ncr-protocol\": \"UDP\",\n"
         "\"ncr-format\": \"JSON\",\n"
-        "\"user-context\": { \"foo\": 1 }\n"
+        "\"user-context\": { \"foo\": 1, \"comment\": \"bar\" }\n"
         "}\n";
     runToElementTest<D2ClientConfig>(expected, *d2_client_config);
 

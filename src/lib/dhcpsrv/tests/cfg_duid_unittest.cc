@@ -1,4 +1,4 @@
-// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -130,14 +130,14 @@ TEST_F(CfgDUIDTest, setValues) {
     EXPECT_EQ(user_context, cfg_duid.getContext()->str());
 
     std::string expected = "{\n"
-        " \"comment\": \"bar\",\n"
         " \"type\": \"EN\",\n"
         " \"identifier\": \"ABCDEF\",\n"
         " \"htype\": 100,\n"
         " \"time\": 32100,\n"
         " \"enterprise-id\": 10,\n"
         " \"persist\": false,\n"
-        " \"user-context\": { \"foo\": 1 }\n"
+        " \"user-context\": { \"foo\": 1,\n"
+        " \"comment\": \"bar\" }\n"
         "}";
     runToElementTest<CfgDUID>(expected, cfg_duid);
 }

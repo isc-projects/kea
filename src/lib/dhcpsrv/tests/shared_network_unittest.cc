@@ -648,7 +648,6 @@ TEST(SharedNetwork4Test, unparse) {
     network->add(subnet2);
 
     std::string expected = "{\n"
-        "    \"comment\": \"bar\",\n"
         "    \"authoritative\": false,\n"
         "    \"interface\": \"eth1\",\n"
         "    \"match-client-id\": false,\n"
@@ -693,7 +692,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"valid-lifetime\": 30\n"
         "      }\n"
         "    ],\n"
-        "    \"user-context\": { \"foo\": 1 },\n"
+        "    \"user-context\": { \"comment\": \"bar\", \"foo\": 1 },\n"
         "    \"valid-lifetime\": 200\n"
         "}\n";
 

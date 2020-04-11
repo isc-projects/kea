@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,23 +29,7 @@ isc::data::ElementPtr moveComments(isc::data::ElementPtr element);
 /// @return a processed copy of element or unmodified element
 isc::data::ConstElementPtr moveComments(isc::data::ConstElementPtr element);
 
-/// @brief Extract comment entries from user-context
-///
-/// Process an element looking for user-context entries carrying
-/// comments and moving these comments at the same level than
-/// user-contexts. As the common case is no comment and this routine
-/// tries to maximize sharing the standard behavior is just to return
-/// the argument unchanged.
-///
-/// @param element
-/// @return a processed copy of element or unmodified element
-isc::data::ElementPtr extractComments(isc::data::ElementPtr element);
-
-/// @brief Extract comment entries from user-context (const variant)
-///
-/// @param element
-/// @return a processed copy of element or unmodified element
-isc::data::ConstElementPtr extractComments(isc::data::ConstElementPtr element);
+/// extractComments was removed.
 
 }; // end of isc::test namespace
 }; // end of isc namespace

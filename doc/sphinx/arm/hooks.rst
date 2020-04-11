@@ -2838,8 +2838,8 @@ operations, for example.
 
 If user context is supported in a given context, the parser translates
 "comment" entries into user context with a "comment" entry. The pretty
-print of a configuration does the opposite operation and puts "comment"
-entries at the beginning of maps, as that seems to be the common usage.
+print of a configuration did the opposite operation and put "comment"
+entries at the beginning of maps, but this was withdrawn in 1.7.x.
 
 As of Kea 1.3, the structures that allow user contexts are pools of all
 types (addresses and prefixes) and subnets. Kea 1.4 extended user

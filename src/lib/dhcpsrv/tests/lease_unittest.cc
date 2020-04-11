@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -535,7 +535,7 @@ TEST_F(Lease4Test, toElement) {
 
     expected = "{"
         "\"cltt\": 12345678,"
-        "\"comment\": \"a comment\","
+        "\"user-context\": { \"comment\": \"a comment\" },"
         "\"fqdn-fwd\": true,"
         "\"fqdn-rev\": true,"
         "\"hostname\": \"urania.example.org\","
@@ -1119,7 +1119,7 @@ TEST(Lease6Test, toElementAddress) {
 
     expected = "{"
         "\"cltt\": 12345678,"
-        "\"comment\": \"a comment\","
+        "\"user-context\": { \"comment\": \"a comment\" },"
         "\"duid\": \"00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\","
         "\"fqdn-fwd\": false,"
         "\"fqdn-rev\": false,"
@@ -1207,15 +1207,17 @@ TEST(Lease6Test, toElementPrefix) {
     l = lease.toElement();
     EXPECT_FALSE(l->contains("hw-address"));
     EXPECT_FALSE(l->contains("user-context"));
-    EXPECT_FALSE(l->contains("comment"));
 
     // And to finish try with a comment.
     lease.setContext(Element::fromJSON("{ \"comment\": \"a comment\" }"));
     l = lease.toElement();
     EXPECT_FALSE(l->contains("hw-address"));
-    EXPECT_FALSE(l->contains("user-context"));
-    ASSERT_TRUE(l->contains("comment"));
-    EXPECT_EQ("a comment", l->get("comment")->stringValue());
+    ConstElementPtr ctx = l->get("user-context");
+    ASSERT_TRUE(ctx);
+    ASSERT_EQ(Element::map, ctx->getType());
+    EXPECT_EQ(1, ctx->size());
+    ASSERT_TRUE(ctx->contains("comment"));
+    EXPECT_EQ("a comment", ctx->get("comment")->stringValue());
 }
 
 // Verify that the IA_NA can be created from JSON.

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1147,8 +1147,8 @@ TEST(Element, prettyPrint) {
 
     // default step is 2, order is alphabetic, no \n at the end
     string text = "{\n"
-        "  \"comment\": \"this is an exception\",\n"
         "  \"boolean\": true,\n"
+        "  \"comment\": \"this is an exception\",\n"
         "  \"empty-list\": [ ],\n"
         "  \"empty-map\": { },\n"
         "  \"integer\": 1,\n"

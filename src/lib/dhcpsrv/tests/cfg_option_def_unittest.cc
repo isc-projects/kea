@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -318,13 +318,12 @@ TEST(CfgOptionDefTest, unparse) {
         "},{\n"
         "    \"name\": \"option-rec\",\n"
         "    \"code\": 6,\n"
-        "    \"comment\": \"foo\",\n"
         "    \"type\": \"record\",\n"
         "    \"array\": false,\n"
         "    \"record-types\": \"uint16, uint16\",\n"
         "    \"encapsulate\": \"\",\n"
         "    \"space\": \"dns\",\n"
-        "    \"user-context\": { \"bar\": 1 }\n"
+        "    \"user-context\": { \"comment\": \"foo\", \"bar\": 1 }\n"
         "},{\n"
         "    \"name\": \"option-foo\",\n"
         "    \"code\": 5,\n"

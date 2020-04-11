@@ -176,9 +176,9 @@ In a sense the user context mechanism has superseeded the JSON comment
 capabilities. ISC would like to encourage people to use user-context in favor of
 the older mechanisms and we hope to deprecate JSON comments one day in the
 future. To promote this way of storing comments, Kea code is able to understand
-JSON comments, but converts them to user context on the fly. For the time being,
-the comments entries in user-context are converted back to JSON comments to keep
-backward compatibility, but that conversion is expected to go away soon.
+JSON comments, but converts them to user context on the fly. The
+comments entries in user-context were converted back to JSON comments to
+keep backward compatibility, but that conversion went away in version 1.7.x.
 
 The is one side effect, however. If your configuration uses the old JSON
 comment, the `config-get` command will return a slightly modified

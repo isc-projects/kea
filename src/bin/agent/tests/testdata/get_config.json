@@ -9,9 +9,11 @@
                 }
             },
             "dhcp4": {
-                "comment": "socket to DHCP4 server",
                 "socket-name": "/tmp/kea4-ctrl-socket",
-                "socket-type": "unix"
+                "socket-type": "unix",
+                "user-context": {
+                    "comment": "socket to DHCP4 server"
+                }
             },
             "dhcp6": {
                 "socket-name": "/tmp/kea6-ctrl-socket",
@@ -20,7 +22,7 @@
         },
         "hooks-libraries": [
             {
-                "library": "/opt/local/control-agent-commands.so",
+                "library": "/tmp/k1100/src/bin/agent/tests/.libs/libbasic.so",
                 "parameters": {
                     "param1": "foo"
                 }

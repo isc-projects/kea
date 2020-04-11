@@ -1279,26 +1279,10 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
         // open the map
         out << "{\n";
 
-        bool first = true;
-        // output comment first
-        if (element->contains("comment")) {
-            // add indentation
-            out << std::string(indent + step, ' ');
-            // add keyword:
-            out << "\"comment\": ";
-            // recursive call
-            prettyPrint(element->get("comment"), out, indent + step, step);
-            // it was the first
-            first = false;
-        }
-
         // iterate on keyword: value
         const auto& m = element->mapValue();
+        bool first = true;
         for (auto it = m.begin(); it != m.end(); ++it) {
-            // skip comment
-            if (it->first == "comment") {
-                continue;
-            }
             // add the separator if not the first item
             if (first) {
                 first = false;

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,7 +74,7 @@ TEST(UserContext, onlyComment) {
     ElementPtr map = gen();
     parent.contextToElement(map);
     ElementPtr expected = gen();
-    merge(expected, ctx);
+    expected->set("user-context", ctx);
     EXPECT_EQ(*expected, *map);
 }
 
@@ -86,8 +86,7 @@ TEST(UserContext, both) {
     ElementPtr map = gen();
     parent.contextToElement(map);
     ElementPtr expected = gen();
-    expected->set("comment", Element::create("foobar"));
-    expected->set("user-context", Element::fromJSON("{ \"version\": 1 }"));
+    expected->set("user-context", ctx);
     EXPECT_EQ(*expected, *map);
 }
 
@@ -118,9 +117,7 @@ TEST(toElement, onlyComment) {
     ConstElementPtr ctx = Element::fromJSON("{ \"comment\": \"foobar\" }");
     map->set("user-context", ctx);
     ConstElementPtr result = UserContext::toElement(map);
-    ElementPtr expected = gen();
-    merge(expected, ctx);
-    EXPECT_EQ(*expected, *result);
+    EXPECT_EQ(*result, *map);
 }
 
 TEST(toElement, both) {
@@ -129,10 +126,7 @@ TEST(toElement, both) {
         Element::fromJSON("{ \"comment\": \"foobar\", \"version\": 1 }");
     map->set("user-context", ctx);
     ConstElementPtr result = UserContext::toElement(map);
-    ElementPtr expected = gen();
-    expected->set("comment", Element::create("foobar"));
-    expected->set("user-context", Element::fromJSON("{ \"version\": 1 }"));
-    EXPECT_EQ(*expected, *result);
+    EXPECT_EQ(*result, *map);
 }
 
 }

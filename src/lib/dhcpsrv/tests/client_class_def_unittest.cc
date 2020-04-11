@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -504,7 +504,6 @@ TEST(ClientClassDef, unparseDef) {
 
     // Unparse it
     std::string expected = "{\n"
-        "\"comment\": \"" + comment + "\",\n"
         "\"name\": \"" + name + "\",\n"
         "\"test\": \"" + test + "\",\n"
         "\"only-if-required\": true,\n"
@@ -512,7 +511,8 @@ TEST(ClientClassDef, unparseDef) {
         "\"server-hostname\": \"" + sname + "\",\n"
         "\"boot-file-name\": \"" + filename + "\",\n"
         "\"option-data\": [ ],\n"
-        "\"user-context\": { \"bar\": 1 } }\n";
+        "\"user-context\": { \"bar\": 1,\n"
+        "\"comment\": \"" + comment + "\" } }\n";
     runToElementTest<ClientClassDef>(expected, *cclass);
 }
 
