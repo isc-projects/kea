@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <string>
 #include <fstream>
+#include <mutex>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -58,14 +59,16 @@ public:
     /// planned to send to perfdhcp.
     std::list<std::tuple<uint8_t, uint32_t>> planned_responses_;
 
+    /// Mutex to protect state concurrent accesses
+    std::mutex mutex_;
+
     /// Limit for sent packets. After this limit not more packets
     /// are sent. This simulate dropping responses.
     int start_dropping_after_cnt_;
 
     /// \brief Simulate receiving DHCPv4 packet.
-    virtual dhcp::Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec) override {
-        (void)timeout_sec; // silence compile 'unused parameter' warning;
-        (void)timeout_usec; // silence compile 'unused parameter' warning;
+    virtual dhcp::Pkt4Ptr receive4(uint32_t /*timeout_sec*/, uint32_t /*timeout_usec*/) override {
+        std::lock_guard<std::mutex> lock(mutex_);
         recv_cnt_++;
 
         if (planned_responses_.empty() || sent_cnt_ >= start_dropping_after_cnt_) {
@@ -85,9 +88,8 @@ public:
     };
 
     /// \brief Simulate receiving DHCPv6 packet.
-    virtual dhcp::Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec) override {
-        (void)timeout_sec; // silence compile 'unused parameter' warning;
-        (void)timeout_usec; // silence compile 'unused parameter' warning;
+    virtual dhcp::Pkt6Ptr receive6(uint32_t /*timeout_sec*/, uint32_t /*timeout_usec*/) override {
+        std::lock_guard<std::mutex> lock(mutex_);
         recv_cnt_++;
 
         if (planned_responses_.empty() || sent_cnt_ >= start_dropping_after_cnt_) {
@@ -124,6 +126,7 @@ public:
 
     /// \brief Simulate sending DHCPv4 packet.
     virtual bool send(const dhcp::Pkt4Ptr& pkt) override {
+        std::lock_guard<std::mutex> lock(mutex_);
         sent_cnt_++;
         pkt->updateTimestamp();
         if (sent_cnt_ >= start_dropping_after_cnt_) {
@@ -141,6 +144,7 @@ public:
 
     /// \brief Simulate sending DHCPv6 packet.
     virtual bool send(const dhcp::Pkt6Ptr& pkt) override {
+        std::lock_guard<std::mutex> lock(mutex_);
         sent_cnt_++;
         pkt->updateTimestamp();
         if (sent_cnt_ >= start_dropping_after_cnt_) {
@@ -160,6 +164,7 @@ public:
     virtual IfacePtr getIface() override { return iface_; }
 
     void reset() {
+        std::lock_guard<std::mutex> lock(mutex_);
         sent_cnt_ = 0;
         recv_cnt_ = 0;
     }
