@@ -455,6 +455,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp4Parser::make_PERSIST(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("persist", driver.loc_);
@@ -465,6 +466,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp4Parser::make_LFC_INTERVAL(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("lfc-interval", driver.loc_);
