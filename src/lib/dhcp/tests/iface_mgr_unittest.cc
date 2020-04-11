@@ -1869,6 +1869,9 @@ TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
     // and active.
     EXPECT_EQ(2, IfaceMgr::instance().getIface("eth1")->getSockets().size());
     EXPECT_EQ(2, IfaceMgr::instance().getIface(ETH1_INDEX)->getSockets().size());
+    // Same for eth1961.
+    EXPECT_EQ(1, IfaceMgr::instance().getIface("eth1961")->getSockets().size());
+    EXPECT_EQ(1, IfaceMgr::instance().getIface(ETH1961_INDEX)->getSockets().size());
     // Never open socket on loopback interface.
     EXPECT_TRUE(IfaceMgr::instance().getIface("lo")->getSockets().empty());
     EXPECT_TRUE(IfaceMgr::instance().getIface(LO_INDEX)->getSockets().empty());

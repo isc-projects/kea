@@ -130,6 +130,9 @@ struct FlagInactive6 {
 /// - eth1 #2
 ///   - 192.0.2.3
 ///   - fe80::3a60:77ff:fed5:abcd
+/// - eth1961
+///   - 198.51.100.1
+///   - fe80::3a60:77ff:fed5:9876
 ///
 /// For all interfaces the following flags are set:
 /// - multicast
