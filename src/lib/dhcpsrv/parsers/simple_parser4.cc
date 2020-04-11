@@ -85,7 +85,8 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "ddns-qualifying-suffix",         Element::string },
     { "store-extended-info",            Element::boolean },
     { "statistic-default-sample-count", Element::integer },
-    { "statistic-default-sample-age",   Element::integer }
+    { "statistic-default-sample-age",   Element::integer },
+    { "multi-threading",                Element::map }
 };
 
 /// @brief This table defines default global values for DHCPv4
