@@ -70,7 +70,7 @@ AC_PATH_PROG([PKG_CONFIG], [pkg-config])
 # check against BusyBox ps not supporting ps -p.
 ps -p 1234 2>&1 > /dev/null | grep 'unrecognized option: p'
 if test $? -eq 0; then
-	AC_MSG_WARN("ps does not support -p. It is likely the BusyBox ps: please install a full ps like procps")
+        AC_MSG_WARN("ps does not support -p. It is likely the BusyBox ps: please install a full ps like procps")
 fi
 
 # Enable low-performing debugging facilities? This option optionally
