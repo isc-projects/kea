@@ -281,6 +281,13 @@ case "$host" in
 esac
 KEA_CXXFLAGS="$KEA_CXXFLAGS $MULTITHREADING_FLAG"
 
+dumpmachine=`$CXX -dumpmachine`
+case "$dumpmachine" in
+*-musl)
+        AC_DEFINE([LIBC_MUSL], [1], [Define to 1 if libc is musl])
+        ;;
+esac
+
 # Disable -Werror by default. Only use it if specifically enabled.
 # The usage of this flag is:
 #

@@ -731,8 +731,11 @@ TEST_F(LibraryManagerTest, libraryLoggerSetup) {
 
     // After unloading the library, the messages should be unregistered.
     EXPECT_TRUE(lib_manager.unloadLibrary());
+    // The musl libc does not implement dlclose
+#ifndef LIBC_MUSL
     EXPECT_TRUE(dict->getText("BCL_LOAD_START").empty());
     EXPECT_TRUE(dict->getText("BCL_LOAD_END").empty());
+#endif
 }
 
 } // Anonymous namespace
