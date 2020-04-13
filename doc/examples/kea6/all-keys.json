@@ -461,7 +461,7 @@
 	// Set the maximum count to zero disables it.
 	"statistic-default-sample-count": 0,
 
-	// When the maximum count the maximum age (in seconds) applies.
+	// When the maximum count is 0 the maximum age (in seconds) applies.
 	"statistic-default-sample-age": 60,
 
         // Governs how the Kea DHCPv6 server should deal with the invalid
