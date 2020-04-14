@@ -1,7 +1,7 @@
 1738.	[func]		fdupont
 	Added new global parameters statistic-default-sample-count and
-	statistic-default-sample-age to set the default values uses
-	a sample keeping limits in new statistics.
+	statistic-default-sample-age to set the default values used
+	for sample keeping limits.
 	(Gitlab #1005)
 
 1737.   [func]		tmark

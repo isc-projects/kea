@@ -427,7 +427,7 @@ public:
     /// @brief Handles statistic-sample-age-set-all command
     ///
     /// This method handles statistic-sample-age-set-all command,
-    /// which set max_sample_age_ limit to all statistics.
+    /// which set max_sample_age_ limit to all statistics and the default.
     /// It expects one parameter stored in params map:
     /// duration: limit expressed as a number of seconds
     ///
@@ -436,31 +436,28 @@ public:
     ///     "duration": 1245
     /// }
     ///
-    /// @param name name of the command (ignored, should be "statistic-sample-age-set-all")
     /// @param params structure containing a map that contains "duration"
     /// @return answer confirming success of this operation
     static isc::data::ConstElementPtr
-    statisticSetMaxSampleAgeAllHandler(const std::string& name,
-                                       const isc::data::ConstElementPtr& params);
+    statisticSetMaxSampleAgeAllHandler(const isc::data::ConstElementPtr& params);
 
     /// @brief Handles statistic-sample-count-set-all command
     ///
     /// This method handles statistic-sample-count-set-all command,
-    /// which set max_sample_count_ limit of all statistics.
+    /// which set max_sample_count_ limit of all statistics and the default.
     /// It expects one parameter stored in params map:
     /// max-samples: count limit
+    /// The value 0 is out of range.
     ///
     /// Example params structure:
     /// {
     ///     "max-samples": 15
     /// }
     ///
-    /// @param name name of the command (ignored, should be "statistic-sample-count-set-all")
     /// @param params structure containing a map that contains "max-samples"
     /// @return answer confirming success of this operation
     static isc::data::ConstElementPtr
-    statisticSetMaxSampleCountAllHandler(const std::string& name,
-                                         const isc::data::ConstElementPtr& params);
+    statisticSetMaxSampleCountAllHandler(const isc::data::ConstElementPtr& params);
 
     /// @}
 

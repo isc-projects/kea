@@ -5320,13 +5320,6 @@ parameters to control statistics default sample limits:
 - ``statistic-default-sample-age`` - determines the default maximum
   age in seconds of samples which will be kept.
 
-.. note::
-
-   These apply to default values and have no action on existing statistics.
-   To change sample limits on an existing (or all) statistic use commands
-   of the dedicated hook described in :ref:`command-statistic-sample-count-set`
-   and :ref:`command-statistic-sample-age-set-all`.
-
 For instance to reduce the statistic keeping overhead you can set
 the default maximum sample count to 1 so only one sample will be kept by:
 

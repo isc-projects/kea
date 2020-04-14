@@ -255,7 +255,6 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
     }
 }
 
-
 void
 SrvConfig::removeStatistics() {
     // Removes statistics for v4 and v6 subnets
@@ -268,10 +267,15 @@ void
 SrvConfig::updateStatistics() {
     // Update default sample limits.
     stats::StatsMgr& stats_mgr = stats::StatsMgr::instance();
-    ConstElementPtr max_samples =
+    ConstElementPtr samples =
         getConfiguredGlobal("statistic-default-sample-count");
-    if (max_samples) {
-        stats_mgr.setMaxSampleCountDefault(max_samples->intValue());
+    uint32_t max_samples = 0;
+    if (samples) {
+        max_samples = samples->intValue();
+        stats_mgr.setMaxSampleCountDefault(max_samples);
+        if (max_samples != 0) {
+            stats_mgr.setMaxSampleCountAll(max_samples);
+        }
     }
     ConstElementPtr duration =
         getConfiguredGlobal("statistic-default-sample-age");
@@ -282,7 +286,12 @@ SrvConfig::updateStatistics() {
         int64_t minutes = time_duration / 60;
         time_duration -= minutes * 60;
         int64_t seconds = time_duration;
-        stats_mgr.setMaxSampleAgeDefault(boost::posix_time::time_duration(hours, minutes, seconds, 0));
+        auto max_age =
+            boost::posix_time::time_duration(hours, minutes, seconds, 0);
+        stats_mgr.setMaxSampleAgeDefault(max_age);
+        if (max_samples == 0) {
+            stats_mgr.setMaxSampleAgeAll(max_age);
+        }
     }
 
     // Updating subnet statistics involves updating lease statistics, which

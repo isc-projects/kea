@@ -641,6 +641,29 @@ ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv6Srv::commandStatisticSetMaxSampleCountAllHandler(const string&,
+                                                                 ConstElementPtr args) {
+    ConstElementPtr answer = StatsMgr::statisticSetMaxSampleCountAllHandler(args);
+    // Update the default parameter.
+    long max_samples = StatsMgr::instance().getMaxSampleCountDefault();
+    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal(
+        "statistic-default-sample-count", Element::create(max_samples));
+    return (answer);
+}
+
+ConstElementPtr
+ControlledDhcpv6Srv::commandStatisticSetMaxSampleAgeAllHandler(const string&,
+                                                                 ConstElementPtr args) {
+    ConstElementPtr answer = StatsMgr::statisticSetMaxSampleAgeAllHandler(args);
+    // Update the default parameter.
+    auto duration = StatsMgr::instance().getMaxSampleAgeDefault();
+    long max_age = duration.total_seconds();
+    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal(
+        "statistic-default-sample-age", Element::create(max_age));
+    return (answer);
+}
+
+ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
     string txt = args ? args->str() : "(none)";
@@ -993,13 +1016,13 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
         boost::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-sample-age-set-all",
-        boost::bind(&StatsMgr::statisticSetMaxSampleAgeAllHandler, _1, _2));
+        boost::bind(&ControlledDhcpv6Srv::commandStatisticSetMaxSampleAgeAllHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-sample-count-set",
         boost::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-sample-count-set-all",
-        boost::bind(&StatsMgr::statisticSetMaxSampleCountAllHandler, _1, _2));
+        boost::bind(&ControlledDhcpv6Srv::commandStatisticSetMaxSampleCountAllHandler, this, _1, _2));
 }
 
 void ControlledDhcpv6Srv::shutdownServer(int exit_value) {

@@ -329,6 +329,32 @@ private:
     commandStatusGetHandler(const std::string& command,
                             isc::data::ConstElementPtr args);
 
+    /// @brief handler for processing 'statistic-sample-count-set-all' command
+    ///
+    /// This handler processes statistic-sample-count-set-all command,
+    /// which set max_sample_count_ limit of all statistics and the default.
+    /// @ref isc::stats::StatsMgr::statisticSetMaxSampleCountAllHandler
+    ///
+    /// @param command (ignored)
+    /// @param args structure containing a map that contains "max-samples"
+    /// @return process information wrapped in a response
+    isc::data::ConstElementPtr
+    commandStatisticSetMaxSampleCountAllHandler(const std::string& command,
+                                                isc::data::ConstElementPtr args);
+
+    /// @brief handler for processing 'statistic-sample-age-set-all' command
+    ///
+    /// This handler processes statistic-sample-age-set-all command,
+    /// which set max_sample_age_ limit of all statistics and the default.
+    /// @ref isc::stats::StatsMgr::statisticSetMaxSampleAgeAllHandler
+    ///
+    /// @param command (ignored)
+    /// @param args structure containing a map that contains "duration"
+    /// @return process information wrapped in a response
+    isc::data::ConstElementPtr
+    commandStatisticSetMaxSampleAgeAllHandler(const std::string& command,
+                                              isc::data::ConstElementPtr args);
+
     /// @brief Reclaims expired IPv6 leases and reschedules timer.
     ///
     /// This is a wrapper method for @c AllocEngine::reclaimExpiredLeases6.

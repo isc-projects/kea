@@ -627,6 +627,10 @@ TEST_F(CfgMgrTest, commitStats4) {
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-addresses"));
     ASSERT_TRUE(total_addrs);
     EXPECT_EQ(128, total_addrs->getInteger().first);
+    EXPECT_TRUE(total_addrs->getMaxSampleCount().first);
+    EXPECT_EQ(15, total_addrs->getMaxSampleCount().second);
+    EXPECT_FALSE(total_addrs->getMaxSampleAge().first);
+    EXPECT_EQ("00:00:02", durationToText(total_addrs->getMaxSampleAge().second, 0));
 }
 
 // This test verifies that once the configuration is merged into the current
@@ -771,10 +775,19 @@ TEST_F(CfgMgrTest, commitStats6) {
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-nas"));
     ASSERT_TRUE(total_addrs);
     EXPECT_EQ(128, total_addrs->getInteger().first);
+    EXPECT_TRUE(total_addrs->getMaxSampleCount().first);
+    EXPECT_EQ(14, total_addrs->getMaxSampleCount().second);
+    EXPECT_FALSE(total_addrs->getMaxSampleAge().first);
+    EXPECT_EQ("00:00:10", durationToText(total_addrs->getMaxSampleAge().second, 0));
 
-    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-pds"));
-    ASSERT_TRUE(total_addrs);
-    EXPECT_EQ(65536, total_addrs->getInteger().first);
+    ObservationPtr total_prfx;
+    EXPECT_NO_THROW(total_prfx = stats_mgr.getObservation("subnet[42].total-pds"));
+    ASSERT_TRUE(total_prfx);
+    EXPECT_EQ(65536, total_prfx->getInteger().first);
+    EXPECT_TRUE(total_prfx->getMaxSampleCount().first);
+    EXPECT_EQ(14, total_prfx->getMaxSampleCount().second);
+    EXPECT_FALSE(total_prfx->getMaxSampleAge().first);
+    EXPECT_EQ("00:00:10", durationToText(total_prfx->getMaxSampleAge().second, 0));
 }
 
 // This test verifies that once the configuration is merged into the current

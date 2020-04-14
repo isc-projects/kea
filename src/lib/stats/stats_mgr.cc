@@ -538,27 +538,43 @@ StatsMgr::statisticResetAllHandler(const string& /*name*/,
 }
 
 ConstElementPtr
-StatsMgr::statisticSetMaxSampleAgeAllHandler(const string& /*name*/,
-                                             const ConstElementPtr& params) {
+StatsMgr::statisticSetMaxSampleAgeAllHandler(const ConstElementPtr& params) {
     string error;
     StatsDuration duration;
     if (!StatsMgr::getStatDuration(params, duration, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    StatsMgr::instance().setMaxSampleAgeAll(duration);
+    if (MultiThreadingMgr::instance().getMode()) {
+        StatsMgr::instance().setMaxSampleCountDefaultInternal(0);
+        StatsMgr::instance().setMaxSampleAgeDefaultInternal(duration);
+        StatsMgr::instance().setMaxSampleAgeAllInternal(duration);
+    } else {
+        StatsMgr::instance().setMaxSampleCountDefaultInternal(0);
+        StatsMgr::instance().setMaxSampleAgeDefaultInternal(duration);
+        StatsMgr::instance().setMaxSampleAgeAllInternal(duration);
+    }
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics duration limit are set."));
 }
 
 ConstElementPtr
-StatsMgr::statisticSetMaxSampleCountAllHandler(const string& /*name*/,
-                                               const ConstElementPtr& params) {
+StatsMgr::statisticSetMaxSampleCountAllHandler(const ConstElementPtr& params) {
     string error;
     uint32_t max_samples;
     if (!StatsMgr::getStatMaxSamples(params, max_samples, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    StatsMgr::instance().setMaxSampleCountAll(max_samples);
+    if (max_samples == 0) {
+        error = "'max-samples' parameter must not be zero";
+        return (createAnswer(CONTROL_RESULT_ERROR, error));
+    }
+    if (MultiThreadingMgr::instance().getMode()) {
+        StatsMgr::instance().setMaxSampleCountDefaultInternal(max_samples);
+        StatsMgr::instance().setMaxSampleCountAllInternal(max_samples);
+    } else {
+        StatsMgr::instance().setMaxSampleCountDefaultInternal(max_samples);
+        StatsMgr::instance().setMaxSampleCountAllInternal(max_samples);
+    }
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics count limit are set."));
 }
@@ -628,5 +644,5 @@ StatsMgr::getStatMaxSamples(const ConstElementPtr& params,
     return (true);
 }
 
-};
-};
+} // end of namespace stats
+} // end of namespace isc
