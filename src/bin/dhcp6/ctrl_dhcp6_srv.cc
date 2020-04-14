@@ -643,9 +643,10 @@ ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
 ConstElementPtr
 ControlledDhcpv6Srv::commandStatisticSetMaxSampleCountAllHandler(const string&,
                                                                  ConstElementPtr args) {
-    ConstElementPtr answer = StatsMgr::statisticSetMaxSampleCountAllHandler(args);
+    StatsMgr& stats_mgr = StatsMgr::instance();
+    ConstElementPtr answer = stats_mgr.statisticSetMaxSampleCountAllHandler(args);
     // Update the default parameter.
-    long max_samples = StatsMgr::instance().getMaxSampleCountDefault();
+    long max_samples = stats_mgr.getMaxSampleCountDefault();
     CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal(
         "statistic-default-sample-count", Element::create(max_samples));
     return (answer);
@@ -653,10 +654,11 @@ ControlledDhcpv6Srv::commandStatisticSetMaxSampleCountAllHandler(const string&,
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandStatisticSetMaxSampleAgeAllHandler(const string&,
-                                                                 ConstElementPtr args) {
-    ConstElementPtr answer = StatsMgr::statisticSetMaxSampleAgeAllHandler(args);
+                                                               ConstElementPtr args) {
+    StatsMgr& stats_mgr = StatsMgr::instance();
+    ConstElementPtr answer = stats_mgr.statisticSetMaxSampleAgeAllHandler(args);
     // Update the default parameter.
-    auto duration = StatsMgr::instance().getMaxSampleAgeDefault();
+    auto duration = stats_mgr.getMaxSampleAgeDefault();
     long max_age = duration.total_seconds();
     CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal(
         "statistic-default-sample-age", Element::create(max_age));

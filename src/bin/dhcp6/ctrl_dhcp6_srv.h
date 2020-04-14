@@ -332,7 +332,7 @@ private:
     /// @brief handler for processing 'statistic-sample-count-set-all' command
     ///
     /// This handler processes statistic-sample-count-set-all command,
-    /// which set max_sample_count_ limit of all statistics and the default.
+    /// which sets max_sample_count_ limit of all statistics and the default.
     /// @ref isc::stats::StatsMgr::statisticSetMaxSampleCountAllHandler
     ///
     /// @param command (ignored)
@@ -345,7 +345,7 @@ private:
     /// @brief handler for processing 'statistic-sample-age-set-all' command
     ///
     /// This handler processes statistic-sample-age-set-all command,
-    /// which set max_sample_age_ limit of all statistics and the default.
+    /// which sets max_sample_age_ limit of all statistics and the default.
     /// @ref isc::stats::StatsMgr::statisticSetMaxSampleAgeAllHandler
     ///
     /// @param command (ignored)

@@ -347,7 +347,7 @@ public:
     /// @brief Handles statistic-sample-age-set command
     ///
     /// This method handles statistic-sample-age-set command,
-    /// which set max_sample_age_ limit of a given statistic
+    /// which sets max_sample_age_ limit of a given statistic
     /// and leaves max_sample_count_ disabled.
     /// It expects two parameters stored in params map:
     /// name: name of the statistic
@@ -369,7 +369,7 @@ public:
     /// @brief Handles statistic-sample-count-set command
     ///
     /// This method handles statistic-sample-count-set command,
-    /// which set max_sample_count_ limit of a given statistic
+    /// which sets max_sample_count_ limit of a given statistic
     /// and leaves max_sample_age_ disabled.
     /// It expects two parameters stored in params map:
     /// name: name of the statistic
@@ -427,7 +427,7 @@ public:
     /// @brief Handles statistic-sample-age-set-all command
     ///
     /// This method handles statistic-sample-age-set-all command,
-    /// which set max_sample_age_ limit to all statistics and the default.
+    /// which sets max_sample_age_ limit to all statistics and the default.
     /// It expects one parameter stored in params map:
     /// duration: limit expressed as a number of seconds
     ///
@@ -438,13 +438,13 @@ public:
     ///
     /// @param params structure containing a map that contains "duration"
     /// @return answer confirming success of this operation
-    static isc::data::ConstElementPtr
+    isc::data::ConstElementPtr
     statisticSetMaxSampleAgeAllHandler(const isc::data::ConstElementPtr& params);
 
     /// @brief Handles statistic-sample-count-set-all command
     ///
     /// This method handles statistic-sample-count-set-all command,
-    /// which set max_sample_count_ limit of all statistics and the default.
+    /// which sets max_sample_count_ limit of all statistics and the default.
     /// It expects one parameter stored in params map:
     /// max-samples: count limit
     /// The value 0 is out of range.
@@ -456,7 +456,7 @@ public:
     ///
     /// @param params structure containing a map that contains "max-samples"
     /// @return answer confirming success of this operation
-    static isc::data::ConstElementPtr
+    isc::data::ConstElementPtr
     statisticSetMaxSampleCountAllHandler(const isc::data::ConstElementPtr& params);
 
     /// @}
@@ -612,14 +612,14 @@ private:
     ///
     /// Should be called in a thread safe context.
     ///
-    /// @param duration determines default maximum age of samples
+    /// @param duration default maximum age of samples to keep.
     void setMaxSampleAgeDefaultInternal(const StatsDuration& duration);
 
     /// @brief Set default count limit.
     ///
     /// Should be called in a thread safe context.
     ///
-    /// @param max_samples default maximum number of samples to keep
+    /// @param max_samples default maximum number of samples to keep.
     /// (0 means to disable count limit and enable age limit)
     void setMaxSampleCountDefaultInternal(uint32_t max_samples);
 

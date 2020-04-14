@@ -545,6 +545,7 @@ StatsMgr::statisticSetMaxSampleAgeAllHandler(const ConstElementPtr& params) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
     if (MultiThreadingMgr::instance().getMode()) {
+        lock_guard<mutex> lock(*mutex_);
         StatsMgr::instance().setMaxSampleCountDefaultInternal(0);
         StatsMgr::instance().setMaxSampleAgeDefaultInternal(duration);
         StatsMgr::instance().setMaxSampleAgeAllInternal(duration);
@@ -569,6 +570,7 @@ StatsMgr::statisticSetMaxSampleCountAllHandler(const ConstElementPtr& params) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
     if (MultiThreadingMgr::instance().getMode()) {
+        lock_guard<mutex> lock(*mutex_);
         StatsMgr::instance().setMaxSampleCountDefaultInternal(max_samples);
         StatsMgr::instance().setMaxSampleCountAllInternal(max_samples);
     } else {
