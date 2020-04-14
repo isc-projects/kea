@@ -142,7 +142,7 @@ public:
 
     /// @brief Determines default maximum age of samples.
     ///
-    /// @param duration determines default maximum age of samples.
+    /// @param duration default maximum age of samples.
     static void setMaxSampleAgeDefault(const StatsDuration& duration);
 
     /// @brief Determines default maximum count of samples.
