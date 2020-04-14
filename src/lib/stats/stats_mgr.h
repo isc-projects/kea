@@ -183,7 +183,7 @@ public:
 
     /// @brief Get default duration limit.
     ///
-    /// @return default maximum age of samples.
+    /// @return default maximum age of samples to keep.
     const StatsDuration& getMaxSampleAgeDefault() const;
 
     /// @brief Get default count limit.
