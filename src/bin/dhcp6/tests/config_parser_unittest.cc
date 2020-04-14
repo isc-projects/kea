@@ -7701,7 +7701,6 @@ TEST_F(Dhcp6ParserTest, storeExtendedInfoNoGlobal) {
     EXPECT_TRUE(subnet->getStoreExtendedInfo());
 }
 
-<<<<<<< HEAD
 /// This test checks that the statistic-default-sample-count and age
 /// global parameters are committed to the stats manager as expected.
 TEST_F(Dhcp6ParserTest, statsDefaultLimits) {
