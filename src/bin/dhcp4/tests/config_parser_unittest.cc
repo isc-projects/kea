@@ -7186,7 +7186,7 @@ TEST_F(Dhcp4ParserTest, multiThreadingDefaultSettings) {
     ConstElementPtr param;
     ASSERT_NO_THROW(param = Element::fromJSON(content_json))
                             << "invalid context_json, test is broken";
-    ASSERT_TRUE(cfg->equals(*param))
+    ASSERT_TRUE(param->equals(*cfg))
                 << "expected: " << *(param) << std::endl
                 << "  actual: " << *(cfg) << std::endl;
 }
@@ -7217,7 +7217,7 @@ TEST_F(Dhcp4ParserTest, multiThreadingSettings) {
     ConstElementPtr param;
     ASSERT_NO_THROW(param = Element::fromJSON(content_json))
                             << "invalid context_json, test is broken";
-    ASSERT_TRUE(cfg->equals(*param))
+    ASSERT_TRUE(param->equals(*cfg))
                 << "expected: " << *(param) << std::endl
                 << "  actual: " << *(cfg) << std::endl;
 }
