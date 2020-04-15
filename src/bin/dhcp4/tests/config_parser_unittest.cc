@@ -7181,7 +7181,7 @@ TEST_F(Dhcp4ParserTest, multiThreadingDefaultSettings) {
         "{"
         "    \"enable-multi-threading\": false,\n"
         "    \"thread-pool-size\": 0,\n"
-        "    \"packet-queue-size\": 0\n"
+        "    \"packet-queue-size\": 64\n"
         "}";
     ConstElementPtr param;
     ASSERT_NO_THROW(param = Element::fromJSON(content_json))
@@ -7201,7 +7201,7 @@ TEST_F(Dhcp4ParserTest, multiThreadingSettings) {
         "}";
     std::string config = "{ " + genIfaceConfig() + "," +
         "\"subnet4\": [  ], "
-        "\"multi-threading\": " + content_json;
+        "\"multi-threading\": " + content_json + "}";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));

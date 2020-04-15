@@ -1,9 +1,8 @@
-// Generated 202004050938
-// A Bison parser, made by GNU Bison 3.5.3.
+// A Bison parser, made by GNU Bison 3.0.4.
 
 // Locations for Bison parsers in C++
 
-// Copyright (C) 2002-2015, 2018-2020 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -39,178 +38,44 @@
 #ifndef YY_PARSER4_LOCATION_HH_INCLUDED
 # define YY_PARSER4_LOCATION_HH_INCLUDED
 
-# include <iostream>
-# include <string>
+# include "position.hh"
 
-# ifndef YY_NULLPTR
-#  if defined __cplusplus
-#   if 201103L <= __cplusplus
-#    define YY_NULLPTR nullptr
-#   else
-#    define YY_NULLPTR 0
-#   endif
-#  else
-#   define YY_NULLPTR ((void*)0)
-#  endif
-# endif
-
-#line 14 "dhcp4_parser.yy"
+#line 14 "dhcp4_parser.yy" // location.cc:296
 namespace isc { namespace dhcp {
-#line 59 "location.hh"
-
-  /// A point in a source file.
-  class position
-  {
-  public:
-    /// Type for line and column numbers.
-    typedef int counter_type;
-
-    /// Construct a position.
-    explicit position (std::string* f = YY_NULLPTR,
-                       counter_type l = 1,
-                       counter_type c = 1)
-      : filename (f)
-      , line (l)
-      , column (c)
-    {}
-
-
-    /// Initialization.
-    void initialize (std::string* fn = YY_NULLPTR,
-                     counter_type l = 1,
-                     counter_type c = 1)
-    {
-      filename = fn;
-      line = l;
-      column = c;
-    }
-
-    /** \name Line and Column related manipulators
-     ** \{ */
-    /// (line related) Advance to the COUNT next lines.
-    void lines (counter_type count = 1)
-    {
-      if (count)
-        {
-          column = 1;
-          line = add_ (line, count, 1);
-        }
-    }
-
-    /// (column related) Advance to the COUNT next columns.
-    void columns (counter_type count = 1)
-    {
-      column = add_ (column, count, 1);
-    }
-    /** \} */
-
-    /// File name to which this position refers.
-    std::string* filename;
-    /// Current line number.
-    counter_type line;
-    /// Current column number.
-    counter_type column;
-
-  private:
-    /// Compute max (min, lhs+rhs).
-    static counter_type add_ (counter_type lhs, counter_type rhs, counter_type min)
-    {
-      return lhs + rhs < min ? min : lhs + rhs;
-    }
-  };
-
-  /// Add \a width columns, in place.
-  inline position&
-  operator+= (position& res, position::counter_type width)
-  {
-    res.columns (width);
-    return res;
-  }
-
-  /// Add \a width columns.
-  inline position
-  operator+ (position res, position::counter_type width)
-  {
-    return res += width;
-  }
-
-  /// Subtract \a width columns, in place.
-  inline position&
-  operator-= (position& res, position::counter_type width)
-  {
-    return res += -width;
-  }
-
-  /// Subtract \a width columns.
-  inline position
-  operator- (position res, position::counter_type width)
-  {
-    return res -= width;
-  }
-
-  /// Compare two position objects.
-  inline bool
-  operator== (const position& pos1, const position& pos2)
-  {
-    return (pos1.line == pos2.line
-            && pos1.column == pos2.column
-            && (pos1.filename == pos2.filename
-                || (pos1.filename && pos2.filename
-                    && *pos1.filename == *pos2.filename)));
-  }
-
-  /// Compare two position objects.
-  inline bool
-  operator!= (const position& pos1, const position& pos2)
-  {
-    return !(pos1 == pos2);
-  }
-
-  /** \brief Intercept output stream redirection.
-   ** \param ostr the destination output stream
-   ** \param pos a reference to the position to redirect
-   */
-  template <typename YYChar>
-  std::basic_ostream<YYChar>&
-  operator<< (std::basic_ostream<YYChar>& ostr, const position& pos)
-  {
-    if (pos.filename)
-      ostr << *pos.filename << ':';
-    return ostr << pos.line << '.' << pos.column;
-  }
-
-  /// Two points in a source file.
+#line 46 "location.hh" // location.cc:296
+  /// Abstract a location.
   class location
   {
   public:
-    /// Type for line and column numbers.
-    typedef position::counter_type counter_type;
 
     /// Construct a location from \a b to \a e.
     location (const position& b, const position& e)
       : begin (b)
       , end (e)
-    {}
+    {
+    }
 
     /// Construct a 0-width location in \a p.
     explicit location (const position& p = position ())
       : begin (p)
       , end (p)
-    {}
+    {
+    }
 
     /// Construct a 0-width location in \a f, \a l, \a c.
     explicit location (std::string* f,
-                       counter_type l = 1,
-                       counter_type c = 1)
+                       unsigned int l = 1u,
+                       unsigned int c = 1u)
       : begin (f, l, c)
       , end (f, l, c)
-    {}
+    {
+    }
 
 
     /// Initialization.
     void initialize (std::string* f = YY_NULLPTR,
-                     counter_type l = 1,
-                     counter_type c = 1)
+                     unsigned int l = 1u,
+                     unsigned int c = 1u)
     {
       begin.initialize (f, l, c);
       end = begin;
@@ -226,13 +91,13 @@ namespace isc { namespace dhcp {
     }
 
     /// Extend the current location to the COUNT next columns.
-    void columns (counter_type count = 1)
+    void columns (int count = 1)
     {
       end += count;
     }
 
     /// Extend the current location to the COUNT next lines.
-    void lines (counter_type count = 1)
+    void lines (int count = 1)
     {
       end.lines (count);
     }
@@ -247,45 +112,39 @@ namespace isc { namespace dhcp {
   };
 
   /// Join two locations, in place.
-  inline location&
-  operator+= (location& res, const location& end)
+  inline location& operator+= (location& res, const location& end)
   {
     res.end = end.end;
     return res;
   }
 
   /// Join two locations.
-  inline location
-  operator+ (location res, const location& end)
+  inline location operator+ (location res, const location& end)
   {
     return res += end;
   }
 
   /// Add \a width columns to the end position, in place.
-  inline location&
-  operator+= (location& res, location::counter_type width)
+  inline location& operator+= (location& res, int width)
   {
     res.columns (width);
     return res;
   }
 
   /// Add \a width columns to the end position.
-  inline location
-  operator+ (location res, location::counter_type width)
+  inline location operator+ (location res, int width)
   {
     return res += width;
   }
 
   /// Subtract \a width columns to the end position, in place.
-  inline location&
-  operator-= (location& res, location::counter_type width)
+  inline location& operator-= (location& res, int width)
   {
     return res += -width;
   }
 
   /// Subtract \a width columns to the end position.
-  inline location
-  operator- (location res, location::counter_type width)
+  inline location operator- (location res, int width)
   {
     return res -= width;
   }
@@ -311,11 +170,10 @@ namespace isc { namespace dhcp {
    ** Avoid duplicate information.
    */
   template <typename YYChar>
-  std::basic_ostream<YYChar>&
+  inline std::basic_ostream<YYChar>&
   operator<< (std::basic_ostream<YYChar>& ostr, const location& loc)
   {
-    location::counter_type end_col
-      = 0 < loc.end.column ? loc.end.column - 1 : 0;
+    unsigned int end_col = 0 < loc.end.column ? loc.end.column - 1 : 0;
     ostr << loc.begin;
     if (loc.end.filename
         && (!loc.begin.filename
@@ -328,8 +186,7 @@ namespace isc { namespace dhcp {
     return ostr;
   }
 
-#line 14 "dhcp4_parser.yy"
+#line 14 "dhcp4_parser.yy" // location.cc:296
 } } // isc::dhcp
-#line 333 "location.hh"
-
+#line 192 "location.hh" // location.cc:296
 #endif // !YY_PARSER4_LOCATION_HH_INCLUDED
