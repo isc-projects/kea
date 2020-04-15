@@ -19,8 +19,9 @@ public:
 
     /// @brief parses JSON structure
     ///
-    /// @param value a JSON map that contains multi-threading parameter.
-    data::ElementPtr parse(const isc::data::ConstElementPtr& value);
+    /// @param srv_cfg parsed value will be stored here
+    /// @param value a JSON map that contains multi-threading parameters.
+    void parse(SrvConfig& srv_cfg, const isc::data::ConstElementPtr& value);
 };
 
 }  // namespace dhcp

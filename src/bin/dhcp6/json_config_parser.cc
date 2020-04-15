@@ -518,15 +518,15 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
-            if (config_pair.first == "dhcp-queue-control") {
-                DHCPQueueControlParser parser;
-                srv_config->setDHCPQueueControl(parser.parse(config_pair.second));
+            if (config_pair.first == "multi-threading") {
+                MultiThreadingConfigParser parser;
+                parser.parse(*srv_config, config_pair.second);
                 continue;
             }
 
-            if (config_pair.first == "multi-threading") {
-                MultiThreadingConfigParser parser;
-                srv_config->setDHCPMultiThreading(parser.parse(config_pair.second));
+            if (config_pair.first == "dhcp-queue-control") {
+                DHCPQueueControlParser parser;
+                srv_config->setDHCPQueueControl(parser.parse(config_pair.second));
                 continue;
             }
 

@@ -47,19 +47,20 @@ CfgMultiThreadingTest::TearDown() {
 TEST_F(CfgMultiThreadingTest, apply) {
     EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
     EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadQueueSize(), 0);
-    ElementPtr param = Element::createMap();
-    param->set("enable-multi-threading", Element::create(true));
-    param->set("thread-pool-size", Element::create(4));
-    param->set("packet-queue-size", Element::create(64));
-    CfgMultiThreading::apply(-1, param);
+    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
+    std::string content_json =
+        "{"
+        "    \"enable-multi-threading\": true,\n"
+        "    \"thread-pool-size\": 4,\n"
+        "    \"packet-queue-size\": 64\n"
+        "}";
+    ConstElementPtr param;
+    ASSERT_NO_THROW(param = Element::fromJSON(content_json))
+                            << "invalid context_json, test is broken";
+    CfgMultiThreading::apply(param);
     EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
     EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 4);
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadQueueSize(), 64);
-    CfgMultiThreading::apply(8, param);
-    EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 8);
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadQueueSize(), 0);
+    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 64);
 }
 
 }  // namespace

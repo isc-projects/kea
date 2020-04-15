@@ -7159,15 +7159,11 @@ TEST_F(Dhcp4ParserTest, statsDefaultLimits) {
     EXPECT_EQ("00:00:05",
               util::durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 }
-    
-// This test checks that adding multi threadding settings works.
-TEST_F(Dhcp4ParserTest, multiThreadingSettings) {
+
+// This test checks that using default multi threading settings works.
+TEST_F(Dhcp4ParserTest, multiThreadingDefaultSettings) {
     std::string config = "{ " + genIfaceConfig() + "," +
-        "\"subnet4\": [  ], "
-        "\"multi-threading\": { "
-        "    \"enable-multi-threading\": false,"
-        "    \"thread-pool-size\": 0,"
-        "    \"packet-queue-size\": 0 }"
+        "\"subnet4\": [  ]"
         "}";
 
     ConstElementPtr json;
@@ -7178,8 +7174,52 @@ TEST_F(Dhcp4ParserTest, multiThreadingSettings) {
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     checkResult(status, 0);
 
-    ASSERT_TRUE(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
-    ASSERT_EQ(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading()->size(), 3);
+    ConstElementPtr cfg = CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading();
+    ASSERT_TRUE(cfg);
+
+    std::string content_json =
+        "{"
+        "    \"enable-multi-threading\": false,\n"
+        "    \"thread-pool-size\": 0,\n"
+        "    \"packet-queue-size\": 0\n"
+        "}";
+    ConstElementPtr param;
+    ASSERT_NO_THROW(param = Element::fromJSON(content_json))
+                            << "invalid context_json, test is broken";
+    ASSERT_TRUE(cfg->equals(*param))
+                << "expected: " << *(param) << std::endl
+                << "  actual: " << *(cfg) << std::endl;
+}
+
+// This test checks that adding multi threading settings works.
+TEST_F(Dhcp4ParserTest, multiThreadingSettings) {
+    std::string content_json =
+        "{"
+        "    \"enable-multi-threading\": true,\n"
+        "    \"thread-pool-size\": 48,\n"
+        "    \"packet-queue-size\": 1024\n"
+        "}";
+    std::string config = "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [  ], "
+        "\"multi-threading\": " + content_json;
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 0);
+
+    ConstElementPtr cfg = CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading();
+    ASSERT_TRUE(cfg);
+
+    ConstElementPtr param;
+    ASSERT_NO_THROW(param = Element::fromJSON(content_json))
+                            << "invalid context_json, test is broken";
+    ASSERT_TRUE(cfg->equals(*param))
+                << "expected: " << *(param) << std::endl
+                << "  actual: " << *(cfg) << std::endl;
 }
 
 }  // namespace

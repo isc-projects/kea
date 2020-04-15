@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/parsers/multi_threading_config_parser.h>
 #include <cc/data.h>
 
@@ -13,10 +14,11 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
-ElementPtr
-MultiThreadingConfigParser::parse(const ConstElementPtr& value) {
+void
+MultiThreadingConfigParser::parse(SrvConfig& srv_cfg,
+                                  const ConstElementPtr& value) {
     if (!value) {
-        return (ElementPtr());
+        return;
     }
     if (value->getType() != Element::map) {
         isc_throw(DhcpConfigError, "multi-threading is supposed to be a map");
@@ -59,7 +61,7 @@ MultiThreadingConfigParser::parse(const ConstElementPtr& value) {
         }
     }
 
-    return (data::copy(value));
+    srv_cfg.setDHCPMultiThreading(value);
 }
 
 }  // namespace dhcp

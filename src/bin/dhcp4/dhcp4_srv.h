@@ -1061,11 +1061,6 @@ protected:
     CBControlDHCPv4Ptr cb_control_;
 
 public:
-    /// @brief command line parameter thread count
-    /// when parameter is not specified, the default value -1 is used
-    /// which means disabled (single-threaded), 0 means auto-detect, other
-    /// values set thread count explicitly.
-    static int srv_thread_count_;
 
     /// Class methods for DHCPv4-over-DHCPv6 handler
 

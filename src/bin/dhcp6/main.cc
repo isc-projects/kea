@@ -48,7 +48,7 @@ usage() {
     cerr << "Kea DHCPv6 server, version " << VERSION << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP6_NAME
-         << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p number] [-P number] [-N number]" << endl;
+         << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p number] [-P number]" << endl;
     cerr << "  -v: print version number and exit." << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
@@ -59,8 +59,6 @@ usage() {
          << "(useful for testing only)" << endl;
     cerr << "  -P number: specify non-standard client port number 1-65535 "
          << "(useful for testing only)" << endl;
-    cerr << "  -N number: enable multi-threading and set thread count 0-65535 "
-         << "(0 means auto detect)" << endl;
     exit(EXIT_FAILURE);
 }
 }  // namespace
@@ -133,23 +131,6 @@ main(int argc, char* argv[]) {
                 cerr << "Failed to parse client port number: [" << optarg
                      << "], 1-65535 allowed." << endl;
                 usage();
-            }
-            break;
-
-        case 'N': // number of threads
-            try {
-                thread_count = boost::lexical_cast<int>(optarg);
-            } catch (const boost::bad_lexical_cast &) {
-                cerr << "Failed to parse thread count number: [" << optarg
-                     << "], 0-65535 allowed." << endl;
-                usage();
-            }
-            if (thread_count < 0 || thread_count > 65535) {
-                cerr << "Failed to parse thread count number: [" << optarg
-                     << "], 0-65535 allowed." << endl;
-                usage();
-            } else {
-                Dhcpv6Srv::srv_thread_count_ = thread_count;
             }
             break;
 

@@ -11,7 +11,7 @@ namespace util {
 
 MultiThreadingMgr::MultiThreadingMgr()
     : enabled_(false), critical_section_count_(0), thread_pool_size_(0),
-      thread_queue_size_(0) {
+      packet_queue_size_(0) {
 }
 
 MultiThreadingMgr::~MultiThreadingMgr() {
@@ -69,13 +69,13 @@ MultiThreadingMgr::setThreadPoolSize(uint32_t size) {
 }
 
 uint32_t
-MultiThreadingMgr::getThreadQueueSize() const {
-    return (thread_queue_size_);
+MultiThreadingMgr::getPacketQueueSize() const {
+    return (packet_queue_size_);
 }
 
 void
-MultiThreadingMgr::setThreadQueueSize(uint32_t size) {
-    thread_queue_size_ = size;
+MultiThreadingMgr::setPacketQueueSize(uint32_t size) {
+    packet_queue_size_ = size;
 }
 
 uint32_t
@@ -103,7 +103,7 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_siz
             thread_pool_.stop();
         }
         setThreadPoolSize(thread_count);
-        setThreadQueueSize(queue_size);
+        setPacketQueueSize(queue_size);
         setMode(true);
         if (!isInCriticalSection()) {
             thread_pool_.start(thread_count);
@@ -112,7 +112,7 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_siz
         thread_pool_.reset();
         setMode(false);
         setThreadPoolSize(thread_count);
-        setThreadQueueSize(queue_size);
+        setPacketQueueSize(queue_size);
     }
 }
 

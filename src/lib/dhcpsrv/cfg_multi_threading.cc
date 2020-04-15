@@ -18,17 +18,11 @@ namespace isc {
 namespace dhcp {
 
 void
-CfgMultiThreading::apply(int32_t overwrite, ConstElementPtr value) {
-        // command line parameters overwrite file and database configuration
+CfgMultiThreading::apply(ConstElementPtr value) {
         bool enabled = false;
         uint32_t thread_pool_size = 0;
         uint32_t thread_queue_size = 0;
-        if (overwrite >= 0) {
-            enabled = true;
-        }
-        if (enabled) {
-            thread_pool_size = overwrite;
-        } else {
+        if (value) {
             if (value->get("enable-multi-threading")) {
                 enabled = SimpleParser::getBoolean(value, "enable-multi-threading");
             }

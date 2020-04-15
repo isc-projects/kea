@@ -164,7 +164,7 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
     LOG_WARN(dhcp6_logger, DHCP6_MULTI_THREADING_INFO)
         .arg(MultiThreadingMgr::instance().getMode() ? "yes" : "no")
         .arg(MultiThreadingMgr::instance().getThreadPoolSize())
-        .arg(MultiThreadingMgr::instance().getThreadQueueSize());
+        .arg(MultiThreadingMgr::instance().getPacketQueueSize());
 
     return (result);
 }
@@ -203,7 +203,6 @@ void ControlledDhcpv6Srv::cleanup() {
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr args) {
-
     if (!ControlledDhcpv6Srv::getInstance()) {
         LOG_WARN(dhcp6_logger, DHCP6_NOT_RUNNING);
         return(createAnswer(CONTROL_RESULT_ERROR, "Shutdown failure."));
@@ -901,8 +900,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Configure multi threading
     try {
-        CfgMultiThreading::apply(Dhcpv6Srv::srv_thread_count_,
-            CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
+        CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
         if (MultiThreadingMgr::instance().getMode()) {
             LOG_FATAL(dhcp6_logger, DHCP6_MULTI_THREADING_WARNING);
         }

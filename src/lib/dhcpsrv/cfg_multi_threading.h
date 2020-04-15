@@ -18,9 +18,8 @@ public:
 
     /// @brief apply multi threading configuration
     ///
-    /// @param overwrite The value used to overwrite configuration
     /// @param value The multi-threading configuration
-    static void apply(int32_t overwrite, data::ConstElementPtr value);
+    static void apply(data::ConstElementPtr value);
 };
 
 }  // namespace dhcp

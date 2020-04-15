@@ -193,7 +193,7 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
     LOG_WARN(dhcp4_logger, DHCP4_MULTI_THREADING_INFO)
         .arg(MultiThreadingMgr::instance().getMode() ? "yes" : "no")
         .arg(MultiThreadingMgr::instance().getThreadPoolSize())
-        .arg(MultiThreadingMgr::instance().getThreadQueueSize());
+        .arg(MultiThreadingMgr::instance().getPacketQueueSize());
 
     return (result);
 }
@@ -879,8 +879,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Configure multi threading
     try {
-        CfgMultiThreading::apply(Dhcpv4Srv::srv_thread_count_,
-            CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
+        CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
         if (MultiThreadingMgr::instance().getMode()) {
             LOG_FATAL(dhcp4_logger, DHCP4_MULTI_THREADING_WARNING);
         }

@@ -515,13 +515,13 @@
         // information) with each lease.
         "store-extended-info": true,
 
-	// Statistics keep some samples per observation point.
-	// There are two default values: maximum count and maximum age.
-	// Set the maximum count to zero disables it.
-	"statistic-default-sample-count": 0,
+        // Statistics keep some samples per observation point.
+        // There are two default values: maximum count and maximum age.
+        // Set the maximum count to zero disables it.
+        "statistic-default-sample-count": 0,
 
-	// When the maximum count is 0 the maximum age (in seconds) applies.
-	"statistic-default-sample-age": 60,
+        // When the maximum count is 0 the maximum age (in seconds) applies.
+        "statistic-default-sample-age": 60,
 
         // Multi-threading parameters.
         "multi-threading": {
@@ -537,9 +537,8 @@
 
             // When multi-threading is enabled, Kea will read packets from the
             // interface and append a working item to the thread pool. This
-            // option configures the maximum number of items that can be queued
-            // for each processing thread. The value must be a positive integer
-            // (0 means unlimited).
+            // option configures the maximum number of items that can be queued.
+            // The value must be a positive integer (0 means unlimited).
             "packet-queue-size": 0
         },
 

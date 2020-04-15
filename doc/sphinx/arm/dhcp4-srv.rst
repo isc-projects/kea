@@ -3751,11 +3751,11 @@ represented by:
 
 -  ``thread-pool-size`` - specify the number of threads to process packets in
    parallel.  Supported values are: 0 (auto detect), any positive number sets
-   number of threads explicitly.
+   thread count explicitly.
 
--  ``packet-queue-size`` - specify the size of the queue used by each thread to
-   process packets.  Supported values are: 0 (unlimited), any positive number
-   sets size explicitly.
+-  ``packet-queue-size`` - specify the size of the queue used by the thread
+   pool to process packets.  Supported values are: 0 (unlimited), any positive
+   number sets queue size explicitly.
 
 An example configuration that sets these parameter looks as follows:
 

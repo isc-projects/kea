@@ -68,6 +68,7 @@ TEST_F(MultiThreadingConfigParserTest, validContent) {
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
+            SrvConfig srv_config;
             // Construct the config JSON
             ASSERT_NO_THROW(config_elems = Element::fromJSON(scenario.json_))
                             << "invalid JSON, test is broken";
@@ -75,17 +76,15 @@ TEST_F(MultiThreadingConfigParserTest, validContent) {
             // Parsing config should succeed.
             MultiThreadingConfigParser parser;
             try {
-                multi_threading_config = parser.parse(config_elems);
+                parser.parse(srv_config, config_elems);
             } catch (const std::exception& ex) {
                 ADD_FAILURE() << "parser threw an exception: " << ex.what();
             }
 
+            multi_threading_config = srv_config.getDHCPMultiThreading();
             // Verify the resultant configuration.
             ASSERT_TRUE(multi_threading_config);
 
-            // The parser should have created a duplicate of the
-            // configuration elements.
-            ASSERT_TRUE(multi_threading_config.get() != config_elems.get());
             EXPECT_TRUE(multi_threading_config->equals(*config_elems));
         }
     }
@@ -150,13 +149,14 @@ TEST_F(MultiThreadingConfigParserTest, invalidContent) {
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
+            SrvConfig srv_config;
             // Construct the config JSON
             ASSERT_NO_THROW(config_elems = Element::fromJSON(scenario.json_))
                             << "invalid JSON, test is broken";
 
             // Parsing config into a queue control should succeed.
             MultiThreadingConfigParser parser;
-            EXPECT_THROW(parser.parse(config_elems), DhcpConfigError);
+            EXPECT_THROW(parser.parse(srv_config, config_elems), DhcpConfigError);
         }
     }
 }

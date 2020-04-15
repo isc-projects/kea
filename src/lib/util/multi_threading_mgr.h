@@ -89,28 +89,28 @@ public:
 
     /// @brief Get the dhcp thread pool.
     ///
-    /// @return The dhcp thread pool of this binary instance.
+    /// @return The dhcp thread pool.
     ThreadPool<std::function<void()>>& getThreadPool();
 
     /// @brief Get the configured dhcp thread pool size.
     ///
-    /// @return The dhcp thread pool size of this binary instance.
+    /// @return The dhcp thread pool size.
     uint32_t getThreadPoolSize() const;
 
     /// @brief Set the configured dhcp thread pool size.
     ///
-    /// @param size The dhcp thread pool size of this binary instance.
+    /// @param size The dhcp thread pool size.
     void setThreadPoolSize(uint32_t size);
 
-    /// @brief Get the configured dhcp thread queue size.
+    /// @brief Get the configured dhcp packet queue size.
     ///
-    /// @return The dhcp thread queue size of this binary instance.
-    uint32_t getThreadQueueSize() const;
+    /// @return The dhcp packet queue size.
+    uint32_t getPacketQueueSize() const;
 
-    /// @brief Set the configured dhcp thread queue size.
+    /// @brief Set the configured dhcp packet queue size.
     ///
-    /// @param size The dhcp thread queue size of this binary instance.
-    void setThreadQueueSize(uint32_t size);
+    /// @param size The dhcp packet queue size.
+    void setPacketQueueSize(uint32_t size);
 
     /// @brief The system current supported hardware concurrency thread count.
     ///
@@ -166,8 +166,8 @@ private:
     /// @brief The configured size of the dhcp thread pool.
     uint32_t thread_pool_size_;
 
-    /// @brief The configured size of the dhcp thread queue.
-    uint32_t thread_queue_size_;
+    /// @brief The configured size of the dhcp packet queue.
+    uint32_t packet_queue_size_;
 
     /// @brief Packet processing thread pool.
     ThreadPool<std::function<void()>> thread_pool_;

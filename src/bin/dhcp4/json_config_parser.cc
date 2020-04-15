@@ -403,15 +403,15 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
-            if (config_pair.first == "dhcp-queue-control") {
-                DHCPQueueControlParser parser;
-                srv_cfg->setDHCPQueueControl(parser.parse(config_pair.second));
+            if (config_pair.first == "multi-threading") {
+                MultiThreadingConfigParser parser;
+                parser.parse(*srv_cfg, config_pair.second);
                 continue;
             }
 
-            if (config_pair.first == "multi-threading") {
-                MultiThreadingConfigParser parser;
-                srv_cfg->setDHCPMultiThreading(parser.parse(config_pair.second));
+            if (config_pair.first == "dhcp-queue-control") {
+                DHCPQueueControlParser parser;
+                srv_cfg->setDHCPQueueControl(parser.parse(config_pair.second));
                 continue;
             }
 
