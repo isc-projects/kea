@@ -70,8 +70,6 @@ main(int argc, char* argv[]) {
     int server_port_number = DHCP6_SERVER_PORT;
     // Not zero values are useful for testing only.
     int client_port_number = 0;
-    // Number of threads. 0 means multi-threading disabled
-    int thread_count = 0;
     bool verbose_mode = false; // Should server be verbose?
     bool check_mode = false;   // Check syntax
 
