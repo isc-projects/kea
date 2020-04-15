@@ -437,7 +437,7 @@ client and the transaction identification information. The second argument
 contains the allocated IPv4 address. The third argument is the validity
 lifetime.
 
-% DHCP4_MULTI_THREADING_INFO enabled: %1, number of threads: %2, queue size per thread: %3
+% DHCP4_MULTI_THREADING_INFO enabled: %1, number of threads: %2, queue size: %3
 This is a message listing some information about the multi-threading parameters
 with which the server is running.
 
