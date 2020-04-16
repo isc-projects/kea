@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed Mar 18 2020 16:30
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Apr 16 2020 10:27
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -229,7 +229,7 @@ const char* values[] = {
     "DHCP6_LEASE_NA_WITHOUT_DUID", "%1: address lease for address %2 does not have a DUID",
     "DHCP6_LEASE_PD_WITHOUT_DUID", "%1: lease for prefix %2/%3 does not have a DUID",
     "DHCP6_LEASE_RENEW", "%1: lease for address %2 and iaid=%3 has been allocated",
-    "DHCP6_MULTI_THREADING_INFO", "enabled: %1, number of threads: %2, queue size per thread: %3",
+    "DHCP6_MULTI_THREADING_INFO", "enabled: %1, number of threads: %2, queue size: %3",
     "DHCP6_MULTI_THREADING_WARNING", "The multi-threading feature is experimental. Don't use in production environment.",
     "DHCP6_NOT_RUNNING", "IPv6 DHCP server is not running",
     "DHCP6_NO_INTERFACES", "failed to detect any network interfaces",
