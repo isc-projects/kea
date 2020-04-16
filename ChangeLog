@@ -1,3 +1,14 @@
+1739.	[func]		razvan
+	Added multi threading configuration parameters which can be used
+	to adjust server performance according to setup resources and needs:
+	enable-multi-threading, thread-pool-size and packet-queue-size.
+	There is also an automatic detection implemented by using
+	thread-pool-size set to 0. However, the packet-queue-size must be
+	manually configured and does not scale automatically.
+	The temporary -N command line option was removed.
+	The multi threading is disabled by default.
+	(Gitlab #893)
+
 1738.	[func]		fdupont
 	Added new global parameters statistic-default-sample-count and
 	statistic-default-sample-age to set the default values used
