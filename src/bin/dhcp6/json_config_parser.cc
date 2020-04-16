@@ -11,11 +11,11 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <database/dbaccess_parser.h>
-#include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
-#include <dhcp6/json_config_parser.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -48,6 +48,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <iostream>
 #include <limits>
@@ -55,15 +57,14 @@
 #include <netinet/in.h>
 #include <vector>
 
+#include <stdint.h>
+
 using namespace std;
 using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::hooks;
-using namespace isc::process;
-using namespace isc::config;
-using namespace isc::db;
 
 namespace {
 
