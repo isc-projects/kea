@@ -2219,13 +2219,13 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSendToSourceTestingModeEnabled) {
     // Source address is set to unrelated to configuration.
 
     // Set env variable that put kea into testing mode
-    //setenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE", "ENABLED", 1);
+    setenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE", "ENABLED", 1);
     Dhcp4Client client1(Dhcp4Client::SELECTING);
     client1.useRelay(true, IOAddress("192.3.5.6"), IOAddress("1.1.1.2"));
     // Configure the server with one shared network and one subnet outside of the
     // shared network.
     configure(NETWORKS_CONFIG[1], *client1.getServer());
-    //EXPECT_TRUE(isc::dhcp::test::NakedDhcpv4Srv::getSendResponsesToSource());
+    EXPECT_TRUE(isc::dhcp::test::NakedDhcpv4Srv::getSendResponsesToSource());
     // Client #1 should be assigned an address from shared network.
     testAssigned([this, &client1] {
         doDORA(client1, "192.0.2.63", "192.0.2.63");

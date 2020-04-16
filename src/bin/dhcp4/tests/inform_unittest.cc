@@ -485,4 +485,60 @@ TEST_F(InformTest, statisticsInform) {
     EXPECT_EQ(5, pkt4_sent->getInteger().first);
 }
 
+// This test checks that the server receiving DHCPINFORM via relay, should
+// unicasts the DHCPACK to the client (ciaddr) but sending to source address
+// because of testing mode enabled with unaltred content.
+TEST_F(InformTest, relayedClientSendToSourceTestingMode) {
+    setenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE", "ENABLED", 1);
+    Dhcp4Client client;
+    // Configure DHCP server.
+    configure(INFORM_CONFIGS[1], *client.getServer());
+    // Message is relayed.
+    EXPECT_TRUE(isc::dhcp::test::NakedDhcpv4Srv::getSendResponsesToSource());
+    client.useRelay();
+    // Request some configuration when DHCPINFORM is sent.
+    client.requestOptions(DHO_LOG_SERVERS, DHO_COOKIE_SERVERS);
+    // Preconfigure the client with the IP address.
+    client.createLease(IOAddress("192.0.2.56"), 600);
+    // Send DHCPINFORM message to the server.
+    ASSERT_NO_THROW(client.doInform());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    Pkt4Ptr query = client.getContext().query_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Response should NOT have been unicast to the ciaddr.
+    EXPECT_NE(IOAddress("192.0.2.56"), resp->getLocalAddr());
+    // Destiantion address of response should be equal to source
+    // address of query.
+    EXPECT_EQ(query->getLocalAddr(), resp->getLocalAddr());
+    // The ciaddr should have been copied.
+    EXPECT_EQ(IOAddress("192.0.2.56"), resp->getCiaddr());
+    // Response is unicast to the client, so it must not be relayed.
+    EXPECT_FALSE(resp->isRelayed());
+    EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getLocalPort());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
+    // Make sure that the server id is present.
+    EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
+    // Make sure that the Routers option has been received.
+    ASSERT_EQ(2, client.config_.routers_.size());
+    EXPECT_EQ("192.0.2.200", client.config_.routers_[0].toText());
+    EXPECT_EQ("192.0.2.201", client.config_.routers_[1].toText());
+    // Make sure that the DNS Servers option has been received.
+    ASSERT_EQ(2, client.config_.dns_servers_.size());
+    EXPECT_EQ("192.0.2.202", client.config_.dns_servers_[0].toText());
+    EXPECT_EQ("192.0.2.203", client.config_.dns_servers_[1].toText());
+    // Make sure that the Quotes Servers option has been received.
+    ASSERT_EQ(2, client.config_.quotes_servers_.size());
+    EXPECT_EQ("10.0.0.202", client.config_.quotes_servers_[0].toText());
+    EXPECT_EQ("10.0.0.203", client.config_.quotes_servers_[1].toText());
+    // Make sure that the Log Servers option has been received.
+    ASSERT_EQ(2, client.config_.log_servers_.size());
+    EXPECT_EQ("10.0.0.200", client.config_.log_servers_[0].toText());
+    EXPECT_EQ("10.0.0.201", client.config_.log_servers_[1].toText());
+
+    unsetenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE");
+}
+
 } // end of anonymous namespace
