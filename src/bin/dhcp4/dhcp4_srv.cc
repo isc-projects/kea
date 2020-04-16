@@ -588,6 +588,8 @@ void Dhcpv4Exchange::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
 
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
+bool Dhcpv4Srv::Dhcpv4Srv::test_send_responses_to_source_(false);
+
 Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
                      const bool use_bcast, const bool direct_response_desired)
     : io_service_(new IOService()), server_port_(server_port),
@@ -595,6 +597,14 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
       alloc_engine_(), use_bcast_(use_bcast),
       network_state_(new NetworkState(NetworkState::DHCPv4)),
       cb_control_(new CBControlDHCPv4()) {
+
+    const char* env = std::getenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE");
+    if (env) {
+        if (strncmp(env, "ENABLED", 7) == 0) {
+            LOG_WARN(dhcp4_logger, DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED);
+            setSendResponsesToSource(true);
+        }
+    }
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET)
         .arg(server_port);
@@ -2716,6 +2726,11 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
         } else {
             response->setRemoteAddr(query->getRemoteAddr());
         }
+
+        if (getSendResponsesToSource()) {
+            response->setRemoteAddr(query->getRemoteAddr());
+        }
+
         // Remote address is now set so return.
         return;
     }
@@ -2772,6 +2787,10 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
     } else {
         response->setRemoteAddr(query->getRemoteAddr());
 
+    }
+
+    if (getSendResponsesToSource()) {
+        response->setRemoteAddr(query->getRemoteAddr());
     }
 }
 

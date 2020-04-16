@@ -741,6 +741,24 @@ public:
     /// will cause the packet to be assigned to class VENDOR_CLASS_FOO.
     static const std::string VENDOR_CLASS_PREFIX;
 
+    /// @brief This function set test_send_responses_to_source_ value
+    ///
+    /// If environment variable KEA_TEST_SEND_RESPONSES_TO_SOURCE will be
+    /// set to ENABLED this function will set value true to
+    /// test_send_responses_to_source_.
+    ///
+    /// @param bool value of test_send_responses_to_source_
+    void setSendResponsesToSource(const bool value) {
+        test_send_responses_to_source_ = value;
+    }
+
+    /// @brief returns value of test_send_responses_to_source_
+    ///
+    /// @return bool value of test_send_responses_to_source_
+    static bool getSendResponsesToSource() {
+        return test_send_responses_to_source_;
+    }
+
 private:
     /// @brief Process Client FQDN %Option sent by a client.
     ///
@@ -1059,6 +1077,12 @@ protected:
 
     /// @brief Controls access to the configuration backends.
     CBControlDHCPv4Ptr cb_control_;
+
+private:
+
+    /// @brief value that define is send response to source mode is enabled
+    /// holds ture if it is.
+    static bool test_send_responses_to_source_;
 
 public:
 

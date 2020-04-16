@@ -22,6 +22,7 @@
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <functional>
+#include <stdlib.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -2196,6 +2197,58 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSubnetSelectedByClass) {
     testAssigned([this, &client2] {
         doRequest(client2, "192.0.2.100");
     });
+}
+
+// Check if Kea starts with send to source mode enabled
+TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkCheckIfSendToSourceTestingModeEnabled) {
+    // Set env variable that put kea into testing mode
+    setenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE", "ENABLED", 1);
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    configure(NETWORKS_CONFIG[1], *client1.getServer());
+    // Check if send to source testing mode is enabled
+    EXPECT_TRUE(isc::dhcp::test::NakedDhcpv4Srv::getSendResponsesToSource());
+
+    unsetenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE");
+}
+
+// Shared network is selected based on giaddr value (relay specified
+// on shared network level, but response is send to source address.
+TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSendToSourceTestingModeEnabled) {
+    // Create client #1. This is a relayed client which is using relay
+    // address matching configured shared network.
+    // Source address is set to unrelated to configuration.
+
+    // Set env variable that put kea into testing mode
+    //setenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE", "ENABLED", 1);
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.useRelay(true, IOAddress("192.3.5.6"), IOAddress("1.1.1.2"));
+    // Configure the server with one shared network and one subnet outside of the
+    // shared network.
+    configure(NETWORKS_CONFIG[1], *client1.getServer());
+    //EXPECT_TRUE(isc::dhcp::test::NakedDhcpv4Srv::getSendResponsesToSource());
+    // Client #1 should be assigned an address from shared network.
+    testAssigned([this, &client1] {
+        doDORA(client1, "192.0.2.63", "192.0.2.63");
+    });
+
+    // normally Kea would send packet to 192.3.5.6 but we want it get from
+    // 1.1.1.2 in send to source testing mode but still with correctly
+    // assigned address.
+    Pkt4Ptr resp1 = client1.getContext().response_;
+    EXPECT_EQ("1.1.1.2", resp1->getLocalAddr().toText());
+
+    // Create client #2. This is a relayed client which is using relay
+    // address matching subnet outside of the shared network.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.useRelay(true, IOAddress("192.1.2.3"), IOAddress("2.2.2.3"));
+    testAssigned([this, &client2] {
+        doDORA(client2, "192.0.2.65", "192.0.2.63");
+    });
+
+    Pkt4Ptr resp2 = client2.getContext().response_;
+    EXPECT_EQ("2.2.2.3", resp2->getLocalAddr().toText());
+    // remove variable
+    unsetenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE");
 }
 
 // Verify option processing precedence

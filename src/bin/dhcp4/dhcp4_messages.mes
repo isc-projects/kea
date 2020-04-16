@@ -6,6 +6,12 @@
 
 $NAMESPACE isc::dhcp
 
+% DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED All packets will be send to source address of an incoming packet - use only for testing
+This message is printed then KEA_TEST_SEND_RESPONSES_TO_SOURCE environment
+variable is set to ENABLED. It's causing Kea to send packets to source address
+of incoming packet. Usable just in testing environment to simulate multiple
+subnet traffic from single source.
+
 % DHCP4_ACTIVATE_INTERFACE activating interface %1
 This message is printed when DHCPv4 server enabled an interface to be used
 to receive DHCPv4 traffic. IPv4 socket on this interface will be opened once
