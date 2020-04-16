@@ -16,22 +16,20 @@ keactrl=@abs_top_builddir@/src/bin/keactrl/keactrl
 @HAVE_SYSREPO_FALSE@have_netconf=0
 @HAVE_SYSREPO_TRUE@have_netconf=1
 
-# Name of the configuration file without its extension.
-CFG_FILE_NAME="test_config"
 # Names for DHCPv4
-DHCP4_CFG_FILE_NAME="dhcp4_test_config"
+DHCP4_CFG_FILE_NAME="dhcp4_test_config.conf"
 DHCP4_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${DHCP4_CFG_FILE_NAME}.json
 # Names for DHCPv6
-DHCP6_CFG_FILE_NAME="dhcp6_test_config"
+DHCP6_CFG_FILE_NAME="dhcp6_test_config.conf"
 DHCP6_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${DHCP6_CFG_FILE_NAME}.json
 # Names for D2
-D2_CFG_FILE_NAME="d2_test_config"
+D2_CFG_FILE_NAME="d2_test_config.conf"
 D2_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${D2_CFG_FILE_NAME}.json
 # Names for CA
-CA_CFG_FILE_NAME="ca_test_config"
+CA_CFG_FILE_NAME="ca_test_config.conf"
 CA_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${CA_CFG_FILE_NAME}.json
 # Names for Netconf
-NC_CFG_FILE_NAME="nc_test_config"
+NC_CFG_FILE_NAME="nc_test_config.conf"
 NC_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${NC_CFG_FILE_NAME}.json
 # Configuration files for all deamons.
 CFG_FILES="kea_dhcp4_config_file=${DHCP4_CFG_FILE}\n\
