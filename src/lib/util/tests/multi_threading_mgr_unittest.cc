@@ -106,7 +106,7 @@ TEST(MultiThreadingMgrTest, applyConfig) {
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(true, 0, 0));
     // MT should be enabled
     EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
-    // thread count should be maximum
+    // thread count should be detected automatically
     EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), MultiThreadingMgr::supportedThreadCount());
     // thread pool should be started
     EXPECT_EQ(thread_pool.size(), MultiThreadingMgr::supportedThreadCount());
