@@ -79,7 +79,7 @@ MultiThreadingMgr::setPacketQueueSize(uint32_t size) {
 }
 
 uint32_t
-MultiThreadingMgr::supportedThreadCount() {
+MultiThreadingMgr::detectThreadCount() {
     return (std::thread::hardware_concurrency());
 }
 
@@ -90,7 +90,7 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_siz
         // check for auto scaling (enabled flag true but thread_count 0)
         if (!thread_count) {
             // might also return 0
-            thread_count = MultiThreadingMgr::supportedThreadCount();
+            thread_count = MultiThreadingMgr::detectThreadCount();
         }
     } else {
         thread_count = 0;

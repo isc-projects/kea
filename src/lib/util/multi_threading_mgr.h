@@ -112,12 +112,12 @@ public:
     /// @param size The dhcp packet queue size.
     void setPacketQueueSize(uint32_t size);
 
-    /// @brief The system current supported hardware concurrency thread count.
+    /// @brief The system current detected hardware concurrency thread count.
     ///
     /// This function will return 0 if the value can not be determined.
     ///
     /// @return The thread count.
-    static uint32_t supportedThreadCount();
+    static uint32_t detectThreadCount();
 
     /// @brief Apply the multi-threading related settings.
     ///

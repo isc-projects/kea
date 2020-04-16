@@ -60,10 +60,10 @@ TEST(MultiThreadingMgrTest, packetQueueSize) {
     EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
 }
 
-/// @brief Verifies that determining supported thread count works.
-TEST(MultiThreadingMgrTest, supportedThreadCount) {
-    // determining supported thread count should work
-    EXPECT_NE(MultiThreadingMgr::supportedThreadCount(), 0);
+/// @brief Verifies that detecting thread count works.
+TEST(MultiThreadingMgrTest, detectThreadCount) {
+    // detecting thread count should work
+    EXPECT_NE(MultiThreadingMgr::detectThreadCount(), 0);
 }
 
 /// @brief Verifies that accessing the thread pool works.
@@ -107,9 +107,9 @@ TEST(MultiThreadingMgrTest, applyConfig) {
     // MT should be enabled
     EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
     // thread count should be detected automatically
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), MultiThreadingMgr::supportedThreadCount());
+    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), MultiThreadingMgr::detectThreadCount());
     // thread pool should be started
-    EXPECT_EQ(thread_pool.size(), MultiThreadingMgr::supportedThreadCount());
+    EXPECT_EQ(thread_pool.size(), MultiThreadingMgr::detectThreadCount());
     // disable MT
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(false, 0, 0));
     // MT should be disabled
