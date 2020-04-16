@@ -10,17 +10,16 @@
 #include <database/dbaccess_parser.h>
 #include <database/backend_selector.h>
 #include <database/server_selector.h>
-#include <dhcp/libdhcp++.h>
-#include <dhcp/option_definition.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option_definition.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/db_type.h>
-#include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
@@ -33,6 +32,7 @@
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <process/config_ctl_parser.h>
 #include <hooks/hooks_parser.h>
@@ -40,20 +40,21 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
-#include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
-#include <iostream>
 #include <limits>
-#include <map>
+#include <iostream>
+#include <iomanip>
 #include <netinet/in.h>
 #include <vector>
+#include <map>
 
 using namespace std;
 using namespace isc;
-using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;
@@ -335,13 +336,13 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // have to be restored to global storages.
     bool rollback = false;
     // config_pair holds the details of the current parser when iterating over
-    // the parsers.  It is declared outside the loop so in case of error, the
-    // name of the failing parser can be retrieved within the "catch" clause.
+    // the parsers.  It is declared outside the loops so in case of an error,
+    // the name of the failing parser can be retrieved in the "catch" clause.
     ConfigPair config_pair;
     ElementPtr mutable_cfg;
     SrvConfigPtr srv_cfg;
     try {
-        // Get the staging configuration.
+        // Get the staging configuration
         srv_cfg = CfgMgr::instance().getStagingCfg();
 
         // This is a way to convert ConstElementPtr to ElementPtr.
@@ -668,14 +669,12 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-            // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                                " parsing error");
-            // An error occurred, so make sure to restore the original data.
             rollback = true;
         }
     }
@@ -692,7 +691,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             err << "during update from config backend database: " << ex.what();
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
-            // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
@@ -701,7 +699,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 << "undefined configuration parsing error";
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
-            // An error occurred, so make sure to restore the original data.
             rollback = true;
         }
     }

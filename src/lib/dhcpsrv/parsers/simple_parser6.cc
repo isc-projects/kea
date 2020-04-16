@@ -389,13 +389,17 @@ size_t SimpleParser6::setAllDefaults(ElementPtr global) {
     // Now set the defaults for each specified option definition
     ConstElementPtr option_defs = global->get("option-def");
     if (option_defs) {
-        cnt += setListDefaults(option_defs, OPTION6_DEF_DEFAULTS);
+        BOOST_FOREACH(ElementPtr option_def, option_defs->listValue()) {
+            cnt += SimpleParser::setDefaults(option_def, OPTION6_DEF_DEFAULTS);
+        }
     }
 
     // Set the defaults for option data
     ConstElementPtr options = global->get("option-data");
     if (options) {
-        cnt += setListDefaults(options, OPTION6_DEFAULTS);
+        BOOST_FOREACH(ElementPtr single_option, options->listValue()) {
+            cnt += SimpleParser::setDefaults(single_option, OPTION6_DEFAULTS);
+        }
     }
 
     // Now set the defaults for defined subnets
