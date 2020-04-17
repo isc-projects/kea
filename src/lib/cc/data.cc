@@ -194,8 +194,7 @@ Element::find(const std::string&, ConstElementPtr&) const {
 namespace {
 inline void
 throwJSONError(const std::string& error, const std::string& file, int line,
-               int pos)
-{
+               int pos) {
     std::stringstream ss;
     ss << error << " in " + file + ":" << line << ":" << pos;
     isc_throw(JSONError, ss.str());
@@ -306,9 +305,8 @@ skipChars(std::istream& in, const char* chars, int& line, int& pos) {
 //
 // It returns the found character (as an int value).
 int
-skipTo(std::istream& in, const std::string& file, int& line,
-       int& pos, const char* chars, const char* may_skip="")
-{
+skipTo(std::istream& in, const std::string& file, int& line, int& pos,
+       const char* chars, const char* may_skip="") {
     int c = in.get();
     ++pos;
     while (c != EOF) {
@@ -342,8 +340,7 @@ skipTo(std::istream& in, const std::string& file, int& line,
 // error on the rest)?
 std::string
 strFromStringstream(std::istream& in, const std::string& file,
-                    const int line, int& pos)
-{
+                    const int line, int& pos) {
     std::stringstream ss;
     int c = in.get();
     ++pos;
@@ -469,7 +466,7 @@ numberFromStringstream(std::istream& in, int& pos) {
 //
 ElementPtr
 fromStringstreamNumber(std::istream& in, const std::string& file,
-                       const int& line, int& pos) {
+                       const int line, int& pos) {
     // Remember position where the value starts. It will be set in the
     // Position structure of the Element to be created.
     const uint32_t start_pos = pos;
@@ -498,8 +495,7 @@ fromStringstreamNumber(std::istream& in, const std::string& file,
 
 ElementPtr
 fromStringstreamBool(std::istream& in, const std::string& file,
-                     const int line, int& pos)
-{
+                     const int line, int& pos) {
     // Remember position where the value starts. It will be set in the
     // Position structure of the Element to be created.
     const uint32_t start_pos = pos;
@@ -521,8 +517,7 @@ fromStringstreamBool(std::istream& in, const std::string& file,
 
 ElementPtr
 fromStringstreamNull(std::istream& in, const std::string& file,
-                     const int line, int& pos)
-{
+                     const int line, int& pos) {
     // Remember position where the value starts. It will be set in the
     // Position structure of the Element to be created.
     const uint32_t start_pos = pos;
@@ -539,8 +534,7 @@ fromStringstreamNull(std::istream& in, const std::string& file,
 
 ElementPtr
 fromStringstreamString(std::istream& in, const std::string& file, int& line,
-                       int& pos)
-{
+                       int& pos) {
     // Remember position where the value starts. It will be set in the
     // Position structure of the Element to be created.
     const uint32_t start_pos = pos;
@@ -552,8 +546,7 @@ fromStringstreamString(std::istream& in, const std::string& file, int& line,
 
 ElementPtr
 fromStringstreamList(std::istream& in, const std::string& file, int& line,
-                     int& pos)
-{
+                     int& pos) {
     int c = 0;
     ElementPtr list = Element::createList(Element::Position(file, line, pos));
     ElementPtr cur_list_element;
@@ -574,8 +567,7 @@ fromStringstreamList(std::istream& in, const std::string& file, int& line,
 
 ElementPtr
 fromStringstreamMap(std::istream& in, const std::string& file, int& line,
-                    int& pos)
-{
+                    int& pos) {
     ElementPtr map = Element::createMap(Element::Position(file, line, pos));
     skipChars(in, WHITESPACE, line, pos);
     int c = in.peek();
@@ -665,8 +657,7 @@ Element::fromJSON(std::istream& in, bool preproc) {
 }
 
 ElementPtr
-Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc)
-{
+Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc) {
     int line = 1, pos = 1;
     stringstream filtered;
     if (preproc) {
@@ -677,8 +668,7 @@ Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc)
 
 ElementPtr
 Element::fromJSON(std::istream& in, const std::string& file, int& line,
-                  int& pos)
-{
+                  int& pos) {
     int c = 0;
     ElementPtr element;
     bool el_read = false;
@@ -766,14 +756,12 @@ Element::fromJSON(const std::string& in, bool preproc) {
 }
 
 ElementPtr
-Element::fromJSONFile(const std::string& file_name,
-                      bool preproc) {
+Element::fromJSONFile(const std::string& file_name, bool preproc) {
     // zero out the errno to be safe
     errno = 0;
 
     std::ifstream infile(file_name.c_str(), std::ios::in | std::ios::binary);
-    if (!infile.is_open())
-    {
+    if (!infile.is_open()) {
         const char* error = strerror(errno);
         isc_throw(InvalidOperation, "failed to read file '" << file_name
                   << "': " << error);
