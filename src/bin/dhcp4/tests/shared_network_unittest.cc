@@ -2199,18 +2199,6 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSubnetSelectedByClass) {
     });
 }
 
-// Check if Kea starts with send to source mode enabled
-TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkCheckIfSendToSourceTestingModeEnabled) {
-    // Set env variable that put kea into testing mode
-    setenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE", "ENABLED", 1);
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
-    configure(NETWORKS_CONFIG[1], *client1.getServer());
-    // Check if send to source testing mode is enabled
-    EXPECT_TRUE(isc::dhcp::test::NakedDhcpv4Srv::getSendResponsesToSource());
-
-    unsetenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE");
-}
-
 // Shared network is selected based on giaddr value (relay specified
 // on shared network level, but response is send to source address.
 TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSendToSourceTestingModeEnabled) {

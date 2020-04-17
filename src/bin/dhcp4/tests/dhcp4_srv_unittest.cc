@@ -3913,4 +3913,55 @@ TEST_F(Dhcpv4SrvTest, userContext) {
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.
 
+
+TEST_F(Dhcpv4SrvTest, SendToSourceMode) {
+    string config  = "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 600,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"relay\": {"
+    "                \"ip-address\": \"192.3.5.6\""
+    "            },"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/26\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.63 - 192.0.2.63\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ],"
+    "    \"subnet4\": ["
+    "        {"
+    "            \"subnet\": \"192.0.2.64/26\","
+    "            \"id\": 1000,"
+    "            \"relay\": {"
+    "                \"ip-address\": \"192.1.2.3\""
+    "            },"
+    "            \"pools\": ["
+    "                {"
+    "                    \"pool\": \"192.0.2.65 - 192.0.2.65\""
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}";
+
+    // Set env variable that put kea into testing mode
+    //setenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE", "ENABLED", 1);
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    configure(config, *client1.getServer());
+    // Check if send to source testing mode is enabled
+    EXPECT_TRUE(isc::dhcp::test::NakedDhcpv4Srv::getSendResponsesToSource());
+    unsetenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE");
+}
+
 }  // namespace
