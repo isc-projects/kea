@@ -1017,13 +1017,13 @@ ListElement::equals(const Element& other) const {
 bool
 MapElement::equals(const Element& other) const {
     if (other.getType() == Element::map) {
-        const std::map<std::string, ConstElementPtr>& m = mapValue();
         if (size() != other.size()) {
             return (false);
         }
-        for (auto it = m.begin(); it != m.end(); ++it) {
-            if (other.contains((*it).first)) {
-                if (!get((*it).first)->equals(*other.get((*it).first))) {
+        for (auto kv : mapValue()) {
+            auto key = kv.first;
+            if (other.contains(key)) {
+                if (!get(key)->equals(*other.get(key))) {
                     return (false);
                 }
             } else {
@@ -1054,11 +1054,11 @@ removeIdentical(ElementPtr a, ConstElementPtr b) {
     // over a checking for identical entries in b or vice-versa.  As elements
     // are removed from a if a match is found, we choose to iterate over b to
     // avoid problems with element removal affecting the iterator.
-    const std::map<std::string, ConstElementPtr>& m = b->mapValue();
-    for (auto it = m.begin(); it != m.end() ; ++it) {
-        if (a->contains((*it).first)) {
-            if (a->get((*it).first)->equals(*b->get((*it).first))) {
-                a->remove((*it).first);
+    for (auto kv : b->mapValue()) {
+        auto key = kv.first;
+        if (a->contains(key)) {
+            if (a->get(key)->equals(*b->get(key))) {
+                a->remove(key);
             }
         }
     }
@@ -1076,11 +1076,11 @@ removeIdentical(ConstElementPtr a, ConstElementPtr b) {
         isc_throw(TypeError, "Non-map Elements passed to removeIdentical");
     }
 
-    const std::map<std::string, ConstElementPtr>& m = a->mapValue();
-    for (auto it = m.begin(); it != m.end() ; ++it) {
-        if (!b->contains((*it).first) ||
-            !a->get((*it).first)->equals(*b->get((*it).first))) {
-            result->set((*it).first, (*it).second);
+    for (auto kv : a->mapValue()) {
+        auto key = kv.first;
+        if (!b->contains(key) ||
+            !a->get(key)->equals(*b->get(key))) {
+            result->set(key, kv.second);
         }
     }
 
@@ -1094,19 +1094,20 @@ merge(ElementPtr element, ConstElementPtr other) {
         isc_throw(TypeError, "merge arguments not MapElements");
     }
 
-    const std::map<std::string, ConstElementPtr>& m = other->mapValue();
-    for (auto it = m.begin(); it != m.end() ; ++it) {
-        if ((*it).second && (*it).second->getType() != Element::null) {
-            element->set((*it).first, (*it).second);
-        } else if (element->contains((*it).first)) {
-            element->remove((*it).first);
+    for (auto kv : other->mapValue()) {
+        auto key = kv.first;
+        auto value = kv.second;
+        if (value && value->getType() != Element::null) {
+            element->set(key, value);
+        } else if (element->contains(key)) {
+            element->remove(key);
         }
     }
 }
 
 ElementPtr
 copy(ConstElementPtr from, int level) {
-    if (isNull(from)) {
+    if (!from) {
         isc_throw(BadValue, "copy got a null pointer");
     }
     int from_type = from->getType();
@@ -1122,25 +1123,23 @@ copy(ConstElementPtr from, int level) {
         return (ElementPtr(new StringElement(from->stringValue())));
     } else if (from_type == Element::list) {
         ElementPtr result = ElementPtr(new ListElement());
-        typedef std::vector<ElementPtr> ListType;
-        const ListType& value = from->listValue();
-        for (auto it = value.cbegin(); it != value.cend(); ++it) {
+        for (auto elem : from->listValue()) {
             if (level == 0) {
-                result->add(*it);
+                result->add(elem);
             } else {
-                result->add(copy(*it, level - 1));
+                result->add(copy(elem, level - 1));
             }
         }
         return (result);
     } else if (from_type == Element::map) {
         ElementPtr result = ElementPtr(new MapElement());
-        typedef std::map<std::string, ConstElementPtr> MapType;
-        const MapType& value = from->mapValue();
-        for (auto it = value.cbegin(); it != value.cend(); ++it) {
+        for (auto kv : from->mapValue()) {
+            auto key = kv.first;
+            auto value = kv.second;
             if (level == 0) {
-                result->set(it->first, it->second);
+                result->set(key, value);
             } else {
-                result->set(it->first, copy(it->second, level - 1));
+                result->set(key, copy(value, level - 1));
             }
         }
         return (result);
@@ -1209,16 +1208,15 @@ isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level) {
         }
         return (true);
     } else if (a->getType() == Element::map) {
-        // iterate on the first map
-        typedef std::map<std::string, ConstElementPtr> MapType;
-        const MapType& ma = a->mapValue();
+        // check sizes
         if (a->size() != b->size()) {
             return (false);
         }
-        for (auto it = ma.begin(); it != ma.end() ; ++it) {
+        // iterate on the first map
+        for (auto kv : a->mapValue()) {
             // get the b value for the given keyword and recurse
-            ConstElementPtr item = b->get(it->first);
-            if (!item || !isEquivalent0(it->second, item, level - 1)) {
+            ConstElementPtr item = b->get(kv.first);
+            if (!item || !isEquivalent0(kv.second, item, level - 1)) {
                 return (false);
             }
         }
@@ -1263,8 +1261,7 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
         out << "[" << (complex ? "\n" : " ");
 
         // iterate on items
-        typedef std::vector<ElementPtr> ListType;
-        const ListType& l = element->listValue();
+        const auto& l = element->listValue();
         for (auto it = l.begin(); it != l.end(); ++it) {
             // add the separator if not the first item
             if (it != l.begin()) {
@@ -1309,8 +1306,7 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
         }
 
         // iterate on keyword: value
-        typedef std::map<std::string, ConstElementPtr> MapType;
-        const MapType& m = element->mapValue();
+        const auto& m = element->mapValue();
         for (auto it = m.begin(); it != m.end(); ++it) {
             // skip comment
             if (it->first == "comment") {
