@@ -200,7 +200,7 @@ throwJSONError(const std::string& error, const std::string& file, int line,
     ss << error << " in " + file + ":" << line << ":" << pos;
     isc_throw(JSONError, ss.str());
 }
-}  // namespace
+} // end anonymous namespace
 
 std::ostream&
 operator<<(std::ostream& out, const Element& e) {
@@ -599,7 +599,7 @@ fromStringstreamMap(std::istream& in, const std::string& file, int& line,
     }
     return (map);
 }
-} // unnamed namespace
+} // end anonymous namespace
 
 std::string
 Element::typeToName(Element::types type) {
@@ -1238,7 +1238,7 @@ isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level) {
     }
 }
 
-}  // namespace
+} // end anonymous namespace
 
 bool
 isEquivalent(ConstElementPtr a, ConstElementPtr b) {
@@ -1376,5 +1376,5 @@ void Element::preprocess(std::istream& in, std::stringstream& out) {
     }
 }
 
-}  // namespace data
-}  // namespace isc
+} // end of isc::data namespace
+} // end of isc namespace
