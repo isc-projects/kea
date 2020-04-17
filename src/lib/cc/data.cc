@@ -200,7 +200,7 @@ throwJSONError(const std::string& error, const std::string& file, int line,
     ss << error << " in " + file + ":" << line << ":" << pos;
     isc_throw(JSONError, ss.str());
 }
-}
+}  // namespace
 
 std::ostream&
 operator<<(std::ostream& out, const Element& e) {
@@ -214,7 +214,7 @@ operator==(const Element& a, const Element& b) {
 
 bool operator!=(const Element& a, const Element& b) {
     return (!a.equals(b));
-};
+}
 
 //
 // factory functions
@@ -232,12 +232,12 @@ Element::create(const long long int i, const Position& pos) {
 ElementPtr
 Element::create(const int i, const Position& pos) {
     return (create(static_cast<long long int>(i), pos));
-};
+}
 
 ElementPtr
 Element::create(const long int i, const Position& pos) {
     return (create(static_cast<long long int>(i), pos));
-};
+}
 
 ElementPtr
 Element::create(const double d, const Position& pos) {
@@ -1020,27 +1020,16 @@ bool
 MapElement::equals(const Element& other) const {
     if (other.getType() == Element::map) {
         const std::map<std::string, ConstElementPtr>& m = mapValue();
+        if (size() != other.size()) {
+            return (false);
+        }
         for (std::map<std::string, ConstElementPtr>::const_iterator it =
-                 m.begin();
-             it != m.end() ; ++it) {
+             m.begin(); it != m.end(); ++it) {
             if (other.contains((*it).first)) {
                 if (!get((*it).first)->equals(*other.get((*it).first))) {
                     return (false);
                 }
             } else {
-                return (false);
-            }
-        }
-        // quickly walk through the other map too, to see if there's
-        // anything in there that we don't have. We don't need to
-        // compare those elements; if one of them is missing we
-        // differ (and if it's not missing the loop above has checked
-        // it)
-        std::map<std::string, ConstElementPtr>::const_iterator it;
-        for (it = other.mapValue().begin();
-             it != other.mapValue().end();
-             ++it) {
-            if (!contains((*it).first)) {
                 return (false);
             }
         }
@@ -1172,8 +1161,7 @@ namespace {
 
 // Helper function which blocks infinite recursion
 bool
-isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level)
-{
+isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level) {
     // check looping forever on cycles
     if (!level) {
         isc_throw(BadValue, "isEquivalent got infinite recursion: "
@@ -1233,20 +1221,14 @@ isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level)
         // iterate on the first map
         typedef std::map<std::string, ConstElementPtr> MapType;
         const MapType& ma = a->mapValue();
+        if (a->size() != b->size()) {
+            return (false);
+        }
         for (MapType::const_iterator it = ma.begin();
              it != ma.end() ; ++it) {
             // get the b value for the given keyword and recurse
             ConstElementPtr item = b->get(it->first);
             if (!item || !isEquivalent0(it->second, item, level - 1)) {
-                return (false);
-            }
-        }
-        // iterate on the second map
-        const MapType& mb = b->mapValue();
-        for (MapType::const_iterator it = mb.begin();
-             it != mb.end() ; ++it) {
-            // check if the keyword exists
-            if (!a->contains(it->first)) {
                 return (false);
             }
         }
@@ -1256,7 +1238,7 @@ isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level)
     }
 }
 
-}
+}  // namespace
 
 bool
 isEquivalent(ConstElementPtr a, ConstElementPtr b) {
@@ -1394,5 +1376,5 @@ void Element::preprocess(std::istream& in, std::stringstream& out) {
     }
 }
 
-}
-}
+}  // namespace data
+}  // namespace isc
