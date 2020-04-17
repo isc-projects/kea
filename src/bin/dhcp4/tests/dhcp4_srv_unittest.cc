@@ -38,6 +38,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
+#include <cstdlib>
 
 #include <arpa/inet.h>
 
@@ -369,6 +370,55 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     EXPECT_EQ(1, resp->getIndex());
 }
 
+// This test verifies that the destination address of the response
+// message is set to source address when the testing mode is enabled.
+// Relayed message: not testing mode was tested in adjustIfaceDataRelay.
+TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelaySendToSourceTestingModeEnabled) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Create the instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr to non-zero address and hops to non-zero value
+    // as if it was relayed.
+    req->setGiaddr(IOAddress("192.0.1.1"));
+    req->setHops(2);
+    // Set ciaddr to zero. This simulates the client which applies
+    // for the new lease.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+    // Clear broadcast flag.
+    req->setFlags(0x0000);
+
+    // Set local address, port and interface.
+    req->setLocalAddr(IOAddress("192.0.2.5"));
+    req->setLocalPort(1001);
+    req->setIface("eth1");
+    req->setIndex(1);
+
+    // Set remote address and port.
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    req->setRemotePort(1234);
+
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+
+    Pkt4Ptr resp = ex.getResponse();
+    resp->setYiaddr(IOAddress("192.0.1.100"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Set hops value for the response.
+    resp->setHops(req->getHops());
+
+    // Set the testing mode.
+    srv_.setSendResponsesToSource(true);
+
+    // This function never throws.
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+
+    // Now the destination address should be source address.
+    EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
+}
+
 // This test verifies that the destination address of the response message
 // is set to ciaddr when giaddr is set to zero and the ciaddr is set to
 // non-zero address in the received message. This is the case when the
@@ -433,6 +483,64 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
     EXPECT_EQ("eth1", resp->getIface());
     EXPECT_EQ(1, resp->getIndex());
 
+}
+
+// This test verifies that the destination address of the response message
+// is set to source address when the testing mode is enabled.
+// Renew: not testing mode was tested in adjustIfaceDataRenew.
+TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewSendToSourceTestingModeEnabled) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Create instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Clear giaddr to simulate direct packet.
+    req->setGiaddr(IOAddress("0.0.0.0"));
+    // Set ciaddr to non-zero address. The response should be sent to this
+    // address as the client is in renewing or rebinding state (it is fully
+    // configured).
+    req->setCiaddr(IOAddress("192.0.1.15"));
+    // Let's configure broadcast flag. It should be ignored because
+    // we are responding directly to the client having an address
+    // and trying to extend his lease. Broadcast flag is only used
+    // when new lease is acquired and server must make a decision
+    // whether to unicast the response to the acquired address or
+    // broadcast it.
+    req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
+    // This is a direct message, so the hops should be cleared.
+    req->setHops(0);
+    // Set local unicast address as if we are renewing a lease.
+    req->setLocalAddr(IOAddress("192.0.2.1"));
+    // Request is received on the DHCPv4 server port.
+    req->setLocalPort(DHCP4_SERVER_PORT);
+    // Set the interface. The response should be sent over the same interface.
+    req->setIface("eth1");
+    req->setIndex(1);
+    // Set remote address.
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+    Pkt4Ptr resp = ex.getResponse();
+
+    // Let's extend the lease for the client in such a way that
+    // it will actually get different address. The response
+    // should not be sent to this address but rather to ciaddr
+    // as client still have ciaddr configured.
+    resp->setYiaddr(IOAddress("192.0.1.13"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Copy hops value from the query.
+    resp->setHops(req->getHops());
+
+    // Set the testing mode.
+    srv_.setSendResponsesToSource(true);
+
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+
+    // Check that server responds to source address.
+    EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
 }
 
 // This test verifies that the destination address of the response message
@@ -525,6 +633,69 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
 }
 
 // This test verifies that the destination address of the response message
+// is set to source address when the testing mode is enabled.
+// Select cases: not testing mode were tested in adjustIfaceDataSelect.
+TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelectSendToSourceTestingModeEnabled) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Create instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Clear giaddr to simulate direct packet.
+    req->setGiaddr(IOAddress("0.0.0.0"));
+    // Clear client address as it hasn't got any address configured yet.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+
+    // Let's clear the broadcast flag.
+    req->setFlags(0);
+
+    // This is a non-relayed message, so let's clear hops count.
+    req->setHops(0);
+    // The query is sent to the broadcast address in the Select state.
+    req->setLocalAddr(IOAddress("255.255.255.255"));
+    // The query has been received on the DHCPv4 server port 67.
+    req->setLocalPort(DHCP4_SERVER_PORT);
+    // Set the interface. The response should be sent via the same interface.
+    req->setIface("eth1");
+    req->setIndex(1);
+    // Set remote address.
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+    Pkt4Ptr resp = ex.getResponse();
+    // Assign some new address for this client.
+    resp->setYiaddr(IOAddress("192.0.1.13"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Copy hops count.
+    resp->setHops(req->getHops());
+
+    // Disable direct responses.
+    test_config.setDirectResponse(false);
+
+    // Set the testing mode.
+    srv_.setSendResponsesToSource(true);
+
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+
+    // Check that server responds to source address.
+    EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
+
+    // Enable direct responses.
+    test_config.setDirectResponse(true);
+
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+
+    // Check that server still responds to source address.
+    EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
+}
+
+// This test verifies that the destination address of the response message
 // is set to broadcast address when client set broadcast flag in its
 // query. Client sets this flag to indicate that it can't receive direct
 // responses from the server when it doesn't have its interface configured.
@@ -580,6 +751,52 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
     EXPECT_EQ("eth1", resp->getIface());
     EXPECT_EQ(1, resp->getIndex());
 
+}
+
+// This test verifies that the destination address of the response message
+// is set to source address when the testing mode is enabled.
+// Broadcast case: not testing mode was tested in adjustIfaceDataBroadcast.
+TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcastSendToSourceTestingModeEnabled) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Create instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Clear giaddr to simulate direct packet.
+    req->setGiaddr(IOAddress("0.0.0.0"));
+    // Clear client address as it hasn't got any address configured yet.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+    // The query is sent to the broadcast address in the Select state.
+    req->setLocalAddr(IOAddress("255.255.255.255"));
+    // The query has been received on the DHCPv4 server port 67.
+    req->setLocalPort(DHCP4_SERVER_PORT);
+    // Set the interface. The response should be sent via the same interface.
+    req->setIface("eth1");
+    req->setIndex(1);
+    // Set remote address.
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+
+    // Let's set the broadcast flag.
+    req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
+
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+    Pkt4Ptr resp = ex.getResponse();
+
+    // Assign some new address for this client.
+    resp->setYiaddr(IOAddress("192.0.1.13"));
+
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+
+    // Set the testing mode.
+    srv_.setSendResponsesToSource(true);
+
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+
+    // Check that server responds to source address.
+    EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
 }
 
 // This test verifies that the mandatory to copy fields and options
@@ -695,6 +912,23 @@ TEST_F(Dhcpv4SrvTest, basic) {
     IfaceMgr::instance().closeSockets();
 
     ASSERT_NO_THROW(naked_srv.reset(new NakedDhcpv4Srv(0)));
+}
+
+// This test verifies the test_send_responses_to_source_ is false by default
+// and sets by the KEA_TEST_SEND_RESPONSES_TO_SOURCE environment variable.
+TEST_F(Dhcpv4SrvTest, testSendResponsesToSource) {
+
+    ASSERT_FALSE(std::getenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE"));
+    boost::scoped_ptr<NakedDhcpv4Srv> naked_srv;
+    ASSERT_NO_THROW(
+        naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
+    EXPECT_FALSE(naked_srv->getSendResponsesToSource());
+    ::setenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE", "ENABLED", 1);
+    // Do not use ASSERT as we want unsetenv to be always called.
+    EXPECT_NO_THROW(
+        naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
+    EXPECT_TRUE(naked_srv->getSendResponsesToSource());
+    ::unsetenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE");
 }
 
 // Verifies that DISCOVER message can be processed correctly,
@@ -3913,55 +4147,4 @@ TEST_F(Dhcpv4SrvTest, userContext) {
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.
 
-
-TEST_F(Dhcpv4SrvTest, SendToSourceMode) {
-    string config  = "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"valid-lifetime\": 600,"
-    "    \"shared-networks\": ["
-    "        {"
-    "            \"name\": \"frog\","
-    "            \"relay\": {"
-    "                \"ip-address\": \"192.3.5.6\""
-    "            },"
-    "            \"subnet4\": ["
-    "                {"
-    "                    \"subnet\": \"192.0.2.0/26\","
-    "                    \"id\": 10,"
-    "                    \"pools\": ["
-    "                        {"
-    "                            \"pool\": \"192.0.2.63 - 192.0.2.63\""
-    "                        }"
-    "                    ]"
-    "                }"
-    "            ]"
-    "        }"
-    "    ],"
-    "    \"subnet4\": ["
-    "        {"
-    "            \"subnet\": \"192.0.2.64/26\","
-    "            \"id\": 1000,"
-    "            \"relay\": {"
-    "                \"ip-address\": \"192.1.2.3\""
-    "            },"
-    "            \"pools\": ["
-    "                {"
-    "                    \"pool\": \"192.0.2.65 - 192.0.2.65\""
-    "                }"
-    "            ]"
-    "        }"
-    "    ]"
-    "}";
-
-    // Set env variable that put kea into testing mode
-    //setenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE", "ENABLED", 1);
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
-    configure(config, *client1.getServer());
-    // Check if send to source testing mode is enabled
-    EXPECT_TRUE(isc::dhcp::test::NakedDhcpv4Srv::getSendResponsesToSource());
-    unsetenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE");
-}
-
-}  // namespace
+} // end of anonymous namespace

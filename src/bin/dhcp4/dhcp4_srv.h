@@ -425,11 +425,11 @@ public:
     /// of all packets.  Called during reconfigure and shutdown.
     void discardPackets();
 
-    /// @brief returns value of test_send_responses_to_source_
+    /// @brief Returns value of the test_send_responses_to_source_ flag.
     ///
-    /// @return bool value of test_send_responses_to_source_
-    static bool getSendResponsesToSource() {
-        return test_send_responses_to_source_;
+    /// @return value of the test_send_responses_to_source_ flag.
+    bool getSendResponsesToSource() const {
+        return (test_send_responses_to_source_);
     }
 
 protected:
@@ -738,6 +738,13 @@ protected:
     /// constructor.
     void setPacketStatisticsDefaults();
 
+    /// @brief Sets value of the test_send_responses_to_source_ flag.
+    ///
+    /// @param value new value of the test_send_responses_to_source_ flag.
+    void setSendResponsesToSource(bool value) {
+        test_send_responses_to_source_ = value;
+    }
+
 public:
 
     /// @brief this is a prefix added to the content of vendor-class option
@@ -914,12 +921,9 @@ protected:
     /// are valid. Make sure that pointers are correct before calling this
     /// function.
     ///
-    /// @note This method is static because it is not dependent on the class
-    /// state.
-    ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    static void adjustRemoteAddr(Dhcpv4Exchange& ex);
+    void adjustRemoteAddr(Dhcpv4Exchange& ex);
 
     /// @brief converts server-id to text
     /// Converts content of server-id option to a text representation, e.g.
@@ -1071,7 +1075,7 @@ private:
 
     /// @brief store value that defines if kea will send responses
     /// to a source address of incoming packet. Only for testing.
-    static bool test_send_responses_to_source_;
+    bool test_send_responses_to_source_;
 
 public:
 

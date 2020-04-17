@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu Apr 16 2020 10:23
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Apr 17 2020 22:42
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -226,7 +226,7 @@ const char* values[] = {
     "DHCP4_INIT_REBOOT", "%1: client is in INIT-REBOOT state and requests address %2",
     "DHCP4_LEASE_ADVERT", "%1: lease %2 will be advertised",
     "DHCP4_LEASE_ALLOC", "%1: lease %2 has been allocated for %3 seconds",
-    "DHCP4_MULTI_THREADING_INFO", "enabled: %1, number of threads: %2, queue size: %3",
+    "DHCP4_MULTI_THREADING_INFO", "enabled: %1, number of threads: %2, queue size per thread: %3",
     "DHCP4_MULTI_THREADING_WARNING", "The multi-threading feature is experimental. Don't use in production environment.",
     "DHCP4_NCR_CREATE", "%1: DDNS updates enabled, therefore sending name change requests",
     "DHCP4_NCR_CREATION_FAILED", "%1: failed to generate name change requests for DNS: %2",

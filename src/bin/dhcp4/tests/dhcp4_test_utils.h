@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -226,6 +226,7 @@ public:
     using Dhcpv4Srv::accept;
     using Dhcpv4Srv::acceptMessageType;
     using Dhcpv4Srv::selectSubnet;
+    using Dhcpv4Srv::setSendResponsesToSource;
     using Dhcpv4Srv::VENDOR_CLASS_PREFIX;
     using Dhcpv4Srv::shutdown_;
     using Dhcpv4Srv::alloc_engine_;

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,6 @@
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <functional>
-#include <stdlib.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -2206,14 +2205,13 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSendToSourceTestingModeEnabled) {
     // address matching configured shared network.
     // Source address is set to unrelated to configuration.
 
-    // Set env variable that put kea into testing mode
-    setenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE", "ENABLED", 1);
     Dhcp4Client client1(Dhcp4Client::SELECTING);
+    // Put Kea into testing mode.
+    client1.getServer()->setSendResponsesToSource(true);
     client1.useRelay(true, IOAddress("192.3.5.6"), IOAddress("1.1.1.2"));
     // Configure the server with one shared network and one subnet outside of the
     // shared network.
     configure(NETWORKS_CONFIG[1], *client1.getServer());
-    EXPECT_TRUE(isc::dhcp::test::NakedDhcpv4Srv::getSendResponsesToSource());
     // Client #1 should be assigned an address from shared network.
     testAssigned([this, &client1] {
         doDORA(client1, "192.0.2.63", "192.0.2.63");
@@ -2235,8 +2233,8 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSendToSourceTestingModeEnabled) {
 
     Pkt4Ptr resp2 = client2.getContext().response_;
     EXPECT_EQ("2.2.2.3", resp2->getLocalAddr().toText());
-    // remove variable
-    unsetenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE");
+    // reset testing mode.
+    client1.getServer()->setSendResponsesToSource(false);
 }
 
 // Verify option processing precedence

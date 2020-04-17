@@ -69,6 +69,7 @@
 
 #include <iomanip>
 #include <set>
+#include <cstdlib>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -588,15 +589,14 @@ void Dhcpv4Exchange::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
 
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
-bool Dhcpv4Srv::test_send_responses_to_source_(false);
-
 Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
                      const bool use_bcast, const bool direct_response_desired)
     : io_service_(new IOService()), server_port_(server_port),
       client_port_(client_port), shutdown_(true),
       alloc_engine_(), use_bcast_(use_bcast),
       network_state_(new NetworkState(NetworkState::DHCPv4)),
-      cb_control_(new CBControlDHCPv4()) {
+      cb_control_(new CBControlDHCPv4()),
+      test_send_responses_to_source_(false) {
 
     const char* env = std::getenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE");
     if (env) {
@@ -2779,10 +2779,10 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
     // to the address we got the query from.
     } else {
         response->setRemoteAddr(query->getRemoteAddr());
-
     }
 
-    if (Dhcpv4Srv::test_send_responses_to_source_) {
+    // For testing *only*.
+    if (getSendResponsesToSource()) {
         response->setRemoteAddr(query->getRemoteAddr());
     }
 }
