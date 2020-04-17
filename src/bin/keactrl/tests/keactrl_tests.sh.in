@@ -16,6 +16,8 @@ keactrl=@abs_top_builddir@/src/bin/keactrl/keactrl
 @HAVE_SYSREPO_FALSE@have_netconf=0
 @HAVE_SYSREPO_TRUE@have_netconf=1
 
+# Configuration file names need to have two '.' to check proper extension detection.
+# This is why the names contain '.conf' followed by the extension which is '.json'
 # Names for DHCPv4
 DHCP4_CFG_FILE_NAME="dhcp4_test_config.conf"
 DHCP4_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${DHCP4_CFG_FILE_NAME}.json
