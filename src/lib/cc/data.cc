@@ -1177,8 +1177,7 @@ isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level) {
 
         // copy b into a list
         const size_t s = a->size();
-        typedef std::list<ConstElementPtr> ListType;
-        ListType l;
+        std::list<ConstElementPtr> l;
         for (size_t i = 0; i < s; ++i) {
             l.push_back(b->get(i));
         }
