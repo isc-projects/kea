@@ -872,8 +872,7 @@ ListElement::toJSON(std::ostream& ss) const {
     ss << "[ ";
 
     const std::vector<ElementPtr>& v = listValue();
-    for (std::vector<ElementPtr>::const_iterator it = v.begin();
-         it != v.end(); ++it) {
+    for (auto it = v.begin(); it != v.end(); ++it) {
         if (it != v.begin()) {
             ss << ", ";
         }
@@ -887,8 +886,7 @@ MapElement::toJSON(std::ostream& ss) const {
     ss << "{ ";
 
     const std::map<std::string, ConstElementPtr>& m = mapValue();
-    for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
-         it != m.end(); ++it) {
+    for (auto it = m.begin(); it != m.end(); ++it) {
         if (it != m.begin()) {
             ss << ", ";
         }
@@ -1023,8 +1021,7 @@ MapElement::equals(const Element& other) const {
         if (size() != other.size()) {
             return (false);
         }
-        for (std::map<std::string, ConstElementPtr>::const_iterator it =
-             m.begin(); it != m.end(); ++it) {
+        for (auto it = m.begin(); it != m.end(); ++it) {
             if (other.contains((*it).first)) {
                 if (!get((*it).first)->equals(*other.get((*it).first))) {
                     return (false);
@@ -1058,8 +1055,7 @@ removeIdentical(ElementPtr a, ConstElementPtr b) {
     // are removed from a if a match is found, we choose to iterate over b to
     // avoid problems with element removal affecting the iterator.
     const std::map<std::string, ConstElementPtr>& m = b->mapValue();
-    for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
-         it != m.end() ; ++it) {
+    for (auto it = m.begin(); it != m.end() ; ++it) {
         if (a->contains((*it).first)) {
             if (a->get((*it).first)->equals(*b->get((*it).first))) {
                 a->remove((*it).first);
@@ -1081,8 +1077,7 @@ removeIdentical(ConstElementPtr a, ConstElementPtr b) {
     }
 
     const std::map<std::string, ConstElementPtr>& m = a->mapValue();
-    for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
-         it != m.end() ; ++it) {
+    for (auto it = m.begin(); it != m.end() ; ++it) {
         if (!b->contains((*it).first) ||
             !a->get((*it).first)->equals(*b->get((*it).first))) {
             result->set((*it).first, (*it).second);
@@ -1100,8 +1095,7 @@ merge(ElementPtr element, ConstElementPtr other) {
     }
 
     const std::map<std::string, ConstElementPtr>& m = other->mapValue();
-    for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
-         it != m.end() ; ++it) {
+    for (auto it = m.begin(); it != m.end() ; ++it) {
         if ((*it).second && (*it).second->getType() != Element::null) {
             element->set((*it).first, (*it).second);
         } else if (element->contains((*it).first)) {
@@ -1130,8 +1124,7 @@ copy(ConstElementPtr from, int level) {
         ElementPtr result = ElementPtr(new ListElement());
         typedef std::vector<ElementPtr> ListType;
         const ListType& value = from->listValue();
-        for (ListType::const_iterator it = value.cbegin();
-             it != value.cend(); ++it) {
+        for (auto it = value.cbegin(); it != value.cend(); ++it) {
             if (level == 0) {
                 result->add(*it);
             } else {
@@ -1143,8 +1136,7 @@ copy(ConstElementPtr from, int level) {
         ElementPtr result = ElementPtr(new MapElement());
         typedef std::map<std::string, ConstElementPtr> MapType;
         const MapType& value = from->mapValue();
-        for (MapType::const_iterator it = value.cbegin();
-             it != value.cend(); ++it) {
+        for (auto it = value.cbegin(); it != value.cend(); ++it) {
             if (level == 0) {
                 result->set(it->first, it->second);
             } else {
@@ -1197,8 +1189,7 @@ isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level) {
             ConstElementPtr item = a->get(i);
             // lookup this item in the list
             bool found = false;
-            for (ListType::iterator it = l.begin();
-                 it != l.end(); ++it) {
+            for (auto it = l.begin(); it != l.end(); ++it) {
                 // if found in the list remove it
                 if (isEquivalent0(item, *it, level - 1)) {
                     found = true;
@@ -1224,8 +1215,7 @@ isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level) {
         if (a->size() != b->size()) {
             return (false);
         }
-        for (MapType::const_iterator it = ma.begin();
-             it != ma.end() ; ++it) {
+        for (auto it = ma.begin(); it != ma.end() ; ++it) {
             // get the b value for the given keyword and recurse
             ConstElementPtr item = b->get(it->first);
             if (!item || !isEquivalent0(it->second, item, level - 1)) {
@@ -1275,8 +1265,7 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
         // iterate on items
         typedef std::vector<ElementPtr> ListType;
         const ListType& l = element->listValue();
-        for (ListType::const_iterator it = l.begin();
-             it != l.end(); ++it) {
+        for (auto it = l.begin(); it != l.end(); ++it) {
             // add the separator if not the first item
             if (it != l.begin()) {
                 out << separator;
@@ -1322,8 +1311,7 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
         // iterate on keyword: value
         typedef std::map<std::string, ConstElementPtr> MapType;
         const MapType& m = element->mapValue();
-        for (MapType::const_iterator it = m.begin();
-             it != m.end(); ++it) {
+        for (auto it = m.begin(); it != m.end(); ++it) {
             // skip comment
             if (it->first == "comment") {
                 continue;
