@@ -12,6 +12,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/asio/signal_set.hpp>
 
 using namespace isc::asiolink;
@@ -21,18 +22,15 @@ namespace process {
 
 /// Implementation class of IOSignalSet.
 class IOSignalSetImpl :
-        public boost::enable_shared_from_this<IOSignalSetImpl>
+    public boost::enable_shared_from_this<IOSignalSetImpl>,
+    public boost::noncopyable
 {
-private:
-    // Prohibit copy.
-    IOSignalSetImpl(const IOSignalSetImpl& source);
-    IOSignalSetImpl& operator=(const IOSignalSetImpl& source);
 public:
     IOSignalSetImpl(IOServicePtr io_service, IOSignalHandler handler);
     ~IOSignalSetImpl(){}
     void install();
     void add(int signum);
- private:
+private:
     boost::asio::signal_set signal_set_;
     IOSignalHandler handler_;
     void callback(const boost::system::error_code& ec, int signum);
