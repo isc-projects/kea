@@ -20,19 +20,40 @@ using namespace isc::asiolink;
 namespace isc {
 namespace process {
 
-/// Implementation class of IOSignalSet.
+/// @brief Implementation class of IOSignalSet.
 class IOSignalSetImpl :
     public boost::enable_shared_from_this<IOSignalSetImpl>,
     public boost::noncopyable
 {
 public:
+    /// @brief Constructor.
+    ///
+    /// @param io_service the process IO service.
+    /// @param handler the signal handler.
     IOSignalSetImpl(IOServicePtr io_service, IOSignalHandler handler);
+
+    /// @brief Destructor.
     ~IOSignalSetImpl(){}
+
+    /// @brief Install the callback on the IO service queue.
     void install();
+
+    /// @brief Add a signal in the ASIO signal set.
+    ///
+    /// @param signum the signal number.
     void add(int signum);
+
 private:
+    /// @brief the ASIO signal set.
     boost::asio::signal_set signal_set_;
+
+    /// @brief the signal handler.
     IOSignalHandler handler_;
+
+    /// @brief the callback (called on cancel or received signal).
+    ///
+    /// The callback is installed on the IO service queue and calls
+    /// the handler if the operation was not aborted.
     void callback(const boost::system::error_code& ec, int signum);
 };
 
