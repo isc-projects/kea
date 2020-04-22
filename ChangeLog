@@ -1,5 +1,5 @@
 1740.	[bug]		fdupont
-	Incorrect signal handling in the process library (uses for
+	Incorrect signal handling in the process library (used for
 	control agent, d2 and netconf server but not by DHCPv4 or
 	DHCPv6 servers) was replaced by the boost ASIO signal set.
 	(Gitlab #1096)
