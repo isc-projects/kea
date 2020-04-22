@@ -1,3 +1,9 @@
+1740.	[bug]		fdupont
+	Incorrect signal handling in the process library (uses for
+	control agent, d2 and netconf server but not by DHCPv4 or
+	DHCPv6 servers) was replaced by the boost ASIO signal set.
+	(Gitlab #1096)
+
 1739.	[func]		razvan
 	Added multi threading configuration parameters which can be used
 	to adjust server performance according to setup resources and needs:
