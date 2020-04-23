@@ -26,7 +26,7 @@
 	for sample keeping limits.
 	(Gitlab #1005)
 
-1737.   [func]		tmark
+1737.	[func]		tmark
 	Added store-extended-info parameter to kea-dhcp4 and kea-dhcp6
 	which enables the storage of additional information per lease.
 	This has been added in anticipation of supporting LeaseQuery.
