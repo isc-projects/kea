@@ -1,3 +1,8 @@
+1741.	[func]		fdupont
+	When the MySQL InnoDB reports a deadlock (very rare event)
+	the failed query is rerun.
+	(Gitlab #1160)
+
 1740.	[bug]		fdupont
 	Incorrect signal handling in the process library (used for
 	control agent, d2 and netconf server but not by DHCPv4 or
