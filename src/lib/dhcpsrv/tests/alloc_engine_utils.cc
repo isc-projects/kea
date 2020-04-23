@@ -53,7 +53,7 @@ bool testStatistics(const std::string& stat_name, const int64_t exp_value,
                     << "value of the observed statistics '"
                     << name << "' " << "("
                     << observation->getInteger().first << ") "
-                    <<  "doesn't match expected value (" << exp_value << ")";
+                    << "doesn't match expected value (" << exp_value << ")";
             }
             return (observation->getInteger().first == exp_value);
         } else {

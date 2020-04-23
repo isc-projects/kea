@@ -97,6 +97,11 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
 
     // We should have bumped the assigned counter by 1
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 
     // Reset last allocated address to check that the other client will
     // be refused the already allocated address and will get the one
@@ -110,10 +115,10 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
 
     // We should have bumped the assigned counter by 2
     EXPECT_TRUE(testStatistics("assigned-nas", 2, subnet_->getID()));
-    cumulative += 2;
+    cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
                                cumulative, subnet_->getID()));
-    glbl_cumulative += 2;
+    glbl_cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
@@ -903,7 +908,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     // Initialize FQDN data for the lease.
     initFqdn("myhost.example.com", true, true);
 
-    // Verify the none of relevant stats are zero.
+    // Verify the all of relevant stats are zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
@@ -1172,7 +1177,8 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
                                501, 502, other_subnetid, HWAddrPtr(),
                                0));
-    int64_t other_cumulative = getStatistics("cumulative-assigned-nas", other_subnetid);
+    int64_t other_cumulative =
+        getStatistics("cumulative-assigned-nas", other_subnetid);
 
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
@@ -1525,12 +1531,22 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestNoHint) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
 
     // Assigned count should have been incremented by one.
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -1553,6 +1569,11 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitValidHint) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), true);
     ASSERT_TRUE(lease);
@@ -1562,6 +1583,9 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitValidHint) {
 
     // Assigned count should not have been incremented.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_EQ(cumulative,
+              getStatistics("cumulative-assigned-nas", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -1584,6 +1608,11 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestValidHint) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), false);
     ASSERT_TRUE(lease);
@@ -1593,6 +1622,11 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestValidHint) {
 
     // Assigned count should have been incremented.
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -1615,6 +1649,11 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitMatchingHint) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), true);
     ASSERT_TRUE(lease);
@@ -1624,6 +1663,9 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitMatchingHint) {
 
     // Assigned count should not have been incremented.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_EQ(cumulative,
+              getStatistics("cumulative-assigned-nas", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -1646,6 +1688,11 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestMatchingHint) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), false);
     ASSERT_TRUE(lease);
@@ -1655,6 +1702,11 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestMatchingHint) {
 
     // Assigned count should have been incremented.
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -1677,13 +1729,20 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitNoHint) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), true, false);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
 
     // Assigned count should not have been incremented.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-
+    EXPECT_EQ(cumulative,
+              getStatistics("cumulative-assigned-nas", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -1706,12 +1765,20 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestNoHint) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false, false);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
 
     // We should not have bumped the address counter
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_EQ(cumulative,
+              getStatistics("cumulative-assigned-nas", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -1734,6 +1801,11 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitValidHint) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), true, false);
     ASSERT_TRUE(lease);
@@ -1743,6 +1815,9 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitValidHint) {
 
     // We should not have bumped the address counter
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_EQ(cumulative,
+              getStatistics("cumulative-assigned-nas", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -1765,6 +1840,11 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestValidHint) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), false, false);
     ASSERT_TRUE(lease);
@@ -1774,6 +1854,9 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestValidHint) {
 
     // We should not have bumped the address counter
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_EQ(cumulative,
+              getStatistics("cumulative-assigned-nas", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -1796,6 +1879,11 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitMatchingHint) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), true, false);
     ASSERT_TRUE(lease);
@@ -1805,6 +1893,9 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitMatchingHint) {
 
     // We should not have bumped the address counter
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_EQ(cumulative,
+              getStatistics("cumulative-assigned-nas", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -1827,6 +1918,11 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestMatchingHint) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), false, false);
     ASSERT_TRUE(lease);
@@ -1836,6 +1932,9 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestMatchingHint) {
 
     // We should not have bumped the address counter
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_EQ(cumulative,
+              getStatistics("cumulative-assigned-nas", subnet_->getID()));
+    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
 }
 
 // In the following situation:
@@ -2100,6 +2199,11 @@ TEST_F(AllocEngine6Test, addressRenewal) {
     // Assigned count should zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     Lease6Collection leases;
 
     leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
@@ -2107,6 +2211,11 @@ TEST_F(AllocEngine6Test, addressRenewal) {
 
     // Assigned count should be one.
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
@@ -2126,6 +2235,9 @@ TEST_F(AllocEngine6Test, addressRenewal) {
 
     // Assigned count should still be one.
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks whether an address can be renewed (in-pool reservation)
@@ -2139,6 +2251,11 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
     // Assigned count should zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
+    // Get the cumulative count of assigned addresses.
+    int64_t cumulative = getStatistics("cumulative-assigned-nas",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
+
     Lease6Collection leases;
 
     leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
@@ -2147,6 +2264,11 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
 
     // Assigned count should be one.
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
@@ -2158,6 +2280,9 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
 
     // Assigned count should still be one.
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks whether a single host can have more than one reservation.

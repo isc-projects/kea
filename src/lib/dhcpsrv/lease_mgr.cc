@@ -272,7 +272,7 @@ LeaseMgr::recountLeaseStats6() {
                     stats_mgr.setValue(StatsMgr::
                                        generateName("subnet", row.subnet_id_,
                                                     "assigned-pds"),
-                                        row.state_count_);
+                                       row.state_count_);
                 }
                 break;
 
