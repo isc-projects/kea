@@ -3259,7 +3259,7 @@ threads. These settings can be found under ``multi-threading`` structure and are
 represented by:
 
 -  ``enable-multi-threading`` - use multiple threads to process packets in
-    parallel (default false).
+   parallel (default false).
 
 -  ``thread-pool-size`` - specify the number of threads to process packets in
    parallel.  Supported values are: 0 (auto detect), any positive number sets
