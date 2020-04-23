@@ -496,9 +496,9 @@ public:
         addPrefix("3001::2:0", 112, 30);
         addPrefix("3001::3:0", 112, 30);
 
-        // Subnet 40:  no leases
+        // Subnet 40: no leases
 
-        // Subnet 50:  1000 cumulative PDs, 2 assigned
+        // Subnet 50: 1000 cumulative PDs, 2 assigned
         setSubnetStat(50, "cumulative-assigned-pds", 1000);
         addPrefix("5001::1:0", 112, 50);
         addPrefix("5001::2:0", 112, 50);

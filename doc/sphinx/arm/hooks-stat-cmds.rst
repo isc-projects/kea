@@ -183,15 +183,15 @@ The response to either command will contain three elements:
       -  ``declined-nas`` - the number of NA addresses that are currently
          declined and are thus unavailable for assignment.
 
-      -  ``total-pds`` - the total number of prefixes available of DHCPv6
+      -  ``total-pds`` - the total number of PD prefixes available of DHCPv6
          management in the subnet. In other words, this is the sum of
          all prefixes in all the configured prefix pools in the subnet.
 
-      - ``cumulative-assigned-pds`` - the cumulative number of prefixes
+      - ``cumulative-assigned-pds`` - the cumulative number of PD prefixes
         in the subnet that have been assigned to a client by the server
         since it started.
 
-      -  ``assigned-pds`` - the number of prefixes in the subnet that are
+      -  ``assigned-pds`` - the number of PD prefixes in the subnet that are
          currently assigned to a client.
 
    -  ``rows`` - a list of rows, one per subnet ID. Each row contains a

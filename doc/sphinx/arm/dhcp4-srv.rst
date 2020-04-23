@@ -5666,7 +5666,7 @@ The DHCPv4 server supports the following statistics:
    |                                          |                | DHCPREQUEST message)              |
    |                                          |                | and never decreased.              |
    |                                          |                | The *id* is the subnet-id         |
-   |                                          |                | of the ubnet. This                |
+   |                                          |                | of the subnet. This               |
    |                                          |                | statistic is exposed              |
    |                                          |                | for each subnet                   |
    |                                          |                | separately, and is                |
