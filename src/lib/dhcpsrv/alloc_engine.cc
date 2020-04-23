@@ -2823,7 +2823,7 @@ AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
     stats_mgr.addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
         "reclaimed-declined-addresses"), static_cast<int64_t>(1));
 
-    // Note that we do not touch assigned-addresses counters. Those are
+    // Note that we do not touch assigned-nas counters. Those are
     // modified in whatever code calls this method.
 
     return (true);

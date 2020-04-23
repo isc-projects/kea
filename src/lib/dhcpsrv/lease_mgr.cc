@@ -254,7 +254,7 @@ LeaseMgr::recountLeaseStats6() {
                                        generateName("subnet", row.subnet_id_,
                                                     "assigned-nas"),
                                        row.state_count_);
-                } if (row.lease_state_ == Lease::STATE_DECLINED) {
+                } else if (row.lease_state_ == Lease::STATE_DECLINED) {
                     // Set subnet level value.
                     stats_mgr.setValue(StatsMgr::
                                        generateName("subnet", row.subnet_id_,

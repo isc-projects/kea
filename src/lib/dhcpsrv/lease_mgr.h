@@ -642,13 +642,15 @@ public:
     ///
     /// This method recalculates the following statistics:
     /// per-subnet:
-    /// - assigned-addresses
+    /// - assigned-nas
     /// - declined-addresses
     /// - declined-reclaimed-addresses (reset to zero)
     /// - assigned-pds
     /// global:
+    /// - assigned-nas
     /// - declined-addresses
     /// - declined-reclaimed-addresses (reset to zero)
+    /// - assigned-pds
     ///
     /// It invokes the virtual method, startLeaseStatsQuery6(), which
     /// returns an instance of an LeaseStatsQuery.  The query contains

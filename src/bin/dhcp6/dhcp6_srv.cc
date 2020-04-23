@@ -3444,13 +3444,13 @@ bool
 Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
                         boost::shared_ptr<Option6IA> ia_rsp) {
     // We do not want to decrease the assigned-nas at this time. While
-    // technically a declined address is no longer allocated, the primary usage
-    // of the assigned-addresses statistic is to monitor pool utilization. Most
-    // people would forget to include declined-addresses in the calculation,
-    // and simply do assigned-addresses/total-addresses. This would have a bias
-    // towards under-representing pool utilization, if we decreased allocated
-    // immediately after receiving DHCPDECLINE, rather than later when we recover
-    // the address.
+    // technically a declined address is no longer allocated, the
+    // primary usage of the assigned-nas statistic is to monitor pool
+    // utilization. Most people would forget to include declined-nas
+    // in the calculation, and simply do assigned-nas/total-nas. This
+    // would have a bias towards under-representing pool utilization,
+    // if we decreased allocated immediately after receiving DHCPDECLINE,
+    // rather than later when we recover the address.
 
     // Let's call lease6_decline hooks if necessary.
     if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_decline_)) {
