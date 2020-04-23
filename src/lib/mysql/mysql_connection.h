@@ -76,7 +76,7 @@ struct TaggedStatement {
     const char* text;
 };
 
-/// @brief Retry on innoDB deadlock.
+/// @brief Retry on InnoDB deadlock.
 ///
 /// When f(args) returns ER_LOCK_DEADLOCK f(args) is called again up to 5 times.
 ///
