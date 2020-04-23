@@ -116,6 +116,13 @@ points to, and the one which precedes it (random-offset - 1). If the
 number of simulated clients exceeds 65535, three bytes will be
 randomized, and so on.
 
+Perfdhcp can now simulate traffic from multiple subnets by enabling option
+-J and passing path to file that contains v4 addresses that will be used as
+giaddr in generated messages. That enable testing of vast numbers of Kea shared
+networks. Kea should be started with KEA_TEST_SEND_RESPONSES_TO_SOURCE
+environment variable to force Kea to send generated messages to source
+address of incoming packet. Feature is not available in kea-dhcp6.
+
 Templates may currently be used to generate packets being sent to the
 server in 4-way exchanges, i.e. SOLICIT, REQUEST (DHCPv6) and DISCOVER,
 REQUEST (DHCPv4). They cannot be used when RENEW or RELEASE packets are
@@ -133,6 +140,11 @@ Options
 
 ``-6``
    Establishes DHCPv6 operation. This is incompatible with the ``-4`` option.
+
+``-u``
+   Enable checking address uniqueness. Lease valid lifetime should not be shorter
+   than test duration and clients should not request address more than once without
+   releasing it first.
 
 ``-b basetype=value``
    Indicates the base MAC or DUID used to simulate different clients. The basetype
@@ -304,6 +316,13 @@ The following options only apply for DHCPv4 (i.e. when ``-4`` is given).
 ``-B``
    Forces broadcast handling.
 
+``-J<giaddr-list-file>``
+    Text file that include multiple addresses. If provided perfdhcp will choose
+    randomly one of addresses for each exchange. This is used to generate traffic
+    from multiple subnets. Designed to test shared-networks in kea-dhcp4. Kea should
+    be started with KEA_TEST_SEND_RESPONSES_TO_SOURCE=ENABLE env variable otherwise
+    perfdhcp will not be able to receive responses.
+
 DHCPv6-Only Options
 ~~~~~~~~~~~~~~~~~~~
 
@@ -383,6 +402,11 @@ Options Controlling a Test
 
 ``-t interval``
    Sets the delay (in seconds) between two successive reports.
+
+``-C<separator>``
+    Output reduced, an argument is a separator for periodic (-t) reports
+    generated in easy parsable mode. Data output won't be changed,
+    remain identical as in -t option.
 
 Arguments
 ~~~~~~~~~
