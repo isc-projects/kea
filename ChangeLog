@@ -1,3 +1,8 @@
+1743.	[doc]		tomek
+	ISC now provides a dashboard solution for Kea. Added documentation
+	pointers about the ISC Stork project.
+	(Gitlab #1191)
+
 1742.	[func]		fdupont
 	Added new cumulative statistics: for each assigned IPv4 address,
 	IPv6 NA address or IPv6 PD prefixes cumulative-assigned-addresses,
