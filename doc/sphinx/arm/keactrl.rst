@@ -276,6 +276,9 @@ Sometimes it is useful to check which servers are running. The
    Kea Netconf configuration file: /usr/local/etc/kea/kea-netconf.conf
    keactrl configuration file: /usr/local/etc/kea/keactrl.conf
 
+``keactrl status`` reporting capabilities are rather basic. If you need more extensive insight
+into the Kea health and status, you may consider deploying Stork. For details, see :ref:`stork`.
+
 .. _keactrl-overriding-servers:
 
 Overriding the Server Selection

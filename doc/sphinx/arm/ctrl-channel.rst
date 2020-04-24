@@ -51,6 +51,10 @@ Control connections over both HTTP and UNIX domain sockets are guarded
 with timeouts. The default timeout value is set to 10 seconds and is not
 configurable.
 
+This API can be used by external tools to manage and monitor Kea operation.
+An example of such a monitoring tool is ISC Stork. For details, see
+:ref:`stork`.
+
 .. _ctrl-channel-syntax:
 
 Data Syntax

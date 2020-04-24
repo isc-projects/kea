@@ -5806,6 +5806,9 @@ the default maximum sample count to 1 so only one sample will be kept by:
        ...
    }
 
+Statistics can be retrieved periodically to gain more insight into Kea operations. One tool that
+leverages that capability is ISC Stork. See :ref:`stork` for details.
+
 .. _dhcp4-ctrl-channel:
 
 Management API for the DHCPv4 Server

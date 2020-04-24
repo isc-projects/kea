@@ -168,6 +168,9 @@ Knowledgebase <https://kb.isc.org/docs>`__.
 
 The details of ``keactrl`` script usage can be found in :ref:`keactrl`.
 
+Once you have Kea services up and running, you may consider deploying a dashboard solution
+that would monitor running services. For more details, see :ref:`stork`.
+
 .. _quick-start-direct-run:
 
 Running the Kea Servers Directly

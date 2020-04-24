@@ -47,6 +47,10 @@ set to a neutral value, typically zero), or even completely remove a
 single statistic or all statistics. See the section :ref:`command-stats`
 for a list of statistics-oriented commands.
 
+Statistics can be used by external tools to monitor Kea. One example of such a tool is Stork.
+See :ref:`stork` for details how to use it to retrieve statistics periodically (and use
+other data sources) to get better insight into Kea health and operational status.
+
 .. _stats-lifecycle:
 
 Statistics Lifecycle
