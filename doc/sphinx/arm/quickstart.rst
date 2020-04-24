@@ -68,8 +68,8 @@ Kea using native packages.
 
         $ apt-get update
 
-4. Kea is splitted into various packages check entire list on `cloudsmith.io
-   <https://cloudsmith.io/~isc/repos/>`__  or in the system. For example:
+4. Kea is split into various packages. You may check the entire list on `cloudsmith.io
+   <https://cloudsmith.io/~isc/repos/>`__  or using apt/yum. For example:
 
     .. code-block:: console
 
@@ -79,7 +79,7 @@ Kea using native packages.
 
     .. code-block:: console
 
-        $ apt-get install isc-kea-dhcp6-server
+        $ sudo apt-get install isc-kea-dhcp6-server
 
    or all packages:
 
@@ -166,8 +166,7 @@ For instructions specific to your system, please read the
 available in the Kea section of `ISC's
 Knowledgebase <https://kb.isc.org/docs>`__.
 
-The details of ``keactrl`` script usage can be found in
-:ref:`keactrl`.
+The details of ``keactrl`` script usage can be found in :ref:`keactrl`.
 
 .. _quick-start-direct-run:
 
