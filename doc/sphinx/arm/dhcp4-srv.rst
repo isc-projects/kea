@@ -5338,32 +5338,6 @@ back to the available pool.
 Statistics in the DHCPv4 Server
 ===============================
 
-.. note::
-
-   This section describes DHCPv4-specific statistics. For a general
-   overview and usage of statistics, see :ref:`stats`.
-
-Beginning with Kea 1.7.7 the DHCPv4 server provides two global
-parameters to control statistics default sample limits:
-
-- ``statistic-default-sample-count`` - determines the default maximum
-  number of samples which will be kept. The special value of zero
-  means to use a default maximum age.
-
-- ``statistic-default-sample-age`` - determines the default maximum
-  age in seconds of samples which will be kept.
-
-For instance to reduce the statistic keeping overhead you can set
-the default maximum sample count to 1 so only one sample will be kept by:
-
-::
-
-     "Dhcp4": {
-       "statistic-default-sample-count": 1,
-       "subnet4": [ ... ],
-       ...
-   }
-
 The DHCPv4 server supports the following statistics:
 
 .. tabularcolumns:: |p{0.2\linewidth}|p{0.1\linewidth}|p{0.7\linewidth}|
@@ -5805,6 +5779,32 @@ The DHCPv4 server supports the following statistics:
    |                                          |                | exposed for each                  |
    |                                          |                | subnet separately.                |
    +------------------------------------------+----------------+-----------------------------------+
+
+.. note::
+
+   This section describes DHCPv4-specific statistics. For a general
+   overview and usage of statistics, see :ref:`stats`.
+
+Beginning with Kea 1.7.7 the DHCPv4 server provides two global
+parameters to control statistics default sample limits:
+
+- ``statistic-default-sample-count`` - determines the default maximum
+  number of samples which will be kept. The special value of zero
+  means to use a default maximum age.
+
+- ``statistic-default-sample-age`` - determines the default maximum
+  age in seconds of samples which will be kept.
+
+For instance to reduce the statistic keeping overhead you can set
+the default maximum sample count to 1 so only one sample will be kept by:
+
+::
+
+     "Dhcp4": {
+       "statistic-default-sample-count": 1,
+       "subnet4": [ ... ],
+       ...
+   }
 
 .. _dhcp4-ctrl-channel:
 

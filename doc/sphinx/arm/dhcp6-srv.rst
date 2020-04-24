@@ -5214,32 +5214,6 @@ back to the available pool.
 Statistics in the DHCPv6 Server
 ===============================
 
-.. note::
-
-   This section describes DHCPv6-specific statistics. For a general
-   overview and usage of statistics, see :ref:`stats`.
-
-Beginning with Kea 1.7.7 the DHCPv6 server provides two global
-parameters to control statistics default sample limits:
-
-- ``statistic-default-sample-count`` - determines the default maximum
-  number of samples which will be kept. The special value of zero
-  means to use a default maximum age.
-
-- ``statistic-default-sample-age`` - determines the default maximum
-  age in seconds of samples which will be kept.
-
-For instance to reduce the statistic keeping overhead you can set
-the default maximum sample count to 1 so only one sample will be kept by:
-
-::
-
-     "Dhcp6": {
-       "statistic-default-sample-count": 1,
-       "subnet6": [ ... ],
-       ...
-   }
-
 The DHCPv6 server supports the following statistics:
 
 .. tabularcolumns:: |p{0.2\linewidth}|p{0.1\linewidth}|p{0.7\linewidth}|
@@ -5833,6 +5807,32 @@ The DHCPv6 server supports the following statistics:
    |                                         |                       | exposed for each       |
    |                                         |                       | subnet separately.     |
    +-----------------------------------------+-----------------------+------------------------+
+
+.. note::
+
+   This section describes DHCPv6-specific statistics. For a general
+   overview and usage of statistics, see :ref:`stats`.
+
+Beginning with Kea 1.7.7 the DHCPv6 server provides two global
+parameters to control statistics default sample limits:
+
+- ``statistic-default-sample-count`` - determines the default maximum
+  number of samples which will be kept. The special value of zero
+  means to use a default maximum age.
+
+- ``statistic-default-sample-age`` - determines the default maximum
+  age in seconds of samples which will be kept.
+
+For instance to reduce the statistic keeping overhead you can set
+the default maximum sample count to 1 so only one sample will be kept by:
+
+::
+
+     "Dhcp6": {
+       "statistic-default-sample-count": 1,
+       "subnet6": [ ... ],
+       ...
+   }
 
 .. _dhcp6-ctrl-channel:
 
