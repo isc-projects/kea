@@ -46,8 +46,7 @@ namespace ha {
 
 CommunicationState::CommunicationState(const IOServicePtr& io_service,
                                        const HAConfigPtr& config)
-    : io_service_(io_service), config_(config), timer_(),
-      timer_mutex_(new std::mutex()), interval_(0),
+    : io_service_(io_service), config_(config), timer_(), interval_(0),
       poke_time_(boost::posix_time::microsec_clock::universal_time()),
       heartbeat_impl_(0), partner_state_(-1), partner_scopes_(),
       clock_skew_(0, 0, 0, 0), last_clock_skew_warn_(),
@@ -94,7 +93,6 @@ CommunicationState::setPartnerScopes(ConstElementPtr new_scopes) {
 void
 CommunicationState::startHeartbeat(const long interval,
                                    const boost::function<void()>& heartbeat_impl) {
-    std::lock_guard<std::mutex> lock(*timer_mutex_);
     startHeartbeatInternal(interval, heartbeat_impl);
 }
 
@@ -141,7 +139,6 @@ CommunicationState::startHeartbeatInternal(const long interval,
 
 void
 CommunicationState::stopHeartbeat() {
-    std::lock_guard<std::mutex> lock(*timer_mutex_);
     if (timer_) {
         timer_->cancel();
         timer_.reset();
@@ -162,7 +159,6 @@ CommunicationState::poke() {
     // seems to be (re)established.
     clearUnackedClients();
 
-    std::lock_guard<std::mutex> lock(*timer_mutex_);
     if (timer_) {
         // Check the duration since last poke. If it is less than a second, we don't
         // want to reschedule the timer. The only case when the poke time duration is

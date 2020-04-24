@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,6 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <map>
-#include <mutex>
 #include <set>
 #include <string>
 
@@ -135,7 +134,6 @@ public:
     ///
     /// @return true if heartbeat is running, false otherwise.
     bool isHeartbeatRunning() const {
-        std::lock_guard<std::mutex> lock(*timer_mutex_);
         return (static_cast<bool>(timer_));
     }
 
@@ -307,9 +305,6 @@ protected:
 
     /// @brief Interval timer triggering heartbeat commands.
     asiolink::IntervalTimerPtr timer_;
-
-    /// @brief Mutex to protect timer_ concurrent accesses.
-    boost::shared_ptr<std::mutex> timer_mutex_;
 
     /// @brief Interval specified for the heartbeat.
     long interval_;
