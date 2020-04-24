@@ -626,7 +626,7 @@ ddns_replace_client_name_value:
   | WHEN_NOT_PRESENT {
       $$ = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(@1)));
       }
-  | BOOLEAN  {
+  | BOOLEAN {
       error(@1, "boolean values for the replace-client-name are "
                 "no longer supported");
       }
@@ -1959,7 +1959,7 @@ ip_addresses: IP_ADDRESSES {
     ctx.leave();
 };
 
-prefixes: PREFIXES  {
+prefixes: PREFIXES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("prefixes", l);
     ctx.stack_.push_back(l);

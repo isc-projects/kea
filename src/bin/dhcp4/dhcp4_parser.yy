@@ -618,7 +618,7 @@ ddns_replace_client_name_value:
   | WHEN_NOT_PRESENT {
       $$ = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(@1)));
       }
-  | BOOLEAN  {
+  | BOOLEAN {
       error(@1, "boolean values for the replace-client-name are "
                 "no longer supported");
       }
