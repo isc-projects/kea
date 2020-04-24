@@ -69,7 +69,7 @@ Kea using native packages.
         $ apt-get update
 
 4. Kea is split into various packages. You may check the entire list on `cloudsmith.io
-   <https://cloudsmith.io/~isc/repos/>`__  or using apt/yum. For example:
+   <https://cloudsmith.io/~isc/repos/>`__  or using apt/yum/dnf. For example:
 
     .. code-block:: console
 
