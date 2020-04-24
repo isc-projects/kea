@@ -26,10 +26,10 @@ and BIND9. Stork can address a variety of scenarios:
 
 Stork is available in source code, but also as native Deb and RPM packages, which makes it easy
 to install on most popular systems. For more details, please see
-
 `Stork ARM <https://stork.readthedocs.io>`_ or `Stork project page <https://gitlab.isc.org/isc-projects/stork>`_.
 The former has a nice collection of screenshots that is frequently updated. It will let you quickly
-formulate a first impression of what is currently available.
+formulate a first impression of what is currently available. Stork is being rapidly developed with
+monthly release. Please check back frequently.
 
 .. _grafana:
 .. _prometheus:
