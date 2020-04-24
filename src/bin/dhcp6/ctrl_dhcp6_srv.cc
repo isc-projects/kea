@@ -227,11 +227,13 @@ ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr args)
     }
 
     ControlledDhcpv6Srv::getInstance()->shutdownServer(exit_value);
-    return(createAnswer(CONTROL_RESULT_SUCCESS, "Shutting down."));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Shutting down."));
 }
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
+    // pause dhcp service when reloading libraries
+    MultiThreadingCriticalSection cs;
     /// @todo delete any stored CalloutHandles referring to the old libraries
     /// Get list of currently loaded libraries and reload them.
     HookLibsCollection loaded = HooksManager::getLibraryInfo();
@@ -354,6 +356,9 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
                                                            message);
         return (result);
     }
+
+    // disable multi-threading (it will be applied by new configuration)
+    MultiThreadingMgr::instance().apply(false, 0, 0);
 
     // We are starting the configuration process so we should remove any
     // staging configuration that has been created during previous
@@ -665,8 +670,8 @@ ControlledDhcpv6Srv::processCommand(const string& command,
 
     if (!srv) {
         ConstElementPtr no_srv = isc::config::createAnswer(1,
-          "Server object not initialized, can't process command '" +
-          command + "', arguments: '" + txt + "'.");
+            "Server object not initialized, so can't process command '" +
+            command + "', arguments: '" + txt + "'.");
         return (no_srv);
     }
 
@@ -722,7 +727,8 @@ ControlledDhcpv6Srv::processCommand(const string& command,
 
     } catch (const Exception& ex) {
         return (isc::config::createAnswer(1, "Error while processing command '"
-                                          + command + "':" + ex.what()));
+                                          + command + "':" + ex.what() +
+                                          ", params: '" + txt + "'"));
     }
 }
 

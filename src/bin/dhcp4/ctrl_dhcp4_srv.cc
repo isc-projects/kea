@@ -229,6 +229,8 @@ ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr args)
 
 ConstElementPtr
 ControlledDhcpv4Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
+    // pause dhcp service when reloading libraries
+    MultiThreadingCriticalSection cs;
     /// @todo delete any stored CalloutHandles referring to the old libraries
     /// Get list of currently loaded libraries and reload them.
     HookLibsCollection loaded = HooksManager::getLibraryInfo();
@@ -351,6 +353,9 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
                                                            message);
         return (result);
     }
+
+    // disable multi-threading (it will be applied by new configuration)
+    MultiThreadingMgr::instance().apply(false, 0, 0);
 
     // We are starting the configuration process so we should remove any
     // staging configuration that has been created during previous
@@ -662,8 +667,8 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
     if (!srv) {
         ConstElementPtr no_srv = isc::config::createAnswer(1,
-          "Server object not initialized, so can't process command '" +
-          command + "', arguments: '" + txt + "'.");
+            "Server object not initialized, so can't process command '" +
+            command + "', arguments: '" + txt + "'.");
         return (no_srv);
     }
 
@@ -713,9 +718,10 @@ ControlledDhcpv4Srv::processCommand(const string& command,
         } else if (command == "status-get") {
             return (srv->commandStatusGetHandler(command, args));
         }
-        ConstElementPtr answer = isc::config::createAnswer(1,
-                                 "Unrecognized command:" + command);
-        return (answer);
+
+        return (isc::config::createAnswer(1, "Unrecognized command:"
+                                          + command));
+
     } catch (const Exception& ex) {
         return (isc::config::createAnswer(1, "Error while processing command '"
                                           + command + "':" + ex.what() +
