@@ -52,6 +52,7 @@ rst_arm_sources+=arm/netconf.rst
 rst_arm_sources+=arm/quickstart.rst
 rst_arm_sources+=arm/shell.rst
 rst_arm_sources+=arm/stats.rst
+rst_arm_sources+=arm/stork.rst
 
 main_sources=$(rst_arm_sources) conf.py $(static_sources)
 
