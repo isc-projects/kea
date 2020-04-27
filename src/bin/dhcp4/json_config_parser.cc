@@ -447,6 +447,9 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            // The hooks-libraries configuration must be parsed after parsing
+            // multi-threading configuration so that libraries are checked
+            // for multi-threading compatibility.
             if (config_pair.first == "hooks-libraries") {
                 HooksLibrariesParser hooks_parser;
                 HooksConfig& libraries = srv_cfg->getHooksConfig();

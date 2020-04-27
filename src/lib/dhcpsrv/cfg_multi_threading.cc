@@ -20,22 +20,30 @@ namespace dhcp {
 void
 CfgMultiThreading::apply(ConstElementPtr value) {
         bool enabled = false;
-        uint32_t thread_pool_size = 0;
-        uint32_t thread_queue_size = 0;
+        uint32_t thread_count = 0;
+        uint32_t queue_size = 0;
+        CfgMultiThreading::extract(value, enabled, thread_count, queue_size);
+        MultiThreadingMgr::instance().apply(enabled, thread_count, queue_size);
+}
+
+void
+CfgMultiThreading::extract(ConstElementPtr value, bool& enabled,
+                           uint32_t& thread_count, uint32_t& queue_size) {
+        enabled = false;
+        thread_count = 0;
+        queue_size = 0;
         if (value) {
             if (value->get("enable-multi-threading")) {
                 enabled = SimpleParser::getBoolean(value, "enable-multi-threading");
             }
             if (value->get("thread-pool-size")) {
-                thread_pool_size = SimpleParser::getInteger(value, "thread-pool-size");
+                thread_count = SimpleParser::getInteger(value, "thread-pool-size");
             }
             if (value->get("packet-queue-size")) {
-                thread_queue_size = SimpleParser::getInteger(value, "packet-queue-size");
+                queue_size = SimpleParser::getInteger(value, "packet-queue-size");
             }
         }
-        MultiThreadingMgr::instance().apply(enabled, thread_pool_size,
-                                            thread_queue_size);
-    }
+}
 
 }  // namespace dhcp
 }  // namespace isc

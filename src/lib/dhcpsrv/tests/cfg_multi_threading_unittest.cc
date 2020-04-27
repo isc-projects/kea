@@ -43,7 +43,48 @@ CfgMultiThreadingTest::TearDown() {
     MultiThreadingMgr::instance().apply(false, 0 , 0);
 }
 
-// Verifies that applying multi threading setting works
+/// @brief Verifies that extracting multi threading settings works
+TEST_F(CfgMultiThreadingTest, extract) {
+    bool enabled = false;
+    uint32_t thread_count = 0;
+    uint32_t queue_size = 0;
+    std::string content_json =
+        "{"
+        "    \"enable-multi-threading\": true,\n"
+        "    \"thread-pool-size\": 4,\n"
+        "    \"packet-queue-size\": 64\n"
+        "}";
+    ConstElementPtr param;
+    ASSERT_NO_THROW(param = Element::fromJSON(content_json))
+                            << "invalid context_json, test is broken";
+    ASSERT_NO_THROW(CfgMultiThreading::extract(param, enabled, thread_count,
+                                               queue_size));
+    EXPECT_EQ(enabled, true);
+    EXPECT_EQ(thread_count, 4);
+    EXPECT_EQ(queue_size, 64);
+
+    content_json = "{}";
+    ASSERT_NO_THROW(param = Element::fromJSON(content_json))
+                            << "invalid context_json, test is broken";
+    //check empty config
+    ASSERT_NO_THROW(CfgMultiThreading::extract(param, enabled, thread_count,
+                    queue_size));
+    EXPECT_EQ(enabled, false);
+    EXPECT_EQ(thread_count, 0);
+    EXPECT_EQ(queue_size, 0);
+
+    enabled = true;
+    thread_count = 4;
+    queue_size = 64;
+    // check empty data
+    ASSERT_NO_THROW(CfgMultiThreading::extract(ConstElementPtr(), enabled,
+                    thread_count, queue_size));
+    EXPECT_EQ(enabled, false);
+    EXPECT_EQ(thread_count, 0);
+    EXPECT_EQ(queue_size, 0);
+}
+
+/// @brief Verifies that applying multi threading settings works
 TEST_F(CfgMultiThreadingTest, apply) {
     EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
     EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);

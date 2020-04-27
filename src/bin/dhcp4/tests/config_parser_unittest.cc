@@ -4013,7 +4013,8 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
 // Helper function to return a configuration containing an arbitrary number
 // of hooks libraries.
 std::string
-buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
+buildHooksLibrariesConfig(const std::vector<std::string>& libraries,
+                          bool multi_threading) {
 
     // Create the first part of the configuration string.
     string config =
@@ -4055,8 +4056,17 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\""
-        " } ]"
-        "}");
+        " } ]");
+
+    if (multi_threading) {
+        config += string(
+            ","
+            "\"multi-threading\": {"
+            "    \"enable-multi-threading\": true"
+            "}");
+    }
+
+    config += string("}");
 
     return (config);
 }
@@ -4073,7 +4083,7 @@ buildHooksLibrariesConfig(const char* library1 = NULL,
             libraries.push_back(string(library2));
         }
     }
-    return (buildHooksLibrariesConfig(libraries));
+    return (buildHooksLibrariesConfig(libraries, false));
 }
 
 // The goal of this test is to verify the configuration of hooks libraries if
@@ -4143,7 +4153,74 @@ TEST_F(Dhcp4ParserTest, LibrariesSpecified) {
     // Expect the hooks system to say that none are loaded.
     libraries = HooksManager::getLibraryNames();
     EXPECT_TRUE(libraries.empty());
+}
 
+// Verify the configuration of hooks libraries which are not compatible with
+// multi threading is rejected.
+TEST_F(Dhcp4ParserTest, IncompatibleLibrary1Specified) {
+    // Marker files should not be present.
+    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    std::vector<std::string> libraries;
+    libraries.push_back(string(CALLOUT_LIBRARY_2));
+
+    // Set up the configuration with two libraries and load them.
+    string config = buildHooksLibrariesConfig(libraries, true);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // The status object must not be NULL
+    ASSERT_TRUE(status);
+
+    // Returned value should not be 0
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_NE(0, rcode_);
+
+    // Expect the library to be rejected by the server (no load marker file, no
+    // unload marker file).
+    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Expect the hooks system to say that none are loaded.
+    libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(libraries.empty());
+}
+
+// Verify the configuration of hooks libraries which are not compatible with
+// multi threading is rejected.
+TEST_F(Dhcp4ParserTest, IncompatibleLibrary2Specified) {
+    // Marker files should not be present.
+    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    std::vector<std::string> libraries;
+    libraries.push_back(string(CALLOUT_LIBRARY_3));
+
+    // Set up the configuration with two libraries and load them.
+    string config = buildHooksLibrariesConfig(libraries, true);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // The status object must not be NULL
+    ASSERT_TRUE(status);
+
+    // Returned value should not be 0
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_NE(0, rcode_);
+
+    // Expect the library to be rejected by the server (no load marker file, no
+    // unload marker file).
+    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Expect the hooks system to say that none are loaded.
+    libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(libraries.empty());
 }
 
 // This test verifies that it is possible to select subset of interfaces

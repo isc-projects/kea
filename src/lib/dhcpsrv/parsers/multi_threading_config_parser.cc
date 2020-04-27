@@ -5,11 +5,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <cc/data.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/parsers/multi_threading_config_parser.h>
-#include <cc/data.h>
+#include <util/multi_threading_mgr.h>
 
 using namespace isc::data;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -25,7 +28,7 @@ MultiThreadingConfigParser::parse(SrvConfig& srv_cfg,
     }
 
     // enable-multi-threading is mandatory
-    getBoolean(value, "enable-multi-threading");
+    auto enabled = getBoolean(value, "enable-multi-threading");
 
     // thread-pool-size is not mandatory
     if (value->get("thread-pool-size")) {
@@ -62,6 +65,7 @@ MultiThreadingConfigParser::parse(SrvConfig& srv_cfg,
     }
 
     srv_cfg.setDHCPMultiThreading(value);
+    MultiThreadingMgr::instance().setMode(enabled);
 }
 
 }  // namespace dhcp

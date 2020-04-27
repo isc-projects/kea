@@ -8,6 +8,8 @@
 
 #include <cc/data.h>
 #include <dhcpsrv/parsers/multi_threading_config_parser.h>
+#include <dhcpsrv/cfg_multi_threading.h>
+#include <util/multi_threading_mgr.h>
 #include <testutils/test_to_element.h>
 
 #include <gtest/gtest.h>
@@ -15,6 +17,7 @@
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::test;
+using namespace isc::util;
 
 namespace {
 
@@ -31,10 +34,12 @@ protected:
 
 void
 MultiThreadingConfigParserTest::SetUp() {
+    MultiThreadingMgr::instance().setMode(false);
 }
 
 void
 MultiThreadingConfigParserTest::TearDown() {
+    MultiThreadingMgr::instance().setMode(false);
 }
 
 // Verifies that MultiThreadingConfigParser handles
@@ -46,6 +51,12 @@ TEST_F(MultiThreadingConfigParserTest, validContent) {
     };
 
     std::vector<Scenario> scenarios = {
+        {
+        "enable-multi-threading, without thread-pool-size or packet-queue-size",
+        "{ \n"
+        "   \"enable-multi-threading\": true, \n"
+        "} \n"
+        },
         {
         "enable-multi-threading disabled",
         "{ \n"
@@ -84,6 +95,15 @@ TEST_F(MultiThreadingConfigParserTest, validContent) {
             multi_threading_config = srv_config.getDHCPMultiThreading();
             // Verify the resultant configuration.
             ASSERT_TRUE(multi_threading_config);
+
+            bool enabled = false;
+            uint32_t thread_count = 0;
+            uint32_t queue_size = 0;
+
+            CfgMultiThreading::extract(multi_threading_config, enabled,
+                                       thread_count, queue_size);
+
+            EXPECT_EQ(MultiThreadingMgr::instance().getMode(), enabled);
 
             EXPECT_TRUE(multi_threading_config->equals(*config_elems));
         }
