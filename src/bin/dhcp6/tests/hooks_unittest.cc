@@ -4899,7 +4899,7 @@ TEST_F(LoadUnloadDhcpv6SrvTest, unloadLibraries) {
 }
 
 // Verifies that libraries incompatible with multi threading are not loaded by
-// the server
+// the server.
 // The callout libraries write their library index number to a marker
 // file upon load and unload, making it simple to test whether or not
 // the load and unload callouts have been invoked.

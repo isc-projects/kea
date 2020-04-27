@@ -475,7 +475,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, libreload) {
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
 }
 
-// Check that the "libreload" command will reload libraries when MT is enabled
+// Check that the "libreload" command will fail to reload libraries which are
+// not compatible when multi-threading is enabled
 TEST_F(CtrlChannelDhcpv6SrvTest, libreloadFailMultiThreading) {
     createUnixChannelServer();
 

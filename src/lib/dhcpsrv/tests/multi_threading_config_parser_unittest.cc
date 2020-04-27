@@ -54,7 +54,7 @@ TEST_F(MultiThreadingConfigParserTest, validContent) {
         {
         "enable-multi-threading, without thread-pool-size or packet-queue-size",
         "{ \n"
-        "   \"enable-multi-threading\": true, \n"
+        "   \"enable-multi-threading\": true \n"
         "} \n"
         },
         {
