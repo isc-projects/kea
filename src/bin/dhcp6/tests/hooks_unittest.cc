@@ -29,6 +29,7 @@
 #include <cc/command_interpreter.h>
 #include <dhcp6/tests/marker_file.h>
 #include <dhcp6/tests/test_libraries.h>
+#include <util/multi_threading_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -967,12 +968,14 @@ public:
     LoadUnloadDhcpv6SrvTest()
         : Dhcpv6SrvTest() {
         reset();
+        MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Destructor
     ~LoadUnloadDhcpv6SrvTest() {
         server_.reset();
         reset();
+        MultiThreadingMgr::instance().setMode(false);
     };
 
     /// @brief Reset hooks data
@@ -4874,8 +4877,8 @@ TEST_F(LoadUnloadDhcpv6SrvTest, unloadLibraries) {
     libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_1),
                                   ConstElementPtr()));
     libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_2),
-
                                   ConstElementPtr()));
+
     ASSERT_TRUE(HooksManager::loadLibraries(libraries));
 
     // Verify that they load functions created the LOAD_MARKER_FILE
@@ -4893,7 +4896,53 @@ TEST_F(LoadUnloadDhcpv6SrvTest, unloadLibraries) {
     // this should be reflected in the unload file.
     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+}
 
+// Verifies that libraries incompatible with multi threading are not loaded by
+// the server
+// The callout libraries write their library index number to a marker
+// file upon load and unload, making it simple to test whether or not
+// the load and unload callouts have been invoked.
+TEST_F(LoadUnloadDhcpv6SrvTest, failLoadIncompatibleLibraries) {
+
+    ASSERT_NO_THROW(server_.reset(new NakedDhcpv6Srv(0)));
+
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Ensure no marker files to start with.
+    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Load the test libraries
+    HookLibsCollection libraries;
+    libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_2),
+                                  ConstElementPtr()));
+
+    ASSERT_FALSE(HooksManager::loadLibraries(libraries));
+
+    // The library is missing multi_threading_compatible function so loading
+    // should fail
+    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    libraries.clear();
+    libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_3),
+                                  ConstElementPtr()));
+
+    ASSERT_FALSE(HooksManager::loadLibraries(libraries));
+
+    // The library is not multi threading compatible so loading should fail
+    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Destroy the server, instance which should unload the libraries.
+    server_.reset();
+
+    // Check that the libraries were unloaded. The libraries are
+    // unloaded in the reverse order to which they are loaded, and
+    // this should be reflected in the unload file.
+    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 }
 
 // Checks if callouts installed on the dhcp6_srv_configured ared indeed called

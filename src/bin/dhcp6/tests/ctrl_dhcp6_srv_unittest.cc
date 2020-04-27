@@ -18,10 +18,11 @@
 #include <hooks/hooks_manager.h>
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
+#include <util/boost_time_utils.h>
+#include <util/multi_threading_mgr.h>
 #include <testutils/io_utils.h>
 #include <testutils/unix_control_client.h>
 #include <testutils/sandbox.h>
-#include <util/boost_time_utils.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
@@ -31,14 +32,13 @@
 
 #include <iomanip>
 #include <sstream>
+#include <thread>
 
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <cstdlib>
 #include <unistd.h>
-
-#include <thread>
 
 using namespace std;
 using namespace isc;
@@ -50,6 +50,7 @@ using namespace isc::dhcp::test;
 using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::test;
+using namespace isc::util;
 
 namespace {
 
@@ -149,12 +150,14 @@ public:
             socket_path_ = sandbox.join("/kea6.sock");
         }
         reset();
+        MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Destructor
     ~CtrlChannelDhcpv6SrvTest() {
         server_.reset();
         reset();
+        MultiThreadingMgr::instance().setMode(false);
     };
 
     /// @brief Returns pointer to the server's IO service.
@@ -470,6 +473,53 @@ TEST_F(CtrlChannelDhcpv6SrvTest, libreload) {
     // they should append information to the loading marker file.
     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
+}
+
+// Check that the "libreload" command will reload libraries when MT is enabled
+TEST_F(CtrlChannelDhcpv6SrvTest, libreloadFailMultiThreading) {
+    createUnixChannelServer();
+
+    // Ensure no marker files to start with.
+    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Load two libraries
+    HookLibsCollection libraries;
+    libraries.push_back(make_pair(CALLOUT_LIBRARY_1, ConstElementPtr()));
+    libraries.push_back(make_pair(CALLOUT_LIBRARY_2, ConstElementPtr()));
+    HooksManager::loadLibraries(libraries);
+
+    // Check they are loaded.
+    HookLibsCollection loaded_libraries =
+        HooksManager::getLibraryInfo();
+    ASSERT_TRUE(libraries == loaded_libraries);
+
+    // ... which also included checking that the marker file created by the
+    // load functions exists and holds the correct value (of "12" - the
+    // first library appends "1" to the file, the second appends "2"). Also
+    // check that the unload marker file does not yet exist.
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Enable multi-threading before libreload command which should now fail
+    // as the second library is not multi-threading compatible.
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Now execute the "libreload" command.  This should cause the libraries
+    // to unload and to reload.
+    std::string response;
+    sendUnixCommand("{ \"command\": \"libreload\" }", response);
+    EXPECT_EQ("{ \"result\": 1, "
+              "\"text\": \"Failed to reload hooks libraries.\" }"
+              , response);
+
+    // Check that the libraries have unloaded and failed to reload.  The
+    // libraries are unloaded in the reverse order to which they are loaded.
+    // When they load, they should append information to the loading marker
+    // file.  Failing to load the second library will also unload the first
+    // library.
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "211"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "121"));
 }
 
 typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;

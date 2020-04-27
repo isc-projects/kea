@@ -14,3 +14,17 @@ static const int LIBRARY_NUMBER = 1;
 #include <config.h>
 
 #include <dhcp6/tests/callout_library_common.h>
+
+// Functions accessed by the hooks framework use C linkage to avoid the name
+// mangling that accompanies use of the C++ compiler as well as to avoid
+// issues related to namespaces.
+extern "C" {
+
+/// @brief This function is called to retrieve the multi-threading compatibility.
+///
+/// @return 1 which means compatible with multi-threading.
+int multi_threading_compatible() {
+    return (1);
+}
+
+} // end extern "C"
