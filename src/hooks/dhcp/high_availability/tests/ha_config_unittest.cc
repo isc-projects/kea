@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,6 +73,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
         "        \"max-response-delay\": 11,"
         "        \"max-ack-delay\": 5,"
         "        \"max-unacked-clients\": 20,"
+        "        \"wait-backup-ack\": false,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server1\","
@@ -123,6 +124,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(11, impl->getConfig()->getMaxResponseDelay());
     EXPECT_EQ(5, impl->getConfig()->getMaxAckDelay());
     EXPECT_EQ(20, impl->getConfig()->getMaxUnackedClients());
+    EXPECT_FALSE(impl->getConfig()->amWaitingBackupAck());
 
     HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
     ASSERT_TRUE(cfg);
@@ -228,6 +230,7 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_EQ(10000, impl->getConfig()->getHeartbeatDelay());
     EXPECT_EQ(10000, impl->getConfig()->getMaxAckDelay());
     EXPECT_EQ(10, impl->getConfig()->getMaxUnackedClients());
+    EXPECT_TRUE(impl->getConfig()->amWaitingBackupAck());
 
     HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
     ASSERT_TRUE(cfg);

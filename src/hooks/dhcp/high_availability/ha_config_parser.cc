@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,14 +20,15 @@ namespace {
 
 /// @brief Default values for HA configuration.
 const SimpleDefaults HA_CONFIG_DEFAULTS = {
+    { "heartbeat-delay", Element::integer, "10000" },
+    { "max-ack-delay", Element::integer, "10000" },
+    { "max-response-delay", Element::integer, "60000" },
+    { "max-unacked-clients", Element::integer, "10" },
     { "send-lease-updates", Element::boolean, "true" },
     { "sync-leases", Element::boolean, "true" },
     { "sync-timeout", Element::integer, "60000" },
     { "sync-page-limit", Element::integer, "10000" },
-    { "heartbeat-delay", Element::integer, "10000" },
-    { "max-response-delay", Element::integer, "60000" },
-    { "max-ack-delay", Element::integer, "10000" },
-    { "max-unacked-clients", Element::integer, "10" }
+    { "wait-backup-ack", Element::boolean, "true" }
 };
 
 /// @brief Default values for HA peer configuration.
@@ -156,6 +157,9 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     // Get 'max-unacked-clients'.
     uint32_t max_unacked_clients = getAndValidateInteger<uint32_t>(c, "max-unacked-clients");
     config_storage->setMaxUnackedClients(max_unacked_clients);
+
+    // Get 'wait-backup-ack'.
+    config_storage->setWaitBackupAck(getBoolean(c, "wait-backup-ack"));
 
     // Peers configuration parsing.
     const auto& peers_vec = peers->listValue();

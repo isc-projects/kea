@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -141,7 +141,8 @@ HAConfig::HAConfig()
     : this_server_name_(), ha_mode_(HOT_STANDBY), send_lease_updates_(true),
       sync_leases_(true), sync_timeout_(60000), sync_page_limit_(10000),
       heartbeat_delay_(10000), max_response_delay_(60000), max_ack_delay_(10000),
-      max_unacked_clients_(10), peers_(), state_machine_(new StateMachineConfig()) {
+      max_unacked_clients_(10), wait_backup_ack_(true), peers_(),
+      state_machine_(new StateMachineConfig()) {
 }
 
 HAConfig::PeerConfigPtr

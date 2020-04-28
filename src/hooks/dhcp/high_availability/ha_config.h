@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -438,6 +438,25 @@ public:
         max_unacked_clients_ = max_unacked_clients;
     }
 
+    /// @brief Configures the server to wait/not wait for the lease update
+    /// acknowledgments from the backup servers.
+    ///
+    /// @param wait_backup_ack indicates that the server should wait for the
+    /// lease update acknowledgments from the backup servers (if true) or
+    /// that it should not (if false).
+    void setWaitBackupAck(const bool wait_backup_ack) {
+        wait_backup_ack_ = wait_backup_ack;
+    }
+
+    /// @brief Checks if the server is configured to wait for tha acknowledgments
+    /// to the lease updates from the backup server or not.
+    ///
+    /// @return true if the server is configured to wait for the acknowledgments
+    /// or false otherwise.
+    bool amWaitingBackupAck() const {
+        return (wait_backup_ack_);
+    }
+
     /// @brief Returns configuration of the specified server.
     ///
     /// @param name Server name.
@@ -501,6 +520,7 @@ public:
     uint32_t max_response_delay_;         ///< Max delay in response to heartbeats.
     uint32_t max_ack_delay_;              ///< Maximum DHCP message ack delay.
     uint32_t max_unacked_clients_;        ///< Maximum number of unacked clients.
+    bool wait_backup_ack_;                ///< Wait for lease update ack from backup?
     PeerConfigMap peers_;                 ///< Map of peers' configurations.
     StateMachineConfigPtr state_machine_; ///< State machine configuration.
 };
