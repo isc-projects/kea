@@ -606,8 +606,10 @@ ControlledDhcpv6Srv::commandConfigBackendPullHandler(const std::string&,
     }
 
     // Code from cbFetchUpdates.
+    // The configuration to use is the current one because this is called
+    // after the configuration manager commit.
     try {
-        auto srv_cfg = CfgMgr::instance().getStagingCfg();
+        auto srv_cfg = CfgMgr::instance().getCurrentCfg();
         auto mode = CBControlDHCPv6::FetchMode::FETCH_UPDATE;
         server_->getCBControl()->databaseConfigFetch(srv_cfg, mode);
     } catch (const std::exception& ex) {

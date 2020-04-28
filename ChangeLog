@@ -1,3 +1,8 @@
+1757.	[bug]		fdupont
+	config-backend-pull commands were fixed to be applied to the
+	current configuration
+	(Gitlab #1189)
+
 1756.	[bug]		fdupont
 	Made the parking lot API generic thread safe.
 	(Gitlab #1255)
