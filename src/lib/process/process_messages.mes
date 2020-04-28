@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,6 +48,10 @@ may be provided.
 % DCTL_CONFIG_DEPRECATED server configuration includes a deprecated object: %1
 This warning message is issued when the configuration includes a deprecated
 object (i.e. a top level element) which will be ignored.
+
+% DCTL_DEVELOPMENT_VERSION This software is a development branch of Kea. It is not recommended for production use.
+This warning message is displayed when the version is a development
+(vs stable) one: the second number of the version is odd.
 
 % DCTL_CONFIG_FETCH Fetching configuration data from config backends.
 This is an informational message emitted when the Kea server is about to begin

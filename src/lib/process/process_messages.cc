@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/process/process_messages.mes on Thu Jun 13 2019 01:25
+// File created from ../../../src/lib/process/process_messages.mes on Tue Apr 28 2020 15:46
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -21,6 +21,7 @@ extern const isc::log::MessageID DCTL_CONFIG_LOAD_FAIL = "DCTL_CONFIG_LOAD_FAIL"
 extern const isc::log::MessageID DCTL_CONFIG_START = "DCTL_CONFIG_START";
 extern const isc::log::MessageID DCTL_CONFIG_STUB = "DCTL_CONFIG_STUB";
 extern const isc::log::MessageID DCTL_CONFIG_UPDATE = "DCTL_CONFIG_UPDATE";
+extern const isc::log::MessageID DCTL_DEVELOPMENT_VERSION = "DCTL_DEVELOPMENT_VERSION";
 extern const isc::log::MessageID DCTL_INIT_PROCESS = "DCTL_INIT_PROCESS";
 extern const isc::log::MessageID DCTL_INIT_PROCESS_FAIL = "DCTL_INIT_PROCESS_FAIL";
 extern const isc::log::MessageID DCTL_NOT_RUNNING = "DCTL_NOT_RUNNING";
@@ -57,6 +58,7 @@ const char* values[] = {
     "DCTL_CONFIG_START", "parsing new configuration: %1",
     "DCTL_CONFIG_STUB", "%1 configuration stub handler called",
     "DCTL_CONFIG_UPDATE", "%1 updated configuration received: %2",
+    "DCTL_DEVELOPMENT_VERSION", "This software is a development branch of Kea. It is not recommended for production use.",
     "DCTL_INIT_PROCESS", "%1 initializing the application",
     "DCTL_INIT_PROCESS_FAIL", "%1 application initialization failed: %2",
     "DCTL_NOT_RUNNING", "%1 application instance is not running",

@@ -41,7 +41,7 @@ else
         KEA_SRCID="tarball"
         AC_MSG_RESULT("tarball")
 fi
-# Export EXTENDED_VERSION to config.h
+# Export KEA_SRCID to config.h
 # This will be either "tarball" or "git abcd".
 # We do not want to put this in a config.h, because it messes up ccache
 # horribly. When building different branches, the commit-id is different
@@ -49,6 +49,16 @@ fi
 # content, ccache can't use cached content and thus has to do full compilation.
 # Now it is in kea_version.h and config.status substitutes it.
 AC_SUBST(KEA_SRCID)
+
+# Check whether the version is a development one (odd minor).
+AC_MSG_CHECKING(whether this is a development or stable version)
+PACKAGE_VERSION_MINOR=`echo $PACKAGE_VERSION | cut -d '.' -f 2`
+PACKAGE_VERSION_TYPE="stable"
+if expr "$PACKAGE_VERSION_MINOR" % 2 = 1; then
+        PACKAGE_VERSION_TYPE="development"
+fi
+# Export PACKAGE_VERSION_TYPE to kea_version.h
+AC_SUBST(PACKAGE_VERSION_TYPE)
 
 # Find a separator for path_replacer
 for sep in "+" "," ";" "&" "__NONE__"; do
@@ -1784,6 +1794,7 @@ Package:
   Name:              ${PACKAGE_NAME}
   Version:           ${PACKAGE_VERSION}
   Extended version:  ${EXTENDED_VERSION}
+  Version type:      ${PACKAGE_VERSION_TYPE}
   OS Family:         ${OS_TYPE}
 
   Prefix:            ${prefix}

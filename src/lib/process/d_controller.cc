@@ -112,6 +112,10 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     // Log the starting of the service.
     LOG_INFO(dctl_logger, DCTL_STARTING)
         .arg(app_name_).arg(getpid()).arg(VERSION);
+    // When it is not a stable version dissuade use in production.
+    if (PACKAGE_VERSION_TYPE == "development") {
+        LOG_WARN(dctl_logger, DCTL_DEVELOPMENT_VERSION);
+    }
     try {
         // Step 2 is to create and initialize the application process object.
         initProcess();
@@ -811,6 +815,6 @@ DControllerBase::getVersion(bool extended) {
     return (tmp.str());
 }
 
-}; // namespace isc::process
+} // end of namespace isc::process
 
-}; // namespace isc
+} // end of namespace isc

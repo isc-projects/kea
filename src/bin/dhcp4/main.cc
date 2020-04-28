@@ -45,7 +45,10 @@ const char* const DHCP4_NAME = "kea-dhcp4";
 /// Note: This function never returns. It terminates the process.
 void
 usage() {
-    cerr << "Kea DHCPv4 server, version " << VERSION << endl;
+    cerr << "Kea DHCPv4 server, "
+         << "version " << VERSION
+         << " (" << PACKAGE_VERSION_TYPE << ")"
+         << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP4_NAME
          << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p number] [-P number]" << endl;
@@ -214,6 +217,10 @@ main(int argc, char* argv[]) {
             .arg(verbose_mode ? "yes" : "no");
 
         LOG_INFO(dhcp4_logger, DHCP4_STARTING).arg(VERSION);
+
+        if (PACKAGE_VERSION_TYPE == "development") {
+            LOG_WARN(dhcp4_logger, DHCP4_DEVELOPMENT_VERSION);
+        }
 
         // Create the server instance.
         ControlledDhcpv4Srv server(server_port_number, client_port_number);
