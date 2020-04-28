@@ -455,8 +455,8 @@ public:
     /// the asynchronous updates are completed.
     ///
     /// @return Number of peers to whom lease updates have been scheduled
-    /// to be sent. This value is used to determine if the DHCP query
-    /// should be parked while waiting for the lease update to complete.
+    /// to be sent and from which we expect a response prior to unparking
+    /// the packet and sending a response to the DHCP client.
     size_t asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
                                  const dhcp::Lease4CollectionPtr& leases,
                                  const dhcp::Lease4CollectionPtr& deleted_leases,
@@ -479,8 +479,8 @@ public:
     /// the asynchronous updates are completed.
     ///
     /// @return Number of peers to whom lease updates have been scheduled
-    /// to be sent. This value is used to determine if the DHCP query
-    /// should be parked while waiting for the lease update to complete.
+    /// to be sent and from which we expect a response prior to unparking
+    /// the packet and sending a response to the DHCP client.
     size_t asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
                                  const dhcp::Lease6CollectionPtr& leases,
                                  const dhcp::Lease6CollectionPtr& deleted_leases,

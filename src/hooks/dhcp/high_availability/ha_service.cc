@@ -809,8 +809,12 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
             continue;
         }
 
-        // Count contacted servers.
-        ++sent_num;
+        // If we're contacting a backup server from which we don't expect a
+        // response prior to responding to the DHCP client we don't count
+        // it.
+        if (config_->amWaitingBackupAck() || (conf->getRole() != HAConfig::PeerConfig::BACKUP)) {
+            ++sent_num;
+        }
 
         // Lease updates for deleted leases.
         for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
@@ -849,8 +853,12 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
             continue;
         }
 
-        // Count contacted servers.
-        ++sent_num;
+        // If we're contacting a backup server from which we don't expect a
+        // response prior to responding to the DHCP client we don't count
+        // it.
+        if (config_->amWaitingBackupAck() || (conf->getRole() != HAConfig::PeerConfig::BACKUP)) {
+            ++sent_num;
+        }
 
         // Send new/updated leases and deleted leases in one command.
         asyncSendLeaseUpdate(query, conf, CommandCreator::createLease6BulkApply(leases, deleted_leases),
@@ -947,10 +955,24 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                     communication_state_->poke();
 
                 } else {
-                    // Lease update was unsuccessful, so drop the parked DHCP packet.
-                    parking_lot->drop(query);
                     communication_state_->setPartnerState("unavailable");
                 }
+            }
+
+            // It is possible to configure the server to not wait for a response from
+            // the backup server before we unpark the packet and respond to the client.
+            // Here we check if we're dealing with such situation.
+            if (config_->amWaitingBackupAck() || (config->getRole() != HAConfig::PeerConfig::BACKUP)) {
+                // We're expecting a response from the backup server or it is not
+                // a backup server and the lease update was unsuccessful. In such
+                // case the DHCP exchange fails.
+                if (!lease_update_success) {
+                    parking_lot->drop(query);
+                }
+            } else {
+                // This was a response from the backup server and we're configured to
+                // not wait for their ackowledgments, so there is nothing more to do.
+                return;
             }
 
             auto it = pending_requests_.find(query);
@@ -979,12 +1001,18 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
         boost::bind(&HAService::clientCloseHandler, this, _1)
     );
 
-    // Request scheduled, so update the request counters for the query.
-    if (pending_requests_.count(query) == 0) {
-        pending_requests_[query] = 1;
+    // The number of pending requests is the number of requests for which we
+    // expect an acknowledgement prior to responding to the DHCP clients. If
+    // we're configured to wait for the acks from the backups or it is not
+    // a backup increase the number of pending requests.
+    if (config_->amWaitingBackupAck() || (config->getRole() != HAConfig::PeerConfig::BACKUP)) {
+        // Request scheduled, so update the request counters for the query.
+        if (pending_requests_.count(query) == 0) {
+            pending_requests_[query] = 1;
 
-    } else {
-        ++pending_requests_[query];
+        } else {
+            ++pending_requests_[query];
+        }
     }
 }
 

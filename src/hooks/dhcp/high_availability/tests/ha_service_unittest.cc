@@ -660,13 +660,17 @@ public:
     /// @param num_updates expected number of servers to which lease updates are
     /// sent.
     /// @param my_state state of the server while lease updates are sent.
+    /// @param wait_backup_ack indicates if the server should wait for the acknowledgment
+    /// from the backup servers.
     void testSendLeaseUpdates(std::function<void()> unpark_handler,
                               const bool should_pass,
                               const size_t num_updates,
-                              const MyState& my_state = MyState(HA_LOAD_BALANCING_ST)) {
+                              const MyState& my_state = MyState(HA_LOAD_BALANCING_ST),
+                              const bool wait_backup_ack = true) {
         // Create HA configuration for 3 servers. This server is
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
+        config_storage->setWaitBackupAck(wait_backup_ack);
 
         // Create parking lot where query is going to be parked and unparked.
         ParkingLotPtr parking_lot(new ParkingLot());
@@ -710,6 +714,12 @@ public:
                   service.asyncSendLeaseUpdates(query, leases4, deleted_leases4,
                                                 parking_lot_handle));
 
+        // The number of pending requests should be 2 times the number of
+        // contacted servers because we send one lease update and one
+        // lease deletion to each contacted server from which we expect
+        // an acknowledgment.
+        EXPECT_EQ(2*num_updates, service.pending_requests_[query]);
+
         EXPECT_FALSE(state->isPoked());
 
         ASSERT_NO_THROW(parking_lot->reference(query));
@@ -748,13 +758,17 @@ public:
     /// @param num_updates expected number of servers to which lease updates are
     /// sent.
     /// @param my_state state of the server while lease updates are sent.
+    /// @param wait_backup_ack indicates if the server should wait for the acknowledgment
+    /// from the backup servers.
     void testSendLeaseUpdates6(std::function<void()> unpark_handler,
                                const bool should_pass,
                                const size_t num_updates,
-                               const MyState& my_state = MyState(HA_LOAD_BALANCING_ST)) {
+                               const MyState& my_state = MyState(HA_LOAD_BALANCING_ST),
+                               const bool wait_backup_ack = true) {
         // Create HA configuration for 3 servers. This server is
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
+        config_storage->setWaitBackupAck(wait_backup_ack);
 
         // Create parking lot where query is going to be parked and unparked.
         ParkingLotPtr parking_lot(new ParkingLot());
@@ -795,6 +809,11 @@ public:
         EXPECT_EQ(num_updates,
                   service.asyncSendLeaseUpdates(query, leases6, deleted_leases6,
                                                 parking_lot_handle));
+
+        // The number of requests we send is equal to the number of servers
+        // from which we expect an acknowledgement. We send both lease updates
+        // and the deletions in a single bulk update command.
+        EXPECT_EQ(num_updates, service.pending_requests_[query]);
 
         EXPECT_FALSE(state->isPoked());
 
@@ -1286,9 +1305,50 @@ TEST_F(HAServiceTest, sendUpdatesBackupServerOffline) {
     bool unpark_called = false;
     testSendLeaseUpdates([&unpark_called] {
         unpark_called = true;
-    }, true, 2);
+    }, true, 1, MyState(HA_LOAD_BALANCING_ST), false);
 
     EXPECT_TRUE(unpark_called);
+
+    // The server 2 should have received two commands.
+    EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 2 has received lease4-update command.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                                        "192.1.2.3");
+    EXPECT_TRUE(update_request2);
+
+    // Check that the server 2 has received lease4-del command.
+    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease4-del",
+                                                                        "192.2.3.4");
+    EXPECT_TRUE(delete_request2);
+
+    // Server 3 should not receive lease4-update.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease4-update",
+                                                                        "192.1.2.3");
+    EXPECT_FALSE(update_request3);
+
+    // Server 3 should not receive lease4-del.
+    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease4-del",
+                                                                        "192.2.3.4");
+    EXPECT_FALSE(delete_request3);
+}
+
+// Test scenario when the backup server is offline but we do expect an
+// ack from it prior to responding to the DHCP client.
+TEST_F(HAServiceTest, sendUpdatesBackupServerOfflineAckExpected) {
+    // Start only two servers out of three. The server 2 is not running.
+    ASSERT_NO_THROW({
+            listener_->start();
+            listener2_->start();
+    });
+
+    bool unpark_called = false;
+    testSendLeaseUpdates([&unpark_called] {
+        unpark_called = true;
+    }, true, 2, MyState(HA_LOAD_BALANCING_ST), true);
+
+    // The packet shouldn't be unparked. It should be dropped.
+    EXPECT_FALSE(unpark_called);
 
     // The server 2 should have received two commands.
     EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
@@ -1473,9 +1533,42 @@ TEST_F(HAServiceTest, sendUpdatesBackupServerOffline6) {
     bool unpark_called = false;
     testSendLeaseUpdates6([&unpark_called] {
         unpark_called = true;
-    }, true, 2);
+    }, true, 1, MyState(HA_LOAD_BALANCING_ST), false);
 
     EXPECT_TRUE(unpark_called);
+
+    // The server 2 should have received one command.
+    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 2 has received lease6-bulk-apply command.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_TRUE(update_request2);
+
+    // Server 3 should not receive lease6-bulk-apply.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_FALSE(update_request3);
+}
+
+// Test scenario when the backup server is offline but we do expect an
+// ack from it prior to responding to the DHCP client.
+TEST_F(HAServiceTest, sendUpdatesBackupServerOfflineAckExpected6) {
+    // Start only two servers out of three. The server 2 is not running.
+    ASSERT_NO_THROW({
+            listener_->start();
+            listener2_->start();
+    });
+
+    bool unpark_called = false;
+    testSendLeaseUpdates6([&unpark_called] {
+        unpark_called = true;
+    }, true, 2, MyState(HA_LOAD_BALANCING_ST), true);
+
+    // The packet shouldn't be unparked. It should be dropped.
+    EXPECT_FALSE(unpark_called);
 
     // The server 2 should have received one command.
     EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
