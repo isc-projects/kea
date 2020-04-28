@@ -1,3 +1,8 @@
+1746.	[bug]		fdupont
+	lease4-add and lease6-add commands now return an error when the
+	lease already exists.
+	(Gitlab #1170)
+
 1745.	[bug]		fdupont
 	Made state model and external sockets thread safe.
 	(Gitlab #1095)

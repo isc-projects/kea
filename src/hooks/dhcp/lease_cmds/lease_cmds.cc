@@ -10,6 +10,7 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <asiolink/io_address.h>
+#include <database/db_exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -391,7 +392,9 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
             lease4 = parser.parse(config, cmd_args_, force_create);
 
             if (lease4) {
-                LeaseMgrFactory::instance().addLease(lease4);
+                if (!LeaseMgrFactory::instance().addLease(lease4)) {
+                    isc_throw(db::DuplicateEntry, "IPv4 lease already exists.");
+                }
                 resp << "Lease for address " << lease4->addr_.toText()
                      << ", subnet-id " << lease4->subnet_id_ << " added.";
             }
@@ -401,7 +404,9 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
             lease6 = parser.parse(config, cmd_args_, force_create);
 
             if (lease6) {
-                LeaseMgrFactory::instance().addLease(lease6);
+                if (!LeaseMgrFactory::instance().addLease(lease6)) {
+                    isc_throw(db::DuplicateEntry, "IPv6 lease already exists.");
+                }
                 if (lease6->type_ == Lease::TYPE_NA) {
                     resp << "Lease for address " << lease6->addr_.toText()
                          << ", subnet-id " << lease6->subnet_id_ << " added.";
@@ -1814,5 +1819,5 @@ LeaseCmds::LeaseCmds()
     :impl_(new LeaseCmdsImpl()) {
 }
 
-};
-};
+} // end of namespace lease_cmds
+} // end of namespace isc

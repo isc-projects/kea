@@ -847,6 +847,29 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
 
 }
 
+// Check that a lease4 is not added when it already exists.
+TEST_F(LeaseCmdsTest, Lease4AddExisting) {
+
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease already exists.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
 // Check that subnet-id is optional. If not specified, Kea should select
 // it on its own.
 TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissing) {
@@ -1289,6 +1312,30 @@ TEST_F(LeaseCmdsTest, Lease6Add) {
     ASSERT_TRUE(l);
     EXPECT_EQ("", l->hostname_);
     EXPECT_FALSE(l->getContext());
+}
+
+// Check that a lease6 is not added when it already exists.
+TEST_F(LeaseCmdsTest, Lease6AddExisting) {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease already exists.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Check that subnet-id is optional. If not specified, Kea should select
