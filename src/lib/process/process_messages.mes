@@ -144,7 +144,7 @@ application in standalone mode. This means it will not connected to the Kea
 message queue. Standalone mode is only useful during program development,
 and should not be used in a production environment.
 
-% DCTL_STARTING %1 starting, pid: %2, version: %3
+% DCTL_STARTING %1 starting, pid: %2, version: %3 (%4)
 This is an informational message issued when controller for the
 service first starts. Version is also reported.
 

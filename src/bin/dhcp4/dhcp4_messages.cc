@@ -286,7 +286,7 @@ const char* values[] = {
     "DHCP4_SRV_D2STOP_ERROR", "error stopping IO with DHCP_DDNS during shutdown: %1",
     "DHCP4_SRV_DHCP4O6_ERROR", "error stopping IO with DHCPv4o6 during shutdown: %1",
     "DHCP4_STARTED", "Kea DHCPv4 server version %1 started",
-    "DHCP4_STARTING", "Kea DHCPv4 server version %1 starting",
+    "DHCP4_STARTING", "Kea DHCPv4 server version %1 (%2) starting",
     "DHCP4_START_INFO", "pid: %1, server port: %2, client port: %3, verbose: %4",
     "DHCP4_SUBNET_DATA", "%1: the selected subnet details: %2",
     "DHCP4_SUBNET_DYNAMICALLY_CHANGED", "%1: changed selected subnet %2 to subnet %3 from shared network %4 for client assignments",

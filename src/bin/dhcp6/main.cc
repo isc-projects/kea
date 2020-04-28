@@ -216,7 +216,9 @@ main(int argc, char* argv[]) {
             .arg(client_port_number)
             .arg(verbose_mode ? "yes" : "no");
 
-        LOG_INFO(dhcp6_logger, DHCP6_STARTING).arg(VERSION);
+        LOG_INFO(dhcp6_logger, DHCP6_STARTING)
+            .arg(VERSION)
+            .arg(PACKAGE_VERSION_TYPE);
 
         if (PACKAGE_VERSION_TYPE == "development") {
             LOG_WARN(dhcp6_logger, DHCP6_DEVELOPMENT_VERSION);

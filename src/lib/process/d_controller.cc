@@ -111,7 +111,10 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 
     // Log the starting of the service.
     LOG_INFO(dctl_logger, DCTL_STARTING)
-        .arg(app_name_).arg(getpid()).arg(VERSION);
+        .arg(app_name_)
+        .arg(getpid())
+        .arg(VERSION)
+        .arg(PACKAGE_VERSION_TYPE);
     // When it is not a stable version dissuade use in production.
     if (PACKAGE_VERSION_TYPE == "development") {
         LOG_WARN(dctl_logger, DCTL_DEVELOPMENT_VERSION);

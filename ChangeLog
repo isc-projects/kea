@@ -1,3 +1,9 @@
+1749.	[func]		fdupont
+	When the version is a development (vs. stable) one (second
+	number is odd, e.g. in 1.7.x) a server or agent logs a
+	warning to dissuade use in production.
+	(Gitlab #1184)
+
 1748.	[func]		marcin
 	Added two extensions to the HA hooks library. Firstly, the active
 	servers no longer wait for the lease update acknowledgments from
@@ -27,7 +33,7 @@
 	Stopping packet processing when changing or reloading configuration.
 	(Gitlab #1188)
 
-Kea 1.7.7 released on Apr 29, 2020
+Kea 1.7.7 (development) released on Apr 29, 2020
 
 1743.	[doc]		tomek
 	ISC now provides a dashboard solution for Kea. Added documentation
@@ -84,7 +90,7 @@ Kea 1.7.7 released on Apr 29, 2020
 	logging syntax can be tweaked using `pattern` option for logging.
 	(Gitlab #1150)
 
-Kea 1.7.6 released on Mar 25, 2020
+Kea 1.7.6 (development) released on Mar 25, 2020
 
 1735.	[func]		wlodek
 	Added clean output mode to perfdhcp with configurable separator
@@ -149,7 +155,7 @@ Kea 1.7.6 released on Mar 25, 2020
 	such case, the configuration order of the hooks must be changed.
 	(Gitlab #1088)
 
-Kea 1.7.5 released on Feb 26, 2020
+Kea 1.7.5 (development) released on Feb 26, 2020
 
 1725.	[func]		wlodek
 	Added perfdhcp command option to enable checking address
@@ -225,7 +231,7 @@ Kea 1.7.5 released on Feb 26, 2020
 	loss of database connectivity.
 	(Gitlab #1097)
 
-Kea 1.7.4 released on Jan 29, 2020
+Kea 1.7.4 (development) released on Jan 29, 2020
 
 1714.	[build]		razvan
 	Bumped up library version numbers for Kea 1.7.4 release.
@@ -318,7 +324,7 @@ Kea 1.7.4 released on Jan 29, 2020
 	(see https://danger.systems/guides/dangerfile.html).
 	(Gitlab #672)
 
-Kea 1.7.3 released on Nov 18th, 2019
+Kea 1.7.3 (development) released on Nov 18th, 2019
 
 1699.	[func]		fdupont, marcin
 	Implemented status-get command which returns general status
@@ -377,7 +383,7 @@ Kea 1.7.3 released on Nov 18th, 2019
 	in DHCPv6 PostgreSQL lease manager actions.
 	(Gitlab #1044)
 
-Kea 1.7.2 released on Nov 27, 2019
+Kea 1.7.2 (development) released on Nov 27, 2019
 
 1689.	[bug]*		fdupont
 	The default Kea Control Agent's configuration file uses port 8000
@@ -435,7 +441,7 @@ Kea 1.7.2 released on Nov 27, 2019
 	recompilation.
 	(Gitlab #964)
 
-Kea 1.7.1 released on Oct 30, 2019
+Kea 1.7.1 (development) released on Oct 30, 2019
 
 1681.	[func]		fdupont
 	Added new command config-backend-pull which forces the server
@@ -528,7 +534,7 @@ Kea 1.7.1 released on Oct 30, 2019
 	but not supported.
 	(Gitlab #917,!518, git f242e5c2e0e14331172671477dce3a6597691b55)
 
-Kea 1.7.0 released on Sep 25, 2019
+Kea 1.7.0 (development) released on Sep 25, 2019
 
 1665.	[build]		tmark
 	Bumped up library version numbers for Kea 1.7.0 final release.

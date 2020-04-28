@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/process/process_messages.mes on Tue Apr 28 2020 15:46
+// File created from ../../../src/lib/process/process_messages.mes on Tue Apr 28 2020 15:58
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -72,7 +72,7 @@ const char* values[] = {
     "DCTL_SHUTDOWN_SIGNAL_RECVD", "OS signal %1 received, starting shutdown",
     "DCTL_SIGNAL_ERROR", "signal handler for signal %1, threw an unexpected exception: %2",
     "DCTL_STANDALONE", "%1 skipping message queue, running standalone",
-    "DCTL_STARTING", "%1 starting, pid: %2, version: %3",
+    "DCTL_STARTING", "%1 starting, pid: %2, version: %3 (%4)",
     "DCTL_UNSUPPORTED_SIGNAL", "ignoring reception of unsupported signal: %1",
     NULL
 };

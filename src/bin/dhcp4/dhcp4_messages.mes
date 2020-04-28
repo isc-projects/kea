@@ -811,7 +811,7 @@ This informational message indicates that the DHCPv4 server has
 processed all configuration information and is ready to process
 DHCPv4 packets.  The version is also printed.
 
-% DHCP4_STARTING Kea DHCPv4 server version %1 starting
+% DHCP4_STARTING Kea DHCPv4 server version %1 (%2) starting
 This informational message indicates that the DHCPv4 server has
 processed any command-line switches and is starting. The version
 is also printed.

@@ -827,7 +827,7 @@ This informational message indicates that the IPv6 DHCP server has
 processed all configuration information and is ready to process
 DHCPv6 packets.  The version is also printed.
 
-% DHCP6_STARTING Kea DHCPv6 server version %1 starting
+% DHCP6_STARTING Kea DHCPv6 server version %1 (%2) starting
 This informational message indicates that the IPv6 DHCP server has
 processed any command-line switches and is starting. The version
 is also printed.
