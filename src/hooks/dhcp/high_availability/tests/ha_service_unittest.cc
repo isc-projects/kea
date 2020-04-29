@@ -4652,6 +4652,17 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesLoadBalancing) {
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_WAITING_ST), peer_config));
 }
 
+// Check that lease updates are sent to the backup server even when the
+// secondary is in the partner-down state.
+TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesToBackup) {
+    HAConfigPtr valid_config = createValidConfiguration();
+    valid_config->setWaitBackupAck(false);
+    startService(valid_config);
+
+    // Send the updates to the backup server.
+    HAConfig::PeerConfigPtr backup_config = valid_config->getPeerConfig("server3");
+    EXPECT_TRUE(expectLeaseUpdates(MyState(HA_PARTNER_DOWN_ST), backup_config));
+}
 
 // This test verifies if the server would not send lease updates to the
 // partner if lease updates are administratively disabled.
