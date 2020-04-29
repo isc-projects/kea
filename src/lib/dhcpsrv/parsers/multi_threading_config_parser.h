@@ -17,9 +17,13 @@ namespace dhcp  {
 class MultiThreadingConfigParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief parses JSON structure
+    /// @brief parses JSON structure.
     ///
-    /// @param srv_cfg parsed value will be stored here
+    /// This function stores the 'multi-threading' settings in the server
+    /// configuration and applies the MT mode so that is can be checked when
+    /// parsing 'hooks-libraries'.
+    ///
+    /// @param srv_cfg parsed value will be stored here.
     /// @param value a JSON map that contains multi-threading parameters.
     void parse(SrvConfig& srv_cfg, const isc::data::ConstElementPtr& value);
 };

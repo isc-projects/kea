@@ -418,6 +418,18 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
         CfgMgr::instance().getCurrentCfg()->applyLoggingCfg();
     }
 
+    // Configure multi threading
+    try {
+        CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
+        if (MultiThreadingMgr::instance().getMode()) {
+            LOG_FATAL(dhcp6_logger, DHCP6_MULTI_THREADING_WARNING);
+        }
+    } catch (const std::exception& ex) {
+        err << "Error applying multi threading settings: "
+            << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
+    }
+
     return (result);
 }
 
@@ -586,6 +598,8 @@ ControlledDhcpv6Srv::commandConfigBackendPullHandler(const std::string&,
     if (!ctl_info) {
         return (createAnswer(CONTROL_RESULT_EMPTY, "No config backend."));
     }
+
+    MultiThreadingCriticalSection cs;
 
     // Reschedule the periodic CB fetch.
     if (TimerMgr::instance()->isTimerRegistered("Dhcp6CBFetchTimer")) {
@@ -904,18 +918,6 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         // operation.
     }
 
-    // Configure multi threading
-    try {
-        CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
-        if (MultiThreadingMgr::instance().getMode()) {
-            LOG_FATAL(dhcp6_logger, DHCP6_MULTI_THREADING_WARNING);
-        }
-    } catch (const std::exception& ex) {
-        err << "Error applying multi threading settings: "
-            << ex.what();
-        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
-    }
-
     return (answer);
 }
 
@@ -1194,6 +1196,8 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
 void
 ControlledDhcpv6Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
                                     boost::shared_ptr<unsigned> failure_count) {
+    MultiThreadingCriticalSection cs;
+
     try {
         // Fetch any configuration backend updates since our last fetch.
         server_->getCBControl()->databaseConfigFetch(srv_cfg,

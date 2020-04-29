@@ -26,7 +26,7 @@ public:
     /// @param[in] value The multi-threading configuration
     /// @param[out] enabled The enabled flag
     /// @param[out] thread_count The thread count
-    /// @param[out] queue size The queue size
+    /// @param[out] queue_size The queue size
     static void extract(data::ConstElementPtr value, bool& enabled,
                         uint32_t& thread_count, uint32_t& queue_size);
 };
