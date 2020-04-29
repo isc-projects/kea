@@ -406,6 +406,11 @@ state as a result of some interaction (or lack of thereof) with its partner.
 The arguments specify initial server state, new server state and the partner's
 state.
 
+% HA_STATE_TRANSITION_PASSIVE_BACKUP server transitions from %1 to %2 state
+This informational message is issued when the server being in the passive-backup
+mode transitions to a new state. The arguments specify initial server state and
+a new server state.
+
 % HA_SYNC_FAILED lease database synchronization with %1 failed: %2
 This error message is issued to indicate that the lease database synchronization
 failed. The first argument provides partner server's name. The second argument

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -150,10 +150,22 @@ public:
     createValidJsonConfiguration(const HAConfig::HAMode& ha_mode =
                                  HAConfig::LOAD_BALANCING) const;
 
+    /// @brief Return HA configuration with one primary and two backup
+    /// serveers in the JSON format.
+    ///
+    /// @return Pointer to the unparsed configuration.
+    data::ConstElementPtr
+    createValidPassiveBackupJsonConfiguration() const;
+
     /// @brief Return HA configuration with three servers.
     ///
     /// @return Pointer to the parsed configuration.
     HAConfigPtr createValidConfiguration() const;
+
+    /// @brief Return passive-backup configuration.
+    ///
+    /// @return Pointer to the parsed configuration.
+    HAConfigPtr createValidPassiveBackupConfiguration() const;
 
     /// @brief Checks the status code and message against expected values.
     ///

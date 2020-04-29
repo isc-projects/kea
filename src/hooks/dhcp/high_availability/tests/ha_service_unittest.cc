@@ -3242,7 +3242,7 @@ public:
 
     /// @brief Tests transition from any state to "terminated".
     ///
-    /// @pasram my_state initial server state.
+    /// @param my_state initial server state.
     void testTerminateTransition(const MyState& my_state) {
         // Set the partner's time way in the past so as the clock skew gets high.
         partner_->setDateTime("Sun, 06 Nov 1994 08:49:37 GMT");
@@ -3255,6 +3255,24 @@ public:
         // clock skew.
         EXPECT_EQ(HA_TERMINATED_ST, service_->getCurrState())
             << "expected transition to the 'terminated' state"
+            << "', but transitioned to the '"
+            << service_->getStateLabel(service_->getCurrState())
+            << "' state";
+    }
+
+    /// @brief Tests transition between states when passive-backup mode is
+    /// in use.
+    ///
+    /// @param my_state initial server state.
+    /// @param final_state expected final state.
+    void testPassiveBackupTransition(const MyState& my_state,
+                                     const FinalState& final_state) {
+        service_->transition(my_state.state_, HAService::NOP_EVT);
+        service_->runModel(TestHAService::NOP_EVT);
+
+        EXPECT_EQ(final_state.state_, service_->getCurrState())
+            << "expected transition to the '"
+            << service_->getStateLabel(final_state.state_)
             << "', but transitioned to the '"
             << service_->getStateLabel(service_->getCurrState())
             << "' state";
@@ -5265,6 +5283,40 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesBackup) {
 
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_BACKUP_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_WAITING_ST), peer_config));
+}
+
+// This test checks all combinations of the primary server in the passive
+// backup configuration.
+TEST_F(HAServiceStateMachineTest, stateTransitionsPassiveBackup) {
+    partner_->startup();
+
+    HAConfigPtr valid_config = createValidPassiveBackupConfiguration();
+    startService(valid_config);
+
+    testPassiveBackupTransition(MyState(HA_WAITING_ST), FinalState(HA_PASSIVE_BACKUP_ST));
+    testPassiveBackupTransition(MyState(HA_PASSIVE_BACKUP_ST), FinalState(HA_PASSIVE_BACKUP_ST));
+}
+
+// This test checks that no scopes are being served in the waiting state
+// of the passive backup configuration and that active server's scope is
+// served while in the passive-backup state.
+TEST_F(HAServiceStateMachineTest, scopesServingPassiveBackup) {
+    HAConfigPtr valid_config = createValidPassiveBackupConfiguration();
+    startService(valid_config);
+
+    EXPECT_TRUE(service_->query_filter_.amServingScope("server1"));
+    EXPECT_FALSE(service_->query_filter_.amServingScope("server2"));
+    EXPECT_TRUE(service_->network_state_->isServiceEnabled());
+}
+
+// Verifies that lease updates are sent by the server in the passive-backup state.
+TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesPassiveBackup) {
+    HAConfigPtr valid_config = createValidPassiveBackupConfiguration();
+    startService(valid_config);
+
+    HAConfig::PeerConfigPtr peer_config = valid_config->getPeerConfig("server2");
+
+    EXPECT_TRUE(expectLeaseUpdates(MyState(HA_WAITING_ST), peer_config));
 }
 
 }

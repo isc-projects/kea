@@ -182,12 +182,54 @@ HATest::createValidJsonConfiguration(const HAConfig::HAMode& ha_mode) const {
     return (Element::fromJSON(config_text.str()));
 }
 
+ConstElementPtr
+HATest::createValidPassiveBackupJsonConfiguration() const {
+    std::ostringstream config_text;
+    config_text <<
+        "["
+        "     {"
+        "         \"this-server-name\": \"server1\","
+        "         \"mode\": \"passive-backup\","
+        "         \"wait-backup-ack\": false,"
+        "         \"peers\": ["
+        "             {"
+        "                 \"name\": \"server1\","
+        "                 \"url\": \"http://127.0.0.1:18123/\","
+        "                 \"role\": \"primary\""
+        "             },"
+        "             {"
+        "                 \"name\": \"server2\","
+        "                 \"url\": \"http://127.0.0.1:18124/\","
+        "                 \"role\": \"backup\""
+        "             },"
+        "             {"
+        "                 \"name\": \"server3\","
+        "                 \"url\": \"http://127.0.0.1:18125/\","
+        "                 \"role\": \"backup\""
+        "             }"
+        "         ]"
+        "     }"
+        "]";
+
+    return (Element::fromJSON(config_text.str()));
+}
+
+
 HAConfigPtr
 HATest::createValidConfiguration() const {
     HAConfigPtr config_storage(new HAConfig());
     HAConfigParser parser;
 
     parser.parse(config_storage, createValidJsonConfiguration());
+    return (config_storage);
+}
+
+HAConfigPtr
+HATest::createValidPassiveBackupConfiguration() const {
+    HAConfigPtr config_storage(new HAConfig());
+    HAConfigParser parser;
+
+    parser.parse(config_storage, createValidPassiveBackupJsonConfiguration());
     return (config_storage);
 }
 

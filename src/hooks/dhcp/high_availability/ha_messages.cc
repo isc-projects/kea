@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Fri Jan 17 2020 20:25
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Thu Apr 30 2020 12:21
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -74,6 +74,7 @@ extern const isc::log::MessageID HA_SERVICE_STARTED = "HA_SERVICE_STARTED";
 extern const isc::log::MessageID HA_STATE_MACHINE_CONTINUED = "HA_STATE_MACHINE_CONTINUED";
 extern const isc::log::MessageID HA_STATE_MACHINE_PAUSED = "HA_STATE_MACHINE_PAUSED";
 extern const isc::log::MessageID HA_STATE_TRANSITION = "HA_STATE_TRANSITION";
+extern const isc::log::MessageID HA_STATE_TRANSITION_PASSIVE_BACKUP = "HA_STATE_TRANSITION_PASSIVE_BACKUP";
 extern const isc::log::MessageID HA_SYNC_FAILED = "HA_SYNC_FAILED";
 extern const isc::log::MessageID HA_SYNC_HANDLER_FAILED = "HA_SYNC_HANDLER_FAILED";
 extern const isc::log::MessageID HA_SYNC_START = "HA_SYNC_START";
@@ -153,6 +154,7 @@ const char* values[] = {
     "HA_STATE_MACHINE_CONTINUED", "state machine is un-paused",
     "HA_STATE_MACHINE_PAUSED", "state machine paused in state %1",
     "HA_STATE_TRANSITION", "server transitions from %1 to %2 state, partner state is %3",
+    "HA_STATE_TRANSITION_PASSIVE_BACKUP", "server transitions from %1 to %2 state",
     "HA_SYNC_FAILED", "lease database synchronization with %1 failed: %2",
     "HA_SYNC_HANDLER_FAILED", "ha-sync command failed: %1",
     "HA_SYNC_START", "starting lease database synchronization with %1",
