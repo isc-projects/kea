@@ -189,7 +189,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(STATE_PAUSE_ONCE, state_cfg->getPausing());
 }
 
-// Verifies that load balancing configuration is parsed correctly.
+// Verifies that hot standby configuration is parsed correctly.
 TEST_F(HAConfigTest, configureHotStandby) {
     const std::string ha_config =
         "["
@@ -288,6 +288,60 @@ TEST_F(HAConfigTest, configureHotStandby) {
                     getStateConfig(HA_WAITING_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+}
+
+// Verifies that passive-backup configuration is parsed correctly.
+TEST_F(HAConfigTest, configurePassiveBackup) {
+    const std::string ha_config =
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"passive-backup\","
+        "        \"wait-backup-ack\": true,"
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"backup\""
+        "            },"
+        "            {"
+        "                \"name\": \"server3\","
+        "                \"url\": \"http://127.0.0.1:8082/\","
+        "                \"role\": \"backup\""
+        "            }"
+        "        ]"
+        "    }"
+        "]";
+
+    HAImplPtr impl(new HAImpl());
+    ASSERT_NO_THROW(impl->configure(Element::fromJSON(ha_config)));
+    EXPECT_EQ("server1", impl->getConfig()->getThisServerName());
+    EXPECT_EQ(HAConfig::PASSIVE_BACKUP, impl->getConfig()->getHAMode());
+    EXPECT_TRUE(impl->getConfig()->amSendingLeaseUpdates());
+    EXPECT_TRUE(impl->getConfig()->amWaitingBackupAck());
+
+    HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
+    ASSERT_TRUE(cfg);
+    EXPECT_EQ("server1", cfg->getName());
+    EXPECT_EQ("http://127.0.0.1:8080/", cfg->getUrl().toText());
+    EXPECT_EQ(HAConfig::PeerConfig::PRIMARY, cfg->getRole());
+
+    cfg = impl->getConfig()->getPeerConfig("server2");
+    ASSERT_TRUE(cfg);
+    EXPECT_EQ("server2", cfg->getName());
+    EXPECT_EQ("http://127.0.0.1:8081/", cfg->getUrl().toText());
+    EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
+
+    cfg = impl->getConfig()->getPeerConfig("server3");
+    ASSERT_TRUE(cfg);
+    EXPECT_EQ("server3", cfg->getName());
+    EXPECT_EQ("http://127.0.0.1:8082/", cfg->getUrl().toText());
+    EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
 }
 
 // This server name must not be empty.
@@ -978,8 +1032,81 @@ TEST_F(HAConfigTest, waitBackupAckWithActiveServers) {
         "        ]"
         "    }"
         "]",
-        "'wait-backup-ack' must be set to false in the 'hot-standby' mode");
+        "'wait-backup-ack' must be set to false in the hot standby configuration");
 }
+
+// Test that secondary server is not allowed in the passive-backup mode.
+TEST_F(HAConfigTest, passiveBackupSecondaryServer) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"passive-backup\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"secondary\""
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "secondary servers not allowed in the passive backup configuration");
+}
+
+// Test that standby server is not allowed in the passive-backup mode.
+TEST_F(HAConfigTest, passiveBackupStandbyServer) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"passive-backup\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\""
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "standby servers not allowed in the passive backup configuration");
+}
+
+// Test that primary server is required in the passive-backup mode.
+TEST_F(HAConfigTest, passiveBackupNoPrimary) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"passive-backup\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"backup\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"backup\""
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "primary server required in the passive backup configuration");
+}
+
 
 // Test that conversion of the role names works correctly.
 TEST_F(HAConfigTest, stringToRole) {
@@ -1011,12 +1138,14 @@ TEST_F(HAConfigTest, roleToString) {
 TEST_F(HAConfigTest, stringToHAMode) {
     EXPECT_EQ(HAConfig::LOAD_BALANCING, HAConfig::stringToHAMode("load-balancing"));
     EXPECT_EQ(HAConfig::HOT_STANDBY, HAConfig::stringToHAMode("hot-standby"));
+    EXPECT_EQ(HAConfig::PASSIVE_BACKUP, HAConfig::stringToHAMode("passive-backup"));
 }
 
 // Test that HA mode name is generated correctly.
 TEST_F(HAConfigTest, HAModeToString) {
     EXPECT_EQ("load-balancing", HAConfig::HAModeToString(HAConfig::LOAD_BALANCING));
     EXPECT_EQ("hot-standby", HAConfig::HAModeToString(HAConfig::HOT_STANDBY));
+    EXPECT_EQ("passive-backup", HAConfig::HAModeToString(HAConfig::PASSIVE_BACKUP));
 }
 
 // Test that conversion of the 'pause' value works correctly.

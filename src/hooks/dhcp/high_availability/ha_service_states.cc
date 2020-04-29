@@ -23,6 +23,8 @@ std::string stateToString(int state) {
         return ("partner-down");
     case HA_PARTNER_IN_MAINTENANCE_ST:
         return ("partner-in-maintenance");
+    case HA_PASSIVE_BACKUP_ST:
+        return ("passive-backup");
     case HA_READY_ST:
         return ("ready");
     case HA_SYNCING_ST:
@@ -58,6 +60,9 @@ int stringToState(const std::string& state_name) {
 
     } else if (state_name == "partner-in-maintenance") {
         return (HA_PARTNER_IN_MAINTENANCE_ST);
+
+    } else if (state_name == "passive-backup") {
+        return (HA_PASSIVE_BACKUP_ST);
 
     } else if (state_name == "ready") {
         return (HA_READY_ST);

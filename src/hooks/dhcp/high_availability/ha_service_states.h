@@ -31,17 +31,20 @@ const int HA_PARTNER_DOWN_ST = util::StateModel::SM_DERIVED_STATE_MIN + 5;
 /// Partner in-maintenance state.
 const int HA_PARTNER_IN_MAINTENANCE_ST = util::StateModel::SM_DERIVED_STATE_MIN + 6;
 
+/// In passive-backup state with a single active server and backup servers.
+const int HA_PASSIVE_BACKUP_ST = util::StateModel::SM_DERIVED_STATE_MIN + 7;
+
 /// Server ready state, i.e. synchronized database, can enable DHCP service.
-const int HA_READY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 7;
+const int HA_READY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 8;
 
 /// Synchronizing database state.
-const int HA_SYNCING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 8;
+const int HA_SYNCING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 9;
 
 /// HA service terminated state.
-const int HA_TERMINATED_ST = util::StateModel::SM_DERIVED_STATE_MIN + 9;
+const int HA_TERMINATED_ST = util::StateModel::SM_DERIVED_STATE_MIN + 10;
 
 /// Server waiting state, i.e. waiting for another server to be ready.
-const int HA_WAITING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 10;
+const int HA_WAITING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 11;
 
 /// Special state indicating that this server is unable to communicate with
 /// the partner.

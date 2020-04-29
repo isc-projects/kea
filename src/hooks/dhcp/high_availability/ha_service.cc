@@ -121,6 +121,10 @@ HAService::defineStates() {
                 boost::bind(&HAService::partnerInMaintenanceStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_PARTNER_IN_MAINTENANCE_ST)->getPausing());
 
+    defineState(HA_PASSIVE_BACKUP_ST, stateToString(HA_PASSIVE_BACKUP_ST),
+                boost::bind(&HAService::passiveBackupStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_PASSIVE_BACKUP_ST)->getPausing());
+
     defineState(HA_READY_ST, stateToString(HA_READY_ST),
                 boost::bind(&HAService::readyStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_READY_ST)->getPausing());
@@ -341,6 +345,10 @@ HAService::partnerInMaintenanceStateHandler() {
     default:
         postNextEvent(NOP_EVT);
     }
+}
+
+void
+HAService::passiveBackupStateHandler() {
 }
 
 void

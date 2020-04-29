@@ -211,6 +211,15 @@ public:
     /// offline partner.
     void partnerInMaintenanceStateHandler();
 
+    /// @brief Handler for "passive-backup" state.
+    ///
+    /// This handler is invoked for the server entering the "passive-backup"
+    /// state. The primary server enters this state in the "passive-backup"
+    /// mode of operation in which there is one server responding to the
+    /// DHCP queries and zero, one or more backup servers which receive
+    /// lease updates from this server.
+    void passiveBackupStateHandler();
+
     /// @brief Handler for "ready" state.
     ///
     /// This a handler invoked for the server which finished synchronizing

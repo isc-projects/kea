@@ -32,11 +32,13 @@ public:
     /// @brief Mode of operation.
     ///
     /// Currently supported modes are:
-    /// - load balancing
-    /// - hot standby
+    /// - load-balancing
+    /// - hot-standby
+    /// - passive-backup
     enum HAMode {
         LOAD_BALANCING,
         HOT_STANDBY,
+        PASSIVE_BACKUP
     };
 
     /// @brief HA peer configuration.
@@ -50,9 +52,9 @@ public:
         /// @brief Server's role in the High Availability setup.
         ///
         /// The following roles are supported:
-        /// - primary - server taking part in load balancing or hot standby setup,
-        ///   taking leadership over other servers. There must be exactly one primary
-        ///   server.
+        /// - primary - server taking part in load balancing, hot standby or
+        ///   passive-backup setup, taking leadership over other servers.
+        ///   There must be exactly one primary server.
         /// - secondary - server taking part in the load balancing setup. It is a slave
         ///   server to primary. There must be exactly one secondary server in the
         ///   load balancing setup.

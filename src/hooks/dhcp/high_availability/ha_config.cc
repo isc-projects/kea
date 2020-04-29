@@ -187,6 +187,9 @@ HAConfig::stringToHAMode(const std::string& ha_mode) {
 
     } else if (ha_mode == "hot-standby") {
         return (HOT_STANDBY);
+
+    } else if (ha_mode == "passive-backup") {
+        return (PASSIVE_BACKUP);
     }
 
     isc_throw(BadValue, "unsupported value '" << ha_mode << "' for mode parameter");
@@ -199,6 +202,8 @@ HAConfig::HAModeToString(const HAMode& ha_mode) {
         return ("load-balancing");
     case HOT_STANDBY:
         return ("hot-standby");
+    case PASSIVE_BACKUP:
+        return ("passive-backup");
     default:
         ;
     }
@@ -297,11 +302,10 @@ HAConfig::validate() const {
         // In the load-balancing mode the wait-backup-ack must be false.
         if (wait_backup_ack_) {
             isc_throw(HAConfigValidationError, "'wait-backup-ack' must be set to false in the"
-                      " 'load-balancing' mode");
+                      " load balancing configuration");
         }
-    }
 
-    if (ha_mode_ == HOT_STANDBY) {
+    } else if (ha_mode_ == HOT_STANDBY) {
         // Secondary servers not allowed in the hot standby configuration.
         if (peers_cnt.count(PeerConfig::SECONDARY) > 0) {
             isc_throw(HAConfigValidationError, "secondary servers not allowed in the hot"
@@ -323,9 +327,26 @@ HAConfig::validate() const {
         // In the hot-standby mode the wait-backup-ack must be false.
         if (wait_backup_ack_) {
             isc_throw(HAConfigValidationError, "'wait-backup-ack' must be set to false in the"
-                      " 'hot-standby' mode");
+                      " hot standby configuration");
+        }
+
+    } else if (ha_mode_ == PASSIVE_BACKUP) {
+        if (peers_cnt.count(PeerConfig::SECONDARY) > 0) {
+            isc_throw(HAConfigValidationError, "secondary servers not allowed in the"
+                      " passive backup configuration");
+        }
+
+        if (peers_cnt.count(PeerConfig::STANDBY) > 0) {
+            isc_throw(HAConfigValidationError, "standby servers not allowed in the"
+                      " passive backup configuration");
+        }
+
+        if (peers_cnt.count(PeerConfig::PRIMARY) == 0) {
+            isc_throw(HAConfigValidationError, "primary server required in the"
+                      " passive backup configuration");
         }
     }
+
 }
 
 } // end of namespace isc::ha
