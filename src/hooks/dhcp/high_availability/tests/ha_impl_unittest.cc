@@ -321,6 +321,11 @@ TEST_F(HAImplTest, leases4Committed) {
     ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
                                          HAServerType::DHCPv4));
 
+    // Make sure we wait for the acks from the backup server to be able to
+    // test the case of sending lease updates even though the service is
+    // in the state in which the lease updates are normally not sent.
+    ha_impl.config_->setWaitBackupAck(true);
+
     // Create callout handle to be used for passing arguments to the
     // callout.
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
@@ -387,6 +392,11 @@ TEST_F(HAImplTest, leases6Committed) {
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
     ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
                                          HAServerType::DHCPv6));
+
+    // Make sure we wait for the acks from the backup server to be able to
+    // test the case of sending lease updates even though the service is
+    // in the state in which the lease updates are normally not sent.
+    ha_impl.config_->setWaitBackupAck(true);
 
     // Create callout handle to be used for passing arguments to the
     // callout.

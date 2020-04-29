@@ -666,7 +666,7 @@ public:
                               const bool should_pass,
                               const size_t num_updates,
                               const MyState& my_state = MyState(HA_LOAD_BALANCING_ST),
-                              const bool wait_backup_ack = true) {
+                              const bool wait_backup_ack = false) {
         // Create HA configuration for 3 servers. This server is
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
@@ -714,11 +714,16 @@ public:
                   service.asyncSendLeaseUpdates(query, leases4, deleted_leases4,
                                                 parking_lot_handle));
 
-        // The number of pending requests should be 2 times the number of
-        // contacted servers because we send one lease update and one
-        // lease deletion to each contacted server from which we expect
-        // an acknowledgment.
-        EXPECT_EQ(2*num_updates, service.pending_requests_[query]);
+        if (num_updates == 0) {
+            EXPECT_TRUE((service.pending_requests_.count(query) == 0) ||
+                        (service.pending_requests_[query] == 0));
+        } else {
+            // The number of pending requests should be 2 times the number of
+            // contacted servers because we send one lease update and one
+            // lease deletion to each contacted server from which we expect
+            // an acknowledgment.
+            EXPECT_EQ(2*num_updates, service.pending_requests_[query]);
+        }
 
         EXPECT_FALSE(state->isPoked());
 
@@ -736,9 +741,13 @@ public:
             return (service.pending_requests_.empty());
         }));
 
-        // Try to drop the packet. We expect that the packet has been already
-        // dropped so this should return false.
-        EXPECT_FALSE(parking_lot_handle->drop(query));
+        // Only if we wait for lease updates to complete it makes senst to test
+        // that the packet was either dropped or unparked.
+        if (num_updates > 0) {
+            // Try to drop the packet. We expect that the packet has been already
+            // dropped so this should return false.
+            EXPECT_FALSE(parking_lot_handle->drop(query));
+        }
 
         // The updates should not be sent to this server.
         EXPECT_TRUE(factory_->getResponseCreator()->getReceivedRequests().empty());
@@ -764,7 +773,7 @@ public:
                                const bool should_pass,
                                const size_t num_updates,
                                const MyState& my_state = MyState(HA_LOAD_BALANCING_ST),
-                               const bool wait_backup_ack = true) {
+                               const bool wait_backup_ack = false) {
         // Create HA configuration for 3 servers. This server is
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
@@ -810,10 +819,15 @@ public:
                   service.asyncSendLeaseUpdates(query, leases6, deleted_leases6,
                                                 parking_lot_handle));
 
-        // The number of requests we send is equal to the number of servers
-        // from which we expect an acknowledgement. We send both lease updates
-        // and the deletions in a single bulk update command.
-        EXPECT_EQ(num_updates, service.pending_requests_[query]);
+        if (num_updates == 0) {
+            EXPECT_TRUE((service.pending_requests_.count(query) == 0) ||
+                        (service.pending_requests_[query] == 0));
+        } else {
+            // The number of requests we send is equal to the number of servers
+            // from which we expect an acknowledgement. We send both lease updates
+            // and the deletions in a single bulk update command.
+            EXPECT_EQ(num_updates, service.pending_requests_[query]);
+        }
 
         EXPECT_FALSE(state->isPoked());
 
@@ -831,9 +845,13 @@ public:
             return (service.pending_requests_.empty());
         }));
 
-        // Try to drop the packet. We expect that the packet has been already
-        // dropped so this should return false.
-        EXPECT_FALSE(parking_lot_handle->drop(query));
+        // Only if we wait for lease updates to complete it makes senst to test
+        // that the packet was either dropped or unparked.
+        if (num_updates > 0) {
+            // Try to drop the packet. We expect that the packet has been already
+            // dropped so this should return false.
+            EXPECT_FALSE(parking_lot_handle->drop(query));
+        }
 
         // The updates should not be sent to this server.
         EXPECT_TRUE(factory_->getResponseCreator()->getReceivedRequests().empty());
@@ -1180,7 +1198,7 @@ TEST_F(HAServiceTest, sendSuccessfulUpdates) {
     bool unpark_called = false;
     testSendLeaseUpdates([&unpark_called] {
         unpark_called = true;
-    }, true, 2);
+    }, true, 1);
 
     // Expecting that the packet was unparked because lease updates are expected
     // to be successful.
@@ -1213,8 +1231,7 @@ TEST_F(HAServiceTest, sendSuccessfulUpdates) {
     EXPECT_TRUE(delete_request3);
 }
 
-// Test scenario when lease updates are sent successfully to the backup server
-// and not sent to the failover peer when this server is in patrtner-down state.
+// Test scenario when lease updates are not sent to the failover peer.
 TEST_F(HAServiceTest, sendUpdatesPartnerDown) {
     // Start HTTP servers.
     ASSERT_NO_THROW({
@@ -1227,11 +1244,12 @@ TEST_F(HAServiceTest, sendUpdatesPartnerDown) {
     bool unpark_called = false;
     testSendLeaseUpdates([&unpark_called] {
         unpark_called = true;
-    }, false, 1, MyState(HA_PARTNER_DOWN_ST));
+    }, false, 0, MyState(HA_PARTNER_DOWN_ST));
 
-    // Expecting that the packet was unparked because lease updates are expected
-    // to be successful.
-    EXPECT_TRUE(unpark_called);
+    // There were no lease updates for which we have been waiting to complete so
+    // the packet was never unparked. Note that in such situation the packet is
+    // not parked either.
+    EXPECT_FALSE(unpark_called);
 
     // Server 2 should not receive lease4-update.
     auto update_request2 = factory2_->getResponseCreator()->findRequest("lease4-update",
@@ -1242,19 +1260,6 @@ TEST_F(HAServiceTest, sendUpdatesPartnerDown) {
     auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease4-del",
                                                                         "192.2.3.4");
     EXPECT_FALSE(delete_request2);
-
-    // Lease updates should be successfully sent to server3.
-    EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
-
-    // Check that the server 3 has received lease4-update command.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease4-update",
-                                                                        "192.1.2.3");
-    EXPECT_TRUE(update_request3);
-
-    // Check that the server 3 has received lease4-del command.
-    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease4-del",
-                                                                        "192.2.3.4");
-    EXPECT_TRUE(delete_request3);
 }
 
 // Test scenario when one of the servers to which updates are sent is offline.
@@ -1268,7 +1273,7 @@ TEST_F(HAServiceTest, sendUpdatesActiveServerOffline) {
     testSendLeaseUpdates([] {
         ADD_FAILURE() << "unpark function called but expected that the packet"
             " is dropped";
-    }, false, 2);
+    }, false, 1);
 
     // Server 2 should not receive lease4-update.
     auto update_request2 = factory2_->getResponseCreator()->findRequest("lease4-update",
@@ -1279,19 +1284,6 @@ TEST_F(HAServiceTest, sendUpdatesActiveServerOffline) {
     auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease4-del",
                                                                         "192.2.3.4");
     EXPECT_FALSE(delete_request2);
-
-    // Lease updates should be successfully sent to server3.
-    EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
-
-    // Check that the server 3 has received lease4-update command.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease4-update",
-                                                                        "192.1.2.3");
-    EXPECT_TRUE(update_request3);
-
-    // Check that the server 3 has received lease4-del command.
-    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease4-del",
-                                                                        "192.2.3.4");
-    EXPECT_TRUE(delete_request3);
 }
 
 // Test scenario when one of the servers to which updates are sent is offline.
@@ -1305,50 +1297,9 @@ TEST_F(HAServiceTest, sendUpdatesBackupServerOffline) {
     bool unpark_called = false;
     testSendLeaseUpdates([&unpark_called] {
         unpark_called = true;
-    }, true, 1, MyState(HA_LOAD_BALANCING_ST), false);
+    }, true, 1);
 
     EXPECT_TRUE(unpark_called);
-
-    // The server 2 should have received two commands.
-    EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
-
-    // Check that the server 2 has received lease4-update command.
-    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease4-update",
-                                                                        "192.1.2.3");
-    EXPECT_TRUE(update_request2);
-
-    // Check that the server 2 has received lease4-del command.
-    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease4-del",
-                                                                        "192.2.3.4");
-    EXPECT_TRUE(delete_request2);
-
-    // Server 3 should not receive lease4-update.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease4-update",
-                                                                        "192.1.2.3");
-    EXPECT_FALSE(update_request3);
-
-    // Server 3 should not receive lease4-del.
-    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease4-del",
-                                                                        "192.2.3.4");
-    EXPECT_FALSE(delete_request3);
-}
-
-// Test scenario when the backup server is offline but we do expect an
-// ack from it prior to responding to the DHCP client.
-TEST_F(HAServiceTest, sendUpdatesBackupServerOfflineAckExpected) {
-    // Start only two servers out of three. The server 2 is not running.
-    ASSERT_NO_THROW({
-            listener_->start();
-            listener2_->start();
-    });
-
-    bool unpark_called = false;
-    testSendLeaseUpdates([&unpark_called] {
-        unpark_called = true;
-    }, true, 2, MyState(HA_LOAD_BALANCING_ST), true);
-
-    // The packet shouldn't be unparked. It should be dropped.
-    EXPECT_FALSE(unpark_called);
 
     // The server 2 should have received two commands.
     EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
@@ -1390,7 +1341,7 @@ TEST_F(HAServiceTest, sendUpdatesControlResultError) {
     testSendLeaseUpdates([] {
         ADD_FAILURE() << "unpark function called but expected that the packet"
             " is dropped";
-    }, false, 2);
+    }, false, 1);
 
     // The updates should be sent to server 2 and this server should return error code.
     EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
@@ -1432,7 +1383,7 @@ TEST_F(HAServiceTest, sendSuccessfulUpdates6) {
     bool unpark_called = false;
     testSendLeaseUpdates6([&unpark_called] {
         unpark_called = true;
-    }, true, 2);
+    }, true, 1);
 
     // Expecting that the packet was unparked because lease updates are expected
     // to be successful.
@@ -1457,8 +1408,7 @@ TEST_F(HAServiceTest, sendSuccessfulUpdates6) {
     EXPECT_TRUE(update_request3);
 }
 
-// Test scenario when lease updates are sent successfully to the backup server
-// and not sent to the failover peer when this server is in patrtner-down state.
+// Test scenario when lease updates are not sent to the failover peer.
 TEST_F(HAServiceTest, sendUpdatesPartnerDown6) {
     // Start HTTP servers.
     ASSERT_NO_THROW({
@@ -1471,26 +1421,18 @@ TEST_F(HAServiceTest, sendUpdatesPartnerDown6) {
     bool unpark_called = false;
     testSendLeaseUpdates6([&unpark_called] {
         unpark_called = true;
-    }, false, 1, MyState(HA_PARTNER_DOWN_ST));
+    }, false, 0, MyState(HA_PARTNER_DOWN_ST));
 
-    // Expecting that the packet was unparked because lease updates are expected
-    // to be successful.
-    EXPECT_TRUE(unpark_called);
+    // There were no lease updates for which we have been waiting to complete so
+    // the packet was never unparked. Note that in such situation the packet is
+    // not parked either.
+    EXPECT_FALSE(unpark_called);
 
     // Server 2 should not receive lease6-bulk-apply.
     auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
                                                                         "2001:db8:1::cafe",
                                                                         "2001:db8:1::efac");
     EXPECT_FALSE(update_request2);
-
-    // Lease updates should be successfully sent to server3.
-    EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
-
-    // Check that the server 3 has received lease6-bulk-apply command.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
-                                                                        "2001:db8:1::cafe",
-                                                                        "2001:db8:1::efac");
-    EXPECT_TRUE(update_request3);
 }
 
 // Test scenario when one of the servers to which updates are sent is offline.
@@ -1504,22 +1446,13 @@ TEST_F(HAServiceTest, sendUpdatesActiveServerOffline6) {
     testSendLeaseUpdates6([] {
         ADD_FAILURE() << "unpark function called but expected that the packet"
             " is dropped";
-    }, false, 2);
+    }, false, 1);
 
     // Server 2 should not receive lease6-bulk-apply.
     auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
                                                                         "2001:db8:1::cafe",
                                                                         "2001:db8:1::efac");
     EXPECT_FALSE(update_request2);
-
-    // Lease updates should be successfully sent to server3.
-    EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
-
-    // Check that the server 3 has received lease6-bulk-apply command.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
-                                                                        "2001:db8:1::cafe",
-                                                                        "2001:db8:1::efac");
-    EXPECT_TRUE(update_request3);
 }
 
 // Test scenario when one of the servers to which updates are sent is offline.
@@ -1533,42 +1466,9 @@ TEST_F(HAServiceTest, sendUpdatesBackupServerOffline6) {
     bool unpark_called = false;
     testSendLeaseUpdates6([&unpark_called] {
         unpark_called = true;
-    }, true, 1, MyState(HA_LOAD_BALANCING_ST), false);
+    }, true, 1);
 
     EXPECT_TRUE(unpark_called);
-
-    // The server 2 should have received one command.
-    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
-
-    // Check that the server 2 has received lease6-bulk-apply command.
-    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
-                                                                        "2001:db8:1::cafe",
-                                                                        "2001:db8:1::efac");
-    EXPECT_TRUE(update_request2);
-
-    // Server 3 should not receive lease6-bulk-apply.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
-                                                                        "2001:db8:1::cafe",
-                                                                        "2001:db8:1::efac");
-    EXPECT_FALSE(update_request3);
-}
-
-// Test scenario when the backup server is offline but we do expect an
-// ack from it prior to responding to the DHCP client.
-TEST_F(HAServiceTest, sendUpdatesBackupServerOfflineAckExpected6) {
-    // Start only two servers out of three. The server 2 is not running.
-    ASSERT_NO_THROW({
-            listener_->start();
-            listener2_->start();
-    });
-
-    bool unpark_called = false;
-    testSendLeaseUpdates6([&unpark_called] {
-        unpark_called = true;
-    }, true, 2, MyState(HA_LOAD_BALANCING_ST), true);
-
-    // The packet shouldn't be unparked. It should be dropped.
-    EXPECT_FALSE(unpark_called);
 
     // The server 2 should have received one command.
     EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
@@ -1602,7 +1502,7 @@ TEST_F(HAServiceTest, sendUpdatesControlResultError6) {
     testSendLeaseUpdates6([] {
         ADD_FAILURE() << "unpark function called but expected that the packet"
             " is dropped";
-    }, false, 2);
+    }, false, 1);
 
     // The updates should be sent to server 2 and this server should return error code.
     EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
@@ -1612,15 +1512,6 @@ TEST_F(HAServiceTest, sendUpdatesControlResultError6) {
                                                                         "2001:db8:1::cafe",
                                                                         "2001:db8:1::efac");
     EXPECT_TRUE(update_request2);
-
-    // Lease updates should be successfully sent to server3.
-    EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
-
-    // Check that the server 3 has received lease6-bulk-apply command.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
-                                                                        "2001:db8:1::cafe",
-                                                                        "2001:db8:1::efac");
-    EXPECT_TRUE(update_request3);
 }
 
 // This test verifies that the server accepts the response to the lease6-bulk-apply
@@ -1670,7 +1561,7 @@ TEST_F(HAServiceTest, sendUpdatesFailedLeases6) {
     bool unpark_called = false;
     testSendLeaseUpdates6([&unpark_called] {
         unpark_called = true;
-    }, true, 2);
+    }, true, 1);
 
     // Expecting that the packet was unparked because lease updates are expected
     // to be successful.
@@ -1684,15 +1575,6 @@ TEST_F(HAServiceTest, sendUpdatesFailedLeases6) {
                                                                         "2001:db8:1::cafe",
                                                                         "2001:db8:1::efac");
     EXPECT_TRUE(update_request2);
-
-    // Lease updates should be successfully sent to server3.
-    EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
-
-    // Check that the server 3 has received lease6-bulk-apply command.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
-                                                                        "2001:db8:1::cafe",
-                                                                        "2001:db8:1::efac");
-    EXPECT_TRUE(update_request3);
 }
 
 // This test verifies that the heartbeat command is processed successfully.

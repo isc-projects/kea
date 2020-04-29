@@ -73,7 +73,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
         "        \"max-response-delay\": 11,"
         "        \"max-ack-delay\": 5,"
         "        \"max-unacked-clients\": 20,"
-        "        \"wait-backup-ack\": true,"
+        "        \"wait-backup-ack\": false,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server1\","
@@ -124,7 +124,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(11, impl->getConfig()->getMaxResponseDelay());
     EXPECT_EQ(5, impl->getConfig()->getMaxAckDelay());
     EXPECT_EQ(20, impl->getConfig()->getMaxUnackedClients());
-    EXPECT_TRUE(impl->getConfig()->amWaitingBackupAck());
+    EXPECT_FALSE(impl->getConfig()->amWaitingBackupAck());
 
     HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
     ASSERT_TRUE(cfg);
@@ -951,6 +951,34 @@ TEST_F(HAConfigTest, duplicatedStates) {
         "    }"
         "]",
         "duplicated configuration for the 'waiting' state");
+}
+
+// Test that wait-backup-ack must not be enabled in the configuration
+// with two active servers.
+TEST_F(HAConfigTest, waitBackupAckWithActiveServers) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"hot-standby\","
+        "        \"wait-backup-ack\": true,"
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "'wait-backup-ack' must be set to false in the 'hot-standby' mode");
 }
 
 // Test that conversion of the role names works correctly.

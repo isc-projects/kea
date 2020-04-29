@@ -154,7 +154,7 @@ HATest::createValidJsonConfiguration(const HAConfig::HAMode& ha_mode) const {
         "         \"max-response-delay\": 1000,"
         "         \"max-ack-delay\": 10000,"
         "         \"max-unacked-clients\": 10,"
-        "         \"wait-backup-ack\": true,"
+        "         \"wait-backup-ack\": false,"
         "         \"peers\": ["
         "             {"
         "                 \"name\": \"server1\","

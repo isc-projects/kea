@@ -294,6 +294,11 @@ HAConfig::validate() const {
                       " balancing configuration");
         }
 
+        // In the load-balancing mode the wait-backup-ack must be false.
+        if (wait_backup_ack_) {
+            isc_throw(HAConfigValidationError, "'wait-backup-ack' must be set to false in the"
+                      " 'load-balancing' mode");
+        }
     }
 
     if (ha_mode_ == HOT_STANDBY) {
@@ -313,6 +318,12 @@ HAConfig::validate() const {
         if (peers_cnt.count(PeerConfig::PRIMARY) == 0) {
             isc_throw(HAConfigValidationError, "primary server required in the hot"
                       " standby configuration");
+        }
+
+        // In the hot-standby mode the wait-backup-ack must be false.
+        if (wait_backup_ack_) {
+            isc_throw(HAConfigValidationError, "'wait-backup-ack' must be set to false in the"
+                      " 'hot-standby' mode");
         }
     }
 }
