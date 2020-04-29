@@ -28,7 +28,7 @@ const SimpleDefaults HA_CONFIG_DEFAULTS = {
     { "sync-leases", Element::boolean, "true" },
     { "sync-timeout", Element::integer, "60000" },
     { "sync-page-limit", Element::integer, "10000" },
-    { "wait-backup-ack", Element::boolean, "true" }
+    { "wait-backup-ack", Element::boolean, "false" }
 };
 
 /// @brief Default values for HA peer configuration.
