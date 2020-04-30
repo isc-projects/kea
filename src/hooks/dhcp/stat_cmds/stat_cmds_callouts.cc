@@ -1,8 +1,8 @@
 // Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
-// This Source Code Form is subject to the terms of the End User License
-// Agreement. See COPYING file in the premium/ directory.
-
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Functions accessed by the hooks framework use C linkage to avoid the name
 // mangling that accompanies use of the C++ compiler as well as to avoid
