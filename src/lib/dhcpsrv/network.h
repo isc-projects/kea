@@ -693,7 +693,7 @@ public:
 
     /// @brief Sets new store-extended-info
     ///
-    /// @param store-extended-info New value to use.
+    /// @param store_extended_info New value to use.
     void setStoreExtendedInfo(const util::Optional<bool>& store_extended_info) {
         store_extended_info_ = store_extended_info;
     }

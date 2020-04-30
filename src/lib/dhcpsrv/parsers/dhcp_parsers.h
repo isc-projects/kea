@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -803,8 +803,6 @@ public:
     ///
     /// @param [out] subnets Container where parsed subnets will be stored.
     /// @param subnets_list pointer to a list of IPv6 subnets
-    /// @param check_iface Check if the specified interface exists in
-    /// the system.
     /// @return Number of subnets created.
     size_t parse(Subnet6Collection& subnets,
                  data::ConstElementPtr subnets_list);

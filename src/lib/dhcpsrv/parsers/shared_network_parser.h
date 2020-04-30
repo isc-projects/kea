@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -54,8 +54,6 @@ public:
     ///
     /// @param shared_network_data Data element holding shared network
     /// configuration to be parsed.
-    /// @param check_iface Check if the specified interface exists in
-    /// the system.
     ///
     /// @return Pointer to an object representing shared network.
     /// @throw DhcpConfigError when shared network configuration is invalid.

@@ -874,7 +874,7 @@ protected:
     /// flagged as ready to read.   It is installed by the invocation to
     /// register the socket with IfaceMgr made in @ref clientConnectHandler.
     ///
-    /// The handler calls @c HttpClient::closeIfOutOfBandwidth() to catch
+    /// The handler calls @c http::HttpClient::closeIfOutOfBandwidth() to catch
     /// and close any sockets that have gone ready outside of transactions.
     ///
     /// We do this in case the other peer closed the socket (e.g. idle timeout),

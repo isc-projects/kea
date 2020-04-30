@@ -1089,7 +1089,7 @@ public:
     /// counters.
     ///
     /// \param clean_report value to generate easy to parse report.
-    /// \param sep_ string used as separator if clean_report enabled..
+    /// \param clean_sep string used as separator if clean_report enabled..
     void
     printIntermediateStats(bool clean_report, std::string clean_sep) const {
         std::ostringstream stream_sent;

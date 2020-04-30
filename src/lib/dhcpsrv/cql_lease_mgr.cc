@@ -161,7 +161,7 @@ public:
     /// Fills in the CQL_BIND array for sending data in the Lease4 object to
     /// the database. Used for DELETE statements.
     ///
-    /// @param address address of the lease to be deleted
+    /// @param lease Deleted lease information.
     /// @param data lease info in CQL format will be stored here
     /// @param statement_tag tag identifying the query (optional)
     void createBindForDelete(const Lease4Ptr &lease,

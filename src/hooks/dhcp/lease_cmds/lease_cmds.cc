@@ -354,8 +354,8 @@ public:
     /// @brief Fetches an IP address parameter from a map of parameters
     /// @param map of parameters in which to look
     /// @name name of the parameter desired
-    /// @family expected protocol family of the address parameter, AF_INET
-    /// or AF_INET6
+    /// @param family expected protocol family of the address parameter,
+    /// AF_INET or AF_INET6
     /// @return IOAddress containing the value of the parameter.
     /// @throw BadValue if the parameter is missing or invalid
     IOAddress getAddressParam(ConstElementPtr params, const std::string name,

@@ -153,6 +153,7 @@ public:
 
 private:
 
+    /// @public
     /// @brief Assign class using vendor-class-identifier option
     ///
     /// @note This is the first part of @ref classifyPacket
@@ -1027,6 +1028,7 @@ protected:
 
 private:
 
+    /// @public
     /// @brief Assign class using vendor-class-identifier option
     ///
     /// @note This is the first part of @ref classifyPacket

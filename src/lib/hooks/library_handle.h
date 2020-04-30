@@ -73,7 +73,7 @@ public:
     ///        used.  Note: although -1 is a valid argument value for
     ///        @ref isc::hooks::CalloutManager::setLibraryIndex(), in this class
     ///        it is used as a sentinel to indicate that the library index in
-    ///        @ref isc::util::CalloutManager should not be set or reset.
+    ///        @ref isc::hooks::CalloutManager should not be set or reset.
     LibraryHandle(CalloutManager& manager, int index = -1)
         : callout_manager_(manager), index_(index) {}
 

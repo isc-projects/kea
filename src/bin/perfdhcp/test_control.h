@@ -568,7 +568,7 @@ protected:
     /// Generate list of addresses and check for uniqueness.
     ///
     /// \param pkt6 object representing received DHCPv6 packet
-    /// \param ExhchangeType enum value.
+    /// \param xchg_type ExchangeType enum value.
     void address6Uniqueness(const dhcp::Pkt6Ptr& pkt6, ExchangeType xchg_type);
 
     /// \brief Process received v4 addresses uniqueness.
@@ -576,7 +576,7 @@ protected:
     /// Generate list of addresses and check for uniqueness.
     ///
     /// \param pkt4 object representing received DHCPv4 packet
-    /// \param ExchangeType enum value.
+    /// \param xchg_type ExchangeType enum value.
     void address4Uniqueness(const dhcp::Pkt4Ptr& pkt4, ExchangeType xchg_type);
 
     /// \brief add unique address to already assigned list.
@@ -584,8 +584,8 @@ protected:
     /// Add address and/or prefix to unique set if it's not already there,
     /// otherwise increment the number of non unique addresses.
     ///
-    /// \param std::set set of addresses that should be added to unique list
-    /// \param ExchangeType enum value.
+    /// \param current set of addresses that should be added to unique list
+    /// \param xchg_type ExchangeType enum value.
     void addUniqeAddr(const std::set<std::string>& current, ExchangeType xchg_type) {
         switch(xchg_type) {
             case ExchangeType::SA: {
@@ -648,7 +648,7 @@ protected:
     /// If address is released we should remove it from both
     /// advertised (offered) and assigned sets.
     ///
-    /// \param std::string holding value of unique address.
+    /// \param addr holding value of unique address.
     void removeUniqueAddr(const std::set<std::string>& addr) {
         for (auto addr_it = addr.begin(); addr_it != addr.end(); ++addr_it) {
             auto it = unique_address_.find(*addr_it);

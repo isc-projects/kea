@@ -472,7 +472,7 @@ private:
     /// method.
     StatsMgr();
 
-    /// @private
+    /// @public
 
     /// @brief Sets a given statistic to specified value (internal version).
     ///
@@ -496,7 +496,7 @@ private:
         }
     }
 
-    /// @private
+    /// @public
 
     /// @brief Adds specified value to a given statistic (internal version).
     ///
@@ -525,7 +525,7 @@ private:
         }
     }
 
-    /// @private
+    /// @public
 
     /// @brief Adds a new observation.
     ///
@@ -536,7 +536,7 @@ private:
     /// @param stat observation
     void addObservation(const ObservationPtr& stat);
 
-    /// @private
+    /// @public
 
     /// @brief Adds a new observation in a thread safe context.
     ///
