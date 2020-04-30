@@ -916,6 +916,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // Apply multi threading settings.
     // @note These settings are applied/updated only if no errors occur while
     // applying the new configuration.
+    // @todo This should be fixed.
     try {
         CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
         if (MultiThreadingMgr::instance().getMode()) {
