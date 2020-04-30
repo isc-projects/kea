@@ -892,7 +892,9 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         // operation.
     }
 
-    // Configure multi threading
+    // Apply multi threading settings.
+    // @note These settings are applied/updated only if no errors occur while
+    // applying the new configuration.
     try {
         CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
         if (MultiThreadingMgr::instance().getMode()) {

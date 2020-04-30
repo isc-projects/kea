@@ -4359,7 +4359,7 @@ TEST_F(Dhcp6ParserTest, LibrariesSpecified) {
 
 // Verify the configuration of hooks libraries which are not compatible with
 // multi threading is rejected.
-TEST_F(Dhcp6ParserTest, IncompatibleLibrary1Specified) {
+TEST_F(Dhcp6ParserTest, IncompatibleLibrary2Specified) {
     // Marker files should not be present.
     EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
@@ -4393,7 +4393,7 @@ TEST_F(Dhcp6ParserTest, IncompatibleLibrary1Specified) {
 
 // Verify the configuration of hooks libraries which are not compatible with
 // multi threading is rejected.
-TEST_F(Dhcp6ParserTest, IncompatibleLibrary2Specified) {
+TEST_F(Dhcp6ParserTest, IncompatibleLibrary3Specified) {
     // Marker files should not be present.
     EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
