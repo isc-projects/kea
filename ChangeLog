@@ -1,3 +1,7 @@
+1744.	[func]		razvan
+	Stopping packet processing when changing or reloading configuration.
+	(Gitlab #1188)
+
 Kea 1.7.7 released on Apr 29, 2020
 
 1743.	[doc]		tomek
