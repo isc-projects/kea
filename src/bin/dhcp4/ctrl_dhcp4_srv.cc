@@ -229,8 +229,9 @@ ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr args)
 
 ConstElementPtr
 ControlledDhcpv4Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
-    // pause dhcp service when reloading libraries
+    // stop thread pool (if running)
     MultiThreadingCriticalSection cs;
+
     /// @todo delete any stored CalloutHandles referring to the old libraries
     /// Get list of currently loaded libraries and reload them.
     HookLibsCollection loaded = HooksManager::getLibraryInfo();
@@ -354,7 +355,12 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
         return (result);
     }
 
+    // stop thread pool (if running)
+    MultiThreadingCriticalSection cs;
+
     // disable multi-threading (it will be applied by new configuration)
+    // this must be done in order to properly handle MT to ST transition
+    // when 'multi-threading' structure is missing from new config
     MultiThreadingMgr::instance().apply(false, 0, 0);
 
     // We are starting the configuration process so we should remove any
@@ -413,18 +419,6 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
         // there were problems with the config. As such, we need to back off
         // and revert to the previous logging configuration.
         CfgMgr::instance().getCurrentCfg()->applyLoggingCfg();
-    }
-
-    // Configure multi threading
-    try {
-        CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
-        if (MultiThreadingMgr::instance().getMode()) {
-            LOG_FATAL(dhcp4_logger, DHCP4_MULTI_THREADING_WARNING);
-        }
-    } catch (const std::exception& ex) {
-        err << "Error applying multi threading settings: "
-            << ex.what();
-        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     return (result);
@@ -596,6 +590,7 @@ ControlledDhcpv4Srv::commandConfigBackendPullHandler(const std::string&,
         return (createAnswer(CONTROL_RESULT_EMPTY, "No config backend."));
     }
 
+    // stop thread pool (if running)
     MultiThreadingCriticalSection cs;
 
     // Reschedule the periodic CB fetch.
@@ -897,6 +892,18 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         // operation.
     }
 
+    // Configure multi threading
+    try {
+        CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
+        if (MultiThreadingMgr::instance().getMode()) {
+            LOG_FATAL(dhcp4_logger, DHCP4_MULTI_THREADING_WARNING);
+        }
+    } catch (const std::exception& ex) {
+        err << "Error applying multi threading settings: "
+            << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
+    }
+
     return (answer);
 }
 
@@ -1178,6 +1185,7 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
 void
 ControlledDhcpv4Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
                                     boost::shared_ptr<unsigned> failure_count) {
+    // stop thread pool (if running)
     MultiThreadingCriticalSection cs;
 
     try {
