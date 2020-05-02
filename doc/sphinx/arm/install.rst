@@ -198,43 +198,43 @@ generate the makefiles using the defaults, simply run:
 Run ``./configure`` with the ``--help`` switch to view the different
 options. Some commonly used options are:
 
---prefix
+ - ``--prefix``
    Define the installation location (the default is ``/usr/local``).
 
---with-mysql
+ - ``--with-mysql``
    Build Kea with code to allow it to store leases and host reservations
    in a MySQL database.
 
---with-pgsql
+ - ``--with-pgsql``
    Build Kea with code to allow it to store leases and host reservations
    in a PostgreSQL database.
 
---with-cql
+ - ``--with-cql``
    Build Kea with code to allow it to store leases and host reservations
    in a Cassandra (CQL) database.
 
---with-log4cplus
+ - ``--with-log4cplus``
    Define the path to find the Log4cplus headers and libraries. Normally
    this is not necessary.
 
---with-boost-include
+ - ``--with-boost-include``
    Define the path to find the Boost headers. Normally this is not
    necessary.
 
---with-botan-config
+ - ``--with-botan-config``
    Specify the path to the botan-config script to build with Botan for
    cryptographic functions. It is preferable to use OpenSSL (see below).
 
---with-openssl
+ - ``--with-openssl``
    Replace Botan by the OpenSSL the cryptographic library. By default
    ``configure`` searches for a valid Botan installation. If one is not
    found, it searches for OpenSSL. Normally this is not necessary.
 
---enable-shell
+ - ``--enable-shell``
    Build the optional ``kea-shell`` tool (more in :ref:`kea-shell`).
    The default is to not build it.
 
---with-site-packages
+ - ``--with-site-packages``
    Only useful when ``kea-shell`` is enabled. It causes the kea-shell
    python packages to be installed in specified directory. This is
    mostly useful for Debian related distros. While most systems store
@@ -243,7 +243,7 @@ options. Some commonly used options are:
    python packages are expected to be installed in
    /usr/lib/python3/dist-packages.
 
---enable-perfdhcp
+ - ``--enable-perfdhcp``
    Build the optional ``perfdhcp`` DHCP benchmarking tool. The default
    is to not build it.
 
@@ -274,20 +274,20 @@ There are also many additional options that are typically not necessary for
 regular users. However, they may be useful for package maintainers,
 developers, or people who want to extend Kea code or send patches:
 
---with-gtest, --with-gtest-source
+ - ``--with-gtest``, ``--with-gtest-source``
    Enable the building of the C++ Unit Tests using the Google Test
    framework. This option specifies the path to the gtest source. (If
    the framework is not installed on your system, it can be downloaded
    from https://github.com/google/googletest.)
 
---enable-generate-docs
+ - ``--enable-generate-docs``
    Enable the rebuilding Kea documentation. ISC publishes Kea
    documentation for each release; however, in some cases you may want
    to rebuild it. For example, if you want to change something in the
    docs, or want to generate new ones from git sources that are not
    released yet.
 
---enable-generate-parser
+ - ``--enable-generate-parser``
    Many Kea components have parsers implemented using flex (.ll files)
    and bison (.yy files). Kea sources have C++/h files generated out
    from them. By default Kea does not use flex or bison to avoid
@@ -296,7 +296,7 @@ developers, or people who want to extend Kea code or send patches:
    parameter), you will need to use flex and bison to regenerate
    parsers. This option lets you do that.
 
---enable-generate-messages
+ - ``--enable-generate-messages``
    Enable the regeneration of messages files from their messages source
    files, e.g. regenerate xxx_messages.h and xxx_messages.cc from
    xxx_messages.mes using the Kea message compiler. By default Kea is
@@ -305,7 +305,7 @@ developers, or people who want to extend Kea code or send patches:
    will need to build and use the Kea message compiler. This option lets
    you do that.
 
---with-benchmark, --with-benchmark-source
+ - ``--with-benchmark``, ``--with-benchmark-source``
    Enable the building of the database backend benchmarks using the
    Google Benchmark framework. This option specifies the path to the
    gtest source. (If the framework is not installed on your system, it

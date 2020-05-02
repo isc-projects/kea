@@ -2850,6 +2850,7 @@ global ``dhcp-ddns`` section of the kea-dhcp4.  Beginning with Kea 1.7.1
 DDNS related parameters were split into two groups:
 
 1. Connectivity Parameters
+
     These are parameters which specify where and how kea-dhcp4 connects to
     and communicates with D2.  These parameters can only be specified
     within the top-level ``dhcp-ddns`` section in the kea-dhcp4
@@ -2865,6 +2866,7 @@ DDNS related parameters were split into two groups:
     -  ``ncr-format"``
 
 2. Behavioral Parameters
+
     These parameters influence behavior such as how client host names and
     FQDN options are handled.  They have been moved out of the ``dhcp-ddns``
     section so that they may be specified at the global, shared-network,
@@ -2958,9 +2960,9 @@ with it. kea-dhcp4 uses the following configuration parameters to
 control this communication:
 
 -  ``enable-updates`` - As of Kea 1.7.1, this parameter only enables
-    connectivity to kea-dhcp-ddns such that DDNS updates can be constructed
-    and sent.  It must be true for NCRs to be generated and sent to D2.
-    It defaults to false.
+   connectivity to kea-dhcp-ddns such that DDNS updates can be constructed
+   and sent.  It must be true for NCRs to be generated and sent to D2.
+   It defaults to false.
 
 -  ``server-ip`` - the IP address on which D2 listens for requests. The
    default is the local loopback interface at address 127.0.0.1.

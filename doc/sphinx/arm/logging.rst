@@ -646,31 +646,31 @@ and a typical log produced by this pattern would look somethng like this:
 
 That breaks down as like so:
 
-- %D{%Y-%m-%d %H:%M:%S.%q}
+  - ``%D{%Y-%m-%d %H:%M:%S.%q}``
     '%D' is the date and time in local time that the log message is generated,
     while everything between the curly braces, '{}' are date and time components.
     From the example log above this produces:
     ``2019-08-05 14:27:45.871``
 
-- %-5p
+  - ``%-5p``
     The severity of message, output as a minimum of five characters,
     using right-padding with spaces. In our example log: ``DEBUG``
 
-- %c
+  - ``%c``
     The log source. This includes two elements: the Kea process generating the
     message, in this case, ``kea-dhcp4``; and the component within the program
     from which the message originated, ``dhcpsrv`` (e.g.  the name of the
     library used by DHCP server implementations).
 
-- %i
+  - ``%i``
     The process ID. From the example log: ``8475``
 
-- %t
+  - ``%t``
     The thread ID. From the example log: ``12345``.
     Note the format of the thread ID is OS dependent: e.g. on some systems
     it is an address so is displayed in hexadecimal.
 
-- %m
+  - ``%m``
     The log message itself. Keg log messages all begin with a message
     identifier followed by arbitrary log text. Every message in Kea has
     a unique identifier, which can be used as an index to the
@@ -787,6 +787,7 @@ The following environment variables can be used to control the behavior
 of logging during startup:
 
 KEA_LOCKFILE_DIR
+
    Specifies a directory where the logging system should create its lock
    file. If not specified, it is prefix/var/run/kea, where "prefix"
    defaults to /usr/local. This variable must not end with a slash.
@@ -795,19 +796,20 @@ KEA_LOCKFILE_DIR
    the same file.
 
 KEA_LOGGER_DESTINATION
+
    Specifies logging output. There are several special values:
 
-   stdout
-      Log to standard output.
+   ``stdout``
+   Log to standard output.
 
-   stderr
-      Log to standard error.
+   ``stderr``
+   Log to standard error.
 
-   syslog[:fac]
-      Log via syslog. The optional fac (which is separated from the word
-      "syslog" by a colon) specifies the facility to be used for the log
-      messages. Unless specified, messages will be logged using the
-      facility "local0".
+   ``syslog[:fac]``
+   Log via syslog. The optional fac (which is separated from the word
+   "syslog" by a colon) specifies the facility to be used for the log
+   messages. Unless specified, messages will be logged using the
+   facility "local0".
 
    Any other value is treated as a name of the output file. If not
    specified otherwise, Kea will log to standard output.
