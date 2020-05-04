@@ -105,7 +105,7 @@ public:
     /// @brief Get the configured dhcp packet queue size.
     ///
     /// @return The dhcp packet queue size.
-    uint32_t getPacketQueueSize() const;
+    uint32_t getPacketQueueSize();
 
     /// @brief Set the configured dhcp packet queue size.
     ///
@@ -165,9 +165,6 @@ private:
 
     /// @brief The configured size of the dhcp thread pool.
     uint32_t thread_pool_size_;
-
-    /// @brief The configured size of the dhcp packet queue.
-    uint32_t packet_queue_size_;
 
     /// @brief Packet processing thread pool.
     ThreadPool<std::function<void()>> thread_pool_;

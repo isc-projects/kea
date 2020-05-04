@@ -330,8 +330,7 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response
-    void processPacketAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp);
+    void processPacketAndSendResponse(Pkt4Ptr& query);
 
     /// @brief Process a single incoming DHCPv4 packet and sends the response.
     ///
@@ -339,8 +338,7 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response
-    void processPacketAndSendResponseNoThrow(Pkt4Ptr& query, Pkt4Ptr& rsp);
+    void processPacketAndSendResponseNoThrow(Pkt4Ptr& query);
 
     /// @brief Process an unparked DHCPv4 packet and sends the response.
     ///

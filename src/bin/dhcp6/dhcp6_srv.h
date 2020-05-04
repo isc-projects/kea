@@ -155,8 +155,7 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response
-    void processPacketAndSendResponse(Pkt6Ptr& query, Pkt6Ptr& rsp);
+    void processPacketAndSendResponse(Pkt6Ptr& query);
 
     /// @brief Process a single incoming DHCPv6 packet and sends the response.
     ///
@@ -164,8 +163,7 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response
-    void processPacketAndSendResponseNoThrow(Pkt6Ptr& query, Pkt6Ptr& rsp);
+    void processPacketAndSendResponseNoThrow(Pkt6Ptr& query);
 
     /// @brief Process an unparked DHCPv6 packet and sends the response.
     ///

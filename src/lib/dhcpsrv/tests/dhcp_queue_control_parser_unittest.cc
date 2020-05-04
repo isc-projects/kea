@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,12 +9,14 @@
 #include <cc/data.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/dhcp_queue_control_parser.h>
+#include <util/multi_threading_mgr.h>
 #include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::test;
+using namespace isc::util;
 
 namespace {
 
@@ -167,5 +169,45 @@ TEST_F(DHCPQueueControlParserTest, invalidContent) {
     }
 }
 
+// Verifies that DHCPQueueControlParser disables the queue when multi-threading
+// is enabled
+TEST_F(DHCPQueueControlParserTest, multiThreading) {
+    // Enable config with some queue type.
+    std::string config =
+        "{ \n"
+        "   \"enable-queue\": true, \n"
+        "   \"queue-type\": \"some-type\" \n"
+        "} \n";
+
+    // Construct the config JSON.
+    ConstElementPtr config_elems;
+    ASSERT_NO_THROW(config_elems = Element::fromJSON(config))
+        << "invalid JSON, test is broken";
+
+    // Parse config.
+    DHCPQueueControlParser parser;
+    ConstElementPtr queue_control;
+    ASSERT_FALSE(MultiThreadingMgr::instance().getMode());
+    ASSERT_NO_THROW(queue_control = parser.parse(config_elems))
+        << "parse fails, test is broken";
+    // Verify that queue is enabled.
+    ASSERT_TRUE(queue_control);
+    ASSERT_TRUE(queue_control->get("enable-queue"));
+    EXPECT_EQ("true", queue_control->get("enable-queue")->str());
+
+    // Retry with multi-threading.
+    ASSERT_NO_THROW(MultiThreadingMgr::instance().setMode(true));
+    EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
+    try {
+        queue_control = parser.parse(config_elems);
+        MultiThreadingMgr::instance().setMode(false);
+    } catch (const std::exception& ex) {
+        MultiThreadingMgr::instance().setMode(false);
+        ADD_FAILURE() << "parser threw an exception: " << ex.what();
+    }
+    ASSERT_TRUE(queue_control);
+    ASSERT_TRUE(queue_control->get("enable-queue"));
+    EXPECT_EQ("false", queue_control->get("enable-queue")->str());
+}
 
 }; // anonymous namespace

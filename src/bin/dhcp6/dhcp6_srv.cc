@@ -518,28 +518,13 @@ int Dhcpv6Srv::run() {
 void Dhcpv6Srv::run_one() {
     // client's message and server's response
     Pkt6Ptr query;
-    Pkt6Ptr rsp;
 
     try {
-        bool read_pkt = true;
-
-        // Do not read more packets from socket if there are enough packets to
-        // be processed in the dhcp thread pool queue
-        // max_queue_size = 0 means no limit
-        const int max_queue_size = MultiThreadingMgr::instance().getPacketQueueSize();
-        const int thread_count = MultiThreadingMgr::instance().getThreadPoolSize();
-        size_t pkt_queue_size = MultiThreadingMgr::instance().getThreadPool().count();
-        if (thread_count && max_queue_size && (pkt_queue_size >= max_queue_size)) {
-            read_pkt = false;
-        }
-
-        if (read_pkt) {
-            // Set select() timeout to 1s. This value should not be modified
-            // because it is important that the select() returns control
-            // frequently so as the IOService can be polled for ready handlers.
-            uint32_t timeout = 1;
-            query = receivePacket(timeout);
-        }
+        // Set select() timeout to 1s. This value should not be modified
+        // because it is important that the select() returns control
+        // frequently so as the IOService can be polled for ready handlers.
+        uint32_t timeout = 1;
+        query = receivePacket(timeout);
 
         // Log if packet has arrived. We can't log the detailed information
         // about the DHCP message because it hasn't been unpacked/parsed
@@ -560,14 +545,13 @@ void Dhcpv6Srv::run_one() {
             // we will increase type specific packets further down the road.
             // See processStatsReceived().
             StatsMgr::instance().addValue("pkt6-received", static_cast<int64_t>(1));
-
         }
+
         // We used to log that the wait was interrupted, but this is no longer
         // the case. Our wait time is 1s now, so the lack of query packet more
         // likely means that nothing new appeared within a second, rather than
         // we were interrupted. And we don't want to print a message every
         // second.
-
 
     } catch (const SignalInterruptOnSelect&) {
         // Packet reception interrupted because a signal has been received.
@@ -616,18 +600,18 @@ void Dhcpv6Srv::run_one() {
             typedef function<void()> CallBack;
             boost::shared_ptr<CallBack> call_back =
                 boost::make_shared<CallBack>(std::bind(&Dhcpv6Srv::processPacketAndSendResponseNoThrow,
-                                                       this, query, rsp));
+                                                       this, query));
             MultiThreadingMgr::instance().getThreadPool().add(call_back);
         } else {
-            processPacketAndSendResponse(query, rsp);
+            processPacketAndSendResponse(query);
         }
     }
 }
 
 void
-Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr& query) {
     try {
-        processPacketAndSendResponse(query, rsp);
+        processPacketAndSendResponse(query);
     } catch (const std::exception& e) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
             .arg(e.what());
@@ -637,7 +621,8 @@ Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 }
 
 void
-Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr& query) {
+    Pkt6Ptr rsp;
     processPacket(query, rsp);
     if (!rsp) {
         return;

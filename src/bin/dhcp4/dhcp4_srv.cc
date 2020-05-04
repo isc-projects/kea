@@ -940,28 +940,13 @@ void
 Dhcpv4Srv::run_one() {
     // client's message and server's response
     Pkt4Ptr query;
-    Pkt4Ptr rsp;
 
     try {
-        bool read_pkt = true;
-
-        // Do not read more packets from socket if there are enough packets to
-        // be processed in the dhcp thread pool queue
-        // max_queue_size = 0 means no limit
-        const int max_queue_size = MultiThreadingMgr::instance().getPacketQueueSize();
-        const int thread_count = MultiThreadingMgr::instance().getThreadPoolSize();
-        size_t pkt_queue_size = MultiThreadingMgr::instance().getThreadPool().count();
-        if (thread_count && max_queue_size && (pkt_queue_size >= max_queue_size)) {
-            read_pkt = false;
-        }
-
-        if (read_pkt) {
-            // Set select() timeout to 1s. This value should not be modified
-            // because it is important that the select() returns control
-            // frequently so as the IOService can be polled for ready handlers.
-            uint32_t timeout = 1;
-            query = receivePacket(timeout);
-        }
+        // Set select() timeout to 1s. This value should not be modified
+        // because it is important that the select() returns control
+        // frequently so as the IOService can be polled for ready handlers.
+        uint32_t timeout = 1;
+        query = receivePacket(timeout);
 
         // Log if packet has arrived. We can't log the detailed information
         // about the DHCP message because it hasn't been unpacked/parsed
@@ -976,8 +961,8 @@ Dhcpv4Srv::run_one() {
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getLocalPort())
                 .arg(query->getIface());
-
         }
+
         // We used to log that the wait was interrupted, but this is no longer
         // the case. Our wait time is 1s now, so the lack of query packet more
         // likely means that nothing new appeared within a second, rather than
@@ -1034,18 +1019,18 @@ Dhcpv4Srv::run_one() {
             typedef function<void()> CallBack;
             boost::shared_ptr<CallBack> call_back =
                 boost::make_shared<CallBack>(std::bind(&Dhcpv4Srv::processPacketAndSendResponseNoThrow,
-                                                       this, query, rsp));
+                                                       this, query));
             MultiThreadingMgr::instance().getThreadPool().add(call_back);
         } else {
-            processPacketAndSendResponse(query, rsp);
+            processPacketAndSendResponse(query);
         }
     }
 }
 
 void
-Dhcpv4Srv::processPacketAndSendResponseNoThrow(Pkt4Ptr& query, Pkt4Ptr& rsp) {
+Dhcpv4Srv::processPacketAndSendResponseNoThrow(Pkt4Ptr& query) {
     try {
-        processPacketAndSendResponse(query, rsp);
+        processPacketAndSendResponse(query);
     } catch (const std::exception& e) {
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
             .arg(e.what());
@@ -1055,7 +1040,8 @@ Dhcpv4Srv::processPacketAndSendResponseNoThrow(Pkt4Ptr& query, Pkt4Ptr& rsp) {
 }
 
 void
-Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp) {
+Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr& query) {
+    Pkt4Ptr rsp;
     processPacket(query, rsp);
     if (!rsp) {
         return;

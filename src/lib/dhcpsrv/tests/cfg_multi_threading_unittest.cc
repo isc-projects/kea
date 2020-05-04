@@ -89,6 +89,7 @@ TEST_F(CfgMultiThreadingTest, apply) {
     EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
     EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
     EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
+    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxCount(), 0);
     std::string content_json =
         "{"
         "    \"enable-multi-threading\": true,\n"
@@ -102,6 +103,7 @@ TEST_F(CfgMultiThreadingTest, apply) {
     EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
     EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 4);
     EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 64);
+    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxCount(), 64);
 }
 
 }  // namespace

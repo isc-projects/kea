@@ -89,6 +89,20 @@ struct ThreadPool {
         return (queue_.count());
     }
 
+    /// @brief set maximum number of work items in the queue
+    ///
+    /// @param max_count the maximum count (0 means unlimited)
+    void setMaxCount(size_t max_count) {
+        queue_.setMaxCount(max_count);
+    }
+
+    /// @brief get maximum number of work items in the queue
+    ///
+    /// @return the maximum count (0 means unlimited)
+    size_t getMaxCount() {
+        return (queue_.getMaxCount());
+    }
+
     /// @brief size number of thread pool threads
     ///
     /// @return the number of threads
@@ -149,7 +163,7 @@ private:
         /// @brief Constructor
         ///
         /// Creates the thread pool queue in 'disabled' state
-        ThreadPoolQueue() : enabled_(false) {
+        ThreadPoolQueue() : enabled_(false), max_count_(0) {
         }
 
         /// @brief Destructor
@@ -160,9 +174,26 @@ private:
             clear();
         }
 
+        /// @brief get maximum number of work items in the queue
+        ///
+        /// @return the maximum count (0 means unlimited)
+        void setMaxCount(size_t max_count) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            max_count_ = max_count;
+        }
+
+        /// @brief get maximum number of work items in the queue
+        ///
+        /// @return the maximum count (0 means unlimited)
+        size_t getMaxCount() {
+            std::lock_guard<std::mutex> lock(mutex_);
+            return (max_count_);
+        }
+
         /// @brief push work item to the queue
         ///
         /// Used to add work items to the queue.
+        /// When the queue is full oldest items are removed.
         /// This function adds an item to the queue and wakes up at least one thread
         /// waiting on the queue.
         ///
@@ -173,6 +204,11 @@ private:
             }
             {
                 std::lock_guard<std::mutex> lock(mutex_);
+                if (max_count_ > 0) {
+                    while (queue_.size() >= max_count_) {
+                        queue_.pop();
+                    }
+                }
                 queue_.push(item);
             }
             // Notify pop function so that it can effectively remove a work item.
@@ -262,6 +298,10 @@ private:
         /// The 'enabled' state corresponds to true value
         /// The 'disabled' state corresponds to false value
         std::atomic<bool> enabled_;
+
+        /// @brief maximum number of work items in the queue
+        /// (0 means unlimited)
+        size_t max_count_;
     };
 
     /// @brief run function of each thread

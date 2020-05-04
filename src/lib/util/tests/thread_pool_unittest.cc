@@ -444,4 +444,38 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     ASSERT_EQ(thread_pool.size(), 0);
 }
 
+/// @brief test ThreadPool max count
+TEST_F(ThreadPoolTest, testMaxCount) {
+    uint32_t items_count;
+    CallBack call_back;
+    ThreadPool<CallBack> thread_pool;
+    // the item count should be 0
+    ASSERT_EQ(thread_pool.count(), 0);
+    // the thread count should be 0
+    ASSERT_EQ(thread_pool.size(), 0);
+
+    items_count = 20;
+
+    call_back = std::bind(&ThreadPoolTest::run, this);
+
+    // add items to stopped thread pool
+    for (uint32_t i = 0; i < items_count; ++i) {
+        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
+    }
+
+    // the item count should match
+    ASSERT_EQ(thread_pool.count(), items_count);
+
+    // change the max count
+    ASSERT_EQ(thread_pool.getMaxCount(), 0);
+    size_t max_count = 10;
+    thread_pool.setMaxCount(max_count);
+    EXPECT_EQ(thread_pool.getMaxCount(), max_count);
+
+    // adding an item should squeeze the queue
+    EXPECT_EQ(thread_pool.count(), items_count);
+    EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
+    EXPECT_EQ(thread_pool.count(), max_count);
+}
+
 }  // namespace

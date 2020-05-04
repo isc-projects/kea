@@ -10,8 +10,7 @@ namespace isc {
 namespace util {
 
 MultiThreadingMgr::MultiThreadingMgr()
-    : enabled_(false), critical_section_count_(0), thread_pool_size_(0),
-      packet_queue_size_(0) {
+    : enabled_(false), critical_section_count_(0), thread_pool_size_(0) {
 }
 
 MultiThreadingMgr::~MultiThreadingMgr() {
@@ -69,13 +68,13 @@ MultiThreadingMgr::setThreadPoolSize(uint32_t size) {
 }
 
 uint32_t
-MultiThreadingMgr::getPacketQueueSize() const {
-    return (packet_queue_size_);
+MultiThreadingMgr::getPacketQueueSize() {
+    return (thread_pool_.getMaxCount());
 }
 
 void
 MultiThreadingMgr::setPacketQueueSize(uint32_t size) {
-    packet_queue_size_ = size;
+    thread_pool_.setMaxCount(size);
 }
 
 uint32_t

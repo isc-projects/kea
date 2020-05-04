@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,17 +9,19 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/dhcp_queue_control_parser.h>
+#include <util/multi_threading_mgr.h>
 #include <boost/foreach.hpp>
 #include <string>
 #include <sys/types.h>
 
 using namespace isc::data;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
 
-data::ElementPtr
-DHCPQueueControlParser::parse(const isc::data::ConstElementPtr& control_elem) {
+ElementPtr
+DHCPQueueControlParser::parse(const ConstElementPtr& control_elem) {
     // All we really do here is verify that it is a map that
     // contains at least queue-type.  All other content depends
     // on the packet queue implementation of that type.
@@ -42,7 +44,15 @@ DHCPQueueControlParser::parse(const isc::data::ConstElementPtr& control_elem) {
     }
 
     // Return a copy of it.
-    return (data::copy(control_elem));
+    ElementPtr result = data::copy(control_elem);
+
+    // Currently not compatible with multi-threading.
+    if (MultiThreadingMgr::instance().getMode()) {
+        // Silently disable it.
+        result->set("enable-queue", Element::create(false));
+    }
+
+    return (result);
 }
 
 } // end of namespace isc::dhcp
