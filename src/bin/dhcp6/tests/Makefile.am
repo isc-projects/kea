@@ -82,6 +82,7 @@ TESTS += dhcp6_unittests
 # This list is ordered alphabetically. When adding new files, please maintain
 # this order.
 dhcp6_unittests_SOURCES  = classify_unittests.cc
+dhcp6_unittests_SOURCES += client_handler_unittest.cc
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
 dhcp6_unittests_SOURCES += config_backend_unittest.cc
 dhcp6_unittests_SOURCES += confirm_unittest.cc

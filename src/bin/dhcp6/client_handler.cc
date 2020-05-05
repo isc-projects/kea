@@ -7,7 +7,9 @@
 #include <config.h>
 
 #include <dhcp6/client_handler.h>
+#include <dhcp6/dhcp6_log.h>
 #include <exceptions/exceptions.h>
+#include <stats/stats_mgr.h>
 
 using namespace std;
 
@@ -29,35 +31,36 @@ ClientHandler::~ClientHandler() {
     locked_.reset();
 }
 
-ClientHandler::Client::Client(Pkt6Ptr query)
+ClientHandler::Client::Client(Pkt6Ptr query, DuidPtr client_id)
     : query_(query), thread_(this_thread::get_id()) {
     if (!query) {
         isc_throw(InvalidParameter, "null query in ClientHandler");
     }
-    if (!query->getClientId()) {
-        isc_throw(InvalidParameter, "query has no client Id in ClientHandler");
+    if (!client_id) {
+        isc_throw(InvalidParameter, "null client-id in ClientHandler");
     }
+    duid_ = client_id->getDuid();
 }
 
-Pkt6Ptr
+ClientHandler::ClientPtr
 ClientHandler::lookup(const DuidPtr& duid) {
     if (!duid) {
         isc_throw(InvalidParameter, "duid is null in ClientHandler::lookup");
     }
     auto it = clients_.find(duid->getDuid());
     if (it == clients_.end()) {
-        return (Pkt6Ptr());
+        return (0);
     }
-    return (it->query_);
+    return (ClientPtr(new Client(*it)));
 }
 
 void
-ClientHandler::lock() {
+ClientHandler::lock(Client client) {
     if (!locked_) {
         isc_throw(Unexpected, "nothing to lock in ClientHandler::lock");
     }
-    Client client(locked_);
-    clients_.insert(Client(locked_));
+    // Assume insert will never fail so not checking its result.
+    clients_.insert(client);
 }
 
 void
@@ -65,16 +68,8 @@ ClientHandler::unLock() {
     if (!locked_) {
         isc_throw(Unexpected, "nothing to unlock in ClientHandler::unLock");
     }
-    const DuidPtr& duid = locked_->getClientId();
-    if (!duid) {
-        isc_throw(Unexpected, "no duid unlock in ClientHandler::unLock");
-    }
-    auto it = clients_.find(duid->getDuid());
-    if (it == clients_.end()) {
-        // Should not happen
-        return;
-    }
-    clients_.erase(it);
+    // Assume erase will never fail so not checking its result.
+    clients_.erase(locked_->getDuid());
 }
 
 bool
@@ -94,15 +89,28 @@ ClientHandler::tryLock(Pkt6Ptr query) {
         // A lot of code assumes this will never happen...
         isc_throw(Unexpected, "empty DUID in ClientHandler::tryLock");
     }
-    lock_guard<mutex> lock_(mutex_);
-    const Pkt6Ptr& duplicate = lookup(duid);
-    if (duplicate) {
-        // Should log.
-        return (true);
+    ClientPtr holder = 0;
+    {
+        // Try to acquire the lock and return the holder when it failed.
+        lock_guard<mutex> lock_(mutex_);
+        holder = lookup(duid);
+        if (!holder) {
+            locked_ = duid;
+            lock(Client(query, duid));
+            return (false);
+        }
     }
-    locked_ = query;
-    lock();
-    return (false);
+    // This query is a duplicate: currently it is simply dropped.
+    // Logging a warning as it is supposed to be a rare event
+    // with well behaving clients...
+    LOG_WARN(bad_packet6_logger, DHCP6_PACKET_DROP_DUPLICATE)
+        .arg(query->toText())
+        .arg(this_thread::get_id())
+        .arg(holder->query_->toText())
+        .arg(holder->thread_);
+    stats::StatsMgr::instance().addValue("pkt6-receive-drop",
+                                         static_cast<int64_t>(1));
+    return (true);
 }
 
 }  // namespace dhcp

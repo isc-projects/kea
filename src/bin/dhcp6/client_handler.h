@@ -10,7 +10,6 @@
 #include <dhcp/pkt6.h>
 #include <boost/noncopyable.hpp>
 #include <boost/multi_index_container.hpp>
-#include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <mutex>
@@ -46,25 +45,25 @@ private:
         /// @brief Constructor.
         ///
         /// @param query The query.
+        /// @param client_id The client ID.
         /// @throw if the query is null or has empty client ID.
-        Client(Pkt6Ptr query);
+        Client(Pkt6Ptr query, DuidPtr client_id);
 
         /// @brief The query being processed.
         Pkt6Ptr query_;
 
+        /// @brief Cached binary client ID.
+        std::vector<uint8_t> duid_;
+
         /// @brief The ID of the thread processing the query.
         std::thread::id thread_;
-
-        /// @brief Key extractor.
-        ///
-        /// Returns the content of the Duid aka client ID.
-        const std::vector<uint8_t>& getClientId() const {
-            return (query_->getClientId()->getDuid());
-        }
     };
 
-    /// @brief Query locked by this handler.
-    Pkt6Ptr locked_;
+    /// @brief The type of unique pointers to clients.
+    typedef std::unique_ptr<Client> ClientPtr;
+
+    /// @brief Client ID locked by this handler.
+    DuidPtr locked_;
 
     /// @brief Mutex to protect the client container.
     static std::mutex mutex_;
@@ -74,13 +73,15 @@ private:
     /// The mutex must be held by the caller.
     ///
     /// @param duid The duid of the query from the client.
-    /// @return The query holding the client or null.
-    static Pkt6Ptr lookup(const DuidPtr& duid);
+    /// @return The held client or null.
+    static ClientPtr lookup(const DuidPtr& duid);
 
     /// @brief Acquire a client.
     ///
     /// The mutex must be held by the caller.
-    void lock();
+    ///
+    /// @param client The filled client object.
+    void lock(Client client);
 
     /// @brief Release a client.
     ///
@@ -90,7 +91,7 @@ private:
     /// @brief The type of the client container.
     typedef boost::multi_index_container<
 
-        // This container stores clients.
+        // This container stores client objects.
         Client,
 
         // Start specification of indexes here.
@@ -99,9 +100,9 @@ private:
             // First index is used to search by Duid.
             boost::multi_index::hashed_unique<
 
-                // Duid content is extracted by calling Client::getClientId()
-                boost::multi_index::const_mem_fun<
-                    Client, const std::vector<uint8_t>&, &Client::getClientId
+                // Client ID binary content as a member of the Client object.
+                boost::multi_index::member<
+                    Client, std::vector<uint8_t>, &Client::duid_
                 >
             >
         >

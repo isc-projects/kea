@@ -526,6 +526,12 @@ after a specified amount of time since receiving "dhcp-disable" command.
 This debug message is emitted when an incoming packet was classified
 into the special class 'DROP' and dropped. The packet details are displayed.
 
+% DHCP6_PACKET_DROP_DUPLICATE dropped as sent by the same client than a packet being processed by another thread: dropped %1 by thread %2 as duplicate of %3 processed by %4
+Currently multi-threading processing avoids races between packets sent by
+the same client by dropping new packets until processing is finished.
+Packet details and thread identifiers are included for both packets in
+this warning message.
+
 % DHCP6_PACKET_DROP_PARSE_FAIL failed to parse packet from %1 to %2, received over interface %3, reason: %4
 The DHCPv6 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
