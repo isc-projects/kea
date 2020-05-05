@@ -28,6 +28,7 @@
 #include <dhcp/option_vendor_class.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
+#include <dhcp6/client_handler.h>
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
@@ -815,9 +816,28 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         return;
     }
 
+    // Create a client race avoidance RAII handler.
+    ClientHandler client_handler;
+    bool drop = false;
+
+    // Check for lease modifier queries from the same client being processed.
+    if (MultiThreadingMgr::instance().getMode() &&
+        ((query->getType() == DHCPV6_SOLICIT) ||
+         (query->getType() == DHCPV6_REQUEST) ||
+         (query->getType() == DHCPV6_RENEW) ||
+         (query->getType() == DHCPV6_REBIND) ||
+         (query->getType() == DHCPV6_RELEASE) ||
+         (query->getType() == DHCPV6_DECLINE))) {
+        drop = client_handler.tryLock(query);
+    }
+
+    // Stop here if ClientHandler tryLock decided the packet is a duplicate.
+    if (drop) {
+        return;
+    }
+
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
     initContext(query, ctx, drop);
 
     // Stop here if initContext decided to drop the packet.
