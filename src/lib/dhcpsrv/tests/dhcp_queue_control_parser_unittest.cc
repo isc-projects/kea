@@ -203,7 +203,7 @@ TEST_F(DHCPQueueControlParserTest, multiThreading) {
         MultiThreadingMgr::instance().setMode(false);
     } catch (const std::exception& ex) {
         MultiThreadingMgr::instance().setMode(false);
-        ADD_FAILURE() << "parser threw an exception: " << ex.what();
+        FAIL() << "parser threw an exception: " << ex.what();
     }
     ASSERT_TRUE(queue_control);
     ASSERT_TRUE(queue_control->get("enable-queue"));

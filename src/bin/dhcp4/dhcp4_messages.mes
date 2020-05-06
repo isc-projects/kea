@@ -615,6 +615,10 @@ during packet processing that was not caught by other, more specific
 exception handlers. This packet will be dropped and the server will
 continue operation.
 
+% DHCP4_PACKET_QUEUE_FULL multi-threading packet queue is full
+A debug message noting that the multi-threading packet queue is full so
+the oldest packet of the queue was dropped to make room for the received one.
+
 % DHCP4_PACKET_RECEIVED %1: %2 (type %3) received from %4 to %5 on interface %6
 A debug message noting that the server has received the specified type of
 packet on the specified interface. The first argument specifies the

@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu Apr 30 2020 14:12
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed May 06 2020 20:50
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -112,6 +112,7 @@ extern const isc::log::MessageID DHCP4_PACKET_PACK;
 extern const isc::log::MessageID DHCP4_PACKET_PACK_FAIL;
 extern const isc::log::MessageID DHCP4_PACKET_PROCESS_EXCEPTION;
 extern const isc::log::MessageID DHCP4_PACKET_PROCESS_STD_EXCEPTION;
+extern const isc::log::MessageID DHCP4_PACKET_QUEUE_FULL;
 extern const isc::log::MessageID DHCP4_PACKET_RECEIVED;
 extern const isc::log::MessageID DHCP4_PACKET_SEND;
 extern const isc::log::MessageID DHCP4_PACKET_SEND_FAIL;

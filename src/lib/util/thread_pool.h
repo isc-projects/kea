@@ -78,8 +78,10 @@ struct ThreadPool {
     /// @brief add a work item to the thread pool
     ///
     /// @param item the 'functor' object to be added to the queue
-    void add(const WorkItemPtr& item) {
-        queue_.push(item);
+    /// @return false if the queue was full and oldest item(s) was dropped,
+    /// true otherwise.
+    bool add(const WorkItemPtr& item) {
+        return (queue_.push(item));
     }
 
     /// @brief count number of work items in the queue
@@ -91,16 +93,16 @@ struct ThreadPool {
 
     /// @brief set maximum number of work items in the queue
     ///
-    /// @param max_count the maximum count (0 means unlimited)
-    void setMaxCount(size_t max_count) {
-        queue_.setMaxCount(max_count);
+    /// @param max_queue_size the maximum count (0 means unlimited)
+    void setMaxQueueSize(size_t max_queue_size) {
+        queue_.setMaxQueueSize(max_queue_size);
     }
 
     /// @brief get maximum number of work items in the queue
     ///
     /// @return the maximum count (0 means unlimited)
-    size_t getMaxCount() {
-        return (queue_.getMaxCount());
+    size_t getMaxQueueSize() {
+        return (queue_.getMaxQueueSize());
     }
 
     /// @brief size number of thread pool threads
@@ -163,7 +165,7 @@ private:
         /// @brief Constructor
         ///
         /// Creates the thread pool queue in 'disabled' state
-        ThreadPoolQueue() : enabled_(false), max_count_(0) {
+        ThreadPoolQueue() : enabled_(false), max_queue_size_(0) {
         }
 
         /// @brief Destructor
@@ -177,17 +179,17 @@ private:
         /// @brief get maximum number of work items in the queue
         ///
         /// @return the maximum count (0 means unlimited)
-        void setMaxCount(size_t max_count) {
+        void setMaxQueueSize(size_t max_queue_size) {
             std::lock_guard<std::mutex> lock(mutex_);
-            max_count_ = max_count;
+            max_queue_size_ = max_queue_size;
         }
 
         /// @brief get maximum number of work items in the queue
         ///
         /// @return the maximum count (0 means unlimited)
-        size_t getMaxCount() {
+        size_t getMaxQueueSize() {
             std::lock_guard<std::mutex> lock(mutex_);
-            return (max_count_);
+            return (max_queue_size_);
         }
 
         /// @brief push work item to the queue
@@ -196,23 +198,30 @@ private:
         /// When the queue is full oldest items are removed.
         /// This function adds an item to the queue and wakes up at least one thread
         /// waiting on the queue.
+        /// When the queue is full oldest item(s) is dropped and false returned.
         ///
         /// @param item the new item to be added to the queue
-        void push(const Item& item) {
+        /// @return true if the queue was not full and oldest item(s) dropped.
+        bool push(const Item& item) {
+            bool ret = true;
             if (!item) {
-                return;
+                return (ret);
             }
             {
                 std::lock_guard<std::mutex> lock(mutex_);
-                if (max_count_ > 0) {
-                    while (queue_.size() >= max_count_) {
+                if (max_queue_size_ > 0) {
+                    while (queue_.size() >= max_queue_size_) {
                         queue_.pop();
+                        if (ret) {
+                            ret = false;
+                        }
                     }
                 }
                 queue_.push(item);
             }
             // Notify pop function so that it can effectively remove a work item.
             cv_.notify_one();
+            return (ret);
         }
 
         /// @brief pop work item from the queue or block waiting
@@ -301,7 +310,7 @@ private:
 
         /// @brief maximum number of work items in the queue
         /// (0 means unlimited)
-        size_t max_count_;
+        size_t max_queue_size_;
     };
 
     /// @brief run function of each thread

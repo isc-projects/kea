@@ -601,7 +601,9 @@ void Dhcpv6Srv::run_one() {
             boost::shared_ptr<CallBack> call_back =
                 boost::make_shared<CallBack>(std::bind(&Dhcpv6Srv::processPacketAndSendResponseNoThrow,
                                                        this, query));
-            MultiThreadingMgr::instance().getThreadPool().add(call_back);
+            if (!MultiThreadingMgr::instance().getThreadPool().add(call_back)) {
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_QUEUE_FULL);
+            }
         } else {
             processPacketAndSendResponse(query);
         }

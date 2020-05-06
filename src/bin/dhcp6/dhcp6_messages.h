@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Apr 16 2020 10:27
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed May 06 2020 20:50
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -100,6 +100,7 @@ extern const isc::log::MessageID DHCP6_PACKET_OPTIONS_SKIPPED;
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_EXCEPTION;
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_FAIL;
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_STD_EXCEPTION;
+extern const isc::log::MessageID DHCP6_PACKET_QUEUE_FULL;
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVED;
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVE_FAIL;
 extern const isc::log::MessageID DHCP6_PACKET_SEND;

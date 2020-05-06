@@ -220,7 +220,9 @@ TEST_F(ThreadPoolTest, testAddAndCount) {
 
     // add items to stopped thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        bool ret = true;
+        EXPECT_NO_THROW(ret = thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        EXPECT_TRUE(ret);
     }
 
     // the item count should match
@@ -286,7 +288,9 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 
     // add items to stopped thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        bool ret = true;
+        EXPECT_NO_THROW(ret = thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        EXPECT_TRUE(ret);
     }
 
     // the item count should match
@@ -324,7 +328,9 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 
     // add items to running thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        bool ret = true;
+        EXPECT_NO_THROW(ret = thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        EXPECT_TRUE(ret);
     }
 
     // wait for all items to be processed
@@ -364,7 +370,9 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 
     // add items to stopped thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        bool ret = true;
+        EXPECT_NO_THROW(ret = thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        EXPECT_TRUE(ret);
     }
 
     // the item count should match
@@ -415,7 +423,9 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 
     // add items to running thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        bool ret = true;
+        EXPECT_NO_THROW(ret = thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        EXPECT_TRUE(ret);
     }
 
     // wait for all items to be processed
@@ -445,7 +455,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 }
 
 /// @brief test ThreadPool max count
-TEST_F(ThreadPoolTest, testMaxCount) {
+TEST_F(ThreadPoolTest, testMaxQueueSize) {
     uint32_t items_count;
     CallBack call_back;
     ThreadPool<CallBack> thread_pool;
@@ -459,23 +469,26 @@ TEST_F(ThreadPoolTest, testMaxCount) {
     call_back = std::bind(&ThreadPoolTest::run, this);
 
     // add items to stopped thread pool
+    bool ret = true;
     for (uint32_t i = 0; i < items_count; ++i) {
-        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        EXPECT_NO_THROW(ret = thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        EXPECT_TRUE(ret);
     }
 
     // the item count should match
     ASSERT_EQ(thread_pool.count(), items_count);
 
     // change the max count
-    ASSERT_EQ(thread_pool.getMaxCount(), 0);
-    size_t max_count = 10;
-    thread_pool.setMaxCount(max_count);
-    EXPECT_EQ(thread_pool.getMaxCount(), max_count);
+    ASSERT_EQ(thread_pool.getMaxQueueSize(), 0);
+    size_t max_queue_size = 10;
+    thread_pool.setMaxQueueSize(max_queue_size);
+    EXPECT_EQ(thread_pool.getMaxQueueSize(), max_queue_size);
 
     // adding an item should squeeze the queue
     EXPECT_EQ(thread_pool.count(), items_count);
-    EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
-    EXPECT_EQ(thread_pool.count(), max_count);
+    EXPECT_NO_THROW(ret = thread_pool.add(boost::make_shared<CallBack>(call_back)));
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(thread_pool.count(), max_queue_size);
 }
 
 }  // namespace

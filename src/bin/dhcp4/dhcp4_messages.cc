@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu Apr 30 2020 14:12
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed May 06 2020 20:50
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -111,6 +111,7 @@ extern const isc::log::MessageID DHCP4_PACKET_PACK = "DHCP4_PACKET_PACK";
 extern const isc::log::MessageID DHCP4_PACKET_PACK_FAIL = "DHCP4_PACKET_PACK_FAIL";
 extern const isc::log::MessageID DHCP4_PACKET_PROCESS_EXCEPTION = "DHCP4_PACKET_PROCESS_EXCEPTION";
 extern const isc::log::MessageID DHCP4_PACKET_PROCESS_STD_EXCEPTION = "DHCP4_PACKET_PROCESS_STD_EXCEPTION";
+extern const isc::log::MessageID DHCP4_PACKET_QUEUE_FULL = "DHCP4_PACKET_QUEUE_FULL";
 extern const isc::log::MessageID DHCP4_PACKET_RECEIVED = "DHCP4_PACKET_RECEIVED";
 extern const isc::log::MessageID DHCP4_PACKET_SEND = "DHCP4_PACKET_SEND";
 extern const isc::log::MessageID DHCP4_PACKET_SEND_FAIL = "DHCP4_PACKET_SEND_FAIL";
@@ -256,6 +257,7 @@ const char* values[] = {
     "DHCP4_PACKET_PACK_FAIL", "%1: preparing on-wire-format of the packet to be sent failed %2",
     "DHCP4_PACKET_PROCESS_EXCEPTION", "exception occurred during packet processing",
     "DHCP4_PACKET_PROCESS_STD_EXCEPTION", "exception occurred during packet processing: %1",
+    "DHCP4_PACKET_QUEUE_FULL", "multi-threading packet queue is full",
     "DHCP4_PACKET_RECEIVED", "%1: %2 (type %3) received from %4 to %5 on interface %6",
     "DHCP4_PACKET_SEND", "%1: trying to send packet %2 (type %3) from %4:%5 to %6:%7 on interface %8",
     "DHCP4_PACKET_SEND_FAIL", "%1: failed to send DHCPv4 packet: %2",

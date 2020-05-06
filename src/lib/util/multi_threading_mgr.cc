@@ -69,12 +69,12 @@ MultiThreadingMgr::setThreadPoolSize(uint32_t size) {
 
 uint32_t
 MultiThreadingMgr::getPacketQueueSize() {
-    return (thread_pool_.getMaxCount());
+    return (thread_pool_.getMaxQueueSize());
 }
 
 void
 MultiThreadingMgr::setPacketQueueSize(uint32_t size) {
-    thread_pool_.setMaxCount(size);
+    thread_pool_.setMaxQueueSize(size);
 }
 
 uint32_t

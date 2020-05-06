@@ -56,17 +56,17 @@ TEST(MultiThreadingMgrTest, threadPoolSize) {
 TEST(MultiThreadingMgrTest, packetQueueSize) {
     // default queue size is 0
     EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxCount(), 0);
+    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxQueueSize(), 0);
     // set queue size to 16
     EXPECT_NO_THROW(MultiThreadingMgr::instance().setPacketQueueSize(16));
     // queue size should be 16
     EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 16);
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxCount(), 16);
+    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxQueueSize(), 16);
     // set queue size to 0
     EXPECT_NO_THROW(MultiThreadingMgr::instance().setPacketQueueSize(0));
     // queue size should be 0
     EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxCount(), 0);
+    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxQueueSize(), 0);
 }
 
 /// @brief Verifies that detecting thread count works.

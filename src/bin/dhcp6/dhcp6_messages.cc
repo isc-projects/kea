@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Apr 16 2020 10:27
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed May 06 2020 20:50
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -99,6 +99,7 @@ extern const isc::log::MessageID DHCP6_PACKET_OPTIONS_SKIPPED = "DHCP6_PACKET_OP
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_EXCEPTION = "DHCP6_PACKET_PROCESS_EXCEPTION";
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_FAIL = "DHCP6_PACKET_PROCESS_FAIL";
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_STD_EXCEPTION = "DHCP6_PACKET_PROCESS_STD_EXCEPTION";
+extern const isc::log::MessageID DHCP6_PACKET_QUEUE_FULL = "DHCP6_PACKET_QUEUE_FULL";
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVED = "DHCP6_PACKET_RECEIVED";
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVE_FAIL = "DHCP6_PACKET_RECEIVE_FAIL";
 extern const isc::log::MessageID DHCP6_PACKET_SEND = "DHCP6_PACKET_SEND";
@@ -245,6 +246,7 @@ const char* values[] = {
     "DHCP6_PACKET_PROCESS_EXCEPTION", "exception occurred during packet processing",
     "DHCP6_PACKET_PROCESS_FAIL", "processing of %1 message received from %2 failed: %3",
     "DHCP6_PACKET_PROCESS_STD_EXCEPTION", "exception occurred during packet processing: %1",
+    "DHCP6_PACKET_QUEUE_FULL", "multi-threading packet queue is full",
     "DHCP6_PACKET_RECEIVED", "%1: %2 (type %3) received from %4 to %5 on interface %6",
     "DHCP6_PACKET_RECEIVE_FAIL", "error on attempt to receive packet: %1",
     "DHCP6_PACKET_SEND", "%1: trying to send packet %2 (type %3) from [%4]:%5 to [%6]:%7 on interface %8",
