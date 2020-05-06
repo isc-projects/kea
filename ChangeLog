@@ -1,3 +1,7 @@
+1745.	[bug]		fdupont
+	Made state model and external sockets multi-thread safe.
+	(Gitlan #1095)
+
 1744.	[func]		razvan
 	Stopping packet processing when changing or reloading configuration.
 	(Gitlab #1188)
