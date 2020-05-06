@@ -1025,6 +1025,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
             BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+                // Add this socket to listening set
                 addFDtoSet(s.socket_, maxfd, &sockets);
             }
         }
@@ -1299,7 +1300,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
             BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-                // Add it to the set as well
+                // Add this socket to listening set
                 addFDtoSet(s.socket_, maxfd, &sockets);
             }
         }
@@ -1404,7 +1405,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
             BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-                // Add it to the set as well
+                // Add this socket to listening set
                 addFDtoSet(s.socket_, maxfd, &sockets);
             }
         }
