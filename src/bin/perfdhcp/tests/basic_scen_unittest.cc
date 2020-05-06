@@ -59,7 +59,7 @@ public:
     /// planned to send to perfdhcp.
     std::list<std::tuple<uint8_t, uint32_t>> planned_responses_;
 
-    /// Mutex to protect state concurrent accesses
+    /// Mutex to protect internal state.
     std::mutex mutex_;
 
     /// Limit for sent packets. After this limit not more packets
