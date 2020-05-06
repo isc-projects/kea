@@ -25,7 +25,7 @@ State::~State() {
 
 void
 State::run() {
-        (handler_)();
+    (handler_)();
 }
 
 bool

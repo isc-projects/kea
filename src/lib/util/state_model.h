@@ -249,6 +249,8 @@ public:
 /// "done".  If the  model fails (END_ST with a FAILED_EVT) it is considered
 /// "done" and "failed".  There are several boolean status methods which may
 /// be used to check these conditions.
+/// Once the model has been started, defining new events or new states is
+/// illegal. It is possible to call startModel only once.
 ///
 /// To progress from one state to the another, state handlers invoke use
 /// the method, transition.  This method accepts a state and an event as
@@ -313,6 +315,7 @@ public:
     /// This method invokes initDictionaries method to initialize the event
     /// and state dictionaries and then starts the model execution setting
     /// the current state to the given start state, and the event to START_EVT.
+    /// This method can be called only once to start the state model.
     ///
     /// @param start_state is the state in which to begin execution.
     ///
@@ -369,6 +372,7 @@ protected:
     ///
     /// This method invokes the define and verify methods for both events and
     /// states to initialize their respective dictionaries.
+    /// This method can be called only once to initialize the state model.
     ///
     /// @throw StateModelError or others indirectly, as this method calls
     /// dictionary define and verify methods.
