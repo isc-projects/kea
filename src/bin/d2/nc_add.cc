@@ -116,9 +116,9 @@ NameAddTransaction::verifyStates() {
     NameChangeTransaction::verifyStates();
 
     // Verify NameAddTransaction states by attempting to fetch them.
-    getState(ADDING_FWD_ADDRS_ST);
-    getState(REPLACING_FWD_ADDRS_ST);
-    getState(REPLACING_REV_PTRS_ST);
+    getStateInternal(ADDING_FWD_ADDRS_ST);
+    getStateInternal(REPLACING_FWD_ADDRS_ST);
+    getStateInternal(REPLACING_REV_PTRS_ST);
 }
 
 void

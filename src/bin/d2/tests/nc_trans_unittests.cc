@@ -221,7 +221,7 @@ public:
         NameChangeTransaction::verifyStates();
 
         // Check our states.
-        getState(DOING_UPDATE_ST);
+        getStateInternal(DOING_UPDATE_ST);
     }
 
     // Expose the protected methods to be tested.

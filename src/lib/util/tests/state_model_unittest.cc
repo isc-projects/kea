@@ -234,12 +234,12 @@ public:
         StateModel::verifyStates();
 
         // Verify our states.
-        getState(DUMMY_ST);
-        getState(READY_ST);
-        getState(DO_WORK_ST);
-        getState(DONE_ST);
-        getState(PAUSE_ALWAYS_ST);
-        getState(PAUSE_ONCE_ST);
+        getStateInternal(DUMMY_ST);
+        getStateInternal(READY_ST);
+        getStateInternal(DO_WORK_ST);
+        getStateInternal(DONE_ST);
+        getStateInternal(PAUSE_ALWAYS_ST);
+        getStateInternal(PAUSE_ONCE_ST);
     }
 
     /// @brief  Manually construct the event and state dictionaries.

@@ -74,14 +74,14 @@ LabeledValueSet::add(LabeledValuePtr entry) {
         isc_throw(LabeledValueError,
                   "value: " << value << " is already defined as: "
                   << getLabel(value));
-        }
+    }
 
-    map_[entry->getValue()]=entry;
+    map_[value] = entry;
 }
 
 void
 LabeledValueSet::add(const int value, const std::string& label) {
-    add (LabeledValuePtr(new LabeledValue(value,label)));
+    add(LabeledValuePtr(new LabeledValue(value,label)));
 }
 
 const LabeledValuePtr&

@@ -731,7 +731,6 @@ IfaceMgr::startDHCPReceiver(const uint16_t family) {
 
         dhcp_receiver_.reset(new WatchedThread());
         dhcp_receiver_->start(boost::bind(&IfaceMgr::receiveDHCP4Packets, this));
-
         break;
     case AF_INET6:
         // If the queue doesn't exist, packet queing has been configured
@@ -1211,7 +1210,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
                 // Note the external socket to call its callback without
                 // the lock taken so it can be deleted.
                 ex_sock = s;
-                break;            }
+                break;
+            }
         }
     }
 

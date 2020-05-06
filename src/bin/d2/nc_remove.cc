@@ -120,9 +120,9 @@ NameRemoveTransaction::verifyStates() {
     NameChangeTransaction::verifyStates();
 
     // Verify NameRemoveTransaction states by attempting to fetch them.
-    getState(REMOVING_FWD_ADDRS_ST);
-    getState(REMOVING_FWD_RRS_ST);
-    getState(REMOVING_REV_PTRS_ST);
+    getStateInternal(REMOVING_FWD_ADDRS_ST);
+    getStateInternal(REMOVING_FWD_RRS_ST);
+    getStateInternal(REMOVING_REV_PTRS_ST);
 }
 
 void

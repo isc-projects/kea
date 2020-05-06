@@ -337,7 +337,7 @@ HAService::partnerInMaintenanceStateHandler() {
     switch (communication_state_->getPartnerState()) {
     case HA_UNAVAILABLE_ST:
         verboseTransition(HA_PARTNER_DOWN_ST);
-
+    /* Falls through. */
     default:
         postNextEvent(NOP_EVT);
     }

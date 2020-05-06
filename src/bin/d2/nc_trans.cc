@@ -244,11 +244,11 @@ NameChangeTransaction::verifyStates() {
     StateModel::verifyStates();
 
     // Verify NCT states. This ensures that derivations provide the handlers.
-    getState(READY_ST);
-    getState(SELECTING_FWD_SERVER_ST);
-    getState(SELECTING_REV_SERVER_ST);
-    getState(PROCESS_TRANS_OK_ST);
-    getState(PROCESS_TRANS_FAILED_ST);
+    getStateInternal(READY_ST);
+    getStateInternal(SELECTING_FWD_SERVER_ST);
+    getStateInternal(SELECTING_REV_SERVER_ST);
+    getStateInternal(PROCESS_TRANS_OK_ST);
+    getStateInternal(PROCESS_TRANS_FAILED_ST);
 }
 
 void
