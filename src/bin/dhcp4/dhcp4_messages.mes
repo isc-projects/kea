@@ -554,6 +554,20 @@ that it was BOOTP packet.
 This debug message is emitted when an incoming packet was classified
 into the special class 'DROP' and dropped. The packet details are displayed.
 
+% DHCP4_PACKET_DROP_0011 dropped as sent by the same client than a packet being processed by another thread: dropped %1 by thread %2 as duplicate of %3 processed by %4
+Currently multi-threading processing avoids races between packets sent by
+a client using the same client id option by dropping new packets until
+processing is finished.
+Packet details and thread identifiers are included for both packets in
+this warning message.
+
+% DHCP4_PACKET_DROP_0012 dropped as sent by the same client than a packet being processed by another thread: dropped %1 by thread %2 as duplicate of %3 processed by %4
+Currently multi-threading processing avoids races between packets sent by
+a client using the same hardware address by dropping new packets until
+processing is finished.
+Packet details and thread identifiers are included for both packets in
+this warning message.
+
 % DHCP4_PACKET_NAK_0001 %1: failed to select a subnet for incoming packet, src %2, type %3
 This error message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable

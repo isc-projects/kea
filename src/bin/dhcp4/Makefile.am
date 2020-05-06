@@ -36,6 +36,7 @@ libdhcp4_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp4_la_SOURCES += dhcp4_log.cc dhcp4_log.h
 libdhcp4_la_SOURCES += dhcp4_srv.cc dhcp4_srv.h
 libdhcp4_la_SOURCES += dhcp4to6_ipc.cc dhcp4to6_ipc.h
+libdhcp4_la_SOURCES += client_handler.cc client_handler.h
 libdhcp4_la_SOURCES += dhcp4_lexer.ll location.hh position.hh stack.hh
 libdhcp4_la_SOURCES += dhcp4_parser.cc dhcp4_parser.h
 libdhcp4_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h

@@ -22,6 +22,7 @@
 #include <dhcp/pkt4o6.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp4/client_handler.h>
 #include <dhcp4/dhcp4to6_ipc.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
@@ -1221,6 +1222,20 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));
         return;
+    }
+
+    // Create a client race avoidance RAII handler.
+    ClientHandler client_handler;
+
+    // Check for lease modifier queries from the same client being processed.
+    if (MultiThreadingMgr::instance().getMode() &&
+        ((query->getType() == DHCPDISCOVER) ||
+         (query->getType() == DHCPREQUEST) ||
+         (query->getType() == DHCPRELEASE) ||
+         (query->getType() == DHCPDECLINE))) {
+        if (client_handler.tryLock(query)) {
+            return;
+        }
     }
 
     AllocEngine::ClientContext4Ptr ctx;
