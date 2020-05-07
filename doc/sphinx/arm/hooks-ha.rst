@@ -43,10 +43,10 @@ Kea HA hook library.
 Supported Configurations
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Kea HA hook library supports two configurations, also known as HA
-modes: load-balancing and hot-standby. In the load-balancing mode, two
-servers respond to DHCP requests. The load-balancing function is
-implemented as described in `RFC
+The Kea HA hook library supports three configurations, also known as HA
+modes: load-balancing, hot-standby and passive-backup. In the
+load-balancing mode, two servers respond to DHCP requests. The
+load-balancing function is implemented as described in `RFC
 3074 <https://tools.ietf.org/html/rfc3074>`__, with each server
 responding to half the received DHCP queries. When one of the servers
 allocates a lease for a client, it notifies the partner server over the
@@ -87,9 +87,46 @@ partner. The HA hook library supports another server type/role: backup
 server. The use of a backup server is optional, and can be implemented in both
 load-balancing and hot-standby setup, in addition to the active servers.
 There is no limit on the number of backup servers in the HA setup;
-however, the presence of backup servers increases the latency of DHCP
-responses, because not only do active servers send lease updates to each
-other, but also to the backup servers.
+however, the presence of backup servers slightly increases the latency
+of DHCP responses, because not only do active servers send lease updates
+to each other, but also to the backup servers. As of Kea 1.7.8 the active
+servers no longer expect the acknowledgments from the backup servers
+before responding to the DHCP clients, therefore the overhead of sending
+the lease updates to the backup servers is minimized comparing to the
+earlier Kea versions.
+
+The last supported configuration, passive-backup, has been introduced
+in Kea 1.7.8 release. In this configuration there is only one active
+server and typically one or more backup servers. A passive-backup
+configuration with no backup servers is also accepted but it is no
+different than running a single server with no HA function at all.
+
+The passive-backup configuration is used in situations when an administrator
+wants to take advantage of the backup servers as an additional storage
+for leases without a need for running the fully blown failover setup.
+In this case, if the primary server fails, the DHCP service is lost
+and it requires that the administrator boots it up manually to resume
+the DHCP service. The administrator may also configure one of the
+backup servers to provide the DHCP service to the clients as these
+servers should have accurate or nearly accurate information about the
+allocated leases. The major advantage of the passive-backup mode is that
+it provides some redundancy of the lease information with much better
+performance of the primary server responding to the DHCP queries. Since
+Kea 1.7.8 release, the primary server does not have to wait for the
+acknowledgments to the lease updates from the backup servers before it
+sends a response to the DHCP client. This greatly reduces a response
+time comparing to the load-balancing and hot-standby cases in which the
+server responding to the DHCP query has to wait for the acknowledgment
+from the other active server before it can respond to the client.
+
+.. note::
+
+   An interesting use case for a single active server running in the
+   passive-backup mode is a notification service in which a software
+   pretending to be a backup server receives live notifications about
+   allocated and deleted leases from the primary server and can display
+   them on the monitoring screen, trigger alerts etc.
+
 
 Clocks on Active Servers
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -124,6 +161,14 @@ DHCP clients (as in the load-balancing or hot-standby mode), but will
 exchange neither lease updates nor heartbeats and their lease databases
 will diverge. In this case, the administrator should synchronize the
 clocks and restart the servers.
+
+.. note::
+
+   The clock skew is only assessed between two active servers and
+   only the active servers may enter the terminated state if it is
+   too high. As of Kea 1.7.8, the clock skew between the active and
+   the backup servers is not assessed because the active servers do
+   not exchange heartbeat messages with the backup servers.
 
 .. _ha-server-states:
 
@@ -194,6 +239,23 @@ The following is the list of all possible server states:
    In this case, the server in the ``partner-in-maintenance`` state
    transitions to the ``partner-down`` state and keeps responding to
    the queries, but no longer sends lease updates.
+
+-  ``passive-backup`` - a primary server running in the passive-backup HA
+   mode transitions to this state immediately after it is booted up. The
+   primary server being in this state responds to the entire DHCP traffic
+   and sends lease updates to the backup servers it is connected to. By
+   default, the primary server does not wait for the acknowledgments from
+   the backup servers and responds to the DHCP query right after sending
+   the lease updates to all backup servers. If any of the lease updates
+   fails, a backup server misses such lease update but the DHCP client
+   is still provisioned. This default configuration can be changed by
+   setting the ``wait-backup-ack`` configuration parameter to ``true``,
+   in which case the primary server always waits for the acknowledgements
+   and drops the DHCP query if sending any of the correponding lease
+   updates fails. This improves lease database consistency between the
+   primary and the secondary. However, if a communication failure between
+   the active server and any of the backups occurs, it effectively causes
+   the failure of the DHCP service from the DHCP clients' perspective.
 
 -  ``ready`` - an active server transitions to this state after
    synchronizing its lease database with an active partner. This state
@@ -284,6 +346,8 @@ the scopes can be found below.
    | partner-down           | active server   | enabled         | all scopes      |
    +------------------------+-----------------+-----------------+-----------------+
    | partner-in-maintenance | active server   | enabled         | all scopes      |
+   +------------------------+-----------------+-----------------+-----------------+
+   | passive-backup         | active server   | enabled         | all scopes      |
    +------------------------+-----------------+-----------------+-----------------+
    | ready                  | active server   | disabled        | none            |
    +------------------------+-----------------+-----------------+-----------------+
@@ -725,6 +789,79 @@ in lease allocations by different servers as they do not allocate leases
 concurrently. The ``client-class`` remains in this example mostly for
 demonstration purposes, to highlight the differences between the
 hot-standby and load-balancing modes of operation.
+
+.. _ha-passive-backup-config:
+
+Passive-Backup Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following is an example configuration of the primary server in the
+passive-backup configuration:
+
+::
+
+   "Dhcp4": {
+       "hooks-libraries": [{
+           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "parameters": { }
+       }, {
+           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "parameters": {
+               "high-availability": [{
+                   "this-server-name": "server1",
+                   "mode": "passive-backup",
+                   "wait-backup-ack": true,
+                   "peers": [{
+                       "name": "server1",
+                       "url": "http://192.168.56.33:8000/",
+                       "role": "primary"
+                   }, {
+                       "name": "server2",
+                       "url": "http://192.168.56.66:8000/",
+                       "role": "backup"
+                   }, {
+                       "name": "server3",
+                       "url": "http://192.168.56.99:8000/",
+                       "role": "backup"
+                   }]
+               }]
+           }
+       }],
+
+       "subnet4": [{
+           "subnet": "192.0.3.0/24",
+           "pools": [{
+               "pool": "192.0.3.100 - 192.0.3.250",
+           }],
+
+           "option-data": [{
+               "name": "routers",
+               "data": "192.0.3.1"
+           }],
+
+           "relay": { "ip-address": "10.1.2.3" }
+       }]
+   }
+
+The configurations of three peers are included, one for the primary and
+two for the backup servers. Many of the parameters present in the load-balancing
+and hot-standby configuration examples are not relevant in the passive-backup
+mode, thus they are not specified here. For example: ``heartbeat-delay``,
+``max-unacked-clients`` and others related to the automatic failover mechanism
+should not be specified in the passive-backup mode. The ``wait-backup-ack``
+is a boolean parameter not present in previous examples. It defaults to ``false`` and
+must not be modified in the load-balancing and hot-standby modes. In the passive-backup
+mode this parameter can be set to ``true`` which causes the primary server to expect
+acknowledgments to the lease updates from the backup servers prior to responding
+to the DHCP client. It ensures that the lease was propagated to all servers before
+the client is given the lease, but it poses a risk of loosing a DHCP service if
+there is a communication problem with one of the backup servers. This setting
+also increases the latency of the DHCP response because of the time that the
+primary spends waiting for the acknowledgements. We recommend that the
+``wait-backup-ack`` is left at its default value if the DHCP service reliability
+is more important than consistency of the lease information between the
+primary and the backups and in all cases when the DHCP service latency should
+be minimal.
 
 .. _ha-sharing-lease-info:
 
