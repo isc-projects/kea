@@ -93,14 +93,14 @@ struct ThreadPool {
 
     /// @brief set maximum number of work items in the queue
     ///
-    /// @param max_queue_size the maximum count (0 means unlimited)
+    /// @param max_queue_size the maximum size (0 means unlimited)
     void setMaxQueueSize(size_t max_queue_size) {
         queue_.setMaxQueueSize(max_queue_size);
     }
 
     /// @brief get maximum number of work items in the queue
     ///
-    /// @return the maximum count (0 means unlimited)
+    /// @return the maximum size (0 means unlimited)
     size_t getMaxQueueSize() {
         return (queue_.getMaxQueueSize());
     }
@@ -176,9 +176,9 @@ private:
             clear();
         }
 
-        /// @brief get maximum number of work items in the queue
+        /// @brief set maximum number of work items in the queue
         ///
-        /// @return the maximum count (0 means unlimited)
+        /// @return the maximum size (0 means unlimited)
         void setMaxQueueSize(size_t max_queue_size) {
             std::lock_guard<std::mutex> lock(mutex_);
             max_queue_size_ = max_queue_size;
@@ -186,7 +186,7 @@ private:
 
         /// @brief get maximum number of work items in the queue
         ///
-        /// @return the maximum count (0 means unlimited)
+        /// @return the maximum size (0 means unlimited)
         size_t getMaxQueueSize() {
             std::lock_guard<std::mutex> lock(mutex_);
             return (max_queue_size_);
@@ -195,13 +195,13 @@ private:
         /// @brief push work item to the queue
         ///
         /// Used to add work items to the queue.
-        /// When the queue is full oldest items are removed.
-        /// This function adds an item to the queue and wakes up at least one thread
-        /// waiting on the queue.
-        /// When the queue is full oldest item(s) is dropped and false returned.
+        /// When the queue is full oldest items are removed and false returned.
+        /// This function adds an item to the queue and wakes up at least one
+        /// thread waiting on the queue.
         ///
         /// @param item the new item to be added to the queue
-        /// @return true if the queue was not full and oldest item(s) dropped.
+        /// @return false if the queue was full and oldest item(s) dropped,
+        /// true otherwise
         bool push(const Item& item) {
             bool ret = true;
             if (!item) {
@@ -209,12 +209,10 @@ private:
             }
             {
                 std::lock_guard<std::mutex> lock(mutex_);
-                if (max_queue_size_ > 0) {
+                if (max_queue_size_ != 0) {
                     while (queue_.size() >= max_queue_size_) {
                         queue_.pop();
-                        if (ret) {
-                            ret = false;
-                        }
+                        ret = false;
                     }
                 }
                 queue_.push(item);
