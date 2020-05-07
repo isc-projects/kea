@@ -164,12 +164,6 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     // Peers configuration parsing.
     const auto& peers_vec = peers->listValue();
 
-    // There must be at least two peers specified.
-    if (peers_vec.size() < 2) {
-        isc_throw(ConfigError, "peers configuration requires at least two peers"
-                  " to be specified");
-    }
-
     // Go over configuration of each peer.
     for (auto p = peers_vec.begin(); p != peers_vec.end(); ++p) {
 

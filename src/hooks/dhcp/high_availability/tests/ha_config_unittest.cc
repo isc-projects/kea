@@ -493,7 +493,7 @@ TEST_F(HAConfigTest, singlePeer) {
         "        ]"
         "    }"
         "]",
-        "peers configuration requires at least two peers to be specified");
+        "secondary server required in the load balancing configuration");
 }
 
 // Server name must not be empty.
