@@ -195,7 +195,8 @@ private:
         /// @brief push work item to the queue
         ///
         /// Used to add work items to the queue.
-        /// When the queue is full oldest items are removed and false returned.
+        /// When the queue is full oldest items are removed and false is
+        /// returned.
         /// This function adds an item to the queue and wakes up at least one
         /// thread waiting on the queue.
         ///

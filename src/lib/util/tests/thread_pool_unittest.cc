@@ -454,7 +454,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     ASSERT_EQ(thread_pool.size(), 0);
 }
 
-/// @brief test ThreadPool max count
+/// @brief test ThreadPool max queue size
 TEST_F(ThreadPoolTest, testMaxQueueSize) {
     uint32_t items_count;
     CallBack call_back;
