@@ -518,8 +518,8 @@ ${args}" 1
 
     status)
         if [ -t 1 ]; then
-            inactive="\e[91minactive\e[0m"
-            active="\e[92mactive\e[0m"
+            inactive="\033[91minactive\e[0m"
+            active="\033[92mactive\e[0m"
         else
             inactive="inactive"
             active="active"
