@@ -114,7 +114,7 @@ it provides some redundancy of the lease information but with better
 performance of the primary server responding to the DHCP queries. Since
 Kea 1.7.8 release, the primary server does not have to wait for the
 acknowledgments to the lease updates from the backup servers before it
-sends a response to the DHCP client. This reduces a response time
+sends a response to the DHCP client. This reduces the response time
 comparing to the load-balancing and hot-standby cases in which the
 server responding to the DHCP query has to wait for the acknowledgment
 from the other active server before it can respond to the client.
