@@ -137,7 +137,7 @@ public:
     /// \note No validation is done on the given data upon construction;
     ///       use with care.
     ///
-    /// \param ls The LabelSequence to construct a LabelSequence from
+    /// \param other The LabelSequence to assign a LabelSequence from
     LabelSequence& operator=(const LabelSequence& other) {
         if (this != &other) {
             // Not self-assignment.
