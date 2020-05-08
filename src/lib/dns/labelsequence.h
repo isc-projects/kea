@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,6 +128,26 @@ public:
         first_label_(ls.first_label_),
         last_label_(ls.last_label_)
     {}
+
+    /// \brief Assignment operator.
+    ///
+    /// \note The associated data MUST remain in scope during the lifetime
+    /// of this LabelSequence, since only the pointers are copied.
+    ///
+    /// \note No validation is done on the given data upon construction;
+    ///       use with care.
+    ///
+    /// \param ls The LabelSequence to construct a LabelSequence from
+    LabelSequence& operator=(const LabelSequence& other) {
+        if (this != &other) {
+            // Not self-assignment.
+            data_ = other.data_;
+            offsets_ = other.offsets_;
+            first_label_ = other.first_label_;
+            last_label_ = other.last_label_;
+        }
+        return (*this);
+    }
 
     /// \brief Return the wire-format data for this LabelSequence
     ///
