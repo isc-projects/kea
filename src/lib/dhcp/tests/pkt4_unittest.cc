@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1118,6 +1118,38 @@ TEST_F(Pkt4Test, getName) {
 
         case DHCPINFORM:
             EXPECT_STREQ("DHCPINFORM", Pkt4::getName(type));
+            break;
+
+        case DHCPLEASEQUERY:
+            EXPECT_STREQ("DHCPLEASEQUERY", Pkt4::getName(type));
+            break;
+
+        case DHCPLEASEUNASSIGNED:
+            EXPECT_STREQ("DHCPLEASEUNASSIGNED", Pkt4::getName(type));
+            break;
+
+        case DHCPLEASEUNKNOWN:
+            EXPECT_STREQ("DHCPLEASEUNKNOWN", Pkt4::getName(type));
+            break;
+
+        case DHCPLEASEACTIVE:
+            EXPECT_STREQ("DHCPLEASEACTIVE", Pkt4::getName(type));
+            break;
+
+        case DHCPBULKLEASEQUERY:
+            EXPECT_STREQ("DHCPBULKLEASEQUERY", Pkt4::getName(type));
+            break;
+
+        case DHCPLEASEQUERYDONE:
+            EXPECT_STREQ("DHCPLEASEQUERYDONE", Pkt4::getName(type));
+            break;
+
+        case DHCPLEASEQUERYSTATUS:
+            EXPECT_STREQ("DHCPLEASEQUERYSTATUS", Pkt4::getName(type));
+            break;
+
+        case DHCPTLS:
+            EXPECT_STREQ("DHCPTLS", Pkt4::getName(type));
             break;
 
         default:

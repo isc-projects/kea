@@ -286,6 +286,14 @@ Pkt4::getName(const uint8_t type) {
     static const char* DHCPNAK_NAME = "DHCPNAK";
     static const char* DHCPRELEASE_NAME = "DHCPRELEASE";
     static const char* DHCPINFORM_NAME = "DHCPINFORM";
+    static const char* DHCPLEASEQUERY_NAME = "DHCPLEASEQUERY";
+    static const char* DHCPLEASEUNASSIGNED_NAME = "DHCPLEASEUNASSIGNED";
+    static const char* DHCPLEASEUNKNOWN_NAME = "DHCPLEASEUNKNOWN";
+    static const char* DHCPLEASEACTIVE_NAME = "DHCPLEASEACTIVE";
+    static const char* DHCPBULKLEASEQUERY_NAME = "DHCPBULKLEASEQUERY";
+    static const char* DHCPLEASEQUERYDONE_NAME = "DHCPLEASEQUERYDONE";
+    static const char* DHCPLEASEQUERYSTATUS_NAME = "DHCPLEASEQUERYSTATUS";
+    static const char* DHCPTLS_NAME = "DHCPTLS";
     static const char* UNKNOWN_NAME = "UNKNOWN";
 
     switch (type) {
@@ -312,6 +320,30 @@ Pkt4::getName(const uint8_t type) {
 
         case DHCPINFORM:
             return (DHCPINFORM_NAME);
+
+        case DHCPLEASEQUERY:
+            return (DHCPLEASEQUERY_NAME);
+
+        case DHCPLEASEUNASSIGNED:
+            return (DHCPLEASEUNASSIGNED_NAME);
+
+        case DHCPLEASEUNKNOWN:
+            return (DHCPLEASEUNKNOWN_NAME);
+
+        case DHCPLEASEACTIVE:
+            return (DHCPLEASEACTIVE_NAME);
+
+        case DHCPBULKLEASEQUERY:
+            return (DHCPBULKLEASEQUERY_NAME);
+
+        case DHCPLEASEQUERYDONE:
+            return (DHCPLEASEQUERYDONE_NAME);
+
+        case DHCPLEASEQUERYSTATUS:
+            return (DHCPLEASEQUERYSTATUS_NAME);
+
+        case DHCPTLS:
+            return (DHCPTLS_NAME);
 
         default:
             ;
