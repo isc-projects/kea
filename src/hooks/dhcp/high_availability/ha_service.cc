@@ -356,7 +356,7 @@ HAService::passiveBackupStateHandler() {
         query_filter_.serveDefaultScopes();
         adjustNetworkState();
 
-        // In the terminated state we don't send heartbeat.
+        // In the passive-backup state we don't send heartbeat.
         communication_state_->stopHeartbeat();
 
         // Log if the state machine is paused.
