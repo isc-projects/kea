@@ -1007,9 +1007,37 @@ TEST_F(HAConfigTest, duplicatedStates) {
         "duplicated configuration for the 'waiting' state");
 }
 
-// Test that wait-backup-ack must not be enabled in the configuration
-// with two active servers.
-TEST_F(HAConfigTest, waitBackupAckWithActiveServers) {
+// Test that wait-backup-ack must not be enabled in the load-balancing
+// configuration.
+TEST_F(HAConfigTest, waitBackupAckLoadBalancing) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"wait-backup-ack\": true,"
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "'wait-backup-ack' must be set to false in the load balancing configuration");
+}
+
+// Test that wait-backup-ack must not be enabled in the hot-standby
+// configuration.
+TEST_F(HAConfigTest, waitBackupAckHotStandby) {
     testInvalidConfig(
         "["
         "    {"
