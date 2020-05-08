@@ -19,6 +19,7 @@
 #include <http/date_time.h>
 #include <http/response_json.h>
 #include <http/post_request_json.h>
+#include <util/multi_threading_mgr.h>
 #include <util/stopwatch.h>
 #include <boost/pointer_cast.hpp>
 #include <boost/bind.hpp>
@@ -51,7 +52,7 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
                      const HAConfigPtr& config, const HAServerType& server_type)
     : io_service_(io_service), network_state_(network_state), config_(config),
       server_type_(server_type), client_(*io_service), communication_state_(),
-      query_filter_(config), pending_requests_() {
+      query_filter_(config), pending_requests_mutex_(), pending_requests_() {
 
     if (server_type == HAServerType::DHCPv4) {
         communication_state_.reset(new CommunicationState4(io_service_, config));
@@ -914,6 +915,61 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
 }
 
 template<typename QueryPtrType>
+bool
+HAService::leaseUpdateComplete(QueryPtrType& query,
+                               const ParkingLotHandlePtr& parking_lot) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(pending_requests_mutex_);
+        return (leaseUpdateCompleteInternal(query, parking_lot));
+    } else {
+        return (leaseUpdateCompleteInternal(query, parking_lot));
+    }
+}
+
+template<typename QueryPtrType>
+bool
+HAService::leaseUpdateCompleteInternal(QueryPtrType& query,
+                                       const ParkingLotHandlePtr& parking_lot) {
+    auto it = pending_requests_.find(query);
+
+    // If there are no more pending requests for this query, let's unpark
+    // the DHCP packet.
+    if (it == pending_requests_.end() || (--pending_requests_[query] <= 0)) {
+        parking_lot->unpark(query);
+
+        // If we have unparked the packet we can clear pending requests for
+        // this query.
+        if (it != pending_requests_.end()) {
+            pending_requests_.erase(it);
+        }
+        return (true);
+    }
+    return (false);
+}
+
+template<typename QueryPtrType>
+void
+HAService::updatePendingRequest(QueryPtrType& query) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(pending_requests_mutex_);
+        updatePendingRequestInternal(query);
+    } else {
+        updatePendingRequestInternal(query);
+    }
+}
+
+template<typename QueryPtrType>
+void
+HAService::updatePendingRequestInternal(QueryPtrType& query) {
+    if (pending_requests_.count(query) == 0) {
+        pending_requests_[query] = 1;
+
+    } else {
+        ++pending_requests_[query];
+    }
+}
+
+template<typename QueryPtrType>
 void
 HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                           const HAConfig::PeerConfigPtr& config,
@@ -1020,19 +1076,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                 return;
             }
 
-            auto it = pending_requests_.find(query);
-
-            // If there are no more pending requests for this query, let's unpark
-            // the DHCP packet.
-            if (it == pending_requests_.end() || (--pending_requests_[query] <= 0)) {
-                parking_lot->unpark(query);
-
-                // If we have unparked the packet we can clear pending requests for
-                // this query.
-                if (it != pending_requests_.end()) {
-                    pending_requests_.erase(it);
-                }
-
+            if (leaseUpdateComplete(query, parking_lot)) {
                 // If we have finished sending the lease updates we need to run the
                 // state machine until the state machine finds that additional events
                 // are required, such as next heartbeat or a lease update. The runModel()
@@ -1052,12 +1096,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
     // a backup increase the number of pending requests.
     if (config_->amWaitingBackupAck() || (config->getRole() != HAConfig::PeerConfig::BACKUP)) {
         // Request scheduled, so update the request counters for the query.
-        if (pending_requests_.count(query) == 0) {
-            pending_requests_[query] = 1;
-
-        } else {
-            ++pending_requests_[query];
-        }
+        updatePendingRequest(query);
     }
 }
 
@@ -2199,6 +2238,16 @@ HAService::clientCloseHandler(int tcp_native_fd) {
         IfaceMgr::instance().deleteExternalSocket(tcp_native_fd);
     }
 };
+
+size_t
+HAService::pendingRequestSize() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(pending_requests_mutex_);
+        return (pending_requests_.size());
+    } else {
+        return (pending_requests_.size());
+    }
+}
 
 } // end of namespace isc::ha
 } // end of namespace isc

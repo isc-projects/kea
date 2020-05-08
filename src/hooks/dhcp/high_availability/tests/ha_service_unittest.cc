@@ -189,11 +189,11 @@ public:
     using HAService::transition;
     using HAService::verboseTransition;
     using HAService::shouldSendLeaseUpdates;
+    using HAService::pendingRequestSize;
     using HAService::network_state_;
     using HAService::config_;
     using HAService::communication_state_;
     using HAService::query_filter_;
-    using HAService::pending_requests_;
 };
 
 /// @brief Pointer to the @c TestHAService.
@@ -738,7 +738,7 @@ public:
         // Actually perform the lease updates.
         ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, [&service]() {
             // Finish running IO service when there are no more pending requests.
-            return (service.pending_requests_.empty());
+            return (service.pendingRequestSize() == 0);
         }));
 
         // Only if we wait for lease updates to complete it makes senst to test
@@ -842,7 +842,7 @@ public:
         // Actually perform the lease updates.
         ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, [&service]() {
             // Finish running IO service when there are no more pending requests.
-            return (service.pending_requests_.empty());
+            return (service.pendingRequestSize() == 0);
         }));
 
         // Only if we wait for lease updates to complete it makes senst to test

@@ -25,6 +25,7 @@
 #include <boost/shared_ptr.hpp>
 #include <functional>
 #include <map>
+#include <mutex>
 #include <vector>
 
 namespace isc {
@@ -376,7 +377,7 @@ private:
     /// This is a generic implementation of the public @c inScope method
     /// variants.
     ///
-    /// @tparam type of the pointer to the DHCP query.
+    /// @tparam QueryPtrType type of the pointer to the DHCP query.
     /// @param [out] query6 pointer to the DHCP query received. A client class
     /// will be appended to this query instance, appropriate for the server to
     /// process this query, e.g. "HA_server1" if the "server1" should process
@@ -916,6 +917,72 @@ protected:
 
     /// @brief Selects queries to be processed/dropped.
     QueryFilter query_filter_;
+
+    /// @brief Handle last pending request for this query.
+    ///
+    /// Search if there are pending requests for this query:
+    ///  - if there are decrement the count
+    ///  - if there were at least two return false
+    ///  - if there was none or one unpark the query
+    ///  - if there was one remove the query from the map
+    ///  - return true
+    ///
+    /// @tparam QueryPtrType Type of the pointer to the DHCP client's message,
+    /// i.e. Pkt4Ptr or Pkt6Ptr.
+    /// @param query Pointer to the DHCP client's query.
+    /// @param [out] parking_lot Parking lot where the query is parked.
+    /// This method uses this handle to unpark the packet when all asynchronous
+    /// requests have been completed.
+    /// @return True when all lease updates are complete, false otherwise.
+    template<typename QueryPtrType>
+    bool leaseUpdateComplete(QueryPtrType& query,
+                             const hooks::ParkingLotHandlePtr& parking_lot);
+
+    /// @brief Update pending request counter for this query.
+    ///
+    /// @tparam QueryPtrType Type of the pointer to the DHCP client's message,
+    /// i.e. Pkt4Ptr or Pkt6Ptr.
+    /// @param query Pointer to the DHCP client's query.
+    template<typename QueryPtrType>
+    void updatePendingRequest(QueryPtrType& query);
+
+protected:
+    /// @brief Get the number of entries in the pending request map.
+    /// @note Currently for testing purposes only.
+    /// @return Number of entries in the pending request map.
+    size_t pendingRequestSize();
+
+private:
+    /// @brief Handle last pending request for this query.
+    ///
+    /// Search if there are pending requests for this query:
+    ///  - if there are decrement the count
+    ///  - if there were at least two return false
+    ///  - if there was none or one unpark the query
+    ///  - if there was one remove the query from the map
+    ///  - return true
+    ///
+    /// @tparam QueryPtrType Type of the pointer to the DHCP client's message,
+    /// i.e. Pkt4Ptr or Pkt6Ptr.
+    /// @param query Pointer to the DHCP client's query.
+    /// @param [out] parking_lot Parking lot where the query is parked.
+    /// This method uses this handle to unpark the packet when all asynchronous
+    /// requests have been completed.
+    /// @return True when all lease updates are complete, false otherwise.
+    template<typename QueryPtrType>
+    bool leaseUpdateCompleteInternal(QueryPtrType& query,
+                                     const hooks::ParkingLotHandlePtr& parking_lot);
+
+    /// @brief Update pending request counter for this query.
+    ///
+    /// @tparam QueryPtrType Type of the pointer to the DHCP client's message,
+    /// i.e. Pkt4Ptr or Pkt6Ptr.
+    /// @param query Pointer to the DHCP client's query.
+    template<typename QueryPtrType>
+    void updatePendingRequestInternal(QueryPtrType& query);
+
+    /// @brief Mutex to protect the pending_requests_ map.
+    std::mutex pending_requests_mutex_;
 
     /// @brief Map holding a number of scheduled requests for a given packet.
     ///
