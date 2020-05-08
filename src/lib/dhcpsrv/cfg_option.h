@@ -116,7 +116,7 @@ public:
     OptionDescriptor& operator=(const OptionDescriptor& other) {
         if (this != &other) {
             // Not self-assignment.
-            data::StampedElement(other);
+            data::StampedElement=(other);
             option_ = other.option_;
             persistent_ = other.persistent_;
             formatted_value_ = other.formatted_value_;
