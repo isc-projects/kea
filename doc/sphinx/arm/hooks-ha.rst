@@ -87,7 +87,7 @@ partner. The HA hook library supports another server type/role: ``"backup"``
 server. The use of a backup server is optional, and can be implemented in both
 load-balancing and hot-standby setup, in addition to the active servers.
 There is no limit on the number of backup servers in the HA setup;
-however, the presence of backup servers slightly increases the latency
+however, the presence of backup servers may increase the latency
 of DHCP responses, because not only do active servers send lease updates
 to each other, but also to the backup servers. As of Kea 1.7.8 the active
 servers no longer expect the acknowledgments from the backup servers
@@ -105,17 +105,17 @@ The passive-backup configuration is used in situations when an administrator
 wants to take advantage of the backup servers as an additional storage
 for leases without a need for running the fully blown failover setup.
 In this case, if the primary server fails, the DHCP service is lost
-and it requires that the administrator boots it up manually to resume
+and it requires that the administrator manually starts the primary to resume
 the DHCP service. The administrator may also configure one of the
 backup servers to provide the DHCP service to the clients as these
 servers should have accurate or nearly accurate information about the
 allocated leases. The major advantage of the passive-backup mode is that
-it provides some redundancy of the lease information with much better
+it provides some redundancy of the lease information but with better
 performance of the primary server responding to the DHCP queries. Since
 Kea 1.7.8 release, the primary server does not have to wait for the
 acknowledgments to the lease updates from the backup servers before it
-sends a response to the DHCP client. This greatly reduces a response
-time comparing to the load-balancing and hot-standby cases in which the
+sends a response to the DHCP client. This reduces a response time
+comparing to the load-balancing and hot-standby cases in which the
 server responding to the DHCP query has to wait for the acknowledgment
 from the other active server before it can respond to the client.
 
@@ -810,7 +810,7 @@ passive-backup configuration:
                "high-availability": [{
                    "this-server-name": "server1",
                    "mode": "passive-backup",
-                   "wait-backup-ack": true,
+                   "wait-backup-ack": false,
                    "peers": [{
                        "name": "server1",
                        "url": "http://192.168.56.33:8000/",
