@@ -61,7 +61,7 @@ can be switched to handle the entire DHCP traffic if its partner becomes
 unavailable.
 
 In the load-balancing configuration, one of the servers must be
-designated as "primary" and the other as "secondary." Functionally,
+designated as ``"primary"`` and the other as ``"secondary."`` Functionally,
 there is no difference between the two during normal operation. This
 distinction is required when the two servers are started at (nearly) the
 same time and have to synchronize their lease databases. The primary
@@ -80,10 +80,10 @@ secondary server detects the failure of the primary, it starts
 responding to all DHCP queries.
 
 In the configurations described above, the primary and secondary/standby
-are referred to as "active" servers, because they receive lease
+are referred to as ``"active"`` servers, because they receive lease
 updates and can automatically react to the partner's failures by
 responding to the DHCP queries which would normally be handled by the
-partner. The HA hook library supports another server type/role: backup
+partner. The HA hook library supports another server type/role: ``"backup"``
 server. The use of a backup server is optional, and can be implemented in both
 load-balancing and hot-standby setup, in addition to the active servers.
 There is no limit on the number of backup servers in the HA setup;
