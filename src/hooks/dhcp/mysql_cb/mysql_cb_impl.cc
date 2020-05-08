@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -518,7 +518,7 @@ void
 MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_selector,
                                               const OptionDefinitionPtr& option_def,
                                               const std::string& space,
-                                              const int& get_option_def_code_space,
+                                              const int& /*get_option_def_code_space*/,
                                               const int& insert_option_def,
                                               const int& update_option_def,
                                               const int& create_audit_revision,
