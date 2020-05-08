@@ -1,3 +1,11 @@
+1747.	[bug]		fdupont
+	Multi-threading and congestion handling were made incompatible:
+	when both are enabled by a configuration the dhcp-queue-control is
+	silently disabled, when packet-queue-size is not 0 and the
+	multi-threading packet queue is full the oldest packet is dropped
+	to make room for a new received one.
+	(Gitlab #1173)
+
 1746.	[bug]		fdupont
 	lease4-add and lease6-add commands now return an error when the
 	lease already exists.
