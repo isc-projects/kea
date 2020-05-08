@@ -555,6 +555,7 @@ AC_TRY_COMPILE([
         AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],
         AC_MSG_RESULT(no))
 
+usable_regex=
 AC_MSG_CHECKING(for usuable C++11 regex)
 AC_TRY_RUN([
 #include <regex>
@@ -566,8 +567,14 @@ int main() {
   return result ? EXIT_SUCCESS : EXIT_FAILURE;
 }],
         [AC_MSG_RESULT(yes)
-        AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++11 regex is usable])],
-        AC_MSG_RESULT(no))
+         usable_regex="yes"],
+        [AC_MSG_RESULT(no)
+         usable_regex="no"],
+        [AC_MSG_RESULT(cross compiling)])
+# Be optimistic for cross compiling.
+if test "x$usable_regex" != "xno" ; then
+        AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++11 regex is usable])
+fi
 
 # Run the gtest detection routines. This supports --with-gtest and --with-gtest-source
 # parameters. If specified, those will set the HAVE_GTEST, HAVE_GTEST_SOURCE,
