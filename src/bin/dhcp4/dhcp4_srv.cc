@@ -1238,6 +1238,31 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         }
     }
 
+    processDhcp4Query(query, rsp, allow_packet_park);
+}
+
+void
+Dhcpv4Srv::processDhcp4QueryAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp,
+                                            bool allow_packet_park) {
+    try {
+        processDhcp4Query(query, rsp, allow_packet_park);
+        if (!rsp) {
+            return;
+        }
+
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+        processPacketBufferSend(callout_handle, rsp);
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(e.what());
+    } catch (...) {
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+    }
+}
+
+void
+Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
+                             bool allow_packet_park) {
     AllocEngine::ClientContext4Ptr ctx;
 
     try {

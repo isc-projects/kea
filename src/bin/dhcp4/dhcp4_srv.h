@@ -327,7 +327,7 @@ public:
 
     /// @brief Process a single incoming DHCPv4 packet and sends the response.
     ///
-    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// It verifies correctness of the passed packet, calls per-type processXXX
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
@@ -335,7 +335,7 @@ public:
 
     /// @brief Process a single incoming DHCPv4 packet and sends the response.
     ///
-    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// It verifies correctness of the passed packet, calls per-type processXXX
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
@@ -345,20 +345,41 @@ public:
     ///
     /// @param callout_handle pointer to the callout handle.
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response
+    /// @param rsp A pointer to the response.
     void sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
                              Pkt4Ptr& query, Pkt4Ptr& rsp);
 
     /// @brief Process a single incoming DHCPv4 packet.
     ///
-    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// It verifies correctness of the passed packet, calls per-type processXXX
     /// methods, generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response
+    /// @param rsp A pointer to the response.
     /// @param allow_packet_park Indicates if parking a packet is allowed.
     void processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp,
                        bool allow_packet_park = true);
+
+    /// @brief Process a single incoming DHCPv4 query.
+    ///
+    /// It calls per-type processXXX methods, generates appropriate answer.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response.
+    /// @param allow_packet_park Indicates if parking a packet is allowed.
+    void processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
+                           bool allow_packet_park);
+
+    /// @brief Process a single incoming DHCPv4 query.
+    ///
+    /// It calls per-type processXXX methods, generates appropriate answer,
+    /// sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response.
+    /// @param allow_packet_park Indicates if parking a packet is allowed.
+    void processDhcp4QueryAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp,
+                                          bool allow_packet_park);
 
     /// @brief Instructs the server to shut down.
     void shutdown();

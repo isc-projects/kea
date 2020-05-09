@@ -816,6 +816,29 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         return;
     }
 
+    processDhcp6Query(query, rsp);
+}
+
+void
+Dhcpv6Srv::processDhcp6QueryAndSendResponse(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+    try {
+        processDhcp6Query(query, rsp);
+        if (!rsp) {
+            return;
+        }
+
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+        processPacketBufferSend(callout_handle, rsp);
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(e.what());
+    } catch (...) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
+    }
+}
+
+void
+Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     // Create a client race avoidance RAII handler.
     ClientHandler client_handler;
     bool drop = false;
