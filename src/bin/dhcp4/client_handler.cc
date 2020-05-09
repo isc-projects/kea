@@ -24,7 +24,8 @@ ClientHandler::ClientByIdContainer ClientHandler::clients_client_id_;
 
 ClientHandler::ClientByHWAddrContainer ClientHandler::clients_hwaddr_;
 
-ClientHandler::ClientHandler() : locked_client_id_(), locked_hwaddr_() {
+ClientHandler::ClientHandler()
+    : client_(), locked_client_id_(), locked_hwaddr_() {
 }
 
 ClientHandler::~ClientHandler() {
@@ -38,6 +39,7 @@ ClientHandler::~ClientHandler() {
         unLockByHWAddr();
     }
     locked_hwaddr_.reset();
+    client_.reset();
 }
 
 ClientHandler::Client::Client(Pkt4Ptr query, DuidPtr client_id,
@@ -67,7 +69,7 @@ ClientHandler::lookup(const DuidPtr& duid) {
     if (it == clients_client_id_.end()) {
         return (0);
     }
-    return (ClientPtr(new Client(*it)));
+    return (*it);
 }
 
 ClientHandler::ClientPtr
@@ -83,25 +85,25 @@ ClientHandler::lookup(const HWAddrPtr& hwaddr) {
     if (it == clients_hwaddr_.end()) {
         return (0);
     }
-    return (ClientPtr(new Client(*it)));
+    return (*it);
 }
 
 void
-ClientHandler::lockById(Client client) {
+ClientHandler::lockById() {
     if (!locked_client_id_) {
         isc_throw(Unexpected, "nothing to lock in ClientHandler::lock (id)");
     }
     // Assume insert will never fail so not checking its result.
-    clients_client_id_.insert(client);
+    clients_client_id_.insert(client_);
 }
 
 void
-ClientHandler::lockByHWAddr(Client client) {
+ClientHandler::lockByHWAddr() {
     if (!locked_hwaddr_) {
         isc_throw(Unexpected, "nothing to lock in ClientHandler::lock (hw)");
     }
     // Assume insert will never fail so not checking its result.
-    clients_hwaddr_.insert(client);
+    clients_hwaddr_.insert(client_);
 }
 
 void
@@ -158,9 +160,8 @@ ClientHandler::tryLock(Pkt4Ptr query) {
         return (false);
     }
 
-    ClientPtr holder_id = 0;
-    ClientPtr holder_hw = 0;
-    Client client(query, duid, hwaddr);
+    ClientPtr holder_id;
+    ClientPtr holder_hw;
 
     // Try first duid.
     if (duid) {
@@ -170,7 +171,8 @@ ClientHandler::tryLock(Pkt4Ptr query) {
         holder_id = lookup(duid);
         if (!holder_id) {
             locked_client_id_ = duid;
-            lockById(client);
+            client_.reset(new Client(query, duid, hwaddr));
+            lockById();
         }
     }
     if (!holder_id) {
@@ -183,7 +185,8 @@ ClientHandler::tryLock(Pkt4Ptr query) {
         holder_hw = lookup(hwaddr);
         if (!holder_hw) {
             locked_hwaddr_ = hwaddr;
-            lockByHWAddr(client);
+            client_.reset(new Client(query, duid, hwaddr));
+            lockByHWAddr();
             return (false);
         }
     }

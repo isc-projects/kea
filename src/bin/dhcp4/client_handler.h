@@ -13,6 +13,7 @@
 #include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
+#include <boost/shared_ptr.hpp>
 #include <mutex>
 #include <thread>
 
@@ -67,8 +68,11 @@ private:
         std::thread::id thread_;
     };
 
-    /// @brief The type of unique pointers to clients by ID.
-    typedef std::unique_ptr<Client> ClientPtr;
+    /// @brief The type of shared pointers to clients by ID.
+    typedef boost::shared_ptr<Client> ClientPtr;
+
+    /// @brief Local client.
+    ClientPtr client_;
 
     /// @brief Client ID locked by this handler.
     DuidPtr locked_client_id_;
@@ -101,16 +105,12 @@ private:
     /// @brief Acquire a client by client ID option.
     ///
     /// The by-id mutex must be held by the caller.
-    ///
-    /// @param client The filled client object.
-    void lockById(Client client);
+    void lockById();
 
     /// @brief Acquire a client by hardware address.
     ///
     /// The by-hwaddr mutex must be held by the caller.
-    ///
-    /// @param client The filled client object.
-    void lockByHWAddr(Client client);
+    void lockByHWAddr();
 
     /// @brief Release a client by client ID option.
     ///
@@ -125,8 +125,8 @@ private:
     /// @brief The type of the client-by-id container.
     typedef boost::multi_index_container<
 
-        // This container stores client-by-id objects.
-        Client,
+        // This container stores pointers to client-by-id objects.
+        ClientPtr,
 
         // Start specification of indexes here.
         boost::multi_index::indexed_by<
@@ -148,8 +148,8 @@ private:
     /// @brief The type of the client-by-hwaddr container.
     typedef boost::multi_index_container<
 
-        // This container stores client-by-hwaddr objects.
-        Client,
+        // This container stores pointers to client-by-hwaddr objects.
+        ClientPtr,
 
         // Start specification of indexes here.
         boost::multi_index::indexed_by<

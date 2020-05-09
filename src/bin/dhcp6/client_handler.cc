@@ -20,7 +20,7 @@ mutex ClientHandler::mutex_;
 
 ClientHandler::ClientContainer ClientHandler::clients_;
 
-ClientHandler::ClientHandler() : locked_() {
+ClientHandler::ClientHandler() : client_(), locked_() {
 }
 
 ClientHandler::~ClientHandler() {
@@ -29,6 +29,7 @@ ClientHandler::~ClientHandler() {
         unLock();
     }
     locked_.reset();
+    client_.reset();
 }
 
 ClientHandler::Client::Client(Pkt6Ptr query, DuidPtr client_id)
@@ -51,16 +52,16 @@ ClientHandler::lookup(const DuidPtr& duid) {
     if (it == clients_.end()) {
         return (0);
     }
-    return (ClientPtr(new Client(*it)));
+    return (*it);
 }
 
 void
-ClientHandler::lock(Client client) {
+ClientHandler::lock() {
     if (!locked_) {
         isc_throw(Unexpected, "nothing to lock in ClientHandler::lock");
     }
     // Assume insert will never fail so not checking its result.
-    clients_.insert(client);
+    clients_.insert(client_);
 }
 
 void
@@ -89,14 +90,15 @@ ClientHandler::tryLock(Pkt6Ptr query) {
         // A lot of code assumes this will never happen...
         isc_throw(Unexpected, "empty DUID in ClientHandler::tryLock");
     }
-    ClientPtr holder = 0;
+    ClientPtr holder;
     {
         // Try to acquire the lock and return the holder when it failed.
         lock_guard<mutex> lock_(mutex_);
         holder = lookup(duid);
         if (!holder) {
             locked_ = duid;
-            lock(Client(query, duid));
+            client_.reset(new Client(query, duid));
+            lock();
             return (false);
         }
     }

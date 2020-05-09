@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed May 13 2020 16:50
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Sat May 09 2020 12:24
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -51,7 +51,6 @@ extern const isc::log::MessageID DHCP4_DECLINE_LEASE_MISMATCH;
 extern const isc::log::MessageID DHCP4_DECLINE_LEASE_NOT_FOUND;
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_MISSING;
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_UNPACK_FAIL;
-extern const isc::log::MessageID DHCP4_DEVELOPMENT_VERSION;
 extern const isc::log::MessageID DHCP4_DHCP4O6_BAD_PACKET;
 extern const isc::log::MessageID DHCP4_DHCP4O6_PACKET_RECEIVED;
 extern const isc::log::MessageID DHCP4_DHCP4O6_PACKET_SEND;
@@ -103,6 +102,8 @@ extern const isc::log::MessageID DHCP4_PACKET_DROP_0007;
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0008;
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0009;
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0010;
+extern const isc::log::MessageID DHCP4_PACKET_DROP_0011;
+extern const isc::log::MessageID DHCP4_PACKET_DROP_0012;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0001;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0002;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0003;

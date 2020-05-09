@@ -12,6 +12,7 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
+#include <boost/shared_ptr.hpp>
 #include <mutex>
 #include <thread>
 
@@ -59,8 +60,11 @@ private:
         std::thread::id thread_;
     };
 
-    /// @brief The type of unique pointers to clients.
-    typedef std::unique_ptr<Client> ClientPtr;
+    /// @brief The type of shared pointers to clients.
+    typedef boost::shared_ptr<Client> ClientPtr;
+
+    /// @brief Local client.
+    ClientPtr client_;
 
     /// @brief Client ID locked by this handler.
     DuidPtr locked_;
@@ -79,9 +83,7 @@ private:
     /// @brief Acquire a client.
     ///
     /// The mutex must be held by the caller.
-    ///
-    /// @param client The filled client object.
-    void lock(Client client);
+    void lock();
 
     /// @brief Release a client.
     ///
@@ -91,8 +93,8 @@ private:
     /// @brief The type of the client container.
     typedef boost::multi_index_container<
 
-        // This container stores client objects.
-        Client,
+        // This container stores pointers to client objects.
+        ClientPtr,
 
         // Start specification of indexes here.
         boost::multi_index::indexed_by<
