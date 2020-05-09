@@ -80,15 +80,12 @@ private:
     /// @brief Hardware address locked by this handler.
     HWAddrPtr locked_hwaddr_;
 
-    /// @brief Mutex to protect the client-by-id container.
-    static std::mutex mutex_client_id_;
-
-    /// @brief Mutex to protect the client-by-hwaddr container.
-    static std::mutex mutex_hwaddr_;
+    /// @brief Mutex to protect client containers.
+    static std::mutex mutex_;
 
     /// @brief Lookup a client-by-id.
     ///
-    /// The by-id mutex must be held by the caller.
+    /// The mutex must be held by the caller.
     ///
     /// @param duid The duid of the query from the client.
     /// @return The held client or null.
@@ -96,7 +93,7 @@ private:
 
     /// @brief Lookup a client-by-hwaddr.
     ///
-    /// The by-hwaddr mutex must be held by the caller.
+    /// The mutex must be held by the caller.
     ///
     /// @param duid The duid of the query from the client.
     /// @return The held client or null.
@@ -104,22 +101,22 @@ private:
 
     /// @brief Acquire a client by client ID option.
     ///
-    /// The by-id mutex must be held by the caller.
+    /// The mutex must be held by the caller.
     void lockById();
 
     /// @brief Acquire a client by hardware address.
     ///
-    /// The by-hwaddr mutex must be held by the caller.
+    /// The mutex must be held by the caller.
     void lockByHWAddr();
 
     /// @brief Release a client by client ID option.
     ///
-    /// The by-idmutex must be held by the caller.
+    /// The mutex must be held by the caller.
     void unLockById();
 
     /// @brief Release a client by hardware address.
     ///
-    /// The by-hwaddr mutex must be held by the caller.
+    /// The mutex must be held by the caller.
     void unLockByHWAddr();
 
     /// @brief The type of the client-by-id container.

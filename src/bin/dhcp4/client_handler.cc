@@ -16,9 +16,7 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-mutex ClientHandler::mutex_client_id_;
-
-mutex ClientHandler::mutex_hwaddr_;
+mutex ClientHandler::mutex_;
 
 ClientHandler::ClientByIdContainer ClientHandler::clients_client_id_;
 
@@ -29,13 +27,12 @@ ClientHandler::ClientHandler()
 }
 
 ClientHandler::~ClientHandler() {
+    lock_guard<mutex> lock_(mutex_);
     if (locked_client_id_) {
-        lock_guard<mutex> lock_(mutex_client_id_);
         unLockById();
     }
     locked_client_id_.reset();
     if (locked_hwaddr_) {
-        lock_guard<mutex> lock_(mutex_hwaddr_);
         unLockByHWAddr();
     }
     locked_hwaddr_.reset();
@@ -167,7 +164,7 @@ ClientHandler::tryLock(Pkt4Ptr query) {
     if (duid) {
         // Try to acquire the by-client-id lock and return the holder
         // when it failed.
-        lock_guard<mutex> lock_(mutex_client_id_);
+        lock_guard<mutex> lock_(mutex_);
         holder_id = lookup(duid);
         if (!holder_id) {
             locked_client_id_ = duid;
@@ -181,7 +178,7 @@ ClientHandler::tryLock(Pkt4Ptr query) {
         }
         // Try to acquire the by-hw-addr lock and return the holder
         // when it failed.
-        lock_guard<mutex> lock_(mutex_hwaddr_);
+        lock_guard<mutex> lock_(mutex_);
         holder_hw = lookup(hwaddr);
         if (!holder_hw) {
             locked_hwaddr_ = hwaddr;
