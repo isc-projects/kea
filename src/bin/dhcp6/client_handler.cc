@@ -10,8 +10,10 @@
 #include <dhcp6/dhcp6_log.h>
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
+#include <util/multi_threading_mgr.h>
 
 using namespace std;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -71,10 +73,22 @@ ClientHandler::unLock() {
     }
     // Assume erase will never fail so not checking its result.
     clients_.erase(locked_->getDuid());
+    if (!client_ || !client_->cont_) {
+        return;
+    }
+    // Try to process next query. As the caller holds the mutex of
+    // the handler class the continuation will be resumed after.
+    MultiThreadingMgr& mt_mgr = MultiThreadingMgr::instance();
+    if (mt_mgr.getMode()) {
+        if (!mt_mgr.getThreadPool().addFront(client_->cont_)) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_QUEUE_FULL);
+        }
+    }
+    client_->cont_.reset();
 }
 
 bool
-ClientHandler::tryLock(Pkt6Ptr query) {
+ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
     if (!query) {
         isc_throw(InvalidParameter, "null query in ClientHandler::tryLock");
     }
@@ -102,7 +116,25 @@ ClientHandler::tryLock(Pkt6Ptr query) {
             return (false);
         }
     }
-    // This query is a duplicate: currently it is simply dropped.
+    // This query can be a duplicate so put the continuation.
+    if (cont) {
+        Pkt6Ptr next_query = holder->next_query_;
+        holder->next_query_ = query;
+        holder->cont_ = cont;
+        if (next_query) {
+            // Logging a warning as it is supposed to be a rare event
+            // with well behaving clients...
+            LOG_WARN(bad_packet6_logger, DHCP6_PACKET_DROP_DUPLICATE)
+                .arg(next_query->toText())
+                .arg(this_thread::get_id())
+                .arg(query->toText())
+                .arg(this_thread::get_id());
+            stats::StatsMgr::instance().addValue("pkt6-receive-drop",
+                                                 static_cast<int64_t>(1));
+        }
+        return (false);
+    }
+
     // Logging a warning as it is supposed to be a rare event
     // with well behaving clients...
     LOG_WARN(bad_packet6_logger, DHCP6_PACKET_DROP_DUPLICATE)

@@ -26,7 +26,7 @@ namespace util {
 ///
 /// @tparam WorkItem a functor
 /// @tparam Container a 'queue like' container
-template <typename WorkItem, typename Container = std::queue<boost::shared_ptr<WorkItem>>>
+template <typename WorkItem, typename Container = std::deque<boost::shared_ptr<WorkItem>>>
 struct ThreadPool {
     typedef typename boost::shared_ptr<WorkItem> WorkItemPtr;
 
@@ -81,7 +81,15 @@ struct ThreadPool {
     /// @return false if the queue was full and oldest item(s) was dropped,
     /// true otherwise.
     bool add(const WorkItemPtr& item) {
-        return (queue_.push(item));
+        return (queue_.push_back(item));
+    }
+
+    /// @brief add a work item to the thread pool at front
+    ///
+    /// @param item the 'functor' object to be added to the queue
+    /// @return false if the queue was full, true otherwise.
+    bool addFront(const WorkItemPtr& item) {
+        return (queue_.push_front(item));
     }
 
     /// @brief count number of work items in the queue
@@ -203,7 +211,7 @@ private:
         /// @param item the new item to be added to the queue
         /// @return false if the queue was full and oldest item(s) dropped,
         /// true otherwise
-        bool push(const Item& item) {
+        bool push_back(const Item& item) {
             bool ret = true;
             if (!item) {
                 return (ret);
@@ -212,15 +220,39 @@ private:
                 std::lock_guard<std::mutex> lock(mutex_);
                 if (max_queue_size_ != 0) {
                     while (queue_.size() >= max_queue_size_) {
-                        queue_.pop();
+                        queue_.pop_front();
                         ret = false;
                     }
                 }
-                queue_.push(item);
+                queue_.push_back(item);
             }
             // Notify pop function so that it can effectively remove a work item.
             cv_.notify_one();
             return (ret);
+        }
+
+        /// @brief push work item to the queue at front.
+        ///
+        /// Used to add work items to the queue at front.
+        /// When the queue is full the item is not added.
+        ///
+        /// @param item the new item to be added to the queue
+        /// @return false if the queue was full, true otherwise
+        bool push_front(const Item& item) {
+            if (!item) {
+                return (true);
+            }
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                if ((max_queue_size_ != 0) &&
+                    (queue_.size() >= max_queue_size_)) {
+                        return (false);
+                }
+                queue_.push_front(item);
+            }
+            // Notify pop function so that it can effectively remove a work item.
+            cv_.notify_one();
+            return (true);
         }
 
         /// @brief pop work item from the queue or block waiting
@@ -241,7 +273,7 @@ private:
                 return (Item());
             }
             Item item = queue_.front();
-            queue_.pop();
+            queue_.pop_front();
             return (item);
         }
 

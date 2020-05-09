@@ -9,6 +9,8 @@
 #include <dhcp6/client_handler.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <stats/stats_mgr.h>
+#include <util/multi_threading_mgr.h>
+#include <unistd.h>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -25,7 +27,8 @@ public:
     /// @brief Constructor.
     ///
     /// Creates the pkt6-receive-drop statistic.
-    ClientHandleTest() {
+    ClientHandleTest() : called1_(false), called2_(false), called3_(false) {
+        MultiThreadingMgr::instance().apply(false, 0, 0);
         StatsMgr::instance().setValue("pkt6-receive-drop", static_cast<int64_t>(0));
     }
 
@@ -33,6 +36,7 @@ public:
     ///
     /// Removes statistics.
     ~ClientHandleTest() {
+        MultiThreadingMgr::instance().apply(false, 0, 0);
         StatsMgr::instance().removeAll();
     }
 
@@ -63,6 +67,38 @@ public:
             EXPECT_EQ(0, obs->getInteger().first);
         }
     }
+
+    /// @brief Waits for pending continuations.
+    void waitForThreads() {
+        while (MultiThreadingMgr::instance().getThreadPool().count() > 0) {
+            usleep(100);
+        }
+    }
+
+    /// @brief Set called1_ to true.
+    void setCalled1() {
+        called1_ = true;
+    }
+
+    /// @brief Set called2_ to true.
+    void setCalled2() {
+        called2_ = true;
+    }
+
+    /// @brief Set called3_ to true.
+    void setCalled3() {
+        called3_ = true;
+    }
+
+    /// @brief The called flag number 1.
+    bool called1_;
+
+    /// @brief The called flag number 2.
+    bool called2_;
+
+    /// @brief The called flag number 3.
+    bool called3_;
+
 };
 
 // Verifies behavior with empty block.
@@ -73,6 +109,7 @@ TEST_F(ClientHandleTest, empty) {
     } catch (const std::exception& ex) {
         ADD_FAILURE() << "unexpected exception: " << ex.what();
     }
+    checkStat(false);
 }
 
 // Verifies behavior with one query.
@@ -282,5 +319,180 @@ TEST_F(ClientHandleTest, doubleTryLock) {
 
 // Cannot verifies that empty client ID fails because getClientId() handles
 // this condition and replaces it by no client ID.
+
+// Verifies behavior with two queries for the same client and multi-threading.
+TEST_F(ClientHandleTest, serializeTwoQueries) {
+    // Get two queries.
+    Pkt6Ptr sol(new Pkt6(DHCPV6_SOLICIT, 1234));
+    Pkt6Ptr req(new Pkt6(DHCPV6_REQUEST, 2345));
+    OptionPtr client_id = generateClientId();
+    // Same client ID: same client.
+    sol->addOption(client_id);
+    req->addOption(client_id);
+
+    // Start multi-threading.
+    EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(true, 1, 0));
+
+    try {
+        // Get a client handler.
+        ClientHandler client_handler;
+
+        // Create a continuation.
+        ClientHandler::ContinuationPtr cont1 =
+            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
+
+        // Try to lock it with the solicit.
+        bool duplicate = false;
+        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol, cont1));
+
+        // Should return false (no duplicate).
+        EXPECT_FALSE(duplicate);
+
+        // Get a second client handler.
+        ClientHandler client_handler2;
+
+        // Create a continuation.
+        ClientHandler::ContinuationPtr cont2 =
+            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
+
+        // Try to lock it with a request.
+        EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req, cont2));
+
+        // Should return false (multi-threading enforces serialization).
+        EXPECT_FALSE(duplicate);
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "unexpected exception: " << ex.what();
+    }
+
+    // Give the second continuation a chance.
+    waitForThreads();
+
+    // Force multi-threading to stop;
+    MultiThreadingCriticalSection cs;
+
+    checkStat(false);
+    EXPECT_FALSE(called1_);
+    EXPECT_TRUE(called2_);
+}
+
+// Verifies behavior with two queries for the same client and multi-threading.
+// Continuations are required for serialization.
+TEST_F(ClientHandleTest, serializeNoCont) {
+    // Get two queries.
+    Pkt6Ptr sol(new Pkt6(DHCPV6_SOLICIT, 1234));
+    Pkt6Ptr req(new Pkt6(DHCPV6_REQUEST, 2345));
+    OptionPtr client_id = generateClientId();
+    // Same client ID: same client.
+    sol->addOption(client_id);
+    req->addOption(client_id);
+
+    // Start multi-threading.
+    EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(true, 1, 0));
+
+    try {
+        // Get a client handler.
+        ClientHandler client_handler;
+
+        // Try to lock it with the solicit.
+        bool duplicate = false;
+        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol));
+
+        // Should return false (no duplicate).
+        EXPECT_FALSE(duplicate);
+
+        // Get a second client handler.
+        ClientHandler client_handler2;
+
+        // Try to lock it with a request.
+        EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req));
+
+        // Should return true (duplicate without continuation).
+        EXPECT_TRUE(duplicate);
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "unexpected exception: " << ex.what();
+    }
+
+    // Give the second continuation a chance even there is none...
+    waitForThreads();
+
+    // Force multi-threading to stop;
+    MultiThreadingCriticalSection cs;
+
+    checkStat(true);
+}
+
+// Verifies behavior with three queries for the same client and
+// multi-threading: currently we accept only two queries,
+// a third one replaces second so we get the first (oldest) query and
+// the last (newest) query when the client is busy.
+TEST_F(ClientHandleTest, serializeThreeQueries) {
+    // Get two queries.
+    Pkt6Ptr sol(new Pkt6(DHCPV6_SOLICIT, 1234));
+    Pkt6Ptr req(new Pkt6(DHCPV6_REQUEST, 2345));
+    Pkt6Ptr ren(new Pkt6(DHCPV6_RENEW, 3456));
+    OptionPtr client_id = generateClientId();
+    // Same client ID: same client.
+    sol->addOption(client_id);
+    req->addOption(client_id);
+    ren->addOption(client_id);
+
+    // Start multi-threading.
+    EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(true, 1, 0));
+
+    try {
+        // Get a client handler.
+        ClientHandler client_handler;
+
+        // Create a continuation.
+        ClientHandler::ContinuationPtr cont1 =
+            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
+
+        // Try to lock it with the solicit.
+        bool duplicate = false;
+        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol, cont1));
+
+        // Should return false (no duplicate).
+        EXPECT_FALSE(duplicate);
+
+        // Get a second client handler.
+        ClientHandler client_handler2;
+
+        // Create a continuation.
+        ClientHandler::ContinuationPtr cont2 =
+            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
+
+        // Try to lock it with a request.
+        EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req, cont2));
+
+        // Should return false (multi-threading enforces serialization).
+        EXPECT_FALSE(duplicate);
+
+        // Get a third client handler.
+        ClientHandler client_handler3;
+
+        // Create a continuation.
+        ClientHandler::ContinuationPtr cont3 =
+            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled3, this));
+
+        // Try to lock it with a renew.
+        EXPECT_NO_THROW(duplicate = client_handler3.tryLock(ren, cont3));
+
+        // Should return false (multi-threading enforces serialization).
+        EXPECT_FALSE(duplicate);
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "unexpected exception: " << ex.what();
+    }
+
+    // Give the second continuation a chance.
+    waitForThreads();
+
+    // Force multi-threading to stop;
+    MultiThreadingCriticalSection cs;
+
+    checkStat(true);
+    EXPECT_FALSE(called1_);
+    EXPECT_FALSE(called2_);
+    EXPECT_TRUE(called3_);
+}
 
 } // end of anonymous namespace

@@ -13,6 +13,7 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/shared_ptr.hpp>
+#include <functional>
 #include <mutex>
 #include <thread>
 
@@ -22,6 +23,19 @@ namespace dhcp {
 /// @brief Client race avoidance RAII handler.
 class ClientHandler : public boost::noncopyable {
 public:
+
+    /// @brief Define the type of packet processing continuation.
+    typedef std::function<void()> Continuation;
+
+    /// @brief Define the type of shared pointers to continuations.
+    typedef boost::shared_ptr<Continuation> ContinuationPtr;
+
+    /// @brief Continuation factory.
+    ///
+    /// @param cont Continuation rvalue.
+    static ContinuationPtr makeContinuation(Continuation&& cont) {
+        return (boost::make_shared<Continuation>(cont));
+    }
 
     /// @brief Constructor.
     ClientHandler();
@@ -33,10 +47,15 @@ public:
 
     /// @brief Tries to acquires a client.
     ///
+    /// Lookup the client:
+    ///  - if not found insert the client in the clients map and return true
+    ///  - if found put the continuation in the holder and return false
+    ///
     /// @param query The query from the client.
+    /// @param cont The continuation in the case the client was held.
     /// @return true if the client was acquired, false if there is already
     /// a query from the same client.
-    bool tryLock(Pkt6Ptr query);
+    bool tryLock(Pkt6Ptr query, ContinuationPtr cont = ContinuationPtr());
 
 private:
 
@@ -58,6 +77,12 @@ private:
 
         /// @brief The ID of the thread processing the query.
         std::thread::id thread_;
+
+        /// @brief The next query.
+        Pkt6Ptr next_query_;
+
+        /// @brief The continuation to process next query for the client.
+        ContinuationPtr cont_;
     };
 
     /// @brief The type of shared pointers to clients.
@@ -86,6 +111,9 @@ private:
     void lock();
 
     /// @brief Release a client.
+    ///
+    /// If the client has a continuation, push it at front of the thread
+    /// packet queue.
     ///
     /// The mutex must be held by the caller.
     void unLock();

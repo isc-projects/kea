@@ -205,7 +205,7 @@ private:
 };
 
 /// @brief test ThreadPool add and count
-TEST_F(ThreadPoolTest, testAddAndCount) {
+TEST_F(ThreadPoolTest, addAndCount) {
     uint32_t items_count;
     CallBack call_back;
     ThreadPool<CallBack> thread_pool;
@@ -237,7 +237,7 @@ TEST_F(ThreadPoolTest, testAddAndCount) {
 }
 
 /// @brief test ThreadPool start and stop
-TEST_F(ThreadPoolTest, testStartAndStop) {
+TEST_F(ThreadPoolTest, startAndStop) {
     uint32_t items_count;
     uint32_t thread_count;
     CallBack call_back;
@@ -455,7 +455,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 }
 
 /// @brief test ThreadPool max queue size
-TEST_F(ThreadPoolTest, testMaxQueueSize) {
+TEST_F(ThreadPoolTest, maxQueueSize) {
     uint32_t items_count;
     CallBack call_back;
     ThreadPool<CallBack> thread_pool;
@@ -489,6 +489,43 @@ TEST_F(ThreadPoolTest, testMaxQueueSize) {
     EXPECT_NO_THROW(ret = thread_pool.add(boost::make_shared<CallBack>(call_back)));
     EXPECT_FALSE(ret);
     EXPECT_EQ(thread_pool.count(), max_queue_size);
+}
+
+/// @brief test ThreadPool add front.
+TEST_F(ThreadPoolTest, addFront) {
+    uint32_t items_count;
+    CallBack call_back;
+    ThreadPool<CallBack> thread_pool;
+    // the item count should be 0
+    ASSERT_EQ(thread_pool.count(), 0);
+    // the thread count should be 0
+    ASSERT_EQ(thread_pool.size(), 0);
+
+    items_count = 20;
+
+    call_back = std::bind(&ThreadPoolTest::run, this);
+
+    // add items to stopped thread pool
+    bool ret = true;
+    for (uint32_t i = 0; i < items_count; ++i) {
+        EXPECT_NO_THROW(ret = thread_pool.addFront(boost::make_shared<CallBack>(call_back)));
+        EXPECT_TRUE(ret);
+    }
+
+    // the item count should match
+    ASSERT_EQ(thread_pool.count(), items_count);
+
+    // change the max count
+    ASSERT_EQ(thread_pool.getMaxQueueSize(), 0);
+    size_t max_queue_size = 10;
+    thread_pool.setMaxQueueSize(max_queue_size);
+    EXPECT_EQ(thread_pool.getMaxQueueSize(), max_queue_size);
+
+    // adding an item at front should change nothing queue
+    EXPECT_EQ(thread_pool.count(), items_count);
+    EXPECT_NO_THROW(ret = thread_pool.addFront(boost::make_shared<CallBack>(call_back)));
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(thread_pool.count(), items_count);
 }
 
 }  // namespace
