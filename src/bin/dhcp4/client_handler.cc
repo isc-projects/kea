@@ -10,8 +10,10 @@
 #include <dhcp4/dhcp4_log.h>
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
+#include <util/multi_threading_mgr.h>
 
 using namespace std;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -27,15 +29,34 @@ ClientHandler::ClientHandler()
 }
 
 ClientHandler::~ClientHandler() {
+    bool unlocked = false;
     lock_guard<mutex> lock_(mutex_);
     if (locked_client_id_) {
+        unlocked = true;
         unLockById();
     }
     locked_client_id_.reset();
     if (locked_hwaddr_) {
+        unlocked = true;
         unLockByHWAddr();
     }
     locked_hwaddr_.reset();
+    if (!client_) {
+        return;
+    }
+    if (!unlocked || !client_->cont_) {
+        client_.reset();
+        return;
+    }
+    // Try to process next query. As the caller holds the mutex of
+    // the handler class the continuation will be resumed after.
+    MultiThreadingMgr& mt_mgr = MultiThreadingMgr::instance();
+    if (mt_mgr.getMode()) {
+        if (!mt_mgr.getThreadPool().addFront(client_->cont_)) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_QUEUE_FULL);
+        }
+    }
+    client_->cont_.reset();
     client_.reset();
 }
 
@@ -128,7 +149,7 @@ ClientHandler::unLockByHWAddr() {
 }
 
 bool
-ClientHandler::tryLock(Pkt4Ptr query) {
+ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
     // Sanity checks.
     if (!query) {
         isc_throw(InvalidParameter, "null query in ClientHandler::tryLock");
@@ -159,6 +180,7 @@ ClientHandler::tryLock(Pkt4Ptr query) {
 
     ClientPtr holder_id;
     ClientPtr holder_hw;
+    client_.reset(new Client(query, duid, hwaddr));
 
     // Try first duid.
     if (duid) {
@@ -168,7 +190,6 @@ ClientHandler::tryLock(Pkt4Ptr query) {
         holder_id = lookup(duid);
         if (!holder_id) {
             locked_client_id_ = duid;
-            client_.reset(new Client(query, duid, hwaddr));
             lockById();
         }
     }
@@ -182,15 +203,30 @@ ClientHandler::tryLock(Pkt4Ptr query) {
         holder_hw = lookup(hwaddr);
         if (!holder_hw) {
             locked_hwaddr_ = hwaddr;
-            client_.reset(new Client(query, duid, hwaddr));
             lockByHWAddr();
             return (false);
         }
     }
 
     if (holder_id) {
-        // This query is a by-client-id-option duplicate:
-        // currently it is simply dropped.
+        // This query is a by-id duplicate so put the continuation.
+        if (cont) {
+            Pkt4Ptr next_query = holder_id->next_query_;
+            holder_id->next_query_ = query;
+            holder_id->cont_ = cont;
+            if (next_query) {
+                // Logging a warning as it is supposed to be a rare event
+                // with well behaving clients...
+                LOG_WARN(bad_packet4_logger, DHCP4_PACKET_DROP_0011)
+                    .arg(next_query->toText())
+                    .arg(this_thread::get_id())
+                    .arg(query->toText())
+                    .arg(this_thread::get_id());
+                stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                     static_cast<int64_t>(1));
+            }
+            return (false);
+        }
         // Logging a warning as it is supposed to be a rare event
         // with well behaving clients...
         LOG_WARN(bad_packet4_logger, DHCP4_PACKET_DROP_0011)
@@ -198,9 +234,27 @@ ClientHandler::tryLock(Pkt4Ptr query) {
             .arg(this_thread::get_id())
             .arg(holder_id->query_->toText())
             .arg(holder_id->thread_);
+        stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                             static_cast<int64_t>(1));
     } else {
-        // This query is a by-hardware address duplicate:
-        // currently it is simply dropped.
+        // This query is a by-hw duplicate so put the continuation.
+        if (cont) {
+            Pkt4Ptr next_query = holder_hw->next_query_;
+            holder_hw->next_query_ = query;
+            holder_hw->cont_ = cont;
+            if (next_query) {
+                // Logging a warning as it is supposed to be a rare event
+                // with well behaving clients...
+                LOG_WARN(bad_packet4_logger, DHCP4_PACKET_DROP_0012)
+                    .arg(next_query->toText())
+                    .arg(this_thread::get_id())
+                    .arg(query->toText())
+                    .arg(this_thread::get_id());
+                stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                     static_cast<int64_t>(1));
+            }
+            return (false);
+        }
         // Logging a warning as it is supposed to be a rare event
         // with well behaving clients...
         LOG_WARN(bad_packet4_logger, DHCP4_PACKET_DROP_0012)
@@ -208,9 +262,9 @@ ClientHandler::tryLock(Pkt4Ptr query) {
             .arg(this_thread::get_id())
             .arg(holder_hw->query_->toText())
             .arg(holder_hw->thread_);
+        stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                             static_cast<int64_t>(1));
     }
-    stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                         static_cast<int64_t>(1));
     return (true);
 }
 

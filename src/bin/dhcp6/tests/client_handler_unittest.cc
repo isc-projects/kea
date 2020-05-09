@@ -98,7 +98,6 @@ public:
 
     /// @brief The called flag number 3.
     bool called3_;
-
 };
 
 // Verifies behavior with empty block.
