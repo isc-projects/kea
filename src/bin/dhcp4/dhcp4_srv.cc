@@ -1224,20 +1224,6 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         return;
     }
 
-    // Create a client race avoidance RAII handler.
-    ClientHandler client_handler;
-
-    // Check for lease modifier queries from the same client being processed.
-    if (MultiThreadingMgr::instance().getMode() &&
-        ((query->getType() == DHCPDISCOVER) ||
-         (query->getType() == DHCPREQUEST) ||
-         (query->getType() == DHCPRELEASE) ||
-         (query->getType() == DHCPDECLINE))) {
-        if (client_handler.tryLock(query)) {
-            return;
-        }
-    }
-
     processDhcp4Query(query, rsp, allow_packet_park);
 }
 
@@ -1263,6 +1249,23 @@ Dhcpv4Srv::processDhcp4QueryAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp,
 void
 Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                              bool allow_packet_park) {
+    // Create a client race avoidance RAII handler.
+    ClientHandler client_handler;
+
+    // Check for lease modifier queries from the same client being processed.
+    if (MultiThreadingMgr::instance().getMode() &&
+        ((query->getType() == DHCPDISCOVER) ||
+         (query->getType() == DHCPREQUEST) ||
+         (query->getType() == DHCPRELEASE) ||
+         (query->getType() == DHCPDECLINE))) {
+        ContinuationPtr cont =
+            makeContinuation(std::bind(&Dhcpv4Srv::processDhcp4QueryAndSendResponse,
+                                       this, query, rsp, allow_packet_park));
+        if (client_handler.tryLock(query, cont)) {
+            return;
+        }
+    }
+
     AllocEngine::ClientContext4Ptr ctx;
 
     try {

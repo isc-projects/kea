@@ -20,22 +20,22 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Define the type of packet processing continuation.
+typedef std::function<void()> Continuation;
+
+/// @brief Define the type of shared pointers to continuations.
+typedef boost::shared_ptr<Continuation> ContinuationPtr;
+
+/// @brief Continuation factory.
+///
+/// @param cont Continuation rvalue.
+inline ContinuationPtr makeContinuation(Continuation&& cont) {
+    return (boost::make_shared<Continuation>(cont));
+}
+
 /// @brief Client race avoidance RAII handler.
 class ClientHandler : public boost::noncopyable {
 public:
-
-    /// @brief Define the type of packet processing continuation.
-    typedef std::function<void()> Continuation;
-
-    /// @brief Define the type of shared pointers to continuations.
-    typedef boost::shared_ptr<Continuation> ContinuationPtr;
-
-    /// @brief Continuation factory.
-    ///
-    /// @param cont Continuation rvalue.
-    static ContinuationPtr makeContinuation(Continuation&& cont) {
-        return (boost::make_shared<Continuation>(cont));
-    }
 
     /// @brief Constructor.
     ClientHandler();

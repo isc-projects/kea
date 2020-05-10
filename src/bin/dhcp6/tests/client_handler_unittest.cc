@@ -337,8 +337,8 @@ TEST_F(ClientHandleTest, serializeTwoQueries) {
         ClientHandler client_handler;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont1 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
+        ContinuationPtr cont1 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
 
         // Try to lock it with the solicit.
         bool duplicate = false;
@@ -351,8 +351,8 @@ TEST_F(ClientHandleTest, serializeTwoQueries) {
         ClientHandler client_handler2;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont2 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
+        ContinuationPtr cont2 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
 
         // Try to lock it with a request.
         EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req, cont2));
@@ -443,8 +443,8 @@ TEST_F(ClientHandleTest, serializeThreeQueries) {
         ClientHandler client_handler;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont1 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
+        ContinuationPtr cont1 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
 
         // Try to lock it with the solicit.
         bool duplicate = false;
@@ -457,8 +457,8 @@ TEST_F(ClientHandleTest, serializeThreeQueries) {
         ClientHandler client_handler2;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont2 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
+        ContinuationPtr cont2 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
 
         // Try to lock it with a request.
         EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req, cont2));
@@ -470,8 +470,8 @@ TEST_F(ClientHandleTest, serializeThreeQueries) {
         ClientHandler client_handler3;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont3 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled3, this));
+        ContinuationPtr cont3 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled3, this));
 
         // Try to lock it with a renew.
         EXPECT_NO_THROW(duplicate = client_handler3.tryLock(ren, cont3));

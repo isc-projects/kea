@@ -463,8 +463,8 @@ TEST_F(ClientHandleTest, serializeTwoQueriesById) {
         ClientHandler client_handler;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont1 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
+        ContinuationPtr cont1 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
 
         // Try to lock it with the discover.
         bool duplicate = false;
@@ -477,8 +477,8 @@ TEST_F(ClientHandleTest, serializeTwoQueriesById) {
         ClientHandler client_handler2;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont2 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
+        ContinuationPtr cont2 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
 
         // Try to lock it with a request.
         EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req, cont2));
@@ -521,8 +521,8 @@ TEST_F(ClientHandleTest, serializeTwoQueriesByHWAddr) {
         ClientHandler client_handler;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont1 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
+        ContinuationPtr cont1 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
 
         // Try to lock it with the discover.
         bool duplicate = false;
@@ -535,8 +535,8 @@ TEST_F(ClientHandleTest, serializeTwoQueriesByHWAddr) {
         ClientHandler client_handler2;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont2 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
+        ContinuationPtr cont2 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
 
         // Try to lock it with a request.
         EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req, cont2));
@@ -681,8 +681,8 @@ TEST_F(ClientHandleTest, serializeThreeQueriesById) {
         ClientHandler client_handler;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont1 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
+        ContinuationPtr cont1 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
 
         // Try to lock it with the discover.
         bool duplicate = false;
@@ -695,8 +695,8 @@ TEST_F(ClientHandleTest, serializeThreeQueriesById) {
         ClientHandler client_handler2;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont2 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
+        ContinuationPtr cont2 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
 
         // Try to lock it with a request.
         EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req, cont2));
@@ -708,8 +708,8 @@ TEST_F(ClientHandleTest, serializeThreeQueriesById) {
         ClientHandler client_handler3;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont3 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled3, this));
+        ContinuationPtr cont3 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled3, this));
 
         // Try to lock it with a release.
         EXPECT_NO_THROW(duplicate = client_handler3.tryLock(rel, cont3));
@@ -759,8 +759,8 @@ TEST_F(ClientHandleTest, serializeThreeQueriesHWAddr) {
         ClientHandler client_handler;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont1 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
+        ContinuationPtr cont1 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
 
         // Try to lock it with the discover.
         bool duplicate = false;
@@ -773,8 +773,8 @@ TEST_F(ClientHandleTest, serializeThreeQueriesHWAddr) {
         ClientHandler client_handler2;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont2 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
+        ContinuationPtr cont2 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
 
         // Try to lock it with a request.
         EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req, cont2));
@@ -786,8 +786,8 @@ TEST_F(ClientHandleTest, serializeThreeQueriesHWAddr) {
         ClientHandler client_handler3;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont3 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled3, this));
+        ContinuationPtr cont3 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled3, this));
 
         // Try to lock it with a release.
         EXPECT_NO_THROW(duplicate = client_handler3.tryLock(rel, cont3));
@@ -841,8 +841,8 @@ TEST_F(ClientHandleTest, serializeThreeQueriesMixed) {
         ClientHandler client_handler;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont1 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
+        ContinuationPtr cont1 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled1, this));
 
         // Try to lock it with the discover.
         bool duplicate = false;
@@ -855,8 +855,8 @@ TEST_F(ClientHandleTest, serializeThreeQueriesMixed) {
         ClientHandler client_handler2;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont2 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
+        ContinuationPtr cont2 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
 
         // Try to lock it with a request.
         EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req, cont2));
@@ -868,8 +868,8 @@ TEST_F(ClientHandleTest, serializeThreeQueriesMixed) {
         ClientHandler client_handler3;
 
         // Create a continuation.
-        ClientHandler::ContinuationPtr cont3 =
-            ClientHandler::makeContinuation(std::bind(&ClientHandleTest::setCalled3, this));
+        ContinuationPtr cont3 =
+            makeContinuation(std::bind(&ClientHandleTest::setCalled3, this));
 
         // Try to lock it with a release.
         EXPECT_NO_THROW(duplicate = client_handler3.tryLock(rel, cont3));
