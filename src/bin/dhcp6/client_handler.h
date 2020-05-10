@@ -48,12 +48,14 @@ public:
     /// @brief Tries to acquires a client.
     ///
     /// Lookup the client:
-    ///  - if not found insert the client in the clients map and return true
-    ///  - if found put the continuation in the holder and return false
+    ///  - if not found insert the client in the clients map and return false
+    ///  - if found and has a continuation put the continuation in the holder
+    ///    and return false
+    ///  - if found and has no continuation return true
     ///
     /// @param query The query from the client.
     /// @param cont The continuation in the case the client was held.
-    /// @return true if the client was acquired, false if there is already
+    /// @return false if the client was acquired, true if there is already
     /// a query from the same client.
     bool tryLock(Pkt6Ptr query, ContinuationPtr cont = ContinuationPtr());
 

@@ -141,6 +141,7 @@ libkea_dhcpsrv_la_SOURCES += cql_lease_mgr.cc cql_lease_mgr.h
 endif
 
 libkea_dhcpsrv_la_SOURCES += pool.cc pool.h
+libkea_dhcpsrv_la_SOURCES += resource_handler.cc resource_handler.h
 libkea_dhcpsrv_la_SOURCES += sanity_checker.cc sanity_checker.h
 libkea_dhcpsrv_la_SOURCES += shared_network.cc shared_network.h
 libkea_dhcpsrv_la_SOURCES += srv_config.cc srv_config.h
@@ -357,6 +358,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	network.h \
 	network_state.h \
 	pool.h \
+	resource_handler.h \
 	sanity_checker.h \
 	shared_network.h \
 	srv_config.h \

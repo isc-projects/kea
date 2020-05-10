@@ -2589,7 +2589,7 @@ MySqlHostDataSource::MySqlHostContextAlloc::MySqlHostContextAlloc(
     } else {
         // single-threaded
         if (mgr_.pool_->pool_.empty()) {
-            isc_throw(Unexpected, "No available MySQL lease context?!");
+            isc_throw(Unexpected, "No available MySQL host context?!");
         }
         ctx_ = mgr_.pool_->pool_.back();
     }

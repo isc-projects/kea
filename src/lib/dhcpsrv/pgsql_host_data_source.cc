@@ -2016,7 +2016,7 @@ PgSqlHostDataSource::PgSqlHostContextAlloc::PgSqlHostContextAlloc(
     } else {
         // single-threaded
         if (mgr_.pool_->pool_.empty()) {
-            isc_throw(Unexpected, "No available PostgreSQL lease context?!");
+            isc_throw(Unexpected, "No available PostgreSQL host context?!");
         }
         ctx_ = mgr_.pool_->pool_.back();
     }
