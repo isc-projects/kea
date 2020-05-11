@@ -1261,7 +1261,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
         ContinuationPtr cont =
             makeContinuation(std::bind(&Dhcpv4Srv::processDhcp4QueryAndSendResponse,
                                        this, query, rsp, allow_packet_park));
-        if (client_handler.tryLock(query, cont)) {
+        if (!client_handler.tryLock(query, cont)) {
             return;
         }
     }

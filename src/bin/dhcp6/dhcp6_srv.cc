@@ -854,7 +854,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         ContinuationPtr cont =
             makeContinuation(std::bind(&Dhcpv6Srv::processDhcp6QueryAndSendResponse,
                                        this, query, rsp));
-        drop = client_handler.tryLock(query, cont);
+        drop = !client_handler.tryLock(query, cont);
     }
 
     // Stop here if ClientHandler tryLock decided the packet is a duplicate.

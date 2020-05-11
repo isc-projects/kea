@@ -123,7 +123,7 @@ TEST_F(ClientHandleTest, oneQuery) {
 
         // Try to lock it.
         bool duplicate = false;
-        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol));
+        EXPECT_NO_THROW(duplicate = !client_handler.tryLock(sol));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -149,7 +149,7 @@ TEST_F(ClientHandleTest, sharedQueries) {
 
         // Try to lock it with the solicit.
         bool duplicate = false;
-        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol));
+        EXPECT_NO_THROW(duplicate = !client_handler.tryLock(sol));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -158,7 +158,7 @@ TEST_F(ClientHandleTest, sharedQueries) {
         ClientHandler client_handler2;
 
         // Try to lock it with a request.
-        EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req));
+        EXPECT_NO_THROW(duplicate = !client_handler2.tryLock(req));
 
         // Should return true (race with the duplicate).
         EXPECT_TRUE(duplicate);
@@ -184,7 +184,7 @@ TEST_F(ClientHandleTest, sequence) {
 
         // Try to lock it with the solicit.
         bool duplicate = false;
-        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol));
+        EXPECT_NO_THROW(duplicate = !client_handler.tryLock(sol));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -200,7 +200,7 @@ TEST_F(ClientHandleTest, sequence) {
 
         // Try to lock it with a request.
         bool duplicate = false;
-        EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req));
+        EXPECT_NO_THROW(duplicate = !client_handler2.tryLock(req));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -227,7 +227,7 @@ TEST_F(ClientHandleTest, notSharedQueries) {
 
         // Try to lock it with the solicit.
         bool duplicate = false;
-        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol));
+        EXPECT_NO_THROW(duplicate = !client_handler.tryLock(sol));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -236,7 +236,7 @@ TEST_F(ClientHandleTest, notSharedQueries) {
         ClientHandler client_handler2;
 
         // Try to lock it with a request.
-        EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req));
+        EXPECT_NO_THROW(duplicate = !client_handler2.tryLock(req));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -259,7 +259,7 @@ TEST_F(ClientHandleTest, noClientId) {
 
         // Try to lock it with the solicit.
         bool duplicate = false;
-        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol));
+        EXPECT_NO_THROW(duplicate = !client_handler.tryLock(sol));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -268,7 +268,7 @@ TEST_F(ClientHandleTest, noClientId) {
         ClientHandler client_handler2;
 
         // Try to lock it with a request.
-        EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req));
+        EXPECT_NO_THROW(duplicate = !client_handler2.tryLock(req));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -304,7 +304,7 @@ TEST_F(ClientHandleTest, doubleTryLock) {
 
         // Try to lock it.
         bool duplicate = false;
-        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol));
+        EXPECT_NO_THROW(duplicate = !client_handler.tryLock(sol));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -342,7 +342,7 @@ TEST_F(ClientHandleTest, serializeTwoQueries) {
 
         // Try to lock it with the solicit.
         bool duplicate = false;
-        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol, cont1));
+        EXPECT_NO_THROW(duplicate = !client_handler.tryLock(sol, cont1));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -355,10 +355,10 @@ TEST_F(ClientHandleTest, serializeTwoQueries) {
             makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
 
         // Try to lock it with a request.
-        EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req, cont2));
+        EXPECT_NO_THROW(duplicate = !client_handler2.tryLock(req, cont2));
 
-        // Should return false (multi-threading enforces serialization).
-        EXPECT_FALSE(duplicate);
+        // Should return true (race with the duplicate).
+        EXPECT_TRUE(duplicate);
     } catch (const std::exception& ex) {
         ADD_FAILURE() << "unexpected exception: " << ex.what();
     }
@@ -394,7 +394,7 @@ TEST_F(ClientHandleTest, serializeNoCont) {
 
         // Try to lock it with the solicit.
         bool duplicate = false;
-        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol));
+        EXPECT_NO_THROW(duplicate = !client_handler.tryLock(sol));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -403,9 +403,9 @@ TEST_F(ClientHandleTest, serializeNoCont) {
         ClientHandler client_handler2;
 
         // Try to lock it with a request.
-        EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req));
+        EXPECT_NO_THROW(duplicate = !client_handler2.tryLock(req));
 
-        // Should return true (duplicate without continuation).
+        // Should return true (race with the duplicate).
         EXPECT_TRUE(duplicate);
     } catch (const std::exception& ex) {
         ADD_FAILURE() << "unexpected exception: " << ex.what();
@@ -448,7 +448,7 @@ TEST_F(ClientHandleTest, serializeThreeQueries) {
 
         // Try to lock it with the solicit.
         bool duplicate = false;
-        EXPECT_NO_THROW(duplicate = client_handler.tryLock(sol, cont1));
+        EXPECT_NO_THROW(duplicate = !client_handler.tryLock(sol, cont1));
 
         // Should return false (no duplicate).
         EXPECT_FALSE(duplicate);
@@ -461,10 +461,10 @@ TEST_F(ClientHandleTest, serializeThreeQueries) {
             makeContinuation(std::bind(&ClientHandleTest::setCalled2, this));
 
         // Try to lock it with a request.
-        EXPECT_NO_THROW(duplicate = client_handler2.tryLock(req, cont2));
+        EXPECT_NO_THROW(duplicate = !client_handler2.tryLock(req, cont2));
 
-        // Should return false (multi-threading enforces serialization).
-        EXPECT_FALSE(duplicate);
+        // Should return true (race with the duplicate).
+        EXPECT_TRUE(duplicate);
 
         // Get a third client handler.
         ClientHandler client_handler3;
@@ -474,10 +474,10 @@ TEST_F(ClientHandleTest, serializeThreeQueries) {
             makeContinuation(std::bind(&ClientHandleTest::setCalled3, this));
 
         // Try to lock it with a renew.
-        EXPECT_NO_THROW(duplicate = client_handler3.tryLock(ren, cont3));
+        EXPECT_NO_THROW(duplicate = !client_handler3.tryLock(ren, cont3));
 
-        // Should return false (multi-threading enforces serialization).
-        EXPECT_FALSE(duplicate);
+        // Should return true (race with the duplicate).
+        EXPECT_TRUE(duplicate);
     } catch (const std::exception& ex) {
         ADD_FAILURE() << "unexpected exception: " << ex.what();
     }

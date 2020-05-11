@@ -175,7 +175,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
     }
     if (!duid && !hwaddr) {
         // Can't do something useful: cross fingers.
-        return (false);
+        return (true);
     }
 
     ClientPtr holder_id;
@@ -195,7 +195,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
     }
     if (!holder_id) {
         if (!hwaddr) {
-            return (false);
+            return (true);
         }
         // Try to acquire the by-hw-addr lock and return the holder
         // when it failed.
@@ -204,7 +204,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
         if (!holder_hw) {
             locked_hwaddr_ = hwaddr;
             lockByHWAddr();
-            return (false);
+            return (true);
         }
     }
 
@@ -265,7 +265,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
         stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                              static_cast<int64_t>(1));
     }
-    return (true);
+    return (false);
 }
 
 }  // namespace dhcp

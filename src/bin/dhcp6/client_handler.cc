@@ -98,7 +98,7 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
     const DuidPtr& duid = query->getClientId();
     if (!duid) {
         // Can't do something useful: cross fingers.
-        return (false);
+        return (true);
     }
     if (duid->getDuid().empty()) {
         // A lot of code assumes this will never happen...
@@ -113,7 +113,7 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
             locked_ = duid;
             client_.reset(new Client(query, duid));
             lock();
-            return (false);
+            return (true);
         }
     }
     // This query can be a duplicate so put the continuation.
@@ -144,7 +144,7 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
         .arg(holder->thread_);
     stats::StatsMgr::instance().addValue("pkt6-receive-drop",
                                          static_cast<int64_t>(1));
-    return (true);
+    return (false);
 }
 
 }  // namespace dhcp
