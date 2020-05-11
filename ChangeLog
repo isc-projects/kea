@@ -1,3 +1,11 @@
+1748.	[func]		marcin
+	Added two extensions to the HA hooks library. Firstly, the active
+	servers no longer wait for the lease update acknowledgments from
+	the backup servers. Secondly, the new passive-backup mode allows
+	for running a single active server with a number of backup
+	servers.
+	(Gitlab #999)
+
 1747.	[bug]		fdupont
 	Multi-threading and congestion handling were made incompatible:
 	when both are enabled by a configuration the dhcp-queue-control is
