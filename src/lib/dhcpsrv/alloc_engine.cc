@@ -866,10 +866,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
-    while (subnet) {
+    for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
 
         if (!subnet->clientSupported(ctx.query_->getClasses())) {
-            subnet = subnet->getNextSubnet(original_subnet);
             continue;
         }
 
@@ -882,92 +881,84 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                              hint));
 
         // check if the pool is allowed
-        if (pool && !pool->clientSupported(ctx.query_->getClasses())) {
-            pool.reset();
+        if (!pool || !pool->clientSupported(ctx.query_->getClasses())) {
+            continue;
         }
 
-        if (pool) {
+        // Check which host reservation mode is supported in this subnet.
+        Network::HRMode hr_mode = subnet->getHostReservationMode();
 
-            // Check which host reservation mode is supported in this subnet.
-            Network::HRMode hr_mode = subnet->getHostReservationMode();
+        /// @todo: We support only one hint for now
+        Lease6Ptr lease =
+            LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, hint);
+        if (!lease) {
 
-            /// @todo: We support only one hint for now
-            Lease6Ptr lease =
-                LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, hint);
-            if (!lease) {
+            // In-pool reservations: Check if this address is reserved for someone
+            // else. There is no need to check for whom it is reserved, because if
+            // it has been reserved for us we would have already allocated a lease.
 
-                // In-pool reservations: Check if this address is reserved for someone
-                // else. There is no need to check for whom it is reserved, because if
-                // it has been reserved for us we would have already allocated a lease.
+            ConstHostPtr host;
+            if (hr_mode != Network::HR_DISABLED) {
+                host = HostMgr::instance().get6(subnet->getID(), hint);
+            }
 
-                ConstHostPtr host;
-                if (hr_mode != Network::HR_DISABLED) {
-                    host = HostMgr::instance().get6(subnet->getID(), hint);
+            if (!host) {
+                // If the in-pool reservations are disabled, or there is no
+                // reservation for a given hint, we're good to go.
+
+                // The hint is valid and not currently used, let's create a
+                // lease for it
+                lease = createLease6(ctx, hint, pool->getLength(), callout_status);
+
+                // It can happen that the lease allocation failed (we could
+                // have lost the race condition. That means that the hint is
+                // no longer usable and we need to continue the regular
+                // allocation path.
+                if (lease) {
+
+                    /// @todo: We support only one lease per ia for now
+                    Lease6Collection collection;
+                    collection.push_back(lease);
+                    return (collection);
                 }
+            } else {
+                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                          ALLOC_ENGINE_V6_HINT_RESERVED)
+                    .arg(ctx.query_->getLabel())
+                    .arg(hint.toText());
+            }
 
-                if (!host) {
-                    // If the in-pool reservations are disabled, or there is no
-                    // reservation for a given hint, we're good to go.
+        } else if (lease->expired()) {
 
-                    // The hint is valid and not currently used, let's create a
-                    // lease for it
-                    lease = createLease6(ctx, hint, pool->getLength(), callout_status);
+            // If the lease is expired, we may likely reuse it, but...
+            ConstHostPtr host;
+            if (hr_mode != Network::HR_DISABLED) {
+                host = HostMgr::instance().get6(subnet->getID(), hint);
+            }
 
-                    // It can happen that the lease allocation failed (we could
-                    // have lost the race condition. That means that the hint is
-                    // no longer usable and we need to continue the regular
-                    // allocation path.
-                    if (lease) {
+            // Let's check if there is a reservation for this address.
+            if (!host) {
 
-                        /// @todo: We support only one lease per ia for now
-                        Lease6Collection collection;
-                        collection.push_back(lease);
-                        return (collection);
-                    }
-                } else {
-                    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                              ALLOC_ENGINE_V6_HINT_RESERVED)
-                        .arg(ctx.query_->getLabel())
-                        .arg(hint.toText());
-                }
+                // Copy an existing, expired lease so as it can be returned
+                // to the caller.
+                Lease6Ptr old_lease(new Lease6(*lease));
+                ctx.currentIA().old_leases_.push_back(old_lease);
+
+                /// We found a lease and it is expired, so we can reuse it
+                lease = reuseExpiredLease(lease, ctx, pool->getLength(),
+                                          callout_status);
+
+                /// @todo: We support only one lease per ia for now
+                leases.push_back(lease);
+                return (leases);
 
             } else {
-
-                // If the lease is expired, we may likely reuse it, but...
-                if (lease->expired()) {
-
-                    ConstHostPtr host;
-                    if (hr_mode != Network::HR_DISABLED) {
-                        host = HostMgr::instance().get6(subnet->getID(), hint);
-                    }
-
-                    // Let's check if there is a reservation for this address.
-                    if (!host) {
-
-                        // Copy an existing, expired lease so as it can be returned
-                        // to the caller.
-                        Lease6Ptr old_lease(new Lease6(*lease));
-                        ctx.currentIA().old_leases_.push_back(old_lease);
-
-                        /// We found a lease and it is expired, so we can reuse it
-                        lease = reuseExpiredLease(lease, ctx, pool->getLength(),
-                                                  callout_status);
-
-                        /// @todo: We support only one lease per ia for now
-                        leases.push_back(lease);
-                        return (leases);
-
-                    } else {
-                        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                                  ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED)
-                            .arg(ctx.query_->getLabel())
-                            .arg(hint.toText());
-                    }
-                }
+                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                          ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED)
+                    .arg(ctx.query_->getLabel())
+                    .arg(hint.toText());
             }
         }
-
-        subnet = subnet->getNextSubnet(original_subnet);
     }
 
     uint64_t total_attempts = 0;
@@ -994,10 +985,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     ctx.subnet_ = subnet = original_subnet;
 
-    while (subnet) {
+    for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
 
         if (!subnet->clientSupported(ctx.query_->getClasses())) {
-            subnet = subnet->getNextSubnet(original_subnet);
             continue;
         }
 
@@ -1012,7 +1002,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                                     ctx.query_->getClasses());
         // Try next subnet if there is no chance to get something
         if (possible_attempts == 0) {
-            subnet = subnet->getNextSubnet(original_subnet);
             continue;
         }
         uint64_t max_attempts = (attempts_ > 0 ? attempts_  : possible_attempts);
@@ -1084,31 +1073,27 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 // Although the address was free just microseconds ago, it may have
                 // been taken just now. If the lease insertion fails, we continue
                 // allocation attempts.
-            } else {
-                if (existing->expired()) {
-                    // Make sure it's not reserved.
-                    if (hr_mode == Network::HR_ALL &&
-                        HostMgr::instance().get6(subnet->getID(), candidate)) {
-                        // Don't allocate.
-                        continue;
-                    }
-
-                    // Copy an existing, expired lease so as it can be returned
-                    // to the caller.
-                    Lease6Ptr old_lease(new Lease6(*existing));
-                    ctx.currentIA().old_leases_.push_back(old_lease);
-
-                    ctx.subnet_ = subnet;
-                    existing = reuseExpiredLease(existing, ctx, prefix_len,
-                                                 callout_status);
-
-                    leases.push_back(existing);
-                    return (leases);
+            } else if (existing->expired()) {
+                // Make sure it's not reserved.
+                if (hr_mode == Network::HR_ALL &&
+                    HostMgr::instance().get6(subnet->getID(), candidate)) {
+                    // Don't allocate.
+                    continue;
                 }
+
+                // Copy an existing, expired lease so as it can be returned
+                // to the caller.
+                Lease6Ptr old_lease(new Lease6(*existing));
+                ctx.currentIA().old_leases_.push_back(old_lease);
+
+                ctx.subnet_ = subnet;
+                existing = reuseExpiredLease(existing, ctx, prefix_len,
+                                             callout_status);
+
+                leases.push_back(existing);
+                return (leases);
             }
         }
-
-        subnet = subnet->getNextSubnet(original_subnet);
     }
 
     // Unable to allocate an address, return an empty lease.
@@ -1201,16 +1186,14 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
     // There is no lease for a reservation in this IA. So, let's now iterate
     // over reservations specified and try to allocate one of them for the IA.
 
-    Subnet6Ptr subnet = ctx.subnet_;
-
-    while (subnet) {
+    for (Subnet6Ptr subnet = ctx.subnet_; subnet;
+         subnet = subnet->getNextSubnet(ctx.subnet_)) {
 
         SubnetID subnet_id = subnet->getID();
 
         // No hosts for this subnet or the subnet not supported.
         if (!subnet->clientSupported(ctx.query_->getClasses()) ||
             ctx.hosts_.count(subnet_id) == 0) {
-            subnet = subnet->getNextSubnet(ctx.subnet_);
             continue;
         }
 
@@ -1232,7 +1215,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
             // If there's a lease for this address, let's not create it.
             // It doesn't matter whether it is for this client or for someone else.
             if (!LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
-                                                   addr)) {
+                                                       addr)) {
 
                 // Let's remember the subnet from which the reserved address has been
                 // allocated. We'll use this subnet for allocating other reserved
@@ -1289,10 +1272,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                 // would work for any number of reservations.
                 return;
             }
-
         }
-
-        subnet = subnet->getNextSubnet(ctx.subnet_);
     }
 }
 
@@ -4018,6 +3998,9 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
         for (uint64_t i = 0; i < max_attempts; ++i) {
+
+            ++total_attempts;
+
             IOAddress candidate = allocator->pickAddress(subnet,
                                                          ctx.query_->getClasses(),
                                                          client_id,
@@ -4048,8 +4031,6 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
                subnet.reset();
                break;
             }
-
-            ++total_attempts;
         }
 
         // This pointer may be set to NULL if hooks set SKIP status.
