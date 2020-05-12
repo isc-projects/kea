@@ -39,18 +39,22 @@ import xml.etree.ElementTree as ET
 
 
 SYSTEMS = {
-    'fedora': [#'27',  # EOLed
-               #'28',  # EOLed
-               #'29',  # EOLed
-               '30',
-               '31'],
+    'fedora': [
+        #'27',  # EOLed
+        #'28',  # EOLed
+        #'29',  # EOLed
+        '30',   # EOLed
+        '31',
+        '32'],
     'centos': ['7', '8'],
     'rhel': ['8'],
-    'ubuntu': [#'16.04',
-               '18.04',
-               #'18.10',  # EOLed
-               '19.04',  # EOLed
-               '19.10'],
+    'ubuntu': [
+        #'16.04',
+        '18.04',
+        #'18.10',  # EOLed
+        #'19.04',  # EOLed
+        '19.10',
+        '20.04'],
     'debian': [#'8',
                '9',
                '10'],
@@ -71,6 +75,7 @@ IMAGE_TEMPLATES = {
     'fedora-30-virtualbox':    {'bare': 'generic/fedora30',            'kea': 'godfryd/kea-fedora-30'},
     'fedora-31-lxc':           {'bare': 'isc/lxc-fedora-31',           'kea': 'isc/kea-fedora-31'},
     'fedora-31-virtualbox':    {'bare': 'isc/vbox-fedora-31',          'kea': 'isc/kea-fedora-31'},
+    'fedora-32-lxc':           {'bare': 'isc/lxc-fedora-32',           'kea': 'isc/kea-fedora-32'},
     'centos-7-lxc':            {'bare': 'godfryd/lxc-centos-7',        'kea': 'godfryd/kea-centos-7'},
     'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
     'centos-8-lxc':            {'bare': 'isc/lxc-centos-8',            'kea': 'isc/kea-centos-8'},
@@ -86,6 +91,7 @@ IMAGE_TEMPLATES = {
     'ubuntu-19.04-virtualbox': {'bare': 'ubuntu/disco64',              'kea': 'godfryd/kea-ubuntu-19.04'},
     'ubuntu-19.10-lxc':        {'bare': 'isc/lxc-ubuntu-19.10',        'kea': 'isc/kea-ubuntu-19.10'},
     'ubuntu-19.10-virtualbox': {'bare': 'generic/ubuntu1910',          'kea': 'isc/kea-ubuntu-19.10'},
+    'ubuntu-20.04-lxc':        {'bare': 'isc/lxc-ubuntu-20.04',        'kea': 'isc/kea-ubuntu-20.04'},
     'debian-8-lxc':            {'bare': 'godfryd/lxc-debian-8',        'kea': 'godfryd/kea-debian-8'},
     'debian-8-virtualbox':     {'bare': 'debian/jessie64',             'kea': 'godfryd/kea-debian-8'},
     'debian-9-lxc':            {'bare': 'godfryd/lxc-debian-9',        'kea': 'godfryd/kea-debian-9'},
@@ -171,15 +177,17 @@ def get_system_revision():
     """Return tuple containing system name and its revision."""
     system = platform.system()
     if system == 'Linux':
-        system, revision, _ = platform.dist()  # pylint: disable=deprecated-method
-        if system == 'debian':
-            revision = revision.split('.')[0]
-        elif system == 'redhat':
-            system = 'rhel'
-            revision = revision[0]
-        elif system == 'centos':
-            revision = revision[0]
-        else:
+        system, revision = None, None
+        try:
+            system, revision, _ = platform.dist()  # pylint: disable=deprecated-method
+            if system == 'debian':
+                revision = revision.split('.')[0]
+            elif system == 'redhat':
+                system = 'rhel'
+                revision = revision[0]
+            elif system == 'centos':
+                revision = revision[0]
+        except:
             if os.path.exists('/etc/os-release'):
                 vals = {}
                 with open('/etc/os-release') as f:
@@ -191,6 +199,8 @@ def get_system_revision():
                 revision = vals['VERSION_ID']
                 if system == 'alpine':
                     revision = revision.rsplit('.', 1)[0]
+            else:
+                raise Exception('cannot determine system or its revision')
     elif system == 'FreeBSD':
         system = system.lower()
         revision = platform.release()
@@ -772,6 +782,7 @@ class VagrantEnv(object):
         """Remove the VM completely."""
         cmd = 'vagrant destroy --force'
         execute(cmd, cwd=self.vagrant_dir, timeout=3 * 60, dry_run=self.dry_run)  # timeout: 3 minutes
+        execute('rm -rf %s', self.vagrant_dir)
 
     def ssh(self):
         """Open interactive session to the VM."""
@@ -1253,6 +1264,8 @@ def prepare_system_local(features, check_times):
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
             packages.extend(['bison', 'debhelper', 'docbook', 'flex', 'libboost-dev', 'python3-dev'])
+            if revision >= '20.04':
+                packages.extend(['dh-python'])
 
         if 'mysql' in features:
             if revision == '16.04':
@@ -1617,6 +1630,8 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20200318150024.fc30'
     elif system == 'fedora' and revision == '31':
         frc_version = 'isc20200318122047.fc31'
+    elif system == 'fedora' and revision == '32':
+        frc_version = 'isc20200511114306.fc32'
     elif system == 'centos' and revision == '7':
         frc_version = 'isc20200318122047.el7'
     elif system == 'centos' and revision == '8':
@@ -1689,6 +1704,8 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         time.sleep(4)
     if system == 'ubuntu' and revision == '19.04':
         frc_version = 'isc20200319090824'
+    elif system == 'ubuntu' and revision == '20.04':
+        frc_version = 'isc20200511114306'
     else:
         frc_version = 'isc20200318122047'
     install_pkgs('libfreeradius-client=1.1.7-{0} libfreeradius-client-dev=1.1.7-{0}'.format(frc_version),
