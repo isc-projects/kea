@@ -56,6 +56,7 @@ run_unittests_SOURCES += strutil_unittest.cc
 run_unittests_SOURCES += thread_pool_unittest.cc
 run_unittests_SOURCES += time_utilities_unittest.cc
 run_unittests_SOURCES += range_utilities_unittest.cc
+run_unittests_SOURCES += readwrite_mutex_unittest.cc
 run_unittests_SOURCES += signal_set_unittest.cc
 run_unittests_SOURCES += stopwatch_unittest.cc
 run_unittests_SOURCES += versioned_csv_file_unittest.cc

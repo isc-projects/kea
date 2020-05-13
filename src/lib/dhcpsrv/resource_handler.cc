@@ -85,9 +85,8 @@ ResourceHandler::unLock(Lease::Type type, const asiolink::IOAddress& addr) {
     auto key = boost::make_tuple(type, addr.toBytes());
     auto it = owned_.find(key);
     if (it == owned_.end()) {
-        isc_throw(InvalidParameter,
-                  "does not owne " << Lease::typeToText(type) << " "
-                  << addr.toText());
+        isc_throw(NotFound, "does not own " << Lease::typeToText(type)
+                  << " " << addr.toText());
     }
     {
         lock_guard<mutex> lock_(mutex_);

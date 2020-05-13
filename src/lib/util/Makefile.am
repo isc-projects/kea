@@ -22,6 +22,7 @@ libkea_util_la_SOURCES += pid_file.h pid_file.cc
 libkea_util_la_SOURCES += pointer_util.h
 libkea_util_la_SOURCES += process_spawn.h process_spawn.cc
 libkea_util_la_SOURCES += range_utilities.h
+libkea_util_la_SOURCES += readwrite_mutex.h
 libkea_util_la_SOURCES += signal_set.cc signal_set.h
 libkea_util_la_SOURCES += staged_value.h
 libkea_util_la_SOURCES += state_model.cc state_model.h
@@ -67,6 +68,7 @@ libkea_util_include_HEADERS = \
 	pointer_util.h \
 	process_spawn.h \
 	range_utilities.h \
+	readwrite_mutex.h \
 	signal_set.h \
 	staged_value.h \
 	state_model.h \
