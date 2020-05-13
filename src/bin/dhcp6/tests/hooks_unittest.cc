@@ -138,7 +138,7 @@ public:
     ~HooksDhcpv6SrvTest() {
 
         // Clear shared manager
-        HooksManager::getSharedCalloutManager().reset();
+        HooksManager::getHooksManager().setSharedCalloutManager();
 
     }
 
@@ -4418,7 +4418,8 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
     IfaceMgrTestConfig test_config(true);
 
     // Libraries will be reloaded later
-    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+    HooksManager::getHooksManager().setSharedCalloutManager(
+        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
 
     // Install lease6_decline callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -4471,7 +4472,8 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
     IfaceMgrTestConfig test_config(true);
 
     // Libraries will be reloaded later
-    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+    HooksManager::getHooksManager().setSharedCalloutManager(
+        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
 
     // Install lease6_decline_skip callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -4521,7 +4523,8 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     IfaceMgrTestConfig test_config(true);
 
     // Libraries will be reloaded later
-    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+    HooksManager::getHooksManager().setSharedCalloutManager(
+        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
 
     // Install lease6_decline_drop callout. It will set the status to drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(

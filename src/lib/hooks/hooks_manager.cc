@@ -26,7 +26,8 @@ namespace hooks {
 
 // Constructor
 
-HooksManager::HooksManager() {
+HooksManager::HooksManager() : loaded_(false) {
+    init();
 }
 
 // Return reference to singleton hooks manager.
@@ -41,7 +42,6 @@ HooksManager::getHooksManager() {
 
 bool
 HooksManager::calloutsPresentInternal(int index) {
-    conditionallyInitialize();
     return (callout_manager_->calloutsPresent(index));
 }
 
@@ -52,7 +52,6 @@ HooksManager::calloutsPresent(int index) {
 
 bool
 HooksManager::commandHandlersPresentInternal(const std::string& command_name) {
-    conditionallyInitialize();
     return (callout_manager_->commandHandlersPresent(command_name));
 }
 
@@ -65,7 +64,6 @@ HooksManager::commandHandlersPresent(const std::string& command_name) {
 
 void
 HooksManager::callCalloutsInternal(int index, CalloutHandle& handle) {
-    conditionallyInitialize();
     callout_manager_->callCallouts(index, handle);
 }
 
@@ -77,7 +75,6 @@ HooksManager::callCallouts(int index, CalloutHandle& handle) {
 void
 HooksManager::callCommandHandlersInternal(const std::string& command_name,
                                           CalloutHandle& handle) {
-    conditionallyInitialize();
     callout_manager_->callCommandHandlers(command_name, handle);
 }
 
@@ -87,17 +84,17 @@ HooksManager::callCommandHandlers(const std::string& command_name,
     getHooksManager().callCommandHandlersInternal(command_name, handle);
 }
 
-
 // Load the libraries.  This will delete the previously-loaded libraries
-// (if present) and load new ones.
+// (if present) and load new ones. If loading libraries fails, initialize with
+// empty list.
 
 bool
 HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
     // Unload current set of libraries (if any are loaded).
-    unloadLibrariesInternal();
+    unloadLibrariesInternal(false);
 
     // Create the library manager and load the libraries.
-    lm_collection_.reset(new LibraryManagerCollection(libraries));
+    lm_collection_.reset(new LibraryManagerCollection(libraries, shared_callout_manager_));
     bool status = lm_collection_->loadLibraries();
 
     if (status) {
@@ -106,9 +103,10 @@ HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
     } else {
         // Unable to load libraries, reset to state before this function was
         // called.
-        lm_collection_.reset();
-        callout_manager_.reset();
+        init();
     }
+
+    loaded_ = true;
 
     return (status);
 }
@@ -118,19 +116,21 @@ HooksManager::loadLibraries(const HookLibsCollection& libraries) {
     return (getHooksManager().loadLibrariesInternal(libraries));
 }
 
-// Unload the libraries.  This just deletes all internal objects which will
-// cause the libraries to be unloaded.
+// Unload the libraries.  This just deletes all internal objects (which will
+// cause the libraries to be unloaded) and initializes them with empty list if
+// requested.
 
 void
-HooksManager::unloadLibrariesInternal() {
-    // The order of deletion does not matter here, as each library manager
-    // holds its own pointer to the callout manager.  However, we may as
-    // well delete the library managers first: if there are no other references
-    // to the callout manager, the second statement will delete it, which may
-    // ease debugging.
-    lm_collection_.reset();
-    callout_manager_.reset();
+HooksManager::unloadLibrariesInternal(bool initialize) {
     ServerHooks::getServerHooks().getParkingLotsPtr()->clear();
+    if (initialize) {
+        init();
+    } else {
+        lm_collection_.reset();
+        callout_manager_.reset();
+    }
+
+    loaded_ = false;
 }
 
 void HooksManager::unloadLibraries() {
@@ -141,9 +141,7 @@ void HooksManager::unloadLibraries() {
 
 boost::shared_ptr<CalloutHandle>
 HooksManager::createCalloutHandleInternal() {
-    conditionallyInitialize();
-    return (boost::shared_ptr<CalloutHandle>(
-            new CalloutHandle(callout_manager_, lm_collection_)));
+    return (boost::make_shared<CalloutHandle>(callout_manager_, lm_collection_));
 }
 
 boost::shared_ptr<CalloutHandle>
@@ -155,14 +153,12 @@ HooksManager::createCalloutHandle() {
 
 std::vector<std::string>
 HooksManager::getLibraryNamesInternal() const {
-    return (lm_collection_ ? lm_collection_->getLibraryNames()
-                           : std::vector<std::string>());
+    return (lm_collection_->getLibraryNames());
 }
 
 HookLibsCollection
 HooksManager::getLibraryInfoInternal() const {
-    return (lm_collection_ ? lm_collection_->getLibraryInfo()
-            : HookLibsCollection());
+    return (lm_collection_->getLibraryInfo());
 }
 
 std::vector<std::string>
@@ -175,17 +171,15 @@ HooksManager::getLibraryInfo() {
     return (getHooksManager().getLibraryInfoInternal());
 }
 
-// Perform conditional initialization if nothing is loaded.
+// Perform initialization
 
 void
-HooksManager::performConditionalInitialization() {
-
+HooksManager::init() {
     // Nothing present, so create the collection with any empty set of
     // libraries, and get the CalloutManager.
     HookLibsCollection libraries;
-    lm_collection_.reset(new LibraryManagerCollection(libraries));
+    lm_collection_.reset(new LibraryManagerCollection(libraries, shared_callout_manager_));
     lm_collection_->loadLibraries();
-
     callout_manager_ = lm_collection_->getCalloutManager();
 }
 
@@ -200,7 +194,6 @@ HooksManager::registerHook(const std::string& name) {
 
 isc::hooks::LibraryHandle&
 HooksManager::preCalloutsLibraryHandleInternal() {
-    conditionallyInitialize();
     return (callout_manager_->getPreLibraryHandle());
 }
 
@@ -211,7 +204,6 @@ HooksManager::preCalloutsLibraryHandle() {
 
 isc::hooks::LibraryHandle&
 HooksManager::postCalloutsLibraryHandleInternal() {
-    conditionallyInitialize();
     return (callout_manager_->getPostLibraryHandle());
 }
 
@@ -227,10 +219,17 @@ HooksManager::validateLibraries(const std::vector<std::string>& libraries) {
     return (LibraryManagerCollection::validateLibraries(libraries));
 }
 
-// Shared callout manager
-boost::shared_ptr<CalloutManager>&
+boost::shared_ptr<CalloutManager>
 HooksManager::getSharedCalloutManager() {
-    return (getHooksManager().shared_callout_manager_);
+    return (shared_callout_manager_);
+}
+
+void
+HooksManager::setSharedCalloutManager(boost::shared_ptr<CalloutManager> manager) {
+    shared_callout_manager_ = manager;
+    if (!loaded_) {
+        init();
+    }
 }
 
 } // namespace util

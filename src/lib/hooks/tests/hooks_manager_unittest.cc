@@ -46,7 +46,7 @@ public:
     /// Unload all libraries and reset the shared manager.
     ~HooksManagerTest() {
         HooksManager::unloadLibraries();
-        HooksManager::getSharedCalloutManager().reset();
+        HooksManager::getHooksManager().setSharedCalloutManager();
     }
 
 
@@ -445,7 +445,8 @@ TEST_F(HooksManagerTest, PrePostCalloutShared) {
     HookLibsCollection library_names;
 
     // Initialize the shared manager.
-    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+    HooksManager::getHooksManager().setSharedCalloutManager(
+        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
@@ -492,7 +493,8 @@ TEST_F(HooksManagerTest, PrePostCalloutSharedNotEmpty) {
                                       data::ConstElementPtr()));
 
     // Initialize the shared manager.
-    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+    HooksManager::getHooksManager().setSharedCalloutManager(
+        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
@@ -538,7 +540,8 @@ TEST_F(HooksManagerTest, PrePostCalloutSharedTooLate) {
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
     // Initialize the shared manager (after loadLibraries so too late)
-    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+    HooksManager::getHooksManager().setSharedCalloutManager(
+        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",

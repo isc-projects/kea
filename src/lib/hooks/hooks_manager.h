@@ -226,13 +226,20 @@ public:
     static const int CONTEXT_CREATE = ServerHooks::CONTEXT_CREATE;
     static const int CONTEXT_DESTROY = ServerHooks::CONTEXT_DESTROY;
 
-    /// @brief Return the shared callout manager
-    ///
-    /// Declared as static as other methods but only one for the
-    /// singleton will be created.
+    /// @brief Get the shared callout manager
     ///
     /// @return A reference to the shared callout manager
-    static boost::shared_ptr<CalloutManager>& getSharedCalloutManager();
+    boost::shared_ptr<CalloutManager> getSharedCalloutManager();
+
+    /// @brief Set the shared callout manager
+    ///
+    /// This function sets the shared callout manager and explicitly updates
+    /// @ref callout_manager_ (by calling @ref init) if @ref loadLibraries has
+    /// not yet been called.
+    ///
+    /// @param manager The shared callout manager
+    void setSharedCalloutManager(boost::shared_ptr<CalloutManager> manager =
+                                 boost::shared_ptr<CalloutManager>());
 
     /// @brief Park an object (packet).
     ///
@@ -411,7 +418,10 @@ private:
     bool loadLibrariesInternal(const HookLibsCollection& libraries);
 
     /// @brief Unload libraries
-    void unloadLibrariesInternal();
+    ///
+    /// @param initialize flag to indicate if intializing or just resetting the
+    /// @ref lm_collection_ and @ref callout_manager_
+    void unloadLibrariesInternal(bool initialize = true);
 
     /// @brief Are callouts present?
     ///
@@ -479,29 +489,8 @@ private:
 
     /// @brief Initialization to No Libraries
     ///
-    /// Initializes the hooks manager with an "empty set" of libraries.  This
-    /// method is called if conditionallyInitialize() determines that such
-    /// initialization is needed.
-    void performConditionalInitialization();
-
-    /// @brief Conditional initialization of the  hooks manager
-    ///
-    /// loadLibraries() performs the initialization of the HooksManager,
-    /// setting up the internal structures and loading libraries.  However,
-    /// in some cases, server authors may not do that.  This method is called
-    /// whenever any hooks execution function is invoked (checking callouts,
-    /// calling callouts or returning a callout handle).  If the HooksManager
-    /// is uninitialized, it will initialize it with an "empty set"
-    /// of libraries.
-    ///
-    /// For speed, the test of whether initialization is required is done
-    /// in-line here.  The actual initialization is performed in
-    /// performConditionalInitialization().
-    void conditionallyInitialize() {
-        if (!lm_collection_) {
-            performConditionalInitialization();
-        }
-    }
+    /// Initializes the hooks manager with an "empty set" of libraries.
+    void init();
 
     // Members
 
@@ -514,6 +503,8 @@ private:
     /// Shared callout manager to survive library reloads.
     boost::shared_ptr<CalloutManager> shared_callout_manager_;
 
+    /// Loaded flag to indicate if @ref loadLibraries has been called
+    bool loaded_;
 };
 
 } // namespace util

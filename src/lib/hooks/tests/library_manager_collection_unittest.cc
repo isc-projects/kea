@@ -8,6 +8,7 @@
 
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
+#include <hooks/hooks_manager.h>
 #include <hooks/library_manager.h>
 #include <hooks/library_manager_collection.h>
 #include <hooks/libinfo.h>
@@ -46,27 +47,33 @@ private:
     }
 };
 
+} // namespace
+
+namespace isc {
+namespace hooks {
 /// @brief Public library manager collection class
 ///
 /// This is an instance of the LibraryManagerCollection class but with the
 /// protected methods made public for test purposes.
 
-class PublicLibraryManagerCollection
-                : public isc::hooks::LibraryManagerCollection {
+class PublicLibraryManagerCollection : public LibraryManagerCollection {
 public:
     /// @brief Constructor
     ///
     /// @param List of libraries that this collection will manage.  The order
     ///        of the libraries is important.
     PublicLibraryManagerCollection(const HookLibsCollection& libraries)
-        : LibraryManagerCollection(libraries)
-    {}
+        : LibraryManagerCollection(libraries) {
+    }
 
     /// Public methods that call protected methods on the superclass.
     using LibraryManagerCollection::unloadLibraries;
 };
 
+} // namespace hooks
+} // namespace isc
 
+namespace {
 // This is effectively the same test as for LibraryManager, but using the
 // LibraryManagerCollection object.
 

@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <hooks/callout_manager.h>
-#include <hooks/hooks_manager.h>
 #include <hooks/library_manager.h>
 #include <hooks/library_manager_collection.h>
 
@@ -29,7 +28,7 @@ boost::shared_ptr<CalloutManager>
 LibraryManagerCollection::getCalloutManager() const {
 
     // Only return a pointer if we have a CalloutManager created.
-    if (! callout_manager_) {
+    if (!callout_manager_) {
         isc_throw(LoadLibrariesNotCalled, "must load hooks libraries before "
                   "attempting to retrieve a CalloutManager for them");
     }
@@ -37,8 +36,9 @@ LibraryManagerCollection::getCalloutManager() const {
     return (callout_manager_);
 }
 
-LibraryManagerCollection::LibraryManagerCollection(const HookLibsCollection& libraries)
-    :library_info_(libraries) {
+LibraryManagerCollection::LibraryManagerCollection(const HookLibsCollection& libraries,
+        const boost::shared_ptr<CalloutManager>& manager)
+    : shared_callout_manager_(manager), library_info_(libraries) {
 
     // We need to split hook libs into library names and library parameters.
     for (HookLibsCollection::const_iterator it = libraries.begin();
@@ -78,7 +78,7 @@ LibraryManagerCollection::loadLibraries() {
     // to re-use the existing callout manager (so retaining registered pre-
     // and post-library callouts).
     if (library_names_.empty()) {
-        callout_manager_ = HooksManager::getSharedCalloutManager();
+        callout_manager_ = shared_callout_manager_;
     }
     if (!library_names_.empty() || !callout_manager_) {
         callout_manager_.reset(new CalloutManager(library_names_.size()));

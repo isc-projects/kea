@@ -129,7 +129,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_decline");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host4_identifier");
 
-        HooksManager::getSharedCalloutManager().reset();
+        HooksManager::getHooksManager().setSharedCalloutManager();
         delete srv_;
     }
 
@@ -2378,7 +2378,8 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     IfaceMgr::instance().openSockets4();
 
     // Libraries will be reloaded later
-    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+    HooksManager::getHooksManager().setSharedCalloutManager(
+        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2430,7 +2431,8 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineSkip) {
     IfaceMgr::instance().openSockets4();
 
     // Libraries will be reloaded later
-    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+    HooksManager::getHooksManager().setSharedCalloutManager(
+        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2481,7 +2483,8 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     IfaceMgr::instance().openSockets4();
 
     // Libraries will be reloaded later
-    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+    HooksManager::getHooksManager().setSharedCalloutManager(
+        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
