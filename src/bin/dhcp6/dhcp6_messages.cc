@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed May 06 2020 20:50
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed May 13 2020 16:52
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -51,6 +51,7 @@ extern const isc::log::MessageID DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID = "DHCP6_
 extern const isc::log::MessageID DHCP6_DECLINE_FAIL_NO_LEASE = "DHCP6_DECLINE_FAIL_NO_LEASE";
 extern const isc::log::MessageID DHCP6_DECLINE_LEASE = "DHCP6_DECLINE_LEASE";
 extern const isc::log::MessageID DHCP6_DECLINE_PROCESS_IA = "DHCP6_DECLINE_PROCESS_IA";
+extern const isc::log::MessageID DHCP6_DEVELOPMENT_VERSION = "DHCP6_DEVELOPMENT_VERSION";
 extern const isc::log::MessageID DHCP6_DHCP4O6_PACKET_RECEIVED = "DHCP6_DHCP4O6_PACKET_RECEIVED";
 extern const isc::log::MessageID DHCP6_DHCP4O6_RECEIVE_FAIL = "DHCP6_DHCP4O6_RECEIVE_FAIL";
 extern const isc::log::MessageID DHCP6_DHCP4O6_RECEIVING = "DHCP6_DHCP4O6_RECEIVING";
@@ -198,6 +199,7 @@ const char* values[] = {
     "DHCP6_DECLINE_FAIL_NO_LEASE", "Client %1 sent DECLINE for address %2, but there's no lease for it",
     "DHCP6_DECLINE_LEASE", "Client %1 sent DECLINE for address %2 and the server marked it as declined. The lease will be recovered in %3 seconds.",
     "DHCP6_DECLINE_PROCESS_IA", "Processing of IA (IAID: %1) from client %2 started.",
+    "DHCP6_DEVELOPMENT_VERSION", "This software is a development branch of Kea. It is not recommended for production use.",
     "DHCP6_DHCP4O6_PACKET_RECEIVED", "received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 port %3 on interface %4",
     "DHCP6_DHCP4O6_RECEIVE_FAIL", "failed to receive DHCPv4o6: %1",
     "DHCP6_DHCP4O6_RECEIVING", "receiving DHCPv4o6 packet from DHCPv4 server",
@@ -286,7 +288,7 @@ const char* values[] = {
     "DHCP6_SRV_D2STOP_ERROR", "error stopping IO with DHCP_DDNS during shutdown: %1",
     "DHCP6_STANDALONE", "skipping message queue, running standalone",
     "DHCP6_STARTED", "Kea DHCPv6 server version %1 started",
-    "DHCP6_STARTING", "Kea DHCPv6 server version %1 starting",
+    "DHCP6_STARTING", "Kea DHCPv6 server version %1 (%2) starting",
     "DHCP6_START_INFO", "pid: %1, server port: %2, client port: %3, verbose: %4",
     "DHCP6_SUBNET_DATA", "%1: the selected subnet details: %2",
     "DHCP6_SUBNET_DYNAMICALLY_CHANGED", "%1: changed selected subnet %2 to subnet %3 from shared network %4 for client assignments",
