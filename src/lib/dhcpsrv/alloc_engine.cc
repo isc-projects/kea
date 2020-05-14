@@ -20,6 +20,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
 #include <dhcpsrv/network.h>
+#include <dhcpsrv/resource_handler.h>
 #include <dhcpsrv/shared_network.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
@@ -961,6 +962,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         }
     }
 
+    // We have the choice in the order checking the lease and
+    // the reservation. The default is to begin by the lease
+    // if the multi-threading is disabled.
+    bool check_reservation_first = MultiThreadingMgr::instance().getMode();
+
     uint64_t total_attempts = 0;
 
     // Need to check if the subnet belongs to a shared network. If so,
@@ -1035,6 +1041,23 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 }
             }
 
+            // First check for reservation when it is the choice.
+            if (check_reservation_first && (hr_mode == Network::HR_ALL) &&
+                HostMgr::instance().get6(subnet->getID(), candidate)) {
+                // Don't allocate.
+                continue;
+            }
+
+            // Check if the resource is busy i.e. can be being allocated
+            // by another thread to another client.
+            ResourceHandler resource_handler;
+            if (MultiThreadingMgr::instance().getMode() &&
+                !MultiThreadingMgr::instance().isInCriticalSection() &&
+                !resource_handler.tryLock(ctx.currentIA().type_, candidate)) {
+                // Don't allocate.
+                continue;
+            }
+
             // Look for an existing lease for the candidate.
             Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
                                                                        candidate);
@@ -1043,7 +1066,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 /// In-pool reservations: Check if this address is reserved for someone
                 /// else. There is no need to check for whom it is reserved, because if
                 /// it has been reserved for us we would have already allocated a lease.
-                if (hr_mode == Network::HR_ALL &&
+                if (!check_reservation_first && (hr_mode == Network::HR_ALL) &&
                     HostMgr::instance().get6(subnet->getID(), candidate)) {
 
                     // Don't allocate.
@@ -1075,7 +1098,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 // allocation attempts.
             } else if (existing->expired()) {
                 // Make sure it's not reserved.
-                if (hr_mode == Network::HR_ALL &&
+                if (!check_reservation_first && (hr_mode == Network::HR_ALL) &&
                     HostMgr::instance().get6(subnet->getID(), candidate)) {
                     // Don't allocate.
                     continue;
@@ -2276,8 +2299,17 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
 
         try {
             // Reclaim the lease.
-            reclaimExpiredLease(lease, remove_lease, callout_handle);
-            ++leases_processed;
+            if (MultiThreadingMgr::instance().getMode() &&
+                !MultiThreadingMgr::instance().isInCriticalSection()) {
+                // The reclamation is exclusive of packet processing.
+                WriteLockGuard exclusive(rw_mutex_);
+
+                reclaimExpiredLease(lease, remove_lease, callout_handle);
+                ++leases_processed;
+            } else {
+                reclaimExpiredLease(lease, remove_lease, callout_handle);
+                ++leases_processed;
+            }
 
         } catch (const std::exception& ex) {
             LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_LEASE_RECLAMATION_FAILED)
@@ -2414,8 +2446,17 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
 
         try {
             // Reclaim the lease.
-            reclaimExpiredLease(lease, remove_lease, callout_handle);
-            ++leases_processed;
+            if (MultiThreadingMgr::instance().getMode() &&
+                !MultiThreadingMgr::instance().isInCriticalSection()) {
+                // The reclamation is exclusive of packet processing.
+                WriteLockGuard exclusive(rw_mutex_);
+
+                reclaimExpiredLease(lease, remove_lease, callout_handle);
+                ++leases_processed;
+            } else {
+                reclaimExpiredLease(lease, remove_lease, callout_handle);
+                ++leases_processed;
+            }
 
         } catch (const std::exception& ex) {
             LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V4_LEASE_RECLAMATION_FAILED)
@@ -3976,6 +4017,11 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         ctx.subnet_ = subnet = network->getPreferredSubnet(ctx.subnet_);
     }
 
+    // We have the choice in the order checking the lease and
+    // the reservation. The default is to begin by the lease
+    // if the multi-threading is disabled.
+    bool check_reservation_first = MultiThreadingMgr::instance().getMode();
+
     Subnet4Ptr original_subnet = subnet;
 
     uint64_t total_attempts = 0;
@@ -4005,17 +4051,34 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
                                                          ctx.query_->getClasses(),
                                                          client_id,
                                                          ctx.requested_address_);
+            // First check for reservation when it is the choice.
+            if (check_reservation_first && addressReserved(candidate, ctx)) {
+                // Don't allocate.
+                continue;
+            }
+
+            // Check if the resource is busy i.e. can be being allocated
+            // by another thread to another client.
+            ResourceHandler4 resource_handler;
+            if (MultiThreadingMgr::instance().getMode() &&
+                !MultiThreadingMgr::instance().isInCriticalSection() &&
+                !resource_handler.tryLock4(candidate)) {
+                // Don't allocate.
+                continue;
+            }
+
             // Check for an existing lease for the candidate address.
             Lease4Ptr exist_lease = LeaseMgrFactory::instance().getLease4(candidate);
             if (!exist_lease) {
                 // No existing lease, is it reserved?
-                if (!addressReserved(candidate, ctx)) {
+                if (check_reservation_first || !addressReserved(candidate, ctx)) {
                     // Not reserved use it.
                     new_lease = createLease4(ctx, candidate, callout_status);
                 }
             } else {
                 // An lease exists, is expired, and not reserved use it.
-                if (exist_lease->expired() && (!addressReserved(candidate, ctx))) {
+                if (exist_lease->expired() &&
+                    (check_reservation_first || !addressReserved(candidate, ctx))) {
                     ctx.old_lease_ = Lease4Ptr(new Lease4(*exist_lease));
                     new_lease = reuseExpiredLease4(exist_lease, ctx, callout_status);
                 }

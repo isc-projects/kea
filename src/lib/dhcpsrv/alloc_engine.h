@@ -23,6 +23,7 @@
 #include <dhcpsrv/srv_config.h>
 #include <hooks/callout_handle.h>
 #include <util/multi_threading_mgr.h>
+#include <util/readwrite_mutex.h>
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -1851,6 +1852,20 @@ private:
     /// @brief Number of consecutive DHCPv6 leases' reclamations after
     /// which there are still expired leases in the database.
     uint16_t incomplete_v6_reclamations_;
+
+public:
+
+    /// @brief Get the read-write mutex.
+    ///
+    /// This read-write mutex is used to make reclamation exclusive
+    /// of multi-threaded packet processing.
+    /// @return A reference to the read-write mutex.
+    isc::util::ReadWriteMutex& getReadWriteMutex() {
+        return (rw_mutex_);
+    }
+
+    /// @brief The read-write mutex.
+    isc::util::ReadWriteMutex rw_mutex_;
 };
 
 /// @brief A pointer to the @c AllocEngine object.

@@ -3049,7 +3049,15 @@ Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
     ctx.fake_allocation_ = (response->getType() != DHCPV6_REPLY);
 
     processClientFqdn(solicit, response, ctx);
-    assignLeases(solicit, response, ctx);
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        // The lease reclamation cannot run at the same time.
+        ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+
+        assignLeases(solicit, response, ctx);
+    } else {
+        assignLeases(solicit, response, ctx);
+    }
 
     conditionallySetReservedClientClasses(solicit, ctx);
     requiredClassify(solicit, ctx);
@@ -3079,7 +3087,15 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
     processClientFqdn(request, reply, ctx);
-    assignLeases(request, reply, ctx);
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        // The lease reclamation cannot run at the same time.
+        ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+
+        assignLeases(request, reply, ctx);
+    } else {
+        assignLeases(request, reply, ctx);
+    }
 
     conditionallySetReservedClientClasses(request, ctx);
     requiredClassify(request, ctx);
@@ -3105,7 +3121,15 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
     processClientFqdn(renew, reply, ctx);
-    extendLeases(renew, reply, ctx);
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        // The lease reclamation cannot run at the same time.
+        ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+
+        extendLeases(renew, reply, ctx);
+    } else {
+        extendLeases(renew, reply, ctx);
+    }
 
     conditionallySetReservedClientClasses(renew, ctx);
     requiredClassify(renew, ctx);
@@ -3131,7 +3155,15 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
     processClientFqdn(rebind, reply, ctx);
-    extendLeases(rebind, reply, ctx);
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        // The lease reclamation cannot run at the same time.
+        ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+
+        extendLeases(rebind, reply, ctx);
+    } else {
+        extendLeases(rebind, reply, ctx);
+    }
 
     conditionallySetReservedClientClasses(rebind, ctx);
     requiredClassify(rebind, ctx);

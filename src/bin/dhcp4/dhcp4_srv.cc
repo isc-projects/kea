@@ -2940,7 +2940,14 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     // updating DNS when the client sends DHCPREQUEST message.
     processClientName(ex);
 
-    assignLease(ex);
+    if (MultiThreadingMgr::instance().getMode()) {
+        // The lease reclamation cannot run at the same time.
+        ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+
+        assignLease(ex);
+    } else {
+        assignLease(ex);
+    }
 
     if (!ex.getResponse()) {
         // The offer is empty so return it *now*!
@@ -3006,7 +3013,14 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
     // Note that we treat REQUEST message uniformly, regardless if this is a
     // first request (requesting for new address), renewing existing address
     // or even rebinding.
-    assignLease(ex);
+    if (MultiThreadingMgr::instance().getMode()) {
+        // The lease reclamation cannot run at the same time.
+        ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+
+        assignLease(ex);
+    } else {
+        assignLease(ex);
+    }
 
     Pkt4Ptr response = ex.getResponse();
     if (!response) {
