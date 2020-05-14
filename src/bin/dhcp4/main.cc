@@ -220,7 +220,7 @@ main(int argc, char* argv[]) {
                 .arg(VERSION)
                 .arg(PACKAGE_VERSION_TYPE);
 
-        if (PACKAGE_VERSION_TYPE == "development") {
+        if (string(PACKAGE_VERSION_TYPE) == "development") {
             LOG_WARN(dhcp4_logger, DHCP4_DEVELOPMENT_VERSION);
         }
 
