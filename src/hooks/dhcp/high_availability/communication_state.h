@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -101,10 +101,16 @@ public:
     /// @throw BadValue if unsupported state value was provided.
     void setPartnerState(const std::string& state);
 
+    /// @brief Returns scopes served by the partner server.
+    ///
+    /// @return A set of scopes served by the partner.
     std::set<std::string> getPartnerScopes() const {
         return (partner_scopes_);
     }
 
+    /// @brief Sets partner scopes.
+    ///
+    /// @param new_scopes Partner scopes enclosed in a JSON list.
     void setPartnerScopes(data::ConstElementPtr new_scopes);
 
     /// @brief Starts recurring heartbeat (public interface).
