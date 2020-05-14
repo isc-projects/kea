@@ -51,7 +51,7 @@ public:
     }
 
     /// @brief Lock write.
-    void lock_write() {
+    void writeLock() {
         std::unique_lock<std::mutex> lk(mutex_);
         // Wait until the write entered flag can be set.
         gate1_.wait(lk, [=]() { return (!writeEntered()); });
@@ -63,7 +63,7 @@ public:
     /// @brief Unlock write.
     ///
     /// @note: do not check that WRITE_ENTERED was set.
-    void unlock_write() {
+    void writeUnlock() {
         std::lock_guard<std::mutex> lk(mutex_);
         state_ = 0;
         // Wake-up readers when exiting the guard.
@@ -71,7 +71,7 @@ public:
     }
 
     /// @brief Lock read.
-    void lock_read() {
+    void readLock() {
         std::unique_lock<std::mutex> lk(mutex_);
         // Wait if there is a writer or if readers overflow.
         gate1_.wait(lk, [=]() { return (state_ < MAX_READERS); });
@@ -81,7 +81,7 @@ public:
     /// @brief Unlock read.
     ///
     /// @note: do not check that there is a least one reader.
-    void unlock_read() {
+    void readUnlock() {
         std::lock_guard<std::mutex> lk(mutex_);
         unsigned prev = state_--;
         if (writeEntered()) {
@@ -144,12 +144,12 @@ public:
     ///
     /// @param rw_mutex The read mutex.
     ReadLockGuard(ReadWriteMutex& rw_mutex) : rw_mutex_(rw_mutex) {
-        rw_mutex_.lock_read();
+        rw_mutex_.readLock();
     }
 
     /// @brief Destructor.
     virtual ~ReadLockGuard() {
-        rw_mutex_.unlock_read();
+        rw_mutex_.readUnlock();
     }
 
 private:
@@ -168,12 +168,12 @@ public:
     ///
     /// @param rw_mutex The write mutex.
     WriteLockGuard(ReadWriteMutex& rw_mutex) : rw_mutex_(rw_mutex) {
-        rw_mutex_.lock_write();
+        rw_mutex_.writeLock();
     }
 
     /// @brief Destructor.
     virtual ~WriteLockGuard() {
-        rw_mutex_.unlock_write();
+        rw_mutex_.writeUnlock();
     }
 
 private:
