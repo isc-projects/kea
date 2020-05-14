@@ -24,9 +24,6 @@ using namespace std;
 namespace isc {
 namespace hooks {
 
-boost::shared_ptr<CalloutManager> HooksManager::shared_callout_manager_;
-bool HooksManager::loaded_;
-
 // Constructor
 
 HooksManager::HooksManager() {
@@ -93,6 +90,9 @@ HooksManager::callCommandHandlers(const std::string& command_name,
 
 bool
 HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
+    if (test_mode_) {
+        return (true);
+    }
     // Unload current set of libraries (if any are loaded).
     unloadLibrariesInternal(false);
 
@@ -108,8 +108,6 @@ HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
         // called.
         init();
     }
-
-    loaded_ = true;
 
     return (status);
 }
@@ -132,8 +130,6 @@ HooksManager::unloadLibrariesInternal(bool initialize) {
         lm_collection_.reset();
         callout_manager_.reset();
     }
-
-    loaded_ = false;
 }
 
 void HooksManager::unloadLibraries() {
@@ -222,17 +218,10 @@ HooksManager::validateLibraries(const std::vector<std::string>& libraries) {
     return (LibraryManagerCollection::validateLibraries(libraries));
 }
 
-boost::shared_ptr<CalloutManager>
-HooksManager::getSharedCalloutManager() {
-    return (shared_callout_manager_);
-}
+bool HooksManager::test_mode_;
 
-void
-HooksManager::setSharedCalloutManager(boost::shared_ptr<CalloutManager> manager) {
-    shared_callout_manager_ = manager;
-    if (!loaded_) {
-        unloadLibraries();
-    }
+void HooksManager::setTestMode(bool mode) {
+    test_mode_ = mode;
 }
 
 } // namespace util

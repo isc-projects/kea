@@ -122,6 +122,8 @@ public:
     HooksDhcpv6SrvTest()
         : Dhcpv6SrvTest() {
 
+        HooksManager::getHooksManager().setTestMode(false);
+
         // Allocate new DHCPv6 Server
         srv_.reset(new NakedDhcpv6Srv(0));
 
@@ -136,10 +138,7 @@ public:
 
     /// @brief destructor (deletes Dhcpv6Srv)
     ~HooksDhcpv6SrvTest() {
-
-        // Clear shared manager
-        HooksManager::getHooksManager().setSharedCalloutManager();
-
+        HooksManager::getHooksManager().setTestMode(false);
     }
 
     /// @brief creates an option with specified option code
@@ -4417,13 +4416,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
 TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
     IfaceMgrTestConfig test_config(true);
 
-    // Libraries will be reloaded later
-    HooksManager::getHooksManager().setSharedCalloutManager(
-        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
-
     // Install lease6_decline callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_callout));
+
+    HooksManager::getHooksManager().setTestMode(true);
 
     // Get an address and decline it. DUIDs, IAID match and we send valid
     // address, so the decline procedure should be successful.
@@ -4471,13 +4468,11 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
 TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
     IfaceMgrTestConfig test_config(true);
 
-    // Libraries will be reloaded later
-    HooksManager::getHooksManager().setSharedCalloutManager(
-        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
-
     // Install lease6_decline_skip callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_skip));
+
+    HooksManager::getHooksManager().setTestMode(true);
 
     // Get an address and decline it. DUIDs, IAID match and we send valid
     // address, so the decline procedure should be successful.
@@ -4522,13 +4517,11 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
 TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     IfaceMgrTestConfig test_config(true);
 
-    // Libraries will be reloaded later
-    HooksManager::getHooksManager().setSharedCalloutManager(
-        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
-
     // Install lease6_decline_drop callout. It will set the status to drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_drop));
+
+    HooksManager::getHooksManager().setTestMode(true);
 
     // Get an address and decline it. DUIDs, IAID match and we send valid
     // address, so it would work, but the callout sets status to DROP, so

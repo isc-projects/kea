@@ -105,6 +105,7 @@ public:
 
     /// @brief creates Dhcpv4Srv and prepares buffers for callouts
     HooksDhcpv4SrvTest() {
+        HooksManager::getHooksManager().setTestMode(false);
 
         // Allocate new DHCPv6 Server
         srv_ = new NakedDhcpv4Srv(0);
@@ -129,8 +130,8 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_decline");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host4_identifier");
 
-        HooksManager::getHooksManager().setSharedCalloutManager();
         delete srv_;
+        HooksManager::getHooksManager().setTestMode(false);
     }
 
     /// @brief creates an option with specified option code
@@ -2377,13 +2378,11 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Libraries will be reloaded later
-    HooksManager::getHooksManager().setSharedCalloutManager(
-        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
-
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_decline", lease4_decline_callout));
+
+    HooksManager::getHooksManager().setTestMode(true);
 
     // Conduct the actual DORA + Decline.
     Dhcp4Client client(Dhcp4Client::SELECTING);
@@ -2430,13 +2429,11 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Libraries will be reloaded later
-    HooksManager::getHooksManager().setSharedCalloutManager(
-        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
-
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_decline", lease4_decline_skip_callout));
+
+    HooksManager::getHooksManager().setTestMode(true);
 
     // Conduct the actual DORA + Decline. The DECLINE should fail, as the
     // hook will set the status to SKIP.
@@ -2482,13 +2479,11 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Libraries will be reloaded later
-    HooksManager::getHooksManager().setSharedCalloutManager(
-        boost::shared_ptr<CalloutManager>(new CalloutManager(0)));
-
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_decline", lease4_decline_drop_callout));
+
+    HooksManager::getHooksManager().setTestMode(true);
 
     // Conduct the actual DORA + Decline. The DECLINE should fail, as the
     // hook will set the status to DROP.
