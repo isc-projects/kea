@@ -98,6 +98,13 @@ a new query type and a new index had to be added.
 @section lease_cmdsMTCompatibility Multi-Threading Compatibility
 
 The Lease Commands Hook library is compatible with multi-threading.
-All commands are executed inside a critical section, i.e. with threads stopped.
+All commands protect the resource they touch so with split spaces
+a race with the allocation engine should not be possible when
+called by a high availability server with a sane configuration.
+When a race is detected a critical section is used.
+
+Note an expired lease reclamation is called only from the periodic
+process or by a command, in both cases it is executed by the main
+thread so the same thread than lease commands.
 
 */

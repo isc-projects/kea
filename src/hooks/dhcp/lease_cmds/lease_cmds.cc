@@ -16,6 +16,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
+#include <dhcpsrv/resource_handler.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/sanity_checker.h>
 #include <dhcp/duid.h>
@@ -392,7 +393,28 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
             lease4 = parser.parse(config, cmd_args_, force_create);
 
             if (lease4) {
-                if (!LeaseMgrFactory::instance().addLease(lease4)) {
+                bool success;
+                if (MultiThreadingMgr::instance().getMode() &&
+                    !MultiThreadingMgr::instance().isInCriticalSection()) {
+                    bool use_cs = false;
+                    {
+                        // Try to avoid a race.
+                        ResourceHandler4 resource_handler;
+                        use_cs = !resource_handler.tryLock4(lease4->addr_);
+                        if (!use_cs) {
+                            success = LeaseMgrFactory::instance().addLease(lease4);
+                        }
+                    }
+                    if (use_cs) {
+                        // Failed to avoid the race.
+                        MultiThreadingCriticalSection cs;
+                        success = LeaseMgrFactory::instance().addLease(lease4);
+                    }
+                } else {
+                    // No multi-threading.
+                    success = LeaseMgrFactory::instance().addLease(lease4);
+                }
+                if (!success) {
                     isc_throw(db::DuplicateEntry, "IPv4 lease already exists.");
                 }
                 resp << "Lease for address " << lease4->addr_.toText()
@@ -404,7 +426,29 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
             lease6 = parser.parse(config, cmd_args_, force_create);
 
             if (lease6) {
-                if (!LeaseMgrFactory::instance().addLease(lease6)) {
+                bool success;
+                if (MultiThreadingMgr::instance().getMode() &&
+                    !MultiThreadingMgr::instance().isInCriticalSection()) {
+                    bool use_cs = false;
+                    {
+                        // Try to avoid a race.
+                        ResourceHandler resource_handler;
+                        use_cs = !resource_handler.tryLock(lease6->type_,
+                                                           lease6->addr_);
+                        if (!use_cs) {
+                            success = LeaseMgrFactory::instance().addLease(lease6);
+                        }
+                    }
+                    if (use_cs) {
+                        // Failed to avoid the race.
+                        MultiThreadingCriticalSection cs;
+                        success = LeaseMgrFactory::instance().addLease(lease6);
+                    }
+                } else {
+                    // No multi-threading.
+                    success = LeaseMgrFactory::instance().addLease(lease6);
+                }
+                if (!success) {
                     isc_throw(db::DuplicateEntry, "IPv6 lease already exists.");
                 }
                 if (lease6->type_ == Lease::TYPE_NA) {
@@ -1121,6 +1165,23 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
     return (0);
 }
 
+namespace { // anonymous namespace.
+
+void updateOrAdd(Lease6Ptr lease) {
+    try {
+        // Try to update.
+        LeaseMgrFactory::instance().updateLease6(lease);
+
+    } catch (const NoSuchLease& ex) {
+        // Lease to be updated not found, so add it.
+        if (!LeaseMgrFactory::instance().addLease(lease)) {
+            isc_throw(db::DuplicateEntry, "update then add lost race");
+        }
+    }
+}
+
+} // end of anonymous namespace.
+
 int
 LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
     try {
@@ -1250,13 +1311,25 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                 Lease6Parser parser;
 
                 try {
-                    try {
-                        // Try to update.
-                        LeaseMgrFactory::instance().updateLease6(lease);
-
-                    } catch (const NoSuchLease& ex) {
-                        // Lease to be updated not found, so add it.
-                        LeaseMgrFactory::instance().addLease(lease);
+                    if (MultiThreadingMgr::instance().getMode() &&
+                        !MultiThreadingMgr::instance().isInCriticalSection()) {
+                        bool use_cs = false;
+                        {
+                            // Try to avoid a race.
+                            ResourceHandler resource_handler;
+                            use_cs = !resource_handler.tryLock(lease->type_,
+                                                               lease->addr_);
+                            if (!use_cs) {
+                                updateOrAdd(lease);
+                            }
+                        }
+                        if (use_cs) {
+                            // Failed to avoid the race.
+                            MultiThreadingCriticalSection cs;
+                            updateOrAdd(lease);
+                        }
+                    } else {
+                        updateOrAdd(lease);
                     }
 
                     ++success_count;
@@ -1368,6 +1441,21 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
     return (0);
 }
 
+namespace { // anonymous namepace.
+
+bool addOrUpdate4(Lease4Ptr lease, bool force_create) {
+    if (force_create && !LeaseMgrFactory::instance().getLease4(lease->addr_)) {
+        if (!LeaseMgrFactory::instance().addLease(lease)) {
+            isc_throw(db::DuplicateEntry, "get then add lost race");
+        }
+        return (true);
+    }
+    LeaseMgrFactory::instance().updateLease4(lease);
+    return (false);
+}
+
+} // end of anonymous namespace.
+
 int
 LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
     try {
@@ -1387,12 +1475,30 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
         // The parser does sanity checks (if the address is in scope, if
         // subnet-id is valid, etc)
         lease4 = parser.parse(config, cmd_args_, force_create);
-        if (force_create && !LeaseMgrFactory::instance().getLease4(lease4->addr_)) {
-            LeaseMgrFactory::instance().addLease(lease4);
-            setSuccessResponse(handle, "IPv4 lease added.");
-
+        bool added;
+        if (MultiThreadingMgr::instance().getMode() &&
+            !MultiThreadingMgr::instance().isInCriticalSection()) {
+            bool use_cs = false;
+            {
+                // Try to avoid a race.
+                ResourceHandler4 resource_handler;
+                use_cs = !resource_handler.tryLock4(lease4->addr_);
+                if (use_cs) {
+                    added = addOrUpdate4(lease4, force_create);
+                }
+            }
+            if (use_cs) {
+                // Failed to avoid the race.
+                MultiThreadingCriticalSection cs;
+                added = addOrUpdate4(lease4, force_create);
+            }
         } else {
-            LeaseMgrFactory::instance().updateLease4(lease4);
+            // No multi-threading.
+            added = addOrUpdate4(lease4, force_create);
+        }
+        if (added) {
+            setSuccessResponse(handle, "IPv4 lease added.");
+        } else {
             setSuccessResponse(handle, "IPv4 lease updated.");
         }
     } catch (const std::exception& ex) {
@@ -1402,6 +1508,22 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
 
     return (0);
 }
+
+namespace { // anonymous namepace.
+
+bool addOrUpdate6(Lease6Ptr lease, bool force_create) {
+    if (force_create &&
+        !LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_)) {
+        if (!LeaseMgrFactory::instance().addLease(lease)) {
+            isc_throw(db::DuplicateEntry, "get then add lost race");
+        }
+        return (true);
+    }
+    LeaseMgrFactory::instance().updateLease6(lease);
+    return (false);
+}
+
+} // end of anonymous namespace.
 
 int
 LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
@@ -1422,12 +1544,30 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
         // The parser does sanity checks (if the address is in scope, if
         // subnet-id is valid, etc)
         lease6 = parser.parse(config, cmd_args_, force_create);
-        if (force_create && !LeaseMgrFactory::instance().getLease6(lease6->type_,
-                                                                   lease6->addr_)) {
-            LeaseMgrFactory::instance().addLease(lease6);
+        bool added;
+        if (MultiThreadingMgr::instance().getMode() &&
+            !MultiThreadingMgr::instance().isInCriticalSection()) {
+            bool use_cs = false;
+            {
+                // Try to avoid a race.
+                ResourceHandler resource_handler;
+                use_cs = !resource_handler.tryLock(lease6->type_,
+                                                   lease6->addr_);
+                if (!use_cs) {
+                    added = addOrUpdate6(lease6, force_create);
+                }
+            }
+            if (use_cs) {
+                // Failed to avoid the race.
+                MultiThreadingCriticalSection cs;
+                added = addOrUpdate6(lease6, force_create);
+            }
+        } else {
+            added = addOrUpdate6(lease6, force_create);
+        }
+        if (added) {
             setSuccessResponse(handle, "IPv6 lease added.");
         } else {
-            LeaseMgrFactory::instance().updateLease6(lease6);
             setSuccessResponse(handle, "IPv6 lease updated.");
         }
     } catch (const std::exception& ex) {
@@ -1724,13 +1864,11 @@ LeaseCmdsImpl::createFailedLeaseMap(const Lease::Type& lease_type,
 
 int
 LeaseCmds::leaseAddHandler(CalloutHandle& handle) {
-    MultiThreadingCriticalSection cs;
     return (impl_->leaseAddHandler(handle));
 }
 
 int
 LeaseCmds::lease6BulkApplyHandler(CalloutHandle& handle) {
-    MultiThreadingCriticalSection cs;
     return (impl_->lease6BulkApplyHandler(handle));
 }
 
@@ -1771,25 +1909,21 @@ LeaseCmds::leaseGetByHostnameHandler(hooks::CalloutHandle& handle) {
 
 int
 LeaseCmds::lease4DelHandler(CalloutHandle& handle) {
-    MultiThreadingCriticalSection cs;
     return (impl_->lease4DelHandler(handle));
 }
 
 int
 LeaseCmds::lease6DelHandler(CalloutHandle& handle) {
-    MultiThreadingCriticalSection cs;
     return (impl_->lease6DelHandler(handle));
 }
 
 int
 LeaseCmds::lease4UpdateHandler(CalloutHandle& handle) {
-    MultiThreadingCriticalSection cs;
     return (impl_->lease4UpdateHandler(handle));
 }
 
 int
 LeaseCmds::lease6UpdateHandler(CalloutHandle& handle) {
-    MultiThreadingCriticalSection cs;
     return (impl_->lease6UpdateHandler(handle));
 }
 
