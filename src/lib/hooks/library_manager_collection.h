@@ -8,7 +8,6 @@
 #define LIBRARY_MANAGER_COLLECTION_H
 
 #include <exceptions/exceptions.h>
-#include <hooks/hooks_manager.h>
 
 #include <boost/shared_ptr.hpp>
 #include <hooks/libinfo.h>
@@ -75,9 +74,7 @@ public:
     /// @param libraries List of libraries that this collection will manage.
     ///        The order of the libraries is important. It holds the library
     ///        names and its configuration parameters.
-    LibraryManagerCollection(const HookLibsCollection& libraries,
-                             const boost::shared_ptr<CalloutManager>& manager =
-                             HooksManager::getHooksManager().getSharedCalloutManager());
+    LibraryManagerCollection(const HookLibsCollection& libraries);
 
     /// @brief Destructor
     ///
@@ -155,8 +152,6 @@ protected:
     void unloadLibraries();
 
 private:
-    /// Shared Callout manager to be associated with the libraries
-    boost::shared_ptr<CalloutManager>               shared_callout_manager_;
 
     /// Vector of library names
     std::vector<std::string>                        library_names_;

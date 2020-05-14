@@ -24,9 +24,12 @@ using namespace std;
 namespace isc {
 namespace hooks {
 
+boost::shared_ptr<CalloutManager> HooksManager::shared_callout_manager_;
+bool HooksManager::loaded_;
+
 // Constructor
 
-HooksManager::HooksManager() : loaded_(false) {
+HooksManager::HooksManager() {
     init();
 }
 
@@ -94,7 +97,7 @@ HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
     unloadLibrariesInternal(false);
 
     // Create the library manager and load the libraries.
-    lm_collection_.reset(new LibraryManagerCollection(libraries, shared_callout_manager_));
+    lm_collection_.reset(new LibraryManagerCollection(libraries));
     bool status = lm_collection_->loadLibraries();
 
     if (status) {
@@ -178,7 +181,7 @@ HooksManager::init() {
     // Nothing present, so create the collection with any empty set of
     // libraries, and get the CalloutManager.
     HookLibsCollection libraries;
-    lm_collection_.reset(new LibraryManagerCollection(libraries, shared_callout_manager_));
+    lm_collection_.reset(new LibraryManagerCollection(libraries));
     lm_collection_->loadLibraries();
     callout_manager_ = lm_collection_->getCalloutManager();
 }
@@ -228,7 +231,7 @@ void
 HooksManager::setSharedCalloutManager(boost::shared_ptr<CalloutManager> manager) {
     shared_callout_manager_ = manager;
     if (!loaded_) {
-        init();
+        unloadLibraries();
     }
 }
 

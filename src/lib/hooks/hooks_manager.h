@@ -229,7 +229,7 @@ public:
     /// @brief Get the shared callout manager
     ///
     /// @return A reference to the shared callout manager
-    boost::shared_ptr<CalloutManager> getSharedCalloutManager();
+    static boost::shared_ptr<CalloutManager> getSharedCalloutManager();
 
     /// @brief Set the shared callout manager
     ///
@@ -238,8 +238,8 @@ public:
     /// not yet been called.
     ///
     /// @param manager The shared callout manager
-    void setSharedCalloutManager(boost::shared_ptr<CalloutManager> manager =
-                                 boost::shared_ptr<CalloutManager>());
+    static void setSharedCalloutManager(boost::shared_ptr<CalloutManager> manager =
+                                        boost::shared_ptr<CalloutManager>());
 
     /// @brief Park an object (packet).
     ///
@@ -501,10 +501,10 @@ private:
     boost::shared_ptr<CalloutManager> callout_manager_;
 
     /// Shared callout manager to survive library reloads.
-    boost::shared_ptr<CalloutManager> shared_callout_manager_;
+    static boost::shared_ptr<CalloutManager> shared_callout_manager_;
 
     /// Loaded flag to indicate if @ref loadLibraries has been called
-    bool loaded_;
+    static bool loaded_;
 };
 
 } // namespace util
