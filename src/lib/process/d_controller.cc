@@ -116,7 +116,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
         .arg(VERSION)
         .arg(PACKAGE_VERSION_TYPE);
     // When it is not a stable version dissuade use in production.
-    if (string(PACKAGE_VERSION_TYPE) == "development") {
+    if (std::string(PACKAGE_VERSION_TYPE) == "development") {
         LOG_WARN(dctl_logger, DCTL_DEVELOPMENT_VERSION);
     }
     try {
