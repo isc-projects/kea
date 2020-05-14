@@ -978,19 +978,13 @@ HAService::processStatusGet() const {
     local->set("scopes", list);
     ha_servers->set("local", local);
 
+    // Do not include remote server information if this is a backup server.
+    if (config_->getThisServerConfig()->getRole() == HAConfig::PeerConfig::BACKUP) {
+        return (ha_servers);
+    }
+
     // Remote part
-    ElementPtr remote = Element::createMap();
-
-    // Add the in-touch boolean flag to indicate whether there was any
-    // communication between the HA peers. Based on that, the user
-    // may determine if the status returned for the peer is based on
-    // the heartbeat or is to be determined.
-    auto in_touch = (communication_state_->getPartnerState() > 0);
-    remote->set("in-touch", Element::create(in_touch));
-
-    auto age = in_touch ?
-        static_cast<long long int>(communication_state_->getDurationInMillisecs() / 1000) : 0;
-    remote->set("age", Element::create(age));
+    ElementPtr remote = communication_state_->getReport();
 
     try {
         role = config_->getFailoverPeerConfig()->getRole();
@@ -1000,22 +994,6 @@ HAService::processStatusGet() const {
     } catch (...) {
         remote->set("role", Element::create(std::string()));
     }
-
-    try {
-        state = getPartnerState();
-        remote->set("last-state", Element::create(stateToString(state)));
-
-    } catch (...) {
-        remote->set("last-state", Element::create(std::string()));
-    }
-
-    // Remote server's scopes.
-    scopes = communication_state_->getPartnerScopes();
-    list = Element::createList();
-    for (auto scope : scopes) {
-        list->add(Element::create(scope));
-    }
-    remote->set("last-scopes", list);
     ha_servers->set("remote", remote);
 
     return (ha_servers);
@@ -1136,6 +1114,11 @@ HAService::asyncSendHeartbeat() {
                 // We were unable to retrieve partner's state, so let's mark it
                 // as unavailable.
                 communication_state_->setPartnerState("unavailable");
+                // Log if the communication is interrupted.
+                if (communication_state_->isCommunicationInterrupted()) {
+                    LOG_WARN(ha_logger, HA_COMMUNICATION_INTERRUPTED)
+                        .arg(partner_config->getName());
+                }
             }
 
             // Whatever the result of the heartbeat was, the state machine needs

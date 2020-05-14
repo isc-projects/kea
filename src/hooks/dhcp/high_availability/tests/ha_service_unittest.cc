@@ -1080,7 +1080,12 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
         "        \"in-touch\": false,"
         "        \"role\": \"standby\","
         "        \"last-scopes\": [ ],"
-        "        \"last-state\": \"\""
+        "        \"last-state\": \"\","
+        "        \"communication-interrupted\": false,"
+        "        \"connecting-clients\": 0,"
+        "        \"unacked-clients\": 0,"
+        "        \"unacked-clients-left\": 0,"
+        "        \"analyzed-packets\": 0"
         "    }"
         "}";
     EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));
@@ -1128,7 +1133,12 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
         "        \"in-touch\": false,"
         "        \"role\": \"primary\","
         "        \"last-scopes\": [ ],"
-        "        \"last-state\": \"\""
+        "        \"last-state\": \"\","
+        "        \"communication-interrupted\": false,"
+        "        \"connecting-clients\": 0,"
+        "        \"unacked-clients\": 0,"
+        "        \"unacked-clients-left\": 0,"
+        "        \"analyzed-packets\": 0"
         "    }"
         "}";
     EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));
@@ -3124,7 +3134,12 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
         "        \"in-touch\": true,"
         "        \"role\": \"secondary\","
         "        \"last-scopes\": [ \"server1\", \"server2\" ],"
-        "        \"last-state\": \"ready\""
+        "        \"last-state\": \"ready\","
+        "        \"communication-interrupted\": false,"
+        "        \"connecting-clients\": 0,"
+        "        \"unacked-clients\": 0,"
+        "        \"unacked-clients-left\": 0,"
+        "        \"analyzed-packets\": 0"
         "    }"
         "}";
     EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));

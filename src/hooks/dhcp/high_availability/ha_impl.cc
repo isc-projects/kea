@@ -277,8 +277,17 @@ HAImpl::commandProcessed(hooks::CalloutHandle& callout_handle) {
         // Add the ha servers info to arguments.
         ElementPtr mutable_resp_args =
             boost::const_pointer_cast<Element>(resp_args);
+
+        /// @todo Today we support only one HA relationship per Kea server.
+        /// In the future there will be more of them. Therefore we enclose
+        /// our sole relationship in a list.
+        auto ha_relationships = Element::createList();
+        auto ha_relationship = Element::createMap();
         ConstElementPtr ha_servers = service_->processStatusGet();
-        mutable_resp_args->set("ha-servers", ha_servers);
+        ha_relationship->set("ha-servers", ha_servers);
+        ha_relationship->set("ha-mode", Element::create(HAConfig::HAModeToString(config_->getHAMode())));
+        ha_relationships->add(ha_relationship);
+        mutable_resp_args->set("high-availability", ha_relationships);
     }
 }
 

@@ -1243,22 +1243,47 @@ the HA status of two load balancing servers:
            "pid": 1234,
            "uptime": 3024,
            "reload": 1111,
-           "ha-servers": {
-               "local": {
-                   "role": "primary",
-                   "scopes": [ "server1" ],
-                   "state": "load-balancing"
-               },
-                "remote": {
-                   "age": 10,
-                   "in-touch": true,
-                   "role": "secondary",
-                   "last-scopes": [ "server2" ],
-                   "last-state": "load-balancing"
+           "high-availability": [
+               {
+                   "ha-mode": "load-balancing",
+                   "ha-servers": {
+                       "local": {
+                           "role": "primary",
+                           "scopes": [ "server1" ],
+                           "state": "load-balancing"
+                       },
+                       "remote": {
+                           "age": 10,
+                           "in-touch": true,
+                           "role": "secondary",
+                           "last-scopes": [ "server2" ],
+                           "last-state": "load-balancing",
+                           "communication-interrupted": true,
+                           "connecting-clients": 2,
+                           "unacked-clients": 1,
+                           "unacked-clients-left": 2,
+                           "analyzed-packets": 8
+                       }
+                   }
                }
-           }
+           ]
        }
    }
+
+The ``high-availability`` argument is a list which currently always comprises
+one element. There are plans to extend the HA implementation to facilitate
+multiple HA relationships for a single server instance. In that case, the
+returned list will comprise more elements, each describing the status of
+a different relationship in which the server participates. Currently, it
+is only one status.
+
+.. note::
+
+   In Kea 1.7.8 an incompatible change was introduced to the syntax of the
+   ``status-get`` response. Previously, the HA status for a single relationship
+   was returned within the ``arguments`` map. As of Kea 1.7.8, the returned status
+   is enclosed in the list as described above. Any existing code relying on the
+   previous syntax must be updated to work with the new Kea versions.
 
 
 The ``ha-servers`` map contains two structures: ``local`` and ``remote``. The former
@@ -1282,3 +1307,59 @@ send the ``status-get`` command to the partner server directly to check
 its current state. The ``age`` parameter specifies the number of seconds
 since the information from the partner was gathered (the age of this
 information).
+
+The ``communication-interrupted`` boolean value indicates if the server
+receiving the ``status-get`` command (local server) has been unable to
+communicate with the partner longer than the duration specified as
+``max-response-delay``. In such a situation we say that active servers are
+in the communication interrupted state or that the communication between
+them is interrupted. At this point, the local server may start monitoring
+the DHCP traffic directed to the partner to see if the partner is
+responding to this traffic. More about the failover procedure can be found
+in :ref:`ha-load-balancing-config`.
+
+The ``connecting-clients``, ``unacked-clients``, ``unacked-clients-left``
+and ``analyzed-packets`` parameters have been introduced together with the
+``communication-interrupted`` parameter in the Kea 1.7.8 release and they
+convey useful information about the state of the DHCP traffic monitoring
+in the communication interrupted state. If the server leaves the
+communication interrupted state these parameters are all reset to 0.
+
+These parameters have the following meaning in the communication interrupted
+state:
+
+-  ``connecting-clients`` - number of different clients which have attempted
+   to get a lease from the remote server. The clients are differentiated by
+   their MAC address and client identifier (in DHCPv4) or DUID (in DHCPv6).
+   This number includes both "unacked" clients (for which "secs" field or
+   "elapsed time" value exceeded the ``max-response-delay``).
+
+-  ``unacked-clients`` - number of different clients which have been considered
+   "unacked", i.e. the clients which have been trying to get the lease long
+   enough, so as the value of the "secs" field or "elapsed time" exceeded the
+   ``max-response-delay``.
+
+-  ``unacked-clients-left`` - number of additional clients which have to be
+   considered "unacked" before the server enters the partner-down state.
+   This value decreases when the ``unacked-clients`` value increases. The
+   local server will enter the ``partner-down`` state when this value
+   decreases to 0.
+
+-  ``analyzed-packets`` - total number of all packets directed to the partner
+   server and analyzed by the local server since entering the communication
+   interrupted state. It includes retransmissions from the same clients.
+
+Monitoring these values helps to predict when the local server will
+enter the partner-down state or why the server hasn't yet entered this
+state.
+
+The last parameter introduced in the Kea 1.7.8 release was the ``ha-mode``.
+It returns the HA mode of operation selected using the ``mode`` parameter
+in the configuration file. It can hold one of the following values:
+``load-balancing``, ``hot-standby`` or ``passive-backup``.
+
+The ``status-get`` response has the format described above only in the
+``load-balancing`` and ``hot-standby`` modes. In the ``passive-backup``
+mode the ``remote`` map is not included in the response because in this
+mode there is only one active server (local). The response comprises no
+information about the status of the backup servers.

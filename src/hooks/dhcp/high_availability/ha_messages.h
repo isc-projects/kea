@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Mon Jul 08 2019 13:20
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Mon May 18 2020 16:44
 
 #ifndef HA_MESSAGES_H
 #define HA_MESSAGES_H
@@ -17,6 +17,11 @@ extern const isc::log::MessageID HA_BUFFER6_RECEIVE_NOT_FOR_US;
 extern const isc::log::MessageID HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED;
 extern const isc::log::MessageID HA_BUFFER6_RECEIVE_UNPACK_FAILED;
 extern const isc::log::MessageID HA_COMMAND_PROCESSED_FAILED;
+extern const isc::log::MessageID HA_COMMUNICATION_INTERRUPTED;
+extern const isc::log::MessageID HA_COMMUNICATION_INTERRUPTED_CLIENT4;
+extern const isc::log::MessageID HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED;
+extern const isc::log::MessageID HA_COMMUNICATION_INTERRUPTED_CLIENT6;
+extern const isc::log::MessageID HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED;
 extern const isc::log::MessageID HA_CONFIGURATION_FAILED;
 extern const isc::log::MessageID HA_CONFIGURATION_SUCCESSFUL;
 extern const isc::log::MessageID HA_CONFIG_AUTO_FAILOVER_DISABLED;

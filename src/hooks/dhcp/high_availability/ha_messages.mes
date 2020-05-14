@@ -58,6 +58,53 @@ reason for failure.
 This error message is issued when the callout for the command_processed hook
 point failed. The argument contains a reason for the error.
 
+% HA_COMMUNICATION_INTERRUPTED communication with %1 is interrupted
+This warning message is issued by the server which discovered that the
+communication to the active partner has been interrupted for a time
+period longer than the configured heartbeat-delay time. At this stage
+the server starts the failover procedure by monitoring the DHCP traffic
+sent to the partner and checking whether the partner server responds to
+this traffic. If the max-unacked-clients value is set to 0 such
+verification is disabled in which case the server will transition to
+the partner-down state.
+
+% HA_COMMUNICATION_INTERRUPTED_CLIENT4 %1: new client attempting to get a lease from the partner
+This informational message is issued when the surviving server observes
+a DHCP packet sent to the partner with which the commuication is interrupted.
+The client whose packet is observed is not yet considered "unacked" because
+the secs field value does not exceed the configured threshold specified
+with max-ack-delay.
+
+% HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED %1: partner server failed to respond, %2 clients unacked so far, %3 clients left before transitioning to the partner-down state
+This informational message is issued when the surviving server determines
+that its partner failed to respond to the DHCP query and that this client
+is considered to not be served by the partner. The surviving server counts
+such clients and if the number of such clients exceeds the max-unacked-clients
+threshold, the server will transition to the partner-down state. The first
+argument contains client identification information. The second argument
+specifies the number of clients to which the server has failed to respond.
+The third argument specifies the number of additional clients which, if not
+provisioned, will cause the server to transition to the partner-down state.
+
+% HA_COMMUNICATION_INTERRUPTED_CLIENT6 %1: new client attempting to get a lease from the partner
+This informational message is issued when the surviving server observes
+a DHCP packet sent to the partner with which the commuication is interrupted.
+The client whose packet is observed is not yet considered "unacked" because
+the elapsed time option value does not exceed the configured threshold
+specified with max-ack-delay. The sole argument specifies client
+identification information.
+
+% HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED %1: partner server failed to respond, %2 clients unacked so far, %3 clients left before transitioning to the partner-down state
+This informational message is issued when the surviving server determines
+that its partner failed to respond to the DHCP query and that this client
+is considered to not be served by the partner. The surviving server counts
+such clients and if the number of such clients exceeds the max-unacked-clients
+threshold, the server will transition to the partner-down state. The first
+argument contains client identification information. The second argument
+specifies the number of clients to which the server has failed to respond.
+The third argument specifies the number of additional clients which, if not
+provisioned, will cause the server to transition to the partner-down state.
+
 % HA_CONFIGURATION_FAILED failed to configure High Availability hooks library: %1
 This error message is issued when there is an error configuring the HA hooks
 library. The argument provides the detailed error message.
