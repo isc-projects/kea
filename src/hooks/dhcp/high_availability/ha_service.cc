@@ -963,7 +963,6 @@ void
 HAService::updatePendingRequestInternal(QueryPtrType& query) {
     if (pending_requests_.count(query) == 0) {
         pending_requests_[query] = 1;
-
     } else {
         ++pending_requests_[query];
     }

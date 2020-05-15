@@ -933,7 +933,7 @@ protected:
     /// @param [out] parking_lot Parking lot where the query is parked.
     /// This method uses this handle to unpark the packet when all asynchronous
     /// requests have been completed.
-    /// @return True when all lease updates are complete, false otherwise.
+    /// @return When all lease updates are complete returns true, false otherwise.
     template<typename QueryPtrType>
     bool leaseUpdateComplete(QueryPtrType& query,
                              const hooks::ParkingLotHandlePtr& parking_lot);
@@ -962,18 +962,22 @@ private:
     ///  - if there was one remove the query from the map
     ///  - return true
     ///
+    /// Should be called in a thread safe context.
+    ///
     /// @tparam QueryPtrType Type of the pointer to the DHCP client's message,
     /// i.e. Pkt4Ptr or Pkt6Ptr.
     /// @param query Pointer to the DHCP client's query.
     /// @param [out] parking_lot Parking lot where the query is parked.
     /// This method uses this handle to unpark the packet when all asynchronous
     /// requests have been completed.
-    /// @return True when all lease updates are complete, false otherwise.
+    /// @return When all lease updates are complete returns true, false otherwise.
     template<typename QueryPtrType>
     bool leaseUpdateCompleteInternal(QueryPtrType& query,
                                      const hooks::ParkingLotHandlePtr& parking_lot);
 
     /// @brief Update pending request counter for this query.
+    ///
+    /// Should be called in a thread safe context.
     ///
     /// @tparam QueryPtrType Type of the pointer to the DHCP client's message,
     /// i.e. Pkt4Ptr or Pkt6Ptr.
