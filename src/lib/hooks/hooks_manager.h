@@ -311,11 +311,19 @@ public:
         getHooksManager().clearParkingLotsInternal();
     }
 
-    /// @brief Set test mode which enables the tests to resister callouts before
-    /// calling @ref loadLibraries and the @ref callout_manager_ is preserved.
+    /// @brief Set test mode
     ///
-    /// @param mode the flag which enables or disabled @ref test_mode_.
+    /// If enabled by unit tests will permit to register callouts before calling
+    /// @ref loadLibraries and the @ref callout_manager_ will survive.
+    ///
+    /// @param mode the test mode flag which enables or disabled the
+    /// functionality.
     void setTestMode(bool mode);
+
+    /// @brief Get test mode
+    ///
+    /// @return the test mode flag.
+    bool getTestMode() const;
 
 private:
 
@@ -410,8 +418,8 @@ private:
 
     /// @brief Unload libraries
     ///
-    /// @param initialize flag to indicate if intializing or just resetting the
-    /// @ref lm_collection_ and @ref callout_manager_
+    /// @param initialize flag to indicate if initializing or just resetting the
+    /// @ref lm_collection_ and @ref callout_manager_.
     void unloadLibrariesInternal(bool initialize = true);
 
     /// @brief Are callouts present?
@@ -492,8 +500,8 @@ private:
     boost::shared_ptr<CalloutManager> callout_manager_;
 
     /// Test flag to keep @ref callout_manager_ when calling @ref loadLibraries
-    /// from unittests (called by @ref configureDhcp[46]Server)
-    static bool test_mode_;
+    /// from unit tests (called by @ref configureDhcp[46]Server).
+    bool test_mode_;
 };
 
 } // namespace util

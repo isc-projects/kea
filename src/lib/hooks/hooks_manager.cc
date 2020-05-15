@@ -26,7 +26,7 @@ namespace hooks {
 
 // Constructor
 
-HooksManager::HooksManager() {
+HooksManager::HooksManager() : test_mode_(false) {
     init();
 }
 
@@ -127,6 +127,11 @@ HooksManager::unloadLibrariesInternal(bool initialize) {
     if (initialize) {
         init();
     } else {
+        // The order of deletion does not matter here, as each library manager
+        // holds its own pointer to the callout manager.  However, we may as
+        // well delete the library managers first: if there are no other
+        // references to the callout manager, the second statement will delete
+        // it, which may ease debugging.
         lm_collection_.reset();
         callout_manager_.reset();
     }
@@ -218,10 +223,14 @@ HooksManager::validateLibraries(const std::vector<std::string>& libraries) {
     return (LibraryManagerCollection::validateLibraries(libraries));
 }
 
-bool HooksManager::test_mode_;
+void
+HooksManager::setTestMode(bool mode) {
+    getHooksManager().test_mode_ = mode;
+}
 
-void HooksManager::setTestMode(bool mode) {
-    test_mode_ = mode;
+bool
+HooksManager::getTestMode() const {
+    return (getHooksManager().test_mode_);
 }
 
 } // namespace util

@@ -77,9 +77,7 @@ LibraryManagerCollection::loadLibraries() {
     // where the hooks-libraries clause was empty and is not changed), try
     // to re-use the existing callout manager (so retaining registered pre-
     // and post-library callouts).
-    if (!library_names_.empty() || !callout_manager_) {
-        callout_manager_.reset(new CalloutManager(library_names_.size()));
-    }
+    callout_manager_.reset(new CalloutManager(library_names_.size()));
 
     // Now iterate through the libraries are load them one by one.  We'll
     for (size_t i = 0; i < library_names_.size(); ++i) {

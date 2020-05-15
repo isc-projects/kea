@@ -439,9 +439,9 @@ TEST_F(HooksManagerTest, PrePostCalloutTest) {
 }
 
 // Test with test mode enabled and the pre- and post- callout functions survive
-// a reload with an empty list of libraries
+// a reload
 
-TEST_F(HooksManagerTest, TestModePrePostSurviveLoadListEmpty) {
+TEST_F(HooksManagerTest, TestModeEnabledPrePostSurviveLoad) {
 
     HookLibsCollection library_names;
 
@@ -482,10 +482,10 @@ TEST_F(HooksManagerTest, TestModePrePostSurviveLoadListEmpty) {
     EXPECT_EQ(2054, result);
 }
 
-// Test with test mode enabled and the pre- and post- callout functions survive
-// a reload with a not empty list of libraries
+// Test with test mode disabled and the pre- and post- callout functions do not
+// survive a reload
 
-TEST_F(HooksManagerTest, TestModePrePostSurviveLoadListNotEmpty) {
+TEST_F(HooksManagerTest, TestModeDisabledPrePostDoNotSurviveLoad) {
 
     HookLibsCollection library_names;
     library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
@@ -497,7 +497,7 @@ TEST_F(HooksManagerTest, TestModePrePostSurviveLoadListNotEmpty) {
     HooksManager::postCalloutsLibraryHandle().registerCallout("hookpt_two",
                                                               testPostCallout);
 
-    HooksManager::getHooksManager().setTestMode(true);
+    HooksManager::getHooksManager().setTestMode(false);
 
     // With the pre- and post- callouts above, the result expected is
     //
@@ -522,16 +522,16 @@ TEST_F(HooksManagerTest, TestModePrePostSurviveLoadListNotEmpty) {
 
     HooksManager::callCallouts(hookpt_two_index_, *handle);
 
-    // Expect same value i.e. 1027 * 2
+    // Expect no change so result = 0
     result = 0;
     handle->getArgument("result", result);
-    EXPECT_EQ(2054, result);
+    EXPECT_EQ(0, result);
 }
 
-// Test with a shared manager the pre- and post- callout functions don't
-// survive a reload if the shared manager is initialized too late.
+// Test with test mode enabled and the pre- and post- callout functions do not
+// survive a reload if the test mode is set too late.
 
-TEST_F(HooksManagerTest, TestModePrePostTooLate) {
+TEST_F(HooksManagerTest, TestModeEnabledTooLatePrePostDoNotSurvive) {
 
     HookLibsCollection library_names;
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
