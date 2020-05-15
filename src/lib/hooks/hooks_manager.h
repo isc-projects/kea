@@ -310,7 +310,8 @@ public:
     /// @brief Set test mode
     ///
     /// If enabled by unit tests will permit to register callouts before calling
-    /// @ref loadLibraries and the @ref callout_manager_ will survive.
+    /// @ref loadLibraries which will return immediately without changing
+    /// current internal state.
     ///
     /// @param mode the test mode flag which enables or disabled the
     /// functionality.
