@@ -292,6 +292,18 @@ CommunicationState::getReport() const {
         list->add(Element::create(scope));
     }
     report->set("last-scopes", list);
+    report->set("communication-interrupted",
+                Element::create(isCommunicationInterrupted()));
+    report->set("connecting-clients", Element::create(static_cast<long long>(getConnectingClientsCount())));
+    report->set("unacked-clients", Element::create(static_cast<long long>(getUnackedClientsCount())));
+
+    long long unacked_clients_left = 0;
+    if (isCommunicationInterrupted() && (config_->getMaxUnackedClients() > getUnackedClientsCount())) {
+        unacked_clients_left = static_cast<long long>(config_->getMaxUnackedClients() -
+                                                      getUnackedClientsCount());
+    }
+    report->set("unacked-clients-left", Element::create(unacked_clients_left));
+    report->set("analyzed-packets", Element::create(static_cast<long long>(getAnalyzedMessagesCount())));
 
     return (report);
 }

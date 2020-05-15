@@ -503,8 +503,16 @@ TEST_F(CommunicationStateTest, getReport) {
     state_.setPartnerScopes(scopes);
 
     state_.poke();
-    state_.modifyPokeTime(-10);
 
+    // Simulate the communications interrupted state.
+    state_.modifyPokeTime(-100);
+
+    // Send two DHCP packets of which one has secs value beyond the threshold and
+    // the other one lower than the threshold.
+    ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, 0, 0, 5)));
+    ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, 1, 0, 15)));
+
+    // Get the report.
     auto report = state_.getReport();
     ASSERT_TRUE(report);
 
@@ -518,7 +526,7 @@ TEST_F(CommunicationStateTest, getReport) {
     auto age = report->get("age");
     ASSERT_TRUE(age);
     EXPECT_EQ(Element::integer, age->getType());
-    EXPECT_GE(age->intValue(), 10);
+    EXPECT_GE(age->intValue(), 100);
 
     auto last_state = report->get("last-state");
     ASSERT_TRUE(last_state);
@@ -531,6 +539,31 @@ TEST_F(CommunicationStateTest, getReport) {
     EXPECT_EQ(1, last_scopes->listValue().size());
     EXPECT_EQ(Element::string, last_scopes->listValue()[0]->getType());
     EXPECT_EQ("server1", last_scopes->listValue()[0]->stringValue());
+
+    auto comm_interrupted = report->get("communication-interrupted");
+    ASSERT_TRUE(comm_interrupted);
+    EXPECT_EQ(Element::boolean, comm_interrupted->getType());
+    EXPECT_TRUE(comm_interrupted->boolValue());
+
+    auto connecting_clients = report->get("connecting-clients");
+    ASSERT_TRUE(connecting_clients);
+    EXPECT_EQ(Element::integer, connecting_clients->getType());
+    EXPECT_EQ(2, connecting_clients->intValue());
+
+    auto unacked_clients = report->get("unacked-clients");
+    ASSERT_TRUE(unacked_clients);
+    EXPECT_EQ(Element::integer, unacked_clients->getType());
+    EXPECT_EQ(1, unacked_clients->intValue());
+
+    auto unacked_clients_left = report->get("unacked-clients-left");
+    ASSERT_TRUE(unacked_clients_left);
+    EXPECT_EQ(Element::integer, unacked_clients_left->getType());
+    EXPECT_EQ(9, unacked_clients_left->intValue());
+
+    auto analyzed_packets = report->get("analyzed-packets");
+    ASSERT_TRUE(analyzed_packets);
+    EXPECT_EQ(Element::integer, analyzed_packets->getType());
+    EXPECT_EQ(2, analyzed_packets->intValue());
 }
 
 // Tests unusual values used to create the report.
@@ -559,6 +592,26 @@ TEST_F(CommunicationStateTest, getReportDefaultValues) {
     ASSERT_TRUE(last_scopes);
     EXPECT_EQ(Element::list, last_scopes->getType());
     EXPECT_TRUE(last_scopes->listValue().empty());
+
+    auto comm_interrupted = report->get("communication-interrupted");
+    ASSERT_TRUE(comm_interrupted);
+    EXPECT_EQ(Element::boolean, comm_interrupted->getType());
+    EXPECT_FALSE(comm_interrupted->boolValue());
+
+    auto clients_attempting = report->get("connecting-clients");
+    ASSERT_TRUE(clients_attempting);
+    EXPECT_EQ(Element::integer, clients_attempting->getType());
+    EXPECT_EQ(0, clients_attempting->intValue());
+
+    auto clients_unacked = report->get("unacked-clients");
+    ASSERT_TRUE(clients_unacked);
+    EXPECT_EQ(Element::integer, clients_unacked->getType());
+    EXPECT_EQ(0, clients_unacked->intValue());
+
+    auto packets_analyzed = report->get("analyzed-packets");
+    ASSERT_TRUE(packets_analyzed);
+    EXPECT_EQ(Element::integer, packets_analyzed->getType());
+    EXPECT_EQ(0, packets_analyzed->intValue());
 }
 
 }
