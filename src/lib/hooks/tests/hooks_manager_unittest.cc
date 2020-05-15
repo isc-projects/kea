@@ -38,6 +38,7 @@ public:
     /// Reset the hooks manager.  The hooks manager is a singleton, so needs
     /// to be reset for each test.
     HooksManagerTest() {
+        HooksManager::getHooksManager().setTestMode(false);
         HooksManager::unloadLibraries();
     }
 
@@ -45,6 +46,7 @@ public:
     ///
     /// Unload all libraries and reset the shared manager.
     ~HooksManagerTest() {
+        HooksManager::getHooksManager().setTestMode(false);
         HooksManager::unloadLibraries();
     }
 
@@ -436,19 +438,20 @@ TEST_F(HooksManagerTest, PrePostCalloutTest) {
     EXPECT_EQ(-15, result);
 }
 
-// Test with a shared manager the pre- and post- callout functions survive
-// a reload
+// Test with test mode enabled and the pre- and post- callout functions survive
+// a reload with an empty list of libraries
 
-TEST_F(HooksManagerTest, DISABLED_PrePostCalloutShared) {
+TEST_F(HooksManagerTest, TestModePrePostSurviveLoadListEmpty) {
 
     HookLibsCollection library_names;
-
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
                                                              testPreCallout);
     HooksManager::postCalloutsLibraryHandle().registerCallout("hookpt_two",
                                                               testPostCallout);
+
+    HooksManager::getHooksManager().setTestMode(true);
 
     // With the pre- and post- callouts above, the result expected is
     //
@@ -479,10 +482,10 @@ TEST_F(HooksManagerTest, DISABLED_PrePostCalloutShared) {
     EXPECT_EQ(2054, result);
 }
 
-// Test with a shared manager the pre- and post- callout functions survive
-// a reload but not with a not empty list of libraries
+// Test with test mode enabled and the pre- and post- callout functions survive
+// a reload with a not empty list of libraries
 
-TEST_F(HooksManagerTest, DISABLED_PrePostCalloutSharedNotEmpty) {
+TEST_F(HooksManagerTest, TestModePrePostSurviveLoadListNotEmpty) {
 
     HookLibsCollection library_names;
     library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
@@ -493,6 +496,8 @@ TEST_F(HooksManagerTest, DISABLED_PrePostCalloutSharedNotEmpty) {
                                                              testPreCallout);
     HooksManager::postCalloutsLibraryHandle().registerCallout("hookpt_two",
                                                               testPostCallout);
+
+    HooksManager::getHooksManager().setTestMode(true);
 
     // With the pre- and post- callouts above, the result expected is
     //
@@ -517,16 +522,16 @@ TEST_F(HooksManagerTest, DISABLED_PrePostCalloutSharedNotEmpty) {
 
     HooksManager::callCallouts(hookpt_two_index_, *handle);
 
-    // Expect result - data_2
+    // Expect same value i.e. 1027 * 2
     result = 0;
     handle->getArgument("result", result);
-    EXPECT_EQ(-15, result);
+    EXPECT_EQ(2054, result);
 }
 
 // Test with a shared manager the pre- and post- callout functions don't
 // survive a reload if the shared manager is initialized too late.
 
-TEST_F(HooksManagerTest, DISABLED_PrePostCalloutSharedTooLate) {
+TEST_F(HooksManagerTest, TestModePrePostTooLate) {
 
     HookLibsCollection library_names;
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
@@ -554,6 +559,8 @@ TEST_F(HooksManagerTest, DISABLED_PrePostCalloutSharedTooLate) {
     // reload.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
     handle = HooksManager::createCalloutHandle();
+
+    HooksManager::getHooksManager().setTestMode(true);
 
     handle->setArgument("result", static_cast<int>(0));
     handle->setArgument("data_2", static_cast<int>(15));
