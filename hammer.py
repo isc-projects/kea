@@ -33,10 +33,6 @@ except:
     from urlparse import urljoin
 import xml.etree.ElementTree as ET
 
-# TODO:
-# - add docker provider
-#   https://developer.fedoraproject.org/tools/docker/docker-installation.html
-
 
 SYSTEMS = {
     'fedora': [
@@ -60,7 +56,10 @@ SYSTEMS = {
                '10'],
     'freebsd': ['11.2',
                 '12.0'],
-    'alpine': ['3.10']
+    'alpine': [
+        '3.10',
+        '3.11'
+    ]
 }
 
 # pylint: disable=C0326
@@ -101,14 +100,22 @@ IMAGE_TEMPLATES = {
     'freebsd-11.2-virtualbox': {'bare': 'generic/freebsd11',           'kea': 'godfryd/kea-freebsd-11.2'},
     'freebsd-12.0-virtualbox': {'bare': 'generic/freebsd12',           'kea': 'godfryd/kea-freebsd-12.0'},
     'alpine-3.10-lxc':         {'bare': 'godfryd/lxc-alpine-3.10',     'kea': 'godfryd/kea-alpine-3.10'},
+    'alpine-3.11-lxc':         {'bare': 'isc/lxc-alpine-3.11',         'kea': 'isc/kea-alpine-3.11'},
 }
+
+# NOTES
+# ** Alpine **
+# 1. Extracting rootfs is failing:
+#    It requires commenting out checking if rootfs has been extraced as it checks for file /bin/true which is a link.
+#    Comment out in ~/.vagrant.d/gems/2.4.9/gems/vagrant-lxc-1.4.3/scripts/lxc-template near 'Failed to extract rootfs'
+
 
 LXC_VAGRANTFILE_TPL = """# -*- mode: ruby -*-
 # vi: set ft=ruby :
 ENV["LC_ALL"] = "C"
 
 Vagrant.configure("2") do |config|
-  config.vm.hostname = "{name}"
+  {hostname}
 
   config.vm.box = "{image_tpl}"
   {box_version}
@@ -187,6 +194,8 @@ def get_system_revision():
                 revision = revision[0]
             elif system == 'centos':
                 revision = revision[0]
+            if not system or not revision:
+                raise Exception('fallback to /etc/os-release')
         except:
             if os.path.exists('/etc/os-release'):
                 vals = {}
@@ -498,10 +507,17 @@ class VagrantEnv(object):
             self.latest_version = None
             box_version = ""
 
+        # alpine has a problem with setting hostname so skip it
+        if system == 'alpine':
+            hostname = ''
+        else:
+            hostname = 'config.vm.hostname = "%s"' % self.name
+
         vagrantfile = vagrantfile_tpl.format(image_tpl=image_tpl,
                                              name=self.name,
                                              ccache_dir=ccache_dir,
-                                             box_version=box_version)
+                                             box_version=box_version,
+                                             hostname=hostname)
 
         with open(vagrantfile_path, "w") as f:
             f.write(vagrantfile)
@@ -1386,7 +1402,10 @@ def prepare_system_local(features, check_times):
                     'boost-libs', 'boost-dev']
 
         if 'docs' in features:
-            packages.extend(['py-sphinx', 'py-sphinx_rtd_theme'])
+            if revision == '3.10':
+                packages.extend(['py-sphinx', 'py-sphinx_rtd_theme'])
+            else:
+                packages.extend(['py3-sphinx'])
 
         if 'unittest' in features:
             _install_gtest_sources()
@@ -1738,7 +1757,11 @@ def _build_alpine_apk(system, revision, features, tarball_path, env, check_times
     execute('sudo rm -rf kea-src packages', check_times=check_times, dry_run=dry_run)
     os.makedirs('kea-src/src')
     execute('tar -zxf %s' % tarball_path, check_times=check_times, dry_run=dry_run)
-    execute('mv kea-%s/alpine/* kea-src' % pkg_version, check_times=check_times, dry_run=dry_run)
+    if revision == '3.10':
+        sys_suffix = '-3.10'
+    else:
+        sys_suffix = ''
+    execute('mv kea-%s/alpine%s/* kea-src' % (pkg_version, sys_suffix), check_times=check_times, dry_run=dry_run)
     execute('rm -rf kea-%s' % pkg_version, check_times=check_times, dry_run=dry_run)
     cmd = 'export kea_chks=`sha512sum kea-%s.tar.gz`; sed -i -e "s/KEA_CHECKSUM/${kea_chks}/" kea-src/APKBUILD' % pkg_version
     execute(cmd, check_times=check_times, dry_run=dry_run)
@@ -1917,10 +1940,6 @@ def ensure_hammer_deps():
     exitcode = execute('vagrant plugin list | grep vagrant-lxc', raise_error=False)
     if exitcode != 0:
         execute('vagrant plugin install vagrant-lxc')
-
-    exitcode = execute('vagrant plugin list | grep vagrant-alpine', raise_error=False)
-    if exitcode != 0:
-        execute('vagrant plugin install vagrant-alpine')
 
 
 class CollectCommaSeparatedArgsAction(argparse.Action):
