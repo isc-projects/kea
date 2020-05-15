@@ -494,4 +494,71 @@ TEST_F(CommunicationStateTest, logFormatClockSkew) {
     EXPECT_EQ(expected, log);
 }
 
+// Tests that the communication state report is correct.
+TEST_F(CommunicationStateTest, getReport) {
+    state_.setPartnerState("waiting");
+
+    auto scopes = Element::createList();
+    scopes->add(Element::create("server1"));
+    state_.setPartnerScopes(scopes);
+
+    state_.poke();
+    state_.modifyPokeTime(-10);
+
+    auto report = state_.getReport();
+    ASSERT_TRUE(report);
+
+    ASSERT_EQ(Element::map, report->getType());
+
+    auto in_touch = report->get("in-touch");
+    ASSERT_TRUE(in_touch);
+    EXPECT_EQ(Element::boolean, in_touch->getType());
+    EXPECT_TRUE(in_touch->boolValue());
+
+    auto age = report->get("age");
+    ASSERT_TRUE(age);
+    EXPECT_EQ(Element::integer, age->getType());
+    EXPECT_GE(age->intValue(), 10);
+
+    auto last_state = report->get("last-state");
+    ASSERT_TRUE(last_state);
+    EXPECT_EQ(Element::string, last_state->getType());
+    EXPECT_EQ("waiting", last_state->stringValue());
+
+    auto last_scopes = report->get("last-scopes");
+    ASSERT_TRUE(last_scopes);
+    EXPECT_EQ(Element::list, last_scopes->getType());
+    EXPECT_EQ(1, last_scopes->listValue().size());
+    EXPECT_EQ(Element::string, last_scopes->listValue()[0]->getType());
+    EXPECT_EQ("server1", last_scopes->listValue()[0]->stringValue());
+}
+
+// Tests unusual values used to create the report.
+TEST_F(CommunicationStateTest, getReportDefaultValues) {
+    auto report = state_.getReport();
+    ASSERT_TRUE(report);
+
+    ASSERT_EQ(Element::map, report->getType());
+
+    auto in_touch = report->get("in-touch");
+    ASSERT_TRUE(in_touch);
+    EXPECT_EQ(Element::boolean, in_touch->getType());
+    EXPECT_FALSE(in_touch->boolValue());
+
+    auto age = report->get("age");
+    ASSERT_TRUE(age);
+    EXPECT_EQ(Element::integer, age->getType());
+    EXPECT_EQ(0, age->intValue());
+
+    auto last_state = report->get("last-state");
+    ASSERT_TRUE(last_state);
+    EXPECT_EQ(Element::string, last_state->getType());
+    EXPECT_TRUE(last_state->stringValue().empty());
+
+    auto last_scopes = report->get("last-scopes");
+    ASSERT_TRUE(last_scopes);
+    EXPECT_EQ(Element::list, last_scopes->getType());
+    EXPECT_TRUE(last_scopes->listValue().empty());
+}
+
 }

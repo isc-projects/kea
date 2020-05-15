@@ -335,6 +335,15 @@ public:
     /// @brief Returns current clock skew value in the logger friendly format.
     std::string logFormatClockSkew() const;
 
+    /// @brief Returns the report about current communication state.
+    ///
+    /// This function returns a JSON map describing the state of communication
+    /// with a partner. This report is included in the response to the
+    /// status-get command.
+    ///
+    /// @return JSON element holding the report.
+    data::ElementPtr getReport() const;
+
 protected:
 
     /// @brief Pointer to the common IO service instance.

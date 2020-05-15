@@ -9,6 +9,7 @@
 #include <communication_state.h>
 #include <exceptions/exceptions.h>
 #include <ha_service_states.h>
+#include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
@@ -267,6 +268,32 @@ CommunicationState::logFormatClockSkew() const {
     }
 
     return (os.str());
+}
+
+ElementPtr
+CommunicationState::getReport() const {
+    auto report = Element::createMap();
+
+    auto in_touch = (getPartnerState() > 0);
+    report->set("in-touch", Element::create(in_touch));
+
+    auto age = in_touch ? static_cast<long long int>(getDurationInMillisecs() / 1000) : 0;
+    report->set("age", Element::create(age));
+
+    try {
+        report->set("last-state", Element::create(stateToString(getPartnerState())));
+
+    } catch (...) {
+        report->set("last-state", Element::create(std::string()));
+    }
+
+    auto list = Element::createList();
+    for (auto scope : getPartnerScopes()) {
+        list->add(Element::create(scope));
+    }
+    report->set("last-scopes", list);
+
+    return (report);
 }
 
 CommunicationState4::CommunicationState4(const IOServicePtr& io_service,
