@@ -676,7 +676,7 @@ Dhcpv4Srv::~Dhcpv4Srv() {
     LeaseMgrFactory::destroy();
 
     // Explicitly unload hooks
-    HooksManager::getHooksManager().unloadLibraries();
+    HooksManager::unloadLibraries();
 }
 
 void

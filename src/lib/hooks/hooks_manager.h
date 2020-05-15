@@ -505,6 +505,8 @@ private:
 
     /// Test flag to keep @ref callout_manager_ when calling @ref loadLibraries
     /// from unit tests (called by @ref configureDhcp[46]Server).
+    ///
+    /// @note: This will effectively make @ref loadLibraries return immediately.
     bool test_mode_;
 };
 
