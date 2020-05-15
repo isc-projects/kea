@@ -377,12 +377,12 @@ TEST(PgSqlHostDataSource, NoCallbackOnOpenFailMultiThreading) {
 }
 
 /// @brief This test verifies that database backend can operate in Read-Only mode.
-TEST_F(PgSqlHostDataSourceTest, DISABLED_testReadOnlyDatabase) {
+TEST_F(PgSqlHostDataSourceTest, testReadOnlyDatabase) {
     testReadOnlyDatabase(PGSQL_VALID_TYPE);
 }
 
 /// @brief This test verifies that database backend can operate in Read-Only mode.
-TEST_F(PgSqlHostDataSourceTest, DISABLED_testReadOnlyDatabaseMultiThreading) {
+TEST_F(PgSqlHostDataSourceTest, testReadOnlyDatabaseMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     testReadOnlyDatabase(PGSQL_VALID_TYPE);
 }
