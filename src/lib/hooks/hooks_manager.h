@@ -318,12 +318,12 @@ public:
     ///
     /// @param mode the test mode flag which enables or disabled the
     /// functionality.
-    void setTestMode(bool mode);
+    static void setTestMode(bool mode);
 
     /// @brief Get test mode
     ///
     /// @return the test mode flag.
-    bool getTestMode() const;
+    static bool getTestMode();
 
 private:
 
@@ -417,10 +417,7 @@ private:
     bool loadLibrariesInternal(const HookLibsCollection& libraries);
 
     /// @brief Unload libraries
-    ///
-    /// @param initialize flag to indicate if initializing or just resetting the
-    /// @ref lm_collection_ and @ref callout_manager_.
-    void unloadLibrariesInternal(bool initialize = true);
+    void unloadLibrariesInternal();
 
     /// @brief Are callouts present?
     ///

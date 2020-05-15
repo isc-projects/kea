@@ -67,16 +67,11 @@ LibraryManagerCollection::loadLibraries() {
     // associated libraries are deleted, hence this link (LibraryManager ->
     // CalloutManager) is safe.
     //
-    // If the list of libraries is not empty, re-create the callout manager.
+    // The call of this function will result in re-creating the callout manager.
     // This deletes all callouts (including the pre-library and post-
     // library) ones.  It is up to the libraries to re-register their callouts.
     // The pre-library and post-library callouts will also need to be
     // re-registered.
-    //
-    // If the list of libraries stays empty (as in the case of a reconfiguration
-    // where the hooks-libraries clause was empty and is not changed), try
-    // to re-use the existing callout manager (so retaining registered pre-
-    // and post-library callouts).
     callout_manager_.reset(new CalloutManager(library_names_.size()));
 
     // Now iterate through the libraries are load them one by one.  We'll

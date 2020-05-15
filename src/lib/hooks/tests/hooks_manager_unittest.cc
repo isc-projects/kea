@@ -38,7 +38,7 @@ public:
     /// Reset the hooks manager.  The hooks manager is a singleton, so needs
     /// to be reset for each test.
     HooksManagerTest() {
-        HooksManager::getHooksManager().setTestMode(false);
+        HooksManager::setTestMode(false);
         HooksManager::unloadLibraries();
     }
 
@@ -46,7 +46,7 @@ public:
     ///
     /// Unload all libraries and reset the shared manager.
     ~HooksManagerTest() {
-        HooksManager::getHooksManager().setTestMode(false);
+        HooksManager::setTestMode(false);
         HooksManager::unloadLibraries();
     }
 
@@ -443,7 +443,10 @@ TEST_F(HooksManagerTest, PrePostCalloutTest) {
 
 TEST_F(HooksManagerTest, TestModeEnabledPrePostSurviveLoad) {
 
+    // Load a single library.
     HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
@@ -451,7 +454,7 @@ TEST_F(HooksManagerTest, TestModeEnabledPrePostSurviveLoad) {
     HooksManager::postCalloutsLibraryHandle().registerCallout("hookpt_two",
                                                               testPostCallout);
 
-    HooksManager::getHooksManager().setTestMode(true);
+    HooksManager::setTestMode(true);
 
     // With the pre- and post- callouts above, the result expected is
     //
@@ -487,7 +490,10 @@ TEST_F(HooksManagerTest, TestModeEnabledPrePostSurviveLoad) {
 
 TEST_F(HooksManagerTest, TestModeDisabledPrePostDoNotSurviveLoad) {
 
+    // Load a single library.
     HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
@@ -495,7 +501,7 @@ TEST_F(HooksManagerTest, TestModeDisabledPrePostDoNotSurviveLoad) {
     HooksManager::postCalloutsLibraryHandle().registerCallout("hookpt_two",
                                                               testPostCallout);
 
-    HooksManager::getHooksManager().setTestMode(false);
+    HooksManager::setTestMode(false);
 
     // With the pre- and post- callouts above, the result expected is
     //
@@ -520,10 +526,9 @@ TEST_F(HooksManagerTest, TestModeDisabledPrePostDoNotSurviveLoad) {
 
     HooksManager::callCallouts(hookpt_two_index_, *handle);
 
-    // Expect no change so result = 0
     result = 0;
     handle->getArgument("result", result);
-    EXPECT_EQ(0, result);
+    EXPECT_EQ(-15, result);
 }
 
 // Test with test mode enabled and the pre- and post- callout functions do not
@@ -531,7 +536,10 @@ TEST_F(HooksManagerTest, TestModeDisabledPrePostDoNotSurviveLoad) {
 
 TEST_F(HooksManagerTest, TestModeEnabledTooLatePrePostDoNotSurvive) {
 
+    // Load a single library.
     HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
@@ -557,17 +565,16 @@ TEST_F(HooksManagerTest, TestModeEnabledTooLatePrePostDoNotSurvive) {
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
     handle = HooksManager::createCalloutHandle();
 
-    HooksManager::getHooksManager().setTestMode(true);
+    HooksManager::setTestMode(true);
 
     handle->setArgument("result", static_cast<int>(0));
     handle->setArgument("data_2", static_cast<int>(15));
 
     HooksManager::callCallouts(hookpt_two_index_, *handle);
 
-    // Expect no change so result = 0
     result = 0;
     handle->getArgument("result", result);
-    EXPECT_EQ(0, result);
+    EXPECT_EQ(-15, result);
 }
 
 // Check that everything works even with no libraries loaded.  First that

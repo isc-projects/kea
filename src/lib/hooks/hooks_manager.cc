@@ -93,8 +93,8 @@ HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
     if (test_mode_) {
         return (true);
     }
-    // Unload current set of libraries (if any are loaded).
-    unloadLibrariesInternal(false);
+
+    ServerHooks::getServerHooks().getParkingLotsPtr()->clear();
 
     // Create the library manager and load the libraries.
     lm_collection_.reset(new LibraryManagerCollection(libraries));
@@ -122,19 +122,9 @@ HooksManager::loadLibraries(const HookLibsCollection& libraries) {
 // requested.
 
 void
-HooksManager::unloadLibrariesInternal(bool initialize) {
+HooksManager::unloadLibrariesInternal() {
     ServerHooks::getServerHooks().getParkingLotsPtr()->clear();
-    if (initialize) {
-        init();
-    } else {
-        // The order of deletion does not matter here, as each library manager
-        // holds its own pointer to the callout manager.  However, we may as
-        // well delete the library managers first: if there are no other
-        // references to the callout manager, the second statement will delete
-        // it, which may ease debugging.
-        lm_collection_.reset();
-        callout_manager_.reset();
-    }
+    init();
 }
 
 void HooksManager::unloadLibraries() {
@@ -229,7 +219,7 @@ HooksManager::setTestMode(bool mode) {
 }
 
 bool
-HooksManager::getTestMode() const {
+HooksManager::getTestMode() {
     return (getHooksManager().test_mode_);
 }
 
