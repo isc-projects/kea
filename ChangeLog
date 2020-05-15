@@ -1,3 +1,9 @@
+1750.	[func]		razvan
+	Refactored HooksManager so that no lazy initialization is possible
+	from dhcp processing functions. The function getHooksManager is now
+	private.
+	(Gitlab #1227)
+
 1749.	[func]		fdupont
 	When the version is a development (vs. stable) one (second
 	number is odd, e.g. in 1.7.x) a server or agent logs a
