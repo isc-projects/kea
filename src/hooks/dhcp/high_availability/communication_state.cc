@@ -155,10 +155,10 @@ CommunicationState::poke() {
     // Set poke time to the current time.
     poke_time_ = boost::posix_time::microsec_clock::universal_time();
 
-    // If we have been tracking the unanswered DHCP messages directed to the
-    // partner, we need to clear any gathered information because the connection
+    // If we have been tracking the DHCP messages directed to the partner,
+    // we need to clear any gathered information because the connection
     // seems to be (re)established.
-    clearUnackedClients();
+    clearConnectingClients();
     analyzed_messages_count_ = 0;
 
     if (timer_) {
@@ -271,7 +271,7 @@ CommunicationState::logFormatClockSkew() const {
 
 CommunicationState4::CommunicationState4(const IOServicePtr& io_service,
                                          const HAConfigPtr& config)
-    : CommunicationState(io_service, config), unacked_clients_() {
+    : CommunicationState(io_service, config), connecting_clients_() {
 }
 
 void
@@ -295,17 +295,11 @@ CommunicationState4::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
         secs = ((secs >> 8) | (secs << 8));
     }
 
-    // Check the value of the "secs" field. If it is below the threshold there
-    // is nothing to do. The "secs" field holds a value in seconds, hence we
-    // have to multiple by 1000 to get a value in milliseconds.
-    if (secs * 1000 <= config_->getMaxAckDelay()) {
-        return;
-    }
-
-    // The "secs" value is above the threshold so we should count it as unacked
-    // request, but we will first have to check if there is such request already
-    // recorded.
-    auto existing_requests = unacked_clients_.equal_range(msg->getHWAddr()->hwaddr_);
+    // Check the value of the "secs" field. The "secs" field holds a value in
+    // seconds, hence we have to multiple by 1000 to get a value in milliseconds.
+    // If the secs value is above the threshold, it means that the current
+    // client should be considered unacked.
+    auto unacked = (secs * 1000 > config_->getMaxAckDelay());
 
     // Client identifier will be stored together with the hardware address. It
     // may remain empty if the client hasn't specified it.
@@ -315,39 +309,46 @@ CommunicationState4::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
         client_id = opt_client_id->getData();
     }
 
-    // Iterate over the requests we found so far and see if we have a match with
-    // the client identifier (this includes empty client identifiers).
-    for (auto r = existing_requests.first; r != existing_requests.second; ++r) {
-        if (r->second == client_id) {
-            // There is a match so we have already recorded this client as
-            // unacked.
-            return;
+    // Check if the given client was already recorded.
+    auto& idx = connecting_clients_.get<0>();
+    auto existing_request = idx.find(boost::make_tuple(msg->getHWAddr()->hwaddr_, client_id));
+    if (existing_request != idx.end()) {
+        // If the client was recorded but was not considered unacked
+        // but it should be considered unacked as a result of processing
+        // this packet, let's update the recorded request to mark the
+        // client unacked.
+        if (!existing_request->unacked_ && unacked) {
+            ConnectingClient4 connecting_client{ msg->getHWAddr()->hwaddr_, client_id, unacked };
+            idx.replace(existing_request, connecting_client);
         }
+        return;
     }
 
-    // New unacked client detected, so record the required information.
-    unacked_clients_.insert(std::make_pair(msg->getHWAddr()->hwaddr_, client_id));
+    // This is the first time we see the packet from this client. Let's
+    // record it.
+    ConnectingClient4 connecting_client{ msg->getHWAddr()->hwaddr_, client_id, unacked };
+    idx.insert(connecting_client);
 }
 
 bool
 CommunicationState4::failureDetected() const {
     return ((config_->getMaxUnackedClients() == 0) ||
-            (unacked_clients_.size() > config_->getMaxUnackedClients()));
+            (getUnackedClientsCount() > config_->getMaxUnackedClients()));
 }
 
 size_t
 CommunicationState4::getUnackedClientsCount() const {
-    return (unacked_clients_.size());
+    return (connecting_clients_.get<1>().count(true));
 }
 
 void
-CommunicationState4::clearUnackedClients() {
-    unacked_clients_.clear();
+CommunicationState4::clearConnectingClients() {
+    connecting_clients_.clear();
 }
 
 CommunicationState6::CommunicationState6(const IOServicePtr& io_service,
                                          const HAConfigPtr& config)
-    : CommunicationState(io_service, config), unacked_clients_() {
+    : CommunicationState(io_service, config), connecting_clients_() {
 }
 
 void
@@ -365,32 +366,48 @@ CommunicationState6::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
     // 1/100 of second, hence we have to multiply by 10 to get a value in milliseconds.
     OptionUint16Ptr elapsed_time = boost::dynamic_pointer_cast<
         OptionUint16>(msg->getOption(D6O_ELAPSED_TIME));
-    if (!elapsed_time || elapsed_time->getValue() * 10 <= config_->getMaxAckDelay()) {
-        return;
-    }
+    auto unacked = (elapsed_time && elapsed_time->getValue() * 10 > config_->getMaxAckDelay());
 
     // Get the DUID of the client to see if it hasn't been recorded already.
     OptionPtr duid = msg->getOption(D6O_CLIENTID);
-    if (duid && unacked_clients_.count(duid->getData()) == 0) {
-        // New unacked client detected, so record the required information.
-        unacked_clients_.insert(duid->getData());
+    if (!duid) {
+        return;
     }
+
+    // Check if the given client was already recorded.
+    auto& idx = connecting_clients_.get<0>();
+    auto existing_request = idx.find(duid->getData());
+    if (existing_request != idx.end()) {
+        // If the client was recorded but was not considered unacked
+        // but it should be considered unacked as a result of processing
+        // this packet, let's update the recorded request to mark the
+        // client unacked.
+        if (!existing_request->unacked_ && unacked) {
+            ConnectingClient6 connecting_client{ duid->getData(), unacked };
+            idx.replace(existing_request, connecting_client);
+        }
+    }
+
+    // This is the first time we see the packet from this client. Let's
+    // record it.
+    ConnectingClient6 connecting_client{ duid->getData(), unacked };
+    idx.insert(connecting_client);
 }
 
 bool
 CommunicationState6::failureDetected() const {
     return ((config_->getMaxUnackedClients() == 0) ||
-            (unacked_clients_.size() > config_->getMaxUnackedClients()));
+            (getUnackedClientsCount() > config_->getMaxUnackedClients()));
 }
 
 size_t
 CommunicationState6::getUnackedClientsCount() const {
-    return (unacked_clients_.size());
+    return (connecting_clients_.get<1>().count(true));
 }
 
 void
-CommunicationState6::clearUnackedClients() {
-    unacked_clients_.clear();
+CommunicationState6::clearConnectingClients() {
+    connecting_clients_.clear();
 }
 
 } // end of namespace isc::ha

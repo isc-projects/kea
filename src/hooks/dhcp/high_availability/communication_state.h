@@ -15,6 +15,12 @@
 #include <dhcp/pkt.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/function.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/composite_key.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 #include <boost/shared_ptr.hpp>
 #include <map>
 #include <set>
@@ -233,8 +239,9 @@ public:
 
 protected:
 
-    /// @brief Removes information about clients which the partner server
-    /// failed to respond to.
+    /// @brief Removes information about the clients the partner server
+    /// should respond to while communication with the partner was
+    /// interrupted.
     ///
     /// This information is cleared by the @c CommunicationState::poke.
     /// The derivations of this class must provide DHCPv4 and DHCPv6 specific
@@ -244,7 +251,7 @@ protected:
     /// procedure starts over.
     ///
     /// See @c CommunicationState::analyzeMessage for details.
-    virtual void clearUnackedClients() = 0;
+    virtual void clearConnectingClients() = 0;
 
 public:
 
@@ -417,19 +424,49 @@ public:
 
 protected:
 
-    /// @brief Removes information about clients which the partner server
-    /// failed to respond to.
+    /// @brief Removes information about the clients the partner server
+    /// should respond to while communication with the partner was
+    /// interrupted.
     ///
     /// See @c CommunicationState::analyzeMessage for details.
-    virtual void clearUnackedClients();
+    virtual void clearConnectingClients();
 
-    /// @brief Holds information about the clients which the partner server
-    /// failed to respond to.
-    ///
-    /// The key of the multimap holds hardware addresses of the clients.
-    /// The value of the multimap holds client identifiers of the
-    /// clients. The client identifiers may be empty.
-    std::multimap<std::vector<uint8_t>, std::vector<uint8_t> > unacked_clients_;
+    /// @brief Structure holding information about the client which has
+    /// send the packet being analyzed.
+    struct ConnectingClient4 {
+        std::vector<uint8_t> hwaddr_;
+        std::vector<uint8_t> clientid_;
+        bool unacked_;
+    };
+
+    /// @brief Multi index container holding information about the clients
+    /// attempting to get leases from the partner server.
+    typedef boost::multi_index_container<
+        ConnectingClient4,
+        boost::multi_index::indexed_by<
+            // First index is a composite index which allows to find a client
+            // by the HW address/client identifier tuple.
+            boost::multi_index::hashed_unique<
+                boost::multi_index::composite_key<
+                    ConnectingClient4,
+                    boost::multi_index::member<ConnectingClient4, std::vector<uint8_t>,
+                                               &ConnectingClient4::hwaddr_>,
+                    boost::multi_index::member<ConnectingClient4, std::vector<uint8_t>,
+                                               &ConnectingClient4::clientid_>
+                >
+            >,
+            // Second index allows for counting all clients which are
+            // considered unacked.
+            boost::multi_index::ordered_non_unique<
+                boost::multi_index::member<ConnectingClient4, bool, &ConnectingClient4::unacked_>
+            >
+        >
+    > ConnectingClients4;
+
+    /// @brief Holds information about the clients attempting to contact
+    /// the partner server while the servers are in communications
+    /// interrupted state.
+    ConnectingClients4 connecting_clients_;
 };
 
 /// @brief Pointer to the @c CommunicationState4 object.
@@ -479,17 +516,42 @@ public:
 
 protected:
 
-    /// @brief Removes information about clients which the partner server
-    /// failed to respond to.
+    /// @brief Removes information about the clients the partner server
+    /// should respond to while communication with the partner was
+    /// interrupted.
     ///
     /// See @c CommunicationState::analyzeMessage for details.
-    virtual void clearUnackedClients();
+    virtual void clearConnectingClients();
 
-    /// @brief Holds information about the clients which the partner server
-    /// failed to respond to.
-    ///
-    /// The value of the set holds DUIDs of the clients.
-    std::set<std::vector<uint8_t> > unacked_clients_;
+    /// @brief Structure holding information about the client which has
+    /// send the packet being analyzed.
+    struct ConnectingClient6 {
+        std::vector<uint8_t> duid_;
+        bool unacked_;
+    };
+
+    /// @brief Multi index container holding information about the clients
+    /// attempting to get leases from the partner server.
+    typedef boost::multi_index_container<
+        ConnectingClient6,
+        boost::multi_index::indexed_by<
+            // First index is for accessing connecting clients by DUID.
+            boost::multi_index::hashed_unique<
+                boost::multi_index::member<ConnectingClient6, std::vector<uint8_t>,
+                                           &ConnectingClient6::duid_>
+            >,
+            // Second index allows for counting all clients which are
+            // considered unacked.
+            boost::multi_index::ordered_non_unique<
+                boost::multi_index::member<ConnectingClient6, bool, &ConnectingClient6::unacked_>
+            >
+        >
+    > ConnectingClients6;
+
+    /// @brief Holds information about the clients attempting to contact
+    /// the partner server while the servers are in communications
+    /// interrupted state.
+    ConnectingClients6 connecting_clients_;
 };
 
 /// @brief Pointer to the @c CommunicationState6 object.
