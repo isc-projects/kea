@@ -44,7 +44,7 @@ public:
 
     /// @brief Destructor
     ///
-    /// Unload all libraries and reset the shared manager.
+    /// Unload all libraries.
     ~HooksManagerTest() {
         HooksManager::setTestMode(false);
         HooksManager::unloadLibraries();

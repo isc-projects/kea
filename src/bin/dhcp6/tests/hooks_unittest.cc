@@ -122,7 +122,7 @@ public:
     HooksDhcpv6SrvTest()
         : Dhcpv6SrvTest() {
 
-        HooksManager::getHooksManager().setTestMode(false);
+        HooksManager::setTestMode(false);
 
         // Allocate new DHCPv6 Server
         srv_.reset(new NakedDhcpv6Srv(0));
@@ -138,7 +138,7 @@ public:
 
     /// @brief destructor (deletes Dhcpv6Srv)
     ~HooksDhcpv6SrvTest() {
-        HooksManager::getHooksManager().setTestMode(false);
+        HooksManager::setTestMode(false);
     }
 
     /// @brief creates an option with specified option code
@@ -4420,7 +4420,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_callout));
 
-    HooksManager::getHooksManager().setTestMode(true);
+    HooksManager::setTestMode(true);
 
     // Get an address and decline it. DUIDs, IAID match and we send valid
     // address, so the decline procedure should be successful.
@@ -4472,7 +4472,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_skip));
 
-    HooksManager::getHooksManager().setTestMode(true);
+    HooksManager::setTestMode(true);
 
     // Get an address and decline it. DUIDs, IAID match and we send valid
     // address, so the decline procedure should be successful.
@@ -4521,7 +4521,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_drop));
 
-    HooksManager::getHooksManager().setTestMode(true);
+    HooksManager::setTestMode(true);
 
     // Get an address and decline it. DUIDs, IAID match and we send valid
     // address, so it would work, but the callout sets status to DROP, so
