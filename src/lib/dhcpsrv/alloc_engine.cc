@@ -1695,7 +1695,7 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
 
     // Let's execute all callouts registered for lease6_select
     if (ctx.callout_handle_ &&
-        HooksManager::getHooksManager().calloutsPresent(hook_index_lease6_select_)) {
+        HooksManager::calloutsPresent(hook_index_lease6_select_)) {
 
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do
@@ -1811,7 +1811,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
 
     // Let's execute all callouts registered for lease6_select
     if (ctx.callout_handle_ &&
-        HooksManager::getHooksManager().calloutsPresent(hook_index_lease6_select_)) {
+        HooksManager::calloutsPresent(hook_index_lease6_select_)) {
 
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do
@@ -2287,7 +2287,7 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
     // lease6_expire callouts installed.
     CalloutHandlePtr callout_handle;
     if (!leases.empty() &&
-        HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_expire_)) {
+        HooksManager::calloutsPresent(Hooks.hook_index_lease6_expire_)) {
         callout_handle = HooksManager::createCalloutHandle();
     }
 
@@ -2425,7 +2425,7 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
     // lease4_expire callouts installed.
     CalloutHandlePtr callout_handle;
     if (!leases.empty() &&
-        HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_expire_)) {
+        HooksManager::calloutsPresent(Hooks.hook_index_lease4_expire_)) {
         callout_handle = HooksManager::createCalloutHandle();
     }
 
@@ -2726,7 +2726,7 @@ AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
         return (true);
     }
 
-    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_recover_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_recover_)) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
         // Use the RAII wrapper to make sure that the callout handle state is
@@ -2780,7 +2780,7 @@ AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
         return (true);
     }
 
-    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_recover_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_recover_)) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
         // Use the RAII wrapper to make sure that the callout handle state is
@@ -3653,7 +3653,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
 
     // Let's execute all callouts registered for lease4_select
     if (ctx.callout_handle_ &&
-        HooksManager::getHooksManager().calloutsPresent(hook_index_lease4_select_)) {
+        HooksManager::calloutsPresent(hook_index_lease4_select_)) {
 
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do
@@ -3768,8 +3768,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
 
     bool skip = false;
     // Execute all callouts registered for lease4_renew.
-    if (HooksManager::getHooksManager().
-        calloutsPresent(Hooks.hook_index_lease4_renew_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_renew_)) {
 
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do
@@ -3871,8 +3870,8 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         .arg(expired->toText());
 
     // Let's execute all callouts registered for lease4_select
-    if (ctx.callout_handle_ &&  HooksManager::getHooksManager()
-        .calloutsPresent(hook_index_lease4_select_)) {
+    if (ctx.callout_handle_ &&
+        HooksManager::calloutsPresent(hook_index_lease4_select_)) {
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(ctx.query_);

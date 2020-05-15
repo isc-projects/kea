@@ -279,7 +279,7 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     LeaseMgrFactory::destroy();
 
     // Explicitly unload hooks
-    HooksManager::getHooksManager().unloadLibraries();
+    HooksManager::unloadLibraries();
 }
 
 void Dhcpv6Srv::shutdown() {

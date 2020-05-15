@@ -37,10 +37,6 @@ class LibraryManagerCollection;
 
 class HooksManager : boost::noncopyable {
 public:
-    /// @brief Get singleton hooks manager
-    ///
-    /// @return Reference to the singleton hooks manager.
-    static HooksManager& getHooksManager();
 
     /// @brief Load and reload libraries
     ///
@@ -332,6 +328,11 @@ private:
     /// This is private as the object is a singleton and can only be addressed
     /// through the getHooksManager() static method.
     HooksManager();
+
+    /// @brief Get singleton hooks manager
+    ///
+    /// @return Reference to the singleton hooks manager.
+    static HooksManager& getHooksManager();
 
     /// @brief Park an object (packet).
     ///

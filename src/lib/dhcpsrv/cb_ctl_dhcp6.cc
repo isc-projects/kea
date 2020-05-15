@@ -208,7 +208,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_CONFIG6_MERGED);
 
     if (!audit_entries.empty() &&
-        HooksManager::getHooksManager().calloutsPresent(hooks_.hook_index_cb6_updated_)) {
+        HooksManager::calloutsPresent(hooks_.hook_index_cb6_updated_)) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
         // Use the RAII wrapper to make sure that the callout handle state is

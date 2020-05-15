@@ -72,7 +72,7 @@ LibraryHandle::deregisterAllCallouts(const std::string& name) {
 
 isc::data::ConstElementPtr
 LibraryHandle::getParameters() {
-    HookLibsCollection libinfo = HooksManager::getHooksManager().getLibraryInfo();
+    HookLibsCollection libinfo = HooksManager::getLibraryInfo();
 
     int index = index_;
 
