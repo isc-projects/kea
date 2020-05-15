@@ -485,15 +485,21 @@ private:
 
     /// @brief Initialization to No Libraries
     ///
-    /// Initializes the hooks manager with an "empty set" of libraries.
+    /// Initializes the hooks manager with an empty set of libraries.
     void init();
 
     // Members
 
     /// Set of library managers.
+    ///
+    /// @node: This should always be initialized using @ref init or
+    /// @ref loadLibraries.
     boost::shared_ptr<LibraryManagerCollection> lm_collection_;
 
     /// Callout manager for the set of library managers.
+    ///
+    /// @node: This should always be initialized using @ref init or
+    /// @ref loadLibraries.
     boost::shared_ptr<CalloutManager> callout_manager_;
 
     /// Test flag to keep @ref callout_manager_ when calling @ref loadLibraries
