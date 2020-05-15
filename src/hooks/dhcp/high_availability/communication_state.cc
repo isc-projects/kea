@@ -313,7 +313,7 @@ CommunicationState4::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
     auto& idx = connecting_clients_.get<0>();
     auto existing_request = idx.find(boost::make_tuple(msg->getHWAddr()->hwaddr_, client_id));
     if (existing_request != idx.end()) {
-        // If the client was recorded but was not considered unacked
+        // If the client was recorded and was not considered unacked
         // but it should be considered unacked as a result of processing
         // this packet, let's update the recorded request to mark the
         // client unacked.
@@ -334,6 +334,11 @@ bool
 CommunicationState4::failureDetected() const {
     return ((config_->getMaxUnackedClients() == 0) ||
             (getUnackedClientsCount() > config_->getMaxUnackedClients()));
+}
+
+size_t
+CommunicationState4::getConnectingClientsCount() const {
+    return (connecting_clients_.size());
 }
 
 size_t
@@ -378,7 +383,7 @@ CommunicationState6::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
     auto& idx = connecting_clients_.get<0>();
     auto existing_request = idx.find(duid->getData());
     if (existing_request != idx.end()) {
-        // If the client was recorded but was not considered unacked
+        // If the client was recorded and was not considered unacked
         // but it should be considered unacked as a result of processing
         // this packet, let's update the recorded request to mark the
         // client unacked.
@@ -398,6 +403,11 @@ bool
 CommunicationState6::failureDetected() const {
     return ((config_->getMaxUnackedClients() == 0) ||
             (getUnackedClientsCount() > config_->getMaxUnackedClients()));
+}
+
+size_t
+CommunicationState6::getConnectingClientsCount() const {
+    return (connecting_clients_.size());
 }
 
 size_t
