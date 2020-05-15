@@ -488,8 +488,6 @@ TEST_F(HooksManagerTest, TestModeEnabledPrePostSurviveLoad) {
 TEST_F(HooksManagerTest, TestModeDisabledPrePostDoNotSurviveLoad) {
 
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
@@ -513,7 +511,7 @@ TEST_F(HooksManagerTest, TestModeDisabledPrePostDoNotSurviveLoad) {
     EXPECT_EQ(2054, result);
 
     // ... and check that the pre- and post- callout functions don't survive a
-    // reload with a not empty list of libraries.
+    // reload.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
     handle = HooksManager::createCalloutHandle();
 
@@ -534,7 +532,6 @@ TEST_F(HooksManagerTest, TestModeDisabledPrePostDoNotSurviveLoad) {
 TEST_F(HooksManagerTest, TestModeEnabledTooLatePrePostDoNotSurvive) {
 
     HookLibsCollection library_names;
-    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
