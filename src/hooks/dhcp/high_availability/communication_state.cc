@@ -326,6 +326,11 @@ CommunicationState4::failureDetected() const {
             (unacked_clients_.size() > config_->getMaxUnackedClients()));
 }
 
+size_t
+CommunicationState4::getUnackedClientsCount() const {
+    return (unacked_clients_.size());
+}
+
 void
 CommunicationState4::clearUnackedClients() {
     unacked_clients_.clear();
@@ -365,6 +370,11 @@ bool
 CommunicationState6::failureDetected() const {
     return ((config_->getMaxUnackedClients() == 0) ||
             (unacked_clients_.size() > config_->getMaxUnackedClients()));
+}
+
+size_t
+CommunicationState6::getUnackedClientsCount() const {
+    return (unacked_clients_.size());
 }
 
 void

@@ -214,6 +214,16 @@ public:
     /// otherwise.
     virtual bool failureDetected() const = 0;
 
+    /// @brief Returns the current number of clients which haven't got
+    /// the lease from the partner server.
+    ///
+    /// The returned number is reset to 0 when the server successfully
+    /// establishes communication with the partner. The number is
+    /// incremented only in the communications interrupted case.
+    ///
+    /// @return Number of unacked clients.
+    virtual size_t getUnackedClientsCount() const = 0;
+
 protected:
 
     /// @brief Removes information about clients which the partner server
@@ -385,6 +395,16 @@ public:
     /// otherwise.
     virtual bool failureDetected() const;
 
+    /// @brief Returns the current number of clients which haven't got
+    /// the lease from the partner server.
+    ///
+    /// The returned number is reset to 0 when the server successfully
+    /// establishes communication with the partner. The number is
+    /// incremented only in the communications interrupted case.
+    ///
+    /// @return Number of unacked clients.
+    virtual size_t getUnackedClientsCount() const;
+
 protected:
 
     /// @brief Removes information about clients which the partner server
@@ -436,6 +456,16 @@ public:
     /// @return true if the partner failure has been detected, false
     /// otherwise.
     virtual bool failureDetected() const;
+
+    /// @brief Returns the current number of clients which haven't got
+    /// the lease from the partner server.
+    ///
+    /// The returned number is reset to 0 when the server successfully
+    /// establishes communication with the partner. The number is
+    /// incremented only in the communications interrupted case.
+    ///
+    /// @return Number of unacked clients.
+    virtual size_t getUnackedClientsCount() const;
 
 protected:
 
