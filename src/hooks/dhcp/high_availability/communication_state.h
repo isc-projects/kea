@@ -198,6 +198,13 @@ public:
     /// this method.
     virtual void analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message) = 0;
 
+    /// @brief Returns the number of analyzed messages while being in the
+    /// communications interrupted state.
+    ///
+    /// @return Number of analyzed messages. It includes retransmissions by
+    /// the same clients.
+    size_t getAnalyzedMessagesCount() const;
+
     /// @brief Checks if the partner failure has been detected based
     /// on the DHCP traffic analysis.
     ///
@@ -351,6 +358,9 @@ protected:
 
     /// @brief Partner reported time when skew was calculated.
     boost::posix_time::ptime partner_time_at_skew_;
+
+    /// @brief Total number of analyzed messages to be responded by partner.
+    size_t analyzed_messages_count_;
 };
 
 /// @brief Type of the pointer to the @c CommunicationState object.

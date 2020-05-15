@@ -50,7 +50,8 @@ CommunicationState::CommunicationState(const IOServicePtr& io_service,
       poke_time_(boost::posix_time::microsec_clock::universal_time()),
       heartbeat_impl_(0), partner_state_(-1), partner_scopes_(),
       clock_skew_(0, 0, 0, 0), last_clock_skew_warn_(),
-      my_time_at_skew_(), partner_time_at_skew_() {
+      my_time_at_skew_(), partner_time_at_skew_(),
+      analyzed_messages_count_(0) {
 }
 
 CommunicationState::~CommunicationState() {
@@ -158,6 +159,7 @@ CommunicationState::poke() {
     // partner, we need to clear any gathered information because the connection
     // seems to be (re)established.
     clearUnackedClients();
+    analyzed_messages_count_ = 0;
 
     if (timer_) {
         // Check the duration since last poke. If it is less than a second, we don't
@@ -186,6 +188,11 @@ CommunicationState::getDurationInMillisecs() const {
 bool
 CommunicationState::isCommunicationInterrupted() const {
     return (getDurationInMillisecs() > config_->getMaxResponseDelay());
+}
+
+size_t
+CommunicationState::getAnalyzedMessagesCount() const {
+    return (analyzed_messages_count_);
 }
 
 bool
@@ -275,6 +282,8 @@ CommunicationState4::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
         isc_throw(BadValue, "DHCP message to be analyzed is not a DHCPv4 message");
     }
 
+    ++analyzed_messages_count_;
+
     // Check value of the "secs" field by comparing it with the configured
     // threshold.
     uint16_t secs = msg->getSecs();
@@ -348,6 +357,8 @@ CommunicationState6::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
     if (!msg) {
         isc_throw(BadValue, "DHCP message to be analyzed is not a DHCPv6 message");
     }
+
+    ++analyzed_messages_count_;
 
     // Check the value of the "elapsed time" option. If it is below the threshold
     // there is nothing to do. The "elapsed time" option holds the time in
