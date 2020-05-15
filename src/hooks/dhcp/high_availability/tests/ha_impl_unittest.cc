@@ -599,6 +599,92 @@ TEST_F(HAImplTest, statusGet) {
     EXPECT_TRUE(isEquivalent(got, Element::fromJSON(expected)));
 }
 
+// Tests status-get command processed handler for backup server.
+TEST_F(HAImplTest, statusGetBackupServer) {
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+    ha_impl.config_->setThisServerName("server3");
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
+                                         HAServerType::DHCPv4));
+
+    std::string name = "status-get";
+    ConstElementPtr response =
+        Element::fromJSON("{ \"arguments\": { \"pid\": 1 }, \"result\": 0 }");
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+    callout_handle->setArgument("name", name);
+    callout_handle->setArgument("response", response);
+
+    ASSERT_NO_THROW(ha_impl.commandProcessed(*callout_handle));
+
+    ConstElementPtr got;
+    callout_handle->getArgument("response", got);
+    ASSERT_TRUE(got);
+
+    std::string expected =
+        "{"
+        "    \"arguments\": {"
+        "        \"ha-servers\": {"
+        "            \"local\": {"
+        "                \"role\": \"backup\","
+        "                \"scopes\": [  ],"
+        "                \"state\": \"backup\""
+        "            }"
+        "        },"
+        "        \"pid\": 1"
+        "    },"
+        "    \"result\": 0"
+        "}";
+    EXPECT_TRUE(isEquivalent(got, Element::fromJSON(expected)));
+}
+
+// Tests status-get command processed handler for primary server being in the
+// passive-backup state.
+TEST_F(HAImplTest, statusGetPassiveBackup) {
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidPassiveBackupJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
+                                         HAServerType::DHCPv4));
+
+    std::string name = "status-get";
+    ConstElementPtr response =
+        Element::fromJSON("{ \"arguments\": { \"pid\": 1 }, \"result\": 0 }");
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+    callout_handle->setArgument("name", name);
+    callout_handle->setArgument("response", response);
+
+    ASSERT_NO_THROW(ha_impl.commandProcessed(*callout_handle));
+
+    ConstElementPtr got;
+    callout_handle->getArgument("response", got);
+    ASSERT_TRUE(got);
+
+    std::string expected =
+        "{"
+        "    \"arguments\": {"
+        "        \"ha-servers\": {"
+        "            \"local\": {"
+        "                \"role\": \"primary\","
+        "                \"scopes\": [ \"server1\" ],"
+        "                \"state\": \"passive-backup\""
+        "            }"
+        "        },"
+        "        \"pid\": 1"
+        "    },"
+        "    \"result\": 0"
+        "}";
+    EXPECT_TRUE(isEquivalent(got, Element::fromJSON(expected)));
+}
+
 // Test ha-maintenance-notify command handler.
 TEST_F(HAImplTest, maintenanceNotify) {
     HAImpl ha_impl;

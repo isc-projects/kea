@@ -1209,6 +1209,13 @@ HAService::processStatusGet() const {
     local->set("scopes", list);
     ha_servers->set("local", local);
 
+    // Do not include remote server information if this is a backup server or
+    // we're in the passive-backup mode.
+    if ((config_->getHAMode() == HAConfig::PASSIVE_BACKUP) ||
+        (config_->getThisServerConfig()->getRole() == HAConfig::PeerConfig::BACKUP)) {
+        return (ha_servers);
+    }
+
     // Remote part
     ElementPtr remote = communication_state_->getReport();
 
