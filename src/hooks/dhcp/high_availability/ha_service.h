@@ -946,11 +946,21 @@ protected:
     template<typename QueryPtrType>
     void updatePendingRequest(QueryPtrType& query);
 
-protected:
     /// @brief Get the number of entries in the pending request map.
     /// @note Currently for testing purposes only.
     /// @return Number of entries in the pending request map.
     size_t pendingRequestSize();
+
+    /// @brief Get the number of scheduled requests for a given query.
+    /// @note Currently for testing purposes only.
+    ///
+    /// If there is an entry in the pending request map for the given
+    /// query the entry is returned else zero is returned.
+    ///
+    /// @param query Pointer to the DHCP client's query.
+    /// @return Number of scheduled requests for the query or zero.
+    template<typename QueryPtrType>
+    int getPendingRequest(const QueryPtrType& query);
 
 private:
     /// @brief Handle last pending request for this query.

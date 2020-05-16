@@ -2248,5 +2248,28 @@ HAService::pendingRequestSize() {
     }
 }
 
+template<typename QueryPtrType>
+int
+HAService::getPendingRequest(const QueryPtrType& query) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(pending_requests_mutex_);
+        if (pending_requests_.count(query) == 0) {
+            return (0);
+        } else {
+            return (pending_requests_[query]);
+        }
+    } else {
+        if (pending_requests_.count(query) == 0) {
+            return (0);
+        } else {
+            return (pending_requests_[query]);
+        }
+    }
+}
+
+// Explicit instantiations.
+template int HAService::getPendingRequest(const Pkt4Ptr&);
+template int HAService::getPendingRequest(const Pkt6Ptr&);
+
 } // end of namespace isc::ha
 } // end of namespace isc

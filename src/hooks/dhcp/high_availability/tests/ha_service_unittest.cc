@@ -190,6 +190,7 @@ public:
     using HAService::verboseTransition;
     using HAService::shouldSendLeaseUpdates;
     using HAService::pendingRequestSize;
+    using HAService::getPendingRequest;
     using HAService::network_state_;
     using HAService::config_;
     using HAService::communication_state_;
@@ -714,16 +715,11 @@ public:
                   service.asyncSendLeaseUpdates(query, leases4, deleted_leases4,
                                                 parking_lot_handle));
 
-        if (num_updates == 0) {
-            EXPECT_TRUE((service.pending_requests_.count(query) == 0) ||
-                        (service.pending_requests_[query] == 0));
-        } else {
-            // The number of pending requests should be 2 times the number of
-            // contacted servers because we send one lease update and one
-            // lease deletion to each contacted server from which we expect
-            // an acknowledgment.
-            EXPECT_EQ(2*num_updates, service.pending_requests_[query]);
-        }
+        // The number of pending requests should be 2 times the number of
+        // contacted servers because we send one lease update and one
+        // lease deletion to each contacted server from which we expect
+        // an acknowledgment.
+        EXPECT_EQ(2*num_updates, service.getPendingRequest(query));
 
         EXPECT_FALSE(state->isPoked());
 
@@ -819,15 +815,10 @@ public:
                   service.asyncSendLeaseUpdates(query, leases6, deleted_leases6,
                                                 parking_lot_handle));
 
-        if (num_updates == 0) {
-            EXPECT_TRUE((service.pending_requests_.count(query) == 0) ||
-                        (service.pending_requests_[query] == 0));
-        } else {
-            // The number of requests we send is equal to the number of servers
-            // from which we expect an acknowledgement. We send both lease updates
-            // and the deletions in a single bulk update command.
-            EXPECT_EQ(num_updates, service.pending_requests_[query]);
-        }
+        // The number of requests we send is equal to the number of servers
+        // from which we expect an acknowledgement. We send both lease updates
+        // and the deletions in a single bulk update command.
+        EXPECT_EQ(num_updates, service.getPendingRequest(query));
 
         EXPECT_FALSE(state->isPoked());
 
