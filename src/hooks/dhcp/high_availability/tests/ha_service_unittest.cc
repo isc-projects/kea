@@ -719,7 +719,7 @@ public:
         // contacted servers because we send one lease update and one
         // lease deletion to each contacted server from which we expect
         // an acknowledgment.
-        EXPECT_EQ(2*num_updates, service.getPendingRequest(query));
+        EXPECT_EQ(2 * num_updates, service.getPendingRequest(query));
 
         EXPECT_FALSE(state->isPoked());
 
