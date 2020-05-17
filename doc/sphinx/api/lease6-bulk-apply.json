@@ -1,4 +1,5 @@
 {
+    "access": "write",
     "avail": "1.6.0",
     "brief": [
         "This command creates, updates, or deletes multiple IPv6 leases in a single transaction. It communicates lease changes between HA peers, but may be used in all cases where it is desirable to apply multiple lease updates in a single transaction."

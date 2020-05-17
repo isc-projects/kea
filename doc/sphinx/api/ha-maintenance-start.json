@@ -1,4 +1,5 @@
 {
+    "access": "write",
     "avail": "1.7.4",
     "brief": [
         "This command is sent to instruct one of the servers to transition",

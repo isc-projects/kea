@@ -30,6 +30,10 @@
     // a hook), remove the whole "hook" entry.
     "hook": "name of the hook that provides this command. remove if provided by the core code",
 
+    // This defines the read or write access. Default is write access
+    // to not leave unrestricted access to a dangerous command by accident.
+    "access": "write",
+
     // This defines the syntax of the command.
     "cmd-syntax": [ "Syntax of the command" ],
 

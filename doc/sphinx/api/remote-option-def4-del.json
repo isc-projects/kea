@@ -1,4 +1,5 @@
 {
+    "access": "write",
     "avail": "1.6.0",
     "brief": [
         "This command deletes a DHCPv4 option definition from the configuration database."

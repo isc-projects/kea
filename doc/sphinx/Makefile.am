@@ -172,9 +172,12 @@ if INSTALL_MANS
 	${INSTALL_DATA} $(mans_found) ${DESTDIR}${mandir}/man8/
 endif
 endif
+	mkdir -p $(DESTDIR)$(datarootdir)/${PACKAGE_NAME}/api
+	cp $(api_files) $(DESTDIR)$(datarootdir)/${PACKAGE_NAME}/api
 
 uninstall-local:
 	rm -rf $(DESTDIR)$(docdir)
+	rm -rf $(DESTDIR)$(datarootdir)/${PACKAGE_NAME}/api
 
 # There are sometimes conflicts when more then one sphinx-build is run at a time.
 # This target blocks running anything in parallel in this Makefile,

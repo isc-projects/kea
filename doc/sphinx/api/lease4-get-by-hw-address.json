@@ -1,4 +1,5 @@
 {
+    "access": "read",
     "avail": "1.7.1",
     "brief": [
         "This command retrieves all IPv4 leases with the specified hardware address."

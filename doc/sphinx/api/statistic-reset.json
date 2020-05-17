@@ -1,4 +1,5 @@
 {
+    "access": "write",
     "avail": "1.0.0",
     "brief": [
         "This command sets the specified statistic to its neutral value: 0 for integer, 0.0 for float, 0h0m0s0us for time duration, and \"\" for string type. It takes a single string parameter called name that specifies the statistic name."

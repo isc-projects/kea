@@ -1,4 +1,5 @@
 {
+    "access": "write",
     "avail": "1.4.0",
     "brief": [
         "This command modifies the scope that the server is responsible for serving when operating in High Availability (HA) mode."

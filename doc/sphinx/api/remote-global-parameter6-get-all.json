@@ -1,4 +1,5 @@
 {
+    "access": "read",
     "avail": "1.6.0",
     "brief": [
         "This command fetches all global parameters for the server from the specified database."
