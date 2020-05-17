@@ -2,7 +2,7 @@ EXTRA_DIST=
 sphinxbuilddir=$(builddir)/_build
 
 # list of api files that are used to generate api.rst
-api_files1=$(shell cat api-files.txt)
+api_files1=$(shell cat $(srcdir)/api-files.txt)
 api_files=$(foreach af,$(api_files1), $(srcdir)/$(af))
 
 if GENERATE_DOCS
