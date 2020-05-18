@@ -2253,17 +2253,19 @@ int
 HAService::getPendingRequest(const QueryPtrType& query) {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(pending_requests_mutex_);
-        if (pending_requests_.count(query) == 0) {
-            return (0);
-        } else {
-            return (pending_requests_[query]);
-        }
+        return (getPendingRequestInternal(query));
     } else {
-        if (pending_requests_.count(query) == 0) {
-            return (0);
-        } else {
-            return (pending_requests_[query]);
-        }
+        return (getPendingRequestInternal(query));
+    }
+}
+
+template<typename QueryPtrType>
+int
+HAService::getPendingRequestInternal(const QueryPtrType& query) {
+    if (pending_requests_.count(query) == 0) {
+        return (0);
+    } else {
+        return (pending_requests_[query]);
     }
 }
 

@@ -947,11 +947,13 @@ protected:
     void updatePendingRequest(QueryPtrType& query);
 
     /// @brief Get the number of entries in the pending request map.
+    ///
     /// @note Currently for testing purposes only.
     /// @return Number of entries in the pending request map.
     size_t pendingRequestSize();
 
     /// @brief Get the number of scheduled requests for a given query.
+    ///
     /// @note Currently for testing purposes only.
     ///
     /// If there is an entry in the pending request map for the given
@@ -995,7 +997,20 @@ private:
     template<typename QueryPtrType>
     void updatePendingRequestInternal(QueryPtrType& query);
 
-    /// @brief Mutex to protect the pending_requests_ map.
+    /// @brief Get the number of scheduled requests for a given query.
+    /// @note Currently for testing purposes only.
+    ///
+    /// If there is an entry in the pending request map for the given
+    /// query the entry is returned else zero is returned.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param query Pointer to the DHCP client's query.
+    /// @return Number of scheduled requests for the query or zero.
+    template<typename QueryPtrType>
+    int getPendingRequestInternal(const QueryPtrType& query);
+
+    /// @brief Mutex to protect the @ref pending_requests_ map.
     std::mutex pending_requests_mutex_;
 
     /// @brief Map holding a number of scheduled requests for a given packet.
