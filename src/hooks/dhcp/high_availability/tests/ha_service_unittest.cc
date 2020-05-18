@@ -1080,7 +1080,8 @@ public:
         EXPECT_TRUE(delete_request3);
     }
 
-    /// @brief Tests scenarios when one of the servers to which updates are sent is offline.
+    /// @brief Tests scenarios when one of the servers to which
+    /// updates are sent is offline.
     void testSendUpdatesBackupServerOffline() {
         // Start only two servers out of three. The server 2 is not running.
         ASSERT_NO_THROW({

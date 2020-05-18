@@ -1231,7 +1231,8 @@ public:
         return (request);
     }
 
-    /// @brief Test that two consecutive requests can be sent over the same connection.
+    /// @brief Test that two consecutive requests can be sent over the same
+    /// connection.
     ///
     /// @param version HTTP version to be used.
     void testConsecutiveRequests(const HttpVersion& version) {
@@ -1287,8 +1288,8 @@ public:
         EXPECT_NE(sequence1->intValue(), sequence2->intValue());
     }
 
-    // Test that the client can communicate with two different destinations
-    // simultaneously.
+    /// @brief Test that the client can communicate with two different
+    /// destinations simultaneously.
     void testMultipleDestinations() {
         // Start two servers running on different ports.
         ASSERT_NO_THROW(listener_.start());
@@ -1343,7 +1344,7 @@ public:
         EXPECT_NE(sequence1->intValue(), sequence2->intValue());
     }
 
-    // Test that idle connection can be resumed for second request.
+    /// @brief Test that idle connection can be resumed for second request.
     void testIdleConnection() {
         // Start the server that has short idle timeout. It closes the idle
         // connection after 200ms.
@@ -1399,8 +1400,8 @@ public:
         EXPECT_NE(sequence1->intValue(), sequence2->intValue());
     }
 
-    // This test verifies that the client returns IO error code when the
-    // server is unreachable.
+    /// @brief This test verifies that the client returns IO error code when the
+    /// server is unreachable.
     void testUnreachable () {
         // Create the client.
         HttpClient client(io_service_);
@@ -1424,8 +1425,8 @@ public:
         ASSERT_NO_THROW(runIOService());
     }
 
-    // Test that an error is returned by the client if the server response is
-    // malformed.
+    /// @brief Test that an error is returned by the client if the server
+    /// response is malformed.
     void testMalformedResponse () {
         // Start the server.
         ASSERT_NO_THROW(listener_.start());
@@ -1440,7 +1441,8 @@ public:
         // an invalid content type. We affect the content type by creating
         // a request that holds a JSON parameter requesting a specific
         // content type.
-        PostHttpRequestJsonPtr request = createRequest("requested-content-type", "text/html");
+        PostHttpRequestJsonPtr request = createRequest("requested-content-type",
+                                                       "text/html");
         HttpResponseJsonPtr response(new HttpResponseJson());
         ASSERT_NO_THROW(client.asyncSendRequest(url, request, response,
             [this](const boost::system::error_code& ec,
@@ -1459,8 +1461,8 @@ public:
         ASSERT_NO_THROW(runIOService());
     }
 
-    // Test that client times out when it doesn't receive the entire response
-    // from the server within a desired time.
+    /// @brief Test that client times out when it doesn't receive the entire
+    /// response from the server within a desired time.
     void testClientRequestTimeout() {
         // Start the server.
         ASSERT_NO_THROW(listener_.start());
@@ -1497,8 +1499,9 @@ public:
         PostHttpRequestJsonPtr request2 = createRequest("sequence", 1);
         HttpResponseJsonPtr response2(new HttpResponseJson());
         ASSERT_NO_THROW(client.asyncSendRequest(url, request2, response2,
-                        [this, &cb_num](const boost::system::error_code& /*ec*/, const HttpResponsePtr&,
-                   const std::string&) {
+                        [this, &cb_num](const boost::system::error_code& /*ec*/,
+                                        const HttpResponsePtr&,
+                                        const std::string&) {
             if (++cb_num > 1) {
                 io_service_.stop();
             }
@@ -1508,7 +1511,7 @@ public:
         ASSERT_NO_THROW(runIOService());
     }
 
-    // Test that client times out when connection takes too long.
+    /// @brief est that client times out when connection takes too long.
     void testClientConnectTimeout() {
         // Start the server.
         ASSERT_NO_THROW(listener_.start());
@@ -1550,8 +1553,9 @@ public:
 
         // Create another request after the timeout. It should be handled ok.
         ASSERT_NO_THROW(client.asyncSendRequest(url, request, response,
-                        [this, &cb_num](const boost::system::error_code& /*ec*/, const HttpResponsePtr&,
-                   const std::string&) {
+                        [this, &cb_num](const boost::system::error_code& /*ec*/,
+                                        const HttpResponsePtr&,
+                                        const std::string&) {
             if (++cb_num > 1) {
                 io_service_.stop();
             }
