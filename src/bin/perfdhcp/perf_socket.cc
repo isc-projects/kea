@@ -150,9 +150,12 @@ Pkt4Ptr
 PerfSocket::receive4(uint32_t timeout_sec, uint32_t timeout_usec) {
     Pkt4Ptr pkt = IfaceMgr::instance().receive4(timeout_sec, timeout_usec);
     if (pkt) {
-        /// @todo: Add packet exception handling here. Right now any
-        /// malformed packet will cause perfdhcp to abort.
-        pkt->unpack();
+	try {
+            pkt->unpack();
+	} catch (const std::exception &e) {
+		std::cout << "Incorrect DHCP packet received"
+			  << e.what() << std::endl;
+	}
     }
     return (pkt);
 }
@@ -161,9 +164,12 @@ Pkt6Ptr
 PerfSocket::receive6(uint32_t timeout_sec, uint32_t timeout_usec) {
     Pkt6Ptr pkt = IfaceMgr::instance().receive6(timeout_sec, timeout_usec);
     if (pkt) {
-        /// @todo: Add packet exception handling here. Right now any
-        /// malformed packet will cause perfdhcp to abort.
-        pkt->unpack();
+        try {
+            pkt->unpack();
+        } catch (const std::exception &e) {
+                std::cout << "Incorrect DHCP packet received"
+                          << e.what() << std::endl;
+        }
     }
     return (pkt);
 }
