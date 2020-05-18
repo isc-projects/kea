@@ -1682,6 +1682,12 @@ It returns the HA mode of operation selected using the ``mode`` parameter
 in the configuration file. It can hold one of the following values:
 ``load-balancing``, ``hot-standby`` or ``passive-backup``.
 
+The ``status-get`` response has the format described above only in the
+``load-balancing`` and ``hot-standby`` modes. In the ``passive-backup``
+mode the ``remote`` map is not included in the response because in this
+mode there is only one active server (local). The response comprises no
+information about the status of the backup servers.
+
 .. _command-ha-maintenance-start:
 
 The ha-maintenance-start Command
