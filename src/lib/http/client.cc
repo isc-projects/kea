@@ -28,7 +28,8 @@
 
 using namespace isc;
 using namespace isc::asiolink;
-using namespace http;
+using namespace isc::http;
+using namespace isc::util;
 
 namespace {
 
@@ -431,9 +432,9 @@ public:
     void closeIfOutOfBandwidth(int socket_fd) {
         if (MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<std::mutex> lk(mutex_);
-            closeIfOutOfBandwidth(fd);
+            closeIfOutOfBandwidth(socket_fd);
         } else {
-            closeIfOutOfBandwidth(fd);
+            closeIfOutOfBandwidth(socket_fd);
         }
     }
 
