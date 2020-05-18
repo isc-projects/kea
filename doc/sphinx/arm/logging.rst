@@ -464,6 +464,12 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | is no specialized              |
    |                                  |                        | logger provided.               |
    +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.lease-query-hooks``, | libdhcp_lease_query    | This logger is used            |
+   | ``kea-dhcp6.lease-query-hooks``  | hook library           | to log messages                |
+   |                                  |                        | related to the                 |
+   |                                  |                        | operation of the               |
+   |                                  |                        | Leasequery hooks library       |
+   +----------------------------------+------------------------+--------------------------------+
 
 Note that user-defined hook libraries should not use any of the loggers
 mentioned above, but should instead define new loggers with names that

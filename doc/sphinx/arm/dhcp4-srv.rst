@@ -5781,6 +5781,26 @@ The DHCPv4 server supports the following statistics:
    |                                          |                | exposed for each                  |
    |                                          |                | subnet separately.                |
    +------------------------------------------+----------------+-----------------------------------+
+   | pkt4-lease-query-received                | integer        | Number of IPv4 DHCPLEASEQUERY     |
+   |                                          |                | packets received. (Only exists if |
+   |                                          |                | Leasequery hook library is        |
+   |                                          |                | loaded.)                          |
+   +------------------------------------------+----------------+-----------------------------------+
+   | pkt4-lease-query-response-unknown-sent   | integer        | Number of IPv4 DHCPLEASEUNKNOWN   |
+   |                                          |                | responses sent. (Only exists if   |
+   |                                          |                | Leasequery hook library is        |
+   |                                          |                | loaded.)                          |
+   +------------------------------------------+----------------+-----------------------------------+
+   | pkt4-lease-query-response-unassigned-sent| integer        | Number of IPv4 DHCPLEASEUNASSIGNED|
+   |                                          |                | responses sent. (Only exists if   |
+   |                                          |                | Leasequery hook library is        |
+   |                                          |                | loaded.)                          |
+   +------------------------------------------+----------------+-----------------------------------+
+   | pkt4-lease-query-response-active-sent    | integer        | Number of IPv4 DHCPLEASEACTIVE    |
+   |                                          |                | responses sent. (Only exists if   |
+   |                                          |                | Leasequery hook library is        |
+   |                                          |                | loaded.)                          |
+   +------------------------------------------+----------------+-----------------------------------+
 
 .. note::
 

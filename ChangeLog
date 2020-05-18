@@ -1,3 +1,8 @@
+1752.	[doc]		tmark
+	Added documentation for the Leasequery premium
+	hook library to the ARM.
+	(Gitlab #1180)
+
 1751.	[perf]		marcin
 	Corrected performance issue occurring while loading large configurations
 	via the MySQL Config Backend. Improper database indexing caused long

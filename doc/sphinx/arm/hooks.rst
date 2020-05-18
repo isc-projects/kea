@@ -2811,6 +2811,7 @@ both the command and the response.
 .. include:: hooks-stat-cmds.rst
 .. include:: hooks-radius.rst
 .. include:: hooks-host-cache.rst
+.. include:: hooks-lease-query.rst
 
 
 .. _user-context-hooks:
