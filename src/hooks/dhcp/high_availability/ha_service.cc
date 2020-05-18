@@ -1351,7 +1351,8 @@ HAService::asyncSendHeartbeat() {
                 communication_state_->setPartnerState("unavailable");
                 // Log if the communication is interrupted.
                 if (communication_state_->isCommunicationInterrupted()) {
-                    LOG_WARN(ha_logger, HA_COMMUNICATION_INTERRUPTED);
+                    LOG_WARN(ha_logger, HA_COMMUNICATION_INTERRUPTED)
+                        .arg(partner_config->getName());
                 }
             }
 

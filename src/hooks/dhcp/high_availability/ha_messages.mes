@@ -58,7 +58,7 @@ reason for failure.
 This error message is issued when the callout for the command_processed hook
 point failed. The argument contains a reason for the error.
 
-% HA_COMMUNICATION_INTERRUPTED communication is interrupted and failover process has been started
+% HA_COMMUNICATION_INTERRUPTED communication with %1 is interrupted
 This warning message is issued by the server which discovered that the
 communication to the active partner has been interrupted for a time
 period longer than the configured heartbeat-delay time. At this stage

@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Mon May 18 2020 11:51
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Mon May 18 2020 16:44
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -101,7 +101,7 @@ const char* values[] = {
     "HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED", "an error upacking an option, caused subsequent options to be skipped: %1",
     "HA_BUFFER6_RECEIVE_UNPACK_FAILED", "failed to parse query from %1 to %2, received over interface %3, reason: %4",
     "HA_COMMAND_PROCESSED_FAILED", "command_processed callout failed: %1",
-    "HA_COMMUNICATION_INTERRUPTED", "communication is interrupted and failover process has been started",
+    "HA_COMMUNICATION_INTERRUPTED", "communication with %1 is interrupted",
     "HA_COMMUNICATION_INTERRUPTED_CLIENT4", "%1: new client attempting to get a lease from the partner",
     "HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED", "%1: partner server failed to respond, %2 clients unacked so far, %3 clients left before transitioning to the partner-down state",
     "HA_COMMUNICATION_INTERRUPTED_CLIENT6", "%1: new client attempting to get a lease from the partner",
