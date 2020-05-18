@@ -8,6 +8,7 @@
 
 #include <communication_state.h>
 #include <exceptions/exceptions.h>
+#include <ha_log.h>
 #include <ha_service_states.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
@@ -27,6 +28,7 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::http;
+using namespace isc::log;
 using namespace boost::posix_time;
 
 namespace {
@@ -348,6 +350,8 @@ CommunicationState4::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
         client_id = opt_client_id->getData();
     }
 
+    bool log_unacked = false;
+
     // Check if the given client was already recorded.
     auto& idx = connecting_clients_.get<0>();
     auto existing_request = idx.find(boost::make_tuple(msg->getHWAddr()->hwaddr_, client_id));
@@ -359,14 +363,35 @@ CommunicationState4::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
         if (!existing_request->unacked_ && unacked) {
             ConnectingClient4 connecting_client{ msg->getHWAddr()->hwaddr_, client_id, unacked };
             idx.replace(existing_request, connecting_client);
+            log_unacked = true;
         }
-        return;
+
+    } else {
+        // This is the first time we see the packet from this client. Let's
+        // record it.
+        ConnectingClient4 connecting_client{ msg->getHWAddr()->hwaddr_, client_id, unacked };
+        idx.insert(connecting_client);
+        log_unacked = unacked;
+
+        if (!unacked) {
+            // This is the first time we see this client after getting into the
+            // communication interrupted state. But, this client hasn't been
+            // yet trying log enough to be considered unacked.
+            LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT4)
+                .arg(message->getLabel());
+        }
     }
 
-    // This is the first time we see the packet from this client. Let's
-    // record it.
-    ConnectingClient4 connecting_client{ msg->getHWAddr()->hwaddr_, client_id, unacked };
-    idx.insert(connecting_client);
+    if (log_unacked) {
+        unsigned unacked_left = 0;
+        if (config_->getMaxUnackedClients() > getUnackedClientsCount()) {
+            unacked_left = config_->getMaxUnackedClients() > getUnackedClientsCount();
+        }
+        LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED)
+            .arg(message->getLabel())
+            .arg(getUnackedClientsCount())
+            .arg(unacked_left);
+    }
 }
 
 bool
@@ -418,6 +443,8 @@ CommunicationState6::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
         return;
     }
 
+    bool log_unacked = false;
+
     // Check if the given client was already recorded.
     auto& idx = connecting_clients_.get<0>();
     auto existing_request = idx.find(duid->getData());
@@ -429,13 +456,35 @@ CommunicationState6::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
         if (!existing_request->unacked_ && unacked) {
             ConnectingClient6 connecting_client{ duid->getData(), unacked };
             idx.replace(existing_request, connecting_client);
+            log_unacked = true;
+        }
+
+    } else {
+        // This is the first time we see the packet from this client. Let's
+        // record it.
+        ConnectingClient6 connecting_client{ duid->getData(), unacked };
+        idx.insert(connecting_client);
+        log_unacked = unacked;
+
+        if (!unacked) {
+            // This is the first time we see this client after getting into the
+            // communication interrupted state. But, this client hasn't been
+            // yet trying log enough to be considered unacked.
+            LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT6)
+                .arg(message->getLabel());
         }
     }
 
-    // This is the first time we see the packet from this client. Let's
-    // record it.
-    ConnectingClient6 connecting_client{ duid->getData(), unacked };
-    idx.insert(connecting_client);
+    if (log_unacked) {
+        unsigned unacked_left = 0;
+        if (config_->getMaxUnackedClients() > getUnackedClientsCount()) {
+            unacked_left = config_->getMaxUnackedClients() > getUnackedClientsCount();
+        }
+        LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED)
+            .arg(message->getLabel())
+            .arg(getUnackedClientsCount())
+            .arg(unacked_left);
+    }
 }
 
 bool

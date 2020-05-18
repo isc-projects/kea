@@ -1349,6 +1349,10 @@ HAService::asyncSendHeartbeat() {
                 // We were unable to retrieve partner's state, so let's mark it
                 // as unavailable.
                 communication_state_->setPartnerState("unavailable");
+                // Log if the communication is interrupted.
+                if (communication_state_->isCommunicationInterrupted()) {
+                    LOG_WARN(ha_logger, HA_COMMUNICATION_INTERRUPTED);
+                }
             }
 
             // Whatever the result of the heartbeat was, the state machine needs

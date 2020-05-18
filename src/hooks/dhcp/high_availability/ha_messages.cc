@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Thu Apr 30 2020 12:21
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Mon May 18 2020 11:51
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -16,6 +16,11 @@ extern const isc::log::MessageID HA_BUFFER6_RECEIVE_NOT_FOR_US = "HA_BUFFER6_REC
 extern const isc::log::MessageID HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED = "HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED";
 extern const isc::log::MessageID HA_BUFFER6_RECEIVE_UNPACK_FAILED = "HA_BUFFER6_RECEIVE_UNPACK_FAILED";
 extern const isc::log::MessageID HA_COMMAND_PROCESSED_FAILED = "HA_COMMAND_PROCESSED_FAILED";
+extern const isc::log::MessageID HA_COMMUNICATION_INTERRUPTED = "HA_COMMUNICATION_INTERRUPTED";
+extern const isc::log::MessageID HA_COMMUNICATION_INTERRUPTED_CLIENT4 = "HA_COMMUNICATION_INTERRUPTED_CLIENT4";
+extern const isc::log::MessageID HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED = "HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED";
+extern const isc::log::MessageID HA_COMMUNICATION_INTERRUPTED_CLIENT6 = "HA_COMMUNICATION_INTERRUPTED_CLIENT6";
+extern const isc::log::MessageID HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED = "HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED";
 extern const isc::log::MessageID HA_CONFIGURATION_FAILED = "HA_CONFIGURATION_FAILED";
 extern const isc::log::MessageID HA_CONFIGURATION_SUCCESSFUL = "HA_CONFIGURATION_SUCCESSFUL";
 extern const isc::log::MessageID HA_CONFIG_AUTO_FAILOVER_DISABLED = "HA_CONFIG_AUTO_FAILOVER_DISABLED";
@@ -96,6 +101,11 @@ const char* values[] = {
     "HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED", "an error upacking an option, caused subsequent options to be skipped: %1",
     "HA_BUFFER6_RECEIVE_UNPACK_FAILED", "failed to parse query from %1 to %2, received over interface %3, reason: %4",
     "HA_COMMAND_PROCESSED_FAILED", "command_processed callout failed: %1",
+    "HA_COMMUNICATION_INTERRUPTED", "communication is interrupted and failover process has been started",
+    "HA_COMMUNICATION_INTERRUPTED_CLIENT4", "%1: new client attempting to get a lease from the partner",
+    "HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED", "%1: partner server failed to respond, %2 clients unacked so far, %3 clients left before transitioning to the partner-down state",
+    "HA_COMMUNICATION_INTERRUPTED_CLIENT6", "%1: new client attempting to get a lease from the partner",
+    "HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED", "%1: partner server failed to respond, %2 clients unacked so far, %3 clients left before transitioning to the partner-down state",
     "HA_CONFIGURATION_FAILED", "failed to configure High Availability hooks library: %1",
     "HA_CONFIGURATION_SUCCESSFUL", "HA hook library has been successfully configured",
     "HA_CONFIG_AUTO_FAILOVER_DISABLED", "auto-failover disabled for %1",
