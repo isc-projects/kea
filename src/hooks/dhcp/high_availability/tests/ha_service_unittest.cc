@@ -33,11 +33,14 @@
 #include <http/response_creator.h>
 #include <http/response_creator_factory.h>
 #include <http/response_json.h>
+#include <util/multi_threading_mgr.h>
+
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+
 #include <functional>
 #include <sstream>
 #include <set>
@@ -52,6 +55,7 @@ using namespace isc::ha;
 using namespace isc::ha::test;
 using namespace isc::hooks;
 using namespace isc::http;
+using namespace isc::util;
 
 namespace {
 
@@ -530,6 +534,7 @@ public:
                                       HttpListener::IdleTimeout(IDLE_TIMEOUT))),
           leases4_(),
           leases6_() {
+        MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Destructor.
@@ -541,6 +546,7 @@ public:
         listener3_->stop();
         io_service_->get_io_service().reset();
         io_service_->poll();
+        MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Callback function invoke upon test timeout.
@@ -1222,8 +1228,87 @@ TEST_F(HAServiceTest, sendSuccessfulUpdates) {
     EXPECT_TRUE(delete_request3);
 }
 
+// Test scenario when all lease updates are sent successfully.
+TEST_F(HAServiceTest, sendSuccessfulUpdatesMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // Start HTTP servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    // This flag will be set to true if unpark is called.
+    bool unpark_called = false;
+    testSendLeaseUpdates([&unpark_called] {
+        unpark_called = true;
+    }, true, 1);
+
+    // Expecting that the packet was unparked because lease updates are expected
+    // to be successful.
+    EXPECT_TRUE(unpark_called);
+
+    // The server 2 should have received two commands.
+    EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 2 has received lease4-update command.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                                        "192.1.2.3");
+    EXPECT_TRUE(update_request2);
+
+    // Check that the server 2 has received lease4-del command.
+    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease4-del",
+                                                                        "192.2.3.4");
+    EXPECT_TRUE(delete_request2);
+
+    // Lease updates should be successfully sent to server3.
+    EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 3 has received lease4-update command.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease4-update",
+                                                                        "192.1.2.3");
+    EXPECT_TRUE(update_request3);
+
+    // Check that the server 3 has received lease4-del command.
+    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease4-del",
+                                                                        "192.2.3.4");
+    EXPECT_TRUE(delete_request3);
+}
+
 // Test scenario when lease updates are not sent to the failover peer.
 TEST_F(HAServiceTest, sendUpdatesPartnerDown) {
+    // Start HTTP servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    // This flag will be set to true if unpark is called.
+    bool unpark_called = false;
+    testSendLeaseUpdates([&unpark_called] {
+        unpark_called = true;
+    }, false, 0, MyState(HA_PARTNER_DOWN_ST));
+
+    // There were no lease updates for which we have been waiting to complete so
+    // the packet was never unparked. Note that in such situation the packet is
+    // not parked either.
+    EXPECT_FALSE(unpark_called);
+
+    // Server 2 should not receive lease4-update.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                                        "192.1.2.3");
+    EXPECT_FALSE(update_request2);
+
+    // Server 2 should not receive lease4-del.
+    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease4-del",
+                                                                        "192.2.3.4");
+    EXPECT_FALSE(delete_request2);
+}
+
+// Test scenario when lease updates are not sent to the failover peer.
+TEST_F(HAServiceTest, sendUpdatesPartnerDownMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
     // Start HTTP servers.
     ASSERT_NO_THROW({
         listener_->start();
@@ -1278,7 +1363,72 @@ TEST_F(HAServiceTest, sendUpdatesActiveServerOffline) {
 }
 
 // Test scenario when one of the servers to which updates are sent is offline.
+TEST_F(HAServiceTest, sendUpdatesActiveServerOfflineMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // Start only two servers out of three. The server 3 is not running.
+    ASSERT_NO_THROW({
+            listener_->start();
+            listener3_->start();
+    });
+
+    testSendLeaseUpdates([] {
+        ADD_FAILURE() << "unpark function called but expected that the packet"
+            " is dropped";
+    }, false, 1);
+
+    // Server 2 should not receive lease4-update.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                                        "192.1.2.3");
+    EXPECT_FALSE(update_request2);
+
+    // Server 2 should not receive lease4-del.
+    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease4-del",
+                                                                        "192.2.3.4");
+    EXPECT_FALSE(delete_request2);
+}
+
+// Test scenario when one of the servers to which updates are sent is offline.
 TEST_F(HAServiceTest, sendUpdatesBackupServerOffline) {
+    // Start only two servers out of three. The server 2 is not running.
+    ASSERT_NO_THROW({
+            listener_->start();
+            listener2_->start();
+    });
+
+    bool unpark_called = false;
+    testSendLeaseUpdates([&unpark_called] {
+        unpark_called = true;
+    }, true, 1);
+
+    EXPECT_TRUE(unpark_called);
+
+    // The server 2 should have received two commands.
+    EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 2 has received lease4-update command.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                                        "192.1.2.3");
+    EXPECT_TRUE(update_request2);
+
+    // Check that the server 2 has received lease4-del command.
+    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease4-del",
+                                                                        "192.2.3.4");
+    EXPECT_TRUE(delete_request2);
+
+    // Server 3 should not receive lease4-update.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease4-update",
+                                                                        "192.1.2.3");
+    EXPECT_FALSE(update_request3);
+
+    // Server 3 should not receive lease4-del.
+    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease4-del",
+                                                                        "192.2.3.4");
+    EXPECT_FALSE(delete_request3);
+}
+
+// Test scenario when one of the servers to which updates are sent is offline.
+TEST_F(HAServiceTest, sendUpdatesBackupServerOfflineMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
     // Start only two servers out of three. The server 2 is not running.
     ASSERT_NO_THROW({
             listener_->start();
@@ -1361,8 +1511,93 @@ TEST_F(HAServiceTest, sendUpdatesControlResultError) {
     EXPECT_TRUE(delete_request3);
 }
 
+// Test scenario when one of the servers to which a lease update is sent
+// returns an error.
+TEST_F(HAServiceTest, sendUpdatesControlResultErrorMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // Instruct the server 2 to return an error as a result of receiving a command.
+    factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
+
+    // Start only two servers out of three. The server 3 is not running.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    testSendLeaseUpdates([] {
+        ADD_FAILURE() << "unpark function called but expected that the packet"
+            " is dropped";
+    }, false, 1);
+
+    // The updates should be sent to server 2 and this server should return error code.
+    EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+    // Server 2 should receive lease4-update.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                                        "192.1.2.3");
+    EXPECT_TRUE(update_request2);
+
+    // Server 2 should receive lease4-del.
+    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease4-del",
+                                                                        "192.2.3.4");
+    EXPECT_TRUE(delete_request2);
+
+    // Lease updates should be successfully sent to server3.
+    EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 3 has received lease4-update command.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease4-update",
+                                                                        "192.1.2.3");
+    EXPECT_TRUE(update_request3);
+
+    // Check that the server 3 has received lease4-del command.
+    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease4-del",
+                                                                        "192.2.3.4");
+    EXPECT_TRUE(delete_request3);
+}
+
 // Test scenario when all lease updates are sent successfully.
 TEST_F(HAServiceTest, sendSuccessfulUpdates6) {
+    // Start HTTP servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    // This flag will be set to true if unpark is called.
+    bool unpark_called = false;
+    testSendLeaseUpdates6([&unpark_called] {
+        unpark_called = true;
+    }, true, 1);
+
+    // Expecting that the packet was unparked because lease updates are expected
+    // to be successful.
+    EXPECT_TRUE(unpark_called);
+
+    // The server 2 should have received one command.
+    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 2 has received lease6-bulk-apply command.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_TRUE(update_request2);
+
+    // Lease updates should be successfully sent to server3.
+    EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 3 has received lease6-bulk-apply command.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_TRUE(update_request3);
+}
+
+// Test scenario when all lease updates are sent successfully.
+TEST_F(HAServiceTest, sendSuccessfulUpdates6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
     // Start HTTP servers.
     ASSERT_NO_THROW({
         listener_->start();
@@ -1426,6 +1661,34 @@ TEST_F(HAServiceTest, sendUpdatesPartnerDown6) {
     EXPECT_FALSE(update_request2);
 }
 
+// Test scenario when lease updates are not sent to the failover peer.
+TEST_F(HAServiceTest, sendUpdatesPartnerDown6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // Start HTTP servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    // This flag will be set to true if unpark is called.
+    bool unpark_called = false;
+    testSendLeaseUpdates6([&unpark_called] {
+        unpark_called = true;
+    }, false, 0, MyState(HA_PARTNER_DOWN_ST));
+
+    // There were no lease updates for which we have been waiting to complete so
+    // the packet was never unparked. Note that in such situation the packet is
+    // not parked either.
+    EXPECT_FALSE(unpark_called);
+
+    // Server 2 should not receive lease6-bulk-apply.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_FALSE(update_request2);
+}
+
 // Test scenario when one of the servers to which updates are sent is offline.
 TEST_F(HAServiceTest, sendUpdatesActiveServerOffline6) {
     // Start only two servers out of three. The server 3 is not running.
@@ -1447,7 +1710,60 @@ TEST_F(HAServiceTest, sendUpdatesActiveServerOffline6) {
 }
 
 // Test scenario when one of the servers to which updates are sent is offline.
+TEST_F(HAServiceTest, sendUpdatesActiveServerOffline6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // Start only two servers out of three. The server 3 is not running.
+    ASSERT_NO_THROW({
+            listener_->start();
+            listener3_->start();
+    });
+
+    testSendLeaseUpdates6([] {
+        ADD_FAILURE() << "unpark function called but expected that the packet"
+            " is dropped";
+    }, false, 1);
+
+    // Server 2 should not receive lease6-bulk-apply.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_FALSE(update_request2);
+}
+
+// Test scenario when one of the servers to which updates are sent is offline.
 TEST_F(HAServiceTest, sendUpdatesBackupServerOffline6) {
+    // Start only two servers out of three. The server 2 is not running.
+    ASSERT_NO_THROW({
+            listener_->start();
+            listener2_->start();
+    });
+
+    bool unpark_called = false;
+    testSendLeaseUpdates6([&unpark_called] {
+        unpark_called = true;
+    }, true, 1);
+
+    EXPECT_TRUE(unpark_called);
+
+    // The server 2 should have received one command.
+    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 2 has received lease6-bulk-apply command.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_TRUE(update_request2);
+
+    // Server 3 should not receive lease6-bulk-apply.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_FALSE(update_request3);
+}
+
+// Test scenario when one of the servers to which updates are sent is offline.
+TEST_F(HAServiceTest, sendUpdatesBackupServerOffline6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
     // Start only two servers out of three. The server 2 is not running.
     ASSERT_NO_THROW({
             listener_->start();
@@ -1505,9 +1821,102 @@ TEST_F(HAServiceTest, sendUpdatesControlResultError6) {
     EXPECT_TRUE(update_request2);
 }
 
+// Test scenario when one of the servers to which a lease update is sent
+// returns an error.
+TEST_F(HAServiceTest, sendUpdatesControlResultError6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // Instruct the server 2 to return an error as a result of receiving a command.
+    factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
+
+    // Start only two servers out of three. The server 3 is not running.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    testSendLeaseUpdates6([] {
+        ADD_FAILURE() << "unpark function called but expected that the packet"
+            " is dropped";
+    }, false, 1);
+
+    // The updates should be sent to server 2 and this server should return error code.
+    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+    // Server 2 should receive lease6-bulk-apply.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_TRUE(update_request2);
+}
+
 // This test verifies that the server accepts the response to the lease6-bulk-apply
 // command including failed-deleted-leases and failed-leases parameters.
 TEST_F(HAServiceTest, sendUpdatesFailedLeases6) {
+    // Create a dummy lease which failed to be deleted.
+    auto failed_deleted_lease = Element::createMap();
+    failed_deleted_lease->set("type", Element::create("IA_NA"));
+    failed_deleted_lease->set("ip-address", Element::create("2001:db8:1::1"));
+    failed_deleted_lease->set("subnet-id", Element::create(1));
+    failed_deleted_lease->set("result", Element::create(CONTROL_RESULT_EMPTY));
+    failed_deleted_lease->set("error-message", Element::create("no lease found"));
+
+    // Crate a dummy lease which failed to be created.
+    auto failed_lease = Element::createMap();
+    failed_lease->set("type", Element::create("IA_PD"));
+    failed_lease->set("ip-address", Element::create("2001:db8:1::"));
+    failed_lease->set("subnet-id", Element::create(2));
+    failed_lease->set("result", Element::create(CONTROL_RESULT_ERROR));
+    failed_lease->set("error-message", Element::create("failed to create lease"));
+
+    // Create the "failed-deleted-leases" list.
+    auto failed_deleted_leases = Element::createList();
+    failed_deleted_leases->add(failed_deleted_lease);
+
+    // Create the "failed-leases" list.
+    auto failed_leases = Element::createList();
+    failed_leases->add(failed_lease);
+
+    // Add both lists to the arguments.
+    ElementPtr arguments = Element::createMap();
+    arguments->set("failed-deleted-leases", failed_deleted_leases);
+    arguments->set("failed-leases", failed_leases);
+
+    // Configure the server to return this response.
+    factory2_->getResponseCreator()->setArguments("lease6-bulk-apply",
+                                                  arguments);
+
+    // Start HTTP servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    // This flag will be set to true if unpark is called.
+    bool unpark_called = false;
+    testSendLeaseUpdates6([&unpark_called] {
+        unpark_called = true;
+    }, true, 1);
+
+    // Expecting that the packet was unparked because lease updates are expected
+    // to be successful.
+    EXPECT_TRUE(unpark_called);
+
+    // The server 2 should have received one command.
+    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 2 has received lease6-bulk-apply command.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_TRUE(update_request2);
+}
+
+// This test verifies that the server accepts the response to the lease6-bulk-apply
+// command including failed-deleted-leases and failed-leases parameters.
+TEST_F(HAServiceTest, sendUpdatesFailedLeases6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
     // Create a dummy lease which failed to be deleted.
     auto failed_deleted_lease = Element::createMap();
     failed_deleted_lease->set("type", Element::create("IA_NA"));

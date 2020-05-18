@@ -1010,8 +1010,8 @@ private:
     template<typename QueryPtrType>
     int getPendingRequestInternal(const QueryPtrType& query);
 
-    /// @brief Mutex to protect the @ref pending_requests_ map.
-    std::mutex pending_requests_mutex_;
+    /// @brief Mutex to protect the internal state.
+    std::mutex mutex_;
 
     /// @brief Map holding a number of scheduled requests for a given packet.
     ///

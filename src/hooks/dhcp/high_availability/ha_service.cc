@@ -52,7 +52,7 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
                      const HAConfigPtr& config, const HAServerType& server_type)
     : io_service_(io_service), network_state_(network_state), config_(config),
       server_type_(server_type), client_(*io_service), communication_state_(),
-      query_filter_(config), pending_requests_mutex_(), pending_requests_() {
+      query_filter_(config), mutex_(), pending_requests_() {
 
     if (server_type == HAServerType::DHCPv4) {
         communication_state_.reset(new CommunicationState4(io_service_, config));
@@ -919,7 +919,7 @@ bool
 HAService::leaseUpdateComplete(QueryPtrType& query,
                                const ParkingLotHandlePtr& parking_lot) {
     if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(pending_requests_mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         return (leaseUpdateCompleteInternal(query, parking_lot));
     } else {
         return (leaseUpdateCompleteInternal(query, parking_lot));
@@ -951,7 +951,7 @@ template<typename QueryPtrType>
 void
 HAService::updatePendingRequest(QueryPtrType& query) {
     if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(pending_requests_mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         updatePendingRequestInternal(query);
     } else {
         updatePendingRequestInternal(query);
@@ -2241,7 +2241,7 @@ HAService::clientCloseHandler(int tcp_native_fd) {
 size_t
 HAService::pendingRequestSize() {
     if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(pending_requests_mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         return (pending_requests_.size());
     } else {
         return (pending_requests_.size());
@@ -2252,7 +2252,7 @@ template<typename QueryPtrType>
 int
 HAService::getPendingRequest(const QueryPtrType& query) {
     if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(pending_requests_mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         return (getPendingRequestInternal(query));
     } else {
         return (getPendingRequestInternal(query));
