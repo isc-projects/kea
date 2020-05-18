@@ -1346,8 +1346,6 @@ public:
         EXPECT_TRUE(update_request2);
     }
 
-    //////
-
     /// @brief Runs HAService::processSynchronize for the DHCPv4 server and
     /// returns a response.
     ///
