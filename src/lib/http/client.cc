@@ -385,7 +385,7 @@ public:
             std::lock_guard<std::mutex> lk(mutex_);
             return (queueRequestInternal(url, request, response,
                                          request_timeout, request_callback,
-                                          connect_callback, close_callback));
+                                         connect_callback, close_callback));
         } else {
             return (queueRequestInternal(url, request, response,
                                          request_timeout, request_callback,
@@ -432,9 +432,9 @@ public:
     void closeIfOutOfBandwidth(int socket_fd) {
         if (MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<std::mutex> lk(mutex_);
-            closeIfOutOfBandwidth(socket_fd);
+            closeIfOutOfBandwidthInternal(socket_fd);
         } else {
-            closeIfOutOfBandwidth(socket_fd);
+            closeIfOutOfBandwidthInternal(socket_fd);
         }
     }
 
