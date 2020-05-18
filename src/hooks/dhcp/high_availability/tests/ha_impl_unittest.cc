@@ -573,6 +573,7 @@ TEST_F(HAImplTest, statusGet) {
     std::string expected =
         "{"
         "    \"arguments\": {"
+        "        \"ha-mode\": \"load-balancing\","
         "        \"ha-servers\": {"
         "            \"local\": {"
         "                \"role\": \"primary\","
@@ -628,6 +629,7 @@ TEST_F(HAImplTest, statusGetBackupServer) {
     std::string expected =
         "{"
         "    \"arguments\": {"
+        "        \"ha-mode\": \"load-balancing\","
         "        \"ha-servers\": {"
         "            \"local\": {"
         "                \"role\": \"backup\","
@@ -671,6 +673,7 @@ TEST_F(HAImplTest, statusGetPassiveBackup) {
     std::string expected =
         "{"
         "    \"arguments\": {"
+        "        \"ha-mode\": \"passive-backup\","
         "        \"ha-servers\": {"
         "            \"local\": {"
         "                \"role\": \"primary\","

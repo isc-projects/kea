@@ -283,6 +283,7 @@ HAImpl::commandProcessed(hooks::CalloutHandle& callout_handle) {
             boost::const_pointer_cast<Element>(resp_args);
         ConstElementPtr ha_servers = service_->processStatusGet();
         mutable_resp_args->set("ha-servers", ha_servers);
+        mutable_resp_args->set("ha-mode", Element::create(HAConfig::HAModeToString(config_->getHAMode())));
     }
 }
 
