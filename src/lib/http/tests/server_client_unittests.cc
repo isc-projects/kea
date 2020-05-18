@@ -1511,7 +1511,7 @@ public:
         ASSERT_NO_THROW(runIOService());
     }
 
-    /// @brief est that client times out when connection takes too long.
+    /// @brief Test that client times out when connection takes too long.
     void testClientConnectTimeout() {
         // Start the server.
         ASSERT_NO_THROW(listener_.start());
