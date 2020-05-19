@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Thu Dec 05 2019 16:13
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Tue May 19 2020 19:04
 
 #ifndef DHCPSRV_MESSAGES_H
 #define DHCPSRV_MESSAGES_H
@@ -189,6 +189,7 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_GET_VERSION;
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB;
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_GET_VERSION;
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_READONLY;
+extern const isc::log::MessageID DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT;
 extern const isc::log::MessageID DHCPSRV_MYSQL_ROLLBACK;
 extern const isc::log::MessageID DHCPSRV_MYSQL_START_TRANSACTION;
 extern const isc::log::MessageID DHCPSRV_MYSQL_UPDATE_ADDR4;
@@ -229,6 +230,7 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_GET_VERSION;
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB;
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_GET_VERSION;
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_READONLY;
+extern const isc::log::MessageID DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT;
 extern const isc::log::MessageID DHCPSRV_PGSQL_ROLLBACK;
 extern const isc::log::MessageID DHCPSRV_PGSQL_START_TRANSACTION;
 extern const isc::log::MessageID DHCPSRV_PGSQL_UPDATE_ADDR4;

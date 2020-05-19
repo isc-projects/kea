@@ -1622,10 +1622,10 @@ public:
         bind_[col].is_unsigned = MLM_TRUE;
         ++col;
 
-        // state_count_: uint32_t
+        // state_count_: int64_t
         bind_[col].buffer_type = MYSQL_TYPE_LONGLONG;
         bind_[col].buffer = reinterpret_cast<char*>(&state_count_);
-        bind_[col].is_unsigned = MLM_TRUE;
+        //bind_[col].is_unsigned = MLM_FALSE;
 
         // Set up the MYSQL_BIND array for the data being returned
         // and bind it to the statement.
@@ -1649,6 +1649,10 @@ public:
     /// result set rows. Once the last row has been fetched, subsequent
     /// calls will return false.
     ///
+    /// Checks against negative values for the state count and logs once
+    /// a warning message. Unfortunately not getting the message is not
+    /// a proof that detailed counters are correct.
+    ///
     /// @param row Storage for the fetched row
     ///
     /// @return True if the fetch succeeded, false if there are no more
@@ -1660,7 +1664,15 @@ public:
             row.subnet_id_ = static_cast<SubnetID>(subnet_id_);
             row.lease_type_ = static_cast<Lease::Type>(lease_type_);
             row.lease_state_ = state_;
-            row.state_count_ = state_count_;
+            if (state_count_ >= 0) {
+                row.state_count_ = state_count_;
+            } else {
+                row.state_count_ = 0;
+                if (!negative_count_) {
+                    negative_count_ = true;
+                    LOG_WARN(dhcpsrv_logger, DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT);
+                }
+            }
             have_row = true;
         } else if (status != MYSQL_NO_DATA) {
             conn_.checkError(status, statement_index_, "getNextRow failed");
@@ -1709,7 +1721,13 @@ private:
 
     /// @brief Receives the state count when fetching a row
     int64_t state_count_;
+
+    /// @brief Received negative state count showing a problem
+    static bool negative_count_;
 };
+
+// Initialize negative state count flag to false.
+bool MySqlLeaseStatsQuery::negative_count_ = false;
 
 // MySqlLeaseContext Constructor
 

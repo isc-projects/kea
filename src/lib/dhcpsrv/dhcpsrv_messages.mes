@@ -921,6 +921,12 @@ database in read-only mode. Kea will not be able to insert or modify
 host reservations but will be able to retrieve existing ones and
 assign them to the clients communicating with the server.
 
+% DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT recount of leases returned a negative value
+This warning message is issued when the recount of leases using counters
+in the MySQL database returned a negative value. This shows a problem
+which can be fixed only by an offline direct recount on the database.
+This message is issued only once.
+
 % DHCPSRV_MYSQL_ROLLBACK rolling back MySQL database
 The code has issued a rollback call.  All outstanding transaction will
 be rolled back and not committed to the database.
@@ -1114,6 +1120,12 @@ This informational message is issued when the user has configured the PostgreSQL
 database in read-only mode. Kea will not be able to insert or modify
 host reservations but will be able to retrieve existing ones and
 assign them to the clients communicating with the server.
+
+% DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT recount of leases returned a negative value
+This warning message is issued when the recount of leases using counters
+in the PostgreSQL database returned a negative value. This shows a problem
+which can be fixed only by an offline direct recount on the database.
+This message is issued only once.
 
 % DHCPSRV_PGSQL_ROLLBACK rolling back PostgreSQL database
 The code has issued a rollback call.  All outstanding transaction will

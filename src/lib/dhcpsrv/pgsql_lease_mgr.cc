@@ -1085,6 +1085,10 @@ public:
     /// result set rows. Once the last row has been fetched, subsequent
     /// calls will return false.
     ///
+    /// Checks against negative values for the state count and logs once
+    /// a warning message. Unfortunately not getting the message is not
+    /// a proof that detailed counters are correct.
+    ///
     /// @param row Storage for the fetched row
     ///
     /// @return True if the fetch succeeded, false if there are no more
@@ -1122,6 +1126,15 @@ public:
         PgSqlExchange::getColumnValue(*result_set_, next_row_, col,
                                       row.state_count_);
 
+        // Protect against negative state count.a
+        if (row.state_count_ < 0) {
+            row.state_count_ = 0;
+            if (!negative_count_) {
+                negative_count_ = true;
+                LOG_WARN(dhcpsrv_logger, DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT);
+            }
+        }
+
         // Point to the next row.
         ++next_row_;
         return (true);
@@ -1143,7 +1156,13 @@ protected:
 
     /// @brief Indicates if query supplies lease type
     bool fetch_type_;
+
+    /// @brief Received negative state count showing a problem
+    static bool negative_count_;
 };
+
+// Initialize negative state count flag to false.
+bool PgSqlLeaseStatsQuery::negative_count_ = false;
 
 // PgSqlLeaseContext Constructor
 
