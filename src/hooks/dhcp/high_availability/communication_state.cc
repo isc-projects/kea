@@ -382,6 +382,7 @@ CommunicationState4::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
         }
     }
 
+    // Only log the first time we detect a client is unacked.
     if (log_unacked) {
         unsigned unacked_left = 0;
         if (config_->getMaxUnackedClients() > getUnackedClientsCount()) {
@@ -475,6 +476,7 @@ CommunicationState6::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
         }
     }
 
+    // Only log the first time we detect a client is unacked.
     if (log_unacked) {
         unsigned unacked_left = 0;
         if (config_->getMaxUnackedClients() > getUnackedClientsCount()) {

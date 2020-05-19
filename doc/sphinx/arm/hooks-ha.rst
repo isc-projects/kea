@@ -1635,7 +1635,7 @@ information).
 The ``communication-interrupted`` boolean value indicates if the server
 receiving the ``status-get`` command (local server) has been unable to
 communicate with the partner longer than the duration specified as
-``max-response-delay``. In such situation we say that active servers are
+``max-response-delay``. In such a situation we say that active servers are
 in the communication interrupted state or that the communication between
 them is interrupted. At this point, the local server may start monitoring
 the DHCP traffic directed to the partner to see if the partner is

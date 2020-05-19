@@ -228,7 +228,7 @@ public:
     virtual bool failureDetected() const = 0;
 
     /// @brief Returns the current number of clients which attempted
-    /// to get the lease from the partner server.
+    /// to get a lease from the partner server.
     ///
     /// The returned number is reset to 0 when the server successfully
     /// establishes communication with the partner. The number is
@@ -432,7 +432,7 @@ public:
     virtual bool failureDetected() const;
 
     /// @brief Returns the current number of clients which attempted
-    /// to get the lease from the partner server.
+    /// to get a lease from the partner server.
     ///
     /// The returned number is reset to 0 when the server successfully
     /// establishes communication with the partner. The number is
@@ -441,8 +441,8 @@ public:
     /// @return The number of clients including unacked clients.
     virtual size_t getConnectingClientsCount() const;
 
-    /// @brief Returns the current number of clients which haven't got
-    /// the lease from the partner server.
+    /// @brief Returns the current number of clients which haven't gotten
+    /// a lease from the partner server.
     ///
     /// The returned number is reset to 0 when the server successfully
     /// establishes communication with the partner. The number is
@@ -534,7 +534,7 @@ public:
     virtual bool failureDetected() const;
 
     /// @brief Returns the current number of clients which attempted
-    /// to get the lease from the partner server.
+    /// to get a lease from the partner server.
     ///
     /// The returned number is reset to 0 when the server successfully
     /// establishes communication with the partner. The number is
@@ -543,8 +543,8 @@ public:
     /// @return The number of clients including unacked clients.
     virtual size_t getConnectingClientsCount() const;
 
-    /// @brief Returns the current number of clients which haven't got
-    /// the lease from the partner server.
+    /// @brief Returns the current number of clients which haven't gotten
+    /// a lease from the partner server.
     ///
     /// The returned number is reset to 0 when the server successfully
     /// establishes communication with the partner. The number is
@@ -562,8 +562,8 @@ protected:
     /// See @c CommunicationState::analyzeMessage for details.
     virtual void clearConnectingClients();
 
-    /// @brief Structure holding information about the client which has
-    /// send the packet being analyzed.
+    /// @brief Structure holding information about a client which
+    /// sent a packet being analyzed.
     struct ConnectingClient6 {
         std::vector<uint8_t> duid_;
         bool unacked_;

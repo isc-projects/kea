@@ -71,7 +71,7 @@ the partner-down state.
 % HA_COMMUNICATION_INTERRUPTED_CLIENT4 %1: new client attempting to get a lease from the partner
 This informational message is issued when the surviving server observes
 a DHCP packet sent to the partner with which the commuication is interrupted.
-The client which packet is observed is not yet considered "unacked" because
+The client whose packet is observed is not yet considered "unacked" because
 the secs field value does not exceed the configured threshold specified
 with max-ack-delay.
 
@@ -82,14 +82,14 @@ is considered to not be served by the partner. The surviving server counts
 such clients and if the number of such clients exceeds the max-unacked-clients
 threshold, the server will transition to the partner-down state. The first
 argument contains client identification information. The second argument
-specifies the number of clients which the server failed to respond to. The
-third argument specifies the number of additional clients which, if not
+specifies the number of clients to which the server has failed to respond.
+The third argument specifies the number of additional clients which, if not
 provisioned, will cause the server to transition to the partner-down state.
 
 % HA_COMMUNICATION_INTERRUPTED_CLIENT6 %1: new client attempting to get a lease from the partner
 This informational message is issued when the surviving server observes
 a DHCP packet sent to the partner with which the commuication is interrupted.
-The client which packet is observed is not yet considered "unacked" because
+The client whose packet is observed is not yet considered "unacked" because
 the elapsed time option value does not exceed the configured threshold
 specified with max-ack-delay. The sole argument specifies client
 identification information.
@@ -101,8 +101,8 @@ is considered to not be served by the partner. The surviving server counts
 such clients and if the number of such clients exceeds the max-unacked-clients
 threshold, the server will transition to the partner-down state. The first
 argument contains client identification information. The second argument
-specifies the number of clients which the server failed to respond to. The
-third argument specifies the number of additional clients which, if not
+specifies the number of clients to which the server has failed to respond.
+The third argument specifies the number of additional clients which, if not
 provisioned, will cause the server to transition to the partner-down state.
 
 % HA_CONFIGURATION_FAILED failed to configure High Availability hooks library: %1
