@@ -926,6 +926,9 @@ ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    // stop thread pool (if running)
+    MultiThreadingCriticalSection cs;
+
     return (configureDhcp4Server(*srv, config, true));
 }
 

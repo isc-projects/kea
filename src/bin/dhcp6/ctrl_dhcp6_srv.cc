@@ -945,6 +945,9 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
         return (no_srv);
     }
 
+    // stop thread pool (if running)
+    MultiThreadingCriticalSection cs;
+
     return (configureDhcp6Server(*srv, config, true));
 }
 
