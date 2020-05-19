@@ -1,10 +1,12 @@
-1753.	[func]		marcin
+1753.	[func]*		marcin
 	Extended the response to the status-get command to include
 	information about the progress of the failover procedure
 	while the active servers are in the communication interrupted
 	state. The new data allow for monitoring the number of clients
 	attempting to communicate with the partner which is presumably
 	offline, total number of packets sent to the partner and so on.
+	The syntax of the response was modified and is incompatible with
+	previous Kea versions.
 	(Gitlab #1087)
 
 1752.	[doc]		tmark
