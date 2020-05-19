@@ -26,12 +26,15 @@ active lease information for either a single IP address or a single client.
 RFC 4388 calls for three such queries:
 
 - Query by IP address
+
     The IP address of interest is contained within the ``ciaddr`` field of
     the query.
 - Query by hardware address
+
     The hardware address of interest is contained with the ``chaddr`` field
     of the query.
 - Query by client identifier
+
     The client identifier of interest is sent in the dhcp-client-identifier
     option (61) of the query.
 
@@ -49,15 +52,18 @@ In response to a valid query, the server will return one of three message
 types:
 
 - DHCPLEASEUNKNOWN
+
     Returned when the IP address of interest is not one the server knows
     about (query by IP address); or there are no active leases for the
     client of interest (query by hardware address or client id).
 
 - DHCPLEASEUNASSIGNED
+
     Returned when the IP address is one the server knows of but for which
     there are no active leases (applies only to query by IP address).
 
 - DHCPLEASEACTIVE
+
     Returned when there is at least one active lease found matching the
     criteria.
 
@@ -77,15 +83,15 @@ In addition, one or more of the following options will be included:
 
 .. table:: DHCPLEASEACTIVE Options
    :class: longtable
-   :widths: 20 10 70
+   :widths: 30 10 70
 
    +------------------------------+-------+-----------------------------------------------+
    | Option                       | Code  | Content                                       |
    +==============================+=======+===============================================+
    | dhcp-client-identifier       |  61   | copied from the lease (if one)                |
    +------------------------------+-------+-----------------------------------------------+
-   | client-last-tranasction-time |  91   | amount of time that has elapsed since the     |
-   | (CLTT)                       |       | lease's client-last-transation-time (CLTT)    |
+   | client-last-transaction-time |  91   | amount of time that has elapsed since the     |
+   |                              |       | lease's client-last-transaction-time (CLTT)   |
    |                              |       | This value will also be used by the server to |
    |                              |       | adjust life time and timer values.            |
    +------------------------------+-------+-----------------------------------------------+

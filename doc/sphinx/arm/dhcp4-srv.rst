@@ -5350,7 +5350,7 @@ The DHCPv4 server supports the following statistics:
 
    +-------------------------------------------+----------------+------------------------------------+
    | Statistic                                 | Data Type      | Description                        |
-   +===========================================+================+===================================-+
+   +===========================================+================+====================================+
    | pkt4-received                             | integer        | Number of DHCPv4 packets           |
    |                                           |                | received.  This includes all       |
    |                                           |                | packets: valid, bogus,             |
