@@ -516,54 +516,19 @@ TEST_F(CommunicationStateTest, getReport) {
     auto report = state_.getReport();
     ASSERT_TRUE(report);
 
-    ASSERT_EQ(Element::map, report->getType());
-
-    auto in_touch = report->get("in-touch");
-    ASSERT_TRUE(in_touch);
-    EXPECT_EQ(Element::boolean, in_touch->getType());
-    EXPECT_TRUE(in_touch->boolValue());
-
-    auto age = report->get("age");
-    ASSERT_TRUE(age);
-    EXPECT_EQ(Element::integer, age->getType());
-    EXPECT_GE(age->intValue(), 100);
-
-    auto last_state = report->get("last-state");
-    ASSERT_TRUE(last_state);
-    EXPECT_EQ(Element::string, last_state->getType());
-    EXPECT_EQ("waiting", last_state->stringValue());
-
-    auto last_scopes = report->get("last-scopes");
-    ASSERT_TRUE(last_scopes);
-    EXPECT_EQ(Element::list, last_scopes->getType());
-    EXPECT_EQ(1, last_scopes->listValue().size());
-    EXPECT_EQ(Element::string, last_scopes->listValue()[0]->getType());
-    EXPECT_EQ("server1", last_scopes->listValue()[0]->stringValue());
-
-    auto comm_interrupted = report->get("communication-interrupted");
-    ASSERT_TRUE(comm_interrupted);
-    EXPECT_EQ(Element::boolean, comm_interrupted->getType());
-    EXPECT_TRUE(comm_interrupted->boolValue());
-
-    auto connecting_clients = report->get("connecting-clients");
-    ASSERT_TRUE(connecting_clients);
-    EXPECT_EQ(Element::integer, connecting_clients->getType());
-    EXPECT_EQ(2, connecting_clients->intValue());
-
-    auto unacked_clients = report->get("unacked-clients");
-    ASSERT_TRUE(unacked_clients);
-    EXPECT_EQ(Element::integer, unacked_clients->getType());
-    EXPECT_EQ(1, unacked_clients->intValue());
-
-    auto unacked_clients_left = report->get("unacked-clients-left");
-    ASSERT_TRUE(unacked_clients_left);
-    EXPECT_EQ(Element::integer, unacked_clients_left->getType());
-    EXPECT_EQ(9, unacked_clients_left->intValue());
-
-    auto analyzed_packets = report->get("analyzed-packets");
-    ASSERT_TRUE(analyzed_packets);
-    EXPECT_EQ(Element::integer, analyzed_packets->getType());
-    EXPECT_EQ(2, analyzed_packets->intValue());
+    // Compare with the expected output.
+    std::string expected = "{"
+        "    \"age\": 100,"
+        "    \"in-touch\": true,"
+        "    \"last-scopes\": [ \"server1\" ],"
+        "    \"last-state\": \"waiting\","
+        "    \"communication-interrupted\": true,"
+        "    \"connecting-clients\": 2,"
+        "    \"unacked-clients\": 1,"
+        "    \"unacked-clients-left\": 9,"
+        "    \"analyzed-packets\": 2"
+        "}";
+    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), report));
 }
 
 // Tests unusual values used to create the report.
@@ -571,47 +536,19 @@ TEST_F(CommunicationStateTest, getReportDefaultValues) {
     auto report = state_.getReport();
     ASSERT_TRUE(report);
 
-    ASSERT_EQ(Element::map, report->getType());
-
-    auto in_touch = report->get("in-touch");
-    ASSERT_TRUE(in_touch);
-    EXPECT_EQ(Element::boolean, in_touch->getType());
-    EXPECT_FALSE(in_touch->boolValue());
-
-    auto age = report->get("age");
-    ASSERT_TRUE(age);
-    EXPECT_EQ(Element::integer, age->getType());
-    EXPECT_EQ(0, age->intValue());
-
-    auto last_state = report->get("last-state");
-    ASSERT_TRUE(last_state);
-    EXPECT_EQ(Element::string, last_state->getType());
-    EXPECT_TRUE(last_state->stringValue().empty());
-
-    auto last_scopes = report->get("last-scopes");
-    ASSERT_TRUE(last_scopes);
-    EXPECT_EQ(Element::list, last_scopes->getType());
-    EXPECT_TRUE(last_scopes->listValue().empty());
-
-    auto comm_interrupted = report->get("communication-interrupted");
-    ASSERT_TRUE(comm_interrupted);
-    EXPECT_EQ(Element::boolean, comm_interrupted->getType());
-    EXPECT_FALSE(comm_interrupted->boolValue());
-
-    auto clients_attempting = report->get("connecting-clients");
-    ASSERT_TRUE(clients_attempting);
-    EXPECT_EQ(Element::integer, clients_attempting->getType());
-    EXPECT_EQ(0, clients_attempting->intValue());
-
-    auto clients_unacked = report->get("unacked-clients");
-    ASSERT_TRUE(clients_unacked);
-    EXPECT_EQ(Element::integer, clients_unacked->getType());
-    EXPECT_EQ(0, clients_unacked->intValue());
-
-    auto packets_analyzed = report->get("analyzed-packets");
-    ASSERT_TRUE(packets_analyzed);
-    EXPECT_EQ(Element::integer, packets_analyzed->getType());
-    EXPECT_EQ(0, packets_analyzed->intValue());
+    // Compare with the expected output.
+    std::string expected = "{"
+        "    \"age\": 0,"
+        "    \"in-touch\": false,"
+        "    \"last-scopes\": [ ],"
+        "    \"last-state\": \"\","
+        "    \"communication-interrupted\": false,"
+        "    \"connecting-clients\": 0,"
+        "    \"unacked-clients\": 0,"
+        "    \"unacked-clients-left\": 0,"
+        "    \"analyzed-packets\": 0"
+        "}";
+    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), report));
 }
 
 }
