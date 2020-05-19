@@ -1586,28 +1586,47 @@ the HA status of two load balancing servers:
            "pid": 1234,
            "uptime": 3024,
            "reload": 1111,
-           "ha-mode": "load-balancing",
-           "ha-servers": {
-               "local": {
-                   "role": "primary",
-                   "scopes": [ "server1" ],
-                   "state": "load-balancing"
-               },
-                "remote": {
-                   "age": 10,
-                   "in-touch": true,
-                   "role": "secondary",
-                   "last-scopes": [ "server2" ],
-                   "last-state": "load-balancing",
-                   "communication-interrupted": true,
-                   "connecting-clients": 2,
-                   "unacked-clients": 1,
-                   "unacked-clients-left": 2,
-                   "analyzed-packets": 8
+           "high-availability": [
+               {
+                   "ha-mode": "load-balancing",
+                   "ha-servers": {
+                       "local": {
+                           "role": "primary",
+                           "scopes": [ "server1" ],
+                           "state": "load-balancing"
+                       },
+                       "remote": {
+                           "age": 10,
+                           "in-touch": true,
+                           "role": "secondary",
+                           "last-scopes": [ "server2" ],
+                           "last-state": "load-balancing",
+                           "communication-interrupted": true,
+                           "connecting-clients": 2,
+                           "unacked-clients": 1,
+                           "unacked-clients-left": 2,
+                           "analyzed-packets": 8
+                       }
+                   }
                }
-           }
+           ]
        }
    }
+
+The ``high-availability`` argument is a list which currently always comprises
+one element. There are plans to extend the HA implementation to facilitate
+multiple HA relationships for a single server instance. In that case, the
+returned list will comprise more elements, each describing the status of
+a different relationship in which the server participates. Currently, it
+is only one status.
+
+.. note::
+
+   In Kea 1.7.8 an incompatible change was introduced to the syntax of the
+   ``status-get`` response. Previously, the HA status for a single relationship
+   was returned within the ``arguments`` map. Currently, the returned status
+   is enclosed in the list as described above. Any existing code relying on the
+   previous syntax must be updated to work with the new Kea versions.
 
 
 The ``ha-servers`` map contains two structures: ``local`` and ``remote``. The former
