@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.5.4.
+// A Bison parser, made by GNU Bison 3.6.2.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -30,8 +30,9 @@
 // This special exception was added by the Free Software Foundation in
 // version 2.2 of Bison.
 
-// Undocumented macros, especially those whose name start with YY_,
-// are private implementation details.  Do not rely on them.
+// DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+// especially those whose name start with YY_ or yy_.  They are
+// private implementation details that can be changed or removed.
 
 
 // Take the name prefix into account.
@@ -47,7 +48,7 @@
 
 #include <agent/parser_context.h>
 
-#line 51 "agent_parser.cc"
+#line 52 "agent_parser.cc"
 
 
 #ifndef YY_
@@ -61,6 +62,7 @@
 #  define YY_(msgid) msgid
 # endif
 #endif
+
 
 // Whether we are compiled with exception support.
 #ifndef YY_EXCEPTIONS
@@ -117,7 +119,7 @@
 # define YY_STACK_PRINT()               \
   do {                                  \
     if (yydebug_)                       \
-      yystack_print_ ();                \
+      yy_stack_print_ ();                \
   } while (false)
 
 #else // !AGENT_DEBUG
@@ -139,49 +141,7 @@
 
 #line 14 "agent_parser.yy"
 namespace isc { namespace agent {
-#line 143 "agent_parser.cc"
-
-
-  /* Return YYSTR after stripping away unnecessary quotes and
-     backslashes, so that it's suitable for yyerror.  The heuristic is
-     that double-quoting is unnecessary unless the string contains an
-     apostrophe, a comma, or backslash (other than backslash-backslash).
-     YYSTR is taken from yytname.  */
-  std::string
-  AgentParser::yytnamerr_ (const char *yystr)
-  {
-    if (*yystr == '"')
-      {
-        std::string yyr;
-        char const *yyp = yystr;
-
-        for (;;)
-          switch (*++yyp)
-            {
-            case '\'':
-            case ',':
-              goto do_not_strip_quotes;
-
-            case '\\':
-              if (*++yyp != '\\')
-                goto do_not_strip_quotes;
-              else
-                goto append;
-
-            append:
-            default:
-              yyr += *yyp;
-              break;
-
-            case '"':
-              return yyr;
-            }
-      do_not_strip_quotes: ;
-      }
-
-    return yystr;
-  }
-
+#line 145 "agent_parser.cc"
 
   /// Build a parser object.
   AgentParser::AgentParser (isc::agent::ParserContext& ctx_yyarg)
@@ -201,7 +161,7 @@ namespace isc { namespace agent {
   {}
 
   /*---------------.
-  | Symbol types.  |
+  | symbol kinds.  |
   `---------------*/
 
 
@@ -232,13 +192,13 @@ namespace isc { namespace agent {
     : state (s)
   {}
 
-  AgentParser::symbol_number_type
-  AgentParser::by_state::type_get () const YY_NOEXCEPT
+  AgentParser::symbol_kind_type
+  AgentParser::by_state::kind () const YY_NOEXCEPT
   {
     if (state == empty_state)
-      return empty_symbol;
+      return symbol_kind::S_YYEMPTY;
     else
-      return yystos_[+state];
+      return YY_CAST (symbol_kind_type, yystos_[+state]);
   }
 
   AgentParser::stack_symbol_type::stack_symbol_type ()
@@ -247,7 +207,7 @@ namespace isc { namespace agent {
   AgentParser::stack_symbol_type::stack_symbol_type (YY_RVREF (stack_symbol_type) that)
     : super_type (YY_MOVE (that.state), YY_MOVE (that.location))
   {
-    switch (that.type_get ())
+    switch (that.kind ())
     {
       case 54: // value
       case 57: // map_value
@@ -284,7 +244,7 @@ namespace isc { namespace agent {
   AgentParser::stack_symbol_type::stack_symbol_type (state_type s, YY_MOVE_REF (symbol_type) that)
     : super_type (s, YY_MOVE (that.location))
   {
-    switch (that.type_get ())
+    switch (that.kind ())
     {
       case 54: // value
       case 57: // map_value
@@ -313,7 +273,7 @@ namespace isc { namespace agent {
     }
 
     // that is emptied.
-    that.type = empty_symbol;
+    that.kind_ = symbol_kind::S_YYEMPTY;
   }
 
 #if YY_CPLUSPLUS < 201103L
@@ -321,7 +281,7 @@ namespace isc { namespace agent {
   AgentParser::stack_symbol_type::operator= (const stack_symbol_type& that)
   {
     state = that.state;
-    switch (that.type_get ())
+    switch (that.kind ())
     {
       case 54: // value
       case 57: // map_value
@@ -357,7 +317,7 @@ namespace isc { namespace agent {
   AgentParser::stack_symbol_type::operator= (stack_symbol_type& that)
   {
     state = that.state;
-    switch (that.type_get ())
+    switch (that.kind ())
     {
       case 54: // value
       case 57: // map_value
@@ -403,69 +363,67 @@ namespace isc { namespace agent {
 #if AGENT_DEBUG
   template <typename Base>
   void
-  AgentParser::yy_print_ (std::ostream& yyo,
-                                     const basic_symbol<Base>& yysym) const
+  AgentParser::yy_print_ (std::ostream& yyo, const basic_symbol<Base>& yysym) const
   {
     std::ostream& yyoutput = yyo;
     YYUSE (yyoutput);
-    symbol_number_type yytype = yysym.type_get ();
-#if defined __GNUC__ && ! defined __clang__ && ! defined __ICC && __GNUC__ * 100 + __GNUC_MINOR__ <= 408
-    // Avoid a (spurious) G++ 4.8 warning about "array subscript is
-    // below array bounds".
     if (yysym.empty ())
-      std::abort ();
-#endif
-    yyo << (yytype < yyntokens_ ? "token" : "nterm")
-        << ' ' << yytname_[yytype] << " ("
-        << yysym.location << ": ";
-    switch (yytype)
+      yyo << "empty symbol";
+    else
+      {
+        symbol_kind_type yykind = yysym.kind ();
+        yyo << (yykind < YYNTOKENS ? "token" : "nterm")
+            << ' ' << yysym.name () << " ("
+            << yysym.location << ": ";
+        switch (yykind)
     {
       case 42: // "constant string"
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
-#line 427 "agent_parser.cc"
+#line 384 "agent_parser.cc"
         break;
 
       case 43: // "integer"
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < int64_t > (); }
-#line 433 "agent_parser.cc"
+#line 390 "agent_parser.cc"
         break;
 
       case 44: // "floating point"
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < double > (); }
-#line 439 "agent_parser.cc"
+#line 396 "agent_parser.cc"
         break;
 
       case 45: // "boolean"
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < bool > (); }
-#line 445 "agent_parser.cc"
+#line 402 "agent_parser.cc"
         break;
 
       case 54: // value
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 451 "agent_parser.cc"
+#line 408 "agent_parser.cc"
         break;
 
       case 57: // map_value
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 457 "agent_parser.cc"
+#line 414 "agent_parser.cc"
         break;
 
       case 108: // socket_type_value
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 463 "agent_parser.cc"
+#line 420 "agent_parser.cc"
         break;
 
       default:
         break;
     }
-    yyo << ')';
+        yyo << ')';
+      }
   }
 #endif
 
@@ -524,11 +482,11 @@ namespace isc { namespace agent {
   AgentParser::state_type
   AgentParser::yy_lr_goto_state_ (state_type yystate, int yysym)
   {
-    int yyr = yypgoto_[yysym - yyntokens_] + yystate;
+    int yyr = yypgoto_[yysym - YYNTOKENS] + yystate;
     if (0 <= yyr && yyr <= yylast_ && yycheck_[yyr] == yystate)
       return yytable_[yyr];
     else
-      return yydefgoto_[yysym - yyntokens_];
+      return yydefgoto_[yysym - YYNTOKENS];
   }
 
   bool
@@ -588,6 +546,7 @@ namespace isc { namespace agent {
   `-----------------------------------------------*/
   yynewstate:
     YYCDEBUG << "Entering state " << int (yystack_[0].state) << '\n';
+    YY_STACK_PRINT ();
 
     // Accept?
     if (yystack_[0].state == yyfinal_)
@@ -608,7 +567,7 @@ namespace isc { namespace agent {
     // Read a lookahead token.
     if (yyla.empty ())
       {
-        YYCDEBUG << "Reading a token: ";
+        YYCDEBUG << "Reading a token\n";
 #if YY_EXCEPTIONS
         try
 #endif // YY_EXCEPTIONS
@@ -627,10 +586,20 @@ namespace isc { namespace agent {
       }
     YY_SYMBOL_PRINT ("Next token is", yyla);
 
+    if (yyla.kind () == symbol_kind::S_YYerror)
+    {
+      // The scanner already issued an error message, process directly
+      // to error recovery.  But do not keep the error token as
+      // lookahead, it is too special and may lead us to an endless
+      // loop in error recovery. */
+      yyla.kind_ = symbol_kind::S_YYUNDEF;
+      goto yyerrlab1;
+    }
+
     /* If the proper action on seeing token YYLA.TYPE is to reduce or
        to detect an error, take that action.  */
-    yyn += yyla.type_get ();
-    if (yyn < 0 || yylast_ < yyn || yycheck_[yyn] != yyla.type_get ())
+    yyn += yyla.kind ();
+    if (yyn < 0 || yylast_ < yyn || yycheck_[yyn] != yyla.kind ())
       {
         goto yydefault;
       }
@@ -722,19 +691,19 @@ namespace isc { namespace agent {
   case 2:
 #line 115 "agent_parser.yy"
                        { ctx.ctx_ = ctx.NO_KEYWORDS; }
-#line 726 "agent_parser.cc"
+#line 695 "agent_parser.cc"
     break;
 
   case 4:
 #line 116 "agent_parser.yy"
                        { ctx.ctx_ = ctx.CONFIG; }
-#line 732 "agent_parser.cc"
+#line 701 "agent_parser.cc"
     break;
 
   case 6:
 #line 117 "agent_parser.yy"
                        { ctx.ctx_ = ctx.AGENT; }
-#line 738 "agent_parser.cc"
+#line 707 "agent_parser.cc"
     break;
 
   case 8:
@@ -744,7 +713,7 @@ namespace isc { namespace agent {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 748 "agent_parser.cc"
+#line 717 "agent_parser.cc"
     break;
 
   case 9:
@@ -752,7 +721,7 @@ namespace isc { namespace agent {
                                {
     // parsing completed
 }
-#line 756 "agent_parser.cc"
+#line 725 "agent_parser.cc"
     break;
 
   case 10:
@@ -761,49 +730,49 @@ namespace isc { namespace agent {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as < ElementPtr > ());
 }
-#line 765 "agent_parser.cc"
+#line 734 "agent_parser.cc"
     break;
 
   case 11:
 #line 142 "agent_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
-#line 771 "agent_parser.cc"
+#line 740 "agent_parser.cc"
     break;
 
   case 12:
 #line 143 "agent_parser.yy"
              { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
-#line 777 "agent_parser.cc"
+#line 746 "agent_parser.cc"
     break;
 
   case 13:
 #line 144 "agent_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
-#line 783 "agent_parser.cc"
+#line 752 "agent_parser.cc"
     break;
 
   case 14:
 #line 145 "agent_parser.yy"
               { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
-#line 789 "agent_parser.cc"
+#line 758 "agent_parser.cc"
     break;
 
   case 15:
 #line 146 "agent_parser.yy"
                  { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
-#line 795 "agent_parser.cc"
+#line 764 "agent_parser.cc"
     break;
 
   case 16:
 #line 147 "agent_parser.yy"
            { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 801 "agent_parser.cc"
+#line 770 "agent_parser.cc"
     break;
 
   case 17:
 #line 148 "agent_parser.yy"
                     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 807 "agent_parser.cc"
+#line 776 "agent_parser.cc"
     break;
 
   case 18:
@@ -814,7 +783,7 @@ namespace isc { namespace agent {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 818 "agent_parser.cc"
+#line 787 "agent_parser.cc"
     break;
 
   case 19:
@@ -824,13 +793,13 @@ namespace isc { namespace agent {
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 828 "agent_parser.cc"
+#line 797 "agent_parser.cc"
     break;
 
   case 20:
 #line 163 "agent_parser.yy"
                { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 834 "agent_parser.cc"
+#line 803 "agent_parser.cc"
     break;
 
   case 23:
@@ -839,7 +808,7 @@ namespace isc { namespace agent {
                   // map containing a single entry
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 843 "agent_parser.cc"
+#line 812 "agent_parser.cc"
     break;
 
   case 24:
@@ -849,7 +818,7 @@ namespace isc { namespace agent {
                   // comma and string:value
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 853 "agent_parser.cc"
+#line 822 "agent_parser.cc"
     break;
 
   case 25:
@@ -858,14 +827,14 @@ namespace isc { namespace agent {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 862 "agent_parser.cc"
+#line 831 "agent_parser.cc"
     break;
 
   case 26:
 #line 191 "agent_parser.yy"
                                {
 }
-#line 869 "agent_parser.cc"
+#line 838 "agent_parser.cc"
     break;
 
   case 29:
@@ -874,7 +843,7 @@ namespace isc { namespace agent {
                   // List consisting of a single element.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 878 "agent_parser.cc"
+#line 847 "agent_parser.cc"
     break;
 
   case 30:
@@ -883,7 +852,7 @@ namespace isc { namespace agent {
                   // List ending with , and a value.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 887 "agent_parser.cc"
+#line 856 "agent_parser.cc"
     break;
 
   case 31:
@@ -894,7 +863,7 @@ namespace isc { namespace agent {
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
-#line 898 "agent_parser.cc"
+#line 867 "agent_parser.cc"
     break;
 
   case 32:
@@ -905,7 +874,7 @@ namespace isc { namespace agent {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 909 "agent_parser.cc"
+#line 878 "agent_parser.cc"
     break;
 
   case 33:
@@ -915,7 +884,7 @@ namespace isc { namespace agent {
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 919 "agent_parser.cc"
+#line 888 "agent_parser.cc"
     break;
 
   case 42:
@@ -931,7 +900,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.AGENT);
 }
-#line 935 "agent_parser.cc"
+#line 904 "agent_parser.cc"
     break;
 
   case 43:
@@ -942,7 +911,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 946 "agent_parser.cc"
+#line 915 "agent_parser.cc"
     break;
 
   case 54:
@@ -950,7 +919,7 @@ namespace isc { namespace agent {
                      {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 954 "agent_parser.cc"
+#line 923 "agent_parser.cc"
     break;
 
   case 55:
@@ -960,7 +929,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("http-host", host);
     ctx.leave();
 }
-#line 964 "agent_parser.cc"
+#line 933 "agent_parser.cc"
     break;
 
   case 56:
@@ -969,7 +938,7 @@ namespace isc { namespace agent {
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("http-port", prf);
 }
-#line 973 "agent_parser.cc"
+#line 942 "agent_parser.cc"
     break;
 
   case 57:
@@ -977,7 +946,7 @@ namespace isc { namespace agent {
                            {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 981 "agent_parser.cc"
+#line 950 "agent_parser.cc"
     break;
 
   case 58:
@@ -1004,7 +973,7 @@ namespace isc { namespace agent {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1008 "agent_parser.cc"
+#line 977 "agent_parser.cc"
     break;
 
   case 59:
@@ -1012,7 +981,7 @@ namespace isc { namespace agent {
                  {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1016 "agent_parser.cc"
+#line 985 "agent_parser.cc"
     break;
 
   case 60:
@@ -1041,7 +1010,7 @@ namespace isc { namespace agent {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1045 "agent_parser.cc"
+#line 1014 "agent_parser.cc"
     break;
 
   case 61:
@@ -1052,7 +1021,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
 }
-#line 1056 "agent_parser.cc"
+#line 1025 "agent_parser.cc"
     break;
 
   case 62:
@@ -1061,7 +1030,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1065 "agent_parser.cc"
+#line 1034 "agent_parser.cc"
     break;
 
   case 67:
@@ -1071,7 +1040,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1075 "agent_parser.cc"
+#line 1044 "agent_parser.cc"
     break;
 
   case 68:
@@ -1079,7 +1048,7 @@ namespace isc { namespace agent {
                               {
     ctx.stack_.pop_back();
 }
-#line 1083 "agent_parser.cc"
+#line 1052 "agent_parser.cc"
     break;
 
   case 74:
@@ -1087,7 +1056,7 @@ namespace isc { namespace agent {
                  {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1091 "agent_parser.cc"
+#line 1060 "agent_parser.cc"
     break;
 
   case 75:
@@ -1097,7 +1066,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
-#line 1101 "agent_parser.cc"
+#line 1070 "agent_parser.cc"
     break;
 
   case 76:
@@ -1105,7 +1074,7 @@ namespace isc { namespace agent {
                        {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1109 "agent_parser.cc"
+#line 1078 "agent_parser.cc"
     break;
 
   case 77:
@@ -1114,7 +1083,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1118 "agent_parser.cc"
+#line 1087 "agent_parser.cc"
     break;
 
   case 78:
@@ -1125,7 +1094,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKETS);
 }
-#line 1129 "agent_parser.cc"
+#line 1098 "agent_parser.cc"
     break;
 
   case 79:
@@ -1134,7 +1103,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1138 "agent_parser.cc"
+#line 1107 "agent_parser.cc"
     break;
 
   case 86:
@@ -1145,7 +1114,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1149 "agent_parser.cc"
+#line 1118 "agent_parser.cc"
     break;
 
   case 87:
@@ -1154,7 +1123,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1158 "agent_parser.cc"
+#line 1127 "agent_parser.cc"
     break;
 
   case 88:
@@ -1165,7 +1134,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1169 "agent_parser.cc"
+#line 1138 "agent_parser.cc"
     break;
 
   case 89:
@@ -1174,7 +1143,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1178 "agent_parser.cc"
+#line 1147 "agent_parser.cc"
     break;
 
   case 90:
@@ -1185,7 +1154,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1189 "agent_parser.cc"
+#line 1158 "agent_parser.cc"
     break;
 
   case 91:
@@ -1194,7 +1163,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1198 "agent_parser.cc"
+#line 1167 "agent_parser.cc"
     break;
 
   case 99:
@@ -1202,7 +1171,7 @@ namespace isc { namespace agent {
                          {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1206 "agent_parser.cc"
+#line 1175 "agent_parser.cc"
     break;
 
   case 100:
@@ -1212,7 +1181,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
-#line 1216 "agent_parser.cc"
+#line 1185 "agent_parser.cc"
     break;
 
   case 101:
@@ -1220,7 +1189,7 @@ namespace isc { namespace agent {
                          {
     ctx.enter(ctx.SOCKET_TYPE);
 }
-#line 1224 "agent_parser.cc"
+#line 1193 "agent_parser.cc"
     break;
 
   case 102:
@@ -1229,13 +1198,13 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("socket-type", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1233 "agent_parser.cc"
+#line 1202 "agent_parser.cc"
     break;
 
   case 103:
 #line 491 "agent_parser.yy"
                          { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("unix", ctx.loc2pos(yystack_[0].location))); }
-#line 1239 "agent_parser.cc"
+#line 1208 "agent_parser.cc"
     break;
 
   case 104:
@@ -1243,7 +1212,7 @@ namespace isc { namespace agent {
                          {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1247 "agent_parser.cc"
+#line 1216 "agent_parser.cc"
     break;
 
   case 105:
@@ -1252,7 +1221,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("Dhcp4", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1256 "agent_parser.cc"
+#line 1225 "agent_parser.cc"
     break;
 
   case 106:
@@ -1260,7 +1229,7 @@ namespace isc { namespace agent {
                          {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1264 "agent_parser.cc"
+#line 1233 "agent_parser.cc"
     break;
 
   case 107:
@@ -1269,7 +1238,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("Dhcp6", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1273 "agent_parser.cc"
+#line 1242 "agent_parser.cc"
     break;
 
   case 108:
@@ -1277,7 +1246,7 @@ namespace isc { namespace agent {
                                {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1281 "agent_parser.cc"
+#line 1250 "agent_parser.cc"
     break;
 
   case 109:
@@ -1286,7 +1255,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("DhcpDdns", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1290 "agent_parser.cc"
+#line 1259 "agent_parser.cc"
     break;
 
   case 110:
@@ -1297,7 +1266,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.LOGGING);
 }
-#line 1301 "agent_parser.cc"
+#line 1270 "agent_parser.cc"
     break;
 
   case 111:
@@ -1306,7 +1275,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1310 "agent_parser.cc"
+#line 1279 "agent_parser.cc"
     break;
 
   case 115:
@@ -1317,7 +1286,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 1321 "agent_parser.cc"
+#line 1290 "agent_parser.cc"
     break;
 
   case 116:
@@ -1326,7 +1295,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1330 "agent_parser.cc"
+#line 1299 "agent_parser.cc"
     break;
 
   case 119:
@@ -1336,7 +1305,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 1340 "agent_parser.cc"
+#line 1309 "agent_parser.cc"
     break;
 
   case 120:
@@ -1344,7 +1313,7 @@ namespace isc { namespace agent {
                                {
     ctx.stack_.pop_back();
 }
-#line 1348 "agent_parser.cc"
+#line 1317 "agent_parser.cc"
     break;
 
   case 130:
@@ -1352,7 +1321,7 @@ namespace isc { namespace agent {
            {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1356 "agent_parser.cc"
+#line 1325 "agent_parser.cc"
     break;
 
   case 131:
@@ -1362,7 +1331,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1366 "agent_parser.cc"
+#line 1335 "agent_parser.cc"
     break;
 
   case 132:
@@ -1371,7 +1340,7 @@ namespace isc { namespace agent {
     ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 1375 "agent_parser.cc"
+#line 1344 "agent_parser.cc"
     break;
 
   case 133:
@@ -1379,7 +1348,7 @@ namespace isc { namespace agent {
                    {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1383 "agent_parser.cc"
+#line 1352 "agent_parser.cc"
     break;
 
   case 134:
@@ -1389,7 +1358,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 1393 "agent_parser.cc"
+#line 1362 "agent_parser.cc"
     break;
 
   case 135:
@@ -1400,7 +1369,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 1404 "agent_parser.cc"
+#line 1373 "agent_parser.cc"
     break;
 
   case 136:
@@ -1409,7 +1378,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1413 "agent_parser.cc"
+#line 1382 "agent_parser.cc"
     break;
 
   case 139:
@@ -1419,7 +1388,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1423 "agent_parser.cc"
+#line 1392 "agent_parser.cc"
     break;
 
   case 140:
@@ -1427,7 +1396,7 @@ namespace isc { namespace agent {
                                     {
     ctx.stack_.pop_back();
 }
-#line 1431 "agent_parser.cc"
+#line 1400 "agent_parser.cc"
     break;
 
   case 148:
@@ -1435,7 +1404,7 @@ namespace isc { namespace agent {
                {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1439 "agent_parser.cc"
+#line 1408 "agent_parser.cc"
     break;
 
   case 149:
@@ -1445,7 +1414,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 1449 "agent_parser.cc"
+#line 1418 "agent_parser.cc"
     break;
 
   case 150:
@@ -1454,7 +1423,7 @@ namespace isc { namespace agent {
     ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 1458 "agent_parser.cc"
+#line 1427 "agent_parser.cc"
     break;
 
   case 151:
@@ -1463,7 +1432,7 @@ namespace isc { namespace agent {
     ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 1467 "agent_parser.cc"
+#line 1436 "agent_parser.cc"
     break;
 
   case 152:
@@ -1472,7 +1441,7 @@ namespace isc { namespace agent {
     ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 1476 "agent_parser.cc"
+#line 1445 "agent_parser.cc"
     break;
 
   case 153:
@@ -1480,7 +1449,7 @@ namespace isc { namespace agent {
                  {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1484 "agent_parser.cc"
+#line 1453 "agent_parser.cc"
     break;
 
   case 154:
@@ -1490,11 +1459,11 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
 }
-#line 1494 "agent_parser.cc"
+#line 1463 "agent_parser.cc"
     break;
 
 
-#line 1498 "agent_parser.cc"
+#line 1467 "agent_parser.cc"
 
             default:
               break;
@@ -1511,7 +1480,6 @@ namespace isc { namespace agent {
       YY_SYMBOL_PRINT ("-> $$ =", yylhs);
       yypop_ (yylen);
       yylen = 0;
-      YY_STACK_PRINT ();
 
       // Shift the result of the reduction.
       yypush_ (YY_NULLPTR, YY_MOVE (yylhs));
@@ -1527,7 +1495,9 @@ namespace isc { namespace agent {
     if (!yyerrstatus_)
       {
         ++yynerrs_;
-        error (yyla.location, yysyntax_error_ (yystack_[0].state, yyla));
+        context yyctx (*this, yyla);
+        std::string msg = yysyntax_error_ (yyctx);
+        error (yyla.location, YY_MOVE (msg));
       }
 
 
@@ -1538,7 +1508,7 @@ namespace isc { namespace agent {
            error, discard it.  */
 
         // Return failure if at end of input.
-        if (yyla.type_get () == yyeof_)
+        if (yyla.kind () == symbol_kind::S_YYEOF)
           YYABORT;
         else if (!yyla.empty ())
           {
@@ -1564,6 +1534,7 @@ namespace isc { namespace agent {
        this YYERROR.  */
     yypop_ (yylen);
     yylen = 0;
+    YY_STACK_PRINT ();
     goto yyerrlab1;
 
 
@@ -1572,31 +1543,33 @@ namespace isc { namespace agent {
   `-------------------------------------------------------------*/
   yyerrlab1:
     yyerrstatus_ = 3;   // Each real token shifted decrements this.
+    // Pop stack until we find a state that shifts the error token.
+    for (;;)
+      {
+        yyn = yypact_[+yystack_[0].state];
+        if (!yy_pact_value_is_default_ (yyn))
+          {
+            yyn += symbol_kind::S_YYerror;
+            if (0 <= yyn && yyn <= yylast_
+                && yycheck_[yyn] == symbol_kind::S_YYerror)
+              {
+                yyn = yytable_[yyn];
+                if (0 < yyn)
+                  break;
+              }
+          }
+
+        // Pop the current state because it cannot handle the error token.
+        if (yystack_.size () == 1)
+          YYABORT;
+
+        yyerror_range[1].location = yystack_[0].location;
+        yy_destroy_ ("Error: popping", yystack_[0]);
+        yypop_ ();
+        YY_STACK_PRINT ();
+      }
     {
       stack_symbol_type error_token;
-      for (;;)
-        {
-          yyn = yypact_[+yystack_[0].state];
-          if (!yy_pact_value_is_default_ (yyn))
-            {
-              yyn += yy_error_token_;
-              if (0 <= yyn && yyn <= yylast_ && yycheck_[yyn] == yy_error_token_)
-                {
-                  yyn = yytable_[yyn];
-                  if (0 < yyn)
-                    break;
-                }
-            }
-
-          // Pop the current state because it cannot handle the error token.
-          if (yystack_.size () == 1)
-            YYABORT;
-
-          yyerror_range[1].location = yystack_[0].location;
-          yy_destroy_ ("Error: popping", yystack_[0]);
-          yypop_ ();
-          YY_STACK_PRINT ();
-        }
 
       yyerror_range[2].location = yyla.location;
       YYLLOC_DEFAULT (error_token.location, yyerror_range, 2);
@@ -1634,6 +1607,7 @@ namespace isc { namespace agent {
     /* Do not reclaim the symbols of the rule whose action triggered
        this YYABORT or YYACCEPT.  */
     yypop_ (yylen);
+    YY_STACK_PRINT ();
     while (1 < yystack_.size ())
       {
         yy_destroy_ ("Cleanup: popping", yystack_[0]);
@@ -1667,18 +1641,100 @@ namespace isc { namespace agent {
     error (yyexc.location, yyexc.what ());
   }
 
-  // Generate an error message.
+  /* Return YYSTR after stripping away unnecessary quotes and
+     backslashes, so that it's suitable for yyerror.  The heuristic is
+     that double-quoting is unnecessary unless the string contains an
+     apostrophe, a comma, or backslash (other than backslash-backslash).
+     YYSTR is taken from yytname.  */
   std::string
-  AgentParser::yysyntax_error_ (state_type yystate, const symbol_type& yyla) const
+  AgentParser::yytnamerr_ (const char *yystr)
   {
-    // Number of reported tokens (one for the "unexpected", one per
-    // "expected").
-    std::ptrdiff_t yycount = 0;
-    // Its maximum.
-    enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
-    // Arguments of yyformat.
-    char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
+    if (*yystr == '"')
+      {
+        std::string yyr;
+        char const *yyp = yystr;
 
+        for (;;)
+          switch (*++yyp)
+            {
+            case '\'':
+            case ',':
+              goto do_not_strip_quotes;
+
+            case '\\':
+              if (*++yyp != '\\')
+                goto do_not_strip_quotes;
+              else
+                goto append;
+
+            append:
+            default:
+              yyr += *yyp;
+              break;
+
+            case '"':
+              return yyr;
+            }
+      do_not_strip_quotes: ;
+      }
+
+    return yystr;
+  }
+
+  std::string
+  AgentParser::symbol_name (symbol_kind_type yysymbol)
+  {
+    return yytnamerr_ (yytname_[yysymbol]);
+  }
+
+
+
+  // AgentParser::context.
+  AgentParser::context::context (const AgentParser& yyparser, const symbol_type& yyla)
+    : yyparser_ (yyparser)
+    , yyla_ (yyla)
+  {}
+
+  int
+  AgentParser::context::expected_tokens (symbol_kind_type yyarg[], int yyargn) const
+  {
+    // Actual number of expected tokens
+    int yycount = 0;
+
+    int yyn = yypact_[+yyparser_.yystack_[0].state];
+    if (!yy_pact_value_is_default_ (yyn))
+      {
+        /* Start YYX at -YYN if negative to avoid negative indexes in
+           YYCHECK.  In other words, skip the first -YYN actions for
+           this state because they are default actions.  */
+        int yyxbegin = yyn < 0 ? -yyn : 0;
+        // Stay within bounds of both yycheck and yytname.
+        int yychecklim = yylast_ - yyn + 1;
+        int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
+        for (int yyx = yyxbegin; yyx < yyxend; ++yyx)
+          if (yycheck_[yyx + yyn] == yyx && yyx != symbol_kind::S_YYerror
+              && !yy_table_value_is_error_ (yytable_[yyx + yyn]))
+            {
+              if (!yyarg)
+                ++yycount;
+              else if (yycount == yyargn)
+                return 0;
+              else
+                yyarg[yycount++] = YY_CAST (symbol_kind_type, yyx);
+            }
+      }
+
+    if (yyarg && yycount == 0 && 0 < yyargn)
+      yyarg[0] = symbol_kind::S_YYEMPTY;
+    return yycount;
+  }
+
+
+
+  int
+  AgentParser::yy_syntax_error_arguments_ (const context& yyctx,
+                                                 symbol_kind_type yyarg[], int yyargn) const
+  {
     /* There are many possibilities here to consider:
        - If this state is a consistent state with a default action, then
          the only way this function was invoked is if the default action
@@ -1703,35 +1759,26 @@ namespace isc { namespace agent {
          one exception: it will still contain any token that will not be
          accepted due to an error action in a later state.
     */
-    if (!yyla.empty ())
-      {
-        symbol_number_type yytoken = yyla.type_get ();
-        yyarg[yycount++] = yytname_[yytoken];
 
-        int yyn = yypact_[+yystate];
-        if (!yy_pact_value_is_default_ (yyn))
-          {
-            /* Start YYX at -YYN if negative to avoid negative indexes in
-               YYCHECK.  In other words, skip the first -YYN actions for
-               this state because they are default actions.  */
-            int yyxbegin = yyn < 0 ? -yyn : 0;
-            // Stay within bounds of both yycheck and yytname.
-            int yychecklim = yylast_ - yyn + 1;
-            int yyxend = yychecklim < yyntokens_ ? yychecklim : yyntokens_;
-            for (int yyx = yyxbegin; yyx < yyxend; ++yyx)
-              if (yycheck_[yyx + yyn] == yyx && yyx != yy_error_token_
-                  && !yy_table_value_is_error_ (yytable_[yyx + yyn]))
-                {
-                  if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
-                    {
-                      yycount = 1;
-                      break;
-                    }
-                  else
-                    yyarg[yycount++] = yytname_[yyx];
-                }
-          }
+    if (!yyctx.lookahead ().empty ())
+      {
+        if (yyarg)
+          yyarg[0] = yyctx.token ();
+        int yyn = yyctx.expected_tokens (yyarg ? yyarg + 1 : yyarg, yyargn - 1);
+        return yyn + 1;
       }
+    return 0;
+  }
+
+  // Generate an error message.
+  std::string
+  AgentParser::yysyntax_error_ (const context& yyctx) const
+  {
+    // Its maximum.
+    enum { YYARGS_MAX = 5 };
+    // Arguments of yyformat.
+    symbol_kind_type yyarg[YYARGS_MAX];
+    int yycount = yy_syntax_error_arguments_ (yyctx, yyarg, YYARGS_MAX);
 
     char const* yyformat = YY_NULLPTR;
     switch (yycount)
@@ -1756,7 +1803,7 @@ namespace isc { namespace agent {
     for (char const* yyp = yyformat; *yyp; ++yyp)
       if (yyp[0] == '%' && yyp[1] == 's' && yyi < yycount)
         {
-          yyres += yytnamerr_ (yyarg[yyi++]);
+          yyres += symbol_name (yyarg[yyi++]);
           ++yyp;
         }
       else
@@ -1990,14 +2037,14 @@ namespace isc { namespace agent {
   };
 
 
-
+#if AGENT_DEBUG || 1
   // YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
-  // First, the terminals, then, starting at \a yyntokens_, nonterminals.
+  // First, the terminals, then, starting at \a YYNTOKENS, nonterminals.
   const char*
   const AgentParser::yytname_[] =
   {
-  "\"end of file\"", "error", "$undefined", "\",\"", "\":\"", "\"[\"",
-  "\"]\"", "\"{\"", "\"}\"", "\"null\"", "\"Control-agent\"",
+  "\"end of file\"", "error", "\"invalid token\"", "\",\"", "\":\"",
+  "\"[\"", "\"]\"", "\"{\"", "\"}\"", "\"null\"", "\"Control-agent\"",
   "\"http-host\"", "\"http-port\"", "\"user-context\"", "\"comment\"",
   "\"control-sockets\"", "\"dhcp4\"", "\"dhcp6\"", "\"d2\"",
   "\"socket-name\"", "\"socket-type\"", "\"unix\"", "\"hooks-libraries\"",
@@ -2028,6 +2075,8 @@ namespace isc { namespace agent {
   "output_entry", "$@31", "output_params_list", "output_params", "output",
   "$@32", "flush", "maxsize", "maxver", "pattern", "$@33", YY_NULLPTR
   };
+#endif
+
 
 #if AGENT_DEBUG
   const short
@@ -2051,9 +2100,8 @@ namespace isc { namespace agent {
      645,   650,   655,   660,   660
   };
 
-  // Print the state stack on the debug stream.
   void
-  AgentParser::yystack_print_ ()
+  AgentParser::yy_stack_print_ () const
   {
     *yycdebug_ << "Stack now";
     for (stack_type::const_iterator
@@ -2064,9 +2112,8 @@ namespace isc { namespace agent {
     *yycdebug_ << '\n';
   }
 
-  // Report on the debug stream that the rule \a yyrule is going to be reduced.
   void
-  AgentParser::yy_reduce_print_ (int yyrule)
+  AgentParser::yy_reduce_print_ (int yyrule) const
   {
     int yylno = yyrline_[yyrule];
     int yynrhs = yyr2_[yyrule];
@@ -2083,7 +2130,7 @@ namespace isc { namespace agent {
 
 #line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2087 "agent_parser.cc"
+#line 2134 "agent_parser.cc"
 
 #line 668 "agent_parser.yy"
 

@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.5.4.
+// A Bison parser, made by GNU Bison 3.6.2.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -38,8 +38,9 @@
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
 
-// Undocumented macros, especially those whose name start with YY_,
-// are private implementation details.  Do not rely on them.
+// DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+// especially those whose name start with YY_ or yy_.  They are
+// private implementation details that can be changed or removed.
 
 #ifndef YY_EVAL_PARSER_H_INCLUDED
 # define YY_EVAL_PARSER_H_INCLUDED
@@ -55,7 +56,7 @@
 using namespace isc::dhcp;
 using namespace isc::eval;
 
-#line 59 "parser.h"
+#line 60 "parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -198,7 +199,7 @@ using namespace isc::eval;
 
 #line 14 "parser.yy"
 namespace isc { namespace eval {
-#line 202 "parser.h"
+#line 203 "parser.h"
 
 
 
@@ -233,6 +234,13 @@ namespace isc { namespace eval {
       YY_ASSERT (sizeof (T) <= size);
       new (yyas_<T> ()) T (YY_MOVE (t));
     }
+
+#if 201103L <= YY_CPLUSPLUS
+    /// Non copyable.
+    semantic_type (const self_type&) = delete;
+    /// Non copyable.
+    self_type& operator= (const self_type&) = delete;
+#endif
 
     /// Destruction, allowed only if empty.
     ~semantic_type () YY_NOEXCEPT
@@ -377,9 +385,12 @@ namespace isc { namespace eval {
     }
 
   private:
-    /// Prohibit blind copies.
-    self_type& operator= (const self_type&);
+#if YY_CPLUSPLUS < 201103L
+    /// Non copyable.
     semantic_type (const self_type&);
+    /// Non copyable.
+    self_type& operator= (const self_type&);
+#endif
 
     /// Accessor to raw memory as \a T.
     template <typename T>
@@ -476,83 +487,170 @@ namespace isc { namespace eval {
       location_type location;
     };
 
-    /// Tokens.
+    /// Token kinds.
     struct token
     {
-      enum yytokentype
+      enum token_kind_type
       {
-        TOKEN_END = 0,
-        TOKEN_LPAREN = 258,
-        TOKEN_RPAREN = 259,
-        TOKEN_NOT = 260,
-        TOKEN_AND = 261,
-        TOKEN_OR = 262,
-        TOKEN_EQUAL = 263,
-        TOKEN_OPTION = 264,
-        TOKEN_RELAY4 = 265,
-        TOKEN_RELAY6 = 266,
-        TOKEN_MEMBER = 267,
-        TOKEN_PEERADDR = 268,
-        TOKEN_LINKADDR = 269,
-        TOKEN_LBRACKET = 270,
-        TOKEN_RBRACKET = 271,
-        TOKEN_DOT = 272,
-        TOKEN_TEXT = 273,
-        TOKEN_HEX = 274,
-        TOKEN_EXISTS = 275,
-        TOKEN_PKT = 276,
-        TOKEN_IFACE = 277,
-        TOKEN_SRC = 278,
-        TOKEN_DST = 279,
-        TOKEN_LEN = 280,
-        TOKEN_PKT4 = 281,
-        TOKEN_CHADDR = 282,
-        TOKEN_HLEN = 283,
-        TOKEN_HTYPE = 284,
-        TOKEN_CIADDR = 285,
-        TOKEN_GIADDR = 286,
-        TOKEN_YIADDR = 287,
-        TOKEN_SIADDR = 288,
-        TOKEN_SUBSTRING = 289,
-        TOKEN_ALL = 290,
-        TOKEN_COMA = 291,
-        TOKEN_CONCAT = 292,
-        TOKEN_IFELSE = 293,
-        TOKEN_TOHEXSTRING = 294,
-        TOKEN_PKT6 = 295,
-        TOKEN_MSGTYPE = 296,
-        TOKEN_TRANSID = 297,
-        TOKEN_VENDOR_CLASS = 298,
-        TOKEN_VENDOR = 299,
-        TOKEN_ANY = 300,
-        TOKEN_DATA = 301,
-        TOKEN_ENTERPRISE = 302,
-        TOKEN_TOPLEVEL_BOOL = 303,
-        TOKEN_TOPLEVEL_STRING = 304,
-        TOKEN_STRING = 305,
-        TOKEN_INTEGER = 306,
-        TOKEN_HEXSTRING = 307,
-        TOKEN_OPTION_NAME = 308,
-        TOKEN_IP_ADDRESS = 309
+        TOKEN_EVALEMPTY = -2,
+    TOKEN_END = 0,                 // "end of file"
+    TOKEN_EVALerror = 256,         // error
+    TOKEN_EVALUNDEF = 257,         // "invalid token"
+    TOKEN_LPAREN = 258,            // "("
+    TOKEN_RPAREN = 259,            // ")"
+    TOKEN_NOT = 260,               // "not"
+    TOKEN_AND = 261,               // "and"
+    TOKEN_OR = 262,                // "or"
+    TOKEN_EQUAL = 263,             // "=="
+    TOKEN_OPTION = 264,            // "option"
+    TOKEN_RELAY4 = 265,            // "relay4"
+    TOKEN_RELAY6 = 266,            // "relay6"
+    TOKEN_MEMBER = 267,            // "member"
+    TOKEN_PEERADDR = 268,          // "peeraddr"
+    TOKEN_LINKADDR = 269,          // "linkaddr"
+    TOKEN_LBRACKET = 270,          // "["
+    TOKEN_RBRACKET = 271,          // "]"
+    TOKEN_DOT = 272,               // "."
+    TOKEN_TEXT = 273,              // "text"
+    TOKEN_HEX = 274,               // "hex"
+    TOKEN_EXISTS = 275,            // "exists"
+    TOKEN_PKT = 276,               // "pkt"
+    TOKEN_IFACE = 277,             // "iface"
+    TOKEN_SRC = 278,               // "src"
+    TOKEN_DST = 279,               // "dst"
+    TOKEN_LEN = 280,               // "len"
+    TOKEN_PKT4 = 281,              // "pkt4"
+    TOKEN_CHADDR = 282,            // "mac"
+    TOKEN_HLEN = 283,              // "hlen"
+    TOKEN_HTYPE = 284,             // "htype"
+    TOKEN_CIADDR = 285,            // "ciaddr"
+    TOKEN_GIADDR = 286,            // "giaddr"
+    TOKEN_YIADDR = 287,            // "yiaddr"
+    TOKEN_SIADDR = 288,            // "siaddr"
+    TOKEN_SUBSTRING = 289,         // "substring"
+    TOKEN_ALL = 290,               // "all"
+    TOKEN_COMA = 291,              // ","
+    TOKEN_CONCAT = 292,            // "concat"
+    TOKEN_IFELSE = 293,            // "ifelse"
+    TOKEN_TOHEXSTRING = 294,       // "hexstring"
+    TOKEN_PKT6 = 295,              // "pkt6"
+    TOKEN_MSGTYPE = 296,           // "msgtype"
+    TOKEN_TRANSID = 297,           // "transid"
+    TOKEN_VENDOR_CLASS = 298,      // "vendor-class"
+    TOKEN_VENDOR = 299,            // "vendor"
+    TOKEN_ANY = 300,               // "*"
+    TOKEN_DATA = 301,              // "data"
+    TOKEN_ENTERPRISE = 302,        // "enterprise"
+    TOKEN_TOPLEVEL_BOOL = 303,     // "top-level bool"
+    TOKEN_TOPLEVEL_STRING = 304,   // "top-level string"
+    TOKEN_STRING = 305,            // "constant string"
+    TOKEN_INTEGER = 306,           // "integer"
+    TOKEN_HEXSTRING = 307,         // "constant hexstring"
+    TOKEN_OPTION_NAME = 308,       // "option name"
+    TOKEN_IP_ADDRESS = 309         // "ip address"
+      };
+      /// Backward compatibility alias (Bison 3.6).
+      typedef token_kind_type yytokentype;
+    };
+
+    /// Token kind, as returned by yylex.
+    typedef token::yytokentype token_kind_type;
+
+    /// Backward compatibility alias (Bison 3.6).
+    typedef token_kind_type token_type;
+
+    /// Symbol kinds.
+    struct symbol_kind
+    {
+      enum symbol_kind_type
+      {
+        YYNTOKENS = 55, ///< Number of tokens.
+        S_YYEMPTY = -2,
+        S_YYEOF = 0,                             // "end of file"
+        S_YYerror = 1,                           // error
+        S_YYUNDEF = 2,                           // "invalid token"
+        S_LPAREN = 3,                            // "("
+        S_RPAREN = 4,                            // ")"
+        S_NOT = 5,                               // "not"
+        S_AND = 6,                               // "and"
+        S_OR = 7,                                // "or"
+        S_EQUAL = 8,                             // "=="
+        S_OPTION = 9,                            // "option"
+        S_RELAY4 = 10,                           // "relay4"
+        S_RELAY6 = 11,                           // "relay6"
+        S_MEMBER = 12,                           // "member"
+        S_PEERADDR = 13,                         // "peeraddr"
+        S_LINKADDR = 14,                         // "linkaddr"
+        S_LBRACKET = 15,                         // "["
+        S_RBRACKET = 16,                         // "]"
+        S_DOT = 17,                              // "."
+        S_TEXT = 18,                             // "text"
+        S_HEX = 19,                              // "hex"
+        S_EXISTS = 20,                           // "exists"
+        S_PKT = 21,                              // "pkt"
+        S_IFACE = 22,                            // "iface"
+        S_SRC = 23,                              // "src"
+        S_DST = 24,                              // "dst"
+        S_LEN = 25,                              // "len"
+        S_PKT4 = 26,                             // "pkt4"
+        S_CHADDR = 27,                           // "mac"
+        S_HLEN = 28,                             // "hlen"
+        S_HTYPE = 29,                            // "htype"
+        S_CIADDR = 30,                           // "ciaddr"
+        S_GIADDR = 31,                           // "giaddr"
+        S_YIADDR = 32,                           // "yiaddr"
+        S_SIADDR = 33,                           // "siaddr"
+        S_SUBSTRING = 34,                        // "substring"
+        S_ALL = 35,                              // "all"
+        S_COMA = 36,                             // ","
+        S_CONCAT = 37,                           // "concat"
+        S_IFELSE = 38,                           // "ifelse"
+        S_TOHEXSTRING = 39,                      // "hexstring"
+        S_PKT6 = 40,                             // "pkt6"
+        S_MSGTYPE = 41,                          // "msgtype"
+        S_TRANSID = 42,                          // "transid"
+        S_VENDOR_CLASS = 43,                     // "vendor-class"
+        S_VENDOR = 44,                           // "vendor"
+        S_ANY = 45,                              // "*"
+        S_DATA = 46,                             // "data"
+        S_ENTERPRISE = 47,                       // "enterprise"
+        S_TOPLEVEL_BOOL = 48,                    // "top-level bool"
+        S_TOPLEVEL_STRING = 49,                  // "top-level string"
+        S_STRING = 50,                           // "constant string"
+        S_INTEGER = 51,                          // "integer"
+        S_HEXSTRING = 52,                        // "constant hexstring"
+        S_OPTION_NAME = 53,                      // "option name"
+        S_IP_ADDRESS = 54,                       // "ip address"
+        S_YYACCEPT = 55,                         // $accept
+        S_start = 56,                            // start
+        S_expression = 57,                       // expression
+        S_bool_expr = 58,                        // bool_expr
+        S_string_expr = 59,                      // string_expr
+        S_integer_expr = 60,                     // integer_expr
+        S_option_code = 61,                      // option_code
+        S_sub_option_code = 62,                  // sub_option_code
+        S_option_repr_type = 63,                 // option_repr_type
+        S_nest_level = 64,                       // nest_level
+        S_pkt_metadata = 65,                     // pkt_metadata
+        S_enterprise_id = 66,                    // enterprise_id
+        S_pkt4_field = 67,                       // pkt4_field
+        S_pkt6_field = 68,                       // pkt6_field
+        S_relay6_field = 69,                     // relay6_field
+        S_start_expr = 70,                       // start_expr
+        S_length_expr = 71                       // length_expr
       };
     };
 
-    /// (External) token type, as returned by yylex.
-    typedef token::yytokentype token_type;
+    /// (Internal) symbol kind.
+    typedef symbol_kind::symbol_kind_type symbol_kind_type;
 
-    /// Symbol type: an internal symbol number.
-    typedef int symbol_number_type;
-
-    /// The symbol type number to denote an empty symbol.
-    enum { empty_symbol = -2 };
-
-    /// Internal symbol number for tokens (subsumed by symbol_number_type).
-    typedef signed char token_number_type;
+    /// The number of tokens.
+    static const symbol_kind_type YYNTOKENS = symbol_kind::YYNTOKENS;
 
     /// A complete symbol.
     ///
-    /// Expects its Base type to provide access to the symbol type
-    /// via type_get ().
+    /// Expects its Base type to provide access to the symbol kind
+    /// via kind ().
     ///
     /// Provide access to semantic value and location.
     template <typename Base>
@@ -569,7 +667,60 @@ namespace isc { namespace eval {
 
 #if 201103L <= YY_CPLUSPLUS
       /// Move constructor.
-      basic_symbol (basic_symbol&& that);
+      basic_symbol (basic_symbol&& that)
+        : Base (std::move (that))
+        , value ()
+        , location (std::move (that.location))
+      {
+        switch (this->kind ())
+    {
+      case 63: // option_repr_type
+        value.move< TokenOption::RepresentationType > (std::move (that.value));
+        break;
+
+      case 67: // pkt4_field
+        value.move< TokenPkt4::FieldType > (std::move (that.value));
+        break;
+
+      case 68: // pkt6_field
+        value.move< TokenPkt6::FieldType > (std::move (that.value));
+        break;
+
+      case 65: // pkt_metadata
+        value.move< TokenPkt::MetadataType > (std::move (that.value));
+        break;
+
+      case 69: // relay6_field
+        value.move< TokenRelay6Field::FieldType > (std::move (that.value));
+        break;
+
+      case 64: // nest_level
+        value.move< int8_t > (std::move (that.value));
+        break;
+
+      case 50: // "constant string"
+      case 51: // "integer"
+      case 52: // "constant hexstring"
+      case 53: // "option name"
+      case 54: // "ip address"
+        value.move< std::string > (std::move (that.value));
+        break;
+
+      case 61: // option_code
+      case 62: // sub_option_code
+        value.move< uint16_t > (std::move (that.value));
+        break;
+
+      case 60: // integer_expr
+      case 66: // enterprise_id
+        value.move< uint32_t > (std::move (that.value));
+        break;
+
+      default:
+        break;
+    }
+
+      }
 #endif
 
       /// Copy constructor.
@@ -715,17 +866,17 @@ namespace isc { namespace eval {
       void clear ()
       {
         // User destructor.
-        symbol_number_type yytype = this->type_get ();
+        symbol_kind_type yykind = this->kind ();
         basic_symbol<Base>& yysym = *this;
         (void) yysym;
-        switch (yytype)
+        switch (yykind)
         {
        default:
           break;
         }
 
-        // Type destructor.
-switch (yytype)
+        // Value type destructor.
+switch (yykind)
     {
       case 63: // option_repr_type
         value.template destroy< TokenOption::RepresentationType > ();
@@ -776,6 +927,15 @@ switch (yytype)
         Base::clear ();
       }
 
+      /// The user-facing name of this symbol.
+      std::string name () const YY_NOEXCEPT
+      {
+        return EvalParser::symbol_name (this->kind ());
+      }
+
+      /// Backward compatibility (Bison 3.6).
+      symbol_kind_type type_get () const YY_NOEXCEPT;
+
       /// Whether empty.
       bool empty () const YY_NOEXCEPT;
 
@@ -796,46 +956,51 @@ switch (yytype)
     };
 
     /// Type access provider for token (enum) based symbols.
-    struct by_type
+    struct by_kind
     {
       /// Default constructor.
-      by_type ();
+      by_kind ();
 
 #if 201103L <= YY_CPLUSPLUS
       /// Move constructor.
-      by_type (by_type&& that);
+      by_kind (by_kind&& that);
 #endif
 
       /// Copy constructor.
-      by_type (const by_type& that);
+      by_kind (const by_kind& that);
 
-      /// The symbol type as needed by the constructor.
-      typedef token_type kind_type;
+      /// The symbol kind as needed by the constructor.
+      typedef token_kind_type kind_type;
 
       /// Constructor from (external) token numbers.
-      by_type (kind_type t);
+      by_kind (kind_type t);
 
       /// Record that this symbol is empty.
       void clear ();
 
-      /// Steal the symbol type from \a that.
-      void move (by_type& that);
+      /// Steal the symbol kind from \a that.
+      void move (by_kind& that);
 
       /// The (internal) type number (corresponding to \a type).
       /// \a empty when empty.
-      symbol_number_type type_get () const YY_NOEXCEPT;
+      symbol_kind_type kind () const YY_NOEXCEPT;
 
-      /// The symbol type.
-      /// \a empty_symbol when empty.
-      /// An int, not token_number_type, to be able to store empty_symbol.
-      int type;
+      /// Backward compatibility (Bison 3.6).
+      symbol_kind_type type_get () const YY_NOEXCEPT;
+
+      /// The symbol kind.
+      /// \a S_YYEMPTY when empty.
+      symbol_kind_type kind_;
     };
 
+    /// Backward compatibility for a private implementation detail (Bison 3.6).
+    typedef by_kind by_type;
+
     /// "External" symbols: returned by the scanner.
-    struct symbol_type : basic_symbol<by_type>
+    struct symbol_type : basic_symbol<by_kind>
     {
       /// Superclass.
-      typedef basic_symbol<by_type> super_type;
+      typedef basic_symbol<by_kind> super_type;
 
       /// Empty symbol.
       symbol_type () {}
@@ -845,13 +1010,13 @@ switch (yytype)
       symbol_type (int tok, location_type l)
         : super_type(token_type (tok), std::move (l))
       {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_LPAREN || tok == token::TOKEN_RPAREN || tok == token::TOKEN_NOT || tok == token::TOKEN_AND || tok == token::TOKEN_OR || tok == token::TOKEN_EQUAL || tok == token::TOKEN_OPTION || tok == token::TOKEN_RELAY4 || tok == token::TOKEN_RELAY6 || tok == token::TOKEN_MEMBER || tok == token::TOKEN_PEERADDR || tok == token::TOKEN_LINKADDR || tok == token::TOKEN_LBRACKET || tok == token::TOKEN_RBRACKET || tok == token::TOKEN_DOT || tok == token::TOKEN_TEXT || tok == token::TOKEN_HEX || tok == token::TOKEN_EXISTS || tok == token::TOKEN_PKT || tok == token::TOKEN_IFACE || tok == token::TOKEN_SRC || tok == token::TOKEN_DST || tok == token::TOKEN_LEN || tok == token::TOKEN_PKT4 || tok == token::TOKEN_CHADDR || tok == token::TOKEN_HLEN || tok == token::TOKEN_HTYPE || tok == token::TOKEN_CIADDR || tok == token::TOKEN_GIADDR || tok == token::TOKEN_YIADDR || tok == token::TOKEN_SIADDR || tok == token::TOKEN_SUBSTRING || tok == token::TOKEN_ALL || tok == token::TOKEN_COMA || tok == token::TOKEN_CONCAT || tok == token::TOKEN_IFELSE || tok == token::TOKEN_TOHEXSTRING || tok == token::TOKEN_PKT6 || tok == token::TOKEN_MSGTYPE || tok == token::TOKEN_TRANSID || tok == token::TOKEN_VENDOR_CLASS || tok == token::TOKEN_VENDOR || tok == token::TOKEN_ANY || tok == token::TOKEN_DATA || tok == token::TOKEN_ENTERPRISE || tok == token::TOKEN_TOPLEVEL_BOOL || tok == token::TOKEN_TOPLEVEL_STRING);
+        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_EVALerror || tok == token::TOKEN_EVALUNDEF || tok == token::TOKEN_LPAREN || tok == token::TOKEN_RPAREN || tok == token::TOKEN_NOT || tok == token::TOKEN_AND || tok == token::TOKEN_OR || tok == token::TOKEN_EQUAL || tok == token::TOKEN_OPTION || tok == token::TOKEN_RELAY4 || tok == token::TOKEN_RELAY6 || tok == token::TOKEN_MEMBER || tok == token::TOKEN_PEERADDR || tok == token::TOKEN_LINKADDR || tok == token::TOKEN_LBRACKET || tok == token::TOKEN_RBRACKET || tok == token::TOKEN_DOT || tok == token::TOKEN_TEXT || tok == token::TOKEN_HEX || tok == token::TOKEN_EXISTS || tok == token::TOKEN_PKT || tok == token::TOKEN_IFACE || tok == token::TOKEN_SRC || tok == token::TOKEN_DST || tok == token::TOKEN_LEN || tok == token::TOKEN_PKT4 || tok == token::TOKEN_CHADDR || tok == token::TOKEN_HLEN || tok == token::TOKEN_HTYPE || tok == token::TOKEN_CIADDR || tok == token::TOKEN_GIADDR || tok == token::TOKEN_YIADDR || tok == token::TOKEN_SIADDR || tok == token::TOKEN_SUBSTRING || tok == token::TOKEN_ALL || tok == token::TOKEN_COMA || tok == token::TOKEN_CONCAT || tok == token::TOKEN_IFELSE || tok == token::TOKEN_TOHEXSTRING || tok == token::TOKEN_PKT6 || tok == token::TOKEN_MSGTYPE || tok == token::TOKEN_TRANSID || tok == token::TOKEN_VENDOR_CLASS || tok == token::TOKEN_VENDOR || tok == token::TOKEN_ANY || tok == token::TOKEN_DATA || tok == token::TOKEN_ENTERPRISE || tok == token::TOKEN_TOPLEVEL_BOOL || tok == token::TOKEN_TOPLEVEL_STRING);
       }
 #else
       symbol_type (int tok, const location_type& l)
         : super_type(token_type (tok), l)
       {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_LPAREN || tok == token::TOKEN_RPAREN || tok == token::TOKEN_NOT || tok == token::TOKEN_AND || tok == token::TOKEN_OR || tok == token::TOKEN_EQUAL || tok == token::TOKEN_OPTION || tok == token::TOKEN_RELAY4 || tok == token::TOKEN_RELAY6 || tok == token::TOKEN_MEMBER || tok == token::TOKEN_PEERADDR || tok == token::TOKEN_LINKADDR || tok == token::TOKEN_LBRACKET || tok == token::TOKEN_RBRACKET || tok == token::TOKEN_DOT || tok == token::TOKEN_TEXT || tok == token::TOKEN_HEX || tok == token::TOKEN_EXISTS || tok == token::TOKEN_PKT || tok == token::TOKEN_IFACE || tok == token::TOKEN_SRC || tok == token::TOKEN_DST || tok == token::TOKEN_LEN || tok == token::TOKEN_PKT4 || tok == token::TOKEN_CHADDR || tok == token::TOKEN_HLEN || tok == token::TOKEN_HTYPE || tok == token::TOKEN_CIADDR || tok == token::TOKEN_GIADDR || tok == token::TOKEN_YIADDR || tok == token::TOKEN_SIADDR || tok == token::TOKEN_SUBSTRING || tok == token::TOKEN_ALL || tok == token::TOKEN_COMA || tok == token::TOKEN_CONCAT || tok == token::TOKEN_IFELSE || tok == token::TOKEN_TOHEXSTRING || tok == token::TOKEN_PKT6 || tok == token::TOKEN_MSGTYPE || tok == token::TOKEN_TRANSID || tok == token::TOKEN_VENDOR_CLASS || tok == token::TOKEN_VENDOR || tok == token::TOKEN_ANY || tok == token::TOKEN_DATA || tok == token::TOKEN_ENTERPRISE || tok == token::TOKEN_TOPLEVEL_BOOL || tok == token::TOKEN_TOPLEVEL_STRING);
+        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_EVALerror || tok == token::TOKEN_EVALUNDEF || tok == token::TOKEN_LPAREN || tok == token::TOKEN_RPAREN || tok == token::TOKEN_NOT || tok == token::TOKEN_AND || tok == token::TOKEN_OR || tok == token::TOKEN_EQUAL || tok == token::TOKEN_OPTION || tok == token::TOKEN_RELAY4 || tok == token::TOKEN_RELAY6 || tok == token::TOKEN_MEMBER || tok == token::TOKEN_PEERADDR || tok == token::TOKEN_LINKADDR || tok == token::TOKEN_LBRACKET || tok == token::TOKEN_RBRACKET || tok == token::TOKEN_DOT || tok == token::TOKEN_TEXT || tok == token::TOKEN_HEX || tok == token::TOKEN_EXISTS || tok == token::TOKEN_PKT || tok == token::TOKEN_IFACE || tok == token::TOKEN_SRC || tok == token::TOKEN_DST || tok == token::TOKEN_LEN || tok == token::TOKEN_PKT4 || tok == token::TOKEN_CHADDR || tok == token::TOKEN_HLEN || tok == token::TOKEN_HTYPE || tok == token::TOKEN_CIADDR || tok == token::TOKEN_GIADDR || tok == token::TOKEN_YIADDR || tok == token::TOKEN_SIADDR || tok == token::TOKEN_SUBSTRING || tok == token::TOKEN_ALL || tok == token::TOKEN_COMA || tok == token::TOKEN_CONCAT || tok == token::TOKEN_IFELSE || tok == token::TOKEN_TOHEXSTRING || tok == token::TOKEN_PKT6 || tok == token::TOKEN_MSGTYPE || tok == token::TOKEN_TRANSID || tok == token::TOKEN_VENDOR_CLASS || tok == token::TOKEN_VENDOR || tok == token::TOKEN_ANY || tok == token::TOKEN_DATA || tok == token::TOKEN_ENTERPRISE || tok == token::TOKEN_TOPLEVEL_BOOL || tok == token::TOKEN_TOPLEVEL_STRING);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -872,6 +1037,13 @@ switch (yytype)
     /// Build a parser object.
     EvalParser (EvalContext& ctx_yyarg);
     virtual ~EvalParser ();
+
+#if 201103L <= YY_CPLUSPLUS
+    /// Non copyable.
+    EvalParser (const EvalParser&) = delete;
+    /// Non copyable.
+    EvalParser& operator= (const EvalParser&) = delete;
+#endif
 
     /// Parse.  An alias for parse ().
     /// \returns  0 iff parsing succeeded.
@@ -903,6 +1075,10 @@ switch (yytype)
     /// Report a syntax error.
     void error (const syntax_error& err);
 
+    /// The user-facing name of the symbol whose (internal) number is
+    /// YYSYMBOL.  No bounds checking.
+    static std::string symbol_name (symbol_kind_type yysymbol);
+
     // Implementation of make_symbol for each symbol type.
 #if 201103L <= YY_CPLUSPLUS
       static
@@ -917,6 +1093,36 @@ switch (yytype)
       make_END (const location_type& l)
       {
         return symbol_type (token::TOKEN_END, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_EVALerror (location_type l)
+      {
+        return symbol_type (token::TOKEN_EVALerror, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_EVALerror (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_EVALerror, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_EVALUNDEF (location_type l)
+      {
+        return symbol_type (token::TOKEN_EVALUNDEF, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_EVALUNDEF (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_EVALUNDEF, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1701,20 +1907,43 @@ switch (yytype)
 #endif
 
 
+    class context
+    {
+    public:
+      context (const EvalParser& yyparser, const symbol_type& yyla);
+      const symbol_type& lookahead () const { return yyla_; }
+      symbol_kind_type token () const { return yyla_.kind (); }
+      const location_type& location () const { return yyla_.location; }
+
+      /// Put in YYARG at most YYARGN of the expected tokens, and return the
+      /// number of tokens stored in YYARG.  If YYARG is null, return the
+      /// number of expected tokens (guaranteed to be less than YYNTOKENS).
+      int expected_tokens (symbol_kind_type yyarg[], int yyargn) const;
+
+    private:
+      const EvalParser& yyparser_;
+      const symbol_type& yyla_;
+    };
+
   private:
-    /// This class is not copyable.
+#if YY_CPLUSPLUS < 201103L
+    /// Non copyable.
     EvalParser (const EvalParser&);
+    /// Non copyable.
     EvalParser& operator= (const EvalParser&);
+#endif
+
 
     /// Stored state numbers (used for stacks).
     typedef unsigned char state_type;
 
-    /// Generate an error message.
-    /// \param yystate   the state where the error occurred.
-    /// \param yyla      the lookahead token.
-    virtual std::string yysyntax_error_ (state_type yystate,
-                                         const symbol_type& yyla) const;
+    /// The arguments of the error message.
+    int yy_syntax_error_arguments_ (const context& yyctx,
+                                    symbol_kind_type yyarg[], int yyargn) const;
 
+    /// Generate an error message.
+    /// \param yyctx     the context in which the error occurred.
+    virtual std::string yysyntax_error_ (const context& yyctx) const;
     /// Compute post-reduction state.
     /// \param yystate   the current state
     /// \param yysym     the nonterminal to push on the stack
@@ -1731,65 +1960,66 @@ switch (yytype)
     static const signed char yypact_ninf_;
     static const signed char yytable_ninf_;
 
-    /// Convert a scanner token number \a t to a symbol number.
-    /// In theory \a t should be a token_type, but character literals
+    /// Convert a scanner token kind \a t to a symbol kind.
+    /// In theory \a t should be a token_kind_type, but character literals
     /// are valid, yet not members of the token_type enum.
-    static token_number_type yytranslate_ (int t);
+    static symbol_kind_type yytranslate_ (int t);
+
+    /// Convert the symbol name \a n to a form suitable for a diagnostic.
+    static std::string yytnamerr_ (const char *yystr);
+
+    /// For a symbol, its name in clear.
+    static const char* const yytname_[];
+
 
     // Tables.
-    // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
+    // YYPACTSTATE-NUM -- Index in YYTABLE of the portion describing
     // STATE-NUM.
     static const short yypact_[];
 
-    // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
+    // YYDEFACTSTATE-NUM -- Default reduction number in state STATE-NUM.
     // Performed when YYTABLE does not specify something else to do.  Zero
     // means the default is an error.
     static const signed char yydefact_[];
 
-    // YYPGOTO[NTERM-NUM].
+    // YYPGOTONTERM-NUM.
     static const short yypgoto_[];
 
-    // YYDEFGOTO[NTERM-NUM].
+    // YYDEFGOTONTERM-NUM.
     static const short yydefgoto_[];
 
-    // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
+    // YYTABLEYYPACT[STATE-NUM] -- What to do in state STATE-NUM.  If
     // positive, shift that token.  If negative, reduce the rule whose
     // number is the opposite.  If YYTABLE_NINF, syntax error.
     static const unsigned char yytable_[];
 
     static const short yycheck_[];
 
-    // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
+    // YYSTOSSTATE-NUM -- The (internal number of the) accessing
     // symbol of state STATE-NUM.
     static const signed char yystos_[];
 
-    // YYR1[YYN] -- Symbol number of symbol that rule YYN derives.
+    // YYR1YYN -- Symbol number of symbol that rule YYN derives.
     static const signed char yyr1_[];
 
-    // YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.
+    // YYR2YYN -- Number of symbols on the right hand side of rule YYN.
     static const signed char yyr2_[];
 
 
-    /// Convert the symbol name \a n to a form suitable for a diagnostic.
-    static std::string yytnamerr_ (const char *n);
-
-
-    /// For a symbol, its name in clear.
-    static const char* const yytname_[];
 #if EVALDEBUG
-    // YYRLINE[YYN] -- Source line where rule number YYN was defined.
+    // YYRLINEYYN -- Source line where rule number YYN was defined.
     static const short yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
-    virtual void yy_reduce_print_ (int r);
+    virtual void yy_reduce_print_ (int r) const;
     /// Print the state stack on the debug stream.
-    virtual void yystack_print_ ();
+    virtual void yy_stack_print_ () const;
 
     /// Debugging level.
     int yydebug_;
     /// Debug stream.
     std::ostream* yycdebug_;
 
-    /// \brief Display a symbol type, value and location.
+    /// \brief Display a symbol kind, value and location.
     /// \param yyo    The output stream.
     /// \param yysym  The symbol.
     template <typename Base>
@@ -1810,7 +2040,7 @@ switch (yytype)
       /// Default constructor.
       by_state () YY_NOEXCEPT;
 
-      /// The symbol type as needed by the constructor.
+      /// The symbol kind as needed by the constructor.
       typedef state_type kind_type;
 
       /// Constructor.
@@ -1822,12 +2052,12 @@ switch (yytype)
       /// Record that this symbol is empty.
       void clear () YY_NOEXCEPT;
 
-      /// Steal the symbol type from \a that.
+      /// Steal the symbol kind from \a that.
       void move (by_state& that);
 
-      /// The (internal) type number (corresponding to \a state).
-      /// \a empty_symbol when empty.
-      symbol_number_type type_get () const YY_NOEXCEPT;
+      /// The symbol kind (corresponding to \a state).
+      /// \a S_YYEMPTY when empty.
+      symbol_kind_type kind () const YY_NOEXCEPT;
 
       /// The state number used to denote an empty symbol.
       /// We use the initial state, as it does not have a value.
@@ -1866,14 +2096,21 @@ switch (yytype)
     {
     public:
       // Hide our reversed order.
-      typedef typename S::reverse_iterator iterator;
-      typedef typename S::const_reverse_iterator const_iterator;
+      typedef typename S::iterator iterator;
+      typedef typename S::const_iterator const_iterator;
       typedef typename S::size_type size_type;
       typedef typename std::ptrdiff_t index_type;
 
       stack (size_type n = 200)
         : seq_ (n)
       {}
+
+#if 201103L <= YY_CPLUSPLUS
+      /// Non copyable.
+      stack (const stack&) = delete;
+      /// Non copyable.
+      stack& operator= (const stack&) = delete;
+#endif
 
       /// Random access.
       ///
@@ -1925,24 +2162,18 @@ switch (yytype)
         return index_type (seq_.size ());
       }
 
-      std::ptrdiff_t
-      ssize () const YY_NOEXCEPT
-      {
-        return std::ptrdiff_t (size ());
-      }
-
       /// Iterator on top of the stack (going downwards).
       const_iterator
       begin () const YY_NOEXCEPT
       {
-        return seq_.rbegin ();
+        return seq_.begin ();
       }
 
       /// Bottom of the stack.
       const_iterator
       end () const YY_NOEXCEPT
       {
-        return seq_.rend ();
+        return seq_.end ();
       }
 
       /// Present a slice of the top of a stack.
@@ -1966,8 +2197,12 @@ switch (yytype)
       };
 
     private:
+#if YY_CPLUSPLUS < 201103L
+      /// Non copyable.
       stack (const stack&);
+      /// Non copyable.
       stack& operator= (const stack&);
+#endif
       /// The wrapped container.
       S seq_;
     };
@@ -1997,33 +2232,28 @@ switch (yytype)
     /// Pop \a n symbols from the stack.
     void yypop_ (int n = 1);
 
-    /// Some specific tokens.
-    static const token_number_type yy_error_token_ = 1;
-    static const token_number_type yy_undef_token_ = 2;
-
     /// Constants.
     enum
     {
-      yyeof_ = 0,
       yylast_ = 217,     ///< Last index in yytable_.
       yynnts_ = 17,  ///< Number of nonterminal symbols.
-      yyfinal_ = 33, ///< Termination state number.
-      yyntokens_ = 55  ///< Number of tokens.
+      yyfinal_ = 33 ///< Termination state number.
     };
 
 
     // User arguments.
     EvalContext& ctx;
+
   };
 
   inline
-  EvalParser::token_number_type
+  EvalParser::symbol_kind_type
   EvalParser::yytranslate_ (int t)
   {
     // YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to
     // TOKEN-NUM as returned by yylex.
     static
-    const token_number_type
+    const signed char
     translate_table[] =
     {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -2061,79 +2291,21 @@ switch (yytype)
     const int user_token_number_max_ = 309;
 
     if (t <= 0)
-      return yyeof_;
+      return symbol_kind::S_YYEOF;
     else if (t <= user_token_number_max_)
-      return translate_table[t];
+      return YY_CAST (symbol_kind_type, translate_table[t]);
     else
-      return yy_undef_token_;
+      return symbol_kind::S_YYUNDEF;
   }
 
   // basic_symbol.
-#if 201103L <= YY_CPLUSPLUS
-  template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (basic_symbol&& that)
-    : Base (std::move (that))
-    , value ()
-    , location (std::move (that.location))
-  {
-    switch (this->type_get ())
-    {
-      case 63: // option_repr_type
-        value.move< TokenOption::RepresentationType > (std::move (that.value));
-        break;
-
-      case 67: // pkt4_field
-        value.move< TokenPkt4::FieldType > (std::move (that.value));
-        break;
-
-      case 68: // pkt6_field
-        value.move< TokenPkt6::FieldType > (std::move (that.value));
-        break;
-
-      case 65: // pkt_metadata
-        value.move< TokenPkt::MetadataType > (std::move (that.value));
-        break;
-
-      case 69: // relay6_field
-        value.move< TokenRelay6Field::FieldType > (std::move (that.value));
-        break;
-
-      case 64: // nest_level
-        value.move< int8_t > (std::move (that.value));
-        break;
-
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
-        value.move< std::string > (std::move (that.value));
-        break;
-
-      case 61: // option_code
-      case 62: // sub_option_code
-        value.move< uint16_t > (std::move (that.value));
-        break;
-
-      case 60: // integer_expr
-      case 66: // enterprise_id
-        value.move< uint32_t > (std::move (that.value));
-        break;
-
-      default:
-        break;
-    }
-
-  }
-#endif
-
   template <typename Base>
   EvalParser::basic_symbol<Base>::basic_symbol (const basic_symbol& that)
     : Base (that)
     , value ()
     , location (that.location)
   {
-    switch (this->type_get ())
+    switch (this->kind ())
     {
       case 63: // option_repr_type
         value.copy< TokenOption::RepresentationType > (YY_MOVE (that.value));
@@ -2186,10 +2358,17 @@ switch (yytype)
 
 
   template <typename Base>
+  EvalParser::symbol_kind_type
+  EvalParser::basic_symbol<Base>::type_get () const YY_NOEXCEPT
+  {
+    return this->kind ();
+  }
+
+  template <typename Base>
   bool
   EvalParser::basic_symbol<Base>::empty () const YY_NOEXCEPT
   {
-    return Base::type_get () == empty_symbol;
+    return this->kind () == symbol_kind::S_YYEMPTY;
   }
 
   template <typename Base>
@@ -2197,7 +2376,7 @@ switch (yytype)
   EvalParser::basic_symbol<Base>::move (basic_symbol& s)
   {
     super_type::move (s);
-    switch (this->type_get ())
+    switch (this->kind ())
     {
       case 63: // option_repr_type
         value.move< TokenOption::RepresentationType > (YY_MOVE (s.value));
@@ -2248,56 +2427,63 @@ switch (yytype)
     location = YY_MOVE (s.location);
   }
 
-  // by_type.
+  // by_kind.
   inline
-  EvalParser::by_type::by_type ()
-    : type (empty_symbol)
+  EvalParser::by_kind::by_kind ()
+    : kind_ (symbol_kind::S_YYEMPTY)
   {}
 
 #if 201103L <= YY_CPLUSPLUS
   inline
-  EvalParser::by_type::by_type (by_type&& that)
-    : type (that.type)
+  EvalParser::by_kind::by_kind (by_kind&& that)
+    : kind_ (that.kind_)
   {
     that.clear ();
   }
 #endif
 
   inline
-  EvalParser::by_type::by_type (const by_type& that)
-    : type (that.type)
+  EvalParser::by_kind::by_kind (const by_kind& that)
+    : kind_ (that.kind_)
   {}
 
   inline
-  EvalParser::by_type::by_type (token_type t)
-    : type (yytranslate_ (t))
+  EvalParser::by_kind::by_kind (token_kind_type t)
+    : kind_ (yytranslate_ (t))
   {}
 
   inline
   void
-  EvalParser::by_type::clear ()
+  EvalParser::by_kind::clear ()
   {
-    type = empty_symbol;
+    kind_ = symbol_kind::S_YYEMPTY;
   }
 
   inline
   void
-  EvalParser::by_type::move (by_type& that)
+  EvalParser::by_kind::move (by_kind& that)
   {
-    type = that.type;
+    kind_ = that.kind_;
     that.clear ();
   }
 
   inline
-  int
-  EvalParser::by_type::type_get () const YY_NOEXCEPT
+  EvalParser::symbol_kind_type
+  EvalParser::by_kind::kind () const YY_NOEXCEPT
   {
-    return type;
+    return kind_;
+  }
+
+  inline
+  EvalParser::symbol_kind_type
+  EvalParser::by_kind::type_get () const YY_NOEXCEPT
+  {
+    return this->kind ();
   }
 
 #line 14 "parser.yy"
 } } // isc::eval
-#line 2301 "parser.h"
+#line 2487 "parser.h"
 
 
 

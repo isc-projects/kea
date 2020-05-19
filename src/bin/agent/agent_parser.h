@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.5.4.
+// A Bison parser, made by GNU Bison 3.6.2.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -38,8 +38,9 @@
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
 
-// Undocumented macros, especially those whose name start with YY_,
-// are private implementation details.  Do not rely on them.
+// DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+// especially those whose name start with YY_ or yy_.  They are
+// private implementation details that can be changed or removed.
 
 #ifndef YY_AGENT_AGENT_PARSER_H_INCLUDED
 # define YY_AGENT_AGENT_PARSER_H_INCLUDED
@@ -55,7 +56,7 @@ using namespace isc::agent;
 using namespace isc::data;
 using namespace std;
 
-#line 59 "agent_parser.h"
+#line 60 "agent_parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -198,7 +199,7 @@ using namespace std;
 
 #line 14 "agent_parser.yy"
 namespace isc { namespace agent {
-#line 202 "agent_parser.h"
+#line 203 "agent_parser.h"
 
 
 
@@ -233,6 +234,13 @@ namespace isc { namespace agent {
       YY_ASSERT (sizeof (T) <= size);
       new (yyas_<T> ()) T (YY_MOVE (t));
     }
+
+#if 201103L <= YY_CPLUSPLUS
+    /// Non copyable.
+    semantic_type (const self_type&) = delete;
+    /// Non copyable.
+    self_type& operator= (const self_type&) = delete;
+#endif
 
     /// Destruction, allowed only if empty.
     ~semantic_type () YY_NOEXCEPT
@@ -377,9 +385,12 @@ namespace isc { namespace agent {
     }
 
   private:
-    /// Prohibit blind copies.
-    self_type& operator= (const self_type&);
+#if YY_CPLUSPLUS < 201103L
+    /// Non copyable.
     semantic_type (const self_type&);
+    /// Non copyable.
+    self_type& operator= (const self_type&);
+#endif
 
     /// Accessor to raw memory as \a T.
     template <typename T>
@@ -460,74 +471,234 @@ namespace isc { namespace agent {
       location_type location;
     };
 
-    /// Tokens.
+    /// Token kinds.
     struct token
     {
-      enum yytokentype
+      enum token_kind_type
       {
-        TOKEN_END = 0,
-        TOKEN_COMMA = 258,
-        TOKEN_COLON = 259,
-        TOKEN_LSQUARE_BRACKET = 260,
-        TOKEN_RSQUARE_BRACKET = 261,
-        TOKEN_LCURLY_BRACKET = 262,
-        TOKEN_RCURLY_BRACKET = 263,
-        TOKEN_NULL_TYPE = 264,
-        TOKEN_CONTROL_AGENT = 265,
-        TOKEN_HTTP_HOST = 266,
-        TOKEN_HTTP_PORT = 267,
-        TOKEN_USER_CONTEXT = 268,
-        TOKEN_COMMENT = 269,
-        TOKEN_CONTROL_SOCKETS = 270,
-        TOKEN_DHCP4_SERVER = 271,
-        TOKEN_DHCP6_SERVER = 272,
-        TOKEN_D2_SERVER = 273,
-        TOKEN_SOCKET_NAME = 274,
-        TOKEN_SOCKET_TYPE = 275,
-        TOKEN_UNIX = 276,
-        TOKEN_HOOKS_LIBRARIES = 277,
-        TOKEN_LIBRARY = 278,
-        TOKEN_PARAMETERS = 279,
-        TOKEN_LOGGING = 280,
-        TOKEN_LOGGERS = 281,
-        TOKEN_NAME = 282,
-        TOKEN_OUTPUT_OPTIONS = 283,
-        TOKEN_OUTPUT = 284,
-        TOKEN_DEBUGLEVEL = 285,
-        TOKEN_SEVERITY = 286,
-        TOKEN_FLUSH = 287,
-        TOKEN_MAXSIZE = 288,
-        TOKEN_MAXVER = 289,
-        TOKEN_PATTERN = 290,
-        TOKEN_DHCP4 = 291,
-        TOKEN_DHCP6 = 292,
-        TOKEN_DHCPDDNS = 293,
-        TOKEN_START_JSON = 294,
-        TOKEN_START_AGENT = 295,
-        TOKEN_START_SUB_AGENT = 296,
-        TOKEN_STRING = 297,
-        TOKEN_INTEGER = 298,
-        TOKEN_FLOAT = 299,
-        TOKEN_BOOLEAN = 300
+        TOKEN_AGENT_EMPTY = -2,
+    TOKEN_END = 0,                 // "end of file"
+    TOKEN_AGENT_error = 256,       // error
+    TOKEN_AGENT_UNDEF = 257,       // "invalid token"
+    TOKEN_COMMA = 258,             // ","
+    TOKEN_COLON = 259,             // ":"
+    TOKEN_LSQUARE_BRACKET = 260,   // "["
+    TOKEN_RSQUARE_BRACKET = 261,   // "]"
+    TOKEN_LCURLY_BRACKET = 262,    // "{"
+    TOKEN_RCURLY_BRACKET = 263,    // "}"
+    TOKEN_NULL_TYPE = 264,         // "null"
+    TOKEN_CONTROL_AGENT = 265,     // "Control-agent"
+    TOKEN_HTTP_HOST = 266,         // "http-host"
+    TOKEN_HTTP_PORT = 267,         // "http-port"
+    TOKEN_USER_CONTEXT = 268,      // "user-context"
+    TOKEN_COMMENT = 269,           // "comment"
+    TOKEN_CONTROL_SOCKETS = 270,   // "control-sockets"
+    TOKEN_DHCP4_SERVER = 271,      // "dhcp4"
+    TOKEN_DHCP6_SERVER = 272,      // "dhcp6"
+    TOKEN_D2_SERVER = 273,         // "d2"
+    TOKEN_SOCKET_NAME = 274,       // "socket-name"
+    TOKEN_SOCKET_TYPE = 275,       // "socket-type"
+    TOKEN_UNIX = 276,              // "unix"
+    TOKEN_HOOKS_LIBRARIES = 277,   // "hooks-libraries"
+    TOKEN_LIBRARY = 278,           // "library"
+    TOKEN_PARAMETERS = 279,        // "parameters"
+    TOKEN_LOGGING = 280,           // "Logging"
+    TOKEN_LOGGERS = 281,           // "loggers"
+    TOKEN_NAME = 282,              // "name"
+    TOKEN_OUTPUT_OPTIONS = 283,    // "output_options"
+    TOKEN_OUTPUT = 284,            // "output"
+    TOKEN_DEBUGLEVEL = 285,        // "debuglevel"
+    TOKEN_SEVERITY = 286,          // "severity"
+    TOKEN_FLUSH = 287,             // "flush"
+    TOKEN_MAXSIZE = 288,           // "maxsize"
+    TOKEN_MAXVER = 289,            // "maxver"
+    TOKEN_PATTERN = 290,           // "pattern"
+    TOKEN_DHCP4 = 291,             // "Dhcp4"
+    TOKEN_DHCP6 = 292,             // "Dhcp6"
+    TOKEN_DHCPDDNS = 293,          // "DhcpDdns"
+    TOKEN_START_JSON = 294,        // START_JSON
+    TOKEN_START_AGENT = 295,       // START_AGENT
+    TOKEN_START_SUB_AGENT = 296,   // START_SUB_AGENT
+    TOKEN_STRING = 297,            // "constant string"
+    TOKEN_INTEGER = 298,           // "integer"
+    TOKEN_FLOAT = 299,             // "floating point"
+    TOKEN_BOOLEAN = 300            // "boolean"
+      };
+      /// Backward compatibility alias (Bison 3.6).
+      typedef token_kind_type yytokentype;
+    };
+
+    /// Token kind, as returned by yylex.
+    typedef token::yytokentype token_kind_type;
+
+    /// Backward compatibility alias (Bison 3.6).
+    typedef token_kind_type token_type;
+
+    /// Symbol kinds.
+    struct symbol_kind
+    {
+      enum symbol_kind_type
+      {
+        YYNTOKENS = 46, ///< Number of tokens.
+        S_YYEMPTY = -2,
+        S_YYEOF = 0,                             // "end of file"
+        S_YYerror = 1,                           // error
+        S_YYUNDEF = 2,                           // "invalid token"
+        S_COMMA = 3,                             // ","
+        S_COLON = 4,                             // ":"
+        S_LSQUARE_BRACKET = 5,                   // "["
+        S_RSQUARE_BRACKET = 6,                   // "]"
+        S_LCURLY_BRACKET = 7,                    // "{"
+        S_RCURLY_BRACKET = 8,                    // "}"
+        S_NULL_TYPE = 9,                         // "null"
+        S_CONTROL_AGENT = 10,                    // "Control-agent"
+        S_HTTP_HOST = 11,                        // "http-host"
+        S_HTTP_PORT = 12,                        // "http-port"
+        S_USER_CONTEXT = 13,                     // "user-context"
+        S_COMMENT = 14,                          // "comment"
+        S_CONTROL_SOCKETS = 15,                  // "control-sockets"
+        S_DHCP4_SERVER = 16,                     // "dhcp4"
+        S_DHCP6_SERVER = 17,                     // "dhcp6"
+        S_D2_SERVER = 18,                        // "d2"
+        S_SOCKET_NAME = 19,                      // "socket-name"
+        S_SOCKET_TYPE = 20,                      // "socket-type"
+        S_UNIX = 21,                             // "unix"
+        S_HOOKS_LIBRARIES = 22,                  // "hooks-libraries"
+        S_LIBRARY = 23,                          // "library"
+        S_PARAMETERS = 24,                       // "parameters"
+        S_LOGGING = 25,                          // "Logging"
+        S_LOGGERS = 26,                          // "loggers"
+        S_NAME = 27,                             // "name"
+        S_OUTPUT_OPTIONS = 28,                   // "output_options"
+        S_OUTPUT = 29,                           // "output"
+        S_DEBUGLEVEL = 30,                       // "debuglevel"
+        S_SEVERITY = 31,                         // "severity"
+        S_FLUSH = 32,                            // "flush"
+        S_MAXSIZE = 33,                          // "maxsize"
+        S_MAXVER = 34,                           // "maxver"
+        S_PATTERN = 35,                          // "pattern"
+        S_DHCP4 = 36,                            // "Dhcp4"
+        S_DHCP6 = 37,                            // "Dhcp6"
+        S_DHCPDDNS = 38,                         // "DhcpDdns"
+        S_START_JSON = 39,                       // START_JSON
+        S_START_AGENT = 40,                      // START_AGENT
+        S_START_SUB_AGENT = 41,                  // START_SUB_AGENT
+        S_STRING = 42,                           // "constant string"
+        S_INTEGER = 43,                          // "integer"
+        S_FLOAT = 44,                            // "floating point"
+        S_BOOLEAN = 45,                          // "boolean"
+        S_YYACCEPT = 46,                         // $accept
+        S_start = 47,                            // start
+        S_48_1 = 48,                             // $@1
+        S_49_2 = 49,                             // $@2
+        S_50_3 = 50,                             // $@3
+        S_sub_agent = 51,                        // sub_agent
+        S_52_4 = 52,                             // $@4
+        S_json = 53,                             // json
+        S_value = 54,                            // value
+        S_map = 55,                              // map
+        S_56_5 = 56,                             // $@5
+        S_map_value = 57,                        // map_value
+        S_map_content = 58,                      // map_content
+        S_not_empty_map = 59,                    // not_empty_map
+        S_list_generic = 60,                     // list_generic
+        S_61_6 = 61,                             // $@6
+        S_list_content = 62,                     // list_content
+        S_not_empty_list = 63,                   // not_empty_list
+        S_unknown_map_entry = 64,                // unknown_map_entry
+        S_agent_syntax_map = 65,                 // agent_syntax_map
+        S_66_7 = 66,                             // $@7
+        S_global_objects = 67,                   // global_objects
+        S_global_object = 68,                    // global_object
+        S_agent_object = 69,                     // agent_object
+        S_70_8 = 70,                             // $@8
+        S_global_params = 71,                    // global_params
+        S_global_param = 72,                     // global_param
+        S_http_host = 73,                        // http_host
+        S_74_9 = 74,                             // $@9
+        S_http_port = 75,                        // http_port
+        S_user_context = 76,                     // user_context
+        S_77_10 = 77,                            // $@10
+        S_comment = 78,                          // comment
+        S_79_11 = 79,                            // $@11
+        S_hooks_libraries = 80,                  // hooks_libraries
+        S_81_12 = 81,                            // $@12
+        S_hooks_libraries_list = 82,             // hooks_libraries_list
+        S_not_empty_hooks_libraries_list = 83,   // not_empty_hooks_libraries_list
+        S_hooks_library = 84,                    // hooks_library
+        S_85_13 = 85,                            // $@13
+        S_hooks_params = 86,                     // hooks_params
+        S_hooks_param = 87,                      // hooks_param
+        S_library = 88,                          // library
+        S_89_14 = 89,                            // $@14
+        S_parameters = 90,                       // parameters
+        S_91_15 = 91,                            // $@15
+        S_control_sockets = 92,                  // control_sockets
+        S_93_16 = 93,                            // $@16
+        S_control_sockets_params = 94,           // control_sockets_params
+        S_control_socket = 95,                   // control_socket
+        S_dhcp4_server_socket = 96,              // dhcp4_server_socket
+        S_97_17 = 97,                            // $@17
+        S_dhcp6_server_socket = 98,              // dhcp6_server_socket
+        S_99_18 = 99,                            // $@18
+        S_d2_server_socket = 100,                // d2_server_socket
+        S_101_19 = 101,                          // $@19
+        S_control_socket_params = 102,           // control_socket_params
+        S_control_socket_param = 103,            // control_socket_param
+        S_socket_name = 104,                     // socket_name
+        S_105_20 = 105,                          // $@20
+        S_socket_type = 106,                     // socket_type
+        S_107_21 = 107,                          // $@21
+        S_socket_type_value = 108,               // socket_type_value
+        S_dhcp4_json_object = 109,               // dhcp4_json_object
+        S_110_22 = 110,                          // $@22
+        S_dhcp6_json_object = 111,               // dhcp6_json_object
+        S_112_23 = 112,                          // $@23
+        S_dhcpddns_json_object = 113,            // dhcpddns_json_object
+        S_114_24 = 114,                          // $@24
+        S_logging_object = 115,                  // logging_object
+        S_116_25 = 116,                          // $@25
+        S_logging_params = 117,                  // logging_params
+        S_logging_param = 118,                   // logging_param
+        S_loggers = 119,                         // loggers
+        S_120_26 = 120,                          // $@26
+        S_loggers_entries = 121,                 // loggers_entries
+        S_logger_entry = 122,                    // logger_entry
+        S_123_27 = 123,                          // $@27
+        S_logger_params = 124,                   // logger_params
+        S_logger_param = 125,                    // logger_param
+        S_name = 126,                            // name
+        S_127_28 = 127,                          // $@28
+        S_debuglevel = 128,                      // debuglevel
+        S_severity = 129,                        // severity
+        S_130_29 = 130,                          // $@29
+        S_output_options_list = 131,             // output_options_list
+        S_132_30 = 132,                          // $@30
+        S_output_options_list_content = 133,     // output_options_list_content
+        S_output_entry = 134,                    // output_entry
+        S_135_31 = 135,                          // $@31
+        S_output_params_list = 136,              // output_params_list
+        S_output_params = 137,                   // output_params
+        S_output = 138,                          // output
+        S_139_32 = 139,                          // $@32
+        S_flush = 140,                           // flush
+        S_maxsize = 141,                         // maxsize
+        S_maxver = 142,                          // maxver
+        S_pattern = 143,                         // pattern
+        S_144_33 = 144                           // $@33
       };
     };
 
-    /// (External) token type, as returned by yylex.
-    typedef token::yytokentype token_type;
+    /// (Internal) symbol kind.
+    typedef symbol_kind::symbol_kind_type symbol_kind_type;
 
-    /// Symbol type: an internal symbol number.
-    typedef int symbol_number_type;
-
-    /// The symbol type number to denote an empty symbol.
-    enum { empty_symbol = -2 };
-
-    /// Internal symbol number for tokens (subsumed by symbol_number_type).
-    typedef signed char token_number_type;
+    /// The number of tokens.
+    static const symbol_kind_type YYNTOKENS = symbol_kind::YYNTOKENS;
 
     /// A complete symbol.
     ///
-    /// Expects its Base type to provide access to the symbol type
-    /// via type_get ().
+    /// Expects its Base type to provide access to the symbol kind
+    /// via kind ().
     ///
     /// Provide access to semantic value and location.
     template <typename Base>
@@ -544,7 +715,40 @@ namespace isc { namespace agent {
 
 #if 201103L <= YY_CPLUSPLUS
       /// Move constructor.
-      basic_symbol (basic_symbol&& that);
+      basic_symbol (basic_symbol&& that)
+        : Base (std::move (that))
+        , value ()
+        , location (std::move (that.location))
+      {
+        switch (this->kind ())
+    {
+      case 54: // value
+      case 57: // map_value
+      case 108: // socket_type_value
+        value.move< ElementPtr > (std::move (that.value));
+        break;
+
+      case 45: // "boolean"
+        value.move< bool > (std::move (that.value));
+        break;
+
+      case 44: // "floating point"
+        value.move< double > (std::move (that.value));
+        break;
+
+      case 43: // "integer"
+        value.move< int64_t > (std::move (that.value));
+        break;
+
+      case 42: // "constant string"
+        value.move< std::string > (std::move (that.value));
+        break;
+
+      default:
+        break;
+    }
+
+      }
 #endif
 
       /// Copy constructor.
@@ -638,17 +842,17 @@ namespace isc { namespace agent {
       void clear ()
       {
         // User destructor.
-        symbol_number_type yytype = this->type_get ();
+        symbol_kind_type yykind = this->kind ();
         basic_symbol<Base>& yysym = *this;
         (void) yysym;
-        switch (yytype)
+        switch (yykind)
         {
        default:
           break;
         }
 
-        // Type destructor.
-switch (yytype)
+        // Value type destructor.
+switch (yykind)
     {
       case 54: // value
       case 57: // map_value
@@ -679,6 +883,15 @@ switch (yytype)
         Base::clear ();
       }
 
+      /// The user-facing name of this symbol.
+      std::string name () const YY_NOEXCEPT
+      {
+        return AgentParser::symbol_name (this->kind ());
+      }
+
+      /// Backward compatibility (Bison 3.6).
+      symbol_kind_type type_get () const YY_NOEXCEPT;
+
       /// Whether empty.
       bool empty () const YY_NOEXCEPT;
 
@@ -699,46 +912,51 @@ switch (yytype)
     };
 
     /// Type access provider for token (enum) based symbols.
-    struct by_type
+    struct by_kind
     {
       /// Default constructor.
-      by_type ();
+      by_kind ();
 
 #if 201103L <= YY_CPLUSPLUS
       /// Move constructor.
-      by_type (by_type&& that);
+      by_kind (by_kind&& that);
 #endif
 
       /// Copy constructor.
-      by_type (const by_type& that);
+      by_kind (const by_kind& that);
 
-      /// The symbol type as needed by the constructor.
-      typedef token_type kind_type;
+      /// The symbol kind as needed by the constructor.
+      typedef token_kind_type kind_type;
 
       /// Constructor from (external) token numbers.
-      by_type (kind_type t);
+      by_kind (kind_type t);
 
       /// Record that this symbol is empty.
       void clear ();
 
-      /// Steal the symbol type from \a that.
-      void move (by_type& that);
+      /// Steal the symbol kind from \a that.
+      void move (by_kind& that);
 
       /// The (internal) type number (corresponding to \a type).
       /// \a empty when empty.
-      symbol_number_type type_get () const YY_NOEXCEPT;
+      symbol_kind_type kind () const YY_NOEXCEPT;
 
-      /// The symbol type.
-      /// \a empty_symbol when empty.
-      /// An int, not token_number_type, to be able to store empty_symbol.
-      int type;
+      /// Backward compatibility (Bison 3.6).
+      symbol_kind_type type_get () const YY_NOEXCEPT;
+
+      /// The symbol kind.
+      /// \a S_YYEMPTY when empty.
+      symbol_kind_type kind_;
     };
 
+    /// Backward compatibility for a private implementation detail (Bison 3.6).
+    typedef by_kind by_type;
+
     /// "External" symbols: returned by the scanner.
-    struct symbol_type : basic_symbol<by_type>
+    struct symbol_type : basic_symbol<by_kind>
     {
       /// Superclass.
-      typedef basic_symbol<by_type> super_type;
+      typedef basic_symbol<by_kind> super_type;
 
       /// Empty symbol.
       symbol_type () {}
@@ -748,13 +966,13 @@ switch (yytype)
       symbol_type (int tok, location_type l)
         : super_type(token_type (tok), std::move (l))
       {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
+        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_AGENT_error || tok == token::TOKEN_AGENT_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
       }
 #else
       symbol_type (int tok, const location_type& l)
         : super_type(token_type (tok), l)
       {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
+        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_AGENT_error || tok == token::TOKEN_AGENT_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -815,6 +1033,13 @@ switch (yytype)
     AgentParser (isc::agent::ParserContext& ctx_yyarg);
     virtual ~AgentParser ();
 
+#if 201103L <= YY_CPLUSPLUS
+    /// Non copyable.
+    AgentParser (const AgentParser&) = delete;
+    /// Non copyable.
+    AgentParser& operator= (const AgentParser&) = delete;
+#endif
+
     /// Parse.  An alias for parse ().
     /// \returns  0 iff parsing succeeded.
     int operator() ();
@@ -845,6 +1070,10 @@ switch (yytype)
     /// Report a syntax error.
     void error (const syntax_error& err);
 
+    /// The user-facing name of the symbol whose (internal) number is
+    /// YYSYMBOL.  No bounds checking.
+    static std::string symbol_name (symbol_kind_type yysymbol);
+
     // Implementation of make_symbol for each symbol type.
 #if 201103L <= YY_CPLUSPLUS
       static
@@ -859,6 +1088,36 @@ switch (yytype)
       make_END (const location_type& l)
       {
         return symbol_type (token::TOKEN_END, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_AGENT_error (location_type l)
+      {
+        return symbol_type (token::TOKEN_AGENT_error, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_AGENT_error (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_AGENT_error, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_AGENT_UNDEF (location_type l)
+      {
+        return symbol_type (token::TOKEN_AGENT_UNDEF, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_AGENT_UNDEF (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_AGENT_UNDEF, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1508,20 +1767,43 @@ switch (yytype)
 #endif
 
 
+    class context
+    {
+    public:
+      context (const AgentParser& yyparser, const symbol_type& yyla);
+      const symbol_type& lookahead () const { return yyla_; }
+      symbol_kind_type token () const { return yyla_.kind (); }
+      const location_type& location () const { return yyla_.location; }
+
+      /// Put in YYARG at most YYARGN of the expected tokens, and return the
+      /// number of tokens stored in YYARG.  If YYARG is null, return the
+      /// number of expected tokens (guaranteed to be less than YYNTOKENS).
+      int expected_tokens (symbol_kind_type yyarg[], int yyargn) const;
+
+    private:
+      const AgentParser& yyparser_;
+      const symbol_type& yyla_;
+    };
+
   private:
-    /// This class is not copyable.
+#if YY_CPLUSPLUS < 201103L
+    /// Non copyable.
     AgentParser (const AgentParser&);
+    /// Non copyable.
     AgentParser& operator= (const AgentParser&);
+#endif
+
 
     /// Stored state numbers (used for stacks).
     typedef short state_type;
 
-    /// Generate an error message.
-    /// \param yystate   the state where the error occurred.
-    /// \param yyla      the lookahead token.
-    virtual std::string yysyntax_error_ (state_type yystate,
-                                         const symbol_type& yyla) const;
+    /// The arguments of the error message.
+    int yy_syntax_error_arguments_ (const context& yyctx,
+                                    symbol_kind_type yyarg[], int yyargn) const;
 
+    /// Generate an error message.
+    /// \param yyctx     the context in which the error occurred.
+    virtual std::string yysyntax_error_ (const context& yyctx) const;
     /// Compute post-reduction state.
     /// \param yystate   the current state
     /// \param yysym     the nonterminal to push on the stack
@@ -1538,65 +1820,66 @@ switch (yytype)
     static const signed char yypact_ninf_;
     static const signed char yytable_ninf_;
 
-    /// Convert a scanner token number \a t to a symbol number.
-    /// In theory \a t should be a token_type, but character literals
+    /// Convert a scanner token kind \a t to a symbol kind.
+    /// In theory \a t should be a token_kind_type, but character literals
     /// are valid, yet not members of the token_type enum.
-    static token_number_type yytranslate_ (int t);
+    static symbol_kind_type yytranslate_ (int t);
+
+    /// Convert the symbol name \a n to a form suitable for a diagnostic.
+    static std::string yytnamerr_ (const char *yystr);
+
+    /// For a symbol, its name in clear.
+    static const char* const yytname_[];
+
 
     // Tables.
-    // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
+    // YYPACTSTATE-NUM -- Index in YYTABLE of the portion describing
     // STATE-NUM.
     static const short yypact_[];
 
-    // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
+    // YYDEFACTSTATE-NUM -- Default reduction number in state STATE-NUM.
     // Performed when YYTABLE does not specify something else to do.  Zero
     // means the default is an error.
     static const unsigned char yydefact_[];
 
-    // YYPGOTO[NTERM-NUM].
+    // YYPGOTONTERM-NUM.
     static const signed char yypgoto_[];
 
-    // YYDEFGOTO[NTERM-NUM].
+    // YYDEFGOTONTERM-NUM.
     static const short yydefgoto_[];
 
-    // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
+    // YYTABLEYYPACT[STATE-NUM] -- What to do in state STATE-NUM.  If
     // positive, shift that token.  If negative, reduce the rule whose
     // number is the opposite.  If YYTABLE_NINF, syntax error.
     static const short yytable_[];
 
     static const short yycheck_[];
 
-    // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
+    // YYSTOSSTATE-NUM -- The (internal number of the) accessing
     // symbol of state STATE-NUM.
     static const unsigned char yystos_[];
 
-    // YYR1[YYN] -- Symbol number of symbol that rule YYN derives.
+    // YYR1YYN -- Symbol number of symbol that rule YYN derives.
     static const unsigned char yyr1_[];
 
-    // YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.
+    // YYR2YYN -- Number of symbols on the right hand side of rule YYN.
     static const signed char yyr2_[];
 
 
-    /// Convert the symbol name \a n to a form suitable for a diagnostic.
-    static std::string yytnamerr_ (const char *n);
-
-
-    /// For a symbol, its name in clear.
-    static const char* const yytname_[];
 #if AGENT_DEBUG
-    // YYRLINE[YYN] -- Source line where rule number YYN was defined.
+    // YYRLINEYYN -- Source line where rule number YYN was defined.
     static const short yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
-    virtual void yy_reduce_print_ (int r);
+    virtual void yy_reduce_print_ (int r) const;
     /// Print the state stack on the debug stream.
-    virtual void yystack_print_ ();
+    virtual void yy_stack_print_ () const;
 
     /// Debugging level.
     int yydebug_;
     /// Debug stream.
     std::ostream* yycdebug_;
 
-    /// \brief Display a symbol type, value and location.
+    /// \brief Display a symbol kind, value and location.
     /// \param yyo    The output stream.
     /// \param yysym  The symbol.
     template <typename Base>
@@ -1617,7 +1900,7 @@ switch (yytype)
       /// Default constructor.
       by_state () YY_NOEXCEPT;
 
-      /// The symbol type as needed by the constructor.
+      /// The symbol kind as needed by the constructor.
       typedef state_type kind_type;
 
       /// Constructor.
@@ -1629,12 +1912,12 @@ switch (yytype)
       /// Record that this symbol is empty.
       void clear () YY_NOEXCEPT;
 
-      /// Steal the symbol type from \a that.
+      /// Steal the symbol kind from \a that.
       void move (by_state& that);
 
-      /// The (internal) type number (corresponding to \a state).
-      /// \a empty_symbol when empty.
-      symbol_number_type type_get () const YY_NOEXCEPT;
+      /// The symbol kind (corresponding to \a state).
+      /// \a S_YYEMPTY when empty.
+      symbol_kind_type kind () const YY_NOEXCEPT;
 
       /// The state number used to denote an empty symbol.
       /// We use the initial state, as it does not have a value.
@@ -1673,14 +1956,21 @@ switch (yytype)
     {
     public:
       // Hide our reversed order.
-      typedef typename S::reverse_iterator iterator;
-      typedef typename S::const_reverse_iterator const_iterator;
+      typedef typename S::iterator iterator;
+      typedef typename S::const_iterator const_iterator;
       typedef typename S::size_type size_type;
       typedef typename std::ptrdiff_t index_type;
 
       stack (size_type n = 200)
         : seq_ (n)
       {}
+
+#if 201103L <= YY_CPLUSPLUS
+      /// Non copyable.
+      stack (const stack&) = delete;
+      /// Non copyable.
+      stack& operator= (const stack&) = delete;
+#endif
 
       /// Random access.
       ///
@@ -1732,24 +2022,18 @@ switch (yytype)
         return index_type (seq_.size ());
       }
 
-      std::ptrdiff_t
-      ssize () const YY_NOEXCEPT
-      {
-        return std::ptrdiff_t (size ());
-      }
-
       /// Iterator on top of the stack (going downwards).
       const_iterator
       begin () const YY_NOEXCEPT
       {
-        return seq_.rbegin ();
+        return seq_.begin ();
       }
 
       /// Bottom of the stack.
       const_iterator
       end () const YY_NOEXCEPT
       {
-        return seq_.rend ();
+        return seq_.end ();
       }
 
       /// Present a slice of the top of a stack.
@@ -1773,8 +2057,12 @@ switch (yytype)
       };
 
     private:
+#if YY_CPLUSPLUS < 201103L
+      /// Non copyable.
       stack (const stack&);
+      /// Non copyable.
       stack& operator= (const stack&);
+#endif
       /// The wrapped container.
       S seq_;
     };
@@ -1804,33 +2092,28 @@ switch (yytype)
     /// Pop \a n symbols from the stack.
     void yypop_ (int n = 1);
 
-    /// Some specific tokens.
-    static const token_number_type yy_error_token_ = 1;
-    static const token_number_type yy_undef_token_ = 2;
-
     /// Constants.
     enum
     {
-      yyeof_ = 0,
       yylast_ = 202,     ///< Last index in yytable_.
       yynnts_ = 99,  ///< Number of nonterminal symbols.
-      yyfinal_ = 8, ///< Termination state number.
-      yyntokens_ = 46  ///< Number of tokens.
+      yyfinal_ = 8 ///< Termination state number.
     };
 
 
     // User arguments.
     isc::agent::ParserContext& ctx;
+
   };
 
   inline
-  AgentParser::token_number_type
+  AgentParser::symbol_kind_type
   AgentParser::yytranslate_ (int t)
   {
     // YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to
     // TOKEN-NUM as returned by yylex.
     static
-    const token_number_type
+    const signed char
     translate_table[] =
     {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -1868,59 +2151,21 @@ switch (yytype)
     const int user_token_number_max_ = 300;
 
     if (t <= 0)
-      return yyeof_;
+      return symbol_kind::S_YYEOF;
     else if (t <= user_token_number_max_)
-      return translate_table[t];
+      return YY_CAST (symbol_kind_type, translate_table[t]);
     else
-      return yy_undef_token_;
+      return symbol_kind::S_YYUNDEF;
   }
 
   // basic_symbol.
-#if 201103L <= YY_CPLUSPLUS
-  template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (basic_symbol&& that)
-    : Base (std::move (that))
-    , value ()
-    , location (std::move (that.location))
-  {
-    switch (this->type_get ())
-    {
-      case 54: // value
-      case 57: // map_value
-      case 108: // socket_type_value
-        value.move< ElementPtr > (std::move (that.value));
-        break;
-
-      case 45: // "boolean"
-        value.move< bool > (std::move (that.value));
-        break;
-
-      case 44: // "floating point"
-        value.move< double > (std::move (that.value));
-        break;
-
-      case 43: // "integer"
-        value.move< int64_t > (std::move (that.value));
-        break;
-
-      case 42: // "constant string"
-        value.move< std::string > (std::move (that.value));
-        break;
-
-      default:
-        break;
-    }
-
-  }
-#endif
-
   template <typename Base>
   AgentParser::basic_symbol<Base>::basic_symbol (const basic_symbol& that)
     : Base (that)
     , value ()
     , location (that.location)
   {
-    switch (this->type_get ())
+    switch (this->kind ())
     {
       case 54: // value
       case 57: // map_value
@@ -1953,10 +2198,17 @@ switch (yytype)
 
 
   template <typename Base>
+  AgentParser::symbol_kind_type
+  AgentParser::basic_symbol<Base>::type_get () const YY_NOEXCEPT
+  {
+    return this->kind ();
+  }
+
+  template <typename Base>
   bool
   AgentParser::basic_symbol<Base>::empty () const YY_NOEXCEPT
   {
-    return Base::type_get () == empty_symbol;
+    return this->kind () == symbol_kind::S_YYEMPTY;
   }
 
   template <typename Base>
@@ -1964,7 +2216,7 @@ switch (yytype)
   AgentParser::basic_symbol<Base>::move (basic_symbol& s)
   {
     super_type::move (s);
-    switch (this->type_get ())
+    switch (this->kind ())
     {
       case 54: // value
       case 57: // map_value
@@ -1995,56 +2247,63 @@ switch (yytype)
     location = YY_MOVE (s.location);
   }
 
-  // by_type.
+  // by_kind.
   inline
-  AgentParser::by_type::by_type ()
-    : type (empty_symbol)
+  AgentParser::by_kind::by_kind ()
+    : kind_ (symbol_kind::S_YYEMPTY)
   {}
 
 #if 201103L <= YY_CPLUSPLUS
   inline
-  AgentParser::by_type::by_type (by_type&& that)
-    : type (that.type)
+  AgentParser::by_kind::by_kind (by_kind&& that)
+    : kind_ (that.kind_)
   {
     that.clear ();
   }
 #endif
 
   inline
-  AgentParser::by_type::by_type (const by_type& that)
-    : type (that.type)
+  AgentParser::by_kind::by_kind (const by_kind& that)
+    : kind_ (that.kind_)
   {}
 
   inline
-  AgentParser::by_type::by_type (token_type t)
-    : type (yytranslate_ (t))
+  AgentParser::by_kind::by_kind (token_kind_type t)
+    : kind_ (yytranslate_ (t))
   {}
 
   inline
   void
-  AgentParser::by_type::clear ()
+  AgentParser::by_kind::clear ()
   {
-    type = empty_symbol;
+    kind_ = symbol_kind::S_YYEMPTY;
   }
 
   inline
   void
-  AgentParser::by_type::move (by_type& that)
+  AgentParser::by_kind::move (by_kind& that)
   {
-    type = that.type;
+    kind_ = that.kind_;
     that.clear ();
   }
 
   inline
-  int
-  AgentParser::by_type::type_get () const YY_NOEXCEPT
+  AgentParser::symbol_kind_type
+  AgentParser::by_kind::kind () const YY_NOEXCEPT
   {
-    return type;
+    return kind_;
+  }
+
+  inline
+  AgentParser::symbol_kind_type
+  AgentParser::by_kind::type_get () const YY_NOEXCEPT
+  {
+    return this->kind ();
   }
 
 #line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2048 "agent_parser.h"
+#line 2307 "agent_parser.h"
 
 
 
