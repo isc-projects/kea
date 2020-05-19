@@ -1,0 +1,68 @@
+#!/bin/sh
+
+prefix=@prefix@
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`mysql_version "$@"`
+
+if [ "$VERSION" != "9.1" ]; then
+    printf "This script upgrades 9.1 to 9.2. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+mysql "$@" <<EOF
+
+# Add missing indexes (foreign keys) to the dhcp4_options table.
+ALTER TABLE dhcp4_options ADD CONSTRAINT fk_dhcp4_options_shared_network
+    FOREIGN KEY (shared_network_name)
+        REFERENCES dhcp4_shared_network(name)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp4_options ADD CONSTRAINT fk_dhcp4_options_subnet
+    FOREIGN KEY (dhcp4_subnet_id)
+        REFERENCES dhcp4_subnet(subnet_id)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp4_options ADD CONSTRAINT fk_dhcp4_options_pool
+    FOREIGN KEY (pool_id)
+        REFERENCES dhcp4_pool(id)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
+# Add missing indexes (foreign keys) to the dhcp6_options table.
+ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_shared_network
+    FOREIGN KEY (shared_network_name)
+        REFERENCES dhcp6_shared_network(name)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_subnet
+    FOREIGN KEY (dhcp6_subnet_id)
+        REFERENCES dhcp6_subnet(subnet_id)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_pool
+    FOREIGN KEY (pool_id)
+        REFERENCES dhcp6_pool(id)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_pd_pool
+    FOREIGN KEY (pd_pool_id)
+        REFERENCES dhcp6_pd_pool(id)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '9', minor = '2';
+
+# This line concludes database upgrade to version 9.2.
+
+EOF
+
+RESULT=$?
+
+exit $?
