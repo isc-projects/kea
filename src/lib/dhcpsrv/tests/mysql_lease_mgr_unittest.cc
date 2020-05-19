@@ -1015,4 +1015,26 @@ TEST_F(MySqlLeaseMgrTest, leaseStatsQuery6MultiThreading) {
     testLeaseStatsQuery6();
 }
 
+/// @brief Tests v4 lease stats to never go negative.
+TEST_F(MySqlLeaseMgrTest, leaseStatsQueryNegative4) {
+    testLeaseStatsQueryNegative4();
+}
+
+/// @brief Tests v4 lease stats to never go negative.
+TEST_F(MySqlLeaseMgrTest, leaseStatsQueryNegative4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testLeaseStatsQueryNegative4();
+}
+
+/// @brief Tests v6 lease stats to never go negative.
+TEST_F(MySqlLeaseMgrTest, leaseStatsQueryNegative6) {
+    testLeaseStatsQueryNegative6();
+}
+
+/// @brief Tests v6 lease stats to never go negative.
+TEST_F(MySqlLeaseMgrTest, leaseStatsQueryNegative6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testLeaseStatsQueryNegative6();
+}
+
 }  // namespace

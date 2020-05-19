@@ -858,4 +858,14 @@ TEST_F(CqlLeaseMgrTest, leaseStatsQuery6) {
     testLeaseStatsQuery6();
 }
 
+/// @brief Tests v4 lease stats to never go negative.
+TEST_F(CqlLeaseMgrTest, leaseStatsQueryNegative4) {
+    testLeaseStatsQueryNegative4();
+}
+
+/// @brief Tests v6 lease stats to never go negative.
+TEST_F(CqlLeaseMgrTest, leaseStatsQueryNegative6) {
+    testLeaseStatsQueryNegative6();
+}
+
 }  // namespace

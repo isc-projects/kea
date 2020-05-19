@@ -2258,4 +2258,16 @@ TEST_F(MemfileLeaseMgrTest, leaseStatsQuery6) {
     testLeaseStatsQuery6();
 }
 
+/// @brief Tests v4 lease stats to never go negative.
+TEST_F(MemfileLeaseMgrTest, leaseStatsQueryNegative4) {
+    startBackend(V4);
+    testLeaseStatsQueryNegative4();
+}
+
+/// @brief Tests v6 lease stats to never go negative.
+TEST_F(MemfileLeaseMgrTest, leaseStatsQueryNegative6) {
+    startBackend(V6);
+    testLeaseStatsQueryNegative6();
+}
+
 }  // namespace

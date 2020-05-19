@@ -3355,7 +3355,7 @@ GenericLeaseMgrTest::checkQueryAgainstRowSet(const LeaseStatsQueryPtr& query,
                 << " count: " << row.state_count_;
         } else {
             if (row.state_count_ != (*found_row).state_count_) {
-                ADD_FAILURE() << "row count wrong for "
+                ADD_FAILURE() << "row count wrong for"
                               << " id: " << row.subnet_id_
                               << " type: " << row.lease_type_
                               << " state: " << row.lease_state_
@@ -3627,6 +3627,93 @@ GenericLeaseMgrTest::testLeaseStatsQuery6() {
         // Verify contents
         checkQueryAgainstRowSet(query, expected_rows);
     }
+}
+
+void
+GenericLeaseMgrTest::testLeaseStatsQueryNegative4() {
+    // Create two subnets for the same range.
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet;
+
+    subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
+    cfg->add(subnet);
+
+    subnet.reset(new Subnet4(IOAddress("192.0.1.1"), 24, 1, 2, 3, 2));
+    cfg->add(subnet);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    LeaseStatsQueryPtr query;
+    RowSet expected_rows;
+
+    // Now let's insert two leases into subnet 1.
+    int subnet_id = 1;
+    makeLease4("192.0.1.1", subnet_id);
+    Lease4Ptr lease = makeLease4("192.0.1.2", subnet_id);
+
+    // And one lease into subnet 2.
+    subnet_id = 2;
+    makeLease4("192.0.1.3", subnet_id);
+
+    // Move a lease to the second subnet.
+    lease->subnet_id_ = subnet_id;
+    EXPECT_NO_THROW(lmptr_->updateLease4(lease));
+
+    // Add expected rows for Subnets.
+    expected_rows.insert(LeaseStatsRow(1, Lease::STATE_DEFAULT, 1));
+    expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DEFAULT, 2));
+
+    // Start the query
+    ASSERT_NO_THROW(query = lmptr_->startLeaseStatsQuery4());
+
+    // Verify contents
+    checkQueryAgainstRowSet(query, expected_rows);
+}
+
+void
+GenericLeaseMgrTest::testLeaseStatsQueryNegative6() {
+    // Create two subnets.
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    Subnet6Ptr subnet;
+
+    int subnet_id = 1;
+    subnet.reset(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4,
+                             subnet_id));
+    cfg->add(subnet);
+
+    ++subnet_id;
+    subnet.reset(new Subnet6(IOAddress("2001:db8:1::1"), 64, 1, 2, 3, 4,
+                             subnet_id));
+    cfg->add(subnet);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    LeaseStatsQueryPtr query;
+    RowSet expected_rows;
+
+    // Now let's insert two leases into subnet 1.
+    subnet_id = 1;
+    makeLease6(Lease::TYPE_NA, "2001:db81::1", 0, subnet_id);
+    Lease6Ptr lease = makeLease6(Lease::TYPE_NA, "2001:db81::2", 0, subnet_id);
+
+    // And one lease into subnet 2.
+    subnet_id = 2;
+    makeLease6(Lease::TYPE_NA, "2001:db81::3", 0, subnet_id);
+
+    // Move a lease to the second subnet.
+    lease->subnet_id_ = subnet_id;
+    EXPECT_NO_THROW(lmptr_->updateLease6(lease));
+
+    // Add expected rows for Subnets.
+    expected_rows.insert(LeaseStatsRow(1, Lease::TYPE_NA,
+                                       Lease::STATE_DEFAULT, 1));
+    expected_rows.insert(LeaseStatsRow(2, Lease::TYPE_NA,
+                                       Lease::STATE_DEFAULT, 2));
+    // Start the query
+    ASSERT_NO_THROW(query = lmptr_->startLeaseStatsQuery6());
+
+    // Verify contents
+    checkQueryAgainstRowSet(query, expected_rows);
 }
 
 }  // namespace test
