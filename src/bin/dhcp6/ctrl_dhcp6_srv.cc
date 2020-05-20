@@ -455,17 +455,20 @@ ControlledDhcpv6Srv::commandConfigTestHandler(const string&,
         return (result);
     }
 
-    // We are starting the configuration process so we should remove any
-    // staging configuration that has been created during previous
-    // configuration attempts.
-    CfgMgr::instance().rollback();
-
     // Check obsolete objects.
 
     // Relocate Logging. Note this allows to check the loggers configuration.
     Daemon::relocateLogging(args, "Dhcp6");
 
     // Log obsolete objects and return an error.
+
+    // stop thread pool (if running)
+    MultiThreadingCriticalSection cs;
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    CfgMgr::instance().rollback();
 
     // Now we check the server proper.
     return (checkConfig(dhcp6));
@@ -944,9 +947,6 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
             "Server object not initialized, can't process config.");
         return (no_srv);
     }
-
-    // stop thread pool (if running)
-    MultiThreadingCriticalSection cs;
 
     return (configureDhcp6Server(*srv, config, true));
 }

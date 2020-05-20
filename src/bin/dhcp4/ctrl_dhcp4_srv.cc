@@ -452,17 +452,20 @@ ControlledDhcpv4Srv::commandConfigTestHandler(const string&,
         return (result);
     }
 
-    // We are starting the configuration process so we should remove any
-    // staging configuration that has been created during previous
-    // configuration attempts.
-    CfgMgr::instance().rollback();
-
     // Check obsolete objects.
 
     // Relocate Logging. Note this allows to check the loggers configuration.
     Daemon::relocateLogging(args, "Dhcp4");
 
     // Log obsolete objects and return an error.
+
+    // stop thread pool (if running)
+    MultiThreadingCriticalSection cs;
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    CfgMgr::instance().rollback();
 
     // Now we check the server proper.
     return (checkConfig(dhcp4));
@@ -925,9 +928,6 @@ ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
         err << "Server object not initialized, can't process config.";
         return (isc::config::createAnswer(1, err.str()));
     }
-
-    // stop thread pool (if running)
-    MultiThreadingCriticalSection cs;
 
     return (configureDhcp4Server(*srv, config, true));
 }
