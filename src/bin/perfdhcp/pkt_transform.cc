@@ -8,6 +8,7 @@
 
 #include <perfdhcp/pkt_transform.h>
 #include <perfdhcp/localized_option.h>
+#include <perfdhcp/stats_mgr.h>
 
 #include <exceptions/exceptions.h>
 #include <dhcp/option.h>
@@ -99,6 +100,7 @@ PktTransform::unpack(const Option::Universe universe,
     try {
         PktTransform::unpackOptions(in_buffer, options);
     } catch (const isc::BadValue& e) {
+        ExchangeStats::malformed_pkts_++;
         cout << "Packet parsing failed: " << e.what() << endl;
         return (false);
     }
