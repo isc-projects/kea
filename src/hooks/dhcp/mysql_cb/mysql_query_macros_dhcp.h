@@ -996,6 +996,14 @@ namespace {
     #__VA_ARGS__
 #endif
 
+#ifndef MYSQL_DELETE_OPTION_SUBNET_ID_PREFIX
+#define MYSQL_DELETE_OPTION_SUBNET_ID_PREFIX(table_prefix) \
+    "DELETE o FROM " #table_prefix "_options AS o " \
+    "INNER JOIN " #table_prefix "_subnet AS s " \
+    "  ON s.subnet_id = o." #table_prefix "_subnet_id " \
+    "WHERE o.scope_id = 1 AND (s.subnet_id = ? OR s.subnet_prefix = ?)"
+#endif
+
 #ifndef MYSQL_DELETE_OPTION_UNASSIGNED
 #define MYSQL_DELETE_OPTION_UNASSIGNED(table_prefix, ...) \
     "DELETE o FROM " #table_prefix "_options AS o " \

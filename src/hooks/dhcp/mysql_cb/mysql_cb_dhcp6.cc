@@ -146,7 +146,7 @@ public:
         DELETE_OPTION6_POOL_RANGE,
         DELETE_OPTION6_PD_POOL,
         DELETE_OPTION6_SHARED_NETWORK,
-        DELETE_OPTIONS6_SUBNET_ID,
+        DELETE_OPTIONS6_SUBNET_ID_PREFIX,
         DELETE_OPTIONS6_SHARED_NETWORK,
         DELETE_SERVER6,
         DELETE_ALL_SERVERS6,
@@ -2554,11 +2554,12 @@ public:
                             const Subnet6Ptr& subnet) {
 
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createInteger<uint32_t>(subnet->getID())
+            MySqlBinding::createInteger<uint32_t>(subnet->getID()),
+            MySqlBinding::createString(subnet->toText())
         };
 
         // Run DELETE.
-        return (deleteTransactional(DELETE_OPTIONS6_SUBNET_ID, server_selector,
+        return (deleteTransactional(DELETE_OPTIONS6_SUBNET_ID_PREFIX, server_selector,
                                     "deleting options for a subnet",
                                     "subnet specific options deleted",
                                     true,
@@ -3246,8 +3247,8 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // Delete options belonging to a subnet.
-    { MySqlConfigBackendDHCPv6Impl::DELETE_OPTIONS6_SUBNET_ID,
-      MYSQL_DELETE_OPTION_NO_TAG(dhcp6, WHERE o.scope_id = 1 AND o.dhcp6_subnet_id = ?)
+    { MySqlConfigBackendDHCPv6Impl::DELETE_OPTIONS6_SUBNET_ID_PREFIX,
+      MYSQL_DELETE_OPTION_SUBNET_ID_PREFIX(dhcp6)
     },
 
     // Delete options belonging to a shared_network.
