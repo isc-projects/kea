@@ -603,7 +603,13 @@ HAService::waitingStateHandler() {
         break;
 
     case HA_TERMINATED_ST:
-        verboseTransition(HA_TERMINATED_ST);
+        // We have checked above whether the clock skew is exceeding the threshold
+        // and we should terminate. If we're here, it means that the clock skew
+        // is acceptable. The partner may be still in the terminated state because
+        // it hasn't been restarted yet. Probably, this server is the first one
+        // being restarted after syncing the clocks. Let's just sit in the waiting
+        // state until the partner gets restarted.
+        postNextEvent(NOP_EVT);
         break;
 
     case HA_WAITING_ST:

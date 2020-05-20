@@ -4175,7 +4175,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
                        FinalState(HA_SYNCING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_TERMINATED_ST),
-                       FinalState(HA_TERMINATED_ST));
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_SYNCING_ST),
                        FinalState(HA_WAITING_ST));
@@ -4218,6 +4218,45 @@ TEST_F(HAServiceStateMachineTest, terminateTransitionsLoadBalancingPrimary) {
     testTerminateTransition(MyState(HA_PARTNER_DOWN_ST));
     testTerminateTransition(MyState(HA_READY_ST));
     testTerminateTransition(MyState(HA_WAITING_ST));
+}
+
+// This test checks that the server does not transition out of the waiting state
+// to the terminated state when the server is restarted but the clock skew has
+// been corrected.
+TEST_F(HAServiceStateMachineTest, terminateNoTransitionOnRestart) {
+    partner_->startup();
+    startService(createValidConfiguration());
+
+    // Set partner's time to the current time. This guarantees that the clock
+    // skew is below 60s and there is no reason for the server to transition
+    // to the terminated state.
+    partner_->setDateTime(HttpDateTime().rfc1123Format());
+    // The partner is in the terminated state to simulate sequential restart
+    // of the two servers from the terminated state.
+    partner_->transition("terminated");
+    // This server is in the waiting state which simulates the restart case.
+    service_->transition(HA_WAITING_ST, HAService::NOP_EVT);
+    // Run the heartbeat.
+    waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT);
+    // The server should remain in the waiting state because the clock skew
+    // is low.
+    EXPECT_EQ(HA_WAITING_ST, service_->getCurrState())
+        << "expected that the server remains in 'waiting' state"
+        << "', but transitioned to the '"
+        << service_->getStateLabel(service_->getCurrState())
+        << "' state";
+
+    // Now, let's set the partner's time way to the past to verify that this
+    // server transitions to the 'terminated' state if the administrator
+    // failed to sync the clocks prior to the restart.
+    partner_->setDateTime("Sun, 06 Nov 1994 08:49:37 GMT");
+    // Run the heartbeat.
+    waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT);
+    EXPECT_EQ(HA_WAITING_ST, service_->getCurrState())
+        << "expected that the server transitions to the 'terminated' state"
+        << "', but transitioned to the '"
+        << service_->getStateLabel(service_->getCurrState())
+        << "' state";
 }
 
 // This test checks all combinations of server and partner states and the
@@ -4417,7 +4456,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_TERMINATED_ST),
-                       FinalState(HA_TERMINATED_ST));
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_WAITING_ST));
@@ -4968,7 +5007,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_TERMINATED_ST),
-                       FinalState(HA_TERMINATED_ST));
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_SYNCING_ST));
@@ -5191,7 +5230,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_TERMINATED_ST),
-                       FinalState(HA_TERMINATED_ST));
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_WAITING_ST));
