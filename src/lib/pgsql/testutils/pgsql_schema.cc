@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,7 +56,7 @@ bool wipePgSQLData(bool show_err) {
     cmd << " sh " << DATABASE_SCRIPTS_DIR << "/pgsql/wipe_data.sh";
 
     // Add expected schema version as the wipe script's first argument.
-    cmd  << " " << PG_SCHEMA_VERSION_MAJOR  << "." << PG_SCHEMA_VERSION_MINOR;
+    cmd  << " " << PGSQL_SCHEMA_VERSION_MAJOR  << "." << PGSQL_SCHEMA_VERSION_MINOR;
 
     // Now add command line arguments for psql.
     cmd  << " --set ON_ERROR_STOP=1 -A -t -h localhost -q -U keatest -d keatest";
