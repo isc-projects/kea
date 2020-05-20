@@ -1,3 +1,11 @@
+1754.	[func]		marcin
+	Improved the procedure of restarting the servers in the terminated
+	HA state. The servers can now be restarted sequentially without the
+	risk of returning to the terminated state right after restart.
+	Previously, the servers had to be both shutdown before being
+	restarted to avoid returning to the terminated state.
+	(Gitlab #1205)
+
 1753.	[func]*		marcin
 	Extended the response to the status-get command to include
 	information about the progress of the failover procedure
