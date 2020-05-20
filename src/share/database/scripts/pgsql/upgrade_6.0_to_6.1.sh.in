@@ -21,7 +21,7 @@ psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
 -- Fix v4 update trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease4_update () RETURNS trigger AS $stat_lease4_update$
+CREATE OR REPLACE FUNCTION proc_stat_lease4_update () RETURNS trigger AS \$stat_lease4_update\$
 BEGIN
     IF OLD.subnet_id != NEW.subnet_id OR OLD.state != NEW.state THEN
         IF OLD.state < 2 THEN
@@ -45,11 +45,11 @@ BEGIN
     -- Return is ignored since this is an after insert
     RETURN NULL;
 END;
-$stat_lease4_update$ LANGUAGE plpgsql;
+\$stat_lease4_update\$ LANGUAGE plpgsql;
 
 --
 -- Fix the v4 delete trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease4_delete () RETURNS trigger AS $stat_lease4_delete$
+CREATE OR REPLACE FUNCTION proc_stat_lease4_delete () RETURNS trigger AS \$stat_lease4_delete\$
 BEGIN
     IF OLD.state < 2 THEN
         -- Decrement the state count if record exists
@@ -60,11 +60,11 @@ BEGIN
     -- Return is ignored since this is an after insert
     RETURN NULL;
 END;
-$stat_lease4_delete$ LANGUAGE plpgsql;
+\$stat_lease4_delete\$ LANGUAGE plpgsql;
 
 --
 -- Fix v6 update trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease6_update () RETURNS trigger AS $stat_lease6_update$
+CREATE OR REPLACE FUNCTION proc_stat_lease6_update () RETURNS trigger AS \$stat_lease6_update\$
 BEGIN
     IF OLD.subnet_id != NEW.subnet_id OR
        OLD.lease_type != NEW.lease_type OR
@@ -92,11 +92,11 @@ BEGIN
     -- Return is ignored since this is an after insert
     RETURN NULL;
 END;
-$stat_lease6_update$ LANGUAGE plpgsql;
+\$stat_lease6_update\$ LANGUAGE plpgsql;
 
 --
 -- Fix the v6 delete trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease6_delete() RETURNS trigger AS $stat_lease6_delete$
+CREATE OR REPLACE FUNCTION proc_stat_lease6_delete() RETURNS trigger AS \$stat_lease6_delete\$
 BEGIN
     IF OLD.state < 2 THEN
         -- Decrement the state count if record exists
@@ -108,7 +108,7 @@ BEGIN
     -- Return is ignored since this is an after insert
     RETURN NULL;
 END;
-$stat_lease6_delete$ LANGUAGE plpgsql;
+\$stat_lease6_delete\$ LANGUAGE plpgsql;
 
 -- Set 6.1 schema version.
 UPDATE schema_version
