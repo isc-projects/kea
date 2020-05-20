@@ -98,6 +98,7 @@ public:
     ///
         /// \return counter name.
     const std::string& getName() const { return(name_); }
+
 private:
     /// \brief Default constructor.
     ///
@@ -554,6 +555,7 @@ public:
         return(std::make_tuple(sent_packets_.begin(), sent_packets_.end()));
     }
 
+    static int malformed_pkts_;
 
 // Private stuff of ExchangeStats class
 private:

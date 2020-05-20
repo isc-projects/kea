@@ -349,7 +349,7 @@ StatsMgr::StatsMgr(CommandOptions& options) :
         addCustomCounter("shortwait", "Short waits for packets");
     }
 }
-
+int ExchangeStats::malformed_pkts_{0};
 
 }
 }

@@ -7,6 +7,7 @@
 
 #include <perfdhcp/perf_socket.h>
 #include <perfdhcp/command_options.h>
+#include <perfdhcp/stats_mgr.h>
 
 #include <dhcp/iface_mgr.h>
 #include <asiolink/io_address.h>
@@ -153,6 +154,7 @@ PerfSocket::receive4(uint32_t timeout_sec, uint32_t timeout_usec) {
 	try {
             pkt->unpack();
 	} catch (const std::exception &e) {
+		ExchangeStats::malformed_pkts_++;
 		std::cout << "Incorrect DHCP packet received"
 			  << e.what() << std::endl;
 	}
@@ -167,6 +169,7 @@ PerfSocket::receive6(uint32_t timeout_sec, uint32_t timeout_usec) {
         try {
             pkt->unpack();
         } catch (const std::exception &e) {
+                ExchangeStats::malformed_pkts_++;
                 std::cout << "Incorrect DHCP packet received"
                           << e.what() << std::endl;
         }

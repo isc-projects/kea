@@ -668,6 +668,10 @@ TestControl::printRate() const {
     }
 
     std::cout << s.str() << std::endl;
+
+    std::cout <<"***Malformed Packages***" << std::endl
+              << "Malformed packages: " << ExchangeStats::malformed_pkts_
+	      << std::endl;
 }
 
 void
