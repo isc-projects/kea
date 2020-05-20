@@ -102,4 +102,7 @@ That is the last moment to freeze code!
    1. Pick your selected pkg build in Packages field, and select "prodcion" in Repository_Type field and click Build button.
    1. When it finishes run check: https://jenkins.isc.org/job/kea-1.7/job/release-pkgs-check-internal/
 1. [ ] Create git tags `Kea-1.x.y` in Kea main and premium repositories
-1. [ ] Trigger rebuilding docs on https://readthedocs.org/projects/kea/builds
+1. Update ReadTheDocs
+   1. [ ] Trigger rebuilding docs on https://readthedocs.org/projects/kea/builds
+   1. [ ] Publish currently released version
+   1. [ ] For stable releases change change default version to point to this stable release
