@@ -484,3 +484,9 @@ This error message is issued to indicate that the HA service has been stopped
 due to an unacceptable condition (e.g. too large of a clock skew). The exact
 cause should appear in a previous error message.  Address the condition
 reported then restart the servers to resume service.
+
+% HA_TERMINATED_RESTART_PARTNER waiting for the partner in the TERMINATED state to be restarted
+This informational message is issued when the server has been restarted after
+correcting the clock skew. The partner server is still in the terminated
+state. The partner must be restarted before the server can synchronize the
+database and start normal operation.

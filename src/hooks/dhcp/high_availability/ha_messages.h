@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Mon May 18 2020 16:44
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Wed May 20 2020 16:33
 
 #ifndef HA_MESSAGES_H
 #define HA_MESSAGES_H
@@ -86,6 +86,7 @@ extern const isc::log::MessageID HA_SYNC_HANDLER_FAILED;
 extern const isc::log::MessageID HA_SYNC_START;
 extern const isc::log::MessageID HA_SYNC_SUCCESSFUL;
 extern const isc::log::MessageID HA_TERMINATED;
+extern const isc::log::MessageID HA_TERMINATED_RESTART_PARTNER;
 
 } // namespace ha
 } // namespace isc

@@ -609,6 +609,7 @@ HAService::waitingStateHandler() {
         // it hasn't been restarted yet. Probably, this server is the first one
         // being restarted after syncing the clocks. Let's just sit in the waiting
         // state until the partner gets restarted.
+        LOG_INFO(ha_logger, HA_TERMINATED_RESTART_PARTNER);
         postNextEvent(NOP_EVT);
         break;
 
