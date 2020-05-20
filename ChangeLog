@@ -602,7 +602,7 @@ Kea 1.7.0 (development) released on Sep 25, 2019
 	configuration failures when values for such options were specified.
 	(Gitlab #729, !434, git e5b68fb226161dcdef0e4d2d9d03d9bdb95af5e2)
 
-Kea 1.6.0 released on Aug 28, 2019
+Kea 1.6.0 (stable) released on Aug 28, 2019
 
 1658.	[bug]		tmark
 	Renamed the column "array" in option definition tables
