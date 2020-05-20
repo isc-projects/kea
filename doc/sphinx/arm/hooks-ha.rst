@@ -164,6 +164,14 @@ clocks and restart the servers.
 
 .. note::
 
+   Prior to Kea 1.7.8 release, in order to recover from the terminated
+   state, the administrator had to shutdown both servers and then start
+   both of them. Since Kea 1.7.8 release it is allowed to restart the
+   servers sequentially, i.e. restart one server and then restart another
+   one. The clocks must be in sync before restarting the servers.
+
+.. note::
+
    The clock skew is only assessed between two active servers and
    only the active servers may enter the terminated state if it is
    too high. As of Kea 1.7.8, the clock skew between the active and
