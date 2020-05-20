@@ -1,3 +1,10 @@
+1751.	[perf]		marcin
+	Corrected performance issue occurring while loading large configurations
+	via the MySQL Config Backend. Improper database indexing caused long
+	server startup time as well as long time to respond to various
+	commands, such as subnet4-list or subnet6-list.
+	(Gitlab #1242)
+
 1750.	[func]		razvan
 	Refactored HooksManager so that no lazy initialization is possible
 	from dhcp processing functions. The function getHooksManager is now
