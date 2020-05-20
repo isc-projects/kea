@@ -21,7 +21,9 @@ Some of those checks and updates can be made before actual freeze.
    - the library versions are being updated
    - the HOOKS_VERSION is being updated;
    - [ ] create an issue for that for developers in Gitlab
-1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" folder, like this one: https://gitlab.isc.org/isc-projects/kea/wikis/release%20notes/Release-notes-1.5-final
+1. Prepare Release Notes
+   1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" folder, like this one: https://gitlab.isc.org/isc-projects/kea/wikis/release%20notes/Release-notes-1.5-final
+   1. [ ] Finish release notes and conduct its review
 1. [ ] Run https://jenkins.isc.org/job/kea-1.7/job/release-pkgs-upload-internal/ and https://jenkins.isc.org/job/kea-1.7/job/release-pkgs-check-internal/ for testing repos to check if they work correctly.
 
 The following steps may involve changing files in the repository.
