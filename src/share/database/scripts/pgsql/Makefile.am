@@ -12,6 +12,7 @@ sqlscripts_DATA += upgrade_3.3_to_4.0.sh
 sqlscripts_DATA += upgrade_4.0_to_5.0.sh
 sqlscripts_DATA += upgrade_5.0_to_5.1.sh
 sqlscripts_DATA += upgrade_5.1_to_6.0.sh
+sqlscripts_DATA += upgrade_6.0_to_6.1.sh
 sqlscripts_DATA += wipe_data.sh
 
 DISTCLEANFILES = upgrade_1.0_to_2.0.sh
@@ -23,6 +24,7 @@ DISTCLEANFILES += upgrade_3.3_to_4.0.sh
 DISTCLEANFILES += upgrade_4.0_to_5.0.sh
 DISTCLEANFILES += upgrade_5.0_to_5.1.sh
 DISTCLEANFILES += upgrade_5.1_to_6.0.sh
+DISTCLEANFILES += upgrade_6.0_to_6.1.sh
 DISTCLEANFILES += wipe_data.sh
 
 EXTRA_DIST = ${sqlscripts_DATA}

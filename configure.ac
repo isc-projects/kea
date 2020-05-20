@@ -1740,6 +1740,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh
                  src/share/database/scripts/pgsql/upgrade_5.0_to_5.1.sh
                  src/share/database/scripts/pgsql/upgrade_5.1_to_6.0.sh
+                 src/share/database/scripts/pgsql/upgrade_6.0_to_6.1.sh
                  src/share/database/scripts/pgsql/wipe_data.sh
                  src/share/yang/Makefile
                  src/share/yang/modules/Makefile

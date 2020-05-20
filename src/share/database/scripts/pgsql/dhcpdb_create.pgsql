@@ -907,7 +907,110 @@ WHERE hostname IS NOT NULL;
 UPDATE schema_version
     SET version = '6', minor = '0';
 
--- Schema 5.1a specification ends here.
+-- Schema 6.0 specification ends here.
+
+-- Commit the script transaction
+COMMIT;
+
+-- Upgrade to schema 6.1 begins here:
+
+START TRANSACTION;
+
+-- Fix v4 update trigger procedure
+CREATE OR REPLACE FUNCTION proc_stat_lease4_update () RETURNS trigger AS $stat_lease4_update$
+BEGIN
+    IF OLD.subnet_id != NEW.subnet_id OR OLD.state != NEW.state THEN
+        IF OLD.state < 2 THEN
+            -- Decrement the old state count if record exists
+            UPDATE lease4_stat SET leases = GREATEST(leases - 1, 0)
+            WHERE subnet_id = OLD.subnet_id AND state = OLD.state;
+        END IF;
+
+        IF NEW.state < 2 THEN
+            -- Increment the new state count if record exists
+            UPDATE lease4_stat SET leases = leases + 1
+            WHERE subnet_id = NEW.subnet_id AND state = NEW.state;
+
+            -- Insert new state record if it does not exist
+            IF NOT FOUND THEN
+                INSERT INTO lease4_stat VALUES (NEW.subnet_id, NEW.state, 1);
+            END IF;
+        END IF;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+$stat_lease4_update$ LANGUAGE plpgsql;
+
+--
+-- Fix the v4 delete trigger procedure
+CREATE OR REPLACE FUNCTION proc_stat_lease4_delete () RETURNS trigger AS $stat_lease4_delete$
+BEGIN
+    IF OLD.state < 2 THEN
+        -- Decrement the state count if record exists
+        UPDATE lease4_stat SET leases = GREATEST(leases - 1, 0)
+        WHERE subnet_id = OLD.subnet_id AND OLD.state = state;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+$stat_lease4_delete$ LANGUAGE plpgsql;
+
+--
+-- Fix v6 update trigger procedure
+CREATE OR REPLACE FUNCTION proc_stat_lease6_update () RETURNS trigger AS $stat_lease6_update$
+BEGIN
+    IF OLD.subnet_id != NEW.subnet_id OR
+       OLD.lease_type != NEW.lease_type OR
+       OLD.state != NEW.state THEN
+        IF OLD.state < 2 THEN
+            -- Decrement the old state count if record exists
+            UPDATE lease6_stat SET leases = GREATEST(leases - 1, 0)
+            WHERE subnet_id = OLD.subnet_id AND lease_type = OLD.lease_type
+            AND state = OLD.state;
+        END IF;
+
+        IF NEW.state < 2 THEN
+            -- Increment the new state count if record exists
+            UPDATE lease6_stat SET leases = leases + 1
+            WHERE subnet_id = NEW.subnet_id AND lease_type = NEW.lease_type
+            AND state = NEW.state;
+
+            -- Insert new state record if it does not exist
+            IF NOT FOUND THEN
+                INSERT INTO lease6_stat VALUES (NEW.subnet_id, NEW.lease_type, NEW.state, 1);
+            END IF;
+        END IF;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+$stat_lease6_update$ LANGUAGE plpgsql;
+
+--
+-- Fix the v6 delete trigger procedure
+CREATE OR REPLACE FUNCTION proc_stat_lease6_delete() RETURNS trigger AS $stat_lease6_delete$
+BEGIN
+    IF OLD.state < 2 THEN
+        -- Decrement the state count if record exists
+        UPDATE lease6_stat SET leases = GREATEST(leases - 1, 0)
+        WHERE subnet_id = OLD.subnet_id AND lease_type = OLD.lease_type
+        AND OLD.state = state;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+$stat_lease6_delete$ LANGUAGE plpgsql;
+
+-- Set 6.1 schema version.
+UPDATE schema_version
+    SET version = '6', minor = '1';
+
+-- Schema 6.1 specification ends here.
 
 -- Commit the script transaction
 COMMIT;
