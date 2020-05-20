@@ -1624,7 +1624,7 @@ is only one status.
 
    In Kea 1.7.8 an incompatible change was introduced to the syntax of the
    ``status-get`` response. Previously, the HA status for a single relationship
-   was returned within the ``arguments`` map. Currently, the returned status
+   was returned within the ``arguments`` map. As of Kea 1.7.8, the returned status
    is enclosed in the list as described above. Any existing code relying on the
    previous syntax must be updated to work with the new Kea versions.
 
