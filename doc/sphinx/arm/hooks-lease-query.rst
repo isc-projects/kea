@@ -1,4 +1,4 @@
-.. lease-query:
+.. _lease-query:
 
 lease_query: Leasequery
 =======================
@@ -16,7 +16,7 @@ added in the near future.
 The Leasequery library is part of the premium source code and is
 available to ISC's paid support customers.
 
-.. lease-query-dhcpv4:
+.. _lease-query-dhcpv4:
 
 DHCPv4 Leasequery
 ~~~~~~~~~~~~~~~~~
@@ -118,7 +118,7 @@ RFC 4388 allows requesters to ask for specific options via the
 dhcp-parameter-request-list (PRL, option 55). This is not currently supported but
 may be added at a future date.
 
-.. lease-query-dhcpv4-config:
+.. _lease-query-dhcpv4-config:
 
 DHCPv4 Leasequery Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

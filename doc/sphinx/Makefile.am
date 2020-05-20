@@ -37,6 +37,7 @@ rst_arm_sources+=arm/hooks-class-cmds.rst
 rst_arm_sources+=arm/hooks-ha.rst
 rst_arm_sources+=arm/hooks-host-cache.rst
 rst_arm_sources+=arm/hooks-lease-cmds.rst
+rst_arm_sources+=arm/hooks-lease-query.rst
 rst_arm_sources+=arm/hooks-radius.rst
 rst_arm_sources+=arm/hooks.rst
 rst_arm_sources+=arm/hooks-stat-cmds.rst
