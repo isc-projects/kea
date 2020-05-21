@@ -1,3 +1,15 @@
+1755.	[func]*		fdupont
+	Implemented various race avoidance mechanisms in the multi-threaded
+	packet processing: only one query from the same client is processed,
+	subsequent queries from the same client are dropped at the exception
+	of the most recent which will be processed after. When picking
+	a free address or prefix from a pool the resource is considered
+	as not free for other threads. This is used by the lease commands
+	hooks library to avoid conflicts with a minimal overhead.
+	Finally individual lease reclamation is exclusive of multi-threaded
+	packet processing.
+	(Gitlab #1147)
+
 Kea 1.7.8 (development) released on May 27, 2020
 
 1754.	[func]		marcin
