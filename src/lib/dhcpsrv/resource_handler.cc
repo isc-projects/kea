@@ -24,8 +24,8 @@ ResourceHandler::ResourceHandler() : owned_() {
 }
 
 ResourceHandler::~ResourceHandler() {
+    lock_guard<mutex> lock_(mutex_);
     for (auto res : owned_) {
-        lock_guard<mutex> lock_(mutex_);
         unLockInternal(res->type_, res->addr_);
     }
     owned_.clear();
@@ -76,6 +76,7 @@ ResourceHandler::tryLock(Lease::Type type, const asiolink::IOAddress& addr) {
 bool
 ResourceHandler::isLocked(Lease::Type type, const asiolink::IOAddress& addr) {
     auto key = boost::make_tuple(type, addr.toBytes());
+    lock_guard<mutex> lock_(mutex_);
     auto it = owned_.find(key);
     return (it != owned_.end());
 }
@@ -83,15 +84,13 @@ ResourceHandler::isLocked(Lease::Type type, const asiolink::IOAddress& addr) {
 void
 ResourceHandler::unLock(Lease::Type type, const asiolink::IOAddress& addr) {
     auto key = boost::make_tuple(type, addr.toBytes());
+    lock_guard<mutex> lock_(mutex_);
     auto it = owned_.find(key);
     if (it == owned_.end()) {
         isc_throw(NotFound, "does not own " << Lease::typeToText(type)
                   << " " << addr.toText());
     }
-    {
-        lock_guard<mutex> lock_(mutex_);
-        unLockInternal(type, addr);
-    }
+    unLockInternal(type, addr);
     owned_.erase(it);
 }
 
