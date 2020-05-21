@@ -35,7 +35,7 @@ public:
     static const unsigned WRITE_ENTERED =
         1U << (sizeof(unsigned) * CHAR_BIT - 1);
 
-    /// @brief The maximum number of readers (flag complement so 2^30 - 1).
+    /// @brief The maximum number of readers (flag complement so 2^31 - 1).
     static const unsigned MAX_READERS = ~WRITE_ENTERED;
 
     /// @brief Constructor.

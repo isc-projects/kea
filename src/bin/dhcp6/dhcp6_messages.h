@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Sat May 09 2020 12:13
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu May 21 2020 12:11
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -52,6 +52,7 @@ extern const isc::log::MessageID DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID;
 extern const isc::log::MessageID DHCP6_DECLINE_FAIL_NO_LEASE;
 extern const isc::log::MessageID DHCP6_DECLINE_LEASE;
 extern const isc::log::MessageID DHCP6_DECLINE_PROCESS_IA;
+extern const isc::log::MessageID DHCP6_DEVELOPMENT_VERSION;
 extern const isc::log::MessageID DHCP6_DHCP4O6_PACKET_RECEIVED;
 extern const isc::log::MessageID DHCP6_DHCP4O6_RECEIVE_FAIL;
 extern const isc::log::MessageID DHCP6_DHCP4O6_RECEIVING;

@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Sat May 09 2020 12:24
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu May 21 2020 12:10
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -50,6 +50,7 @@ extern const isc::log::MessageID DHCP4_DECLINE_LEASE_MISMATCH = "DHCP4_DECLINE_L
 extern const isc::log::MessageID DHCP4_DECLINE_LEASE_NOT_FOUND = "DHCP4_DECLINE_LEASE_NOT_FOUND";
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_MISSING = "DHCP4_DEFERRED_OPTION_MISSING";
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_UNPACK_FAIL = "DHCP4_DEFERRED_OPTION_UNPACK_FAIL";
+extern const isc::log::MessageID DHCP4_DEVELOPMENT_VERSION = "DHCP4_DEVELOPMENT_VERSION";
 extern const isc::log::MessageID DHCP4_DHCP4O6_BAD_PACKET = "DHCP4_DHCP4O6_BAD_PACKET";
 extern const isc::log::MessageID DHCP4_DHCP4O6_PACKET_RECEIVED = "DHCP4_DHCP4O6_PACKET_RECEIVED";
 extern const isc::log::MessageID DHCP4_DHCP4O6_PACKET_SEND = "DHCP4_DHCP4O6_PACKET_SEND";
@@ -198,6 +199,7 @@ const char* values[] = {
     "DHCP4_DECLINE_LEASE_NOT_FOUND", "Received DHCPDECLINE for addr %1 from client %2, but no such lease found.",
     "DHCP4_DEFERRED_OPTION_MISSING", "can find deferred option code %1 in the query",
     "DHCP4_DEFERRED_OPTION_UNPACK_FAIL", "An error unpacking the deferred option %1: %2",
+    "DHCP4_DEVELOPMENT_VERSION", "This software is a development branch of Kea. It is not recommended for production use.",
     "DHCP4_DHCP4O6_BAD_PACKET", "received malformed DHCPv4o6 packet: %1",
     "DHCP4_DHCP4O6_PACKET_RECEIVED", "received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3",
     "DHCP4_DHCP4O6_PACKET_SEND", "%1: trying to send packet %2 (type %3) to %4 port %5 on interface %6 encapsulating %7: %8 (type %9)",
@@ -288,7 +290,7 @@ const char* values[] = {
     "DHCP4_SRV_D2STOP_ERROR", "error stopping IO with DHCP_DDNS during shutdown: %1",
     "DHCP4_SRV_DHCP4O6_ERROR", "error stopping IO with DHCPv4o6 during shutdown: %1",
     "DHCP4_STARTED", "Kea DHCPv4 server version %1 started",
-    "DHCP4_STARTING", "Kea DHCPv4 server version %1 starting",
+    "DHCP4_STARTING", "Kea DHCPv4 server version %1 (%2) starting",
     "DHCP4_START_INFO", "pid: %1, server port: %2, client port: %3, verbose: %4",
     "DHCP4_SUBNET_DATA", "%1: the selected subnet details: %2",
     "DHCP4_SUBNET_DYNAMICALLY_CHANGED", "%1: changed selected subnet %2 to subnet %3 from shared network %4 for client assignments",

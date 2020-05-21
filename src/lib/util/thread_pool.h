@@ -81,7 +81,7 @@ struct ThreadPool {
     /// @return false if the queue was full and oldest item(s) was dropped,
     /// true otherwise.
     bool add(const WorkItemPtr& item) {
-        return (queue_.push_back(item));
+        return (queue_.pushBack(item));
     }
 
     /// @brief add a work item to the thread pool at front
@@ -89,7 +89,7 @@ struct ThreadPool {
     /// @param item the 'functor' object to be added to the queue
     /// @return false if the queue was full, true otherwise.
     bool addFront(const WorkItemPtr& item) {
-        return (queue_.push_front(item));
+        return (queue_.pushFront(item));
     }
 
     /// @brief count number of work items in the queue
@@ -211,7 +211,7 @@ private:
         /// @param item the new item to be added to the queue
         /// @return false if the queue was full and oldest item(s) dropped,
         /// true otherwise
-        bool push_back(const Item& item) {
+        bool pushBack(const Item& item) {
             bool ret = true;
             if (!item) {
                 return (ret);
@@ -238,7 +238,7 @@ private:
         ///
         /// @param item the new item to be added to the queue
         /// @return false if the queue was full, true otherwise
-        bool push_front(const Item& item) {
+        bool pushFront(const Item& item) {
             if (!item) {
                 return (true);
             }
@@ -246,7 +246,7 @@ private:
                 std::lock_guard<std::mutex> lock(mutex_);
                 if ((max_queue_size_ != 0) &&
                     (queue_.size() >= max_queue_size_)) {
-                        return (false);
+                    return (false);
                 }
                 queue_.push_front(item);
             }
