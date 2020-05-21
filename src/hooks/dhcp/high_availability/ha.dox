@@ -409,7 +409,6 @@ Addressing this issue requires two enhancements:
 
 @section haMTCompatibility Multi-Threading Compatibility
 
-The High Availability hooks library currently it is compatible with
-multi-threading.
+The High Availability hooks library it is compatible with multi-threading.
 
 */
