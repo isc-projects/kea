@@ -57,7 +57,7 @@ public:
         gate1_.wait(lk, [=]() { return (!writeEntered()); });
         state_ |= WRITE_ENTERED;
         // Wait until there are no more readers.
-        gate2_.wait(lk, [=]() { return (readers() == 0);});
+        gate2_.wait(lk, [=]() { return (readers() == 0); });
     }
 
     /// @brief Unlock write.
