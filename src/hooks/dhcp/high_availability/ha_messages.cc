@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Wed May 20 2020 16:33
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Thu May 21 2020 19:53
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -171,7 +171,7 @@ const char* values[] = {
     "HA_SYNC_START", "starting lease database synchronization with %1",
     "HA_SYNC_SUCCESSFUL", "lease database synchronization with %1 completed successfully in %2",
     "HA_TERMINATED", "HA service terminated due to an unrecoverable condition. Check previous error message(s), address the problem and restart!",
-    "HA_TERMINATED_RESTART_PARTNER", "waiting for the partner in the terminated state to be restarted",
+    "HA_TERMINATED_RESTART_PARTNER", "waiting for the partner in the TERMINATED state to be restarted",
     NULL
 };
 
