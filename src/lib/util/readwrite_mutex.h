@@ -66,7 +66,7 @@ public:
     void writeUnlock() {
         std::lock_guard<std::mutex> lk(mutex_);
         state_ = 0;
-        // Wake-up readers when exiting the guard.
+        // Wake-up waiting threads when exiting the guard.
         gate1_.notify_all();
     }
 
