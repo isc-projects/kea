@@ -85,7 +85,7 @@ ClientHandler::lookup(const DuidPtr& duid) {
     }
     auto it = clients_client_id_.find(duid->getDuid());
     if (it == clients_client_id_.end()) {
-        return (0);
+        return (ClientPtr());
     }
     return (*it);
 }
@@ -101,7 +101,7 @@ ClientHandler::lookup(const HWAddrPtr& hwaddr) {
     auto key = boost::make_tuple(hwaddr->htype_, hwaddr->hwaddr_);
     auto it = clients_hwaddr_.find(key);
     if (it == clients_hwaddr_.end()) {
-        return (0);
+        return (ClientPtr());
     }
     return (*it);
 }

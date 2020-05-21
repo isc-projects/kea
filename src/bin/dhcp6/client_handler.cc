@@ -52,7 +52,7 @@ ClientHandler::lookup(const DuidPtr& duid) {
     }
     auto it = clients_.find(duid->getDuid());
     if (it == clients_.end()) {
-        return (0);
+        return (ClientPtr());
     }
     return (*it);
 }

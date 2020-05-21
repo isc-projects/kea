@@ -51,7 +51,7 @@ public:
     ///
     /// Lookup the client:
     ///  - if not found insert the client in the clients map and return true
-    ///  - if found, if  has a continuation put it in the holder,
+    ///  - if found, if has a continuation put it in the holder,
     ///    and return false
     ///
     /// @param query The query from the client.
