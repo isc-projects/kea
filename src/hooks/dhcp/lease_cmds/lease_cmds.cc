@@ -1175,7 +1175,8 @@ void updateOrAdd(Lease6Ptr lease) {
     } catch (const NoSuchLease& ex) {
         // Lease to be updated not found, so add it.
         if (!LeaseMgrFactory::instance().addLease(lease)) {
-            isc_throw(db::DuplicateEntry, "update then add lost race");
+            isc_throw(db::DuplicateEntry,
+                      "lost race between calls to update and add");
         }
     }
 }
@@ -1446,7 +1447,8 @@ namespace { // anonymous namepace.
 bool addOrUpdate4(Lease4Ptr lease, bool force_create) {
     if (force_create && !LeaseMgrFactory::instance().getLease4(lease->addr_)) {
         if (!LeaseMgrFactory::instance().addLease(lease)) {
-            isc_throw(db::DuplicateEntry, "get then add lost race");
+            isc_throw(db::DuplicateEntry,
+                      "lost race between calls to get and add");
         }
         return (true);
     }
@@ -1515,7 +1517,8 @@ bool addOrUpdate6(Lease6Ptr lease, bool force_create) {
     if (force_create &&
         !LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_)) {
         if (!LeaseMgrFactory::instance().addLease(lease)) {
-            isc_throw(db::DuplicateEntry, "get then add lost race");
+            isc_throw(db::DuplicateEntry,
+                      "lost race between calls to get and add");
         }
         return (true);
     }
