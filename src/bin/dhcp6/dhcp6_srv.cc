@@ -858,11 +858,6 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         }
     }
 
-    // Stop here if ClientHandler tryLock decided the packet is a duplicate.
-    if (drop) {
-        return;
-    }
-
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     bool drop = false;
