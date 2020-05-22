@@ -139,7 +139,8 @@ BasicScen::run() {
     for (;;) {
         // Calculate number of packets to be sent to stay
         // catch up with rate.
-        uint64_t packets_due = basic_rate_control_.getOutboundMessageCount();
+        uint64_t packets_due =
+            basic_rate_control_.getOutboundMessageCount(!tc_.exit_time_.is_not_a_date_time());
         if ((packets_due == 0) && options_.testDiags('i')) {
             stats_mgr.incrementCounter("shortwait");
         }
@@ -171,7 +172,7 @@ BasicScen::run() {
         // Renew packets should be sent to catch up with a desired rate.
         if (options_.getRenewRate() != 0) {
             uint64_t renew_packets_due =
-                renew_rate_control_.getOutboundMessageCount();
+                renew_rate_control_.getOutboundMessageCount(!tc_.exit_time_.is_not_a_date_time());
 
             // Send multiple renews to satisfy the desired rate.
             if (options_.getIpVersion() == 4) {
@@ -185,7 +186,7 @@ BasicScen::run() {
         // Release messages should be sent to catch up with a desired rate.
         if ((options_.getIpVersion() == 6) && (options_.getReleaseRate() != 0)) {
             uint64_t release_packets_due =
-                release_rate_control_.getOutboundMessageCount();
+                release_rate_control_.getOutboundMessageCount(!tc_.exit_time_.is_not_a_date_time());
             // Send Release messages.
             tc_.sendMultipleMessages6(DHCPV6_RELEASE, release_packets_due);
         }

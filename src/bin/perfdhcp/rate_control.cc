@@ -25,7 +25,7 @@ RateControl::RateControl(const unsigned int rate)
 }
 
 uint64_t
-RateControl::getOutboundMessageCount() {
+RateControl::getOutboundMessageCount(bool const waiting_to_exit /* = false */) {
     if (total_pkts_sent_count_ == 0) {
         start_time_ = currentTime();
         total_pkts_sent_count_ = 1;
@@ -35,6 +35,11 @@ RateControl::getOutboundMessageCount() {
     // If rate is not limited, then each time send 1 packet.
     if (getRate() == 0) {
         return 1;
+    }
+
+    // If we've entered exit wait time's zone, stop sending.
+    if (waiting_to_exit) {
+        return 0;
     }
 
     // Estimate number of packets to sent. If we are behind of time we will
