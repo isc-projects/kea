@@ -63,12 +63,14 @@ ClientHandler::~ClientHandler() {
 ClientHandler::Client::Client(Pkt4Ptr query, DuidPtr client_id,
                               HWAddrPtr hwaddr)
     : query_(query), thread_(this_thread::get_id()) {
+    // Sanity checks.
     if (!query) {
         isc_throw(InvalidParameter, "null query in ClientHandler (id)");
     }
     if (!client_id && !hwaddr) {
         isc_throw(InvalidParameter, "null client-id and hwaddr in ClientHandler");
     }
+
     if (client_id) {
         duid_ = client_id->getDuid();
     }
@@ -80,9 +82,11 @@ ClientHandler::Client::Client(Pkt4Ptr query, DuidPtr client_id,
 
 ClientHandler::ClientPtr
 ClientHandler::lookup(const DuidPtr& duid) {
+    // Sanity check.
     if (!duid) {
         isc_throw(InvalidParameter, "duid is null in ClientHandler::lookup");
     }
+
     auto it = clients_client_id_.find(duid->getDuid());
     if (it == clients_client_id_.end()) {
         return (ClientPtr());
@@ -92,12 +96,14 @@ ClientHandler::lookup(const DuidPtr& duid) {
 
 ClientHandler::ClientPtr
 ClientHandler::lookup(const HWAddrPtr& hwaddr) {
+    // Sanity checks.
     if (!hwaddr) {
         isc_throw(InvalidParameter, "hwaddr is null in ClientHandler::lookup");
     }
     if (hwaddr->hwaddr_.empty()) {
         isc_throw(InvalidParameter, "hwaddr is empty in ClientHandler::lookup");
     }
+
     auto key = boost::make_tuple(hwaddr->htype_, hwaddr->hwaddr_);
     auto it = clients_hwaddr_.find(key);
     if (it == clients_hwaddr_.end()) {
@@ -108,36 +114,44 @@ ClientHandler::lookup(const HWAddrPtr& hwaddr) {
 
 void
 ClientHandler::lockById() {
+    // Sanity check.
     if (!locked_client_id_) {
         isc_throw(Unexpected, "nothing to lock in ClientHandler::lock (id)");
     }
+
     // Assume insert will never fail so not checking its result.
     clients_client_id_.insert(client_);
 }
 
 void
 ClientHandler::lockByHWAddr() {
+    // Sanity check.
     if (!locked_hwaddr_) {
         isc_throw(Unexpected, "nothing to lock in ClientHandler::lock (hw)");
     }
+
     // Assume insert will never fail so not checking its result.
     clients_hwaddr_.insert(client_);
 }
 
 void
 ClientHandler::unLockById() {
+    // Sanity check.
     if (!locked_client_id_) {
         isc_throw(Unexpected, "nothing to unlock in ClientHandler::unLock (id)");
     }
+
     // Assume erase will never fail so not checking its result.
     clients_client_id_.erase(locked_client_id_->getDuid());
 }
 
 void
 ClientHandler::unLockByHWAddr() {
+    // Sanity check.
     if (!locked_hwaddr_) {
         isc_throw(Unexpected, "nothing to unlock in ClientHandler::unLock (hw)");
     }
+
     auto key = boost::make_tuple(locked_hwaddr_->htype_, locked_hwaddr_->hwaddr_);
     // Assume erase will never fail so not checking its result.
     auto it = clients_hwaddr_.find(key);
@@ -221,7 +235,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
     if (holder_id) {
         // This query is a by-id duplicate so put the continuation.
         if (cont) {
-             if (next_query_id) {
+            if (next_query_id) {
                 // Logging a warning as it is supposed to be a rare event
                 // with well behaving clients...
                 LOG_WARN(bad_packet4_logger, DHCP4_PACKET_DROP_0011)

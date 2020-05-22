@@ -36,20 +36,24 @@ ClientHandler::~ClientHandler() {
 
 ClientHandler::Client::Client(Pkt6Ptr query, DuidPtr client_id)
     : query_(query), thread_(this_thread::get_id()) {
+    // Sanity checks.
     if (!query) {
         isc_throw(InvalidParameter, "null query in ClientHandler");
     }
     if (!client_id) {
         isc_throw(InvalidParameter, "null client-id in ClientHandler");
     }
+
     duid_ = client_id->getDuid();
 }
 
 ClientHandler::ClientPtr
 ClientHandler::lookup(const DuidPtr& duid) {
+    // Sanity check.
     if (!duid) {
         isc_throw(InvalidParameter, "duid is null in ClientHandler::lookup");
     }
+
     auto it = clients_.find(duid->getDuid());
     if (it == clients_.end()) {
         return (ClientPtr());
@@ -59,18 +63,22 @@ ClientHandler::lookup(const DuidPtr& duid) {
 
 void
 ClientHandler::lock() {
+    // Sanity check.
     if (!locked_) {
         isc_throw(Unexpected, "nothing to lock in ClientHandler::lock");
     }
+
     // Assume insert will never fail so not checking its result.
     clients_.insert(client_);
 }
 
 void
 ClientHandler::unLock() {
+    // Sanity check.
     if (!locked_) {
         isc_throw(Unexpected, "nothing to unlock in ClientHandler::unLock");
     }
+
     // Assume erase will never fail so not checking its result.
     clients_.erase(locked_->getDuid());
     if (!client_ || !client_->cont_) {
@@ -89,12 +97,14 @@ ClientHandler::unLock() {
 
 bool
 ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
+    // Sanity checks.
     if (!query) {
         isc_throw(InvalidParameter, "null query in ClientHandler::tryLock");
     }
     if (locked_) {
         isc_throw(Unexpected, "already handling in ClientHandler::tryLock");
     }
+
     const DuidPtr& duid = query->getClientId();
     if (!duid) {
         // Can't do something useful: cross fingers.

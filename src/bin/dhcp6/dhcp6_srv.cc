@@ -841,7 +841,6 @@ void
 Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     // Create a client race avoidance RAII handler.
     ClientHandler client_handler;
-    bool drop = false;
 
     // Check for lease modifier queries from the same client being processed.
     if (MultiThreadingMgr::instance().getMode() &&
@@ -854,7 +853,9 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         ContinuationPtr cont =
             makeContinuation(std::bind(&Dhcpv6Srv::processDhcp6QueryAndSendResponse,
                                        this, query, rsp));
-        drop = !client_handler.tryLock(query, cont);
+        if (!client_handler.tryLock(query, cont)) {
+            return;
+        }
     }
 
     // Stop here if ClientHandler tryLock decided the packet is a duplicate.
@@ -864,6 +865,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
+    bool drop = false;
     initContext(query, ctx, drop);
 
     // Stop here if initContext decided to drop the packet.
