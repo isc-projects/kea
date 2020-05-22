@@ -71,7 +71,8 @@ public:
 
     /// @brief Constructor.
     TestCBControlDHCPv4()
-        : CBControlDHCPv4(), db_config_fetch_calls_(0),
+        : CBControlDHCPv4(), db_total_config_fetch_calls_(0),
+          db_current_config_fetch_calls_(0), db_staging_config_fetch_calls_(0),
           enable_check_fetch_mode_(false), enable_throw_(false) {
     }
 
@@ -84,20 +85,29 @@ public:
     /// It also throws an exception when desired by a test, to
     /// verify that the server gracefully handles such exception.
     ///
+    /// @param config either the staging or the current configuration.
     /// @param fetch_mode value indicating if the method is called upon the
     /// server start up or it is called to fetch configuration updates.
     ///
     /// @throw Unexpected when configured to do so.
-    virtual void databaseConfigFetch(const process::ConfigPtr&,
+    virtual void databaseConfigFetch(const process::ConfigPtr& config,
                                      const FetchMode& fetch_mode) {
-        ++db_config_fetch_calls_;
+        ++db_total_config_fetch_calls_;
+
+        if (config == CfgMgr::instance().getCurrentCfg()) {
+            ++db_current_config_fetch_calls_;
+        } else if (config == CfgMgr::instance().getStagingCfg()) {
+            ++db_staging_config_fetch_calls_;
+        }
 
         if (enable_check_fetch_mode_) {
-            if ((db_config_fetch_calls_ <= 1) && (fetch_mode == FetchMode::FETCH_UPDATE)) {
+            if ((db_total_config_fetch_calls_ <= 1) &&
+                (fetch_mode == FetchMode::FETCH_UPDATE)) {
                 ADD_FAILURE() << "databaseConfigFetch was called with the value "
                     "of fetch_mode=FetchMode::FETCH_UPDATE upon the server configuration";
 
-            } else if ((db_config_fetch_calls_ > 1) && (fetch_mode == FetchMode::FETCH_ALL)) {
+            } else if ((db_total_config_fetch_calls_ > 1) &&
+                       (fetch_mode == FetchMode::FETCH_ALL)) {
                 ADD_FAILURE() << "databaseConfigFetch was called with the value "
                     "of fetch_mode=FetchMode::FETCH_ALL during fetching the updates";
             }
@@ -108,9 +118,22 @@ public:
         }
     }
 
-    /// @brief Returns number of invocations of the @c databaseConfigFetch.
-    size_t getDatabaseConfigFetchCalls() const {
-        return (db_config_fetch_calls_);
+    /// @brief Returns number of invocations of the @c databaseConfigFetch
+    /// (total).
+    size_t getDatabaseTotalConfigFetchCalls() const {
+        return (db_total_config_fetch_calls_);
+    }
+
+    /// @brief Returns number of invocations of the @c databaseConfigFetch
+    /// (current configuration).
+    size_t getDatabaseCurrentConfigFetchCalls() const {
+        return (db_current_config_fetch_calls_);
+    }
+
+    /// @brief Returns number of invocations of the @c databaseConfigFetch
+    /// (staging configuration).
+    size_t getDatabaseStagingConfigFetchCalls() const {
+        return (db_staging_config_fetch_calls_);
     }
 
     /// @brief Enables checking of the @c fetch_mode value.
@@ -125,8 +148,17 @@ public:
 
 private:
 
-    /// @brief Counter holding number of invocations of the @c databaseConfigFetch.
-    size_t db_config_fetch_calls_;
+    /// @brief Counter holding number of invocations of the
+    /// @c databaseConfigFetch (total).
+    size_t db_total_config_fetch_calls_;
+
+    /// @brief Counter holding number of invocations of the
+    /// @c databaseConfigFetch (current configuration).
+    size_t db_current_config_fetch_calls_;
+
+    /// @brief Counter holding number of invocations of the
+    /// @c databaseConfigFetch (staging configuration).
+    size_t db_staging_config_fetch_calls_;
 
     /// @brief Boolean flag indicated if the value of the @c fetch_mode
     /// should be verified.
@@ -258,8 +290,16 @@ public:
         }
 
         // So far there should be exactly one attempt to fetch the configuration
-        // from the backend. That's the attempt made upon startup.
-        EXPECT_EQ(1, cb_control->getDatabaseConfigFetchCalls());
+        // from the backend. That's the attempt made upon startup on
+        // the staging configuration.
+        // All other fetches will be on the current configuration:
+        //  - the timer makes a closure with the staging one but it is
+        //    committed so becomes the current one.
+        //  - the command is called outside configuration so it must
+        //    be the current configuration. The test explicitly checks this.
+        EXPECT_EQ(1, cb_control->getDatabaseTotalConfigFetchCalls());
+        EXPECT_EQ(0, cb_control->getDatabaseCurrentConfigFetchCalls());
+        EXPECT_EQ(1, cb_control->getDatabaseStagingConfigFetchCalls());
 
 
         if (call_command) {
@@ -268,12 +308,14 @@ public:
             // that the command calls the database config fetch.
 
             // Count the startup.
-            EXPECT_EQ(cb_control->getDatabaseConfigFetchCalls(), 1);
+            EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 1);
+            EXPECT_EQ(cb_control->getDatabaseCurrentConfigFetchCalls(), 0);
+            EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1);
 
             ConstElementPtr result =
                 ControlledDhcpv4Srv::processCommand("config-backend-pull",
                                                     ConstElementPtr());
-            EXPECT_EQ(cb_control->getDatabaseConfigFetchCalls(), 2);
+            EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 2);
             std::string expected;
 
             if (throw_during_fetch) {
@@ -290,9 +332,13 @@ public:
             ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 20));
 
             if (config_wait_fetch_time > 0) {
-                EXPECT_GE(cb_control->getDatabaseConfigFetchCalls(), 5);
+                EXPECT_GE(cb_control->getDatabaseTotalConfigFetchCalls(), 5);
+                EXPECT_GE(cb_control->getDatabaseCurrentConfigFetchCalls(), 4);
+                EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1);
             } else {
-                EXPECT_EQ(cb_control->getDatabaseConfigFetchCalls(), 2);
+                EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 2);
+                EXPECT_EQ(cb_control->getDatabaseCurrentConfigFetchCalls(), 1);
+                EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1);
             }
 
         } else if ((config_wait_fetch_time > 0) && (!throw_during_fetch)) {
@@ -305,9 +351,11 @@ public:
                 [cb_control]() {
                     // Interrupt the timers poll if we have recorded at
                     // least 3 attempts to fetch the updates.
-                    return (cb_control->getDatabaseConfigFetchCalls() >= 3);
+                    return (cb_control->getDatabaseTotalConfigFetchCalls() >= 3);
                 }));
-            EXPECT_GE(cb_control->getDatabaseConfigFetchCalls(), 3);
+            EXPECT_GE(cb_control->getDatabaseTotalConfigFetchCalls(), 3);
+            EXPECT_GE(cb_control->getDatabaseCurrentConfigFetchCalls(), 2);
+            EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1);
 
         } else {
             ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 500));
@@ -318,12 +366,16 @@ public:
                 // the number of recorded fetches should be 12. One at
                 // startup, 10 failures and one that causes the timer
                 // to stop.
-                EXPECT_EQ(12, cb_control->getDatabaseConfigFetchCalls());
+                EXPECT_EQ(12, cb_control->getDatabaseTotalConfigFetchCalls());
+                EXPECT_EQ(11, cb_control->getDatabaseCurrentConfigFetchCalls());
+                EXPECT_EQ(1, cb_control->getDatabaseStagingConfigFetchCalls());
 
             } else {
                 // If the server is not configured to schedule the timer,
                 // we should still have one fetch attempt recorded.
-                EXPECT_EQ(1, cb_control->getDatabaseConfigFetchCalls());
+                EXPECT_EQ(1, cb_control->getDatabaseTotalConfigFetchCalls());
+                EXPECT_EQ(0, cb_control->getDatabaseCurrentConfigFetchCalls());
+                EXPECT_EQ(1, cb_control->getDatabaseStagingConfigFetchCalls());
             }
         }
     }
