@@ -65,6 +65,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::hooks;
+using namespace isc::process;
 
 namespace {
 
@@ -441,10 +442,8 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // rollback informs whether error occurred and original data
     // have to be restored to global storages.
     bool rollback = false;
-    // config_pair holds the details of the current parser when iterating over
-    // the parsers.  It is declared outside the loop so in case of error, the
-    // name of the failing parser can be retrieved within the "catch" clause.
-    ConfigPair config_pair;
+    // Global parameter name in case of an error.
+    string parameter_name;
     SrvConfigPtr srv_config;
     try {
         // Get the staging configuration.
@@ -462,209 +461,264 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // And now derive (inherit) global parameters to subnets, if not specified.
         SimpleParser6::deriveParameters(mutable_cfg);
 
-        // Make parsers grouping.
-        const std::map<std::string, ConstElementPtr>& values_map =
-            mutable_cfg->mapValue();
+        // In principle we could have the following code structured as a series
+        // of long if else if clauses. That would give a marginal performance
+        // boost, but would make the code less readable. We had serious issues
+        // with the parser code debugability, so I decided to keep it as a
+        // series of independent ifs.
+
+        // Specific check for this global parameter.
+        ConstElementPtr data_directory = mutable_cfg->get("data-directory");
+        if (data_directory) {
+            parameter_name = "data-directory";
+            dirExists(data_directory->stringValue());
+        }
 
         // We need definitions first
         ConstElementPtr option_defs = mutable_cfg->get("option-def");
         if (option_defs) {
+            parameter_name = "option-def";
             OptionDefListParser parser(AF_INET6);
             CfgOptionDefPtr cfg_option_def = srv_config->getCfgOptionDef();
             parser.parse(cfg_option_def, option_defs);
         }
 
-        // This parser is used in several places, so it should be available
-        // early.
-        Dhcp6ConfigParser global_parser;
+        ConstElementPtr option_datas = mutable_cfg->get("option-data");
+        if (option_datas) {
+            parameter_name = "option-data";
+            OptionDataListParser parser(AF_INET6);
+            CfgOptionPtr cfg_option = srv_config->getCfgOption();
+            parser.parse(cfg_option, option_datas);
+        }
+
+        ConstElementPtr mac_sources = mutable_cfg->get("mac-sources");
+        if (mac_sources) {
+            parameter_name = "mac-sources";
+            MACSourcesListConfigParser parser;
+            CfgMACSource& mac_source = srv_config->getMACSources();
+            parser.parse(mac_source, mac_sources);
+        }
+
+        ConstElementPtr control_socket = mutable_cfg->get("control-socket");
+        if (control_socket) {
+            parameter_name = "control-socket";
+            ControlSocketParser parser;
+            parser.parse(*srv_config, control_socket);
+        }
+
+        ConstElementPtr multi_threading = mutable_cfg->get("multi-threading");
+        if (multi_threading) {
+            parameter_name = "multi-threading";
+            MultiThreadingConfigParser parser;
+            parser.parse(*srv_config, multi_threading);
+        }
+
+        ConstElementPtr queue_control = mutable_cfg->get("dhcp-queue-control");
+        if (queue_control) {
+            parameter_name = "dhcp-queue-control";
+            DHCPQueueControlParser parser;
+            srv_config->setDHCPQueueControl(parser.parse(queue_control));
+        }
+
+        ConstElementPtr hr_identifiers =
+            mutable_cfg->get("host-reservation-identifiers");
+        if (hr_identifiers) {
+            parameter_name = "host-reservation-identifiers";
+            HostReservationIdsParser6 parser;
+            parser.parse(hr_identifiers);
+        }
+
+        ConstElementPtr server_id = mutable_cfg->get("server-id");
+        if (server_id) {
+            parameter_name = "server-id";
+            DUIDConfigParser parser;
+            const CfgDUIDPtr& cfg = srv_config->getCfgDUID();
+            parser.parse(cfg, server_id);
+        }
+
+        ConstElementPtr ifaces_config = mutable_cfg->get("interfaces-config");
+        if (ifaces_config) {
+            parameter_name = "interfaces-config";
+            ElementPtr mutable_cfg =
+                boost::const_pointer_cast<Element>(ifaces_config);
+            if (check_only) {
+                // No re-detection in check only mode
+                mutable_cfg->set("re-detect", Element::create(false));
+            }
+            IfacesConfigParser parser(AF_INET6);
+            CfgIfacePtr cfg_iface = srv_config->getCfgIface();
+            parser.parse(cfg_iface, ifaces_config);
+        }
+
+        ConstElementPtr sanity_checks = mutable_cfg->get("sanity-checks");
+        if (sanity_checks) {
+            parameter_name = "sanity-checks";
+            SanityChecksParser parser;
+            parser.parse(*srv_config, sanity_checks);
+        }
+
+        ConstElementPtr expiration_cfg =
+            mutable_cfg->get("expired-leases-processing");
+        if (expiration_cfg) {
+            parameter_name = "expired-leases-processing";
+            ExpirationConfigParser parser;
+            parser.parse(expiration_cfg);
+        }
+
+        // The hooks-libraries configuration must be parsed after parsing
+        // multi-threading configuration so that libraries are checked
+        // for multi-threading compatibility.
+        ConstElementPtr hooks_libraries = mutable_cfg->get("hooks-libraries");
+        if (hooks_libraries) {
+            parameter_name = "hooks-libraries";
+            HooksLibrariesParser hooks_parser;
+            HooksConfig& libraries = srv_config->getHooksConfig();
+            hooks_parser.parse(libraries, hooks_libraries);
+            libraries.verifyLibraries(hooks_libraries->getPosition());
+        }
 
         // D2 client configuration.
         D2ClientConfigPtr d2_client_cfg;
 
-        BOOST_FOREACH(config_pair, values_map) {
-            // In principle we could have the following code structured as a series
-            // of long if else if clauses. That would give a marginal performance
-            // boost, but would make the code less readable. We had serious issues
-            // with the parser code debugability, so I decided to keep it as a
-            // series of independent ifs.
+        // Legacy DhcpConfigParser stuff below.
+        ConstElementPtr dhcp_ddns = mutable_cfg->get("dhcp-ddns");
+        if (dhcp_ddns) {
+            parameter_name = "dhcp-ddns";
+            // Apply defaults
+            D2ClientConfigParser::setAllDefaults(dhcp_ddns);
+            D2ClientConfigParser parser;
+            d2_client_cfg = parser.parse(dhcp_ddns);
+        }
 
-            if (config_pair.first == "data-directory") {
-                // Specific check for this global parameter.
-                dirExists(config_pair.second->stringValue());
-                continue;
-            }
+        ConstElementPtr client_classes = mutable_cfg->get("client-classes");
+        if (client_classes) {
+            parameter_name = "client-classes";
+            ClientClassDefListParser parser;
+            ClientClassDictionaryPtr dictionary =
+                parser.parse(client_classes, AF_INET6);
+            srv_config->setClientClassDictionary(dictionary);
+        }
 
-            if (config_pair.first == "option-def") {
-                // This is converted to SimpleParser and is handled already above.
-                continue;
-            }
+        // Please move at the end when migration will be finished.
+        ConstElementPtr lease_database = mutable_cfg->get("lease-database");
+        if (lease_database) {
+            parameter_name = "lease-database";
+            db::DbAccessParser parser;
+            std::string access_string;
+            parser.parse(access_string, lease_database);
+            CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+            cfg_db_access->setLeaseDbAccessString(access_string);
+        }
 
-            if (config_pair.first == "option-data") {
-                OptionDataListParser parser(AF_INET6);
-                CfgOptionPtr cfg_option = srv_config->getCfgOption();
-                parser.parse(cfg_option, config_pair.second);
-                continue;
-            }
+        ConstElementPtr hosts_database = mutable_cfg->get("hosts-database");
+        if (hosts_database) {
+            parameter_name = "hosts-database";
+            db::DbAccessParser parser;
+            std::string access_string;
+            parser.parse(access_string, hosts_database);
+            CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+            cfg_db_access->setHostDbAccessString(access_string);
+        }
 
-            if (config_pair.first == "mac-sources") {
-                MACSourcesListConfigParser parser;
-                CfgMACSource& mac_source = srv_config->getMACSources();
-                parser.parse(mac_source, config_pair.second);
-                continue;
-            }
-
-            if (config_pair.first == "control-socket") {
-                ControlSocketParser parser;
-                parser.parse(*srv_config, config_pair.second);
-                continue;
-            }
-
-            if (config_pair.first == "multi-threading") {
-                MultiThreadingConfigParser parser;
-                parser.parse(*srv_config, config_pair.second);
-                continue;
-            }
-
-            if (config_pair.first == "dhcp-queue-control") {
-                DHCPQueueControlParser parser;
-                srv_config->setDHCPQueueControl(parser.parse(config_pair.second));
-                continue;
-            }
-
-            if (config_pair.first == "host-reservation-identifiers") {
-                HostReservationIdsParser6 parser;
-                parser.parse(config_pair.second);
-                continue;
-            }
-
-            if (config_pair.first == "server-id") {
-                DUIDConfigParser parser;
-                const CfgDUIDPtr& cfg = srv_config->getCfgDUID();
-                parser.parse(cfg, config_pair.second);
-                continue;
-            }
-
-            if (config_pair.first == "interfaces-config") {
-                ElementPtr ifaces_cfg =
-                    boost::const_pointer_cast<Element>(config_pair.second);
-                if (check_only) {
-                    // No re-detection in check only mode
-                    ifaces_cfg->set("re-detect", Element::create(false));
-                }
-                IfacesConfigParser parser(AF_INET6);
-                CfgIfacePtr cfg_iface = srv_config->getCfgIface();
-                parser.parse(cfg_iface, ifaces_cfg);
-                continue;
-            }
-
-            if (config_pair.first == "sanity-checks") {
-                SanityChecksParser parser;
-                parser.parse(*srv_config, config_pair.second);
-                continue;
-            }
-
-            if (config_pair.first == "expired-leases-processing") {
-                ExpirationConfigParser parser;
-                parser.parse(config_pair.second);
-                continue;
-            }
-
-            // The hooks-libraries configuration must be parsed after parsing
-            // multi-threading configuration so that libraries are checked
-            // for multi-threading compatibility.
-            if (config_pair.first == "hooks-libraries") {
-                HooksLibrariesParser hooks_parser;
-                HooksConfig& libraries = srv_config->getHooksConfig();
-                hooks_parser.parse(libraries, config_pair.second);
-                libraries.verifyLibraries(config_pair.second->getPosition());
-                continue;
-            }
-
-            if (config_pair.first == "dhcp-ddns") {
-                // Apply defaults
-                D2ClientConfigParser::setAllDefaults(config_pair.second);
-                D2ClientConfigParser parser;
-                d2_client_cfg = parser.parse(config_pair.second);
-                continue;
-            }
-
-            if (config_pair.first =="client-classes") {
-                ClientClassDefListParser parser;
-                ClientClassDictionaryPtr dictionary =
-                    parser.parse(config_pair.second, AF_INET6);
-                srv_config->setClientClassDictionary(dictionary);
-                continue;
-            }
-
-            // Please move at the end when migration will be finished.
-            if (config_pair.first == "lease-database") {
-                db::DbAccessParser parser;
+        ConstElementPtr hosts_databases = mutable_cfg->get("hosts-databases");
+        if (hosts_databases) {
+            parameter_name = "hosts-databases";
+            CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+            db::DbAccessParser parser;
+            for (auto it : hosts_databases->listValue()) {
                 std::string access_string;
-                parser.parse(access_string, config_pair.second);
-                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-                cfg_db_access->setLeaseDbAccessString(access_string);
-                continue;
-            }
-
-            if (config_pair.first == "hosts-database") {
-                db::DbAccessParser parser;
-                std::string access_string;
-                parser.parse(access_string, config_pair.second);
-                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+                parser.parse(access_string, it);
                 cfg_db_access->setHostDbAccessString(access_string);
-                continue;
             }
+        }
 
-            if (config_pair.first == "hosts-databases") {
-                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-                db::DbAccessParser parser;
-                auto list = config_pair.second->listValue();
-                for (auto it : list) {
-                    std::string access_string;
-                    parser.parse(access_string, it);
-                    cfg_db_access->setHostDbAccessString(access_string);
-                }
-                continue;
+        ConstElementPtr subnet6 = mutable_cfg->get("subnet6");
+        if (subnet6) {
+            parameter_name = "subnet6";
+            Subnets6ListConfigParser subnets_parser;
+            // parse() returns number of subnets parsed. We may log it one day.
+            subnets_parser.parse(srv_config, subnet6);
+        }
+
+        // This parser is used in several places.
+        Dhcp6ConfigParser global_parser;
+
+        ConstElementPtr shared_networks = mutable_cfg->get("shared-networks");
+        if (shared_networks) {
+            parameter_name = "shared-networks";
+            /// We need to create instance of SharedNetworks6ListParser
+            /// and parse the list of the shared networks into the
+            /// CfgSharedNetworks6 object. One additional step is then to
+            /// add subnets from the CfgSharedNetworks6 into CfgSubnets6
+            /// as well.
+            SharedNetworks6ListParser parser;
+            CfgSharedNetworks6Ptr cfg = srv_config->getCfgSharedNetworks6();
+            parser.parse(cfg, shared_networks);
+
+            // We also need to put the subnets it contains into normal
+            // subnets list.
+            global_parser.copySubnets6(srv_config->getCfgSubnets6(), cfg);
+        }
+
+        ConstElementPtr reservations = mutable_cfg->get("reservations");
+        if (reservations) {
+            parameter_name = "reservations";
+            HostCollection hosts;
+            HostReservationsListParser<HostReservationParser6> parser;
+            parser.parse(SUBNET_ID_GLOBAL, reservations, hosts);
+            for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+                srv_config->getCfgHosts()->add(*h);
             }
+        }
 
-            if (config_pair.first == "subnet6") {
-                Subnets6ListConfigParser subnets_parser;
-                // parse() returns number of subnets parsed. We may log it one day.
-                subnets_parser.parse(srv_config, config_pair.second);
-                continue;
-            }
+        ConstElementPtr config_control = mutable_cfg->get("config-control");
+        if (config_control) {
+            parameter_name = "config-control";
+            ConfigControlParser parser;
+            ConfigControlInfoPtr config_ctl_info = parser.parse(config_control);
+            CfgMgr::instance().getStagingCfg()->setConfigControlInfo(config_ctl_info);
+        }
 
-            if (config_pair.first == "shared-networks") {
-                /// We need to create instance of SharedNetworks6ListParser
-                /// and parse the list of the shared networks into the
-                /// CfgSharedNetworks6 object. One additional step is then to
-                /// add subnets from the CfgSharedNetworks6 into CfgSubnets6
-                /// as well.
-                SharedNetworks6ListParser parser;
-                CfgSharedNetworks6Ptr cfg = srv_config->getCfgSharedNetworks6();
-                parser.parse(cfg, config_pair.second);
+        ConstElementPtr rsoo_list = mutable_cfg->get("relay-supplied-options");
+        if (rsoo_list) {
+            parameter_name = "relay-supplied-options";
+            RSOOListConfigParser parser;
+            parser.parse(srv_config, rsoo_list);
+        }
 
-                // We also need to put the subnets it contains into normal
-                // subnets list.
-                global_parser.copySubnets6(srv_config->getCfgSubnets6(), cfg);
-                continue;
-            }
+        // Make parsers grouping.
+        ConfigPair config_pair;
+        const std::map<std::string, ConstElementPtr>& values_map =
+            mutable_cfg->mapValue();
 
-            if (config_pair.first == "reservations") {
-                HostCollection hosts;
-                HostReservationsListParser<HostReservationParser6> parser;
-                parser.parse(SUBNET_ID_GLOBAL, config_pair.second, hosts);
-                for (auto h = hosts.begin(); h != hosts.end(); ++h) {
-                    srv_config->getCfgHosts()->add(*h);
-                }
+        BOOST_FOREACH(config_pair, values_map) {
 
-                continue;
-            }
+            parameter_name = config_pair.first;
 
-            if (config_pair.first == "config-control") {
-                process::ConfigControlParser parser;
-                process::ConfigControlInfoPtr config_ctl_info = parser.parse(config_pair.second);
-                CfgMgr::instance().getStagingCfg()->setConfigControlInfo(config_ctl_info);
+            // This is converted to SimpleParser and is handled already above.
+            if ((config_pair.first == "data-directory") ||
+                (config_pair.first == "option-def")  ||
+                (config_pair.first == "option-data") ||
+                (config_pair.first == "mac-sources") ||
+                (config_pair.first == "control-socket") ||
+                (config_pair.first == "multi-threading") ||
+                (config_pair.first == "dhcp-queue-control") ||
+                (config_pair.first == "host-reservation-identifiers") ||
+                (config_pair.first == "server-id") ||
+                (config_pair.first == "interfaces-config") ||
+                (config_pair.first == "sanity-checks") ||
+                (config_pair.first == "expired-leases-processing") ||
+                (config_pair.first == "hooks-libraries") ||
+                (config_pair.first == "dhcp-ddns") ||
+                (config_pair.first == "client-classes") ||
+                (config_pair.first == "lease-database") ||
+                (config_pair.first == "hosts-database") ||
+                (config_pair.first == "hosts-databases") ||
+                (config_pair.first == "subnet6") ||
+                (config_pair.first == "shared-networks") ||
+                (config_pair.first == "reservations") ||
+                (config_pair.first == "config-control") ||
+                (config_pair.first == "relay-supplied-options")) {
                 continue;
             }
 
@@ -715,17 +769,14 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
-            if (config_pair.first == "relay-supplied-options") {
-                RSOOListConfigParser parser;
-                parser.parse(srv_config, config_pair.second);
-                continue;
-            }
-
             // If we got here, no code handled this parameter, so we bail out.
             isc_throw(DhcpConfigError,
                       "unsupported global configuration parameter: " << config_pair.first
                       << " (" << config_pair.second->getPosition() << ")");
         }
+
+        // Reset parameter name.
+        parameter_name = "<post parsing>";
 
         // Apply global options in the staging config.
         global_parser.parse(srv_config, mutable_cfg);
@@ -744,14 +795,14 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
-                  .arg(config_pair.first).arg(ex.what());
+                  .arg(parameter_name).arg(ex.what());
         answer = isc::config::createAnswer(1, ex.what());
         // An error occurred, so make sure that we restore original data.
         rollback = true;
 
     } catch (...) {
         // for things like bad_cast in boost::lexical_cast
-        LOG_ERROR(dhcp6_logger, DHCP6_PARSER_EXCEPTION).arg(config_pair.first);
+        LOG_ERROR(dhcp6_logger, DHCP6_PARSER_EXCEPTION).arg(parameter_name);
         answer = isc::config::createAnswer(1, "undefined configuration"
                                            " processing error");
         // An error occurred, so make sure that we restore original data.
