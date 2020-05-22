@@ -571,7 +571,9 @@ int main() {
         [AC_MSG_RESULT(no)
          usable_regex="no"],
         [AC_MSG_RESULT(cross compiling)])
-# Be optimistic for cross compiling.
+# When cross-compiling we don't have any way to check if regex is
+# usable or not.
+# Let's be optimistic and assume it is by testing only the negative case.
 if test "x$usable_regex" != "xno" ; then
         AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++11 regex is usable])
 fi
