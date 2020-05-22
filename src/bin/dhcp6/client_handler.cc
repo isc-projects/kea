@@ -105,6 +105,7 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
         isc_throw(Unexpected, "empty DUID in ClientHandler::tryLock");
     }
     ClientPtr holder;
+    Pkt6Ptr next_query;
     {
         // Try to acquire the lock and return the holder when it failed.
         lock_guard<mutex> lock_(mutex_);
@@ -115,35 +116,36 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
             lock();
             return (true);
         }
+        // This query can be a duplicate so put the continuation.
+        if (cont) {
+            next_query = holder->next_query_;
+            holder->next_query_ = query;
+            holder->cont_ = cont;
+        }
     }
-    // This query can be a duplicate so put the continuation.
     if (cont) {
-        Pkt6Ptr next_query = holder->next_query_;
-        holder->next_query_ = query;
-        holder->cont_ = cont;
         if (next_query) {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
             LOG_WARN(bad_packet6_logger, DHCP6_PACKET_DROP_DUPLICATE)
                 .arg(next_query->toText())
                 .arg(this_thread::get_id())
-                .arg(query->toText())
-                .arg(this_thread::get_id());
+                .arg(holder->query_->toText())
+                .arg(holder->thread_);
             stats::StatsMgr::instance().addValue("pkt6-receive-drop",
                                                  static_cast<int64_t>(1));
         }
-        return (false);
+    } else {
+        // Logging a warning as it is supposed to be a rare event
+        // with well behaving clients...
+        LOG_WARN(bad_packet6_logger, DHCP6_PACKET_DROP_DUPLICATE)
+            .arg(query->toText())
+            .arg(this_thread::get_id())
+            .arg(holder->query_->toText())
+            .arg(holder->thread_);
+        stats::StatsMgr::instance().addValue("pkt6-receive-drop",
+                                             static_cast<int64_t>(1));
     }
-
-    // Logging a warning as it is supposed to be a rare event
-    // with well behaving clients...
-    LOG_WARN(bad_packet6_logger, DHCP6_PACKET_DROP_DUPLICATE)
-        .arg(query->toText())
-        .arg(this_thread::get_id())
-        .arg(holder->query_->toText())
-        .arg(holder->thread_);
-    stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                         static_cast<int64_t>(1));
     return (false);
 }
 

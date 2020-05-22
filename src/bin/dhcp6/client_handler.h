@@ -80,9 +80,15 @@ private:
         std::thread::id thread_;
 
         /// @brief The next query.
+        ///
+        /// @note This field can be modified from another handler
+        /// holding the mutex.
         Pkt6Ptr next_query_;
 
         /// @brief The continuation to process next query for the client.
+        ///
+        /// @note This field can be modified from another handler
+        /// holding the mutex.
         ContinuationPtr cont_;
     };
 

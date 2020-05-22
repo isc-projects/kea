@@ -89,13 +89,19 @@ private:
         std::thread::id thread_;
 
         /// @brief The next query.
+        ///
+        /// @note This field can be modified from another handler
+        /// holding the mutex.
         Pkt4Ptr next_query_;
 
         /// @brief The continuation to process next query for the client.
+        ///
+        /// @note This field can be modified from another handler
+        /// holding the mutex.
         ContinuationPtr cont_;
     };
 
-    /// @brief The type of shared pointers to clients by ID.
+    /// @brief The type of shared pointers to clients.
     typedef boost::shared_ptr<Client> ClientPtr;
 
     /// @brief Local client.
@@ -197,7 +203,6 @@ private:
 
     /// @brief The client-by-hwaddr container.
     static ClientByHWAddrContainer clients_hwaddr_;
-
 };
 
 } // namespace isc
