@@ -1,10 +1,6 @@
 EXTRA_DIST=
 sphinxbuilddir=$(builddir)/_build
 
-# list of api files that are used to generate api.rst
-api_files1=$(shell cat api-files.txt)
-api_files=$(foreach af,$(api_files1), $(srcdir)/$(af))
-
 if GENERATE_DOCS
 
 sphinxopts=
@@ -81,6 +77,11 @@ EXTRA_DIST+=$(main_sources) $(man_sources) mes2doc.py api2doc.py $(man8s)
 # list of messages files that are used to generate kea-messages.rst and then kea-messages.pdf
 mes_files1=$(shell cat mes-files.txt)
 mes_files=$(foreach mf,$(mes_files1), $(top_srcdir)/$(mf))
+
+
+# list of api files that are used to generate api.rst
+api_files1=$(shell cat api-files.txt)
+api_files=$(foreach af,$(api_files1), $(srcdir)/$(af))
 
 EXTRA_DIST+=mes-files.txt
 EXTRA_DIST+=api-files.txt
