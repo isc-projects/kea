@@ -1,5 +1,4 @@
 {
-    "access": "write",
     "avail": "1.7.1",
     "brief": [
         "This command forces an immediate update of the server using Config Backends.",

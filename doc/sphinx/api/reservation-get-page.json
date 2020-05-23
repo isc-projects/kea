@@ -1,5 +1,4 @@
 {
-    "access": "read",
     "avail": "1.6.0",
     "brief": [
         "This command retrieves host reservations for a specified subnet by page."

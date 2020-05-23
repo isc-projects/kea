@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -107,17 +107,6 @@ API Reference
         rst += 'Availability: %s ' % func['avail']
         rst += '(:ref:`%s <commands-%s>` hook library)' % (func['hook'], func['hook']) if 'hook' in func else '(built-in)'
         rst += '\n\n'
-
-        # access
-        try:
-            access = func['access']
-        except:
-            print('\naccess missing in %s\n\n' % name)
-            raise
-        if not access in ['read', 'write']:
-            print('\nUnknown access %s in %s\n\n' % (access, name))
-            raise ValueError('access must be read or write')
-        rst += 'Access: %s\n' % access
 
         # description and examples
         rst += 'Description and examples: see :ref:`%s command <command-%s>`\n\n' % (name, name)

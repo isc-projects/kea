@@ -1,5 +1,4 @@
 {
-    "access": "read",
     "avail": "1.6.0",
     "brief": [
         "This command fetches all DHCPv6 option definitions from the configuration database."

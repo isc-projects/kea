@@ -1,5 +1,4 @@
 {
-    "access": "read",
     "avail": "1.0.0",
     "brief": [
         "This command retrieves a list of all commands supported by the server."

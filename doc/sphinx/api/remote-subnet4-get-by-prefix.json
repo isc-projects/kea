@@ -1,5 +1,4 @@
 {
-    "access": "read",
     "avail": "1.6.0",
     "brief": [
         "This command fetches the selected IPv4 subnet by prefix from the configuration database."

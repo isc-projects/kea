@@ -1,5 +1,4 @@
 {
-    "access": "read",
     "avail": "1.2.0",
     "brief": [
         "This command retrieves an existing host reservation."

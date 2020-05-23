@@ -1,5 +1,4 @@
 {
-    "access": "write",
     "avail": "1.7.4",
     "brief": [
         "This command is sent by the server receiving the ha-maintenance-start",

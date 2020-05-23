@@ -1,5 +1,4 @@
 {
-    "access": "write",
     "avail": "1.7.6",
     "brief": [
         "This command resends a request to kea-dhcp-ddns to update DNS for an existing lease."

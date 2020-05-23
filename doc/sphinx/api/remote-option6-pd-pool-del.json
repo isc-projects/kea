@@ -1,5 +1,4 @@
 {
-    "access": "write",
     "avail": "1.6.0",
     "brief": [
         "This command deletes a DHCPv6 option from a prefix delegation pool from the configuration database."

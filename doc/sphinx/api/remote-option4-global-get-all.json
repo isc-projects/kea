@@ -1,5 +1,4 @@
 {
-    "access": "read",
     "avail": "1.6.0",
     "brief": [
         "This command fetches all DHCPv4 global options for the server from the configuration database."
