@@ -117,7 +117,7 @@ API Reference
         if not access in ['read', 'write']:
             print('\nUnknown access %s in %s\n\n' % (access, name))
             raise ValueError('access must be read or write')
-        rst += 'Access: %s *(parameter ignored in this Kea version)* \n\n' % access
+        rst += 'Access: %s\n' % access
 
         # description and examples
         rst += 'Description and examples: see :ref:`%s command <command-%s>`\n\n' % (name, name)
