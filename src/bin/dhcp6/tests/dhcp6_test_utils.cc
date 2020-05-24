@@ -837,8 +837,7 @@ NakedDhcpv6SrvTest::NakedDhcpv6SrvTest()
     // it's ok if that fails. There should not be such a file anyway
     static_cast<void>(remove(DUID_FILE));
 
-    const isc::dhcp::IfaceMgr::IfaceCollection& ifaces =
-        isc::dhcp::IfaceMgr::instance().getIfaces();
+    const IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
 
     // There must be some interface detected
     if (ifaces.empty()) {
@@ -850,7 +849,7 @@ NakedDhcpv6SrvTest::NakedDhcpv6SrvTest()
     valid_ifindex_ = (*ifaces.begin())->getIndex();
 
     // Let's wipe all existing statistics.
-    isc::stats::StatsMgr::instance().removeAll();
+    StatsMgr::instance().removeAll();
 }
 
 NakedDhcpv6SrvTest::~NakedDhcpv6SrvTest() {

@@ -16,14 +16,15 @@
 #include <dhcp/pkt_filter_inet6.h>
 #include <exceptions/exceptions.h>
 #include <util/io/pktinfo_utilities.h>
+#include <util/multi_threading_mgr.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
 
 #include <cstring>
 #include <errno.h>
 #include <fstream>
+#include <limits>
 #include <sstream>
 
 #include <arpa/inet.h>
@@ -65,6 +66,10 @@ Iface::Iface(const std::string& name, int ifindex)
      flag_multicast_(false), flag_broadcast_(false), flags_(0),
      inactive4_(false), inactive6_(false)
 {
+    if ((ifindex_ < 0) || (ifindex_ > std::numeric_limits<int32_t>::max())) {
+        isc_throw(OutOfRange, "Interface index must be in 0.." <<
+                  std::numeric_limits<int32_t>::max());
+    }
     memset(mac_, 0, sizeof(mac_));
 }
 
@@ -179,10 +184,11 @@ bool Iface::delSocket(const uint16_t sockfd) {
 }
 
 IfaceMgr::IfaceMgr()
-    :packet_filter_(new PktFilterInet()),
-     packet_filter6_(new PktFilterInet6()),
-     test_mode_(false),
-     allow_loopback_(false) {
+    : fail_on_index_not_found_(false),
+      packet_filter_(new PktFilterInet()),
+      packet_filter6_(new PktFilterInet6()),
+      test_mode_(false),
+      allow_loopback_(false) {
 
     // Ensure that PQMs have been created to guarantee we have
     // default packet queues in place.
@@ -206,7 +212,7 @@ IfaceMgr::IfaceMgr()
 }
 
 void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
-    BOOST_FOREACH(Address a, unicasts_) {
+    for (Address a : unicasts_) {
         if (a.get() == addr) {
             isc_throw(BadValue, "Address " << addr
                       << " already defined on the " << name_ << " interface.");
@@ -219,7 +225,7 @@ bool
 Iface::getAddress4(isc::asiolink::IOAddress& address) const {
     // Iterate over existing addresses assigned to the interface.
     // Try to find the one that is IPv4.
-    BOOST_FOREACH(Address addr, getAddresses()) {
+    for (Address addr : getAddresses()) {
         // If address is IPv4, we assign it to the function argument
         // and return true.
         if (addr.get().isV4()) {
@@ -233,7 +239,7 @@ Iface::getAddress4(isc::asiolink::IOAddress& address) const {
 
 bool
 Iface::hasAddress(const isc::asiolink::IOAddress& address) const {
-    BOOST_FOREACH(Address addr, getAddresses()) {
+    for (Address addr : getAddresses()) {
         if (address == addr.get()) {
             return (true);
         }
@@ -270,7 +276,7 @@ Iface::setActive(const bool active) {
 unsigned int
 Iface::countActive4() const {
     uint16_t count = 0;
-    BOOST_FOREACH(Address addr, addrs_) {
+    for (Address addr : addrs_) {
         if (!addr.unspecified() && addr.get().isV4()) {
             ++count;
         }
@@ -282,7 +288,7 @@ void IfaceMgr::closeSockets() {
     // Stops the receiver thread if there is one.
     stopDHCPReceiver();
 
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
+    for (IfacePtr iface : ifaces_) {
         iface->closeSockets();
     }
 }
@@ -319,7 +325,7 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
                   << socketfd);
     }
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
-    BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+    for (SocketCallbackInfo s : callbacks_) {
         // There's such a socket description there already.
         // Update the callback and we're done
         if (s.socket_ == socketfd) {
@@ -421,8 +427,8 @@ IfaceMgr::setPacketFilter(const PktFilter6Ptr& packet_filter) {
 bool
 IfaceMgr::hasOpenSocket(const uint16_t family) const {
     // Iterate over all interfaces and search for open sockets.
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        BOOST_FOREACH(SocketInfo sock, iface->getSockets()) {
+    for (IfacePtr iface : ifaces_) {
+        for (SocketInfo sock : iface->getSockets()) {
             // Check if the socket matches specified family.
             if (sock.family_ == family) {
                 // There is at least one socket open, so return.
@@ -437,8 +443,8 @@ IfaceMgr::hasOpenSocket(const uint16_t family) const {
 bool
 IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
     // Iterate over all interfaces and search for open sockets.
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        BOOST_FOREACH(SocketInfo sock, iface->getSockets()) {
+    for (IfacePtr iface : ifaces_) {
+        for (SocketInfo sock : iface->getSockets()) {
             // Check if the socket address matches the specified address or
             // if address is unspecified (in6addr_any).
             if (sock.addr_ == addr) {
@@ -448,7 +454,7 @@ IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
                 // Handle the case that the address is unspecified (any).
                 // In this case, we should check if the specified address
                 // belongs to any of the interfaces.
-                BOOST_FOREACH(Iface::Address a, iface->getAddresses()) {
+                for (Iface::Address a : iface->getAddresses()) {
                     if (addr == a.get()) {
                         return (true);
                     }
@@ -504,7 +510,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
     int count = 0;
     int bcast_num = 0;
 
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
+    for (IfacePtr iface : ifaces_) {
         // If the interface is inactive, there is nothing to do. Simply
         // proceed to the next detected interface.
         if (iface->inactive4_) {
@@ -549,7 +555,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             }
         }
 
-        BOOST_FOREACH(Iface::Address addr, iface->getAddresses()) {
+        for (Iface::Address addr : iface->getAddresses()) {
             // Skip non-IPv4 addresses and those that weren't selected..
             if (addr.unspecified() || !addr.get().isV4()) {
                 continue;
@@ -632,7 +638,7 @@ IfaceMgr::openSockets6(const uint16_t port,
                        IfaceMgrErrorMsgCallback error_handler) {
     int count = 0;
 
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
+    for (IfacePtr iface : ifaces_) {
         if (iface->inactive6_) {
             continue;
 
@@ -665,7 +671,7 @@ IfaceMgr::openSockets6(const uint16_t port,
         }
 
         // Open unicast sockets if there are any unicast addresses defined
-        BOOST_FOREACH(Iface::Address addr, iface->getUnicasts()) {
+        for (Iface::Address addr : iface->getUnicasts()) {
 
             try {
                 openSocket(iface->getName(), addr, port);
@@ -681,7 +687,7 @@ IfaceMgr::openSockets6(const uint16_t port,
 
         }
 
-        BOOST_FOREACH(Iface::Address addr, iface->getAddresses()) {
+        for (Iface::Address addr : iface->getAddresses()) {
 
             // Skip all but V6 addresses.
             if (!addr.get().isV6()) {
@@ -763,7 +769,7 @@ IfaceMgr::addInterface(const IfacePtr& iface) {
 
 void
 IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
+    for (IfacePtr iface : ifaces_) {
         const Iface::AddressCollection& addrs = iface->getAddresses();
 
         out << "Detected interface " << iface->getFullName()
@@ -778,7 +784,7 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
             << ")" << endl;
         out << "  " << addrs.size() << " addr(s):";
 
-        BOOST_FOREACH(Iface::Address addr, addrs) {
+        for (Iface::Address addr : addrs) {
             out << "  " << addr.get().toText();
         }
         out << endl;
@@ -786,29 +792,97 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
 }
 
 IfacePtr
-IfaceMgr::getIface(int ifindex) {
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        if (iface->getIndex() == ifindex)
-            return (iface);
-    }
+IfaceCollection::getIface(uint32_t ifindex) {
+    return (getIfaceInternal(ifindex, MultiThreadingMgr::instance().getMode()));
+}
 
-    return (IfacePtr()); // not found
+
+IfacePtr
+IfaceCollection::getIface(const std::string& ifname) {
+    return (getIfaceInternal(ifname, MultiThreadingMgr::instance().getMode()));
+}
+
+IfacePtr
+IfaceCollection::getIfaceInternal(uint32_t ifindex, bool need_lock) {
+    if (need_lock) {
+        lock_guard<mutex> lock(mutex_);
+        if (cache_ && (cache_->getIndex() == ifindex)) {
+            return (cache_);
+        }
+    } else {
+        if (cache_ && (cache_->getIndex() == ifindex)) {
+            return (cache_);
+        }
+    }
+    const auto& idx = ifaces_container_.get<1>();
+    auto it = idx.find(ifindex);
+    if (it == idx.end()) {
+        return (IfacePtr()); // not found
+    }
+    if (need_lock) {
+        lock_guard<mutex> lock(mutex_);
+        cache_ = *it;
+        return (cache_);
+    } else {
+        lock_guard<mutex> lock(mutex_);
+        cache_ = *it;
+        return (cache_);
+    }
+}
+
+IfacePtr
+IfaceCollection::getIfaceInternal(const std::string& ifname, bool need_lock) {
+    if (need_lock) {
+        lock_guard<mutex> lock(mutex_);
+        if (cache_ && (cache_->getName() == ifname)) {
+            return (cache_);
+        }
+    } else {
+                if (cache_ && (cache_->getName() == ifname)) {
+            return (cache_);
+        }
+    }
+    const auto& idx = ifaces_container_.get<2>();
+    auto it = idx.find(ifname);
+    if (it == idx.end()) {
+        return (IfacePtr()); // not found
+    }
+    if (need_lock) {
+        lock_guard<mutex> lock(mutex_);
+        cache_ = *it;
+        return (cache_);
+    } else {
+        lock_guard<mutex> lock(mutex_);
+        cache_ = *it;
+        return (cache_);
+    }
+}
+
+IfacePtr
+IfaceMgr::getIface(int ifindex) {
+    if ((ifindex < 0) || (ifindex > std::numeric_limits<int32_t>::max())) {
+        return (IfacePtr()); // out of range
+    }
+    return (ifaces_.getIface(ifindex));
 }
 
 IfacePtr
 IfaceMgr::getIface(const std::string& ifname) {
-    std::cerr << "getIface(name) unefficient\n";
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        if (iface->getName() == ifname)
-            return (iface);
+    if (ifname.empty()) {
+        return (IfacePtr()); // empty
     }
-
-    return (IfacePtr()); // not found
+    return (ifaces_.getIface(ifname));
 }
 
 IfacePtr
 IfaceMgr::getIface(const PktPtr& pkt) {
-    IfacePtr iface = getIface(pkt->getIndex());
+    IfacePtr iface;
+    if (pkt->indexSet()) {
+            iface = getIface(pkt->getIndex());
+            if (fail_on_index_not_found_) {
+                return (iface);
+            }
+    }
     if (!iface) {
         iface = getIface(pkt->getIface());
     }
@@ -822,7 +896,7 @@ IfaceMgr::clearIfaces() {
 
 void
 IfaceMgr::clearUnicasts() {
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
+    for (IfacePtr iface : ifaces_) {
         iface->clearUnicasts();
     }
 }
@@ -850,7 +924,7 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
                                   const uint16_t port,
                                   const uint8_t family) {
     // Search for specified interface among detected interfaces.
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
+    for (IfacePtr iface : ifaces_) {
         if ((iface->getFullName() != ifname) &&
             (iface->getName() != ifname)) {
             continue;
@@ -891,8 +965,8 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
                                     const uint16_t port) {
     // Search through detected interfaces and addresses to match
     // local address we got.
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        BOOST_FOREACH(Iface::Address a, iface->getAddresses()) {
+    for (IfacePtr iface : ifaces_) {
+        for (Iface::Address a : iface->getAddresses()) {
 
             // Local address must match one of the addresses
             // on detected interfaces. If it does, we have
@@ -1046,7 +1120,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 // Add this socket to listening set
                 addFDtoSet(s.socket_, maxfd, &sockets);
             }
@@ -1116,7 +1190,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         bool found = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
-            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 if (!FD_ISSET(s.socket_, &sockets)) {
                     continue;
                 }
@@ -1159,7 +1233,6 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
                   " one million microseconds");
     }
     boost::scoped_ptr<SocketInfo> candidate;
-    IfacePtr iface;
     fd_set sockets;
     int maxfd = 0;
 
@@ -1168,8 +1241,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
-    BOOST_FOREACH(iface, ifaces_) {
-        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+    for (IfacePtr iface : ifaces_) {
+        for (SocketInfo s : iface->getSockets()) {
             // Only deal with IPv4 addresses.
             if (s.addr_.isV4()) {
                 // Add this socket to listening set
@@ -1182,7 +1255,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 // Add this socket to listening set
                 addFDtoSet(s.socket_, maxfd, &sockets);
             }
@@ -1227,7 +1300,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     bool found = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
-        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+        for (SocketCallbackInfo s : callbacks_) {
             if (!FD_ISSET(s.socket_, &sockets)) {
                 continue;
             }
@@ -1254,25 +1327,27 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
 
     // Let's find out which interface/socket has the data
-    BOOST_FOREACH(iface, ifaces_) {
-        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+    IfacePtr recv_if;
+    for (IfacePtr iface : ifaces_) {
+        for (SocketInfo s : iface->getSockets()) {
             if (FD_ISSET(s.sockfd_, &sockets)) {
                 candidate.reset(new SocketInfo(s));
                 break;
             }
         }
         if (candidate) {
+            recv_if = iface;
             break;
         }
     }
 
-    if (!candidate) {
+    if (!candidate || !recv_if) {
         isc_throw(SocketReadError, "received data over unknown socket");
     }
 
     // Now we have a socket, let's get some data from it!
     // Assuming that packet filter is not null, because its modifier checks it.
-    return (packet_filter_->receive(*iface, *candidate));
+    return (packet_filter_->receive(*recv_if, *candidate));
 }
 
 Pkt6Ptr
@@ -1313,8 +1388,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+    for (IfacePtr iface : ifaces_) {
+        for (SocketInfo s : iface->getSockets()) {
             // Only deal with IPv6 addresses.
             if (s.addr_.isV6()) {
                 // Add this socket to listening set
@@ -1327,7 +1402,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 // Add this socket to listening set
                 addFDtoSet(s.socket_, maxfd, &sockets);
             }
@@ -1372,7 +1447,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     bool found = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
-        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+        for (SocketCallbackInfo s : callbacks_) {
             if (!FD_ISSET(s.socket_, &sockets)) {
                 continue;
             }
@@ -1399,8 +1474,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     }
 
     // Let's find out which interface/socket has the data
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+    for (IfacePtr iface : ifaces_) {
+        for (SocketInfo s : iface->getSockets()) {
             if (FD_ISSET(s.sockfd_, &sockets)) {
                 candidate.reset(new SocketInfo(s));
                 break;
@@ -1435,7 +1510,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 // Add this socket to listening set
                 addFDtoSet(s.socket_, maxfd, &sockets);
             }
@@ -1505,7 +1580,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         bool found = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
-            BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 if (!FD_ISSET(s.socket_, &sockets)) {
                     continue;
                 }
@@ -1543,7 +1618,6 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
 void
 IfaceMgr::receiveDHCP4Packets() {
-    IfacePtr iface;
     fd_set sockets;
     int maxfd = 0;
 
@@ -1553,8 +1627,8 @@ IfaceMgr::receiveDHCP4Packets() {
     addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE), maxfd, &sockets);
 
     // Add Interface sockets.
-    BOOST_FOREACH(iface, ifaces_) {
-        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+    for (IfacePtr iface : ifaces_) {
+        for (SocketInfo s : iface->getSockets()) {
             // Only deal with IPv4 addresses.
             if (s.addr_.isV4()) {
                 // Add this socket to listening set.
@@ -1601,8 +1675,8 @@ IfaceMgr::receiveDHCP4Packets() {
         }
 
         // Let's find out which interface/socket has data.
-        BOOST_FOREACH(iface, ifaces_) {
-            BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+        for (IfacePtr iface : ifaces_) {
+            for (SocketInfo s : iface->getSockets()) {
                 if (FD_ISSET(s.sockfd_, &sockets)) {
                     receiveDHCP4Packet(*iface, s);
                     // Can take time so check one more time the watch socket.
@@ -1618,7 +1692,6 @@ IfaceMgr::receiveDHCP4Packets() {
 
 void
 IfaceMgr::receiveDHCP6Packets() {
-    IfacePtr iface;
     fd_set sockets;
     int maxfd = 0;
 
@@ -1628,8 +1701,8 @@ IfaceMgr::receiveDHCP6Packets() {
     addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE), maxfd, &sockets);
 
     // Add Interface sockets.
-    BOOST_FOREACH(iface, ifaces_) {
-        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+    for (IfacePtr iface : ifaces_) {
+        for (SocketInfo s : iface->getSockets()) {
             // Only deal with IPv6 addresses.
             if (s.addr_.isV6()) {
                 // Add this socket to listening set.
@@ -1675,8 +1748,8 @@ IfaceMgr::receiveDHCP6Packets() {
         }
 
         // Let's find out which interface/socket has data.
-        BOOST_FOREACH(iface, ifaces_) {
-            BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+        for (IfacePtr iface : ifaces_) {
+            for (SocketInfo s : iface->getSockets()) {
                 if (FD_ISSET(s.sockfd_, &sockets)) {
                     receiveDHCP6Packet(s);
                     // Can take time so check one more time the watch socket.
@@ -1876,7 +1949,6 @@ IfaceMgr::configureDHCPPacketQueue(uint16_t family, data::ConstElementPtr queue_
 
     return(enable_queue);
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

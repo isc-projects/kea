@@ -12,9 +12,6 @@
 #include <dhcp/iface_mgr.h>
 #include <asiolink/io_address.h>
 
-#include <boost/foreach.hpp>
-
-
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
@@ -135,8 +132,8 @@ PerfSocket::~PerfSocket() {
 
 void
 PerfSocket::initSocketData() {
-    BOOST_FOREACH(IfacePtr iface, IfaceMgr::instance().getIfaces()) {
-        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
+        for (SocketInfo s : iface->getSockets()) {
             if (s.sockfd_ == sockfd_) {
                 ifindex_ = iface->getIndex();
                 addr_ = s.addr_;
@@ -151,13 +148,13 @@ Pkt4Ptr
 PerfSocket::receive4(uint32_t timeout_sec, uint32_t timeout_usec) {
     Pkt4Ptr pkt = IfaceMgr::instance().receive4(timeout_sec, timeout_usec);
     if (pkt) {
-	try {
+        try {
             pkt->unpack();
-	} catch (const std::exception &e) {
-		ExchangeStats::malformed_pkts_++;
-		std::cout << "Incorrect DHCP packet received"
-			  << e.what() << std::endl;
-	}
+        } catch (const std::exception &e) {
+                ExchangeStats::malformed_pkts_++;
+                std::cout << "Incorrect DHCP packet received"
+                          << e.what() << std::endl;
+        }
     }
     return (pkt);
 }

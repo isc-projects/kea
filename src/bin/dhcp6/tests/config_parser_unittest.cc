@@ -368,8 +368,7 @@ public:
         // deal with sockets here, just check if configuration handling
         // is sane.
 
-        const IfaceMgr::IfaceCollection& ifaces =
-            IfaceMgr::instance().getIfaces();
+        const IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
 
         // There must be some interface detected
         if (ifaces.empty()) {

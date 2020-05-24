@@ -21,6 +21,10 @@
 #include <util/watched_thread.h>
 
 #include <boost/function.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index_container.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
@@ -32,7 +36,6 @@
 namespace isc {
 
 namespace dhcp {
-
 
 /// @brief IfaceMgr exception thrown thrown when interface detection fails.
 class IfaceDetectError : public Exception {
@@ -209,7 +212,7 @@ public:
     /// @brief Returns interface index.
     ///
     /// @return interface index
-    uint16_t getIndex() const { return ifindex_; }
+    uint32_t getIndex() const { return ifindex_; }
 
     /// @brief Returns interface name.
     ///
@@ -455,7 +458,135 @@ private:
     std::vector<uint8_t> read_buffer_;
 };
 
+/// @brief Type definition for the pointer to an @c Iface object.
 typedef boost::shared_ptr<Iface> IfacePtr;
+
+/// @brief Collection of pointers to network interfaces.
+class IfaceCollection {
+public:
+
+    /// @brief Multi index container for network interfaces.
+    ///
+    /// This container allows to search for a network interfaces using
+    /// three indexes:
+    ///  - sequenced: used to access elements in the order they have
+    /// been added to the container.
+    ///  - interface index: used to access an interface using its index.
+    ///  - interface name: used to access an interface using its name.
+    /// Note that indexes and names are unique.
+    typedef boost::multi_index_container<
+        // Container comprises elements of IfacePtr type.
+        IfacePtr,
+        // Here we start enumerating various indexes.
+        boost::multi_index::indexed_by<
+            // Sequenced index allows accessing elements in the same way
+            // as elements in std::list. Sequenced is the index #0.
+            boost::multi_index::sequenced<>,
+            // Start definition of index #1.
+            boost::multi_index::hashed_unique<
+                // Use the interface index as the key.
+                boost::multi_index::const_mem_fun<
+                    Iface, uint32_t, &Iface::getIndex
+                >
+            >,
+            // Start definition of index #2.
+            boost::multi_index::hashed_unique<
+                // Use the interface name as the key.
+                boost::multi_index::const_mem_fun<
+                    Iface, std::string, &Iface::getName
+                >
+            >
+        >
+    > IfaceContainer;
+
+    /// @brief Constructor.
+    IfaceCollection() { }
+
+    /// @brief Destructor.
+    ~IfaceCollection() { }
+
+    /// @brief Begin iterator.
+    ///
+    /// @return The container sequence begin iterator.
+    IfaceContainer::const_iterator begin() const {
+        return (ifaces_container_.begin());
+    }
+
+    /// @brief End iterator.
+    ///
+    /// @return The container sequence end iterator.
+    IfaceContainer::const_iterator end() const {
+        return (ifaces_container_.end());
+    }
+
+    /// @brief Empty predicate.
+    ///
+    /// @return If the container is empty true else false.
+    bool empty() const {
+        return (ifaces_container_.empty());
+    }
+
+    /// @brief Return the number of interfaces.
+    ///
+    /// @return The container size.
+    size_t size() const {
+        return (ifaces_container_.size());
+    }
+
+    /// @brief Clear the collection.
+    void clear() {
+        cache_.reset();
+        ifaces_container_.clear();
+    }
+
+    /// @brief Adds an interface to the collection.
+    ///
+    /// The interface is added at the end of sequence.
+    ///
+    /// @param iface reference to Iface object.
+    void push_back(const IfacePtr& iface) {
+        ifaces_container_.push_back(iface);
+    }
+
+    /// @brief Lookup by interface index.
+    ///
+    /// @param ifindex The index of the interface to find.
+    /// @return The interface with the index or null.
+    IfacePtr getIface(uint32_t ifindex);
+
+    /// @brief Lookup by interface name.
+    ///
+    /// @param ifname The name of the interface to find.
+    /// @return The interface with the name or null.
+    IfacePtr getIface(const std::string& ifname);
+
+private:
+    /// @brief Lookup by interface index.
+    ///
+    /// @param ifindex The index of the interface to find.
+    /// @param need_lock True when the cache operation needs to hold the mutex.
+    /// @return The interface with the index or null.
+    IfacePtr getIfaceInternal(uint32_t ifindex, bool need_lock);
+
+    /// @brief Lookup by interface name.
+    ///
+    /// The mutex must be held when called from a packet processing thread.
+    ///
+    /// @param ifname The name of the interface to find.
+    /// @param need_lock True when the cache operation needs to hold the mutex.
+    /// @return The interface with the name or null.
+    IfacePtr getIfaceInternal(const std::string& ifname, bool need_lock);
+
+    /// @brief The mutex for protecting the cache from concurrent
+    /// access from packet processing threads.
+    std::mutex mutex_;
+
+    /// @brief The last interface returned by a lookup method.
+    IfacePtr cache_;
+
+    /// @brief The container.
+    IfaceContainer ifaces_container_;
+};
 
 /// @brief Forward declaration to the @c IfaceMgr.
 class IfaceMgr;
@@ -506,9 +637,6 @@ public:
     // TODO performance improvement: we may change this into
     //      2 maps (ifindex-indexed and name-indexed) and
     //      also hide it (make it public make tests easier for now)
-
-    /// Type that holds a list of pointers to interfaces.
-    typedef std::list<IfacePtr> IfaceCollection;
 
     /// IfaceMgr is a singleton class. This method returns reference
     /// to its sole instance.
@@ -1264,8 +1392,11 @@ protected:
     // TODO: having 2 maps (ifindex->iface and ifname->iface would)
     //      probably be better for performance reasons
 
-    /// List of available interfaces
+    /// @brief List of available interfaces
     IfaceCollection ifaces_;
+
+    /// @brief Return an error when index search fails.
+    bool fail_on_index_not_found_;
 
     // TODO: Also keep this interface on Iface once interface detection
     // is implemented. We may need it e.g. to close all sockets on

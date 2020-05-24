@@ -15,6 +15,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_filter6_test_utils.h>
 #include <dhcp/tests/packet_queue_testutils.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -328,14 +329,13 @@ public:
                        const bool up, const bool running,
                        const bool inactive4,
                        const bool inactive6) {
-        for (IfaceMgr::IfaceCollection::iterator iface = ifaces_.begin();
-             iface != ifaces_.end(); ++iface) {
-            if ((*iface)->getName() == name) {
-                (*iface)->flag_loopback_ = loopback;
-                (*iface)->flag_up_ = up;
-                (*iface)->flag_running_ = running;
-                (*iface)->inactive4_ = inactive4;
-                (*iface)->inactive6_ = inactive6;
+        for (IfacePtr iface : ifaces_) {
+            if (iface->getName() == name) {
+                iface->flag_loopback_ = loopback;
+                iface->flag_up_ = up;
+                iface->flag_running_ = running;
+                iface->inactive4_ = inactive4;
+                iface->inactive6_ = inactive6;
             }
         }
     }
@@ -921,11 +921,60 @@ TEST_F(IfaceMgrTest, instance) {
     EXPECT_NO_THROW(IfaceMgr::instance());
 }
 
+// Basic tests for Iface inner class.
 TEST_F(IfaceMgrTest, ifaceClass) {
-    // Basic tests for Iface inner class
 
     Iface iface("eth5", 7);
     EXPECT_STREQ("eth5/7", iface.getFullName().c_str());
+
+    EXPECT_THROW_MSG(Iface("foo", -1), OutOfRange,
+                     "Interface index must be in 0..2147483647");
+}
+
+// This test checks the getIface by packet method.
+TEST_F(IfaceMgrTest, getIfaceByPkt) {
+    NakedIfaceMgr ifacemgr;
+    // Create a set of fake interfaces. At the same time, remove the actual
+    // interfaces that have been detected by the IfaceMgr.
+    ifacemgr.createIfaces();
+
+    // Try IPv4 packet by name.
+    Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 1234));
+    IfacePtr iface = ifacemgr.getIface(pkt4);
+    EXPECT_FALSE(iface);
+    pkt4->setIface("eth0");
+    iface = ifacemgr.getIface(pkt4);
+    EXPECT_TRUE(iface);
+    EXPECT_FALSE(pkt4->indexSet());
+
+    // Try IPv6 packet by index.
+    Pkt6Ptr pkt6(new Pkt6(DHCPV6_REPLY, 123456));
+    iface = ifacemgr.getIface(pkt6);
+    EXPECT_FALSE(iface);
+    ASSERT_TRUE(ifacemgr.getIface("eth0"));
+    pkt6->setIndex(ifacemgr.getIface("eth0")->getIndex() + 1);
+    iface = ifacemgr.getIface(pkt6);
+    ASSERT_TRUE(iface);
+
+    // Index has precedence when both name and index are available.
+    EXPECT_EQ("eth1", iface->getName());
+    pkt6->setIface("eth0");
+    iface = ifacemgr.getIface(pkt6);
+    ASSERT_TRUE(iface);
+    EXPECT_EQ("eth1", iface->getName());
+
+    // Not existing name fails.
+    pkt4->setIface("eth2");
+    iface = ifacemgr.getIface(pkt4);
+    EXPECT_FALSE(iface);
+
+    // Not existing index depends on fail_on_index_not_found_.
+    // Currently fail_on_index_not_found_ is false.
+    pkt6->setIndex(3);
+    iface = ifacemgr.getIface(pkt6);
+    ASSERT_TRUE(iface);
+    EXPECT_EQ("eth0", iface->getName());
+    EXPECT_EQ(1, iface->getIndex());
 }
 
 // Test that the IPv4 address can be retrieved for the interface.
@@ -967,6 +1016,21 @@ TEST_F(IfaceMgrTest, ifaceHasAddress) {
     EXPECT_FALSE(iface->hasAddress(IOAddress("2001:db8:1::2")));
 }
 
+// This test checks it is not allowed to add duplicate interfaces.
+TEST_F(IfaceMgrTest, addInterface) {
+    IfaceMgrTestConfig config(true);
+
+    IfacePtr dup_name(new Iface("eth1", 123));
+    EXPECT_THROW_MSG(IfaceMgr::instance().addInterface(dup_name), Unexpected,
+                     "Can't add eth1/123 when eth1/2 already exists.");
+    IfacePtr dup_index(new Iface("eth2", 2));
+    EXPECT_THROW_MSG(IfaceMgr::instance().addInterface(dup_index), Unexpected,
+                     "Can't add eth2/2 when eth1/2 already exists.");
+
+    IfacePtr eth2(new Iface("eth2", 3));
+    EXPECT_NO_THROW(IfaceMgr::instance().addInterface(eth2));
+}
+
 // TODO: Implement getPlainMac() test as soon as interface detection
 // is implemented.
 TEST_F(IfaceMgrTest, getIface) {
@@ -991,10 +1055,8 @@ TEST_F(IfaceMgrTest, getIface) {
 
     cout << "There are " << ifacemgr->getIfacesLst().size()
          << " interfaces." << endl;
-    for (IfaceMgr::IfaceCollection::iterator iface=ifacemgr->getIfacesLst().begin();
-         iface != ifacemgr->getIfacesLst().end();
-         ++iface) {
-        cout << "  " << (*iface)->getFullName() << endl;
+    for (IfacePtr iface : ifacemgr->getIfacesLst()) {
+        cout << "  " << iface->getFullName() << endl;
     }
 
     // Check that interface can be retrieved by ifindex

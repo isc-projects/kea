@@ -774,7 +774,7 @@ TEST_F(CommandOptionsTest, Interface) {
     // here it is called by CommandOptions object internally
     // so this function is covered by the test.
     dhcp::IfaceMgr& iface_mgr = dhcp::IfaceMgr::instance();
-    const dhcp::IfaceMgr::IfaceCollection& ifaces = iface_mgr.getIfaces();
+    const dhcp::IfaceCollection& ifaces = iface_mgr.getIfaces();
     std::string iface_name;
     CommandOptions opt;
     // The local loopback interface should be available.

@@ -12,7 +12,6 @@
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
 #include <util/strutil.h>
-#include <boost/foreach.hpp>
 #include <ctime>
 #include <fstream>
 #include <stdlib.h>
@@ -244,10 +243,8 @@ DUIDFactory::createLL(const uint16_t htype,
 void
 DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier,
                                uint16_t& htype) const {
-    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
-
     // Let's find suitable interface.
-    BOOST_FOREACH(IfacePtr iface, ifaces) {
+    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
         // All the following checks could be merged into one multi-condition
         // statement, but let's keep them separated as perhaps one day
         // we will grow knobs to selectively turn them on or off. Also,

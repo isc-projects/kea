@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,6 @@
 #include <dhcpsrv/cfg_iface.h>
 #include <util/strutil.h>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <algorithm>
 
 using namespace isc::asiolink;
@@ -41,8 +40,7 @@ CfgIface::equals(const CfgIface& other) const {
 
 bool
 CfgIface::multipleAddressesPerInterfaceActive() const {
-    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
-    BOOST_FOREACH(IfacePtr iface, ifaces) {
+    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
         if (iface->countActive4() > 1) {
             return (true);
         }
@@ -172,7 +170,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         // use_bcast is ignored for V6.
         sopen = IfaceMgr::instance().openSockets6(port, error_callback);
     }
-    
+
     if (!sopen) {
         // If no socket were opened, log a warning because the server will
         // not respond to any queries.
@@ -191,8 +189,7 @@ CfgIface::reset() {
 void
 CfgIface::setState(const uint16_t family, const bool inactive,
                    const bool loopback_inactive) const {
-    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
-    BOOST_FOREACH(IfacePtr iface, ifaces) {
+    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
         bool iface_inactive = iface->flag_loopback_ ? loopback_inactive : inactive;
         if (family == AF_INET) {
             iface->inactive4_ = iface_inactive;
@@ -209,7 +206,7 @@ void
 CfgIface::setIfaceAddrsState(const uint16_t family, const bool active,
                              Iface& iface) const {
     // Activate/deactivate all addresses.
-    BOOST_FOREACH(Iface::Address addr, iface.getAddresses()) {
+    for (Iface::Address addr : iface.getAddresses()) {
         if (addr.get().getFamily() == family) {
             iface.setActive(addr.get(), active);
         }
