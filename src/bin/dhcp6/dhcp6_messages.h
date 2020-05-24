@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu May 21 2020 12:11
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Sun May 24 2020 11:35
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -46,6 +46,7 @@ extern const isc::log::MessageID DHCP6_DDNS_REQUEST_SEND_FAILED;
 extern const isc::log::MessageID DHCP6_DDNS_RESPONSE_FQDN_DATA;
 extern const isc::log::MessageID DHCP6_DDNS_SEND_FQDN;
 extern const isc::log::MessageID DHCP6_DEACTIVATE_INTERFACE;
+extern const isc::log::MessageID DHCP6_DECLINE_FAIL;
 extern const isc::log::MessageID DHCP6_DECLINE_FAIL_DUID_MISMATCH;
 extern const isc::log::MessageID DHCP6_DECLINE_FAIL_IAID_MISMATCH;
 extern const isc::log::MessageID DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID;
@@ -94,7 +95,6 @@ extern const isc::log::MessageID DHCP6_OPEN_SOCKET;
 extern const isc::log::MessageID DHCP6_OPEN_SOCKET_FAIL;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DHCP_DISABLED;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DROP_CLASS;
-extern const isc::log::MessageID DHCP6_PACKET_DROP_DUPLICATE;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_PARSE_FAIL;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_SERVERID_MISMATCH;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_UNICAST;
