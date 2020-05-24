@@ -1440,11 +1440,12 @@ if test "x$enable_generate_docs" != xno ; then
     AC_MSG_CHECKING([whether $SPHINXBUILD and $PDFLATEX work])
     ti=`mktemp -d`
     to=`mktemp -d`
+    oldpath=`pwd`
     echo 'hello' > $ti/contents.rst
-    sphinx-build -b latex -C $ti $to > /dev/null 2>&1
-    pushd $to > /dev/null 2>&1
+    $SPHINXBUILD -b latex -C $ti $to > /dev/null 2>&1
+    cd $to > /dev/null 2>&1
     $PDFLATEX -interaction nonstopmode [[pP]]ython.tex > /dev/null 2>&1
-    popd > /dev/null 2>&1
+    cd $oldpath > /dev/null 2>&1
     file $to/[[pP]]ython.pdf | grep PDF > /dev/null 2>&1
     if test $? -ne 0 ; then
       AC_MSG_RESULT([no - disabled building docs in PDF])

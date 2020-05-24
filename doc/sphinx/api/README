@@ -15,3 +15,13 @@ There are several steps needed to document new API command:
    remove those unused keys. The generator will attempt to generate
    boilerplates for it.
 4. Rebuild User's Guide as usual, run in doc/sphinx folder: make
+
+Files in this directory:
+ - README: this file
+ - _template.json: template used by generate-templates
+ - api-files.mk: list of command files for inclusion in Makefiles
+  (build from 'ls [a-z]*.json > api-files.mk')
+ - cmds-list: list of commands, used as the argument of generate-templates
+  (build by 'ls [a-z]*.json | sed 's/\.json//' | sort')
+ - generate-templates: script generating a new command file from the
+  command list (cmds-list) and the template (_template.json)

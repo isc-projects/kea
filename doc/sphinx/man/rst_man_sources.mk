@@ -1,0 +1,10 @@
+rst_man_sources += %reldir%/kea-admin.8.rst
+rst_man_sources += %reldir%/kea-ctrl-agent.8.rst
+rst_man_sources += %reldir%/kea-dhcp4.8.rst
+rst_man_sources += %reldir%/kea-dhcp6.8.rst
+rst_man_sources += %reldir%/kea-dhcp-ddns.8.rst
+rst_man_sources += %reldir%/kea-lfc.8.rst
+rst_man_sources += %reldir%/kea-netconf.8.rst
+rst_man_sources += %reldir%/kea-shell.8.rst
+rst_man_sources += %reldir%/keactrl.8.rst
+rst_man_sources += %reldir%/perfdhcp.8.rst
