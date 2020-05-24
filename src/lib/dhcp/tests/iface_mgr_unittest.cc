@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,7 +40,8 @@ namespace {
 
 // Name of loopback interface detection
 const size_t BUF_SIZE = 32;
-char LOOPBACK[BUF_SIZE] = "lo";
+char LOOPBACK_NAME[BUF_SIZE] = "lo";
+uint32_t LOOPBACK_INDEX = 0;
 
 // Ports used during testing
 const uint16_t PORT1 = 10547;   // V6 socket
@@ -201,14 +202,15 @@ public:
         // Poor man's interface detection.  It will go away as soon as proper
         // interface detection is implemented
         if (if_nametoindex("lo") > 0) {
-            snprintf(LOOPBACK, BUF_SIZE - 1, "lo");
+            snprintf(LOOPBACK_NAME, BUF_SIZE - 1, "lo");
         } else if (if_nametoindex("lo0") > 0) {
-            snprintf(LOOPBACK, BUF_SIZE - 1, "lo0");
+            snprintf(LOOPBACK_NAME, BUF_SIZE - 1, "lo0");
         } else {
             cout << "Failed to detect loopback interface. Neither "
                  << "lo nor lo0 worked. I give up." << endl;
             FAIL();
         }
+        LOOPBACK_INDEX = if_nametoindex(LOOPBACK_NAME);
     }
 
     /// @brief Returns the collection of existing interfaces.
@@ -337,7 +339,6 @@ public:
             }
         }
     }
-
 };
 
 /// @brief A test fixture class for IfaceMgr.
@@ -471,8 +472,8 @@ public:
         IOAddress lo_addr("::1");
         int socket1 = 0, socket2 = 0;
         EXPECT_NO_THROW(
-            socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10547);
-            socket2 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10546);
+            socket1 = ifacemgr->openSocket(LOOPBACK_NAME, lo_addr, 10547);
+            socket2 = ifacemgr->openSocket(LOOPBACK_NAME, lo_addr, 10546);
         );
 
         EXPECT_GE(socket1, 0);
@@ -507,8 +508,8 @@ public:
         sendPkt->repack();
         sendPkt->setRemotePort(10547);
         sendPkt->setRemoteAddr(IOAddress("::1"));
-        sendPkt->setIndex(1);
-        sendPkt->setIface(LOOPBACK);
+        sendPkt->setIndex(LOOPBACK_INDEX);
+        sendPkt->setIface(LOOPBACK_NAME);
 
         // Send the packet.
         EXPECT_EQ(true, ifacemgr->send(sendPkt));
@@ -537,7 +538,6 @@ public:
         ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
     }
 
-
     /// @brief Tests the ability to send and receive DHCPv4 packets
     ///
     /// This test calls @r IfaceMgr::configureDHCPPacketQueue, passing in the
@@ -559,7 +559,8 @@ public:
         IOAddress lo_addr("127.0.0.1");
         int socket1 = 0;
         EXPECT_NO_THROW(
-            socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, DHCP4_SERVER_PORT + 10000);
+            socket1 = ifacemgr->openSocket(LOOPBACK_NAME, lo_addr,
+                                           DHCP4_SERVER_PORT + 10000);
         );
 
         EXPECT_GE(socket1, 0);
@@ -588,8 +589,8 @@ public:
         sendPkt->setLocalPort(DHCP4_SERVER_PORT + 10000 + 1);
         sendPkt->setRemotePort(DHCP4_SERVER_PORT + 10000);
         sendPkt->setRemoteAddr(IOAddress("127.0.0.1"));
-        sendPkt->setIndex(1);
-        sendPkt->setIface(string(LOOPBACK));
+        sendPkt->setIndex(LOOPBACK_INDEX);
+        sendPkt->setIface(string(LOOPBACK_NAME));
         sendPkt->setHops(6);
         sendPkt->setSecs(42);
         sendPkt->setCiaddr(IOAddress("192.0.2.1"));
@@ -844,7 +845,6 @@ public:
 
     /// Holds the invocation counter for ifaceMgrErrorHandler.
     int errors_count_;
-
 };
 
 // We need some known interface to work reliably. Loopback interface is named
@@ -951,7 +951,6 @@ TEST_F(IfaceMgrTest, ifaceGetAddress) {
     // This new address should now be returned.
     EXPECT_TRUE(iface.getAddress4(addr));
     EXPECT_EQ("192.0.2.3", addr.toText());
-
 }
 
 // This test checks if it is possible to check that the specific address is
@@ -997,7 +996,6 @@ TEST_F(IfaceMgrTest, getIface) {
          ++iface) {
         cout << "  " << (*iface)->getFullName() << endl;
     }
-
 
     // Check that interface can be retrieved by ifindex
     IfacePtr tmp = ifacemgr->getIface(102);
@@ -1075,7 +1073,7 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     IOAddress lo_addr("::1");
     int socket1 = 0;
     ASSERT_NO_THROW(
-        socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10547)
+        socket1 = ifacemgr->openSocket(LOOPBACK_NAME, lo_addr, 10547)
     );
     // Socket is open if result is non-negative.
     ASSERT_GE(socket1, 0);
@@ -1132,7 +1130,7 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     IOAddress lo_addr("127.0.0.1");
     int socket1 = 0;
     ASSERT_NO_THROW(
-        socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10067)
+        socket1 = ifacemgr->openSocket(LOOPBACK_NAME, lo_addr, 10067)
     );
     // Socket is open if returned value is non-negative.
     ASSERT_GE(socket1, 0);
@@ -1188,7 +1186,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
     // Create socket #1
     int socket1 = 0;
     ASSERT_NO_THROW(
-        socket1 = ifacemgr->openSocketFromIface(LOOPBACK, PORT1, AF_INET);
+        socket1 = ifacemgr->openSocketFromIface(LOOPBACK_NAME, PORT1, AF_INET);
     );
     ASSERT_GE(socket1, 0);
     init_sockets.push_back(socket1);
@@ -1204,11 +1202,12 @@ TEST_F(IfaceMgrTest, multipleSockets) {
 
     // Get loopback interface. If we don't find one we are unable to run
     // this test but we don't want to fail.
-    IfacePtr iface_ptr = ifacemgr->getIface(LOOPBACK);
+    IfacePtr iface_ptr = ifacemgr->getIface(LOOPBACK_NAME);
     if (iface_ptr == NULL) {
         cout << "Local loopback interface not found. Skipping test. " << endl;
         return;
     }
+    ASSERT_EQ(LOOPBACK_INDEX, iface_ptr->getIndex());
     // Once sockets have been successfully opened, they are supposed to
     // be on the list. Here we start to test if all expected sockets
     // are on the list and no other (unexpected) socket is there.
@@ -1275,17 +1274,17 @@ TEST_F(IfaceMgrTest, sockets6) {
 
     IOAddress lo_addr("::1");
 
-    Pkt6 pkt6(DHCPV6_SOLICIT, 123);
-    pkt6.setIface(LOOPBACK);
+    Pkt6Ptr pkt6(new Pkt6(DHCPV6_SOLICIT, 123));
+    pkt6->setIface(LOOPBACK_NAME);
 
     // Bind multicast socket to port 10547
-    int socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10547);
+    int socket1 = ifacemgr->openSocket(LOOPBACK_NAME, lo_addr, 10547);
     EXPECT_GE(socket1, 0); // socket >= 0
 
     EXPECT_EQ(socket1, ifacemgr->getSocket(pkt6));
 
     // Bind unicast socket to port 10548
-    int socket2 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10548);
+    int socket2 = ifacemgr->openSocket(LOOPBACK_NAME, lo_addr, 10548);
     EXPECT_GE(socket2, 0);
 
     // Removed code for binding socket twice to the same address/port
@@ -1298,7 +1297,7 @@ TEST_F(IfaceMgrTest, sockets6) {
     // Use address that is not assigned to LOOPBACK iface.
     IOAddress invalidAddr("::2");
     EXPECT_THROW(
-        ifacemgr->openSocket(LOOPBACK, invalidAddr, 10547),
+        ifacemgr->openSocket(LOOPBACK_NAME, invalidAddr, 10547),
         SocketConfigError
     );
 
@@ -1318,7 +1317,7 @@ TEST_F(IfaceMgrTest, socketsFromIface) {
     // Open v6 socket on loopback interface and bind to port
     int socket1 = 0;
     EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocketFromIface(LOOPBACK, PORT1, AF_INET6);
+        socket1 = ifacemgr->openSocketFromIface(LOOPBACK_NAME, PORT1, AF_INET6);
     );
     // Socket descriptor must be non-negative integer
     EXPECT_GE(socket1, 0);
@@ -1327,7 +1326,7 @@ TEST_F(IfaceMgrTest, socketsFromIface) {
     // Open v4 socket on loopback interface and bind to different port
     int socket2 = 0;
     EXPECT_NO_THROW(
-        socket2 = ifacemgr->openSocketFromIface(LOOPBACK, PORT2, AF_INET);
+        socket2 = ifacemgr->openSocketFromIface(LOOPBACK_NAME, PORT2, AF_INET);
     );
     // socket descriptor must be non-negative integer
     EXPECT_GE(socket2, 0);
@@ -1430,12 +1429,12 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
     IOAddress mcastAddr("ff02::1:2");
 
     // bind multicast socket to port 10547
-    int socket1 = ifacemgr->openSocket(LOOPBACK, mcastAddr, 10547);
+    int socket1 = ifacemgr->openSocket(LOOPBACK_NAME, mcastAddr, 10547);
     EXPECT_GE(socket1, 0); // socket > 0
 
     // expect success. This address/port is already bound, but
     // we are using SO_REUSEADDR, so we can bind it twice
-    int socket2 = ifacemgr->openSocket(LOOPBACK, mcastAddr, 10547);
+    int socket2 = ifacemgr->openSocket(LOOPBACK_NAME, mcastAddr, 10547);
     EXPECT_GE(socket2, 0);
 
     // there's no good way to test negative case here.
@@ -1508,7 +1507,8 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
     IOAddress lo_addr("127.0.0.1");
     int socket1 = 0;
     EXPECT_NO_THROW(
-        socket1 = iface_mgr->openSocket(LOOPBACK, lo_addr, DHCP4_SERVER_PORT + 10000);
+        socket1 = iface_mgr->openSocket(LOOPBACK_NAME, lo_addr,
+                                        DHCP4_SERVER_PORT + 10000);
     );
 
     // Check that openSocket function was called.
@@ -1548,7 +1548,7 @@ TEST_F(IfaceMgrTest, setPacketFilter6) {
     IOAddress lo_addr("::1");
     int socket1 = 0;
     EXPECT_NO_THROW(
-        socket1 = iface_mgr->openSocket(LOOPBACK, lo_addr,
+        socket1 = iface_mgr->openSocket(LOOPBACK_NAME, lo_addr,
                                         DHCP6_SERVER_PORT + 10000);
     );
     // Check that openSocket function has been actually called on the packet
@@ -1565,9 +1565,7 @@ TEST_F(IfaceMgrTest, setPacketFilter6) {
     // So, let's close the sockets and retry. Now it should succeed.
     iface_mgr->closeSockets();
     EXPECT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
-
 }
-
 
 #if defined OS_LINUX || OS_BSD
 
@@ -1617,7 +1615,7 @@ TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
     // PktFilterInet.
     EXPECT_NO_THROW(iface_mgr1->setMatchingPacketFilter(false));
     // Let's open a loopback socket with handy unpriviliged port number
-    socket1 = iface_mgr1->openSocket(LOOPBACK, lo_addr,
+    socket1 = iface_mgr1->openSocket(LOOPBACK_NAME, lo_addr,
                                      DHCP4_SERVER_PORT + 10000);
 
     EXPECT_GE(socket1, 0);
@@ -1628,7 +1626,7 @@ TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
     // The socket is open and bound. Another attempt to open socket and
     // bind to the same address and port should result in an exception.
     EXPECT_THROW(
-        socket2 = iface_mgr2->openSocket(LOOPBACK, lo_addr,
+        socket2 = iface_mgr2->openSocket(LOOPBACK_NAME, lo_addr,
                                          DHCP4_SERVER_PORT + 10000),
         isc::dhcp::SocketConfigError
     );
@@ -1691,13 +1689,15 @@ TEST_F(IfaceMgrTest, socket4) {
     int socket1 = 0;
 
     EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, DHCP4_SERVER_PORT + 10000);
+        socket1 = ifacemgr->openSocket(LOOPBACK_NAME, lo_addr,
+                                       DHCP4_SERVER_PORT + 10000);
     );
 
     EXPECT_GE(socket1, 0);
 
-    Pkt4 pkt(DHCPDISCOVER, 1234);
-    pkt.setIface(LOOPBACK);
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1234));
+    pkt->setIface(LOOPBACK_NAME);
+    pkt->setIndex(LOOPBACK_INDEX);
 
     // Expect that we get the socket that we just opened.
     EXPECT_EQ(socket1, ifacemgr->getSocket(pkt).sockfd_);
@@ -1725,9 +1725,12 @@ TEST_F(IfaceMgrTest, openSockets4) {
 
     // Expect that the sockets are open on both eth0 and eth1.
     EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(1)->getSockets().size());
     EXPECT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(2)->getSockets().size());
     // Socket shouldn't have been opened on loopback.
     EXPECT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
+    EXPECT_TRUE(ifacemgr.getIface(0)->getSockets().empty());
 }
 
 // This test verifies that IPv4 sockets are open on the loopback interface
@@ -1755,8 +1758,11 @@ TEST_F(IfaceMgrTest, openSockets4Loopback) {
 
     // Expect that the sockets are open on all interfaces.
     EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(1)->getSockets().size());
     EXPECT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(2)->getSockets().size());
     EXPECT_EQ(1, ifacemgr.getIface("lo")->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(0)->getSockets().size());
 }
 
 // This test verifies that the socket is not open on the interface which is
@@ -1773,6 +1779,7 @@ TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
                          FlagRunning(false), FlagInactive4(false),
                          FlagInactive6(false));
     ASSERT_FALSE(IfaceMgr::instance().getIface("eth0")->flag_up_);
+    ASSERT_FALSE(IfaceMgr::instance().getIface(1)->flag_up_);
 
     // Install an error handler before trying to open sockets. This handler
     // should be called when the IfaceMgr fails to open socket on an interface
@@ -1788,13 +1795,15 @@ TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
 
     // There should be no socket on eth0 open, because interface was down.
     EXPECT_TRUE(IfaceMgr::instance().getIface("eth0")->getSockets().empty());
+    EXPECT_TRUE(IfaceMgr::instance().getIface(1)->getSockets().empty());
 
     // Expecting that the socket is open on eth1 because it was up, running
     // and active.
     EXPECT_EQ(2, IfaceMgr::instance().getIface("eth1")->getSockets().size());
+    EXPECT_EQ(2, IfaceMgr::instance().getIface(2)->getSockets().size());
     // Never open socket on loopback interface.
     EXPECT_TRUE(IfaceMgr::instance().getIface("lo")->getSockets().empty());
-
+    EXPECT_TRUE(IfaceMgr::instance().getIface(0)->getSockets().empty());
 }
 
 // This test verifies that the socket is not open on the interface which is
@@ -1817,15 +1826,19 @@ TEST_F(IfaceMgrTest, openSockets4IfaceInactive) {
     // - is inactive
     ifacemgr.setIfaceFlags("eth1", false, true, true, true, false);
     ASSERT_TRUE(ifacemgr.getIface("eth1")->inactive4_);
+    ASSERT_TRUE(ifacemgr.getIface(2)->inactive4_);
     ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, 0));
 
     // The socket on eth0 should be open because interface is up, running and
     // active (not disabled through DHCP configuration, for example).
     EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(1)->getSockets().size());
     // There should be no socket open on eth1 because it was marked inactive.
     EXPECT_TRUE(ifacemgr.getIface("eth1")->getSockets().empty());
+    EXPECT_TRUE(ifacemgr.getIface(2)->getSockets().empty());
     // Sockets are not open on loopback interfaces too.
     EXPECT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
+    EXPECT_TRUE(ifacemgr.getIface(0)->getSockets().empty());
 }
 
 // Test that exception is thrown when trying to bind a new socket to the port
@@ -1850,7 +1863,6 @@ TEST_F(IfaceMgrTest, openSockets4NoErrorHandler) {
     // and bind it to the address in use.
     EXPECT_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, 0),
                  isc::dhcp::SocketConfigError);
-
 }
 
 // Test that the external error handler is called when trying to bind a new
@@ -1890,7 +1902,6 @@ TEST_F(IfaceMgrTest, openSocket4ErrorHandler) {
     // when opening a socket on eth1.
     ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, error_handler));
     EXPECT_EQ(2, errors_count_);
-
 }
 
 // This test verifies that the function correctly checks that the v4 socket is
@@ -1912,9 +1923,12 @@ TEST_F(IfaceMgrTest, hasOpenSocketForAddress4) {
 
     // Expect that the sockets are open on both eth0 and eth1.
     ASSERT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
+    ASSERT_EQ(1, ifacemgr.getIface(1)->getSockets().size());
     ASSERT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
+    ASSERT_EQ(1, ifacemgr.getIface(2)->getSockets().size());
     // Socket shouldn't have been opened on loopback.
     ASSERT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
+    ASSERT_TRUE(ifacemgr.getIface(0)->getSockets().empty());
 
     // Check that there are sockets bound to addresses that we have
     // set for interfaces.
@@ -1927,7 +1941,6 @@ TEST_F(IfaceMgrTest, hasOpenSocketForAddress4) {
     // Check that v4 sockets are open, but no v6 socket is open.
     EXPECT_TRUE(ifacemgr.hasOpenSocket(AF_INET));
     EXPECT_FALSE(ifacemgr.hasOpenSocket(AF_INET6));
-
 }
 
 // This test checks that the sockets are open and bound to link local addresses
@@ -1949,8 +1962,11 @@ TEST_F(IfaceMgrTest, openSockets6LinkLocal) {
 
     // Check that the number of sockets is correct on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(0), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(1), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(2), 0);
 
     // Sockets on eth0 should be bound to link-local and should not be bound
     // to global unicast address, even though this address is configured on
@@ -1996,6 +2012,7 @@ TEST_F(IfaceMgrTest, openSockets6Loopback) {
 
     // Check that the loopback interface has at least an open socket.
     EXPECT_EQ(1, ifacemgr.getIface("lo")->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(0)->getSockets().size());
 
     // This socket should be bound to ::1
     EXPECT_TRUE(ifacemgr.isBound("lo", "::1"));
@@ -2025,10 +2042,13 @@ TEST_F(IfaceMgrTest, openSockets6NoLinkLocal) {
 
     // Check that the number of sockets is correct on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(0), 0);
     // The third parameter specifies that the number of link-local
     // addresses for eth0 is equal to 0.
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 0, 0);
+    checkSocketsCount6(*ifacemgr.getIface(1), 0, 0);
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0, 1);
+    checkSocketsCount6(*ifacemgr.getIface(2), 0, 1);
 
     // There should be no sockets open on eth0 because it neither has
     // link-local nor global unicast addresses.
@@ -2041,7 +2061,6 @@ TEST_F(IfaceMgrTest, openSockets6NoLinkLocal) {
 #if defined OS_LINUX
     EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
 #endif
-
 }
 
 // This test checks that socket is open on the non-multicast-capable
@@ -2066,8 +2085,11 @@ TEST_F(IfaceMgrTest, openSockets6NotMulticast) {
 
     // Check that the number of sockets is correct on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(0), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(1), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(2), 0);
 
     // Sockets on eth0 should be bound to link-local and should not be bound
     // to global unicast address, even though this address is configured on
@@ -2110,8 +2132,11 @@ TEST_F(IfaceMgrTest, openSockets6Unicast) {
 
     // Check that we have correct number of sockets on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(0), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 1); // one unicast address.
+    checkSocketsCount6(*ifacemgr.getIface(1), 1);
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(2), 0);
 
     // eth0 should have two sockets, one bound to link-local, another one
     // bound to unicast address.
@@ -2125,7 +2150,6 @@ TEST_F(IfaceMgrTest, openSockets6Unicast) {
     EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
     EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
 #endif
-
 }
 
 // This test checks that the socket is open and bound to a global unicast
@@ -2155,8 +2179,11 @@ TEST_F(IfaceMgrTest, openSockets6UnicastOnly) {
 
     // Check that we have correct number of sockets on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(0), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 1, 0);
+    checkSocketsCount6(*ifacemgr.getIface(1), 1, 0);
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(2), 0);
 
     // The link-local address is not present on eth0. Therefore, no socket
     // must be bound to this address, nor to multicast address.
@@ -2171,7 +2198,6 @@ TEST_F(IfaceMgrTest, openSockets6UnicastOnly) {
 #if defined OS_LINUX
     EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
 #endif
-
 }
 
 // This test checks that no sockets are open for the interface which is down.
@@ -2213,9 +2239,12 @@ TEST_F(IfaceMgrTest, openSockets6IfaceDown) {
 
     // Check that we have correct number of sockets on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(0), 0);
     // There should be no sockets on eth0 because interface is down.
     ASSERT_TRUE(ifacemgr.getIface("eth0")->getSockets().empty());
+    ASSERT_TRUE(ifacemgr.getIface(1)->getSockets().empty());
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(2), 0);
 
     // eth0 should have no sockets because the interface is down.
     EXPECT_FALSE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
@@ -2228,7 +2257,6 @@ TEST_F(IfaceMgrTest, openSockets6IfaceDown) {
 #if defined OS_LINUX
     EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
 #endif
-
 }
 
 // This test checks that no sockets are open for the interface which is
@@ -2262,9 +2290,12 @@ TEST_F(IfaceMgrTest, openSockets6IfaceInactive) {
 
     // Check that we have correct number of sockets on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface(0), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 1); // one unicast address
+    checkSocketsCount6(*ifacemgr.getIface(1), 1);
     // There should be no sockets on eth1 because interface is inactive
     ASSERT_TRUE(ifacemgr.getIface("eth1")->getSockets().empty());
+    ASSERT_TRUE(ifacemgr.getIface(2)->getSockets().empty());
 
     // eth0 should have one socket bound to a link-local address, another one
     // bound to unicast address.
@@ -2280,7 +2311,6 @@ TEST_F(IfaceMgrTest, openSockets6IfaceInactive) {
 #if defined OS_LINUX
     EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
 #endif
-
 }
 
 // Test that the openSockets6 function does not throw if there are no interfaces
@@ -2339,7 +2369,6 @@ TEST_F(IfaceMgrTest, openSocket6ErrorHandler) {
     // when opening a socket on eth1.
     ASSERT_NO_THROW(ifacemgr.openSockets6(DHCP6_SERVER_PORT, error_handler));
     EXPECT_EQ(2, errors_count_);
-
 }
 
 // This test verifies that the function correctly checks that the v6 socket is
@@ -2374,7 +2403,6 @@ TEST_F(IfaceMgrTest, hasOpenSocketForAddress6) {
     // Check that there is no socket bound to the address which hasn't been
     // configured on any interface.
     EXPECT_FALSE(ifacemgr.hasOpenSocket(IOAddress("fe80::3a60:77ff:feed:1")));
-
 }
 
 // Test the Iface structure itself
@@ -2478,13 +2506,13 @@ TEST_F(IfaceMgrTest, socketInfo) {
 
     // Now let's test if IfaceMgr handles socket info properly
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
-    IfacePtr loopback = ifacemgr->getIface(LOOPBACK);
+    IfacePtr loopback = ifacemgr->getIface(LOOPBACK_NAME);
     ASSERT_TRUE(loopback);
     loopback->addSocket(sock1);
     loopback->addSocket(sock2);
     loopback->addSocket(sock3);
 
-    Pkt6 pkt6(DHCPV6_REPLY, 123456);
+    Pkt6Ptr pkt6(new Pkt6(DHCPV6_REPLY, 123456));
 
     // pkt6 does not have interface set yet
     EXPECT_THROW(
@@ -2493,19 +2521,22 @@ TEST_F(IfaceMgrTest, socketInfo) {
     );
 
     // Try to send over non-existing interface
-    pkt6.setIface("nosuchinterface45");
+    pkt6->setIface("nosuchinterface45");
+    pkt6->setIndex(12345);
     EXPECT_THROW(
         ifacemgr->getSocket(pkt6),
         IfaceNotFound
     );
 
     // This will work
-    pkt6.setIface(LOOPBACK);
+    pkt6->setIface(LOOPBACK_NAME);
+    EXPECT_EQ(9, ifacemgr->getSocket(pkt6));
+    pkt6->setIndex(LOOPBACK_INDEX);
     EXPECT_EQ(9, ifacemgr->getSocket(pkt6));
 
     bool deleted = false;
     EXPECT_NO_THROW(
-        deleted = ifacemgr->getIface(LOOPBACK)->delSocket(9);
+        deleted = ifacemgr->getIface(LOOPBACK_NAME)->delSocket(9);
     );
     EXPECT_EQ(true, deleted);
 
@@ -2516,7 +2547,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
     );
 
     // Repeat for pkt4
-    Pkt4 pkt4(DHCPDISCOVER, 1);
+    Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 1));
 
     // pkt4 does not have interface set yet.
     EXPECT_THROW(
@@ -2525,29 +2556,32 @@ TEST_F(IfaceMgrTest, socketInfo) {
     );
 
     // Try to send over non-existing interface.
-    pkt4.setIface("nosuchinterface45");
+    pkt4->setIface("nosuchinterface45");
+    pkt4->setIndex(12345);
     EXPECT_THROW(
         ifacemgr->getSocket(pkt4),
         IfaceNotFound
     );
 
     // Socket info is set, packet has well defined interface. It should work.
-    pkt4.setIface(LOOPBACK);
+    pkt4->setIface(LOOPBACK_NAME);
+    EXPECT_EQ(7, ifacemgr->getSocket(pkt4).sockfd_);
+    pkt4->setIndex(LOOPBACK_INDEX);
     EXPECT_EQ(7, ifacemgr->getSocket(pkt4).sockfd_);
 
     // Set the local address to check if the socket for this address will
     // be returned.
-    pkt4.setLocalAddr(IOAddress("192.0.2.56"));
+    pkt4->setLocalAddr(IOAddress("192.0.2.56"));
     EXPECT_EQ(7, ifacemgr->getSocket(pkt4).sockfd_);
 
     // Modify the local address and expect that the other socket will be
     // returned.
-    pkt4.setLocalAddr(IOAddress("192.0.2.53"));
+    pkt4->setLocalAddr(IOAddress("192.0.2.53"));
     EXPECT_EQ(8, ifacemgr->getSocket(pkt4).sockfd_);
 
     EXPECT_NO_THROW(
-        ifacemgr->getIface(LOOPBACK)->delSocket(7);
-        ifacemgr->getIface(LOOPBACK)->delSocket(8);
+        ifacemgr->getIface(LOOPBACK_NAME)->delSocket(7);
+        ifacemgr->getIface(LOOPBACK_NAME)->delSocket(8);
     );
 
     // It should throw again, there's no usable socket anymore.
@@ -3177,7 +3211,7 @@ TEST_F(IfaceMgrTest, DISABLED_openUnicastSockets) {
 TEST_F(IfaceMgrTest, unicastDuplicates) {
     NakedIfaceMgr ifacemgr;
 
-    IfacePtr iface = ifacemgr.getIface(LOOPBACK);
+    IfacePtr iface = ifacemgr.getIface(LOOPBACK_NAME);
     if (!iface) {
         cout << "Local loopback interface not found. Skipping test. " << endl;
         return;
@@ -3214,14 +3248,14 @@ TEST_F(IfaceMgrTest, DISABLED_getSocket) {
     IOAddress dst_global("2001:db8:15c::dead:beef");
 
     // Bind loopback address
-    int socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10547);
+    int socket1 = ifacemgr->openSocket(LOOPBACK_NAME, lo_addr, 10547);
     EXPECT_GE(socket1, 0); // socket >= 0
 
     // Bind link-local address
-    int socket2 = ifacemgr->openSocket(LOOPBACK, link_local, 10547);
+    int socket2 = ifacemgr->openSocket(LOOPBACK_NAME, link_local, 10547);
     EXPECT_GE(socket2, 0);
 
-    int socket3 = ifacemgr->openSocket(LOOPBACK, global, 10547);
+    int socket3 = ifacemgr->openSocket(LOOPBACK_NAME, global, 10547);
     EXPECT_GE(socket3, 0);
 
     // Let's make sure those sockets are unique
@@ -3230,17 +3264,18 @@ TEST_F(IfaceMgrTest, DISABLED_getSocket) {
     EXPECT_NE(socket3, socket1);
 
     // Create a packet
-    Pkt6 pkt6(DHCPV6_SOLICIT, 123);
-    pkt6.setIface(LOOPBACK);
+    Pkt6Ptr pkt6(new Pkt6(DHCPV6_SOLICIT, 123));
+    pkt6->setIface(LOOPBACK_NAME);
+    pkt6->setIndex(LOOPBACK_INDEX);
 
     // Check that packets sent to link-local will get socket bound to link local
-    pkt6.setLocalAddr(global);
-    pkt6.setRemoteAddr(dst_global);
+    pkt6->setLocalAddr(global);
+    pkt6->setRemoteAddr(dst_global);
     EXPECT_EQ(socket3, ifacemgr->getSocket(pkt6));
 
     // Check that packets sent to link-local will get socket bound to link local
-    pkt6.setLocalAddr(link_local);
-    pkt6.setRemoteAddr(dst_link_local);
+    pkt6->setLocalAddr(link_local);
+    pkt6->setRemoteAddr(dst_link_local);
     EXPECT_EQ(socket2, ifacemgr->getSocket(pkt6));
 
     // Close sockets here because the following tests will want to

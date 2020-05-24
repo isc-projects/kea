@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -141,6 +141,7 @@ TEST_F(VendorOptsTest, vendorOptionsORO) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -233,6 +234,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptions) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);

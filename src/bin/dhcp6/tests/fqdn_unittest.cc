@@ -186,6 +186,7 @@ public:
                             OptionPtr srvid = OptionPtr()) {
         Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(msg_type, 1234));
         pkt->setIface("eth0");
+        pkt->setIndex(ETH0_INDEX);
         Option6IAPtr ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
         if (msg_type != DHCPV6_REPLY) {
             IOAddress hint("2001:db8:1:1::dead:beef");
@@ -222,6 +223,7 @@ public:
     Pkt6Ptr generateMessageWithIds(const uint8_t msg_type) {
         Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(msg_type, 1234));
         pkt->setIface("eth0");
+        pkt->setIndex(ETH0_INDEX);
         // Generate client-id.
         OptionPtr opt_clientid = generateClientId();
         pkt->addOption(opt_clientid);
@@ -1680,4 +1682,4 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
 
 }
 
-}   // end of anonymous namespace
+} // end of anonymous namespace

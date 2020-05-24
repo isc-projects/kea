@@ -434,6 +434,7 @@ public:
         Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
         pkt->setRemoteAddr(IOAddress("192.0.2.3"));
         pkt->setIface("eth1");
+        pkt->setIndex(ETH1_INDEX);
         // For DISCOVER we don't include server id, because client broadcasts
         // the message to all servers.
         if (msg_type != DHCPDISCOVER) {
@@ -1133,6 +1134,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestTopLevelHostname) {
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
     req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
 
     Pkt4Ptr reply;
     ASSERT_NO_THROW(reply = srv_->processRequest(req));
@@ -1220,7 +1222,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
     req1->setIface("eth1");
-
+    req1->setIndex(ETH1_INDEX);
 
     Pkt4Ptr reply;
     ASSERT_NO_THROW(reply = srv_->processRequest(req1));
@@ -1243,6 +1245,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
     req2->setIface("eth1");
+    req2->setIndex(ETH1_INDEX);
 
     ASSERT_NO_THROW(reply = srv_->processRequest(req2));
 
@@ -1317,6 +1320,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
     req1->setIface("eth1");
+    req1->setIndex(ETH1_INDEX);
 
     Pkt4Ptr reply;
     ASSERT_NO_THROW(reply = srv_->processRequest(req1));
@@ -1338,6 +1342,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
     req2->setIface("eth1");
+    req2->setIndex(ETH1_INDEX);
 
     ASSERT_NO_THROW(reply = srv_->processRequest(req2));
 
@@ -2192,6 +2197,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
 TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
     Dhcp4Client client1(Dhcp4Client::SELECTING);
     client1.setIfaceName("eth0");
+    client1.setIfaceIndex(ETH0_INDEX);
 
     // Load a configuration with D2 enabled
     ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[8], *client1.getServer()));
@@ -2221,6 +2227,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
     // Now let's try with a client on subnet 2.
     Dhcp4Client client2(Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
+    client2.setIfaceIndex(ETH1_INDEX);
 
     // Include the Client FQDN option.
     ASSERT_NO_THROW(client2.includeFQDN((Option4ClientFqdn::FLAG_S

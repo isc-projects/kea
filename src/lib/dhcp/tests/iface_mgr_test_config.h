@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,17 @@
 namespace isc {
 namespace dhcp {
 namespace test {
+
+//@{
+/// @brief Index of the lo fake interface.
+const uint32_t LO_INDEX = 0;
+
+/// @brief Index of the eth0 fake interface.
+const uint32_t ETH0_INDEX = 1;
+
+/// @brief Index of the eth1 fake interface.
+const uint32_t ETH1_INDEX = 2;
+//@}
 
 ///
 /// @name Set of structures describing interface flags.
@@ -109,14 +120,14 @@ struct FlagInactive6 {
 /// The class allows the caller to create custom fake interfaces (with custom
 /// IPv4 and IPv6 addresses, flags etc.), but it also provides a default
 /// test configuration for interfaces as follows:
-/// - lo
+/// - lo #0
 ///   - 127.0.0.1
 ///   - ::1
-/// - eth0
+/// - eth0 #1
 ///   - 10.0.0.1
 ///   - fe80::3a60:77ff:fed5:cdef
 ///   - 2001:db8:1::1
-/// - eth1
+/// - eth1 #2
 ///   - 192.0.2.3
 ///   - fe80::3a60:77ff:fed5:abcd
 ///

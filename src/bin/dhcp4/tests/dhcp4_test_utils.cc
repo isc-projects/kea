@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -483,9 +483,8 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     boost::shared_ptr<Pkt4> rsp;
     // Set the name of the interface on which packet is received.
     req->setIface("eth0");
-    // Set the interface index. It is just a dummy value and will
-    // not be interpreted.
-    req->setIndex(17);
+    // Set the interface index.
+    req->setIndex(ETH0_INDEX);
     // Set the target HW address. This value is normally used to
     // construct the data link layer header.
     req->setRemoteHWAddr(1, 6, dst_mac);
@@ -513,6 +512,7 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     ASSERT_TRUE(createPacketFromBuffer(req, received));
     // Set interface. It is required for the server to generate server id.
     received->setIface("eth0");
+    received->setIndex(ETH0_INDEX);
     if (msg_type == DHCPDISCOVER) {
         ASSERT_NO_THROW(
             rsp = srv->processDiscover(received);
@@ -548,6 +548,7 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
     // Set interface. It is required for the server to generate server id.
     received->setIface("eth0");
+    received->setIndex(ETH0_INDEX);
 
     if (msg_type == DHCPDISCOVER) {
         ASSERT_NO_THROW(rsp = srv->processDiscover(received));
@@ -584,6 +585,7 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
     // Set interface. It is required for the server to generate server id.
     received->setIface("eth0");
+    received->setIndex(ETH0_INDEX);
 
     if (msg_type == DHCPDISCOVER) {
         ASSERT_NO_THROW(rsp = srv->processDiscover(received));

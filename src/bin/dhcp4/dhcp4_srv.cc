@@ -1601,8 +1601,7 @@ Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
     Pkt4Ptr query = ex.getQuery();
 
     if (local_addr.isV4Bcast() || query->isDhcp4o6()) {
-        SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
-        local_addr = sock_info.addr_;
+        local_addr = IfaceMgr::instance().getSocket(query).addr_;
     }
 
     OptionPtr opt_srvid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
@@ -2697,8 +2696,7 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
         // use this address as a source address for the response.
         // Do the same for DHCPv4-over-DHCPv6 exchanges.
         if (local_addr.isV4Bcast() || query->isDhcp4o6()) {
-            SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
-            local_addr = sock_info.addr_;
+            local_addr = IfaceMgr::instance().getSocket(query).addr_;
         }
 
         // We assume that there is an appropriate socket bound to this address

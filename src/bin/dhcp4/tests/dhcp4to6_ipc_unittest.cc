@@ -214,6 +214,7 @@ TEST_F(Dhcp4to6IpcTest, receive) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 1234));
     pkt->addOption(createDHCPv4MsgOption());
     pkt->setIface("eth0");
+    pkt->setIndex(ETH0_INDEX);
     pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
     ASSERT_NO_THROW(pkt->pack());
 
@@ -235,6 +236,7 @@ TEST_F(Dhcp4to6IpcTest, receive) {
     Pkt6Ptr pkt6_received = pkt_received->getPkt6();
     ASSERT_TRUE(pkt6_received);
     EXPECT_EQ("eth0", pkt6_received->getIface());
+    EXPECT_EQ(ETH0_INDEX, pkt6_received->getIndex());
     EXPECT_EQ("2001:db8:1::123", pkt6_received->getRemoteAddr().toText());
 
     // Both DHCP4o6 and encapsulated DHCPv6 packet should have the
@@ -261,6 +263,7 @@ TEST_F(Dhcp4to6IpcTest, receiveMultipleQueries) {
     pkt->addOption(createDHCPv4MsgOption());
     pkt->addOption(createDHCPv4MsgOption());
     pkt->setIface("eth0");
+    pkt->setIndex(ETH0_INDEX);
     pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
     ASSERT_NO_THROW(pkt->pack());
 
@@ -290,6 +293,7 @@ TEST_F(Dhcp4to6IpcTest, receiveNoQueries) {
     // Create message to be sent over IPC without DHCPv4 query option.
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 1234));
     pkt->setIface("eth0");
+    pkt->setIndex(ETH0_INDEX);
     pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
     ASSERT_NO_THROW(pkt->pack());
 
@@ -341,6 +345,7 @@ TEST_F(Dhcp4to6IpcTest, process) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 1234));
     pkt->addOption(opt_msg);
     pkt->setIface("eth0");
+    pkt->setIndex(ETH0_INDEX);
     pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
     ASSERT_NO_THROW(pkt->pack());
 
@@ -360,6 +365,7 @@ TEST_F(Dhcp4to6IpcTest, process) {
     Pkt6Ptr pkt6_received = pkt_received->getPkt6();
     ASSERT_TRUE(pkt6_received);
     EXPECT_EQ("eth0", pkt6_received->getIface());
+    EXPECT_EQ(ETH0_INDEX, pkt6_received->getIndex());
     EXPECT_EQ("2001:db8:1::123", pkt6_received->getRemoteAddr().toText());
 
     // Make sure that the message has been processed.
@@ -373,6 +379,7 @@ TEST_F(Dhcp4to6IpcTest, process) {
     ASSERT_TRUE(pkt6_sent);
     EXPECT_EQ(DHCPV6_DHCPV4_RESPONSE, pkt6_sent->getType());
     EXPECT_EQ("eth0", pkt6_sent->getIface());
+    EXPECT_EQ(ETH0_INDEX, pkt6_sent->getIndex());
     EXPECT_EQ("2001:db8:1::123", pkt6_sent->getRemoteAddr().toText());
 
     // Both DHCP4o6 and encapsulated DHCPv6 packet should have the

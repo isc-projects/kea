@@ -371,7 +371,7 @@ public:
     /// NULL if the buffer is empty.
     uint8_t* getReadBuffer() {
         if (read_buffer_.empty()) {
-            return NULL;
+            return (0);
         }
         return (&read_buffer_[0]);
     }
@@ -576,7 +576,7 @@ public:
     ///
     /// @param ifindex index of searched interface
     ///
-    /// @return interface with requested index (or NULL if no such
+    /// @return interface with requested index (or null if no such
     ///         interface is present)
     ///
     IfacePtr getIface(int ifindex);
@@ -585,9 +585,17 @@ public:
     ///
     /// @param ifname name of searched interface
     ///
-    /// @return interface with requested name (or NULL if no such
+    /// @return interface with requested name (or null if no such
     ///         interface is present)
     IfacePtr getIface(const std::string& ifname);
+
+    /// @brief Returns interface with specified packet
+    ///
+    /// @param pkt packet with interface index and name
+    ///
+    /// @return interface with packet interface index or name
+    ///         (or null if no such interface is present)
+    IfacePtr getIface(const PktPtr& pkt);
 
     /// @brief Returns container with all interfaces.
     ///
@@ -618,8 +626,8 @@ public:
 
     /// @brief Return most suitable socket for transmitting specified IPv6 packet.
     ///
-    /// This method takes Pkt6 (see overloaded implementation that takes
-    /// Pkt4) and chooses appropriate socket to send it. This method
+    /// This method takes Pkt6Ptr (see overloaded implementation that takes
+    /// Pkt4Ptr) and chooses appropriate socket to send it. This method
     /// may throw if specified packet does not have outbound interface specified,
     /// no such interface exists, or specified interface does not have any
     /// appropriate sockets open.
@@ -629,7 +637,7 @@ public:
     /// @return a socket descriptor
     /// @throw SocketNotFound If no suitable socket found.
     /// @throw IfaceNotFound If interface is not set for the packet.
-    uint16_t getSocket(const isc::dhcp::Pkt6& pkt);
+    uint16_t getSocket(const isc::dhcp::Pkt6Ptr& pkt);
 
     /// @brief Return most suitable socket for transmitting specified IPv4 packet.
     ///
@@ -644,7 +652,7 @@ public:
     ///
     /// @return A structure describing a socket.
     /// @throw SocketNotFound if no suitable socket found.
-    SocketInfo getSocket(const isc::dhcp::Pkt4& pkt);
+    SocketInfo getSocket(const isc::dhcp::Pkt4Ptr& pkt);
 
     /// Debugging method that prints out all available interfaces.
     ///
@@ -687,7 +695,7 @@ public:
     /// @param timeout_usec specifies fractional part of the timeout
     /// (in microseconds)
     ///
-    /// @return Pkt4 object representing received packet (or NULL)
+    /// @return Pkt4 object representing received packet (or null)
     Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// @brief Receive IPv4 packets or data from external sockets
@@ -700,7 +708,7 @@ public:
     /// @param timeout_usec specifies fractional part of the timeout
     /// (in microseconds)
     ///
-    /// @return Pkt4 object representing received packet (or NULL)
+    /// @return Pkt4 object representing received packet (or null)
     Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// Opens UDP/IP socket and binds it to address, interface and port.
@@ -811,7 +819,7 @@ public:
     /// to the error handler, e.g. Iface if it was really supposed to do
     /// some more sophisticated error handling.
     ///
-    /// If the error handler is not installed (is NULL), the exception is thrown
+    /// If the error handler is not installed (is null), the exception is thrown
     /// for each failure (default behavior).
     ///
     /// @warning This function does not check if there has been any sockets
@@ -824,7 +832,7 @@ public:
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
     /// @param error_handler A pointer to an error handler function which is
     /// called by the openSockets6 when it fails to open a socket. This
-    /// parameter can be NULL to indicate that the callback should not be used.
+    /// parameter can be null to indicate that the callback should not be used.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
@@ -880,7 +888,7 @@ public:
     /// to the error handler, e.g. Iface if it was really supposed to do
     /// some more sophisticated error handling.
     ///
-    /// If the error handler is not installed (is NULL), the exception is thrown
+    /// If the error handler is not installed (is null), the exception is thrown
     /// for each failure (default behavior).
     ///
     /// @warning This function does not check if there has been any sockets
@@ -894,7 +902,7 @@ public:
     /// @param use_bcast configure sockets to support broadcast messages.
     /// @param error_handler A pointer to an error handler function which is
     /// called by the openSockets4 when it fails to open a socket. This
-    /// parameter can be NULL to indicate that the callback should not be used.
+    /// parameter can be null to indicate that the callback should not be used.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket and callback
     /// function hasn't been specified.
@@ -957,7 +965,7 @@ public:
     /// @param packet_filter A pointer to the new packet filter object to be
     /// used by @c IfaceMgr.
     ///
-    /// @throw InvalidPacketFilter if provided packet filter object is NULL.
+    /// @throw InvalidPacketFilter if provided packet filter object is null.
     /// @throw PacketFilterChangeDenied if there are open IPv4 sockets.
     void setPacketFilter(const PktFilterPtr& packet_filter);
 
@@ -978,7 +986,7 @@ public:
     /// @param packet_filter A pointer to the new packet filter object to be
     /// used by @c IfaceMgr.
     ///
-    /// @throw isc::dhcp::InvalidPacketFilter if specified object is NULL.
+    /// @throw isc::dhcp::InvalidPacketFilter if specified object is null.
     /// @throw isc::dhcp::PacketFilterChangeDenied if there are open IPv6
     /// sockets.
     void setPacketFilter(const PktFilter6Ptr& packet_filter);
@@ -1006,9 +1014,8 @@ public:
     /// @param iface reference to Iface object.
     /// @note This function must be public because it has to be callable
     /// from unit tests.
-    void addInterface(const IfacePtr& iface) {
-        ifaces_.push_back(iface);
-    }
+    /// @throw Unexpected when name or index already exists.
+    void addInterface(const IfacePtr& iface);
 
     /// @brief Checks if there is at least one socket of the specified family
     /// open.
@@ -1159,7 +1166,7 @@ protected:
     /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
     /// interrupted by a signal.
     ///
-    /// @return Pkt4 object representing received packet (or NULL)
+    /// @return Pkt4 object representing received packet (or null)
     Pkt4Ptr receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// @brief Receive IPv4 packets indirectly or data from external sockets.
@@ -1181,7 +1188,7 @@ protected:
     /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
     /// interrupted by a signal.
     ///
-    /// @return Pkt4 object representing received packet (or NULL)
+    /// @return Pkt4 object representing received packet (or null)
     Pkt4Ptr receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// @brief Opens IPv6 socket.
@@ -1220,7 +1227,7 @@ protected:
     /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
     /// interrupted by a signal.
     ///
-    /// @return Pkt6 object representing received packet (or NULL)
+    /// @return Pkt6 object representing received packet (or null)
     Pkt6Ptr receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// @brief Receive IPv6 packets indirectly or data from external sockets.
@@ -1242,7 +1249,7 @@ protected:
     /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
     /// interrupted by a signal.
     ///
-    /// @return Pkt6 object representing received packet (or NULL)
+    /// @return Pkt6 object representing received packet (or null)
     Pkt6Ptr receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
 
@@ -1305,7 +1312,7 @@ private:
     /// @param addr Link-local address to bind the socket to.
     /// @param port Port number to bind socket to.
     /// @param error_handler Error handler function to be called when an
-    /// error occurs during opening a socket, or NULL if exception should
+    /// error occurs during opening a socket, or null if exception should
     /// be thrown upon error.
     bool openMulticastSocket(Iface& iface,
                              const isc::asiolink::IOAddress& addr,

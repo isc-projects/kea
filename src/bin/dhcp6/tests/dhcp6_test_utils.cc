@@ -847,6 +847,7 @@ NakedDhcpv6SrvTest::NakedDhcpv6SrvTest()
     }
 
     valid_iface_ = (*ifaces.begin())->getName();
+    valid_ifindex_ = (*ifaces.begin())->getIndex();
 
     // Let's wipe all existing statistics.
     isc::stats::StatsMgr::instance().removeAll();

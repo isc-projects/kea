@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,10 +77,13 @@ public:
     /// @param msg_type Type of the message to be created.
     /// @param iface Name of the interface on which the message has been
     /// "received" by the server.
+    /// @param ifindex Index of the interface on which the message has been
+    /// "received" by the server.
     ///
     /// @return Generated message.
     Pkt4Ptr createClientMessage(const uint16_t msg_type,
-                                const std::string& iface);
+                                const std::string& iface,
+                                const uint32_t ifindex);
 
     /// @brief Creates simple message from a client.
     ///
@@ -93,9 +96,13 @@ public:
     /// not be NULL.
     /// @param iface Name of the interface on which the message has been
     /// "received" by the server.
+    /// @param ifindex Index of the interface on which the message has been
+    /// "received" by the server.
     ///
     /// @return Configured and parsed message.
-    Pkt4Ptr createClientMessage(const Pkt4Ptr &msg, const std::string& iface);
+    Pkt4Ptr createClientMessage(const Pkt4Ptr &msg,
+                                const std::string& iface,
+                                const uint32_t ifindex);
 
     /// @brief classes the client belongs to
     ///
@@ -159,20 +166,23 @@ DirectClientTest::configureTwoSubnets(const std::string& prefix1,
 }
 
 Pkt4Ptr
-DirectClientTest:: createClientMessage(const uint16_t msg_type,
-                                       const std::string& iface) {
+DirectClientTest::createClientMessage(const uint16_t msg_type,
+                                      const std::string& iface,
+                                      const uint32_t ifindex) {
     // Create a source packet.
     Pkt4Ptr msg = Pkt4Ptr(new Pkt4(msg_type, 1234));
-    return (createClientMessage(msg, iface));
+    return (createClientMessage(msg, iface, ifindex));
 
 }
 
 Pkt4Ptr
 DirectClientTest::createClientMessage(const Pkt4Ptr& msg,
-                                      const std::string& iface) {
+                                      const std::string& iface,
+                                      const uint32_t ifindex) {
     msg->setRemoteAddr(IOAddress("255.255.255.255"));
     msg->addOption(generateClientId());
     msg->setIface(iface);
+    msg->setIndex(ifindex);
 
     // Create copy of this packet by parsing its wire data. Make sure that the
     // local and remote address are set like it was a message sent from the
@@ -180,6 +190,7 @@ DirectClientTest::createClientMessage(const Pkt4Ptr& msg,
     Pkt4Ptr received;
     createPacketFromBuffer(msg, received);
     received->setIface(iface);
+    received->setIndex(ifindex);
     received->setLocalAddr(IOAddress("255.255.255.255"));
     received->setRemoteAddr(IOAddress("0.0.0.0"));
 
@@ -204,10 +215,10 @@ TEST_F(DirectClientTest,  twoSubnets) {
     // address on eth1 belongs to the first subnet.
     ASSERT_NO_FATAL_FAILURE(configureTwoSubnets("192.0.2.0", "10.0.0.0"));
     // Create Discover and simulate reception of this message through eth0.
-    Pkt4Ptr dis = createClientMessage(DHCPDISCOVER, "eth0");
+    Pkt4Ptr dis = createClientMessage(DHCPDISCOVER, "eth0", ETH0_INDEX);
     srv_.fakeReceive(dis);
     // Create Request and simulate reception of this message through eth1.
-    Pkt4Ptr req = createClientMessage(DHCPREQUEST, "eth1");
+    Pkt4Ptr req = createClientMessage(DHCPREQUEST, "eth1", ETH1_INDEX);
     srv_.fakeReceive(req);
 
     // Process clients' messages.
@@ -259,10 +270,10 @@ TEST_F(DirectClientTest, oneSubnet) {
     // connected client is received through interface eth0.
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
     // Create Discover and simulate reception of this message through eth0.
-    Pkt4Ptr dis = createClientMessage(DHCPDISCOVER, "eth0");
+    Pkt4Ptr dis = createClientMessage(DHCPDISCOVER, "eth0", ETH0_INDEX);
     srv_.fakeReceive(dis);
     // Create Request and simulate reception of this message through eth1.
-    Pkt4Ptr req = createClientMessage(DHCPDISCOVER, "eth1");
+    Pkt4Ptr req = createClientMessage(DHCPDISCOVER, "eth1", ETH1_INDEX);
     srv_.fakeReceive(req);
 
     // Process clients' messages.
@@ -347,12 +358,14 @@ TEST_F(DirectClientTest, rebind) {
     // Broadcast Request through an interface for which there is no subnet
     // configured. This message should be discarded by the server.
     client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doRequest());
     EXPECT_FALSE(client.getContext().response_);
 
     // Send Rebind over the correct interface, and make sure we have obtained
     // the same address.
     client.setIfaceName("eth0");
+    client.setIfaceIndex(ETH0_INDEX);
     ASSERT_NO_THROW(client.doRequest());
     ASSERT_TRUE(client.getContext().response_);
     EXPECT_EQ(DHCPACK, static_cast<int>(client.getContext().response_->getType()));

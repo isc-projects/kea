@@ -355,7 +355,7 @@ public:
 
         // Perform 4-way exchange with the server but to not request any
         // specific address in the DHCPDISCOVER message.
-        boost::shared_ptr<IOAddress> hint; 
+        boost::shared_ptr<IOAddress> hint;
         if (!requested_addr.empty()) {
             hint = boost::make_shared<IOAddress>(requested_addr);
         }
@@ -402,6 +402,7 @@ public:
         // client class.
         client_resrv.setHWAddress("aa:bb:cc:dd:ee:fe");
         client_resrv.setIfaceName("eth0");
+        client_resrv.setIfaceIndex(ETH0_INDEX);
 
         ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[config_idx], *client_resrv.getServer()));
 
@@ -421,6 +422,7 @@ public:
         Dhcp4Client client_no_resrv(client_resrv.getServer(), Dhcp4Client::SELECTING);
         client_no_resrv.setHWAddress("aa:bb:cc:dd:ee:ff");
         client_no_resrv.setIfaceName("eth0");
+        client_no_resrv.setIfaceIndex(ETH0_INDEX);
 
         // Let's use the address of 10.0.0.10 as a hint to make sure that the
         // server refuses it in favor of the 192.0.3.10.
@@ -533,6 +535,7 @@ TEST_F(HostTest, globalOverSubnet) {
 
     // Change to subnet 20
     client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
 
     // Subnet 20 usses global HR mode, so the global
     // reservation should be used, rather than the subnet one.

@@ -90,6 +90,16 @@ PktFilterInet6::openSocket(const Iface& iface,
     }
 #endif
 
+#ifdef IPV6_V6ONLY
+    // Set IPV6_V6ONLY to get only IPv6 packets.
+    if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
+                   (char *)&flag, sizeof(flag)) < 0) {
+          close(sock);
+          isc_throw(SocketConfigError, "Can't set IPPROTO_IPV6 option on "
+                    "IPv6 socket.");
+    }
+#endif
+
     if (bind(sock, (struct sockaddr *)&addr6, sizeof(addr6)) < 0) {
         // Get the error message immediately after the bind because the
         // invocation to close() below would override the errno.
@@ -99,6 +109,7 @@ PktFilterInet6::openSocket(const Iface& iface,
                   << addr.toText() << "/port=" << port
                   << ": " << errmsg);
     }
+
 #ifdef IPV6_RECVPKTINFO
     // RFC3542 - a new way
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,

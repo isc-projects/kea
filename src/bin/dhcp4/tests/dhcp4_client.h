@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -337,6 +337,14 @@ public:
         iface_name_ = iface_name;
     }
 
+    /// @brief Sets the interface over which the messages should be sent.
+    ///
+    /// @param iface_index Index of the interface over which the
+    /// messages should be sent.
+    void setIfaceIndex(uint32_t iface_index) {
+        iface_index_ = iface_index;
+    }
+
     /// @brief Sets client state.
     ///
     /// Depending on the current state the client's behavior is different
@@ -483,8 +491,11 @@ private:
     /// @brief Current client identifier.
     ClientIdPtr clientid_;
 
-    /// @brief Interface to be used to send the messages.
+    /// @brief Interface to be used to send the messages (name).
     std::string iface_name_;
+
+    /// @brief Interface to be used to send the messages (index).
+    uint32_t iface_index_;
 
     /// @brief Relay address to use.
     asiolink::IOAddress relay_addr_;

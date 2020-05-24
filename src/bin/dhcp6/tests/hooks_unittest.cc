@@ -1670,6 +1670,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6Select) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface(valid_iface_);
+    sol->setIndex(valid_ifindex_);
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -1754,6 +1755,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SselectChange) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface(valid_iface_);
+    sol->setIndex(valid_ifindex_);
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -2727,6 +2729,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Renew) {
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
     req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
@@ -2830,6 +2833,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Renew) {
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
     req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
@@ -2932,6 +2936,7 @@ TEST_F(HooksDhcpv6SrvTest, skipLease6Renew) {
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
     req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
@@ -3855,6 +3860,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Rebind) {
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REBIND, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
     req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr rebound_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
@@ -3953,6 +3959,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Rebind) {
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REBIND, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
     req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr rebound_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
@@ -4053,6 +4060,7 @@ TEST_F(HooksDhcpv6SrvTest, skipLease6Rebind) {
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REBIND, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
     req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr rebound_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
@@ -4762,6 +4770,7 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface(valid_iface_);
+    sol->setIndex(valid_ifindex_);
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -4843,6 +4852,7 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier_hwaddr) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface(valid_iface_);
+    sol->setIndex(valid_ifindex_);
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);

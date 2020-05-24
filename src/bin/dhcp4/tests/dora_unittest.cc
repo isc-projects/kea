@@ -2131,6 +2131,7 @@ TEST_F(DORATest, customServerIdentifier) {
     // Repeat the test for different subnet.
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
+    client2.setIfaceIndex(ETH1_INDEX);
 
     ASSERT_NO_THROW(client2.doDORA());
     ASSERT_TRUE(client2.getContext().response_);

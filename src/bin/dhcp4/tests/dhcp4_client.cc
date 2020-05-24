@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/lease.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <util/range_utilities.h>
@@ -23,7 +24,7 @@ namespace test {
 
 Dhcp4Client::Configuration::Configuration()
     : routers_(), dns_servers_(), log_servers_(), quotes_servers_(),
-      serverid_("0.0.0.0"), siaddr_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
+      serverid_("0.0.0.0"), siaddr_(IOAddress::IPV4_ZERO_ADDRESS()) {
     reset();
 }
 
@@ -33,8 +34,8 @@ Dhcp4Client::Configuration::reset() {
     dns_servers_.clear();
     log_servers_.clear();
     quotes_servers_.clear();
-    serverid_ = asiolink::IOAddress("0.0.0.0");
-    siaddr_ = asiolink::IOAddress::IPV4_ZERO_ADDRESS();
+    serverid_ = IOAddress("0.0.0.0");
+    siaddr_ = IOAddress::IPV4_ZERO_ADDRESS();
     sname_.clear();
     boot_file_name_.clear();
     lease_ = Lease4();
@@ -48,6 +49,7 @@ Dhcp4Client::Dhcp4Client(const Dhcp4Client::State& state) :
     hwaddr_(generateHWAddr()),
     clientid_(),
     iface_name_("eth0"),
+    iface_index_(ETH0_INDEX),
     relay_addr_("192.0.2.2"),
     requested_options_(),
     server_facing_relay_addr_("10.0.0.2"),
@@ -67,6 +69,7 @@ Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,
     hwaddr_(generateHWAddr()),
     clientid_(),
     iface_name_("eth0"),
+    iface_index_(ETH0_INDEX),
     relay_addr_("192.0.2.2"),
     requested_options_(),
     server_facing_relay_addr_("10.0.0.2"),
@@ -77,7 +80,7 @@ Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,
 }
 
 void
-Dhcp4Client::addRequestedAddress(const asiolink::IOAddress& addr) {
+Dhcp4Client::addRequestedAddress(const IOAddress& addr) {
     if (context_.query_) {
         Option4AddrLstPtr opt(new Option4AddrLst(DHO_DHCP_REQUESTED_ADDRESS,
                                                  addr));
@@ -213,8 +216,7 @@ Dhcp4Client::applyConfiguration() {
 }
 
 void
-Dhcp4Client::createLease(const asiolink::IOAddress& addr,
-                         const uint32_t valid_lft) {
+Dhcp4Client::createLease(const IOAddress& addr, const uint32_t valid_lft) {
     Lease4 lease(addr, hwaddr_, 0, 0, valid_lft,
                  time(NULL), 0, false, false, "");
     config_.lease_ = lease;
@@ -540,6 +542,7 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
     msg_copy->setRemoteAddr(msg->getLocalAddr());
     msg_copy->setLocalAddr(dest_addr_);
     msg_copy->setIface(iface_name_);
+    msg_copy->setIndex(iface_index_);
     // Copy classes
     const ClientClasses& classes = msg->getClasses();
     for (ClientClasses::const_iterator cclass = classes.cbegin();

@@ -217,6 +217,7 @@ public:
         // and the fake eth0 interface has IPv4 address matching the subnet
         // currently configured for this test.
         dis->setIface("eth1");
+        dis->setIndex(ETH1_INDEX);
         return (dis);
     }
 
@@ -1594,6 +1595,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     sol->setRemoteAddr(IOAddress("192.0.2.1"));
     sol->setIface("eth1");
+    sol->setIndex(ETH1_INDEX);
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -1675,6 +1677,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     sol->setRemoteAddr(IOAddress("192.0.2.1"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -1714,6 +1717,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedDiscover) {
 
     Dhcp4Client client(Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDiscover());
 
     // Make sure that we received a response
@@ -1789,6 +1793,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     req->setYiaddr(addr);
     req->setCiaddr(addr); // client's address
     req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
     req->setHWAddr(hwaddr2);
 
     req->addOption(clientid);
@@ -1891,6 +1896,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     req->setYiaddr(addr);
     req->setCiaddr(addr); // client's address
     req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
     req->setHWAddr(hwaddr2);
 
     req->addOption(clientid);
@@ -1929,6 +1935,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
 
     Dhcp4Client client(Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
 
     // Make sure that we received a response
@@ -2048,6 +2055,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     // Create first client and perform DORA.
     Dhcp4Client client1(Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
+    client1.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client1.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
 
     // We should be offered an address but the DHCPACK should not arrive
@@ -2086,6 +2094,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     // server while the previous packet is parked.
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
+    client2.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.101"))));
 
     // The DHCPOFFER should have been returned but not DHCPACK, as this
@@ -2283,6 +2292,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRelease) {
 
     Dhcp4Client client(Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
 
     // Make sure that we received a response

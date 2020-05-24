@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -366,6 +366,7 @@ public:
             query->setRemoteAddr(IOAddress(remote_addr));
             query->addOption(clientid);
             query->setIface("eth1");
+            query->setIndex(ETH1_INDEX);
             query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
             return (query);
     }
@@ -533,16 +534,19 @@ TEST_F(ClassifyTest, required) {
     query1->setRemoteAddr(IOAddress("fe80::abcd"));
     query1->addOption(clientid);
     query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
     query1->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
     Pkt6Ptr query2(new Pkt6(DHCPV6_SOLICIT, 1234));
     query2->setRemoteAddr(IOAddress("fe80::abcd"));
     query2->addOption(clientid);
     query2->setIface("eth1");
+    query2->setIndex(ETH1_INDEX);
     query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     Pkt6Ptr query3(new Pkt6(DHCPV6_SOLICIT, 1234));
     query3->setRemoteAddr(IOAddress("fe80::abcd"));
     query3->addOption(clientid);
     query3->setIface("eth1");
+    query3->setIndex(ETH1_INDEX);
     query3->addOption(generateIA(D6O_IA_NA, 345, 1500, 3000));
 
     // Create and add an ORO option to the first 2 queries
@@ -633,16 +637,19 @@ TEST_F(ClassifyTest, requiredClassification) {
     query1->setRemoteAddr(IOAddress("fe80::abcd"));
     query1->addOption(clientid);
     query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
     query1->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
     Pkt6Ptr query2(new Pkt6(DHCPV6_SOLICIT, 1234));
     query2->setRemoteAddr(IOAddress("fe80::abcd"));
     query2->addOption(clientid);
     query2->setIface("eth1");
+    query2->setIndex(ETH1_INDEX);
     query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     Pkt6Ptr query3(new Pkt6(DHCPV6_SOLICIT, 1234));
     query3->setRemoteAddr(IOAddress("fe80::abcd"));
     query3->addOption(clientid);
     query3->setIface("eth1");
+    query3->setIndex(ETH1_INDEX);
     query3->addOption(generateIA(D6O_IA_NA, 345, 1500, 3000));
 
     // Create and add an ORO option to the first 2 queries
@@ -1162,6 +1169,7 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     query1->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     query1->addOption(clientid1);
     query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
 
     // First pool requires reservation so the second will be used
     srv.classifyPacket(query1);
@@ -1190,6 +1198,7 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     query2->addOption(clientid2);
     query2->setIface("eth1");
+    query2->setIndex(ETH1_INDEX);
 
     // Now the first pool will be used
     srv.classifyPacket(query2);
@@ -1433,16 +1442,19 @@ TEST_F(ClassifyTest, member) {
     query1->setRemoteAddr(IOAddress("fe80::abcd"));
     query1->addOption(clientid);
     query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
     query1->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
     Pkt6Ptr query2(new Pkt6(DHCPV6_SOLICIT, 1234));
     query2->setRemoteAddr(IOAddress("fe80::abcd"));
     query2->addOption(clientid);
     query2->setIface("eth1");
+    query2->setIndex(ETH1_INDEX);
     query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     Pkt6Ptr query3(new Pkt6(DHCPV6_SOLICIT, 1234));
     query3->setRemoteAddr(IOAddress("fe80::abcd"));
     query3->addOption(clientid);
     query3->setIface("eth1");
+    query3->setIndex(ETH1_INDEX);
     query3->addOption(generateIA(D6O_IA_NA, 345, 1500, 3000));
 
     // Create and add an ORO option to queries

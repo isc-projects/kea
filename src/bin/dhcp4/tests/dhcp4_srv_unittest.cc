@@ -159,7 +159,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     req->setLocalAddr(IOAddress("192.0.2.5"));
     req->setLocalPort(1001);
     req->setIface("eth1");
-    req->setIndex(1);
+    req->setIndex(ETH1_INDEX);
 
     // Set remote port (it will be used in the next test).
     req->setRemotePort(1234);
@@ -188,7 +188,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     // We will send response over the same interface which was used to receive
     // query.
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(1, resp->getIndex());
+    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
 
     // Let's do another test and set other fields: ciaddr and
     // flags. By doing it, we want to make sure that the relay
@@ -239,7 +239,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelayPort) {
     req->setLocalAddr(IOAddress("192.0.2.5"));
     req->setLocalPort(1001);
     req->setIface("eth1");
-    req->setIndex(1);
+    req->setIndex(ETH1_INDEX);
 
     // Set remote port.
     req->setRemotePort(1234);
@@ -283,7 +283,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelayPort) {
     // We will send response over the same interface which was used to receive
     // query.
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(1, resp->getIndex());
+    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
 }
 
 // This test verifies that it is possible to configure the server to use
@@ -321,7 +321,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     req->setLocalAddr(IOAddress("192.0.2.5"));
     req->setLocalPort(1001);
     req->setIface("eth1");
-    req->setIndex(1);
+    req->setIndex(ETH1_INDEX);
 
     // Create the exchange using the req.
     Dhcpv4Exchange ex = createExchange(req);
@@ -367,7 +367,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
 
     EXPECT_EQ("192.0.2.5", resp->getLocalAddr().toText());
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(1, resp->getIndex());
+    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
 }
 
 // This test verifies that the destination address of the response
@@ -393,7 +393,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelaySendToSourceTestingModeEnabled) {
     req->setLocalAddr(IOAddress("192.0.2.5"));
     req->setLocalPort(1001);
     req->setIface("eth1");
-    req->setIndex(1);
+    req->setIndex(ETH1_INDEX);
 
     // Set remote address and port.
     req->setRemoteAddr(IOAddress("192.0.2.1"));
@@ -451,7 +451,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
     req->setLocalPort(DHCP4_SERVER_PORT);
     // Set the interface. The response should be sent over the same interface.
     req->setIface("eth1");
-    req->setIndex(1);
+    req->setIndex(ETH1_INDEX);
 
     // Create the exchange using the req.
     Dhcpv4Exchange ex = createExchange(req);
@@ -481,8 +481,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
     // The interface data should match the data in the query.
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(1, resp->getIndex());
-
+    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
 }
 
 // This test verifies that the destination address of the response message
@@ -516,7 +515,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewSendToSourceTestingModeEnabled) {
     req->setLocalPort(DHCP4_SERVER_PORT);
     // Set the interface. The response should be sent over the same interface.
     req->setIface("eth1");
-    req->setIndex(1);
+    req->setIndex(ETH1_INDEX);
     // Set remote address.
     req->setRemoteAddr(IOAddress("192.0.2.1"));
 
@@ -573,7 +572,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
     req->setLocalPort(DHCP4_SERVER_PORT);
     // Set the interface. The response should be sent via the same interface.
     req->setIface("eth1");
-    req->setIndex(1);
+    req->setIndex(ETH1_INDEX);
 
     // Create the exchange using the req.
     Dhcpv4Exchange ex = createExchange(req);
@@ -586,7 +585,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
     resp->setHops(req->getHops());
 
     // We want to test the case, when the server (packet filter) doesn't support
-    // ddirect responses to the client which doesn't have an address yet. In
+    // direct responses to the client which doesn't have an address yet. In
     // case, the server should send its response to the broadcast address.
     // We can control whether the current packet filter returns that its support
     // direct responses or not.
@@ -615,7 +614,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
     // The response should be sent via the same interface through which
     // query has been received.
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(1, resp->getIndex());
+    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
 
     // We also want to test the case when the server has capability to
     // respond directly to the client which is not configured. Server
@@ -658,7 +657,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelectSendToSourceTestingModeEnabled) {
     req->setLocalPort(DHCP4_SERVER_PORT);
     // Set the interface. The response should be sent via the same interface.
     req->setIface("eth1");
-    req->setIndex(1);
+    req->setIndex(ETH1_INDEX);
     // Set remote address.
     req->setRemoteAddr(IOAddress("192.0.2.1"));
 
@@ -717,7 +716,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
     req->setLocalPort(DHCP4_SERVER_PORT);
     // Set the interface. The response should be sent via the same interface.
     req->setIface("eth1");
-    req->setIndex(1);
+    req->setIndex(ETH1_INDEX);
 
     // Let's set the broadcast flag.
     req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
@@ -749,7 +748,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
     // The response should be sent via the same interface through which
     // query has been received.
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(1, resp->getIndex());
+    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
 
 }
 
@@ -773,7 +772,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcastSendToSourceTestingModeEnabled
     req->setLocalPort(DHCP4_SERVER_PORT);
     // Set the interface. The response should be sent via the same interface.
     req->setIface("eth1");
-    req->setIndex(1);
+    req->setIndex(ETH1_INDEX);
     // Set remote address.
     req->setRemoteAddr(IOAddress("192.0.2.1"));
 
@@ -1186,6 +1185,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -1253,6 +1253,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverValidLifetime) {
         OptionPtr clientid = generateClientId();
         dis->addOption(clientid);
         dis->setIface("eth1");
+        dis->setIndex(ETH1_INDEX);
 
         // Add dhcp-lease-time option.
         if (test.hint) {
@@ -1405,6 +1406,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
 
     // Iterate over the test scenarios.
     for (auto test = tests.begin(); test != tests.end(); ++test) {
@@ -1521,6 +1523,7 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
 
     // Iterate over the test scenarios.
     for (auto test = tests.begin(); test != tests.end(); ++test) {
@@ -1593,6 +1596,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
     dis->addOption(clientid);
     dis->setYiaddr(hint);
     dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -1638,8 +1642,11 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
 
     // Assign interfaces
     dis1->setIface("eth1");
+    dis1->setIndex(ETH1_INDEX);
     dis2->setIface("eth1");
+    dis2->setIndex(ETH1_INDEX);
     dis3->setIface("eth1");
+    dis3->setIndex(ETH1_INDEX);
 
     // Different client-id sizes
     OptionPtr clientid1 = generateClientId(4); // length 4
@@ -1700,6 +1707,7 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv.processDiscover(dis);
@@ -1736,6 +1744,7 @@ TEST_F(Dhcpv4SrvTest, RequestNoTimers) {
     OptionPtr clientid = generateClientId();
     req->addOption(clientid);
     req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
 
     // Recreate a subnet but set T1 and T2 to "unspecified".
     subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
@@ -1775,6 +1784,7 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
 
     // Pass it to the server and get ACK
     Pkt4Ptr ack = srv.processRequest(dis);
@@ -1848,6 +1858,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     req->setYiaddr(addr);
     req->setCiaddr(addr); // client's address
     req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
     req->setHWAddr(hwaddr2);
 
     req->addOption(clientid);
@@ -1940,6 +1951,7 @@ void prepare(struct ctx& c) {
     c.req->setYiaddr(c.addr);
     c.req->setCiaddr(c.addr); // client's address
     c.req->setIface("eth0");
+    c.req->setIndex(ETH0_INDEX);
     c.req->setHWAddr(c.hwaddr);
 
     c.req->addOption(c.clientid);
@@ -2438,6 +2450,7 @@ TEST_F(Dhcpv4SrvTest, siaddrDefault) {
     dis->addOption(clientid);
     dis->setYiaddr(hint);
     dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -2462,6 +2475,7 @@ TEST_F(Dhcpv4SrvTest, siaddr) {
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -2519,6 +2533,7 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -2580,6 +2595,7 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -2600,8 +2616,6 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     std::memcpy(filename_buf, filename.c_str(), filename.size());
     EXPECT_EQ(0, std::memcmp(filename_buf, &offer->getFile()[0], Pkt4::MAX_FILE_LEN));
 }
-
-
 
 // Checks if client packets are classified properly using match expressions.
 TEST_F(Dhcpv4SrvTest, matchClassification) {
@@ -2645,14 +2659,17 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     query1->setRemoteAddr(IOAddress("192.0.2.1"));
     query1->addOption(clientid);
     query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
     Pkt4Ptr query2(new Pkt4(DHCPDISCOVER, 1234));
     query2->setRemoteAddr(IOAddress("192.0.2.1"));
     query2->addOption(clientid);
     query2->setIface("eth1");
+    query2->setIndex(ETH1_INDEX);
     Pkt4Ptr query3(new Pkt4(DHCPDISCOVER, 1234));
     query3->setRemoteAddr(IOAddress("192.0.2.1"));
     query3->addOption(clientid);
     query3->setIface("eth1");
+    query3->setIndex(ETH1_INDEX);
 
     // Create and add a PRL option to the first 2 queries
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -2840,6 +2857,7 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a PRL option to the query
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -2913,6 +2931,7 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a PRL option to the query
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -2985,6 +3004,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a PRL option to the query
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -3067,6 +3087,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Do not add a PRL
     OptionPtr prl = query->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST);
@@ -3131,6 +3152,7 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setCiaddr(IOAddress("192.0.2.1"));
     dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -3199,6 +3221,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setCiaddr(IOAddress("192.0.2.1"));
     dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -3266,6 +3289,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setCiaddr(IOAddress("192.0.2.1"));
     dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -3321,6 +3345,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyUnknown) {
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setCiaddr(IOAddress("192.0.2.1"));
     dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -3384,6 +3409,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a private option with code 234
     OptionBuffer buf;
@@ -3453,6 +3479,7 @@ TEST_F(Dhcpv4SrvTest, prlPersistency) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a PRL option for another option
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -3537,6 +3564,7 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
     dis->setHops(1);
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
@@ -3622,6 +3650,7 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
     dis->setHops(1);
     dis->setGiaddr(IOAddress("192.0.5.1"));
     OptionPtr clientid = generateClientId();
@@ -3685,6 +3714,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
     dis->setHops(1);
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
@@ -3803,6 +3833,7 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
     dis->setHops(1);
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
@@ -3867,6 +3898,7 @@ TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
     pkt->setRemoteAddr(IOAddress("0.0.0.0"));
     pkt->setLocalAddr(IOAddress("192.0.2.3"));
     pkt->setIface("eth1");
+    pkt->setIndex(ETH1_INDEX);
     EXPECT_TRUE(srv.accept(pkt));
 
     // Let's set hops and check that the message is still accepted as
@@ -3892,6 +3924,7 @@ TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
     // For eth0, there is no subnet configured. Such message is expected
     // to be silently dropped.
     pkt->setIface("eth0");
+    pkt->setIndex(ETH0_INDEX);
     EXPECT_FALSE(srv.accept(pkt));
 
     // But, if the message is unicast it should be accepted, even though

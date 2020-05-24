@@ -169,6 +169,7 @@ TEST_F(Dhcp6to4IpcTest, receive) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_RESPONSE, 1234));
     pkt->addOption(createDHCPv4MsgOption());
     pkt->setIface("eth0");
+    pkt->setIndex(ETH0_INDEX);
     pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
     ASSERT_NO_THROW(pkt->pack());
 
@@ -192,6 +193,7 @@ TEST_F(Dhcp6to4IpcTest, receive) {
     EXPECT_EQ(forwarded->getType(), pkt->getType());
     EXPECT_TRUE(forwarded->getOption(D6O_DHCPV4_MSG));
     EXPECT_EQ("eth0", forwarded->getIface());
+    EXPECT_EQ(ETH0_INDEX, forwarded->getIndex());
     EXPECT_EQ("2001:db8:1::123", forwarded->getRemoteAddr().toText());
 
     // Verify statistics
@@ -236,6 +238,7 @@ TEST_F(Dhcp6to4IpcTest, DISABLED_receiveRelayed) {
     relay.hop_count_ = 1;
     pkt->relay_info_.push_back(relay);
     pkt->setIface("eth0");
+    pkt->setIndex(ETH0_INDEX);
     pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
     ASSERT_NO_THROW(pkt->pack());
 
@@ -255,6 +258,7 @@ TEST_F(Dhcp6to4IpcTest, DISABLED_receiveRelayed) {
     EXPECT_EQ(forwarded->getType(), pkt->getType());
     EXPECT_TRUE(forwarded->getOption(D6O_DHCPV4_MSG));
     EXPECT_EQ("eth0", forwarded->getIface());
+    EXPECT_EQ(ETH0_INDEX, forwarded->getIndex());
     EXPECT_EQ("2001:db8:1::123", forwarded->getRemoteAddr().toText());
     EXPECT_EQ(DHCP6_CLIENT_PORT, forwarded->getRemotePort());
 
@@ -287,6 +291,7 @@ TEST_F(Dhcp6to4IpcTest, clientPort) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_RESPONSE, 1234));
     pkt->addOption(createDHCPv4MsgOption());
     pkt->setIface("eth0");
+    pkt->setIndex(ETH0_INDEX);
     pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
     ASSERT_NO_THROW(pkt->pack());
 

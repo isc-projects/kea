@@ -226,6 +226,7 @@ TEST_F(VendorOptsTest, vendorOptionsORO) {
     dis->addOption(clientid);
     // Set interface. It is required by the server to generate server id.
     dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
 
     // Pass it to the server and get an advertise
     Pkt4Ptr offer = srv.processDiscover(dis);
@@ -317,6 +318,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptions) {
     dis->addOption(clientid);
     // Set interface. It is required by the server to generate server id.
     dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
 
     // Let's add a vendor-option (vendor-id=4491).
     OptionPtr vendor(new OptionVendor(Option::V4, 4491));
@@ -557,6 +559,7 @@ TEST_F(VendorOptsTest, option43LastResort) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a PRL option to the query
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -631,6 +634,7 @@ TEST_F(VendorOptsTest, option43BadRaw) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a vendor-encapsulated-options (code 43)
     // with not compatible (not parsable as suboptions) content
@@ -721,6 +725,7 @@ TEST_F(VendorOptsTest, option43FailRaw) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a vendor-encapsulated-options (code 43)
     // with not compatible (not parsable as suboptions) content
@@ -791,6 +796,7 @@ TEST_F(VendorOptsTest, option43RawGlobal) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a vendor-encapsulated-options (code 43)
     // with not compatible (not parsable as suboptions) content
@@ -883,6 +889,7 @@ TEST_F(VendorOptsTest, option43RawClass) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a vendor-encapsulated-options (code 43)
     // with not compatible (not parsable as suboptions) content
@@ -982,6 +989,7 @@ TEST_F(VendorOptsTest, option43Class) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a vendor-encapsulated-options (code 43)
     OptionBuffer buf;
@@ -1113,6 +1121,7 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a vendor-encapsulated-options (code 43)
     OptionBuffer buf;
@@ -1250,6 +1259,7 @@ TEST_F(VendorOptsTest, option43Classes) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a vendor-encapsulated-options (code 43)
     OptionBuffer buf;
@@ -1594,6 +1604,7 @@ TEST_F(VendorOptsTest, vendorOpsSubOption0) {
     OptionPtr clientid = generateClientId();
     query->addOption(clientid);
     query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
 
     // Create and add a PRL option to the query
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,

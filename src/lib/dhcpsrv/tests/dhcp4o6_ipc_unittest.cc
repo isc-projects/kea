@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -167,6 +167,7 @@ Dhcp4o6IpcBaseTest::createDHCPv4o6Message(uint16_t msg_type,
     // this test includes two interfaces: "eth0" and "eth1". Therefore,
     // we pick one or another, depending on the index of the iteration.
     pkt->setIface(concatenate("eth", postfix % 2));
+    pkt->setIndex(ETH0_INDEX + postfix % 2);
 
     // The remote address of the sender of the DHCPv6 packet is carried
     // between the servers in the dedicated option. We use different
@@ -286,6 +287,7 @@ Dhcp4o6IpcBaseTest::testSendReceive(uint16_t iterations_num,
 
         // Check that the interface is correct.
         EXPECT_EQ(concatenate("eth", i % 2), pkt_received->getIface());
+        EXPECT_EQ(ETH0_INDEX + i % 2, pkt_received->getIndex());
 
         // Check that the address conveyed is correct.
         EXPECT_EQ(concatenate("2001:db8:1::", i),
@@ -327,6 +329,7 @@ Dhcp4o6IpcBaseTest::testReceiveError(const Pkt6Ptr& pkt) {
     ASSERT_NO_THROW(ipc_dest.open());
 
     pkt->setIface("eth0");
+    pkt->setIndex(ETH0_INDEX);
     pkt->setRemoteAddr(IOAddress("2001:db8:1::1"));
     pkt->setRemotePort(TEST_PORT);
     pkt->addOption(createDHCPv4MsgOption(TestIpc::ENDPOINT_TYPE_V6));

@@ -382,6 +382,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -474,6 +475,7 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -522,6 +524,7 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     sol->addOption(generateIA(D6O_IA_PD, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -561,6 +564,7 @@ TEST_F(Dhcpv6SrvTest, defaultLifetimeSolicit) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -602,6 +606,7 @@ TEST_F(Dhcpv6SrvTest, hintZeroLifetimeSolicit) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     OptionPtr iapd = generateIA(D6O_IA_PD, 234, 1500, 3000);
     sol->addOption(iapd);
     OptionPtr clientid = generateClientId();
@@ -649,6 +654,7 @@ TEST_F(Dhcpv6SrvTest, hintLifetimeSolicit) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     OptionPtr iana = generateIA(D6O_IA_NA, 234, 1500, 3000);
     sol->addOption(iana);
     OptionPtr clientid = generateClientId();
@@ -696,6 +702,7 @@ TEST_F(Dhcpv6SrvTest, minLifetimeSolicit) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     OptionPtr iapd = generateIA(D6O_IA_PD, 234, 1500, 3000);
     sol->addOption(iapd);
     OptionPtr clientid = generateClientId();
@@ -744,6 +751,7 @@ TEST_F(Dhcpv6SrvTest, maxLifetimeSolicit) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     OptionPtr iana = generateIA(D6O_IA_NA, 234, 1500, 3000);
     sol->addOption(iana);
     OptionPtr clientid = generateClientId();
@@ -802,6 +810,7 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
 
     // with a valid hint
@@ -861,6 +870,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
     IOAddress hint("2001:db8:1::cafe:babe");
     ASSERT_FALSE(subnet_->inPool(Lease::TYPE_NA, hint));
@@ -916,8 +926,11 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     sol3->setRemoteAddr(IOAddress("fe80::3467"));
 
     sol1->setIface("eth0");
+    sol1->setIndex(ETH0_INDEX);
     sol2->setIface("eth0");
+    sol2->setIndex(ETH0_INDEX);
     sol3->setIface("eth0");
+    sol3->setIndex(ETH0_INDEX);
 
     sol1->addOption(generateIA(D6O_IA_NA, 1, 1500, 3000));
     sol2->addOption(generateIA(D6O_IA_NA, 2, 1500, 3000));
@@ -1007,6 +1020,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
     req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
 
     // with a valid hint
@@ -1074,6 +1088,7 @@ TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
     req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_PD, 234, 1500, 3000);
 
     // with a valid hint
@@ -1140,8 +1155,11 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     req3->setRemoteAddr(IOAddress("fe80::3467"));
 
     req1->setIface("eth0");
+    req1->setIndex(ETH0_INDEX);
     req2->setIface("eth0");
+    req2->setIndex(ETH0_INDEX);
     req3->setIface("eth0");
+    req3->setIndex(ETH0_INDEX);
 
     req1->addOption(generateIA(D6O_IA_NA, 1, 1500, 3000));
     req2->addOption(generateIA(D6O_IA_NA, 2, 1500, 3000));
@@ -1725,6 +1743,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
 
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     pkt->setIface("eth0");
+    pkt->setIndex(ETH0_INDEX);
 
     bool drop = false;
     Subnet6Ptr selected = srv.selectSubnet(pkt, drop);
@@ -1738,6 +1757,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
     CfgMgr::instance().commit();
 
     pkt->setIface("eth1");
+    pkt->setIndex(ETH1_INDEX);
 
     selected = srv.selectSubnet(pkt, drop);
     EXPECT_FALSE(selected);
@@ -1753,14 +1773,17 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
     CfgMgr::instance().commit();
 
     pkt->setIface("eth0");
+    pkt->setIndex(ETH0_INDEX);
     EXPECT_EQ(subnet1, srv.selectSubnet(pkt, drop));
     EXPECT_FALSE(drop);
 
     pkt->setIface("eth3"); // no such interface
+    pkt->setIndex(3);
     EXPECT_EQ(Subnet6Ptr(), srv.selectSubnet(pkt, drop)); // nothing selected
     EXPECT_FALSE(drop);
 
     pkt->setIface("wifi1");
+    pkt->setIndex(101); // arbitrary value
     EXPECT_EQ(subnet3, srv.selectSubnet(pkt, drop));
     EXPECT_FALSE(drop);
 }
@@ -2074,6 +2097,7 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
     Pkt6Ptr sol(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -2108,6 +2132,7 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
     query->setLocalAddr(sol->getLocalAddr());
     query->setLocalPort(sol->getLocalPort());
     query->setIface(sol->getIface());
+    query->setIndex(sol->getIndex());
 
     srv.fakeReceive(query);
 
@@ -2153,6 +2178,7 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     Pkt6Ptr sol(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -2947,6 +2973,7 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
     sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
 
     // Iterate over the test scenarios.
     for (auto test = tests.begin(); test != tests.end(); ++test) {

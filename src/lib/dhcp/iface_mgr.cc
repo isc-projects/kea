@@ -378,7 +378,7 @@ IfaceMgr::deleteAllExternalSockets() {
 
 void
 IfaceMgr::setPacketFilter(const PktFilterPtr& packet_filter) {
-    // Do not allow NULL pointer.
+    // Do not allow null pointer.
     if (!packet_filter) {
         isc_throw(InvalidPacketFilter, "NULL packet filter object specified for"
                   " DHCPv4");
@@ -749,6 +749,19 @@ IfaceMgr::startDHCPReceiver(const uint16_t family) {
 }
 
 void
+IfaceMgr::addInterface(const IfacePtr& iface) {
+    for (const IfacePtr& existing : ifaces_) {
+        if ((existing->getName() == iface->getName()) ||
+            (existing->getIndex() == iface->getIndex())) {
+            isc_throw(Unexpected, "Can't add " << iface->getFullName() <<
+                      " when " << existing->getFullName() <<
+                      " already exists.");
+        }
+    }
+    ifaces_.push_back(iface);
+}
+
+void
 IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
     BOOST_FOREACH(IfacePtr iface, ifaces_) {
         const Iface::AddressCollection& addrs = iface->getAddresses();
@@ -784,12 +797,22 @@ IfaceMgr::getIface(int ifindex) {
 
 IfacePtr
 IfaceMgr::getIface(const std::string& ifname) {
+    std::cerr << "getIface(name) unefficient\n";
     BOOST_FOREACH(IfacePtr iface, ifaces_) {
         if (iface->getName() == ifname)
             return (iface);
     }
 
     return (IfacePtr()); // not found
+}
+
+IfacePtr
+IfaceMgr::getIface(const PktPtr& pkt) {
+    IfacePtr iface = getIface(pkt->getIndex());
+    if (!iface) {
+        iface = getIface(pkt->getIface());
+    }
+    return (iface);
 }
 
 void
@@ -965,7 +988,7 @@ IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr,
                           const uint16_t port, const bool receive_bcast,
                           const bool send_bcast) {
 
-    // Assuming that packet filter is not NULL, because its modifier checks it.
+    // Assuming that packet filter is not null, because its modifier checks it.
     SocketInfo info = packet_filter_->openSocket(iface, addr, port,
                                                  receive_bcast, send_bcast);
     iface.addSocket(info);
@@ -975,29 +998,28 @@ IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr,
 
 bool
 IfaceMgr::send(const Pkt6Ptr& pkt) {
-    IfacePtr iface = getIface(pkt->getIface());
+    IfacePtr iface = getIface(pkt);
     if (!iface) {
         isc_throw(BadValue, "Unable to send DHCPv6 message. Invalid interface ("
                   << pkt->getIface() << ") specified.");
     }
 
-    // Assuming that packet filter is not NULL, because its modifier checks it.
+    // Assuming that packet filter is not null, because its modifier checks it.
     // The packet filter returns an int but in fact it either returns 0 or throws.
-    return (packet_filter6_->send(*iface, getSocket(*pkt), pkt) == 0);
+    return (packet_filter6_->send(*iface, getSocket(pkt), pkt) == 0);
 }
 
 bool
 IfaceMgr::send(const Pkt4Ptr& pkt) {
-
-    IfacePtr iface = getIface(pkt->getIface());
+    IfacePtr iface = getIface(pkt);
     if (!iface) {
         isc_throw(BadValue, "Unable to send DHCPv4 message. Invalid interface ("
                   << pkt->getIface() << ") specified.");
     }
 
-    // Assuming that packet filter is not NULL, because its modifier checks it.
+    // Assuming that packet filter is not null, because its modifier checks it.
     // The packet filter returns an int but in fact it either returns 0 or throws.
-    return (packet_filter_->send(*iface, getSocket(*pkt).sockfd_, pkt) == 0);
+    return (packet_filter_->send(*iface, getSocket(pkt).sockfd_, pkt) == 0);
 }
 
 Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
@@ -1055,7 +1077,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
 
     if ((result == 0) && getPacketQueue4()->empty()) {
         // nothing received and timeout has been reached
@@ -1174,11 +1196,11 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
 
     if (result == 0) {
         // nothing received and timeout has been reached
-        return (Pkt4Ptr()); // NULL
+        return (Pkt4Ptr()); // null
 
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
@@ -1249,7 +1271,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
 
     // Now we have a socket, let's get some data from it!
-    // Assuming that packet filter is not NULL, because its modifier checks it.
+    // Assuming that packet filter is not null, because its modifier checks it.
     return (packet_filter_->receive(*iface, *candidate));
 }
 
@@ -1319,11 +1341,11 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
 
     if (result == 0) {
         // nothing received and timeout has been reached
-        return (Pkt6Ptr()); // NULL
+        return (Pkt6Ptr()); // null
 
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
@@ -1392,7 +1414,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     if (!candidate) {
         isc_throw(SocketReadError, "received data over unknown socket");
     }
-    // Assuming that packet filter is not NULL, because its modifier checks it.
+    // Assuming that packet filter is not null, because its modifier checks it.
     return (packet_filter6_->receive(*candidate));
 }
 
@@ -1444,7 +1466,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
 
     if ((result == 0) && getPacketQueue6()->empty()) {
         // nothing received and timeout has been reached
@@ -1730,8 +1752,8 @@ IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
 }
 
 uint16_t
-IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
-    IfacePtr iface = getIface(pkt.getIface());
+IfaceMgr::getSocket(const isc::dhcp::Pkt6Ptr& pkt) {
+    IfacePtr iface = getIface(pkt);
     if (!iface) {
         isc_throw(IfaceNotFound, "Tried to find socket for non-existent interface");
     }
@@ -1756,7 +1778,7 @@ IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
             continue;
         }
 
-        if (s->addr_ == pkt.getLocalAddr()) {
+        if (s->addr_ == pkt->getLocalAddr()) {
             // This socket is bound to the source address. This is perfect
             // match, no need to look any further.
             return (s->sockfd_);
@@ -1769,9 +1791,9 @@ IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
             // If we want to send something to link-local and the socket is
             // bound to link-local or we want to send to global and the socket
             // is bound to global, then use it as candidate
-            if ( (pkt.getRemoteAddr().isV6LinkLocal() &&
+            if ( (pkt->getRemoteAddr().isV6LinkLocal() &&
                 s->addr_.isV6LinkLocal()) ||
-                 (!pkt.getRemoteAddr().isV6LinkLocal() &&
+                 (!pkt->getRemoteAddr().isV6LinkLocal() &&
                   !s->addr_.isV6LinkLocal()) ) {
                 candidate = s;
             }
@@ -1787,9 +1809,9 @@ IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
 }
 
 SocketInfo
-IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
-    IfacePtr iface = getIface(pkt.getIface());
-    if (iface == NULL) {
+IfaceMgr::getSocket(const isc::dhcp::Pkt4Ptr& pkt) {
+    IfacePtr iface = getIface(pkt);
+    if (!iface) {
         isc_throw(IfaceNotFound, "Tried to find socket for non-existent interface");
     }
 
@@ -1801,7 +1823,7 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     Iface::SocketCollection::const_iterator s;
     for (s = socket_collection.begin(); s != socket_collection.end(); ++s) {
         if (s->family_ == AF_INET) {
-            if (s->addr_ == pkt.getLocalAddr()) {
+            if (s->addr_ == pkt->getLocalAddr()) {
                 return (*s);
             }
 
