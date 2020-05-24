@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu May 21 2020 12:11
+=======
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Sun May 24 2020 11:35
+>>>>>>> [#1232] Added a try and log
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -45,6 +49,7 @@ extern const isc::log::MessageID DHCP6_DDNS_REQUEST_SEND_FAILED = "DHCP6_DDNS_RE
 extern const isc::log::MessageID DHCP6_DDNS_RESPONSE_FQDN_DATA = "DHCP6_DDNS_RESPONSE_FQDN_DATA";
 extern const isc::log::MessageID DHCP6_DDNS_SEND_FQDN = "DHCP6_DDNS_SEND_FQDN";
 extern const isc::log::MessageID DHCP6_DEACTIVATE_INTERFACE = "DHCP6_DEACTIVATE_INTERFACE";
+extern const isc::log::MessageID DHCP6_DECLINE_FAIL = "DHCP6_DECLINE_FAIL";
 extern const isc::log::MessageID DHCP6_DECLINE_FAIL_DUID_MISMATCH = "DHCP6_DECLINE_FAIL_DUID_MISMATCH";
 extern const isc::log::MessageID DHCP6_DECLINE_FAIL_IAID_MISMATCH = "DHCP6_DECLINE_FAIL_IAID_MISMATCH";
 extern const isc::log::MessageID DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID = "DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID";
@@ -194,6 +199,7 @@ const char* values[] = {
     "DHCP6_DDNS_RESPONSE_FQDN_DATA", "%1: including FQDN option in the server's response: %2",
     "DHCP6_DDNS_SEND_FQDN", "sending DHCPv6 Client FQDN Option to the client: %1",
     "DHCP6_DEACTIVATE_INTERFACE", "deactivate interface %1",
+    "DHCP6_DECLINE_FAIL", "%1: error on decline lease for address %2: %3",
     "DHCP6_DECLINE_FAIL_DUID_MISMATCH", "Client %1 sent DECLINE for address %2, but it belongs to client with DUID %3",
     "DHCP6_DECLINE_FAIL_IAID_MISMATCH", "Client %1 sent DECLINE for address %2, but used a wrong IAID (%3), instead of expected %4",
     "DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID", "Client %1 sent DECLINE for address %2, but the associated lease has no DUID",

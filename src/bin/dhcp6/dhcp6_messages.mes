@@ -227,6 +227,14 @@ This message is printed when DHCPv6 server disables an interface from being
 used to receive DHCPv6 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
+% DHCP6_DECLINE_FAIL %1: error on decline lease for address %2: %3
+This error message indicates that the software failed to deline a
+lease from the lease database due to an error during a database
+operation. The first argument includes the client and the transaction
+identification information. The second argument holds the IPv6 address
+which decline was attempted. The last one contains the reason for
+failure.
+
 % DHCP6_DECLINE_FAIL_DUID_MISMATCH Client %1 sent DECLINE for address %2, but it belongs to client with DUID %3
 This informational message is printed when a client attempts to decline
 a lease, but that lease belongs to a different client. The decline request

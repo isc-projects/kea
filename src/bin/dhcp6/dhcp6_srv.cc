@@ -3566,7 +3566,16 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     // way.
     lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
 
-    LeaseMgrFactory::instance().updateLease6(lease);
+    try {
+        LeaseMgrFactory::instance().updateLease6(lease);
+    } catch (const Exception& ex) {
+        // Update failed.
+        LOG_ERROR(lease6_logger, DHCP6_DECLINE_FAIL)
+            .arg(decline->getLabel())
+            .arg(lease->addr_.toText())
+            .arg(ex.what());
+        return (false);
+    }
 
     // Check if a lease has flags indicating that the FQDN update has
     // been performed. If so, create NameChangeRequest which removes

@@ -3301,7 +3301,16 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
     // way.
     lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
 
-    LeaseMgrFactory::instance().updateLease4(lease);
+    try {
+        LeaseMgrFactory::instance().updateLease4(lease);
+    } catch (const Exception& ex) {
+        // Update failed.
+        LOG_ERROR(lease4_logger, DHCP4_DECLINE_FAIL)
+            .arg(decline->getLabel())
+            .arg(lease->addr_.toText())
+            .arg(ex.what());
+        return;
+    }
 
     // Remove existing DNS entries for the lease, if any.
     // queueNCR will do the necessary checks and will skip the update, if not needed.

@@ -224,6 +224,14 @@ This message is printed when DHCPv4 server disables an interface from being
 used to receive DHCPv4 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
+% DHCP4_DECLINE_FAIL %1: error on decline lease for address %2: %3
+This error message indicates that the software failed to deline a
+lease from the lease database due to an error during a database
+operation. The first argument includes the client and the transaction
+identification information. The second argument holds the IPv4 address
+which decline was attempted. The last one contains the reason for
+failure.
+
 % DHCP4_DECLINE_LEASE Received DHCPDECLINE for addr %1 from client %2. The lease will be unavailable for %3 seconds.
 This informational message is printed when a client received an address, but
 discovered that it is being used by some other device and notified the server by
