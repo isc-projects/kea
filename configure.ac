@@ -484,7 +484,7 @@ AC_SEARCH_LIBS(dlsym, [dl])
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
-
+AC_TYPE_SSIZE_T
 
 # Detect OS type (it may be used to do OS-specific things, e.g.
 # interface detection in DHCP)

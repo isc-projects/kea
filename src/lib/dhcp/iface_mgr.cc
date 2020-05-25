@@ -449,16 +449,20 @@ IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
             // if address is unspecified (in6addr_any).
             if (sock.addr_ == addr) {
                 return (true);
-
-            } else if (sock.addr_ == IOAddress("::")) {
+            } else if (sock.addr_.isV6Zero()) {
                 // Handle the case that the address is unspecified (any).
+                // This happens only with IPv6 so we do not check IPv4.
                 // In this case, we should check if the specified address
                 // belongs to any of the interfaces.
-                for (Iface::Address a : iface->getAddresses()) {
-                    if (addr == a.get()) {
-                        return (true);
+                for (IfacePtr it : ifaces_) {
+                    for (Iface::Address a : it->getAddresses()) {
+                        if (addr == a.get()) {
+                            return (true);
+                        }
                     }
                 }
+                // The address does not belongs to any interface.
+                return (false);
             }
         }
     }
