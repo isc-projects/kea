@@ -5,8 +5,8 @@ Supported platforms
 ===================
 
 In general, this version of Kea will build and run on any POSIX-compliant
-system with a C++ compiler (with C++11 support), the Botan cryptographic library, 
-the log4cplus logging library and the Boost system library. 
+system with a C++ compiler (with C++11 support), the Botan cryptographic library,
+the log4cplus logging library and the Boost system library.
 
 The Kea build has been checked with GCC g++ 4.8.5 and some later versions,
 and Clang 800.0.38 and some later versions.
@@ -22,8 +22,8 @@ As of January, 2020, Kea is officially supported on CentOS, Fedora, Ubuntu, Debi
 FreeBSD systems. Kea-|release| builds have been tested on:
 
 * CentOS Linux — 7, 8
-* Fedora — 30, 31
-* Ubuntu — 16.04, 18.04, 19.04
+* Fedora — 31, 32
+* Ubuntu — 16.04, 18.04, 20.04
 * Debian GNU/Linux — 9, 10
 
 There are currently no plans to port Kea to Windows systems.
@@ -34,10 +34,10 @@ Best effort
 The following are platforms on which Kea is known to build and run.
 ISC makes every effort to fix bugs on these platforms, but may be unable to
 do so quickly due to lack of hardware, less familiarity on the part of
-engineering staff, and other constraints. 
+engineering staff, and other constraints.
 
 * FreeBSD — 11.3, 12.0
-* Alpine Linux — 3.10
+* Alpine Linux — 3.10, 3.11
 * macOS — 10.13, 10.14
 
 Community maintained
@@ -53,7 +53,8 @@ platforms.
 
 Platforms past or close to their respective EOL dates, such as:
 
-* Ubuntu 14.04, 18.10
+* Ubuntu 14.04, 18.10, 19.04, 19.10
+* Fedora 30
 * CentOS 6
 * Debian 8 (Jessie)
 * FreeBSD 10.x
@@ -119,5 +120,3 @@ Some optional features of Kea have additional dependencies.
    Sysrepo software when used. Building Kea with NETCONF support
    requires many dependencies to be installed, which are described in
    more detail in :ref:`netconf-install`.
-
-  
