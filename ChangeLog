@@ -1,3 +1,5 @@
+Kea 1.7.8 (development) released on May 27, 2020
+
 1754.	[func]		marcin
 	Improved the procedure of restarting the servers in the terminated
 	HA state. The servers can now be restarted sequentially without the

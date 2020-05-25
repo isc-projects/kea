@@ -49,10 +49,6 @@ may be provided.
 This warning message is issued when the configuration includes a deprecated
 object (i.e. a top level element) which will be ignored.
 
-% DCTL_DEVELOPMENT_VERSION This software is a development branch of Kea. It is not recommended for production use.
-This warning message is displayed when the version is a development
-(vs stable) one: the second number of the version is odd.
-
 % DCTL_CONFIG_FETCH Fetching configuration data from config backends.
 This is an informational message emitted when the Kea server is about to begin
 retrieving configuration data from one or more configuration backends.
@@ -78,6 +74,10 @@ events is called.  This only happens during initial startup.
 % DCTL_CONFIG_UPDATE %1 updated configuration received: %2
 A debug message indicating that the controller has received an
 updated configuration from the Kea configuration system.
+
+% DCTL_DEVELOPMENT_VERSION This software is a development branch of Kea. It is not recommended for production use.
+This warning message is displayed when the version is a development
+(vs stable) one: the second number of the version is odd.
 
 % DCTL_INIT_PROCESS %1 initializing the application
 This debug message is issued just before the controller attempts
