@@ -927,6 +927,9 @@ TEST_F(IfaceMgrTest, ifaceClass) {
     Iface iface("eth5", 7);
     EXPECT_STREQ("eth5/7", iface.getFullName().c_str());
 
+    EXPECT_THROW_MSG(Iface("", 10), BadValue,
+                     "Interface name must not be empty");
+
     EXPECT_THROW_MSG(Iface("foo", -1), OutOfRange,
                      "Interface index must be in 0..2147483647");
 }
@@ -968,13 +971,10 @@ TEST_F(IfaceMgrTest, getIfaceByPkt) {
     iface = ifacemgr.getIface(pkt4);
     EXPECT_FALSE(iface);
 
-    // Not existing index depends on fail_on_index_not_found_.
-    // Currently fail_on_index_not_found_ is false.
+    // Not existing index fails.
     pkt6->setIndex(3);
     iface = ifacemgr.getIface(pkt6);
-    ASSERT_TRUE(iface);
-    EXPECT_EQ("eth0", iface->getName());
-    EXPECT_EQ(1, iface->getIndex());
+    ASSERT_FALSE(iface);
 }
 
 // Test that the IPv4 address can be retrieved for the interface.
@@ -2590,9 +2590,14 @@ TEST_F(IfaceMgrTest, socketInfo) {
         IfaceNotFound
     );
 
-    // This will work
+    // Index is now checked first
     pkt6->setIface(LOOPBACK_NAME);
-    EXPECT_EQ(9, ifacemgr->getSocket(pkt6));
+    EXPECT_THROW(
+        ifacemgr->getSocket(pkt6),
+        IfaceNotFound
+    );
+
+    // This will work
     pkt6->setIndex(LOOPBACK_INDEX);
     EXPECT_EQ(9, ifacemgr->getSocket(pkt6));
 
@@ -2625,9 +2630,14 @@ TEST_F(IfaceMgrTest, socketInfo) {
         IfaceNotFound
     );
 
-    // Socket info is set, packet has well defined interface. It should work.
+    // Index is now checked first.
     pkt4->setIface(LOOPBACK_NAME);
-    EXPECT_EQ(7, ifacemgr->getSocket(pkt4).sockfd_);
+    EXPECT_THROW(
+        ifacemgr->getSocket(pkt4),
+        IfaceNotFound
+    );
+
+    // Socket info is set, packet has well defined interface. It should work.
     pkt4->setIndex(LOOPBACK_INDEX);
     EXPECT_EQ(7, ifacemgr->getSocket(pkt4).sockfd_);
 

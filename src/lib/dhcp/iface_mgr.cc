@@ -66,6 +66,10 @@ Iface::Iface(const std::string& name, int ifindex)
      flag_multicast_(false), flag_broadcast_(false), flags_(0),
      inactive4_(false), inactive6_(false)
 {
+    // Sanity checks.
+    if (name.empty()) {
+        isc_throw(BadValue, "Interface name must not be empty");
+    }
     if ((ifindex_ < 0) || (ifindex_ > std::numeric_limits<int32_t>::max())) {
         isc_throw(OutOfRange, "Interface index must be in 0.." <<
                   std::numeric_limits<int32_t>::max());
@@ -184,8 +188,7 @@ bool Iface::delSocket(const uint16_t sockfd) {
 }
 
 IfaceMgr::IfaceMgr()
-    : fail_on_index_not_found_(false),
-      packet_filter_(new PktFilterInet()),
+    : packet_filter_(new PktFilterInet()),
       packet_filter6_(new PktFilterInet6()),
       test_mode_(false),
       allow_loopback_(false) {
@@ -285,6 +288,9 @@ Iface::countActive4() const {
 }
 
 void IfaceMgr::closeSockets() {
+    // Clears bound addresses.
+    clearBoundAddresses();
+
     // Stops the receiver thread if there is one.
     stopDHCPReceiver();
 
@@ -442,6 +448,10 @@ IfaceMgr::hasOpenSocket(const uint16_t family) const {
 
 bool
 IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
+    // Fast track for IPv4 using bound addresses.
+    if (addr.isV4() && !bound_address_.empty()) {
+        return (bound_address_.count(addr.toUint32()) != 0);
+    }
     // Iterate over all interfaces and search for open sockets.
     for (IfacePtr iface : ifaces_) {
         for (SocketInfo sock : iface->getSockets()) {
@@ -630,7 +640,10 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
 
     // If we have open sockets, start the receiver.
     if (count > 0) {
-        // starts the receiver thread (if queueing is enabled).
+        // Collects bound addresses.
+        collectBoundAddresses();
+
+        // Starts the receiver thread (if queueing is enabled).
         startDHCPReceiver(AF_INET);
     }
 
@@ -880,22 +893,36 @@ IfaceMgr::getIface(const std::string& ifname) {
 
 IfacePtr
 IfaceMgr::getIface(const PktPtr& pkt) {
-    IfacePtr iface;
     if (pkt->indexSet()) {
-            iface = getIface(pkt->getIndex());
-            if (fail_on_index_not_found_) {
-                return (iface);
-            }
+        return (getIface(pkt->getIndex()));
+    } else {
+        return (getIface(pkt->getIface()));
     }
-    if (!iface) {
-        iface = getIface(pkt->getIface());
-    }
-    return (iface);
 }
 
 void
 IfaceMgr::clearIfaces() {
     ifaces_.clear();
+}
+
+void
+IfaceMgr::clearBoundAddresses() {
+    bound_address_.clear();
+}
+
+void
+IfaceMgr::collectBoundAddresses() {
+    for (IfacePtr iface : ifaces_) {
+        for (SocketInfo sock : iface->getSockets()) {
+            const IOAddress& addr = sock.addr_;
+            if (!addr.isV4()) {
+                continue;
+            }
+            if (bound_address_.count(addr.toUint32()) == 0) {
+                bound_address_.insert(addr);
+            }
+        }
+    }
 }
 
 void

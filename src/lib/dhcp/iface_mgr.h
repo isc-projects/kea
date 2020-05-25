@@ -144,6 +144,8 @@ public:
     ///
     /// @param name name of the interface
     /// @param ifindex interface index (unique integer identifier)
+    /// @param BadValue when name is empty.
+    /// @throw OutOfRange when ifindex is not in 0..2147483647 range.
     Iface(const std::string& name, int ifindex);
 
     /// @brief Destructor.
@@ -588,6 +590,25 @@ private:
     IfaceContainer ifaces_container_;
 };
 
+/// @brief Type definition for the unordered set of IPv4 bound addresses.
+///
+/// In order to make @c hasOpenSocket with an IPv4 address faster bound
+/// addresses should be collected after calling @c CfgIface::openSockets.
+typedef boost::multi_index_container<
+    /// Container comprises elements of asiolink::IOAddress type.
+    asiolink::IOAddress,
+    // Here we start enumerating the only index.
+    boost::multi_index::indexed_by<
+        // Start definition of index #0.
+        boost::multi_index::hashed_unique<
+            // Use the address in its network order integer form as the key.
+            boost::multi_index::const_mem_fun<
+                asiolink::IOAddress, uint32_t, &asiolink::IOAddress::toUint32
+            >
+        >
+    >
+> BoundAddresses;
+
 /// @brief Forward declaration to the @c IfaceMgr.
 class IfaceMgr;
 
@@ -633,10 +654,6 @@ public:
     /// than 1500. For now, we can assume that
     /// we don't support packets larger than 1500.
     static const uint32_t RCVBUFSIZE = 1500;
-
-    // TODO performance improvement: we may change this into
-    //      2 maps (ifindex-indexed and name-indexed) and
-    //      also hide it (make it public make tests easier for now)
 
     /// IfaceMgr is a singleton class. This method returns reference
     /// to its sole instance.
@@ -719,6 +736,10 @@ public:
 
     /// @brief Returns interface with specified packet
     ///
+    /// @note When the interface index is set (@c Pkt::indexSet
+    ///       returns true) it is searched for, if it is not set
+    ///       the name instead is searched for.
+    ///
     /// @param pkt packet with interface index and name
     ///
     /// @return interface with packet interface index or name
@@ -751,6 +772,12 @@ public:
 
     /// @brief Clears unicast addresses on all interfaces.
     void clearUnicasts();
+
+    /// @brief Clears bound addresses.
+    void clearBoundAddresses();
+
+    /// @brief Collect bound addresses.
+    void collectBoundAddresses();
 
     /// @brief Return most suitable socket for transmitting specified IPv6 packet.
     ///
@@ -1389,14 +1416,11 @@ protected:
     /// interfaces.txt file.
     void stubDetectIfaces();
 
-    // TODO: having 2 maps (ifindex->iface and ifname->iface would)
-    //      probably be better for performance reasons
-
     /// @brief List of available interfaces
     IfaceCollection ifaces_;
 
-    /// @brief Return an error when index search fails.
-    bool fail_on_index_not_found_;
+    /// @brief Unordered set of IPv4 bound addresses.
+    BoundAddresses bound_address_;
 
     // TODO: Also keep this interface on Iface once interface detection
     // is implemented. We may need it e.g. to close all sockets on
