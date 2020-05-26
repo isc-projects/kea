@@ -1052,7 +1052,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // by another thread to another client.
             ResourceHandler resource_handler;
             if (MultiThreadingMgr::instance().getMode() &&
-                !MultiThreadingMgr::instance().isInCriticalSection() &&
                 !resource_handler.tryLock(ctx.currentIA().type_, candidate)) {
                 // Don't allocate.
                 continue;
@@ -2299,8 +2298,7 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
 
         try {
             // Reclaim the lease.
-            if (MultiThreadingMgr::instance().getMode() &&
-                !MultiThreadingMgr::instance().isInCriticalSection()) {
+            if (MultiThreadingMgr::instance().getMode()) {
                 // The reclamation is exclusive of packet processing.
                 WriteLockGuard exclusive(rw_mutex_);
 
@@ -2446,8 +2444,7 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
 
         try {
             // Reclaim the lease.
-            if (MultiThreadingMgr::instance().getMode() &&
-                !MultiThreadingMgr::instance().isInCriticalSection()) {
+            if (MultiThreadingMgr::instance().getMode()) {
                 // The reclamation is exclusive of packet processing.
                 WriteLockGuard exclusive(rw_mutex_);
 
@@ -4061,7 +4058,6 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             // by another thread to another client.
             ResourceHandler4 resource_handler;
             if (MultiThreadingMgr::instance().getMode() &&
-                !MultiThreadingMgr::instance().isInCriticalSection() &&
                 !resource_handler.tryLock4(candidate)) {
                 // Don't allocate.
                 continue;

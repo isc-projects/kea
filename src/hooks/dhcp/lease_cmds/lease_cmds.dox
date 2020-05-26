@@ -104,7 +104,7 @@ called by a high availability server with a sane configuration.
 When a race is detected a critical section is used.
 
 Note an expired lease reclamation is called only from the periodic
-process or by a command, in both cases it is executed by the main
+process or by a command. In both cases it is executed by the main
 thread so the same thread than lease commands.
 
 */

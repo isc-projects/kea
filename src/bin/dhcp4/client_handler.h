@@ -114,6 +114,8 @@ private:
     HWAddrPtr locked_hwaddr_;
 
     /// @brief Mutex to protect client containers.
+    ///
+    /// The mutex is used only by public methods for guards.
     static std::mutex mutex_;
 
     /// @brief Lookup a client-by-id.

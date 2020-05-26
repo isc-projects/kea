@@ -56,8 +56,9 @@ TEST(ReadWriteMutexTest, read) {
                     lock_guard<std::mutex> lock(mutex);
                     ready = work;
                 }
-                if (ready)
+                if (ready) {
                     break;
+                }
                 usleep(100);
             }
             {
@@ -145,8 +146,9 @@ TEST(ReadWriteMutexTest, write) {
                     lock_guard<std::mutex> lock(mutex);
                     ready = work;
                 }
-                if (ready)
+                if (ready) {
                     break;
+                }
                 usleep(100);
             }
             {
@@ -234,8 +236,9 @@ TEST(ReadWriteMutexTest, readRead) {
                     lock_guard<std::mutex> lock(mutex);
                     ready = work;
                 }
-                if (ready)
+                if (ready) {
                     break;
+                }
                 usleep(100);
             }
             {
@@ -326,8 +329,9 @@ TEST(ReadWriteMutexTest, readWrite) {
                     lock_guard<std::mutex> lock(mutex);
                     ready = work;
                 }
-                if (ready)
+                if (ready) {
                     break;
+                }
                 usleep(100);
             }
             {
@@ -429,8 +433,9 @@ TEST(ReadWriteMutexTest, writeWrite) {
                     lock_guard<std::mutex> lock(mutex);
                     ready = work;
                 }
-                if (ready)
+                if (ready) {
                     break;
+                }
                 usleep(100);
             }
             {
@@ -536,8 +541,9 @@ TEST(ReadWriteMutexTest, readWriteRead) {
                     lock_guard<std::mutex> lock(mutex);
                     ready = work1;
                 }
-                if (ready)
+                if (ready) {
                     break;
+                }
                 usleep(100);
             }
             {
@@ -574,8 +580,9 @@ TEST(ReadWriteMutexTest, readWriteRead) {
                     lock_guard<std::mutex> lock(mutex);
                     ready = work2;
                 }
-                if (ready)
+                if (ready) {
                     break;
+                }
                 usleep(100);
             }
             {
@@ -640,7 +647,7 @@ TEST(ReadWriteMutexTest, readWriteRead) {
         {
             lock_guard<std::mutex> lock(mutex);
             ready = done2;
-            }
+        }
         EXPECT_FALSE(ready);
     }
 
@@ -651,7 +658,7 @@ TEST(ReadWriteMutexTest, readWriteRead) {
         {
             lock_guard<std::mutex> lock(mutex);
             ready = done2;
-            }
+        }
         EXPECT_FALSE(ready);
     }
     // Signal the writer thread to terminate.

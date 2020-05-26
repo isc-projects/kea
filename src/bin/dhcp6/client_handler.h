@@ -102,6 +102,8 @@ private:
     DuidPtr locked_;
 
     /// @brief Mutex to protect the client container.
+    ///
+    /// The mutex is used only by public methods for guards.
     static std::mutex mutex_;
 
     /// @brief Lookup a client.

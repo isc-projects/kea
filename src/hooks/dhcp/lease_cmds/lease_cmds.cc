@@ -1330,6 +1330,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                             updateOrAdd(lease);
                         }
                     } else {
+                        // No multi-threading.
                         updateOrAdd(lease);
                     }
 
@@ -1566,6 +1567,7 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
                 added = addOrUpdate6(lease6, force_create);
             }
         } else {
+            // No multi-threading.
             added = addOrUpdate6(lease6, force_create);
         }
         if (added) {

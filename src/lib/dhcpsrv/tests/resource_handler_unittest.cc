@@ -223,7 +223,7 @@ TEST(ResourceHandleTest, differentAddress) {
     }
 }
 
-// Verifies behavior with two IPv4 handlers.
+// Verifies behavior with two IPv4 handlers for different addresses.
 TEST(ResourceHandleTest, differentAddress4) {
     IOAddress addr("192.0.2.1");
     IOAddress addr2("192.0.2.2");

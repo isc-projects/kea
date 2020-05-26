@@ -35,17 +35,11 @@ ClientHandler::~ClientHandler() {
         unlocked = true;
         unLockById();
     }
-    locked_client_id_.reset();
     if (locked_hwaddr_) {
         unlocked = true;
         unLockByHWAddr();
     }
-    locked_hwaddr_.reset();
-    if (!client_) {
-        return;
-    }
-    if (!unlocked || !client_->cont_) {
-        client_.reset();
+    if (!unlocked || !client_ || !client_->cont_) {
         return;
     }
     // Try to process next query. As the caller holds the mutex of
@@ -56,8 +50,6 @@ ClientHandler::~ClientHandler() {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_QUEUE_FULL);
         }
     }
-    client_->cont_.reset();
-    client_.reset();
 }
 
 ClientHandler::Client::Client(Pkt4Ptr query, DuidPtr client_id,
@@ -143,6 +135,7 @@ ClientHandler::unLockById() {
 
     // Assume erase will never fail so not checking its result.
     clients_client_id_.erase(locked_client_id_->getDuid());
+    locked_client_id_.reset();
 }
 
 void
@@ -155,11 +148,11 @@ ClientHandler::unLockByHWAddr() {
     auto key = boost::make_tuple(locked_hwaddr_->htype_, locked_hwaddr_->hwaddr_);
     // Assume erase will never fail so not checking its result.
     auto it = clients_hwaddr_.find(key);
-    if (it == clients_hwaddr_.end()) {
-        // Should not happen.
-        return;
+    if (it != clients_hwaddr_.end()) {
+        // Should always happen.
+        clients_hwaddr_.erase(it);
     }
-    clients_hwaddr_.erase(it);
+    locked_hwaddr_.reset();
 }
 
 bool

@@ -30,8 +30,6 @@ ClientHandler::~ClientHandler() {
         lock_guard<mutex> lock_(mutex_);
         unLock();
     }
-    locked_.reset();
-    client_.reset();
 }
 
 ClientHandler::Client::Client(Pkt6Ptr query, DuidPtr client_id)
@@ -81,9 +79,11 @@ ClientHandler::unLock() {
 
     // Assume erase will never fail so not checking its result.
     clients_.erase(locked_->getDuid());
+    locked_.reset();
     if (!client_ || !client_->cont_) {
         return;
     }
+
     // Try to process next query. As the caller holds the mutex of
     // the handler class the continuation will be resumed after.
     MultiThreadingMgr& mt_mgr = MultiThreadingMgr::instance();
@@ -92,7 +92,6 @@ ClientHandler::unLock() {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_QUEUE_FULL);
         }
     }
-    client_->cont_.reset();
 }
 
 bool
