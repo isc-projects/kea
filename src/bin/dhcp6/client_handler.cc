@@ -18,20 +18,6 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-mutex ClientHandler::mutex_;
-
-ClientHandler::ClientContainer ClientHandler::clients_;
-
-ClientHandler::ClientHandler() : client_(), locked_() {
-}
-
-ClientHandler::~ClientHandler() {
-    if (locked_) {
-        lock_guard<mutex> lock_(mutex_);
-        unLock();
-    }
-}
-
 ClientHandler::Client::Client(Pkt6Ptr query, DuidPtr client_id)
     : query_(query), thread_(this_thread::get_id()) {
     // Sanity checks.
@@ -44,6 +30,10 @@ ClientHandler::Client::Client(Pkt6Ptr query, DuidPtr client_id)
 
     duid_ = client_id->getDuid();
 }
+
+mutex ClientHandler::mutex_;
+
+ClientHandler::ClientContainer ClientHandler::clients_;
 
 ClientHandler::ClientPtr
 ClientHandler::lookup(const DuidPtr& duid) {
@@ -60,37 +50,34 @@ ClientHandler::lookup(const DuidPtr& duid) {
 }
 
 void
-ClientHandler::lock() {
+ClientHandler::add(const ClientPtr& client) {
     // Sanity check.
-    if (!locked_) {
-        isc_throw(Unexpected, "nothing to lock in ClientHandler::lock");
+    if (!client) {
+        isc_throw(InvalidParameter, "client is null in ClientHandler::add");
     }
 
     // Assume insert will never fail so not checking its result.
-    clients_.insert(client_);
+    clients_.insert(client);
 }
 
 void
-ClientHandler::unLock() {
+ClientHandler::del(const DuidPtr& duid) {
     // Sanity check.
-    if (!locked_) {
-        isc_throw(Unexpected, "nothing to unlock in ClientHandler::unLock");
+    if (!duid) {
+        isc_throw(InvalidParameter, "duid is null in ClientHandler::del");
     }
 
     // Assume erase will never fail so not checking its result.
-    clients_.erase(locked_->getDuid());
-    locked_.reset();
-    if (!client_ || !client_->cont_) {
-        return;
-    }
+    clients_.erase(duid->getDuid());
+}
 
-    // Try to process next query. As the caller holds the mutex of
-    // the handler class the continuation will be resumed after.
-    MultiThreadingMgr& mt_mgr = MultiThreadingMgr::instance();
-    if (mt_mgr.getMode()) {
-        if (!mt_mgr.getThreadPool().addFront(client_->cont_)) {
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_QUEUE_FULL);
-        }
+ClientHandler::ClientHandler() : client_(), locked_() {
+}
+
+ClientHandler::~ClientHandler() {
+    if (locked_) {
+        lock_guard<mutex> lock_(mutex_);
+        unLock();
     }
 }
 
@@ -156,6 +143,38 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
                                              static_cast<int64_t>(1));
     }
     return (false);
+}
+
+void
+ClientHandler::lock() {
+    // Sanity check.
+    if (!locked_) {
+        isc_throw(Unexpected, "nothing to lock in ClientHandler::lock");
+    }
+    add(client_);
+}
+
+void
+ClientHandler::unLock() {
+    // Sanity check.
+    if (!locked_) {
+        isc_throw(Unexpected, "nothing to unlock in ClientHandler::unLock");
+    }
+
+    del(locked_);
+    locked_.reset();
+    if (!client_ || !client_->cont_) {
+        return;
+    }
+
+    // Try to process next query. As the caller holds the mutex of
+    // the handler class the continuation will be resumed after.
+    MultiThreadingMgr& mt_mgr = MultiThreadingMgr::instance();
+    if (mt_mgr.getMode()) {
+        if (!mt_mgr.getThreadPool().addFront(client_->cont_)) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_QUEUE_FULL);
+        }
+    }
 }
 
 }  // namespace dhcp

@@ -35,30 +35,9 @@ inline ContinuationPtr makeContinuation(Continuation&& cont) {
 
 /// @brief Client race avoidance RAII handler.
 class ClientHandler : public boost::noncopyable {
-public:
-
-    /// @brief Constructor.
-    ClientHandler();
-
-    /// @brief Destructor.
-    ///
-    /// Releases the client if it was acquired.
-    virtual ~ClientHandler();
-
-    /// @brief Tries to acquires a client.
-    ///
-    /// Lookup the client:
-    ///  - if not found insert the client in the clients map and return true
-    ///  - if found, if has a continuation put it in the holder,
-    ///    and return false
-    ///
-    /// @param query The query from the client.
-    /// @param cont The continuation in the case the client was held.
-    /// @return true if the client was acquired, false if there is already
-    /// a query from the same client.
-    bool tryLock(Pkt6Ptr query, ContinuationPtr cont = ContinuationPtr());
-
 private:
+
+    /// Class (aka static) types, methods and members.
 
     /// @brief Structure representing a client.
     struct Client {
@@ -95,38 +74,6 @@ private:
     /// @brief The type of shared pointers to clients.
     typedef boost::shared_ptr<Client> ClientPtr;
 
-    /// @brief Local client.
-    ClientPtr client_;
-
-    /// @brief Client ID locked by this handler.
-    DuidPtr locked_;
-
-    /// @brief Mutex to protect the client container.
-    ///
-    /// The mutex is used only by public methods for guards.
-    static std::mutex mutex_;
-
-    /// @brief Lookup a client.
-    ///
-    /// The mutex must be held by the caller.
-    ///
-    /// @param duid The duid of the query from the client.
-    /// @return The held client or null.
-    static ClientPtr lookup(const DuidPtr& duid);
-
-    /// @brief Acquire a client.
-    ///
-    /// The mutex must be held by the caller.
-    void lock();
-
-    /// @brief Release a client.
-    ///
-    /// If the client has a continuation, push it at front of the thread
-    /// packet queue.
-    ///
-    /// The mutex must be held by the caller.
-    void unLock();
-
     /// @brief The type of the client container.
     typedef boost::multi_index_container<
 
@@ -147,8 +94,84 @@ private:
         >
     > ClientContainer;
 
+    /// @brief Lookup a client.
+    ///
+    /// The mutex must be held by the caller.
+    ///
+    /// @param duid The duid of the query from the client.
+    /// @return The client found in the container or null.
+    static ClientPtr lookup(const DuidPtr& duid);
+
+    /// @brief Add a client.
+    ///
+    /// The mutex must be held by the caller.
+    ///
+    /// @param client The client to insert into the client container.
+    static void add(const ClientPtr& client);
+
+    /// @brief Delete a client.
+    ///
+    /// The mutex must be held by the caller.
+    ///
+    /// @param duid The duid to delete from the client container.
+    static void del(const DuidPtr& duid);
+
+    /// @brief Mutex to protect the client container.
+    ///
+    /// The mutex is used only by public methods for guards.
+    static std::mutex mutex_;
+
     /// @brief The client container.
     static ClientContainer clients_;
+
+public:
+
+    /// Public interface.
+
+    /// @brief Constructor.
+    ClientHandler();
+
+    /// @brief Destructor.
+    ///
+    /// Releases the client if it was acquired.
+    virtual ~ClientHandler();
+
+    /// @brief Tries to acquires a client.
+    ///
+    /// Lookup the client:
+    ///  - if not found insert the client in the clients map and return true
+    ///  - if found, if has a continuation put it in the holder,
+    ///    and return false
+    ///
+    /// @param query The query from the client.
+    /// @param cont The continuation in the case the client was held.
+    /// @return true if the client was acquired, false if there is already
+    /// a query from the same client.
+    bool tryLock(Pkt6Ptr query, ContinuationPtr cont = ContinuationPtr());
+
+private:
+
+    /// Instance methods and members.
+
+    /// @brief Acquire a client.
+    ///
+    /// The mutex must be held by the caller.
+    void lock();
+
+    /// @brief Release a client.
+    ///
+    /// If the client has a continuation, push it at front of the thread
+    /// packet queue.
+    ///
+    /// The mutex must be held by the only caller: the destructor.
+    void unLock();
+
+    /// @brief Local client.
+    ClientPtr client_;
+
+    /// @brief Client ID locked by this handler.
+    DuidPtr locked_;
+
 };
 
 } // namespace isc
