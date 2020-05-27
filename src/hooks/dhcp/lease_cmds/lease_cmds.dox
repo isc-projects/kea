@@ -105,6 +105,6 @@ When a race is detected a critical section is used.
 
 Note an expired lease reclamation is called only from the periodic
 process or by a command. In both cases it is executed by the main
-thread so the same thread than lease commands.
+thread so the same thread as lease commands.
 
 */
