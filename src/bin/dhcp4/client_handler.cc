@@ -18,11 +18,118 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
+ClientHandler::Client::Client(Pkt4Ptr query, DuidPtr client_id,
+                              HWAddrPtr hwaddr)
+    : query_(query), thread_(this_thread::get_id()) {
+    // Sanity checks.
+    if (!query) {
+        isc_throw(InvalidParameter, "null query in ClientHandler");
+    }
+    if (!client_id && (!hwaddr || hwaddr->hwaddr_.empty())) {
+        isc_throw(InvalidParameter,
+                  "null client-id and hwaddr in ClientHandler");
+    }
+
+    if (client_id) {
+        duid_ = client_id->getDuid();
+    }
+    if (hwaddr && !hwaddr->hwaddr_.empty()) {
+        htype_ = hwaddr->htype_;
+        hwaddr_ = hwaddr->hwaddr_;
+    }
+}
+
 mutex ClientHandler::mutex_;
 
 ClientHandler::ClientByIdContainer ClientHandler::clients_client_id_;
 
 ClientHandler::ClientByHWAddrContainer ClientHandler::clients_hwaddr_;
+
+ClientHandler::ClientPtr
+ClientHandler::lookup(const DuidPtr& duid) {
+    // Sanity check.
+    if (!duid) {
+        isc_throw(InvalidParameter, "null duid in ClientHandler::lookup");
+    }
+
+    auto it = clients_client_id_.find(duid->getDuid());
+    if (it == clients_client_id_.end()) {
+        return (ClientPtr());
+    }
+    return (*it);
+}
+
+ClientHandler::ClientPtr
+ClientHandler::lookup(const HWAddrPtr& hwaddr) {
+    // Sanity checks.
+    if (!hwaddr) {
+        isc_throw(InvalidParameter, "null hwaddr in ClientHandler::lookup");
+    }
+    if (hwaddr->hwaddr_.empty()) {
+        isc_throw(InvalidParameter, "empty hwaddr in ClientHandler::lookup");
+    }
+
+    auto key = boost::make_tuple(hwaddr->htype_, hwaddr->hwaddr_);
+    auto it = clients_hwaddr_.find(key);
+    if (it == clients_hwaddr_.end()) {
+        return (ClientPtr());
+    }
+    return (*it);
+}
+
+void
+ClientHandler::addById(const ClientPtr& client) {
+    // Sanity checks.
+    if (!client) {
+        isc_throw(InvalidParameter, "null client in ClientHandler::addById");
+    }
+
+    // Assume insert will never fail so not checking its result.
+    clients_client_id_.insert(client);
+}
+
+void
+ClientHandler::addByHWAddr(const ClientPtr& client) {
+    // Sanity checks.
+    if (!client) {
+        isc_throw(InvalidParameter,
+                  "null client in ClientHandler::addByHWAddr");
+    }
+
+    // Assume insert will never fail so not checking its result.
+    clients_hwaddr_.insert(client);
+}
+
+void
+ClientHandler::del(const DuidPtr& duid) {
+    // Sanity check.
+    if (!duid) {
+        isc_throw(InvalidParameter, "null duid in ClientHandler::del");
+    }
+
+    // Assume erase will never fail so not checking its result.
+    clients_client_id_.erase(duid->getDuid());
+}
+
+void
+ClientHandler::del(const HWAddrPtr& hwaddr) {
+    // Sanity checks.
+    if (!hwaddr) {
+        isc_throw(InvalidParameter, "null hwaddr in ClientHandler::del");
+    }
+    if (hwaddr->hwaddr_.empty()) {
+        isc_throw(InvalidParameter, "empty hwaddr in ClientHandler::del");
+    }
+
+    auto key = boost::make_tuple(hwaddr->htype_, hwaddr->hwaddr_);
+    // Assume erase will never fail so not checking its result.
+    auto it = clients_hwaddr_.find(key);
+    if (it == clients_hwaddr_.end()) {
+        // Should not happen.
+        return;
+    }
+    clients_hwaddr_.erase(it);
+}
 
 ClientHandler::ClientHandler()
     : client_(), locked_client_id_(), locked_hwaddr_() {
@@ -50,109 +157,6 @@ ClientHandler::~ClientHandler() {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_QUEUE_FULL);
         }
     }
-}
-
-ClientHandler::Client::Client(Pkt4Ptr query, DuidPtr client_id,
-                              HWAddrPtr hwaddr)
-    : query_(query), thread_(this_thread::get_id()) {
-    // Sanity checks.
-    if (!query) {
-        isc_throw(InvalidParameter, "null query in ClientHandler (id)");
-    }
-    if (!client_id && !hwaddr) {
-        isc_throw(InvalidParameter, "null client-id and hwaddr in ClientHandler");
-    }
-
-    if (client_id) {
-        duid_ = client_id->getDuid();
-    }
-    if (hwaddr) {
-        htype_ = hwaddr->htype_;
-        hwaddr_ = hwaddr->hwaddr_;
-    }
-}
-
-ClientHandler::ClientPtr
-ClientHandler::lookup(const DuidPtr& duid) {
-    // Sanity check.
-    if (!duid) {
-        isc_throw(InvalidParameter, "duid is null in ClientHandler::lookup");
-    }
-
-    auto it = clients_client_id_.find(duid->getDuid());
-    if (it == clients_client_id_.end()) {
-        return (ClientPtr());
-    }
-    return (*it);
-}
-
-ClientHandler::ClientPtr
-ClientHandler::lookup(const HWAddrPtr& hwaddr) {
-    // Sanity checks.
-    if (!hwaddr) {
-        isc_throw(InvalidParameter, "hwaddr is null in ClientHandler::lookup");
-    }
-    if (hwaddr->hwaddr_.empty()) {
-        isc_throw(InvalidParameter, "hwaddr is empty in ClientHandler::lookup");
-    }
-
-    auto key = boost::make_tuple(hwaddr->htype_, hwaddr->hwaddr_);
-    auto it = clients_hwaddr_.find(key);
-    if (it == clients_hwaddr_.end()) {
-        return (ClientPtr());
-    }
-    return (*it);
-}
-
-void
-ClientHandler::lockById() {
-    // Sanity check.
-    if (!locked_client_id_) {
-        isc_throw(Unexpected, "nothing to lock in ClientHandler::lock (id)");
-    }
-
-    // Assume insert will never fail so not checking its result.
-    clients_client_id_.insert(client_);
-}
-
-void
-ClientHandler::lockByHWAddr() {
-    // Sanity check.
-    if (!locked_hwaddr_) {
-        isc_throw(Unexpected, "nothing to lock in ClientHandler::lock (hw)");
-    }
-
-    // Assume insert will never fail so not checking its result.
-    clients_hwaddr_.insert(client_);
-}
-
-void
-ClientHandler::unLockById() {
-    // Sanity check.
-    if (!locked_client_id_) {
-        isc_throw(Unexpected, "nothing to unlock in ClientHandler::unLock (id)");
-    }
-
-    // Assume erase will never fail so not checking its result.
-    clients_client_id_.erase(locked_client_id_->getDuid());
-    locked_client_id_.reset();
-}
-
-void
-ClientHandler::unLockByHWAddr() {
-    // Sanity check.
-    if (!locked_hwaddr_) {
-        isc_throw(Unexpected, "nothing to unlock in ClientHandler::unLock (hw)");
-    }
-
-    auto key = boost::make_tuple(locked_hwaddr_->htype_, locked_hwaddr_->hwaddr_);
-    // Assume erase will never fail so not checking its result.
-    auto it = clients_hwaddr_.find(key);
-    if (it != clients_hwaddr_.end()) {
-        // Should always happen.
-        clients_hwaddr_.erase(it);
-    }
-    locked_hwaddr_.reset();
 }
 
 bool
@@ -277,6 +281,51 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
         }
     }
     return (false);
+}
+
+void
+ClientHandler::lockById() {
+    // Sanity check.
+    if (!locked_client_id_) {
+        isc_throw(Unexpected, "nothing to lock in ClientHandler::lockById");
+    }
+
+    addById(client_);
+}
+
+void
+ClientHandler::lockByHWAddr() {
+    // Sanity check.
+    if (!locked_hwaddr_) {
+        isc_throw(Unexpected,
+                  "nothing to lock in ClientHandler::lockByHWAddr");
+    }
+
+    addByHWAddr(client_);
+}
+
+void
+ClientHandler::unLockById() {
+    // Sanity check.
+    if (!locked_client_id_) {
+        isc_throw(Unexpected,
+                  "nothing to unlock in ClientHandler::unLockById");
+    }
+
+    del(locked_client_id_);
+    locked_client_id_.reset();
+}
+
+void
+ClientHandler::unLockByHWAddr() {
+    // Sanity check.
+    if (!locked_hwaddr_) {
+        isc_throw(Unexpected,
+                  "nothing to unlock in ClientHandler::unLockByHWAddr");
+    }
+
+    del(locked_hwaddr_);
+    locked_hwaddr_.reset();
 }
 
 }  // namespace dhcp
