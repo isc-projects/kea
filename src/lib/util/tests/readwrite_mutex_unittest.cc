@@ -21,6 +21,18 @@ using namespace std;
 namespace {
 
 /// @brief Test Fixture for testing read-write mutexes.
+///
+/// Each not basic test follows the same schema:
+/// @code
+/// main thread    work thread
+/// <-             started
+/// work           ->
+///                enter guard
+/// <-             done
+/// terminate      ->
+///                return
+/// join
+/// @endcode
 class ReadWriteMutexTest : public ::testing::Test {
 public:
 
