@@ -424,7 +424,7 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
         }
         syncr_.work_cv.notify_one();
 
-        // Verify the reader thread is waiting for the rea lock.
+        // Verify the reader thread is waiting for the read lock.
         cout << "pausing for one second\n";
         timeout = false;
         while (!timeout && !syncr_.done) {
@@ -482,7 +482,7 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
     }
     syncr_.terminate_cv.notify_one();
 
-    // Join the writer thread.
+    // Join the reader thread.
     threadr.join();
 }
 
