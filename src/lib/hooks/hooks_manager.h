@@ -255,7 +255,8 @@ public:
     template<typename T>
     static void park(const std::string& hook_name, T parked_object,
                      std::function<void()> unpark_callback) {
-        getHooksManager().parkInternal(hook_name, parked_object, unpark_callback);
+        ServerHooks::getServerHooks().
+            getParkingLotPtr(hook_name)->park(parked_object, unpark_callback);
     }
 
     /// @brief Forces unparking the object (packet).
@@ -270,7 +271,8 @@ public:
     /// @return true if the specified object has been found, false otherwise.
     template<typename T>
     static bool unpark(const std::string& hook_name, T parked_object) {
-        return (getHooksManager().unparkInternal(hook_name, parked_object));
+        return (ServerHooks::getServerHooks().
+                getParkingLotPtr(hook_name)->unpark(parked_object, true));
     }
 
     /// @brief Removes parked object without calling a callback.
@@ -281,7 +283,8 @@ public:
     /// @return true if the specified object has been found false otherwise.
     template<typename T>
     static bool drop(const std::string& hook_name, T parked_object) {
-        return (getHooksManager().dropInternal(hook_name, parked_object));
+        return (ServerHooks::getServerHooks().
+                getParkingLotPtr(hook_name)->drop(parked_object));
     }
 
     /// @brief Increases reference counter for the parked object.
@@ -295,7 +298,8 @@ public:
     /// be increased.
     template<typename T>
     static void reference(const std::string& hook_name, T parked_object) {
-        getHooksManager().referenceInternal(hook_name, parked_object);
+        ServerHooks::getServerHooks().
+            getParkingLotPtr(hook_name)->reference(parked_object);
     }
 
     /// @brief Clears any parking packets.
@@ -304,7 +308,7 @@ public:
     /// are no dangling pointers that could possibly prevent the library
     /// from being unloaded.
     static void clearParkingLots() {
-        getHooksManager().clearParkingLotsInternal();
+        ServerHooks::getServerHooks().getParkingLotsPtr()->clear();
     }
 
     /// @brief Set test mode
@@ -334,62 +338,6 @@ private:
     ///
     /// @return Reference to the singleton hooks manager.
     static HooksManager& getHooksManager();
-
-    /// @brief Park an object (packet).
-    ///
-    /// @tparam Type of the parked object.
-    /// @param hook_name Name of the hook point for which the packet is parked.
-    /// @param parked_object packet to be parked.
-    /// @param unpark_callback callback invoked when the packet is unparked.
-    template<typename T>
-    void parkInternal(const std::string& hook_name, T parked_object,
-                      std::function<void()> unpark_callback) {
-        ServerHooks::getServerHooks().
-            getParkingLotPtr(hook_name)->park(parked_object, unpark_callback);
-    }
-
-    /// @brief Signals that the object (packet) should be unparked.
-    ///
-    /// @tparam Type of the parked object.
-    /// @param hook_name name of the hook point for which the packet is parked.
-    /// @param parked_object parked object to be unparked.
-    /// @return true if the specified object has been found, false otherwise.
-    template<typename T>
-    bool unparkInternal(const std::string& hook_name, T parked_object) {
-        return (ServerHooks::getServerHooks().
-                getParkingLotPtr(hook_name)->unpark(parked_object, true));
-    }
-
-    /// @brief Removes parked object without calling a callback.
-    ///
-    /// @tparam T type of the parked object.
-    /// @param hook_name name of the hook point for which the packet is parked.
-    /// @param parked_object parked object to be removed.
-    /// @return true if the specified object has been found false otherwise.
-    template<typename T>
-    static bool dropInternal(const std::string& hook_name, T parked_object) {
-        return (ServerHooks::getServerHooks().
-                getParkingLotPtr(hook_name)->drop(parked_object));
-    }
-
-    /// @brief Increases reference counter for the parked object.
-    ///
-    /// @tparam Type of the parked object.
-    /// @param hook_name name of the hook point for which the packet is parked.
-    /// @param parked_object parked object for which reference counter should
-    /// be increased.
-    template<typename T>
-    void referenceInternal(const std::string& hook_name, T parked_object) {
-        ServerHooks::getServerHooks().
-            getParkingLotPtr(hook_name)->reference(parked_object);
-    }
-
-    /// @brief Clears all pointers stored in parking lots.
-    ///
-    /// See @ref clearParkingLots for explanation.
-    void clearParkingLotsInternal() {
-        ServerHooks::getServerHooks().getParkingLotsPtr()->clear();
-    }
 
     //@{
     /// The following methods correspond to similarly-named static methods,

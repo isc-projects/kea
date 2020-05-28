@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,11 +11,12 @@
 #include <boost/any.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
+
 #include <functional>
+#include <iostream>
 #include <list>
 #include <map>
-
-#include <iostream>
+#include <mutex>
 
 namespace isc {
 namespace hooks {
@@ -70,6 +71,7 @@ public:
     /// parking the object.
     template<typename T>
     void park(T parked_object, std::function<void()> unpark_callback) {
+        std::lock_guard<std::mutex> lock(mutex_);
         auto it = find(parked_object);
         if (it == parking_.end() || it->refcount_ <= 0) {
             isc_throw(InvalidOperation, "unable to park an object because"
@@ -90,11 +92,11 @@ public:
     /// @param parked_object object which will be parked.
     template<typename T>
     void reference(T parked_object) {
+        std::lock_guard<std::mutex> lock(mutex_);
         auto it = find(parked_object);
         if (it == parking_.end()) {
             ParkingInfo parking_info(parked_object);
             parking_.push_back(parking_info);
-
         } else {
             ++it->refcount_;
         }
@@ -115,31 +117,39 @@ public:
     /// no such object, true otherwise.
     template<typename T>
     bool unpark(T parked_object, bool force = false) {
-        auto it = find(parked_object);
-        if (it != parking_.end()) {
+        // Initialize as the empty function.
+        std::function<void()> cb;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            auto it = find(parked_object);
+            if (it == parking_.end()) {
+                // No such parked object.
+                return (false);
+            }
+
             if (force) {
                 it->refcount_ = 0;
-
             } else {
                 --it->refcount_;
             }
 
             if (it->refcount_ <= 0) {
-                // Unpark the packet and invoke the callback.
-                std::function<void()> cb = it->unpark_callback_;
+                // Unpark the packet and set the callback.
+                cb = it->unpark_callback_;
                 parking_.erase(it);
-                cb();
             }
-
-            // Parked object found, so return true to indicate that the
-            // operation was successful. It doesn't necessarily mean
-            // that the object was unparked, but at least the reference
-            // count was decreased.
-            return (true);
         }
 
-        // No such parked object.
-        return (false);
+        // Invoke the callback if not empty.
+        if (cb) {
+            cb();
+        }
+
+        // Parked object found, so return true to indicate that the
+        // operation was successful. It doesn't necessarily mean
+        // that the object was unparked, but at least the reference
+        // count was decreased.
+        return (true);
     }
 
     /// @brief Removes parked object without calling a callback.
@@ -150,6 +160,7 @@ public:
     /// no such object, true otherwise.
     template<typename T>
     bool drop(T parked_object) {
+        std::lock_guard<std::mutex> lock(mutex_);
         auto it = find(parked_object);
         if (it != parking_.end()) {
             // Parked object found.
@@ -192,6 +203,7 @@ private:
 
     /// @brief Type of list of parked objects.
     typedef std::list<ParkingInfo> ParkingInfoList;
+
     /// @brief Type of the iterator in the list of parked objects.
     typedef ParkingInfoList::iterator ParkingInfoListIterator;
 
@@ -213,6 +225,12 @@ private:
         }
         return (parking_.end());
     }
+
+    /// @brief The mutex to protect parking lot internal state.
+    ///
+    /// All public methods must enter of lock guard with the mutex
+    /// before any access to the @c parking_ member.
+    std::mutex mutex_;
 };
 
 /// @brief Type of the pointer to the parking lot.
@@ -299,6 +317,7 @@ public:
     ///
     /// It doesn't invoke callbacks associated with the removed objects.
     void clear() {
+        std::lock_guard<std::mutex> lock(mutex_);
         parking_lots_.clear();
     }
 
@@ -311,6 +330,7 @@ public:
     /// lot is associated.
     /// @return Pointer to the parking lot.
     ParkingLotPtr getParkingLotPtr(const int hook_index) {
+        std::lock_guard<std::mutex> lock(mutex_);
         if (parking_lots_.count(hook_index) == 0) {
             parking_lots_[hook_index] = boost::make_shared<ParkingLot>();
         }
@@ -322,6 +342,8 @@ private:
     /// @brief Container holding parking lots for various hook points.
     std::map<int, ParkingLotPtr> parking_lots_;
 
+    /// @brief The mutex to protect parking lots internal state.
+    std::mutex mutex_;
 };
 
 /// @brief Type of the pointer to the parking lots.
