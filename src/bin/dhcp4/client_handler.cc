@@ -195,37 +195,38 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
     Pkt4Ptr next_query_hw;
     client_.reset(new Client(query, duid, hwaddr));
 
-    // Try first duid.
-    if (duid) {
-        // Try to acquire the by-client-id lock and return the holder
-        // when it failed.
+    {
         lock_guard<mutex> lk(mutex_);
-        holder_id = lookup(duid);
+        // Try first duid.
+        if (duid) {
+            // Try to acquire the by-client-id lock and return the holder
+            // when it failed.
+            holder_id = lookup(duid);
+            if (!holder_id) {
+                locked_client_id_ = duid;
+                lockById();
+            } else if (cont) {
+                next_query_id = holder_id->next_query_;
+                holder_id->next_query_ = query;
+                holder_id->cont_ = cont;
+            }
+        }
         if (!holder_id) {
-            locked_client_id_ = duid;
-            lockById();
-        } else if (cont) {
-            next_query_id = holder_id->next_query_;
-            holder_id->next_query_ = query;
-            holder_id->cont_ = cont;
-        }
-    }
-    if (!holder_id) {
-        if (!hwaddr) {
-            return (true);
-        }
-        // Try to acquire the by-hw-addr lock and return the holder
-        // when it failed.
-        lock_guard<mutex> lk(mutex_);
-        holder_hw = lookup(hwaddr);
-        if (!holder_hw) {
-            locked_hwaddr_ = hwaddr;
-            lockByHWAddr();
-            return (true);
-        } else if (cont) {
-            next_query_hw = holder_hw->next_query_;
-            holder_hw->next_query_ = query;
-            holder_hw->cont_ = cont;
+            if (!hwaddr) {
+                return (true);
+            }
+            // Try to acquire the by-hw-addr lock and return the holder
+            // when it failed.
+            holder_hw = lookup(hwaddr);
+            if (!holder_hw) {
+                locked_hwaddr_ = hwaddr;
+                lockByHWAddr();
+                return (true);
+            } else if (cont) {
+                next_query_hw = holder_hw->next_query_;
+                holder_hw->next_query_ = query;
+                holder_hw->cont_ = cont;
+            }
         }
     }
 
