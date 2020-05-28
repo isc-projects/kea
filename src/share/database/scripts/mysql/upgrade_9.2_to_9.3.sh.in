@@ -1,0 +1,127 @@
+#!/bin/sh
+
+prefix=@prefix@
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`mysql_version "$@"`
+
+if [ "$VERSION" != "9.2" ]; then
+    printf "This script upgrades 9.2 to 9.3. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+mysql "$@" <<EOF
+
+# Fix stat_lease4_update trigger
+DROP TRIGGER stat_lease4_update;
+
+DELIMITER $$
+CREATE TRIGGER stat_lease4_update AFTER UPDATE ON lease4
+    FOR EACH ROW
+    BEGIN
+        IF OLD.subnet_id != NEW.subnet_id OR OLD.state != NEW.state THEN
+            IF OLD.state = 0 OR OLD.state = 1 THEN
+                # Decrement the old state count if record exists
+                UPDATE lease4_stat
+                SET leases = IF(leases > 0, leases - 1, 0)
+                WHERE subnet_id = OLD.subnet_id AND state = OLD.state;
+            END IF;
+
+            IF NEW.state = 0 OR NEW.state = 1 THEN
+                # Increment the new state count if record exists
+                UPDATE lease4_stat SET leases = leases + 1
+                WHERE subnet_id = NEW.subnet_id AND state = NEW.state;
+
+                # Insert new state record if it does not exist
+                IF ROW_COUNT() <= 0 THEN
+                    INSERT INTO lease4_stat VALUES (NEW.subnet_id, NEW.state, 1);
+                END IF;
+            END IF;
+        END IF;
+    END $$
+DELIMITER ;
+
+# Fix stat_lease4_delete trigger
+DROP TRIGGER stat_lease4_delete;
+
+DELIMITER $$
+CREATE TRIGGER stat_lease4_delete AFTER DELETE ON lease4
+    FOR EACH ROW
+    BEGIN
+        IF OLD.state = 0 OR OLD.state = 1 THEN
+            # Decrement the state count if record exists
+            UPDATE lease4_stat
+            SET leases = IF(leases > 0, leases - 1, 0)
+            WHERE subnet_id = OLD.subnet_id AND OLD.state = state;
+        END IF;
+    END $$
+DELIMITER ;
+
+# Fix stat_lease6_update trigger
+DROP TRIGGER stat_lease6_update;
+
+DELIMITER $$
+CREATE TRIGGER stat_lease6_update AFTER UPDATE ON lease6
+    FOR EACH ROW
+    BEGIN
+        IF OLD.subnet_id != NEW.subnet_id OR
+           OLD.lease_type != NEW.lease_type OR
+           OLD.state != NEW.state THEN
+            IF OLD.state = 0 OR OLD.state = 1 THEN
+                # Decrement the old state count if record exists
+                UPDATE lease6_stat
+                SET leases = IF(leases > 0, leases - 1, 0)
+                WHERE subnet_id = OLD.subnet_id AND lease_type = OLD.lease_type
+                AND state = OLD.state;
+            END IF;
+
+            IF NEW.state = 0 OR NEW.state = 1 THEN
+                # Increment the new state count if record exists
+                UPDATE lease6_stat SET leases = leases + 1
+                WHERE subnet_id = NEW.subnet_id AND lease_type = NEW.lease_type
+                AND state = NEW.state;
+
+                # Insert new state record if it does not exist
+                IF ROW_COUNT() <= 0 THEN
+                    INSERT INTO lease6_stat
+                    VALUES (NEW.subnet_id, NEW.lease_type, NEW.state, 1);
+                END IF;
+            END IF;
+        END IF;
+    END $$
+DELIMITER ;
+
+# Fix stat_lease6_delete trigger
+DROP TRIGGER stat_lease6_delete;
+
+DELIMITER $$
+CREATE TRIGGER stat_lease6_delete AFTER DELETE ON lease6
+    FOR EACH ROW
+    BEGIN
+        IF OLD.state = 0 OR OLD.state = 1 THEN
+            # Decrement the state count if record exists
+            UPDATE lease6_stat
+            SET leases = IF(leases > 0, leases - 1, 0)
+            WHERE subnet_id = OLD.subnet_id AND lease_type = OLD.lease_type
+            AND state = OLD.state;
+        END IF;
+    END $$
+DELIMITER ;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '9', minor = '3';
+
+# This line concludes database upgrade to version 9.3.
+
+EOF
+
+RESULT=$?
+
+exit $?

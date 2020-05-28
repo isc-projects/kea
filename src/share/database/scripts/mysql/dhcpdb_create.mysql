@@ -2873,6 +2873,12 @@ ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_pd_pool
         REFERENCES dhcp6_pd_pool(id)
         ON DELETE CASCADE ON UPDATE CASCADE;
 
+# Update the schema version number
+UPDATE schema_version
+SET version = '9', minor = '2';
+
+# This line concludes database upgrade to version 9.2.
+
 # Fix stat_lease4_update trigger
 DROP TRIGGER stat_lease4_update;
 
@@ -2971,9 +2977,9 @@ DELIMITER ;
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '9', minor = '2';
+SET version = '9', minor = '3';
 
-# This line concludes database upgrade to version 9.2.
+# This line concludes database upgrade to version 9.3.
 
 
 # Notes:
