@@ -136,9 +136,26 @@ ClientHandler::ClientHandler()
 }
 
 ClientHandler::~ClientHandler() {
-    if (locked_client_id_ || locked_hwaddr_) {
-        lock_guard<mutex> lk(mutex_);
-        unLock();
+    bool unlocked = false;
+    lock_guard<mutex> lk(mutex_);
+    if (locked_client_id_) {
+        unlocked = true;
+        unLockById();
+    }
+    if (locked_hwaddr_) {
+        unlocked = true;
+        unLockByHWAddr();
+    }
+    if (!unlocked || !client_ || !client_->cont_) {
+        return;
+    }
+    // Try to process next query. As the caller holds the mutex of
+    // the handler class the continuation will be resumed after.
+    MultiThreadingMgr& mt_mgr = MultiThreadingMgr::instance();
+    if (mt_mgr.getMode()) {
+        if (!mt_mgr.getThreadPool().addFront(client_->cont_)) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_QUEUE_FULL);
+        }
     }
 }
 
@@ -178,38 +195,37 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
     Pkt4Ptr next_query_hw;
     client_.reset(new Client(query, duid, hwaddr));
 
-    {
+    // Try first duid.
+    if (duid) {
+        // Try to acquire the by-client-id lock and return the holder
+        // when it failed.
         lock_guard<mutex> lk(mutex_);
-        // Try first duid.
-        if (duid) {
-            // Try to acquire the by-client-id lock and return the holder
-            // when it failed.
-            holder_id = lookup(duid);
-            if (!holder_id) {
-                locked_client_id_ = duid;
-                lockById();
-            } else if (cont) {
-                next_query_id = holder_id->next_query_;
-                holder_id->next_query_ = query;
-                holder_id->cont_ = cont;
-            }
-        }
+        holder_id = lookup(duid);
         if (!holder_id) {
-            if (!hwaddr) {
-                return (true);
-            }
-            // Try to acquire the by-hw-addr lock and return the holder
-            // when it failed.
-            holder_hw = lookup(hwaddr);
-            if (!holder_hw) {
-                locked_hwaddr_ = hwaddr;
-                lockByHWAddr();
-                return (true);
-            } else if (cont) {
-                next_query_hw = holder_hw->next_query_;
-                holder_hw->next_query_ = query;
-                holder_hw->cont_ = cont;
-            }
+            locked_client_id_ = duid;
+            lockById();
+        } else if (cont) {
+            next_query_id = holder_id->next_query_;
+            holder_id->next_query_ = query;
+            holder_id->cont_ = cont;
+        }
+    }
+    if (!holder_id) {
+        if (!hwaddr) {
+            return (true);
+        }
+        // Try to acquire the by-hw-addr lock and return the holder
+        // when it failed.
+        lock_guard<mutex> lk(mutex_);
+        holder_hw = lookup(hwaddr);
+        if (!holder_hw) {
+            locked_hwaddr_ = hwaddr;
+            lockByHWAddr();
+            return (true);
+        } else if (cont) {
+            next_query_hw = holder_hw->next_query_;
+            holder_hw->next_query_ = query;
+            holder_hw->cont_ = cont;
         }
     }
 
@@ -286,29 +302,6 @@ ClientHandler::lockByHWAddr() {
     }
 
     addByHWAddr(client_);
-}
-
-void
-ClientHandler::unLock() {
-    if (locked_client_id_) {
-        unLockById();
-    }
-    if (locked_hwaddr_) {
-        unLockByHWAddr();
-    }
-
-    if (!client_ || !client_->cont_) {
-        return;
-    }
-
-    // Try to process next query. As the caller holds the mutex of
-    // the handler class the continuation will be resumed after.
-    MultiThreadingMgr& mt_mgr = MultiThreadingMgr::instance();
-    if (mt_mgr.getMode()) {
-        if (!mt_mgr.getThreadPool().addFront(client_->cont_)) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_QUEUE_FULL);
-        }
-    }
 }
 
 void

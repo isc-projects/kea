@@ -222,14 +222,6 @@ private:
     /// The mutex must be held by the caller.
     void lockByHWAddr();
 
-    /// @brief Release a client.
-    ///
-    /// If the client has a continuation, push it at front of the thread
-    /// packet queue.
-    ///
-    /// The mutex must be held by the only caller: the destructor.
-    void unLock();
-
     /// @brief Release a client by client ID option.
     ///
     /// The mutex must be held by the caller.
