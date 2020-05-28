@@ -171,7 +171,6 @@ private:
 
     /// @brief Client ID locked by this handler.
     DuidPtr locked_;
-
 };
 
 } // namespace isc

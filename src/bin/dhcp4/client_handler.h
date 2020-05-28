@@ -148,14 +148,14 @@ private:
     ///
     /// The mutex must be held by the caller.
     ///
-    /// @param The client to insert into the by id client container.
+    /// @param client The client to insert into the by id client container.
     static void addById(const ClientPtr& client);
 
     /// @brief Add a client by hwaddr.
     ///
     /// The mutex must be held by the caller.
     ///
-    /// @param The client to insert into the by hwaddr client container.
+    /// @param client The client to insert into the by hwaddr client container.
     static void addByHWAddr(const ClientPtr& client);
 
     /// @brief Delete a client by id.
@@ -192,8 +192,7 @@ public:
 
     /// @brief Destructor.
     ///
-    /// Releases the client if it was acquired, if it has also a continuation,
-    /// push it at front of the thread packet queue.
+    /// Releases the client if it was acquired.
     virtual ~ClientHandler();
 
     /// @brief Tries to acquires a client.
@@ -222,6 +221,14 @@ private:
     ///
     /// The mutex must be held by the caller.
     void lockByHWAddr();
+
+    /// @brief Release a client.
+    ///
+    /// If the client has a continuation, push it at front of the thread
+    /// packet queue.
+    ///
+    /// The mutex must be held by the only caller: the destructor.
+    void unLock();
 
     /// @brief Release a client by client ID option.
     ///
