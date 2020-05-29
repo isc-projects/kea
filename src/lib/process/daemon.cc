@@ -67,31 +67,6 @@ void Daemon::handleSignal() {
     }
 }
 
-void Daemon::relocateLogging(ConstElementPtr config,
-                             const std::string server_name) {
-    ConstElementPtr logging = config->get("Logging");
-    ConstElementPtr loggers;
-    if (logging) {
-        loggers = logging->get("loggers");
-        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config);
-        mutable_cfg->remove("Logging");
-    }
-    if (loggers) {
-        ConstElementPtr server = config->get(server_name);
-        ElementPtr mutable_srv = boost::const_pointer_cast<Element>(server);
-        mutable_srv->set("loggers", loggers);
-    }
-    while (config->size() > 1) {
-        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config);
-        for (auto object : config->mapValue()) {
-            if (object.first != server_name) {
-                mutable_cfg->remove(object.first);
-                break;
-            }
-        }
-    }
-}
-
 void Daemon::configureLogger(const ConstElementPtr& log_config,
                              const ConfigPtr& storage) {
 

@@ -112,6 +112,18 @@ Parser4Context::require(const std::string& name,
 }
 
 void
+Parser4Context::unique(const std::string& name,
+                       isc::data::Element::Position loc)
+{
+    ConstElementPtr value = stack_.back()->get(name);
+    if (value) {
+        isc_throw(Dhcp4ParseError, loc << ": duplicate " << name
+                  << " entries in " << contextName()
+                  << " map (previous at " << value->getPosition() << ")");
+    }
+}
+
+void
 Parser4Context::enter(const ParserContext& ctx)
 {
     cstack_.push_back(ctx_);
@@ -140,8 +152,6 @@ Parser4Context::contextName()
         return ("toplevel");
     case DHCP4:
         return ("Dhcp4");
-    case LOGGING:
-        return ("Logging");
     case INTERFACES_CONFIG:
         return ("interfaces-config");
     case DHCP_SOCKET_TYPE:

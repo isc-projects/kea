@@ -112,6 +112,18 @@ Parser6Context::require(const std::string& name,
 }
 
 void
+Parser6Context::unique(const std::string& name,
+                       isc::data::Element::Position loc)
+{
+    ConstElementPtr value = stack_.back()->get(name);
+    if (value) {
+        isc_throw(Dhcp6ParseError, loc << ": duplicate " << name
+                  << " entries in " << contextName()
+                  << " map (previous at " << value->getPosition() << ")");
+    }
+}
+
+void
 Parser6Context::enter(const ParserContext& ctx)
 {
     cstack_.push_back(ctx_);
@@ -140,8 +152,6 @@ Parser6Context::contextName()
         return ("toplevel");
     case DHCP6:
         return ("Dhcp6");
-    case LOGGING:
-        return ("Logging");
     case INTERFACES_CONFIG:
         return ("interfaces-config");
     case LEASE_DATABASE:

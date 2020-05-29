@@ -358,6 +358,25 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
         }
     }
 
+    // Check unsupported objects.
+    if (message.empty()) {
+        for (auto obj : args->mapValue()) {
+            const string& obj_name = obj.first;
+            if (obj_name != "Dhcp6") {
+                LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_UNSUPPORTED_OBJECT)
+                    .arg(obj_name);
+                if (message.empty()) {
+                    message = "Unsupported '" + obj_name + "' parameter";
+                } else {
+                    message += " (and '" + obj_name + "')";
+                }
+            }
+        }
+        if (!message.empty()) {
+            message += ".";
+        }
+    }
+
     if (!message.empty()) {
         // Something is amiss with arguments, return a failure response.
         ConstElementPtr result = isc::config::createAnswer(status_code,
@@ -378,20 +397,6 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     // configuration attempts.
     CfgMgr::instance().rollback();
 
-    // Check deprecated, obsolete or unknown (aka unsupported) objects.
-    list<string> unsupported;
-    for (auto obj : args->mapValue()) {
-        const string& obj_name = obj.first;
-        if ((obj_name == "Dhcp6") || (obj_name == "Logging")) {
-            continue;
-        }
-        unsupported.push_back(obj_name);
-    }
-
-    // Relocate Logging: if there is a global Logging object takes its
-    // loggers entry, move the entry to Dhcp6 and remove now empty Logging.
-    Daemon::relocateLogging(args, "Dhcp6");
-
     // Parse the logger configuration explicitly into the staging config.
     // Note this does not alter the current loggers, they remain in
     // effect until we apply the logging config below.  If no logging
@@ -401,15 +406,6 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     // Let's apply the new logging. We do it early, so we'll be able to print
     // out what exactly is wrong with the new config in case of problems.
     CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
-
-    // Log unsupported objects.
-    if (!unsupported.empty()) {
-        for (auto name : unsupported) {
-            LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_UNSUPPORTED_OBJECT).arg(name);
-        }
-
-        // Will return an error in a future version.
-    }
 
     // Now we configure the server proper.
     ConstElementPtr result = processConfig(dhcp6);
@@ -455,19 +451,31 @@ ControlledDhcpv6Srv::commandConfigTestHandler(const string&,
         }
     }
 
+    // Check unsupported objects.
+    if (message.empty()) {
+        for (auto obj : args->mapValue()) {
+            const string& obj_name = obj.first;
+            if (obj_name != "Dhcp6") {
+                LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_UNSUPPORTED_OBJECT)
+                    .arg(obj_name);
+                if (message.empty()) {
+                    message = "Unsupported '" + obj_name + "' parameter";
+                } else {
+                    message += " (and '" + obj_name + "')";
+                }
+            }
+        }
+        if (!message.empty()) {
+            message += ".";
+        }
+    }
+
     if (!message.empty()) {
         // Something is amiss with arguments, return a failure response.
         ConstElementPtr result = isc::config::createAnswer(status_code,
                                                            message);
         return (result);
     }
-
-    // Check obsolete objects.
-
-    // Relocate Logging. Note this allows to check the loggers configuration.
-    Daemon::relocateLogging(args, "Dhcp6");
-
-    // Log obsolete objects and return an error.
 
     // stop thread pool (if running)
     MultiThreadingCriticalSection cs;

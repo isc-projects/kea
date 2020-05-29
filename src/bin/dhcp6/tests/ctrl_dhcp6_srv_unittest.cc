@@ -677,8 +677,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     string control_socket_footer =
         "\"   \n} \n";
     string logger_txt =
-        "    \"Logging\": { \n"
-        "        \"loggers\": [ { \n"
+        "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
         "            \"output_options\": [{ \n"
@@ -700,9 +699,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         << control_socket_header
         << socket_path_
         << control_socket_footer
-        << "}\n"                      // close dhcp6
-        << ","
         << logger_txt
+        << "}\n"                      // close dhcp6
         << "}}";
 
     // Send the config-set command
@@ -855,8 +853,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
     string control_socket_footer =
         "\"   \n} \n";
     string logger_txt =
-        "    \"Logging\": { \n"
-        "        \"loggers\": [ { \n"
+        "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
         "            \"output_options\": [{ \n"
@@ -876,9 +873,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
         << control_socket_header
         << socket_path_
         << control_socket_footer
-        << "}\n"                      // close dhcp6
-        << ","
         << logger_txt
+        << "}\n"                      // close dhcp6
         << "}}";
 
     // Send the config-set command

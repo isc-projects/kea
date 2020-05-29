@@ -17,8 +17,8 @@ useful when debugging a problem.
 
 The logging system in Kea is configured through the loggers entry in the
 server section of your configuration file. In previous Kea releases this
-entry was in an independent Logging section; this is still supported for
-backward compatibility.
+entry was in an independent Logging section; this was still supported
+for backward compatibility until Kea 1.7.8 included.
 
 Loggers
 -------

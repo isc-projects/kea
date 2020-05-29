@@ -90,9 +90,6 @@ public:
 
         /// This will parse the input as config-control.
         PARSER_CONFIG_CONTROL,
-
-        /// This will parse the content of Logging.
-        PARSER_LOGGING
     } ParserType;
 
     /// @brief Default constructor.
@@ -192,27 +189,33 @@ public:
     ///
     /// @param name name of the parameter to check
     /// @param open_loc location of the opening curly bracket
-    /// @param close_loc ocation of the closing curly bracket
+    /// @param close_loc location of the closing curly bracket
     /// @throw Dhcp4ParseError
     void require(const std::string& name,
                  isc::data::Element::Position open_loc,
                  isc::data::Element::Position close_loc);
+
+    /// @brief Check if a parameter is already present
+    ///
+    /// Check if a parameter is already present in the map at the top
+    /// of the stack and raise an error when it is.
+    ///
+    /// @param name name of the parameter to check
+    /// @param loc location of the current parameter
+    /// @throw Dhcp4ParseError
+    void unique(const std::string& name,
+                isc::data::Element::Position loc);
 
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
         ///< This one is used in pure JSON mode.
         NO_KEYWORD,
 
-        ///< Used while parsing top level (that contains Dhcp4, Logging and others)
+        ///< Used while parsing top level (that contains Dhcp4)
         CONFIG,
 
         ///< Used while parsing content of Dhcp4.
         DHCP4,
-
-        // not yet Dhcp6, DhcpDdns,
-
-        ///< Used while parsing content of Logging
-        LOGGING,
 
         /// Used while parsing Dhcp4/interfaces structures.
         INTERFACES_CONFIG,

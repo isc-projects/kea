@@ -148,12 +148,9 @@ above this object is called ``Dhcp4``.
 
    In the current Kea release it is possible to specify configurations
    of multiple modules within a single configuration file, but this is
-   not recommended and support for it will be removed in a future
-   release. The only object, besides the one specifying module
-   configuration, which can be (and usually was) included in the same file
-   is ``Logging``. However, we don't include this object in the example
-   above for clarity; its content, the list of loggers, should now be
-   inside the ``Dhcp4`` object instead of the deprecated object.
+   not recommended and support for it was removed in 1.7.9 release,
+   including the ``Logging`` object: its previous content, the list
+   of loggers, must now inside be the ``Dhcp4`` object.
 
 The Dhcp4 configuration starts with the ``"Dhcp4": {`` line and ends
 with the corresponding closing brace (in the above example, the brace

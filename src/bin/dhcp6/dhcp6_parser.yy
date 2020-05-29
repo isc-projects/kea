@@ -230,7 +230,6 @@ using namespace std;
   HOSTNAME_CHAR_SET "hostname-char-set"
   HOSTNAME_CHAR_REPLACEMENT "hostname-char-replacement"
 
-  LOGGING "Logging"
   LOGGERS "loggers"
   OUTPUT_OPTIONS "output_options"
   OUTPUT "output"
@@ -240,10 +239,6 @@ using namespace std;
   MAXSIZE "maxsize"
   MAXVER "maxver"
   PATTERN "pattern"
-
-  DHCP4 "Dhcp4"
-  DHCPDDNS "DhcpDdns"
-  CONTROL_AGENT "Control-agent"
 
  // Not real tokens, just a way to signal what the parser is expected to
  // parse.
@@ -260,7 +255,6 @@ using namespace std;
   SUB_OPTION_DATA
   SUB_HOOKS_LIBRARY
   SUB_DHCP_DDNS
-  SUB_LOGGING
   SUB_CONFIG_CONTROL
 ;
 
@@ -299,7 +293,6 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
      | SUB_DHCP_DDNS { ctx.ctx_ = ctx.DHCP_DDNS; } sub_dhcp_ddns
-     | SUB_LOGGING { ctx.ctx_ = ctx.LOGGING; } sub_logging
      | SUB_CONFIG_CONTROL { ctx.ctx_ = ctx.CONFIG_CONTROL; } sub_config_control
      ;
 
@@ -407,8 +400,7 @@ unknown_map_entry: STRING COLON {
 };
 
 
-// This defines the top-level { } that holds Control-agent, Dhcp6, Dhcp4,
-// DhcpDdns or Logging objects.
+// This defines the top-level { } that holds Dhcp6 only object.
 syntax_map: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -423,24 +415,20 @@ syntax_map: LCURLY_BRACKET {
     ctx.require("Dhcp6", ctx.loc2pos(@1), ctx.loc2pos(@4));
 };
 
-// This represents top-level entries: Control-agent, Dhcp6, Dhcp4,
-// DhcpDdns, Logging
+// This represents top-level entries: Dhcp6
 global_objects: global_object
               | global_objects COMMA global_object
               ;
 
-// This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
+// This represents a single top level entry, e.g. Dhcp6.
 global_object: dhcp6_object
-             | logging_object
-             | dhcp4_json_object
-             | dhcpddns_json_object
-             | control_agent_json_object
-             | unknown_map_entry
              ;
 
 dhcp6_object: DHCP6 {
     // This code is executed when we're about to start parsing
     // the content of the map
+    // Prevent against duplicate.
+    ctx.unique("Dhcp6", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("Dhcp6", m);
     ctx.stack_.push_back(m);
@@ -2418,29 +2406,6 @@ dep_hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
 };
 
 
-// JSON entries for Dhcp4 and DhcpDdns
-
-dhcp4_json_object: DHCP4 {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->set("Dhcp4", $4);
-    ctx.leave();
-};
-
-dhcpddns_json_object: DHCPDDNS {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->set("DhcpDdns", $4);
-    ctx.leave();
-};
-
-control_agent_json_object: CONTROL_AGENT {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->set("Control-agent", $4);
-    ctx.leave();
-};
-
 // Config control information element
 
 config_control: CONFIG_CONTROL {
@@ -2488,41 +2453,8 @@ config_fetch_wait_time: CONFIG_FETCH_WAIT_TIME COLON INTEGER {
     ctx.stack_.back()->set("config-fetch-wait-time", value);
 };
 
-// --- logging entry -----------------------------------------
+// --- loggers entry -----------------------------------------
 
-// This defines the top level "Logging" object. It parses
-// the following "Logging": { ... }. The ... is defined
-// by logging_params
-logging_object: LOGGING {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("Logging", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.LOGGING);
-} COLON LCURLY_BRACKET logging_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-sub_logging: LCURLY_BRACKET {
-    // Parse the Logging map
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.push_back(m);
-} logging_params RCURLY_BRACKET {
-    // parsing completed
-};
-
-// This defines the list of allowed parameters that may appear
-// in the top-level Logging object. It can either be a single
-// parameter or several parameters separated by commas.
-logging_params: logging_param
-              | logging_params COMMA logging_param
-              ;
-
-// There's currently only one parameter defined, which is "loggers".
-logging_param: loggers;
-
-// "loggers", the only parameter currently defined in "Logging" object,
-// is "loggers": [ ... ].
 loggers: LOGGERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
@@ -2539,7 +2471,7 @@ loggers_entries: logger_entry
                | loggers_entries COMMA logger_entry
                ;
 
-// This defines a single entry defined in loggers in Logging.
+// This defines a single entry defined in loggers.
 logger_entry: LCURLY_BRACKET {
     ElementPtr l(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(l);

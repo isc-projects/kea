@@ -343,7 +343,6 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
 
     // Command arguments are expected to be:
     // { "Dhcp4": { ... } }
-    // The Logging component is supported by backward compatiblity.
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {
@@ -352,6 +351,25 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
             message = "Missing mandatory 'Dhcp4' parameter.";
         } else if (dhcp4->getType() != Element::map) {
             message = "'Dhcp4' parameter expected to be a map.";
+        }
+    }
+
+    // Check unsupported objects.
+    if (message.empty()) {
+        for (auto obj : args->mapValue()) {
+            const string& obj_name = obj.first;
+            if (obj_name != "Dhcp4") {
+                LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_UNSUPPORTED_OBJECT)
+                    .arg(obj_name);
+                if (message.empty()) {
+                    message = "Unsupported '" + obj_name + "' parameter";
+                } else {
+                    message += " (and '" + obj_name + "')";
+                }
+            }
+        }
+        if (!message.empty()) {
+            message += ".";
         }
     }
 
@@ -375,20 +393,6 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
     // configuration attempts.
     CfgMgr::instance().rollback();
 
-    // Check deprecated, obsolete or unknown (aka unsupported) objects.
-    list<string> unsupported;
-    for (auto obj : args->mapValue()) {
-        const string& obj_name = obj.first;
-        if ((obj_name == "Dhcp4") || (obj_name == "Logging")) {
-            continue;
-        }
-        unsupported.push_back(obj_name);
-    }
-
-    // Relocate Logging: if there is a global Logging object takes its
-    // loggers entry, move the entry to Dhcp4 and remove now empty Logging.
-    Daemon::relocateLogging(args, "Dhcp4");
-
     // Parse the logger configuration explicitly into the staging config.
     // Note this does not alter the current loggers, they remain in
     // effect until we apply the logging config below.  If no logging
@@ -398,15 +402,6 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
     // Let's apply the new logging. We do it early, so we'll be able to print
     // out what exactly is wrong with the new config in case of problems.
     CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
-
-    // Log unsupported objects.
-    if (!unsupported.empty()) {
-        for (auto name : unsupported) {
-            LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_UNSUPPORTED_OBJECT).arg(name);
-        }
-
-        // Will return an error in a future version.
-    }
 
     // Now we configure the server proper.
     ConstElementPtr result = processConfig(dhcp4);
@@ -452,19 +447,31 @@ ControlledDhcpv4Srv::commandConfigTestHandler(const string&,
         }
     }
 
+    // Check unsupported objects.
+    if (message.empty()) {
+        for (auto obj : args->mapValue()) {
+            const string& obj_name = obj.first;
+            if (obj_name != "Dhcp4") {
+                LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_UNSUPPORTED_OBJECT)
+                    .arg(obj_name);
+                if (message.empty()) {
+                    message = "Unsupported '" + obj_name + "' parameter";
+                } else {
+                    message += " (and '" + obj_name + "')";
+                }
+            }
+        }
+        if (!message.empty()) {
+            message += ".";
+        }
+    }
+
     if (!message.empty()) {
         // Something is amiss with arguments, return a failure response.
         ConstElementPtr result = isc::config::createAnswer(status_code,
                                                            message);
         return (result);
     }
-
-    // Check obsolete objects.
-
-    // Relocate Logging. Note this allows to check the loggers configuration.
-    Daemon::relocateLogging(args, "Dhcp4");
-
-    // Log obsolete objects and return an error.
 
     // stop thread pool (if running)
     MultiThreadingCriticalSection cs;

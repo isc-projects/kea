@@ -139,8 +139,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
             return isc::dhcp::Dhcp6Parser::make_SUB_DHCP_DDNS(driver.loc_);
         case Parser6Context::PARSER_CONFIG_CONTROL:
             return isc::dhcp::Dhcp6Parser::make_SUB_CONFIG_CONTROL(driver.loc_);
-        case Parser6Context::PARSER_LOGGING:
-            return isc::dhcp::Dhcp6Parser::make_SUB_LOGGING(driver.loc_);
         }
     }
 %}
@@ -1362,19 +1360,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"Logging\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::CONFIG:
-        return isc::dhcp::Dhcp6Parser::make_LOGGING(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("Logging", driver.loc_);
-    }
-}
-
 \"loggers\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-    case isc::dhcp::Parser6Context::LOGGING:
         return isc::dhcp::Dhcp6Parser::make_LOGGERS(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("loggers", driver.loc_);
@@ -1916,33 +1904,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_DHCP_DDNS(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("dhcp-ddns", driver.loc_);
-    }
-}
-
-\"Dhcp4\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::CONFIG:
-        return isc::dhcp::Dhcp6Parser::make_DHCP4(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("Dhcp4", driver.loc_);
-    }
-}
-
-\"DhcpDdns\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::CONFIG:
-        return isc::dhcp::Dhcp6Parser::make_DHCPDDNS(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("DhcpDdns", driver.loc_);
-    }
-}
-
-\"Control-agent\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::CONFIG:
-        return isc::dhcp::Dhcp6Parser::make_CONTROL_AGENT(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("Control-agent", driver.loc_);
     }
 }
 

@@ -508,26 +508,28 @@ TEST(ParserTest, errors) {
               "expecting }");
     testError("{ 123 }\n",
               Parser4Context::PARSER_DHCP4,
-              "<string>:1.3-5: syntax error, unexpected integer");
+              "<string>:1.3-5: syntax error, unexpected integer, "
+              "expecting Dhcp4");
     testError("{ \"foo\" }\n",
               Parser4Context::PARSER_JSON,
               "<string>:1.9: syntax error, unexpected }, "
               "expecting :");
     testError("{ \"foo\" }\n",
               Parser4Context::PARSER_DHCP4,
-              "<string>:1.9: syntax error, unexpected }, expecting :");
+              "<string>:1.3-7: syntax error, unexpected constant string, "
+              "expecting Dhcp4");
     testError("{ \"foo\":null }\n",
               Parser4Context::PARSER_DHCP4,
-              "<string>:1.3-7: got unexpected keyword "
-              "\"foo\" in toplevel map.");
+              "<string>:1.3-7: syntax error, unexpected constant string, "
+              "expecting Dhcp4");
+    testError("{ \"Logging\":null }\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:1.3-11: syntax error, unexpected constant string, "
+              "expecting Dhcp4");
     testError("{ \"Dhcp4\" }\n",
               Parser4Context::PARSER_DHCP4,
               "<string>:1.11: syntax error, unexpected }, "
               "expecting :");
-    testError("{ \"Dhcp6\":[]\n",
-              Parser4Context::PARSER_DHCP4,
-              "<string>:2.1: syntax error, unexpected end of file, "
-              "expecting \",\" or }");
     testError("{}{}\n",
               Parser4Context::PARSER_JSON,
               "<string>:1.3: syntax error, unexpected {, "
@@ -606,6 +608,15 @@ TEST(ParserTest, errors) {
               Parser4Context::PARSER_DHCP4,
               "<string>:3.3-11: duplicate user-context/comment entries "
               "(previous at <string>:2:19)");
+
+    // duplicate Dhcp4 entries
+    testError("{ \"Dhcp4\":{\n"
+              "  \"comment\": \"first\" },\n"
+              "  \"Dhcp4\":{\n"
+              "  \"comment\": \"second\" }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:3:3: duplicate Dhcp4 entries in toplevel map "
+              "(previous at <string>:1:3)");
 }
 
 // Check unicode escapes
@@ -649,6 +660,6 @@ TEST(ParserTest, unicodeSlash) {
     EXPECT_EQ("////", result->stringValue());
 }
 
-};
-};
-};
+}
+}
+}

@@ -93,10 +93,6 @@ public:
 
         /// This will parse the input as config-control.
         PARSER_CONFIG_CONTROL,
-
-        /// This will parse the content of Logging.
-        PARSER_LOGGING
-
     } ParserType;
 
     /// @brief Default constructor.
@@ -202,21 +198,27 @@ public:
                  isc::data::Element::Position open_loc,
                  isc::data::Element::Position close_loc);
 
+    /// @brief Check if a parameter is already present
+    ///
+    /// Check if a parameter is already present in the map at the top
+    /// of the stack and raise an error when it is.
+    ///
+    /// @param name name of the parameter to check
+    /// @param loc location of the current parameter
+    /// @throw Dhcp6ParseError
+    void unique(const std::string& name,
+                isc::data::Element::Position loc);
+
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
         ///< This one is used in pure JSON mode.
         NO_KEYWORD,
 
-        ///< Used while parsing top level (that contains Dhcp6, Logging and others)
+        ///< Used while parsing top level (that contains Dhcp6)
         CONFIG,
 
         ///< Used while parsing content of Dhcp6.
         DHCP6,
-
-        // not yet Dhcp4, DhcpDdns,
-
-        ///< Used while parsing content of Logging
-        LOGGING,
 
         /// Used while parsing Dhcp6/interfaces structures.
         INTERFACES_CONFIG,

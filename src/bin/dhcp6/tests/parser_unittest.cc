@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -498,26 +498,28 @@ TEST(ParserTest, errors) {
               "expecting }");
     testError("{ 123 }\n",
               Parser6Context::PARSER_DHCP6,
-              "<string>:1.3-5: syntax error, unexpected integer");
+              "<string>:1.3-5: syntax error, unexpected integer, "
+              "expecting Dhcp6");
     testError("{ \"foo\" }\n",
               Parser6Context::PARSER_JSON,
               "<string>:1.9: syntax error, unexpected }, "
               "expecting :");
     testError("{ \"foo\" }\n",
               Parser6Context::PARSER_DHCP6,
-              "<string>:1.9: syntax error, unexpected }, expecting :");
+              "<string>:1.3-7: syntax error, unexpected constant string, "
+              "expecting Dhcp6");
     testError("{ \"foo\":null }\n",
               Parser6Context::PARSER_DHCP6,
-              "<string>:1.3-7: got unexpected keyword "
-              "\"foo\" in toplevel map.");
+              "<string>:1.3-7: syntax error, unexpected constant string, "
+              "expecting Dhcp6");
+    testError("{ \"Logging\":null }\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:1.3-11: syntax error, unexpected constant string, "
+              "expecting Dhcp6");
     testError("{ \"Dhcp6\" }\n",
               Parser6Context::PARSER_DHCP6,
               "<string>:1.11: syntax error, unexpected }, "
               "expecting :");
-    testError("{ \"Dhcp4\":[]\n",
-              Parser6Context::PARSER_DHCP6,
-              "<string>:2.1: syntax error, unexpected end of file, "
-              "expecting \",\" or }");
     testError("{}{}\n",
               Parser6Context::PARSER_JSON,
               "<string>:1.3: syntax error, unexpected {, "
@@ -596,6 +598,15 @@ TEST(ParserTest, errors) {
               Parser6Context::PARSER_DHCP6,
               "<string>:3.3-11: duplicate user-context/comment entries "
               "(previous at <string>:2:19)");
+
+    // duplicate Dhcp6 entries
+    testError("{ \"Dhcp6\":{\n"
+              "  \"comment\": \"first\" },\n"
+              "  \"Dhcp6\":{\n"
+              "  \"comment\": \"second\" }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:3:3: duplicate Dhcp6 entries in toplevel map "
+              "(previous at <string>:1:3)");
 }
 
 // Check unicode escapes
@@ -639,6 +650,6 @@ TEST(ParserTest, unicodeSlash) {
     EXPECT_EQ("////", result->stringValue());
 }
 
-};
-};
-};
+}
+}
+}

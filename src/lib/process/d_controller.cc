@@ -203,7 +203,7 @@ DControllerBase::checkConfigOnly() {
                       " include not map '" << getAppName() << "' entry");
         }
 
-        // Handle other (i.e. not application name) objects (e.g. Logging).
+        // Handle other (i.e. not application name) objects.
         handleOtherObjects(whole_config);
 
         // Get an application process object.
@@ -376,7 +376,7 @@ DControllerBase::configFromFile() {
                       " include not map '" << getAppName() << "' entry");
         }
 
-        // Handle other (i.e. not application name) objects (e.g. Logging).
+        // Handle other (i.e. not application name) objects.
         handleOtherObjects(whole_config);
 
         // Let's configure logging before applying the configuration,
@@ -509,22 +509,10 @@ DControllerBase::handleOtherObjects(ConstElementPtr args) {
         if (obj_name == app_name) {
             continue;
         }
-        if (obj_name == "Logging") {
-            LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-                .arg("The top level element, 'Logging', has been deprecated."
-                     "  Loggers should be defined with the 'loggers[]'"
-                     " element within the '" +  app_name + "' scope.");
-            continue;
-        }
-        LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
+        LOG_ERROR(dctl_logger, DCTL_CONFIG_DEPRECATED)
             .arg("'" + obj_name + "', defining anything in global level besides '"
                  + app_name + "' is no longer supported.");
     }
-
-    // Relocate Logging: if there is a global Logging object takes its
-    // loggers entry, move the entry to AppName object and remove
-    // now empty Logging.
-    Daemon::relocateLogging(args, app_name);
 }
 
 ConstElementPtr
@@ -554,7 +542,7 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
         return (result);
     }
 
-    // Handle other (i.e. not application name) objects (e.g. Logging).
+    // Handle other (i.e. not application name) objects.
     handleOtherObjects(args);
 
     // We are starting the configuration process so we should remove any
@@ -602,7 +590,7 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
 
     try {
 
-        // Handle other (i.e. not application name) objects (e.g. Logging).
+        // Handle other (i.e. not application name) objects.
         handleOtherObjects(args);
 
         // We are starting the configuration process so we should remove any

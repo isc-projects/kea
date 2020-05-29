@@ -39,11 +39,7 @@ CONFIG="{
        \"dhcp-ddns\": {
             \"enable-updates\": true,
             \"qualifying-suffix\": \"\"
-        }
-    },
-
-    \"Logging\":
-    {
+        },
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
@@ -77,11 +73,7 @@ CONFIG_BAD_SYNTAX="{
         {
             \"subnet\": \"10.0.0.0/8\",
             \"pool\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
-        } ]
-    },
-
-    \"Logging\":
-    {
+        } ],
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
@@ -116,11 +108,7 @@ CONFIG_BAD_VALUES="{
         {
             \"subnet\": \"10.0.0.0/8\",
             \"pools\": [ { \"pool\": \"192.168.0.10-192.168.0.100\" } ]
-        } ]
-    },
-
-    \"Logging\":
-    {
+        } ],
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
@@ -155,11 +143,7 @@ CONFIG_INVALID="{
         {
             \"subnet\": \"10.0.0.0/8\",
             \"pool\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
-        } ]
-    },
-
-    \"Logging\":
-    {
+        } ],
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",

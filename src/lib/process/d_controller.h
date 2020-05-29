@@ -605,7 +605,6 @@ protected:
     ///
     /// Code shared between configuration handlers:
     ///  - check obsolete or unknown (aka unsupported) objects.
-    ///  - relocate Logging.
     ///
     /// @param args Command arguments.
     void handleOtherObjects(isc::data::ConstElementPtr args);

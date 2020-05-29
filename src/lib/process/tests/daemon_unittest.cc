@@ -270,58 +270,6 @@ TEST_F(DaemonTest, PIDFileCleanup) {
     EXPECT_EQ(errno, ENOENT);
 }
 
-// Check that relocateLogging method is behaving properly with no Logging.
-TEST_F(DaemonTest, relocateLoggingNoLogging) {
-    std::string config_txt = "{ \"myServer\": { } }";
-    ConstElementPtr config = Element::fromJSON(config_txt);
-    ConstElementPtr expected = Element::fromJSON(config_txt);
-    Daemon x;
-    EXPECT_NO_THROW(x.relocateLogging(config, "myServer"));
-    EXPECT_TRUE(expected->equals(*config));
-}
-
-// Check that relocateLogging method is behaving properly with empty Logging.
-TEST_F(DaemonTest, relocateLoggingEmptyLogging) {
-    std::string config_txt =
-        "{ \"myServer\": { },\n"
-        "  \"Logging\": { } }";
-    ConstElementPtr config = Element::fromJSON(config_txt);
-    std::string expected_txt = "{ \"myServer\": { } }";
-    ConstElementPtr expected = Element::fromJSON(expected_txt);
-    Daemon x;
-    EXPECT_NO_THROW(x.relocateLogging(config, "myServer"));
-    EXPECT_TRUE(expected->equals(*config));
-}
-
-// Check that relocateLogging method is behaving properly.
-TEST_F(DaemonTest, relocateLogging) {
-    std::string config_txt =
-        "{ \"myServer\": { },\n"
-        "  \"Logging\": {\n"
-        "    \"loggers\": [ ] } }";
-    ConstElementPtr config = Element::fromJSON(config_txt);
-    std::string expected_txt =
-        "{ \"myServer\": {\n"
-        "  \"loggers\": [ ] } }";
-    ConstElementPtr expected = Element::fromJSON(expected_txt);
-    Daemon x;
-    EXPECT_NO_THROW(x.relocateLogging(config, "myServer"));
-    EXPECT_TRUE(expected->equals(*config));
-}
-
-// Check that relocateLogging method is behaving properly with extra objects.
-TEST_F(DaemonTest, relocateLoggingExtraObjects) {
-    std::string config_txt =
-        "{ \"myServer\": { },\n"
-        "  \"Foobar\": { } }";
-    ConstElementPtr config = Element::fromJSON(config_txt);
-    std::string expected_txt = "{ \"myServer\": { } }";
-    ConstElementPtr expected = Element::fromJSON(expected_txt);
-    Daemon x;
-    EXPECT_NO_THROW(x.relocateLogging(config, "myServer"));
-    EXPECT_TRUE(expected->equals(*config));
-}
-
 // Checks that configureLogger method is behaving properly.
 // More dedicated tests are available for LogConfigParser class.
 // See logger_unittest.cc

@@ -46,7 +46,7 @@ configuration is committed by the administrator.  Additional information
 may be provided.
 
 % DCTL_CONFIG_DEPRECATED server configuration includes a deprecated object: %1
-This warning message is issued when the configuration includes a deprecated
+This error message is issued when the configuration includes a deprecated
 object (i.e. a top level element) which will be ignored.
 
 % DCTL_CONFIG_FETCH Fetching configuration data from config backends.

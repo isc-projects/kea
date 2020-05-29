@@ -137,8 +137,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
             return isc::dhcp::Dhcp4Parser::make_SUB_DHCP_DDNS(driver.loc_);
         case Parser4Context::PARSER_CONFIG_CONTROL:
             return isc::dhcp::Dhcp4Parser::make_SUB_CONFIG_CONTROL(driver.loc_);
-        case Parser4Context::PARSER_LOGGING:
-            return isc::dhcp::Dhcp4Parser::make_SUB_LOGGING(driver.loc_);
         }
     }
 %}
@@ -1036,19 +1034,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 }
 
 
-\"Logging\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONFIG:
-        return isc::dhcp::Dhcp4Parser::make_LOGGING(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("Logging", driver.loc_);
-    }
-}
-
 \"loggers\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-    case isc::dhcp::Parser4Context::LOGGING:
         return isc::dhcp::Dhcp4Parser::make_LOGGERS(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("loggers", driver.loc_);
@@ -1759,33 +1747,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     std::string tmp(yytext+1);
     tmp.resize(tmp.size() - 1);
     return isc::dhcp::Dhcp4Parser::make_STRING(tmp, driver.loc_);
-}
-
-\"Dhcp6\"  {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONFIG:
-        return isc::dhcp::Dhcp4Parser::make_DHCP6(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("Dhcp6", driver.loc_);
-    }
-}
-
-\"DhcpDdns\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONFIG:
-        return isc::dhcp::Dhcp4Parser::make_DHCPDDNS(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("DhcpDdns", driver.loc_);
-    }
-}
-
-\"Control-agent\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONFIG:
-        return isc::dhcp::Dhcp4Parser::make_CONTROL_AGENT(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("Control-agent", driver.loc_);
-    }
 }
 
 \"4o6-interface\" {

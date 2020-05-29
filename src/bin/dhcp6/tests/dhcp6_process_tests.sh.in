@@ -41,11 +41,7 @@ CONFIG="{
         \"dhcp-ddns\": {
             \"enable-updates\": true,
             \"qualifying-suffix\": \"\"
-        }
-    },
-
-    \"Logging\":
-    {
+        },
         \"loggers\": [
         {
             \"name\": \"kea-dhcp6\",
@@ -80,11 +76,7 @@ CONFIG_BAD_SYNTAX="{
         {
             \"subnet\": \"2001:db8:1::/64\",
             \"pool\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
-        } ]
-    },
-
-    \"Logging\":
-    {
+        } ],
         \"loggers\": [
         {
             \"name\": \"kea-dhcp6\",
@@ -119,11 +111,7 @@ CONFIG_INVALID="{
         {
             \"subnet\": \"2001:db8:1::/64\",
             \"pool\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
-        } ]
-    },
-
-    \"Logging\":
-    {
+        } ],
         \"loggers\": [
         {
             \"name\": \"kea-dhcp6\",

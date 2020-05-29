@@ -768,15 +768,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     string control_socket_footer =
         "\"   \n} \n";
     string logger_txt =
-        "    \"Logging\": { \n"
-        "        \"loggers\": [ { \n"
+        "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
         "            \"output_options\": [{ \n"
         "                \"output\": \"/dev/null\" \n"
         "            }] \n"
-        "        }] \n"
-        "    } \n";
+        "        }] \n";
 
     std::ostringstream os;
 
@@ -791,9 +789,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
         << control_socket_header
         << socket_path_
         << control_socket_footer
-        << "}\n"                      // close dhcp4
-        << ","
         << logger_txt
+        << "}\n"                      // close dhcp4
         << "}}";
 
     // Send the config-set command
@@ -823,7 +820,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
         << socket_path_
         << control_socket_footer
         << "}\n"                      // close dhcp4
-        "}}";
+        << "}}";
 
     // Send the config-set command
     sendUnixCommand(os.str(), response);
@@ -945,15 +942,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
     string control_socket_footer =
         "\"   \n} \n";
     string logger_txt =
-        "    \"Logging\": { \n"
-        "        \"loggers\": [ { \n"
+        "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
         "            \"output_options\": [{ \n"
         "                \"output\": \"/dev/null\" \n"
         "            }] \n"
-        "        }] \n"
-        "    } \n";
+        "        }] \n";
 
     std::ostringstream os;
 
@@ -966,9 +961,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
         << control_socket_header
         << socket_path_
         << control_socket_footer
-        << "}\n"                      // close dhcp4
-        << ","
         << logger_txt
+        << "}\n"                      // close dhcp4
         << "}}";
 
     // Send the config-set command
@@ -995,7 +989,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
         << socket_path_
         << control_socket_footer
         << "}\n"                      // close dhcp4
-        "}}";
+        << "}}";
 
     // Send the config-test command
     sendUnixCommand(os.str(), response);

@@ -450,32 +450,6 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     EXPECT_EQ(Lease::TYPE_NA, pools3.at(0)->getType());
 }
 
-// This test verifies that the configurations for various servers
-// can coexist and that the DHCPv6 configuration parsers will simply
-// ignore them.
-TEST_F(JSONFileBackendTest, serverConfigurationsCoexistence) {
-    std::string config = "{ \"Dhcp6\": {"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, \n"
-        "\"preferred-lifetime\": 1000, \n"
-        "\"valid-lifetime\": 4000 }, "
-        "\"Dhcp4\": { },"
-        "\"DhcpDdns\": { },"
-        "\"Control-agent\": { }"
-        "}";
-
-    writeFile(TEST_FILE, config);
-
-    // Now initialize the server
-    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
-    ASSERT_NO_THROW(
-        srv.reset(new ControlledDhcpv6Srv(0))
-    );
-
-    // And configure it using the config file.
-    EXPECT_NO_THROW(srv->init(TEST_FILE));
-}
-
 // This test checks if configuration can be read from a JSON file
 // using hash (#) line comments
 TEST_F(JSONFileBackendTest, hashComments) {
