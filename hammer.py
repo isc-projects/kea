@@ -242,7 +242,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
     :param bool capture: if True then the command's traces are captured and returned by the function
     :param bool interactive: if True then stdin and stdout are not redirected, traces handling is disabled,
                              used for e.g. SSH
-    :param int attemts: number of attempts to run the command if it fails
+    :param int attempts: number of attempts to run the command if it fails
     :param int sleep_time_after_attempt: number of seconds to sleep before taking next attempt
     """
     log.info('>>>>> Executing %s in %s', cmd, cwd if cwd else os.getcwd())
@@ -1632,12 +1632,12 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
 def _check_installed_rpm_or_debs(services_list):
     for svc in services_list:
         execute('sudo systemctl stop %s' % svc)
-        _, out = execute('date +"%Y-%m-%d%H:%M:%S"', capture=True)
-        timestamp = out.strip()
+        now = datetime.datetime.now()
+        timestamp = now.strftime('%Y-%m-%d%H:%M:%S')
         execute('sudo systemctl start %s' % svc)
         time.sleep(3)
         cmd = "sudo journalctl --since %s -u %s | grep '_STARTED Kea'" % (timestamp, svc)
-        execute(cmd)
+        execute(cmd, attempts=10, sleep_time_after_attempt=1)
 
 
 def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_run,
@@ -1811,8 +1811,11 @@ def _build_alpine_apk(system, revision, features, tarball_path, env, check_times
             time.sleep(3)
             if svc == 'kea-dhcp-ddns':
                 svc = 'kea-ddns'
-            cmd = "sudo cat /var/log/kea/%s.log | grep '_STARTED Kea'" % svc
-            execute(cmd)
+            log_path = '/var/log/kea/%s.log' % svc
+            if revision == '3.10':
+                log_path = '/var/log/%s.log' % svc
+            cmd = "sudo cat %s | grep '_STARTED Kea'" % log_path
+            execute(cmd, attempts=10, sleep_time_after_attempt=1)
 
 
 def _build_native_pkg(system, revision, features, tarball_path, env, check_times, dry_run, ccache_dir,
