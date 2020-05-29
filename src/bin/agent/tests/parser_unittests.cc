@@ -120,54 +120,6 @@ TEST(ParserTest, keywordJSON) {
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
-// This test checks that the DhcpDdns configuration is accepted
-// by the parser.
-TEST(ParserTest, keywordDhcpDdns) {
-    string txt =
-        "{ \"DhcpDdns\" : \n"
-           "{ \n"
-            " \"ip-address\": \"192.168.77.1\", \n"
-            " \"port\": 777 , \n "
-            " \"ncr-protocol\": \"UDP\", \n"
-            "\"tsig-keys\": [], \n"
-            "\"forward-ddns\" : {}, \n"
-            "\"reverse-ddns\" : {} \n"
-            "} \n"
-         "} \n";
-     testParser(txt, ParserContext::PARSER_AGENT);
-}
-
-// This test checks that the Dhcp6 configuration is accepted
-// by the parser.
-TEST(ParserTest, keywordDhcp6) {
-     string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
-                  " \"interfaces\": [ \"type\", \"htype\" ] },\n"
-                  "\"preferred-lifetime\": 3000,\n"
-                  "\"rebind-timer\": 2000, \n"
-                  "\"renew-timer\": 1000, \n"
-                  "\"subnet6\": [ { "
-                  "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                  "    \"subnet\": \"2001:db8:1::/48\", "
-                  "    \"interface\": \"test\" } ],\n"
-                   "\"valid-lifetime\": 4000 } }";
-     testParser(txt, ParserContext::PARSER_AGENT);
-}
-
-// This test checks that the Dhcp4 configuration is accepted
-// by the parser.
-TEST(ParserTest, keywordDhcp4) {
-    string txt = "{ \"Dhcp4\": { \"interfaces-config\": {"
-                  " \"interfaces\": [ \"type\", \"htype\" ] },\n"
-                  "\"rebind-timer\": 2000, \n"
-                  "\"renew-timer\": 1000, \n"
-                  "\"subnet4\": [ { "
-                  "  \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-                  "  \"subnet\": \"192.0.2.0/24\", "
-                  "  \"interface\": \"test\" } ],\n"
-                   "\"valid-lifetime\": 4000 } }";
-     testParser(txt, ParserContext::PARSER_AGENT);
-}
-
 // This test checks if full config (with top level and Control-agent objects) can
 // be parsed with syntactic checking (and as pure JSON).
 TEST(ParserTest, keywordAgent) {
@@ -562,18 +514,24 @@ TEST(ParserTest, errors) {
               "expecting }");
     testError("{ 123 }\n",
               ParserContext::PARSER_AGENT,
-              "<string>:1.3-5: syntax error, unexpected integer");
+              "<string>:1.3-5: syntax error, unexpected integer, "
+              "expecting Control-agent");
     testError("{ \"foo\" }\n",
               ParserContext::PARSER_JSON,
               "<string>:1.9: syntax error, unexpected }, "
               "expecting :");
     testError("{ \"foo\" }\n",
               ParserContext::PARSER_AGENT,
-              "<string>:1.9: syntax error, unexpected }, expecting :");
+              "<string>:1.3-7: syntax error, unexpected constant string, "
+              "expecting Control-agent");
     testError("{ \"foo\":null }\n",
               ParserContext::PARSER_AGENT,
-              "<string>:1.3-7: got unexpected keyword "
-              "\"foo\" in toplevel map.");
+              "<string>:1.3-7: syntax error, unexpected constant string, "
+              "expecting Control-agent");
+    testError("{ \"Logging\":null }\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:1.3-11: syntax error, unexpected constant string, "
+              "expecting Control-agent");
     testError("{ \"Control-agent\" }\n",
               ParserContext::PARSER_AGENT,
               "<string>:1.19: syntax error, unexpected }, "
@@ -696,6 +654,6 @@ TEST(ParserTest, unicodeSlash) {
     EXPECT_EQ("////", result->stringValue());
 }
 
-};
-};
-};
+}
+}
+}

@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,10 +18,7 @@ CONFIG="{
         \"port\": 53001,
         \"tsig-keys\": [],
         \"forward-ddns\" : {},
-        \"reverse-ddns\" : {}
-    },
-    \"Logging\":
-    {
+        \"reverse-ddns\" : {},
         \"loggers\": [
         {
             \"name\": \"kea-dhcp-ddns\",
@@ -44,10 +41,7 @@ CONFIG_BAD_SYNTAX="{
         \"port\": BOGUS,
         \"tsig-keys\": [],
         \"forward-ddns\" : {},
-        \"reverse-ddns\" : {}
-    },
-    \"Logging\":
-    {
+        \"reverse-ddns\" : {},
         \"loggers\": [
         {
             \"name\": \"kea-dhcp-ddns\",
@@ -70,10 +64,7 @@ CONFIG_BAD_VALUE="{
         \"port\": 80000,
         \"tsig-keys\": [],
         \"forward-ddns\" : {},
-        \"reverse-ddns\" : {}
-    },
-    \"Logging\":
-    {
+        \"reverse-ddns\" : {},
         \"loggers\": [
         {
             \"name\": \"kea-dhcp-ddns\",
@@ -97,10 +88,7 @@ CONFIG_INVALID="{
         \"port\": BOGUS,
         \"tsig-keys\": [],
         \"forward-ddns\" : {},
-        \"reverse-ddns\" : {}
-    },
-    \"Logging\":
-    {
+        \"reverse-ddns\" : {},
         \"loggers\": [
         {
             \"name\": \"kea-dhcp-ddns\",

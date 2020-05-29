@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -574,7 +574,7 @@ TEST(ParserTest, errors) {
     testError("{ 123 }\n",
               ParserContext::PARSER_NETCONF,
               "<string>:1.3-5: syntax error, unexpected integer, "
-              "expecting Netconf or Logging");
+              "expecting Netconf");
     testError("{ \"foo\" }\n",
               ParserContext::PARSER_JSON,
               "<string>:1.9: syntax error, unexpected }, "
@@ -582,11 +582,15 @@ TEST(ParserTest, errors) {
     testError("{ \"foo\" }\n",
               ParserContext::PARSER_NETCONF,
               "<string>:1.3-7: syntax error, unexpected constant string, "
-              "expecting Netconf or Logging");
+              "expecting Netconf");
     testError("{ \"foo\":null }\n",
               ParserContext::PARSER_NETCONF,
               "<string>:1.3-7: syntax error, unexpected constant string, "
-              "expecting Netconf or Logging");
+              "expecting Netconf");
+    testError("{ \"Logging\":null }\n",
+              ParserContext::PARSER_NETCONF,
+              "<string>:1.3-11: syntax error, unexpected constant string, "
+              "expecting Netconf");
     testError("{ \"Netconf\" }\n",
               ParserContext::PARSER_NETCONF,
               "<string>:1.13: syntax error, unexpected }, "
@@ -661,6 +665,15 @@ TEST(ParserTest, errors) {
               ParserContext::PARSER_NETCONF,
               "<string>:3.3-11: duplicate user-context/comment entries "
               "(previous at <string>:2:19)");
+
+    // duplicate Netconf entries
+    testError("{ \"Netconf\":{\n"
+              "  \"comment\": \"first\" },\n"
+              "  \"Netconf\":{\n"
+              "  \"comment\": \"second\" }}\n",
+              ParserContext::PARSER_NETCONF,
+              "<string>:3:3: duplicate Netconf entries in toplevel map "
+              "(previous at <string>:1:3)");
 }
 
 // Check unicode escapes
@@ -704,6 +717,6 @@ TEST(ParserTest, unicodeSlash) {
     EXPECT_EQ("////", result->stringValue());
 }
 
-};
-};
-};
+}
+}
+}

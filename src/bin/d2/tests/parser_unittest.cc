@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -135,57 +135,6 @@ TEST(ParserTest, keywordDhcpDdns) {
          "} \n";
      testParser(txt, D2ParserContext::PARSER_DHCPDDNS);
 }
-
-TEST(ParserTest, keywordDhcp6) {
-     string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
-                  " \"interfaces\": [ \"type\", \"htype\" ] },\n"
-                  "\"preferred-lifetime\": 3000,\n"
-                  "\"rebind-timer\": 2000, \n"
-                  "\"renew-timer\": 1000, \n"
-                  "\"subnet6\": [ { "
-                  "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                  "    \"subnet\": \"2001:db8:1::/48\", "
-                  "    \"interface\": \"test\" } ],\n"
-                   "\"valid-lifetime\": 4000 } }";
-     testParser(txt, D2ParserContext::PARSER_DHCPDDNS);
-}
-
-TEST(ParserTest, keywordDhcp4) {
-    string txt = "{ \"Dhcp4\": { \"interfaces-config\": {"
-                  " \"interfaces\": [ \"type\", \"htype\" ] },\n"
-                  "\"rebind-timer\": 2000, \n"
-                  "\"renew-timer\": 1000, \n"
-                  "\"subnet4\": [ { "
-                  "  \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-                  "  \"subnet\": \"192.0.2.0/24\", "
-                  "  \"interface\": \"test\" } ],\n"
-                   "\"valid-lifetime\": 4000 } }";
-     testParser(txt, D2ParserContext::PARSER_DHCPDDNS);
-}
-
-TEST(ParserTest, keywordControlAgent) {
-    string txt = "{ \"Control-agent\": { } }";
-    testParser(txt, D2ParserContext::PARSER_DHCPDDNS);
-}
-
-TEST(ParserTest, Logging) {
-    string txt = "{ \"Logging\": { \n"
-                 "    \"loggers\": [ \n"
-                 "        { \n"
-                 "            \"name\": \"kea-dhcp6\", \n"
-                 "            \"output_options\": [ \n"
-                 "                { \n"
-                 "                    \"output\": \"stdout\" \n"
-                 "                } \n"
-                 "            ], \n"
-                 "            \"debuglevel\": 0, \n"
-                 "            \"severity\": \"INFO\" \n"
-                 "        } \n"
-                 "    ] }\n"
-                 "} \n";
-     testParser(txt, D2ParserContext::PARSER_DHCPDDNS);
-}
-
 
 // Tests if bash (#) comments are supported. That's the only comment type that
 // was supported by the old parser.
@@ -517,26 +466,24 @@ TEST(ParserTest, errors) {
               "expecting }");
     testError("{ 123 }\n",
               D2ParserContext::PARSER_DHCPDDNS,
-              "<string>:1.3-5: syntax error, unexpected integer");
+              "<string>:1.3-5: syntax error, unexpected integer, "
+              "expecting DhcpDdns");
     testError("{ \"foo\" }\n",
               D2ParserContext::PARSER_JSON,
               "<string>:1.9: syntax error, unexpected }, "
               "expecting :");
     testError("{ \"foo\" }\n",
               D2ParserContext::PARSER_DHCPDDNS,
-              "<string>:1.9: syntax error, unexpected }, expecting :");
+              "<string>:1.3-7: syntax error, unexpected constant string, "
+              "expecting DhcpDdns");
     testError("{ \"foo\":null }\n",
               D2ParserContext::PARSER_DHCPDDNS,
-              "<string>:1.3-7: got unexpected keyword "
-              "\"foo\" in toplevel map.");
-    testError("{ \"Dhcp6\" }\n",
+              "<string>:1.3-7: syntax error, unexpected constant string, "
+              "expecting DhcpDdns");
+    testError("{ \"Logging\":null }\n",
               D2ParserContext::PARSER_DHCPDDNS,
-              "<string>:1.11: syntax error, unexpected }, "
-              "expecting :");
-    testError("{ \"Dhcp4\":[]\n",
-              D2ParserContext::PARSER_DHCPDDNS,
-              "<string>:2.1: syntax error, unexpected end of file, "
-              "expecting \",\" or }");
+              "<string>:1.3-11: syntax error, unexpected constant string, "
+              "expecting DhcpDdns");
     testError("{}{}\n",
               D2ParserContext::PARSER_JSON,
               "<string>:1.3: syntax error, unexpected {, "
@@ -651,6 +598,6 @@ TEST(ParserTest, unicodeSlash) {
     EXPECT_EQ("////", result->stringValue());
 }
 
-};
-};
-};
+}
+}
+}
