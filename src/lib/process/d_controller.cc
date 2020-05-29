@@ -200,11 +200,14 @@ DControllerBase::checkConfigOnly() {
         }
         if (module_config->getType() != Element::map) {
             isc_throw(InvalidUsage, "Config file " << config_file <<
-                      " include not map '" << getAppName() << "' entry");
+                      " includes not map '" << getAppName() << "' entry");
         }
 
         // Handle other (i.e. not application name) objects.
-        handleOtherObjects(whole_config);
+        std::string errmsg = handleOtherObjects(whole_config);
+        if (!errmsg.empty()) {
+            isc_throw(InvalidUsage, "Config file " << config_file << errmsg);
+        }
 
         // Get an application process object.
         initProcess();
@@ -373,11 +376,14 @@ DControllerBase::configFromFile() {
         }
         if (module_config->getType() != Element::map) {
             isc_throw(InvalidUsage, "Config file " << config_file <<
-                      " include not map '" << getAppName() << "' entry");
+                      " includes not map '" << getAppName() << "' entry");
         }
 
         // Handle other (i.e. not application name) objects.
-        handleOtherObjects(whole_config);
+        std::string errmsg = handleOtherObjects(whole_config);
+        if (!errmsg.empty()) {
+            isc_throw(InvalidUsage, "Config file " << config_file << errmsg);
+        }
 
         // Let's configure logging before applying the configuration,
         // so we can log things during configuration process.
@@ -500,10 +506,11 @@ DControllerBase::configWriteHandler(const std::string&,
                          + filename + " successful", params));
 }
 
-void
+std::string
 DControllerBase::handleOtherObjects(ConstElementPtr args) {
     // Check obsolete or unknown (aka unsupported) objects.
     const std::string& app_name = getAppName();
+    std::string errmsg;
     for (auto obj : args->mapValue()) {
         const std::string& obj_name = obj.first;
         if (obj_name == app_name) {
@@ -512,7 +519,13 @@ DControllerBase::handleOtherObjects(ConstElementPtr args) {
         LOG_ERROR(dctl_logger, DCTL_CONFIG_DEPRECATED)
             .arg("'" + obj_name + "', defining anything in global level besides '"
                  + app_name + "' is no longer supported.");
+        if (errmsg.empty()) {
+            errmsg = " contains unsupported '" + obj_name + "' parameter";
+        } else {
+            errmsg += " (and '" + obj_name + "')";
+        }
     }
+    return (errmsg);
 }
 
 ConstElementPtr
@@ -535,6 +548,14 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
         }
     }
 
+    if (message.empty()) {
+        // Handle other (i.e. not application name) objects.
+        std::string errmsg = handleOtherObjects(args);
+        if (!errmsg.empty()) {
+            message = "'arguments' parameter" + errmsg;
+        }
+    }
+
     if (!message.empty()) {
         // Something is amiss with arguments, return a failure response.
         ConstElementPtr result = isc::config::createAnswer(status_code,
@@ -542,8 +563,6 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
         return (result);
     }
 
-    // Handle other (i.e. not application name) objects.
-    handleOtherObjects(args);
 
     // We are starting the configuration process so we should remove any
     // staging configuration that has been created during previous

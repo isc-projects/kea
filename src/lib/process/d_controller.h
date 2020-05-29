@@ -607,7 +607,8 @@ protected:
     ///  - check obsolete or unknown (aka unsupported) objects.
     ///
     /// @param args Command arguments.
-    void handleOtherObjects(isc::data::ConstElementPtr args);
+    /// @return Error message or empty string.
+    std::string handleOtherObjects(isc::data::ConstElementPtr args);
 
 private:
     /// @brief Name of the service under control.
