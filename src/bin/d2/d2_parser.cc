@@ -209,25 +209,25 @@ namespace isc { namespace d2 {
   {
     switch (that.kind ())
     {
-      case 72: // value
-      case 76: // map_value
-      case 100: // ncr_protocol_value
+      case 68: // value
+      case 72: // map_value
+      case 96: // ncr_protocol_value
         value.YY_MOVE_OR_COPY< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 60: // "boolean"
+      case 56: // "boolean"
         value.YY_MOVE_OR_COPY< bool > (YY_MOVE (that.value));
         break;
 
-      case 59: // "floating point"
+      case 55: // "floating point"
         value.YY_MOVE_OR_COPY< double > (YY_MOVE (that.value));
         break;
 
-      case 58: // "integer"
+      case 54: // "integer"
         value.YY_MOVE_OR_COPY< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 57: // "constant string"
+      case 53: // "constant string"
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
         break;
 
@@ -246,25 +246,25 @@ namespace isc { namespace d2 {
   {
     switch (that.kind ())
     {
-      case 72: // value
-      case 76: // map_value
-      case 100: // ncr_protocol_value
+      case 68: // value
+      case 72: // map_value
+      case 96: // ncr_protocol_value
         value.move< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 60: // "boolean"
+      case 56: // "boolean"
         value.move< bool > (YY_MOVE (that.value));
         break;
 
-      case 59: // "floating point"
+      case 55: // "floating point"
         value.move< double > (YY_MOVE (that.value));
         break;
 
-      case 58: // "integer"
+      case 54: // "integer"
         value.move< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 57: // "constant string"
+      case 53: // "constant string"
         value.move< std::string > (YY_MOVE (that.value));
         break;
 
@@ -283,25 +283,25 @@ namespace isc { namespace d2 {
     state = that.state;
     switch (that.kind ())
     {
-      case 72: // value
-      case 76: // map_value
-      case 100: // ncr_protocol_value
+      case 68: // value
+      case 72: // map_value
+      case 96: // ncr_protocol_value
         value.copy< ElementPtr > (that.value);
         break;
 
-      case 60: // "boolean"
+      case 56: // "boolean"
         value.copy< bool > (that.value);
         break;
 
-      case 59: // "floating point"
+      case 55: // "floating point"
         value.copy< double > (that.value);
         break;
 
-      case 58: // "integer"
+      case 54: // "integer"
         value.copy< int64_t > (that.value);
         break;
 
-      case 57: // "constant string"
+      case 53: // "constant string"
         value.copy< std::string > (that.value);
         break;
 
@@ -319,25 +319,25 @@ namespace isc { namespace d2 {
     state = that.state;
     switch (that.kind ())
     {
-      case 72: // value
-      case 76: // map_value
-      case 100: // ncr_protocol_value
+      case 68: // value
+      case 72: // map_value
+      case 96: // ncr_protocol_value
         value.move< ElementPtr > (that.value);
         break;
 
-      case 60: // "boolean"
+      case 56: // "boolean"
         value.move< bool > (that.value);
         break;
 
-      case 59: // "floating point"
+      case 55: // "floating point"
         value.move< double > (that.value);
         break;
 
-      case 58: // "integer"
+      case 54: // "integer"
         value.move< int64_t > (that.value);
         break;
 
-      case 57: // "constant string"
+      case 53: // "constant string"
         value.move< std::string > (that.value);
         break;
 
@@ -377,44 +377,44 @@ namespace isc { namespace d2 {
             << yysym.location << ": ";
         switch (yykind)
     {
-      case 57: // "constant string"
-#line 116 "d2_parser.yy"
+      case 53: // "constant string"
+#line 111 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 384 "d2_parser.cc"
         break;
 
-      case 58: // "integer"
-#line 116 "d2_parser.yy"
+      case 54: // "integer"
+#line 111 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < int64_t > (); }
 #line 390 "d2_parser.cc"
         break;
 
-      case 59: // "floating point"
-#line 116 "d2_parser.yy"
+      case 55: // "floating point"
+#line 111 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < double > (); }
 #line 396 "d2_parser.cc"
         break;
 
-      case 60: // "boolean"
-#line 116 "d2_parser.yy"
+      case 56: // "boolean"
+#line 111 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < bool > (); }
 #line 402 "d2_parser.cc"
         break;
 
-      case 72: // value
-#line 116 "d2_parser.yy"
+      case 68: // value
+#line 111 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
 #line 408 "d2_parser.cc"
         break;
 
-      case 76: // map_value
-#line 116 "d2_parser.yy"
+      case 72: // map_value
+#line 111 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
 #line 414 "d2_parser.cc"
         break;
 
-      case 100: // ncr_protocol_value
-#line 116 "d2_parser.yy"
+      case 96: // ncr_protocol_value
+#line 111 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
 #line 420 "d2_parser.cc"
         break;
@@ -646,25 +646,25 @@ namespace isc { namespace d2 {
          when using variants.  */
       switch (yyr1_[yyn])
     {
-      case 72: // value
-      case 76: // map_value
-      case 100: // ncr_protocol_value
+      case 68: // value
+      case 72: // map_value
+      case 96: // ncr_protocol_value
         yylhs.value.emplace< ElementPtr > ();
         break;
 
-      case 60: // "boolean"
+      case 56: // "boolean"
         yylhs.value.emplace< bool > ();
         break;
 
-      case 59: // "floating point"
+      case 55: // "floating point"
         yylhs.value.emplace< double > ();
         break;
 
-      case 58: // "integer"
+      case 54: // "integer"
         yylhs.value.emplace< int64_t > ();
         break;
 
-      case 57: // "constant string"
+      case 53: // "constant string"
         yylhs.value.emplace< std::string > ();
         break;
 
@@ -689,103 +689,103 @@ namespace isc { namespace d2 {
           switch (yyn)
             {
   case 2:
-#line 125 "d2_parser.yy"
+#line 120 "d2_parser.yy"
                      { ctx.ctx_ = ctx.NO_KEYWORD; }
 #line 695 "d2_parser.cc"
     break;
 
   case 4:
-#line 126 "d2_parser.yy"
+#line 121 "d2_parser.yy"
                          { ctx.ctx_ = ctx.CONFIG; }
 #line 701 "d2_parser.cc"
     break;
 
   case 6:
-#line 127 "d2_parser.yy"
+#line 122 "d2_parser.yy"
                     { ctx.ctx_ = ctx.DHCPDDNS; }
 #line 707 "d2_parser.cc"
     break;
 
   case 8:
-#line 128 "d2_parser.yy"
+#line 123 "d2_parser.yy"
                     { ctx.ctx_ = ctx.TSIG_KEY; }
 #line 713 "d2_parser.cc"
     break;
 
   case 10:
-#line 129 "d2_parser.yy"
+#line 124 "d2_parser.yy"
                      { ctx.ctx_ = ctx.TSIG_KEYS; }
 #line 719 "d2_parser.cc"
     break;
 
   case 12:
-#line 130 "d2_parser.yy"
+#line 125 "d2_parser.yy"
                        { ctx.ctx_ = ctx.DDNS_DOMAIN; }
 #line 725 "d2_parser.cc"
     break;
 
   case 14:
-#line 131 "d2_parser.yy"
+#line 126 "d2_parser.yy"
                         { ctx.ctx_ = ctx.DDNS_DOMAINS; }
 #line 731 "d2_parser.cc"
     break;
 
   case 16:
-#line 132 "d2_parser.yy"
+#line 127 "d2_parser.yy"
                       { ctx.ctx_ = ctx.DNS_SERVERS; }
 #line 737 "d2_parser.cc"
     break;
 
   case 18:
-#line 133 "d2_parser.yy"
+#line 128 "d2_parser.yy"
                        { ctx.ctx_ = ctx.DNS_SERVERS; }
 #line 743 "d2_parser.cc"
     break;
 
   case 20:
-#line 141 "d2_parser.yy"
+#line 136 "d2_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
 #line 749 "d2_parser.cc"
     break;
 
   case 21:
-#line 142 "d2_parser.yy"
+#line 137 "d2_parser.yy"
              { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
 #line 755 "d2_parser.cc"
     break;
 
   case 22:
-#line 143 "d2_parser.yy"
+#line 138 "d2_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
 #line 761 "d2_parser.cc"
     break;
 
   case 23:
-#line 144 "d2_parser.yy"
+#line 139 "d2_parser.yy"
               { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
 #line 767 "d2_parser.cc"
     break;
 
   case 24:
-#line 145 "d2_parser.yy"
+#line 140 "d2_parser.yy"
                  { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
 #line 773 "d2_parser.cc"
     break;
 
   case 25:
-#line 146 "d2_parser.yy"
+#line 141 "d2_parser.yy"
             { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 779 "d2_parser.cc"
     break;
 
   case 26:
-#line 147 "d2_parser.yy"
+#line 142 "d2_parser.yy"
                     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 785 "d2_parser.cc"
     break;
 
   case 27:
-#line 150 "d2_parser.yy"
+#line 145 "d2_parser.yy"
                 {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as < ElementPtr > ());
@@ -794,7 +794,7 @@ namespace isc { namespace d2 {
     break;
 
   case 28:
-#line 155 "d2_parser.yy"
+#line 150 "d2_parser.yy"
                      {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -805,7 +805,7 @@ namespace isc { namespace d2 {
     break;
 
   case 29:
-#line 160 "d2_parser.yy"
+#line 155 "d2_parser.yy"
                              {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
@@ -815,13 +815,13 @@ namespace isc { namespace d2 {
     break;
 
   case 30:
-#line 166 "d2_parser.yy"
+#line 161 "d2_parser.yy"
                 { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 821 "d2_parser.cc"
     break;
 
   case 33:
-#line 173 "d2_parser.yy"
+#line 168 "d2_parser.yy"
                                   {
                   // map containing a single entry
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
@@ -830,7 +830,7 @@ namespace isc { namespace d2 {
     break;
 
   case 34:
-#line 177 "d2_parser.yy"
+#line 172 "d2_parser.yy"
                                                       {
                   // map consisting of a shorter map followed by
                   // comma and string:value
@@ -840,7 +840,7 @@ namespace isc { namespace d2 {
     break;
 
   case 35:
-#line 184 "d2_parser.yy"
+#line 179 "d2_parser.yy"
                               {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
@@ -849,7 +849,7 @@ namespace isc { namespace d2 {
     break;
 
   case 36:
-#line 187 "d2_parser.yy"
+#line 182 "d2_parser.yy"
                                {
     // list parsing complete. Put any sanity checking here
 }
@@ -857,7 +857,7 @@ namespace isc { namespace d2 {
     break;
 
   case 39:
-#line 195 "d2_parser.yy"
+#line 190 "d2_parser.yy"
                       {
                   // List consisting of a single element.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
@@ -866,7 +866,7 @@ namespace isc { namespace d2 {
     break;
 
   case 40:
-#line 199 "d2_parser.yy"
+#line 194 "d2_parser.yy"
                                            {
                   // List ending with , and a value.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
@@ -875,7 +875,7 @@ namespace isc { namespace d2 {
     break;
 
   case 41:
-#line 210 "d2_parser.yy"
+#line 205 "d2_parser.yy"
                                 {
     const std::string& where = ctx.contextName();
     const std::string& keyword = yystack_[1].value.as < std::string > ();
@@ -886,7 +886,7 @@ namespace isc { namespace d2 {
     break;
 
   case 42:
-#line 220 "d2_parser.yy"
+#line 214 "d2_parser.yy"
                            {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -897,7 +897,7 @@ namespace isc { namespace d2 {
     break;
 
   case 43:
-#line 225 "d2_parser.yy"
+#line 219 "d2_parser.yy"
                                 {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
@@ -906,8 +906,8 @@ namespace isc { namespace d2 {
 #line 907 "d2_parser.cc"
     break;
 
-  case 52:
-#line 247 "d2_parser.yy"
+  case 46:
+#line 235 "d2_parser.yy"
                           {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("DhcpDdns", m);
@@ -917,8 +917,8 @@ namespace isc { namespace d2 {
 #line 918 "d2_parser.cc"
     break;
 
-  case 53:
-#line 252 "d2_parser.yy"
+  case 47:
+#line 240 "d2_parser.yy"
                                                       {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -926,8 +926,8 @@ namespace isc { namespace d2 {
 #line 927 "d2_parser.cc"
     break;
 
-  case 54:
-#line 257 "d2_parser.yy"
+  case 48:
+#line 245 "d2_parser.yy"
                              {
     // Parse the dhcpddns map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -936,24 +936,24 @@ namespace isc { namespace d2 {
 #line 937 "d2_parser.cc"
     break;
 
-  case 55:
-#line 261 "d2_parser.yy"
+  case 49:
+#line 249 "d2_parser.yy"
                                  {
     // parsing completed
 }
 #line 945 "d2_parser.cc"
     break;
 
-  case 71:
-#line 285 "d2_parser.yy"
+  case 65:
+#line 273 "d2_parser.yy"
                        {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 953 "d2_parser.cc"
     break;
 
-  case 72:
-#line 287 "d2_parser.yy"
+  case 66:
+#line 275 "d2_parser.yy"
                {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-address", s);
@@ -962,8 +962,8 @@ namespace isc { namespace d2 {
 #line 963 "d2_parser.cc"
     break;
 
-  case 73:
-#line 293 "d2_parser.yy"
+  case 67:
+#line 281 "d2_parser.yy"
                          {
     if (yystack_[0].value.as < int64_t > () <= 0 || yystack_[0].value.as < int64_t > () >= 65536 ) {
         error(yystack_[0].location, "port must be greater than zero but less than 65536");
@@ -974,8 +974,8 @@ namespace isc { namespace d2 {
 #line 975 "d2_parser.cc"
     break;
 
-  case 74:
-#line 301 "d2_parser.yy"
+  case 68:
+#line 289 "d2_parser.yy"
                                                      {
     if (yystack_[0].value.as < int64_t > () <= 0) {
         error(yystack_[0].location, "dns-server-timeout must be greater than zero");
@@ -987,16 +987,16 @@ namespace isc { namespace d2 {
 #line 988 "d2_parser.cc"
     break;
 
-  case 75:
-#line 310 "d2_parser.yy"
+  case 69:
+#line 298 "d2_parser.yy"
                            {
     ctx.enter(ctx.NCR_PROTOCOL);
 }
 #line 996 "d2_parser.cc"
     break;
 
-  case 76:
-#line 312 "d2_parser.yy"
+  case 70:
+#line 300 "d2_parser.yy"
                            {
     ctx.stack_.back()->set("ncr-protocol", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
@@ -1004,28 +1004,28 @@ namespace isc { namespace d2 {
 #line 1005 "d2_parser.cc"
     break;
 
-  case 77:
-#line 318 "d2_parser.yy"
+  case 71:
+#line 306 "d2_parser.yy"
         { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
 #line 1011 "d2_parser.cc"
     break;
 
-  case 78:
-#line 319 "d2_parser.yy"
+  case 72:
+#line 307 "d2_parser.yy"
         { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("TCP", ctx.loc2pos(yystack_[0].location))); }
 #line 1017 "d2_parser.cc"
     break;
 
-  case 79:
-#line 322 "d2_parser.yy"
+  case 73:
+#line 310 "d2_parser.yy"
                        {
     ctx.enter(ctx.NCR_FORMAT);
 }
 #line 1025 "d2_parser.cc"
     break;
 
-  case 80:
-#line 324 "d2_parser.yy"
+  case 74:
+#line 312 "d2_parser.yy"
              {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ncr-format", json);
@@ -1034,16 +1034,16 @@ namespace isc { namespace d2 {
 #line 1035 "d2_parser.cc"
     break;
 
-  case 81:
-#line 330 "d2_parser.yy"
+  case 75:
+#line 318 "d2_parser.yy"
                            {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 1043 "d2_parser.cc"
     break;
 
-  case 82:
-#line 332 "d2_parser.yy"
+  case 76:
+#line 320 "d2_parser.yy"
                   {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context = yystack_[0].value.as < ElementPtr > ();
@@ -1069,16 +1069,16 @@ namespace isc { namespace d2 {
 #line 1070 "d2_parser.cc"
     break;
 
-  case 83:
-#line 355 "d2_parser.yy"
+  case 77:
+#line 343 "d2_parser.yy"
                  {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 1078 "d2_parser.cc"
     break;
 
-  case 84:
-#line 357 "d2_parser.yy"
+  case 78:
+#line 345 "d2_parser.yy"
                {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
@@ -1106,8 +1106,8 @@ namespace isc { namespace d2 {
 #line 1107 "d2_parser.cc"
     break;
 
-  case 85:
-#line 382 "d2_parser.yy"
+  case 79:
+#line 370 "d2_parser.yy"
                             {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("forward-ddns", m);
@@ -1117,8 +1117,8 @@ namespace isc { namespace d2 {
 #line 1118 "d2_parser.cc"
     break;
 
-  case 86:
-#line 387 "d2_parser.yy"
+  case 80:
+#line 375 "d2_parser.yy"
                                                       {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1126,8 +1126,8 @@ namespace isc { namespace d2 {
 #line 1127 "d2_parser.cc"
     break;
 
-  case 87:
-#line 392 "d2_parser.yy"
+  case 81:
+#line 380 "d2_parser.yy"
                             {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reverse-ddns", m);
@@ -1137,8 +1137,8 @@ namespace isc { namespace d2 {
 #line 1138 "d2_parser.cc"
     break;
 
-  case 88:
-#line 397 "d2_parser.yy"
+  case 82:
+#line 385 "d2_parser.yy"
                                                       {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1146,8 +1146,8 @@ namespace isc { namespace d2 {
 #line 1147 "d2_parser.cc"
     break;
 
-  case 95:
-#line 416 "d2_parser.yy"
+  case 89:
+#line 404 "d2_parser.yy"
                            {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ddns-domains", l);
@@ -1157,8 +1157,8 @@ namespace isc { namespace d2 {
 #line 1158 "d2_parser.cc"
     break;
 
-  case 96:
-#line 421 "d2_parser.yy"
+  case 90:
+#line 409 "d2_parser.yy"
                                                          {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1166,8 +1166,8 @@ namespace isc { namespace d2 {
 #line 1167 "d2_parser.cc"
     break;
 
-  case 97:
-#line 426 "d2_parser.yy"
+  case 91:
+#line 414 "d2_parser.yy"
                                   {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
@@ -1175,16 +1175,16 @@ namespace isc { namespace d2 {
 #line 1176 "d2_parser.cc"
     break;
 
-  case 98:
-#line 429 "d2_parser.yy"
+  case 92:
+#line 417 "d2_parser.yy"
                                    {
     // parsing completed
 }
 #line 1184 "d2_parser.cc"
     break;
 
-  case 103:
-#line 441 "d2_parser.yy"
+  case 97:
+#line 429 "d2_parser.yy"
                             {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
@@ -1193,16 +1193,16 @@ namespace isc { namespace d2 {
 #line 1194 "d2_parser.cc"
     break;
 
-  case 104:
-#line 445 "d2_parser.yy"
+  case 98:
+#line 433 "d2_parser.yy"
                                     {
     ctx.stack_.pop_back();
 }
 #line 1202 "d2_parser.cc"
     break;
 
-  case 105:
-#line 449 "d2_parser.yy"
+  case 99:
+#line 437 "d2_parser.yy"
                                 {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
@@ -1210,24 +1210,24 @@ namespace isc { namespace d2 {
 #line 1211 "d2_parser.cc"
     break;
 
-  case 106:
-#line 452 "d2_parser.yy"
+  case 100:
+#line 440 "d2_parser.yy"
                                     {
     // parsing completed
 }
 #line 1219 "d2_parser.cc"
     break;
 
-  case 115:
-#line 469 "d2_parser.yy"
+  case 109:
+#line 457 "d2_parser.yy"
                        {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 1227 "d2_parser.cc"
     break;
 
-  case 116:
-#line 471 "d2_parser.yy"
+  case 110:
+#line 459 "d2_parser.yy"
                {
     if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "Ddns domain name cannot be blank");
@@ -1240,16 +1240,16 @@ namespace isc { namespace d2 {
 #line 1241 "d2_parser.cc"
     break;
 
-  case 117:
-#line 481 "d2_parser.yy"
+  case 111:
+#line 469 "d2_parser.yy"
                                {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 1249 "d2_parser.cc"
     break;
 
-  case 118:
-#line 483 "d2_parser.yy"
+  case 112:
+#line 471 "d2_parser.yy"
                {
     ElementPtr elem(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -1259,8 +1259,8 @@ namespace isc { namespace d2 {
 #line 1260 "d2_parser.cc"
     break;
 
-  case 119:
-#line 493 "d2_parser.yy"
+  case 113:
+#line 481 "d2_parser.yy"
                          {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dns-servers", l);
@@ -1270,8 +1270,8 @@ namespace isc { namespace d2 {
 #line 1271 "d2_parser.cc"
     break;
 
-  case 120:
-#line 498 "d2_parser.yy"
+  case 114:
+#line 486 "d2_parser.yy"
                                                         {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1279,8 +1279,8 @@ namespace isc { namespace d2 {
 #line 1280 "d2_parser.cc"
     break;
 
-  case 121:
-#line 503 "d2_parser.yy"
+  case 115:
+#line 491 "d2_parser.yy"
                                  {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
@@ -1288,16 +1288,16 @@ namespace isc { namespace d2 {
 #line 1289 "d2_parser.cc"
     break;
 
-  case 122:
-#line 506 "d2_parser.yy"
+  case 116:
+#line 494 "d2_parser.yy"
                                   {
     // parsing completed
 }
 #line 1297 "d2_parser.cc"
     break;
 
-  case 125:
-#line 514 "d2_parser.yy"
+  case 119:
+#line 502 "d2_parser.yy"
                            {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
@@ -1306,16 +1306,16 @@ namespace isc { namespace d2 {
 #line 1307 "d2_parser.cc"
     break;
 
-  case 126:
-#line 518 "d2_parser.yy"
+  case 120:
+#line 506 "d2_parser.yy"
                                    {
     ctx.stack_.pop_back();
 }
 #line 1315 "d2_parser.cc"
     break;
 
-  case 127:
-#line 522 "d2_parser.yy"
+  case 121:
+#line 510 "d2_parser.yy"
                                {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
@@ -1323,24 +1323,24 @@ namespace isc { namespace d2 {
 #line 1324 "d2_parser.cc"
     break;
 
-  case 128:
-#line 525 "d2_parser.yy"
+  case 122:
+#line 513 "d2_parser.yy"
                                    {
     // parsing completed
 }
 #line 1332 "d2_parser.cc"
     break;
 
-  case 137:
-#line 541 "d2_parser.yy"
+  case 131:
+#line 529 "d2_parser.yy"
                               {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 1340 "d2_parser.cc"
     break;
 
-  case 138:
-#line 543 "d2_parser.yy"
+  case 132:
+#line 531 "d2_parser.yy"
                {
     if (yystack_[0].value.as < std::string > () != "") {
         error(yystack_[1].location, "hostname is not yet supported");
@@ -1353,16 +1353,16 @@ namespace isc { namespace d2 {
 #line 1354 "d2_parser.cc"
     break;
 
-  case 139:
-#line 553 "d2_parser.yy"
+  case 133:
+#line 541 "d2_parser.yy"
                                   {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 1362 "d2_parser.cc"
     break;
 
-  case 140:
-#line 555 "d2_parser.yy"
+  case 134:
+#line 543 "d2_parser.yy"
                {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-address", s);
@@ -1371,8 +1371,8 @@ namespace isc { namespace d2 {
 #line 1372 "d2_parser.cc"
     break;
 
-  case 141:
-#line 561 "d2_parser.yy"
+  case 135:
+#line 549 "d2_parser.yy"
                                     {
     if (yystack_[0].value.as < int64_t > () <= 0 || yystack_[0].value.as < int64_t > () >= 65536 ) {
         error(yystack_[0].location, "port must be greater than zero but less than 65536");
@@ -1383,8 +1383,8 @@ namespace isc { namespace d2 {
 #line 1384 "d2_parser.cc"
     break;
 
-  case 142:
-#line 575 "d2_parser.yy"
+  case 136:
+#line 563 "d2_parser.yy"
                      {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("tsig-keys", l);
@@ -1394,8 +1394,8 @@ namespace isc { namespace d2 {
 #line 1395 "d2_parser.cc"
     break;
 
-  case 143:
-#line 580 "d2_parser.yy"
+  case 137:
+#line 568 "d2_parser.yy"
                                                        {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1403,8 +1403,8 @@ namespace isc { namespace d2 {
 #line 1404 "d2_parser.cc"
     break;
 
-  case 144:
-#line 585 "d2_parser.yy"
+  case 138:
+#line 573 "d2_parser.yy"
                                {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
@@ -1412,16 +1412,16 @@ namespace isc { namespace d2 {
 #line 1413 "d2_parser.cc"
     break;
 
-  case 145:
-#line 588 "d2_parser.yy"
+  case 139:
+#line 576 "d2_parser.yy"
                                  {
     // parsing completed
 }
 #line 1421 "d2_parser.cc"
     break;
 
-  case 150:
-#line 600 "d2_parser.yy"
+  case 144:
+#line 588 "d2_parser.yy"
                          {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
@@ -1430,16 +1430,16 @@ namespace isc { namespace d2 {
 #line 1431 "d2_parser.cc"
     break;
 
-  case 151:
-#line 604 "d2_parser.yy"
+  case 145:
+#line 592 "d2_parser.yy"
                                  {
     ctx.stack_.pop_back();
 }
 #line 1439 "d2_parser.cc"
     break;
 
-  case 152:
-#line 608 "d2_parser.yy"
+  case 146:
+#line 596 "d2_parser.yy"
                              {
     // Parse tsig key list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1448,24 +1448,24 @@ namespace isc { namespace d2 {
 #line 1449 "d2_parser.cc"
     break;
 
-  case 153:
-#line 612 "d2_parser.yy"
+  case 147:
+#line 600 "d2_parser.yy"
                                  {
     // parsing completed
 }
 #line 1457 "d2_parser.cc"
     break;
 
-  case 163:
-#line 630 "d2_parser.yy"
+  case 157:
+#line 618 "d2_parser.yy"
                     {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 1465 "d2_parser.cc"
     break;
 
-  case 164:
-#line 632 "d2_parser.yy"
+  case 158:
+#line 620 "d2_parser.yy"
                {
     if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "TSIG key name cannot be blank");
@@ -1478,16 +1478,16 @@ namespace isc { namespace d2 {
 #line 1479 "d2_parser.cc"
     break;
 
-  case 165:
-#line 642 "d2_parser.yy"
+  case 159:
+#line 630 "d2_parser.yy"
                               {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 1487 "d2_parser.cc"
     break;
 
-  case 166:
-#line 644 "d2_parser.yy"
+  case 160:
+#line 632 "d2_parser.yy"
                {
     if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "TSIG key algorithm cannot be blank");
@@ -1499,8 +1499,8 @@ namespace isc { namespace d2 {
 #line 1500 "d2_parser.cc"
     break;
 
-  case 167:
-#line 653 "d2_parser.yy"
+  case 161:
+#line 641 "d2_parser.yy"
                                                 {
     if (yystack_[0].value.as < int64_t > () < 0 || (yystack_[0].value.as < int64_t > () > 0  && (yystack_[0].value.as < int64_t > () % 8 != 0))) {
         error(yystack_[0].location, "TSIG key digest-bits must either be zero or a positive, multiple of eight");
@@ -1511,16 +1511,16 @@ namespace isc { namespace d2 {
 #line 1512 "d2_parser.cc"
     break;
 
-  case 168:
-#line 661 "d2_parser.yy"
+  case 162:
+#line 649 "d2_parser.yy"
                         {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 1520 "d2_parser.cc"
     break;
 
-  case 169:
-#line 663 "d2_parser.yy"
+  case 163:
+#line 651 "d2_parser.yy"
                {
     if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "TSIG key secret cannot be blank");
@@ -1532,8 +1532,8 @@ namespace isc { namespace d2 {
 #line 1533 "d2_parser.cc"
     break;
 
-  case 170:
-#line 677 "d2_parser.yy"
+  case 164:
+#line 665 "d2_parser.yy"
                                {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("control-socket", m);
@@ -1543,8 +1543,8 @@ namespace isc { namespace d2 {
 #line 1544 "d2_parser.cc"
     break;
 
-  case 171:
-#line 682 "d2_parser.yy"
+  case 165:
+#line 670 "d2_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1552,16 +1552,16 @@ namespace isc { namespace d2 {
 #line 1553 "d2_parser.cc"
     break;
 
-  case 179:
-#line 698 "d2_parser.yy"
+  case 173:
+#line 686 "d2_parser.yy"
                                  {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 1561 "d2_parser.cc"
     break;
 
-  case 180:
-#line 700 "d2_parser.yy"
+  case 174:
+#line 688 "d2_parser.yy"
                {
     ElementPtr stype(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-type", stype);
@@ -1570,16 +1570,16 @@ namespace isc { namespace d2 {
 #line 1571 "d2_parser.cc"
     break;
 
-  case 181:
-#line 706 "d2_parser.yy"
+  case 175:
+#line 694 "d2_parser.yy"
                                  {
     ctx.enter(ctx.NO_KEYWORD);
 }
 #line 1579 "d2_parser.cc"
     break;
 
-  case 182:
-#line 708 "d2_parser.yy"
+  case 176:
+#line 696 "d2_parser.yy"
                {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-name", name);
@@ -1588,263 +1588,192 @@ namespace isc { namespace d2 {
 #line 1589 "d2_parser.cc"
     break;
 
-  case 183:
-#line 716 "d2_parser.yy"
-                         {
-    ctx.enter(ctx.NO_KEYWORD);
-}
-#line 1597 "d2_parser.cc"
-    break;
-
-  case 184:
-#line 718 "d2_parser.yy"
-              {
-    ctx.stack_.back()->set("Dhcp6", yystack_[0].value.as < ElementPtr > ());
-    ctx.leave();
-}
-#line 1606 "d2_parser.cc"
-    break;
-
-  case 185:
-#line 723 "d2_parser.yy"
-                         {
-    ctx.enter(ctx.NO_KEYWORD);
-}
-#line 1614 "d2_parser.cc"
-    break;
-
-  case 186:
-#line 725 "d2_parser.yy"
-              {
-    ctx.stack_.back()->set("Dhcp4", yystack_[0].value.as < ElementPtr > ());
-    ctx.leave();
-}
-#line 1623 "d2_parser.cc"
-    break;
-
-  case 187:
-#line 730 "d2_parser.yy"
-                                         {
-    ctx.enter(ctx.NO_KEYWORD);
-}
-#line 1631 "d2_parser.cc"
-    break;
-
-  case 188:
-#line 732 "d2_parser.yy"
-              {
-    ctx.stack_.back()->set("Control-agent", yystack_[0].value.as < ElementPtr > ());
-    ctx.leave();
-}
-#line 1640 "d2_parser.cc"
-    break;
-
-  case 189:
-#line 742 "d2_parser.yy"
-                        {
-    ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("Logging", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.LOGGING);
-}
-#line 1651 "d2_parser.cc"
-    break;
-
-  case 190:
-#line 747 "d2_parser.yy"
-                                                     {
-    ctx.stack_.pop_back();
-    ctx.leave();
-}
-#line 1660 "d2_parser.cc"
-    break;
-
-  case 194:
-#line 764 "d2_parser.yy"
+  case 177:
+#line 705 "d2_parser.yy"
                  {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 1671 "d2_parser.cc"
+#line 1600 "d2_parser.cc"
     break;
 
-  case 195:
-#line 769 "d2_parser.yy"
+  case 178:
+#line 710 "d2_parser.yy"
                                                          {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1680 "d2_parser.cc"
+#line 1609 "d2_parser.cc"
     break;
 
-  case 198:
-#line 781 "d2_parser.yy"
+  case 181:
+#line 722 "d2_parser.yy"
                              {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 1690 "d2_parser.cc"
+#line 1619 "d2_parser.cc"
     break;
 
-  case 199:
-#line 785 "d2_parser.yy"
+  case 182:
+#line 726 "d2_parser.yy"
                                {
     ctx.stack_.pop_back();
 }
-#line 1698 "d2_parser.cc"
+#line 1627 "d2_parser.cc"
     break;
 
-  case 209:
-#line 802 "d2_parser.yy"
+  case 192:
+#line 743 "d2_parser.yy"
            {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1706 "d2_parser.cc"
+#line 1635 "d2_parser.cc"
     break;
 
-  case 210:
-#line 804 "d2_parser.yy"
+  case 193:
+#line 745 "d2_parser.yy"
                {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1716 "d2_parser.cc"
+#line 1645 "d2_parser.cc"
     break;
 
-  case 211:
-#line 810 "d2_parser.yy"
+  case 194:
+#line 751 "d2_parser.yy"
                                      {
     ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 1725 "d2_parser.cc"
+#line 1654 "d2_parser.cc"
     break;
 
-  case 212:
-#line 814 "d2_parser.yy"
+  case 195:
+#line 755 "d2_parser.yy"
                    {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1733 "d2_parser.cc"
+#line 1662 "d2_parser.cc"
     break;
 
-  case 213:
-#line 816 "d2_parser.yy"
+  case 196:
+#line 757 "d2_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 1743 "d2_parser.cc"
+#line 1672 "d2_parser.cc"
     break;
 
-  case 214:
-#line 822 "d2_parser.yy"
+  case 197:
+#line 763 "d2_parser.yy"
                                     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 1754 "d2_parser.cc"
+#line 1683 "d2_parser.cc"
     break;
 
-  case 215:
-#line 827 "d2_parser.yy"
+  case 198:
+#line 768 "d2_parser.yy"
                                                                     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1763 "d2_parser.cc"
+#line 1692 "d2_parser.cc"
     break;
 
-  case 218:
-#line 836 "d2_parser.yy"
+  case 201:
+#line 777 "d2_parser.yy"
                              {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1773 "d2_parser.cc"
+#line 1702 "d2_parser.cc"
     break;
 
-  case 219:
-#line 840 "d2_parser.yy"
+  case 202:
+#line 781 "d2_parser.yy"
                                     {
     ctx.stack_.pop_back();
 }
-#line 1781 "d2_parser.cc"
+#line 1710 "d2_parser.cc"
     break;
 
-  case 227:
-#line 855 "d2_parser.yy"
+  case 210:
+#line 796 "d2_parser.yy"
                {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1789 "d2_parser.cc"
+#line 1718 "d2_parser.cc"
     break;
 
-  case 228:
-#line 857 "d2_parser.yy"
+  case 211:
+#line 798 "d2_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 1799 "d2_parser.cc"
+#line 1728 "d2_parser.cc"
     break;
 
-  case 229:
-#line 863 "d2_parser.yy"
+  case 212:
+#line 804 "d2_parser.yy"
                            {
     ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 1808 "d2_parser.cc"
+#line 1737 "d2_parser.cc"
     break;
 
-  case 230:
-#line 868 "d2_parser.yy"
+  case 213:
+#line 809 "d2_parser.yy"
                                {
     ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 1817 "d2_parser.cc"
+#line 1746 "d2_parser.cc"
     break;
 
-  case 231:
-#line 873 "d2_parser.yy"
+  case 214:
+#line 814 "d2_parser.yy"
                              {
     ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 1826 "d2_parser.cc"
+#line 1755 "d2_parser.cc"
     break;
 
-  case 232:
-#line 878 "d2_parser.yy"
+  case 215:
+#line 819 "d2_parser.yy"
                  {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1834 "d2_parser.cc"
+#line 1763 "d2_parser.cc"
     break;
 
-  case 233:
-#line 880 "d2_parser.yy"
+  case 216:
+#line 821 "d2_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
 }
-#line 1844 "d2_parser.cc"
+#line 1773 "d2_parser.cc"
     break;
 
 
-#line 1848 "d2_parser.cc"
+#line 1777 "d2_parser.cc"
 
             default:
               break;
@@ -2193,52 +2122,49 @@ namespace isc { namespace d2 {
   }
 
 
-  const short D2Parser::yypact_ninf_ = -238;
+  const signed char D2Parser::yypact_ninf_ = -83;
 
   const signed char D2Parser::yytable_ninf_ = -1;
 
   const short
   D2Parser::yypact_[] =
   {
-      69,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,
-      14,     2,     1,    23,    37,    11,    39,    43,    47,    51,
-    -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,
-    -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,
-    -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,     2,    22,
-       8,     9,    18,    85,    50,   104,    13,   120,  -238,    84,
-     125,   132,   129,   135,  -238,  -238,  -238,  -238,  -238,   140,
-    -238,    55,  -238,  -238,  -238,  -238,  -238,  -238,  -238,   142,
-     150,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,
-    -238,    66,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,
-    -238,  -238,  -238,  -238,  -238,  -238,   160,  -238,  -238,  -238,
-    -238,  -238,    68,  -238,  -238,  -238,  -238,  -238,  -238,   167,
-     153,  -238,  -238,  -238,  -238,  -238,  -238,  -238,    83,  -238,
-    -238,  -238,  -238,  -238,   168,   162,  -238,  -238,   171,  -238,
-    -238,  -238,  -238,    97,  -238,  -238,  -238,  -238,  -238,    49,
-    -238,  -238,     2,     2,  -238,   119,   174,   175,   176,   177,
-     178,  -238,     8,  -238,   179,   126,   128,   181,   183,   184,
-     185,   186,   187,   188,   189,   190,     9,  -238,   191,   138,
-     193,   194,    18,  -238,    18,  -238,    85,   195,   196,   197,
-      50,  -238,    50,  -238,   104,   198,   145,   200,    13,  -238,
-      13,   120,  -238,  -238,  -238,   201,     2,     2,     2,   205,
-     206,  -238,   157,  -238,  -238,    19,   199,   208,   161,   209,
-     210,   202,   212,   216,  -238,   166,  -238,   170,   172,  -238,
-      98,  -238,   173,   219,   180,  -238,   100,  -238,   182,  -238,
-     192,  -238,   101,  -238,     2,  -238,  -238,  -238,     9,   203,
-    -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,    -4,    -4,
-      85,    59,   218,  -238,  -238,  -238,  -238,  -238,   120,  -238,
-    -238,  -238,  -238,  -238,  -238,   127,   149,  -238,  -238,  -238,
-    -238,   152,  -238,  -238,  -238,   155,   220,  -238,  -238,  -238,
-    -238,  -238,   159,  -238,  -238,  -238,  -238,    77,  -238,   107,
-    -238,   203,  -238,   224,    -4,  -238,  -238,  -238,   227,   228,
-      59,  -238,    45,   218,  -238,  -238,  -238,   229,  -238,   207,
-     211,  -238,  -238,  -238,   231,  -238,  -238,  -238,  -238,   163,
-    -238,  -238,  -238,  -238,  -238,  -238,   104,  -238,  -238,   232,
-     234,   214,   236,    45,  -238,   237,   213,   239,  -238,   217,
-    -238,  -238,  -238,   226,  -238,  -238,   123,  -238,    52,   226,
-    -238,  -238,   238,   241,   242,  -238,   169,  -238,  -238,  -238,
-    -238,  -238,  -238,  -238,   243,   215,   221,   222,   244,    52,
-    -238,   225,  -238,  -238,  -238,   230,  -238,  -238,  -238
+      38,   -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,
+       7,     1,     2,     8,    17,    26,    34,    53,    60,    86,
+     -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,
+     -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,
+     -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,     1,    40,
+       3,     6,    15,    94,    46,    95,    10,   105,   -83,   115,
+     110,   118,   121,   128,   -83,   131,   -83,   -83,   -83,   151,
+     152,   -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,
+     153,   -83,    39,   -83,   -83,   -83,   -83,   -83,   -83,   -83,
+     -83,   -83,   -83,   -83,   -83,   -83,   -83,   154,   -83,   -83,
+     -83,   -83,   -83,    45,   -83,   -83,   -83,   -83,   -83,   -83,
+     135,   148,   -83,   -83,   -83,   -83,   -83,   -83,   -83,    61,
+     -83,   -83,   -83,   -83,   -83,   155,   156,   -83,   -83,   158,
+     -83,   -83,   -83,   -83,    70,   -83,   -83,   -83,   -83,   -83,
+      43,   -83,   -83,     1,     1,   -83,   111,   159,   -83,   161,
+     106,   112,   163,   164,   165,   166,   167,   168,   169,   170,
+     171,   -83,     6,   -83,   172,   123,   174,   175,    15,   -83,
+      15,   -83,    94,   176,   177,   178,    46,   -83,    46,   -83,
+      95,   181,   136,   185,    10,   -83,    10,   105,   -83,   -83,
+     -83,   187,   186,   139,   -83,   -83,    59,   179,   188,   141,
+     189,   192,   195,   194,   197,   -83,   150,   -83,   157,   160,
+     -83,    97,   -83,   162,   199,   173,   -83,   100,   -83,   182,
+     -83,   183,   -83,   101,   -83,     1,     6,   -83,   -83,   -83,
+     -83,   -83,   -83,   -83,   -83,     9,     9,    94,    19,   198,
+     -83,   -83,   -83,   -83,   -83,   105,   -83,   -83,   -83,   -83,
+     -83,   -83,   107,   -83,   -83,   134,   -83,   -83,   -83,   137,
+     200,   -83,   -83,   -83,   -83,   -83,   140,   -83,   -83,   -83,
+     -83,   108,   -83,   117,   -83,   203,     9,   -83,   -83,   -83,
+     204,   205,    19,   -83,    41,   198,   -83,   -83,   206,   -83,
+     184,   190,   -83,   -83,   -83,   208,   -83,   -83,   -83,   -83,
+     144,   -83,   -83,   -83,   -83,   -83,   -83,    95,   -83,   -83,
+     210,   212,   180,   213,    41,   -83,   214,   193,   216,   -83,
+     196,   -83,   -83,   -83,   211,   -83,   -83,   147,   -83,    55,
+     211,   -83,   -83,   215,   218,   219,   -83,   146,   -83,   -83,
+     -83,   -83,   -83,   -83,   -83,   221,   191,   201,   202,   223,
+      55,   -83,   207,   -83,   -83,   -83,   217,   -83,   -83,   -83
   };
 
   const unsigned char
@@ -2247,227 +2173,211 @@ namespace isc { namespace d2 {
        0,     2,     4,     6,     8,    10,    12,    14,    16,    18,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        1,    35,    28,    24,    23,    20,    21,    22,    27,     3,
-      25,    26,    42,     5,    54,     7,   152,     9,   144,    11,
-     105,    13,    97,    15,   127,    17,   121,    19,    37,    31,
-       0,     0,     0,   146,     0,    99,     0,     0,    39,     0,
-      38,     0,     0,    32,   183,   185,   187,    52,   189,     0,
-      51,     0,    44,    49,    46,    48,    50,    47,    71,     0,
-       0,    75,    79,    81,    83,    85,    87,   142,   170,   194,
-      70,     0,    56,    58,    59,    60,    61,    62,    68,    69,
-      63,    64,    65,    66,    67,   165,     0,   168,   163,   162,
-     160,   161,     0,   154,   156,   157,   158,   159,   150,     0,
-     147,   148,   117,   119,   115,   114,   112,   113,     0,   107,
-     109,   110,   111,   103,     0,   100,   101,   139,     0,   137,
-     136,   134,   135,     0,   129,   131,   132,   133,   125,     0,
-     123,    36,     0,     0,    29,     0,     0,     0,     0,     0,
-       0,    41,     0,    43,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,    55,     0,     0,
-       0,     0,     0,   153,     0,   145,     0,     0,     0,     0,
-       0,   106,     0,    98,     0,     0,     0,     0,     0,   128,
-       0,     0,   122,    40,    33,     0,     0,     0,     0,     0,
-       0,    45,     0,    73,    74,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,    57,     0,   167,     0,     0,   155,
-       0,   149,     0,     0,     0,   108,     0,   102,     0,   141,
-       0,   130,     0,   124,     0,   184,   186,   188,     0,     0,
-      72,    77,    78,    76,    80,    30,    82,    84,    89,    89,
-     146,     0,     0,   166,   169,   164,   151,   118,     0,   116,
-     104,   140,   138,   126,    34,     0,     0,   191,   193,    95,
-      94,     0,    90,    91,    93,     0,     0,   179,   181,   178,
-     176,   177,     0,   172,   174,   175,   198,     0,   196,     0,
-      53,     0,   190,     0,     0,    86,    88,   143,     0,     0,
-       0,   171,     0,     0,   195,   120,   192,     0,    92,     0,
-       0,   173,   209,   214,     0,   212,   208,   206,   207,     0,
-     200,   202,   204,   205,   203,   197,    99,   180,   182,     0,
-       0,     0,     0,     0,   199,     0,     0,     0,   211,     0,
-     201,    96,   210,     0,   213,   218,     0,   216,     0,     0,
-     215,   227,     0,     0,     0,   232,     0,   220,   222,   223,
-     224,   225,   226,   217,     0,     0,     0,     0,     0,     0,
-     219,     0,   229,   230,   231,     0,   221,   228,   233
+      25,    26,    42,     5,    48,     7,   146,     9,   138,    11,
+      99,    13,    91,    15,   121,    17,   115,    19,    37,    31,
+       0,     0,     0,   140,     0,    93,     0,     0,    39,     0,
+      38,     0,     0,    32,    46,     0,    44,    45,    65,     0,
+       0,    69,    73,    75,    77,    79,    81,   136,   164,   177,
+       0,    64,     0,    50,    52,    53,    54,    55,    56,    62,
+      63,    57,    58,    59,    60,    61,   159,     0,   162,   157,
+     156,   154,   155,     0,   148,   150,   151,   152,   153,   144,
+       0,   141,   142,   111,   113,   109,   108,   106,   107,     0,
+     101,   103,   104,   105,    97,     0,    94,    95,   133,     0,
+     131,   130,   128,   129,     0,   123,   125,   126,   127,   119,
+       0,   117,    36,     0,     0,    29,     0,     0,    43,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,    41,     0,    49,     0,     0,     0,     0,     0,   147,
+       0,   139,     0,     0,     0,     0,     0,   100,     0,    92,
+       0,     0,     0,     0,     0,   122,     0,     0,   116,    40,
+      33,     0,     0,     0,    67,    68,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,    51,     0,   161,     0,     0,
+     149,     0,   143,     0,     0,     0,   102,     0,    96,     0,
+     135,     0,   124,     0,   118,     0,     0,    66,    71,    72,
+      70,    74,    30,    76,    78,    83,    83,   140,     0,     0,
+     160,   163,   158,   145,   112,     0,   110,    98,   134,   132,
+     120,    34,     0,    89,    88,     0,    84,    85,    87,     0,
+       0,   173,   175,   172,   170,   171,     0,   166,   168,   169,
+     181,     0,   179,     0,    47,     0,     0,    80,    82,   137,
+       0,     0,     0,   165,     0,     0,   178,   114,     0,    86,
+       0,     0,   167,   192,   197,     0,   195,   191,   189,   190,
+       0,   183,   185,   187,   188,   186,   180,    93,   174,   176,
+       0,     0,     0,     0,     0,   182,     0,     0,     0,   194,
+       0,   184,    90,   193,     0,   196,   201,     0,   199,     0,
+       0,   198,   210,     0,     0,     0,   215,     0,   203,   205,
+     206,   207,   208,   209,   200,     0,     0,     0,     0,     0,
+       0,   202,     0,   212,   213,   214,     0,   204,   211,   216
   };
 
-  const short
+  const signed char
   D2Parser::yypgoto_[] =
   {
-    -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,
-    -238,   -38,  -238,    33,  -238,  -238,  -238,  -238,  -238,  -238,
-    -238,  -238,   -50,  -238,  -238,  -238,    89,  -238,  -238,  -238,
-    -238,     4,    79,  -238,  -238,  -238,  -238,  -238,  -238,  -238,
-    -238,  -238,   -51,  -238,   -39,  -238,  -238,  -238,  -238,  -238,
-      -6,  -238,   -48,  -238,  -238,  -238,  -238,   -79,  -238,    64,
-    -238,  -238,  -238,    71,    75,  -238,  -238,  -238,  -238,  -238,
-    -238,  -238,  -238,    -2,    76,  -238,  -238,  -238,    67,    78,
-    -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,    21,
-    -238,    92,  -238,  -238,  -238,    99,    87,  -238,  -238,  -238,
-    -238,  -238,  -238,  -238,  -238,  -238,  -238,   -26,  -238,  -238,
-    -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,  -238,
-    -238,   -16,  -237,  -238,  -238,   -27,  -238,  -238,   -55,  -238,
-    -238,  -238,  -238,  -238,  -238,  -238,  -238,   -70,  -238,  -238,
-     -89,  -238,  -238,  -238,  -238,  -238,  -238,  -238
+     -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,
+     -83,   -37,   -83,    30,   -83,   -83,   -83,   -83,   -83,   -83,
+     -83,   -83,   -52,   -83,   -83,   -83,   -83,   -83,   -83,   -83,
+     -83,    12,    67,   -83,   -83,   -83,   -83,   -83,   -83,   -83,
+     -83,   -83,   -51,   -83,   -40,   -83,   -83,   -83,   -83,   -83,
+       4,   -83,   -35,   -83,   -83,   -83,   -83,   -68,   -83,    65,
+     -83,   -83,   -83,    72,    75,   -83,   -83,   -83,   -83,   -83,
+     -83,   -83,   -83,    13,    66,   -83,   -83,   -83,    62,    68,
+     -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,   -83,    20,
+     -83,    82,   -83,   -83,   -83,    89,    93,   -83,   -83,   -83,
+     -83,   -83,   -83,   -83,   -83,   -83,   -83,   -18,   -83,   -83,
+     -83,   -83,   -83,   -83,   -83,   -20,   -83,   -83,   -48,   -83,
+     -83,   -83,   -83,   -83,   -83,   -83,   -83,   -63,   -83,   -83,
+     -82,   -83,   -83,   -83,   -83,   -83,   -83,   -83
   };
 
   const short
   D2Parser::yydefgoto_[] =
   {
       -1,    10,    11,    12,    13,    14,    15,    16,    17,    18,
-      19,    28,    29,    30,    49,   256,    62,    63,    31,    48,
-      59,    60,    90,    33,    50,    71,    72,    73,   159,    35,
-      51,    91,    92,    93,   164,    94,    95,    96,   167,   253,
-      97,   168,    98,   169,    99,   170,   100,   171,   101,   172,
-     281,   282,   283,   284,   303,    43,    55,   134,   135,   136,
-     192,    41,    54,   128,   129,   130,   189,   131,   187,   132,
-     188,    47,    57,   149,   150,   200,    45,    56,   143,   144,
-     145,   197,   146,   195,   147,   102,   173,    39,    53,   119,
-     120,   121,   184,    37,    52,   112,   113,   114,   181,   115,
-     178,   116,   117,   180,   103,   174,   292,   293,   294,   308,
-     295,   309,    74,   156,    75,   157,    76,   158,    77,   160,
-     276,   277,   104,   175,   297,   298,   312,   329,   330,   331,
-     339,   332,   333,   342,   334,   340,   356,   357,   358,   366,
-     367,   368,   374,   369,   370,   371,   372,   378
+      19,    28,    29,    30,    49,   233,    62,    63,    31,    48,
+      59,    60,    81,    33,    50,    65,    66,    67,   147,    35,
+      51,    82,    83,    84,   149,    85,    86,    87,   152,   230,
+      88,   153,    89,   154,    90,   155,    91,   156,    92,   157,
+     255,   256,   257,   258,   275,    43,    55,   125,   126,   127,
+     178,    41,    54,   119,   120,   121,   175,   122,   173,   123,
+     174,    47,    57,   140,   141,   186,    45,    56,   134,   135,
+     136,   183,   137,   181,   138,    93,   158,    39,    53,   110,
+     111,   112,   170,    37,    52,   103,   104,   105,   167,   106,
+     164,   107,   108,   166,    94,   159,   266,   267,   268,   280,
+     269,   281,    95,   160,   271,   272,   284,   300,   301,   302,
+     310,   303,   304,   313,   305,   311,   327,   328,   329,   337,
+     338,   339,   345,   340,   341,   342,   343,   349
   };
 
   const short
   D2Parser::yytable_[] =
   {
-      70,   110,   109,   126,   125,   141,   140,    21,    32,    22,
-      58,    23,   278,   111,    20,   127,    38,   142,    64,    65,
-      66,    67,   279,    78,    79,    80,    81,   137,   138,    82,
-      34,    83,    84,    85,    86,    83,    84,   251,   252,    87,
-      83,    84,   139,    88,    36,    68,    40,    89,    42,   105,
-     106,   107,   201,    69,    44,   202,    46,   108,   162,    24,
-      25,    26,    27,   163,   278,    69,    69,    83,    84,   176,
-      69,   182,    83,    84,   177,    69,   183,   122,   123,    61,
-     313,    83,    84,   314,   322,   323,   190,   324,   325,   124,
-     151,   191,   118,   361,   287,   288,   362,   363,   364,   365,
-     198,   182,    69,   190,   198,   199,   266,    69,   270,   273,
-     201,   133,    70,   315,   203,   204,    69,     1,     2,     3,
-       4,     5,     6,     7,     8,     9,   359,   148,   152,   360,
-     176,   110,   109,   110,   109,   300,   153,   154,   155,   126,
-     125,   126,   125,   111,   161,   111,   165,   141,   140,   141,
-     140,   127,   301,   127,   166,   304,   186,   302,   304,   142,
-     305,   142,   310,   306,   179,   194,   343,   311,   245,   246,
-     247,   344,   379,   185,   193,   196,   205,   380,   206,   207,
-     208,   209,   210,   212,   213,   215,   214,   216,   217,   218,
-     219,   220,   221,   222,   223,   225,   226,   227,   228,   232,
-     233,   234,   238,   239,   240,   244,   274,   260,   280,   280,
-     290,   289,   248,   249,   250,    22,   258,   259,   257,   261,
-     254,   262,   291,   263,   268,   296,   307,   264,   317,   265,
-     267,   319,   320,   355,   336,   341,   346,   269,   347,   271,
-     349,    89,   375,   351,   353,   376,   377,   381,   385,   272,
-     255,   211,   275,   285,   280,   224,   318,   345,   237,   290,
-     289,   327,   326,   236,   337,   235,   299,   242,   338,   229,
-     352,   291,   348,   328,   354,   382,   241,   243,   231,   383,
-     384,   286,   387,   230,   321,   316,   335,   388,   350,   373,
-     386,     0,   327,   326,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,   328
+     100,   101,   116,   117,   131,   132,    21,    20,    22,    32,
+      23,    58,   102,    64,   118,    34,   133,    68,    69,    70,
+      71,   128,   129,    72,    36,    73,    74,    75,    76,    73,
+      74,    38,   253,    77,    73,    74,   130,    78,    73,    74,
+      79,    40,   162,    96,    97,    98,   187,   163,   168,   188,
+      99,   261,   262,   169,    24,    25,    26,    27,    42,    80,
+      73,    74,    80,    80,   176,    73,    74,    44,    80,   177,
+     113,   114,    80,   184,   228,   229,   293,   294,   185,   295,
+     296,   115,     1,     2,     3,     4,     5,     6,     7,     8,
+       9,    46,   332,    61,    80,   333,   334,   335,   336,    80,
+     168,   109,   124,   176,   184,   243,   189,   190,   247,   250,
+     162,   285,   139,   143,   286,   274,   100,   101,   100,   101,
+     187,   142,   144,   287,   116,   117,   116,   117,   102,   145,
+     102,   146,   131,   132,   131,   132,   118,   276,   118,   148,
+     276,   171,   277,   282,   133,   278,   133,   314,   283,   350,
+     330,   172,   315,   331,   351,   150,   151,   161,   165,   180,
+     194,   179,   182,   192,   191,   193,   195,   196,   197,   198,
+     199,   200,   201,   202,   203,   204,   206,   207,   208,   209,
+     213,   214,   215,   254,   254,   219,   263,   264,   251,   221,
+     220,   225,   227,   226,   234,    22,   235,   231,   265,   236,
+     237,   238,   239,   240,   245,   270,   279,   288,   290,   291,
+     241,   307,   312,   242,   317,   244,   318,   320,   326,   346,
+     322,   324,   347,   348,   254,   352,   246,   356,   232,   205,
+     263,   264,   297,   298,   319,   248,   249,   308,   252,   316,
+     259,   289,   265,   309,   299,   218,   323,   353,   223,   325,
+     217,   216,   222,   224,   212,   354,   355,   260,   273,   211,
+     358,   210,   297,   298,   292,   306,   321,   344,   357,     0,
+     359,     0,     0,     0,   299
   };
 
   const short
   D2Parser::yycheck_[] =
   {
-      50,    52,    52,    54,    54,    56,    56,     5,     7,     7,
-      48,     9,   249,    52,     0,    54,     5,    56,    10,    11,
-      12,    13,    26,    14,    15,    16,    17,    14,    15,    20,
-       7,    22,    23,    24,    25,    22,    23,    18,    19,    30,
-      22,    23,    29,    34,     7,    37,     7,    38,     5,    31,
-      32,    33,     3,    57,     7,     6,     5,    39,     3,    57,
-      58,    59,    60,     8,   301,    57,    57,    22,    23,     3,
-      57,     3,    22,    23,     8,    57,     8,    27,    28,    57,
-       3,    22,    23,     6,    39,    40,     3,    42,    43,    39,
-       6,     8,     7,    41,    35,    36,    44,    45,    46,    47,
-       3,     3,    57,     3,     3,     8,     8,    57,     8,     8,
-       3,     7,   162,     6,   152,   153,    57,    48,    49,    50,
-      51,    52,    53,    54,    55,    56,     3,     7,     3,     6,
-       3,   182,   182,   184,   184,     8,     4,     8,     3,   190,
-     190,   192,   192,   182,     4,   184,     4,   198,   198,   200,
-     200,   190,     3,   192,     4,     3,     3,     8,     3,   198,
-       8,   200,     3,     8,     4,     3,     3,     8,   206,   207,
-     208,     8,     3,     6,     6,     4,    57,     8,     4,     4,
-       4,     4,     4,     4,    58,     4,    58,     4,     4,     4,
-       4,     4,     4,     4,     4,     4,    58,     4,     4,     4,
-       4,     4,     4,    58,     4,     4,   244,     5,   258,   259,
-     261,   261,     7,     7,    57,     7,     7,     7,    57,     7,
-      21,     5,   261,    57,     5,     7,     6,    57,     4,    57,
-      57,     4,     4,     7,     5,     4,     4,    57,     4,    57,
-       4,    38,     4,     6,     5,     4,     4,     4,     4,    57,
-     217,   162,   248,   259,   304,   176,   304,   336,   194,   310,
-     310,   312,   312,   192,    57,   190,   268,   200,    57,   182,
-      57,   310,    58,   312,    57,    60,   198,   201,   186,    58,
-      58,   260,    57,   184,   310,   301,   313,    57,   343,   359,
-     379,    -1,   343,   343,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,   343
+      52,    52,    54,    54,    56,    56,     5,     0,     7,     7,
+       9,    48,    52,    10,    54,     7,    56,    11,    12,    13,
+      14,    11,    12,    17,     7,    19,    20,    21,    22,    19,
+      20,     5,    23,    27,    19,    20,    26,    31,    19,    20,
+      34,     7,     3,    28,    29,    30,     3,     8,     3,     6,
+      35,    32,    33,     8,    53,    54,    55,    56,     5,    53,
+      19,    20,    53,    53,     3,    19,    20,     7,    53,     8,
+      24,    25,    53,     3,    15,    16,    35,    36,     8,    38,
+      39,    35,    44,    45,    46,    47,    48,    49,    50,    51,
+      52,     5,    37,    53,    53,    40,    41,    42,    43,    53,
+       3,     7,     7,     3,     3,     8,   143,   144,     8,     8,
+       3,     3,     7,     3,     6,     8,   168,   168,   170,   170,
+       3,     6,     4,     6,   176,   176,   178,   178,   168,     8,
+     170,     3,   184,   184,   186,   186,   176,     3,   178,     8,
+       3,     6,     8,     3,   184,     8,   186,     3,     8,     3,
+       3,     3,     8,     6,     8,     4,     4,     4,     4,     3,
+      54,     6,     4,     4,    53,     4,    54,     4,     4,     4,
+       4,     4,     4,     4,     4,     4,     4,    54,     4,     4,
+       4,     4,     4,   235,   236,     4,   238,   238,   225,     4,
+      54,     4,    53,     7,    53,     7,     7,    18,   238,     7,
+       5,     7,     5,    53,     5,     7,     6,     4,     4,     4,
+      53,     5,     4,    53,     4,    53,     4,     4,     7,     4,
+       6,     5,     4,     4,   276,     4,    53,     4,   198,   162,
+     282,   282,   284,   284,    54,    53,    53,    53,   226,   307,
+     236,   276,   282,    53,   284,   180,    53,    56,   186,    53,
+     178,   176,   184,   187,   172,    54,    54,   237,   245,   170,
+      53,   168,   314,   314,   282,   285,   314,   330,   350,    -1,
+      53,    -1,    -1,    -1,   314
   };
 
   const unsigned char
   D2Parser::yystos_[] =
   {
-       0,    48,    49,    50,    51,    52,    53,    54,    55,    56,
-      62,    63,    64,    65,    66,    67,    68,    69,    70,    71,
-       0,     5,     7,     9,    57,    58,    59,    60,    72,    73,
-      74,    79,     7,    84,     7,    90,     7,   154,     5,   148,
-       7,   122,     5,   116,     7,   137,     5,   132,    80,    75,
-      85,    91,   155,   149,   123,   117,   138,   133,    72,    81,
-      82,    57,    77,    78,    10,    11,    12,    13,    37,    57,
-      83,    86,    87,    88,   173,   175,   177,   179,    14,    15,
-      16,    17,    20,    22,    23,    24,    25,    30,    34,    38,
-      83,    92,    93,    94,    96,    97,    98,   101,   103,   105,
-     107,   109,   146,   165,   183,    31,    32,    33,    39,    83,
-     103,   105,   156,   157,   158,   160,   162,   163,     7,   150,
-     151,   152,    27,    28,    39,    83,   103,   105,   124,   125,
-     126,   128,   130,     7,   118,   119,   120,    14,    15,    29,
-      83,   103,   105,   139,   140,   141,   143,   145,     7,   134,
-     135,     6,     3,     4,     8,     3,   174,   176,   178,    89,
-     180,     4,     3,     8,    95,     4,     4,    99,   102,   104,
-     106,   108,   110,   147,   166,   184,     3,     8,   161,     4,
-     164,   159,     3,     8,   153,     6,     3,   129,   131,   127,
-       3,     8,   121,     6,     3,   144,     4,   142,     3,     8,
-     136,     3,     6,    72,    72,    57,     4,     4,     4,     4,
-       4,    87,     4,    58,    58,     4,     4,     4,     4,     4,
-       4,     4,     4,     4,    93,     4,    58,     4,     4,   157,
-     156,   152,     4,     4,     4,   125,   124,   120,     4,    58,
-       4,   140,   139,   135,     4,    72,    72,    72,     7,     7,
-      57,    18,    19,   100,    21,    74,    76,    57,     7,     7,
-       5,     7,     5,    57,    57,    57,     8,    57,     5,    57,
-       8,    57,    57,     8,    72,    92,   181,   182,   183,    26,
-      83,   111,   112,   113,   114,   111,   150,    35,    36,    83,
-     103,   105,   167,   168,   169,   171,     7,   185,   186,   134,
-       8,     3,     8,   115,     3,     8,     8,     6,   170,   172,
-       3,     8,   187,     3,     6,     6,   182,     4,   113,     4,
-       4,   168,    39,    40,    42,    43,    83,   103,   105,   188,
-     189,   190,   192,   193,   195,   186,     5,    57,    57,   191,
-     196,     4,   194,     3,     8,   118,     4,     4,    58,     4,
-     189,     6,    57,     5,    57,     7,   197,   198,   199,     3,
-       6,    41,    44,    45,    46,    47,   200,   201,   202,   204,
-     205,   206,   207,   198,   203,     4,     4,     4,   208,     3,
-       8,     4,    60,    58,    58,     4,   201,    57,    57
+       0,    44,    45,    46,    47,    48,    49,    50,    51,    52,
+      58,    59,    60,    61,    62,    63,    64,    65,    66,    67,
+       0,     5,     7,     9,    53,    54,    55,    56,    68,    69,
+      70,    75,     7,    80,     7,    86,     7,   150,     5,   144,
+       7,   118,     5,   112,     7,   133,     5,   128,    76,    71,
+      81,    87,   151,   145,   119,   113,   134,   129,    68,    77,
+      78,    53,    73,    74,    10,    82,    83,    84,    11,    12,
+      13,    14,    17,    19,    20,    21,    22,    27,    31,    34,
+      53,    79,    88,    89,    90,    92,    93,    94,    97,    99,
+     101,   103,   105,   142,   161,   169,    28,    29,    30,    35,
+      79,    99,   101,   152,   153,   154,   156,   158,   159,     7,
+     146,   147,   148,    24,    25,    35,    79,    99,   101,   120,
+     121,   122,   124,   126,     7,   114,   115,   116,    11,    12,
+      26,    79,    99,   101,   135,   136,   137,   139,   141,     7,
+     130,   131,     6,     3,     4,     8,     3,    85,     8,    91,
+       4,     4,    95,    98,   100,   102,   104,   106,   143,   162,
+     170,     4,     3,     8,   157,     4,   160,   155,     3,     8,
+     149,     6,     3,   125,   127,   123,     3,     8,   117,     6,
+       3,   140,     4,   138,     3,     8,   132,     3,     6,    68,
+      68,    53,     4,     4,    54,    54,     4,     4,     4,     4,
+       4,     4,     4,     4,     4,    89,     4,    54,     4,     4,
+     153,   152,   148,     4,     4,     4,   121,   120,   116,     4,
+      54,     4,   136,   135,   131,     4,     7,    53,    15,    16,
+      96,    18,    70,    72,    53,     7,     7,     5,     7,     5,
+      53,    53,    53,     8,    53,     5,    53,     8,    53,    53,
+       8,    68,    88,    23,    79,   107,   108,   109,   110,   107,
+     146,    32,    33,    79,    99,   101,   163,   164,   165,   167,
+       7,   171,   172,   130,     8,   111,     3,     8,     8,     6,
+     166,   168,     3,     8,   173,     3,     6,     6,     4,   109,
+       4,     4,   164,    35,    36,    38,    39,    79,    99,   101,
+     174,   175,   176,   178,   179,   181,   172,     5,    53,    53,
+     177,   182,     4,   180,     3,     8,   114,     4,     4,    54,
+       4,   175,     6,    53,     5,    53,     7,   183,   184,   185,
+       3,     6,    37,    40,    41,    42,    43,   186,   187,   188,
+     190,   191,   192,   193,   184,   189,     4,     4,     4,   194,
+       3,     8,     4,    56,    54,    54,     4,   187,    53,    53
   };
 
   const unsigned char
   D2Parser::yyr1_[] =
   {
-       0,    61,    63,    62,    64,    62,    65,    62,    66,    62,
-      67,    62,    68,    62,    69,    62,    70,    62,    71,    62,
-      72,    72,    72,    72,    72,    72,    72,    73,    75,    74,
-      76,    77,    77,    78,    78,    80,    79,    81,    81,    82,
-      82,    83,    85,    84,    86,    86,    87,    87,    87,    87,
-      87,    87,    89,    88,    91,    90,    92,    92,    93,    93,
-      93,    93,    93,    93,    93,    93,    93,    93,    93,    93,
-      93,    95,    94,    96,    97,    99,    98,   100,   100,   102,
-     101,   104,   103,   106,   105,   108,   107,   110,   109,   111,
-     111,   112,   112,   113,   113,   115,   114,   117,   116,   118,
-     118,   119,   119,   121,   120,   123,   122,   124,   124,   125,
-     125,   125,   125,   125,   125,   127,   126,   129,   128,   131,
-     130,   133,   132,   134,   134,   136,   135,   138,   137,   139,
-     139,   140,   140,   140,   140,   140,   140,   142,   141,   144,
-     143,   145,   147,   146,   149,   148,   150,   150,   151,   151,
-     153,   152,   155,   154,   156,   156,   157,   157,   157,   157,
-     157,   157,   157,   159,   158,   161,   160,   162,   164,   163,
-     166,   165,   167,   167,   168,   168,   168,   168,   168,   170,
-     169,   172,   171,   174,   173,   176,   175,   178,   177,   180,
-     179,   181,   181,   182,   184,   183,   185,   185,   187,   186,
-     188,   188,   189,   189,   189,   189,   189,   189,   189,   191,
-     190,   192,   194,   193,   196,   195,   197,   197,   199,   198,
-     200,   200,   201,   201,   201,   201,   201,   203,   202,   204,
-     205,   206,   208,   207
+       0,    57,    59,    58,    60,    58,    61,    58,    62,    58,
+      63,    58,    64,    58,    65,    58,    66,    58,    67,    58,
+      68,    68,    68,    68,    68,    68,    68,    69,    71,    70,
+      72,    73,    73,    74,    74,    76,    75,    77,    77,    78,
+      78,    79,    81,    80,    82,    83,    85,    84,    87,    86,
+      88,    88,    89,    89,    89,    89,    89,    89,    89,    89,
+      89,    89,    89,    89,    89,    91,    90,    92,    93,    95,
+      94,    96,    96,    98,    97,   100,    99,   102,   101,   104,
+     103,   106,   105,   107,   107,   108,   108,   109,   109,   111,
+     110,   113,   112,   114,   114,   115,   115,   117,   116,   119,
+     118,   120,   120,   121,   121,   121,   121,   121,   121,   123,
+     122,   125,   124,   127,   126,   129,   128,   130,   130,   132,
+     131,   134,   133,   135,   135,   136,   136,   136,   136,   136,
+     136,   138,   137,   140,   139,   141,   143,   142,   145,   144,
+     146,   146,   147,   147,   149,   148,   151,   150,   152,   152,
+     153,   153,   153,   153,   153,   153,   153,   155,   154,   157,
+     156,   158,   160,   159,   162,   161,   163,   163,   164,   164,
+     164,   164,   164,   166,   165,   168,   167,   170,   169,   171,
+     171,   173,   172,   174,   174,   175,   175,   175,   175,   175,
+     175,   175,   177,   176,   178,   180,   179,   182,   181,   183,
+     183,   185,   184,   186,   186,   187,   187,   187,   187,   187,
+     189,   188,   190,   191,   192,   194,   193
   };
 
   const signed char
@@ -2477,26 +2387,24 @@ namespace isc { namespace d2 {
        0,     3,     0,     3,     0,     3,     0,     3,     0,     3,
        1,     1,     1,     1,     1,     1,     1,     1,     0,     4,
        1,     0,     1,     3,     5,     0,     4,     0,     1,     1,
-       3,     2,     0,     4,     1,     3,     1,     1,     1,     1,
-       1,     1,     0,     6,     0,     4,     1,     3,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     0,     4,     3,     3,     0,     4,     1,     1,     0,
-       4,     0,     4,     0,     4,     0,     6,     0,     6,     0,
-       1,     1,     3,     1,     1,     0,     6,     0,     4,     0,
-       1,     1,     3,     0,     4,     0,     4,     1,     3,     1,
-       1,     1,     1,     1,     1,     0,     4,     0,     4,     0,
-       6,     0,     4,     1,     3,     0,     4,     0,     4,     1,
-       3,     1,     1,     1,     1,     1,     1,     0,     4,     0,
-       4,     3,     0,     6,     0,     4,     0,     1,     1,     3,
-       0,     4,     0,     4,     1,     3,     1,     1,     1,     1,
-       1,     1,     1,     0,     4,     0,     4,     3,     0,     4,
-       0,     6,     1,     3,     1,     1,     1,     1,     1,     0,
-       4,     0,     4,     0,     4,     0,     4,     0,     4,     0,
-       6,     1,     3,     1,     0,     6,     1,     3,     0,     4,
-       1,     3,     1,     1,     1,     1,     1,     1,     1,     0,
-       4,     3,     0,     4,     0,     6,     1,     3,     0,     4,
-       1,     3,     1,     1,     1,     1,     1,     0,     4,     3,
-       3,     3,     0,     4
+       3,     2,     0,     4,     1,     1,     0,     6,     0,     4,
+       1,     3,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     0,     4,     3,     3,     0,
+       4,     1,     1,     0,     4,     0,     4,     0,     4,     0,
+       6,     0,     6,     0,     1,     1,     3,     1,     1,     0,
+       6,     0,     4,     0,     1,     1,     3,     0,     4,     0,
+       4,     1,     3,     1,     1,     1,     1,     1,     1,     0,
+       4,     0,     4,     0,     6,     0,     4,     1,     3,     0,
+       4,     0,     4,     1,     3,     1,     1,     1,     1,     1,
+       1,     0,     4,     0,     4,     3,     0,     6,     0,     4,
+       0,     1,     1,     3,     0,     4,     0,     4,     1,     3,
+       1,     1,     1,     1,     1,     1,     1,     0,     4,     0,
+       4,     3,     0,     4,     0,     6,     1,     3,     1,     1,
+       1,     1,     1,     0,     4,     0,     4,     0,     6,     1,
+       3,     0,     4,     1,     3,     1,     1,     1,     1,     1,
+       1,     1,     0,     4,     3,     0,     4,     0,     6,     1,
+       3,     0,     4,     1,     3,     1,     1,     1,     1,     1,
+       0,     4,     3,     3,     3,     0,     4
   };
 
 
@@ -2507,18 +2415,18 @@ namespace isc { namespace d2 {
   const D2Parser::yytname_[] =
   {
   "\"end of file\"", "error", "\"invalid token\"", "\",\"", "\":\"",
-  "\"[\"", "\"]\"", "\"{\"", "\"}\"", "\"null\"", "\"Dhcp6\"", "\"Dhcp4\"",
-  "\"Control-agent\"", "\"DhcpDdns\"", "\"ip-address\"", "\"port\"",
-  "\"dns-server-timeout\"", "\"ncr-protocol\"", "\"UDP\"", "\"TCP\"",
-  "\"ncr-format\"", "\"JSON\"", "\"user-context\"", "\"comment\"",
-  "\"forward-ddns\"", "\"reverse-ddns\"", "\"ddns-domains\"",
-  "\"key-name\"", "\"dns-servers\"", "\"hostname\"", "\"tsig-keys\"",
-  "\"algorithm\"", "\"digest-bits\"", "\"secret\"", "\"control-socket\"",
-  "\"socket-type\"", "\"socket-name\"", "\"Logging\"", "\"loggers\"",
-  "\"name\"", "\"output_options\"", "\"output\"", "\"debuglevel\"",
-  "\"severity\"", "\"flush\"", "\"maxsize\"", "\"maxver\"", "\"pattern\"",
-  "TOPLEVEL_JSON", "TOPLEVEL_DHCPDDNS", "SUB_DHCPDDNS", "SUB_TSIG_KEY",
-  "SUB_TSIG_KEYS", "SUB_DDNS_DOMAIN", "SUB_DDNS_DOMAINS", "SUB_DNS_SERVER",
+  "\"[\"", "\"]\"", "\"{\"", "\"}\"", "\"null\"", "\"DhcpDdns\"",
+  "\"ip-address\"", "\"port\"", "\"dns-server-timeout\"",
+  "\"ncr-protocol\"", "\"UDP\"", "\"TCP\"", "\"ncr-format\"", "\"JSON\"",
+  "\"user-context\"", "\"comment\"", "\"forward-ddns\"",
+  "\"reverse-ddns\"", "\"ddns-domains\"", "\"key-name\"",
+  "\"dns-servers\"", "\"hostname\"", "\"tsig-keys\"", "\"algorithm\"",
+  "\"digest-bits\"", "\"secret\"", "\"control-socket\"", "\"socket-type\"",
+  "\"socket-name\"", "\"loggers\"", "\"name\"", "\"output_options\"",
+  "\"output\"", "\"debuglevel\"", "\"severity\"", "\"flush\"",
+  "\"maxsize\"", "\"maxver\"", "\"pattern\"", "TOPLEVEL_JSON",
+  "TOPLEVEL_DHCPDDNS", "SUB_DHCPDDNS", "SUB_TSIG_KEY", "SUB_TSIG_KEYS",
+  "SUB_DDNS_DOMAIN", "SUB_DDNS_DOMAINS", "SUB_DNS_SERVER",
   "SUB_DNS_SERVERS", "\"constant string\"", "\"integer\"",
   "\"floating point\"", "\"boolean\"", "$accept", "start", "$@1", "$@2",
   "$@3", "$@4", "$@5", "$@6", "$@7", "$@8", "$@9", "value", "sub_json",
@@ -2544,15 +2452,12 @@ namespace isc { namespace d2 {
   "tsig_key_name", "$@38", "tsig_key_algorithm", "$@39",
   "tsig_key_digest_bits", "tsig_key_secret", "$@40", "control_socket",
   "$@41", "control_socket_params", "control_socket_param",
-  "control_socket_type", "$@42", "control_socket_name", "$@43",
-  "dhcp6_json_object", "$@44", "dhcp4_json_object", "$@45",
-  "control_agent_json_object", "$@46", "logging_object", "$@47",
-  "logging_params", "logging_param", "loggers", "$@48", "loggers_entries",
-  "logger_entry", "$@49", "logger_params", "logger_param", "name", "$@50",
-  "debuglevel", "severity", "$@51", "output_options_list", "$@52",
-  "output_options_list_content", "output_entry", "$@53",
-  "output_params_list", "output_params", "output", "$@54", "flush",
-  "maxsize", "maxver", "pattern", "$@55", YY_NULLPTR
+  "control_socket_type", "$@42", "control_socket_name", "$@43", "loggers",
+  "$@44", "loggers_entries", "logger_entry", "$@45", "logger_params",
+  "logger_param", "name", "$@46", "debuglevel", "severity", "$@47",
+  "output_options_list", "$@48", "output_options_list_content",
+  "output_entry", "$@49", "output_params_list", "output_params", "output",
+  "$@50", "flush", "maxsize", "maxver", "pattern", "$@51", YY_NULLPTR
   };
 #endif
 
@@ -2561,30 +2466,28 @@ namespace isc { namespace d2 {
   const short
   D2Parser::yyrline_[] =
   {
-       0,   125,   125,   125,   126,   126,   127,   127,   128,   128,
-     129,   129,   130,   130,   131,   131,   132,   132,   133,   133,
-     141,   142,   143,   144,   145,   146,   147,   150,   155,   155,
-     166,   169,   170,   173,   177,   184,   184,   191,   192,   195,
-     199,   210,   220,   220,   232,   233,   237,   238,   239,   240,
-     241,   242,   247,   247,   257,   257,   265,   266,   270,   271,
-     272,   273,   274,   275,   276,   277,   278,   279,   280,   281,
-     282,   285,   285,   293,   301,   310,   310,   318,   319,   322,
-     322,   330,   330,   355,   355,   382,   382,   392,   392,   402,
-     403,   406,   407,   410,   411,   416,   416,   426,   426,   433,
-     434,   437,   438,   441,   441,   449,   449,   456,   457,   460,
-     461,   462,   463,   464,   465,   469,   469,   481,   481,   493,
-     493,   503,   503,   510,   511,   514,   514,   522,   522,   529,
-     530,   533,   534,   535,   536,   537,   538,   541,   541,   553,
-     553,   561,   575,   575,   585,   585,   592,   593,   596,   597,
-     600,   600,   608,   608,   617,   618,   621,   622,   623,   624,
-     625,   626,   627,   630,   630,   642,   642,   653,   661,   661,
-     677,   677,   687,   688,   691,   692,   693,   694,   695,   698,
-     698,   706,   706,   716,   716,   723,   723,   730,   730,   742,
-     742,   755,   756,   760,   764,   764,   776,   777,   781,   781,
-     789,   790,   793,   794,   795,   796,   797,   798,   799,   802,
-     802,   810,   814,   814,   822,   822,   832,   833,   836,   836,
-     844,   845,   848,   849,   850,   851,   852,   855,   855,   863,
-     868,   873,   878,   878
+       0,   120,   120,   120,   121,   121,   122,   122,   123,   123,
+     124,   124,   125,   125,   126,   126,   127,   127,   128,   128,
+     136,   137,   138,   139,   140,   141,   142,   145,   150,   150,
+     161,   164,   165,   168,   172,   179,   179,   186,   187,   190,
+     194,   205,   214,   214,   226,   230,   235,   235,   245,   245,
+     253,   254,   258,   259,   260,   261,   262,   263,   264,   265,
+     266,   267,   268,   269,   270,   273,   273,   281,   289,   298,
+     298,   306,   307,   310,   310,   318,   318,   343,   343,   370,
+     370,   380,   380,   390,   391,   394,   395,   398,   399,   404,
+     404,   414,   414,   421,   422,   425,   426,   429,   429,   437,
+     437,   444,   445,   448,   449,   450,   451,   452,   453,   457,
+     457,   469,   469,   481,   481,   491,   491,   498,   499,   502,
+     502,   510,   510,   517,   518,   521,   522,   523,   524,   525,
+     526,   529,   529,   541,   541,   549,   563,   563,   573,   573,
+     580,   581,   584,   585,   588,   588,   596,   596,   605,   606,
+     609,   610,   611,   612,   613,   614,   615,   618,   618,   630,
+     630,   641,   649,   649,   665,   665,   675,   676,   679,   680,
+     681,   682,   683,   686,   686,   694,   694,   705,   705,   717,
+     718,   722,   722,   730,   731,   734,   735,   736,   737,   738,
+     739,   740,   743,   743,   751,   755,   755,   763,   763,   773,
+     774,   777,   777,   785,   786,   789,   790,   791,   792,   793,
+     796,   796,   804,   809,   814,   819,   819
   };
 
   void
@@ -2617,9 +2520,9 @@ namespace isc { namespace d2 {
 
 #line 14 "d2_parser.yy"
 } } // isc::d2
-#line 2621 "d2_parser.cc"
+#line 2524 "d2_parser.cc"
 
-#line 886 "d2_parser.yy"
+#line 827 "d2_parser.yy"
 
 
 void
