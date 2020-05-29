@@ -1629,6 +1629,17 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
                 execute('kea-admin db-init pgsql -u keauser -p keapass -n keadb', dry_run=dry_run)
 
 
+def _check_installed_rpm_or_debs(services_list):
+    for svc in services_list:
+        execute('sudo systemctl stop %s' % svc)
+        _, out = execute('date +"%Y-%m-%d%H:%M:%S"', capture=True)
+        timestamp = out.strip()
+        execute('sudo systemctl start %s' % svc)
+        time.sleep(3)
+        cmd = "sudo journalctl --since %s -u %s | grep '_STARTED Kea'" % (timestamp, svc)
+        execute(cmd)
+
+
 def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_run,
                pkg_version, pkg_isc_version, repo_url):
     # install our freeradius-client but now from rpm
@@ -1699,8 +1710,13 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     execute(cmd, env=env, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
+        # install packages
         execute('rpm -qa | grep isc-kea | xargs sudo rpm -e', check_times=check_times, dry_run=dry_run, raise_error=False)
         execute('sudo rpm -i rpm-root/RPMS/x86_64/*rpm', check_times=check_times, dry_run=dry_run)
+
+        # check if kea services can be started
+        services_list = ['kea-dhcp4.service', 'kea-dhcp6.service', 'kea-dhcp-ddns.service', 'kea-ctrl-agent.service']
+        _check_installed_rpm_or_debs(services_list)
 
     execute('mv rpm-root/RPMS/x86_64/*rpm pkgs', check_times=check_times, dry_run=dry_run)
 
@@ -1741,6 +1757,15 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     execute('sed -i -e s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
     execute('sed -i -e s/{FREERADIUS_CLIENT_VERSION}/%s/g control' % frc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
 
+    services_list = ['isc-kea-dhcp4-server.service', 'isc-kea-dhcp6-server.service', 'isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
+
+    # debian 9 does not support some fields in systemd unit files so they need to be commented out
+    if system == 'debian' and revision == '9':
+        for f in services_list:
+            for k in ['RuntimeDirectory', 'RuntimeDirectoryPreserve', 'LogsDirectory', 'LogsDirectoryMode', 'StateDirectory', 'ConfigurationDirectory']:
+                cmd = "sed -i -E 's/^(%s=.*)/#\\1/' %s" % (k, f)
+                execute(cmd, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
+
     # do deb build
     env['LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
     env['LD_LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
@@ -1748,7 +1773,10 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     execute(cmd, env=env, cwd=src_path, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
+        # install packages
         execute('sudo dpkg -i kea-src/*deb', check_times=check_times, dry_run=dry_run)
+        # check if kea services can be started
+        _check_installed_rpm_or_debs(services_list)
 
 
 def _build_alpine_apk(system, revision, features, tarball_path, env, check_times, dry_run,
@@ -1774,7 +1802,18 @@ def _build_alpine_apk(system, revision, features, tarball_path, env, check_times
     execute('abuild -v -r', cwd='kea-src', check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
+        # install packages
         execute('sudo apk add *.apk', cwd='packages/vagrant/x86_64', check_times=check_times, dry_run=dry_run)
+
+        # check if kea services can be started
+        for svc in ['kea-dhcp4', 'kea-dhcp6', 'kea-ctrl-agent', 'kea-dhcp-ddns']:
+            execute('sudo rc-service %s start' % svc)
+            time.sleep(3)
+            if svc == 'kea-dhcp-ddns':
+                svc = 'kea-ddns'
+            cmd = "sudo cat /var/log/kea/%s.log | grep '_STARTED Kea'" % svc
+            execute(cmd)
+
 
 def _build_native_pkg(system, revision, features, tarball_path, env, check_times, dry_run, ccache_dir,
                       pkg_version, pkg_isc_version, repository_url):
