@@ -190,6 +190,9 @@ public:
         return (processed_signals_);
     }
 
+    /// @brief Deals with other (i.e. not application name) global objects.
+    using DControllerBase::handleOtherObjects;
+
     /// @brief Controls whether signals are processed in full or merely
     /// recorded.
     ///

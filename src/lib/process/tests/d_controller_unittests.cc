@@ -28,12 +28,13 @@ public:
     /// @brief Constructor.
     /// Note the constructor passes in the static DStubController instance
     /// method.
-    DStubControllerTest() : DControllerTest (DStubController::instance) {
+    DStubControllerTest() : DControllerTest(DStubController::instance) {
         controller_ = boost::dynamic_pointer_cast<DStubController>
                                                  (DControllerTest::
                                                   getController());
     }
 
+    /// @brief The controller.
     DStubControllerPtr controller_;
 };
 
@@ -287,6 +288,28 @@ TEST_F(DStubControllerTest, configUpdateTests) {
     EXPECT_EQ(1, rcode);
 }
 
+// Tests that handleOtherObjects behaves as expected.
+TEST_F(DStubControllerTest, handleOtherObjects) {
+    using namespace isc::data;
+
+    // A bad config.
+    ElementPtr config = Element::createMap();
+    config->set(controller_->getAppName(), Element::create(1));
+    config->set("foo", Element::create(2));
+    config->set("bar", Element::create(3));
+
+    // Check the error message.
+    std::string errmsg;
+    EXPECT_NO_THROW(errmsg = controller_->handleOtherObjects(config));
+    EXPECT_EQ(" contains unsupported 'bar' parameter (and 'foo')", errmsg);
+
+    // Retry with no error.
+    config = Element::createMap();
+    config->set(controller_->getAppName(), Element::create(1));
+    EXPECT_NO_THROW(errmsg = controller_->handleOtherObjects(config));
+    EXPECT_TRUE(errmsg.empty());
+}
+
 // Tests that registered signals are caught and handled.
 TEST_F(DStubControllerTest, ioSignals) {
     // Tell test controller just to record the signals, don't call the
@@ -354,8 +377,6 @@ TEST_F(DStubControllerTest, alternateParsing) {
     ASSERT_EQ(1, signals.size());
     EXPECT_EQ(SIGHUP, signals[0]);
 }
-
-
 
 // Tests that the original configuration is replaced after a SIGHUP triggered
 // reconfiguration succeeds.
