@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -123,8 +123,6 @@ ParserContext::contextName()
         return ("toplevel");
     case AGENT:
         return ("Control-agent");
-    case LOGGING:
-        return ("Logging");
     case CONTROL_SOCKETS:
         return ("control-sockets");
     case SERVER:

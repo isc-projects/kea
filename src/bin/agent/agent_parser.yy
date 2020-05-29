@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,7 +67,6 @@ using namespace std;
   LIBRARY "library"
   PARAMETERS "parameters"
 
-  LOGGING "Logging"
   LOGGERS "loggers"
   NAME "name"
   OUTPUT_OPTIONS "output_options"
@@ -78,10 +77,6 @@ using namespace std;
   MAXSIZE "maxsize"
   MAXVER "maxver"
   PATTERN "pattern"
-
-  DHCP4 "Dhcp4"
-  DHCP6 "Dhcp6"
-  DHCPDDNS "DhcpDdns"
 
   // Not real tokens, just a way to signal what the parser is expected to
   // parse. This define the starting point. It either can be full grammar
@@ -106,7 +101,7 @@ using namespace std;
 %%
 
 // The whole grammar starts with a map, because the config file
-// consists of Control-Agent, DhcpX, Logger and DhcpDdns entries in one big { }.
+// consists of only Control-Agent entry in one big { }.
 %start start;
 
 // The starting token can be one of those listed below. Note these are
@@ -219,8 +214,7 @@ unknown_map_entry: STRING COLON {
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 };
 
-// This defines the top-level { } that holds Control-agent, Dhcp6, Dhcp4,
-// DhcpDdns or Logging objects.
+// This defines the top-level { } that holds only Control-agent object.
 agent_syntax_map: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -232,18 +226,12 @@ agent_syntax_map: LCURLY_BRACKET {
     // for it.
 };
 
-// This represents top-level entries: Control-agent, Logging, possibly others
+// This represents top-level entries: Control-agent.
 global_objects: global_object
-              | global_objects COMMA global_object
               ;
 
-// This represents a single top level entry, e.g. Control-agent, Dhcp6 or DhcpDdns.
+// This represents a single top level entry, e.g. Control-agent.
 global_object: agent_object
-             | logging_object
-             | dhcp4_json_object
-             | dhcp6_json_object
-             | dhcpddns_json_object
-             | unknown_map_entry
              ;
 
 // This define the Control-agent object.
@@ -493,55 +481,8 @@ socket_type_value : UNIX { $$ = ElementPtr(new StringElement("unix", ctx.loc2pos
 
 // --- control-sockets end here ------------------------------------------------
 
-// JSON entries for other global objects (Dhcp4,Dhcp6 and DhcpDdns)
-dhcp4_json_object: DHCP4 {
-    ctx.enter(ctx.NO_KEYWORDS);
-} COLON value {
-    ctx.stack_.back()->set("Dhcp4", $4);
-    ctx.leave();
-};
+// --- Loggers starts here -----------------------------------------------------
 
-dhcp6_json_object: DHCP6 {
-    ctx.enter(ctx.NO_KEYWORDS);
-} COLON value {
-    ctx.stack_.back()->set("Dhcp6", $4);
-    ctx.leave();
-};
-
-dhcpddns_json_object: DHCPDDNS {
-    ctx.enter(ctx.NO_KEYWORDS);
-} COLON value {
-    ctx.stack_.back()->set("DhcpDdns", $4);
-    ctx.leave();
-};
-
-// --- Logging starts here -----------------------------------------------------
-
-// This defines the top level "Logging" object. It parses
-// the following "Logging": { ... }. The ... is defined
-// by logging_params
-logging_object: LOGGING {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("Logging", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.LOGGING);
-} COLON LCURLY_BRACKET logging_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-// This defines the list of allowed parameters that may appear
-// in the top-level Logging object. It can either be a single
-// parameter or several parameters separated by commas.
-logging_params: logging_param
-              | logging_params COMMA logging_param
-              ;
-
-// There's currently only one parameter defined, which is "loggers".
-logging_param: loggers;
-
-// "loggers", the only parameter currently defined in "Logging" object,
-// is "Loggers": [ ... ].
 loggers: LOGGERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
@@ -558,7 +499,7 @@ loggers_entries: logger_entry
                | loggers_entries COMMA logger_entry
                ;
 
-// This defines a single entry defined in loggers in Logging.
+// This defines a single entry defined in loggers.
 logger_entry: LCURLY_BRACKET {
     ElementPtr l(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(l);

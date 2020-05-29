@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,10 +49,6 @@ using namespace std;
   RCURLY_BRACKET "}"
   NULL_TYPE "null"
 
-  DHCP6 "Dhcp6"
-  DHCP4 "Dhcp4"
-  CONTROL_AGENT "Control-agent"
-
   DHCPDDNS "DhcpDdns"
   IP_ADDRESS "ip-address"
   PORT "port"
@@ -79,7 +75,6 @@ using namespace std;
   SOCKET_TYPE "socket-type"
   SOCKET_NAME "socket-name"
 
-  LOGGING "Logging"
   LOGGERS "loggers"
   NAME "name"
   OUTPUT_OPTIONS "output_options"
@@ -215,8 +210,7 @@ unknown_map_entry: STRING COLON {
 };
 
 
-// This defines the top-level { } that holds Control-agent, Dhcp6, Dhcp4,
-// DhcpDdns or Logging objects.
+// This defines the top-level { } that holds only DhcpDdns object.
 syntax_map: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -228,18 +222,12 @@ syntax_map: LCURLY_BRACKET {
     // for it.
 };
 
-// This represents top-level entries: Dhcp6, Dhcp4, DhcpDdns, Logging
+// This represents top-level entries: DhcpDdns.
 global_objects: global_object
-              | global_objects COMMA global_object
               ;
 
-// This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
-global_object: dhcp6_json_object
-             | logging_object
-             | dhcp4_json_object
-             | dhcpddns_object
-             | control_agent_json_object
-             | unknown_map_entry
+// This represents a single top level entry, e.g. DhcpDdns.
+global_object: dhcpddns_object
              ;
 
 // --- dhcp ddns ---------------------------------------------
@@ -711,55 +699,8 @@ control_socket_name: SOCKET_NAME {
     ctx.leave();
 };
 
-// ----------------------------------------------------------------
+// --- loggers entry -----------------------------------------
 
-dhcp6_json_object: DHCP6 {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->set("Dhcp6", $4);
-    ctx.leave();
-};
-
-dhcp4_json_object: DHCP4 {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->set("Dhcp4", $4);
-    ctx.leave();
-};
-
-control_agent_json_object: CONTROL_AGENT {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->set("Control-agent", $4);
-    ctx.leave();
-};
-
-// --- logging entry -----------------------------------------
-
-// This defines the top level "Logging" object. It parses
-// the following "Logging": { ... }. The ... is defined
-// by logging_params
-logging_object: LOGGING {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("Logging", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.LOGGING);
-} COLON LCURLY_BRACKET logging_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-// This defines the list of allowed parameters that may appear
-// in the top-level Logging object. It can either be a single
-// parameter or several parameters separated by commas.
-logging_params: logging_param
-              | logging_params COMMA logging_param
-              ;
-
-// There's currently only one parameter defined, which is "loggers".
-logging_param: loggers;
-
-// "loggers", the only parameter currently defined in "Logging" object,
 // is "Loggers": [ ... ].
 loggers: LOGGERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
@@ -777,7 +718,7 @@ loggers_entries: logger_entry
                | loggers_entries COMMA logger_entry
                ;
 
-// This defines a single entry defined in loggers in Logging.
+// This defines a single entry defined in loggers.
 logger_entry: LCURLY_BRACKET {
     ElementPtr l(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(l);

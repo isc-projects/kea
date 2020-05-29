@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -161,19 +161,27 @@ public:
                  isc::data::Element::Position open_loc,
                  isc::data::Element::Position close_loc);
 
+    /// @brief Check if a parameter is already present
+    ///
+    /// Check if a parameter is already present in the map at the top
+    /// of the stack and raise an error when it is.
+    ///
+    /// @param name name of the parameter to check
+    /// @param loc location of the current parameter
+    /// @throw ParseError
+    void unique(const std::string& name,
+                isc::data::Element::Position loc);
+
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
         ///< This one is used in pure JSON mode.
         NO_KEYWORDS,
 
-        ///< Used while parsing top level (that contains Netconf, Logging and others)
+        ///< Used while parsing top level (that contains Netconf)
         CONFIG,
 
         ///< Used while parsing content of Netconf.
         NETCONF,
-
-        ///< Used while parsing content of Logging.
-        LOGGING,
 
         /// Used while parsing Netconf/managed-servers.
         MANAGED_SERVERS,

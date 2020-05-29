@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -419,20 +419,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-
-\"Logging\" {
-    switch(driver.ctx_) {
-    case isc::d2::D2ParserContext::CONFIG:
-        return isc::d2::D2Parser::make_LOGGING(driver.loc_);
-    default:
-        return isc::d2::D2Parser::make_STRING("Logging", driver.loc_);
-    }
-}
-
 \"loggers\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
-    case isc::d2::D2ParserContext::LOGGING:
         return isc::d2::D2Parser::make_LOGGERS(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("loggers", driver.loc_);
@@ -523,34 +512,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::d2::D2Parser::make_STRING("severity", driver.loc_);
     }
 }
-
-\"Dhcp4\" {
-    switch(driver.ctx_) {
-    case isc::d2::D2ParserContext::CONFIG:
-        return isc::d2::D2Parser::make_DHCP4(driver.loc_);
-    default:
-        return isc::d2::D2Parser::make_STRING("Dhcp4", driver.loc_);
-    }
-}
-
-\"Dhcp6\" {
-    switch(driver.ctx_) {
-    case isc::d2::D2ParserContext::CONFIG:
-        return isc::d2::D2Parser::make_DHCP6(driver.loc_);
-    default:
-        return isc::d2::D2Parser::make_STRING("Dhcp6", driver.loc_);
-    }
-}
-
-\"Control-agent\" {
-    switch(driver.ctx_) {
-    case isc::d2::D2ParserContext::CONFIG:
-        return isc::d2::D2Parser::make_CONTROL_AGENT(driver.loc_);
-    default:
-        return isc::d2::D2Parser::make_STRING("Control-agent", driver.loc_);
-    }
-}
-
 
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.

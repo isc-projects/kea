@@ -1,4 +1,4 @@
-/* Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -75,7 +75,6 @@ using namespace std;
   LIBRARY "library"
   PARAMETERS "parameters"
 
-  LOGGING "Logging"
   LOGGERS "loggers"
   NAME "name"
   OUTPUT_OPTIONS "output_options"
@@ -223,7 +222,7 @@ unknown_map_entry: STRING COLON {
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 };
 
-// This defines the top-level { } that holds Netconf or Logging objects.
+// This defines the top-level { } that holds Netconf object.
 netconf_syntax_map: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -235,14 +234,13 @@ netconf_syntax_map: LCURLY_BRACKET {
     // for it.
 };
 
-// This represents top-level entries: Netconf, Logging, possibly others
+// This represents top-level entries: Netconf.
 global_objects: global_object
               | global_objects COMMA global_object
               ;
 
-// This represents a single top level entry, e.g. Netconf or Logging.
+// This represents a single top level entry, e.g. Netconf.
 global_object: netconf_object
-             | logging_object
              ;
 
 // This define the Netconf object.
@@ -252,6 +250,9 @@ netconf_object: NETCONF {
     // top level map (that's already on the stack) and put the new map
     // on the stack as well, so child elements will be able to add
     // themselves to it.
+
+    // Prevent against duplicate.
+    ctx.unique("Netconf, ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("Netconf", m);
     ctx.stack_.push_back(m);
@@ -558,33 +559,8 @@ socket_url: SOCKET_URL {
 
 // --- managed-servers end here ------------------------------------------------
 
-// --- Logging starts here -----------------------------------------------------
+// --- Loggers starts here -----------------------------------------------------
 
-// This defines the top level "Logging" object. It parses
-// the following "Logging": { ... }. The ... is defined
-// by logging_params
-logging_object: LOGGING {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("Logging", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.LOGGING);
-} COLON LCURLY_BRACKET logging_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-// This defines the list of allowed parameters that may appear
-// in the top-level Logging object. It can either be a single
-// parameter or several parameters separated by commas.
-logging_params: logging_param
-              | logging_params COMMA logging_param
-              ;
-
-// There's currently only one parameter defined, which is "loggers".
-logging_param: loggers;
-
-// "loggers", the only parameter currently defined in "Logging" object,
-// is "Loggers": [ ... ].
 loggers: LOGGERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
@@ -601,7 +577,7 @@ loggers_entries: logger_entry
                | loggers_entries COMMA logger_entry
                ;
 
-// This defines a single entry defined in loggers in Logging.
+// This defines a single entry defined in loggers.
 logger_entry: LCURLY_BRACKET {
     ElementPtr l(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(l);

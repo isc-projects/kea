@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -152,14 +152,11 @@ public:
         ///< This one is used in pure JSON mode.
         NO_KEYWORDS,
 
-        ///< Used while parsing top level (that contains Control-agent, Logging and others)
+        ///< Used while parsing top level (that contains Control-agent)
         CONFIG,
 
         ///< Used while parsing content of Agent.
         AGENT,
-
-        ///< Used while parsing content of Logging.
-        LOGGING,
 
         ///< Used while parsing Control-agent/control-sockets.
         CONTROL_SOCKETS,

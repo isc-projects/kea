@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,7 +48,7 @@ public:
         /// This parser will parse the content as generic JSON.
         PARSER_JSON,
 
-        ///< Used for parsing top level (contains DhcpDdns, Logging, others)
+        ///< Used for parsing top level (contains DhcpDdns)
         PARSER_DHCPDDNS,
 
         ///< Used for parsing content of DhcpDdns.
@@ -165,7 +165,7 @@ public:
         ///< This one is used in pure JSON mode.
         NO_KEYWORD,
 
-        ///< Used while parsing top level (contains DhcpDdns, Logging, ...)
+        ///< Used while parsing top level (contains DhcpDdns).
         CONFIG,
 
         ///< Used while parsing content of DhcpDdns.
@@ -206,9 +206,6 @@ public:
 
         ///< Used while parsing content of a control-socket
         CONTROL_SOCKET,
-
-        ///< Used while parsing content of Logging
-        LOGGING,
 
         /// Used while parsing DhcpDdns/loggers structures.
         LOGGERS,

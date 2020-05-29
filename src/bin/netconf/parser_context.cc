@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -112,6 +112,18 @@ ParserContext::require(const std::string& name,
 }
 
 void
+ParserContext::unique(const std::string& name,
+                      isc::data::Element::Position loc)
+{
+    ConstElementPtr value = stack_.back()->get(name);
+    if (value) {
+        isc_throw(ParseError, loc << ": duplicate " << name
+                  << " entries in " << contextName()
+                  << " map (previous at " << value->getPosition() << ")");
+    }
+}
+
+void
 ParserContext::enter(const LexerContext& ctx)
 {
     cstack_.push_back(ctx_);
@@ -138,8 +150,6 @@ ParserContext::contextName()
         return ("toplevel");
     case NETCONF:
         return ("Netconf");
-    case LOGGING:
-        return ("Logging");
     case MANAGED_SERVERS:
         return ("managed-servers");
     case SERVER:
