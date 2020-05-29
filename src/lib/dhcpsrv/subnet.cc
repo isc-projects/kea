@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcp/option_space.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
+#include <util/multi_threading_mgr.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
 #include <algorithm>
@@ -62,7 +63,8 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
       last_allocated_pd_(lastAddrInPrefix(prefix, len)),
       last_allocated_time_(),
       iface_(),
-      shared_network_name_() {
+      shared_network_name_(),
+      mutex_() {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
@@ -74,6 +76,8 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
     last_allocated_time_[Lease::TYPE_NA] = boost::posix_time::neg_infin;
     last_allocated_time_[Lease::TYPE_TA] = boost::posix_time::neg_infin;
     last_allocated_time_[Lease::TYPE_PD] = boost::posix_time::neg_infin;
+
+    mutex_.reset(new std::mutex);
 }
 
 bool
@@ -85,6 +89,15 @@ Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
 }
 
 isc::asiolink::IOAddress Subnet::getLastAllocated(Lease::Type type) const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLastAllocatedInternal(type));
+    } else {
+        return (getLastAllocatedInternal(type));
+    }
+}
+
+isc::asiolink::IOAddress Subnet::getLastAllocatedInternal(Lease::Type type) const {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
@@ -103,6 +116,16 @@ isc::asiolink::IOAddress Subnet::getLastAllocated(Lease::Type type) const {
 
 boost::posix_time::ptime
 Subnet::getLastAllocatedTime(const Lease::Type& lease_type) const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLastAllocatedTimeInternal(lease_type));
+    } else {
+        return (getLastAllocatedTimeInternal(lease_type));
+    }
+}
+
+boost::posix_time::ptime
+Subnet::getLastAllocatedTimeInternal(const Lease::Type& lease_type) const {
     auto t = last_allocated_time_.find(lease_type);
     if (t != last_allocated_time_.end()) {
         return (t->second);
@@ -113,9 +136,18 @@ Subnet::getLastAllocatedTime(const Lease::Type& lease_type) const {
     return (boost::posix_time::neg_infin);
 }
 
-
 void Subnet::setLastAllocated(Lease::Type type,
                               const isc::asiolink::IOAddress& addr) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        setLastAllocatedInternal(type, addr);
+    } else {
+        setLastAllocatedInternal(type, addr);
+    }
+}
+
+void Subnet::setLastAllocatedInternal(Lease::Type type,
+                                      const isc::asiolink::IOAddress& addr) {
 
     // check if the type is valid (and throw if it isn't)
     checkType(type);
@@ -778,7 +810,6 @@ Subnet6::parsePrefix(const std::string& prefix) {
     }
     return (parsed);
 }
-
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

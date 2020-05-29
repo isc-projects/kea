@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,9 +23,11 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/pointer_cast.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cstdint>
 #include <map>
+#include <mutex>
 #include <utility>
 
 namespace isc {
@@ -72,6 +74,8 @@ public:
     /// from this subnet. This is used as helper information for the next
     /// iteration of the allocation algorithm.
     ///
+    /// @note: this routine is Kea thread safe.
+    ///
     /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
     ///
@@ -81,6 +85,8 @@ public:
 
     /// @brief Returns the timestamp when the @c setLastAllocated function
     /// was called.
+    ///
+    /// @note: this routine is Kea thread safe.
     ///
     /// @param lease_type Lease type for which last allocation timestamp should
     /// be returned.
@@ -95,6 +101,8 @@ public:
     /// This method sets the last address that was attempted to be allocated
     /// from this subnet. This is used as helper information for the next
     /// iteration of the allocation algorithm.
+    ///
+    /// @note: this routine is Kea thread safe.
     ///
     /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
@@ -430,6 +438,8 @@ protected:
 
     /// @brief Timestamp indicating when a lease of a specified type has been
     /// last allocated from this subnet.
+    ///
+    /// @note: This map is protected by the mutex.
     std::map<Lease::Type, boost::posix_time::ptime> last_allocated_time_;
 
     /// @brief Name of the network interface (if connected directly)
@@ -437,6 +447,51 @@ protected:
 
     /// @brief Shared network name.
     std::string shared_network_name_;
+
+private:
+
+    /// @brief returns the last address that was tried from this subnet
+    ///
+    /// This method returns the last address that was attempted to be allocated
+    /// from this subnet. This is used as helper information for the next
+    /// iteration of the allocation algorithm.
+    ///
+     /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
+    ///        AllocEngine::IterativeAllocator and keep the data there
+    ///
+    /// @param type lease type to be returned
+    /// @return address/prefix that was last tried from this subnet
+    isc::asiolink::IOAddress getLastAllocatedInternal(Lease::Type type) const;
+
+    /// @brief Returns the timestamp when the @c setLastAllocated function
+    /// was called.
+    ///
+    /// @param lease_type Lease type for which last allocation timestamp should
+    /// be returned.
+    ///
+    /// @return Time when a lease of a specified type has been allocated from
+    /// this subnet. The negative infinity time is returned if a lease type is
+    /// not recognized (which is unlikely).
+    boost::posix_time::ptime
+    getLastAllocatedTimeInternal(const Lease::Type& lease_type) const;
+
+    /// @brief sets the last address that was tried from this subnet
+    ///
+    /// This method sets the last address that was attempted to be allocated
+    /// from this subnet. This is used as helper information for the next
+    /// iteration of the allocation algorithm.
+    ///
+    /// @note: this routine is Kea thread safe.
+    ///
+    /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
+    ///        AllocEngine::IterativeAllocator and keep the data there
+    /// @param addr address/prefix to that was tried last
+    /// @param type lease type to be set
+    void setLastAllocatedInternal(Lease::Type type,
+                                  const isc::asiolink::IOAddress& addr);
+
+    /// @brief The mutex protecting the last_allocated_time_ map.
+    boost::scoped_ptr<std::mutex> mutex_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
