@@ -509,24 +509,23 @@ namespace isc { namespace netconf {
     TOKEN_HOOKS_LIBRARIES = 284,   // "hooks-libraries"
     TOKEN_LIBRARY = 285,           // "library"
     TOKEN_PARAMETERS = 286,        // "parameters"
-    TOKEN_LOGGING = 287,           // "Logging"
-    TOKEN_LOGGERS = 288,           // "loggers"
-    TOKEN_NAME = 289,              // "name"
-    TOKEN_OUTPUT_OPTIONS = 290,    // "output_options"
-    TOKEN_OUTPUT = 291,            // "output"
-    TOKEN_DEBUGLEVEL = 292,        // "debuglevel"
-    TOKEN_SEVERITY = 293,          // "severity"
-    TOKEN_FLUSH = 294,             // "flush"
-    TOKEN_MAXSIZE = 295,           // "maxsize"
-    TOKEN_MAXVER = 296,            // "maxver"
-    TOKEN_PATTERN = 297,           // "pattern"
-    TOKEN_START_JSON = 298,        // START_JSON
-    TOKEN_START_NETCONF = 299,     // START_NETCONF
-    TOKEN_START_SUB_NETCONF = 300, // START_SUB_NETCONF
-    TOKEN_STRING = 301,            // "constant string"
-    TOKEN_INTEGER = 302,           // "integer"
-    TOKEN_FLOAT = 303,             // "floating point"
-    TOKEN_BOOLEAN = 304            // "boolean"
+    TOKEN_LOGGERS = 287,           // "loggers"
+    TOKEN_NAME = 288,              // "name"
+    TOKEN_OUTPUT_OPTIONS = 289,    // "output_options"
+    TOKEN_OUTPUT = 290,            // "output"
+    TOKEN_DEBUGLEVEL = 291,        // "debuglevel"
+    TOKEN_SEVERITY = 292,          // "severity"
+    TOKEN_FLUSH = 293,             // "flush"
+    TOKEN_MAXSIZE = 294,           // "maxsize"
+    TOKEN_MAXVER = 295,            // "maxver"
+    TOKEN_PATTERN = 296,           // "pattern"
+    TOKEN_START_JSON = 297,        // START_JSON
+    TOKEN_START_NETCONF = 298,     // START_NETCONF
+    TOKEN_START_SUB_NETCONF = 299, // START_SUB_NETCONF
+    TOKEN_STRING = 300,            // "constant string"
+    TOKEN_INTEGER = 301,           // "integer"
+    TOKEN_FLOAT = 302,             // "floating point"
+    TOKEN_BOOLEAN = 303            // "boolean"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -543,7 +542,7 @@ namespace isc { namespace netconf {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 50, ///< Number of tokens.
+        YYNTOKENS = 49, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -577,129 +576,124 @@ namespace isc { namespace netconf {
         S_HOOKS_LIBRARIES = 29,                  // "hooks-libraries"
         S_LIBRARY = 30,                          // "library"
         S_PARAMETERS = 31,                       // "parameters"
-        S_LOGGING = 32,                          // "Logging"
-        S_LOGGERS = 33,                          // "loggers"
-        S_NAME = 34,                             // "name"
-        S_OUTPUT_OPTIONS = 35,                   // "output_options"
-        S_OUTPUT = 36,                           // "output"
-        S_DEBUGLEVEL = 37,                       // "debuglevel"
-        S_SEVERITY = 38,                         // "severity"
-        S_FLUSH = 39,                            // "flush"
-        S_MAXSIZE = 40,                          // "maxsize"
-        S_MAXVER = 41,                           // "maxver"
-        S_PATTERN = 42,                          // "pattern"
-        S_START_JSON = 43,                       // START_JSON
-        S_START_NETCONF = 44,                    // START_NETCONF
-        S_START_SUB_NETCONF = 45,                // START_SUB_NETCONF
-        S_STRING = 46,                           // "constant string"
-        S_INTEGER = 47,                          // "integer"
-        S_FLOAT = 48,                            // "floating point"
-        S_BOOLEAN = 49,                          // "boolean"
-        S_YYACCEPT = 50,                         // $accept
-        S_start = 51,                            // start
-        S_52_1 = 52,                             // $@1
-        S_53_2 = 53,                             // $@2
-        S_54_3 = 54,                             // $@3
-        S_sub_netconf = 55,                      // sub_netconf
-        S_56_4 = 56,                             // $@4
-        S_json = 57,                             // json
-        S_value = 58,                            // value
-        S_map = 59,                              // map
-        S_60_5 = 60,                             // $@5
-        S_map_value = 61,                        // map_value
-        S_map_content = 62,                      // map_content
-        S_not_empty_map = 63,                    // not_empty_map
-        S_list_generic = 64,                     // list_generic
-        S_65_6 = 65,                             // $@6
-        S_list_content = 66,                     // list_content
-        S_not_empty_list = 67,                   // not_empty_list
-        S_unknown_map_entry = 68,                // unknown_map_entry
-        S_netconf_syntax_map = 69,               // netconf_syntax_map
-        S_70_7 = 70,                             // $@7
-        S_global_objects = 71,                   // global_objects
-        S_global_object = 72,                    // global_object
-        S_netconf_object = 73,                   // netconf_object
-        S_74_8 = 74,                             // $@8
-        S_global_params = 75,                    // global_params
-        S_not_empty_global_params = 76,          // not_empty_global_params
-        S_global_param = 77,                     // global_param
-        S_boot_update = 78,                      // boot_update
-        S_subscribe_changes = 79,                // subscribe_changes
-        S_validate_changes = 80,                 // validate_changes
-        S_user_context = 81,                     // user_context
-        S_82_9 = 82,                             // $@9
-        S_comment = 83,                          // comment
-        S_84_10 = 84,                            // $@10
-        S_hooks_libraries = 85,                  // hooks_libraries
-        S_86_11 = 86,                            // $@11
-        S_hooks_libraries_list = 87,             // hooks_libraries_list
-        S_not_empty_hooks_libraries_list = 88,   // not_empty_hooks_libraries_list
-        S_hooks_library = 89,                    // hooks_library
-        S_90_12 = 90,                            // $@12
-        S_hooks_params = 91,                     // hooks_params
-        S_hooks_param = 92,                      // hooks_param
-        S_library = 93,                          // library
-        S_94_13 = 94,                            // $@13
-        S_parameters = 95,                       // parameters
-        S_96_14 = 96,                            // $@14
-        S_managed_servers = 97,                  // managed_servers
-        S_98_15 = 98,                            // $@15
-        S_servers_entries = 99,                  // servers_entries
-        S_not_empty_servers_entries = 100,       // not_empty_servers_entries
-        S_server_entry = 101,                    // server_entry
-        S_dhcp4_server = 102,                    // dhcp4_server
-        S_103_16 = 103,                          // $@16
-        S_dhcp6_server = 104,                    // dhcp6_server
-        S_105_17 = 105,                          // $@17
-        S_d2_server = 106,                       // d2_server
-        S_107_18 = 107,                          // $@18
-        S_ca_server = 108,                       // ca_server
-        S_109_19 = 109,                          // $@19
-        S_managed_server_params = 110,           // managed_server_params
-        S_managed_server_param = 111,            // managed_server_param
-        S_model = 112,                           // model
-        S_113_20 = 113,                          // $@20
-        S_control_socket = 114,                  // control_socket
-        S_115_21 = 115,                          // $@21
-        S_control_socket_params = 116,           // control_socket_params
-        S_control_socket_param = 117,            // control_socket_param
-        S_socket_type = 118,                     // socket_type
-        S_119_22 = 119,                          // $@22
-        S_socket_type_value = 120,               // socket_type_value
-        S_socket_name = 121,                     // socket_name
-        S_122_23 = 122,                          // $@23
-        S_socket_url = 123,                      // socket_url
-        S_124_24 = 124,                          // $@24
-        S_logging_object = 125,                  // logging_object
-        S_126_25 = 126,                          // $@25
-        S_logging_params = 127,                  // logging_params
-        S_logging_param = 128,                   // logging_param
-        S_loggers = 129,                         // loggers
-        S_130_26 = 130,                          // $@26
-        S_loggers_entries = 131,                 // loggers_entries
-        S_logger_entry = 132,                    // logger_entry
-        S_133_27 = 133,                          // $@27
-        S_logger_params = 134,                   // logger_params
-        S_logger_param = 135,                    // logger_param
-        S_name = 136,                            // name
-        S_137_28 = 137,                          // $@28
-        S_debuglevel = 138,                      // debuglevel
-        S_severity = 139,                        // severity
-        S_140_29 = 140,                          // $@29
-        S_output_options_list = 141,             // output_options_list
-        S_142_30 = 142,                          // $@30
-        S_output_options_list_content = 143,     // output_options_list_content
-        S_output_entry = 144,                    // output_entry
-        S_145_31 = 145,                          // $@31
-        S_output_params_list = 146,              // output_params_list
-        S_output_params = 147,                   // output_params
-        S_output = 148,                          // output
-        S_149_32 = 149,                          // $@32
-        S_flush = 150,                           // flush
-        S_maxsize = 151,                         // maxsize
-        S_maxver = 152,                          // maxver
-        S_pattern = 153,                         // pattern
-        S_154_33 = 154                           // $@33
+        S_LOGGERS = 32,                          // "loggers"
+        S_NAME = 33,                             // "name"
+        S_OUTPUT_OPTIONS = 34,                   // "output_options"
+        S_OUTPUT = 35,                           // "output"
+        S_DEBUGLEVEL = 36,                       // "debuglevel"
+        S_SEVERITY = 37,                         // "severity"
+        S_FLUSH = 38,                            // "flush"
+        S_MAXSIZE = 39,                          // "maxsize"
+        S_MAXVER = 40,                           // "maxver"
+        S_PATTERN = 41,                          // "pattern"
+        S_START_JSON = 42,                       // START_JSON
+        S_START_NETCONF = 43,                    // START_NETCONF
+        S_START_SUB_NETCONF = 44,                // START_SUB_NETCONF
+        S_STRING = 45,                           // "constant string"
+        S_INTEGER = 46,                          // "integer"
+        S_FLOAT = 47,                            // "floating point"
+        S_BOOLEAN = 48,                          // "boolean"
+        S_YYACCEPT = 49,                         // $accept
+        S_start = 50,                            // start
+        S_51_1 = 51,                             // $@1
+        S_52_2 = 52,                             // $@2
+        S_53_3 = 53,                             // $@3
+        S_sub_netconf = 54,                      // sub_netconf
+        S_55_4 = 55,                             // $@4
+        S_json = 56,                             // json
+        S_value = 57,                            // value
+        S_map = 58,                              // map
+        S_59_5 = 59,                             // $@5
+        S_map_value = 60,                        // map_value
+        S_map_content = 61,                      // map_content
+        S_not_empty_map = 62,                    // not_empty_map
+        S_list_generic = 63,                     // list_generic
+        S_64_6 = 64,                             // $@6
+        S_list_content = 65,                     // list_content
+        S_not_empty_list = 66,                   // not_empty_list
+        S_unknown_map_entry = 67,                // unknown_map_entry
+        S_netconf_syntax_map = 68,               // netconf_syntax_map
+        S_69_7 = 69,                             // $@7
+        S_global_objects = 70,                   // global_objects
+        S_global_object = 71,                    // global_object
+        S_netconf_object = 72,                   // netconf_object
+        S_73_8 = 73,                             // $@8
+        S_global_params = 74,                    // global_params
+        S_not_empty_global_params = 75,          // not_empty_global_params
+        S_global_param = 76,                     // global_param
+        S_boot_update = 77,                      // boot_update
+        S_subscribe_changes = 78,                // subscribe_changes
+        S_validate_changes = 79,                 // validate_changes
+        S_user_context = 80,                     // user_context
+        S_81_9 = 81,                             // $@9
+        S_comment = 82,                          // comment
+        S_83_10 = 83,                            // $@10
+        S_hooks_libraries = 84,                  // hooks_libraries
+        S_85_11 = 85,                            // $@11
+        S_hooks_libraries_list = 86,             // hooks_libraries_list
+        S_not_empty_hooks_libraries_list = 87,   // not_empty_hooks_libraries_list
+        S_hooks_library = 88,                    // hooks_library
+        S_89_12 = 89,                            // $@12
+        S_hooks_params = 90,                     // hooks_params
+        S_hooks_param = 91,                      // hooks_param
+        S_library = 92,                          // library
+        S_93_13 = 93,                            // $@13
+        S_parameters = 94,                       // parameters
+        S_95_14 = 95,                            // $@14
+        S_managed_servers = 96,                  // managed_servers
+        S_97_15 = 97,                            // $@15
+        S_servers_entries = 98,                  // servers_entries
+        S_not_empty_servers_entries = 99,        // not_empty_servers_entries
+        S_server_entry = 100,                    // server_entry
+        S_dhcp4_server = 101,                    // dhcp4_server
+        S_102_16 = 102,                          // $@16
+        S_dhcp6_server = 103,                    // dhcp6_server
+        S_104_17 = 104,                          // $@17
+        S_d2_server = 105,                       // d2_server
+        S_106_18 = 106,                          // $@18
+        S_ca_server = 107,                       // ca_server
+        S_108_19 = 108,                          // $@19
+        S_managed_server_params = 109,           // managed_server_params
+        S_managed_server_param = 110,            // managed_server_param
+        S_model = 111,                           // model
+        S_112_20 = 112,                          // $@20
+        S_control_socket = 113,                  // control_socket
+        S_114_21 = 114,                          // $@21
+        S_control_socket_params = 115,           // control_socket_params
+        S_control_socket_param = 116,            // control_socket_param
+        S_socket_type = 117,                     // socket_type
+        S_118_22 = 118,                          // $@22
+        S_socket_type_value = 119,               // socket_type_value
+        S_socket_name = 120,                     // socket_name
+        S_121_23 = 121,                          // $@23
+        S_socket_url = 122,                      // socket_url
+        S_123_24 = 123,                          // $@24
+        S_loggers = 124,                         // loggers
+        S_125_25 = 125,                          // $@25
+        S_loggers_entries = 126,                 // loggers_entries
+        S_logger_entry = 127,                    // logger_entry
+        S_128_26 = 128,                          // $@26
+        S_logger_params = 129,                   // logger_params
+        S_logger_param = 130,                    // logger_param
+        S_name = 131,                            // name
+        S_132_27 = 132,                          // $@27
+        S_debuglevel = 133,                      // debuglevel
+        S_severity = 134,                        // severity
+        S_135_28 = 135,                          // $@28
+        S_output_options_list = 136,             // output_options_list
+        S_137_29 = 137,                          // $@29
+        S_output_options_list_content = 138,     // output_options_list_content
+        S_output_entry = 139,                    // output_entry
+        S_140_30 = 140,                          // $@30
+        S_output_params_list = 141,              // output_params_list
+        S_output_params = 142,                   // output_params
+        S_output = 143,                          // output
+        S_144_31 = 144,                          // $@31
+        S_flush = 145,                           // flush
+        S_maxsize = 146,                         // maxsize
+        S_maxver = 147,                          // maxver
+        S_pattern = 148,                         // pattern
+        S_149_32 = 149                           // $@32
       };
     };
 
@@ -736,25 +730,25 @@ namespace isc { namespace netconf {
       {
         switch (this->kind ())
     {
-      case 58: // value
-      case 61: // map_value
-      case 120: // socket_type_value
+      case 57: // value
+      case 60: // map_value
+      case 119: // socket_type_value
         value.move< ElementPtr > (std::move (that.value));
         break;
 
-      case 49: // "boolean"
+      case 48: // "boolean"
         value.move< bool > (std::move (that.value));
         break;
 
-      case 48: // "floating point"
+      case 47: // "floating point"
         value.move< double > (std::move (that.value));
         break;
 
-      case 47: // "integer"
+      case 46: // "integer"
         value.move< int64_t > (std::move (that.value));
         break;
 
-      case 46: // "constant string"
+      case 45: // "constant string"
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -868,25 +862,25 @@ namespace isc { namespace netconf {
         // Value type destructor.
 switch (yykind)
     {
-      case 58: // value
-      case 61: // map_value
-      case 120: // socket_type_value
+      case 57: // value
+      case 60: // map_value
+      case 119: // socket_type_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 49: // "boolean"
+      case 48: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 48: // "floating point"
+      case 47: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 47: // "integer"
+      case 46: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 46: // "constant string"
+      case 45: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -980,13 +974,13 @@ switch (yykind)
       symbol_type (int tok, location_type l)
         : super_type(token_type (tok), std::move (l))
       {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_NETCONF_error || tok == token::TOKEN_NETCONF_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_NETCONF || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_BOOT_UPDATE || tok == token::TOKEN_SUBSCRIBE_CHANGES || tok == token::TOKEN_VALIDATE_CHANGES || tok == token::TOKEN_MANAGED_SERVERS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_CA_SERVER || tok == token::TOKEN_MODEL || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HTTP || tok == token::TOKEN_STDOUT || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_URL || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_NETCONF || tok == token::TOKEN_START_SUB_NETCONF);
+        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_NETCONF_error || tok == token::TOKEN_NETCONF_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_NETCONF || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_BOOT_UPDATE || tok == token::TOKEN_SUBSCRIBE_CHANGES || tok == token::TOKEN_VALIDATE_CHANGES || tok == token::TOKEN_MANAGED_SERVERS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_CA_SERVER || tok == token::TOKEN_MODEL || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HTTP || tok == token::TOKEN_STDOUT || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_URL || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_NETCONF || tok == token::TOKEN_START_SUB_NETCONF);
       }
 #else
       symbol_type (int tok, const location_type& l)
         : super_type(token_type (tok), l)
       {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_NETCONF_error || tok == token::TOKEN_NETCONF_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_NETCONF || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_BOOT_UPDATE || tok == token::TOKEN_SUBSCRIBE_CHANGES || tok == token::TOKEN_VALIDATE_CHANGES || tok == token::TOKEN_MANAGED_SERVERS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_CA_SERVER || tok == token::TOKEN_MODEL || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HTTP || tok == token::TOKEN_STDOUT || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_URL || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_NETCONF || tok == token::TOKEN_START_SUB_NETCONF);
+        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_NETCONF_error || tok == token::TOKEN_NETCONF_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_NETCONF || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_BOOT_UPDATE || tok == token::TOKEN_SUBSCRIBE_CHANGES || tok == token::TOKEN_VALIDATE_CHANGES || tok == token::TOKEN_MANAGED_SERVERS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_CA_SERVER || tok == token::TOKEN_MODEL || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HTTP || tok == token::TOKEN_STDOUT || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_URL || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_NETCONF || tok == token::TOKEN_START_SUB_NETCONF);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1567,21 +1561,6 @@ switch (yykind)
       make_PARAMETERS (const location_type& l)
       {
         return symbol_type (token::TOKEN_PARAMETERS, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_LOGGING (location_type l)
-      {
-        return symbol_type (token::TOKEN_LOGGING, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_LOGGING (const location_type& l)
-      {
-        return symbol_type (token::TOKEN_LOGGING, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -2169,8 +2148,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 234,     ///< Last index in yytable_.
-      yynnts_ = 105,  ///< Number of nonterminal symbols.
+      yylast_ = 253,     ///< Last index in yytable_.
+      yynnts_ = 101,  ///< Number of nonterminal symbols.
       yyfinal_ = 8 ///< Termination state number.
     };
 
@@ -2220,9 +2199,9 @@ switch (yykind)
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    47,    48,    49
+      45,    46,    47,    48
     };
-    const int user_token_number_max_ = 304;
+    const int user_token_number_max_ = 303;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -2241,25 +2220,25 @@ switch (yykind)
   {
     switch (this->kind ())
     {
-      case 58: // value
-      case 61: // map_value
-      case 120: // socket_type_value
+      case 57: // value
+      case 60: // map_value
+      case 119: // socket_type_value
         value.copy< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 49: // "boolean"
+      case 48: // "boolean"
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 48: // "floating point"
+      case 47: // "floating point"
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case 47: // "integer"
+      case 46: // "integer"
         value.copy< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 46: // "constant string"
+      case 45: // "constant string"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -2292,25 +2271,25 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
-      case 58: // value
-      case 61: // map_value
-      case 120: // socket_type_value
+      case 57: // value
+      case 60: // map_value
+      case 119: // socket_type_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
-      case 49: // "boolean"
+      case 48: // "boolean"
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 48: // "floating point"
+      case 47: // "floating point"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 47: // "integer"
+      case 46: // "integer"
         value.move< int64_t > (YY_MOVE (s.value));
         break;
 
-      case 46: // "constant string"
+      case 45: // "constant string"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -2377,7 +2356,7 @@ switch (yykind)
 
 #line 14 "netconf_parser.yy"
 } } // isc::netconf
-#line 2381 "netconf_parser.h"
+#line 2360 "netconf_parser.h"
 
 
 
