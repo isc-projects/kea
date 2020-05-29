@@ -252,7 +252,7 @@ netconf_object: NETCONF {
     // themselves to it.
 
     // Prevent against duplicate.
-    ctx.unique("Netconf, ctx.loc2pos(@1));
+    ctx.unique("Netconf", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("Netconf", m);
     ctx.stack_.push_back(m);
