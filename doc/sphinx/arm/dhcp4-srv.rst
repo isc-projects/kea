@@ -150,7 +150,7 @@ above this object is called ``Dhcp4``.
    of multiple modules within a single configuration file, but this is
    not recommended and support for it was removed in 1.7.9 release,
    including the ``Logging`` object: its previous content, the list
-   of loggers, must now inside be the ``Dhcp4`` object.
+   of loggers, must now be inside the ``Dhcp4`` object.
 
 The Dhcp4 configuration starts with the ``"Dhcp4": {`` line and ends
 with the corresponding closing brace (in the above example, the brace
