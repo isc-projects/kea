@@ -265,8 +265,7 @@ If you'd like to check the address family too it is returned in DHCP servers
 by isc::dhcp::CfgMgr::instance().getFamily() declared in dhcpsrv/cfgmgr.h
 with AF_INET and AF_INET6 values.
 
-@subsubsection hooksdgMultiThreadingCompatibleFunction The
-"multi_threading_compatible" function
+@subsubsection hooksdgMultiThreadingCompatibleFunction The "multi_threading_compatible" function
 
 "multi_threading_compatible" is used by the hooks framework to check
 if the libraries it is loading are compatible with the DHCPv4 or DHCPv6
