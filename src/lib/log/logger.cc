@@ -26,7 +26,10 @@ namespace log {
 LoggerImpl*
 Logger::getLoggerPtr() {
     if (!loggerptr_) {
-        std::call_once(flag_, [&](){ initLoggerImpl(); });
+        lock_guard<mutex> lk(mutex_);
+        if (!loggerptr_) {
+            initLoggerImpl();
+        }
     }
     return (loggerptr_);
 }
