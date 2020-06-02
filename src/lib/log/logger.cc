@@ -23,8 +23,17 @@ using namespace std;
 namespace isc {
 namespace log {
 
+LoggerImpl*
+Logger::getLoggerPtr() {
+    if (!loggerptr_) {
+        std::call_once(flag_, [&](){ initLoggerImpl(); });
+    }
+    return (loggerptr_);
+}
+
 // Initialize underlying logger, but only if logging has been initialized.
-void Logger::initLoggerImpl() {
+void
+Logger::initLoggerImpl() {
     if (isLoggingInitialized()) {
         loggerptr_ = new LoggerImpl(name_);
     } else {

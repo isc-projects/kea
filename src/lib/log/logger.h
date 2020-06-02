@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <string>
 #include <cstring>
+#include <mutex>
 
 #include <boost/static_assert.hpp>
 
@@ -344,18 +345,14 @@ private:
     /// cause a "LoggingNotInitialized" exception to be thrown.
     ///
     /// \return Returns pointer to implementation
-    LoggerImpl* getLoggerPtr() {
-        if (!loggerptr_) {
-            initLoggerImpl();
-        }
-        return (loggerptr_);
-    }
+    LoggerImpl* getLoggerPtr();
 
     /// \brief Initialize Underlying Implementation and Set loggerptr_
     void initLoggerImpl();
 
-    LoggerImpl* loggerptr_;                  ///< Pointer to underlying logger
+    LoggerImpl* loggerptr_;                      ///< Pointer to underlying logger
     char        name_[MAX_LOGGER_NAME_SIZE + 1]; ///< Copy of the logger name
+    std::once_flag flag_;                        ///< Flag to initialize only once
 };
 
 } // namespace log
