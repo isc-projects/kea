@@ -7,6 +7,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include <atomic>
 #include <cassert>
 #include <cstdlib>
 #include <string>
@@ -350,9 +351,17 @@ private:
     /// \brief Initialize Underlying Implementation and Set loggerptr_
     void initLoggerImpl();
 
-    LoggerImpl* loggerptr_;                      ///< Pointer to underlying logger
-    char        name_[MAX_LOGGER_NAME_SIZE + 1]; ///< Copy of the logger name
-    std::mutex  mutex_;                          ///< Mutex to protect the internal state
+    ///< Pointer to underlying logger
+    LoggerImpl* loggerptr_;
+
+    ///< Copy of the logger name
+    char name_[MAX_LOGGER_NAME_SIZE + 1];
+
+    ///< Mutex to protect the internal state
+    std::mutex mutex_;
+
+    ///< Flag which indicates if logger is initialized
+    std::atomic<bool> initialized_;
 };
 
 } // namespace log

@@ -25,11 +25,12 @@ namespace log {
 
 LoggerImpl*
 Logger::getLoggerPtr() {
-    if (!loggerptr_) {
+    if (!initialized_) {
         lock_guard<mutex> lk(mutex_);
-        if (!loggerptr_) {
+        if (!initialized_) {
             initLoggerImpl();
         }
+        initialized_ = true;
     }
     return (loggerptr_);
 }
