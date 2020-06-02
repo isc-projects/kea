@@ -801,9 +801,6 @@ private:
 ///
 //@{
 
-/// @brief Tag for the random access index.
-struct SubnetRandomAccessIndexTag { };
-
 /// @brief Tag for the index for searching by subnet identifier.
 struct SubnetSubnetIdIndexTag { };
 
@@ -844,30 +841,25 @@ typedef boost::multi_index_container<
     Subnet4Ptr,
     // The following holds all indexes.
     boost::multi_index::indexed_by<
-        // First is the random access index allowing for accessing
-        // objects just like we'd do with a vector.
-        boost::multi_index::random_access<
-            boost::multi_index::tag<SubnetRandomAccessIndexTag>
-        >,
-        // Second index allows for searching using subnet identifier.
+        // First index allows for searching using subnet identifier.
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<SubnetSubnetIdIndexTag>,
             boost::multi_index::const_mem_fun<Subnet, SubnetID, &Subnet::getID>
         >,
-        // Third index allows for searching using an output from toText function.
+        // Second index allows for searching using an output from toText function.
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<SubnetPrefixIndexTag>,
             boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
         >,
 
-        // Fourth index allows for searching using an output from getServerId.
+        // Third index allows for searching using an output from getServerId.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SubnetServerIdIndexTag>,
             boost::multi_index::const_mem_fun<Network4, asiolink::IOAddress,
                                               &Network4::getServerId>
         >,
 
-        // Fifth index allows for searching using subnet modification time.
+        // Forth index allows for searching using subnet modification time.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SubnetModificationTimeIndexTag>,
             boost::multi_index::const_mem_fun<data::BaseStampedElement,
@@ -904,22 +896,17 @@ typedef boost::multi_index_container<
     Subnet6Ptr,
     // The following holds all indexes.
     boost::multi_index::indexed_by<
-        // First is the random access index allowing for accessing
-        // objects just like we'd do with a vector.
-        boost::multi_index::random_access<
-            boost::multi_index::tag<SubnetRandomAccessIndexTag>
-        >,
-        // Second index allows for searching using subnet identifier.
+        // First index allows for searching using subnet identifier.
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<SubnetSubnetIdIndexTag>,
             boost::multi_index::const_mem_fun<Subnet, SubnetID, &Subnet::getID>
         >,
-        // Third index allows for searching using an output from toText function.
+        // Second index allows for searching using an output from toText function.
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<SubnetPrefixIndexTag>,
             boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
         >,
-        // Fourth index allows for searching using subnet modification time.
+        // Third index allows for searching using subnet modification time.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SubnetModificationTimeIndexTag>,
             boost::multi_index::const_mem_fun<data::BaseStampedElement,

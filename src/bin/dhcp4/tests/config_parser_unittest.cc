@@ -793,7 +793,12 @@ public:
         ASSERT_TRUE(subnets);
         ASSERT_GE(subnets->size(), subnet_index + 1);
 
-        const PoolCollection pools = subnets->at(subnet_index)->getPools(Lease::TYPE_V4);
+        auto subnet = subnets->begin();
+        // std::advance is not available for subnets iterators.
+        for (size_t i = 0; i < subnet_index; ++i) {
+            subnet = std::next(subnet);
+        }
+        const PoolCollection pools = (*subnet)->getPools(Lease::TYPE_V4);
         ASSERT_GE(pools.size(), pool_index + 1);
 
         pool = pools.at(pool_index);
@@ -1109,10 +1114,11 @@ TEST_F(Dhcp4ParserTest, multipleSubnets) {
         ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
 
         // Check subnet-ids of each subnet (it should be monotonously increasing)
-        EXPECT_EQ(1, subnets->at(0)->getID());
-        EXPECT_EQ(2, subnets->at(1)->getID());
-        EXPECT_EQ(3, subnets->at(2)->getID());
-        EXPECT_EQ(4, subnets->at(3)->getID());
+        auto subnet = subnets->begin();
+        EXPECT_EQ(1, (*subnet)->getID());
+        EXPECT_EQ(2, (*++subnet)->getID());
+        EXPECT_EQ(3, (*++subnet)->getID());
+        EXPECT_EQ(4, (*++subnet)->getID());
 
         // Repeat reconfiguration process 10 times and check that the subnet-id
         // is set to the same value. Technically, just two iterations would be
@@ -1167,10 +1173,12 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsExplicitIDs) {
         ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
 
         // Verify that subnet ids are as expected.
-        EXPECT_EQ(1024, subnets->at(0)->getID());
-        EXPECT_EQ(100, subnets->at(1)->getID());
-        EXPECT_EQ(1, subnets->at(2)->getID());
-        EXPECT_EQ(34, subnets->at(3)->getID());
+        // Now the subnet order is the subnet id one.
+        auto subnet = subnets->begin();
+        EXPECT_EQ(1, (*subnet)->getID());
+        EXPECT_EQ(34, (*++subnet)->getID());
+        EXPECT_EQ(100, (*++subnet)->getID());
+        EXPECT_EQ(1024, (*++subnet)->getID());
 
         // Repeat reconfiguration process 10 times and check that the subnet-id
         // is set to the same value.
@@ -1312,9 +1320,10 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
     ASSERT_EQ(3, subnets->size()); // We expect 3 subnets now (4th is removed)
 
     // Check subnet-ids of each subnet (it should be monotonously increasing)
-    EXPECT_EQ(1, subnets->at(0)->getID());
-    EXPECT_EQ(2, subnets->at(1)->getID());
-    EXPECT_EQ(3, subnets->at(2)->getID());
+    auto subnet = subnets->begin();
+    EXPECT_EQ(1, (*subnet)->getID());
+    EXPECT_EQ(2, (*++subnet)->getID());
+    EXPECT_EQ(3, (*++subnet)->getID());
 
     CfgMgr::instance().clear();
 
@@ -1335,11 +1344,11 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
     ASSERT_TRUE(subnets);
     ASSERT_EQ(3, subnets->size()); // We expect 4 subnets
 
-    EXPECT_EQ(1, subnets->at(0)->getID());
+    auto subnet_it = subnets->begin();
+    EXPECT_EQ(1, (*subnet_it)->getID());
     // The second subnet (with subnet-id = 2) is no longer there
-    EXPECT_EQ(3, subnets->at(1)->getID());
-    EXPECT_EQ(4, subnets->at(2)->getID());
-
+    EXPECT_EQ(3, (*++subnet_it)->getID());
+    EXPECT_EQ(4, (*++subnet_it)->getID());
 }
 
 /// @todo: implement subnet removal test as part of #3281.
@@ -1869,26 +1878,28 @@ TEST_F(Dhcp4ParserTest, multiplePools) {
     ASSERT_EQ(2, subnets->size()); // We expect 2 subnets
 
     // Check the first subnet
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
+    auto subnet = subnets->begin();
+    const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_V4);
     ASSERT_EQ(2, pools1.size());
     EXPECT_EQ("type=V4, 192.0.2.0-192.0.2.15",
               pools1[0]->toText());
     EXPECT_EQ("type=V4, 192.0.2.200-192.0.2.255",
               pools1[1]->toText());
     // There shouldn't be any TA or PD pools
-    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_TA), BadValue);
-    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_PD), BadValue);
+    EXPECT_THROW((*subnet)->getPools(Lease::TYPE_TA), BadValue);
+    EXPECT_THROW((*subnet)->getPools(Lease::TYPE_PD), BadValue);
 
     // Check the second subnet
-    const PoolCollection& pools2 = subnets->at(1)->getPools(Lease::TYPE_V4);
+    ++subnet;
+    const PoolCollection& pools2 = (*subnet)->getPools(Lease::TYPE_V4);
     ASSERT_EQ(2, pools2.size());
     EXPECT_EQ("type=V4, 192.0.3.0-192.0.3.127",
               pools2[0]->toText());
     EXPECT_EQ("type=V4, 192.0.3.128-192.0.3.255",
               pools2[1]->toText());
     // There shouldn't be any TA or PD pools
-    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_TA).empty(), BadValue);
-    EXPECT_THROW(subnets->at(0)->getPools(Lease::TYPE_PD).empty(), BadValue);
+    EXPECT_THROW((*subnet)->getPools(Lease::TYPE_TA).empty(), BadValue);
+    EXPECT_THROW((*subnet)->getPools(Lease::TYPE_PD).empty(), BadValue);
 }
 
 // Test verifies that a subnet with pool values that do not belong to that
@@ -4742,47 +4753,51 @@ TEST_F(Dhcp4ParserTest, classifySubnets) {
     // everyone).
     ClientClasses classes;
     classes.insert("alpha");
-    EXPECT_TRUE (subnets->at(0)->clientSupported(classes));
-    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
-    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
-    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+    auto subnet0 = subnets->begin();
+    auto subnet1 = std::next(subnet0);
+    auto subnet2 = std::next(subnet1);
+    auto subnet3 = std::next(subnet2);
+    EXPECT_TRUE ((*subnet0)->clientSupported(classes));
+    EXPECT_FALSE((*subnet1)->clientSupported(classes));
+    EXPECT_FALSE((*subnet2)->clientSupported(classes));
+    EXPECT_TRUE ((*subnet3)->clientSupported(classes));
 
     // Let's check if client belonging to beta class is supported in subnet[1]
     // and not supported in any other subnet  (except subnet[3], which allows
     // everyone).
     classes.clear();
     classes.insert("beta");
-    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
-    EXPECT_TRUE (subnets->at(1)->clientSupported(classes));
-    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
-    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+    EXPECT_FALSE((*subnet0)->clientSupported(classes));
+    EXPECT_TRUE ((*subnet1)->clientSupported(classes));
+    EXPECT_FALSE((*subnet2)->clientSupported(classes));
+    EXPECT_TRUE ((*subnet3)->clientSupported(classes));
 
     // Let's check if client belonging to gamma class is supported in subnet[2]
     // and not supported in any other subnet  (except subnet[3], which allows
     // everyone).
     classes.clear();
     classes.insert("gamma");
-    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
-    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
-    EXPECT_TRUE (subnets->at(2)->clientSupported(classes));
-    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+    EXPECT_FALSE((*subnet0)->clientSupported(classes));
+    EXPECT_FALSE((*subnet1)->clientSupported(classes));
+    EXPECT_TRUE ((*subnet2)->clientSupported(classes));
+    EXPECT_TRUE ((*subnet3)->clientSupported(classes));
 
     // Let's check if client belonging to some other class (not mentioned in
     // the config) is supported only in subnet[3], which allows everyone.
     classes.clear();
     classes.insert("delta");
-    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
-    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
-    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
-    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+    EXPECT_FALSE((*subnet0)->clientSupported(classes));
+    EXPECT_FALSE((*subnet1)->clientSupported(classes));
+    EXPECT_FALSE((*subnet2)->clientSupported(classes));
+    EXPECT_TRUE ((*subnet3)->clientSupported(classes));
 
     // Finally, let's check class-less client. He should be allowed only in
     // the last subnet, which does not have any class restrictions.
     classes.clear();
-    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
-    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
-    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
-    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+    EXPECT_FALSE((*subnet0)->clientSupported(classes));
+    EXPECT_FALSE((*subnet1)->clientSupported(classes));
+    EXPECT_FALSE((*subnet2)->clientSupported(classes));
+    EXPECT_TRUE ((*subnet3)->clientSupported(classes));
 }
 
 // Goal of this test is to verify that multiple pools can be configured
@@ -4823,7 +4838,7 @@ TEST_F(Dhcp4ParserTest, classifyPools) {
         CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
     ASSERT_EQ(1, subnets->size());
-    const PoolCollection& pools = subnets->at(0)->getPools(Lease::TYPE_V4);
+    const PoolCollection& pools = (*subnets->begin())->getPools(Lease::TYPE_V4);
     ASSERT_EQ(4, pools.size()); // We expect 4 pools
 
     // Let's check if client belonging to alpha class is supported in pool[0]
@@ -6602,7 +6617,7 @@ TEST_F(Dhcp4ParserTest, comments) {
     const Subnet4Collection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     ASSERT_EQ(1, subs->size());
-    Subnet4Ptr sub = subs->at(0);
+    Subnet4Ptr sub = *subs->begin();
     ASSERT_TRUE(sub);
     EXPECT_EQ(100, sub->getID());
     EXPECT_EQ("192.0.1.0/24", sub->toText());

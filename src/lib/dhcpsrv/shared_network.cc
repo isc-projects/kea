@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,7 +69,7 @@ public:
         }
 
         // Add a subnet to the collection of subnets for this shared network.
-        static_cast<void>(subnets.push_back(subnet));
+        static_cast<void>(subnets.insert(subnet));
     }
 
     /// @brief Replaces IPv4 subnet in a shared network.
@@ -246,17 +246,13 @@ public:
         // subnet must exist in this container, thus we throw if the iterator
         // is not found.
         const auto& index = subnets.template get<SubnetSubnetIdIndexTag>();
-        auto subnet_id_it = index.find(current_subnet);
-        if (subnet_id_it == index.cend()) {
+        auto subnet_it = index.find(current_subnet);
+        if (subnet_it == index.cend()) {
             isc_throw(BadValue, "no such subnet " << current_subnet
                       << " within shared network");
         }
 
-        // We need to transform this iterator (by subnet id) to a random access
-        // index iterator. Multi index container has a nice way of doing it.
-        auto subnet_it = subnets.template project<SubnetRandomAccessIndexTag>(subnet_id_it);
-
-        // Step to a next subnet within random access index.
+        // Step to a next subnet.
         if (++subnet_it == subnets.cend()) {
             // If we reached the end of the container, start over from the
             // beginning.

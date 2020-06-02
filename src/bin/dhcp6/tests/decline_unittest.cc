@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -88,7 +88,8 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
     ASSERT_EQ(1, subnets->size());
 
     // Let's generate the subnet specific statistic
-    std::string name = StatsMgr::generateName("subnet", subnets->at(0)->getID(),
+    std::string name = StatsMgr::generateName("subnet",
+                                              (*subnets->begin())->getID(),
                                               "declined-addresses");
 
     // Set this statistic explicitly to zero.

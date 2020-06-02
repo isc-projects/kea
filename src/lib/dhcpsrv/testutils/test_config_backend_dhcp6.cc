@@ -86,12 +86,12 @@ TestConfigBackendDHCPv6::getAllSubnets6(const db::ServerSelector& server_selecto
     Subnet6Collection subnets;
     for (auto subnet : subnets_) {
         if (server_selector.amAny()) {
-            subnets.push_back(subnet);
+            subnets.insert(subnet);
             continue;
         }
         if (server_selector.amUnassigned()) {
             if (subnet->getServerTags().empty()) {
-                subnets.push_back(subnet);
+                subnets.insert(subnet);
             }
             continue;
         }
@@ -99,7 +99,7 @@ TestConfigBackendDHCPv6::getAllSubnets6(const db::ServerSelector& server_selecto
         auto tags = server_selector.getTags();
         for (auto tag : tags) {
             if (subnet->hasServerTag(ServerTag(tag))) {
-                subnets.push_back(subnet);
+                subnets.insert(subnet);
                 got = true;
                 break;
             }
@@ -108,7 +108,7 @@ TestConfigBackendDHCPv6::getAllSubnets6(const db::ServerSelector& server_selecto
             continue;
         }
         if (subnet->hasAllServerTag()) {
-            subnets.push_back(subnet);
+            subnets.insert(subnet);
         }
     }
     return (subnets);
@@ -122,12 +122,12 @@ TestConfigBackendDHCPv6::getModifiedSubnets6(const db::ServerSelector& server_se
     auto lb = index.lower_bound(modification_time);
     for (auto subnet = lb; subnet != index.end(); ++subnet) {
         if (server_selector.amAny()) {
-            subnets.push_back(*subnet);
+            subnets.insert(*subnet);
             continue;
         }
         if (server_selector.amUnassigned()) {
             if ((*subnet)->getServerTags().empty()) {
-                subnets.push_back(*subnet);
+                subnets.insert(*subnet);
             }
             continue;
         }
@@ -135,7 +135,7 @@ TestConfigBackendDHCPv6::getModifiedSubnets6(const db::ServerSelector& server_se
         auto tags = server_selector.getTags();
         for (auto tag : tags) {
             if ((*subnet)->hasServerTag(ServerTag(tag))) {
-                subnets.push_back(*subnet);
+                subnets.insert(*subnet);
                 got = true;
                 break;
             }
@@ -144,7 +144,7 @@ TestConfigBackendDHCPv6::getModifiedSubnets6(const db::ServerSelector& server_se
             continue;
         }
         if ((*subnet)->hasAllServerTag()) {
-            subnets.push_back(*subnet);
+            subnets.insert(*subnet);
         }
     }
     return (subnets);
@@ -187,7 +187,7 @@ TestConfigBackendDHCPv6::getSharedNetworkSubnets6(const db::ServerSelector& serv
         subnet->getSharedNetwork(network);
         if (((network && (network->getName() == shared_network_name)) ||
              (subnet->getSharedNetworkName() == shared_network_name))) {
-            subnets.push_back(subnet);
+            subnets.insert(subnet);
         }
     }
     return (subnets);
@@ -943,8 +943,7 @@ uint64_t
 TestConfigBackendDHCPv6::deleteSharedNetworkSubnets6(const db::ServerSelector& server_selector,
                                                      const std::string& shared_network_name) {
     uint64_t cnt = 0;
-    auto& index = subnets_.get<SubnetRandomAccessIndexTag>();
-    for (auto subnet = index.begin(); subnet != index.end(); ) {
+    for (auto subnet = subnets_.begin(); subnet != subnets_.end(); ) {
         // Skip subnets which do not match the server selector.
         if (server_selector.amUnassigned() &&
            !(*subnet)->getServerTags().empty()) {
@@ -974,7 +973,7 @@ TestConfigBackendDHCPv6::deleteSharedNetworkSubnets6(const db::ServerSelector& s
 
         if ((network && (network->getName() == shared_network_name)) ||
             ((*subnet)->getSharedNetworkName() == shared_network_name)) {
-            subnet = index.erase(subnet);
+            subnet = subnets_.erase(subnet);
             ++cnt;
         } else {
             ++subnet;

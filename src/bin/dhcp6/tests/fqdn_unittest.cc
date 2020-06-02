@@ -641,7 +641,12 @@ public:
         ASSERT_TRUE(subnets);
         const Subnet6Collection* subnet_col = subnets->getAll();
         ASSERT_EQ(subnet_idx + 1, subnet_col->size());
-        subnet_ = subnet_col->at(subnet_idx);
+        auto subnet_it = subnet_col->begin();
+        // std::advance is not available for this iterator.
+        for (int i = 0; i < subnet_idx; ++i) {
+            subnet_it = std::next(subnet_it);
+        }
+        subnet_ = *subnet_it;
         ASSERT_TRUE(subnet_);
 
         const PoolCollection& pool_col = subnet_->getPools(type);

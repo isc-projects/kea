@@ -59,7 +59,7 @@ public:
             Subnet4Ptr subnet(new Subnet4(IOAddress(0xC0000000 | (i << 2)),
                                           24, def_triplet, def_triplet,
                                           4000));
-            test_subnets4_.push_back(subnet);
+            test_subnets4_.insert(subnet);
         }
         // Create IPv6 subnets.
         IOAddress prefix("2001:db8:1::");
@@ -72,7 +72,7 @@ public:
             ++prefix_bytes[5];
             prefix = IOAddress::fromBytes(prefix.getFamily(), &prefix_bytes[0]);
             Subnet6Ptr subnet(new Subnet6(prefix, 64, 1000, 2000, 3000, 4000));
-            test_subnets6_.push_back(subnet);
+            test_subnets6_.insert(subnet);
         }
 
         // Build our reference dictionary of client classes
@@ -142,7 +142,12 @@ SrvConfigTest::addSubnet4(const unsigned int index) {
         FAIL() << "Subnet index " << index << "out of range (0.."
                << TEST_SUBNETS_NUM << "): " << "unable to add IPv4 subnet";
     }
-    conf_.getCfgSubnets4()->add(test_subnets4_[index]);
+    // std::advance is not available for this iterator.
+    auto it = test_subnets4_.begin();
+    for (unsigned int i = 0; i < index; ++i, ++it) {
+        ASSERT_FALSE(it == test_subnets4_.end());
+    }
+    conf_.getCfgSubnets4()->add(*it);
 }
 
 void
@@ -151,7 +156,12 @@ SrvConfigTest::addSubnet6(const unsigned int index) {
         FAIL() << "Subnet index " << index << "out of range (0.."
                << TEST_SUBNETS_NUM << "): " << "unable to add IPv6 subnet";
     }
-    conf_.getCfgSubnets6()->add(test_subnets6_[index]);
+    // std::advance is not available for this iterator.
+    auto it = test_subnets6_.begin();
+    for (unsigned int i = 0; i < index; ++i, ++it) {
+        ASSERT_FALSE(it == test_subnets6_.end());
+    }
+    conf_.getCfgSubnets6()->add(*it);
 }
 
 void

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,8 +60,10 @@ Dhcpv6MessageTest::requestLease(const std::string& config,
 
     // Check if the lease belongs to one of the available pools.
     bool pool_found = false;
-    for (int i = 0; i < subnets_num; ++i) {
-        if ((*subnets)[i]->getPool(lease_client.type_, lease_client.addr_)) {
+    auto subnet = subnets->begin();
+    for (int i = 0; i < subnets_num; ++i, ++subnet) {
+        ASSERT_TRUE(subnet != subnets->end());
+        if ((*subnet)->getPool(lease_client.type_, lease_client.addr_)) {
             pool_found = true;
             break;
         }

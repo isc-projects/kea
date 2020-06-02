@@ -1286,8 +1286,8 @@ TEST_F(ClassifyTest, relayOverrideAndClientClass) {
     ASSERT_EQ(2, subnets->size());
 
     // Let's get them for easy reference
-    Subnet6Ptr subnet1 = (*subnets)[0];
-    Subnet6Ptr subnet2 = (*subnets)[1];
+    Subnet6Ptr subnet1 = *subnets->begin();
+    Subnet6Ptr subnet2 = *std::next(subnets->begin());
     ASSERT_TRUE(subnet1);
     ASSERT_TRUE(subnet2);
 

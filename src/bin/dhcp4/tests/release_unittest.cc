@@ -141,7 +141,7 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_EQ(1, subnets->size());
-    name << "subnet[" << subnets->at(0)->getID() << "].assigned-addresses";
+    name << "subnet[" << (*subnets->begin())->getID() << "].assigned-addresses";
 
     ObservationPtr assigned_cnt = StatsMgr::instance().getObservation(name.str());
     ASSERT_TRUE(assigned_cnt);

@@ -418,33 +418,39 @@ TEST_F(JSONFileBackendTest, jsonFile) {
 
 
     // Check subnet 1.
-    EXPECT_EQ("2001:db8:1::", subnets->at(0)->get().first.toText());
-    EXPECT_EQ(64, subnets->at(0)->get().second);
+    auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("2001:db8:1::", (*subnet)->get().first.toText());
+    EXPECT_EQ(64, (*subnet)->get().second);
 
     // Check pools in the first subnet.
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_NA);
     ASSERT_EQ(1, pools1.size());
     EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
 
     // Check subnet 2.
-    EXPECT_EQ("2001:db8:2::", subnets->at(1)->get().first.toText());
-    EXPECT_EQ(64, subnets->at(1)->get().second);
+    ++subnet;
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("2001:db8:2::", (*subnet)->get().first.toText());
+    EXPECT_EQ(64, (*subnet)->get().second);
 
     // Check pools in the second subnet.
-    const PoolCollection& pools2 = subnets->at(1)->getPools(Lease::TYPE_NA);
+    const PoolCollection& pools2 = (*subnet)->getPools(Lease::TYPE_NA);
     ASSERT_EQ(1, pools2.size());
     EXPECT_EQ("2001:db8:2::", pools2.at(0)->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:2::ffff:ffff:ffff", pools2.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_NA, pools2.at(0)->getType());
 
     // And finally check subnet 3.
-    EXPECT_EQ("2001:db8:3::", subnets->at(2)->get().first.toText());
-    EXPECT_EQ(64, subnets->at(2)->get().second);
+    ++subnet;
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("2001:db8:3::", (*subnet)->get().first.toText());
+    EXPECT_EQ(64, (*subnet)->get().second);
 
     // ... and it's only pool.
-    const PoolCollection& pools3 = subnets->at(2)->getPools(Lease::TYPE_NA);
+    const PoolCollection& pools3 = (*subnet)->getPools(Lease::TYPE_NA);
     EXPECT_EQ("2001:db8:3::", pools3.at(0)->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:3::ffff:ffff:ffff", pools3.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_NA, pools3.at(0)->getType());
@@ -489,11 +495,13 @@ TEST_F(JSONFileBackendTest, hashComments) {
     ASSERT_EQ(1, subnets->size());
 
     // Check subnet 1.
-    EXPECT_EQ("2001:db8:1::", subnets->at(0)->get().first.toText());
-    EXPECT_EQ(64, subnets->at(0)->get().second);
+    auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("2001:db8:1::", (*subnet)->get().first.toText());
+    EXPECT_EQ(64, (*subnet)->get().second);
 
     // Check pools in the first subnet.
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_NA);
     ASSERT_EQ(1, pools1.size());
     EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
@@ -539,11 +547,13 @@ TEST_F(JSONFileBackendTest, cppLineComments) {
     ASSERT_EQ(1, subnets->size());
 
     // Check subnet 1.
-    EXPECT_EQ("2001:db8:1::", subnets->at(0)->get().first.toText());
-    EXPECT_EQ(64, subnets->at(0)->get().second);
+    auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("2001:db8:1::", (*subnet)->get().first.toText());
+    EXPECT_EQ(64, (*subnet)->get().second);
 
     // Check pools in the first subnet.
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_NA);
     ASSERT_EQ(1, pools1.size());
     EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
@@ -589,11 +599,13 @@ TEST_F(JSONFileBackendTest, cBlockComments) {
     ASSERT_EQ(1, subnets->size());
 
     // Check subnet 1.
-    EXPECT_EQ("2001:db8:1::", subnets->at(0)->get().first.toText());
-    EXPECT_EQ(64, subnets->at(0)->get().second);
+    auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("2001:db8:1::", (*subnet)->get().first.toText());
+    EXPECT_EQ(64, (*subnet)->get().second);
 
     // Check pools in the first subnet.
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_NA);
     ASSERT_EQ(1, pools1.size());
     EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
@@ -639,11 +651,13 @@ TEST_F(JSONFileBackendTest, include) {
     ASSERT_EQ(1, subnets->size());
 
     // Check subnet 1.
-    EXPECT_EQ("2001:db8:1::", subnets->at(0)->get().first.toText());
-    EXPECT_EQ(64, subnets->at(0)->get().second);
+    auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("2001:db8:1::", (*subnet)->get().first.toText());
+    EXPECT_EQ(64, (*subnet)->get().second);
 
     // Check pools in the first subnet.
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_NA);
     ASSERT_EQ(1, pools1.size());
     EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());

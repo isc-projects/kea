@@ -73,7 +73,7 @@ int subnet4_select(CalloutHandle& handle) {
             // User is not in the registry, so assign them to the last subnet
             // in the collection.  By convention we are assuming this is the
             // restricted subnet.
-            Subnet4Ptr subnet = subnets->back();
+            Subnet4Ptr subnet = *subnets->rbegin();
             handle.setArgument("subnet4", subnet);
         }
     } catch (const std::exception& ex) {
@@ -133,7 +133,7 @@ int subnet6_select(CalloutHandle& handle) {
             // User is not in the registry, so assign them to the last subnet
             // in the collection.  By convention we are assuming this is the
             // restricted subnet.
-            Subnet6Ptr subnet = subnets->back();
+            Subnet6Ptr subnet = *subnets->rbegin();
             handle.setArgument("subnet6", subnet);
         }
     } catch (const std::exception& ex) {

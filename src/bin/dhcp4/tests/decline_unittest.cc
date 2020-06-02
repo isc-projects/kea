@@ -106,7 +106,7 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_EQ(1, subnets->size());
     std::stringstream name;
-    name << "subnet[" << subnets->at(0)->getID() << "].declined-addresses";
+    name << "subnet[" << (*subnets->begin())->getID() << "].declined-addresses";
 
     // Set the subnet specific statistic explicitly to zero.
     isc::stats::StatsMgr::instance().setValue(name.str(), static_cast<int64_t>(0));

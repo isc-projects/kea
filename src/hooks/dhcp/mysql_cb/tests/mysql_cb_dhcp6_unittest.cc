@@ -1508,11 +1508,12 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSubnets6) {
     ASSERT_EQ(test_subnets_.size() - 1, subnets.size());
 
     // See if the subnets are returned ok.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    auto subnet_it = subnets.begin();
+    for (auto i = 0; i < subnets.size(); ++i, ++subnet_it) {
         EXPECT_EQ(test_subnets_[i + 1]->toElement()->str(),
-                  subnets[i]->toElement()->str());
-        ASSERT_EQ(1, subnets[i]->getServerTags().size());
-        EXPECT_EQ("all", subnets[i]->getServerTags().begin()->get());
+                  (*subnet_it)->toElement()->str());
+        ASSERT_EQ(1, (*subnet_it)->getServerTags().size());
+        EXPECT_EQ("all", (*subnet_it)->getServerTags().begin()->get());
     }
 
     // Attempt to remove the non existing subnet should  return 0.
@@ -2028,7 +2029,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetworkSubnets6) {
 
     // Returned subnet should match test subnet #1.
     EXPECT_TRUE(isEquivalent(test_subnets_[1]->toElement(),
-                             subnets[0]->toElement()));
+                             (*subnets.begin())->toElement()));
 
     // All subnets should also be returned for ANY server.
     subnets = cbptr_->getSharedNetworkSubnets6(ServerSelector::ANY(), "level1");
@@ -2036,7 +2037,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetworkSubnets6) {
 
     // Returned subnet should match test subnet #1.
     EXPECT_TRUE(isEquivalent(test_subnets_[1]->toElement(),
-                             subnets[0]->toElement()));
+                             (*subnets.begin())->toElement()));
 
     // Fetch all subnets belonging to shared network level2.
     subnets = cbptr_->getSharedNetworkSubnets6(ServerSelector::ALL(), "level2");
@@ -2047,8 +2048,9 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetworkSubnets6) {
     test_list->add(test_subnets_[3]->toElement());
 
     ElementPtr returned_list = Element::createList();
-    returned_list->add(subnets[0]->toElement());
-    returned_list->add(subnets[1]->toElement());
+    auto subnet = subnets.begin();
+    returned_list->add((*subnet)->toElement());
+    returned_list->add((*++subnet)->toElement());
 
     EXPECT_TRUE(isEquivalent(returned_list, test_list));
 
@@ -2057,8 +2059,9 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetworkSubnets6) {
     ASSERT_EQ(2, subnets.size());
 
     returned_list = Element::createList();
-    returned_list->add(subnets[0]->toElement());
-    returned_list->add(subnets[1]->toElement());
+    subnet = subnets.begin();
+    returned_list->add((*subnet)->toElement());
+    returned_list->add((*++subnet)->toElement());
 
     EXPECT_TRUE(isEquivalent(returned_list, test_list));
 }
