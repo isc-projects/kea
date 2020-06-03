@@ -4921,6 +4921,16 @@ DHCPv6 server:
 Using a Specific Relay Agent for a Subnet
 =========================================
 
+The DHCPv6 server follows the same principles than in IPv4 to select
+a subnet for the client with noticable differences mainly for relays.
+
+.. note::
+
+   Starting with Kea 1.7.9, the order used to find a subnet which matches
+   required conditions to be selected is the ascending subnet identifier
+   order. When the selected subnet is a member of a shared network the
+   whole shared network is selected.
+
 The relay must have an interface connected to the link on which the
 clients are being configured. Typically the relay has a global IPv6
 address configured on that interface, which belongs to the subnet from
