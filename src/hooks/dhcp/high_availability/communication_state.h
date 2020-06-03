@@ -13,6 +13,7 @@
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <dhcp/pkt.h>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/function.hpp>
 #include <boost/multi_index_container.hpp>
@@ -21,8 +22,11 @@
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
+
 #include <map>
+#include <mutex>
 #include <set>
 #include <string>
 
@@ -344,7 +348,44 @@ public:
     /// @return JSON element holding the report.
     data::ElementPtr getReport() const;
 
+    /// @brief Modifies poke time by adding seconds to it.
+    ///
+    /// Used in unittests only.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param secs number of seconds to be added to the poke time. If
+    /// the value is negative it will set the poke time in the past
+    /// comparing to current value.
+    void modifyPokeTime(const long secs);
+
+    /// @brief Modifies poke time by adding seconds to it.
+    ///
+    /// Used in unittests only.
+    ///
+    /// @param secs number of seconds to be added to the poke time. If
+    /// the value is negative it will set the poke time in the past
+    /// comparing to current value.
+    void modifyPokeTimeInternal(const long secs);
+
 protected:
+
+    /// @brief Returns duration between the poke time and current time.
+    ///
+    /// @return Duration between the poke time and current time.
+    int64_t getDurationInMillisecsInternal() const;
+
+    /// @brief Update the poke time and compute the duration.
+    ///
+    /// @return The time elapsed.
+    boost::posix_time::time_duration updatePokeTime();
+
+    /// @brief Update the poke time and compute the duration.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return The time elapsed.
+    boost::posix_time::time_duration updatePokeTimeInternal();
 
     /// @brief Pointer to the common IO service instance.
     asiolink::IOServicePtr io_service_;
@@ -387,6 +428,9 @@ protected:
 
     /// @brief Total number of analyzed messages to be responded by partner.
     size_t analyzed_messages_count_;
+
+    /// @brief The mutex used to protect internal state.
+    const boost::scoped_ptr<std::mutex> mutex_;
 };
 
 /// @brief Type of the pointer to the @c CommunicationState object.

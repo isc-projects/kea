@@ -19,8 +19,11 @@
 #include <dhcp/pkt6.h>
 #include <http/date_time.h>
 #include <util/boost_time_utils.h>
+#include <util/multi_threading_mgr.h>
+
 #include <boost/bind.hpp>
 #include <boost/pointer_cast.hpp>
+
 #include <sstream>
 #include <utility>
 
@@ -29,7 +32,10 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::http;
 using namespace isc::log;
+using namespace isc::util;
+
 using namespace boost::posix_time;
+using namespace std;
 
 namespace {
 
@@ -54,11 +60,26 @@ CommunicationState::CommunicationState(const IOServicePtr& io_service,
       heartbeat_impl_(0), partner_state_(-1), partner_scopes_(),
       clock_skew_(0, 0, 0, 0), last_clock_skew_warn_(),
       my_time_at_skew_(), partner_time_at_skew_(),
-      analyzed_messages_count_(0) {
+      analyzed_messages_count_(0), mutex_(new mutex()) {
 }
 
 CommunicationState::~CommunicationState() {
     stopHeartbeat();
+}
+
+void
+CommunicationState::modifyPokeTime(const long secs) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        modifyPokeTimeInternal(secs);
+    } else {
+        modifyPokeTimeInternal(secs);
+    }
+}
+
+void
+CommunicationState::modifyPokeTimeInternal(const long secs) {
+    poke_time_ += boost::posix_time::seconds(secs);
 }
 
 void
@@ -151,12 +172,29 @@ CommunicationState::stopHeartbeat() {
     }
 }
 
-void
-CommunicationState::poke() {
+boost::posix_time::time_duration
+CommunicationState::updatePokeTime() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (updatePokeTimeInternal());
+    } else {
+        return (updatePokeTimeInternal());
+    }
+}
+
+boost::posix_time::time_duration
+CommunicationState::updatePokeTimeInternal() {
     // Remember previous poke time.
     boost::posix_time::ptime prev_poke_time = poke_time_;
     // Set poke time to the current time.
     poke_time_ = boost::posix_time::microsec_clock::universal_time();
+    return (poke_time_ - prev_poke_time);
+}
+
+void
+CommunicationState::poke() {
+    // Update poke time and compute duration.
+    boost::posix_time::time_duration duration_since_poke = updatePokeTime();
 
     // If we have been tracking the DHCP messages directed to the partner,
     // we need to clear any gathered information because the connection
@@ -170,7 +208,6 @@ CommunicationState::poke() {
         // lower than 1s is when we're performing lease updates. In order to avoid the
         // overhead of re-scheduling the timer too frequently we reschedule it only if the
         // duration is 1s or more. This matches the time resolution for heartbeats.
-        boost::posix_time::time_duration duration_since_poke = poke_time_ - prev_poke_time;
         if (duration_since_poke.total_seconds() > 0) {
             // A poke causes the timer to be re-scheduled to prevent it
             // from triggering a heartbeat shortly after confirming the
@@ -183,6 +220,16 @@ CommunicationState::poke() {
 
 int64_t
 CommunicationState::getDurationInMillisecs() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (getDurationInMillisecsInternal());
+    } else {
+        return (getDurationInMillisecsInternal());
+    }
+}
+
+int64_t
+CommunicationState::getDurationInMillisecsInternal() const {
     ptime now = boost::posix_time::microsec_clock::universal_time();
     time_duration duration = now - poke_time_;
     return (duration.total_milliseconds());

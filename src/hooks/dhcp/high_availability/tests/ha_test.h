@@ -45,15 +45,6 @@ public:
         : StateType(io_service, config) {
     }
 
-    /// @brief Modifies poke time by adding seconds to it.
-    ///
-    /// @param secs number of seconds to be added to the poke time. If
-    /// the value is negative it will set the poke time in the past
-    /// comparing to current value.
-    void modifyPokeTime(const long secs) {
-        StateType::poke_time_ += boost::posix_time::seconds(secs);
-    }
-
     /// @brief Checks if the object was poked recently.
     ///
     /// @return true if the object was poked less than 5 seconds ago,
