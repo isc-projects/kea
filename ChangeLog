@@ -1,4 +1,9 @@
+
 Kea 1.7.10 (development) released on Jul 29, 2020
+
+1778.	[func]*		fdupont
+	Changed the order of subnets to follow ascending subnet identifier.
+	(Gitlab #1265)
 
 1777.	[doc]		fdupont
 	Added in the Developer's Guide an example about how to cross
