@@ -16,6 +16,8 @@
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
 
+#include <boost/make_shared.hpp>
+
 #include <util/strutil.h>
 
 using namespace std;
@@ -23,7 +25,7 @@ using namespace std;
 namespace isc {
 namespace log {
 
-LoggerImpl*
+LoggerImplPtr
 Logger::getLoggerPtr() {
     if (!initialized_) {
         lock_guard<mutex> lk(mutex_);
@@ -39,7 +41,7 @@ Logger::getLoggerPtr() {
 void
 Logger::initLoggerImpl() {
     if (isLoggingInitialized()) {
-        loggerptr_ = new LoggerImpl(name_);
+        loggerptr_ = boost::make_shared<LoggerImpl>(name_);
     } else {
         isc_throw(LoggingNotInitialized, "attempt to access logging function "
                   "before logging has been initialized");
@@ -49,12 +51,6 @@ Logger::initLoggerImpl() {
 // Destructor.
 
 Logger::~Logger() {
-    delete loggerptr_;
-
-    // The next statement is required for the Kea hooks framework, where a
-    // statically-linked Kea loads and unloads multiple libraries. See the hooks
-    // documentation for more details.
-    loggerptr_ = 0;
 }
 
 // Get Version

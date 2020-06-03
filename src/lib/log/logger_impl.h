@@ -15,6 +15,8 @@
 #include <string>
 #include <map>
 #include <utility>
+
+#include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
 
@@ -191,6 +193,8 @@ private:
     log4cplus::Logger            logger_; ///< Underlying log4cplus logger
     isc::log::interprocess::InterprocessSync* sync_;
 };
+
+typedef boost::shared_ptr<LoggerImpl> LoggerImplPtr;
 
 } // namespace log
 } // namespace isc
