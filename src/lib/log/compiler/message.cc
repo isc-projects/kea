@@ -560,7 +560,7 @@ main(int argc, char* argv[]) {
         vector<string> args(e.arguments());
         for (size_t i(0); i < args.size(); ++ i) {
             try {
-                replacePlaceholder(&text, args[i], i + 1);
+                replacePlaceholder(text, args[i], i + 1);
             } catch (...) {
                 // Error in error handling: nothing right to do...
             }

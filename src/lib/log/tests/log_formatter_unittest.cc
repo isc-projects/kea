@@ -30,8 +30,8 @@ public:
         outputs.push_back(Output(prefix, message));
     }
     // Just shortcut for new string
-    string* s(const char* text) {
-        return (new string(text));
+    boost::shared_ptr<string> s(const char* text) {
+        return (boost::make_shared<string>(text));
     }
 };
 

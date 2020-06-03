@@ -12,8 +12,11 @@
 #include <iostream>
 
 #include <exceptions/exceptions.h>
-#include <boost/lexical_cast.hpp>
 #include <log/logger_level.h>
+
+#include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace isc {
 namespace log {
@@ -50,7 +53,7 @@ public:
 /// This is used internally by the Formatter to check for excess
 /// placeholders (and fewer arguments).
 void
-checkExcessPlaceholders(std::string* message, unsigned int placeholder);
+checkExcessPlaceholders(std::string& message, unsigned int placeholder);
 
 ///
 /// \brief The internal replacement routine
@@ -59,7 +62,7 @@ checkExcessPlaceholders(std::string* message, unsigned int placeholder);
 /// in the message by replacement. If the placeholder is not found,
 /// it adds a complain at the end.
 void
-replacePlaceholder(std::string* message, const std::string& replacement,
+replacePlaceholder(std::string& message, const std::string& replacement,
                    const unsigned placeholder);
 
 ///
@@ -110,7 +113,7 @@ private:
     Severity severity_;
 
     /// \brief The messages with %1, %2... placeholders
-    std::string* message_;
+    boost::shared_ptr<std::string> message_;
 
     /// \brief Which will be the next placeholder to replace
     unsigned nextPlaceholder_;
@@ -131,11 +134,11 @@ public:
     ///     logger is also NULL, but it's not checked.
     /// \param logger The logger where the final output will go, or NULL
     ///     if no output is wanted.
-    Formatter(const Severity& severity = NONE, std::string* message = NULL,
+    Formatter(const Severity& severity = NONE,
+              boost::shared_ptr<std::string> message = boost::make_shared<std::string>(),
               Logger* logger = NULL) :
         logger_(logger), severity_(severity), message_(message),
-        nextPlaceholder_(0)
-    {
+        nextPlaceholder_(0) {
     }
 
     /// \brief Copy constructor
@@ -145,23 +148,21 @@ public:
     /// object being copied relinquishes that responsibility.
     Formatter(const Formatter& other) :
         logger_(other.logger_), severity_(other.severity_),
-        message_(other.message_), nextPlaceholder_(other.nextPlaceholder_)
-    {
+        message_(other.message_), nextPlaceholder_(other.nextPlaceholder_) {
         other.logger_ = NULL;
     }
 
     /// \brief Destructor.
     //
     /// This is the place where output happens if the formatter is active.
-    ~ Formatter() {
+    ~Formatter() {
         if (logger_) {
             try {
-                checkExcessPlaceholders(message_, ++nextPlaceholder_);
+                checkExcessPlaceholders(*message_, ++nextPlaceholder_);
                 logger_->output(severity_, *message_);
             } catch (...) {
                 // Catch and ignore all exceptions here.
             }
-            delete message_;
         }
     }
 
@@ -228,9 +229,8 @@ public:
             // .arg(42).arg("%1") would return "42 %1" - there are no recursive
             // replacements).
             try {
-                replacePlaceholder(message_, arg, ++nextPlaceholder_ );
-            }
-            catch (...) {
+                replacePlaceholder(*message_, arg, ++nextPlaceholder_ );
+            } catch (...) {
                 // Something went wrong here, the log message is broken, so
                 // we don't want to output it, nor we want to check all the
                 // placeholders were used (because they won't be).
@@ -251,14 +251,13 @@ public:
     /// the arguments for the message.
     void deactivate() {
         if (logger_) {
-            delete message_;
-            message_ = NULL;
+            message_.reset();
             logger_ = NULL;
         }
     }
 };
 
-}
-}
+} // namespace log
+} // namespace isc
 
 #endif

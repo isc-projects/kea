@@ -165,7 +165,7 @@ public:
     /// \brief Look up message text in dictionary
     ///
     /// This gets you the unformatted text of message for given ID.
-    std::string* lookupMessage(const MessageID& id);
+    boost::shared_ptr<std::string> lookupMessage(const MessageID& id);
 
     /// \brief Replace the interprocess synchronization object
     ///
