@@ -96,19 +96,20 @@ typedef boost::shared_ptr<ConnectionPool> ConnectionPoolPtr;
 /// the new request is stored in the FIFO queue. The queued requests to the
 /// particular URL are sent to the server when the current transaction ends.
 ///
-/// The communication over the TCP socket is asynchronous. The caller is notified
-/// about the completion of the transaction via a callback that the caller supplies
-/// when initiating the transaction.
+/// The communication over the TCP socket is asynchronous. The caller is
+/// notified about the completion of the transaction via a callback that the
+/// caller supplies when initiating the transaction.
 class Connection : public boost::enable_shared_from_this<Connection> {
 public:
 
     /// @brief Constructor.
     ///
     /// @param io_service IO service to be used for the connection.
-    /// @param conn_pool Back pointer to the connection pool to which this connection
-    /// belongs.
+    /// @param conn_pool Back pointer to the connection pool to which this
+    /// connection belongs.
     /// @param url URL associated with this connection.
-    explicit Connection(IOService& io_service, const ConnectionPoolPtr& conn_pool,
+    explicit Connection(IOService& io_service,
+                        const ConnectionPoolPtr& conn_pool,
                         const Url& url);
 
     /// @brief Destructor.
@@ -119,19 +120,21 @@ public:
     /// This method expects that all pointers provided as argument are non-null.
     ///
     /// @param request Pointer to the request to be sent to the server.
-    /// @param response Pointer to the object into which the response is stored. The
-    /// caller should create a response object of the type which matches the content
-    /// type expected by the caller, e.g. HttpResponseJson when JSON content type
-    /// is expected to be received.
+    /// @param response Pointer to the object into which the response is stored.
+    /// The caller should create a response object of the type which matches the
+    /// content type expected by the caller, e.g. HttpResponseJson when JSON
+    /// content type is expected to be received.
     /// @param request_timeout Request timeout in milliseconds.
     /// @param callback Pointer to the callback function to be invoked when the
     /// transaction completes.
-    /// @param connect_callback Pointer to the callback function to be invoked when
-    /// the client connects to the server.
-    /// @param close_callback Pointer to the callback function to be invoked when
-    /// the client closes the socket to the server.
-    void doTransaction(const HttpRequestPtr& request, const HttpResponsePtr& response,
-                       const long request_timeout, const HttpClient::RequestHandler& callback,
+    /// @param connect_callback Pointer to the callback function to be invoked
+    /// when the client connects to the server.
+    /// @param close_callback Pointer to the callback function to be invoked
+    /// when the client closes the socket to the server.
+    void doTransaction(const HttpRequestPtr& request,
+                       const HttpResponsePtr& response,
+                       const long request_timeout,
+                       const HttpClient::RequestHandler& callback,
                        const HttpClient::ConnectHandler& connect_callback,
                        const HttpClient::CloseHandler& close_callback);
 
@@ -141,7 +144,7 @@ public:
     /// @brief Checks if a transaction has been initiated over this connection.
     ///
     /// @return true if transaction has been initiated, false otherwise.
-    bool isTransactionOngoing() const;
+    bool isTransactionOngoing();
 
     /// @brief Checks if a socket descriptor belongs to this connection.
     ///
@@ -169,7 +172,65 @@ public:
 
 private:
 
+    /// @brief Starts new asynchronous transaction (HTTP request and response).
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// This method expects that all pointers provided as argument are non-null.
+    ///
+    /// @param request Pointer to the request to be sent to the server.
+    /// @param response Pointer to the object into which the response is stored.
+    /// The caller should create a response object of the type which matches the
+    /// content type expected by the caller, e.g. HttpResponseJson when JSON
+    /// content type is expected to be received.
+    /// @param request_timeout Request timeout in milliseconds.
+    /// @param callback Pointer to the callback function to be invoked when the
+    /// transaction completes.
+    /// @param connect_callback Pointer to the callback function to be invoked
+    /// when the client connects to the server.
+    /// @param close_callback Pointer to the callback function to be invoked
+    /// when the client closes the socket to the server.
+    void doTransactionInternal(const HttpRequestPtr& request,
+                               const HttpResponsePtr& response,
+                               const long request_timeout,
+                               const HttpClient::RequestHandler& callback,
+                               const HttpClient::ConnectHandler& connect_callback,
+                               const HttpClient::CloseHandler& close_callback);
+
+    /// @brief Closes the socket and cancels the request timer.
+    ///
+    /// Should be called in a thread safe context.
+    void closeInternal();
+
+    /// @brief Checks if a transaction has been initiated over this connection.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return true if transaction has been initiated, false otherwise.
+    bool isTransactionOngoingInternal() const;
+
+    /// @brief Checks and logs if premature transaction timeout is suspected.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// There are cases when the premature timeout occurs, e.g. as a result of
+    /// moving system clock, during the transaction. In such case, the
+    /// @c terminate function is called which resets the transaction state but
+    /// the transaction handlers may be already waiting for the execution.
+    /// Each such handler should call this function to check if the transaction
+    /// it is participating in is still alive. If it is not, it should simply
+    /// return. This method also logs such situation.
+    ///
+    /// @param transid identifier of the transaction for which the handler
+    /// is being invoked. It is compared against the current transaction
+    /// id for this connection.
+    ///
+    /// @return true if the premature timeout is suspected, false otherwise.
+    bool checkPrematureTimeoutInternal(const uint64_t transid);
+
     /// @brief Resets the state of the object.
+    ///
+    /// Should be called in a thread safe context.
     ///
     /// In particular, it removes instances of objects provided for the previous
     /// transaction by a caller. It doesn't close the socket, though.
@@ -186,6 +247,38 @@ private:
     /// @param parsing_error Message parsing error.
     void terminate(const boost::system::error_code& ec,
                    const std::string& parsing_error = "");
+
+    /// @brief Performs tasks required after receiving a response or after an
+    /// error.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// This method triggers user's callback, resets the state of the connection
+    /// and initiates next transaction if there is any transaction queued for the
+    /// URL associated with this connection.
+    ///
+    /// @param ec Error code received as a result of the IO operation.
+    /// @param parsing_error Message parsing error.
+    void terminateInternal(const boost::system::error_code& ec,
+                           const std::string& parsing_error = "");
+
+    /// @brief Run parser and check if more data is needed.
+    ///
+    /// @param ec Error code received as a result of the IO operation.
+    /// @param length Number of bytes received.
+    ///
+    /// @return true if more data is needed, false otherwise.
+    bool runParser(const boost::system::error_code& ec, size_t length);
+
+    /// @brief Run parser and check if more data is needed.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param ec Error code received as a result of the IO operation.
+    /// @param length Number of bytes received.
+    ///
+    /// @return true if more data is needed, false otherwise.
+    bool runParserInternal(const boost::system::error_code& ec, size_t length);
 
     /// @brief This method schedules timer or reschedules existing timer.
     ///
@@ -293,6 +386,9 @@ private:
 
     /// @brief User supplied callback.
     HttpClient::CloseHandler close_callback_;
+
+    /// @brief Mutex to protect the internal state.
+    std::mutex mutex_;
 };
 
 /// @brief Shared pointer to the connection.
@@ -709,7 +805,6 @@ Connection::closeCallback(const bool clear) {
     }
 }
 
-
 void
 Connection::doTransaction(const HttpRequestPtr& request,
                           const HttpResponsePtr& response,
@@ -717,6 +812,23 @@ Connection::doTransaction(const HttpRequestPtr& request,
                           const HttpClient::RequestHandler& callback,
                           const HttpClient::ConnectHandler& connect_callback,
                           const HttpClient::CloseHandler& close_callback) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        doTransactionInternal(request, response, request_timeout,
+                              callback, connect_callback, close_callback);
+    } else {
+        doTransactionInternal(request, response, request_timeout,
+                              callback, connect_callback, close_callback);
+    }
+}
+
+void
+Connection::doTransactionInternal(const HttpRequestPtr& request,
+                                  const HttpResponsePtr& response,
+                                  const long request_timeout,
+                                  const HttpClient::RequestHandler& callback,
+                                  const HttpClient::ConnectHandler& connect_callback,
+                                  const HttpClient::CloseHandler& close_callback) {
     try {
         current_request_ = request;
         current_response_ = response;
@@ -774,16 +886,37 @@ Connection::doTransaction(const HttpRequestPtr& request,
 
 void
 Connection::close() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        return (closeInternal());
+    } else {
+        return (closeInternal());
+    }
+}
+
+void
+Connection::closeInternal() {
     // Pass in true to discard the callback.
     closeCallback(true);
 
     timer_.cancel();
     socket_.close();
+
     resetState();
 }
 
 bool
-Connection::isTransactionOngoing() const {
+Connection::isTransactionOngoing() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        return (isTransactionOngoingInternal());
+    } else {
+        return (isTransactionOngoingInternal());
+    }
+}
+
+bool
+Connection::isTransactionOngoingInternal() const {
     return (static_cast<bool>(current_request_));
 }
 
@@ -794,12 +927,22 @@ Connection::isMySocket(int socket_fd) const {
 
 bool
 Connection::checkPrematureTimeout(const uint64_t transid) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        return (checkPrematureTimeoutInternal(transid));
+    } else {
+        return (checkPrematureTimeoutInternal(transid));
+    }
+}
+
+bool
+Connection::checkPrematureTimeoutInternal(const uint64_t transid) {
     // If there is no transaction but the handlers are invoked it means
     // that the last transaction in the queue timed out prematurely.
     // Also, if there is a transaction in progress but the ID of that
     // transaction doesn't match the one associated with the handler it,
     // also means that the transaction timed out prematurely.
-    if (!isTransactionOngoing() || (transid != current_transid_)) {
+    if (!isTransactionOngoingInternal() || (transid != current_transid_)) {
         LOG_WARN(http_logger, HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED);
         return (true);
     }
@@ -809,10 +952,20 @@ Connection::checkPrematureTimeout(const uint64_t transid) {
 void
 Connection::terminate(const boost::system::error_code& ec,
                       const std::string& parsing_error) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        terminateInternal(ec, parsing_error);
+    } else {
+        terminateInternal(ec, parsing_error);
+    }
+}
 
+void
+Connection::terminateInternal(const boost::system::error_code& ec,
+                              const std::string& parsing_error) {
     HttpResponsePtr response;
 
-    if (isTransactionOngoing()) {
+    if (isTransactionOngoingInternal()) {
 
         timer_.cancel();
         socket_.cancel();
@@ -827,11 +980,13 @@ Connection::terminate(const boost::system::error_code& ec,
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                       HTTP_SERVER_RESPONSE_RECEIVED_DETAILS)
                 .arg(url_.toText())
-                .arg((parser_ ? parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE)
-                      : "[HttpResponseParser is null]"));
+                .arg((parser_ ?
+                      parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE) :
+                      "[HttpResponseParser is null]"));
 
         } else {
-            std::string err = parsing_error.empty() ? ec.message() : parsing_error;
+            std::string err = parsing_error.empty() ? ec.message() :
+                                                      parsing_error;
 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                       HTTP_BAD_SERVER_RESPONSE_RECEIVED)
@@ -844,11 +999,13 @@ Connection::terminate(const boost::system::error_code& ec,
                 LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                           HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS)
                     .arg(url_.toText())
-                    .arg((parser_ ? parser_->getBufferAsString()
-                          : "[HttpResponseParser is null]"));
+                    .arg((parser_ ? parser_->getBufferAsString() :
+                                    "[HttpResponseParser is null]"));
             }
         }
 
+        // unlock mutex so that callback can call any locking function.
+        mutex_.unlock();
         try {
             // The callback should take care of its own exceptions but one
             // never knows.
@@ -856,11 +1013,13 @@ Connection::terminate(const boost::system::error_code& ec,
 
         } catch (...) {
         }
+        // lock mutex so that we can continue processing.
+        mutex_.lock();
 
         // If we're not requesting connection persistence, we should close the socket.
         // We're going to reconnect for the next transaction.
         if (!current_request_->isPersistent()) {
-            close();
+            closeInternal();
         }
 
         resetState();
@@ -874,10 +1033,12 @@ Connection::terminate(const boost::system::error_code& ec,
     HttpClient::ConnectHandler connect_callback;
     HttpClient::CloseHandler close_callback;
     ConnectionPoolPtr conn_pool = conn_pool_.lock();
-    if (conn_pool && conn_pool->getNextRequest(url_, request, response, request_timeout,
-                                               callback, connect_callback, close_callback)) {
-        doTransaction(request, response, request_timeout, callback,
-                      connect_callback, close_callback);
+    if (conn_pool && conn_pool->getNextRequest(url_, request, response,
+                                               request_timeout, callback,
+                                               connect_callback,
+                                               close_callback)) {
+        doTransactionInternal(request, response, request_timeout, callback,
+                              connect_callback, close_callback);
     }
 }
 
@@ -951,7 +1112,8 @@ Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
 }
 
 void
-Connection::sendCallback(const uint64_t transid, const boost::system::error_code& ec,
+Connection::sendCallback(const uint64_t transid,
+                         const boost::system::error_code& ec,
                          size_t length) {
     if (checkPrematureTimeout(transid)) {
         return;
@@ -994,7 +1156,8 @@ Connection::sendCallback(const uint64_t transid, const boost::system::error_code
 }
 
 void
-Connection::receiveCallback(const uint64_t transid, const boost::system::error_code& ec,
+Connection::receiveCallback(const uint64_t transid,
+                            const boost::system::error_code& ec,
                             size_t length) {
     if (checkPrematureTimeout(transid)) {
         return;
@@ -1021,6 +1184,24 @@ Connection::receiveCallback(const uint64_t transid, const boost::system::error_c
     // Receiving is in progress, so push back the timeout.
     scheduleTimer(timer_.getInterval());
 
+    if (runParser(ec, length)) {
+        doReceive(transid);
+    }
+}
+
+bool
+Connection::runParser(const boost::system::error_code& ec, size_t length) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        return (runParserInternal(ec, length));
+    } else {
+        return (runParserInternal(ec, length));
+    }
+}
+
+bool
+Connection::runParserInternal(const boost::system::error_code& ec,
+                              size_t length) {
     // If we have received any data, let's feed the parser with it.
     if (length != 0) {
         parser_->postBuffer(static_cast<void*>(input_buf_.data()), length);
@@ -1029,25 +1210,27 @@ Connection::receiveCallback(const uint64_t transid, const boost::system::error_c
 
     // If the parser still needs data, let's schedule another receive.
     if (parser_->needData()) {
-        doReceive(transid);
+        return (true);
 
     } else if (parser_->httpParseOk()) {
         // No more data needed and parsing has been successful so far. Let's
         // try to finalize the response parsing.
         try {
             current_response_->finalize();
-            terminate(ec);
+            terminateInternal(ec);
 
         } catch (const std::exception& ex) {
             // If there is an error here, we need to return the error message.
-            terminate(ec, ex.what());
+            terminateInternal(ec, ex.what());
         }
 
     } else {
-        // Parsing was unsuccessul. Let's pass the error message held in the
+        // Parsing was unsuccessful. Let's pass the error message held in the
         // parser.
-        terminate(ec, parser_->getErrorMessage());
+        terminateInternal(ec, parser_->getErrorMessage());
     }
+
+    return (false);
 }
 
 void

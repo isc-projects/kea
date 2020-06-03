@@ -11,11 +11,15 @@
 
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <exceptions/exceptions.h>
 
 #include <atomic>
+#include <mutex>
+
+using namespace std;
 
 namespace isc {
 namespace asiolink {
@@ -28,46 +32,77 @@ namespace asiolink {
 /// Please follow the link to get an example:
 /// http://think-async.com/asio/asio-1.4.8/doc/asio/tutorial/tutdaytime3.html#asio.tutorial.tutdaytime3.the_tcp_connection_class
 class IntervalTimerImpl :
-    public boost::enable_shared_from_this<IntervalTimerImpl>
-{
-private:
-    // prohibit copy
-    IntervalTimerImpl(const IntervalTimerImpl& source);
-    IntervalTimerImpl& operator=(const IntervalTimerImpl& source);
+    public boost::enable_shared_from_this<IntervalTimerImpl>,
+    public boost::noncopyable {
 public:
+
+    /// @brief Constructor.
+    ///
+    /// @param io_service The IO service used to handle events.
     IntervalTimerImpl(IOService& io_service);
+
+    /// @brief Destructor.
     ~IntervalTimerImpl();
+
+    /// @brief Setup function to register callback and start timer.
+    ///
+    /// @param cbfunc The callback function registered on timer.
+    /// @param interval The interval used to start the timer.
+    /// @param interval_mode The interval mode used by the timer.
     void setup(const IntervalTimer::Callback& cbfunc, const long interval,
                const IntervalTimer::Mode& interval_mode
                = IntervalTimer::REPEATING);
+
+    /// @brief Callback function which calls the registerd callback.
+    ///
+    /// @param error The error code retrieved from the timer.
     void callback(const boost::system::error_code& error);
+
+    /// @brief Cancel timer.
     void cancel() {
+        lock_guard<mutex> lk (mutex_);
         timer_.cancel();
         interval_ = 0;
     }
+
+    /// @brief Get the timer interval.
+    ///
+    /// @return The timer interval.
     long getInterval() const { return (interval_); }
+
 private:
-    // a function to update timer_ when it expires
+
+    /// @brief Update function to update timer_ when it expires.
+    ///
+    /// Should be called in a thread safe context.
     void update();
-    // a function to call back when timer_ expires
+
+    /// @brief The callback function to call when timer_ expires.
     IntervalTimer::Callback cbfunc_;
-    // interval in milliseconds
+
+    /// @brief The interval in milliseconds.
     std::atomic<long> interval_;
-    // asio timer
+
+    /// @brief The asio timer.
     boost::asio::deadline_timer timer_;
 
-    // Controls how the timer behaves after expiration.
+    /// @brief Controls how the timer behaves after expiration.
     IntervalTimer::Mode mode_;
 
-    // interval_ will be set to this value in destructor in order to detect
-    // use-after-free type of bugs.
+    /// @brief Mutex to protect the internal state.
+    std::mutex mutex_;
+
+    /// @brief Invalid interval value.
+    ///
+    /// @ref interval_ will be set to this value in destructor in order to
+    /// detect use-after-free type of bugs.
     static const long INVALIDATED_INTERVAL = -1;
 };
 
 IntervalTimerImpl::IntervalTimerImpl(IOService& io_service) :
     interval_(0), timer_(io_service.get_io_service()),
-    mode_(IntervalTimer::REPEATING)
-{}
+    mode_(IntervalTimer::REPEATING) {
+}
 
 IntervalTimerImpl::~IntervalTimerImpl() {
     interval_ = INVALIDATED_INTERVAL;
@@ -76,8 +111,7 @@ IntervalTimerImpl::~IntervalTimerImpl() {
 void
 IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
                          const long interval,
-                         const IntervalTimer::Mode& mode)
-{
+                         const IntervalTimer::Mode& mode) {
     // Interval should not be less than 0.
     if (interval < 0) {
         isc_throw(isc::BadValue, "Interval should not be less than or "
@@ -87,6 +121,8 @@ IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
     if (cbfunc.empty()) {
         isc_throw(isc::InvalidParameter, "Callback function is empty");
     }
+
+    lock_guard<mutex> lk(mutex_);
     cbfunc_ = cbfunc;
     interval_ = interval;
     mode_ = mode;
@@ -111,19 +147,23 @@ IntervalTimerImpl::update() {
         isc_throw(isc::Unexpected, "Failed to update timer: " << e.what());
     } catch (const boost::bad_weak_ptr&) {
         // Can't happen. It means a severe internal bug.
-        assert(0);
     }
 }
 
 void
 IntervalTimerImpl::callback(const boost::system::error_code& ec) {
-    assert(interval_ != INVALIDATED_INTERVAL);
+    if (interval_ == INVALIDATED_INTERVAL) {
+        isc_throw(isc::BadValue, "Interval internal state");
+    }
     if (interval_ == 0 || ec) {
         // timer has been canceled. Do nothing.
     } else {
-        // If we should repeat, set next expire time.
-        if (mode_ == IntervalTimer::REPEATING) {
-            update();
+        {
+            lock_guard<mutex> lk(mutex_);
+            // If we should repeat, set next expire time.
+            if (mode_ == IntervalTimer::REPEATING) {
+                update();
+            }
         }
 
         // Invoke the call back function.
@@ -132,8 +172,8 @@ IntervalTimerImpl::callback(const boost::system::error_code& ec) {
 }
 
 IntervalTimer::IntervalTimer(IOService& io_service) :
-    impl_(new IntervalTimerImpl(io_service))
-{}
+    impl_(new IntervalTimerImpl(io_service)) {
+}
 
 IntervalTimer::~IntervalTimer() {
     // Cancel the timer to make sure cbfunc_() will not be called any more.
