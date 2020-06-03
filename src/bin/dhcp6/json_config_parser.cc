@@ -632,17 +632,10 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             }
         }
 
-        ConstElementPtr subnet6 = mutable_cfg->get("subnet6");
-        if (subnet6) {
-            parameter_name = "subnet6";
-            Subnets6ListConfigParser subnets_parser;
-            // parse() returns number of subnets parsed. We may log it one day.
-            subnets_parser.parse(srv_config, subnet6);
-        }
-
         // This parser is used in several places.
         Dhcp6ConfigParser global_parser;
 
+	// Keep relative orders of shared networks and subnets.
         ConstElementPtr shared_networks = mutable_cfg->get("shared-networks");
         if (shared_networks) {
             parameter_name = "shared-networks";
@@ -658,6 +651,14 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // We also need to put the subnets it contains into normal
             // subnets list.
             global_parser.copySubnets6(srv_config->getCfgSubnets6(), cfg);
+        }
+
+        ConstElementPtr subnet6 = mutable_cfg->get("subnet6");
+        if (subnet6) {
+            parameter_name = "subnet6";
+            Subnets6ListConfigParser subnets_parser;
+            // parse() returns number of subnets parsed. We may log it one day.
+            subnets_parser.parse(srv_config, subnet6);
         }
 
         ConstElementPtr reservations = mutable_cfg->get("reservations");

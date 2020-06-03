@@ -508,17 +508,10 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             }
         }
 
-        ConstElementPtr subnet4 = mutable_cfg->get("subnet4");
-        if (subnet4) {
-            parameter_name = "subnet4";
-            Subnets4ListConfigParser subnets_parser;
-            // parse() returns number of subnets parsed. We may log it one day.
-            subnets_parser.parse(srv_cfg, subnet4);
-        }
-
         // This parser is used in several places.
         Dhcp4ConfigParser global_parser;
 
+	// Keep relative orders of shared networks and subnets.
         ConstElementPtr shared_networks = mutable_cfg->get("shared-networks");
         if (shared_networks) {
             parameter_name = "shared-networks";
@@ -534,6 +527,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             // We also need to put the subnets it contains into normal
             // subnets list.
             global_parser.copySubnets4(srv_cfg->getCfgSubnets4(), cfg);
+        }
+
+        ConstElementPtr subnet4 = mutable_cfg->get("subnet4");
+        if (subnet4) {
+            parameter_name = "subnet4";
+            Subnets4ListConfigParser subnets_parser;
+            // parse() returns number of subnets parsed. We may log it one day.
+            subnets_parser.parse(srv_cfg, subnet4);
         }
 
         ConstElementPtr reservations = mutable_cfg->get("reservations");
