@@ -15,6 +15,9 @@
 #include <dhcp/dhcp6.h>
 #include <exceptions/exceptions.h>
 #include <http/date_time.h>
+#include <util/multi_threading_mgr.h>
+
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -27,6 +30,8 @@ using namespace isc::dhcp;
 using namespace isc::ha;
 using namespace isc::ha::test;
 using namespace isc::http;
+using namespace isc::util;
+
 using namespace boost::posix_time;
 using namespace boost::gregorian;
 
@@ -42,10 +47,12 @@ public:
     CommunicationStateTest()
         : state_(io_service_, createValidConfiguration()),
           state6_(io_service_, createValidConfiguration()) {
+        MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Destructor.
     ~CommunicationStateTest() {
+        MultiThreadingMgr::instance().setMode(false);
         io_service_->poll();
     }
 
@@ -148,6 +155,17 @@ TEST_F(CommunicationStateTest, initialDuration) {
 
 // Verifies that  poking the state updates the returned duration.
 TEST_F(CommunicationStateTest, poke) {
+    state_.modifyPokeTime(-30);
+    ASSERT_GE(state_.getDurationInMillisecs(), 30000);
+    ASSERT_TRUE(state_.isCommunicationInterrupted());
+    ASSERT_NO_THROW(state_.poke());
+    EXPECT_TRUE(state_.isPoked());
+    EXPECT_FALSE(state_.isCommunicationInterrupted());
+}
+
+// Verifies that  poking the state updates the returned duration.
+TEST_F(CommunicationStateTest, pokeMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
     state_.modifyPokeTime(-30);
     ASSERT_GE(state_.getDurationInMillisecs(), 30000);
     ASSERT_TRUE(state_.isCommunicationInterrupted());
