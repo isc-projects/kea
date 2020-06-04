@@ -1005,7 +1005,9 @@ Connection::terminateInternal(const boost::system::error_code& ec,
         }
 
         // unlock mutex so that callback can call any locking function.
-        mutex_.unlock();
+        if (MultiThreadingMgr::instance().getMode()) {
+            mutex_.unlock();
+        }
         try {
             // The callback should take care of its own exceptions but one
             // never knows.
@@ -1014,7 +1016,9 @@ Connection::terminateInternal(const boost::system::error_code& ec,
         } catch (...) {
         }
         // lock mutex so that we can continue processing.
-        mutex_.lock();
+        if (MultiThreadingMgr::instance().getMode()) {
+            mutex_.lock();
+        }
 
         // If we're not requesting connection persistence, we should close the socket.
         // We're going to reconnect for the next transaction.
