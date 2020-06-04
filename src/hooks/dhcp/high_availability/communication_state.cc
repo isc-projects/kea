@@ -359,7 +359,8 @@ CommunicationState::getReport() const {
 
 CommunicationState4::CommunicationState4(const IOServicePtr& io_service,
                                          const HAConfigPtr& config)
-    : CommunicationState(io_service, config), connecting_clients_() {
+    : CommunicationState(io_service, config), connecting_clients_(),
+      mutex_(new mutex()) {
 }
 
 void
@@ -465,7 +466,7 @@ CommunicationState4::failureDetected() const {
 bool
 CommunicationState4::failureDetectedInternal() const {
     return ((config_->getMaxUnackedClients() == 0) ||
-            (getUnackedClientsCount() > config_->getMaxUnackedClients()));
+            (getUnackedClientsCountInternal() > config_->getMaxUnackedClients()));
 }
 
 size_t
@@ -515,7 +516,8 @@ CommunicationState4::clearConnectingClientsInternal() {
 
 CommunicationState6::CommunicationState6(const IOServicePtr& io_service,
                                          const HAConfigPtr& config)
-    : CommunicationState(io_service, config), connecting_clients_() {
+    : CommunicationState(io_service, config), connecting_clients_(),
+      mutex_(new mutex()){
 }
 
 void
@@ -609,7 +611,7 @@ CommunicationState6::failureDetected() const {
 bool
 CommunicationState6::failureDetectedInternal() const {
     return ((config_->getMaxUnackedClients() == 0) ||
-            (getUnackedClientsCount() > config_->getMaxUnackedClients()));
+            (getUnackedClientsCountInternal() > config_->getMaxUnackedClients()));
 }
 
 size_t
