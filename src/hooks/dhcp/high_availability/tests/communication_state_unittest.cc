@@ -322,10 +322,139 @@ TEST_F(CommunicationStateTest, detectFailureV4) {
     EXPECT_EQ(22, state_.getAnalyzedMessagesCount());
 }
 
+// Test that failure detection works properly for DHCPv4 case.
+TEST_F(CommunicationStateTest, detectFailureV4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // Initially, there should be no unacked clients recorded.
+    ASSERT_FALSE(state_.failureDetected());
+    EXPECT_EQ(0, state_.getUnackedClientsCount());
+    EXPECT_EQ(0, state_.getConnectingClientsCount());
+    EXPECT_EQ(0, state_.getAnalyzedMessagesCount());
+
+    // The maximum number of unacked clients is 10. Let's provide 10
+    // DHCPDISCOVER messages with the "secs" value of 15 which exceeds
+    // the threshold of 10. All these clients should be recorded as
+    // unacked.
+    for (uint8_t i = 0; i < 10; ++i) {
+        // Some of the requests have no client identifier to test that
+        // we don't fall over if the client identifier is null.
+        const uint8_t client_id_seed = (i < 5 ? i : 0);
+        ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, i,
+                                                             client_id_seed,
+                                                             15)));
+        // We don't exceed the maximum of number of unacked clients so the
+        // partner failure shouldn't be reported.
+        ASSERT_FALSE(state_.failureDetected())
+            << "failure detected for the request number "
+            << static_cast<int>(i);
+    }
+    EXPECT_EQ(10, state_.getUnackedClientsCount());
+    EXPECT_EQ(10, state_.getConnectingClientsCount());
+    EXPECT_EQ(10, state_.getAnalyzedMessagesCount());
+
+    // Let's provide similar set of requests but this time the "secs" field is
+    // below the threshold. They should not be counted as failures. Also,
+    // all of these requests have client identifier.
+    for (uint8_t i = 0; i < 10; ++i) {
+        ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, i, i,
+                                                             9)));
+        ASSERT_FALSE(state_.failureDetected())
+            << "failure detected for the request number "
+            << static_cast<int>(i);
+    }
+    EXPECT_EQ(10, state_.getUnackedClientsCount());
+    EXPECT_EQ(15, state_.getConnectingClientsCount());
+    EXPECT_EQ(20, state_.getAnalyzedMessagesCount());
+
+    // Let's create a message from a new (not recorded yet) client with the
+    // "secs" field value below the threshold. It should not be counted as failure.
+    ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, 10, 10, 6)));
+
+    // Still no failure.
+    ASSERT_FALSE(state_.failureDetected());
+    EXPECT_EQ(10, state_.getUnackedClientsCount());
+    EXPECT_EQ(16, state_.getConnectingClientsCount());
+    EXPECT_EQ(21, state_.getAnalyzedMessagesCount());
+
+    // Let's repeat one of the requests which already have been recorded as
+    // unacked but with a greater value of "secs" field. This should not
+    // be counted because only new clients count.
+    ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, 3, 3, 20)));
+    ASSERT_FALSE(state_.failureDetected());
+    EXPECT_EQ(10, state_.getUnackedClientsCount());
+    EXPECT_EQ(16, state_.getConnectingClientsCount());
+    EXPECT_EQ(22, state_.getAnalyzedMessagesCount());
+
+    // This time let's simulate a client with a MAC address already recorded but
+    // with a client identifier. This should be counted as a new unacked request.
+    ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, 7, 7, 15)));
+    ASSERT_TRUE(state_.failureDetected());
+    EXPECT_EQ(11, state_.getUnackedClientsCount());
+    EXPECT_EQ(16, state_.getConnectingClientsCount());
+    EXPECT_EQ(23, state_.getAnalyzedMessagesCount());
+
+    // Poking should cause all counters to reset as it is an indication that the
+    // control connection has been re-established.
+    ASSERT_NO_THROW(state_.poke());
+
+    // We're back to no failure state.
+    EXPECT_FALSE(state_.failureDetected());
+    EXPECT_EQ(0, state_.getUnackedClientsCount());
+    EXPECT_EQ(0, state_.getConnectingClientsCount());
+    EXPECT_EQ(0, state_.getAnalyzedMessagesCount());
+
+    // Send 11 DHCPDISCOVER messages with the "secs" field bytes swapped. Swapping
+    // bytes was reported for some misbehaving Windows clients. The server should
+    // detect bytes swapping when second byte is 0 and the first byte is non-zero.
+    // However, the first byte is equal to 5 which is below our threshold so none
+    // of the requests below should count as unacked.
+    for (uint8_t i = 0; i < 11; ++i) {
+        ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, i, i,
+                                                             0x0500)));
+        ASSERT_FALSE(state_.failureDetected())
+            << "failure detected for the request number "
+            << static_cast<int>(i)
+            << " when testing swapped secs field bytes";
+    }
+    EXPECT_EQ(0, state_.getUnackedClientsCount());
+    EXPECT_EQ(11, state_.getConnectingClientsCount());
+    EXPECT_EQ(11, state_.getAnalyzedMessagesCount());
+
+    // Repeat the same test, but this time either the first byte exceeds the
+    // secs threshold or the second byte is non-zero. All should be counted
+    // as unacked.
+    for (uint8_t i = 0; i < 10; ++i) {
+        uint16_t secs = (i % 2 == 0 ? 0x0F00 : 0x0501);
+        ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, i, i,
+                                                             secs)));
+        ASSERT_FALSE(state_.failureDetected())
+            << "failure detected for the request number "
+            << static_cast<int>(i)
+            << " when testing swapped secs field bytes";
+    }
+
+    // This last message should cause the failure state.
+    ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, 11, 11,
+                                                         0x30)));
+    EXPECT_TRUE(state_.failureDetected());
+    EXPECT_EQ(11, state_.getUnackedClientsCount());
+    EXPECT_EQ(12, state_.getConnectingClientsCount());
+    EXPECT_EQ(22, state_.getAnalyzedMessagesCount());
+}
+
 // This test verifies that it is possible to disable analysis of the DHCPv4
 // packets in which case the partner's failure is assumed when there is
 // no connection over the control channel.
 TEST_F(CommunicationStateTest, failureDetectionDisabled4) {
+    state_.config_->setMaxUnackedClients(0);
+    EXPECT_TRUE(state_.failureDetected());
+}
+
+// This test verifies that it is possible to disable analysis of the DHCPv4
+// packets in which case the partner's failure is assumed when there is
+// no connection over the control channel.
+TEST_F(CommunicationStateTest, failureDetectionDisabled4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
     state_.config_->setMaxUnackedClients(0);
     EXPECT_TRUE(state_.failureDetected());
 }
@@ -407,10 +536,97 @@ TEST_F(CommunicationStateTest, detectFailureV6) {
     EXPECT_EQ(0, state6_.getAnalyzedMessagesCount());
 }
 
+// Test that failure detection works properly for DHCPv6 case.
+TEST_F(CommunicationStateTest, detectFailureV6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // Initially, there should be no unacked clients recorded.
+    ASSERT_FALSE(state6_.failureDetected());
+    EXPECT_EQ(0, state6_.getUnackedClientsCount());
+    EXPECT_EQ(0, state6_.getConnectingClientsCount());
+    EXPECT_EQ(0, state6_.getAnalyzedMessagesCount());
+
+    // The maximum number of unacked clients is 10. Let's provide 10
+    // Solicit messages with the "elapsed time" value of 1500 which exceeds
+    // the threshold of 10000ms. Note that the elapsed time value is provided
+    // in 1/100s of 1 second. All these clients should be recorded as
+    // unacked.
+    for (uint8_t i = 0; i < 10; ++i) {
+        ASSERT_NO_THROW(state6_.analyzeMessage(createMessage6(DHCPV6_SOLICIT, i,
+                                                              1500)));
+        // We don't exceed the maximum number of unacked clients so the
+        // partner failure shouldn't be reported.
+        ASSERT_FALSE(state6_.failureDetected())
+            << "failure detected for the request number "
+            << static_cast<int>(i);
+    }
+    EXPECT_EQ(10, state6_.getUnackedClientsCount());
+    EXPECT_EQ(10, state6_.getConnectingClientsCount());
+    EXPECT_EQ(10, state6_.getAnalyzedMessagesCount());
+
+    // Let's provide similar set of requests but this time the "elapsed time" is
+    // below the threshold. This should not reduce the number of unacked or new
+    // clients.
+    for (uint8_t i = 0; i < 10; ++i) {
+        ASSERT_NO_THROW(state6_.analyzeMessage(createMessage6(DHCPV6_SOLICIT, i,
+                                                             900)));
+        ASSERT_FALSE(state6_.failureDetected())
+            << "failure detected for the request number "
+            << static_cast<int>(i);
+    }
+    EXPECT_EQ(10, state6_.getUnackedClientsCount());
+    EXPECT_EQ(10, state6_.getConnectingClientsCount());
+    EXPECT_EQ(20, state6_.getAnalyzedMessagesCount());
+
+    // Let's create a message from a new (not recorded yet) client with the
+    // "elapsed time" value below the threshold. It should not count as failure.
+    ASSERT_NO_THROW(state6_.analyzeMessage(createMessage6(DHCPV6_SOLICIT, 10, 600)));
+
+    // Still no failure.
+    ASSERT_FALSE(state6_.failureDetected());
+    EXPECT_EQ(10, state6_.getUnackedClientsCount());
+    EXPECT_EQ(11, state6_.getConnectingClientsCount());
+    EXPECT_EQ(21, state6_.getAnalyzedMessagesCount());
+
+    // Let's repeat one of the requests which already have been recorded as
+    // unacked but with a greater value of "elapsed time". This should not
+    // be counted because only new clients count.
+    ASSERT_NO_THROW(state6_.analyzeMessage(createMessage6(DHCPV6_SOLICIT, 3, 2000)));
+    ASSERT_FALSE(state6_.failureDetected());
+    EXPECT_EQ(10, state6_.getUnackedClientsCount());
+    EXPECT_EQ(11, state6_.getConnectingClientsCount());
+    EXPECT_EQ(22, state6_.getAnalyzedMessagesCount());
+
+    // New unacked client should cause failure to be detected.
+    ASSERT_NO_THROW(state6_.analyzeMessage(createMessage6(DHCPV6_SOLICIT, 11, 1500)));
+    ASSERT_TRUE(state6_.failureDetected());
+    EXPECT_EQ(11, state6_.getUnackedClientsCount());
+    EXPECT_EQ(12, state6_.getConnectingClientsCount());
+    EXPECT_EQ(23, state6_.getAnalyzedMessagesCount());
+
+    // Poking should cause all counters to reset as it is an indication that the
+    // control connection has been re-established.
+    ASSERT_NO_THROW(state6_.poke());
+
+    // We're back to no failure state.
+    EXPECT_FALSE(state6_.failureDetected());
+    EXPECT_EQ(0, state6_.getUnackedClientsCount());
+    EXPECT_EQ(0, state6_.getConnectingClientsCount());
+    EXPECT_EQ(0, state6_.getAnalyzedMessagesCount());
+}
+
 // This test verifies that it is possible to disable analysis of the DHCPv6
 // packets in which case the partner's failure is assumed when there is
 // no connection over the control channel.
 TEST_F(CommunicationStateTest, failureDetectionDisabled6) {
+    state6_.config_->setMaxUnackedClients(0);
+    EXPECT_TRUE(state6_.failureDetected());
+}
+
+// This test verifies that it is possible to disable analysis of the DHCPv6
+// packets in which case the partner's failure is assumed when there is
+// no connection over the control channel.
+TEST_F(CommunicationStateTest, failureDetectionDisabled6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
     state6_.config_->setMaxUnackedClients(0);
     EXPECT_TRUE(state6_.failureDetected());
 }
