@@ -364,6 +364,16 @@ CommunicationState4::CommunicationState4(const IOServicePtr& io_service,
 
 void
 CommunicationState4::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        analyzeMessageInternal(message);
+    } else {
+        analyzeMessageInternal(message);
+    }
+}
+
+void
+CommunicationState4::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& message) {
     // The DHCP message must successfully cast to a Pkt4 object.
     Pkt4Ptr msg = boost::dynamic_pointer_cast<Pkt4>(message);
     if (!msg) {
@@ -432,34 +442,74 @@ CommunicationState4::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
     // Only log the first time we detect a client is unacked.
     if (log_unacked) {
         unsigned unacked_left = 0;
-        if (config_->getMaxUnackedClients() > getUnackedClientsCount()) {
-            unacked_left = config_->getMaxUnackedClients() > getUnackedClientsCount();
+        if (config_->getMaxUnackedClients() > getUnackedClientsCountInternal()) {
+            unacked_left = config_->getMaxUnackedClients() - getUnackedClientsCountInternal();
         }
         LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED)
             .arg(message->getLabel())
-            .arg(getUnackedClientsCount())
+            .arg(getUnackedClientsCountInternal())
             .arg(unacked_left);
     }
 }
 
 bool
 CommunicationState4::failureDetected() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (failureDetectedInternal());
+    } else {
+        return (failureDetectedInternal());
+    }
+}
+
+bool
+CommunicationState4::failureDetectedInternal() const {
     return ((config_->getMaxUnackedClients() == 0) ||
             (getUnackedClientsCount() > config_->getMaxUnackedClients()));
 }
 
 size_t
 CommunicationState4::getConnectingClientsCount() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (getConnectingClientsCountInternal());
+    } else {
+        return (getConnectingClientsCountInternal());
+    }
+}
+
+size_t
+CommunicationState4::getConnectingClientsCountInternal() const {
     return (connecting_clients_.size());
 }
 
 size_t
 CommunicationState4::getUnackedClientsCount() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (getUnackedClientsCountInternal());
+    } else {
+        return (getUnackedClientsCountInternal());
+    }
+}
+
+size_t
+CommunicationState4::getUnackedClientsCountInternal() const {
     return (connecting_clients_.get<1>().count(true));
 }
 
 void
 CommunicationState4::clearConnectingClients() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        clearConnectingClientsInternal();
+    } else {
+        clearConnectingClientsInternal();
+    }
+}
+
+void
+CommunicationState4::clearConnectingClientsInternal() {
     connecting_clients_.clear();
 }
 
@@ -470,6 +520,16 @@ CommunicationState6::CommunicationState6(const IOServicePtr& io_service,
 
 void
 CommunicationState6::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        analyzeMessageInternal(message);
+    } else {
+        analyzeMessageInternal(message);
+    }
+}
+
+void
+CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& message) {
     // The DHCP message must successfully cast to a Pkt6 object.
     Pkt6Ptr msg = boost::dynamic_pointer_cast<Pkt6>(message);
     if (!msg) {
@@ -526,34 +586,74 @@ CommunicationState6::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
     // Only log the first time we detect a client is unacked.
     if (log_unacked) {
         unsigned unacked_left = 0;
-        if (config_->getMaxUnackedClients() > getUnackedClientsCount()) {
-            unacked_left = config_->getMaxUnackedClients() > getUnackedClientsCount();
+        if (config_->getMaxUnackedClients() > getUnackedClientsCountInternal()) {
+            unacked_left = config_->getMaxUnackedClients() - getUnackedClientsCountInternal();
         }
         LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED)
             .arg(message->getLabel())
-            .arg(getUnackedClientsCount())
+            .arg(getUnackedClientsCountInternal())
             .arg(unacked_left);
     }
 }
 
 bool
 CommunicationState6::failureDetected() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (failureDetectedInternal());
+    } else {
+        return (failureDetectedInternal());
+    }
+}
+
+bool
+CommunicationState6::failureDetectedInternal() const {
     return ((config_->getMaxUnackedClients() == 0) ||
             (getUnackedClientsCount() > config_->getMaxUnackedClients()));
 }
 
 size_t
 CommunicationState6::getConnectingClientsCount() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (getConnectingClientsCountInternal());
+    } else {
+        return (getConnectingClientsCountInternal());
+    }
+}
+
+size_t
+CommunicationState6::getConnectingClientsCountInternal() const {
     return (connecting_clients_.size());
 }
 
 size_t
 CommunicationState6::getUnackedClientsCount() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (getUnackedClientsCountInternal());
+    } else {
+        return (getUnackedClientsCountInternal());
+    }
+}
+
+size_t
+CommunicationState6::getUnackedClientsCountInternal() const {
     return (connecting_clients_.get<1>().count(true));
 }
 
 void
 CommunicationState6::clearConnectingClients() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        clearConnectingClientsInternal();
+    } else {
+        clearConnectingClientsInternal();
+    }
+}
+
+void
+CommunicationState6::clearConnectingClientsInternal() {
     connecting_clients_.clear();
 }
 

@@ -497,12 +497,72 @@ public:
 
 protected:
 
+    /// @brief Checks if the DHCPv4 message appears to be unanswered.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// This method uses "secs" field value for detecting client
+    /// communication failures as described in the
+    /// @c CommunicationState::analyzeMessage. Some misbehaving Windows
+    /// clients were reported to swap "secs" field bytes. In this case
+    /// the first byte is set to non-zero byte and the second byte is
+    /// set to 0. This method handles such cases and corrects bytes
+    /// order before comparing against the threshold.
+    ///
+    /// @param message DHCPv4 message to be analyzed. This must be the
+    /// message which belongs to the partner, i.e. the caller must
+    /// filter out messages belonging to the partner prior to calling
+    /// this method.
+    virtual void analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& message);
+
+    /// @brief Checks if the partner failure has been detected based
+    /// on the DHCP traffic analysis.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return true if the partner failure has been detected, false
+    /// otherwise.
+    virtual bool failureDetectedInternal() const;
+
+    /// @brief Returns the current number of clients which attempted
+    /// to get a lease from the partner server.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// The returned number is reset to 0 when the server successfully
+    /// establishes communication with the partner. The number is
+    /// incremented only in the communications interrupted case.
+    ///
+    /// @return The number of clients including unacked clients.
+    virtual size_t getConnectingClientsCountInternal() const;
+
+    /// @brief Returns the current number of clients which haven't gotten
+    /// a lease from the partner server.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// The returned number is reset to 0 when the server successfully
+    /// establishes communication with the partner. The number is
+    /// incremented only in the communications interrupted case.
+    ///
+    /// @return Number of unacked clients.
+    virtual size_t getUnackedClientsCountInternal() const;
+
     /// @brief Removes information about the clients the partner server
     /// should respond to while communication with the partner was
     /// interrupted.
     ///
     /// See @c CommunicationState::analyzeMessage for details.
     virtual void clearConnectingClients();
+
+    /// @brief Removes information about the clients the partner server
+    /// should respond to while communication with the partner was
+    /// interrupted.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// See @c CommunicationState::analyzeMessage for details.
+    virtual void clearConnectingClientsInternal();
 
     /// @brief Structure holding information about the client which has
     /// send the packet being analyzed.
@@ -540,6 +600,9 @@ protected:
     /// the partner server while the servers are in communications
     /// interrupted state.
     ConnectingClients4 connecting_clients_;
+
+    /// @brief The mutex used to protect internal state.
+    const boost::scoped_ptr<std::mutex> mutex_;
 };
 
 /// @brief Pointer to the @c CommunicationState4 object.
@@ -599,12 +662,66 @@ public:
 
 protected:
 
+    /// @brief Checks if the DHCPv6 message appears to be unanswered.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// See @c CommunicationState::analyzeMessage for details.
+    ///
+    /// @param message DHCPv6 message to be analyzed. This must be the
+    /// message which belongs to the partner, i.e. the caller must
+    /// filter out messages belonging to the partner prior to calling
+    /// this method.
+    virtual void analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& message);
+
+    /// @brief Checks if the partner failure has been detected based
+    /// on the DHCP traffic analysis.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return true if the partner failure has been detected, false
+    /// otherwise.
+    virtual bool failureDetectedInternal() const;
+
+    /// @brief Returns the current number of clients which attempted
+    /// to get a lease from the partner server.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// The returned number is reset to 0 when the server successfully
+    /// establishes communication with the partner. The number is
+    /// incremented only in the communications interrupted case.
+    ///
+    /// @return The number of clients including unacked clients.
+    virtual size_t getConnectingClientsCountInternal() const;
+
+    /// @brief Returns the current number of clients which haven't gotten
+    /// a lease from the partner server.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// The returned number is reset to 0 when the server successfully
+    /// establishes communication with the partner. The number is
+    /// incremented only in the communications interrupted case.
+    ///
+    /// @return Number of unacked clients.
+    virtual size_t getUnackedClientsCountInternal() const;
+
     /// @brief Removes information about the clients the partner server
     /// should respond to while communication with the partner was
     /// interrupted.
     ///
     /// See @c CommunicationState::analyzeMessage for details.
     virtual void clearConnectingClients();
+
+    /// @brief Removes information about the clients the partner server
+    /// should respond to while communication with the partner was
+    /// interrupted.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// See @c CommunicationState::analyzeMessage for details.
+    virtual void clearConnectingClientsInternal();
 
     /// @brief Structure holding information about a client which
     /// sent a packet being analyzed.
@@ -635,6 +752,9 @@ protected:
     /// the partner server while the servers are in communications
     /// interrupted state.
     ConnectingClients6 connecting_clients_;
+
+    /// @brief The mutex used to protect internal state.
+    const boost::scoped_ptr<std::mutex> mutex_;
 };
 
 /// @brief Pointer to the @c CommunicationState6 object.

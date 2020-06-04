@@ -416,20 +416,11 @@ public:
         closeAll();
     }
 
-    /// @brief Returns next queued request for the given URL.
+    /// @brief Process next queued request for the given URL.
     ///
-    /// @param url URL for which next queued request should be retrieved.
-    /// @param [out] request Pointer to the queued request.
-    /// @param [out] response Pointer to the object into which response should
-    /// be stored.
-    /// @param request_timeout Requested timeout for the transaction.
-    /// @param callback Pointer to the user callback for this request.
-    /// @param connect_callback Pointer to the user callback invoked when
-    /// the client connects to the server.
-    /// @param close_callback Pointer to the user callback invoked when
-    /// the client closes the connection to the server.
+    /// @param url URL for which next queued request should be processed.
     ///
-    /// @return true if the request for the given URL has been retrieved,
+    /// @return true if the request for the given URL has been processed,
     /// false if there are no more requests queued for this URL.
     bool processNextRequest(const Url& url) {
         if (MultiThreadingMgr::instance().getMode()) {
