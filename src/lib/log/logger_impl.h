@@ -194,6 +194,7 @@ private:
     isc::log::interprocess::InterprocessSync* sync_;
 };
 
+/// \brief Pointer to the Logger implementation.
 typedef boost::shared_ptr<LoggerImpl> LoggerImplPtr;
 
 } // namespace log
