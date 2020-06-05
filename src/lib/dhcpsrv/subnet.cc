@@ -66,7 +66,7 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
       last_allocated_time_(),
       iface_(),
       shared_network_name_(),
-      mutex_(boost::make_shared<std::mutex>()) {
+      mutex_(new std::mutex) {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
