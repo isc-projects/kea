@@ -1485,7 +1485,6 @@ TEST(Subnet6Test, getOptions) {
     }
 }
 
-
 TEST(Subnet6Test, addVendorOption) {
 
     // Create as subnet to add options to it.
@@ -1536,8 +1535,6 @@ TEST(Subnet6Test, addVendorOption) {
     ASSERT_TRUE(options);
     EXPECT_TRUE(options->empty());
 }
-
-
 
 // This test verifies that inRange() and inPool() methods work properly.
 TEST(Subnet6Test, inRangeinPool) {

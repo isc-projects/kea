@@ -1099,7 +1099,6 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
     Subnet6Ptr subnet4(new Subnet6(IOAddress("3000:1::"), 64, 10, 20, 30,
                                    40, SubnetID(4)));
 
-
     // Associate first two subnets with classes.
     subnet1->allowClientClass("class1");
     subnet2->allowClientClass("class1");
@@ -1197,7 +1196,6 @@ TEST(SharedNetwork6Test, getPreferredSubnetMultiThreading) {
                                    40, SubnetID(3)));
     Subnet6Ptr subnet4(new Subnet6(IOAddress("3000:1::"), 64, 10, 20, 30,
                                    40, SubnetID(4)));
-
 
     // Associate first two subnets with classes.
     subnet1->allowClientClass("class1");
@@ -1507,6 +1505,5 @@ TEST(SharedNetworkFetcherTest, getSharedNetwork6ByName) {
     ASSERT_TRUE(network);
     EXPECT_EQ("network2", network->getName());
 }
-
 
 } // end of anonymous namespace
