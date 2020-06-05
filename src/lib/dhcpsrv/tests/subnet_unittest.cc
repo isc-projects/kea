@@ -28,9 +28,11 @@
 // don't import the entire boost namespace.  It will unexpectedly hide uint8_t
 // for some systems.
 using boost::scoped_ptr;
+
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace {
 
