@@ -81,8 +81,7 @@ class InterprocessSync;
 /// the string passed to the Logger constructor) to a maximum of 31 characters.
 /// There is no reason for this particular value other than limiting the amount
 /// of memory used.  It is defined by the constant Logger::MAX_LOGGER_NAME_SIZE,
-/// and can be made larger (or smaller) if so desired.  Note however, using a
-/// logger name larger than this limit will cause an assertion failure.
+/// and can be made larger (or smaller) if so desired.
 
 class LoggerImpl;   // Forward declaration of the implementation class
 
@@ -177,12 +176,6 @@ public:
         } else {
             isc_throw(LoggerNameNull, "logger names may not be null");
         }
-
-        // The checks above and the assertion below ensure that the contents of
-        // "name" plus a trailing null will fit into the space allocated for
-        // "name_".
-        static_assert(MAX_LOGGER_NAME_SIZE < sizeof(name_), "name size too small");
-
 
         // Do the copy, ensuring a trailing null in all cases.
         std::strncpy(name_, name, MAX_LOGGER_NAME_SIZE);
