@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
+#include <util/multi_threading_mgr.h>
 
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -683,7 +684,6 @@ TEST(Subnet4Test, get) {
     EXPECT_EQ(28, subnet->get().second);
 }
 
-
 // Checks if last allocated address/prefix is stored/retrieved properly
 TEST(Subnet4Test, lastAllocated) {
     IOAddress addr("192.0.2.17");
@@ -703,6 +703,29 @@ TEST(Subnet4Test, lastAllocated) {
     EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_TA, addr), BadValue);
     EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_TA, addr), BadValue);
     EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_PD, addr), BadValue);
+}
+
+// Checks if last allocated address/prefix is stored/retrieved properly
+TEST(Subnet4Test, lastAllocatedMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    IOAddress addr("192.0.2.17");
+
+    IOAddress last("192.0.2.255");
+
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+
+    // Check initial conditions (all should be set to the last address in range)
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_V4).toText());
+
+    // Now set last allocated for IA
+    EXPECT_NO_THROW(subnet->setLastAllocated(Lease::TYPE_V4, addr));
+    EXPECT_EQ(addr.toText(), subnet->getLastAllocated(Lease::TYPE_V4).toText());
+
+    // No, you can't set the last allocated IPv6 address in IPv4 subnet
+    EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_TA, addr), BadValue);
+    EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_TA, addr), BadValue);
+    EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_PD, addr), BadValue);
+    MultiThreadingMgr::instance().setMode(false);
 }
 
 // Checks if the V4 is the only allowed type for Pool4 and if getPool()
@@ -1730,6 +1753,43 @@ TEST(Subnet6Test, lastAllocated) {
 
     // No, you can't set the last allocated IPv4 address in IPv6 subnet
     EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_V4, ia), BadValue);
+}
+
+// Checks if last allocated address/prefix is stored/retrieved properly
+TEST(Subnet6Test, lastAllocatedMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    IOAddress ia("2001:db8:1::1");
+    IOAddress ta("2001:db8:1::abcd");
+    IOAddress pd("2001:db8:1::1234:5678");
+
+    IOAddress last("2001:db8:1::ffff:ffff:ffff:ffff");
+
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4));
+
+    // Check initial conditions (all should be set to the last address in range)
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_NA).toText());
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_TA).toText());
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_PD).toText());
+
+    // Now set last allocated for IA
+    EXPECT_NO_THROW(subnet->setLastAllocated(Lease::TYPE_NA, ia));
+    EXPECT_EQ(ia.toText(), subnet->getLastAllocated(Lease::TYPE_NA).toText());
+
+    // TA and PD should be unchanged
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_TA).toText());
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_PD).toText());
+
+    // Now set TA and PD
+    EXPECT_NO_THROW(subnet->setLastAllocated(Lease::TYPE_TA, ta));
+    EXPECT_NO_THROW(subnet->setLastAllocated(Lease::TYPE_PD, pd));
+
+    EXPECT_EQ(ia.toText(), subnet->getLastAllocated(Lease::TYPE_NA).toText());
+    EXPECT_EQ(ta.toText(), subnet->getLastAllocated(Lease::TYPE_TA).toText());
+    EXPECT_EQ(pd.toText(), subnet->getLastAllocated(Lease::TYPE_PD).toText());
+
+    // No, you can't set the last allocated IPv4 address in IPv6 subnet
+    EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_V4, ia), BadValue);
+    MultiThreadingMgr::instance().setMode(false);
 }
 
 // This test verifies that the IPv4 subnet can be fetched by id.

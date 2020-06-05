@@ -12,8 +12,10 @@
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <util/multi_threading_mgr.h>
+
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
+
 #include <algorithm>
 #include <sstream>
 
@@ -64,7 +66,7 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
       last_allocated_time_(),
       iface_(),
       shared_network_name_(),
-      mutex_() {
+      mutex_(boost::make_shared<std::mutex>()) {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
@@ -76,8 +78,6 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
     last_allocated_time_[Lease::TYPE_NA] = boost::posix_time::neg_infin;
     last_allocated_time_[Lease::TYPE_TA] = boost::posix_time::neg_infin;
     last_allocated_time_[Lease::TYPE_PD] = boost::posix_time::neg_infin;
-
-    mutex_.reset(new std::mutex);
 }
 
 bool

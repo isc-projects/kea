@@ -36,10 +36,14 @@ namespace dhcp {
 class Subnet : public virtual Network {
 public:
 
-    /// @brief checks if specified address is in range
+    /// @brief checks if specified address is in range.
+    ///
+    /// @param addr this address will be checked if it is included in a specific
+    ///        range
+    /// @return true if address is in range, false otherwise
     bool inRange(const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief checks if the specified address is in pools
+    /// @brief checks if the specified address is in pools.
     ///
     /// Note the difference between inRange() and inPool() for addresses
     /// (i.e. *not* prefixes). For a given subnet (e.g. 2001::/64) there
@@ -55,7 +59,7 @@ public:
     /// @return true if the address is in any of the pools
     bool inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief checks if the specified address is in allowed pools
+    /// @brief checks if the specified address is in allowed pools.
     ///
     /// This takes also into account client classes
     ///
@@ -68,7 +72,7 @@ public:
                 const isc::asiolink::IOAddress& addr,
                 const ClientClasses& client_classes) const;
 
-    /// @brief returns the last address that was tried from this subnet
+    /// @brief returns the last address that was tried from this subnet.
     ///
     /// This method returns the last address that was attempted to be allocated
     /// from this subnet. This is used as helper information for the next
@@ -94,9 +98,10 @@ public:
     /// @return Time when a lease of a specified type has been allocated from
     /// this subnet. The negative infinity time is returned if a lease type is
     /// not recognized (which is unlikely).
-    boost::posix_time::ptime getLastAllocatedTime(const Lease::Type& lease_type) const;
+    boost::posix_time::ptime
+    getLastAllocatedTime(const Lease::Type& lease_type) const;
 
-    /// @brief sets the last address that was tried from this subnet
+    /// @brief sets the last address that was tried from this subnet.
     ///
     /// This method sets the last address that was attempted to be allocated
     /// from this subnet. This is used as helper information for the next
@@ -111,11 +116,12 @@ public:
     void setLastAllocated(Lease::Type type,
                           const isc::asiolink::IOAddress& addr);
 
-    /// @brief Returns unique ID for that subnet
+    /// @brief Returns unique ID for that subnet.
+    ///
     /// @return unique ID for that subnet
     SubnetID getID() const { return (id_); }
 
-    /// @brief Returns subnet parameters (prefix and prefix length)
+    /// @brief Returns subnet parameters (prefix and prefix length).
     ///
     /// @return (prefix, prefix length) pair
     std::pair<isc::asiolink::IOAddress, uint8_t> get() const {
@@ -146,13 +152,14 @@ public:
     /// within the subnet.
     void addPool(const PoolPtr& pool);
 
-    /// @brief Deletes all pools of specified type
+    /// @brief Deletes all pools of specified type.
     ///
     /// This method is used for testing purposes only
+    ///
     /// @param type type of pools to be deleted
     void delPools(Lease::Type type);
 
-    /// @brief Returns a pool that specified address belongs to
+    /// @brief Returns a pool that specified address belongs to.
     ///
     /// This method uses binary search to retrieve the pool. Thus, the number
     /// of comparisons performed by this method is logarithmic in the number
@@ -173,9 +180,9 @@ public:
     const PoolPtr getPool(Lease::Type type, const isc::asiolink::IOAddress& addr,
                           bool anypool = true) const;
 
-    /// @brief Returns a pool that specified address belongs to with classes
+    /// @brief Returns a pool that specified address belongs to with classes.
     ///
-    /// Variant using only pools allowing given classes
+    /// Variant using only pools allowing given classes.
     ///
     /// @param type pool type that the pool is looked for
     /// @param client_classes client class list which must be allowed
@@ -184,7 +191,7 @@ public:
                           const ClientClasses& client_classes,
                           const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief Returns a pool without any address specified
+    /// @brief Returns a pool without any address specified.
     ///
     /// @param type pool type that the pool is looked for
     /// @return returns one of the pools defined
@@ -192,13 +199,13 @@ public:
         return (getPool(type, default_pool()));
     }
 
-    /// @brief Returns the default address that will be used for pool selection
+    /// @brief Returns the default address that will be used for pool selection.
     ///
     /// It must be implemented in derived classes (should return :: for Subnet6
-    /// and 0.0.0.0 for Subnet4)
+    /// and 0.0.0.0 for Subnet4).
     virtual isc::asiolink::IOAddress default_pool() const = 0;
 
-    /// @brief Returns all pools (const variant)
+    /// @brief Returns all pools (const variant).
     ///
     /// The reference is only valid as long as the object that returned it.
     ///
@@ -206,7 +213,7 @@ public:
     /// @return a collection of all pools
     const PoolCollection& getPools(Lease::Type type) const;
 
-    /// @brief Returns the number of possible leases for specified lease type
+    /// @brief Returns the number of possible leases for specified lease type.
     ///
     /// @param type type of the lease
     uint64_t getPoolCapacity(Lease::Type type) const;
@@ -215,17 +222,18 @@ public:
     /// allowed for a client which belongs to classes.
     ///
     /// @param type type of the lease
-    /// @param client_classes List of classes the client belongs to.
+    /// @param client_classes list of classes the client belongs to
+    /// @return number of leases matching lease type and classes
     uint64_t getPoolCapacity(Lease::Type type,
                              const ClientClasses& client_classes) const;
 
     /// @brief Returns textual representation of the subnet (e.g.
-    /// "2001:db8::/64")
+    /// "2001:db8::/64").
     ///
     /// @return textual representation
     virtual std::string toText() const;
 
-    /// @brief Resets subnet-id counter to its initial value (1)
+    /// @brief Resets subnet-id counter to its initial value (1).
     ///
     /// This should be called during reconfiguration, before any new
     /// subnet objects are created. It will ensure that the subnet_id will
@@ -268,6 +276,8 @@ public:
     }
 
     /// @brief Returns shared network name.
+    ///
+    /// @return shared network name
     std::string getSharedNetworkName() const {
         return (shared_network_name_);
     }
@@ -288,7 +298,7 @@ public:
         shared_network_name_ = shared_network_name;
     }
 
-    /// @brief Returns all pools (non-const variant)
+    /// @brief Returns all pools (non-const variant).
     ///
     /// The reference is only valid as long as the object that returned it.
     ///
@@ -298,7 +308,7 @@ public:
 
 protected:
 
-    /// @brief Protected constructor
+    /// @brief Protected constructor.
     //
     /// By making the constructor protected, we make sure that no one will
     /// ever instantiate that class. Subnet4 and Subnet6 should be used instead.
@@ -315,13 +325,13 @@ protected:
     Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
            const SubnetID id);
 
-    /// @brief virtual destructor
+    /// @brief virtual destructor.
     ///
     /// A virtual destructor is needed because other classes
     /// derive from this class.
     virtual ~Subnet() { };
 
-    /// @brief keeps the subnet-id value
+    /// @brief keeps the subnet-id value.
     ///
     /// It is incremented every time a new Subnet object is created. It is reset
     /// (@ref resetSubnetID) every time reconfiguration
@@ -330,7 +340,7 @@ protected:
     /// Static value initialized in subnet.cc.
     static SubnetID static_id_;
 
-    /// @brief returns the next unique Subnet-ID
+    /// @brief returns the next unique Subnet-ID.
     ///
     /// This method generates and returns the next unique subnet-id.
     /// It is a strictly monotonously increasing value (1,2,3,...) for
@@ -346,7 +356,7 @@ protected:
         return (static_id_++);
     }
 
-    /// @brief Checks if used pool type is valid
+    /// @brief Checks if used pool type is valid.
     ///
     /// Allowed type for Subnet4 is Pool::TYPE_V4.
     /// Allowed types for Subnet6 are Pool::TYPE_{IA,TA,PD}.
@@ -356,12 +366,14 @@ protected:
     /// @throw BadValue if invalid value is used
     virtual void checkType(Lease::Type type) const = 0;
 
-    /// @brief Returns a sum of possible leases in all pools
+    /// @brief Returns a sum of possible leases in all pools.
+    ///
     /// @param pools list of pools
     /// @return sum of possible leases
     uint64_t sumPoolCapacity(const PoolCollection& pools) const;
 
-    /// @brief Returns a sum of possible leases in all pools allowing classes
+    /// @brief Returns a sum of possible leases in all pools allowing classes.
+    ///
     /// @param pools list of pools
     /// @param client_classes list of classes
     /// @return sum of possible/allowed leases
@@ -375,7 +387,7 @@ protected:
     /// it overlaps with any existing pool within this subnet.
     ///
     /// @return true if pool overlaps with an existing pool of a specified
-    /// type.
+    /// type, false otherwise
     bool poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const;
 
     /// @brief Unparse a subnet object.
@@ -400,22 +412,22 @@ protected:
     /// a Subnet4 or Subnet6.
     SubnetID id_;
 
-    /// @brief collection of IPv4 or non-temporary IPv6 pools in that subnet
+    /// @brief collection of IPv4 or non-temporary IPv6 pools in that subnet.
     PoolCollection pools_;
 
-    /// @brief collection of IPv6 temporary address pools in that subnet
+    /// @brief collection of IPv6 temporary address pools in that subnet.
     PoolCollection pools_ta_;
 
-    /// @brief collection of IPv6 prefix pools in that subnet
+    /// @brief collection of IPv6 prefix pools in that subnet.
     PoolCollection pools_pd_;
 
-    /// @brief a prefix of the subnet
+    /// @brief a prefix of the subnet.
     isc::asiolink::IOAddress prefix_;
 
-    /// @brief a prefix length of the subnet
+    /// @brief a prefix length of the subnet.
     uint8_t prefix_len_;
 
-    /// @brief last allocated address
+    /// @brief last allocated address.
     ///
     /// This is the last allocated address that was previously allocated from
     /// this particular subnet. Some allocation algorithms (e.g. iterative) use
@@ -426,12 +438,12 @@ protected:
     /// fully trusted.
     isc::asiolink::IOAddress last_allocated_ia_;
 
-    /// @brief last allocated temporary address
+    /// @brief last allocated temporary address.
     ///
     /// See @ref last_allocated_ia_ for details.
     isc::asiolink::IOAddress last_allocated_ta_;
 
-    /// @brief last allocated IPv6 prefix
+    /// @brief last allocated IPv6 prefix.
     ///
     /// See @ref last_allocated_ia_ for details.
     isc::asiolink::IOAddress last_allocated_pd_;
@@ -442,7 +454,7 @@ protected:
     /// @note: This map is protected by the mutex.
     std::map<Lease::Type, boost::posix_time::ptime> last_allocated_time_;
 
-    /// @brief Name of the network interface (if connected directly)
+    /// @brief Name of the network interface (if connected directly).
     std::string iface_;
 
     /// @brief Shared network name.
@@ -450,13 +462,15 @@ protected:
 
 private:
 
-    /// @brief returns the last address that was tried from this subnet
+    /// @brief returns the last address that was tried from this subnet.
+    ///
+    /// Should be called in a thread safe context.
     ///
     /// This method returns the last address that was attempted to be allocated
     /// from this subnet. This is used as helper information for the next
     /// iteration of the allocation algorithm.
     ///
-     /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
+    /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
     ///
     /// @param type lease type to be returned
@@ -465,6 +479,8 @@ private:
 
     /// @brief Returns the timestamp when the @c setLastAllocated function
     /// was called.
+    ///
+    /// Should be called in a thread safe context.
     ///
     /// @param lease_type Lease type for which last allocation timestamp should
     /// be returned.
@@ -475,7 +491,9 @@ private:
     boost::posix_time::ptime
     getLastAllocatedTimeInternal(const Lease::Type& lease_type) const;
 
-    /// @brief sets the last address that was tried from this subnet
+    /// @brief sets the last address that was tried from this subnet.
+    ///
+    /// Should be called in a thread safe context.
     ///
     /// This method sets the last address that was attempted to be allocated
     /// from this subnet. This is used as helper information for the next
@@ -490,7 +508,7 @@ private:
     void setLastAllocatedInternal(Lease::Type type,
                                   const isc::asiolink::IOAddress& addr);
 
-    /// @brief The mutex protecting the last_allocated_time_ map.
+    /// @brief Mutex to protect the internal state.
     boost::scoped_ptr<std::mutex> mutex_;
 };
 
@@ -514,7 +532,7 @@ typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
 class Subnet4 : public Subnet, public Network4 {
 public:
 
-    /// @brief Constructor with all parameters
+    /// @brief Constructor with all parameters.
     ///
     /// This constructor calls Subnet::Subnet, where subnet-id is generated.
     ///
@@ -627,13 +645,14 @@ public:
 
 private:
 
-    /// @brief Returns default address for pool selection
+    /// @brief Returns default address for pool selection.
+    ///
     /// @return ANY IPv4 address
     virtual isc::asiolink::IOAddress default_pool() const {
         return (isc::asiolink::IOAddress("0.0.0.0"));
     }
 
-    /// @brief Checks if used pool type is valid
+    /// @brief Checks if used pool type is valid.
     ///
     /// Allowed type for Subnet4 is Pool::TYPE_V4.
     ///
@@ -661,7 +680,7 @@ typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 class Subnet6 : public Subnet, public Network6 {
 public:
 
-    /// @brief Constructor with all parameters
+    /// @brief Constructor with all parameters.
     ///
     /// This constructor calls Subnet::Subnet, where subnet-id is generated.
     ///
@@ -797,7 +816,7 @@ struct SubnetServerIdIndexTag { };
 /// @brief Tag for the index for searching by subnet modification time.
 struct SubnetModificationTimeIndexTag { };
 
-/// @brief A collection of @c Subnet4 objects
+/// @brief A collection of @c Subnet4 objects.
 ///
 /// This container provides a set of indexes which can be used to retrieve
 /// subnets by various properties.
