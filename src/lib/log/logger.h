@@ -181,7 +181,7 @@ public:
         // The checks above and the assertion below ensure that the contents of
         // "name" plus a trailing null will fit into the space allocated for
         // "name_".
-        static_assert(MAX_LOGGER_NAME_SIZE < sizeof(name_));
+        static_assert(MAX_LOGGER_NAME_SIZE < sizeof(name_), "name size too small");
 
 
         // Do the copy, ensuring a trailing null in all cases.
