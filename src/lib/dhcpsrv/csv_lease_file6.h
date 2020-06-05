@@ -29,7 +29,7 @@ namespace dhcp {
 /// The @c Lease6 is a structure that should be itself responsible for this
 /// validation (see http://oldkea.isc.org/ticket/2405). However, when #2405
 /// is implemented, the @c next function may need to be updated to use the
-/// validation capablity of @c Lease6.
+/// validation capability of @c Lease6.
 class CSVLeaseFile6 : public isc::util::VersionedCSVFile, public LeaseFileStats {
 public:
 
@@ -57,8 +57,8 @@ public:
     /// error.
     ///
     /// @param lease Structure representing a DHCPv6 lease.
-    /// @throw BadValue if the lease to be written has an empty DUID and is
-    /// whose state is not STATE_DECLINED.
+    /// @throw BadValue if the lease to be written has an empty DUID and is not
+    /// in STATE_DECLINED.
     void append(const Lease6& lease);
 
     /// @brief Reads next lease from the CSV file.
@@ -82,6 +82,53 @@ public:
     bool next(Lease6Ptr& lease);
 
 private:
+
+    /// @brief Opens a lease file.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// This function calls the base class open to do the
+    /// work of opening a file.  It is used to clear any
+    /// statistics associated with any previous use of the file
+    /// While it doesn't throw any exceptions of its own
+    /// the base class may do so.
+    virtual void openInternal(const bool seek_to_end = false);
+
+    /// @brief Appends the lease record to the CSV file.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// This function doesn't throw exceptions itself. In theory, exceptions
+    /// are possible when the index of the indexes of the values being written
+    /// to the file are invalid. However, this would have been a programming
+    /// error.
+    ///
+    /// @param lease Structure representing a DHCPv6 lease.
+    /// @throw BadValue if the lease to be written has an empty DUID and is not
+    /// in STATE_DECLINED.
+    void appendInternal(const Lease6& lease);
+
+    /// @brief Reads next lease from the CSV file.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// If this function hits an error during lease read, it sets the error
+    /// message using @c CSVFile::setReadMsg and returns false. The error
+    /// string may be read using @c CSVFile::getReadMsg.
+    ///
+    /// This function is exception safe.
+    ///
+    /// @param [out] lease Pointer to the lease read from CSV file or
+    /// NULL pointer if lease hasn't been read.
+    ///
+    /// @return Boolean value indicating that the new lease has been
+    /// read from the CSV file (if true), or that the error has occurred
+    /// (false).
+    ///
+    /// @todo Make sure that the values read from the file are correct.
+    /// The appropriate @c Lease6 validation mechanism should be used once
+    /// ticket http://oldkea.isc.org/ticket/2405 is implemented.
+    bool nextInternal(Lease6Ptr& lease);
 
     /// @brief Initializes columns of the CSV file holding leases.
     ///
@@ -185,6 +232,8 @@ private:
     data::ConstElementPtr readContext(const util::CSVRow& row);
     //@}
 
+    /// @brief Mutex to protect the internal state.
+    std::mutex mutex_;
 };
 
 } // namespace isc::dhcp

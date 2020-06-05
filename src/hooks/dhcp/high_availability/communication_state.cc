@@ -517,7 +517,7 @@ CommunicationState4::clearConnectingClientsInternal() {
 CommunicationState6::CommunicationState6(const IOServicePtr& io_service,
                                          const HAConfigPtr& config)
     : CommunicationState(io_service, config), connecting_clients_(),
-      mutex_(new mutex()){
+      mutex_(new mutex()) {
 }
 
 void

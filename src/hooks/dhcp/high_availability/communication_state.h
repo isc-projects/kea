@@ -352,25 +352,27 @@ public:
     ///
     /// Used in unittests only.
     ///
-    /// Should be called in a thread safe context.
-    ///
     /// @param secs number of seconds to be added to the poke time. If
     /// the value is negative it will set the poke time in the past
     /// comparing to current value.
     void modifyPokeTime(const long secs);
 
+protected:
+
     /// @brief Modifies poke time by adding seconds to it.
     ///
     /// Used in unittests only.
+    ///
+    /// Should be called in a thread safe context.
     ///
     /// @param secs number of seconds to be added to the poke time. If
     /// the value is negative it will set the poke time in the past
     /// comparing to current value.
     void modifyPokeTimeInternal(const long secs);
 
-protected:
-
     /// @brief Returns duration between the poke time and current time.
+    ///
+    /// Should be called in a thread safe context.
     ///
     /// @return Duration between the poke time and current time.
     int64_t getDurationInMillisecsInternal() const;
