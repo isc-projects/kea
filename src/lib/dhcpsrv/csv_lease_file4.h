@@ -51,6 +51,8 @@ public:
     virtual void open(const bool seek_to_end = false);
 
     /// @brief Closes the lease file.
+    ///
+    /// This function should hide instead of overwrite the base class function.
     virtual void close();
 
     /// @brief Appends the lease record to the CSV file.
