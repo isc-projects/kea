@@ -49,6 +49,9 @@ public:
     /// the base class may do so.
     virtual void open(const bool seek_to_end = false);
 
+    /// @brief Closes the lease file.
+    virtual void close();
+
     /// @brief Appends the lease record to the CSV file.
     ///
     /// This function doesn't throw exceptions itself. In theory, exceptions
@@ -93,6 +96,11 @@ private:
     /// While it doesn't throw any exceptions of its own
     /// the base class may do so.
     virtual void openInternal(const bool seek_to_end = false);
+
+    /// @brief Closes the lease file.
+    ///
+    /// Should be called in a thread safe context.
+    virtual void closeInternal();
 
     /// @brief Appends the lease record to the CSV file.
     ///

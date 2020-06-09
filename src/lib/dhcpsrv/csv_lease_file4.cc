@@ -43,6 +43,22 @@ CSVLeaseFile4::openInternal(const bool seek_to_end) {
 }
 
 void
+CSVLeaseFile4::close() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        closeInternal();
+    } else {
+        closeInternal();
+    }
+}
+
+void
+CSVLeaseFile4::closeInternal() {
+    // Call the base class to close the file
+    VersionedCSVFile::close();
+}
+
+void
 CSVLeaseFile4::append(const Lease4& lease) {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(mutex_);

@@ -35,6 +35,22 @@ CSVLeaseFile6::open(const bool seek_to_end) {
 }
 
 void
+CSVLeaseFile6::close() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        closeInternal();
+    } else {
+        closeInternal();
+    }
+}
+
+void
+CSVLeaseFile6::closeInternal() {
+    // Call the base class to close the file
+    VersionedCSVFile::close();
+}
+
+void
 CSVLeaseFile6::openInternal(const bool seek_to_end) {
     // Call the base class to open the file
     VersionedCSVFile::open(seek_to_end);
