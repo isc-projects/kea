@@ -387,7 +387,7 @@ public:
     void append(const CSVRow& row) const;
 
     /// @brief Closes the CSV file.
-    virtual void close();
+    void close();
 
     /// @brief Checks if the CSV file exists and can be opened for reading.
     ///
