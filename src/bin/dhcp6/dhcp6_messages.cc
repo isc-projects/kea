@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu May 21 2020 12:11
-=======
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Sun May 24 2020 11:35
->>>>>>> [#1232] Added a try and log
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jun 11 2020 16:04
 
 #include <cstddef>
 #include <log/message_types.h>
