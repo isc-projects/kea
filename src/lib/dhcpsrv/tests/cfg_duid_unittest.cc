@@ -220,7 +220,11 @@ TEST_F(CfgDUIDTest, createEN) {
     // Verify that the DUID file has been created.
     EXPECT_TRUE(fileExists(absolutePath(DUID_FILE_NAME)));
 
+<<<<<<< HEAD
     // Verify getCurrentDuid() returns the value created.
+=======
+    // Verifiy getCurrentDuid() returns the value created.
+>>>>>>> [#1235] Updated v6 option defintions, made current server_id accessible
     DuidPtr current_duid = cfg.getCurrentDuid();
     ASSERT_TRUE(current_duid);
     EXPECT_EQ(*current_duid, *duid);
@@ -245,7 +249,11 @@ TEST_F(CfgDUIDTest, createLL) {
     // Verify that the DUID file has been created.
     EXPECT_TRUE(fileExists(absolutePath(DUID_FILE_NAME)));
 
+<<<<<<< HEAD
     // Verify getCurrentDuid() returns the value created.
+=======
+    // Verifiy getCurrentDuid() returns the value created.
+>>>>>>> [#1235] Updated v6 option defintions, made current server_id accessible
     DuidPtr current_duid = cfg.getCurrentDuid();
     ASSERT_TRUE(current_duid);
     EXPECT_EQ(*current_duid, *duid);
@@ -271,7 +279,11 @@ TEST_F(CfgDUIDTest, createDisableWrite) {
     // DUID persistence is disabled so there should be no DUID file.
     EXPECT_FALSE(fileExists(absolutePath(DUID_FILE_NAME)));
 
+<<<<<<< HEAD
     // Verify getCurrentDuid() returns the value created.
+=======
+    // Verifiy getCurrentDuid() returns the value created.
+>>>>>>> [#1235] Updated v6 option defintions, made current server_id accessible
     DuidPtr current_duid = cfg.getCurrentDuid();
     ASSERT_TRUE(current_duid);
     EXPECT_EQ(*current_duid, *duid);
