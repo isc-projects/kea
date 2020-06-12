@@ -274,7 +274,8 @@ private:
             << " is invalid";
         // Check that the valid encapsulated option space name
         // has been specified.
-        EXPECT_EQ(encapsulates, def->getEncapsulatedSpace());
+        EXPECT_EQ(encapsulates, def->getEncapsulatedSpace()) <<
+            "opt name: " << def->getName();
         OptionPtr option;
         // Create the option.
         ASSERT_NO_THROW(option = def->optionFactory(u, code, begin, end))
@@ -1924,10 +1925,10 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(OptionIntArray<uint16_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_LQ_QUERY, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionCustom), LQ_QUERY_OPTION_SPACE);
 
     LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_DATA, begin, end,
-                                    typeid(Option));
+                                    typeid(OptionCustom), DHCP6_OPTION_SPACE);
 
     LibDhcpTest::testStdOptionDefs6(D6O_CLT_TIME, begin, begin + 4,
                                     typeid(OptionInt<uint32_t>));

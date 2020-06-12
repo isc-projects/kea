@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,8 @@
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_string.h>
@@ -1810,6 +1812,250 @@ TEST_F(Pkt6Test, testSkipThisOptionError) {
     ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
     EXPECT_EQ(3, opstr->getValue().length());
     EXPECT_EQ("def", opstr->getValue());
+}
+
+// This test verifies that LQ_QUERY_OPTIONs can be created, packed,
+// and unpacked correctly.
+TEST_F(Pkt6Test, lqQueryOption) {
+
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_LQ_QUERY);
+    ASSERT_TRUE(def) << "D6O_LQ_QUERY is not undefined";
+
+    OptionCustomPtr lq_option(new OptionCustom(*def, Option::V6));
+    ASSERT_TRUE(lq_option);
+
+    // Add query type (77 is technically not valid but better visually).
+    uint8_t orig_type = 77;
+    ASSERT_NO_THROW_LOG(lq_option->writeInteger<uint8_t>(77,0));
+
+    // Add query link address
+    IOAddress orig_link("2001:db8::1");
+    ASSERT_NO_THROW_LOG(lq_option->writeAddress(orig_link, 1));
+
+    // Now add supported sub-options: D6O_IAADR, D6O_CLIENTID, and D6O_ORO
+    // We are ingoring the fact that a query containing both a D6O_IAADDR
+    // and a D6O_CLIENTID is not technically valid.  We only care that the
+    // sub options will pack and unpack.
+
+    // Add a D6O_IAADDR option
+    Option6IAAddrPtr orig_iaaddr(new Option6IAAddr(D6O_IAADDR, IOAddress("2001:db8::2"), 0, 0));
+    ASSERT_TRUE(orig_iaaddr);
+    ASSERT_NO_THROW_LOG(lq_option->addOption(orig_iaaddr));
+
+    // Add a D6O_CLIENTID option
+    DuidPtr duid(new DUID(DUID::fromText("0102020202030303030303")));
+    OptionPtr orig_clientid(new Option(Option::V6, D6O_CLIENTID, OptionBuffer(
+                                       duid->getDuid().begin(), duid->getDuid().end())));
+    ASSERT_NO_THROW_LOG(lq_option->addOption(orig_clientid));
+
+    // Add a D6O_ORO option
+    OptionUint16ArrayPtr orig_oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(orig_oro);
+    orig_oro->addValue(1234);
+    ASSERT_NO_THROW_LOG(lq_option->addOption(orig_oro));
+
+    // Now let's create a packet to which to add our new lq_option.
+    Pkt6Ptr orig(new Pkt6(DHCPV6_LEASEQUERY, 0x2312));
+    orig->addOption(lq_option);
+    ASSERT_NO_THROW_LOG(orig->pack());
+
+    // Now create second packet,based on assembled data from the first one
+    Pkt6Ptr clone(new Pkt6(static_cast<const uint8_t*>
+                           (orig->getBuffer().getData()),
+                            orig->getBuffer().getLength()));
+
+    // Unpack it.
+    ASSERT_NO_THROW_LOG(clone->unpack());
+
+    // We should be able to find our query option.
+    OptionPtr opt;
+    opt = clone->getOption(D6O_LQ_QUERY);
+    ASSERT_TRUE(opt);
+    OptionCustomPtr clone_query = boost::dynamic_pointer_cast<OptionCustom>(opt);
+    ASSERT_TRUE(clone_query);
+
+    // Verify the query type is right.
+    uint8_t clone_type;
+    ASSERT_NO_THROW_LOG(clone_type = clone_query->readInteger<uint8_t>(0));
+    EXPECT_EQ(orig_type, clone_type);
+
+    // Verify the query link address is right.
+    IOAddress clone_link("::");
+    ASSERT_NO_THROW_LOG(clone_link = clone_query->readAddress(1));
+    EXPECT_EQ(orig_link, clone_link);
+
+    // Verify the suboptions.
+
+    // Verify the D6O_IAADDR option
+    opt = clone_query->getOption(D6O_IAADDR);
+    ASSERT_TRUE(opt);
+    Option6IAAddrPtr clone_iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(opt);
+    ASSERT_TRUE(clone_iaaddr);
+    EXPECT_TRUE(clone_iaaddr->equals(*orig_iaaddr));
+
+    // Verify the D6O_CLIENTID option
+    opt = clone_query->getOption(D6O_CLIENTID);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equals(*orig_clientid));
+
+    // Verify the D6O_ORO option
+    opt = clone_query->getOption(D6O_ORO);
+    ASSERT_TRUE(opt);
+    OptionUint16ArrayPtr clone_oro = boost::dynamic_pointer_cast<OptionUint16Array>(opt);
+    ASSERT_TRUE(clone_oro);
+    EXPECT_TRUE(clone_oro->equals(*orig_oro));
+}
+
+// This test verifies that D6O_CLIENT_DATA options can be created, packed,
+// and unpacked correctly.
+TEST_F(Pkt6Test, clientDataOption) {
+
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_CLIENT_DATA);
+    ASSERT_TRUE(def) << "D6O_CLIENT_DATA is not undefined";
+
+    OptionCustomPtr cd_option(new OptionCustom(*def, Option::V6));
+    ASSERT_TRUE(cd_option);
+
+    // Now add supported sub-options: D6O_CLIENTID, D6O_IAADR, D6O_IAAPREFIX,
+    // and D6O_CLTT
+
+    // Add a D6O_CLIENTID option
+    DuidPtr duid(new DUID(DUID::fromText("0102020202030303030303")));
+    OptionPtr orig_clientid(new Option(Option::V6, D6O_CLIENTID, OptionBuffer(
+                                       duid->getDuid().begin(), duid->getDuid().end())));
+    ASSERT_NO_THROW_LOG(cd_option->addOption(orig_clientid));
+
+    // Add a D6O_IAADDR option
+    Option6IAAddrPtr orig_iaaddr1(new Option6IAAddr(D6O_IAADDR, IOAddress("2001:db8::1"), 0, 0));
+    ASSERT_TRUE(orig_iaaddr1);
+    ASSERT_NO_THROW_LOG(cd_option->addOption(orig_iaaddr1));
+
+    // Add another D6O_IAADDR option
+    Option6IAAddrPtr orig_iaaddr2(new Option6IAAddr(D6O_IAADDR, IOAddress("2001:db8::2"), 0, 0));
+    ASSERT_TRUE(orig_iaaddr2);
+    ASSERT_NO_THROW_LOG(cd_option->addOption(orig_iaaddr2));
+
+    // Add a D6O_IAPREFIX option
+    Option6IAAddrPtr orig_iaprefix1(new Option6IAPrefix(D6O_IAPREFIX, IOAddress("2001:db8:1::"), 64, 0, 0));
+    ASSERT_TRUE(orig_iaprefix1);
+    ASSERT_NO_THROW_LOG(cd_option->addOption(orig_iaprefix1));
+
+    // Add another D6O_IAPREFIX option
+    Option6IAAddrPtr orig_iaprefix2(new Option6IAPrefix(D6O_IAPREFIX, IOAddress("2001:db8:2::"), 64, 0, 0));
+    ASSERT_TRUE(orig_iaprefix2);
+    ASSERT_NO_THROW_LOG(cd_option->addOption(orig_iaprefix2));
+
+    // Add a D6O_CLT_TIME option
+    OptionUint32Ptr orig_cltt(new OptionInt<uint32_t>(Option::V6, D6O_CLT_TIME, 4000));
+    ASSERT_TRUE(orig_cltt);
+    ASSERT_NO_THROW_LOG(cd_option->addOption(orig_cltt));
+
+    // Now let's create a packet to which to add our new client data option.
+    Pkt6Ptr orig(new Pkt6(DHCPV6_LEASEQUERY_REPLY, 0x2312));
+    orig->addOption(cd_option);
+    ASSERT_NO_THROW_LOG(orig->pack());
+
+    // Now create second packet,based on assembled data from the first one
+    Pkt6Ptr clone(new Pkt6(static_cast<const uint8_t*>
+                           (orig->getBuffer().getData()),
+                            orig->getBuffer().getLength()));
+
+    // Unpack it.
+    ASSERT_NO_THROW_LOG(clone->unpack());
+
+    // We should be able to find our client data option.
+    OptionPtr opt;
+    opt = clone->getOption(D6O_CLIENT_DATA);
+    ASSERT_TRUE(opt);
+    OptionCustomPtr clone_cd_option = boost::dynamic_pointer_cast<OptionCustom>(opt);
+    ASSERT_TRUE(clone_cd_option);
+
+    // Verify the suboptions.
+    opt = clone_cd_option->getOption(D6O_CLIENTID);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equals(*orig_clientid));
+
+    // Verify the first address option
+    opt = clone_cd_option->getOption(D6O_IAADDR);
+    ASSERT_TRUE(opt);
+    Option6IAAddrPtr clone_iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(opt);
+    ASSERT_TRUE(clone_iaaddr);
+    EXPECT_TRUE(clone_iaaddr->equals(*orig_iaaddr1));
+
+    // Verify the second address option.
+    opt = clone_cd_option->getOption(D6O_IAADDR);
+    ASSERT_TRUE(opt);
+    clone_iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(opt);
+    ASSERT_TRUE(clone_iaaddr);
+    EXPECT_TRUE(clone_iaaddr->equals(*orig_iaaddr2));
+
+    // Verify the first prefix option.
+    opt = clone_cd_option->getOption(D6O_IAPREFIX);
+    ASSERT_TRUE(opt);
+    Option6IAPrefixPtr clone_iaprefix = boost::dynamic_pointer_cast<Option6IAPrefix>(opt);
+    ASSERT_TRUE(clone_iaprefix);
+    EXPECT_TRUE(clone_iaprefix->equals(*orig_iaprefix1));
+
+    // Verify the second prefix option.
+    opt = clone_cd_option->getOption(D6O_IAPREFIX);
+    ASSERT_TRUE(opt);
+    clone_iaprefix = boost::dynamic_pointer_cast<Option6IAPrefix>(opt);
+    ASSERT_TRUE(clone_iaprefix);
+    EXPECT_TRUE(clone_iaprefix->equals(*orig_iaprefix2));
+
+    // Verify the CLT option.
+    opt = clone_cd_option->getOption(D6O_CLT_TIME);
+    ASSERT_TRUE(opt);
+    OptionUint32Ptr clone_cltt = boost::dynamic_pointer_cast<OptionUint32>(opt);
+    ASSERT_TRUE(clone_cltt);
+    EXPECT_TRUE(clone_cltt->equals(*orig_cltt));
+}
+
+// This test verifies that D6O_LQ_RELAY_DATA options can be created, packed,
+// and unpacked correctly.
+TEST_F(Pkt6Test, relayDataOption) {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_LQ_RELAY_DATA);
+    ASSERT_TRUE(def) << "D6O_LQ_RELAY_DATA is not undefined";
+
+    OptionCustomPtr rd_option(new OptionCustom(*def, Option::V6));
+    ASSERT_TRUE(rd_option);
+
+    // Write out the peer address.
+    IOAddress orig_address("2001:db8::1");
+    rd_option->writeAddress(orig_address, 0);
+
+    // Write out the binary data (in real life this is a RELAY_FORW message)
+    std::vector<uint8_t>orig_data({ 01,02,03,04,05,06 });
+    rd_option->writeBinary(orig_data, 1);
+
+    // Now let's create a packet to which to add our new relay data option.
+    Pkt6Ptr orig(new Pkt6(DHCPV6_LEASEQUERY_REPLY, 0x2312));
+    orig->addOption(rd_option);
+    ASSERT_NO_THROW_LOG(orig->pack());
+
+    // Now create second packet,based on assembled data from the first one
+    Pkt6Ptr clone(new Pkt6(static_cast<const uint8_t*>
+                           (orig->getBuffer().getData()),
+                            orig->getBuffer().getLength()));
+    // Unpack it.
+    ASSERT_NO_THROW_LOG(clone->unpack());
+
+    // We should be able to find our client data option.
+    OptionPtr opt;
+    opt = clone->getOption(D6O_LQ_RELAY_DATA);
+    ASSERT_TRUE(opt);
+    OptionCustomPtr clone_rd_option = boost::dynamic_pointer_cast<OptionCustom>(opt);
+    ASSERT_TRUE(clone_rd_option);
+
+    // Verify the address field.
+    IOAddress clone_addr("::");
+    ASSERT_NO_THROW_LOG(clone_addr = clone_rd_option->readAddress(0));
+    EXPECT_EQ(orig_address, clone_addr);
+
+    // Verify the binary field
+    OptionBuffer clone_data;
+    ASSERT_NO_THROW_LOG(clone_data = clone_rd_option->readBinary(1));
+    EXPECT_EQ(orig_data, clone_data);
 }
 
 }

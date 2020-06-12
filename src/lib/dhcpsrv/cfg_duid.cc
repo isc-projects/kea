@@ -52,7 +52,7 @@ CfgDUID::setIdentifier(const std::string& identifier_as_hex) {
 }
 
 DuidPtr
-CfgDUID::create(const std::string& duid_file_path) const {
+CfgDUID::create(const std::string& duid_file_path) {
     // Use DUID factory to create a DUID instance.
     DUIDFactory factory(persist() ? duid_file_path : "");
 
@@ -73,7 +73,8 @@ CfgDUID::create(const std::string& duid_file_path) const {
     }
 
     // Return generated DUID.
-    return (factory.get());
+    current_duid_ = factory.get();
+    return (current_duid_);
 }
 
 ElementPtr

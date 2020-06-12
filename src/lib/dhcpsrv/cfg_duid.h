@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -114,12 +114,19 @@ public:
     ///
     /// @param duid_file_path Absolute path to a DUID file.
     /// @return Pointer to an instance of new DUID.
-    DuidPtr create(const std::string& duid_file_path) const;
+    DuidPtr create(const std::string& duid_file_path);
 
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
+
+    /// @brief Fetches the duid created by @ref create()
+    /// @return a pointer to created duid. Pointer will
+    /// empty if the duid has not yet been created.
+    const DuidPtr getCurrentDuid() const {
+        return (current_duid_);
+    }
 
 private:
 
@@ -141,6 +148,8 @@ private:
     /// @brief Boolean flag which indicates if server identifier should
     /// be stored on the disk.
     bool persist_;
+
+    DuidPtr current_duid_;
 };
 
 /// @name Pointers to the @c CfgDUID objects.

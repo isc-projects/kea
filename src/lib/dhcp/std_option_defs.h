@@ -27,6 +27,7 @@
 #define DHCP_AGENT_OPTION_SPACE          "dhcp-agent-options-space"
 #define VENDOR_OPTION_SPACE              "vendor-opts-space"
 #define VENDOR_ENCAPSULATED_OPTION_SPACE "vendor-encapsulated-options-space"
+#define LQ_QUERY_OPTION_SPACE            "lq-query-option-space"
 
 // NOTE:
 // When adding a new space, make sure you also update
@@ -430,8 +431,9 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       NO_RECORD_DEF, "" },
     { "ero", D6O_ERO, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
     { "lq-query", D6O_LQ_QUERY, OPT_RECORD_TYPE, false,
-      RECORD_DEF(LQ_QUERY_RECORDS), "" },
-    { "client-data", D6O_CLIENT_DATA, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "" },
+      RECORD_DEF(LQ_QUERY_RECORDS), LQ_QUERY_OPTION_SPACE },
+    { "client-data", D6O_CLIENT_DATA, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
+      DHCP6_OPTION_SPACE },
     { "clt-time", D6O_CLT_TIME, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
     { "lq-relay-data", D6O_LQ_RELAY_DATA, OPT_RECORD_TYPE, false,
       RECORD_DEF(LQ_RELAY_DATA_RECORDS), "" },
@@ -562,6 +564,18 @@ const OptionDefParams V4V6_BIND_OPTION_DEFINITIONS[] = {
 const int V4V6_BIND_OPTION_DEFINITIONS_SIZE =
     sizeof(V4V6_BIND_OPTION_DEFINITIONS) /
     sizeof(V4V6_BIND_OPTION_DEFINITIONS[0]);
+
+/// @brief LQ_QUERY suboption definitions (v6)
+const OptionDefParams LQ_QUERY_OPTION_DEFINITIONS[] = {
+    { "clientid", D6O_CLIENTID, OPT_BINARY_TYPE, false, NO_RECORD_DEF, ""},
+    { "iaaddr", D6O_IAADDR, OPT_RECORD_TYPE, false, RECORD_DEF(IAADDR_RECORDS), ""},
+    { "oro", D6O_ORO, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" }
+};
+
+const int LQ_QUERY_OPTION_DEFINITIONS_SIZE =
+    sizeof(LQ_QUERY_OPTION_DEFINITIONS) /
+    sizeof(LQ_QUERY_OPTION_DEFINITIONS[0]);
+
 
 }  // namespace
 
