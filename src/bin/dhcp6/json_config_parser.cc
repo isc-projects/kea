@@ -635,7 +635,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // This parser is used in several places.
         Dhcp6ConfigParser global_parser;
 
-	// Keep relative orders of shared networks and subnets.
+        // Keep relative orders of shared networks and subnets.
         ConstElementPtr shared_networks = mutable_cfg->get("shared-networks");
         if (shared_networks) {
             parameter_name = "shared-networks";
@@ -696,7 +696,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
             parameter_name = config_pair.first;
 
-            // This is converted to SimpleParser and is handled already above.
+            // This are converted to SimpleParser and are handled already above.
             if ((config_pair.first == "data-directory") ||
                 (config_pair.first == "option-def")  ||
                 (config_pair.first == "option-data") ||

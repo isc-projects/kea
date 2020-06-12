@@ -511,7 +511,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // This parser is used in several places.
         Dhcp4ConfigParser global_parser;
 
-	// Keep relative orders of shared networks and subnets.
+        // Keep relative orders of shared networks and subnets.
         ConstElementPtr shared_networks = mutable_cfg->get("shared-networks");
         if (shared_networks) {
             parameter_name = "shared-networks";
@@ -559,7 +559,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // Make parsers grouping.
         ConfigPair config_pair;
         const std::map<std::string, ConstElementPtr>& values_map =
-                                                        mutable_cfg->mapValue();
+            mutable_cfg->mapValue();
         BOOST_FOREACH(config_pair, values_map) {
 
             parameter_name = config_pair.first;
