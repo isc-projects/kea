@@ -229,7 +229,7 @@ public:
             // .arg(42).arg("%1") would return "42 %1" - there are no recursive
             // replacements).
             try {
-                replacePlaceholder(*message_, arg, ++nextPlaceholder_ );
+                replacePlaceholder(*message_, arg, ++nextPlaceholder_);
             } catch (...) {
                 // Something went wrong here, the log message is broken, so
                 // we don't want to output it, nor we want to check all the
