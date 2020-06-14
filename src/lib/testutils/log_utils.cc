@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,6 +74,35 @@ bool LogContentTest::checkFile() {
     return (true);
 }
 
+size_t LogContentTest::countFile(const string& exp_string) {
+    ifstream file(LOG_FILE);
+    EXPECT_TRUE(file.is_open());
+    string line;
+    size_t cnt = 0;
+
+    using namespace std;
+
+    if (verbose_) {
+        cout << "Looking for:" << exp_string << endl;
+    }
+    while (getline(file, line)) {
+        if (verbose_) {
+            cout << "Read line  :" << line << endl;
+        }
+        if (line.find(exp_string) != string::npos) {
+            ++cnt;
+        }
+    }
+
+    file.close();
+
+    if (verbose_) {
+        cout << "Final count: " << cnt << endl;
+    }
+
+    return (cnt);
+}
+
 void LogContentTest::remFile() {
     static_cast<void>(remove(LOG_FILE));
 }
@@ -86,6 +115,6 @@ void LogContentTest::addString(const string& new_string) {
 // the debug statements
 const char *LogContentTest::LOG_FILE = "test.log";
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp::test namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace

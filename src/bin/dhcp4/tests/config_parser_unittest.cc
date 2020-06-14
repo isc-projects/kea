@@ -30,6 +30,7 @@
 #include <process/config_ctl_info.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
+#include <testutils/log_utils.h>
 #include <util/boost_time_utils.h>
 #include <util/doubles.h>
 
@@ -262,7 +263,7 @@ const char* PARSER_CONFIGS[] = {
     "} \n"
 };
 
-class Dhcp4ParserTest : public ::testing::Test {
+class Dhcp4ParserTest : public LogContentTest {
 protected:
     // Check that no hooks libraries are loaded.  This is a pre-condition for
     // a number of tests, so is checked in one place.  As this uses an
@@ -2395,6 +2396,13 @@ TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
     ASSERT_TRUE(status);
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    // Specific check for incorrect report using default config pair
+    // as option-def is parsed first.
+    string expected = "failed to create or run parser for configuration ";
+    expected += "element option-def: option definition with code '100' ";
+    expected += "already exists in option space 'isc'";
+    EXPECT_EQ(1, countFile(expected));
 
     // The new configuration should have inserted option 100, but
     // once configuration failed (on the duplicate option definition)

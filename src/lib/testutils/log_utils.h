@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,6 +60,13 @@ public:
     /// @return true if all of the strings match
     bool checkFile();
 
+    /// @brief check that the requested string is in the
+    /// test log file.
+    ///
+    /// @param exp_string the string to be searched
+    /// @return count of matching lines
+    size_t countFile(const string& exp_string);
+
     /// @brief remove the test log file
     void remFile();
 
@@ -90,10 +97,7 @@ public:
     bool verbose_;
 };
 
-
-
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
-
+} // end of isc::dhcp::test namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
 #endif // TEST_LOG_UTILS_H
