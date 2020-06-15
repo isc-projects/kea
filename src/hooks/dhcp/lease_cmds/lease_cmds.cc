@@ -1478,7 +1478,7 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
         // The parser does sanity checks (if the address is in scope, if
         // subnet-id is valid, etc)
         lease4 = parser.parse(config, cmd_args_, force_create);
-        bool added;
+        bool added = false;
         if (MultiThreadingMgr::instance().getMode() &&
             !MultiThreadingMgr::instance().isInCriticalSection()) {
             bool use_cs = false;
