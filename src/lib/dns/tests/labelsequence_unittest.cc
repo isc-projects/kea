@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -81,6 +81,18 @@ public:
     LabelSequence ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8;
     LabelSequence ls9, ls10, ls11, ls12;
 };
+
+// Check the assignment operator.
+TEST_F(LabelSequenceTest, assign) {
+    // Create the label sequence with example.org (n1 name).
+    LabelSequence ls(n1);
+    EXPECT_TRUE(ls == ls1);
+
+    // Assign the label sequence to example.com (n2 name).
+    ls = ls2;
+    EXPECT_FALSE(ls == ls1);
+    EXPECT_TRUE(ls == ls2);
+}
 
 // Basic equality tests
 TEST_F(LabelSequenceTest, equals_sensitive) {

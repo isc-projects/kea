@@ -77,6 +77,31 @@ TEST(OptionDescriptorTest, createCopy) {
     EXPECT_EQ(context, desc_copy->getContext());
 }
 
+// This test verifies that the OptionDescriptor assignment operator
+// does the shallow copy.
+TEST(OptionDescriptorTest, assign) {
+    // Create a persistent option descriptor.
+    auto desc = OptionDescriptor::create(true);
+    ASSERT_TRUE(desc);
+
+    // Create another option descriptor.
+    OptionPtr option = Option::create(Option::V4, 234);
+    ElementPtr context = Element::createMap();
+    context->set("name", Element::create("value"));
+    auto desc1 = OptionDescriptor::create(option, true, "value", context);
+    ASSERT_TRUE(desc1);
+
+    // Assign the option descriptor.
+    desc = desc1;
+
+    // Check it.
+    ASSERT_TRUE(desc);
+    EXPECT_EQ(option, desc->option_);
+    EXPECT_TRUE(desc->persistent_);
+    EXPECT_EQ("value", desc->formatted_value_);
+    EXPECT_EQ(context, desc->getContext());
+}
+
 /// This class fixture for testing @c CfgOption class, holding option
 /// configuration.
 class CfgOptionTest : public ::testing::Test {
