@@ -15,13 +15,17 @@ namespace util {
 /// @brief Unlock Guard.
 ///
 /// Acts as a reverse std::lock_guard.
-template<typename Lock>
+///
+/// @tparam Mutex a mutex object.
+template<typename Mutex>
 class UnlockGuard : public boost::noncopyable {
 public:
     /// @brief Constructor.
     ///
     /// Unlock mutex object on constructor.
-    explicit UnlockGuard(Lock& lock) : lock_(lock) {
+    ///
+    /// @param lock the mutex used for unlocking and locking.
+    explicit UnlockGuard(Mutex& lock) : lock_(lock) {
         lock_.unlock();
     }
 
@@ -34,7 +38,7 @@ public:
 
 private:
     /// @brief The mutex object.
-    Lock& lock_;
+    Mutex& lock_;
 };
 
 } // namespace util
