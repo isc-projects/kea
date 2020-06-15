@@ -15,6 +15,7 @@
 #include <http/response_json.h>
 #include <http/response_parser.h>
 #include <util/multi_threading_mgr.h>
+#include <util/unlock_guard.h>
 
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -962,22 +963,16 @@ Connection::terminateInternal(const boost::system::error_code& ec,
             }
         }
 
-        // unlock mutex so that the callback can be safely processed.
-        if (MultiThreadingMgr::instance().getMode()) {
-            mutex_.unlock();
-        }
-
         try {
             // The callback should take care of its own exceptions but one
             // never knows.
-            current_callback_(ec, response, parsing_error);
-
+            if (MultiThreadingMgr::instance().getMode()) {
+                UnlockGuard<std::mutex> lock(mutex_);
+                current_callback_(ec, response, parsing_error);
+            } else {
+                current_callback_(ec, response, parsing_error);
+            }
         } catch (...) {
-        }
-
-        // lock mutex so that processing can continue.
-        if (MultiThreadingMgr::instance().getMode()) {
-            mutex_.lock();
         }
 
         // If we're not requesting connection persistence, we should close the socket.
@@ -989,21 +984,16 @@ Connection::terminateInternal(const boost::system::error_code& ec,
         resetState();
     }
 
-    // unlock mutex so that the next request can be safely processed.
-    if (MultiThreadingMgr::instance().getMode()) {
-        mutex_.unlock();
-    }
-
     // Check if there are any requests queued for this connection and start
     // another transaction if there is at least one.
     ConnectionPoolPtr conn_pool = conn_pool_.lock();
     if (conn_pool) {
-        conn_pool->processNextRequest(url_);
-    }
-
-    // lock mutex so that processing can continue.
-    if (MultiThreadingMgr::instance().getMode()) {
-        mutex_.lock();
+        if (MultiThreadingMgr::instance().getMode()) {
+            UnlockGuard<std::mutex> lock(mutex_);
+            conn_pool->processNextRequest(url_);
+        } else {
+            conn_pool->processNextRequest(url_);
+        }
     }
 }
 
