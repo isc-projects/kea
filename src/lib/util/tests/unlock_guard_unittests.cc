@@ -11,10 +11,7 @@
 #include <util/unlock_guard.h>
 #include <exceptions/exceptions.h>
 
-#include <condition_variable>
-#include <list>
 #include <mutex>
-#include <set>
 #include <thread>
 
 using namespace isc::util;
