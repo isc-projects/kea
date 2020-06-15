@@ -1,3 +1,11 @@
+1758.	[func]*		fdupont
+	Earlier Kea versions converted "comment" entries to "user-context"
+	scope in the configuration when using config-get. This backwards
+	compatibility has now been removed. This may affect users who use
+	config-get or config-write commands and use comments in their
+	configurations.
+	(Gitlab #1100)
+
 1757.	[bug]		fdupont
 	config-backend-pull commands were fixed to be applied to the
 	current configuration
