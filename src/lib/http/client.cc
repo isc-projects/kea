@@ -420,10 +420,7 @@ public:
     /// @brief Process next queued request for the given URL.
     ///
     /// @param url URL for which next queued request should be processed.
-    ///
-    /// @return true if the request for the given URL has been processed,
-    /// false if there are no more requests queued for this URL.
-    bool processNextRequest(const Url& url) {
+    void processNextRequest(const Url& url) {
         if (MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<std::mutex> lk(mutex_);
             return (processNextRequestInternal(url));
@@ -520,10 +517,7 @@ private:
     /// This method should be called in a thread safe context.
     ///
     /// @param url URL for which next queued request should be retrieved.
-    ///
-    /// @return true if the request for the given URL has been processed,
-    /// false if there are no more requests queued for this URL.
-    bool processNextRequestInternal(const Url& url) {
+    void processNextRequestInternal(const Url& url) {
         // Check if there is a queue for this URL. If there is no queue, there
         // is no request queued either.
         auto it = queue_.find(url);
@@ -536,11 +530,8 @@ private:
                                           desc.request_timeout_, desc.callback_,
                                           desc.connect_callback_,
                                           desc.close_callback_);
-                return (true);
             }
         }
-
-        return (false);
     }
 
     /// @brief Queue next request for sending to the server.

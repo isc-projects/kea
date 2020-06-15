@@ -49,6 +49,12 @@ class IntervalTimerImpl;
 ///  intervalTimer.setup(function_to_call_back, interval_in_milliseconds);
 ///  io_service.run();
 /// \endcode
+///
+/// @note Only scheduling new timer (calling @ref setup) and canceling existing
+/// timer (calling @ref cancel) are thread safe.
+/// Registering new timers (calling @ref registerTimer) and unregistering
+/// existing timers (calling @ref unregisterTimer) must be handled before
+/// starting processing threads.
 class IntervalTimer {
 public:
     /// \name The type of timer callback function
