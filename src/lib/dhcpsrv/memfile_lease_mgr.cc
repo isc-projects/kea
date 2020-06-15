@@ -1846,9 +1846,10 @@ Memfile_LeaseMgr::lfcCallback() {
 
     // Check if we're in the v4 or v6 space and use the appropriate file.
     if (lease_file4_) {
+        MultiThreadingCriticalSection cs;
         lfcExecute(lease_file4_);
-
     } else if (lease_file6_) {
+        MultiThreadingCriticalSection cs;
         lfcExecute(lease_file6_);
     }
 }

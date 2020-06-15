@@ -359,17 +359,6 @@ public:
 
 protected:
 
-    /// @brief Modifies poke time by adding seconds to it.
-    ///
-    /// Used in unittests only.
-    ///
-    /// Should be called in a thread safe context.
-    ///
-    /// @param secs number of seconds to be added to the poke time. If
-    /// the value is negative it will set the poke time in the past
-    /// comparing to current value.
-    void modifyPokeTimeInternal(const long secs);
-
     /// @brief Returns duration between the poke time and current time.
     ///
     /// Should be called in a thread safe context.
@@ -526,45 +515,12 @@ protected:
     /// otherwise.
     virtual bool failureDetectedInternal() const;
 
-    /// @brief Returns the current number of clients which attempted
-    /// to get a lease from the partner server.
-    ///
-    /// Should be called in a thread safe context.
-    ///
-    /// The returned number is reset to 0 when the server successfully
-    /// establishes communication with the partner. The number is
-    /// incremented only in the communications interrupted case.
-    ///
-    /// @return The number of clients including unacked clients.
-    virtual size_t getConnectingClientsCountInternal() const;
-
-    /// @brief Returns the current number of clients which haven't gotten
-    /// a lease from the partner server.
-    ///
-    /// Should be called in a thread safe context.
-    ///
-    /// The returned number is reset to 0 when the server successfully
-    /// establishes communication with the partner. The number is
-    /// incremented only in the communications interrupted case.
-    ///
-    /// @return Number of unacked clients.
-    virtual size_t getUnackedClientsCountInternal() const;
-
     /// @brief Removes information about the clients the partner server
     /// should respond to while communication with the partner was
     /// interrupted.
     ///
     /// See @c CommunicationState::analyzeMessage for details.
     virtual void clearConnectingClients();
-
-    /// @brief Removes information about the clients the partner server
-    /// should respond to while communication with the partner was
-    /// interrupted.
-    ///
-    /// Should be called in a thread safe context.
-    ///
-    /// See @c CommunicationState::analyzeMessage for details.
-    virtual void clearConnectingClientsInternal();
 
     /// @brief Structure holding information about the client which has
     /// send the packet being analyzed.
@@ -685,45 +641,12 @@ protected:
     /// otherwise.
     virtual bool failureDetectedInternal() const;
 
-    /// @brief Returns the current number of clients which attempted
-    /// to get a lease from the partner server.
-    ///
-    /// Should be called in a thread safe context.
-    ///
-    /// The returned number is reset to 0 when the server successfully
-    /// establishes communication with the partner. The number is
-    /// incremented only in the communications interrupted case.
-    ///
-    /// @return The number of clients including unacked clients.
-    virtual size_t getConnectingClientsCountInternal() const;
-
-    /// @brief Returns the current number of clients which haven't gotten
-    /// a lease from the partner server.
-    ///
-    /// Should be called in a thread safe context.
-    ///
-    /// The returned number is reset to 0 when the server successfully
-    /// establishes communication with the partner. The number is
-    /// incremented only in the communications interrupted case.
-    ///
-    /// @return Number of unacked clients.
-    virtual size_t getUnackedClientsCountInternal() const;
-
     /// @brief Removes information about the clients the partner server
     /// should respond to while communication with the partner was
     /// interrupted.
     ///
     /// See @c CommunicationState::analyzeMessage for details.
     virtual void clearConnectingClients();
-
-    /// @brief Removes information about the clients the partner server
-    /// should respond to while communication with the partner was
-    /// interrupted.
-    ///
-    /// Should be called in a thread safe context.
-    ///
-    /// See @c CommunicationState::analyzeMessage for details.
-    virtual void clearConnectingClientsInternal();
 
     /// @brief Structure holding information about a client which
     /// sent a packet being analyzed.

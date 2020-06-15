@@ -5,11 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/csv_lease_file6.h>
-#include <util/multi_threading_mgr.h>
-
 #include <ctime>
 
 using namespace isc::asiolink;
@@ -26,32 +23,6 @@ CSVLeaseFile6::CSVLeaseFile6(const std::string& filename)
 
 void
 CSVLeaseFile6::open(const bool seek_to_end) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        openInternal(seek_to_end);
-    } else {
-        openInternal(seek_to_end);
-    }
-}
-
-void
-CSVLeaseFile6::close() {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        closeInternal();
-    } else {
-        closeInternal();
-    }
-}
-
-void
-CSVLeaseFile6::closeInternal() {
-    // Call the base class to close the file
-    VersionedCSVFile::close();
-}
-
-void
-CSVLeaseFile6::openInternal(const bool seek_to_end) {
     // Call the base class to open the file
     VersionedCSVFile::open(seek_to_end);
 
@@ -61,16 +32,6 @@ CSVLeaseFile6::openInternal(const bool seek_to_end) {
 
 void
 CSVLeaseFile6::append(const Lease6& lease) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        appendInternal(lease);
-    } else {
-        appendInternal(lease);
-    }
-}
-
-void
-CSVLeaseFile6::appendInternal(const Lease6& lease) {
     // Bump the number of write attempts
     ++writes_;
 
@@ -118,16 +79,6 @@ CSVLeaseFile6::appendInternal(const Lease6& lease) {
 
 bool
 CSVLeaseFile6::next(Lease6Ptr& lease) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return (nextInternal(lease));
-    } else {
-        return (nextInternal(lease));
-    }
-}
-
-bool
-CSVLeaseFile6::nextInternal(Lease6Ptr& lease) {
     // Bump the number of read attempts
     ++reads_;
 

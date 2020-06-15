@@ -71,15 +71,10 @@ void
 CommunicationState::modifyPokeTime(const long secs) {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
-        modifyPokeTimeInternal(secs);
+        poke_time_ += boost::posix_time::seconds(secs);
     } else {
-        modifyPokeTimeInternal(secs);
+        poke_time_ += boost::posix_time::seconds(secs);
     }
-}
-
-void
-CommunicationState::modifyPokeTimeInternal(const long secs) {
-    poke_time_ += boost::posix_time::seconds(secs);
 }
 
 void
@@ -443,12 +438,13 @@ CommunicationState4::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
     // Only log the first time we detect a client is unacked.
     if (log_unacked) {
         unsigned unacked_left = 0;
-        if (config_->getMaxUnackedClients() > getUnackedClientsCountInternal()) {
-            unacked_left = config_->getMaxUnackedClients() - getUnackedClientsCountInternal();
+        unsigned unacked_total = connecting_clients_.get<1>().count(true);
+        if (config_->getMaxUnackedClients() > unacked_total) {
+            unacked_left = config_->getMaxUnackedClients() - unacked_total;
         }
         LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED)
             .arg(message->getLabel())
-            .arg(getUnackedClientsCountInternal())
+            .arg(unacked_total)
             .arg(unacked_left);
     }
 }
@@ -466,52 +462,38 @@ CommunicationState4::failureDetected() const {
 bool
 CommunicationState4::failureDetectedInternal() const {
     return ((config_->getMaxUnackedClients() == 0) ||
-            (getUnackedClientsCountInternal() > config_->getMaxUnackedClients()));
+            (connecting_clients_.get<1>().count(true) >
+             config_->getMaxUnackedClients()));
 }
 
 size_t
 CommunicationState4::getConnectingClientsCount() const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
-        return (getConnectingClientsCountInternal());
+        return (connecting_clients_.size());
     } else {
-        return (getConnectingClientsCountInternal());
+        return (connecting_clients_.size());
     }
-}
-
-size_t
-CommunicationState4::getConnectingClientsCountInternal() const {
-    return (connecting_clients_.size());
 }
 
 size_t
 CommunicationState4::getUnackedClientsCount() const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
-        return (getUnackedClientsCountInternal());
+        return (connecting_clients_.get<1>().count(true));
     } else {
-        return (getUnackedClientsCountInternal());
+        return (connecting_clients_.get<1>().count(true));
     }
-}
-
-size_t
-CommunicationState4::getUnackedClientsCountInternal() const {
-    return (connecting_clients_.get<1>().count(true));
 }
 
 void
 CommunicationState4::clearConnectingClients() {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
-        clearConnectingClientsInternal();
+        connecting_clients_.clear();
     } else {
-        clearConnectingClientsInternal();
+        connecting_clients_.clear();
     }
-}
-
-void
-CommunicationState4::clearConnectingClientsInternal() {
-    connecting_clients_.clear();
 }
 
 CommunicationState6::CommunicationState6(const IOServicePtr& io_service,
@@ -588,12 +570,13 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
     // Only log the first time we detect a client is unacked.
     if (log_unacked) {
         unsigned unacked_left = 0;
-        if (config_->getMaxUnackedClients() > getUnackedClientsCountInternal()) {
-            unacked_left = config_->getMaxUnackedClients() - getUnackedClientsCountInternal();
+        unsigned unacked_total = connecting_clients_.get<1>().count(true);
+        if (config_->getMaxUnackedClients() > unacked_total) {
+            unacked_left = config_->getMaxUnackedClients() - unacked_total;
         }
         LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED)
             .arg(message->getLabel())
-            .arg(getUnackedClientsCountInternal())
+            .arg(unacked_total)
             .arg(unacked_left);
     }
 }
@@ -611,52 +594,38 @@ CommunicationState6::failureDetected() const {
 bool
 CommunicationState6::failureDetectedInternal() const {
     return ((config_->getMaxUnackedClients() == 0) ||
-            (getUnackedClientsCountInternal() > config_->getMaxUnackedClients()));
+            (connecting_clients_.get<1>().count(true) >
+             config_->getMaxUnackedClients()));
 }
 
 size_t
 CommunicationState6::getConnectingClientsCount() const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
-        return (getConnectingClientsCountInternal());
+        return (connecting_clients_.size());
     } else {
-        return (getConnectingClientsCountInternal());
+        return (connecting_clients_.size());
     }
-}
-
-size_t
-CommunicationState6::getConnectingClientsCountInternal() const {
-    return (connecting_clients_.size());
 }
 
 size_t
 CommunicationState6::getUnackedClientsCount() const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
-        return (getUnackedClientsCountInternal());
+        return (connecting_clients_.get<1>().count(true));
     } else {
-        return (getUnackedClientsCountInternal());
+        return (connecting_clients_.get<1>().count(true));
     }
-}
-
-size_t
-CommunicationState6::getUnackedClientsCountInternal() const {
-    return (connecting_clients_.get<1>().count(true));
 }
 
 void
 CommunicationState6::clearConnectingClients() {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
-        clearConnectingClientsInternal();
+        connecting_clients_.clear();
     } else {
-        clearConnectingClientsInternal();
+        connecting_clients_.clear();
     }
-}
-
-void
-CommunicationState6::clearConnectingClientsInternal() {
-    connecting_clients_.clear();
 }
 
 } // end of namespace isc::ha

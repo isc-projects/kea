@@ -51,6 +51,12 @@ typedef boost::shared_ptr<TimerMgr> TimerMgrPtr;
 /// Before the @c TimerMgr can be used the server process must call
 /// @c TimerMgr::setIOService to associate the manager with the IO service
 /// that the server is using to its run tasks.
+///
+/// @note Only scheduling new timer (calling @ref setup) and canceling existing
+/// timer (calling @ref cancel) are thread safe.
+/// Registering new timers (calling @ref registerTimer) and unregistering
+/// existing timers (calling @ref unregisterTimer) must be handled before
+/// starting processing threads.
 class TimerMgr : public boost::noncopyable {
 public:
 
