@@ -22,7 +22,7 @@
         },
         "hooks-libraries": [
             {
-                "library": "/tmp/k1100/src/bin/agent/tests/.libs/libbasic.so",
+                "library": "/opt/local/control-agent-commands.so",
                 "parameters": {
                     "param1": "foo"
                 }
