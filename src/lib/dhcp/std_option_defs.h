@@ -27,7 +27,6 @@
 #define DHCP_AGENT_OPTION_SPACE          "dhcp-agent-options-space"
 #define VENDOR_OPTION_SPACE              "vendor-opts-space"
 #define VENDOR_ENCAPSULATED_OPTION_SPACE "vendor-encapsulated-options-space"
-#define LQ_QUERY_OPTION_SPACE            "lq-query-option-space"
 
 // NOTE:
 // When adding a new space, make sure you also update
@@ -564,18 +563,6 @@ const OptionDefParams V4V6_BIND_OPTION_DEFINITIONS[] = {
 const int V4V6_BIND_OPTION_DEFINITIONS_SIZE =
     sizeof(V4V6_BIND_OPTION_DEFINITIONS) /
     sizeof(V4V6_BIND_OPTION_DEFINITIONS[0]);
-
-/// @brief LQ_QUERY suboption definitions (v6)
-const OptionDefParams LQ_QUERY_OPTION_DEFINITIONS[] = {
-    { "clientid", D6O_CLIENTID, OPT_BINARY_TYPE, false, NO_RECORD_DEF, ""},
-    { "iaaddr", D6O_IAADDR, OPT_RECORD_TYPE, false, RECORD_DEF(IAADDR_RECORDS), ""},
-    { "oro", D6O_ORO, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" }
-};
-
-const int LQ_QUERY_OPTION_DEFINITIONS_SIZE =
-    sizeof(LQ_QUERY_OPTION_DEFINITIONS) /
-    sizeof(LQ_QUERY_OPTION_DEFINITIONS[0]);
-
 
 }  // namespace
 
