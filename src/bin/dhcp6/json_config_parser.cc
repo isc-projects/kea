@@ -696,7 +696,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
             parameter_name = config_pair.first;
 
-            // This are converted to SimpleParser and are handled already above.
+            // These are converted to SimpleParser and are handled already above.
             if ((config_pair.first == "data-directory") ||
                 (config_pair.first == "option-def")  ||
                 (config_pair.first == "option-data") ||
