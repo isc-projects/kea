@@ -14,7 +14,6 @@
 #include <string>
 
 #include <exceptions/exceptions.h>
-#include <log/logger_impl.h>
 #include <log/logger_level.h>
 #include <log/message_types.h>
 #include <log/log_formatter.h>
@@ -161,7 +160,7 @@ public:
     /// \note Note also that there is no constructor taking a std::string. This
     /// minimizes the possibility of initializing a static logger with a
     /// string, so leading to problems mentioned above.
-    Logger(const char* name) : loggerptr_(), initialized_(false) {
+    Logger(const char* name) : loggerptr_(0), initialized_(false) {
 
         // Validate the name of the logger.
         if (name) {
@@ -337,13 +336,13 @@ private:
     /// cause a "LoggingNotInitialized" exception to be thrown.
     ///
     /// \return Returns pointer to implementation
-    LoggerImplPtr getLoggerPtr();
+    LoggerImpl* getLoggerPtr();
 
     /// \brief Initialize Underlying Implementation and Set loggerptr_
     void initLoggerImpl();
 
     ///< Pointer to underlying logger
-    LoggerImplPtr loggerptr_;
+    LoggerImpl* loggerptr_;
 
     ///< Copy of the logger name
     char name_[MAX_LOGGER_NAME_SIZE + 1];
