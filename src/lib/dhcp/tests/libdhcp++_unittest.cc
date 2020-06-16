@@ -1925,7 +1925,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(OptionIntArray<uint16_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_LQ_QUERY, begin, end,
-                                    typeid(OptionCustom), LQ_QUERY_OPTION_SPACE);
+                                    typeid(OptionCustom), DHCP6_OPTION_SPACE);
 
     LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_DATA, begin, end,
                                     typeid(OptionCustom), DHCP6_OPTION_SPACE);

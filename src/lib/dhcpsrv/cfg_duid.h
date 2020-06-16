@@ -112,6 +112,9 @@ public:
 
     /// @brief Creates instance of a DUID from the current configuration.
     ///
+    /// The newly created DUID is retained internally to make it accessible
+    /// anywhere.
+    ///
     /// @param duid_file_path Absolute path to a DUID file.
     /// @return Pointer to an instance of new DUID.
     DuidPtr create(const std::string& duid_file_path);

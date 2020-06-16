@@ -1,4 +1,4 @@
-// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,6 +53,9 @@ CfgDUID::setIdentifier(const std::string& identifier_as_hex) {
 
 DuidPtr
 CfgDUID::create(const std::string& duid_file_path) {
+    // Forget the current DUID.
+    current_duid_.reset();
+
     // Use DUID factory to create a DUID instance.
     DUIDFactory factory(persist() ? duid_file_path : "");
 
@@ -72,8 +75,10 @@ CfgDUID::create(const std::string& duid_file_path) {
                   << " to create a new DUID");
     }
 
-    // Return generated DUID.
+    // Save the newly created DUID.
     current_duid_ = factory.get();
+
+    // Return generated DUID.
     return (current_duid_);
 }
 
