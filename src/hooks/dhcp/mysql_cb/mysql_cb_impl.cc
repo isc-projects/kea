@@ -213,7 +213,6 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time),
-            MySqlBinding::createTimestamp(modification_time),
             MySqlBinding::createInteger<uint64_t>(modification_id)
         };
 
