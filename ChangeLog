@@ -1,3 +1,9 @@
+1759.	[bug]*		fdupont
+	Fixed the way configuration global entries are parsed in DHCPv4
+	and DHCPv6 servers. We expect this change will not be visible
+	for sane configurations.
+	(Gitlab #1245)
+
 1758.	[func]*		fdupont
 	Earlier Kea versions converted "comment" entries to "user-context"
 	scope in the configuration when using config-get. This backwards
