@@ -1,6 +1,6 @@
 1759.	[bug]*		fdupont
 	Fixed the way configuration global entries are parsed in DHCPv4
-	and DHCPv6 servers. We expect this change will not be visible
+	and DHCPv6 servers. We expect that the change will not be visible
 	for sane configurations.
 	(Gitlab #1245)
 
