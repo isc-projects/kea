@@ -432,7 +432,7 @@ public:
     std::string logExistingAuditEntries(const std::string& server_tag) {
         std::ostringstream s;
 
-        auto& mod_time_idx = audit_entries_[server_tag].get<AuditEntryModificationTimeTag>();
+        auto& mod_time_idx = audit_entries_[server_tag].get<AuditEntryModificationTimeIdTag>();
 
         for (auto audit_entry_it = mod_time_idx.begin();
              audit_entry_it != mod_time_idx.end();
@@ -442,6 +442,7 @@ public:
               << audit_entry->getObjectId() << ", "
               << static_cast<int>(audit_entry->getModificationType()) << ", "
               << audit_entry->getModificationTime() << ", "
+              << audit_entry->getEntryId() << ", "
               << audit_entry->getLogMessage()
               << std::endl;
         }
@@ -492,11 +493,11 @@ public:
         // Audit entries for different server tags are stored in separate
         // containers.
         audit_entries_[tag] = cbptr_->getRecentAuditEntries(server_selector,
-                                                            timestamps_["two days ago"]);
+                                                            timestamps_["two days ago"], 0);
         ASSERT_EQ(audit_entries_size_save + new_entries_num, audit_entries_[tag].size())
             << logExistingAuditEntries(tag);
 
-        auto& mod_time_idx = audit_entries_[tag].get<AuditEntryModificationTimeTag>();
+        auto& mod_time_idx = audit_entries_[tag].get<AuditEntryModificationTimeIdTag>();
 
         // Iterate over specified number of entries starting from the most recent
         // one and check they have correct values.

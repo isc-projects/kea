@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,8 +62,8 @@ namespace process {
 /// - use the "config-control" specification to connect to the specified
 ///   databases via the configuration backends,
 /// - fetch the audit trail to detect configuration updates,
-/// - store the timestamp of the most recent audit entry fetched from the
-///   database, so as next time it can fetch only the later updates.
+/// - store the timestamp and id of the most recent audit entry fetched
+///   from the database, so as next time it can fetch only the later updates.
 ///
 /// The server specific part to be implemented in derived classes must
 /// correctly interpret the audit entries and make appropriate API calls
@@ -92,9 +92,11 @@ public:
 
     /// @brief Constructor.
     ///
-    /// Sets the time of the last fetched audit entry to Jan 1st, 1970.
+    /// Sets the time of the last fetched audit entry to Jan 1st, 1970,
+    /// with id 0.
     CBControlBase()
-        : last_audit_entry_time_(getInitialAuditEntryTime()) {
+        : last_audit_entry_time_(getInitialAuditEntryTime()),
+          last_audit_entry_id_(0) {
     }
 
     /// @brief Virtual destructor.
@@ -107,10 +109,11 @@ public:
     /// @brief Resets the state of this object.
     ///
     /// Disconnects the configuration backends resets the recorded last
-    /// audit entry time.
+    /// audit entry time and id.
     void reset() {
         databaseConfigDisconnect();
         last_audit_entry_time_ = getInitialAuditEntryTime();
+        last_audit_entry_id_ = 0;
     }
 
     /// @brief (Re)connects to the specified configuration backends.
@@ -200,13 +203,16 @@ public:
 
         // Save the timestamp indicating last audit entry time.
         auto lb_modification_time = last_audit_entry_time_;
+        // Save the identifier indicating last audit entry id.
+        auto lb_modification_id = last_audit_entry_id_;
 
         audit_entries = getMgr().getPool()->getRecentAuditEntries(backend_selector,
                                                                   server_selector,
-                                                                  lb_modification_time);
+                                                                  lb_modification_time,
+                                                                  lb_modification_id);
         // Store the last audit entry time. It should be set to the most recent
         // audit entry fetched. If returned audit is empty we don't update.
-        updateLastAuditEntryTime(audit_entries);
+        updateLastAuditEntryTimeId(audit_entries);
 
         // If this is full reconfiguration we don't need the audit entries anymore.
         // Let's remove them and proceed as if they don't exist.
@@ -223,11 +229,12 @@ public:
                 databaseConfigApply(backend_selector, server_selector,
                                     lb_modification_time, audit_entries);
             } catch (...) {
-                // Revert last audit entry time so as we can retry from the
-                // last successful attempt.
+                // Revert last audit entry time and id so as we can retry
+                // from the last successful attempt.
                 /// @todo Consider reverting to the initial value to reload
                 /// the entire configuration if the update failed.
                 last_audit_entry_time_ = lb_modification_time;
+                last_audit_entry_id_ = lb_modification_id;
                 throw;
             }
         }
@@ -326,7 +333,7 @@ protected:
     /// returns without updating the timestamp.
     ///
     /// @param audit_entries reference to the collection of the fetched audit entries.
-    void updateLastAuditEntryTime(const db::AuditEntryCollection& audit_entries) {
+    void updateLastAuditEntryTimeId(const db::AuditEntryCollection& audit_entries) {
         // Do nothing if there are no audit entries. It is the case if
         // there were no updates to the configuration.
         if (audit_entries.empty()) {
@@ -335,12 +342,21 @@ protected:
 
         // Get the audit entries sorted by modification time and pick the
         // latest entry.
-        const auto& index = audit_entries.get<db::AuditEntryModificationTimeTag>();
-        last_audit_entry_time_ = ((*index.rbegin())->getModificationTime());
+        const auto& index = audit_entries.get<db::AuditEntryModificationTimeIdTag>();
+        last_audit_entry_time_ = (*index.rbegin())->getModificationTime();
+        last_audit_entry_id_ = (*index.rbegin())->getEntryId();
     }
 
-    /// @brief Stores the most recent audit entry.
+    /// @brief Stores the most recent audit entry timestamp.
     boost::posix_time::ptime last_audit_entry_time_;
+
+    /// @brief Stores the most recent audit entry identifier.
+    ///
+    /// The identifier is used when two (or more) audit entries have
+    /// the same timestamp. It is not used by itself because timestamps
+    /// are more user friendly. Unfortunately old versions of MySQL do not
+    /// support millisecond timestamps.
+    uint64_t last_audit_entry_id_;
 };
 
 } // end of namespace isc::process

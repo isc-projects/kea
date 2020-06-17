@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -91,11 +91,12 @@ TEST_F(AuditEntryTest, create) {
 
         ASSERT_NO_THROW(audit_entry = AuditEntry::create
                         ("dhcp4_subnet", 10, AuditEntry::ModificationType::DELETE,
-                         fixedTime(), "deleted subnet 10"));
+                         fixedTime(), 123, "deleted subnet 10"));
         EXPECT_EQ("dhcp4_subnet", audit_entry->getObjectType());
         EXPECT_EQ(10, audit_entry->getObjectId());
         EXPECT_EQ(AuditEntry::ModificationType::DELETE, audit_entry->getModificationType());
         EXPECT_EQ(fixedTime(), audit_entry->getModificationTime());
+        EXPECT_EQ(123, audit_entry->getEntryId());
         EXPECT_EQ("deleted subnet 10", audit_entry->getLogMessage());
     }
 
@@ -104,11 +105,12 @@ TEST_F(AuditEntryTest, create) {
 
         ASSERT_NO_THROW(audit_entry = AuditEntry::create
                         ("dhcp4_option", 123, AuditEntry::ModificationType::CREATE,
-                         ""));
+                         234, ""));
         EXPECT_EQ("dhcp4_option", audit_entry->getObjectType());
         EXPECT_EQ(123, audit_entry->getObjectId());
         EXPECT_EQ(AuditEntry::ModificationType::CREATE, audit_entry->getModificationType());
         EXPECT_TRUE(almostEqualTime(audit_entry->getModificationTime()));
+        EXPECT_EQ(234, audit_entry->getEntryId());
         EXPECT_TRUE(audit_entry->getLogMessage().empty());
     }
 }
@@ -118,7 +120,7 @@ TEST_F(AuditEntryTest, createFailures) {
     {
         SCOPED_TRACE("empty object type");
         EXPECT_THROW(AuditEntry("", 10, AuditEntry::ModificationType::DELETE,
-                                fixedTime(), "deleted subnet 10"),
+                                fixedTime(), 123, "deleted subnet 10"),
                      BadValue);
     }
 
@@ -126,7 +128,8 @@ TEST_F(AuditEntryTest, createFailures) {
         SCOPED_TRACE("not a date time");
         EXPECT_THROW(AuditEntry("dhcp4_subnet", 10,
                                 AuditEntry::ModificationType::DELETE,
-                                boost::posix_time::ptime(), "deleted subnet 10"),
+                                boost::posix_time::ptime(), 123,
+                                "deleted subnet 10"),
                      BadValue);
     }
 }
@@ -171,17 +174,17 @@ public:
     /// the tests.
     void createTestAuditEntries() {
         create("dhcp4_subnet", 10, AuditEntry::ModificationType::CREATE,
-               diffTime(-5), "added subnet 10");
+               diffTime(-5), 100, "added subnet 10");
         create("dhcp4_shared_network", 1, AuditEntry::ModificationType::CREATE,
-               diffTime(-5), "added shared network 1");
+               diffTime(-5), 110, "added shared network 1");
         create("dhcp4_shared_network", 120, AuditEntry::ModificationType::UPDATE,
-               diffTime(-8), "updated shared network 120");
+               diffTime(-8), 90, "updated shared network 120");
         create("dhcp4_subnet", 120, AuditEntry::ModificationType::DELETE,
-               diffTime(8), "deleted subnet 120");
+               diffTime(8), 130, "deleted subnet 120");
         create("dhcp4_subnet", 1000, AuditEntry::ModificationType::CREATE,
-               diffTime(4), "created subnet 1000");
+               diffTime(4), 120, "created subnet 1000");
         create("dhcp4_option", 15, AuditEntry::ModificationType::UPDATE,
-               diffTime(16), "updated option 15");
+               diffTime(16), 140, "updated option 15");
     }
 
     /// @brief Checks if the returned results range contains an @c AuditEntry
@@ -237,7 +240,7 @@ TEST_F(AuditEntryCollectionTest, getByObjectType) {
 
 // Checks that entries can be found by modification time.
 TEST_F(AuditEntryCollectionTest, getByModificationTime) {
-    const auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeTag>();
+    const auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeIdTag>();
 
     // Search for objects later than fixed time - 10s.
     auto lb = mod_time_idx.lower_bound(diffTime(-10));
@@ -280,6 +283,20 @@ TEST_F(AuditEntryCollectionTest, getByModificationTime) {
     lb = mod_time_idx.lower_bound(diffTime(20));
     // None found.
     ASSERT_EQ(0, std::distance(lb, mod_time_idx.end()));
+}
+
+// Checks that entries can be found by modification time and id.
+TEST_F(AuditEntryCollectionTest, getByModificationTimeAndId) {
+    const auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeIdTag>();
+
+    // Search for objects later than added added subnet 10.
+    auto mod = boost::make_tuple(diffTime(-5), 100 + 1);
+    auto lb = mod_time_idx.lower_bound(mod);
+    ASSERT_EQ(4, std::distance(lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 120, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 1000, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_shared_network", 1, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_option", 15, lb, mod_time_idx.end()));
 }
 
 }

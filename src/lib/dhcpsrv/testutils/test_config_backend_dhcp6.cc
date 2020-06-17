@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -510,7 +510,8 @@ TestConfigBackendDHCPv6::getModifiedGlobalParameters6(const db::ServerSelector& 
 
 AuditEntryCollection
 TestConfigBackendDHCPv6::getRecentAuditEntries(const db::ServerSelector&,
-                                               const boost::posix_time::ptime&) const {
+                                               const boost::posix_time::ptime&,
+                                               const uint64_t&) const {
     return (AuditEntryCollection());
 }
 

@@ -3002,12 +3002,15 @@ MySqlConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector&
 
 AuditEntryCollection
 MySqlConfigBackendDHCPv4::getRecentAuditEntries(const db::ServerSelector& server_selector,
-        const boost::posix_time::ptime& modification_time) const {
+        const boost::posix_time::ptime& modification_time,
+        const uint64_t& modification_id) const {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4)
-        .arg(util::ptimeToText(modification_time));
+      .arg(util::ptimeToText(modification_time))
+      .arg(modification_id);
     AuditEntryCollection audit_entries;
     impl_->getRecentAuditEntries(MySqlConfigBackendDHCPv4Impl::GET_AUDIT_ENTRIES4_TIME,
-                                 server_selector, modification_time, audit_entries);
+                                 server_selector, modification_time,
+                                 modification_id, audit_entries);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4_RESULT)
         .arg(audit_entries.size());
     return (audit_entries);

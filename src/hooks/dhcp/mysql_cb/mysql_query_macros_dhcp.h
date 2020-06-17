@@ -617,13 +617,16 @@ namespace {
     "  a.object_id," \
     "  a.modification_type," \
     "  r.modification_ts," \
+    "  r.id, " \
     "  r.log_message " \
     "FROM " #table_prefix "_audit AS a " \
     "INNER JOIN " #table_prefix "_audit_revision AS r " \
     "  ON a.revision_id = r.id " \
     "INNER JOIN " #table_prefix "_server AS s" \
     "  ON r.server_id = s.id " \
-    "WHERE (s.tag = ? OR s.id = 1) AND (r.modification_ts > ?) " \
+    "WHERE (s.tag = ? OR s.id = 1) AND" \
+    " ((r.modification_ts > ?) OR " \
+    "  ((r.modification_ts = ?) AND (r.id > ?))) " \
     "ORDER BY r.modification_ts, r.id"
 #endif
 

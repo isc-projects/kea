@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,19 +39,23 @@ public:
     ///
     /// @param modification_time The lower bound time for which audit
     /// entries should be returned.
+    /// @param modification_id The lower bound id for which audit
+    /// entries should be returned.
     ///
     /// @return Collection of audit entries later than specified time.
     virtual db::AuditEntryCollection
     getRecentAuditEntries(const db::ServerSelector&,
-                          const boost::posix_time::ptime& modification_time) const {
+                          const boost::posix_time::ptime& modification_time,
+                          const uint64_t modification_id) const {
         db::AuditEntryCollection filtered_entries;
 
         // Use the index which orders the audit entries by timestamps.
-        const auto& index = audit_entries_.get<AuditEntryModificationTimeTag>();
+        const auto& index = audit_entries_.get<AuditEntryModificationTimeIdTag>();
 
         // Locate the first audit entry after the last one having the
-        // specified modification time.
-        auto first_entry = index.upper_bound(modification_time);
+        // specified modification time and id.
+        auto modification = boost::make_tuple(modification_time, modification_id);
+        auto first_entry = index.upper_bound(modification);
 
         // If there are any entries found return them.
         if (first_entry != index.end()) {
@@ -66,15 +70,18 @@ public:
     /// @param object_type Object type to be stored in the audit entry.
     /// @param object_id Object id to be stored in the audit entry.
     /// @param modification_time Audit entry modification time to be set.
+    /// @param modification_id Audit entry modification id to be set.
     void addAuditEntry(const ServerSelector&,
                        const std::string& object_type,
                        const uint64_t object_id,
-                       const boost::posix_time::ptime& modification_time) {
+                       const boost::posix_time::ptime& modification_time,
+                       const uint64_t modification_id) {
         // Create new audit entry from the specified parameters.
         AuditEntryPtr audit_entry(new AuditEntry(object_type,
                                                  object_id,
                                                  AuditEntry::ModificationType::CREATE,
                                                  modification_time,
+                                                 modification_id,
                                                  "added audit entry"));
 
         // The audit entries are held in the static variable so as they
@@ -143,15 +150,17 @@ public:
     /// @param object_type Object type to be stored in the audit entry.
     /// @param object_id Object id to be stored in the audit entry.
     /// @param modification_time Audit entry modification time to be set.
+    /// @param modification_id Audit entry modification id to be set.
     void addAuditEntry(const BackendSelector& backend_selector,
                        const ServerSelector& server_selector,
                        const std::string& object_type,
                        const uint64_t object_id,
-                       const boost::posix_time::ptime& modification_time) {
+                       const boost::posix_time::ptime& modification_time,
+                       const uint64_t modification_id) {
         createUpdateDeleteProperty<void, const std::string&, uint64_t,
-                                   const boost::posix_time::ptime&>
+                                   const boost::posix_time::ptime&, uint64_t>
             (&CBControlBackend::addAuditEntry, backend_selector, server_selector,
-             object_type, object_id, modification_time);
+             object_type, object_id, modification_time, modification_id);
     }
 
     /// @brief Retrieves the audit entries later than specified time.
@@ -160,16 +169,20 @@ public:
     /// @param server_selector Server selector.
     /// @param modification_time The lower bound time for which audit
     /// entries should be returned.
+    /// @param modification_id The lower bound id for which audit
+    /// entries should be returned.
     ///
     /// @return Collection of audit entries later than specified time.
     virtual db::AuditEntryCollection
     getRecentAuditEntries(const BackendSelector& backend_selector,
                           const ServerSelector& server_selector,
-                          const boost::posix_time::ptime& modification_time) const {
+                          const boost::posix_time::ptime& modification_time,
+                          const uint64_t modification_id) const {
         AuditEntryCollection audit_entries;
         getMultiplePropertiesConst<AuditEntryCollection, const boost::posix_time::ptime&>
             (&CBControlBackend::getRecentAuditEntries, backend_selector,
-             server_selector, audit_entries, modification_time);
+             server_selector, audit_entries, modification_time,
+             modification_id);
         return (audit_entries);
     }
 };
@@ -286,11 +299,23 @@ public:
         return (last_audit_entry_time_);
     }
 
+    /// @brief Returns the recorded id of last audit entry.
+    uint64_t getLastAuditEntryId() const {
+        return (last_audit_entry_id_);
+    }
+
     /// @brief Overwrites the last audit entry time.
     ///
     /// @param last_audit_entry_time New time to be set.
     void setLastAuditEntryTime(const boost::posix_time::ptime& last_audit_entry_time) {
         last_audit_entry_time_ = last_audit_entry_time;
+    }
+
+    /// @brief Overwrites the last audit entry id.
+    ///
+    /// @param last_audit_entry_id New id to be set.
+    void setLastAuditEntryId(const uint64_t& last_audit_entry_id) {
+        last_audit_entry_id_ = last_audit_entry_id;
     }
 
     /// @brief Enables the @c databaseConfigApply function to throw.
@@ -400,6 +425,7 @@ TEST_F(CBControlBaseTest, reset) {
     cb_ctl_.setLastAuditEntryTime(timestamps_["tomorrow"]);
     cb_ctl_.reset();
     EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
+    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
 }
 
 // This test verifies that it is correctly determined whether the
@@ -418,7 +444,7 @@ TEST_F(CBControlBaseTest, fetchConfigElement) {
     // no reason to fetch the data from the database.
     AuditEntryPtr audit_entry(new AuditEntry("dhcp4_subnet", 1234 ,
                                              AuditEntry::ModificationType::DELETE,
-                                             "added audit entry"));
+                                             2345, "added audit entry"));
     audit_entries.insert(audit_entry);
     EXPECT_FALSE(cb_ctl_.fetchConfigElement(audit_entries, "my_object_type"));
 
@@ -426,14 +452,14 @@ TEST_F(CBControlBaseTest, fetchConfigElement) {
     // This time we should get 'true'.
     audit_entry.reset(new AuditEntry("my_object_type", 5678,
                                      AuditEntry::ModificationType::CREATE,
-                                     "added audit entry"));
+                                     6789, "added audit entry"));
     audit_entries.insert(audit_entry);
     EXPECT_TRUE(cb_ctl_.fetchConfigElement(audit_entries, "my_object_type"));
 
     // Also we should get 'true' for the UPDATE case.
     audit_entry.reset(new AuditEntry("another_object_type",
                                      5678, AuditEntry::ModificationType::UPDATE,
-                                     "added audit entry"));
+                                     6790, "added audit entry"));
     audit_entries.insert(audit_entry);
     EXPECT_TRUE(cb_ctl_.fetchConfigElement(audit_entries, "another_object_type"));
 }
@@ -462,13 +488,15 @@ TEST_F(CBControlBaseTest, fetchAll) {
                                               ServerSelector::ALL(),
                                               "sql_table_2",
                                               1234,
-                                              timestamps_["yesterday"]);
+                                              timestamps_["yesterday"],
+                                              2345);
 
     cb_ctl_.getMgr().getPool()->addAuditEntry(BackendSelector::UNSPEC(),
                                               ServerSelector::ALL(),
                                               "sql_table_1",
                                               3456,
-                                              timestamps_["today"]);
+                                              timestamps_["today"],
+                                              4567);
 
     // Disconnect from the database in order to check that the
     // databaseConfigFetch reconnects.
@@ -480,6 +508,7 @@ TEST_F(CBControlBaseTest, fetchAll) {
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
+    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
 
     // Connect to the database and fetch the configuration.
     ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base));
@@ -495,6 +524,7 @@ TEST_F(CBControlBaseTest, fetchAll) {
     // audit entry, so as the server will only later fetch config
     // updates after this timestamp.
     EXPECT_EQ(timestamps_["today"], cb_ctl_.getLastAuditEntryTime());
+    EXPECT_EQ(4567, cb_ctl_.getLastAuditEntryId());
 }
 
 // This test verifies that the configuration can be fetched for a
@@ -510,6 +540,7 @@ TEST_F(CBControlBaseTest, fetchFromServer) {
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
+    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
 
     ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base));
 
@@ -540,7 +571,8 @@ TEST_F(CBControlBaseTest, fetchUpdates) {
                                               ServerSelector::ALL(),
                                               "sql_table_1",
                                               3456,
-                                              timestamps_["today"]);
+                                              timestamps_["today"],
+                                              4567);
 
     // Verify that various indicators are set to their initial values.
     ASSERT_EQ(0, cb_ctl_.getMergesNum());
@@ -548,6 +580,7 @@ TEST_F(CBControlBaseTest, fetchUpdates) {
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
+    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
 
     ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base,
                                                 CBControl::FetchMode::FETCH_UPDATE));
@@ -560,6 +593,7 @@ TEST_F(CBControlBaseTest, fetchUpdates) {
     EXPECT_EQ(ServerSelector::Type::ALL, cb_ctl_.getServerSelector().getType());
     // The last audit entry time should be set to the latest audit entry.
     EXPECT_EQ(timestamps_["today"], cb_ctl_.getLastAuditEntryTime());
+    EXPECT_EQ(4567, cb_ctl_.getLastAuditEntryId());
 }
 
 // Check that the databaseConfigApply function is not called when there
@@ -571,6 +605,7 @@ TEST_F(CBControlBaseTest, fetchNoUpdates) {
     // entry we are going to add. That means that there will be
     // no new audit entries to fetch.
     cb_ctl_.setLastAuditEntryTime(timestamps_["yesterday"]);
+    cb_ctl_.setLastAuditEntryId(4567);
 
     ASSERT_TRUE(cb_ctl_.databaseConfigConnect(config_base));
 
@@ -578,7 +613,8 @@ TEST_F(CBControlBaseTest, fetchNoUpdates) {
                                               ServerSelector::ALL(),
                                               "sql_table_1",
                                               3456,
-                                              timestamps_["yesterday"]);
+                                              timestamps_["yesterday"],
+                                              4567);
 
     ASSERT_EQ(0, cb_ctl_.getMergesNum());
 
@@ -603,7 +639,8 @@ TEST_F(CBControlBaseTest, fetchFailure) {
                                               ServerSelector::ALL(),
                                               "sql_table_1",
                                               3456,
-                                              timestamps_["today"]);
+                                              timestamps_["today"],
+                                              4567);
 
     // Configure the CBControl to always throw simulating the failure
     // during configuration merge.
@@ -615,6 +652,7 @@ TEST_F(CBControlBaseTest, fetchFailure) {
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
+    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
 
     ASSERT_THROW(cb_ctl_.databaseConfigFetch(config_base, CBControl::FetchMode::FETCH_UPDATE),
                  isc::Unexpected);
@@ -628,7 +666,7 @@ TEST_F(CBControlBaseTest, fetchFailure) {
     // The last audit entry time should not be modified because there was a merge
     // error.
     EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
-
+    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
 }
 
 }

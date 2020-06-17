@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -239,11 +239,14 @@ public:
     /// @param server_selector Server selector.
     /// @param modification_time Timestamp being a lower limit for the returned
     /// result set, i.e. entries later than specified time are returned.
+    /// @param modification_id Identifier being a lower limit for the returned
+    /// result set, used when two (or more) entries have modification_time.
     /// @param [out] audit_entries Reference to the container where fetched audit
     /// entries will be inserted.
     void getRecentAuditEntries(const int index,
                                const db::ServerSelector& server_selector,
                                const boost::posix_time::ptime& modification_time,
+                               const uint64_t& modification_id,
                                db::AuditEntryCollection& audit_entries);
 
     /// @brief Sends query to delete rows from a table.

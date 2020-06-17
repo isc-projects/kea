@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 
 $NAMESPACE isc::cb
 
@@ -429,14 +429,14 @@ Debug message issued when triggered an action to retrieve port
 % MYSQL_CB_GET_PORT6 get port
 Debug message issued when triggered an action to retrieve port
 
-% MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4 retrieving audit entries from: %1
-Debug message issued when triggered an action to retrieve audit entries from specified time
+% MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4 retrieving audit entries from: %1 %2
+Debug message issued when triggered an action to retrieve audit entries from specified time and id.
 
 % MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4_RESULT retrieving: %1 elements
 Debug message indicating the result of an action to retrieve audit entries from specified time
 
-% MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6 retrieving audit entries from: %1
-Debug message issued when triggered an action to retrieve audit entries from specified time
+% MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6 retrieving audit entries from: %1 %2
+Debug message issued when triggered an action to retrieve audit entries from specified time and id
 
 % MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6_RESULT retrieving: %1 elements
 Debug message indicating the result of an action to retrieve audit entries from specified time

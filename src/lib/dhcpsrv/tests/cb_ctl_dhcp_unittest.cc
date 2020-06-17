@@ -70,7 +70,7 @@ public:
     void addCreateAuditEntry(const std::string& object_type) {
         AuditEntryPtr entry(new AuditEntry(object_type, 1234,
                                            AuditEntry::ModificationType::CREATE,
-                                           "some log message"));
+                                           2345, "some log message"));
         audit_entries_.insert(entry);
     }
 
@@ -86,7 +86,7 @@ public:
                              const uint64_t object_id) {
         AuditEntryPtr entry(new AuditEntry(object_type, object_id,
                                            AuditEntry::ModificationType::DELETE,
-                                           "some log message"));
+                                           1234, "some log message"));
         audit_entries_.insert(entry);
     }
 

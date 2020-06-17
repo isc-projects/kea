@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Tue Jun 25 2019 16:12
+// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Wed Jun 17 2020 02:55
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -317,9 +317,9 @@ const char* values[] = {
     "MYSQL_CB_GET_OPTION_DEF6", "retrieving option definition code: %1 space: %2",
     "MYSQL_CB_GET_PORT4", "get port",
     "MYSQL_CB_GET_PORT6", "get port",
-    "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4", "retrieving audit entries from: %1",
+    "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4", "retrieving audit entries from: %1 %2",
     "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4_RESULT", "retrieving: %1 elements",
-    "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6", "retrieving audit entries from: %1",
+    "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6", "retrieving audit entries from: %1 %2",
     "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6_RESULT", "retrieving: %1 elements",
     "MYSQL_CB_GET_SERVER4", "retrieving DHCPv4 server: %1",
     "MYSQL_CB_GET_SERVER6", "retrieving DHCPv6 server: %1",

@@ -192,6 +192,7 @@ void
 MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
                                               const db::ServerSelector& server_selector,
                                               const boost::posix_time::ptime& modification_time,
+                                              const uint64_t& modification_id,
                                               AuditEntryCollection& audit_entries) {
     // Create the output bindings for receiving the data.
     MySqlBindingCollection out_bindings = {
@@ -200,6 +201,7 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
         MySqlBinding::createInteger<uint64_t>(), // object_id
         MySqlBinding::createInteger<uint8_t>(), // modification_type
         MySqlBinding::createTimestamp(), // modification_time
+        MySqlBinding::createInteger<uint64_t>(), // revision_id
         MySqlBinding::createString(AUDIT_ENTRY_LOG_MESSAGE_BUF_LENGTH) // log_message
     };
 
@@ -207,10 +209,12 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
 
     for (auto tag : tags) {
 
-        // There is only one input binding, modification time.
+        // There are only a few input bindings
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(tag.get()),
-            MySqlBinding::createTimestamp(modification_time)
+            MySqlBinding::createTimestamp(modification_time),
+            MySqlBinding::createTimestamp(modification_time),
+            MySqlBinding::createInteger<uint64_t>(modification_id)
         };
 
         // Execute select.
@@ -227,7 +231,8 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
                                    out_bindings[2]->getInteger<uint64_t>(),
                                    mod_type,
                                    out_bindings[4]->getTimestamp(),
-                                   out_bindings[5]->getStringOrDefault(""));
+                                   out_bindings[5]->getInteger<uint64_t>(),
+                                   out_bindings[6]->getStringOrDefault(""));
             audit_entries.insert(audit_entry);
         });
     }
