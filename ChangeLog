@@ -1,3 +1,7 @@
+1760.	[bug]		razvan
+	Fixed log message on DHCPv6 IA_NA lease renew.
+	(Gitlab #1276)
+
 1759.	[bug]*		fdupont
 	Fixed the way configuration global entries are parsed in DHCPv4
 	and DHCPv6 servers. We expect that the change will not be visible
