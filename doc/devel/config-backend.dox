@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -81,7 +81,7 @@ The following are some details of the JSON backend framework.
    option). From the implementation perspective, this is slight change
    from the BIND10 days, as back then a subset of the configuration was received by
    the daemon processes. Nowadays the whole configuration is passed. To take a
-   specific example, the following is how b10-config.db looks today:
+   specific example, the following is how b10-config.db looked many years ago:
    @code
    {
      "Init": { ... }
@@ -115,6 +115,7 @@ The following are some details of the JSON backend framework.
    start, stop and reconfigure the daemons. Its only
    job is to pass the configuration file to each daemon and remember its PID file, so
    that sending signals is possible (for configuration reload or shutdown). It is also
-   able to print out a status.
-
+   able to print out a status.<br/><br/>
+-# The capability to share the same configuration file between servers and
+   agents, and the Logging toplevel entry, were removed in 1.7.9.
 */

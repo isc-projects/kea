@@ -701,7 +701,6 @@ control_socket_name: SOCKET_NAME {
 
 // --- loggers entry -----------------------------------------
 
-// is "Loggers": [ ... ].
 loggers: LOGGERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
