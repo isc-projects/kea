@@ -2318,10 +2318,9 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
             min_preferred_lft = (*l)->preferred_lft_;
         }
 
-        LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
+        LOG_INFO(lease6_logger, DHCP6_LEASE_RENEW)
             .arg(query->getLabel())
             .arg((*l)->addr_.toText())
-            .arg(static_cast<int>((*l)->prefixlen_))
             .arg(ia->getIAID());
 
         // Now remove this prefix from the hints list.
