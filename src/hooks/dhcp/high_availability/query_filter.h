@@ -10,11 +10,15 @@
 #include <ha_config.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+
+#include <boost/scoped_ptr.hpp>
+
 #include <cstdint>
 #include <map>
-#include <vector>
+#include <mutex>
 #include <set>
 #include <string>
+#include <vector>
 
 namespace isc {
 namespace ha {
@@ -165,9 +169,81 @@ public:
     bool inScope(const dhcp::Pkt6Ptr& query6, std::string& scope_class) const;
 
 private:
+    /// @brief Enable scope.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// Starts serving queries from the specified scope. It doesn't affect
+    /// other scopes.
+    ///
+    /// @param scope_name name of the scope/server to be enabled.
+    /// @throw BadValue if scope name doesn't match any of the server names.
+    void serveScopeInternal(const std::string& scope_name);
+
+    /// @brief Enable scope and disable all other scopes.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// Starts serving queries from the specified scope. Disable all other
+    /// scopes.
+    ///
+    /// @param scope_name name of the scope/server to be enabled.
+    /// @throw BadValue if scope name doesn't match any of the server names.
+    void serveScopeOnlyInternal(const std::string& scope_name);
+
+    /// @brief Enables selected scopes.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// All non listed scopes are disabled.
+    ///
+    /// @param scopes vector of scope names to be enabled.
+    void serveScopesInternal(const std::vector<std::string>& scopes);
+
+    /// @brief Serve default scopes for the given HA mode.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// If this server is primary or secondary (load balancing), the scope
+    /// of this server is enabled. All other scopes are disabled.
+    void serveDefaultScopesInternal();
+
+    /// @brief Enable scopes required in failover case.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// In the load balancing case, the scopes of the primary and secondary
+    /// servers are enabled (this server will handle the entire traffic).
+    /// In the hot standby case, the primary server's scope is enabled
+    /// (this server will handle the entire traffic normally processed by
+    /// the primary server).
+    void serveFailoverScopesInternal();
+
+    /// @brief Disables all scopes.
+    ///
+    /// Should be called in a thread safe context.
+    void serveNoScopesInternal();
+
+    /// @brief Checks if this server instance is configured to process traffic
+    /// belonging to a particular scope.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param scope_name name of the scope/server.
+    /// @return true if the scope is enabled.
+    bool amServingScopeInternal(const std::string& scope_name) const;
+
+    /// @brief Returns served scopes.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// This method is mostly useful for testing purposes.
+    std::set<std::string> getServedScopesInternal() const;
 
     /// @brief Generic implementation of the @c inScope function for DHCPv4
     /// and DHCPv6 queries.
+    ///
+    /// Should be called in a thread safe context.
     ///
     /// @tparam QueryPtrType type of the query, i.e. DHCPv4 or DHCPv6 query.
     /// @param query pointer to the DHCP query instance.
@@ -258,6 +334,9 @@ protected:
 
     /// @brief Number of the active servers in the given HA mode.
     int active_servers_;
+
+    /// @brief Mutex to protect the internal state.
+    boost::scoped_ptr<std::mutex> mutex_;
 };
 
 } // end of namespace isc::ha

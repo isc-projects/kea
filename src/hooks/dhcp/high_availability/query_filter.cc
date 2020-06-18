@@ -12,12 +12,15 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <exceptions/exceptions.h>
+#include <util/multi_threading_mgr.h>
+
 #include <array>
 #include <iostream>
 #include <sstream>
 
 using namespace isc::dhcp;
 using namespace isc::log;
+using namespace isc::util;
 
 namespace {
 
@@ -50,7 +53,8 @@ namespace isc {
 namespace ha {
 
 QueryFilter::QueryFilter(const HAConfigPtr& config)
-    : config_(config), peers_(), scopes_(), active_servers_(0) {
+    : config_(config), peers_(), scopes_(), active_servers_(0),
+      mutex_(new std::mutex) {
 
     // Make sure that the configuration is valid. We make certain
     // assumptions about the availability of the servers' configurations
@@ -101,26 +105,56 @@ QueryFilter::QueryFilter(const HAConfigPtr& config)
 
 void
 QueryFilter::serveScope(const std::string& scope_name) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        serveScopeInternal(scope_name);
+    } else {
+        serveScopeInternal(scope_name);
+    }
+}
+
+void
+QueryFilter::serveScopeInternal(const std::string& scope_name) {
     validateScopeName(scope_name);
     scopes_[scope_name] = true;
 }
 
 void
 QueryFilter::serveScopeOnly(const std::string& scope_name) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        serveScopeOnlyInternal(scope_name);
+    } else {
+        serveScopeOnlyInternal(scope_name);
+    }
+}
+
+void
+QueryFilter::serveScopeOnlyInternal(const std::string& scope_name) {
     validateScopeName(scope_name);
-    serveNoScopes();
-    serveScope(scope_name);
+    serveNoScopesInternal();
+    serveScopeInternal(scope_name);
 }
 
 void
 QueryFilter::serveScopes(const std::vector<std::string>& scopes) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        serveScopesInternal(scopes);
+    } else {
+        serveScopesInternal(scopes);
+    }
+}
+
+void
+QueryFilter::serveScopesInternal(const std::vector<std::string>& scopes) {
     // Remember currently enabled scopes in case we fail to process
     // the provided list of scopes.
     auto current_scopes = scopes_;
     try {
-        serveNoScopes();
+        serveNoScopesInternal();
         for (size_t i = 0; i < scopes.size(); ++i) {
-            serveScope(scopes[i]);
+            serveScopeInternal(scopes[i]);
         }
 
     } catch (...) {
@@ -133,25 +167,45 @@ QueryFilter::serveScopes(const std::vector<std::string>& scopes) {
 
 void
 QueryFilter::serveDefaultScopes() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        serveDefaultScopesInternal();
+    } else {
+        serveDefaultScopesInternal();
+    }
+}
+
+void
+QueryFilter::serveDefaultScopesInternal() {
     // Get this server instance configuration.
     HAConfig::PeerConfigPtr my_config = config_->getThisServerConfig();
     HAConfig::PeerConfig::Role my_role = my_config->getRole();
 
     // Clear scopes.
-    serveNoScopes();
+    serveNoScopesInternal();
 
     // If I am primary or secondary, then I am only responsible for my own
     // scope.  If I am standby, I am not responsible for any scope.
     if ((my_role == HAConfig::PeerConfig::PRIMARY) ||
         (my_role == HAConfig::PeerConfig::SECONDARY)) {
-        serveScope(my_config->getName());
+        serveScopeInternal(my_config->getName());
     }
 }
 
 void
 QueryFilter::serveFailoverScopes() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        serveFailoverScopesInternal();
+    } else {
+        serveFailoverScopesInternal();
+    }
+}
+
+void
+QueryFilter::serveFailoverScopesInternal() {
     // Clear scopes.
-    serveNoScopes();
+    serveNoScopesInternal();
 
     // Iterate over the roles of all servers to see which scope should
     // be enabled.
@@ -164,13 +218,23 @@ QueryFilter::serveFailoverScopes() {
         // server.
         if (((*peer)->getRole() == HAConfig::PeerConfig::PRIMARY) ||
             ((*peer)->getRole() == HAConfig::PeerConfig::SECONDARY)) {
-            serveScope((*peer)->getName());
+            serveScopeInternal((*peer)->getName());
         }
     }
 }
 
 void
 QueryFilter::serveNoScopes() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        serveNoScopesInternal();
+    } else {
+        serveNoScopesInternal();
+    }
+}
+
+void
+QueryFilter::serveNoScopesInternal() {
     scopes_.clear();
 
     // Disable scope for each peer in the configuration.
@@ -181,12 +245,32 @@ QueryFilter::serveNoScopes() {
 
 bool
 QueryFilter::amServingScope(const std::string& scope_name) const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (amServingScopeInternal(scope_name));
+    } else {
+        return (amServingScopeInternal(scope_name));
+    }
+}
+
+bool
+QueryFilter::amServingScopeInternal(const std::string& scope_name) const {
     auto scope = scopes_.find(scope_name);
     return ((scope == scopes_.end()) || (scope->second));
 }
 
 std::set<std::string>
 QueryFilter::getServedScopes() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getServedScopesInternal());
+    } else {
+        return (getServedScopesInternal());
+    }
+}
+
+std::set<std::string>
+QueryFilter::getServedScopesInternal() const {
     std::set<std::string> scope_set;
     for (auto scope : scopes_) {
         if (scope.second) {
@@ -198,12 +282,22 @@ QueryFilter::getServedScopes() const {
 
 bool
 QueryFilter::inScope(const dhcp::Pkt4Ptr& query4, std::string& scope_class) const {
-    return (inScopeInternal(query4, scope_class));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (inScopeInternal(query4, scope_class));
+    } else {
+        return (inScopeInternal(query4, scope_class));
+    }
 }
 
 bool
 QueryFilter::inScope(const dhcp::Pkt6Ptr& query6, std::string& scope_class) const {
-    return (inScopeInternal(query6, scope_class));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (inScopeInternal(query6, scope_class));
+    } else {
+        return (inScopeInternal(query6, scope_class));
+    }
 }
 
 template<typename QueryPtrType>
@@ -229,7 +323,7 @@ QueryFilter::inScopeInternal(const QueryPtrType& query,
 
     auto scope = peers_[candidate_server]->getName();
     scope_class = makeScopeClass(scope);
-    return ((candidate_server >= 0) && amServingScope(scope));
+    return ((candidate_server >= 0) && amServingScopeInternal(scope));
 }
 
 int
@@ -314,7 +408,6 @@ std::string
 QueryFilter::makeScopeClass(const std::string& scope_name) const {
     return (std::string("HA_") + scope_name);
 }
-
 
 } // end of namespace isc::ha
 } // end of namespace isc

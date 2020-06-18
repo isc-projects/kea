@@ -13,6 +13,8 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/hwaddr.h>
+#include <util/multi_threading_mgr.h>
+
 #include <cstdint>
 #include <string>
 
@@ -21,15 +23,86 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::ha;
 using namespace isc::ha::test;
+using namespace util;
 
 namespace  {
 
 /// @brief Test fixture class for @c QueryFilter class.
-using QueryFilterTest = HATest;
+class QueryFilterTest : public HATest {
+public:
+    /// @brief Constructor.
+    QueryFilterTest() {
+        MultiThreadingMgr::instance().setMode(false);
+    }
 
-// This test verifies the case when load balancing is enabled and
-// this server is primary.
-TEST_F(QueryFilterTest, loadBalancingThisPrimary) {
+    /// @brief Destructor.
+    ~QueryFilterTest() {
+        MultiThreadingMgr::instance().setMode(false);
+    }
+
+    /// @brief This test verifies that client identifier is used for load
+    /// balancing.
+    void loadBalancingClientIdThisPrimary();
+
+    /// @brief This test verifies the case when load balancing is enabled and
+    /// this server is primary.
+    void loadBalancingThisPrimary();
+
+    /// @brief This test verifies the case when load balancing is enabled and
+    /// this server is secondary.
+    void loadBalancingThisSecondary();
+
+    /// @brief This test verifies the case when load balancing is enabled and
+    /// this server is backup.
+    /// @todo Expand these tests once we implement the actual load balancing to
+    /// verify which packets are in scope.
+    void loadBalancingThisBackup();
+
+    /// @brief This test verifies the case when hot-standby is enabled and this
+    /// server is primary.
+    void hotStandbyThisPrimary();
+
+    /// @brief This test verifies the case when hot-standby is enabled and this
+    /// server is standby.
+    void hotStandbyThisSecondary();
+
+    /// @brief This test verifies the case when hot-standby is enabled and this
+    /// server is backup.
+    void hotStandbyThisBackup();
+
+    /// @brief This test verifies the case when load balancing is enabled and
+    /// this server is primary.
+    void loadBalancingThisPrimary6();
+
+    /// @brief This test verifies the case when load balancing is enabled and
+    /// this server is secondary.
+    void loadBalancingThisSecondary6();
+
+    /// @brief This test verifies the case when load balancing is enabled and
+    /// this server is backup.
+    /// @todo Expand these tests once we implement the actual load balancing to
+    /// verify which packets are in scope.
+    void loadBalancingThisBackup6();
+
+    /// @brief This test verifies the case when hot-standby is enabled and this
+    /// server is primary.
+    void hotStandbyThisPrimary6();
+
+    /// @brief This test verifies the case when hot-standby is enabled and this
+    /// server is standby.
+    void hotStandbyThisSecondary6();
+
+    /// @brief This test verifies the case when hot-standby is enabled and this
+    /// server is backup.
+    void hotStandbyThisBackup6();
+
+    /// @brief This test verifies that it is possible to explicitly enable and
+    /// disable certain scopes.
+    void explicitlyServeScopes();
+};
+
+void
+QueryFilterTest::loadBalancingThisPrimary() {
     HAConfigPtr config = createValidConfiguration();
 
     QueryFilter filter(config);
@@ -85,8 +158,8 @@ TEST_F(QueryFilterTest, loadBalancingThisPrimary) {
     EXPECT_FALSE(filter.inScope(query4, scope_class));
 }
 
-// This test verifies that client identifier is used for load balancing.
-TEST_F(QueryFilterTest, loadBalancingClientIdThisPrimary) {
+void
+QueryFilterTest::loadBalancingClientIdThisPrimary() {
     HAConfigPtr config = createValidConfiguration();
 
     QueryFilter filter(config);
@@ -140,9 +213,8 @@ TEST_F(QueryFilterTest, loadBalancingClientIdThisPrimary) {
     }
 }
 
-// This test verifies the case when load balancing is enabled and
-// this server is secondary.
-TEST_F(QueryFilterTest, loadBalancingThisSecondary) {
+void
+QueryFilterTest::loadBalancingThisSecondary() {
     HAConfigPtr config = createValidConfiguration();
 
     // We're now a secondary server.
@@ -196,11 +268,8 @@ TEST_F(QueryFilterTest, loadBalancingThisSecondary) {
     }
 }
 
-// This test verifies the case when load balancing is enabled and
-// this server is backup.
-/// @todo Expand these tests once we implement the actual load balancing to
-/// verify which packets are in scope.
-TEST_F(QueryFilterTest, loadBalancingThisBackup) {
+void
+QueryFilterTest::loadBalancingThisBackup() {
     HAConfigPtr config = createValidConfiguration();
 
     config->setThisServerName("server3");
@@ -241,9 +310,8 @@ TEST_F(QueryFilterTest, loadBalancingThisBackup) {
     }
 }
 
-// This test verifies the case when hot-standby is enabled and this
-// server is primary.
-TEST_F(QueryFilterTest, hotStandbyThisPrimary) {
+void
+QueryFilterTest::hotStandbyThisPrimary() {
     HAConfigPtr config = createValidConfiguration();
 
     config->setHAMode("hot-standby");
@@ -278,9 +346,8 @@ TEST_F(QueryFilterTest, hotStandbyThisPrimary) {
     EXPECT_NE(scope_class, "HA_server2");
 }
 
-// This test verifies the case when hot-standby is enabled and this
-// server is standby.
-TEST_F(QueryFilterTest, hotStandbyThisSecondary) {
+void
+QueryFilterTest::hotStandbyThisSecondary() {
     HAConfigPtr config = createValidConfiguration();
 
     config->setHAMode("hot-standby");
@@ -318,9 +385,8 @@ TEST_F(QueryFilterTest, hotStandbyThisSecondary) {
     EXPECT_NE(scope_class, "HA_server2");
 }
 
-// This test verifies the case when hot-standby is enabled and this
-// server is backup.
-TEST_F(QueryFilterTest, hotStandbyThisBackup) {
+void
+QueryFilterTest::hotStandbyThisBackup() {
     HAConfigPtr config = createValidConfiguration();
 
     config->setHAMode("hot-standby");
@@ -354,9 +420,8 @@ TEST_F(QueryFilterTest, hotStandbyThisBackup) {
     EXPECT_TRUE(filter.inScope(query4, scope_class));
 }
 
-// This test verifies the case when load balancing is enabled and
-// this DHCPv6 server is primary.
-TEST_F(QueryFilterTest, loadBalancingThisPrimary6) {
+void
+QueryFilterTest::loadBalancingThisPrimary6() {
     HAConfigPtr config = createValidConfiguration();
 
     QueryFilter filter(config);
@@ -411,9 +476,8 @@ TEST_F(QueryFilterTest, loadBalancingThisPrimary6) {
     EXPECT_FALSE(filter.inScope(query6, scope_class));
 }
 
-// This test verifies the case when load balancing is enabled and
-// this server is secondary.
-TEST_F(QueryFilterTest, loadBalancingThisSecondary6) {
+void
+QueryFilterTest::loadBalancingThisSecondary6() {
     HAConfigPtr config = createValidConfiguration();
 
     // We're now a secondary server.
@@ -467,11 +531,8 @@ TEST_F(QueryFilterTest, loadBalancingThisSecondary6) {
     }
 }
 
-// This test verifies the case when load balancing is enabled and
-// this server is backup.
-/// @todo Expand these tests once we implement the actual load balancing to
-/// verify which packets are in scope.
-TEST_F(QueryFilterTest, loadBalancingThisBackup6) {
+void
+QueryFilterTest::loadBalancingThisBackup6() {
     HAConfigPtr config = createValidConfiguration();
 
     config->setThisServerName("server3");
@@ -512,9 +573,8 @@ TEST_F(QueryFilterTest, loadBalancingThisBackup6) {
     }
 }
 
-// This test verifies the case when hot-standby is enabled and this
-// server is primary.
-TEST_F(QueryFilterTest, hotStandbyThisPrimary6) {
+void
+QueryFilterTest::hotStandbyThisPrimary6() {
     HAConfigPtr config = createValidConfiguration();
 
     config->setHAMode("hot-standby");
@@ -549,9 +609,8 @@ TEST_F(QueryFilterTest, hotStandbyThisPrimary6) {
     EXPECT_NE(scope_class, "HA_server2");
 }
 
-// This test verifies the case when hot-standby is enabled and this
-// server is standby.
-TEST_F(QueryFilterTest, hotStandbyThisSecondary6) {
+void
+QueryFilterTest::hotStandbyThisSecondary6() {
     HAConfigPtr config = createValidConfiguration();
 
     config->setHAMode("hot-standby");
@@ -589,9 +648,43 @@ TEST_F(QueryFilterTest, hotStandbyThisSecondary6) {
     EXPECT_NE(scope_class, "HA_server2");
 }
 
-// This test verifies that it is possible to explicitly enable and
-// disable certain scopes.
-TEST_F(QueryFilterTest, explicitlyServeScopes) {
+void
+QueryFilterTest::hotStandbyThisBackup6() {
+    HAConfigPtr config = createValidConfiguration();
+
+    config->setHAMode("hot-standby");
+    config->getPeerConfig("server2")->setRole("standby");
+    config->setThisServerName("server3");
+
+    QueryFilter filter(config);
+
+    Pkt6Ptr query6 = createQuery6(randomKey(10));
+
+    // By default the backup server doesn't process any traffic.
+    EXPECT_FALSE(filter.amServingScope("server1"));
+    EXPECT_FALSE(filter.amServingScope("server2"));
+    EXPECT_FALSE(filter.amServingScope("server3"));
+
+    std::string scope_class;
+
+    EXPECT_FALSE(filter.inScope(query6, scope_class));
+
+    // Simulate failover. Although, backup server never starts handling
+    // other server's traffic automatically, it can be manually instructed
+    // to do so. This simulates such scenario.
+    filter.serveFailoverScopes();
+
+    // The backup server now handles the entire traffic, i.e. the traffic
+    // that the primary server handles.
+    EXPECT_TRUE(filter.amServingScope("server1"));
+    EXPECT_FALSE(filter.amServingScope("server2"));
+    EXPECT_FALSE(filter.amServingScope("server3"));
+
+    EXPECT_TRUE(filter.inScope(query6, scope_class));
+}
+
+void
+QueryFilterTest::explicitlyServeScopes() {
     HAConfigPtr config = createValidConfiguration();
 
     QueryFilter filter(config);
@@ -636,6 +729,132 @@ TEST_F(QueryFilterTest, explicitlyServeScopes) {
     EXPECT_THROW(filter.serveScope("unsupported"), BadValue);
     EXPECT_THROW(filter.serveScopeOnly("unsupported"), BadValue);
     EXPECT_THROW(filter.serveScopes({ "server1", "unsupported" }), BadValue);
+}
+
+TEST_F(QueryFilterTest, loadBalancingClientIdThisPrimary) {
+    loadBalancingClientIdThisPrimary();
+}
+
+TEST_F(QueryFilterTest, loadBalancingClientIdThisPrimaryMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    loadBalancingClientIdThisPrimary();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisPrimary) {
+    loadBalancingThisPrimary();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisPrimaryMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    loadBalancingThisPrimary();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisSecondary) {
+    loadBalancingThisSecondary();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisSecondaryMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    loadBalancingThisSecondary();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisBackup) {
+    loadBalancingThisBackup();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisBackupMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    loadBalancingThisBackup();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisPrimary) {
+    hotStandbyThisPrimary();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisPrimaryMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    hotStandbyThisPrimary();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisSecondary) {
+    hotStandbyThisSecondary();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisSecondaryMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    hotStandbyThisSecondary();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisBackup) {
+    hotStandbyThisBackup();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisBackupMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    hotStandbyThisBackup();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisPrimary6) {
+    loadBalancingThisPrimary6();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisPrimary6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    loadBalancingThisPrimary6();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisSecondary6) {
+    loadBalancingThisSecondary6();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisSecondary6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    loadBalancingThisSecondary6();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisBackup6) {
+    loadBalancingThisBackup6();
+}
+
+TEST_F(QueryFilterTest, loadBalancingThisBackup6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    loadBalancingThisBackup6();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisPrimary6) {
+    hotStandbyThisPrimary6();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisPrimary6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    hotStandbyThisPrimary6();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisSecondary6) {
+    hotStandbyThisSecondary6();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisSecondary6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    hotStandbyThisSecondary6();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisBackup6) {
+    hotStandbyThisBackup6();
+}
+
+TEST_F(QueryFilterTest, hotStandbyThisBackup6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    hotStandbyThisBackup6();
+}
+
+TEST_F(QueryFilterTest, explicitlyServeScopes) {
+    explicitlyServeScopes();
+}
+
+TEST_F(QueryFilterTest, explicitlyServeScopesMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    explicitlyServeScopes();
 }
 
 }
