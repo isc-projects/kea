@@ -112,7 +112,8 @@ void LogContentTest::addString(const string& new_string) {
 }
 
 // Set up the name of the LOG_FILE for use in checking
-// the debug statements. MUST NOT be the same as test shell scripts!
+// the debug statements.
+// Must not be the same file name used by test shell scripts.
 const char *LogContentTest::LOG_FILE = "logtest.log";
 
 } // end of isc::dhcp::test namespace
