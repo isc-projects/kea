@@ -3630,7 +3630,7 @@ GenericLeaseMgrTest::testLeaseStatsQuery6() {
 }
 
 void
-GenericLeaseMgrTest::testLeaseStatsQueryNegative4() {
+GenericLeaseMgrTest::testLeaseStatsQueryAttribution4() {
     // Create two subnets for the same range.
     CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     Subnet4Ptr subnet;
@@ -3638,7 +3638,8 @@ GenericLeaseMgrTest::testLeaseStatsQueryNegative4() {
     subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
     cfg->add(subnet);
 
-    subnet.reset(new Subnet4(IOAddress("192.0.1.1"), 24, 1, 2, 3, 2));
+    // Note it is even allowed to use 192.0.1.1/24 here...
+    subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 25, 1, 2, 3, 2));
     cfg->add(subnet);
 
     ASSERT_NO_THROW(CfgMgr::instance().commit());
@@ -3671,7 +3672,7 @@ GenericLeaseMgrTest::testLeaseStatsQueryNegative4() {
 }
 
 void
-GenericLeaseMgrTest::testLeaseStatsQueryNegative6() {
+GenericLeaseMgrTest::testLeaseStatsQueryAttribution6() {
     // Create two subnets.
     CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
     Subnet6Ptr subnet;

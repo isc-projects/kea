@@ -1086,8 +1086,7 @@ public:
     /// calls will return false.
     ///
     /// Checks against negative values for the state count and logs once
-    /// a warning message. Unfortunately not getting the message is not
-    /// a proof that detailed counters are correct.
+    /// a warning message.
     ///
     /// @param row Storage for the fetched row
     ///
@@ -1212,8 +1211,8 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : parameters_(parameters) {
 
     // Validate schema version first.
-    std::pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
-                                               PGSQL_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
+                                               PG_SCHEMA_VERSION_MINOR);
     std::pair<uint32_t, uint32_t> db_version = getVersion();
     if (code_version != db_version) {
         isc_throw(DbOpenError,
@@ -1263,8 +1262,8 @@ PgSqlLeaseMgr::createContext() const {
 std::string
 PgSqlLeaseMgr::getDBVersion() {
     std::stringstream tmp;
-    tmp << "PostgreSQL backend " << PGSQL_SCHEMA_VERSION_MAJOR;
-    tmp << "." << PGSQL_SCHEMA_VERSION_MINOR;
+    tmp << "PostgreSQL backend " << PG_SCHEMA_VERSION_MAJOR;
+    tmp << "." << PG_SCHEMA_VERSION_MINOR;
     tmp << ", library " << PQlibVersion();
     return (tmp.str());
 }

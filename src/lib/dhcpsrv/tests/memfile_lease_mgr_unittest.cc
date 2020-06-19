@@ -2258,16 +2258,16 @@ TEST_F(MemfileLeaseMgrTest, leaseStatsQuery6) {
     testLeaseStatsQuery6();
 }
 
-/// @brief Tests v4 lease stats to never go negative.
-TEST_F(MemfileLeaseMgrTest, leaseStatsQueryNegative4) {
+/// @brief Tests v4 lease stats to be attributed to the wrong subnet.
+TEST_F(MemfileLeaseMgrTest, leaseStatsQueryAttribution4) {
     startBackend(V4);
-    testLeaseStatsQueryNegative4();
+    testLeaseStatsQueryAttribution4();
 }
 
-/// @brief Tests v6 lease stats to never go negative.
-TEST_F(MemfileLeaseMgrTest, leaseStatsQueryNegative6) {
+/// @brief Tests v6 lease stats to be attributed to the wrong subnet.
+TEST_F(MemfileLeaseMgrTest, leaseStatsQueryAttribution6) {
     startBackend(V6);
-    testLeaseStatsQueryNegative6();
+    testLeaseStatsQueryAttribution6();
 }
 
 }  // namespace

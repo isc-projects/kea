@@ -467,23 +467,25 @@ public:
     ///
     void testLeaseStatsQuery6();
 
-    /// @brief Checks if v4 LeaseStatsQuery can get negative counters
+    /// @brief Checks if v4 LeaseStatsQuery can get bad attribution.
     ///
     /// It creates two subnets with leases and move one from the first
     /// to the second. If counters are not updated this can lead to
-    /// negative counters.
+    /// bad attribution i.e. a lease is counted in a subnet when it
+    /// belongs to another one.
     ///
-    void testLeaseStatsQueryNegative4();
+    void testLeaseStatsQueryAttribution4();
 
-    /// @brief Checks if v6 LeaseStatsQuery can get negative counters
+    /// @brief Checks if v6 LeaseStatsQuery can get bad attribution.
     ///
     /// It creates two subnets with leases and move one from the first
     /// to the second. If counters are not updated this can lead to
-    /// negative counters.
+    /// bad attribution i.e. a lease is counted in a subnet when it
+    /// belongs to another one.
     ///
     /// @note We can check the lease type change too but in the real
     /// world this never happens.
-    void testLeaseStatsQueryNegative6();
+    void testLeaseStatsQueryAttribution6();
 
     /// @brief Compares LeaseQueryStats content to expected set of rows
     ///

@@ -246,8 +246,8 @@ TEST_F(PgSqlLeaseMgrTest, checkVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
-    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
-    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+    EXPECT_EQ(PG_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PG_SCHEMA_VERSION_MINOR, version.second);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -971,26 +971,26 @@ TEST_F(PgSqlLeaseMgrTest, leaseStatsQuery6MultiThreading) {
     testLeaseStatsQuery6();
 }
 
-/// @brief Tests v4 lease stats to never go negative.
-TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryNegative4) {
-    testLeaseStatsQueryNegative4();
+/// @brief Tests v4 lease stats to be attributed to the wrong subnet.
+TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryAttribution4) {
+    testLeaseStatsQueryAttribution4();
 }
 
-/// @brief Tests v4 lease stats to never go negative.
-TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryNegative4MultiThreading) {
+/// @brief Tests v4 lease stats to be attributed to the wrong subnet.
+TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryAttribution4MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    testLeaseStatsQueryNegative4();
+    testLeaseStatsQueryAttribution4();
 }
 
-/// @brief Tests v6 lease stats to never go negative.
-TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryNegative6) {
-    testLeaseStatsQueryNegative6();
+/// @brief Tests v6 lease stats to be attributed to the wrong subnet.
+TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryAttribution6) {
+    testLeaseStatsQueryAttribution6();
 }
 
-/// @brief Tests v6 lease stats to never go negative.
-TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryNegative6MultiThreading) {
+/// @brief Tests v6 lease stats to be attributed to the wrong subnet.
+TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryAttribution6MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    testLeaseStatsQueryNegative6();
+    testLeaseStatsQueryAttribution6();
 }
 
 }  // namespace

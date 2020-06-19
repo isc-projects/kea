@@ -1015,26 +1015,26 @@ TEST_F(MySqlLeaseMgrTest, leaseStatsQuery6MultiThreading) {
     testLeaseStatsQuery6();
 }
 
-/// @brief Tests v4 lease stats to never go negative.
-TEST_F(MySqlLeaseMgrTest, leaseStatsQueryNegative4) {
-    testLeaseStatsQueryNegative4();
+/// @brief Tests v4 lease stats to be attributed to the wrong subnet.
+TEST_F(MySqlLeaseMgrTest, leaseStatsQueryAttribution4) {
+    testLeaseStatsQueryAttribution4();
 }
 
-/// @brief Tests v4 lease stats to never go negative.
-TEST_F(MySqlLeaseMgrTest, leaseStatsQueryNegative4MultiThreading) {
+/// @brief Tests v4 lease stats to be attributed to the wrong subnet.
+TEST_F(MySqlLeaseMgrTest, leaseStatsQueryAttribution4MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    testLeaseStatsQueryNegative4();
+    testLeaseStatsQueryAttribution4();
 }
 
-/// @brief Tests v6 lease stats to never go negative.
-TEST_F(MySqlLeaseMgrTest, leaseStatsQueryNegative6) {
-    testLeaseStatsQueryNegative6();
+/// @brief Tests v6 lease stats to be attributed to the wrong subnet.
+TEST_F(MySqlLeaseMgrTest, leaseStatsQueryAttribution6) {
+    testLeaseStatsQueryAttribution6();
 }
 
-/// @brief Tests v6 lease stats to never go negative.
-TEST_F(MySqlLeaseMgrTest, leaseStatsQueryNegative6MultiThreading) {
+/// @brief Tests v6 lease stats to be attributed to the wrong subnet.
+TEST_F(MySqlLeaseMgrTest, leaseStatsQueryAttribution6MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    testLeaseStatsQueryNegative6();
+    testLeaseStatsQueryAttribution6();
 }
 
 }  // namespace
