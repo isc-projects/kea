@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -338,4 +338,15 @@ TEST(IOAddressTest, increaseAddr) {
     EXPECT_EQ(IOAddress("::2"), IOAddress::increase(addr11));
     EXPECT_EQ(IOAddress("::1"), IOAddress::increase(any6));
     EXPECT_EQ(IOAddress("::"), IOAddress::increase(the_last_one));
+}
+
+// Test verifies the hash function is sane.
+TEST(IOAddressTest, hash) {
+    size_t hash1 = hash_value(IOAddress("192.0.2.1"));
+    size_t hash2 = hash_value(IOAddress("192.0.2.2"));
+    EXPECT_NE(hash1, hash2);
+
+    hash1 = hash_value(IOAddress("2001:db8::12"));
+    hash2 = hash_value(IOAddress("2001:db8::1234"));
+    EXPECT_NE(hash1, hash2);
 }

@@ -302,6 +302,14 @@ private:
 std::ostream&
 operator<<(std::ostream& os, const IOAddress& address);
 
+/// \brief Hash the IOAddress.
+///
+/// This method allows boost multi-index hashed indexes on IOAddresses.
+///
+/// \param address A \c IOAddress to hash.
+/// \return The hash of the IOAddress.
+std::size_t hash_value(const IOAddress& address);
+
 } // namespace asiolink
 } // namespace isc
 #endif // IO_ADDRESS_H

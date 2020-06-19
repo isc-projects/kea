@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/static_assert.hpp>
+#include <boost/container_hash/hash.hpp>
 
 #include <unistd.h>             // for some IPC/network system calls
 #include <stdint.h>
@@ -172,6 +173,11 @@ IOAddress::increase(const IOAddress& addr) {
     return (IOAddress::fromBytes(addr.getFamily(), &packed[0]));
 }
 
+std::size_t
+hash_value(const IOAddress& address) {
+    boost::hash<std::vector<uint8_t> > hasher;
+    return (hasher(address.toBytes()));
+}
 
 } // namespace asiolink
 } // namespace isc
