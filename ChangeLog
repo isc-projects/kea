@@ -1,5 +1,5 @@
 1762.	[bug]		fdupont
-	Fixed the control command execution: either it was deffered by
+	Fixed the control command execution: either it was defered by
 	DHCP packet processing or a spurious error message was logged.
 	(Gitlab #1234)
 
