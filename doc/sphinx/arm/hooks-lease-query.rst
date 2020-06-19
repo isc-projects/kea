@@ -41,7 +41,7 @@ The inbound DHCPLEASEQUERY packet must supply only one of the three values
 above.  Queries which supply more than one of these values are dropped.
 
 In addition, the query must contain the IP address of the requester in
-``giaddr.`` This value will be used not only as the destination for the
+``giaddr``. This value will be used not only as the destination for the
 query response but also to validate the requester against a known
 list of IP addresses which are permitted to query.  This list of valid
 requester addresses is specified as part of the Leasequery hook library's
@@ -288,7 +288,7 @@ If the lease with the most recent CLTT value (Client Last
 Transmission Time) has relay information in it's user-context (see
 :ref:`store-extended-info-v6`), then an OPTION_LQ_RELAY_DATA option will be
 added to the reply (see
-`RFC 5007, Section 4.1.2.4 <https://tools.ietf.org/html/rfc5007#section-4.1.2.4>`__)
+`RFC 5007, Section 4.1.2.4 <https://tools.ietf.org/html/rfc5007#section-4.1.2.4>`__).
 
 The relay information on the lease is a list with an entry for each
 relay layer the client packet (e.g. DHCPV6_REQUEST) traversed, with the
