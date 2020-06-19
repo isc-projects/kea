@@ -12,8 +12,7 @@ Lease Query (`RFC 5007 <https://tools.ietf.org/html/rfc5007>`__).
    This library may only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.
 
-The Leasequery library is part of the premium source code and is
-available to ISC's paid support customers.
+The Leasequery library is only available to ISC customers with a paid support contract.
 
 .. _lease-query-dhcpv4:
 
