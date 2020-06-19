@@ -141,6 +141,11 @@ addresses:
     ],
  :
 
+.. note::
+
+    For security purposes, there is no way to specify wildcards. Each requester address
+    must be explicitly listed.
+
 .. _lease-query-dhcpv6:
 
 DHCPv6 Leasequery
@@ -175,8 +180,8 @@ attached to a DHCPV6_LEASEQUERY message.  Briefly,
 .. note::
 
     `RFC 5007, Section 3.3 <https://tools.ietf.org/html/rfc5007#section-3.3>`__
-    states that querying by IP address should return either a leases (e.g.
-    binding) for the address itself or a lese for a delegated prefix that
+    states that querying by IP address should return either a lease (e.g.
+    binding) for the address itself or a lease for a delegated prefix that
     contains the address.  The latter is not currently implemented. Leases for
     delegated prefixes may only be returned when querying by client ID. See
     `gitlab issue #1275 <https://gitlab.isc.org/isc-projects/kea/-/issues/1275>`__
@@ -276,7 +281,7 @@ The client-data option will encapsulate the following options:
    |                              |       | - valid life time reduced by CLTT             |
    |                              |       | - preferred life time reduced by CLTT         |
    +------------------------------+-------+-----------------------------------------------+
-   | iaprefix                     |   5   | One option per matched prefix, fields in      |
+   | iaprefix                     |   26  | One option per matched prefix, fields in      |
    |                              |       | each option:                                  |
    |                              |       | - prefix                                      |
    |                              |       | - prefix length                               |
@@ -321,3 +326,8 @@ addresses:
         }
     ],
  :
+
+.. note::
+
+    For security purposes, there is no way to specify wildcards. Each requester address
+    must be explicitly listed.
