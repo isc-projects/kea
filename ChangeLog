@@ -1,3 +1,8 @@
+1762.	[bug]		fdupont
+	Fixed the control command execution: either it was deffered by
+	DHCP packet processing or a spurious error message was logged.
+	(Gitlab #1234)
+
 1761.	[bug]		fdupont
 	Found and fixed a possible source of incorrect statistics cached
 	in MySQL and PostgreSQL lease databases which in some cases
