@@ -96,7 +96,7 @@ TEST_F(AuditEntryTest, create) {
         EXPECT_EQ(10, audit_entry->getObjectId());
         EXPECT_EQ(AuditEntry::ModificationType::DELETE, audit_entry->getModificationType());
         EXPECT_EQ(fixedTime(), audit_entry->getModificationTime());
-        EXPECT_EQ(123, audit_entry->getEntryId());
+        EXPECT_EQ(123, audit_entry->getModificationId());
         EXPECT_EQ("deleted subnet 10", audit_entry->getLogMessage());
     }
 
@@ -110,7 +110,7 @@ TEST_F(AuditEntryTest, create) {
         EXPECT_EQ(123, audit_entry->getObjectId());
         EXPECT_EQ(AuditEntry::ModificationType::CREATE, audit_entry->getModificationType());
         EXPECT_TRUE(almostEqualTime(audit_entry->getModificationTime()));
-        EXPECT_EQ(234, audit_entry->getEntryId());
+        EXPECT_EQ(234, audit_entry->getModificationId());
         EXPECT_TRUE(audit_entry->getLogMessage().empty());
     }
 }
@@ -210,6 +210,32 @@ public:
         return (false);
     }
 
+    /// @brief Checks if the returned results range contains an @c AuditEntry
+    /// with a given object and modification types, and object identifier.
+    ///
+    /// @param object_type expected object type.
+    /// @param object_id expected object id.
+    /// @param modification_type expected modification type.
+    /// @param begin beginning of the results range to be examined.
+    /// @param end end of the results range to be examined.
+    template<typename Iterator>
+    bool includes(const std::string& object_type, const uint64_t object_id,
+                  const AuditEntry::ModificationType& modification_type,
+                  Iterator begin, Iterator end) {
+        // Iterate over the results range and look for the entry.
+        for (auto it = begin; it != end; ++it) {
+            if (((*it)->getObjectType() == object_type) &&
+                ((*it)->getObjectId() == object_id) &&
+                ((*it)->getModificationType() == modification_type)) {
+                // Entry found.
+                return (true);
+            }
+        }
+
+        // Entry not found.
+        return (false);
+    }
+
     /// @brief Audit entries used in the tests.
     AuditEntryCollection audit_entries_;
 
@@ -297,6 +323,40 @@ TEST_F(AuditEntryCollectionTest, getByModificationTimeAndId) {
     EXPECT_TRUE(includes("dhcp4_subnet", 1000, lb, mod_time_idx.end()));
     EXPECT_TRUE(includes("dhcp4_shared_network", 1, lb, mod_time_idx.end()));
     EXPECT_TRUE(includes("dhcp4_option", 15, lb, mod_time_idx.end()));
+
+    // Check the order is time first, id after.
+    create("dhcp4_subnet", 1000, AuditEntry::ModificationType::UPDATE,
+           diffTime(-8), 200, "updated subnet 1000");
+    lb = mod_time_idx.lower_bound(mod);
+    ASSERT_EQ(4, std::distance(lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 120, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 1000, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_shared_network", 1, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_option", 15, lb, mod_time_idx.end()));
+}
+
+// Checks that entries can be found by object id.
+TEST_F(AuditEntryCollectionTest, getByObjectId) {
+    const auto& object_id_idx = audit_entries_.get<AuditEntryObjectIdTag>();
+
+    // Search for object id 10.
+    auto range =  object_id_idx.equal_range(10);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    EXPECT_TRUE(includes("dhcp4_subnet", 10, range.first, range.second));
+
+    // Add another entry.
+    create("dhcp4_subnet", 10, AuditEntry::ModificationType::UPDATE,
+           diffTime(0), 111, "updated subnet 10");
+
+    // Now search should return two entries.
+    range =  object_id_idx.equal_range(10);
+    ASSERT_EQ(2, std::distance(range.first, range.second));
+    EXPECT_TRUE(includes("dhcp4_subnet", 10,
+                         AuditEntry::ModificationType::CREATE,
+                         range.first, range.second));
+    EXPECT_TRUE(includes("dhcp4_subnet", 10,
+                         AuditEntry::ModificationType::UPDATE,
+                         range.first, range.second));
 }
 
 }

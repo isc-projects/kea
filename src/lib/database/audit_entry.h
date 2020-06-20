@@ -10,6 +10,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/shared_ptr.hpp>
@@ -40,7 +41,7 @@ typedef boost::shared_ptr<AuditEntry> AuditEntryPtr;
 /// entries with later modification time than stored. That way the
 /// server queries only for the audit entries it hasn't fetched yet.
 /// In the case two (or more) successive audit entries have the same
-/// modification time the strictly increasing id is used.
+/// modification time the strictly increasing modification id is used.
 ///
 /// When the modification type of the entry is set to
 /// @c AuditEntry::ModificationType::DELETE, the corresponding
@@ -180,7 +181,7 @@ public:
     /// @brief Returns entry id.
     ///
     /// @return Identifier of the entry.
-    uint64_t getEntryId() const {
+    uint64_t getModificationId() const {
         return (id_);
     }
 
@@ -224,6 +225,9 @@ struct AuditEntryObjectTypeTag { };
 /// @brief Tag used to access index by modification time.
 struct AuditEntryModificationTimeIdTag { };
 
+/// @brief Tag used to access index by object id.
+struct AuditEntryObjectIdTag { };
+
 /// @brief Multi index container holding @c AuditEntry instances.
 ///
 /// This container provides indexes to access the audit entries
@@ -263,8 +267,18 @@ typedef boost::multi_index_container<
                 boost::multi_index::const_mem_fun<
                     AuditEntry,
                     uint64_t,
-                    &AuditEntry::getEntryId
+                    &AuditEntry::getModificationId
                 >
+            >
+        >,
+
+        // Third index allows for accessing by the object id.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<AuditEntryObjectIdTag>,
+            boost::multi_index::const_mem_fun<
+                AuditEntry,
+                uint64_t,
+                &AuditEntry::getObjectId
             >
         >
     >

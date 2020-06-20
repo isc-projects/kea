@@ -442,7 +442,7 @@ public:
               << audit_entry->getObjectId() << ", "
               << static_cast<int>(audit_entry->getModificationType()) << ", "
               << audit_entry->getModificationTime() << ", "
-              << audit_entry->getEntryId() << ", "
+              << audit_entry->getModificationId() << ", "
               << audit_entry->getLogMessage()
               << std::endl;
         }

@@ -231,7 +231,8 @@ public:
     /// @param modification_time Timestamp being a lower limit for the returned
     /// result set, i.e. entries later than specified time are returned.
     /// @param modification_id Identifier being a lower limit for the returned
-    /// result set, used when two (or more) entries have modification_time.
+    /// result set, used when two (or more) entries have the same
+    /// modification_time.
     /// @return Collection of audit entries.
     virtual db::AuditEntryCollection
     getRecentAuditEntries(const db::ServerSelector& server_selector,

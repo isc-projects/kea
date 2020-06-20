@@ -344,7 +344,7 @@ protected:
         // latest entry.
         const auto& index = audit_entries.get<db::AuditEntryModificationTimeIdTag>();
         last_audit_entry_time_ = (*index.rbegin())->getModificationTime();
-        last_audit_entry_id_ = (*index.rbegin())->getEntryId();
+        last_audit_entry_id_ = (*index.rbegin())->getModificationId();
     }
 
     /// @brief Stores the most recent audit entry timestamp.

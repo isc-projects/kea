@@ -240,7 +240,8 @@ public:
     /// @param modification_time Timestamp being a lower limit for the returned
     /// result set, i.e. entries later than specified time are returned.
     /// @param modification_id Identifier being a lower limit for the returned
-    /// result set, used when two (or more) entries have modification_time.
+    /// result set, used when two (or more) entries have the same
+    /// modification_time.
     /// @param [out] audit_entries Reference to the container where fetched audit
     /// entries will be inserted.
     void getRecentAuditEntries(const int index,
