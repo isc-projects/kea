@@ -305,10 +305,13 @@ operator<<(std::ostream& os, const IOAddress& address);
 /// \brief Hash the IOAddress.
 ///
 /// This method allows boost multi-index hashed indexes on IOAddresses.
+/// It follows the requirement with equality: if two addresses are equal
+/// their hashes are equal, if two addresses are not equal their hashes
+/// are almost surely not equal.
 ///
 /// \param address A \c IOAddress to hash.
 /// \return The hash of the IOAddress.
-std::size_t hash_value(const IOAddress& address);
+size_t hash_value(const IOAddress& address);
 
 } // namespace asiolink
 } // namespace isc

@@ -173,10 +173,15 @@ IOAddress::increase(const IOAddress& addr) {
     return (IOAddress::fromBytes(addr.getFamily(), &packed[0]));
 }
 
-std::size_t
+size_t
 hash_value(const IOAddress& address) {
-    boost::hash<std::vector<uint8_t> > hasher;
-    return (hasher(address.toBytes()));
+    if (address.isV4()) {
+        boost::hash<uint32_t> hasher;
+        return (hasher(address.toUint32()));
+    } else {
+        boost::hash<std::vector<uint8_t> > hasher;
+        return (hasher(address.toBytes()));
+    }
 }
 
 } // namespace asiolink
