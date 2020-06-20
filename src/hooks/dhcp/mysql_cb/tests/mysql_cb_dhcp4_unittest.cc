@@ -416,12 +416,18 @@ public:
         // Current time minus 1 hour to make sure it is in the past.
         timestamps_["today"] = boost::posix_time::second_clock::local_time()
             - boost::posix_time::hours(1);
+        // One second after today.
+        timestamps_["after today"] = timestamps_["today"] + boost::posix_time::seconds(1);
         // Yesterday.
         timestamps_["yesterday"] = timestamps_["today"] - boost::posix_time::hours(24);
+        // One second after yesterday.
+        timestamps_["after yesterday"] = timestamps_["yesterday"] + boost::posix_time::seconds(1);
         // Two days ago.
         timestamps_["two days ago"] = timestamps_["today"] - boost::posix_time::hours(48);
         // Tomorrow.
         timestamps_["tomorrow"] = timestamps_["today"] + boost::posix_time::hours(24);
+        // One second after tomorrow.
+        timestamps_["after tomorrow"] = timestamps_["tomorrow"] + boost::posix_time::seconds(1);
     }
 
     /// @brief Logs audit entries in the @c audit_entries_ member.
@@ -1061,7 +1067,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedGlobalParameters4) {
 
     // Get parameters modified after "today".
     auto parameters = cbptr_->getModifiedGlobalParameters4(ServerSelector::ALL(),
-                                                           timestamps_["today"]);
+                                                           timestamps_["after today"]);
 
     const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
@@ -1077,7 +1083,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedGlobalParameters4) {
     // Should be able to fetct these parameters when explicitly providing
     // the server tag.
     parameters = cbptr_->getModifiedGlobalParameters4(ServerSelector::ONE("server1"),
-                                                      timestamps_["today"]);
+                                                      timestamps_["after today"]);
     EXPECT_EQ(1, parameters.size());
 }
 
@@ -1920,24 +1926,24 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSubnets4) {
     // should be returned.
     Subnet4Collection
         subnets = cbptr_->getModifiedSubnets4(ServerSelector::ALL(),
-                                              timestamps_["today"]);
+                                              timestamps_["after today"]);
     ASSERT_EQ(1, subnets.size());
 
     // All subnets should also be returned for explicitly specified server tag.
     subnets = cbptr_->getModifiedSubnets4(ServerSelector::ONE("server1"),
-                                          timestamps_["today"]);
+                                          timestamps_["after today"]);
     ASSERT_EQ(1, subnets.size());
 
     // Fetch subnets with timestamp later than yesterday. We should get
     // two subnets.
     subnets = cbptr_->getModifiedSubnets4(ServerSelector::ALL(),
-                                          timestamps_["yesterday"]);
+                                          timestamps_["after yesterday"]);
     ASSERT_EQ(2, subnets.size());
 
     // Fetch subnets with timestamp later than tomorrow. Nothing should
     // be returned.
     subnets = cbptr_->getModifiedSubnets4(ServerSelector::ALL(),
-                                          timestamps_["tomorrow"]);
+                                          timestamps_["after tomorrow"]);
     ASSERT_TRUE(subnets.empty());
 }
 
@@ -2622,19 +2628,19 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSharedNetworks4) {
     // shared network  should be returned.
     SharedNetwork4Collection
         networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::ALL(),
-                                                      timestamps_["today"]);
+                                                      timestamps_["after today"]);
     ASSERT_EQ(1, networks.size());
 
     // Fetch shared networks with timestamp later than yesterday. We
     // should get two shared networks.
     networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::ALL(),
-                                                 timestamps_["yesterday"]);
+                                                 timestamps_["after yesterday"]);
     ASSERT_EQ(2, networks.size());
 
     // Fetch shared networks with timestamp later than tomorrow. Nothing
     // should be returned.
     networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::ALL(),
-                                                  timestamps_["tomorrow"]);
+                                                  timestamps_["after tomorrow"]);
     ASSERT_TRUE(networks.empty());
 }
 
@@ -3290,19 +3296,19 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptionDefs4) {
     // option definition should be returned.
     OptionDefContainer
         option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::ALL(),
-                                                     timestamps_["today"]);
+                                                     timestamps_["after today"]);
     ASSERT_EQ(1, option_defs.size());
 
     // Fetch option definitions with timestamp later than yesterday. We
     // should get two option definitions.
     option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::ALL(),
-                                                 timestamps_["yesterday"]);
+                                                 timestamps_["after yesterday"]);
     ASSERT_EQ(2, option_defs.size());
 
     // Fetch option definitions with timestamp later than tomorrow. Nothing
     // should be returned.
     option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::ALL(),
-                                              timestamps_["tomorrow"]);
+                                              timestamps_["after tomorrow"]);
     ASSERT_TRUE(option_defs.empty());
 }
 
@@ -3638,13 +3644,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptions4) {
     // one option should be returned.
     OptionContainer returned_options =
         cbptr_->getModifiedOptions4(ServerSelector::ALL(),
-                                    timestamps_["today"]);
+                                    timestamps_["after today"]);
     ASSERT_EQ(1, returned_options.size());
 
     // Fetching modified options with explicitly specified server selector
     // should return the same result.
     returned_options = cbptr_->getModifiedOptions4(ServerSelector::ONE("server1"),
-                                                   timestamps_["today"]);
+                                                   timestamps_["after today"]);
     ASSERT_EQ(1, returned_options.size());
 
     // The returned option should be the one with the timestamp
@@ -4090,6 +4096,43 @@ TEST_F(MySqlConfigBackendDHCPv4Test, sharedNetworkOptionIdOrder) {
             EXPECT_EQ(level2->toElement()->str(),
                   networks[i]->toElement()->str());
         }
+    }
+}
+
+/// This test verifies that audit entries can be retrieved from a given
+/// timestamp and id including when two entries can get the same timestamp.
+/// (either it is a common even and this should catch it, or it is a rare
+/// event and it does not matter).
+TEST_F(MySqlConfigBackendDHCPv4Test, multipleAuditEntries) {
+    // Get current time.
+    boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+
+    // Create a server.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[1]));
+
+    // Create a global parameter and update it many times.
+    const ServerSelector& server_selector = ServerSelector::ALL();
+    StampedValuePtr param;
+    ElementPtr value;
+    for (int i = 0; i < 100; ++i) {
+        value = Element::create(i);
+        param = StampedValue::create("my-parameter", value);
+        cbptr_->createUpdateGlobalParameter4(server_selector, param);
+    }
+
+    // Get all audit entries from now.
+    AuditEntryCollection audit_entries =
+        cbptr_->getRecentAuditEntries(server_selector, now, 0);
+
+    // Check that partial retrieves return the right count.
+    auto& mod_time_idx = audit_entries.get<AuditEntryModificationTimeIdTag>();
+    for (auto it = mod_time_idx.begin(); it != mod_time_idx.end(); ++it) {
+        size_t partial_size =
+            cbptr_->getRecentAuditEntries(server_selector,
+                                          (*it)->getModificationTime(),
+                                          (*it)->getModificationId()).size();
+        EXPECT_EQ(partial_size + 1,
+                  std::distance(it, mod_time_idx.end()));
     }
 }
 

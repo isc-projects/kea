@@ -2700,7 +2700,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Select modified global parameters.
     { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_GLOBAL_PARAMETERS6,
-      MYSQL_GET_GLOBAL_PARAMETER(dhcp6, AND g.modification_ts > ?)
+      MYSQL_GET_GLOBAL_PARAMETER(dhcp6, AND g.modification_ts >= ?)
     },
 
     // Delete all global parameters which are unassigned to any servers.
@@ -2750,12 +2750,12 @@ TaggedStatementArray tagged_statements = { {
 
     // Select subnets having modification time later than X.
     { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_SUBNETS6,
-      MYSQL_GET_SUBNET6_NO_TAG(WHERE s.modification_ts > ?)
+      MYSQL_GET_SUBNET6_NO_TAG(WHERE s.modification_ts >= ?)
     },
 
     // Select modified and unassigned subnets.
     { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_SUBNETS6_UNASSIGNED,
-      MYSQL_GET_SUBNET6_UNASSIGNED(AND s.modification_ts > ?)
+      MYSQL_GET_SUBNET6_UNASSIGNED(AND s.modification_ts >= ?)
     },
 
     // Select subnets belonging to a shared network.
@@ -2812,12 +2812,12 @@ TaggedStatementArray tagged_statements = { {
 
     // Select modified shared networks.
     { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_SHARED_NETWORKS6,
-      MYSQL_GET_SHARED_NETWORK6_NO_TAG(WHERE n.modification_ts > ?)
+      MYSQL_GET_SHARED_NETWORK6_NO_TAG(WHERE n.modification_ts >= ?)
     },
 
     // Select modified and unassigned shared networks.
     { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_SHARED_NETWORKS6_UNASSIGNED,
-      MYSQL_GET_SHARED_NETWORK6_UNASSIGNED(AND n.modification_ts > ?)
+      MYSQL_GET_SHARED_NETWORK6_UNASSIGNED(AND n.modification_ts >= ?)
     },
 
     // Retrieves option definition by code and space.
@@ -2832,7 +2832,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Retrieves modified option definitions.
     { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_OPTION_DEFS6,
-      MYSQL_GET_OPTION_DEF(dhcp6, AND d.modification_ts > ?)
+      MYSQL_GET_OPTION_DEF(dhcp6, AND d.modification_ts >= ?)
     },
 
     // Retrieves global option by code and space.
@@ -2847,7 +2847,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Retrieves modified options.
     { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_OPTIONS6,
-      MYSQL_GET_OPTION6(AND o.scope_id = 0 AND o.modification_ts > ?)
+      MYSQL_GET_OPTION6(AND o.scope_id = 0 AND o.modification_ts >= ?)
     },
 
     // Retrieves an option for a given subnet, option code and space.

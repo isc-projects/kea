@@ -2256,7 +2256,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Select modified global parameters.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_GLOBAL_PARAMETERS4,
-      MYSQL_GET_GLOBAL_PARAMETER(dhcp4, AND g.modification_ts > ?)
+      MYSQL_GET_GLOBAL_PARAMETER(dhcp4, AND g.modification_ts >= ?)
     },
 
     // Select subnet by id.
@@ -2301,12 +2301,12 @@ TaggedStatementArray tagged_statements = { {
 
     // Select subnets having modification time later than X.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SUBNETS4,
-      MYSQL_GET_SUBNET4_NO_TAG(WHERE s.modification_ts > ?)
+      MYSQL_GET_SUBNET4_NO_TAG(WHERE s.modification_ts >= ?)
     },
 
     // Select modified and unassigned subnets.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SUBNETS4_UNASSIGNED,
-      MYSQL_GET_SUBNET4_UNASSIGNED(AND s.modification_ts > ?)
+      MYSQL_GET_SUBNET4_UNASSIGNED(AND s.modification_ts >= ?)
     },
 
     // Select subnets belonging to a shared network.
@@ -2352,12 +2352,12 @@ TaggedStatementArray tagged_statements = { {
 
     // Select modified shared networks.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SHARED_NETWORKS4,
-      MYSQL_GET_SHARED_NETWORK4_NO_TAG(WHERE n.modification_ts > ?)
+      MYSQL_GET_SHARED_NETWORK4_NO_TAG(WHERE n.modification_ts >= ?)
     },
 
     // Select modified and unassigned shared networks.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SHARED_NETWORKS4_UNASSIGNED,
-      MYSQL_GET_SHARED_NETWORK4_UNASSIGNED(AND n.modification_ts > ?)
+      MYSQL_GET_SHARED_NETWORK4_UNASSIGNED(AND n.modification_ts >= ?)
     },
 
     // Retrieves option definition by code and space.
@@ -2372,7 +2372,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Retrieves modified option definitions.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
-      MYSQL_GET_OPTION_DEF(dhcp4, AND d.modification_ts > ?)
+      MYSQL_GET_OPTION_DEF(dhcp4, AND d.modification_ts >= ?)
     },
 
     // Retrieves global option by code and space.
@@ -2387,7 +2387,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Retrieves modified options.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
-      MYSQL_GET_OPTION4(AND o.scope_id = 0 AND o.modification_ts > ?)
+      MYSQL_GET_OPTION4(AND o.scope_id = 0 AND o.modification_ts >= ?)
     },
 
     // Retrieves an option for a given subnet, option code and space.
