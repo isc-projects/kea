@@ -40,7 +40,8 @@ public:
 
     /// @brief Constructor.
     CBControlDHCPTest()
-        : timestamp_(), object_timestamp_(), audit_entries_() {
+        : timestamp_(), object_timestamp_(), audit_entries_(),
+          modification_id_(2345) {
         CfgMgr::instance().clear();
         initTimestamps();
         callback_name_ = std::string("");
@@ -67,10 +68,14 @@ public:
     ///
     /// @param object_type Object type to be associated with the audit
     /// entry.
-    void addCreateAuditEntry(const std::string& object_type) {
-        AuditEntryPtr entry(new AuditEntry(object_type, 1234,
+    /// @param object_id Identifier of the object to be associated with
+    /// the audit entry.
+    void addCreateAuditEntry(const std::string& object_type,
+                             const uint64_t object_id) {
+        AuditEntryPtr entry(new AuditEntry(object_type, object_id,
                                            AuditEntry::ModificationType::CREATE,
-                                           2345, "some log message"));
+                                           ++modification_id_,
+                                           "some log message"));
         audit_entries_.insert(entry);
     }
 
@@ -86,7 +91,8 @@ public:
                              const uint64_t object_id) {
         AuditEntryPtr entry(new AuditEntry(object_type, object_id,
                                            AuditEntry::ModificationType::DELETE,
-                                           1234, "some log message"));
+                                           ++modification_id_,
+                                           "some log message"));
         audit_entries_.insert(entry);
     }
 
@@ -139,7 +145,7 @@ public:
     /// object types.
     ///
     /// @param object_type Object type.
-    bool fetchConfigElement(const std::string& object_type) const {
+    bool hasConfigElement(const std::string& object_type) const {
         if (!audit_entries_.empty()) {
             const auto& index = audit_entries_.get<AuditEntryObjectTypeTag>();
             auto range = index.equal_range(object_type);
@@ -202,6 +208,9 @@ public:
 
     /// @brief Collection of audit entries used in the unit tests.
     AuditEntryCollection audit_entries_;
+
+    /// @brief Modification id counter.
+    uint64_t modification_id_;
 
     /// @brief Callback name.
     static std::string callback_name_;
@@ -453,7 +462,7 @@ public:
         // If there is an audit entry for global parameter and the parameter
         // modification time is later than last audit entry time it should
         // be merged.
-        if (fetchConfigElement("dhcp4_global_parameter") &&
+        if (hasConfigElement("dhcp4_global_parameter") &&
             (getTimestamp("dhcp4_global_parameter") > lb_modification_time)) {
             checkConfiguredGlobal(srv_cfg, "foo", Element::create("bar"));
 
@@ -466,7 +475,7 @@ public:
         // modification time is later than last audit entry time it should
         // be merged.
         auto found_def = srv_cfg->getCfgOptionDef()->get("isc", "one");
-        if (fetchConfigElement("dhcp4_option_def") &&
+        if (hasConfigElement("dhcp4_option_def") &&
             getTimestamp("dhcp4_option_def") > lb_modification_time) {
             ASSERT_TRUE(found_def);
             EXPECT_EQ(101, found_def->getCode());
@@ -481,7 +490,7 @@ public:
         // be merged.
         auto options = srv_cfg->getCfgOption();
         auto found_opt = options->get("dhcp4", DHO_HOST_NAME);
-        if (fetchConfigElement("dhcp4_options") &&
+        if (hasConfigElement("dhcp4_options") &&
             (getTimestamp("dhcp4_options") > lb_modification_time)) {
             ASSERT_TRUE(found_opt.option_);
             EXPECT_EQ("new.example.com", found_opt.option_->toString());
@@ -495,7 +504,7 @@ public:
         // be merged.
         auto networks = srv_cfg->getCfgSharedNetworks4();
         auto found_network = networks->getByName("one");
-        if (fetchConfigElement("dhcp4_shared_network") &&
+        if (hasConfigElement("dhcp4_shared_network") &&
             (getTimestamp("dhcp4_shared_network") > lb_modification_time)) {
             ASSERT_TRUE(found_network);
             EXPECT_TRUE(found_network->hasFetchGlobalsFn());
@@ -508,7 +517,7 @@ public:
         // time is later than last audit entry time it should be merged.
         auto subnets = srv_cfg->getCfgSubnets4();
         auto found_subnet = subnets->getSubnet(1);
-        if (fetchConfigElement("dhcp4_subnet") &&
+        if (hasConfigElement("dhcp4_subnet") &&
             (getTimestamp("dhcp4_subnet") > lb_modification_time)) {
             ASSERT_TRUE(found_subnet);
             EXPECT_TRUE(found_subnet->hasFetchGlobalsFn());
@@ -648,11 +657,16 @@ public:
 // types are merged into the current configuration.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyAll) {
 
-    addCreateAuditEntry("dhcp4_global_parameter");
-    addCreateAuditEntry("dhcp4_option_def");
-    addCreateAuditEntry("dhcp4_options");
-    addCreateAuditEntry("dhcp4_shared_network");
-    addCreateAuditEntry("dhcp4_subnet");
+    addCreateAuditEntry("dhcp4_global_parameter", 1);
+    addCreateAuditEntry("dhcp4_global_parameter", 2);
+    addCreateAuditEntry("dhcp4_option_def", 1);
+    addCreateAuditEntry("dhcp4_option_def", 2);
+    addCreateAuditEntry("dhcp4_options", 1);
+    addCreateAuditEntry("dhcp4_options", 2);
+    addCreateAuditEntry("dhcp4_shared_network", 1);
+    addCreateAuditEntry("dhcp4_shared_network", 2);
+    addCreateAuditEntry("dhcp4_subnet", 1);
+    addCreateAuditEntry("dhcp4_subnet", 2);
 
     testDatabaseConfigApply(getTimestamp(-5));
 }
@@ -689,7 +703,8 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteNonExisting) {
 // This test verifies that only a global parameter is merged into
 // the current configuration.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyGlobal) {
-    addCreateAuditEntry("dhcp4_global_parameter");
+    addCreateAuditEntry("dhcp4_global_parameter", 1);
+    addCreateAuditEntry("dhcp4_global_parameter", 2);
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
@@ -706,14 +721,16 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteGlobal) {
 // database when the modification time is earlier than the last
 // fetched audit entry.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyGlobalNotFetched) {
-    addCreateAuditEntry("dhcp4_global_parameter");
+    addCreateAuditEntry("dhcp4_global_parameter", 1);
+    addCreateAuditEntry("dhcp4_global_parameter", 2);
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
 // This test verifies that only an option definition is merged into
 // the current configuration.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyOptionDef) {
-    addCreateAuditEntry("dhcp4_option_def");
+    addCreateAuditEntry("dhcp4_option_def", 1);
+    addCreateAuditEntry("dhcp4_option_def", 2);
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
@@ -731,14 +748,16 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteOptionDef) {
 // database when the modification time is earlier than the last
 // fetched audit entry.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyOptionDefNotFetched) {
-    addCreateAuditEntry("dhcp4_option_def");
+    addCreateAuditEntry("dhcp4_option_def", 1);
+    addCreateAuditEntry("dhcp4_option_def", 2);
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
 // This test verifies that only a DHCPv4 option is merged into the
 // current configuration.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyOption) {
-    addCreateAuditEntry("dhcp4_options");
+    addCreateAuditEntry("dhcp4_options", 1);
+    addCreateAuditEntry("dhcp4_options", 2);
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
@@ -755,14 +774,16 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteOption) {
 // database when the modification time is earlier than the last
 // fetched audit entry.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyOptionNotFetched) {
-    addCreateAuditEntry("dhcp4_options");
+    addCreateAuditEntry("dhcp4_options", 1);
+    addCreateAuditEntry("dhcp4_options", 2);
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
 // This test verifies that only a shared network is merged into the
 // current configuration.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplySharedNetwork) {
-    addCreateAuditEntry("dhcp4_shared_network");
+    addCreateAuditEntry("dhcp4_shared_network", 1);
+    addCreateAuditEntry("dhcp4_shared_network", 2);
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
@@ -779,15 +800,18 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteSharedNetwork) {
 // database when the modification time is earlier than the last
 // fetched audit entry.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplySharedNetworkNotFetched) {
-    addCreateAuditEntry("dhcp4_shared_network");
+    addCreateAuditEntry("dhcp4_shared_network", 1);
+    addCreateAuditEntry("dhcp4_shared_network", 2);
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
 // This test verifies that only a subnet is merged into the current
 // configuration.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplySubnet) {
-    addCreateAuditEntry("dhcp4_shared_network");
-    addCreateAuditEntry("dhcp4_subnet");
+    addCreateAuditEntry("dhcp4_shared_network", 1);
+    addCreateAuditEntry("dhcp4_shared_network", 2);
+    addCreateAuditEntry("dhcp4_subnet", 1);
+    addCreateAuditEntry("dhcp4_subnet", 2);
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
@@ -803,7 +827,8 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteSubnet) {
 // when the modification time is earlier than the last fetched audit
 // entry.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplySubnetNotFetched) {
-    addCreateAuditEntry("dhcp4_subnet");
+    addCreateAuditEntry("dhcp4_subnet", 1);
+    addCreateAuditEntry("dhcp4_subnet", 2);
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
@@ -818,11 +843,16 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyHook) {
         "cb4_updated", cb4_updated_callout));
 
     // Create audit entries.
-    addCreateAuditEntry("dhcp4_global_parameter");
-    addCreateAuditEntry("dhcp4_option_def");
-    addCreateAuditEntry("dhcp4_options");
-    addCreateAuditEntry("dhcp4_shared_network");
-    addCreateAuditEntry("dhcp4_subnet");
+    addCreateAuditEntry("dhcp4_global_parameter", 1);
+    addCreateAuditEntry("dhcp4_global_parameter", 2);
+    addCreateAuditEntry("dhcp4_option_def", 1);
+    addCreateAuditEntry("dhcp4_option_def", 2);
+    addCreateAuditEntry("dhcp4_options", 1);
+    addCreateAuditEntry("dhcp4_options", 2);
+    addCreateAuditEntry("dhcp4_shared_network", 1);
+    addCreateAuditEntry("dhcp4_shared_network", 2);
+    addCreateAuditEntry("dhcp4_subnet", 1);
+    addCreateAuditEntry("dhcp4_subnet", 2);
 
     // Run the test.
     testDatabaseConfigApply(getTimestamp(-5));
@@ -1078,7 +1108,7 @@ public:
         // If there is an audit entry for global parameter and the parameter
         // modification time is later than last audit entry time it should
         // be merged.
-        if (fetchConfigElement("dhcp6_global_parameter") &&
+        if (hasConfigElement("dhcp6_global_parameter") &&
             (getTimestamp("dhcp6_global_parameter") > lb_modification_time)) {
             checkConfiguredGlobal(srv_cfg, "foo", Element::create("bar"));
 
@@ -1091,7 +1121,7 @@ public:
         // modification time is later than last audit entry time it should
         // be merged.
         auto found_def = srv_cfg->getCfgOptionDef()->get("isc", "one");
-        if (fetchConfigElement("dhcp6_option_def") &&
+        if (hasConfigElement("dhcp6_option_def") &&
             getTimestamp("dhcp6_option_def") > lb_modification_time) {
             ASSERT_TRUE(found_def);
             EXPECT_EQ(101, found_def->getCode());
@@ -1106,7 +1136,7 @@ public:
         // be merged.
         auto options = srv_cfg->getCfgOption();
         auto found_opt = options->get("dhcp6", D6O_BOOTFILE_URL);
-        if (fetchConfigElement("dhcp6_options") &&
+        if (hasConfigElement("dhcp6_options") &&
             (getTimestamp("dhcp6_options") > lb_modification_time)) {
             ASSERT_TRUE(found_opt.option_);
             EXPECT_EQ("some.bootfile", found_opt.option_->toString());
@@ -1120,7 +1150,7 @@ public:
         // be merged.
         auto networks = srv_cfg->getCfgSharedNetworks6();
         auto found_network = networks->getByName("one");
-        if (fetchConfigElement("dhcp6_shared_network") &&
+        if (hasConfigElement("dhcp6_shared_network") &&
             (getTimestamp("dhcp6_shared_network") > lb_modification_time)) {
             ASSERT_TRUE(found_network);
             EXPECT_TRUE(found_network->hasFetchGlobalsFn());
@@ -1133,7 +1163,7 @@ public:
         // time is later than last audit entry time it should be merged.
         auto subnets = srv_cfg->getCfgSubnets6();
         auto found_subnet = subnets->getSubnet(1);
-        if (fetchConfigElement("dhcp6_subnet") &&
+        if (hasConfigElement("dhcp6_subnet") &&
             (getTimestamp("dhcp6_subnet") > lb_modification_time)) {
             ASSERT_TRUE(found_subnet);
             EXPECT_TRUE(found_subnet->hasFetchGlobalsFn());
@@ -1272,11 +1302,16 @@ public:
 // types are merged into the current configuration.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplyAll) {
 
-    addCreateAuditEntry("dhcp6_global_parameter");
-    addCreateAuditEntry("dhcp6_option_def");
-    addCreateAuditEntry("dhcp6_options");
-    addCreateAuditEntry("dhcp6_shared_network");
-    addCreateAuditEntry("dhcp6_subnet");
+    addCreateAuditEntry("dhcp6_global_parameter", 1);
+    addCreateAuditEntry("dhcp6_global_parameter", 2);
+    addCreateAuditEntry("dhcp6_option_def", 1);
+    addCreateAuditEntry("dhcp6_option_def", 2);
+    addCreateAuditEntry("dhcp6_options", 1);
+    addCreateAuditEntry("dhcp6_options", 2);
+    addCreateAuditEntry("dhcp6_shared_network", 1);
+    addCreateAuditEntry("dhcp6_shared_network", 2);
+    addCreateAuditEntry("dhcp6_subnet", 1);
+    addCreateAuditEntry("dhcp6_subnet", 2);
 
     testDatabaseConfigApply(getTimestamp(-5));
 }
@@ -1313,7 +1348,8 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplyDeleteNonExisting) {
 // This test verifies that only a global parameter is merged into
 // the current configuration.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplyGlobal) {
-    addCreateAuditEntry("dhcp6_global_parameter");
+    addCreateAuditEntry("dhcp6_global_parameter", 1);
+    addCreateAuditEntry("dhcp6_global_parameter", 2);
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
@@ -1330,14 +1366,16 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplyDeleteGlobal) {
 // database when the modification time is earlier than the last
 // fetched audit entry.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplyGlobalNotFetched) {
-    addCreateAuditEntry("dhcp6_global_parameter");
+    addCreateAuditEntry("dhcp6_global_parameter", 1);
+    addCreateAuditEntry("dhcp6_global_parameter", 2);
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
 // This test verifies that only an option definition is merged into
 // the current configuration.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplyOptionDef) {
-    addCreateAuditEntry("dhcp6_option_def");
+    addCreateAuditEntry("dhcp6_option_def", 1);
+    addCreateAuditEntry("dhcp6_option_def", 2);
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
@@ -1355,14 +1393,16 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplyDeleteOptionDef) {
 // database when the modification time is earlier than the last
 // fetched audit entry.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplyOptionDefNotFetched) {
-    addCreateAuditEntry("dhcp6_option_def");
+    addCreateAuditEntry("dhcp6_option_def", 1);
+    addCreateAuditEntry("dhcp6_option_def", 2);
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
 // This test verifies that only a DHCPv6 option is merged into the
 // current configuration.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplyOption) {
-    addCreateAuditEntry("dhcp6_options");
+    addCreateAuditEntry("dhcp6_options", 1);
+    addCreateAuditEntry("dhcp6_options", 2);
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
@@ -1379,14 +1419,16 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplyDeleteOption) {
 // database when the modification time is earlier than the last
 // fetched audit entry.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplyOptionNotFetched) {
-    addCreateAuditEntry("dhcp6_options");
+    addCreateAuditEntry("dhcp6_options", 1);
+    addCreateAuditEntry("dhcp6_options", 2);
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
 // This test verifies that only a shared network is merged into the
 // current configuration.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplySharedNetwork) {
-    addCreateAuditEntry("dhcp6_shared_network");
+    addCreateAuditEntry("dhcp6_shared_network", 1);
+    addCreateAuditEntry("dhcp6_shared_network", 2);
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
@@ -1403,15 +1445,18 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplyDeleteSharedNetwork) {
 // database when the modification time is earlier than the last
 // fetched audit entry.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplySharedNetworkNotFetched) {
-    addCreateAuditEntry("dhcp6_shared_network");
+    addCreateAuditEntry("dhcp6_shared_network", 1);
+    addCreateAuditEntry("dhcp6_shared_network", 2);
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
 // This test verifies that only a subnet is merged into the current
 // configuration.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplySubnet) {
-    addCreateAuditEntry("dhcp6_shared_network");
-    addCreateAuditEntry("dhcp6_subnet");
+    addCreateAuditEntry("dhcp6_shared_network", 1);
+    addCreateAuditEntry("dhcp6_shared_network", 2);
+    addCreateAuditEntry("dhcp6_subnet", 1);
+    addCreateAuditEntry("dhcp6_subnet", 2);
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
@@ -1427,7 +1472,8 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplyDeleteSubnet) {
 // when the modification time is earlier than the last fetched audit
 // entry.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplySubnetNotFetched) {
-    addCreateAuditEntry("dhcp6_subnet");
+    addCreateAuditEntry("dhcp6_subnet", 1);
+    addCreateAuditEntry("dhcp6_subnet", 2);
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
@@ -1442,11 +1488,16 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplyHook) {
         "cb6_updated", cb6_updated_callout));
 
     // Create audit entries.
-    addCreateAuditEntry("dhcp6_global_parameter");
-    addCreateAuditEntry("dhcp6_option_def");
-    addCreateAuditEntry("dhcp6_options");
-    addCreateAuditEntry("dhcp6_shared_network");
-    addCreateAuditEntry("dhcp6_subnet");
+    addCreateAuditEntry("dhcp6_global_parameter", 1);
+    addCreateAuditEntry("dhcp6_global_parameter", 2);
+    addCreateAuditEntry("dhcp6_option_def", 1);
+    addCreateAuditEntry("dhcp6_option_def", 2);
+    addCreateAuditEntry("dhcp6_options", 1);
+    addCreateAuditEntry("dhcp6_options", 2);
+    addCreateAuditEntry("dhcp6_shared_network", 1);
+    addCreateAuditEntry("dhcp6_shared_network", 2);
+    addCreateAuditEntry("dhcp6_subnet", 1);
+    addCreateAuditEntry("dhcp6_subnet", 2);
 
     // Run the test.
     testDatabaseConfigApply(getTimestamp(-5));

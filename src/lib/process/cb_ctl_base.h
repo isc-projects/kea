@@ -242,38 +242,35 @@ public:
 
 protected:
 
-    /// @brief Checks if there are new or updated configuration elements of
-    /// specific type to be fetched from the database.
+    /// @brief Returns audit entries for new or updated configuration
+    /// elements of specific type to be fetched from the database.
     ///
     /// This is convenience method invoked from the implementations of the
-    /// @c databaseConfigApply function. This method is invoked in two cases:
-    /// when the server starts up and fetches the entire configuration available
-    /// for it and when it should fetch the updates to the existing configuration.
-    /// In the former case, the collection of audit entries is always empty.
-    /// In the latter case it contains audit entries indicating the updates
-    /// to be fetched. This method checks if the implementation of the
-    /// @c databaseConfigApply should fetch updated configuration of the
-    /// configuration elements of the specific type. Therefore, it returns true
-    /// if the audit entries collection is empty (the former case described
-    /// above) or the audit entries collection contains CREATE or UPDATE
-    /// entries of the specific type.
+    /// @c databaseConfigApply function. This method is invoked when the
+    /// server should fetch the updates to the existing configuration.
+    /// The collection of audit entries contains audit entries indicating
+    /// the updates to be fetched. This method returns audit entries for
+    /// updated configuration elements of the specific type the
+    /// @c databaseConfigApply should fetch. The returned collection od
+    /// audit entries contains CREATE or UPDATE entries of the specific type.
     ///
-    /// @return true if there are new or updated configuration elements to
-    /// be fetched from the database or the audit entries collection is empty.
-    bool fetchConfigElement(const db::AuditEntryCollection& audit_entries,
-                            const std::string& object_type) const {
-        if (!audit_entries.empty()) {
-            const auto& index = audit_entries.get<db::AuditEntryObjectTypeTag>();
-            auto range = index.equal_range(object_type);
-            for (auto it = range.first; it != range.second; ++it) {
-                if ((*it)->getModificationType() != db::AuditEntry::ModificationType::DELETE) {
-                    return (true);
-                }
+    /// @param audit_entries collection od audit entries to filter.
+    /// @param object_type object type to filter with.
+    /// @return audit entries collection with CREATE or UPDATE entries
+    /// of the specific type be fetched from the database.
+    db::AuditEntryCollection
+    fetchConfigElement(const db::AuditEntryCollection& audit_entries,
+                       const std::string& object_type) const {
+        db::AuditEntryCollection result;
+        const auto& index = audit_entries.get<db::AuditEntryObjectTypeTag>();
+        auto range = index.equal_range(object_type);
+        for (auto it = range.first; it != range.second; ++it) {
+            if ((*it)->getModificationType() != db::AuditEntry::ModificationType::DELETE) {
+                result.insert(*it);
             }
-            return (false);
         }
 
-        return (true);
+        return (result);
     }
 
     /// @brief Server specific method to fetch and apply back end
@@ -358,6 +355,17 @@ protected:
     /// support millisecond timestamps.
     uint64_t last_audit_entry_id_;
 };
+
+/// @brief Checks if an object is in a collection od audit entries.
+///
+/// @param audit_entries collection od audit entries to search for.
+/// @param object_id object identifier.
+inline bool
+hasObjectId(const db::AuditEntryCollection& audit_entries,
+            const uint64_t& object_id) {
+    const auto& object_id_idx = audit_entries.get<db::AuditEntryObjectIdTag>();
+    return (object_id_idx.count(object_id) > 0);
+}
 
 } // end of namespace isc::process
 } // end of namespace isc

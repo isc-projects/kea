@@ -428,14 +428,14 @@ TEST_F(CBControlBaseTest, reset) {
     EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
 }
 
-// This test verifies that it is correctly determined whether the
-// server should fetch the particular configuration element.
+// This test verifies that it is correctly determined what entries the
+// server should fetch for the particular configuration element.
 TEST_F(CBControlBaseTest, fetchConfigElement) {
     db::AuditEntryCollection audit_entries;
-    // When audit entries collection is empty it indicates that this
-    // is the case of the full server reconfiguration. Always indicate
-    // that the configuration elements must be fetched.
-    EXPECT_TRUE(cb_ctl_.fetchConfigElement(audit_entries, "my_object_type"));
+    db::AuditEntryCollection updated;
+    // When audit entries collection is empty any subset is empty too.
+    updated = cb_ctl_.fetchConfigElement(audit_entries, "my_object_type");
+    EXPECT_TRUE(updated.empty());
 
     // Now test the case that there is a DELETE audit entry. In this case
     // our function should indicate that the configuration should not be
@@ -446,22 +446,53 @@ TEST_F(CBControlBaseTest, fetchConfigElement) {
                                              AuditEntry::ModificationType::DELETE,
                                              2345, "added audit entry"));
     audit_entries.insert(audit_entry);
-    EXPECT_FALSE(cb_ctl_.fetchConfigElement(audit_entries, "my_object_type"));
+    updated = cb_ctl_.fetchConfigElement(audit_entries, "my_object_type");
+    EXPECT_TRUE(updated.empty());
+    EXPECT_TRUE(hasObjectId(audit_entries, 1234));
+    EXPECT_FALSE(hasObjectId(audit_entries, 5678));
+    EXPECT_FALSE(hasObjectId(updated, 1234));
 
     // Add another audit entry which indicates creation of the configuration element.
-    // This time we should get 'true'.
+    // This time we should get it.
     audit_entry.reset(new AuditEntry("my_object_type", 5678,
                                      AuditEntry::ModificationType::CREATE,
                                      6789, "added audit entry"));
     audit_entries.insert(audit_entry);
-    EXPECT_TRUE(cb_ctl_.fetchConfigElement(audit_entries, "my_object_type"));
+    updated = cb_ctl_.fetchConfigElement(audit_entries, "my_object_type");
+    ASSERT_EQ(1, updated.size());
+    AuditEntryPtr updated_entry = (*updated.begin());
+    ASSERT_TRUE(updated_entry);
+    EXPECT_EQ("my_object_type", updated_entry->getObjectType());
+    EXPECT_EQ(5678, updated_entry->getObjectId());
+    EXPECT_EQ(AuditEntry::ModificationType::CREATE, updated_entry->getModificationType());
+    EXPECT_TRUE(hasObjectId(audit_entries, 5678));
+    EXPECT_TRUE(hasObjectId(updated, 5678));
+    EXPECT_FALSE(hasObjectId(updated, 1234));
 
     // Also we should get 'true' for the UPDATE case.
-    audit_entry.reset(new AuditEntry("another_object_type",
+    audit_entry.reset(new AuditEntry("my_object_type",
                                      5678, AuditEntry::ModificationType::UPDATE,
                                      6790, "added audit entry"));
     audit_entries.insert(audit_entry);
-    EXPECT_TRUE(cb_ctl_.fetchConfigElement(audit_entries, "another_object_type"));
+    updated = cb_ctl_.fetchConfigElement(audit_entries, "my_object_type");
+    EXPECT_EQ(2, updated.size());
+    bool saw_create = false;
+    bool saw_update =  false;
+    for (auto entry : updated) {
+        EXPECT_EQ("my_object_type", entry->getObjectType());
+        EXPECT_EQ(5678, entry->getObjectId());
+        if (AuditEntry::ModificationType::CREATE == entry->getModificationType()) {
+            EXPECT_FALSE(saw_create);
+            saw_create = true;
+        } else if (AuditEntry::ModificationType::UPDATE == entry->getModificationType()) {
+            EXPECT_FALSE(saw_update);
+            saw_update = true;
+        }
+    }
+    EXPECT_TRUE(saw_create);
+    EXPECT_TRUE(saw_update);
+    EXPECT_TRUE(hasObjectId(updated, 5678));
+    EXPECT_FALSE(hasObjectId(updated, 1234));
 }
 
 // This test verifies that true is return when the server successfully

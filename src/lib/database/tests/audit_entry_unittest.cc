@@ -340,7 +340,7 @@ TEST_F(AuditEntryCollectionTest, getByObjectId) {
     const auto& object_id_idx = audit_entries_.get<AuditEntryObjectIdTag>();
 
     // Search for object id 10.
-    auto range =  object_id_idx.equal_range(10);
+    auto range = object_id_idx.equal_range(10);
     ASSERT_EQ(1, std::distance(range.first, range.second));
     EXPECT_TRUE(includes("dhcp4_subnet", 10, range.first, range.second));
 
