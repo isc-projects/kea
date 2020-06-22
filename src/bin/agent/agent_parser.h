@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.6.2.
+// A Bison parser, made by GNU Bison 3.6.4.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -1833,41 +1833,41 @@ switch (yykind)
 
 
     // Tables.
-    // YYPACTSTATE-NUM -- Index in YYTABLE of the portion describing
+    // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
     // STATE-NUM.
     static const short yypact_[];
 
-    // YYDEFACTSTATE-NUM -- Default reduction number in state STATE-NUM.
+    // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
     // Performed when YYTABLE does not specify something else to do.  Zero
     // means the default is an error.
     static const unsigned char yydefact_[];
 
-    // YYPGOTONTERM-NUM.
+    // YYPGOTO[NTERM-NUM].
     static const signed char yypgoto_[];
 
-    // YYDEFGOTONTERM-NUM.
+    // YYDEFGOTO[NTERM-NUM].
     static const short yydefgoto_[];
 
-    // YYTABLEYYPACT[STATE-NUM] -- What to do in state STATE-NUM.  If
+    // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
     // positive, shift that token.  If negative, reduce the rule whose
     // number is the opposite.  If YYTABLE_NINF, syntax error.
     static const short yytable_[];
 
     static const short yycheck_[];
 
-    // YYSTOSSTATE-NUM -- The (internal number of the) accessing
+    // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
     // symbol of state STATE-NUM.
     static const unsigned char yystos_[];
 
-    // YYR1YYN -- Symbol number of symbol that rule YYN derives.
+    // YYR1[YYN] -- Symbol number of symbol that rule YYN derives.
     static const unsigned char yyr1_[];
 
-    // YYR2YYN -- Number of symbols on the right hand side of rule YYN.
+    // YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.
     static const signed char yyr2_[];
 
 
 #if AGENT_DEBUG
-    // YYRLINEYYN -- Source line where rule number YYN was defined.
+    // YYRLINE[YYN] -- Source line where rule number YYN was defined.
     static const short yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r) const;

@@ -1,3 +1,5 @@
+Kea 1.7.9 (development) released on June 24, 2020
+
 1762.	[bug]		fdupont
 	Fixed the control command execution: either it was deferred by
 	DHCP packet processing or a spurious error message was logged.
