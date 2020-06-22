@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes on Fri Mar 13 2020 14:35
+// File created from ../../../../src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes on Mon Jun 22 2020 17:35
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -36,8 +36,8 @@ const char* values[] = {
     "LEASE_CMDS_DEL6_FAILED", "lease6-del command failed (parameters: %1, reason: %2)",
     "LEASE_CMDS_INIT_FAILED", "loading Lease Commands hooks library failed: %1",
     "LEASE_CMDS_INIT_OK", "loading Lease Commands hooks library successful",
-    "LEASE_CMDS_RESEND_DDNS4", "lease6-resend-ddns command successful: %1",
-    "LEASE_CMDS_RESEND_DDNS4_FAILED", "lease6-resend-ddns command failed: %1",
+    "LEASE_CMDS_RESEND_DDNS4", "lease4-resend-ddns command successful: %1",
+    "LEASE_CMDS_RESEND_DDNS4_FAILED", "lease4-resend-ddns command failed: %1",
     "LEASE_CMDS_RESEND_DDNS6", "lease6-resend-ddns command successful: %1",
     "LEASE_CMDS_RESEND_DDNS6_FAILED", "lease6-resend-ddns command failed: %1",
     NULL

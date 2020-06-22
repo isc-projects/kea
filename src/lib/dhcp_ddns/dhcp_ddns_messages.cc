@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcp_ddns/dhcp_ddns_messages.mes on Fri Feb 08 2019 20:17
+// File created from ../../../src/lib/dhcp_ddns/dhcp_ddns_messages.mes on Mon Jun 22 2020 17:21
 
 #include <cstddef>
 #include <log/message_types.h>

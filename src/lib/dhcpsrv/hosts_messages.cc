@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Sun Sep 29 2019 01:57
+// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Mon Jun 22 2020 17:23
 
 #include <cstddef>
 #include <log/message_types.h>
