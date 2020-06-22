@@ -65,8 +65,10 @@ in the compiled version of the software, hence the need for a rebuild.
 
 The core of Kea is written in C++.  While it is the intention to
 provide interfaces into user code written in other languages, the initial
-versions of the Hooks system requires that user code be written in C++.
-All examples in this guide are in that language.
+versions of the Hooks system required that user code be written in C++.
+It is no longer the case and there are examples of hooks written for
+instance in Python but this guide does not document how to do that.
+All examples in this guide are in C++.
 
 
 @subsection hooksdgTerminology Terminology
@@ -1520,5 +1522,44 @@ A good sources of examples could be unit-tests in file src/lib/cc/tests/data_uni
 which are dedicated to isc::data::Element testing and src/lib/hooks/tests/callout_params_library.cc,
 which is an example library used in testing. This library expects exactly 3 parameters:
 svalue (which is a string), ivalue (which is an integer) and bvalue (which is a boolean).
+
+@subsection hooksMultiThreading Multi-Threading Considations for Hooks Writers
+
+Multi-threading programming in C++ is not easy. For instance STL containers
+do not support simultaneous read and write accesses. Kea is written in C++
+so a priori for all Kea features one should never assume thread safety.
+
+This stands both for internal multi-threading inside a hook library or
+when a hook is called from a callout point in the multi-threaded packet
+processing. When the problem can't be solved the hook must be marked
+as not compatible with multi-threading.
+
+Some Kea APIs were made thread safe mainly because they are used by the
+packet processing:
+ - logging is thread safe and even multi process safe i.e. messages logged
+  into a file or by syslog from multiple processes do not mixed.
+ - statistics update is thread safe.
+ - lease and host database backends are thread safe. Note if you need to
+  perform a direct MySQL or PostgreSQL query you must use the connection pool.
+ - state model and watched thread are thread safe (libkea-util)
+ - interval timer setup and cancel are thread safe (libkea-asiolink)
+ - parking lots are thread safe (libkea-hooks)
+ - external sockets are thread safe (libkea-dhcp++)
+ - http client is thread safe (libkea-http)
+
+In some cases thread safety is not required for instance for the code which
+is executed by the main thread:
+ - (re)configuration is performed by the main thread with the packet
+  processing stopped
+ - io service (io context is recent boost versions) is polled by the main
+  thread
+ - external context callbacks are executed by the main thread
+Note in the last two cases the packet processing is not stopped: the
+external socket being thread safe only means one may at any moment for
+instance delete an external socket, not that the callback has an exclusive
+access to Kea internal objects.
+ 
+Per library documentation will be updated to detail thread safety to help
+hooks writers and to provide an exhaustive list of Kea thread safe APIs.
 
 */
