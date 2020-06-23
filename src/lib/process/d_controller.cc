@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -134,6 +134,9 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
         isc_throw (ProcessInitError, "Could Not load configuration file: "
                    << comment->stringValue());
     }
+
+    // Note that the controller was started.
+    start_ = boost::posix_time::second_clock::universal_time();
 
     // Everything is clear for launch, so start the application's
     // event loop.
@@ -634,6 +637,26 @@ DControllerBase::serverTagGetHandler(const std::string&, ConstElementPtr) {
     response->set("server-tag", Element::create(tag));
 
     return (createAnswer(COMMAND_SUCCESS, response));
+}
+
+ConstElementPtr
+DControllerBase::statusGetHandler(const std::string&, ConstElementPtr) {
+    ElementPtr status = Element::createMap();
+    status->set("pid", Element::create(static_cast<int>(getpid())));
+
+    auto now = boost::posix_time::second_clock::universal_time();
+    if (!start_.is_not_a_date_time()) {
+        auto uptime = now - start_;
+        status->set("uptime", Element::create(uptime.total_seconds()));
+    }
+
+    auto last_commit = process_->getCfgMgr()->getContext()->getLastCommitTime();
+    if (!last_commit.is_not_a_date_time()) {
+        auto reload = now - last_commit;
+        status->set("reload", Element::create(reload.total_seconds()));
+    }
+
+    return (createAnswer(COMMAND_SUCCESS, status));
 }
 
 ConstElementPtr

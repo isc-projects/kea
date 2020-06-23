@@ -295,6 +295,7 @@ The D2 server supports the following operational commands:
 -  config-write
 -  list-commands
 -  shutdown
+-  status-get
 -  version-get
 
 .. _d2-tsig-key-list-config:

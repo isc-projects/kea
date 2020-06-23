@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,6 +73,9 @@ D2Controller::registerCommands() {
     CommandMgr::instance().registerCommand(SHUT_DOWN_COMMAND,
         boost::bind(&D2Controller::shutdownHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand(STATUS_GET_COMMAND,
+        boost::bind(&DControllerBase::statusGetHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand(VERSION_GET_COMMAND,
         boost::bind(&D2Controller::versionGetHandler, this, _1, _2));
 }
@@ -91,6 +94,7 @@ D2Controller::deregisterCommands() {
         CommandMgr::instance().deregisterCommand(CONFIG_TEST_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_WRITE_COMMAND);
         CommandMgr::instance().deregisterCommand(SHUT_DOWN_COMMAND);
+        CommandMgr::instance().deregisterCommand(STATUS_GET_COMMAND);
         CommandMgr::instance().deregisterCommand(VERSION_GET_COMMAND);
 
     } catch (...) {

@@ -538,6 +538,38 @@ The ``dhcp-enable`` command globally enables the DHCP service.
        "command": "dhcp-enable"
    }
 
+.. _command-status-get:
+
+The status-get Command
+----------------------
+
+The ``status-get`` command returns server's runtime information:
+
+ - pid: process id.
+
+ - uptime: number of seconds since the start of the server.
+
+ - reload: number of seconds since the last configuration (re)load.
+
+ - ha-servers: HA specific status information about the DHCP servers
+   configured to use HA hooks library:
+
+     * local: for the local server the state, the role (primary,
+       secondary, ...) and scopes (i.e. what the server is actually
+       processing).
+
+     * remote: for the remote server the last known state, served
+       HA scopes and the role of the server in HA relationship.
+
+The ``ha-servers`` information is only returned when the command is
+sent to the DHCP servers being in the HA setup. This parameter is
+never returned when the ``status-get`` command is sent to the
+Control Agent or DDNS deamon.
+
+To learn more about the HA status information returned by the
+``status-get`` command please refer to the the :ref:`command-ha-status-get`
+section.
+
 .. _command-version-get:
 
 The version-get Command
@@ -574,6 +606,8 @@ The D2 server supports only a subset of DHCPv4 / DHCPv6 server commands:
 
 -  shutdown
 
+-  status-get
+
 -  version-get
 
 .. _agent-commands:
@@ -600,5 +634,7 @@ commands are handled by the CA and they relate to the CA process itself:
 -  list-commands
 
 -  shutdown
+
+-  status-get
 
 -  version-get

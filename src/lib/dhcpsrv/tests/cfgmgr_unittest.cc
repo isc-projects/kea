@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -463,12 +463,19 @@ TEST_F(CfgMgrTest, staging) {
 
     // This should change the staging configuration so as it becomes a current
     // one.
+    auto before = boost::posix_time::second_clock::universal_time();
     cfg_mgr.commit();
+    auto after = boost::posix_time::second_clock::universal_time();
     const_config = cfg_mgr.getCurrentCfg();
     ASSERT_TRUE(const_config);
     // Sequence id equal to 1 indicates that the current configuration points
     // to the configuration that used to be a staging configuration previously.
     EXPECT_EQ(1, const_config->getSequence());
+    // Last commit timestamp should be between before and after.
+    auto reload = const_config->getLastCommitTime();
+    ASSERT_FALSE(reload.is_not_a_date_time());
+    EXPECT_LE(before, reload);
+    EXPECT_GE(after, reload);
 
     // Create a new staging configuration. It should be assigned a new
     // sequence id.

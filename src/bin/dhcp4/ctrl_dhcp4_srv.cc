@@ -78,6 +78,9 @@ ControlledDhcpv4Srv* ControlledDhcpv4Srv::server_ = NULL;
 
 void
 ControlledDhcpv4Srv::init(const std::string& file_name) {
+    // Keep the call timestamp.
+    start_ = boost::posix_time::second_clock::universal_time();
+
     // Configure the server using JSON file.
     ConstElementPtr result = loadConfigFile(file_name);
     int rcode;
@@ -550,6 +553,30 @@ ControlledDhcpv4Srv::commandServerTagGetHandler(const std::string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandStatusGetHandler(const string&,
+                                             ConstElementPtr /*args*/) {
+    ElementPtr status = Element::createMap();
+    status->set("pid", Element::create(static_cast<int>(getpid())));
+
+    auto now = boost::posix_time::second_clock::universal_time();
+    // Sanity check: start_ is always initialized.
+    if (!start_.is_not_a_date_time()) {
+        auto uptime = now - start_;
+        status->set("uptime", Element::create(uptime.total_seconds()));
+    }
+
+    auto last_commit = CfgMgr::instance().getCurrentCfg()->getLastCommitTime();
+    if (!last_commit.is_not_a_date_time()) {
+        auto reload = now - last_commit;
+        status->set("reload", Element::create(reload.total_seconds()));
+    }
+
+    // todo: number of service threads.
+
+    return (createAnswer(0, status));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
     string txt = args ? args->str() : "(none)";
@@ -606,6 +633,8 @@ ControlledDhcpv4Srv::processCommand(const string& command,
         } else if (command == "server-tag-get") {
             return (srv->commandServerTagGetHandler(command, args));
 
+        } else if (command == "status-get") {
+            return (srv->commandStatusGetHandler(command, args));
         }
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  "Unrecognized command:" + command);
@@ -842,6 +871,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("status-get",
+        boost::bind(&ControlledDhcpv4Srv::commandStatusGetHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("version-get",
         boost::bind(&ControlledDhcpv4Srv::commandVersionGetHandler, this, _1, _2));
 
@@ -918,6 +950,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("statistic-sample-age-set-all");
         CommandMgr::instance().deregisterCommand("statistic-sample-count-set");
         CommandMgr::instance().deregisterCommand("statistic-sample-count-set-all");
+        CommandMgr::instance().deregisterCommand("status-get");
         CommandMgr::instance().deregisterCommand("version-get");
 
     } catch (...) {

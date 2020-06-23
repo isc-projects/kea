@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,10 +34,12 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <cstdlib>
+#include <unistd.h>
 
 #include <thread>
 
 using namespace std;
+using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
@@ -802,6 +804,7 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"statistic-sample-age-set-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-sample-count-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-sample-count-set-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"status-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
@@ -838,6 +841,48 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
 
     sendUnixCommand("{ \"command\": \"shutdown\" }", response);
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutting down.\" }",response);
+}
+
+// This test verifies that the DHCP server handles status-get commands
+TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
+    createUnixChannelServer();
+
+    // start_ is initialized by init.
+    ASSERT_THROW(server_->init("/no/such/file"), BadValue);
+
+    std::string response_txt;
+
+    // Send the version-get command
+    sendUnixCommand("{ \"command\": \"status-get\" }", response_txt);
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_txt));
+    ASSERT_TRUE(response);
+    ASSERT_EQ(Element::map, response->getType());
+    EXPECT_EQ(2, response->size());
+    ConstElementPtr result = response->get("result");
+    ASSERT_TRUE(result);
+    ASSERT_EQ(Element::integer, result->getType());
+    EXPECT_EQ(0, result->intValue());
+    ConstElementPtr arguments = response->get("arguments");
+    ASSERT_EQ(Element::map, arguments->getType());
+
+    // The returned pid should be the pid of our process.
+    auto found_pid = arguments->get("pid");
+    ASSERT_TRUE(found_pid);
+    EXPECT_EQ(static_cast<int64_t>(getpid()), found_pid->intValue());
+
+    // It is hard to check the actual uptime (and reload) as it is based
+    // on current time. Let's just make sure it is within a reasonable
+    // range.
+    auto found_uptime = arguments->get("uptime");
+    ASSERT_TRUE(found_uptime);
+    EXPECT_LE(found_uptime->intValue(), 5);
+    EXPECT_GE(found_uptime->intValue(), 0);
+
+    auto found_reload = arguments->get("reload");
+    ASSERT_TRUE(found_reload);
+    EXPECT_LE(found_reload->intValue(), 5);
+    EXPECT_GE(found_reload->intValue(), 0);
 }
 
 // This test verifies that the DHCP server handles version-get commands

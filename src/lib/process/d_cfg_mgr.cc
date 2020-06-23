@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,6 +99,9 @@ DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
                     post_config_cb();
                 }
                 LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg(getConfigSummary(0));
+                // Set the last commit timestamp.
+                auto now = boost::posix_time::second_clock::universal_time();
+                context_->setLastCommitTime(now);
             } else {
                 rollback = true;
             }

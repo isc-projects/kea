@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <util/pid_file.h>
 #include <util/signal_set.h>
 #include <boost/noncopyable.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <string>
 
 namespace isc {
@@ -259,6 +260,9 @@ protected:
 
     /// @brief Manufacture the pid file name
     std::string makePIDFileName() const;
+
+    /// @brief Timestamp of the start of the daemon.
+    boost::posix_time::ptime start_;
 
 private:
     /// @brief Config file name or empty if config file not used.

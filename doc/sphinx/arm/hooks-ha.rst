@@ -1218,3 +1218,67 @@ command structure is as simple as:
    {
        "command": "ha-continue"
    }
+
+.. _command-ha-status-get:
+
+The status-get Command
+------------------------
+
+The ``status-get`` is the general purpose command supported by several Kea deamons,
+not only DHCP servers. However, when sent to the DHCP server with HA enabled, it
+can be used to get insight into the details of the HA specific status information
+of the servers being in the HA configuration. Not only does the response contain
+the status information of the server receiving this command but also the
+information about its partner, if this information is available.
+
+The following is the example response to the ``status-get`` command including
+the HA status of two load balancing servers:
+
+::
+
+   {
+       "result": 0,
+       "text": "",
+       "arguments": {
+           "pid": 1234,
+           "uptime": 3024,
+           "reload": 1111,
+           "ha-servers": {
+               "local": {
+                   "role": "primary",
+                   "scopes": [ "server1" ],
+                   "state": "load-balancing"
+               },
+                "remote": {
+                   "age": 10,
+                   "in-touch": true,
+                   "role": "secondary",
+                   "last-scopes": [ "server2" ],
+                   "last-state": "load-balancing"
+               }
+           }
+       }
+   }
+
+
+The ``ha-servers`` map contains two structures: ``local`` and ``remote``. The former
+contains the status information of the server which received the command. The
+latter contains the status information known to the local server about the
+partner. The ``role`` of the partner server is gathered from the local
+configuration file, therefore it should always be available. The remaining
+status information such as ``last-scopes`` and ``last-state`` is not available
+until the local server communicates with the remote by successfully sending
+the ``ha-heartbeat`` command. If at least one such communication took place,
+the returned value of ``in-touch`` parameter is set to ``true``. By examining
+this value, the command sender can determine whether the information about
+the remote server is reliable.
+
+The ``last-scopes`` and ``last-state`` contain the information about the
+HA scopes served by the partner and its state. Note that this information
+is gathered during the heartbeat command exchange, so it may not be
+accurate if the communication problem occur between the partners and this
+status information is not refreshed. In such case, it may be useful to
+send the ``status-get`` command to the partner server directly to check
+its current state. The ``age`` parameter specifies the number of seconds
+since the information from the partner was gathered (the age of this
+information).

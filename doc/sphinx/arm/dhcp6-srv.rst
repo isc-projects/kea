@@ -5668,6 +5668,7 @@ The DHCPv6 server supports the following operational commands:
 -  leases-reclaim
 -  list-commands
 -  shutdown
+-  status-get
 -  version-get
 
 as described in :ref:`commands-common`. In addition, it supports the

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,6 +51,9 @@ static const std::string SERVER_TAG_GET_COMMAND("server-tag-get");
 
 /// @brief String value for the shutdown command.
 static const std::string SHUT_DOWN_COMMAND("shutdown");
+
+/// @brief String value for the status-get command.
+static const std::string STATUS_GET_COMMAND("status-get");
 
 /// @brief Returned by the process to indicate a command was successful.
 static const int COMMAND_SUCCESS = 0;
@@ -134,7 +137,7 @@ public:
     /// Certainly once during process startup, and possibly later if the user
     /// alters configuration. This method must not throw, it should catch any
     /// processing errors and return a success or failure answer as described
-    /// below.
+    /// below. On success the last commit timestamp must be updated.
     ///
     /// @param config_set a new configuration (JSON) for the process
     /// @param check_only true if configuration is to be verified only, not applied
