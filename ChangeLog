@@ -1,3 +1,9 @@
+1667.	[func]		marcin
+	Implemented status-get command which returns general status
+	information about a Kea server status and optionally
+	HA specific information if the HA hooks library is present.
+	(Gitlab #1258)
+
 1666.	[func]		marcin
 	Client classes specified within host reservations can be used
 	to influence subnet selection within a shared network and pool
