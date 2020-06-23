@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 #include <utility>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::http;
 using namespace boost::posix_time;
@@ -46,8 +47,9 @@ CommunicationState::CommunicationState(const IOServicePtr& io_service,
                                        const HAConfigPtr& config)
     : io_service_(io_service), config_(config), timer_(), interval_(0),
       poke_time_(boost::posix_time::microsec_clock::universal_time()),
-      heartbeat_impl_(0), partner_state_(-1), clock_skew_(0, 0, 0, 0),
-      last_clock_skew_warn_(), my_time_at_skew_(), partner_time_at_skew_() {
+      heartbeat_impl_(0), partner_state_(-1), partner_scopes_(),
+      clock_skew_(0, 0, 0, 0), last_clock_skew_warn_(), my_time_at_skew_(),
+      partner_time_at_skew_() {
 }
 
 CommunicationState::~CommunicationState() {
@@ -76,6 +78,28 @@ CommunicationState::setPartnerState(const std::string& state) {
         isc_throw(BadValue, "unsupported HA partner state returned "
                   << state);
     }
+}
+
+void
+CommunicationState::setPartnerScopes(ConstElementPtr new_scopes) {
+    if (!new_scopes || (new_scopes->getType() != Element::list)) {
+        isc_throw(BadValue, "unable to record partner's HA scopes because"
+                  " the received value is not a valid JSON list");
+    }
+
+    std::set<std::string> partner_scopes;
+    for (auto i = 0; i < new_scopes->size(); ++i) {
+        auto scope = new_scopes->get(i);
+        if (scope->getType() != Element::string) {
+            isc_throw(BadValue, "unable to record partner's HA scopes because"
+                      " the received scope value is not a valid JSON string");
+        }
+        auto scope_str = scope->stringValue();
+        if (!scope_str.empty()) {
+            partner_scopes.insert(scope_str);
+        }
+    }
+    partner_scopes_ = partner_scopes;
 }
 
 void

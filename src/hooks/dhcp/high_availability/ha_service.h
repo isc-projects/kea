@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -246,6 +246,12 @@ public:
     /// queries.
     void waitingStateHandler();
 
+    /// @brief Returns last known state of the partner.
+    /// @ref CommunicationState::getPartnerState.
+    int getPartnerState() const {
+        return (communication_state_->getPartnerState());
+    }
+
 protected:
 
     /// @brief Transitions to a desired state and logs it.
@@ -485,12 +491,13 @@ public:
     /// a restart.
     ///
     /// The ha-heartbeat command takes no arguments. The response contains
-    /// a server state and timestamp in the following format:
+    /// a server state, served scopes and timestamp in the following format:
     ///
     /// @code
     /// {
     ///     "arguments": {
     ///         "date-time": "Thu, 01 Feb 2018 21:18:26 GMT",
+    ///         "scopes": [ "server1" ],
     ///         "state": "waiting"
     ///     },
     ///     "result": 0,
@@ -500,6 +507,12 @@ public:
     ///
     /// @return Pointer to the response to the heartbeat.
     data::ConstElementPtr processHeartbeat();
+
+    /// @brief Processes status-get command and returns a response.
+    ///
+    /// @c HAImpl::commandProcessed calls this to add information about the
+    /// HA servers status into the status-get response.
+    data::ConstElementPtr processStatusGet() const;
 
 protected:
 

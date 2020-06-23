@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -953,6 +953,75 @@ HAService::logFailedLeaseUpdates(const PktPtr& query,
 }
 
 ConstElementPtr
+HAService::processStatusGet() const {
+    ElementPtr ha_servers = Element::createMap();
+
+    // Local part
+    ElementPtr local = Element::createMap();
+    HAConfig::PeerConfig::Role role;
+    role = config_->getThisServerConfig()->getRole();
+    std::string role_txt = HAConfig::PeerConfig::roleToString(role);
+    local->set("role", Element::create(role_txt));
+    int state = getCurrState();
+    try {
+        local->set("state", Element::create(stateToString(state)));
+
+    } catch (...) {
+        // Empty string on error.
+        local->set("state", Element::create(std::string()));
+    }
+    std::set<std::string> scopes = query_filter_.getServedScopes();
+    ElementPtr list = Element::createList();
+    for (std::string scope : scopes) {
+        list->add(Element::create(scope));
+    }
+    local->set("scopes", list);
+    ha_servers->set("local", local);
+
+    // Remote part
+    ElementPtr remote = Element::createMap();
+
+    // Add the in-touch boolean flag to indicate whether there was any
+    // communication between the HA peers. Based on that, the user
+    // may determine if the status returned for the peer is based on
+    // the heartbeat or is to be determined.
+    auto in_touch = (communication_state_->getPartnerState() > 0);
+    remote->set("in-touch", Element::create(in_touch));
+
+    auto age = in_touch ?
+        static_cast<long long int>(communication_state_->getDurationInMillisecs() / 1000) : 0;
+    remote->set("age", Element::create(age));
+
+    try {
+        role = config_->getFailoverPeerConfig()->getRole();
+        std::string role_txt = HAConfig::PeerConfig::roleToString(role);
+        remote->set("role", Element::create(role_txt));
+
+    } catch (...) {
+        remote->set("role", Element::create(std::string()));
+    }
+
+    try {
+        state = getPartnerState();
+        remote->set("last-state", Element::create(stateToString(state)));
+
+    } catch (...) {
+        remote->set("last-state", Element::create(std::string()));
+    }
+
+    // Remote server's scopes.
+    scopes = communication_state_->getPartnerScopes();
+    list = Element::createList();
+    for (auto scope : scopes) {
+        list->add(Element::create(scope));
+    }
+    remote->set("last-scopes", list);
+    ha_servers->set("remote", remote);
+
+    return (ha_servers);
+}
+
+ConstElementPtr
 HAService::processHeartbeat() {
     ElementPtr arguments = Element::createMap();
     std::string state_label = getState(getCurrState())->getLabel();
@@ -961,6 +1030,12 @@ HAService::processHeartbeat() {
     std::string date_time = HttpDateTime().rfc1123Format();
     arguments->set("date-time", Element::create(date_time));
 
+    auto scopes = query_filter_.getServedScopes();
+    ElementPtr scopes_list = Element::createList();
+    for (auto scope : scopes) {
+        scopes_list->add(Element::create(scope));
+    }
+    arguments->set("scopes", scopes_list);
     return (createAnswer(CONTROL_RESULT_SUCCESS, "HA peer status returned.",
                          arguments));
 }
@@ -1030,6 +1105,19 @@ HAService::asyncSendHeartbeat() {
                     }
                     // Note the time returned by the partner to calculate the clock skew.
                     communication_state_->setPartnerTime(date_time->stringValue());
+
+                    // Remember the scopes served by the partner.
+                    try {
+                        auto scopes = args->get("scopes");
+                        communication_state_->setPartnerScopes(scopes);
+
+                    } catch (...) {
+                        // We don't want to fail if the scopes are missing because
+                        // this would be incompatible with old HA hook library
+                        // versions. We may make it mandatory one day, but during
+                        // upgrades of existing HA setup it would be a real issue
+                        // if we failed here.
+                    }
 
                 } catch (const std::exception& ex) {
                     LOG_WARN(ha_logger, HA_HEARTBEAT_FAILED)

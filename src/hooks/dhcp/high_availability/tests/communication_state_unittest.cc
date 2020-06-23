@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::ha;
 using namespace isc::ha::test;
@@ -102,7 +103,42 @@ TEST_F(CommunicationStateTest, partnerState) {
 
     // An attempt to set unsupported value should result in exception.
     EXPECT_THROW(state_.setPartnerState("unsupported"), BadValue);
+}
 
+// Verifies that the partner's scopes are set and retrieved correctly.
+TEST_F(CommunicationStateTest, partnerScopes) {
+    // Initially, the scopes should be empty.
+    ASSERT_TRUE(state_.getPartnerScopes().empty());
+
+    // Set new partner scopes.
+    ASSERT_NO_THROW(
+        state_.setPartnerScopes(Element::fromJSON("[ \"server1\", \"server2\" ]"))
+    );
+
+    // Get them back.
+    auto returned = state_.getPartnerScopes();
+    EXPECT_EQ(2, returned.size());
+    EXPECT_EQ(1, returned.count("server1"));
+    EXPECT_EQ(1, returned.count("server2"));
+
+    // Override the scopes.
+    ASSERT_NO_THROW(
+        state_.setPartnerScopes(Element::fromJSON("[ \"server1\" ]"))
+    );
+    returned = state_.getPartnerScopes();
+    EXPECT_EQ(1, returned.size());
+    EXPECT_EQ(1, returned.count("server1"));
+
+    // Clear the scopes.
+    ASSERT_NO_THROW(
+        state_.setPartnerScopes(Element::fromJSON("[ ]"))
+    );
+    returned = state_.getPartnerScopes();
+    EXPECT_TRUE(returned.empty());
+
+    // An attempt to set invalid JSON should fail.
+    EXPECT_THROW(state_.setPartnerScopes(Element::fromJSON("{ \"not-a-list\": 1 }")),
+                 BadValue);
 }
 
 // Verifies that the object is poked right after construction.

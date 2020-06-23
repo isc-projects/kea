@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,6 +40,7 @@
 #include <gtest/gtest.h>
 #include <functional>
 #include <sstream>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -1065,6 +1066,25 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
     service.verboseTransition(HA_HOT_STANDBY_ST);
     service.runModel(HAService::NOP_EVT);
 
+    // Check the reported info about servers.
+    ConstElementPtr ha_servers = service.processStatusGet();
+    ASSERT_TRUE(ha_servers);
+    std::string expected = "{"
+        "    \"local\": {"
+        "        \"role\": \"primary\","
+        "        \"scopes\": [ \"server1\" ],"
+        "        \"state\": \"hot-standby\""
+        "    }, "
+        "    \"remote\": {"
+        "        \"age\": 0,"
+        "        \"in-touch\": false,"
+        "        \"role\": \"standby\","
+        "        \"last-scopes\": [ ],"
+        "        \"last-state\": \"\""
+        "    }"
+        "}";
+    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));
+
     // Set the test size - 65535 queries.
     const unsigned queries_num = 65535;
     for (unsigned i = 0; i < queries_num; ++i) {
@@ -1092,6 +1112,26 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
 
     // ... and HA service using this configuration.
     TestHAService service(io_service_, network_state_, config_storage);
+
+    // Check the reported info about servers.
+    ConstElementPtr ha_servers = service.processStatusGet();
+    ASSERT_TRUE(ha_servers);
+
+    std::string expected = "{"
+        "    \"local\": {"
+        "        \"role\": \"standby\","
+        "        \"scopes\": [ ],"
+        "        \"state\": \"waiting\""
+        "    }, "
+        "    \"remote\": {"
+        "        \"age\": 0,"
+        "        \"in-touch\": false,"
+        "        \"role\": \"primary\","
+        "        \"last-scopes\": [ ],"
+        "        \"last-state\": \"\""
+        "    }"
+        "}";
+    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));
 
     // Set the test size - 65535 queries.
     const unsigned queries_num = 65535;
@@ -1599,7 +1639,8 @@ TEST_F(HAServiceTest, processHeartbeat) {
     HAConfigParser parser;
     ASSERT_NO_THROW(parser.parse(config_storage, Element::fromJSON(config_text)));
 
-    HAService service(io_service_,  network_state_, config_storage);
+    TestHAService service(io_service_,  network_state_, config_storage);
+    service.query_filter_.serveDefaultScopes();
 
     // Process heartbeat command.
     ConstElementPtr rsp;
@@ -1621,6 +1662,15 @@ TEST_F(HAServiceTest, processHeartbeat) {
     ConstElementPtr date_time = args->get("date-time");
     ASSERT_TRUE(date_time);
     EXPECT_EQ(Element::string, date_time->getType());
+
+    auto scopes_list = args->get("scopes");
+    ASSERT_TRUE(scopes_list);
+    EXPECT_EQ(Element::list, scopes_list->getType());
+    ASSERT_EQ(1, scopes_list->size());
+    auto scope = scopes_list->get(0);
+    ASSERT_TRUE(scope);
+    EXPECT_EQ(Element::string, scope->getType());
+    EXPECT_EQ("server1", scope->stringValue());
 
     // The response should contain the timestamp in the format specified
     // in RFC1123. We use the HttpDateTime method to parse this timestamp.
@@ -2547,7 +2597,7 @@ public:
               const TestHttpResponseCreatorFactoryPtr& factory,
               const std::string& initial_state = "waiting")
         : listener_(listener), factory_(factory), running_(false),
-          static_date_time_() {
+          static_date_time_(), static_scopes_() {
         transition(initial_state);
     }
 
@@ -2564,6 +2614,13 @@ public:
     /// @param static_date_time fixed date-time value.
     void setDateTime(const std::string& static_date_time) {
         static_date_time_ = static_date_time;
+    }
+
+    /// @brief Sets static scopes to be used in responses.
+    ///
+    /// @param scopes Fixed scopes set.
+    void setScopes(const std::set<std::string>& scopes) {
+        static_scopes_ = scopes;
     }
 
     /// @brief Enable response to commands required for leases synchronization.
@@ -2615,6 +2672,13 @@ public:
         if (!static_date_time_.empty()) {
             response_arguments->set("date-time", Element::create(static_date_time_));
         }
+        if (!static_scopes_.empty()) {
+            auto json_scopes = Element::createList();
+            for (auto scope : static_scopes_) {
+                json_scopes->add(Element::create(scope));
+            }
+            response_arguments->set("scopes", json_scopes);
+        }
         factory_->getResponseCreator()->setArguments(response_arguments);
     }
 
@@ -2634,6 +2698,9 @@ private:
 
     /// @brief Static date-time value to be returned.
     std::string static_date_time_;
+
+    /// @brief Static scopes to be reported.
+    std::set<std::string> static_scopes_;
 };
 
 /// @brief Shared pointer to a partner.
@@ -3012,7 +3079,9 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     EXPECT_EQ(HA_PARTNER_DOWN_ST, service_->getCurrState());
 
     // Partner shows up and (eventually) transitions to READY state.
-    HAPartner partner(listener2_, factory2_, "ready");
+    HAPartner partner(listener2_, factory2_);
+    partner.setScopes({ "server1", "server2" });
+    partner.transition("ready");
     partner.startup();
 
     // PARTNER DOWN state: receive a response from the partner indicating that
@@ -3023,6 +3092,42 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     ASSERT_TRUE(isDoingHeartbeat());
     ASSERT_FALSE(isCommunicationInterrupted());
     ASSERT_FALSE(isFailureDetected());
+
+    // Check the reported info about servers.
+    ConstElementPtr ha_servers = service_->processStatusGet();
+    ASSERT_TRUE(ha_servers);
+
+    // Hard to know what is the age of the remote data. Therefore, let's simply
+    // grab it from the response.
+    ASSERT_EQ(Element::map, ha_servers->getType());
+    auto remote = ha_servers->get("remote");
+    ASSERT_TRUE(remote);
+    EXPECT_EQ(Element::map, remote->getType());
+    auto age = remote->get("age");
+    ASSERT_TRUE(age);
+    EXPECT_EQ(Element::integer, age->getType());
+    auto age_value = age->intValue();
+    EXPECT_GE(age_value, 0);
+
+    // Now append it to the whole structure for comparison.
+    std::ostringstream s;
+    s << age_value;
+
+    std::string expected = "{"
+        "    \"local\": {"
+        "        \"role\": \"primary\","
+        "        \"scopes\": [ \"server1\", \"server2\" ], "
+        "        \"state\": \"load-balancing\""
+        "    }, "
+        "    \"remote\": {"
+        "        \"age\": " + s.str() + ","
+        "        \"in-touch\": true,"
+        "        \"role\": \"secondary\","
+        "        \"last-scopes\": [ \"server1\", \"server2\" ],"
+        "        \"last-state\": \"ready\""
+        "    }"
+        "}";
+    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));
 
     // Crash the partner and see whether our server can return to the partner
     // down state.
