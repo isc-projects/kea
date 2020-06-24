@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <exceptions/exceptions.h>
 #include <hooks/parking_lots.h>
+#include <boost/weak_ptr.hpp>
 #include <gtest/gtest.h>
 #include <string>
 
@@ -109,6 +110,47 @@ TEST(ParkingLotTest, drop) {
     // Expect that an attempt to unpark return false, as the object
     // has been dropped.
     EXPECT_FALSE(parking_lot_handle->unpark(parked_object));
+}
+
+// Test that parked lots can be cleared.
+TEST(ParkingLotTest, clear) {
+    ParkingLotsPtr parking_lots = boost::make_shared<ParkingLots>();
+    ParkingLotPtr parking_lot = parking_lots->getParkingLotPtr(1234);
+    ASSERT_TRUE(parking_lot);
+    ParkingLotHandlePtr parking_lot_handle =
+        boost::make_shared<ParkingLotHandle>(parking_lot);
+
+    boost::shared_ptr<std::string> parked_object =
+        boost::make_shared<std::string>("foo");
+    boost::weak_ptr<std::string> weak_parked_object(parked_object);
+
+    // Reference object twice to test that clearing the parking lots
+    // ignores reference counting.
+    ASSERT_NO_THROW(parking_lot_handle->reference(parked_object));
+    ASSERT_NO_THROW(parking_lot_handle->reference(parked_object));
+
+    // This flag will indicate if the callback has been called.
+    bool unparked = false;
+    ASSERT_NO_THROW(parking_lot->park(parked_object, [&unparked] {
+        unparked = true;
+    }));
+
+    // Drop reference on objects.
+    parking_lot.reset();
+    parking_lot_handle.reset();
+    parked_object.reset();
+    
+    // The parked object is still alive.
+    EXPECT_FALSE(weak_parked_object.expired());
+
+    // Clear the parking lots.
+    ASSERT_NO_THROW(parking_lots->clear());
+
+    // The callback should not be invoked.
+    EXPECT_FALSE(unparked);
+
+    // The parked object was destroyed.
+    EXPECT_TRUE(weak_parked_object.expired());
 }
 
 }

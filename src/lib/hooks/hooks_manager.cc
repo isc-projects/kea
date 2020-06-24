@@ -213,6 +213,8 @@ HooksManager::validateLibraries(const std::vector<std::string>& libraries) {
     return (LibraryManagerCollection::validateLibraries(libraries));
 }
 
+// Test mode
+
 void
 HooksManager::setTestMode(bool mode) {
     getHooksManager().test_mode_ = mode;

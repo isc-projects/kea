@@ -260,7 +260,9 @@ void Dhcpv6Srv::setPacketStatisticsDefaults() {
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {
+    // Discard any parked packets
     discardPackets();
+
     try {
         stopD2();
     } catch(const std::exception& ex) {
@@ -4181,8 +4183,6 @@ Dhcpv6Srv::requestedInORO(const Pkt6Ptr& query, const uint16_t code) const {
 
 void Dhcpv6Srv::discardPackets() {
     // Dump all of our current packets, anything that is mid-stream
-    isc::dhcp::Pkt6Ptr pkt6ptr_empty;
-    isc::dhcp::getCalloutHandle(pkt6ptr_empty);
     HooksManager::clearParkingLots();
 }
 

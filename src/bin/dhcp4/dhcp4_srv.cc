@@ -653,7 +653,7 @@ void Dhcpv4Srv::setPacketStatisticsDefaults() {
 }
 
 Dhcpv4Srv::~Dhcpv4Srv() {
-    // Discard any cached packets or parked packets
+    // Discard any parked packets
     discardPackets();
 
     try {
@@ -3991,10 +3991,7 @@ int Dhcpv4Srv::getHookIndexLease4Decline() {
 }
 
 void Dhcpv4Srv::discardPackets() {
-    // Clear any packets held by the callhout handle store and
-    // all parked packets
-    isc::dhcp::Pkt4Ptr pkt4ptr_empty;
-    isc::dhcp::getCalloutHandle(pkt4ptr_empty);
+    // Dump all of our current packets, anything that is mid-stream
     HooksManager::clearParkingLots();
 }
 
