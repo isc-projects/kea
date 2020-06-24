@@ -1277,15 +1277,6 @@ returned list will comprise more elements, each describing the status of
 a different relationship in which the server participates. Currently, it
 is only one status.
 
-.. note::
-
-   In Kea 1.7.8 an incompatible change was introduced to the syntax of the
-   ``status-get`` response. Previously, the HA status for a single relationship
-   was returned within the ``arguments`` map. As of Kea 1.7.8, the returned status
-   is enclosed in the list as described above. Any existing code relying on the
-   previous syntax must be updated to work with the new Kea versions.
-
-
 The ``ha-servers`` map contains two structures: ``local`` and ``remote``. The former
 contains the status information of the server which received the command. The
 latter contains the status information known to the local server about the
@@ -1319,11 +1310,10 @@ responding to this traffic. More about the failover procedure can be found
 in :ref:`ha-load-balancing-config`.
 
 The ``connecting-clients``, ``unacked-clients``, ``unacked-clients-left``
-and ``analyzed-packets`` parameters have been introduced together with the
-``communication-interrupted`` parameter in the Kea 1.7.8 release and they
-convey useful information about the state of the DHCP traffic monitoring
-in the communication interrupted state. If the server leaves the
-communication interrupted state these parameters are all reset to 0.
+and ``analyzed-packets`` together with the ``communication-interrupted``
+parameter convey useful information about the state of the DHCP traffic
+monitoring in the communication interrupted state. If the server leaves the
+communication interrupted state these parameters are reset to 0.
 
 These parameters have the following meaning in the communication interrupted
 state:
@@ -1353,13 +1343,6 @@ Monitoring these values helps to predict when the local server will
 enter the partner-down state or why the server hasn't yet entered this
 state.
 
-The last parameter introduced in the Kea 1.7.8 release was the ``ha-mode``.
-It returns the HA mode of operation selected using the ``mode`` parameter
-in the configuration file. It can hold one of the following values:
-``load-balancing``, ``hot-standby`` or ``passive-backup``.
-
-The ``status-get`` response has the format described above only in the
-``load-balancing`` and ``hot-standby`` modes. In the ``passive-backup``
-mode the ``remote`` map is not included in the response because in this
-mode there is only one active server (local). The response comprises no
-information about the status of the backup servers.
+Finally, the ``ha-mode`` parameter returns the HA mode of operation selected
+using the ``mode`` parameter in the configuration file. It can hold
+one of the following values: ``load-balancing``, ``hot-standby``.

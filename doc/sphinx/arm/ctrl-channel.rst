@@ -551,7 +551,7 @@ The ``status-get`` command returns server's runtime information:
 
  - reload: number of seconds since the last configuration (re)load.
 
- - ha-servers: HA specific status information about the DHCP servers
+ - high-availability: HA specific status information about the DHCP servers
    configured to use HA hooks library:
 
      * local: for the local server the state, the role (primary,
@@ -561,7 +561,7 @@ The ``status-get`` command returns server's runtime information:
      * remote: for the remote server the last known state, served
        HA scopes and the role of the server in HA relationship.
 
-The ``ha-servers`` information is only returned when the command is
+The ``high-availability`` information is only returned when the command is
 sent to the DHCP servers being in the HA setup. This parameter is
 never returned when the ``status-get`` command is sent to the
 Control Agent or DDNS deamon.
