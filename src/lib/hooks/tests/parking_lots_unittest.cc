@@ -139,7 +139,7 @@ TEST(ParkingLotTest, clear) {
     parking_lot.reset();
     parking_lot_handle.reset();
     parked_object.reset();
-    
+
     // The parked object is still alive.
     EXPECT_FALSE(weak_parked_object.expired());
 
