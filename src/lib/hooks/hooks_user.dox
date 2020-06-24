@@ -292,7 +292,7 @@ source) the service methods must be thread safe.
 e.g. creates or deletes a subnet, it must enter a critical section using
 the @c isc::util::MultiThreadingCriticalSection RAII class.
 
-In the tutoral, we'll put "multi_threading_compatible" in its own file,
+In the tutorial, we'll put "multi_threading_compatible" in its own file,
 multi_threading_compatible.cc. The contents are:
 
 @code
@@ -324,6 +324,8 @@ int commandHandler(CalloutHandle& handle) {
 }
 @endcode
 
+@ref hooksMultiThreading provides more details about thread safety
+requirements.
 
 @subsection hooksdgCallouts Callouts
 
@@ -1157,7 +1159,7 @@ ones with non-standard names need to be registered manually.
 Kea servers natively support a set of control commands to retrieve and update
 runtime information, e.g. server configuration, basic statistics etc. In
 many cases, however, DHCP deployments require support for additional commands
-or the natively supported commands don't exactly fulfil one's requirements.
+or the natively supported commands don't exactly fulfill one's requirements.
 
 Taking advantage of Kea's modularity and hooks framework, it is now possible
 to easily extend the pool of supported commands by implementing additional
@@ -1523,42 +1525,82 @@ which are dedicated to isc::data::Element testing and src/lib/hooks/tests/callou
 which is an example library used in testing. This library expects exactly 3 parameters:
 svalue (which is a string), ivalue (which is an integer) and bvalue (which is a boolean).
 
-@subsection hooksMultiThreading Multi-Threading Considations for Hooks Writers
+@subsection hooksMultiThreading Multi-Threading Considerations for Hooks Writers
 
 Multi-threading programming in C++ is not easy. For instance STL containers
 do not support simultaneous read and write accesses. Kea is written in C++
-so a priori for all Kea features one should never assume thread safety.
+so a priori for all Kea APIs one should never assume thread safety.
 
-This stands both for internal multi-threading inside a hook library or
-when a hook is called from a callout point in the multi-threaded packet
-processing. When the problem can't be solved the hook must be marked
-as not compatible with multi-threading.
+When a hook library is internally multi-threaded its code and any Kea API
+used simultaneously by different threads must be thread safe. To mark
+the difference between this and the other thread safety requirement this
+is called "generic thread safe".
 
-Some Kea APIs were made thread safe mainly because they are used by the
-packet processing:
- - logging is thread safe and even multi process safe i.e. messages logged
-  into a file or by syslog from multiple processes do not mixed.
- - statistics update is thread safe.
- - lease and host database backends are thread safe. Note if you need to
-  perform a direct MySQL or PostgreSQL query you must use the connection pool.
- - state model and watched thread are thread safe (libkea-util)
- - interval timer setup and cancel are thread safe (libkea-asiolink)
- - parking lots are thread safe (libkea-hooks)
- - external sockets are thread safe (libkea-dhcp++)
- - http client is thread safe (libkea-http)
+When multi-threaded packet processing is enabled Kea servers perform
+some actions by the main thread and packet processing by members of
+a thread pool. The multi-threading mode is returned by:
+@code
+isc::util::MultiThreadingMgr::instance().getMode()
+@endcode
+When it is false Kea is single threaded there is no thread safety
+requirement, when it is true the requirement is named Kea packet processing
+thread safe shorten into "Kea thread safe".
 
-In some cases thread safety is not required for instance for the code which
-is executed by the main thread:
- - (re)configuration is performed by the main thread with the packet
-  processing stopped
+A typical Kea thread safe looks like:
+@code
+int Foo() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(mutex_);
+	return (FooInternal());
+    } else {
+	return (FooInternal());
+    }
+}
+@endcode
+
+The overhead of mutexes and other synchronization tools is far greater
+than a test and branch so it is the recommended way to implement Kea
+thread safety.
+
+When a hook library entry point can be called from a packet processing
+thread, typically from a packet processing callout but also when
+implementing a lease or host backend API, the entry point code must
+be Kea thread safe. If it is not possible the hook library must
+be marked as not multi-threading compatible (i.e. return 0 from
+multi_threading_compatible).
+
+At the opposite during (re)configuration including libload command
+and config backend only the main thread runs so version, load, unload,
+multi_threading_compatible, dhcp4_srv_configured, dhcp6_srv_configured,
+cb4_updated and cb6_updated have no thread safety requirements.
+
+Other hook library entry points are called by the main thread:
  - io service (io context is recent boost versions) is polled by the main
   thread
- - external context callbacks are executed by the main thread
-Note in the last two cases the packet processing is not stopped: the
-external socket being thread safe only means one may at any moment for
-instance delete an external socket, not that the callback has an exclusive
-access to Kea internal objects.
- 
+ - external socket callbacks are executed by the main thread
+ - commands including command_process
+
+The packet processing threads are not stopped so either the entry
+point code is Kea thread safe or it uses a critical section
+(@c isc::util::MultiThreadingCriticalSection) to stop the packet
+processing threads during the execution of the not Kea thread safe code.
+Of course critical sections have an impact on performance so they should
+be used only for particular cases where no better choice is available.
+
+Some  Kea APIs were made thread safe mainly because they are used by the
+packet processing:
+ - logging is generic thread safe and even multi process safe i.e.
+  messages logged into a file or by syslog from multiple processes
+  do not mixed.
+ - statistics update is Kea thread safe.
+ - lease and host database backends are Kea thread safe. Note if you need to
+  perform a direct MySQL or PostgreSQL query you must use the connection pool.
+ - state model and watched thread are generic thread safe (libkea-util)
+ - interval timer setup and cancel are generic thread safe (libkea-asiolink)
+ - parking lots are generic thread safe (libkea-hooks)
+ - external sockets are generic thread safe (libkea-dhcp++)
+ - http client is Kea thread safe (libkea-http)
+
 Per library documentation will be updated to detail thread safety to help
 hooks writers and to provide an exhaustive list of Kea thread safe APIs.
 
