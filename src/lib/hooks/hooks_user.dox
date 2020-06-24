@@ -1531,7 +1531,7 @@ Multi-threading programming in C++ is not easy. For instance STL containers
 do not support simultaneous read and write accesses. Kea is written in C++
 so a priori for all Kea APIs one should never assume thread safety.
 
-When a hook library is internally multi-threaded its code and any Kea API
+When a hook library is internally multi-threaded, its code and any Kea API
 used simultaneously by different threads must be thread safe. To mark
 the difference between this and the other thread safety requirement this
 is called "generic thread safe".
@@ -1542,8 +1542,8 @@ a thread pool. The multi-threading mode is returned by:
 @code
 isc::util::MultiThreadingMgr::instance().getMode()
 @endcode
-When it is false Kea is single threaded there is no thread safety
-requirement, when it is true the requirement is named Kea packet processing
+When it is false, Kea is single threaded and there is no thread safety
+requirement, when it is true, the requirement is named Kea packet processing
 thread safe shorten into "Kea thread safe".
 
 A typical Kea thread safe looks like:
@@ -1570,7 +1570,7 @@ be marked as not multi-threading compatible (i.e. return 0 from
 multi_threading_compatible).
 
 At the opposite during (re)configuration including libload command
-and config backend only the main thread runs so version, load, unload,
+and config backend, only the main thread runs, so version, load, unload,
 multi_threading_compatible, dhcp4_srv_configured, dhcp6_srv_configured,
 cb4_updated and cb6_updated have no thread safety requirements.
 
@@ -1591,7 +1591,7 @@ Some  Kea APIs were made thread safe mainly because they are used by the
 packet processing:
  - logging is generic thread safe and even multi process safe i.e.
   messages logged into a file or by syslog from multiple processes
-  do not mixed.
+  do not mix.
  - statistics update is Kea thread safe.
  - lease and host database backends are Kea thread safe. Note if you need to
   perform a direct MySQL or PostgreSQL query you must use the connection pool.
@@ -1600,6 +1600,10 @@ packet processing:
  - parking lots are generic thread safe (libkea-hooks)
  - external sockets are generic thread safe (libkea-dhcp++)
  - http client is Kea thread safe (libkea-http)
+
+Some other Kea APIs are intrinsically thread safe because they do not
+involve a shared structure so for instance despite of its name the
+interface manager send methods are generic thread safe.
 
 Per library documentation will be updated to detail thread safety to help
 hooks writers and to provide an exhaustive list of Kea thread safe APIs.
