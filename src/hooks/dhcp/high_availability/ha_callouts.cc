@@ -322,6 +322,7 @@ int load(LibraryHandle& handle) {
 ///
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
+    impl.reset();
     LOG_INFO(ha_logger, HA_DEINIT_OK);
     return (0);
 }
