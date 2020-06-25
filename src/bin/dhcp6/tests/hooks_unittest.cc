@@ -123,6 +123,10 @@ public:
         : Dhcpv6SrvTest() {
 
         HooksManager::setTestMode(false);
+        bool status = HooksManager::unloadLibraries();
+        if (!status) {
+            cerr << "(fixture ctor) unloadLibraries failed" << endl;
+        }
 
         // Allocate new DHCPv6 Server
         srv_.reset(new NakedDhcpv6Srv(0));
@@ -138,7 +142,26 @@ public:
 
     /// @brief destructor (deletes Dhcpv6Srv)
     ~HooksDhcpv6SrvTest() {
+        // Clear static buffers
+        resetCalloutBuffers();
+
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("buffer6_receive");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt6_receive");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt6_send");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("buffer6_send");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("subnet6_select");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("leases6_committed");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease6_renew");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease6_release");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease6_rebind");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease6_decline");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host6_identifier");
+
         HooksManager::setTestMode(false);
+        bool status = HooksManager::unloadLibraries();
+        if (!status) {
+            cerr << "(fixture dtor) unloadLibraries failed" << endl;
+        }
     }
 
     /// @brief creates an option with specified option code
@@ -983,7 +1006,7 @@ public:
     /// that no libraries are loaded and that any marker files are deleted.
     void reset() {
         // Unload any previously-loaded libraries.
-        HooksManager::unloadLibraries();
+        EXPECT_TRUE(HooksManager::unloadLibraries());
 
         // Get rid of any marker files.
         static_cast<void>(remove(LOAD_MARKER_FILE));

@@ -830,6 +830,13 @@ stopping IO between the DHCPv6 server and the DHCP_DDNS server.  This is
 probably due to a programmatic error is not likely to impact either server
 upon restart.  The reason for the failure is given within the message.
 
+% DHCP6_SRV_UNLOAD_LIBRARIES_ERROR error unloading hooks libraries during shutdown: %1
+This error message indicates that during shutdown, unloading hooks
+libraries failed to close them. If the list of libraries is empty it is
+a programmatic error in the server code. If it is not empty it could be
+a programmatic error in one of the hooks libraries which could lead to
+a crash during finalization.
+
 % DHCP6_STANDALONE skipping message queue, running standalone
 This is a debug message indicating that the IPv6 server is running in
 standalone mode, not connected to the message queue.  Standalone mode

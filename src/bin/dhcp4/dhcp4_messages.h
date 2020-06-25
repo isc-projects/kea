@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Mon Jun 22 2020 17:28
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu Jun 25 2020 13:36
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -142,6 +142,7 @@ extern const isc::log::MessageID DHCP4_SHUTDOWN_REQUEST;
 extern const isc::log::MessageID DHCP4_SRV_CONSTRUCT_ERROR;
 extern const isc::log::MessageID DHCP4_SRV_D2STOP_ERROR;
 extern const isc::log::MessageID DHCP4_SRV_DHCP4O6_ERROR;
+extern const isc::log::MessageID DHCP4_SRV_UNLOAD_LIBRARIES_ERROR;
 extern const isc::log::MessageID DHCP4_STARTED;
 extern const isc::log::MessageID DHCP4_STARTING;
 extern const isc::log::MessageID DHCP4_START_INFO;

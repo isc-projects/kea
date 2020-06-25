@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Mon Jun 22 2020 17:30
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jun 25 2020 14:35
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -140,6 +140,7 @@ extern const isc::log::MessageID DHCP6_SHUTDOWN_REQUEST = "DHCP6_SHUTDOWN_REQUES
 extern const isc::log::MessageID DHCP6_SOCKET_UNICAST = "DHCP6_SOCKET_UNICAST";
 extern const isc::log::MessageID DHCP6_SRV_CONSTRUCT_ERROR = "DHCP6_SRV_CONSTRUCT_ERROR";
 extern const isc::log::MessageID DHCP6_SRV_D2STOP_ERROR = "DHCP6_SRV_D2STOP_ERROR";
+extern const isc::log::MessageID DHCP6_SRV_UNLOAD_LIBRARIES_ERROR = "DHCP6_SRV_UNLOAD_LIBRARIES_ERROR";
 extern const isc::log::MessageID DHCP6_STANDALONE = "DHCP6_STANDALONE";
 extern const isc::log::MessageID DHCP6_STARTED = "DHCP6_STARTED";
 extern const isc::log::MessageID DHCP6_STARTING = "DHCP6_STARTING";
@@ -290,6 +291,7 @@ const char* values[] = {
     "DHCP6_SOCKET_UNICAST", "server is about to open socket on address %1 on interface %2",
     "DHCP6_SRV_CONSTRUCT_ERROR", "error creating Dhcpv6Srv object, reason: %1",
     "DHCP6_SRV_D2STOP_ERROR", "error stopping IO with DHCP_DDNS during shutdown: %1",
+    "DHCP6_SRV_UNLOAD_LIBRARIES_ERROR", "error unloading hooks libraries during shutdown: %1",
     "DHCP6_STANDALONE", "skipping message queue, running standalone",
     "DHCP6_STARTED", "Kea DHCPv6 server version %1 started",
     "DHCP6_STARTING", "Kea DHCPv6 server version %1 (%2) starting",

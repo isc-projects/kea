@@ -1344,7 +1344,7 @@ TEST_F(Dhcpv4SharedNetworkTest, parse) {
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
-    ASSERT_EQ(0, rcode);
+    ASSERT_EQ(0, rcode) << " comment: " << comment->stringValue();
     ASSERT_NO_THROW( {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=4");

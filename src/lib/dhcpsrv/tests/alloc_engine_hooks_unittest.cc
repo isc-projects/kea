@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,8 @@
 #include <hooks/server_hooks.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_manager.h>
+
+#include <iostream>
 
 using namespace std;
 using namespace isc::hooks;
@@ -31,8 +33,13 @@ public:
     }
 
     virtual ~HookAllocEngine6Test() {
+        resetCalloutBuffers();
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
             "lease6_select");
+        bool status = HooksManager::unloadLibraries();
+        if (!status) {
+            cerr << "(fixture dtor) unloadLibraries failed" << endl;
+        }
     }
 
     /// @brief clears out buffers, so callouts can store received arguments
@@ -181,7 +188,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
 
     // Initialize Hooks Manager
     HookLibsCollection libraries; // no libraries at this time
-    HooksManager::loadLibraries(libraries);
+    ASSERT_NO_THROW(HooksManager::loadLibraries(libraries));
 
     // Install lease6_select
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -258,7 +265,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
 
     // Initialize Hooks Manager
     HookLibsCollection libraries; // no libraries at this time
-    HooksManager::loadLibraries(libraries);
+    ASSERT_NO_THROW(HooksManager::loadLibraries(libraries));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -304,7 +311,7 @@ TEST_F(HookAllocEngine6Test, skip_lease6_select) {
 
     // Initialize Hooks Manager
     HookLibsCollection libraries; // no libraries at this time
-    HooksManager::loadLibraries(libraries);
+    ASSERT_NO_THROW(HooksManager::loadLibraries(libraries));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -338,12 +345,19 @@ TEST_F(HookAllocEngine6Test, skip_lease6_select) {
 class HookAllocEngine4Test : public AllocEngine4Test {
 public:
     HookAllocEngine4Test() {
+        // The default context is not used in these tests.
+        ctx_.callout_handle_.reset();
         resetCalloutBuffers();
     }
 
     virtual ~HookAllocEngine4Test() {
+        resetCalloutBuffers();
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
             "lease4_select");
+        bool status = HooksManager::unloadLibraries();
+        if (!status) {
+            cerr << "(fixture dtor) unloadLibraries failed" << endl;
+        }
     }
 
     /// @brief clears out buffers, so callouts can store received arguments
@@ -490,7 +504,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
 
     // Initialize Hooks Manager
     HookLibsCollection libraries; // no libraries at this time
-    HooksManager::loadLibraries(libraries);
+    ASSERT_NO_THROW(HooksManager::loadLibraries(libraries));
 
     // Install lease4_select
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -565,7 +579,7 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
     // Initialize Hooks Manager
     HookLibsCollection libraries; // no libraries at this time
-    HooksManager::loadLibraries(libraries);
+    ASSERT_NO_THROW(HooksManager::loadLibraries(libraries));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -615,7 +629,7 @@ TEST_F(HookAllocEngine4Test, skip_lease4_select) {
 
     // Initialize Hooks Manager
     HookLibsCollection libraries; // no libraries at this time
-    HooksManager::loadLibraries(libraries);
+    ASSERT_NO_THROW(HooksManager::loadLibraries(libraries));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -641,6 +655,6 @@ TEST_F(HookAllocEngine4Test, skip_lease4_select) {
     checkCalloutHandleReset(ctx.query_);
 }
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+} // namespace test
+} // namespace dhcp
+} // namespace isc

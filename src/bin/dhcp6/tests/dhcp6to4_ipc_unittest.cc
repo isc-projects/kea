@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,6 +58,18 @@ public:
 
         // Reset the flag which we expect to be set in the callout.
         callback_pkt_options_copy_ = false;
+    }
+
+    /// @brief Destructor
+    ///
+    /// Various cleanups.
+    virtual ~Dhcp6to4IpcTest() {
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("buffer6_send");
+        callback_pkt_.reset();
+        bool status = HooksManager::unloadLibraries();
+        if (!status) {
+            std::cerr << "(fixture dtor) unloadLibraries failed" << std::endl;
+        }
     }
 
     /// @brief Configure DHCP4o6 port.

@@ -39,6 +39,7 @@
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <hooks/hooks_parser.h>
+#include <hooks/hooks_manager.h>
 #include <log/logger_support.h>
 #include <process/config_ctl_parser.h>
 
@@ -842,6 +843,8 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // change causes problems when trying to roll back.
             const HooksConfig& libraries =
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
+            HooksManager::prepareUnloadLibraries();
+            static_cast<void>(HooksManager::unloadLibraries());
             libraries.loadLibraries();
         }
         catch (const isc::Exception& ex) {

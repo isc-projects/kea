@@ -470,6 +470,10 @@ TEST_F(HooksManagerTest, PrePostCalloutTest) {
 
     // ... and check that the pre- and post- callout functions don't survive a
     // reload.
+    EXPECT_NO_THROW(HooksManager::prepareUnloadLibraries());
+    bool status = false;
+    EXPECT_NO_THROW(status = HooksManager::unloadLibraries());
+    EXPECT_TRUE(status);
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
     handle = HooksManager::createCalloutHandle();
 
@@ -519,6 +523,10 @@ TEST_F(HooksManagerTest, TestModeEnabledPrePostSurviveLoad) {
 
     // ... and check that the pre- and post- callout functions survive a
     // reload.
+    EXPECT_NO_THROW(HooksManager::prepareUnloadLibraries());
+    bool status = false;
+    EXPECT_NO_THROW(status = HooksManager::unloadLibraries());
+    EXPECT_TRUE(status);
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
     handle = HooksManager::createCalloutHandle();
 
@@ -569,6 +577,10 @@ TEST_F(HooksManagerTest, TestModeDisabledPrePostDoNotSurviveLoad) {
 
     // ... and check that the pre- and post- callout functions don't survive a
     // reload.
+    EXPECT_NO_THROW(HooksManager::prepareUnloadLibraries());
+    bool status = false;
+    EXPECT_NO_THROW(status = HooksManager::unloadLibraries());
+    EXPECT_TRUE(status);
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
     handle = HooksManager::createCalloutHandle();
 
@@ -616,6 +628,10 @@ TEST_F(HooksManagerTest, TestModeEnabledTooLatePrePostDoNotSurvive) {
 
     // ... and check that the pre- and post- callout functions don't survive a
     // reload.
+    EXPECT_NO_THROW(HooksManager::prepareUnloadLibraries());
+    bool status = false;
+    EXPECT_NO_THROW(status = HooksManager::unloadLibraries());
+    EXPECT_TRUE(status);
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
     handle = HooksManager::createCalloutHandle();
 

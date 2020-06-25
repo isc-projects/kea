@@ -106,6 +106,10 @@ public:
     /// @brief creates Dhcpv4Srv and prepares buffers for callouts
     HooksDhcpv4SrvTest() {
         HooksManager::setTestMode(false);
+        bool status = HooksManager::unloadLibraries();
+        if (!status) {
+            cerr << "(fixture ctor) unloadLibraries failed" << endl;
+        }
 
         // Allocate new DHCPv6 Server
         srv_ = new NakedDhcpv4Srv(0);
@@ -118,6 +122,9 @@ public:
 
     /// @brief destructor (deletes Dhcpv4Srv)
     virtual ~HooksDhcpv4SrvTest() {
+
+        // clear static buffers
+        resetCalloutBuffers();
 
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("dhcp4_srv_configured");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("buffer4_receive");
@@ -132,6 +139,10 @@ public:
 
         delete srv_;
         HooksManager::setTestMode(false);
+        bool status = HooksManager::unloadLibraries();
+        if (!status) {
+            cerr << "(fixture dtor) unloadLibraries failed" << endl;
+        }
     }
 
     /// @brief creates an option with specified option code

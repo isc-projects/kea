@@ -35,6 +35,7 @@
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <process/config_ctl_parser.h>
+#include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 #include <config/command_mgr.h>
 #include <util/encode/hex.h>
@@ -708,6 +709,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             // This occurs last as if it succeeds, there is no easy way to
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
+            HooksManager::prepareUnloadLibraries();
+            static_cast<void>(HooksManager::unloadLibraries());
             const HooksConfig& libraries =
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
             libraries.loadLibraries();

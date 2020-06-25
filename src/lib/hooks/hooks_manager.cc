@@ -135,6 +135,10 @@ HooksManager::loadLibraries(const HookLibsCollection& libraries) {
 
 bool
 HooksManager::unloadLibrariesInternal() {
+    if (test_mode_) {
+        return (true);
+    }
+
     ServerHooks::getServerHooks().getParkingLotsPtr()->clear();
 
     // Keep a weak pointer on the existing library manager collection.
@@ -167,6 +171,10 @@ bool HooksManager::unloadLibraries() {
 
 void
 HooksManager::prepareUnloadLibrariesInternal() {
+    if (test_mode_) {
+        return;
+    }
+
     static_cast<void>(lm_collection_->prepareUnloadLibraries());
 }
 

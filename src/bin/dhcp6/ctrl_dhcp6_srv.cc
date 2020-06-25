@@ -235,14 +235,21 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
     // stop thread pool (if running)
     MultiThreadingCriticalSection cs;
 
-    /// @todo delete any stored CalloutHandles referring to the old libraries
-    /// Get list of currently loaded libraries and reload them.
-    HookLibsCollection loaded = HooksManager::getLibraryInfo();
-    bool status = HooksManager::loadLibraries(loaded);
-    if (!status) {
+    // Clear the packet queue.
+    MultiThreadingMgr::instance().getThreadPool().reset();
+
+    try {
+        /// Get list of currently loaded libraries and reload them.
+        HookLibsCollection loaded = HooksManager::getLibraryInfo();
+        HooksManager::prepareUnloadLibraries();
+        static_cast<void>(HooksManager::unloadLibraries());
+        bool status = HooksManager::loadLibraries(loaded);
+        if (!status) {
+            isc_throw(Unexpected, "Failed to reload hooks libraries.");
+        }
+    } catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_HOOKS_LIBS_RELOAD_FAIL);
-        ConstElementPtr answer = isc::config::createAnswer(1,
-                                 "Failed to reload hooks libraries.");
+        ConstElementPtr answer = isc::config::createAnswer(1, ex.what());
         return (answer);
     }
     ConstElementPtr answer = isc::config::createAnswer(0,

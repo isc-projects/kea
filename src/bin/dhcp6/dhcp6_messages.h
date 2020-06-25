@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Mon Jun 22 2020 17:30
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jun 25 2020 14:35
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -141,6 +141,7 @@ extern const isc::log::MessageID DHCP6_SHUTDOWN_REQUEST;
 extern const isc::log::MessageID DHCP6_SOCKET_UNICAST;
 extern const isc::log::MessageID DHCP6_SRV_CONSTRUCT_ERROR;
 extern const isc::log::MessageID DHCP6_SRV_D2STOP_ERROR;
+extern const isc::log::MessageID DHCP6_SRV_UNLOAD_LIBRARIES_ERROR;
 extern const isc::log::MessageID DHCP6_STANDALONE;
 extern const isc::log::MessageID DHCP6_STARTED;
 extern const isc::log::MessageID DHCP6_STARTING;

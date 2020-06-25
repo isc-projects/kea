@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Mon Jun 22 2020 17:28
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu Jun 25 2020 13:36
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -141,6 +141,7 @@ extern const isc::log::MessageID DHCP4_SHUTDOWN_REQUEST = "DHCP4_SHUTDOWN_REQUES
 extern const isc::log::MessageID DHCP4_SRV_CONSTRUCT_ERROR = "DHCP4_SRV_CONSTRUCT_ERROR";
 extern const isc::log::MessageID DHCP4_SRV_D2STOP_ERROR = "DHCP4_SRV_D2STOP_ERROR";
 extern const isc::log::MessageID DHCP4_SRV_DHCP4O6_ERROR = "DHCP4_SRV_DHCP4O6_ERROR";
+extern const isc::log::MessageID DHCP4_SRV_UNLOAD_LIBRARIES_ERROR = "DHCP4_SRV_UNLOAD_LIBRARIES_ERROR";
 extern const isc::log::MessageID DHCP4_STARTED = "DHCP4_STARTED";
 extern const isc::log::MessageID DHCP4_STARTING = "DHCP4_STARTING";
 extern const isc::log::MessageID DHCP4_START_INFO = "DHCP4_START_INFO";
@@ -291,6 +292,7 @@ const char* values[] = {
     "DHCP4_SRV_CONSTRUCT_ERROR", "error creating Dhcpv4Srv object, reason: %1",
     "DHCP4_SRV_D2STOP_ERROR", "error stopping IO with DHCP_DDNS during shutdown: %1",
     "DHCP4_SRV_DHCP4O6_ERROR", "error stopping IO with DHCPv4o6 during shutdown: %1",
+    "DHCP4_SRV_UNLOAD_LIBRARIES_ERROR", "error unloading hooks libraries during shutdown: %1",
     "DHCP4_STARTED", "Kea DHCPv4 server version %1 started",
     "DHCP4_STARTING", "Kea DHCPv4 server version %1 (%2) starting",
     "DHCP4_START_INFO", "pid: %1, server port: %2, client port: %3, verbose: %4",

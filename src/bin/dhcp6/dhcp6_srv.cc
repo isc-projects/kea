@@ -282,7 +282,18 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     LeaseMgrFactory::destroy();
 
     // Explicitly unload hooks
-    HooksManager::unloadLibraries();
+    HooksManager::prepareUnloadLibraries();
+    if (!HooksManager::unloadLibraries()) {
+        auto names = HooksManager::getLibraryNames();
+        std::string msg;
+        if (!names.empty()) {
+            msg = names[0];
+            for (size_t i = 1; i < names.size(); ++i) {
+                msg += std::string(", ") + names[i];
+            }
+        }
+        LOG_ERROR(dhcp6_logger, DHCP6_SRV_UNLOAD_LIBRARIES_ERROR).arg(msg);
+    }
 }
 
 void Dhcpv6Srv::shutdown() {
