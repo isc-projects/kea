@@ -19,6 +19,18 @@
 namespace isc {
 namespace hooks {
 
+/// @brief Libraries still opened.
+///
+/// Thrown if an attempt is made to load libraries when some are still
+/// in memory likely because they were not unloaded (logic error in Kea)
+/// or they have some visible dangling pointers (logic error in a hook
+/// library).
+class LibrariesStillOpened : public Exception {
+public:
+    LibrariesStillOpened(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 // Forward declarations
 class CalloutHandle;
 class CalloutManager;
@@ -45,8 +57,8 @@ public:
     /// hook points) are configured and the libraries' "load" function
     /// called.
     ///
-    /// If libraries are already loaded, they are unloaded and the new
-    /// libraries loaded.
+    /// @note this method now requires the libraries are unloaded before
+    ///       being called.
     ///
     /// If any library fails to load, an error message will be logged.  The
     /// remaining libraries will be loaded if possible.
@@ -58,6 +70,7 @@ public:
     /// @return true if all libraries loaded without a problem, false if one or
     ///        more libraries failed to load.  In the latter case, message will
     ///        be logged that give the reason.
+    /// @throw LibrariesStillOpened when some libraries are already loaded.
     static bool loadLibraries(const HookLibsCollection& libraries);
 
     /// @brief Unload libraries
@@ -65,15 +78,37 @@ public:
     /// Unloads the loaded libraries and leaves the hooks subsystem in the
     /// state it was after construction but before loadLibraries() is called.
     ///
-    /// @note: This method should be used with caution - see the notes for
-    ///        the class LibraryManager for pitfalls.  In general, a server
-    ///        should not call this method: library unloading will automatically
-    ///        take place when new libraries are loaded, and when appropriate
-    ///        objects are destroyed.
+    /// @note: This method should be called after @ref prepareUnloadLibraries
+    ///        in order to destroy appropriate objects. See notes for
+    ///        the class LibraryManager for pitfalls.
+    /// @note: if even after @ref prepareUnloadLibraries there are still
+    ///        visible pointers (i.e. callout handles owning the
+    ///        library manager collection) the method will fail to close
+    ///        libraries and returns false. It is a fatal error as there
+    ///        is no possible recovery. It is a logic error in the hook
+    ///        code too so the solution is to fix the it and to restart
+    ///        the server with a correct hook library binary.
     ///
-    /// @return true if all libraries unloaded successfully, false on an error.
-    ///         In the latter case, an error message will have been output.
-    static void unloadLibraries();
+    /// @return true if all libraries unloaded successfully, false if they
+    ///         are still in memory.
+    static bool unloadLibraries();
+
+    /// @brief Prepare the unloading of libraries
+    ///
+    /// Calls the unload functions when they exists and removes callouts.
+    ///
+    /// @note: after the call to this method there should be no visible
+    ///        dangling pointers (i.e. callout handles owning the library
+    ///        manager collection) nor invisible dangling pointers.
+    ///        In the first case it will be impossible to close libraries
+    ///        so they will remain in memory, in the second case a crash
+    ///        is possible in particular at exit time during global
+    ///        object finalization. In both cases the hook library code
+    ///        causing the problem is incorrect and must be fixed.
+    /// @note: it is a logic error to not call this method before
+    ///        @ref unloadLibraries even it hurts only with particular
+    ///        hooks libraries.
+    static void prepareUnloadLibraries();
 
     /// @brief Are callouts present?
     ///
@@ -367,7 +402,13 @@ private:
     bool loadLibrariesInternal(const HookLibsCollection& libraries);
 
     /// @brief Unload libraries
-    void unloadLibrariesInternal();
+    ///
+    /// @return true if all libraries unloaded successfully, false on an error.
+    ///         In the latter case, an error message will have been output.
+    bool unloadLibrariesInternal();
+
+    /// @brief Prepare the unloading of libraries
+    void prepareUnloadLibrariesInternal();
 
     /// @brief Are callouts present?
     ///

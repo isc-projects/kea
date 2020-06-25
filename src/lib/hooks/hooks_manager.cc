@@ -15,6 +15,7 @@
 #include <hooks/server_hooks.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <string>
 #include <vector>
@@ -96,8 +97,19 @@ HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
 
     ServerHooks::getServerHooks().getParkingLotsPtr()->clear();
 
-    // Create the library manager and load the libraries.
+    // Keep a weak pointer on the existing library manager collection.
+    boost::weak_ptr<LibraryManagerCollection> weak_lmc(lm_collection_);
+
+    // Create the library manager collection.
     lm_collection_.reset(new LibraryManagerCollection(libraries));
+
+    // If there was another owner the previous library manager collection
+    // was not destroyed and libraries not closed.
+    if (!weak_lmc.expired()) {
+        isc_throw(LibrariesStillOpened, "some libraries are still opened");
+    }
+
+    // Load the libraries.
     bool status = lm_collection_->loadLibraries();
 
     if (status) {
@@ -121,14 +133,45 @@ HooksManager::loadLibraries(const HookLibsCollection& libraries) {
 // cause the libraries to be unloaded) and initializes them with empty list if
 // requested.
 
-void
+bool
 HooksManager::unloadLibrariesInternal() {
     ServerHooks::getServerHooks().getParkingLotsPtr()->clear();
-    init();
+
+    // Keep a weak pointer on the existing library manager collection.
+    boost::weak_ptr<LibraryManagerCollection> weak_lmc(lm_collection_);
+
+    // Create the collection with any empty set of libraries.
+    HookLibsCollection libraries;
+    lm_collection_.reset(new LibraryManagerCollection(libraries));
+
+    // If there was another owner the previous library manager collection
+    // was not destroyed and libraries not closed.
+    if (!weak_lmc.expired()) {
+        // Restore the library manager collection.
+        lm_collection_ = weak_lmc.lock();
+        return (false);
+    }
+
+    // Load the empty set of libraries.
+    lm_collection_->loadLibraries();
+
+    // Get the CalloutManager.
+    callout_manager_ = lm_collection_->getCalloutManager();
+
+    return (true);
 }
 
-void HooksManager::unloadLibraries() {
-    getHooksManager().unloadLibrariesInternal();
+bool HooksManager::unloadLibraries() {
+    return (getHooksManager().unloadLibrariesInternal());
+}
+
+void
+HooksManager::prepareUnloadLibrariesInternal() {
+    static_cast<void>(lm_collection_->prepareUnloadLibraries());
+}
+
+void HooksManager::prepareUnloadLibraries() {
+    getHooksManager().prepareUnloadLibrariesInternal();
 }
 
 // Create a callout handle

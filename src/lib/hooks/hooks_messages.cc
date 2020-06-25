@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/hooks/hooks_messages.mes on Mon Jun 22 2020 17:18
+// File created from ../../../src/lib/hooks/hooks_messages.mes on Wed Jun 24 2020 22:17
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -19,12 +19,14 @@ extern const isc::log::MessageID HOOKS_CALLOUT_REGISTRATION = "HOOKS_CALLOUT_REG
 extern const isc::log::MessageID HOOKS_CLOSE_ERROR = "HOOKS_CLOSE_ERROR";
 extern const isc::log::MessageID HOOKS_HOOK_LIST_RESET = "HOOKS_HOOK_LIST_RESET";
 extern const isc::log::MessageID HOOKS_INCORRECT_VERSION = "HOOKS_INCORRECT_VERSION";
+extern const isc::log::MessageID HOOKS_LIBRARY_CLOSED = "HOOKS_LIBRARY_CLOSED";
 extern const isc::log::MessageID HOOKS_LIBRARY_LOADED = "HOOKS_LIBRARY_LOADED";
 extern const isc::log::MessageID HOOKS_LIBRARY_LOADING = "HOOKS_LIBRARY_LOADING";
 extern const isc::log::MessageID HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE = "HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE";
 extern const isc::log::MessageID HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE = "HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE";
 extern const isc::log::MessageID HOOKS_LIBRARY_UNLOADED = "HOOKS_LIBRARY_UNLOADED";
 extern const isc::log::MessageID HOOKS_LIBRARY_UNLOADING = "HOOKS_LIBRARY_UNLOADING";
+extern const isc::log::MessageID HOOKS_LIBRARY_UNLOAD_ALREADY_CALLED = "HOOKS_LIBRARY_UNLOAD_ALREADY_CALLED";
 extern const isc::log::MessageID HOOKS_LIBRARY_VERSION = "HOOKS_LIBRARY_VERSION";
 extern const isc::log::MessageID HOOKS_LOAD_ERROR = "HOOKS_LOAD_ERROR";
 extern const isc::log::MessageID HOOKS_LOAD_EXCEPTION = "HOOKS_LOAD_EXCEPTION";
@@ -60,12 +62,14 @@ const char* values[] = {
     "HOOKS_CLOSE_ERROR", "failed to close hook library %1: %2",
     "HOOKS_HOOK_LIST_RESET", "the list of hooks has been reset",
     "HOOKS_INCORRECT_VERSION", "hook library %1 is at version %2, require version %3",
+    "HOOKS_LIBRARY_CLOSED", "hooks library %1 successfully closed",
     "HOOKS_LIBRARY_LOADED", "hooks library %1 successfully loaded",
     "HOOKS_LIBRARY_LOADING", "loading hooks library %1",
     "HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE", "hooks library %1 reports its multi-threading compatibility as %2",
     "HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE", "hooks library %1 is not compatible with multi-threading",
     "HOOKS_LIBRARY_UNLOADED", "hooks library %1 successfully unloaded",
     "HOOKS_LIBRARY_UNLOADING", "unloading library %1",
+    "HOOKS_LIBRARY_UNLOAD_ALREADY_CALLED", "hooks library %1 unload() was already called",
     "HOOKS_LIBRARY_VERSION", "hooks library %1 reports its version as %2",
     "HOOKS_LOAD_ERROR", "'load' function in hook library %1 returned error %2",
     "HOOKS_LOAD_EXCEPTION", "'load' function in hook library %1 threw an exception",

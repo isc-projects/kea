@@ -41,15 +41,16 @@ class LibraryManager;
 /// known hooks and locates their symbols, registering each callout as it does
 /// so.  Finally it locates the "load" function (if present) and calls it.
 ///
-/// On unload, it calls the "unload" method if present, clears the callouts on
-/// all hooks, and closes the library.
+/// On unload, it clears the callouts on all hooks, calls the "unload"
+/// method if present, clears the callouts on all hooks, and
+/// closes the library.
 ///
-/// @note Caution needs to be exercised when using the unload method. During
+/// @note Caution needs to be exercised when using the close method. During
 ///       normal use, data will pass between the server and the library.  In
 ///       this process, the library may allocate memory and pass it back to the
 ///       server.  This could happen by the server setting arguments or context
 ///       in the CalloutHandle object, or by the library modifying the content
-///       of pointed-to data. If the library is unloaded, this memory may lie
+///       of pointed-to data. If the library is closed, this memory may lie
 ///       in the virtual address space deleted in that process. (The word "may"
 ///       is used, as this could be operating-system specific.) Should this
 ///       happen, any reference to the memory will cause a segmentation fault.
@@ -57,7 +58,7 @@ class LibraryManager;
 ///       a destructor of an STL class when it is deleting memory allocated
 ///       when the data structure was extended by a function in the library.
 ///
-/// @note The only safe way to run the "unload" function is to ensure that all
+/// @note The only safe way to run the "close" function is to ensure that all
 ///       possible references to it are removed first.  This means that all
 ///       CalloutHandles must be destroyed, as must any data items that were
 ///       passed to the callouts.  In practice, it could mean that a server
@@ -92,7 +93,7 @@ public:
     /// If the library is open, closes it.  This is principally a safety
     /// feature to ensure closure in the case of an exception destroying this
     /// object.  However, see the caveat in the class header about when it is
-    /// safe to unload libraries.
+    /// safe to close libraries.
     ~LibraryManager();
 
     /// @brief Validate library
@@ -122,6 +123,27 @@ public:
     /// In the latter case, the library will be unloaded if possible.
     bool loadLibrary();
 
+    /// @brief Prepares library unloading
+    ///
+    /// Searches for the "unload" framework function and, if present, runs it.
+    /// Regardless of status, remove all callouts associated with this
+    /// library on all hooks.
+    ///
+    /// @return bool true if not found or found and run successfully,
+    ///         false on an error.  In this case, an error message will
+    ///         have been output.
+    bool prepareUnloadLibrary();
+
+    /// @brief Return library name
+    ///
+    /// @return Name of this library
+    std::string getName() const {
+        return (library_name_);
+    }
+
+protected:
+    // The following methods are protected as they are accessed in testing.
+
     /// @brief Unloads a library
     ///
     /// Calls the libraries "unload" function if present, the closes the
@@ -135,16 +157,6 @@ public:
     ///         (if present) returned an error).  Even if an error did occur,
     ///         the library is closed if possible.
     bool unloadLibrary();
-
-    /// @brief Return library name
-    ///
-    /// @return Name of this library
-    std::string getName() const {
-        return (library_name_);
-    }
-
-protected:
-    // The following methods are protected as they are accessed in testing.
 
     /// @brief Open library
     ///
@@ -203,15 +215,6 @@ protected:
     ///         false on an error.  In this case, an error message will
     ///         have been output.
     bool runLoad();
-
-    /// @brief Run the unload function if present
-    ///
-    /// Searches for the "unload" framework function and, if present, runs it.
-    ///
-    /// @return bool true if not found or found and run successfully,
-    ///         false on an error.  In this case, an error message will
-    ///         have been output.
-    bool runUnload();
 
 private:
     /// @brief Validating constructor

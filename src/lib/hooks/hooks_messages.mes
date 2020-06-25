@@ -79,6 +79,10 @@ This is most likely due to the installation of a new version of Kea
 without rebuilding the hook library.  A rebuild and re-install of the
 library should fix the problem in most cases.
 
+% HOOKS_LIBRARY_CLOSED hooks library %1 successfully closed
+This information message is issued when a user-supplied hooks library
+has been successfully closed.
+
 % HOOKS_LIBRARY_LOADED hooks library %1 successfully loaded
 This information message is issued when a user-supplied hooks library
 has been successfully loaded.
@@ -102,6 +106,10 @@ from the configuration or the multi-threading disabled.
 % HOOKS_LIBRARY_UNLOADED hooks library %1 successfully unloaded
 This information message is issued when a user-supplied hooks library
 has been successfully unloaded.
+
+% HOOKS_LIBRARY_UNLOAD_ALREADY_CALLED hooks library %1 unload() was already called
+This warning message is issued when the unload() function of a
+user-supplied hooks library was already called.
 
 % HOOKS_LIBRARY_UNLOADING unloading library %1
 This is a debug message called when the specified library is

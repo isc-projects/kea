@@ -141,13 +141,14 @@ public:
     {}
 
     /// Public methods that call protected methods on the superclass.
+    using LibraryManager::unloadLibrary;
     using LibraryManager::openLibrary;
     using LibraryManager::closeLibrary;
     using LibraryManager::checkVersion;
     using LibraryManager::checkMultiThreadingCompatible;
     using LibraryManager::registerStandardCallouts;
     using LibraryManager::runLoad;
-    using LibraryManager::runUnload;
+    using LibraryManager::prepareUnloadLibrary;
 };
 
 
@@ -337,7 +338,7 @@ TEST_F(LibraryManagerTest, RegisterStandardCallouts) {
     // Load the only library, specifying the index of 0 as it's the only
     // library.  This should load all callouts.
     PublicLibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY),
-                               0, callout_manager_);
+                                     0, callout_manager_);
     EXPECT_TRUE(lib_manager.openLibrary());
 
     // Check the version of the library.
@@ -455,7 +456,7 @@ TEST_F(LibraryManagerTest, CheckNoUnload) {
     EXPECT_TRUE(lib_manager.openLibrary());
 
     // Check that no unload function returns true.
-    EXPECT_TRUE(lib_manager.runUnload());
+    EXPECT_TRUE(lib_manager.prepareUnloadLibrary());
 
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
@@ -472,7 +473,7 @@ TEST_F(LibraryManagerTest, CheckUnloadError) {
     EXPECT_TRUE(lib_manager.openLibrary());
 
     // Check that unload function returning an error returns false.
-    EXPECT_FALSE(lib_manager.runUnload());
+    EXPECT_FALSE(lib_manager.prepareUnloadLibrary());
 
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
@@ -489,7 +490,7 @@ TEST_F(LibraryManagerTest, CheckUnloadException) {
     EXPECT_TRUE(lib_manager.openLibrary());
 
     // Check that we detect that the unload function throws an exception.
-    EXPECT_FALSE(lib_manager.runUnload());
+    EXPECT_FALSE(lib_manager.prepareUnloadLibrary());
 
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
@@ -512,7 +513,7 @@ TEST_F(LibraryManagerTest, CheckUnload) {
     EXPECT_FALSE(markerFilePresent());
 
     // Check that unload function runs and returns a success
-    EXPECT_TRUE(lib_manager.runUnload());
+    EXPECT_TRUE(lib_manager.prepareUnloadLibrary());
 
     // Check that the marker file was created.
     EXPECT_TRUE(markerFilePresent());
@@ -531,7 +532,7 @@ TEST_F(LibraryManagerTest, LibUnload) {
     // Load the only library, specifying the index of 0 as it's the only
     // library.  This should load all callouts.
     PublicLibraryManager lib_manager(std::string(LOAD_CALLOUT_LIBRARY),
-                               0, callout_manager_);
+                                     0, callout_manager_);
     EXPECT_TRUE(lib_manager.openLibrary());
 
     // Check the version of the library.
@@ -603,8 +604,8 @@ TEST_F(LibraryManagerTest, LoadLibraryWrongVersion) {
 // Check that the full loadLibrary call works.
 
 TEST_F(LibraryManagerTest, LoadLibrary) {
-    LibraryManager lib_manager(std::string(FULL_CALLOUT_LIBRARY), 0,
-                                           callout_manager_);
+ PublicLibraryManager lib_manager(std::string(FULL_CALLOUT_LIBRARY), 0,
+                                  callout_manager_);
     EXPECT_TRUE(lib_manager.loadLibrary());
 
     // Now execute the callouts in the order expected.  The library performs
@@ -631,28 +632,28 @@ TEST_F(LibraryManagerTest, LoadLibrary) {
 
 TEST_F(LibraryManagerTest, LoadMultipleLibraries) {
     // Load a library with all framework functions.
-    LibraryManager lib_manager_1(std::string(FULL_CALLOUT_LIBRARY), 0,
-                                 callout_manager_);
+    PublicLibraryManager lib_manager_1(std::string(FULL_CALLOUT_LIBRARY),
+                                       0, callout_manager_);
     EXPECT_TRUE(lib_manager_1.loadLibrary());
 
     // Attempt to load a library with no version() function.  We should detect
     // this and not end up calling the function from the already loaded
     // library.
-    LibraryManager lib_manager_2(std::string(NO_VERSION_LIBRARY), 1,
-                                 callout_manager_);
+    PublicLibraryManager lib_manager_2(std::string(NO_VERSION_LIBRARY),
+                                       1, callout_manager_);
     EXPECT_FALSE(lib_manager_2.loadLibrary());
 
     // Attempt to load the library with an incorrect version.  This should
     // be detected.
-    LibraryManager lib_manager_3(std::string(INCORRECT_VERSION_LIBRARY), 1,
-                                 callout_manager_);
+    PublicLibraryManager lib_manager_3(std::string(INCORRECT_VERSION_LIBRARY),
+                                       1, callout_manager_);
     EXPECT_FALSE(lib_manager_3.loadLibrary());
 
     // Load the basic callout library.  This only has standard callouts so,
     // if the first library's load() function gets called, some callouts
     // will be registered twice and lead to incorrect results.
-    LibraryManager lib_manager_4(std::string(BASIC_CALLOUT_LIBRARY), 1,
-                                 callout_manager_);
+    PublicLibraryManager lib_manager_4(std::string(BASIC_CALLOUT_LIBRARY),
+                                       1, callout_manager_);
     EXPECT_TRUE(lib_manager_4.loadLibrary());
 
     // Execute the callouts.  The first library implements the calculation.
@@ -712,8 +713,8 @@ TEST_F(LibraryManagerTest, validateLibraries) {
 
 TEST_F(LibraryManagerTest, libraryLoggerSetup) {
     // Load a library with all framework functions.
-    LibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY), 0,
-                               callout_manager_);
+    PublicLibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY),
+                                     0, callout_manager_);
     EXPECT_TRUE(lib_manager.loadLibrary());
 
     // After loading the library, the global logging dictionary should

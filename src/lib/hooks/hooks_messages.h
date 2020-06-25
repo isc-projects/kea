@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/hooks/hooks_messages.mes on Mon Jun 22 2020 17:18
+// File created from ../../../src/lib/hooks/hooks_messages.mes on Wed Jun 24 2020 22:17
 
 #ifndef HOOKS_MESSAGES_H
 #define HOOKS_MESSAGES_H
@@ -20,12 +20,14 @@ extern const isc::log::MessageID HOOKS_CALLOUT_REGISTRATION;
 extern const isc::log::MessageID HOOKS_CLOSE_ERROR;
 extern const isc::log::MessageID HOOKS_HOOK_LIST_RESET;
 extern const isc::log::MessageID HOOKS_INCORRECT_VERSION;
+extern const isc::log::MessageID HOOKS_LIBRARY_CLOSED;
 extern const isc::log::MessageID HOOKS_LIBRARY_LOADED;
 extern const isc::log::MessageID HOOKS_LIBRARY_LOADING;
 extern const isc::log::MessageID HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE;
 extern const isc::log::MessageID HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE;
 extern const isc::log::MessageID HOOKS_LIBRARY_UNLOADED;
 extern const isc::log::MessageID HOOKS_LIBRARY_UNLOADING;
+extern const isc::log::MessageID HOOKS_LIBRARY_UNLOAD_ALREADY_CALLED;
 extern const isc::log::MessageID HOOKS_LIBRARY_VERSION;
 extern const isc::log::MessageID HOOKS_LOAD_ERROR;
 extern const isc::log::MessageID HOOKS_LOAD_EXCEPTION;

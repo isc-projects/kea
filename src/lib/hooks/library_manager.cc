@@ -55,15 +55,15 @@ LibraryManager::LibraryManager(const std::string& name)
 
 // Destructor.
 LibraryManager::~LibraryManager() {
-    if (manager_) {
+    if (index_ >= 0) {
         // LibraryManager instantiated to load a library, so ensure that
         // it is unloaded before exiting.
-        static_cast<void>(unloadLibrary());
-    } else {
-        // LibraryManager instantiated to validate a library, so just ensure
-        // that it is closed before exiting.
-        static_cast<void>(closeLibrary());
+        static_cast<void>(prepareUnloadLibrary());
     }
+
+    // LibraryManager instantiated to validate a library, so just ensure
+    // that it is closed before exiting.
+    static_cast<void>(closeLibrary());
 }
 
 // Open the library
@@ -95,6 +95,8 @@ LibraryManager::closeLibrary() {
         if (status != 0) {
             LOG_ERROR(hooks_logger, HOOKS_CLOSE_ERROR).arg(library_name_)
                       .arg(dlerror());
+        } else {
+            LOG_INFO(hooks_logger, HOOKS_LIBRARY_CLOSED).arg(library_name_);
         }
     }
 
@@ -242,9 +244,22 @@ LibraryManager::runLoad() {
 // Run the "unload" function if present.
 
 bool
-LibraryManager::runUnload() {
+LibraryManager::prepareUnloadLibrary() {
+
+    // Nothing to do.
+    if (dl_handle_ == NULL) {
+        return (true);
+    }
+
+    // Call once.
+    if (index_ < 0) {
+        LOG_WARN(hooks_logger, HOOKS_LIBRARY_UNLOAD_ALREADY_CALLED)
+            .arg(library_name_);
+        return (false);
+    }
 
     // Get the pointer to the "load" function.
+    bool result = false;
     PointerConverter pc(dlsym(dl_handle_, UNLOAD_FUNCTION_NAME));
     if (pc.unloadPtr() != NULL) {
 
@@ -254,31 +269,48 @@ LibraryManager::runUnload() {
         int status = -1;
         try {
             status = (*pc.unloadPtr())();
+            result = true;
         } catch (const isc::Exception& ex) {
             LOG_ERROR(hooks_logger, HOOKS_UNLOAD_FRAMEWORK_EXCEPTION)
                 .arg(library_name_).arg(ex.what());
-            return (false);
         } catch (...) {
             // Exception generated.  Note a warning as the unload will occur
             // anyway.
             LOG_WARN(hooks_logger, HOOKS_UNLOAD_EXCEPTION).arg(library_name_);
-            return (false);
         }
 
-        if (status != 0) {
-            LOG_ERROR(hooks_logger, HOOKS_UNLOAD_ERROR).arg(library_name_)
-                      .arg(status);
-            return (false);
-        } else {
-        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_UNLOAD_SUCCESS)
-            .arg(library_name_);
+        if (result) {
+            if (status != 0) {
+                LOG_ERROR(hooks_logger, HOOKS_UNLOAD_ERROR).arg(library_name_)
+                    .arg(status);
+                result = false;
+            } else {
+                LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_UNLOAD_SUCCESS)
+                    .arg(library_name_);
+            }
         }
     } else {
         LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_NO_UNLOAD)
             .arg(library_name_);
+        result = true;
     }
 
-    return (true);
+    // Regardless of status, remove all callouts associated with this
+    // library on all hooks.
+    vector<string> hooks = ServerHooks::getServerHooks().getHookNames();
+    manager_->setLibraryIndex(index_);
+    for (size_t i = 0; i < hooks.size(); ++i) {
+        bool removed = manager_->deregisterAllCallouts(hooks[i], index_);
+        if (removed) {
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_REMOVED)
+                .arg(hooks[i]).arg(library_name_);
+        }
+    }
+
+    // Mark as unload() ran.
+    index_ = -1;
+
+    return (result);
 }
 
 // The main library loading function.
@@ -327,7 +359,7 @@ LibraryManager::loadLibrary() {
                 // function (if present) in case "load" allocated resources that
                 // need to be freed and (b) we need to remove any callouts that
                 // have been installed.
-                static_cast<void>(unloadLibrary());
+                static_cast<void>(prepareUnloadLibrary());
             }
         }
 
@@ -355,18 +387,8 @@ LibraryManager::unloadLibrary() {
         // Call the unload() function if present.  Note that this is done first
         // - operations take place in the reverse order to which they were done
         // when the library was loaded.
-        result = runUnload();
-
-        // Regardless of status, remove all callouts associated with this
-        // library on all hooks.
-        vector<string> hooks = ServerHooks::getServerHooks().getHookNames();
-        manager_->setLibraryIndex(index_);
-        for (size_t i = 0; i < hooks.size(); ++i) {
-            bool removed = manager_->deregisterAllCallouts(hooks[i], index_);
-            if (removed) {
-                LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_REMOVED)
-                    .arg(hooks[i]).arg(library_name_);
-            }
+        if (index_ >= 0) {
+            result = prepareUnloadLibrary();
         }
 
         // ... and close the library.

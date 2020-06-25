@@ -52,8 +52,10 @@ LibraryManagerCollection::LibraryManagerCollection(const HookLibsCollection& lib
 bool
 LibraryManagerCollection::loadLibraries() {
 
-    // Unload libraries if any are loaded.
-    static_cast<void>(unloadLibraries());
+    // There must be not libraries still in memory.
+    if (!lib_managers_.empty()) {
+        isc_throw(LibrariesStillOpened, "some libraries are still opened");
+    }
 
     // Access the callout manager, (re)creating it if required.
     //
@@ -106,14 +108,24 @@ LibraryManagerCollection::unloadLibraries() {
 
     // Delete the library managers in the reverse order to which they were
     // created, then clear the library manager vector.
-    for (int i = lib_managers_.size() - 1; i >= 0; --i) {
-        lib_managers_[i].reset();
+    while (!lib_managers_.empty()) {
+        lib_managers_.pop_back();
     }
-    lib_managers_.clear();
 
     // Get rid of the callout manager. (The other member, the list of library
     // names, was cleared when the libraries were loaded.)
     callout_manager_.reset();
+}
+
+// Prepare the unloading of libraries.
+bool
+LibraryManagerCollection::prepareUnloadLibraries() {
+    bool result = true;
+    // Iterate on library managers in reverse order.
+    for (auto lm = lib_managers_.rbegin(); lm != lib_managers_.rend(); ++lm) {
+        result = (*lm)->prepareUnloadLibrary() && result;
+    }
+    return (result);
 }
 
 // Return number of loaded libraries.

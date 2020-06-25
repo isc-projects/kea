@@ -42,14 +42,14 @@ class LibraryManager;
 ///
 /// As described in the LibraryManager documentation, a CalloutHandle may end
 /// up with pointers to memory within the address space of a loaded library.
-/// If the library is unloaded before this address space is deleted, the
+/// If the library is closed before this address space is deleted, the
 /// deletion of the CalloutHandle may attempt to free memory into the newly-
 /// unmapped address space and cause a segmentation fault.
 ///
 /// To prevent this, each CalloutHandle maintains a shared pointer to the
 /// LibraryManagerCollection current when it was created.  In addition, the
-/// containing HooksManager object also maintains a shared pointer to it.  A
-/// a LibraryManagerCollection is never explicitly deleted: when a new set
+/// containing HooksManager object also maintains a shared pointer to it.
+/// A LibraryManagerCollection is never explicitly deleted: when a new set
 /// of libraries is loaded, the HooksManager clears its pointer to the
 /// collection.  The LibraryManagerCollection is only destroyed when all
 /// CallHandle objects referencing it are destroyed.
@@ -143,6 +143,19 @@ public:
     ///         if all validated.
     static std::vector<std::string>
     validateLibraries(const std::vector<std::string>& libraries);
+
+    /// @brief Prepare libaries unloading
+    ///
+    /// Utility function to call before closing libraries. It runs the
+    /// unload() function when it exists and removes associated callout.
+    /// When this function returns either there is only one owner
+    /// (the hook manager) or some visible dangling pointers so
+    /// libraries are not closed to lower the probability of a crash.
+    /// See @ref LibraryManager::prepareUnloadLibrary.
+    ///
+    /// @return true if all libraries unload were not found or run
+    /// successfully, false on an error.
+    bool prepareUnloadLibraries();
 
 protected:
     /// @brief Unload libraries
