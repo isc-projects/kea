@@ -1536,7 +1536,7 @@ used simultaneously by different threads must be thread safe. To mark
 the difference between this and the other thread safety requirement this
 is called "generic thread safe".
 
-When multi-threaded packet processing is enabled Kea servers perform
+When multi-threaded packet processing is enabled, Kea servers perform
 some actions by the main thread and packet processing by members of
 a thread pool. The multi-threading mode is returned by:
 @code
