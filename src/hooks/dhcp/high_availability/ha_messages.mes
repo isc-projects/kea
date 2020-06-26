@@ -70,7 +70,7 @@ the partner-down state.
 
 % HA_COMMUNICATION_INTERRUPTED_CLIENT4 %1: new client attempting to get a lease from the partner
 This informational message is issued when the surviving server observes
-a DHCP packet sent to the partner with which the commuication is interrupted.
+a DHCP packet sent to the partner with which the communication is interrupted.
 The client whose packet is observed is not yet considered "unacked" because
 the secs field value does not exceed the configured threshold specified
 with max-ack-delay.
@@ -88,7 +88,7 @@ provisioned, will cause the server to transition to the partner-down state.
 
 % HA_COMMUNICATION_INTERRUPTED_CLIENT6 %1: new client attempting to get a lease from the partner
 This informational message is issued when the surviving server observes
-a DHCP packet sent to the partner with which the commuication is interrupted.
+a DHCP packet sent to the partner with which the communication is interrupted.
 The client whose packet is observed is not yet considered "unacked" because
 the elapsed time option value does not exceed the configured threshold
 specified with max-ack-delay. The sole argument specifies client
