@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Mon May 18 2020 16:44
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Fri Jun 26 2020 18:37
 
 #include <cstddef>
 #include <log/message_types.h>
