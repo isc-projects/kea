@@ -27,6 +27,7 @@ TESTS += ha_unittests
 
 ha_unittests_SOURCES = run_unittests.cc
 ha_unittests_SOURCES += load_unload_unittests.cc
+ha_unittests_SOURCES += close_unittests.cc
 
 ha_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
