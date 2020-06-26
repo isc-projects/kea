@@ -118,7 +118,7 @@ public:
     /// that no libraries are loaded and that any marker files are deleted.
     virtual void reset() {
         // Unload any previously-loaded libraries.
-        HooksManager::unloadLibraries();
+        EXPECT_TRUE(HooksManager::unloadLibraries());
 
         // Get rid of any marker files.
         static_cast<void>(remove(LOAD_MARKER_FILE));

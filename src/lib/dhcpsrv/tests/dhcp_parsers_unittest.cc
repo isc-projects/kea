@@ -468,7 +468,7 @@ public:
         family_ = family;
 
         // Ensure no hooks libraries are loaded.
-        HooksManager::unloadLibraries();
+        EXPECT_TRUE(HooksManager::unloadLibraries());
 
         // Set it to minimal, disabled config
         D2ClientConfigPtr tmp(new D2ClientConfig());

@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,7 @@
 #include <hooks/hooks_manager.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
+#include <iostream>
 #include <map>
 #include <string>
 
@@ -54,6 +55,10 @@ public:
         // Unregister hooks.
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("cb4_updated");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("cb6_updated");
+        bool status = HooksManager::unloadLibraries();
+        if (!status) {
+            std::cerr << "(fixture dtor) unloadLibraries failed" << std::endl;
+        }
     }
 
     /// @brief Creates new CREATE audit entry.
