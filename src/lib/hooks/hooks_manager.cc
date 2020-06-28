@@ -152,8 +152,14 @@ HooksManager::unloadLibrariesInternal() {
     // was not destroyed and libraries not closed.
     if (!weak_lmc.expired()) {
         // Restore the library manager collection.
-        lm_collection_ = weak_lmc.lock();
-        return (false);
+        boost::shared_ptr<LibraryManagerCollection> restored_lmc = weak_lmc.lock();
+        if (restored_lmc) {
+            lm_collection_ = restored_lmc;
+            return (false);
+        }
+        // The library manager collection was destroyed between calls to
+        // expired and lock.
+        // assert(weak_lmc.expired());
     }
 
     // Load the empty set of libraries.
