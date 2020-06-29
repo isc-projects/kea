@@ -148,7 +148,7 @@ above this object is called ``Dhcp4``.
 
    In the current Kea release it is possible to specify configurations
    of multiple modules within a single configuration file, but this is
-   not recommended and support for it was removed in 1.7.9 release,
+   not recommended and support for it was removed in 1.7.10 release,
    including the ``Logging`` object: its previous content, the list
    of loggers, must now be inside the ``Dhcp4`` object.
 

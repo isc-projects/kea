@@ -117,5 +117,5 @@ The following are some details of the JSON backend framework.
    that sending signals is possible (for configuration reload or shutdown). It is also
    able to print out a status.<br/><br/>
 -# The capability to share the same configuration file between servers and
-   agents, and the Logging toplevel entry, were removed in 1.7.9.
+   agents, and the Logging toplevel entry, were removed in 1.7.10.
 */

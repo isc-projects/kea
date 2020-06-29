@@ -91,11 +91,11 @@ directory.
    "loggers" object) moved inside the configuration objects (maps) for the
    respective Kea modules. For example: the "Dhcp4" map contains the
    "loggers" object specifying logging configuration for the DHCPv4
-   server. Backward compatibility is maintained until Kea 1.7.9
+   server. Backward compatibility is maintained until Kea 1.7.10
    release; it will be possible to specify the "Logging" object at the top
    configuration level and "loggers" objects at the module configuration
    level. Finally, support for the top-level "Logging" object was
-   removed in Kea 1.7.9.
+   removed in Kea 1.7.10.
 
    The specification of several supported elements (e.g. "Dhcp4",
    "Dhcp6") in a single configuration file can be confusing and works
