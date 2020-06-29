@@ -1596,9 +1596,9 @@ A typical Kea thread safe looks like:
 int Foo() {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(mutex_);
-	return (FooInternal());
+        return (FooInternal());
     } else {
-	return (FooInternal());
+        return (FooInternal());
     }
 }
 @endcode
