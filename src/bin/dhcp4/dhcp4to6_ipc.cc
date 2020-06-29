@@ -187,6 +187,5 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
     }
 }
 
-};  // namespace dhcp
-
-};  // namespace isc
+} // namespace dhcp
+} // namespace isc

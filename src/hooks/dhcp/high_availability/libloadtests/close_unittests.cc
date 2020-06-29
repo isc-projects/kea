@@ -219,8 +219,8 @@ CloseHATest::runPartners() {
                 nfd = accept_partner1;
             }
             // FD_SET(accept_partner2, &fds);
-            if (accept_partner1 > nfd) {
-                nfd = accept_partner1;
+            if (accept_partner2 > nfd) {
+                nfd = accept_partner2;
             }
             for (auto reader : readers) {
                 if (!reader.second) {
@@ -258,7 +258,7 @@ CloseHATest::runPartners() {
                 if (fd < 0) {
                     cerr << "accept2 failed " << strerror(errno) << endl;
                 } else {
-                    if (fcntl(fd, F_SETFL, O_NONBLOCK)) {
+                    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0) {
                         cerr << "fcntl NONBLOCK " << strerror(errno) << endl;
                     }
                     readers[fd] = true;
@@ -268,7 +268,7 @@ CloseHATest::runPartners() {
                 if (!reader.second) {
                     continue;
                 }
-                int     fd = reader.first;
+                int fd = reader.first;
                 if (FD_ISSET(fd, &fds)) {
                     char buf[128];
                     int cc = read(fd, buf, 128);
