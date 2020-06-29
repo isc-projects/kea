@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -263,6 +263,13 @@
  this may mean the server suspending all processing of incoming requests
  until all currently executing requests have completed and data object
  destroyed, reloading the libraries, then resuming processing.
+
+ Since Kea 1.7.10 the unload() entry point is called as the first phase
+ of unloading. This gives more chance to hooks writer to perform
+ necessary cleanup actions so the second phase, memory unmapping
+ can safely happen. The @c isc::hooks::unloadLibraries() function
+ was updated too to return false when at least one active callout
+ handle remained.
 
  @subsection hooksmgStaticLinking Hooks and Statically-Linked Kea
 

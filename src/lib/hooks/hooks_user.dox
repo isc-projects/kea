@@ -243,9 +243,9 @@ in this example, the argument specification omits the variable name
 (whilst retaining the type) to avoid an "unused variable" compiler
 warning. (The LibraryHandle and its use is discussed in the section
 @ref hooksdgLibraryHandle.)
-- In the current version of the hooks framework, it is not possible to pass
+- In the initial version of the hooks framework, it was not possible to pass
 any configuration information to the "load" function.  The name of the log
-file must therefore be hard-coded as an absolute path name or communicated
+file had therefore to be hard-coded as an absolute path name or communicated
 to the user code by some other means.
 - "load" must return 0 on success and non-zero on error.  The hooks framework
 will abandon the loading of the library if "load" returns an error status.
@@ -1524,6 +1524,51 @@ A good sources of examples could be unit-tests in file src/lib/cc/tests/data_uni
 which are dedicated to isc::data::Element testing and src/lib/hooks/tests/callout_params_library.cc,
 which is an example library used in testing. This library expects exactly 3 parameters:
 svalue (which is a string), ivalue (which is an integer) and bvalue (which is a boolean).
+
+@subsection hooksMemoryManagement Memory Management Considerations for Hooks Writer
+
+Both Kea server memory space and hook library memory space share a common
+address space between the opening of the hook (call to dlopen() as the first
+phase of the hook library loading) and the closing of the hook (call to
+dlclose() as the last phase of the hook library unloading). There are
+pointers between the two memory spaces with at least two bad consequences
+when they are not correctly managed:
+
+- Kea uses shared pointers for its objects. If the hook ownership keeps
+ownership of an object this object will be never destroyed leading to
+a trivial memory leak. Some care is recommended when the the hook library
+uses a garbage collector to not postpone releases of no longer used
+objects. Cycles should be avoided too for instance using weak pointers.
+Of course at the opposite if a Kea object is needed ownership on it must
+be kept in order to not get a dangling pointer when it will be destroyed
+at the end of its last reference lifetime.
+
+- Kea can take some pointers to the hook library memory space for instance
+when a hook object is registered. If these pointers are not destroyed
+before the hook library memory space is unmapped by dlclose() this likely
+leads to a crash.
+
+Communication between Kea code and hook library code is provided by
+callout handles. For callout points related to a packet the callout
+handle is associated with the packet, this allows for instance to
+get the same callout handle for all callout points called during
+processing of a query.
+
+Hook libraries are closed i.e. hook library memory spaces are unmapped
+only when there is no active callout handles. This enforces a correct
+behavior at two conditions:
+
+- there is no "wild" dangling pointers, for instance no registered
+objects.
+
+- this can happen i.e. the hook library does not keep a shared pointer
+to a query packet.
+
+To allow hook writers to fulfill these two conditions the unload() entry
+point is called in the first phase of the unloading process since Kea
+version 1.7.10. For instance if the hook library uses the PIMPL code
+pattern the unload() entry point must reset the pointer to the
+hook library implementation.
 
 @subsection hooksMultiThreading Multi-Threading Considerations for Hooks Writers
 
