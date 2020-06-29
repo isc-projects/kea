@@ -841,10 +841,10 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // This occurs last as if it succeeds, there is no easy way to
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
-            const HooksConfig& libraries =
-                CfgMgr::instance().getStagingCfg()->getHooksConfig();
             HooksManager::prepareUnloadLibraries();
             static_cast<void>(HooksManager::unloadLibraries());
+            const HooksConfig& libraries =
+                CfgMgr::instance().getStagingCfg()->getHooksConfig();
             libraries.loadLibraries();
         }
         catch (const isc::Exception& ex) {

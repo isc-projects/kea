@@ -604,8 +604,8 @@ TEST_F(LibraryManagerTest, LoadLibraryWrongVersion) {
 // Check that the full loadLibrary call works.
 
 TEST_F(LibraryManagerTest, LoadLibrary) {
- PublicLibraryManager lib_manager(std::string(FULL_CALLOUT_LIBRARY), 0,
-                                  callout_manager_);
+    PublicLibraryManager lib_manager(std::string(FULL_CALLOUT_LIBRARY), 0,
+                                     callout_manager_);
     EXPECT_TRUE(lib_manager.loadLibrary());
 
     // Now execute the callouts in the order expected.  The library performs

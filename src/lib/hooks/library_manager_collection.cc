@@ -52,7 +52,7 @@ LibraryManagerCollection::LibraryManagerCollection(const HookLibsCollection& lib
 bool
 LibraryManagerCollection::loadLibraries() {
 
-    // There must be not libraries still in memory.
+    // There must be no libraries still in memory.
     if (!lib_managers_.empty()) {
         isc_throw(LibrariesStillOpened, "some libraries are still opened");
     }

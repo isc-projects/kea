@@ -86,7 +86,7 @@ public:
     ///        library manager collection) the method will fail to close
     ///        libraries and returns false. It is a fatal error as there
     ///        is no possible recovery. It is a logic error in the hook
-    ///        code too so the solution is to fix the it and to restart
+    ///        code too so the solution is to fix it and to restart
     ///        the server with a correct hook library binary.
     ///
     /// @return true if all libraries unloaded successfully, false if they
@@ -95,7 +95,7 @@ public:
 
     /// @brief Prepare the unloading of libraries
     ///
-    /// Calls the unload functions when they exists and removes callouts.
+    /// Calls the unload functions when they exist and removes callouts.
     ///
     /// @note: after the call to this method there should be no visible
     ///        dangling pointers (i.e. callout handles owning the library

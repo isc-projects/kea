@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -120,6 +120,12 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
 
             // Delete previously set arguments
             callout_handle->deleteAllArguments();
+
+            // Use the RAII wrapper to make sure that the callout handle state is
+            // reset when this object goes out of scope. All hook points must do
+            // it to prevent possible circular dependency between the callout
+            // handle and its arguments.
+            ScopedCalloutHandleState callout_handle_state(callout_handle);
 
             // Enable copying options from the packet within hook library.
             ScopedEnableOptionsCopy<Pkt4> response4_options_copy(rsp);

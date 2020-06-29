@@ -122,7 +122,6 @@ public:
 
     /// @brief destructor (deletes Dhcpv4Srv)
     virtual ~HooksDhcpv4SrvTest() {
-
         // clear static buffers
         resetCalloutBuffers();
 
