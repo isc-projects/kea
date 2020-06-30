@@ -3,7 +3,7 @@
 	in two phases: the first phase calls unload() entry points and
 	removed callouts, the second phase unmaps hook library memory
 	spaces. This should lead to less problems including less crashes
-	at exit time. On the other hands incorrect libraries can stay
+	at exit time. On the other hand incorrect libraries can stay
 	in memory until exit and prevent any (re)load.
 	(Gitlab #1282)
 
