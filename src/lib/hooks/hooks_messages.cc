@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/hooks/hooks_messages.mes on Wed Jun 24 2020 22:17
+// File created from ../../../src/lib/hooks/hooks_messages.mes on Tue Jun 30 2020 14:43
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -26,7 +26,6 @@ extern const isc::log::MessageID HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE = "HOO
 extern const isc::log::MessageID HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE = "HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE";
 extern const isc::log::MessageID HOOKS_LIBRARY_UNLOADED = "HOOKS_LIBRARY_UNLOADED";
 extern const isc::log::MessageID HOOKS_LIBRARY_UNLOADING = "HOOKS_LIBRARY_UNLOADING";
-extern const isc::log::MessageID HOOKS_LIBRARY_UNLOAD_ALREADY_CALLED = "HOOKS_LIBRARY_UNLOAD_ALREADY_CALLED";
 extern const isc::log::MessageID HOOKS_LIBRARY_VERSION = "HOOKS_LIBRARY_VERSION";
 extern const isc::log::MessageID HOOKS_LOAD_ERROR = "HOOKS_LOAD_ERROR";
 extern const isc::log::MessageID HOOKS_LOAD_EXCEPTION = "HOOKS_LOAD_EXCEPTION";
@@ -69,7 +68,6 @@ const char* values[] = {
     "HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE", "hooks library %1 is not compatible with multi-threading",
     "HOOKS_LIBRARY_UNLOADED", "hooks library %1 successfully unloaded",
     "HOOKS_LIBRARY_UNLOADING", "unloading library %1",
-    "HOOKS_LIBRARY_UNLOAD_ALREADY_CALLED", "hooks library %1 unload() was already called",
     "HOOKS_LIBRARY_VERSION", "hooks library %1 reports its version as %2",
     "HOOKS_LOAD_ERROR", "'load' function in hook library %1 returned error %2",
     "HOOKS_LOAD_EXCEPTION", "'load' function in hook library %1 threw an exception",

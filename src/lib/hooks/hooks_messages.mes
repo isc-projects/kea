@@ -107,10 +107,6 @@ from the configuration or the multi-threading disabled.
 This information message is issued when a user-supplied hooks library
 has been successfully unloaded.
 
-% HOOKS_LIBRARY_UNLOAD_ALREADY_CALLED hooks library %1 unload() was already called
-This warning message is issued when the unload() function of a
-user-supplied hooks library was already called.
-
 % HOOKS_LIBRARY_UNLOADING unloading library %1
 This is a debug message called when the specified library is
 being unloaded.  If all is successful, it will be followed by the

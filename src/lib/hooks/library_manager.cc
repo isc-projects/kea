@@ -253,9 +253,7 @@ LibraryManager::prepareUnloadLibrary() {
 
     // Call once.
     if (index_ < 0) {
-        LOG_WARN(hooks_logger, HOOKS_LIBRARY_UNLOAD_ALREADY_CALLED)
-            .arg(library_name_);
-        return (false);
+        return (true);
     }
 
     // Get the pointer to the "load" function.

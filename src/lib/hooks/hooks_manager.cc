@@ -28,7 +28,12 @@ namespace hooks {
 // Constructor
 
 HooksManager::HooksManager() : test_mode_(false) {
-    init();
+    // Nothing present, so create the collection with any empty set of
+    // libraries, and get the CalloutManager.
+    HookLibsCollection libraries;
+    lm_collection_.reset(new LibraryManagerCollection(libraries));
+    lm_collection_->loadLibraries();
+    callout_manager_ = lm_collection_->getCalloutManager();
 }
 
 // Return reference to singleton hooks manager.
@@ -118,7 +123,7 @@ HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
     } else {
         // Unable to load libraries, reset to state before this function was
         // called.
-        init();
+        static_cast<void>(unloadLibrariesInternal());
     }
 
     return (status);
@@ -166,7 +171,8 @@ HooksManager::unloadLibrariesInternal() {
     return (true);
 }
 
-bool HooksManager::unloadLibraries() {
+bool
+HooksManager::unloadLibraries() {
     return (getHooksManager().unloadLibrariesInternal());
 }
 
@@ -179,7 +185,8 @@ HooksManager::prepareUnloadLibrariesInternal() {
     static_cast<void>(lm_collection_->prepareUnloadLibraries());
 }
 
-void HooksManager::prepareUnloadLibraries() {
+void
+HooksManager::prepareUnloadLibraries() {
     getHooksManager().prepareUnloadLibrariesInternal();
 }
 
@@ -215,18 +222,6 @@ HooksManager::getLibraryNames() {
 HookLibsCollection
 HooksManager::getLibraryInfo() {
     return (getHooksManager().getLibraryInfoInternal());
-}
-
-// Perform initialization
-
-void
-HooksManager::init() {
-    // Nothing present, so create the collection with any empty set of
-    // libraries, and get the CalloutManager.
-    HookLibsCollection libraries;
-    lm_collection_.reset(new LibraryManagerCollection(libraries));
-    lm_collection_->loadLibraries();
-    callout_manager_ = lm_collection_->getCalloutManager();
 }
 
 // Shell around ServerHooks::registerHook()

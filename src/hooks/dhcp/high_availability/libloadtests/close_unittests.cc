@@ -206,19 +206,17 @@ CloseHATest::runPartners() {
 
         wthread_->markReady(WatchedThread::READY);
 
-        // In fact below only the terminate matters as in fact
-        // accepts have not the time to be called.
         for (;;) {
             int nfd;
             fd_set fds;
             FD_ZERO(&fds);
             FD_SET(wthread_->getWatchFd(WatchedThread::TERMINATE), &fds);
             nfd = wthread_->getWatchFd(WatchedThread::TERMINATE);
-            // FD_SET(accept_partner1, &fds);
+            FD_SET(accept_partner1, &fds);
             if (accept_partner1 > nfd) {
                 nfd = accept_partner1;
             }
-            // FD_SET(accept_partner2, &fds);
+            FD_SET(accept_partner2, &fds);
             if (accept_partner2 > nfd) {
                 nfd = accept_partner2;
             }
@@ -502,7 +500,6 @@ TEST_F(CloseHATest, close6) {
         // Use the query callout handle.
         CalloutHandlePtr handle = query->getCalloutHandle();
         ScopedCalloutHandleState handle_state(handle);
-        handle->setStatus(CalloutHandle::NEXT_STEP_SKIP);
         handle->setArgument("query6", query);
         HooksManager::callCallouts(testHooks.hook_index_buffer6_receive_,
                                    *handle);
