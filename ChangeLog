@@ -4,7 +4,7 @@
 	removed callouts, the second phase unmaps hook library memory
 	spaces. This should lead to less problems including less crashes
 	at exit time. On the other hands incorrect libraries can stay
-	until exit in memory and prevent any (re)load.
+	in memory until exit and prevent any (re)load.
 	(Gitlab #1282)
 
 Kea 1.7.9 (development) released on June 24, 2020
