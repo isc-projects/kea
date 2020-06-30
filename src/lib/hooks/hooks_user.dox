@@ -1535,24 +1535,23 @@ pointers between the two memory spaces with at least two bad consequences
 when they are not correctly managed:
 
 - Kea uses shared pointers for its objects. If the hook ownership keeps
-ownership of an object this object will be never destroyed leading to
-a trivial memory leak. Some care is recommended when the the hook library
+ownership of an object, this object will never be destroyed, leading to
+a trivial memory leak. Some care is recommended when the hook library
 uses a garbage collector to not postpone releases of no longer used
-objects. Cycles should be avoided too for instance using weak pointers.
-Of course at the opposite if a Kea object is needed ownership on it must
+objects. Cycles should be avoided too, for instance using weak pointers.
+Of course at the opposite, if a Kea object is needed ownership on, it must
 be kept in order to not get a dangling pointer when it will be destroyed
 at the end of its last reference lifetime.
 
-- Kea can take some pointers to the hook library memory space for instance
+- Kea can take some pointers to the hook library memory space, for instance
 when a hook object is registered. If these pointers are not destroyed
 before the hook library memory space is unmapped by dlclose() this likely
 leads to a crash.
 
 Communication between Kea code and hook library code is provided by
-callout handles. For callout points related to a packet the callout
-handle is associated with the packet, this allows for instance to
-get the same callout handle for all callout points called during
-processing of a query.
+callout handles. For callout points related to a packet, the callout
+handle is associated with the packet allowing to get the same callout handle
+for all callout points called during processing of a query.
 
 Hook libraries are closed i.e. hook library memory spaces are unmapped
 only when there is no active callout handles. This enforces a correct
