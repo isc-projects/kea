@@ -511,6 +511,7 @@ Dhcp4Client::receiveOneMsg() {
     msg_copy->setRemotePort(msg->getLocalPort());
     msg_copy->setLocalPort(msg->getRemotePort());
     msg_copy->setIface(msg->getIface());
+    msg_copy->setIndex(msg->getIndex());
 
     msg_copy->unpack();
 

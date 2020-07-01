@@ -210,6 +210,7 @@ Dhcpv6SrvTest::createMessage(uint8_t message_type, Lease::Type lease_type,
     Pkt6Ptr msg = Pkt6Ptr(new Pkt6(message_type, 1234));
     msg->setRemoteAddr(IOAddress("fe80::abcd"));
     msg->setIface("eth0");
+    msg->setIndex(ETH0_INDEX);
     msg->addOption(createIA(lease_type, addr, prefix_len, iaid));
     return (msg);
 }
@@ -338,6 +339,7 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type,
         req.reset(new Pkt6(message_type, 1234));
         req->setRemoteAddr(IOAddress("fe80::abcd"));
         req->setIface("eth0");
+        req->setIndex(ETH0_INDEX);
 
         // from createIA
         uint16_t code;

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/pool.h>
@@ -103,6 +104,7 @@ Dhcp6Client::Dhcp6Client() :
     duid_(generateDUID(DUID::DUID_LLT)),
     link_local_("fe80::3a60:77ff:fed5:cdef"),
     iface_name_("eth0"),
+    iface_index_(ETH0_INDEX),
     srv_(boost::shared_ptr<NakedDhcpv6Srv>(new NakedDhcpv6Srv(0))),
     use_relay_(false),
     use_oro_(false),
@@ -121,6 +123,7 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     duid_(generateDUID(DUID::DUID_LLT)),
     link_local_("fe80::3a60:77ff:fed5:cdef"),
     iface_name_("eth0"),
+    iface_index_(ETH0_INDEX),
     srv_(srv),
     use_relay_(false),
     use_oro_(false),
@@ -970,6 +973,7 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     msg_copy->setRemoteAddr(link_local_);
     msg_copy->setLocalAddr(dest_addr_);
     msg_copy->setIface(iface_name_);
+    msg_copy->setIndex(iface_index_);
 
     // Copy classes
     const ClientClasses& classes = msg->getClasses();

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -575,6 +575,13 @@ public:
         iface_name_ = iface_name;
     }
 
+    /// @brief Sets the interface to be used by the client.
+    ///
+    /// @param iface_index Interface index.
+    void setIfaceIndex(uint32_t iface_index) {
+        iface_index_ = iface_index;
+    }
+
     /// @brief Sets link local address used by the client.
     ///
     /// @param link_local New link local address.
@@ -912,8 +919,11 @@ private:
     /// @brief Currently used link local address.
     asiolink::IOAddress link_local_;
 
-    /// @brief Currently used interface.
+    /// @brief Currently used interface (name).
     std::string iface_name_;
+
+    /// @brief Currently used interface (index).
+    uint32_t iface_index_;
 
     /// @brief Pointer to the server that the client is communicating with.
     boost::shared_ptr<isc::dhcp::test::NakedDhcpv6Srv> srv_;
