@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -259,5 +259,19 @@ exception will be thrown. If non-NULL value is provided, the
 error string as an argument. The handler function may use its logging
 mechanism to log this error message. In particular, the DHCP server
 will use BINDX logger to log the error message.
+
+@section libdhcpMTConsiderations Multi-Threading Consideration for DHCP library
+
+By default APIs provided by the DHCP library are not thread safe.
+For instance packets or options are not thread safe. Exception are:
+
+ - external sockets are thread safe (the container used to manage external
+  socket is thread safe so one can for instance delete an external socket
+  at any time).
+
+ - interface send method is thread safe (mainly because it does not change
+  any internal state).
+
+ - packet queue ring is thread safe.
 
 */

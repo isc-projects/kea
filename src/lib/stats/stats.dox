@@ -1,0 +1,16 @@
+// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page libstats libkea-stats - Kea Statistics Library
+
+@section statsMTConsiderations Multi-Threading Consideration for Statistics
+
+The statistic manager (@c isc::stats::StatsMgr singleton) is Kea thread safe
+i.e. it is thread safe when the multi-threading mode is true (when the
+multi-threading mode is false Kea main thread processes packets).
+
+*/

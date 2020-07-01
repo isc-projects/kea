@@ -96,4 +96,12 @@ ParamsList is a simple vector<string>. There will be more specific
 methods implemented in the future, but for the time being only
 @ref isc::data::SimpleParser::deriveParams is implemented.
 
+@subsection ccMTConsiderations Multi-Threading Consideration for Configuration Utilities
+
+No configuration utility is thread safe. For instance stamped values are
+not thread safe so any read access must be done in a context where write
+access at the same time is not possible. Note that configuration is
+performed by the main thread with service threads stopped so this constraint
+is fulfilled.
+
 */

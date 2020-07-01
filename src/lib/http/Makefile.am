@@ -4,8 +4,10 @@ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
+EXTRA_DIST = http.dox
+
 # Ensure that the message file is included in the distribution
-EXTRA_DIST = http_messages.mes
+EXTRA_DIST += http_messages.mes
 
 CLEANFILES = *.gcno *.gcda
 

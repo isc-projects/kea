@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -175,5 +175,11 @@ instantiated with the appropriate value and put onto the expression vector.
    vendor-class[*].enterprise-id, vendor-class[*].data[3])
 
 More operators are expected to be implemented in upcoming releases.
+
+@section dhcpEvalMTConsiderations Multi-Threading Consideration for Expression Evaluation Library
+
+This library is not thread safe, for instance @ref isc::dhcp::evaluateBool
+or @ref isc::dhcp::evaluateString must not be called in different threads
+on the same packet.
 
 */

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,5 +50,12 @@ The UDP implementation is provided by isc::dhcp_ddns::NameChangeUDPSender
 and isc::dhcp_ddns::NameChangeUDPListener.  The implementation is strictly
 unidirectional: there is no explicit acknowledgment of receipt of a
 request so, as it is UDP, no guarantee of delivery.
+
+@section libdhcp_ddnsMTConsiderations Multi-Threading Consideration for DHCP_DDNS Request I/O Library
+
+By default this library is not thread safe (it uses asynchronous I/O) at
+the exception of the Name Change Request sender class (@c
+isc::dhcp_ddns::NameChangeSender) which is Kea thread safe (i.e. it is
+thread safe when the multi-threading mode is true).
 
 */

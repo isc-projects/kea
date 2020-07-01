@@ -48,6 +48,8 @@ libkea_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
 libkea_util_la_LDFLAGS  = -no-undefined -version-info 14:0:0
 
+EXTRA_DIST = util.dox
+
 CLEANFILES = *.gcno *.gcda
 
 # Specify the headers for copying into the installation directory tree.

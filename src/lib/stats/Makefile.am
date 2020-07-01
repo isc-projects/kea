@@ -17,6 +17,8 @@ libkea_stats_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_stats_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_stats_la_LIBADD += $(BOOST_LIBS)
 
+EXTRA_DIST = stats.dox
+
 libkea_stats_includedir = $(pkgincludedir)/stats
 libkea_stats_include_HEADERS = \
 	context.h \

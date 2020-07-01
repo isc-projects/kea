@@ -6,7 +6,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 # Ensure that the message file is included in the distribution
-EXTRA_DIST = db_messages.mes
+EXTRA_DIST = database.dox db_messages.mes
 
 CLEANFILES = *.gcno *.gcda
 

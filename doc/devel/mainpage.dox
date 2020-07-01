@@ -108,7 +108,10 @@
  * - @subpage perfdhcpInternals
  *
  * @section libraries Kea libraries
+ * - @subpage libutil
+ * - @subpage libasiolink
  * - @subpage libcc
+ * - @subpage libdatabase
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
@@ -116,6 +119,7 @@
  *   - @subpage libdhcpPktFilter
  *   - @subpage libdhcpPktFilter6
  *   - @subpage libdhcpErrorLogging
+ * - @subpage libstats
  * - @subpage libdhcp_ddns
  * - @subpage libdhcpsrv
  *   - @subpage leasemgr
@@ -132,6 +136,7 @@
  *   - @subpage cpl
  *   - @subpage cplSignals
  * - @subpage libyang
+ * - @subpage libhttp
  *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage terminology

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -682,4 +682,17 @@ loggers.  As the loggers are independent and the severity levels
 independent, fine-tuning of what and what is not recorded can be achieved.</li>
 
 </ol>
+
+@section logMTConsiderations Multi-Threading Consideration for Logging
+
+Logging is thread safe: messages emitted at the same time do not mix.
+
+When the KEA_LOCKFILE_DIR environment variable is not set to none
+Logging to files is multi-process safe too: for instance two servers
+can be configured to put log messages in the same file.
+
+The @c isc::log::Logger class initializes its implementation in a lazy
+(i.e. on demand) but thread safe way so it is always initialized at most
+once even in a multi-threaded environment.
+
 */

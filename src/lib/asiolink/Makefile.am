@@ -5,6 +5,8 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS) -Wno-non-virtual-dtor
 
+EXTRA_DIST = asiolink.dox
+
 CLEANFILES = *.gcno *.gcda
 
 # This is a wrapper library.

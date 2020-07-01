@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+K// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -180,5 +180,11 @@ src/lib/yang/pretests/sysrepo_setup_tests
 to verify that your environment is ready. If there is anything
 wrong, it will enumerate the problems and will suggest how to solve
 them.
+
+@section yangMTConsiderations Multi-Threading Consideration for YANG Utilities
+
+The YANG utilities are not thread safe. Note as they are used only in a
+configuration context it is not a problem, and the yang / sysrepo libraries
+are multi-threaded so their APIs are thread safe.
 
 */

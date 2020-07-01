@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -175,5 +175,14 @@ main loop must contain calls to @ref isc::asiolink::IOService::run or
 @ref isc::asiolink::IOService::poll or their variants to invoke Command
 Manager's handlers as required for processing control requests.
 
+@section ctrlSocketMTConsiderations Multi-Threading Consideration for Control Channel
+
+The control channel utilities are not thread safe but they are used only
+by the main thread so in most cases it does not matter. For instance
+the assumption that only at most one command can be executed at a given
+time can be done. Of course this has its limit: when the command changes
+the configuration or is incompatible with a simultaneous packet
+processing the multi-threading mode must be checked and service threads
+stopped.
 
 */

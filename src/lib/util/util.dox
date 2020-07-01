@@ -1,0 +1,96 @@
+// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page libutil libkea-util - Kea Utilities Library
+
+@section utilUtilities Utilities
+
+The utilities library (libkea-util) provides generic and Kea utilities:
+
+ - boost time: boost Posix time and duration to text conversions.
+
+ - buffer (header only): input and output buffers.
+
+ - csv file: comma-separated values (CSV) files.
+
+ - double: test utility for checking double equivalence (vs. strict
+  equality).
+
+ - encode: base16, base32, base64 and hexadecimal conversions.
+
+ - filename: filename manipulation (avoid dependency on boost).
+
+ - hash: Fowler-Noll-Vo 64 bit hash function.
+
+ - io: test utils for file descriptors and sockets.
+
+ - io utilities (header only): reads and writes integers from / to buffers.
+
+ - labeled values: labeled constants and label constant sets.
+
+ - multi threading manager (in the util library to be available in the
+  whole Kea code).
+
+ - optional: optional values.
+
+ - pid file: process id files.
+
+ - pointer util: test utility to compare smart pointers.
+
+ - process spawn.
+
+ - random: pseudo-random number generator for query ids (please use
+  the cryptolink random generator when security matters).
+
+ - range utilities.
+
+ - read-write mutex (header only).
+
+ - signal set: signal handling (please @c isc::process::IOSignalSet instead).
+
+ - staged values.
+
+ - state model: event-driven deterministic finite state automaton
+  (to accept a regular language).
+
+ - stop watch: to measure code execution time.
+
+ - string util: various string common tools.
+
+ - thread pool.
+
+ - time utilities: DNSSEC time conversions from and to text.
+
+ - unittests (directory): tools for google test unit tests.
+
+ - unlock guard: RAII helper to unlock a mutex in a limited scope.
+
+ - versioned csv file: csv files with multiple versions of file schema.
+
+ - watched socket (required as select() or poll() do not support condition
+  variables).
+
+ - watched threads: threads using ready, error and terminate watched socket.
+
+@section utilMTConsiderations Multi-Threading Consideration for Utilities
+
+By default utilities are not thread safe, for instance CSV files and
+qid random generators are not thread safe. Exceptions are:
+
+ - multi threading manager is thread safe.
+
+ - read-write mutex is thread safe.
+
+ - state model is thread safe.
+
+ - thread pool is thread safe.
+
+ - unlock guard is thread safe.
+
+ - watched threads are thread safe.
+
+*/

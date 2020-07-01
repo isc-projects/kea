@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -172,5 +172,10 @@ The following sequence diagram depicts the initialization of signal handling
 during startup and the subsequent receipt of a SIGHUP:
 
 @image html cpl_signal_sequence.svg "CPL Signal Handling Sequence"
+
+@section cplMTConsiderations Multi-Threading Consideration for Controllable Process Layer
+
+By default this library is not thread safe and currently there is no known
+exception.
 
 */

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -197,5 +197,29 @@
   Note this leads to negative cache entries without IP reservations,
   this property should not be used because it limits negative cache
   addition to only be performed by the host manager.
+
+@section dhcpDatabaseBackendsMTConsiderations Multi-Threading Consideration for DHCP Database Backends
+
+Lease and host database backends including the memfile for leases are Kea
+(i.e. when the multi-threading mode is true) thread safe. This extends
+to legal / forensic log backends but not to config backends which is
+used only for configuration by the main thread with packet processing
+threads stopped so has no thread safety requirements.
+
+There are exceptions:
+
+ - memfile constructor (including loading of leases from files) is not
+  thread safe.
+
+ - lfc handling in memfile is not thread safe: instead it is required
+  to be called from the main thread.
+
+ - wipe lease methods are either not thread safe or not implemented.
+
+Note for statistics queries it does not make sense to call them with
+running packet processing threads so they have no thread safety guarantees.
+
+Note too the memfile backend is not inter-process safe so must be kept
+private to the Kea server using it.
 
   */

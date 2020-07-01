@@ -1649,7 +1649,22 @@ Some other Kea APIs are intrinsically thread safe because they do not
 involve a shared structure so for instance despite of its name the
 interface manager send methods are generic thread safe.
 
-Per library documentation will be updated to detail thread safety to help
-hooks writers and to provide an exhaustive list of Kea thread safe APIs.
+Per library documentation details thread safety to help hooks writers
+and to provide an exhaustive list of Kea thread safe APIs:
+ - @ref utilMTConsiderations
+ - @ref logMTConsiderations
+ - @ref asiolinkMTConsiderations
+ - @ref ccMTConsiderations
+ - @ref databaseMTConsiderations
+ - @ref ctrlSocketMTConsiderations
+ - @ref libdhcpMTConsiderations
+ - @ref statsMTConsiderations
+ - @ref yangMTConsiderations
+ - @ref libdhcp_ddnsMTConsiderations
+ - @ref dhcpEvalMTConsiderations
+ - @ref cplMTConsiderations
+ - @ref dhcpDatabaseBackendsMTConsiderations
+ - @ref libdhcpsrvMTConsiderations
+ - @ref httpMTConsiderations
 
 */

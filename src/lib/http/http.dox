@@ -1,0 +1,24 @@
+// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page libhttp libkea-http - Kea HTTP Library
+
+@section httpMTConsiderations Multi-Threading Consideration for HTTP Library
+
+By default this library is not thread safe, for instance HTTP listeners
+and HTTP messages are not thread safe. Exceptions are:
+
+ - HTTP client is Kea (i.e. when the multi-threading mode is treu)
+  thread safe.
+
+ - date time is thread safe (mainly because its encapsulated POSIX time
+  is private and read-only, or because all methods are instance const methods
+  or class methods).
+
+ - URL is thread safe (all public methods are const methods).
+
+*/
