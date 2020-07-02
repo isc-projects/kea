@@ -60,7 +60,7 @@ IfaceMgr::instancePtr() {
     return (iface_mgr);
 }
 
-Iface::Iface(const std::string& name, int ifindex)
+Iface::Iface(const std::string& name, unsigned int ifindex)
     :name_(name), ifindex_(ifindex), mac_len_(0), hardware_type_(0),
      flag_loopback_(false), flag_up_(false), flag_running_(false),
      flag_multicast_(false), flag_broadcast_(false), flags_(0),
@@ -69,10 +69,6 @@ Iface::Iface(const std::string& name, int ifindex)
     // Sanity checks.
     if (name.empty()) {
         isc_throw(BadValue, "Interface name must not be empty");
-    }
-    if ((ifindex_ < 0) || (ifindex_ > std::numeric_limits<int32_t>::max())) {
-        isc_throw(OutOfRange, "Interface index must be in 0.." <<
-                  std::numeric_limits<int32_t>::max());
     }
     memset(mac_, 0, sizeof(mac_));
 }

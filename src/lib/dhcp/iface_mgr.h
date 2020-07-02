@@ -145,8 +145,7 @@ public:
     /// @param name name of the interface
     /// @param ifindex interface index (unique integer identifier)
     /// @param BadValue when name is empty.
-    /// @throw OutOfRange when ifindex is not in 0..2147483647 range.
-    Iface(const std::string& name, int ifindex);
+    Iface(const std::string& name, unsigned int ifindex);
 
     /// @brief Destructor.
     ~Iface() { }

@@ -471,6 +471,11 @@ void IfaceMgr::detectIfaces() {
         // into three separate steps for easier debugging.
         const char* tmp = static_cast<const char*>(RTA_DATA(attribs_table[IFLA_IFNAME]));
         string iface_name(tmp); // <--- bogus valgrind warning here
+        // This is guaranteed both by the if_nametoindex() implementation
+        // and by kernel dev_new_index() code. In fact 0 is impossible too...
+        if (interface_info->ifi_index < 0) {
+            isc_throw(OutOfRange, "negative interface index");
+        }
         IfacePtr iface(new Iface(iface_name, interface_info->ifi_index));
 
         iface->setHWType(interface_info->ifi_type);

@@ -39,9 +39,15 @@ using boost::scoped_ptr;
 
 namespace {
 
-// Name of loopback interface detection
+// Note this is for the *real* loopback interface, *not* the fake one.
+// So in tests using it you have LOOPBACK_NAME, LOOPBACK_INDEX and
+// no "eth0" nor "eth1". In tests not using it you can have "lo", LO_INDEX,
+// "eth0" or "eth1".
+// Name of loopback interface detection.
 const size_t BUF_SIZE = 32;
+// Can be overwriten to "lo0" for instance on BSD systems.
 char LOOPBACK_NAME[BUF_SIZE] = "lo";
+// In fact is never 0, 1 is by far the most likely.
 uint32_t LOOPBACK_INDEX = 0;
 
 // Ports used during testing
@@ -229,18 +235,18 @@ public:
         ifaces_.clear();
 
         // local loopback
-        IfacePtr lo = createIface("lo", 0);
+        IfacePtr lo = createIface("lo", LO_INDEX);
         lo->addAddress(IOAddress("127.0.0.1"));
         lo->addAddress(IOAddress("::1"));
         ifaces_.push_back(lo);
         // eth0
-        IfacePtr eth0 = createIface("eth0", 1);
+        IfacePtr eth0 = createIface("eth0", ETH0_INDEX);
         eth0->addAddress(IOAddress("10.0.0.1"));
         eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
         eth0->addAddress(IOAddress("2001:db8:1::1"));
         ifaces_.push_back(eth0);
         // eth1
-        IfacePtr eth1 = createIface("eth1", 2);
+        IfacePtr eth1 = createIface("eth1", ETH1_INDEX);
         eth1->addAddress(IOAddress("192.0.2.3"));
         eth1->addAddress(IOAddress("fe80::3a60:77ff:fed5:abcd"));
         ifaces_.push_back(eth1);
@@ -924,14 +930,14 @@ TEST_F(IfaceMgrTest, instance) {
 // Basic tests for Iface inner class.
 TEST_F(IfaceMgrTest, ifaceClass) {
 
-    Iface iface("eth5", 7);
-    EXPECT_STREQ("eth5/7", iface.getFullName().c_str());
+  IfacePtr iface(new Iface("eth5", 7));
+    EXPECT_STREQ("eth5/7", iface->getFullName().c_str());
 
-    EXPECT_THROW_MSG(Iface("", 10), BadValue,
+    EXPECT_THROW_MSG(iface.reset(new Iface("", 10)), BadValue,
                      "Interface name must not be empty");
 
-    EXPECT_THROW_MSG(Iface("foo", -1), OutOfRange,
-                     "Interface index must be in 0..2147483647");
+    EXPECT_NO_THROW(iface.reset(new Iface("big-index", 66666)));
+    EXPECT_EQ(66666, iface->getIndex());
 }
 
 // This test checks the getIface by packet method.
@@ -1787,12 +1793,12 @@ TEST_F(IfaceMgrTest, openSockets4) {
 
     // Expect that the sockets are open on both eth0 and eth1.
     EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(1)->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
     EXPECT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(2)->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(ETH1_INDEX)->getSockets().size());
     // Socket shouldn't have been opened on loopback.
     EXPECT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
-    EXPECT_TRUE(ifacemgr.getIface(0)->getSockets().empty());
+    EXPECT_TRUE(ifacemgr.getIface(LO_INDEX)->getSockets().empty());
 }
 
 // This test verifies that IPv4 sockets are open on the loopback interface
@@ -1820,11 +1826,11 @@ TEST_F(IfaceMgrTest, openSockets4Loopback) {
 
     // Expect that the sockets are open on all interfaces.
     EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(1)->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
     EXPECT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(2)->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(ETH1_INDEX)->getSockets().size());
     EXPECT_EQ(1, ifacemgr.getIface("lo")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(0)->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(LO_INDEX)->getSockets().size());
 }
 
 // This test verifies that the socket is not open on the interface which is
@@ -1841,7 +1847,7 @@ TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
                          FlagRunning(false), FlagInactive4(false),
                          FlagInactive6(false));
     ASSERT_FALSE(IfaceMgr::instance().getIface("eth0")->flag_up_);
-    ASSERT_FALSE(IfaceMgr::instance().getIface(1)->flag_up_);
+    ASSERT_FALSE(IfaceMgr::instance().getIface(ETH0_INDEX)->flag_up_);
 
     // Install an error handler before trying to open sockets. This handler
     // should be called when the IfaceMgr fails to open socket on an interface
@@ -1857,15 +1863,15 @@ TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
 
     // There should be no socket on eth0 open, because interface was down.
     EXPECT_TRUE(IfaceMgr::instance().getIface("eth0")->getSockets().empty());
-    EXPECT_TRUE(IfaceMgr::instance().getIface(1)->getSockets().empty());
+    EXPECT_TRUE(IfaceMgr::instance().getIface(ETH0_INDEX)->getSockets().empty());
 
     // Expecting that the socket is open on eth1 because it was up, running
     // and active.
     EXPECT_EQ(2, IfaceMgr::instance().getIface("eth1")->getSockets().size());
-    EXPECT_EQ(2, IfaceMgr::instance().getIface(2)->getSockets().size());
+    EXPECT_EQ(2, IfaceMgr::instance().getIface(ETH1_INDEX)->getSockets().size());
     // Never open socket on loopback interface.
     EXPECT_TRUE(IfaceMgr::instance().getIface("lo")->getSockets().empty());
-    EXPECT_TRUE(IfaceMgr::instance().getIface(0)->getSockets().empty());
+    EXPECT_TRUE(IfaceMgr::instance().getIface(LO_INDEX)->getSockets().empty());
 }
 
 // This test verifies that the socket is not open on the interface which is
@@ -1888,19 +1894,19 @@ TEST_F(IfaceMgrTest, openSockets4IfaceInactive) {
     // - is inactive
     ifacemgr.setIfaceFlags("eth1", false, true, true, true, false);
     ASSERT_TRUE(ifacemgr.getIface("eth1")->inactive4_);
-    ASSERT_TRUE(ifacemgr.getIface(2)->inactive4_);
+    ASSERT_TRUE(ifacemgr.getIface(ETH1_INDEX)->inactive4_);
     ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, 0));
 
     // The socket on eth0 should be open because interface is up, running and
     // active (not disabled through DHCP configuration, for example).
     EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(1)->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
     // There should be no socket open on eth1 because it was marked inactive.
     EXPECT_TRUE(ifacemgr.getIface("eth1")->getSockets().empty());
-    EXPECT_TRUE(ifacemgr.getIface(2)->getSockets().empty());
+    EXPECT_TRUE(ifacemgr.getIface(ETH1_INDEX)->getSockets().empty());
     // Sockets are not open on loopback interfaces too.
     EXPECT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
-    EXPECT_TRUE(ifacemgr.getIface(0)->getSockets().empty());
+    EXPECT_TRUE(ifacemgr.getIface(LO_INDEX)->getSockets().empty());
 }
 
 // Test that exception is thrown when trying to bind a new socket to the port
@@ -1985,12 +1991,12 @@ TEST_F(IfaceMgrTest, hasOpenSocketForAddress4) {
 
     // Expect that the sockets are open on both eth0 and eth1.
     ASSERT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
-    ASSERT_EQ(1, ifacemgr.getIface(1)->getSockets().size());
+    ASSERT_EQ(1, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
     ASSERT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
-    ASSERT_EQ(1, ifacemgr.getIface(2)->getSockets().size());
+    ASSERT_EQ(1, ifacemgr.getIface(ETH1_INDEX)->getSockets().size());
     // Socket shouldn't have been opened on loopback.
     ASSERT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
-    ASSERT_TRUE(ifacemgr.getIface(0)->getSockets().empty());
+    ASSERT_TRUE(ifacemgr.getIface(LO_INDEX)->getSockets().empty());
 
     // Check that there are sockets bound to addresses that we have
     // set for interfaces.
@@ -2024,11 +2030,11 @@ TEST_F(IfaceMgrTest, openSockets6LinkLocal) {
 
     // Check that the number of sockets is correct on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(0), 0);
+    checkSocketsCount6(*ifacemgr.getIface(LO_INDEX), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(1), 0);
+    checkSocketsCount6(*ifacemgr.getIface(ETH0_INDEX), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(2), 0);
+    checkSocketsCount6(*ifacemgr.getIface(ETH1_INDEX), 0);
 
     // Sockets on eth0 should be bound to link-local and should not be bound
     // to global unicast address, even though this address is configured on
@@ -2074,7 +2080,7 @@ TEST_F(IfaceMgrTest, openSockets6Loopback) {
 
     // Check that the loopback interface has at least an open socket.
     EXPECT_EQ(1, ifacemgr.getIface("lo")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(0)->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface(LO_INDEX)->getSockets().size());
 
     // This socket should be bound to ::1
     EXPECT_TRUE(ifacemgr.isBound("lo", "::1"));
@@ -2104,13 +2110,13 @@ TEST_F(IfaceMgrTest, openSockets6NoLinkLocal) {
 
     // Check that the number of sockets is correct on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(0), 0);
+    checkSocketsCount6(*ifacemgr.getIface(LO_INDEX), 0);
     // The third parameter specifies that the number of link-local
     // addresses for eth0 is equal to 0.
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 0, 0);
-    checkSocketsCount6(*ifacemgr.getIface(1), 0, 0);
+    checkSocketsCount6(*ifacemgr.getIface(ETH0_INDEX), 0, 0);
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0, 1);
-    checkSocketsCount6(*ifacemgr.getIface(2), 0, 1);
+    checkSocketsCount6(*ifacemgr.getIface(ETH1_INDEX), 0, 1);
 
     // There should be no sockets open on eth0 because it neither has
     // link-local nor global unicast addresses.
@@ -2147,11 +2153,11 @@ TEST_F(IfaceMgrTest, openSockets6NotMulticast) {
 
     // Check that the number of sockets is correct on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(0), 0);
+    checkSocketsCount6(*ifacemgr.getIface(LO_INDEX), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(1), 0);
+    checkSocketsCount6(*ifacemgr.getIface(ETH0_INDEX), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(2), 0);
+    checkSocketsCount6(*ifacemgr.getIface(ETH1_INDEX), 0);
 
     // Sockets on eth0 should be bound to link-local and should not be bound
     // to global unicast address, even though this address is configured on
@@ -2194,11 +2200,11 @@ TEST_F(IfaceMgrTest, openSockets6Unicast) {
 
     // Check that we have correct number of sockets on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(0), 0);
+    checkSocketsCount6(*ifacemgr.getIface(LO_INDEX), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 1); // one unicast address.
-    checkSocketsCount6(*ifacemgr.getIface(1), 1);
+    checkSocketsCount6(*ifacemgr.getIface(ETH0_INDEX), 1);
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(2), 0);
+    checkSocketsCount6(*ifacemgr.getIface(ETH1_INDEX), 0);
 
     // eth0 should have two sockets, one bound to link-local, another one
     // bound to unicast address.
@@ -2241,11 +2247,11 @@ TEST_F(IfaceMgrTest, openSockets6UnicastOnly) {
 
     // Check that we have correct number of sockets on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(0), 0);
+    checkSocketsCount6(*ifacemgr.getIface(LO_INDEX), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 1, 0);
-    checkSocketsCount6(*ifacemgr.getIface(1), 1, 0);
+    checkSocketsCount6(*ifacemgr.getIface(ETH0_INDEX), 1, 0);
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(2), 0);
+    checkSocketsCount6(*ifacemgr.getIface(ETH1_INDEX), 0);
 
     // The link-local address is not present on eth0. Therefore, no socket
     // must be bound to this address, nor to multicast address.
@@ -2301,12 +2307,12 @@ TEST_F(IfaceMgrTest, openSockets6IfaceDown) {
 
     // Check that we have correct number of sockets on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(0), 0);
+    checkSocketsCount6(*ifacemgr.getIface(LO_INDEX), 0);
     // There should be no sockets on eth0 because interface is down.
     ASSERT_TRUE(ifacemgr.getIface("eth0")->getSockets().empty());
-    ASSERT_TRUE(ifacemgr.getIface(1)->getSockets().empty());
+    ASSERT_TRUE(ifacemgr.getIface(ETH0_INDEX)->getSockets().empty());
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(2), 0);
+    checkSocketsCount6(*ifacemgr.getIface(ETH1_INDEX), 0);
 
     // eth0 should have no sockets because the interface is down.
     EXPECT_FALSE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
@@ -2352,12 +2358,12 @@ TEST_F(IfaceMgrTest, openSockets6IfaceInactive) {
 
     // Check that we have correct number of sockets on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
-    checkSocketsCount6(*ifacemgr.getIface(0), 0);
+    checkSocketsCount6(*ifacemgr.getIface(LO_INDEX), 0);
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 1); // one unicast address
-    checkSocketsCount6(*ifacemgr.getIface(1), 1);
+    checkSocketsCount6(*ifacemgr.getIface(ETH0_INDEX), 1);
     // There should be no sockets on eth1 because interface is inactive
     ASSERT_TRUE(ifacemgr.getIface("eth1")->getSockets().empty());
-    ASSERT_TRUE(ifacemgr.getIface(2)->getSockets().empty());
+    ASSERT_TRUE(ifacemgr.getIface(ETH1_INDEX)->getSockets().empty());
 
     // eth0 should have one socket bound to a link-local address, another one
     // bound to unicast address.
