@@ -1,3 +1,8 @@
+1766.	[func]		fdupont
+	Optimized the interface manager code and removed the 16 bit limit
+	to interface indexes.
+	(Gitlab #553)
+
 1765.	[bug]		fdupont
 	Corrected a bug in MySQL Config Backend which occasionally caused
 	the DHCP servers to overlook some configuration changes. This
