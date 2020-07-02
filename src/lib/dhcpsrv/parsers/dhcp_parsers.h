@@ -565,6 +565,13 @@ protected:
     /// @param len is the prefix length
     void initSubnet(data::ConstElementPtr params,
                     asiolink::IOAddress addr, uint8_t len);
+
+    /// @brief Verifies the host reservation address is in the subnet range
+    ///
+    /// @param subnet pointer to the subnet
+    /// @param host pointer to the host reservation
+    /// @throw DhcpConfigError when the address is not in the subnet range.
+    void validateResv(const Subnet4Ptr& subnet, ConstHostPtr host);
 };
 
 /// @brief this class parses list of DHCP4 subnets
@@ -771,6 +778,13 @@ protected:
     /// @param len is the prefix length
     void initSubnet(isc::data::ConstElementPtr params,
                     isc::asiolink::IOAddress addr, uint8_t len);
+
+    /// @brief Verifies host reservation addresses are in the subnet range
+    ///
+    /// @param subnet pointer to the subnet
+    /// @param host pointer to the host reservation
+    /// @throw DhcpConfigError when an address is not in the subnet range.
+    void validateResvs(const Subnet6Ptr& subnet, ConstHostPtr host);
 };
 
 
@@ -885,7 +899,7 @@ private:
     getMode(isc::data::ConstElementPtr scope, const std::string& name);
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
 
 #endif // DHCP_PARSERS_H

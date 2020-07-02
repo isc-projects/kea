@@ -722,6 +722,7 @@ Subnet4ConfigParser::parse(ConstElementPtr subnet) {
         HostReservationsListParser<HostReservationParser4> parser;
         parser.parse(subnet_->getID(), reservations, hosts);
         for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+            validateResv(sn4ptr, *h);
             CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
         }
     }
@@ -928,6 +929,16 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Parse DDNS parameters
     parseDdnsParams(params, network);
+}
+
+void
+Subnet4ConfigParser::validateResv(const Subnet4Ptr& subnet, ConstHostPtr host) {
+    const IOAddress& address = host->getIPv4Reservation();
+    if (!address.isV4Zero() && !subnet->inRange(address)) {
+        isc_throw(DhcpConfigError, "specified reservation '" << address
+                  << "' is not matching the IPv4 subnet prefix '"
+                  << subnet->toText() << "'");
+    }
 }
 
 //**************************** Subnets4ListConfigParser **********************
@@ -1166,6 +1177,7 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
         HostReservationsListParser<HostReservationParser6> parser;
         parser.parse(subnet_->getID(), reservations, hosts);
         for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+            validateResvs(sn6ptr, *h);
             CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
         }
     }
@@ -1325,6 +1337,19 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Parse DDNS parameters
     parseDdnsParams(params, network);
+}
+
+void
+Subnet6ConfigParser::validateResvs(const Subnet6Ptr& subnet, ConstHostPtr host) {
+    IPv6ResrvRange range = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+    for (auto it = range.first; it != range.second; ++it) {
+        const IOAddress& address = it->second.getPrefix();
+        if (!subnet->inRange(address)) {
+            isc_throw(DhcpConfigError, "specified reservation '" << address
+                      << "' is not matching the IPv6 subnet prefix '"
+                      << subnet->toText() << "'");
+        }
+    }
 }
 
 //**************************** Subnet6ListConfigParser ********************
@@ -1525,5 +1550,5 @@ D2ClientConfigParser::setAllDefaults(isc::data::ConstElementPtr d2_config) {
     return (SimpleParser::setDefaults(mutable_d2, D2_CLIENT_CONFIG_DEFAULTS));
 }
 
-};  // namespace dhcp
-};  // namespace isc
+} // namespace dhcp
+} // namespace isc
