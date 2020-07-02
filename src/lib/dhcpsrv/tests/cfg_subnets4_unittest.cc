@@ -22,6 +22,8 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_hosts.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
@@ -1899,6 +1901,61 @@ TEST(CfgSubnets4Test, removeStatistics) {
         StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-leases"));
     ASSERT_FALSE(observation);
+}
+    
+// This test verifies that in range host reservation works as expected.
+TEST(CfgSubnets4Test, host) {
+    // Create a configuration.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"10.1.2.0/24\", \n"
+        "            \"reservations\": [ {\n"
+        "                \"hw-address\": \"aa:bb:cc:dd:ee:ff\", \n"
+        "                \"ip-address\": \"10.1.2.1\" } ]\n"
+        "        }";
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+        << "invalid JSON:" << json << "\n test is broken";
+
+    Subnet4ConfigParser parser;
+    Subnet4Ptr subnet;
+    EXPECT_NO_THROW(subnet = parser.parse(elems));
+    ASSERT_TRUE(subnet);
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_TRUE(cfg_hosts);
+    HostCollection hosts = cfg_hosts->getAll4(SubnetID(1));
+    ASSERT_EQ(1, hosts.size());
+    ConstHostPtr host = hosts[0];
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ("hwaddr=AABBCCDDEEFF", host->getIdentifierAsText());
+    EXPECT_EQ("10.1.2.1", host->getIPv4Reservation().toText());
+
+    CfgMgr::instance().clear();
+}
+
+// This test verifies that an out of range host reservation is rejected.
+TEST(CfgSubnets4Test, outOfRangeHost) {
+    // Create a configuration.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"10.1.2.0/24\", \n"
+        "            \"reservations\": [ {\n"
+        "                \"hw-address\": \"aa:bb:cc:dd:ee:ff\", \n"
+        "                \"ip-address\": \"10.2.2.1\" } ]\n"
+        "        }";
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+        << "invalid JSON:" << json << "\n test is broken";
+
+    Subnet4ConfigParser parser;
+    std::string msg = "specified reservation '10.2.2.1' is not matching ";
+    msg += "the IPv4 subnet prefix '10.1.2.0/24'";
+    EXPECT_THROW_MSG(parser.parse(elems), DhcpConfigError, msg);
 }
 
 } // end of anonymous namespace

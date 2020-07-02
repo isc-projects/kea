@@ -18,6 +18,8 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_hosts.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
@@ -1772,6 +1774,108 @@ TEST(CfgSubnets6Test, removeStatistics) {
         StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-leases"));
     ASSERT_FALSE(observation);
+}
+
+// This test verifies that in range host reservation works as expected.
+TEST(CfgSubnets6Test, hostNA) {
+    // Create a configuration.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"2001:db8:1::/48\", \n"
+        "            \"reservations\": [ {\n"
+        "                \"hw-address\": \"aa:bb:cc:dd:ee:ff\", \n"
+        "                \"ip-addresses\": [\"2001:db8:1::1\"] } ]\n"
+        "        }";
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+        << "invalid JSON:" << json << "\n test is broken";
+
+    Subnet6ConfigParser parser;
+    Subnet6Ptr subnet;
+    EXPECT_NO_THROW(subnet = parser.parse(elems));
+    ASSERT_TRUE(subnet);
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_TRUE(cfg_hosts);
+    HostCollection hosts = cfg_hosts->getAll6(SubnetID(1));
+    ASSERT_EQ(1, hosts.size());
+    ConstHostPtr host = hosts[0];
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv6SubnetID());
+    EXPECT_EQ("hwaddr=AABBCCDDEEFF", host->getIdentifierAsText());
+    IPv6ResrvRange addresses = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+    ASSERT_EQ(1, std::distance(addresses.first, addresses.second));
+    EXPECT_EQ("2001:db8:1::1", addresses.first->second.getPrefix().toText());
+
+    CfgMgr::instance().clear();
+}
+
+// This test verifies that an out of range host reservation is rejected.
+TEST(CfgSubnets6Test, outOfRangeHost) {
+    // Create a configuration.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"2001:db8:1::/48\", \n"
+        "            \"reservations\": [ {\n"
+        "                \"hw-address\": \"aa:bb:cc:dd:ee:ff\", \n"
+        "                \"ip-addresses\": [\"2001:db8:1::1\", \n"
+        "                                   \"2001:db8:2::1\"] } ]\n"
+        "        }";
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+        << "invalid JSON:" << json << "\n test is broken";
+
+    Subnet6ConfigParser parser;
+    std::string msg = "specified reservation '2001:db8:2::1' is ";
+    msg += "not matching the IPv6 subnet prefix '2001:db8:1::/48'";
+    EXPECT_THROW_MSG(parser.parse(elems), DhcpConfigError, msg);
+}
+
+// This test verifies that in range validation does not applies to prefixes.
+TEST(CfgSubnets6Test, hostPD) {
+    // Create a configuration.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"2001:db8:1::/48\", \n"
+        "            \"reservations\": [ {\n"
+        "                \"hw-address\": \"aa:bb:cc:dd:ee:ff\", \n"
+        "                \"prefixes\": [\"2001:db8:2::/64\"] } ]\n"
+        "        }";
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+        << "invalid JSON:" << json << "\n test is broken";
+
+    Subnet6ConfigParser parser;
+    Subnet6Ptr subnet;
+    try {
+      subnet = parser.parse(elems);
+    } catch (const std::exception& ex) {
+      std::cerr << "parse fail with " << ex.what() << std::endl;
+    }
+    //EXPECT_NO_THROW(subnet = parser.parse(elems));
+    ASSERT_TRUE(subnet);
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_TRUE(cfg_hosts);
+    HostCollection hosts = cfg_hosts->getAll6(SubnetID(1));
+    ASSERT_EQ(1, hosts.size());
+    ConstHostPtr host = hosts[0];
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv6SubnetID());
+    EXPECT_EQ("hwaddr=AABBCCDDEEFF", host->getIdentifierAsText());
+    IPv6ResrvRange prefixes = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
+    ASSERT_EQ(1, std::distance(prefixes.first, prefixes.second));
+    EXPECT_EQ("2001:db8:2::", prefixes.first->second.getPrefix().toText());
+    EXPECT_EQ(64, prefixes.first->second.getPrefixLen());
+
+    // Verify the prefix is not in the subnet range.
+    EXPECT_FALSE(subnet->inRange(prefixes.first->second.getPrefix()));
+
+    CfgMgr::instance().clear();
 }
 
 } // end of anonymous namespace

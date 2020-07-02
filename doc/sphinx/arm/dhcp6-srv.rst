@@ -3354,6 +3354,11 @@ usually a DUID, but it can also be a hardware or MAC address. One or more
 addresses or prefixes may also be specified, and it is possible to
 specify a hostname and DHCPv6 options for a given host.
 
+.. note::
+
+   Beginning with Kea 1.7.11 all reserved addresses must be in the subnet
+   prefix. This does not apply to reserved prefixes.
+
 The following example shows how to reserve addresses and prefixes for
 specific hosts:
 

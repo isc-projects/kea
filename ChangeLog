@@ -1,3 +1,10 @@
+17xx.	[bug]*		fdupont
+	When a host reservation in a subnet reserves an address, the
+	address must in the subnet prefix. This check was previously
+	only done by the host command hook library. Note it does not
+	applies the prefix delegation.
+	(Gitlab #1254)
+
 1787.	[bug]		razvan
 	The recount leases functions consider leases in 'declined' state as
 	'assigned' so that when the lease is reclaimed or reused, no negative

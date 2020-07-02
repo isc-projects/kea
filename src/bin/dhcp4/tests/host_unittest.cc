@@ -134,7 +134,7 @@ const char* CONFIGS[] = {
         "        {\n"
         "           \"hw-address\": \"aa:bb:cc:dd:ee:ff\",\n"
         "           \"hostname\": \"subnet-10-host\",\n"
-        "           \"ip-address\": \"192.0.5.10\"\n"
+        "           \"ip-address\": \"10.0.0.105\"\n"
         "        }]\n"
         "    }\n"
         "]\n"
@@ -154,14 +154,15 @@ const char* CONFIGS[] = {
         "\"subnet4\": [\n"
         "    {\n"
         "        \"subnet\": \"10.0.0.0/24\", \n"
-        "        \"id\": 10," "        \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],\n"
+        "        \"id\": 10,"
+        "        \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],\n"
         "        \"interface\": \"eth0\",\n"
         "        \"reservation-mode\": \"all\","
         "        \"reservations\": [ \n"
         "        {\n"
         "           \"hw-address\": \"aa:bb:cc:dd:ee:ff\",\n"
         "           \"hostname\": \"subnet-10-host\",\n"
-        "           \"ip-address\": \"192.0.5.10\"\n"
+        "           \"ip-address\": \"10.0.0.105\"\n"
         "        }]\n"
         "    }\n"
         "]\n"
@@ -550,9 +551,9 @@ TEST_F(HostTest, outOfPoolOverGlobal) {
     // Hardware address matches all reservations
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
 
-    // Subnet 10 usses default HR mode(i.e. "in-pool"), so its
+    // Subnet 10 uses "out-of-pool" HR mode, so its
     // reservation should be used, rather than global.
-    runDoraTest(CONFIGS[2], client, "subnet-10-host", "192.0.5.10");
+    runDoraTest(CONFIGS[2], client, "subnet-10-host", "10.0.0.105");
 }
 
 // Verifies that when there are matching reservations at
@@ -565,9 +566,9 @@ TEST_F(HostTest, allOverGlobal) {
     // Hardware address matches all reservations
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
 
-    // Subnet 10 usses default HR mode(i.e. "in-pool"), so its
+    // Subnet 10 uses default HR mode(i.e. "all"), so its
     // reservation should be used, rather than global.
-    runDoraTest(CONFIGS[3], client, "subnet-10-host", "192.0.5.10");
+    runDoraTest(CONFIGS[3], client, "subnet-10-host", "10.0.0.105");
 }
 
 // Verifies that client class specified in the global reservation

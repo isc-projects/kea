@@ -3841,6 +3841,11 @@ In most cases an IP address will be specified. It is also possible to
 specify a hostname, host-specific options, or fields carried within the
 DHCPv4 message such as siaddr, sname, or file.
 
+.. note::
+
+   Beginning with Kea 1.7.11 the reserved address must be in the subnet
+   prefix.
+
 The following example shows how to reserve addresses for specific hosts
 in a subnet:
 
