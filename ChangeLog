@@ -7,7 +7,7 @@
 	Changed the way hook libraries are unloaded. Now unload is done
 	in two phases: the first phase calls unload() entry points and
 	removes callouts, the second phase unmaps hook library memory
-	spaces. This should lead to fewer problems including less crashes
+	spaces. This should lead to fewer problems including fewer crashes
 	at exit time. On the other hand, incorrect libraries can stay
 	in memory until exit and prevent any (re)load.
 	(Gitlab #1282)
