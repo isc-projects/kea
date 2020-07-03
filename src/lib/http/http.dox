@@ -12,8 +12,8 @@
 By default this library is not thread safe, for instance HTTP listeners
 and HTTP messages are not thread safe. Exceptions are:
 
- - HTTP client is Kea (i.e. when the multi-threading mode is treu)
-  thread safe.
+ - HTTP client is Kea thread safe (i.e. is thread safe when the
+  multi-threading mode is true).
 
  - date time is thread safe (mainly because its encapsulated POSIX time
   is private and read-only, or because all methods are instance const methods

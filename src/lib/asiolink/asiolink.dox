@@ -49,7 +49,7 @@ The asiolink library (libkea-asiolink) encapsulates Boost ASIO tools:
 
 @section asiolinkMTConsiderations Multi-Threading Consideration for Boost ASIO Utilities
 
-By default Boost ASIO utilities are not thread safe even Boost ASIO tools
+By default Boost ASIO utilities are not thread safe even if Boost ASIO tools
 themselves are. When there is no state and the encapsulation is direct
 the thread safety property is preserved. Exceptions to the by default
 no thread safe are:

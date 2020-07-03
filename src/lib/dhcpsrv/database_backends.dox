@@ -201,10 +201,11 @@
 @section dhcpDatabaseBackendsMTConsiderations Multi-Threading Consideration for DHCP Database Backends
 
 Lease and host database backends including the memfile for leases are Kea
-(i.e. when the multi-threading mode is true) thread safe. This extends
-to legal / forensic log backends but not to config backends which is
-used only for configuration by the main thread with packet processing
-threads stopped so has no thread safety requirements.
+thread safe (i.e. are thread safe when the multi-threading mode is true).
+This extends to legal / forensic log backends but not to config
+backends which is used only for configuration by the main thread with
+packet processing threads stopped so has no thread safety
+requirements.
 
 There are exceptions:
 
@@ -219,7 +220,7 @@ There are exceptions:
 Note for statistics queries it does not make sense to call them with
 running packet processing threads so they have no thread safety guarantees.
 
-Note too the memfile backend is not inter-process safe so must be kept
+Note too that the memfile backend is not inter-process safe so must be kept
 private to the Kea server using it.
 
   */

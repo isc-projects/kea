@@ -50,12 +50,12 @@ The utilities library (libkea-util) provides generic and Kea utilities:
 
  - read-write mutex (header only).
 
- - signal set: signal handling (please @c isc::process::IOSignalSet instead).
+ - signal set: signal handling (please use @c isc::process::IOSignalSet
+  instead).
 
  - staged values.
 
- - state model: event-driven deterministic finite state automaton
-  (to accept a regular language).
+ - state model: event-driven deterministic finite state machine.
 
  - stop watch: to measure code execution time.
 

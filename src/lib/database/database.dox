@@ -9,7 +9,7 @@
 
 @section databaseMTConsiderations Multi-Threading Consideration for Database
 
-MySQL and PostgreSQL provide connection pools which is used to make
+MySQL and PostgreSQL provide connection pools which are used to make
 lease, host and legal log backends thread safe. Cassandra/CQL is
 thread safe by design.
 
@@ -19,7 +19,7 @@ a transaction). For MySQL this means that transactions must be supported
 by the database engine (the engine selection is done in the schema).
 
 Note the InnoDB engine used by Kea for MySQL databases cancels a transaction
-when a deadlock is detected (rare but possible event) and leaves the charge
-to retry the transaction to the caller.
+when a deadlock is detected (rare but possible event) and leaves the
+responsibility to retry the transaction to the caller.
 
 */
