@@ -1,3 +1,8 @@
+1764.	[doc]		fdupont
+	Added thread safety consideration sections to library documentations
+	in the developer guide.
+	(Gitlab #996,#1264)
+
 1763.	[bug]		fdupont
 	Changed the way hook libraries are unloaded. Now unload is done
 	in two phases: the first phase calls unload() entry points and
