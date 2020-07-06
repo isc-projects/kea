@@ -82,14 +82,14 @@ public:
     /// @param object_id identifier of the modified record in this table.
     /// @param modification_type type of the modification, e.g. DELETE.
     /// @param modification_time time of modification for that record.
-    /// @param id identifier of the revision.
+    /// @param revision_id identifier of the revision.
     /// @param log_message optional log message associated with the
     /// modification.
     AuditEntry(const std::string& object_type,
                const uint64_t object_id,
                const ModificationType& modification_type,
                const boost::posix_time::ptime& modification_time,
-               const uint64_t id,
+               const uint64_t revision_id,
                const std::string& log_message);
 
     /// @brief Constructor using default modification time.
@@ -97,13 +97,13 @@ public:
     /// @param object_type name of the table where data was modified.
     /// @param object_id identifier of the modified record in this table.
     /// @param modification_type type of the modification, e.g. DELETE.
-    /// @param id identifier of the revision.
+    /// @param revision_id identifier of the revision.
     /// @param log_message optional log message associated with the
     /// modification.
     AuditEntry(const std::string& object_type,
                const uint64_t object_id,
                const ModificationType& modification_type,
-               const uint64_t id,
+               const uint64_t revision_id,
                const std::string& log_message);
 
     /// @brief Factory function creating an instance of @c AuditEntry.
@@ -117,7 +117,7 @@ public:
     /// @param object_id identifier of the modified record in this table.
     /// @param modification_type type of the modification, e.g. DELETE.
     /// @param modification_time time of modification for that record.
-    /// @param id identifier of the revision.
+    /// @param revision_id identifier of the revision.
     /// @param log_message optional log message associated with the
     /// modification.
     ///
@@ -126,7 +126,7 @@ public:
                                 const uint64_t object_id,
                                 const ModificationType& modification_type,
                                 const boost::posix_time::ptime& modification_time,
-                                const uint64_t id,
+                                const uint64_t revision_id,
                                 const std::string& log_message);
 
     /// @brief Factory function creating an instance of @c AuditEntry.
@@ -139,7 +139,7 @@ public:
     /// @param object_type name of the table where data was modified.
     /// @param object_id identifier of the modified record in this table.
     /// @param modification_type type of the modification, e.g. DELETE.
-    /// @param id identifier of the revision.
+    /// @param revision_id identifier of the revision.
     /// @param log_message optional log message associated with the
     /// modification.
     ///
@@ -147,7 +147,7 @@ public:
     static AuditEntryPtr create(const std::string& object_type,
                                 const uint64_t object_id,
                                 const ModificationType& modification_type,
-                                const uint64_t id,
+                                const uint64_t revision_id,
                                 const std::string& log_message);
 
     /// @brief Returns object type.
@@ -181,8 +181,8 @@ public:
     /// @brief Returns revision id aka modification id.
     ///
     /// @return Identifier of the revision.
-    uint64_t getModificationId() const {
-        return (id_);
+    uint64_t getRevisionId() const {
+        return (revision_id_);
     }
 
     /// @brief Returns log message.
@@ -213,7 +213,7 @@ private:
     boost::posix_time::ptime modification_time_;
 
     /// @brief Revision id aka modification id.
-    uint64_t id_;
+    uint64_t revision_id_;
 
     /// @brief Log message.
     std::string log_message_;
@@ -267,7 +267,7 @@ typedef boost::multi_index_container<
                 boost::multi_index::const_mem_fun<
                     AuditEntry,
                     uint64_t,
-                    &AuditEntry::getModificationId
+                    &AuditEntry::getRevisionId
                 >
             >
         >,

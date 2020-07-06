@@ -341,7 +341,7 @@ protected:
 	// and pick the latest entry.
         const auto& index = audit_entries.get<db::AuditEntryModificationTimeIdTag>();
         last_audit_revision_time_ = (*index.rbegin())->getModificationTime();
-        last_audit_revision_id_ = (*index.rbegin())->getModificationId();
+        last_audit_revision_id_ = (*index.rbegin())->getRevisionId();
     }
 
     /// @brief Stores the most recent audit revision timestamp.

@@ -96,7 +96,7 @@ TEST_F(AuditEntryTest, create) {
         EXPECT_EQ(10, audit_entry->getObjectId());
         EXPECT_EQ(AuditEntry::ModificationType::DELETE, audit_entry->getModificationType());
         EXPECT_EQ(fixedTime(), audit_entry->getModificationTime());
-        EXPECT_EQ(123, audit_entry->getModificationId());
+        EXPECT_EQ(123, audit_entry->getRevisionId());
         EXPECT_EQ("deleted subnet 10", audit_entry->getLogMessage());
     }
 
@@ -110,7 +110,7 @@ TEST_F(AuditEntryTest, create) {
         EXPECT_EQ(123, audit_entry->getObjectId());
         EXPECT_EQ(AuditEntry::ModificationType::CREATE, audit_entry->getModificationType());
         EXPECT_TRUE(almostEqualTime(audit_entry->getModificationTime()));
-        EXPECT_EQ(234, audit_entry->getModificationId());
+        EXPECT_EQ(234, audit_entry->getRevisionId());
         EXPECT_TRUE(audit_entry->getLogMessage().empty());
     }
 }

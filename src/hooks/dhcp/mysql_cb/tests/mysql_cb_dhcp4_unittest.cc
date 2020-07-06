@@ -448,7 +448,7 @@ public:
               << audit_entry->getObjectId() << ", "
               << static_cast<int>(audit_entry->getModificationType()) << ", "
               << audit_entry->getModificationTime() << ", "
-              << audit_entry->getModificationId() << ", "
+              << audit_entry->getRevisionId() << ", "
               << audit_entry->getLogMessage()
               << std::endl;
         }
@@ -4130,7 +4130,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, multipleAuditEntries) {
         size_t partial_size =
             cbptr_->getRecentAuditEntries(server_selector,
                                           (*it)->getModificationTime(),
-                                          (*it)->getModificationId()).size();
+                                          (*it)->getRevisionId()).size();
         EXPECT_EQ(partial_size + 1,
                   std::distance(it, mod_time_idx.end()));
     }
