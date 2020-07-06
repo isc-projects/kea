@@ -54,7 +54,7 @@ typedef boost::shared_ptr<AuditEntry> AuditEntryPtr;
 /// - object_id: 123
 /// - modification_type: 3 (DELETE)
 /// - modification_time: "2019-01-15 15:45:23"
-/// - id: 234
+/// - revision id: 234
 /// - log_message: "DHCPv4 subnet 123 deleted"
 ///
 /// The subnet is instantly removed from the dhcp4_subnet table. When
@@ -82,7 +82,7 @@ public:
     /// @param object_id identifier of the modified record in this table.
     /// @param modification_type type of the modification, e.g. DELETE.
     /// @param modification_time time of modification for that record.
-    /// @param id identifier of the entry itself.
+    /// @param id identifier of the revision.
     /// @param log_message optional log message associated with the
     /// modification.
     AuditEntry(const std::string& object_type,
@@ -97,7 +97,7 @@ public:
     /// @param object_type name of the table where data was modified.
     /// @param object_id identifier of the modified record in this table.
     /// @param modification_type type of the modification, e.g. DELETE.
-    /// @param id identifier of the entry itself.
+    /// @param id identifier of the revision.
     /// @param log_message optional log message associated with the
     /// modification.
     AuditEntry(const std::string& object_type,
@@ -117,7 +117,7 @@ public:
     /// @param object_id identifier of the modified record in this table.
     /// @param modification_type type of the modification, e.g. DELETE.
     /// @param modification_time time of modification for that record.
-    /// @param id identifier of the entry itself.
+    /// @param id identifier of the revision.
     /// @param log_message optional log message associated with the
     /// modification.
     ///
@@ -139,7 +139,7 @@ public:
     /// @param object_type name of the table where data was modified.
     /// @param object_id identifier of the modified record in this table.
     /// @param modification_type type of the modification, e.g. DELETE.
-    /// @param id identifier of the entry itself.
+    /// @param id identifier of the revision.
     /// @param log_message optional log message associated with the
     /// modification.
     ///
@@ -178,9 +178,9 @@ public:
         return (modification_time_);
     }
 
-    /// @brief Returns entry id.
+    /// @brief Returns revision id aka modification id.
     ///
-    /// @return Identifier of the entry.
+    /// @return Identifier of the revision.
     uint64_t getModificationId() const {
         return (id_);
     }
@@ -212,7 +212,7 @@ private:
     /// @brief Modification time.
     boost::posix_time::ptime modification_time_;
 
-    /// @brief Entry id.
+    /// @brief Revision id aka modification id.
     uint64_t id_;
 
     /// @brief Log message.

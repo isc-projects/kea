@@ -227,7 +227,7 @@ AuditEntryCollectionPtr CBControlDHCPTest::callback_audit_entries_;
 /// @brief Naked @c CBControlDHCPv4 class exposing protected methods.
 class TestCBControlDHCPv4 : public CBControlDHCPv4 {
 public:
-    using CBControlDHCPv4::getInitialAuditEntryTime;
+    using CBControlDHCPv4::getInitialAuditRevisionTime;
     using CBControlDHCPv4::databaseConfigApply;
 };
 
@@ -460,7 +460,7 @@ public:
         auto srv_cfg = CfgMgr::instance().getCurrentCfg();
 
         // If there is an audit entry for global parameter and the parameter
-        // modification time is later than last audit entry time it should
+        // modification time is later than last audit revision time it should
         // be merged.
         if (hasConfigElement("dhcp4_global_parameter") &&
             (getTimestamp("dhcp4_global_parameter") > lb_modification_time)) {
@@ -472,7 +472,7 @@ public:
         }
 
         // If there is an audit entry for option definition and the definition
-        // modification time is later than last audit entry time it should
+        // modification time is later than last audit revision time it should
         // be merged.
         auto found_def = srv_cfg->getCfgOptionDef()->get("isc", "one");
         if (hasConfigElement("dhcp4_option_def") &&
@@ -486,7 +486,7 @@ public:
         }
 
         // If there is an audit entry for an option and the option
-        // modification time is later than last audit entry time it should
+        // modification time is later than last audit revision time it should
         // be merged.
         auto options = srv_cfg->getCfgOption();
         auto found_opt = options->get("dhcp4", DHO_HOST_NAME);
@@ -500,7 +500,7 @@ public:
         }
 
         // If there is an audit entry for a shared network and the network
-        // modification time is later than last audit entry time it should
+        // modification time is later than last audit revision time it should
         // be merged.
         auto networks = srv_cfg->getCfgSharedNetworks4();
         auto found_network = networks->getByName("one");
@@ -514,7 +514,7 @@ public:
         }
 
         // If there is an audit entry for a subnet and the subnet modification
-        // time is later than last audit entry time it should be merged.
+        // time is later than last audit revision time it should be merged.
         auto subnets = srv_cfg->getCfgSubnets4();
         auto found_subnet = subnets->getSubnet(1);
         if (hasConfigElement("dhcp4_subnet") &&
@@ -555,7 +555,7 @@ public:
         // as if the server is starting up and fetches the entire
         // configuration from the database.
         ctl_.databaseConfigApply(BackendSelector::UNSPEC(), ServerSelector::ALL(),
-                                 ctl_.getInitialAuditEntryTime(),
+                                 ctl_.getInitialAuditRevisionTime(),
                                  AuditEntryCollection());
         // Commit the configuration so as it is moved from the staging
         // to current.
@@ -873,7 +873,7 @@ public:
         CfgMgr::instance().setFamily(AF_INET6);
     }
 
-    using CBControlDHCPv6::getInitialAuditEntryTime;
+    using CBControlDHCPv6::getInitialAuditRevisionTime;
     using CBControlDHCPv6::databaseConfigApply;
 };
 
@@ -1106,7 +1106,7 @@ public:
         auto srv_cfg = CfgMgr::instance().getCurrentCfg();
 
         // If there is an audit entry for global parameter and the parameter
-        // modification time is later than last audit entry time it should
+        // modification time is later than last audit revision time it should
         // be merged.
         if (hasConfigElement("dhcp6_global_parameter") &&
             (getTimestamp("dhcp6_global_parameter") > lb_modification_time)) {
@@ -1118,7 +1118,7 @@ public:
         }
 
         // If there is an audit entry for option definition and the definition
-        // modification time is later than last audit entry time it should
+        // modification time is later than last audit revision time it should
         // be merged.
         auto found_def = srv_cfg->getCfgOptionDef()->get("isc", "one");
         if (hasConfigElement("dhcp6_option_def") &&
@@ -1132,7 +1132,7 @@ public:
         }
 
         // If there is an audit entry for an option and the option
-        // modification time is later than last audit entry time it should
+        // modification time is later than last audit revision time it should
         // be merged.
         auto options = srv_cfg->getCfgOption();
         auto found_opt = options->get("dhcp6", D6O_BOOTFILE_URL);
@@ -1146,7 +1146,7 @@ public:
         }
 
         // If there is an audit entry for a shared network and the network
-        // modification time is later than last audit entry time it should
+        // modification time is later than last audit revision time it should
         // be merged.
         auto networks = srv_cfg->getCfgSharedNetworks6();
         auto found_network = networks->getByName("one");
@@ -1160,7 +1160,7 @@ public:
         }
 
         // If there is an audit entry for a subnet and the subnet modification
-        // time is later than last audit entry time it should be merged.
+        // time is later than last audit revision time it should be merged.
         auto subnets = srv_cfg->getCfgSubnets6();
         auto found_subnet = subnets->getSubnet(1);
         if (hasConfigElement("dhcp6_subnet") &&
@@ -1201,7 +1201,7 @@ public:
         // as if the server is starting up and fetches the entire
         // configuration from the database.
         ctl_.databaseConfigApply(BackendSelector::UNSPEC(), ServerSelector::ALL(),
-                                 ctl_.getInitialAuditEntryTime(),
+                                 ctl_.getInitialAuditRevisionTime(),
                                  AuditEntryCollection());
         // Commit the configuration so as it is moved from the staging
         // to current.

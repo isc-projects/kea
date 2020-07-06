@@ -236,7 +236,7 @@ public:
 
     using CBControlBase<CBControlBackendMgr>::fetchConfigElement;
     using CBControlBase<CBControlBackendMgr>::getMgr;
-    using CBControlBase<CBControlBackendMgr>::getInitialAuditEntryTime;
+    using CBControlBase<CBControlBackendMgr>::getInitialAuditRevisionTime;
 
     /// @brief Constructor.
     CBControl()
@@ -295,27 +295,27 @@ public:
     }
 
     /// @brief Returns the recorded time of last audit entry.
-    boost::posix_time::ptime getLastAuditEntryTime() const {
-        return (last_audit_entry_time_);
+    boost::posix_time::ptime getLastAuditRevisionTime() const {
+        return (last_audit_revision_time_);
     }
 
     /// @brief Returns the recorded id of last audit entry.
-    uint64_t getLastAuditEntryId() const {
-        return (last_audit_entry_id_);
+    uint64_t getLastAuditRevisionId() const {
+        return (last_audit_revision_id_);
     }
 
     /// @brief Overwrites the last audit entry time.
     ///
-    /// @param last_audit_entry_time New time to be set.
-    void setLastAuditEntryTime(const boost::posix_time::ptime& last_audit_entry_time) {
-        last_audit_entry_time_ = last_audit_entry_time;
+    /// @param last_audit_revision_time New time to be set.
+    void setLastAuditRevisionTime(const boost::posix_time::ptime& last_audit_revision_time) {
+        last_audit_revision_time_ = last_audit_revision_time;
     }
 
-    /// @brief Overwrites the last audit entry id.
+    /// @brief Overwrites the last audit revision id.
     ///
-    /// @param last_audit_entry_id New id to be set.
-    void setLastAuditEntryId(const uint64_t& last_audit_entry_id) {
-        last_audit_entry_id_ = last_audit_entry_id;
+    /// @param last_audit_revision_id New id to be set.
+    void setLastAuditRevisionId(const uint64_t& last_audit_revision_id) {
+        last_audit_revision_id_ = last_audit_revision_id;
     }
 
     /// @brief Enables the @c databaseConfigApply function to throw.
@@ -422,10 +422,10 @@ TEST_F(CBControlBaseTest, getMgr) {
 // This test verifies that last audit entry time is reset upon the
 // call to CBControlBase::reset().
 TEST_F(CBControlBaseTest, reset) {
-    cb_ctl_.setLastAuditEntryTime(timestamps_["tomorrow"]);
+    cb_ctl_.setLastAuditRevisionTime(timestamps_["tomorrow"]);
     cb_ctl_.reset();
-    EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
+    EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
+    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
 }
 
 // This test verifies that it is correctly determined what entries the
@@ -538,8 +538,8 @@ TEST_F(CBControlBaseTest, fetchAll) {
     ASSERT_EQ(BackendSelector::Type::MYSQL, cb_ctl_.getBackendSelector().getBackendType());
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
-    EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
+    EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
+    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
 
     // Connect to the database and fetch the configuration.
     ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base));
@@ -554,8 +554,8 @@ TEST_F(CBControlBaseTest, fetchAll) {
     // Make sure that the internal timestamp is set to the most recent
     // audit entry, so as the server will only later fetch config
     // updates after this timestamp.
-    EXPECT_EQ(timestamps_["today"], cb_ctl_.getLastAuditEntryTime());
-    EXPECT_EQ(4567, cb_ctl_.getLastAuditEntryId());
+    EXPECT_EQ(timestamps_["today"], cb_ctl_.getLastAuditRevisionTime());
+    EXPECT_EQ(4567, cb_ctl_.getLastAuditRevisionId());
 }
 
 // This test verifies that the configuration can be fetched for a
@@ -570,8 +570,8 @@ TEST_F(CBControlBaseTest, fetchFromServer) {
     ASSERT_EQ(BackendSelector::Type::MYSQL, cb_ctl_.getBackendSelector().getBackendType());
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
-    EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
+    EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
+    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
 
     ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base));
 
@@ -580,7 +580,7 @@ TEST_F(CBControlBaseTest, fetchFromServer) {
     EXPECT_EQ(BackendSelector::Type::UNSPEC, cb_ctl_.getBackendSelector().getBackendType());
     // An explicit server selector should have been used this time.
     ASSERT_EQ(ServerSelector::Type::SUBSET, cb_ctl_.getServerSelector().getType());
-    EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
+    EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
 
     // Make sure that the server selector used in databaseConfigFetch is
     // correct.
@@ -610,8 +610,8 @@ TEST_F(CBControlBaseTest, fetchUpdates) {
     ASSERT_EQ(BackendSelector::Type::MYSQL, cb_ctl_.getBackendSelector().getBackendType());
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
-    EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
+    EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
+    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
 
     ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base,
                                                 CBControl::FetchMode::FETCH_UPDATE));
@@ -623,8 +623,8 @@ TEST_F(CBControlBaseTest, fetchUpdates) {
     EXPECT_EQ(BackendSelector::Type::UNSPEC, cb_ctl_.getBackendSelector().getBackendType());
     EXPECT_EQ(ServerSelector::Type::ALL, cb_ctl_.getServerSelector().getType());
     // The last audit entry time should be set to the latest audit entry.
-    EXPECT_EQ(timestamps_["today"], cb_ctl_.getLastAuditEntryTime());
-    EXPECT_EQ(4567, cb_ctl_.getLastAuditEntryId());
+    EXPECT_EQ(timestamps_["today"], cb_ctl_.getLastAuditRevisionTime());
+    EXPECT_EQ(4567, cb_ctl_.getLastAuditRevisionId());
 }
 
 // Check that the databaseConfigApply function is not called when there
@@ -635,8 +635,8 @@ TEST_F(CBControlBaseTest, fetchNoUpdates) {
     // Set last audit entry time to the timestamp of the audit
     // entry we are going to add. That means that there will be
     // no new audit entries to fetch.
-    cb_ctl_.setLastAuditEntryTime(timestamps_["yesterday"]);
-    cb_ctl_.setLastAuditEntryId(4567);
+    cb_ctl_.setLastAuditRevisionTime(timestamps_["yesterday"]);
+    cb_ctl_.setLastAuditRevisionId(4567);
 
     ASSERT_TRUE(cb_ctl_.databaseConfigConnect(config_base));
 
@@ -682,8 +682,8 @@ TEST_F(CBControlBaseTest, fetchFailure) {
     ASSERT_EQ(BackendSelector::Type::MYSQL, cb_ctl_.getBackendSelector().getBackendType());
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
-    EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
+    EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
+    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
 
     ASSERT_THROW(cb_ctl_.databaseConfigFetch(config_base, CBControl::FetchMode::FETCH_UPDATE),
                  isc::Unexpected);
@@ -696,8 +696,8 @@ TEST_F(CBControlBaseTest, fetchFailure) {
     EXPECT_EQ(ServerSelector::Type::ALL, cb_ctl_.getServerSelector().getType());
     // The last audit entry time should not be modified because there was a merge
     // error.
-    EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditEntryId());
+    EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
+    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
 }
 
 }

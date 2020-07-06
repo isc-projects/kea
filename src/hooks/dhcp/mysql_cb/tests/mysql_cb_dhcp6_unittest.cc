@@ -512,7 +512,7 @@ public:
     /// specified by the caller.
     ///
     /// @param exp_object_type Expected object type.
-    /// @param exp_modification_time Expected modification time.
+    /// @param exp_modification_type Expected modification type.
     /// @param exp_log_message Expected log message.
     /// @param server_selector Server selector to be used for next query.
     /// @param new_entries_num Number of the new entries expected to be inserted.

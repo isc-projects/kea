@@ -95,8 +95,8 @@ public:
     /// Sets the time of the last fetched audit entry to Jan 1st, 1970,
     /// with id 0.
     CBControlBase()
-        : last_audit_entry_time_(getInitialAuditEntryTime()),
-          last_audit_entry_id_(0) {
+        : last_audit_revision_time_(getInitialAuditRevisionTime()),
+          last_audit_revision_id_(0) {
     }
 
     /// @brief Virtual destructor.
@@ -109,11 +109,11 @@ public:
     /// @brief Resets the state of this object.
     ///
     /// Disconnects the configuration backends resets the recorded last
-    /// audit entry time and id.
+    /// audit revision time and id.
     void reset() {
         databaseConfigDisconnect();
-        last_audit_entry_time_ = getInitialAuditEntryTime();
-        last_audit_entry_id_ = 0;
+        last_audit_revision_time_ = getInitialAuditRevisionTime();
+        last_audit_revision_id_ = 0;
     }
 
     /// @brief (Re)connects to the specified configuration backends.
@@ -195,24 +195,24 @@ public:
 
         // If we're fetching updates we need to retrieve audit entries to see
         // which objects have to be updated. If we're performing full reconfiguration
-        // we also need audit entries to set the last_audit_entry_time_ to the
+        // we also need audit entries to set the last_audit_revision_time_ to the
         // time of the most recent audit entry.
 
         /// @todo We need a separate API call for the latter case to only
         /// fetch the last audit entry rather than all of them.
 
-        // Save the timestamp indicating last audit entry time.
-        auto lb_modification_time = last_audit_entry_time_;
-        // Save the identifier indicating last audit entry id.
-        auto lb_modification_id = last_audit_entry_id_;
+        // Save the timestamp indicating last audit revision time.
+        auto lb_modification_time = last_audit_revision_time_;
+        // Save the identifier indicating last audit revision id.
+        auto lb_modification_id = last_audit_revision_id_;
 
         audit_entries = getMgr().getPool()->getRecentAuditEntries(backend_selector,
                                                                   server_selector,
                                                                   lb_modification_time,
                                                                   lb_modification_id);
-        // Store the last audit entry time. It should be set to the most recent
+        // Store the last audit revision time. It should be set to the most recent
         // audit entry fetched. If returned audit is empty we don't update.
-        updateLastAuditEntryTimeId(audit_entries);
+        updateLastAuditRevisionTimeId(audit_entries);
 
         // If this is full reconfiguration we don't need the audit entries anymore.
         // Let's remove them and proceed as if they don't exist.
@@ -229,12 +229,12 @@ public:
                 databaseConfigApply(backend_selector, server_selector,
                                     lb_modification_time, audit_entries);
             } catch (...) {
-                // Revert last audit entry time and id so as we can retry
+                // Revert last audit revision time and id so as we can retry
                 // from the last successful attempt.
                 /// @todo Consider reverting to the initial value to reload
                 /// the entire configuration if the update failed.
-                last_audit_entry_time_ = lb_modification_time;
-                last_audit_entry_id_ = lb_modification_id;
+                last_audit_revision_time_ = lb_modification_time;
+                last_audit_revision_id_ = lb_modification_id;
                 throw;
             }
         }
@@ -314,10 +314,10 @@ protected:
     }
 
     /// @brief Convenience method returning initial timestamp to set the
-    /// @c last_audit_entry_time_ to.
+    /// @c last_audit_revision_time_ to.
     ///
     /// @return Returns 1970-Jan-01 00:00:00 in local time.
-    static boost::posix_time::ptime getInitialAuditEntryTime() {
+    static boost::posix_time::ptime getInitialAuditRevisionTime() {
         static boost::posix_time::ptime
             initial_time(boost::gregorian::date(1970, boost::gregorian::Jan, 1));
         return (initial_time);
@@ -330,30 +330,30 @@ protected:
     /// returns without updating the timestamp.
     ///
     /// @param audit_entries reference to the collection of the fetched audit entries.
-    void updateLastAuditEntryTimeId(const db::AuditEntryCollection& audit_entries) {
+    void updateLastAuditRevisionTimeId(const db::AuditEntryCollection& audit_entries) {
         // Do nothing if there are no audit entries. It is the case if
         // there were no updates to the configuration.
         if (audit_entries.empty()) {
             return;
         }
 
-        // Get the audit entries sorted by modification time and pick the
-        // latest entry.
+        // Get the audit entries sorted by modification time and id,
+	// and pick the latest entry.
         const auto& index = audit_entries.get<db::AuditEntryModificationTimeIdTag>();
-        last_audit_entry_time_ = (*index.rbegin())->getModificationTime();
-        last_audit_entry_id_ = (*index.rbegin())->getModificationId();
+        last_audit_revision_time_ = (*index.rbegin())->getModificationTime();
+        last_audit_revision_id_ = (*index.rbegin())->getModificationId();
     }
 
-    /// @brief Stores the most recent audit entry timestamp.
-    boost::posix_time::ptime last_audit_entry_time_;
+    /// @brief Stores the most recent audit revision timestamp.
+    boost::posix_time::ptime last_audit_revision_time_;
 
-    /// @brief Stores the most recent audit entry identifier.
+    /// @brief Stores the most recent audit revision identifier.
     ///
     /// The identifier is used when two (or more) audit entries have
     /// the same timestamp. It is not used by itself because timestamps
     /// are more user friendly. Unfortunately old versions of MySQL do not
     /// support millisecond timestamps.
-    uint64_t last_audit_entry_id_;
+    uint64_t last_audit_revision_id_;
 };
 
 /// @brief Checks if an object is in a collection od audit entries.
