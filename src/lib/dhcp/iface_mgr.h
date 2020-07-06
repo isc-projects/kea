@@ -500,12 +500,6 @@ public:
         >
     > IfaceContainer;
 
-    /// @brief Constructor.
-    IfaceCollection() { }
-
-    /// @brief Destructor.
-    ~IfaceCollection() { }
-
     /// @brief Begin iterator.
     ///
     /// @return The container sequence begin iterator.
@@ -583,6 +577,14 @@ private:
     std::mutex mutex_;
 
     /// @brief The last interface returned by a lookup method.
+    ///
+    /// A lookup method first tries the cache: if it matches the cache is
+    /// returned without an expensive lookup in the container. If it does
+    /// not match and a value is found in the container the cache is
+    /// updated with this value.
+    /// The cache should perform well when active interfaces are a small
+    /// subset of the whole interface set, or when consecutive packets
+    /// come from the same interface.
     IfacePtr cache_;
 
     /// @brief The container.

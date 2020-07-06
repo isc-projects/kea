@@ -95,7 +95,7 @@ PktFilterInet6::openSocket(const Iface& iface,
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
                    (char *)&flag, sizeof(flag)) < 0) {
           close(sock);
-          isc_throw(SocketConfigError, "Can't set IPPROTO_IPV6 option on "
+          isc_throw(SocketConfigError, "Can't set IPV6_V6ONLY option on "
                     "IPv6 socket.");
     }
 #endif
