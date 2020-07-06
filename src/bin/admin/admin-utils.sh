@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -149,4 +149,32 @@ cql_version() {
     version=$(echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 | tr "|" ".")
     echo "$version"
     return $error
+}
+
+recount4_query() {
+    # recount IPv4 leases from scratch
+    query="
+START TRANSACTION;
+DELETE FROM lease4_stat;
+INSERT INTO lease4_stat (subnet_id, state, leases)
+    SELECT subnet_id, state, COUNT(*)
+    FROM lease4 WHERE state = 0 OR state = 1
+    GROUP BY subnet_id, state;
+COMMIT;
+"
+    return $query
+}
+
+recount6_query() {
+    # recount IPv6 leases from scratch
+    query="
+START TRANSACTION;
+DELETE FROM lease6_stat;
+INSERT INTO lease6_stat (subnet_id, lease_type, state, leases)
+    SELECT subnet_id, lease_type, state, COUNT(*)
+    FROM lease6 WHERE state = 0 OR state = 1
+    GROUP BY subnet_id, lease_type, state;
+COMMIT;
+"
+    return $query
 }

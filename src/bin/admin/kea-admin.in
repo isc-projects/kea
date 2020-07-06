@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 # - database version check
 # - database version upgrade
 # - lease database dump
+# - lease database recount
 
 
 # Get the location of the kea-admin scripts
@@ -59,6 +60,7 @@ usage() {
     printf " -             for checking databaseB version when preparing for an upgrade.\n"
     printf " - db-upgrade: Upgrades your database scheme\n"
     printf " - lease-dump: Dump current leases to a CSV file\n"
+    printf " - lease-recount: Recount leases.
     printf "\n"
     printf "BACKEND - one of the supported backends: memfile|mysql|pgsql|cql\n"
     printf "\n"
@@ -622,6 +624,51 @@ cql_dump() {
     exit 0
 }
 
+### Functions used for recount
+mysql_recount() {
+
+    printf "Recount leases from database\n"
+    QUERY4=recount4_query()
+    RESULT=$(mysql_execute "$QUERY")
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        log_error "mysql failed to recount IPv4 leases, mysql status = $ERRCODE"
+        exit 1
+    fi
+
+    QUERY6=recount6_query()
+    RESULT=$(mysql_execute "$QUERY")
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        log_error "mysql failed to recount IPv6 leases, mysql status = $ERRCODE"
+        exit 1
+    fi
+}
+
+pgsql_recount() {
+
+    printf "Recount leases from database\n"
+    QUERY4=recount4_query()
+    RESULT=$(pgsql_execute "$QUERY")
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        log_error "pgsql failed to recount IPv4 leases, pgsql status = $ERRCODE"
+        exit 1
+    fi
+
+    QUERY6=recount6_query()
+    RESULT=$(pgsql_execute "$QUERY")
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        log_error "pgsql failed to recount IPv6 leases, pgsql status = $ERRCODE"
+        exit 1
+    fi
+}
+
 ### Script starts here ###
 
 # First, find what the command is
@@ -638,7 +685,7 @@ if test "${command}" = "-v" || test "${command}" = "--version" ; then
     exit 0
 fi
 
-is_in_list "${command}" "db-init db-version db-upgrade lease-dump"
+is_in_list "${command}" "db-init db-version db-upgrade lease-dump lease-recount"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
     usage
@@ -814,6 +861,22 @@ case ${command} in
                 ;;
             cql)
                 cql_dump
+                ;;
+            esac
+        ;;
+    lease-recount)
+        case ${backend} in
+            memfile)
+                log_info "memfile does not count leases"
+                ;;
+            mysql)
+                mysql_recount
+                ;;
+            pgsql)
+                pgsql_recount
+                ;;
+            cql)
+                log_info "cql does not count leases"
                 ;;
             esac
         ;;

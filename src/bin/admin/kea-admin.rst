@@ -3,7 +3,7 @@ kea-admin
 Kea
 kea-admin
 Shell script for managing Kea databases
-2014-2018
+2014-2020
 Internet Systems Consortium, Inc. ("ISC")
 kea-admin
 command
@@ -53,6 +53,9 @@ OPTIONS
         file. The first line of the file contains the column names. This is
         meant to be used as a diagnostic tool, so it provides a portable,
         human-readable form of the lease data.
+
+   lease-recount
+        Recounts leases for MySQL or PostgreSQL database.
 
 ``backend``
    Specifies backend type. Currently allowed backends are: memfile,

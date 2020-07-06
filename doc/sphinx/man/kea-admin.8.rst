@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,12 +43,15 @@ Arguments
    **db-upgrade**
       Conducts a database schema upgrade. This is useful when upgrading Kea.
 
-   **db-dump**
+   **lease-dump**
       Dumps the contents of the lease database (for MySQL, PostgreSQL,
       or CQL backends) to a CSV (comma-separated values) text file.
       The first line of the file contains the column names. This is meant
       to be used as a diagnostic tool, so it provides a portable,
       human-readable form of the lease data.
+
+   **lease-recount**
+      Recounts leases for MySQL or PostgreSQL database.
 
 ``backend``
    Specifies the backend type. Currently allowed backends are: memfile,
