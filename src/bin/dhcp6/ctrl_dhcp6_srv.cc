@@ -572,8 +572,6 @@ ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
         status->set("reload", Element::create(reload.total_seconds()));
     }
 
-    // todo: number of service threads.
-
     return (createAnswer(0, status));
 }
 
