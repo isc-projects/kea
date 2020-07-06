@@ -1,3 +1,10 @@
+1765.	[bug]		fdupont
+	Corrected a bug in MySQL Config Backend which occasionally caused
+	the DHCP servers to overlook some configuration changes. This
+	issue could occur when the server fetched configuration changes
+	within one second after they they were applied in the database.
+	(Gitlab #1247)
+
 1764.	[doc]		fdupont
 	Added thread safety consideration sections to library documentations
 	in the developer guide.
