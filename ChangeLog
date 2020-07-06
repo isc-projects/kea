@@ -10,7 +10,7 @@
 	selection within a subnet.
 	(Gitlab #1155)
 
-Kea 1.6.2 released on Feb 19, 2020
+Kea 1.6.2 (stable) released on Feb 19, 2020
 
 1665.	[bug]		tmark
 	Modified option 43 parsing to interpret sub-option codes 0 and 255
@@ -46,7 +46,7 @@ Kea 1.6.2 released on Feb 19, 2020
 	loss of database connecivity.
 	(Gitlab #1113,#1097)
 
-Kea 1.6.1 released on Nov 20, 2019
+Kea 1.6.1 (stable) released on Nov 20, 2019
 
 1660.	[bug]		tmark
 	Fixed a bug introduced in Kea 1.6.0 (see #539) that caused
@@ -68,7 +68,7 @@ Kea 1.6.1 released on Nov 20, 2019
 	recompilation.
 	(Gitlab #964)
 
-Kea 1.6.0 released on Aug 28, 2019
+Kea 1.6.0 (stable) released on Aug 28, 2019
 
 1658.	[bug]		tmark
 	Renamed the column "array" in option definition tables
@@ -259,7 +259,7 @@ Kea 1.6.0 released on Aug 28, 2019
 	and its version bumped up to 8.2.
 	(Gitlab #680,!426, git 03f0af3900bdd9eaa951b23cc9508f0618d3f1bb)
 
-Kea 1.6.0-beta2 released on July 24, 2019
+Kea 1.6.0-beta2 (development) released on July 24, 2019
 
 1625.	[build]		tmark, marcin
 	Bumped up libraries version numbers for Kea 1.6.0 beta2 release.
@@ -473,7 +473,7 @@ Kea 1.6.0-beta2 released on July 24, 2019
 	Configuration Backend.
 	(Gitlab #637,!349, git 483273734e8608ed68624d7a868f20672c859c95)
 
-Kea 1.6.0-beta released on May 29, 2019
+Kea 1.6.0-beta (development) released on May 29, 2019
 
 1586.	[build]		razvan, marcin
 	Bumped up libraries version numbers for Kea 1.6.0 beta release.
