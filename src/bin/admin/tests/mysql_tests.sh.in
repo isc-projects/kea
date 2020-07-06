@@ -736,7 +736,7 @@ EOF
     # table: dhcp4_shared_network (should include six new columns)
     qry="select ddns_send_updates, ddns_override_no_update, ddns_override_client_update, ddns_replace_client_name, ddns_generated_prefix, ddns_qualifying_suffix from dhcp4_shared_network"
     run_statement "dhcp4_shared_network" "$qry"
-    
+
     # table: dhcp6_shared_network (should include six new columns)
     qry="select ddns_send_updates, ddns_override_no_update, ddns_override_client_update, ddns_replace_client_name, ddns_generated_prefix, ddns_qualifying_suffix from dhcp6_shared_network"
     run_statement "dhcp6_shared_network" "$qry"
@@ -744,7 +744,7 @@ EOF
     # table: dhcp4_subnet (should include six new columns)
     qry="select ddns_send_updates, ddns_override_no_update, ddns_override_client_update, ddns_replace_client_name, ddns_generated_prefix, ddns_qualifying_suffix from dhcp4_subnet"
     run_statement "dhcp4_subnet" "$qry"
-    
+
     # table: dhcp6_subnet (should include six new columns)
     qry="select ddns_send_updates, ddns_override_no_update, ddns_override_client_update, ddns_replace_client_name, ddns_generated_prefix, ddns_qualifying_suffix from dhcp6_subnet"
     run_statement "dhcp6_subnet" "$qry"
@@ -1150,6 +1150,101 @@ mysql_lease_stat_upgrade_test() {
     test_finish 0
 }
 
+mysql_lease_stat_recount_test() {
+    test_start "my_sql_lease_stat_recount_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # Ok, now let's initialize the database
+    ${keaadmin} db-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ERRCODE=$?
+
+    assert_eq 0 $ERRCODE "kea-admin db-init mysql returned non-zero status code %d, expected %d"
+
+    # Now we need insert some leases to "recount"
+    qry=\
+"insert into lease4 (address, subnet_id, state) values (111,10,0);\
+ insert into lease4 (address, subnet_id, state) values (222,10,0);\
+ insert into lease4 (address, subnet_id, state) values (333,10,1);\
+ insert into lease4 (address, subnet_id, state) values (444,10,2);\
+ insert into lease4 (address, subnet_id, state) values (555,77,0);"
+    run_statement "insert v4 leases" "$qry"
+
+    qry=\
+"insert into lease6 (address, lease_type, subnet_id, state) values (111,0,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (222,0,40,1);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (333,1,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (444,1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (555,1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2);"
+    run_statement "insert v6 leases" "$qry"
+
+    # Now we change some counters.
+    qry=\
+"insert into lease4_stat (subnet_id, state, leases) values (20,0,1);\
+ update lease4_stat set leases = 5 where subnet_id = 10 and state = 0;
+ delete from lease4_stat where subnet_id = 10 and state = 2;"
+    run_statement "change v4 stats" "$qry"
+
+    qry=\
+"insert into lease6_stat (subnet_id, lease_type, state, leases) values (20,1,0,1);
+ update lease6_stat set leases = 5 where subnet_id = 40 and lease_type = 0 and state = 0;
+ delete from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 2;"
+    run_statement "change v6 stats" "$qry"
+
+    # Recount all statistics from scratch.
+    ${keaadmin} lease-stat-recount mysql -u $db_user -p $db_password -n $db_name
+    ERRCODE=$?
+
+    assert_eq 0 $ERRCODE "kea-admin lease-stat-recount mysql returned non-zero status code %d, expected %d"
+
+    #
+    # First we'll verify lease4_stats are correct after recount.
+    #
+
+    # Assigned leases for subnet 10 should be 2
+    qry="select leases from lease4_stat where subnet_id = 10 and state = 0"
+    run_statement "#4.1" "$qry" 2
+
+    # Assigned leases for subnet 77 should be 1
+    qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
+    run_statement "#4.2" "$qry" 1
+
+    # Should be no records for EXPIRED
+    qry="select count(subnet_id) from lease4_stat where state = 2"
+    run_statement "#4.3" "$qry" 0
+
+    #
+    # Next we'll verify lease6_stats are correct after recount.
+    #
+
+    # Assigned leases for subnet 40 should be 1
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 0"
+    run_statement "#6.1" "$qry" 1
+
+    # Assigned (PD) leases for subnet 40 should be 1
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 0"
+    run_statement "#6.2" "$qry" 1
+
+    # Declined leases for subnet 40 should be 1
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 1"
+    run_statement "#6.3" "$qry" 1
+
+    # Assigned (PD) leases for subnet 50 should be 2
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    run_statement "#6.4" "$qry" 2
+
+    # Should be no records for EXPIRED
+    qry="select count(subnet_id) from lease4_stat where state = 2"
+    run_statement "#6.5" "$qry" 0
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
 # Verifies that you can upgrade from an earlier version and
 # that unused subnet ID values in hosts and options tables are
 # converted to NULL.
@@ -1244,4 +1339,5 @@ mysql_lease6_dump_test
 mysql_lease4_stat_test
 mysql_lease6_stat_test
 mysql_lease_stat_upgrade_test
+mysql_lease_stat_recount_test
 mysql_unused_subnet_id_test

@@ -59,8 +59,8 @@ usage() {
     printf " - db-version: Checks version of the existing database scheme. Useful\n"
     printf " -             for checking databaseB version when preparing for an upgrade.\n"
     printf " - db-upgrade: Upgrades your database scheme\n"
-    printf " - lease-dump: Dump current leases to a CSV file\n"
-    printf " - lease-recount: Recount leases.
+    printf " - lease-dump: Dumps current leases to a CSV file\n"
+    printf " - lease-stat-recount: Recounts lease statistics\n"
     printf "\n"
     printf "BACKEND - one of the supported backends: memfile|mysql|pgsql|cql\n"
     printf "\n"
@@ -624,12 +624,11 @@ cql_dump() {
     exit 0
 }
 
-### Functions used for recount
+### Functions used for recounting statistics
 mysql_recount() {
+    printf "Recount lease statistics from database\n"
 
-    printf "Recount leases from database\n"
-    QUERY4=recount4_query()
-    RESULT=$(mysql_execute "$QUERY")
+    RESULT=$(mysql_execute "$_RECOUNT4_QUERY")
     ERRCODE=$?
     if [ $ERRCODE -ne 0 ]
     then
@@ -637,8 +636,7 @@ mysql_recount() {
         exit 1
     fi
 
-    QUERY6=recount6_query()
-    RESULT=$(mysql_execute "$QUERY")
+    RESULT=$(mysql_execute "$_RECOUNT6_QUERY")
     ERRCODE=$?
     if [ $ERRCODE -ne 0 ]
     then
@@ -648,10 +646,9 @@ mysql_recount() {
 }
 
 pgsql_recount() {
+    printf "Recount lease statistics from database\n"
 
-    printf "Recount leases from database\n"
-    QUERY4=recount4_query()
-    RESULT=$(pgsql_execute "$QUERY")
+    RESULT=$(pgsql_execute "$_RECOUNT4_QUERY")
     ERRCODE=$?
     if [ $ERRCODE -ne 0 ]
     then
@@ -659,8 +656,7 @@ pgsql_recount() {
         exit 1
     fi
 
-    QUERY6=recount6_query()
-    RESULT=$(pgsql_execute "$QUERY")
+    RESULT=$(pgsql_execute "$_RECOUNT6_QUERY")
     ERRCODE=$?
     if [ $ERRCODE -ne 0 ]
     then
@@ -685,7 +681,7 @@ if test "${command}" = "-v" || test "${command}" = "--version" ; then
     exit 0
 fi
 
-is_in_list "${command}" "db-init db-version db-upgrade lease-dump lease-recount"
+is_in_list "${command}" "db-init db-version db-upgrade lease-dump lease-stat-recount"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
     usage
@@ -864,10 +860,10 @@ case ${command} in
                 ;;
             esac
         ;;
-    lease-recount)
+    lease-stat-recount)
         case ${backend} in
             memfile)
-                log_info "memfile does not count leases"
+                log_info "memfile does not keep lease statistics"
                 ;;
             mysql)
                 mysql_recount
@@ -876,7 +872,7 @@ case ${command} in
                 pgsql_recount
                 ;;
             cql)
-                log_info "cql does not count leases"
+                log_info "cql does not keep lease statistics"
                 ;;
             esac
         ;;

@@ -151,30 +151,25 @@ cql_version() {
     return $error
 }
 
-recount4_query() {
-    # recount IPv4 leases from scratch
-    query="
-START TRANSACTION;
-DELETE FROM lease4_stat;
-INSERT INTO lease4_stat (subnet_id, state, leases)
-    SELECT subnet_id, state, COUNT(*)
-    FROM lease4 WHERE state = 0 OR state = 1
-    GROUP BY subnet_id, state;
-COMMIT;
+# recount IPv4 leases from scratch
+_RECOUNT4_QUERY=\
 "
-    return $query
-}
+START TRANSACTION; \
+DELETE FROM lease4_stat; \
+INSERT INTO lease4_stat (subnet_id, state, leases) \
+    SELECT subnet_id, state, COUNT(*) \
+    FROM lease4 WHERE state = 0 OR state = 1 \
+    GROUP BY subnet_id, state; \
+COMMIT;"
 
-recount6_query() {
-    # recount IPv6 leases from scratch
-    query="
-START TRANSACTION;
-DELETE FROM lease6_stat;
-INSERT INTO lease6_stat (subnet_id, lease_type, state, leases)
-    SELECT subnet_id, lease_type, state, COUNT(*)
-    FROM lease6 WHERE state = 0 OR state = 1
-    GROUP BY subnet_id, lease_type, state;
-COMMIT;
+# recount IPv6 leases from scratch
+_RECOUNT6_QUERY=\
 "
-    return $query
-}
+START TRANSACTION; \
+DELETE FROM lease6_stat; \
+INSERT INTO lease6_stat (subnet_id, lease_type, state, leases) \
+    SELECT subnet_id, lease_type, state, COUNT(*) \
+    FROM lease6 WHERE state = 0 OR state = 1 \
+    GROUP BY subnet_id, lease_type, state; \
+COMMIT;"
+

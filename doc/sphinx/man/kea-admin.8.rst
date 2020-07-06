@@ -50,8 +50,8 @@ Arguments
       to be used as a diagnostic tool, so it provides a portable,
       human-readable form of the lease data.
 
-   **lease-recount**
-      Recounts leases for MySQL or PostgreSQL database.
+   **lease-stat-recount**
+      Recounts lease statistics for MySQL or PostgreSQL database.
 
 ``backend``
    Specifies the backend type. Currently allowed backends are: memfile,
