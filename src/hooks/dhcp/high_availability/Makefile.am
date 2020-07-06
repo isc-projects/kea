@@ -40,15 +40,16 @@ libdhcp_ha_la_LDFLAGS  = $(AM_LDFLAGS)
 libdhcp_ha_la_LDFLAGS  += -avoid-version -export-dynamic -module
 
 libdhcp_ha_la_LIBADD  = libha.la
+libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/http/libkea-http.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/http/libkea-http.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

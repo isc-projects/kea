@@ -1098,9 +1098,11 @@ if test "x$enable_benchmark" = "xyes" ; then
             if test ! -d $BENCHMARK_SOURCE/src; then
                 BENCHMARK_SOURCE=$BENCHMARK_SOURCE/benchmark
             fi
-            AC_CHECK_FILES([$BENCHMARK_SOURCE/src/benchmark.cc],
-                [have_benchmark_source=yes],
-                [AC_MSG_ERROR([no benchmark source at $BENCHMARK_SOURCE])])
+            if test -f $BENCHMARK_SOURCE/src/benchmark.cc; then
+                have_benchmark_source=yes
+            else
+                AC_MSG_ERROR([no benchmark source at $BENCHMARK_SOURCE])
+            fi
         fi
         have_benchmark_source=yes
         BENCHMARK_CPPFLAGS=`cat \${BENCHMARK_SOURCE}/build/src/CMakeFiles/benchmark.dir/flags.make | grep CXX_DEFINES | cut -d "=" -f 2`
