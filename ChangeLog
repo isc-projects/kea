@@ -1,3 +1,8 @@
+1770.	[func]		fdupont
+	Added kea-admin lease-stat-recount command which recounts cached
+	statistics in MySQL and PostgreSQL lease databases.
+	(Gitlab #1196)
+
 1769.	[build]		fdupont
 	Added detection of the musl libc which implements dlclose() as
 	a no-operation: this behavior breaks Kea expectations for

@@ -161,6 +161,7 @@ INSERT INTO lease4_stat (subnet_id, state, leases) \
     FROM lease4 WHERE state = 0 OR state = 1 \
     GROUP BY subnet_id, state; \
 COMMIT;"
+export _RECOUNT4_QUERY
 
 # recount IPv6 leases from scratch
 _RECOUNT6_QUERY=\
@@ -172,4 +173,4 @@ INSERT INTO lease6_stat (subnet_id, lease_type, state, leases) \
     FROM lease6 WHERE state = 0 OR state = 1 \
     GROUP BY subnet_id, lease_type, state; \
 COMMIT;"
-
+export _RECOUNT6_QUERY
