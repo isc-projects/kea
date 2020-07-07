@@ -269,6 +269,9 @@ For instance packets or options are not thread safe. Exception are:
   socket is thread safe so one can for instance delete an external socket
   at any time).
 
+ - interface lookup cache is Kea thread safe (i.e. thread safe when the
+  multi-threading mode is true).
+
  - interface send method is thread safe (mainly because it does not change
   any internal state).
 
