@@ -104,21 +104,21 @@ IfaceMgrTestConfig::createIface(const std::string &name, const int ifindex) {
 void
 IfaceMgrTestConfig::createIfaces() {
     // local loopback
-    addIface("lo", 0);
+    addIface("lo", LO_INDEX);
     addAddress("lo", IOAddress("127.0.0.1"));
     addAddress("lo", IOAddress("::1"));
     // eth0
-    addIface("eth0", 1);
+    addIface("eth0", ETH0_INDEX);
     addAddress("eth0", IOAddress("10.0.0.1"));
     addAddress("eth0", IOAddress("fe80::3a60:77ff:fed5:cdef"));
     addAddress("eth0", IOAddress("2001:db8:1::1"));
     // eth1
-    addIface("eth1", 2);
+    addIface("eth1", ETH1_INDEX);
     addAddress("eth1", IOAddress("192.0.2.3"));
     addAddress("eth1", IOAddress("192.0.2.5"));
     addAddress("eth1", IOAddress("fe80::3a60:77ff:fed5:abcd"));
     // eth1961
-    addIface("eth1961", 3);
+    addIface("eth1961", ETH1961_INDEX);
     addAddress("eth1961", IOAddress("198.51.100.1"));
     addAddress("eth1961", IOAddress("fe80::3a60:77ff:fed5:9876"));
 

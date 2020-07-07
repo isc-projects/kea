@@ -24,6 +24,9 @@ const uint32_t ETH0_INDEX = 1;
 
 /// @brief Index of the eth1 fake interface.
 const uint32_t ETH1_INDEX = 2;
+
+/// @brief Index of the eth1961 fake interface.
+const uint32_t ETH1961_INDEX = 1962;
 //@}
 
 ///
@@ -130,7 +133,7 @@ struct FlagInactive6 {
 /// - eth1 #2
 ///   - 192.0.2.3
 ///   - fe80::3a60:77ff:fed5:abcd
-/// - eth1961
+/// - eth1961 #1962
 ///   - 198.51.100.1
 ///   - fe80::3a60:77ff:fed5:9876
 ///
