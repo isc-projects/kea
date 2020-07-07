@@ -435,7 +435,6 @@ ControlledDhcpv4Srv::commandConfigTestHandler(const string&,
 
     // Command arguments are expected to be:
     // { "Dhcp4": { ... } }
-    // The Logging component is supported by backward compatiblity.
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {

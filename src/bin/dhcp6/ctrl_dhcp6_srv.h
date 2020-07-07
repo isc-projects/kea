@@ -206,8 +206,6 @@ private:
     /// @param command (parameter ignored)
     /// @param args configuration to be processed. Expected format:
     /// map containing Dhcp6 map that contains DHCPv6 server configuration.
-    /// May also contain Logging map that specifies logging configuration
-    /// for backward compatibility.
     ///
     /// @return status of the command
     isc::data::ConstElementPtr
@@ -221,8 +219,6 @@ private:
     /// @param command (parameter ignored)
     /// @param args configuration to be checked. Expected format:
     /// map containing Dhcp6 map that contains DHCPv6 server configuration.
-    /// May also contain Logging map that specifies logging configuration
-    /// for backward compatibility.
     ///
     /// @return status of the command
     isc::data::ConstElementPtr

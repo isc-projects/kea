@@ -346,7 +346,6 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
 
     // Command arguments are expected to be:
     // { "Dhcp6": { ... } }
-    // The Logging component is supported by backward compatiblity.
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {
@@ -439,7 +438,6 @@ ControlledDhcpv6Srv::commandConfigTestHandler(const string&,
 
     // Command arguments are expected to be:
     // { "Dhcp6": { ... } }
-    // The Logging component is supported by backward compatiblity.
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {
