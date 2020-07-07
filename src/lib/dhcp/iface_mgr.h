@@ -774,10 +774,10 @@ public:
     /// @brief Clears unicast addresses on all interfaces.
     void clearUnicasts();
 
-    /// @brief Clears bound addresses.
+    /// @brief Clears the addresses all sockets are bound to.
     void clearBoundAddresses();
 
-    /// @brief Collect bound addresses.
+    /// @brief Collect the addresses all sockets are bound to.
     void collectBoundAddresses();
 
     /// @brief Return most suitable socket for transmitting specified IPv6 packet.
