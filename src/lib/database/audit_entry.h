@@ -178,7 +178,10 @@ public:
         return (modification_time_);
     }
 
-    /// @brief Returns revision id aka modification id.
+    /// @brief Returns revision id.
+    ///
+    /// The revision id is used when two audit entries have the same
+    /// modification time.
     ///
     /// @return Identifier of the revision.
     uint64_t getRevisionId() const {
@@ -212,7 +215,10 @@ private:
     /// @brief Modification time.
     boost::posix_time::ptime modification_time_;
 
-    /// @brief Revision id aka modification id.
+    /// @brief Revision id.
+    ///
+    /// The revision id is used when two audit entries have the same
+    /// modification time.
     uint64_t revision_id_;
 
     /// @brief Log message.
