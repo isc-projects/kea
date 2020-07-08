@@ -155,7 +155,7 @@ public:
     ///
     /// @param name name of the parameter to check
     /// @param open_loc location of the opening curly bracket
-    /// @param close_loc ocation of the closing curly bracket
+    /// @param close_loc location of the closing curly bracket
     /// @throw ParseError
     void require(const std::string& name,
                  isc::data::Element::Position open_loc,

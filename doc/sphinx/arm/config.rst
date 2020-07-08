@@ -107,8 +107,8 @@ To avoid repetition of mostly similar structures, examples in the rest
 of this guide will showcase only the subset of parameters appropriate
 for a given context. For example, when discussing the IPv6 subnets
 configuration in DHCPv6, only subnet6 parameters will be mentioned. It
-is implied that the remaining elements (the global map that holds Dhcp6
-and Logging) are present, but they are omitted for clarity. Usually,
+is implied that the remaining elements (the global map that holds Dhcp6)
+are present, but they are omitted for clarity. Usually,
 locations where extra parameters may appear are denoted by an ellipsis
 (...).
 

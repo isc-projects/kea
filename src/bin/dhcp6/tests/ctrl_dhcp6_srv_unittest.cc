@@ -683,8 +683,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         "            \"output_options\": [{ \n"
         "                \"output\": \"/dev/null\" \n"
         "            }] \n"
-        "        }] \n"
-        "    } \n";
+        "        }] \n";
 
     std::ostringstream os;
 
@@ -730,7 +729,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         << socket_path_
         << control_socket_footer
         << "}\n"                      // close dhcp6
-        "}}";
+        << "}}";
 
     // Send the config-set command
     sendUnixCommand(os.str(), response);
@@ -859,8 +858,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
         "            \"output_options\": [{ \n"
         "                \"output\": \"/dev/null\" \n"
         "            }] \n"
-        "        }] \n"
-        "    } \n";
+        "        }] \n";
 
     std::ostringstream os;
 
@@ -901,7 +899,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
         << socket_path_
         << control_socket_footer
         << "}\n"                      // close dhcp6
-        "}}";
+        << "}}";
 
     // Send the config-test command
     sendUnixCommand(os.str(), response);
