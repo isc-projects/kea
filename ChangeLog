@@ -1,3 +1,7 @@
+1767.	[bug]		fdupont
+	Fixed unit tests failing on systems where an interface is named	eth0.
+	(Gitlab #1043)
+
 1766.	[func]		fdupont
 	Optimized the interface manager code and removed the 16 bit limit
 	to interface indexes.
