@@ -1,3 +1,8 @@
+1768.	[func]*		fdupont
+	Removed the support of the Logging toplevel entry. Now loggers must
+	be defined in each server toplevel entry.
+	(Gitlab #916)
+
 1767.	[bug]		fdupont
 	Fixed unit tests failing on systems where an interface is named	eth0.
 	(Gitlab #1043)
