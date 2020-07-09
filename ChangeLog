@@ -1,3 +1,7 @@
+1771.	[func]		fdupont
+	Added a stats-recount command to kea-admin tool, which recounts
+	cached statistics in MySQL and PostgreSQL lease databases.
+
 1770.	[func]		fdupont
 	Added kea-admin lease-stat-recount command which recounts cached
 	statistics in MySQL and PostgreSQL lease databases.

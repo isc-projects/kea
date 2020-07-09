@@ -54,7 +54,7 @@ OPTIONS
         meant to be used as a diagnostic tool, so it provides a portable,
         human-readable form of the lease data.
 
-   lease-stat-recount
+   stats-recount
         Recounts lease statistics for MySQL or PostgreSQL database.
 
 ``backend``

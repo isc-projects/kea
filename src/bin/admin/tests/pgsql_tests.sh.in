@@ -835,10 +835,10 @@ pgsql_lease_stat_recount_test() {
     run_statement "change v6 stats" "$qry"
 
     # Recount all statistics from scratch.
-    ${keaadmin} lease-stat-recount pgsql -u $db_user -p $db_password -n $db_name
+    ${keaadmin} stats-recount pgsql -u $db_user -p $db_password -n $db_name
     ERRCODE=$?
 
-    assert_eq 0 $ERRCODE "kea-admin lease-stat-recount pgsql returned non-zero status code %d, expected %d"
+    assert_eq 0 $ERRCODE "kea-admin stats-recount pgsql returned non-zero status code %d, expected %d"
 
     #
     # First we'll verify lease4_stats are correct after recount.

@@ -60,7 +60,7 @@ usage() {
     printf " -             for checking databaseB version when preparing for an upgrade.\n"
     printf " - db-upgrade: Upgrades your database scheme\n"
     printf " - lease-dump: Dumps current leases to a CSV file\n"
-    printf " - lease-stat-recount: Recounts lease statistics\n"
+    printf " - stats-recount: Recounts lease statistics\n"
     printf "\n"
     printf "BACKEND - one of the supported backends: memfile|mysql|pgsql|cql\n"
     printf "\n"
@@ -681,7 +681,7 @@ if test "${command}" = "-v" || test "${command}" = "--version" ; then
     exit 0
 fi
 
-is_in_list "${command}" "db-init db-version db-upgrade lease-dump lease-stat-recount"
+is_in_list "${command}" "db-init db-version db-upgrade lease-dump stats-recount"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
     usage
@@ -860,7 +860,7 @@ case ${command} in
                 ;;
             esac
         ;;
-    lease-stat-recount)
+    stats-recount)
         case ${backend} in
             memfile)
                 log_info "memfile does not keep lease statistics"
