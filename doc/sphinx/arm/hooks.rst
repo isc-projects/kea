@@ -33,6 +33,15 @@ order in which the libraries are specified in the configuration file.
 The order may be important; consult the documentation of the libraries
 for specifics.
 
+When a Kea process unloads a library, it expects the ``dlclose`` function
+removes all library symbols and removes the library code from address space
+on the last reference. This behavior is not required by the POSIX standard
+and at least the musl library used by default by Alpine Linux implements
+the ``dlclose`` function has a no operation. On such systems a library
+is loaded for ever in a process, for instance it is not possible to
+replace a library binary by another version using configuration change
+or reload: the process must be stopped and relaunched.
+
 The next section describes how to configure hooks libraries. Users who are
 interested in writing their own hooks library can find information
 in the `Hooks Developer's Guide section of the Kea Developer's

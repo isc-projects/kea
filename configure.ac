@@ -284,6 +284,7 @@ KEA_CXXFLAGS="$KEA_CXXFLAGS $MULTITHREADING_FLAG"
 dumpmachine=`$CXX -dumpmachine`
 case "$dumpmachine" in
 *-musl)
+        AC_MSG_WARN("Detected musl libc: musl dlclose() is a noop")
         AC_DEFINE([LIBC_MUSL], [1], [Define to 1 if libc is musl])
         ;;
 esac
