@@ -37,8 +37,8 @@ When a Kea process unloads a library, it expects the ``dlclose`` function
 removes all library symbols and removes the library code from address space
 on the last reference. This behavior is not required by the POSIX standard
 and at least the musl library used by default by Alpine Linux implements
-the ``dlclose`` function has a no operation. On such systems a library
-is loaded for ever in a process, for instance it is not possible to
+the ``dlclose`` function as a no operation. On such systems a library
+is loaded forever in a process, for instance it is not possible to
 replace a library binary by another version using configuration change
 or reload: the process must be stopped and relaunched.
 
