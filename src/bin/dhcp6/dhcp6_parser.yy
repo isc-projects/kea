@@ -1132,7 +1132,7 @@ library: LIBRARY {
 
 parameters: PARAMETERS {
     ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
+} COLON map_value {
     ctx.stack_.back()->set("parameters", $4);
     ctx.leave();
 };
