@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,6 +36,7 @@ version() {
 /// @param handle passed by the hooks framework
 /// @return 0 if load was successful, non-zero for errors
 int load(LibraryHandle& handle) {
+    ConstElementPtr elems        = handle.getParameters();
     ConstElementPtr string_elem  = handle.getParameter("svalue");
     ConstElementPtr int_elem     = handle.getParameter("ivalue");
     ConstElementPtr bool_elem    = handle.getParameter("bvalue");
@@ -107,10 +108,22 @@ int load(LibraryHandle& handle) {
         return (10);
     }
 
+    // Check elems map.
+    if (!elems) {
+        return (11);
+    }
+    string expected_str = "{ "
+        "\"bvalue\": true, "
+        "\"ivalue\": 42, "
+        "\"svalue\": \"string value\""
+        " }";
+    if (expected_str != elems->str()) {
+        return (12);
+    }
+
     // All validation steps were successful. The library has all the parameters
     // it needs, so we should report a success.
     return (0);
 }
-    
 
-};
+}

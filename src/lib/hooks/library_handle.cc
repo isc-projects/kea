@@ -101,7 +101,7 @@ isc::data::ConstElementPtr
 LibraryHandle::getParameter(const std::string& name) {
     // Try to find appropriate parameter. May return null pointer
     isc::data::ConstElementPtr params = getParameters();
-    if (!params) {
+    if (!params || (params->getType() != isc::data::Element::map)) {
         return (isc::data::ConstElementPtr());
     }
 
