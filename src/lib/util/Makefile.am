@@ -42,6 +42,7 @@ libkea_util_la_SOURCES += encode/base32hex_from_binary.h
 libkea_util_la_SOURCES += encode/base_n.cc encode/hex.h
 libkea_util_la_SOURCES += encode/binary_from_base32hex.h
 libkea_util_la_SOURCES += encode/binary_from_base16.h
+libkea_util_la_SOURCES += encode/utf8.cc encode/utf8.h
 libkea_util_la_SOURCES += random/qid_gen.h random/qid_gen.cc
 libkea_util_la_SOURCES += random/random_number_generator.h
 
@@ -94,7 +95,8 @@ libkea_util_encode_include_HEADERS = \
 	encode/base64.h \
 	encode/binary_from_base16.h \
 	encode/binary_from_base32hex.h \
-	encode/hex.h
+	encode/hex.h \
+	encode/utf8.h
 
 libkea_util_io_includedir = $(pkgincludedir)/util/io
 libkea_util_io_include_HEADERS = \
