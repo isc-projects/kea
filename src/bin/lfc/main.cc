@@ -12,6 +12,7 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/exception_ptr.hpp>
 #include <iostream>
+#include <sys/resource.h>
 
 using namespace std;
 using namespace isc::lfc;
@@ -23,6 +24,9 @@ using namespace isc::lfc;
 /// The exit value of the program will be EXIT_SUCCESS if there were no
 /// errors, EXIT_FAILURE otherwise.
 int main(int argc, char* argv[]) {
+    // Ask scheduling to not give too much resources to LFC.
+    static_cast<void>(setpriority(PRIO_PROCESS, 0, 4));
+
     int ret = EXIT_SUCCESS;
     LFCController lfc_controller;
 
