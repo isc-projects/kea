@@ -38,6 +38,7 @@ libkea_http_la_SOURCES += response_creator.cc response_creator.h
 libkea_http_la_SOURCES += response_creator_factory.h
 libkea_http_la_SOURCES += response_json.cc response_json.h
 libkea_http_la_SOURCES += url.cc url.h
+libkea_http_la_SOURCES += basic_auth.cc basic_auth.h
 
 libkea_http_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_http_la_CPPFLAGS = $(AM_CPPFLAGS)

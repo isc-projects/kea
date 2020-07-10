@@ -1,4 +1,4 @@
-# Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@ class CARequest:
      - command - specifies the command to send (e.g. list-commands)
      - service - specifies service that is target for the command (e.g. dhcp4)
      - timeout - timeout (in ms)
+     - auth - basic HTTP authentication credential
      - args - extra arguments my be added here
      - headers - extra HTTP headers may be added here
      - version - version to be reported in HTTP header
@@ -28,6 +29,7 @@ class CARequest:
     command = ''
     service = ''
     timeout = 0
+    auth = None
     args = ''
     headers = {}
     version = ""
@@ -55,9 +57,11 @@ class CARequest:
 
         In particular, this method generates Content-Length and its value.
         """
-        self.headers['Content-Type'] = 'application/json'
         self.headers['User-Agent'] = "Kea-shell/%s"%(self.version)
         self.headers['Accept'] = '*/*'
+        if self.auth is not None:
+            self.headers['Authorization'] = "Basic %s"%(self.auth)
+        self.headers['Content-Type'] = 'application/json'
         self.headers['Content-Length'] = "%d"%(len(self.content))
 
 

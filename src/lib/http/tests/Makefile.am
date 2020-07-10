@@ -20,7 +20,8 @@ TESTS =
 if HAVE_GTEST
 TESTS += libhttp_unittests
 
-libhttp_unittests_SOURCES  = connection_pool_unittests.cc
+libhttp_unittests_SOURCES  = basic_auth_unittests.cc
+libhttp_unittests_SOURCES += connection_pool_unittests.cc
 libhttp_unittests_SOURCES += date_time_unittests.cc
 libhttp_unittests_SOURCES += http_header_unittests.cc
 libhttp_unittests_SOURCES += post_request_unittests.cc

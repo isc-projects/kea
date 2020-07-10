@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,7 @@ import os
 import sys
 import signal
 import argparse
+from base64 import b64encode
 
 sys.path.append('@PKGPYTHONDIR@')
 
@@ -69,6 +70,10 @@ def shell_body():
     parser.add_argument('--service', nargs="?", action="append",
                         help='target spcified service. If not specified,'
                         'control agent will receive command.')
+    parser.add_argument('--auth-user', type=str, default='',
+                        help='Basic HTTP authentication user')
+    parser.add_argument('--auth-password', type=str, default='',
+                        help='Basic HTTP authentication password')
     parser.add_argument('command', type=str, nargs="?",
                         default='list-commands',
                         help='command to be executed. If not specified, '
@@ -88,6 +93,14 @@ def shell_body():
     params.http_host = cmd_args.host
     params.http_port = cmd_args.port
     params.path += cmd_args.path
+    if cmd_args.auth_user is not '':
+        user = cmd_args.auth_user.encode('latin1')
+        password = cmd_args.auth_password.encode('latin1')
+        secret = b':'.join((user, password))
+        if sys.version_info[0] == 3:
+            params.auth = b64encode(secret).strip().decode('ascii')
+        else:
+            params.auth = b64encode(secret).strip().encode('ascii')
     params.timeout = cmd_args.timeout
     params.version = VERSION
 

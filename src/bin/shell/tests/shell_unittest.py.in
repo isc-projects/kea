@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,8 @@ Kea shell unittest (python part)
 """
 
 import unittest
+import sys
+from base64 import b64encode
 
 from kea_conn import CARequest
 
@@ -137,6 +139,36 @@ class CARequestUnitTest(unittest.TestCase):
         request.generate_headers()
         self.assertTrue(self.check_header(request.headers, 'User-Agent',
                                           'Kea-shell/1.2.3'))
+
+    def test_basic_http_auth(self):
+        """
+        This test check if the basic HTTP authentication credential
+        generated properly.
+        """
+        user = 'foo'
+        password = 'bar'
+        buser = user.encode('latin1')
+        bpassword = password.encode('latin1')
+        secret = b':'.join((buser, bpassword))
+        self.assertEqual(b'foo:bar', secret)
+        if sys.version_info[0] == 3:
+            auth = b64encode(secret).strip().decode('ascii')
+        else:
+            auth = b64encode(secret).strip().encode('ascii')
+        self.assertEqual('Zm9vOmJhcg==', auth)
+
+    def test_header_auth(self):
+        """
+        This test checks if the basic HTTP authentication header is
+        generated properly.
+        """
+        request = CARequest()
+        request.auth = "Zm9vOmJhcg=="
+        request.generate_headers()
+
+        self.assertTrue(self.check_header(request.headers,
+                                          'Authorization',
+                                          'Basic Zm9vOmJhcg=='))
 
     def tearDown(self):
         """

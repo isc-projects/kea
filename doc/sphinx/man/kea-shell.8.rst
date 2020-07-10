@@ -15,7 +15,7 @@ kea-shell - Text client for Control Agent process
 Synopsis
 ~~~~~~~~
 
-:program:`kea-shell` [**-h**] [**-v**] [**--host**] [**--port**] [**--path**] [**--timeout**] [**--service**] [command]
+:program:`kea-shell` [**-h**] [**-v**] [**--host**] [**--port**] [**--path**] [**--auth-user**] [**--auth-password**] [**--timeout**] [**--service**] [command]
 
 Description
 ~~~~~~~~~~~
@@ -49,6 +49,14 @@ The arguments are as follows:
    Specifies the path in the URL to connect to. If not specified, an empty
    path is used. As Control Agent listens at the empty path, this
    parameter is useful only with a reverse proxy.
+
+``--auth-user``
+   Specifies the user name for basic HTTP authentication. If not specified
+   or specified as the empty string authentication is not used.
+
+``--auth-password``
+   Specifies the password for basic HTTP authentication. If not specified
+   but the user name is specified an empty password is used.
 
 ``--timeout``
    Specifies the connection timeout in seconds. If not specified, 10
