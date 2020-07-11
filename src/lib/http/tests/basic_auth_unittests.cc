@@ -15,41 +15,41 @@ namespace {
 
 // Test that user name with a colon is rejected.
 TEST(BasicHttpAuthTest, userColon) {
-    BasicHttpAuthPtr ba;
-    EXPECT_THROW(ba.reset(new BasicHttpAuth("foo:bar", "")), BadValue);
+    BasicHttpAuthPtr basic_auth;
+    EXPECT_THROW(basic_auth.reset(new BasicHttpAuth("foo:bar", "")), BadValue);
 }
 
 // Test that secret without a colon is rejected.
 TEST(BasicHttpAuthTest, secretNoColon) {
-    BasicHttpAuthPtr ba;
-    EXPECT_THROW(ba.reset(new BasicHttpAuth("foo-bar")), BadValue);
+    BasicHttpAuthPtr basic_auth;
+    EXPECT_THROW(basic_auth.reset(new BasicHttpAuth("foo-bar")), BadValue);
 }
 
 // Test that valid user and password work.
 TEST(BasicHttpAuthTest, user) {
-    BasicHttpAuthPtr ba;
-    EXPECT_NO_THROW(ba.reset(new BasicHttpAuth("foo", "bar")));
-    ASSERT_TRUE(ba);
-    EXPECT_EQ("foo:bar", ba->getSecret());
-    EXPECT_EQ("Zm9vOmJhcg==", ba->getCredential());
+    BasicHttpAuthPtr basic_auth;
+    EXPECT_NO_THROW(basic_auth.reset(new BasicHttpAuth("foo", "bar")));
+    ASSERT_TRUE(basic_auth);
+    EXPECT_EQ("foo:bar", basic_auth->getSecret());
+    EXPECT_EQ("Zm9vOmJhcg==", basic_auth->getCredential());
 }
 
 // Test that valid secret work.
 TEST(BasicHttpAuthTest, secret) {
-    BasicHttpAuthPtr ba;
-    EXPECT_NO_THROW(ba.reset(new BasicHttpAuth("foo:bar")));
-    ASSERT_TRUE(ba);
-    EXPECT_EQ("foo:bar", ba->getSecret());
-    EXPECT_EQ("Zm9vOmJhcg==", ba->getCredential());
+    BasicHttpAuthPtr basic_auth;
+    EXPECT_NO_THROW(basic_auth.reset(new BasicHttpAuth("foo:bar")));
+    ASSERT_TRUE(basic_auth);
+    EXPECT_EQ("foo:bar", basic_auth->getSecret());
+    EXPECT_EQ("Zm9vOmJhcg==", basic_auth->getCredential());
 }
 
 // Test that secret is encoded in UTF-8.
 TEST(BasicHttpAuthTest, utf8) {
-    BasicHttpAuthPtr ba;
-    EXPECT_NO_THROW(ba.reset(new BasicHttpAuth("foo\n", "b\ar")));
-    ASSERT_TRUE(ba);
-    EXPECT_EQ("foo\n:b\ar", ba->getSecret());
-    EXPECT_EQ("Zm9vCjpiB3I=", ba->getCredential());
+    BasicHttpAuthPtr basic_auth;
+    EXPECT_NO_THROW(basic_auth.reset(new BasicHttpAuth("foo\n", "b\ar")));
+    ASSERT_TRUE(basic_auth);
+    EXPECT_EQ("foo\n:b\ar", basic_auth->getSecret());
+    EXPECT_EQ("Zm9vCjpiB3I=", basic_auth->getCredential());
 }
 
 } // end of anonymous namespace

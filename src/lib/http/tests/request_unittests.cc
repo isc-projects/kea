@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -356,6 +356,37 @@ TEST_F(HttpRequestTest, toBriefString) {
     ASSERT_NO_THROW(request_->finalize());
     // Check that the brief string is correct.
     EXPECT_EQ("POST /isc/org HTTP/1.1", request_->toBriefString());
+}
+
+// This test verifies that no basic HTTP authentication is supported.
+TEST_F(HttpRequestTest, noBasicAuth) {
+    ASSERT_NO_THROW(request_.reset(new HttpRequest(HttpRequest::Method::HTTP_GET,
+                                                   "/isc/org",
+                                                   HttpVersion(1, 1),
+                                                   HostHttpHeader("www.example.org"))));
+
+    ASSERT_NO_THROW(request_->finalize());
+    ASSERT_THROW(request_->getHeader("Authorization"),
+                 HttpMessageNonExistingHeader);
+}
+
+// This test verifies that basic HTTP authentication works as expected.
+TEST_F(HttpRequestTest, basicAuth) {
+    BasicHttpAuthPtr basic_auth;
+    EXPECT_NO_THROW(basic_auth.reset(new BasicHttpAuth("foo", "bar")));
+    ASSERT_TRUE(basic_auth);
+
+    ASSERT_NO_THROW(request_.reset(new HttpRequest(HttpRequest::Method::HTTP_GET,
+                                                   "/isc/org",
+                                                   HttpVersion(1, 1),
+                                                   HostHttpHeader("www.example.org"),
+                                                   basic_auth)));
+
+    ASSERT_NO_THROW(request_->finalize());
+
+    std::string value;
+    EXPECT_NO_THROW(value = request_->getHeaderValue("Authorization"));
+    EXPECT_EQ(value, "Basic " + basic_auth->getCredential());
 }
 
 }

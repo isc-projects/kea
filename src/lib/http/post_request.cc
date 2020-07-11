@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,8 +20,9 @@ PostHttpRequest::PostHttpRequest()
 
 PostHttpRequest::PostHttpRequest(const Method& method, const std::string& uri,
                                  const HttpVersion& version,
-                                 const HostHttpHeader& host_header)
-    : HttpRequest(method, uri, version, host_header) {
+                                 const HostHttpHeader& host_header,
+                                 const BasicHttpAuthPtr& basic_auth)
+    : HttpRequest(method, uri, version, host_header, basic_auth) {
     requireHttpMethod(Method::HTTP_POST);
     requireHeader("Content-Length");
     requireHeader("Content-Type");

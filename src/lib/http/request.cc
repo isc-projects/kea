@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,8 @@ HttpRequest::HttpRequest()
 HttpRequest::HttpRequest(const Method& method,
                          const std::string& uri,
                          const HttpVersion& version,
-                         const HostHttpHeader& host_header)
+                         const HostHttpHeader& host_header,
+                         const BasicHttpAuthPtr& basic_auth)
     : HttpMessage(OUTBOUND), required_methods_(),
       method_(Method::HTTP_METHOD_UNKNOWN),
       context_(new HttpRequestContext()) {
@@ -43,6 +44,11 @@ HttpRequest::HttpRequest(const Method& method,
     // harm to include it.
     context()->headers_.push_back(HttpHeaderContext(host_header.getName(),
                                                     host_header.getValue()));
+    if (basic_auth) {
+        context()->headers_.push_back(HttpHeaderContext("Authorization",
+                                                        "Basic " +
+                                                        basic_auth->getCredential()));
+    }
 }
 
 void
