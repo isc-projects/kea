@@ -58,7 +58,7 @@ shell_command_test() {
 
     # Log the start of the test and print test name.
     test_start ${test_name}
-    
+
     # Remove any dangling CA instances and remove log files.
     cleanup
 
@@ -100,7 +100,7 @@ shell_command_test() {
     tmp="echo \"${params}\" | ${shell_bin_path}/${shell_bin} --host \
  127.0.0.1 --port 8081 ${cmd} > ${tmpfile_path}/shell-stdout.txt"
     echo "Executing kea-shell ($tmp)"
-    
+
     echo "${params}" | ${shell_bin_path}/${shell_bin} --host 127.0.0.1 \
  --port 8081 ${cmd} > ${tmpfile_path}/shell-stdout.txt
 

@@ -26,7 +26,6 @@ class CARequestUnitTest(unittest.TestCase):
         """
         This method is called before each test. Currently it does nothing.
         """
-        pass
 
     def test_body_with_service(self):
         """
@@ -35,9 +34,10 @@ class CARequestUnitTest(unittest.TestCase):
         """
         request = CARequest()
         request.command = "foo"
-        request.service= ["service1"]
+        request.service = ["service1"]
         request.generate_body()
-        self.assertEqual(request.content, '{ "command": "foo", "service": ["service1"] }')
+        self.assertEqual(request.content,
+                         '{ "command": "foo", "service": ["service1"] }')
 
     def test_body_with_multiple_service(self):
         """
@@ -46,9 +46,10 @@ class CARequestUnitTest(unittest.TestCase):
         """
         request = CARequest()
         request.command = "foo"
-        request.service= ["service1","service2/2"]
+        request.service = ["service1", "service2/2"]
         request.generate_body()
-        self.assertEqual(request.content, '{ "command": "foo", "service": ["service1","service2/2"] }')
+        self.assertEqual(request.content,
+                         '{ "command": "foo", "service": ["service1","service2/2"] }')
 
     def test_body_with_malformed_service(self):
         """
@@ -57,9 +58,10 @@ class CARequestUnitTest(unittest.TestCase):
         """
         request = CARequest()
         request.command = "foo"
-        request.service= ["service1",""]
+        request.service = ["service1", ""]
         request.generate_body()
-        self.assertEqual(request.content, '{ "command": "foo", "service": ["service1"] }')
+        self.assertEqual(request.content,
+                         '{ "command": "foo", "service": ["service1"] }')
 
     def test_body_without_args(self):
         """
@@ -92,14 +94,12 @@ class CARequestUnitTest(unittest.TestCase):
         if header_name in headers:
             if headers[header_name] == value:
                 return True
-            else:
-                print("Expected value: " + value +
-                      " does not match actual value: " +
-                      headers[header_name])
+            print("Expected value: " + value +
+                  " does not match actual value: " +
+                  headers[header_name])
             return False
-        else:
-            print("Expected header: " + header_name + " missing")
-            return False
+        print("Expected header: " + header_name + " missing")
+        return False
 
     def test_headers(self):
         """
@@ -194,7 +194,6 @@ class CARequestUnitTest(unittest.TestCase):
         """
         This method is called after each test. Currently it does nothing.
         """
-        pass
 
 if __name__ == '__main__':
     unittest.main()

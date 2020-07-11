@@ -17,7 +17,6 @@ Text client for Control Agent process
 # that's a stand alone package that requires separate installation. One of
 # the design requirements was to not require any additional packages, so
 # the code uses standard libraries available in python. Hence two versions.
-import os
 import sys
 import signal
 import argparse
@@ -30,8 +29,9 @@ from kea_conn import CARequest # CAResponse
 if sys.version_info[0] == 2:
     # This is Python 2.x
     import kea_connector2 as kea_connector
-    def auth8(s):
-        return unicode(s, 'utf-8')
+    def auth8(string):
+        """Convert str into unicode"""
+        return unicode(string, 'utf-8')
 elif sys.version_info[0] == 3:
     # This is Python 3.x
     import kea_connector3 as kea_connector
@@ -86,7 +86,7 @@ def shell_body():
 
     if cmd_args.v:
         print(VERSION)
-        exit(0)
+        sys.exit(0)
 
     # Ok, now it's time to put the parameters parsed into the structure to be
     # used by the connection.
@@ -96,7 +96,7 @@ def shell_body():
     params.http_host = cmd_args.host
     params.http_port = cmd_args.port
     params.path += cmd_args.path
-    if cmd_args.auth_user is not '':
+    if cmd_args.auth_user != '':
         user = cmd_args.auth_user
         password = cmd_args.auth_password
         secret = b':'.join((user.encode('utf-8'), password.encode('utf-8')))
