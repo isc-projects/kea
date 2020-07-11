@@ -30,9 +30,12 @@ from kea_conn import CARequest # CAResponse
 if sys.version_info[0] == 2:
     # This is Python 2.x
     import kea_connector2 as kea_connector
+    def auth8(s):
+        return unicode(s, 'utf-8')
 elif sys.version_info[0] == 3:
     # This is Python 3.x
     import kea_connector3 as kea_connector
+    auth8 = str
 else:
     # This is... have no idea what it is.
     raise SystemExit("Unknown python version:" + str(sys.version_info[0]))
@@ -70,9 +73,9 @@ def shell_body():
     parser.add_argument('--service', nargs="?", action="append",
                         help='target spcified service. If not specified,'
                         'control agent will receive command.')
-    parser.add_argument('--auth-user', type=str, default='',
+    parser.add_argument('--auth-user', type=auth8, default='',
                         help='Basic HTTP authentication user')
-    parser.add_argument('--auth-password', type=str, default='',
+    parser.add_argument('--auth-password', type=auth8, default='',
                         help='Basic HTTP authentication password')
     parser.add_argument('command', type=str, nargs="?",
                         default='list-commands',
@@ -94,9 +97,9 @@ def shell_body():
     params.http_port = cmd_args.port
     params.path += cmd_args.path
     if cmd_args.auth_user is not '':
-        user = cmd_args.auth_user.encode('latin1')
-        password = cmd_args.auth_password.encode('latin1')
-        secret = b':'.join((user, password))
+        user = cmd_args.auth_user
+        password = cmd_args.auth_password
+        secret = b':'.join((user.encode('utf-8'), password.encode('utf-8')))
         if sys.version_info[0] == 3:
             params.auth = b64encode(secret).strip().decode('ascii')
         else:
