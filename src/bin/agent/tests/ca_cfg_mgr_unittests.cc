@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 using namespace isc::agent;
 using namespace isc::data;
 using namespace isc::hooks;
+using namespace isc::http;
 using namespace isc::process;
 
 namespace  {
@@ -62,6 +63,9 @@ TEST(CtrlAgentCfgMgr, contextHttpParams) {
 
     ctx.setHttpHost("alnitak");
     EXPECT_EQ("alnitak", ctx.getHttpHost());
+
+    ctx.setBasicAuthRealm("foobar");
+    EXPECT_EQ("foobar", ctx.getBasicAuthRealm());
 }
 
 // Tests if context can store and retrieve control socket information.
@@ -122,11 +126,15 @@ TEST(CtrlAgentCfgMgr, contextSocketInfoCopy) {
 
     EXPECT_NO_THROW(ctx.setHttpPort(12345));
     EXPECT_NO_THROW(ctx.setHttpHost("bellatrix"));
+    EXPECT_NO_THROW(ctx.setBasicAuthRealm("foobar"));
 
     HooksConfig& libs = ctx.getHooksConfig();
     string exp_name("testlib1.so");
     ConstElementPtr exp_param(new StringElement("myparam"));
     libs.add(exp_name, exp_param);
+
+    BasicHttpAuthConfig& auth = ctx.getBasicAuthConfig();
+    auth.add("foo", "bar");
 
     // Make a copy.
     ConfigPtr copy_base(ctx.clone());
@@ -136,6 +144,7 @@ TEST(CtrlAgentCfgMgr, contextSocketInfoCopy) {
     // Now check the values returned
     EXPECT_EQ(12345, copy->getHttpPort());
     EXPECT_EQ("bellatrix", copy->getHttpHost());
+    EXPECT_EQ("foobar", copy->getBasicAuthRealm());
 
     // Check socket info
     ASSERT_TRUE(copy->getControlSocketInfo("d2"));
@@ -151,6 +160,10 @@ TEST(CtrlAgentCfgMgr, contextSocketInfoCopy) {
     EXPECT_EQ(exp_name, libs2[0].first);
     ASSERT_TRUE(libs2[0].second);
     EXPECT_EQ(exp_param->str(), libs2[0].second->str());
+
+    // Check basic HTTP authentication
+    const BasicHttpAuthConfig& auth2 = copy->getBasicAuthConfig();
+    EXPECT_EQ(auth.toElement()->str(), auth2.toElement()->str());
 }
 
 
@@ -173,6 +186,23 @@ TEST(CtrlAgentCfgMgr, contextHookParams) {
     EXPECT_EQ(libs.get(), stored_libs.get());
 }
 
+// Test if the context can store and retrieve basic HTTP authentication clients.
+TEST(CtrlAgentCfgMgr, contextBasicAuth) {
+    CtrlAgentCfgContext ctx;
+
+    // By default there should be no authentication.
+    BasicHttpAuthConfig& auth = ctx.getBasicAuthConfig();
+    EXPECT_TRUE(auth.getClientList().empty());
+
+    auth.add("foo", "bar");
+    auth.add("test", "123\xa3");
+
+    const BasicHttpAuthConfig& stored_auth = ctx.getBasicAuthConfig();
+    EXPECT_EQ(2, stored_auth.getClientList().size());
+
+    EXPECT_EQ(auth.toElement()->str(), stored_auth.toElement()->str());
+}
+
 /// Control Agent configurations used in tests.
 const char* AGENT_CONFIGS[] = {
 
@@ -180,14 +210,16 @@ const char* AGENT_CONFIGS[] = {
     "{ }",
 
     // Configuration 1: http parameters only (no control sockets, not hooks)
-    "{  \"http-host\": \"betelgeuse\",\n"
-    "    \"http-port\": 8001\n"
+    "{   \"http-host\": \"betelgeuse\",\n"
+    "    \"http-port\": 8001,\n"
+    "    \"basic-authentication-realm\": \"foobar\"\n"
     "}",
 
     // Configuration 2: http and 1 socket
     "{\n"
     "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
+    "    \"basic-authentication-realm\": \"foobar\",\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
     "            \"socket-name\": \"/tmp/socket-v4\"\n"
@@ -199,6 +231,7 @@ const char* AGENT_CONFIGS[] = {
     "{\n"
     "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
+    "    \"basic-authentication-realm\": \"foobar\",\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
     "            \"socket-name\": \"/tmp/socket-v4\"\n"
@@ -218,6 +251,7 @@ const char* AGENT_CONFIGS[] = {
     "{\n"
     "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
+    "    \"basic-authentication-realm\": \"foobar\",\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
     "            \"socket-name\": \"/tmp/socket-v4\"\n"
@@ -237,6 +271,7 @@ const char* AGENT_CONFIGS[] = {
     "{\n"
     "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
+    "    \"basic-authentication-realm\": \"foobar\",\n"
     "    \"control-sockets\": {\n"
     "        \"d2\": {\n"
     "            \"socket-name\": \"/tmp/socket-d2\"\n"
@@ -248,6 +283,7 @@ const char* AGENT_CONFIGS[] = {
     "{\n"
     "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
+    "    \"basic-authentication-realm\": \"foobar\",\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp6\": {\n"
     "            \"socket-name\": \"/tmp/socket-v6\"\n"
@@ -255,11 +291,33 @@ const char* AGENT_CONFIGS[] = {
     "    }\n"
     "}",
 
-    // Configuration 7: http and 2 sockets with user contexts and comments
+    // Configuration 7: http, 1 socket and basic authentication
+    "{\n"
+    "    \"http-host\": \"betelgeuse\",\n"
+    "    \"http-port\": 8001,\n"
+    "    \"basic-authentication-realm\": \"foobar\",\n"
+    "    \"control-sockets\": {\n"
+    "        \"dhcp4\": {\n"
+    "            \"socket-name\": \"/tmp/socket-v4\"\n"
+    "        }\n"
+    "   },\n"
+    "    \"basic-authentications\": ["
+    "        {"
+    "          \"user\": \"foo\",\n"
+    "          \"password\": \"bar\"\n"
+    "        },{\n"
+    "          \"user\": \"test\",\n"
+    "          \"password\": \"123\\u00a3\"\n"
+    "        }\n"
+    "     ]\n"
+    "}",
+
+    // Configuration 8: http and 2 sockets with user contexts and comments
     "{\n"
     "    \"user-context\": { \"comment\": \"Indirect comment\" },\n"
     "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
+    "    \"basic-authentication-realm\": \"foobar\",\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
     "            \"comment\": \"dhcp4 socket\",\n"
@@ -269,7 +327,17 @@ const char* AGENT_CONFIGS[] = {
     "            \"socket-name\": \"/tmp/socket-v6\",\n"
     "            \"user-context\": { \"version\": 1 }\n"
     "        }\n"
-    "   }\n"
+    "   },\n"
+    "    \"basic-authentications\": ["
+    "        {"
+    "          \"comment\": \"foo is authorized\",\n"
+    "          \"user\": \"foo\",\n"
+    "          \"password\": \"bar\"\n"
+    "        },{\n"
+    "          \"user\": \"test\",\n"
+    "          \"user-context\": { \"no password\": true }\n"
+    "        }\n"
+    "     ]\n"
     "}"
 };
 
@@ -321,6 +389,7 @@ TEST_F(AgentParserTest, configParseHttpOnly) {
     ASSERT_TRUE(ctx);
     EXPECT_EQ("betelgeuse", ctx->getHttpHost());
     EXPECT_EQ(8001, ctx->getHttpPort());
+    EXPECT_EQ("foobar", ctx->getBasicAuthRealm());
 }
 
 // Tests if a single socket can be configured. BTW this test also checks
@@ -411,9 +480,32 @@ TEST_F(AgentParserTest, configParseHooks) {
     EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].second->str());
 }
 
+// This test checks that the config file with basic HTTP authentication can be
+// loaded.
+TEST_F(AgentParserTest, configParseBasicAuth) {
+    configParse(AGENT_CONFIGS[7], 0);
+    CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
+    const BasicHttpAuthConfig& auth = ctx->getBasicAuthConfig();
+
+    // Check credentails
+    auto credentials = auth.getCredentialMap();
+    EXPECT_EQ(2, credentials.size());
+    std::string user;
+    EXPECT_NO_THROW(user = credentials.at("Zm9vOmJhcg=="));
+    EXPECT_EQ("foo", user);
+    EXPECT_NO_THROW(user = credentials.at("dGVzdDoxMjPCow=="));
+    EXPECT_EQ("test", user);
+
+    // Check clients.
+    BasicHttpAuthConfig expected;
+    expected.add("foo", "bar");
+    expected.add("test", "123\xa3");
+    EXPECT_EQ(expected.toElement()->str(), auth.toElement()->str());
+}
+
 // This test checks comments.
 TEST_F(AgentParserTest, comments) {
-    configParse(AGENT_CONFIGS[7], 0);
+    configParse(AGENT_CONFIGS[8], 0);
     CtrlAgentCfgContextPtr agent_ctx = cfg_mgr_.getCtrlAgentCfgContext();
     ASSERT_TRUE(agent_ctx);
 
@@ -445,6 +537,23 @@ TEST_F(AgentParserTest, comments) {
     ASSERT_EQ(1, ctx6->size());
     ASSERT_TRUE(ctx6->get("version"));
     EXPECT_EQ("1", ctx6->get("version")->str());
+
+    // Check basic HTTP authentication comment.
+    const BasicHttpAuthConfig& auth = agent_ctx->getBasicAuthConfig();
+    auto clients = auth.getClientList();
+    ASSERT_EQ(2, clients.size());
+    ConstElementPtr ctx7 = clients.front().getContext();
+    ASSERT_TRUE(ctx7);
+    ASSERT_EQ(1, ctx7->size());
+    ASSERT_TRUE(ctx7->get("comment"));
+    EXPECT_EQ("\"foo is authorized\"", ctx7->get("comment")->str());
+
+    // Check basic HTTP authentication user context.
+    ConstElementPtr ctx8 = clients.back().getContext();
+    ASSERT_TRUE(ctx8);
+    ASSERT_EQ(1, ctx8->size());
+    ASSERT_TRUE(ctx8->get("no password"));
+    EXPECT_EQ("true", ctx8->get("no password")->str());
 }
 
-}; // end of anonymous namespace
+} // end of anonymous namespace

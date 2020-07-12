@@ -9,6 +9,7 @@
 
 #include <cc/data.h>
 #include <hooks/hooks_config.h>
+#include <http/basic_auth_config.h>
 #include <process/d_cfg_mgr.h>
 #include <boost/pointer_cast.hpp>
 #include <map>
@@ -126,6 +127,22 @@ public:
         return (hooks_config_);
     }
 
+    /// @brief Returns non-const reference to configured basic HTTP
+    /// authentification clients.
+    ///
+    /// @return non-const reference to configured basic auth clients.
+    isc::http::BasicHttpAuthConfig& getBasicAuthConfig() {
+        return (basic_auth_config_);
+    }
+
+    /// @brief Returns const reference to configured basic HTTP
+    /// authentification clients.
+    ///
+    /// @return const reference to configured basic auth clients.
+    const isc::http::BasicHttpAuthConfig& getBasicAuthConfig() const {
+        return (basic_auth_config_);
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// Returns an element which must parse into the same object, i.e.
@@ -166,6 +183,9 @@ private:
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
+
+    /// @brief Configured basic HTTP authentification clients.
+    isc::http::BasicHttpAuthConfig basic_auth_config_;
 };
 
 /// @brief Ctrl Agent Configuration Manager.

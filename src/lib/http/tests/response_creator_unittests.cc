@@ -151,7 +151,7 @@ TEST_F(HttpResponseCreatorAuthTest, noAuth) {
     string realm = "ISC.ORG";
 
     ASSERT_NO_THROW(response =
-        checkBasicHttpAuth(creator, request, credentials, realm));
+        checkBasicHttpAuth(*creator, request, credentials, realm));
     ASSERT_TRUE(response);
 
     EXPECT_EQ("HTTP/1.0 401 Unauthorized\r\n"
@@ -185,7 +185,7 @@ TEST_F(HttpResponseCreatorAuthTest, authTooShort) {
     string realm = "ISC.ORG";
 
     ASSERT_NO_THROW(response =
-        checkBasicHttpAuth(creator, request, credentials, realm));
+        checkBasicHttpAuth(*creator, request, credentials, realm));
     ASSERT_TRUE(response);
 
     EXPECT_EQ("HTTP/1.0 401 Unauthorized\r\n"
@@ -220,7 +220,7 @@ TEST_F(HttpResponseCreatorAuthTest, badScheme) {
     string realm = "ISC.ORG";
 
     ASSERT_NO_THROW(response =
-        checkBasicHttpAuth(creator, request, credentials, realm));
+        checkBasicHttpAuth(*creator, request, credentials, realm));
     ASSERT_TRUE(response);
 
     EXPECT_EQ("HTTP/1.0 401 Unauthorized\r\n"
@@ -255,7 +255,7 @@ TEST_F(HttpResponseCreatorAuthTest, notMatching) {
     string realm = "ISC.ORG";
 
     ASSERT_NO_THROW(response =
-        checkBasicHttpAuth(creator, request, credentials, realm));
+        checkBasicHttpAuth(*creator, request, credentials, realm));
     ASSERT_TRUE(response);
 
     EXPECT_EQ("HTTP/1.0 401 Unauthorized\r\n"
@@ -293,7 +293,7 @@ TEST_F(HttpResponseCreatorAuthTest, matching) {
     string realm = "ISC.ORG";
 
     ASSERT_NO_THROW(response =
-        checkBasicHttpAuth(creator, request, credentials, realm));
+        checkBasicHttpAuth(*creator, request, credentials, realm));
     EXPECT_FALSE(response);
 
     addString("HTTP_CLIENT_REQUEST_AUTHORIZED received HTTP request "

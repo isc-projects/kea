@@ -9,6 +9,7 @@
 
 #include <http/basic_auth_config.h>
 #include <http/response_creator.h>
+#include <http/response_json.h>
 #include <string.h>
 #include <unordered_map>
 
@@ -22,10 +23,10 @@ namespace http {
 /// @param credentials Authorized credentials and user id map.
 /// @param realm Realm name.
 /// @return Error HTTP response if validation failed, null otherwise.
-HttpResponsePtr checkBasicHttpAuth(HttpResponseCreatorPtr creator,
-                                   const ConstHttpRequestPtr& request,
-                                   const BasicHttpAuthMap& credentials,
-                                   const std::string& realm);
+HttpResponseJsonPtr checkBasicHttpAuth(const HttpResponseCreator& creator,
+                                       const ConstHttpRequestPtr& request,
+                                       const BasicHttpAuthMap& credentials,
+                                       const std::string& realm);
 
 } // end of namespace isc::http
 } // end of namespace isc

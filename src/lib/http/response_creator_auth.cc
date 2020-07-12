@@ -17,10 +17,10 @@ using namespace std;
 namespace isc {
 namespace http {
 
-HttpResponsePtr checkBasicHttpAuth(HttpResponseCreatorPtr creator,
-                                   const ConstHttpRequestPtr& request,
-                                   const BasicHttpAuthMap& credentials,
-                                   const std::string& realm) {
+HttpResponseJsonPtr checkBasicHttpAuth(const HttpResponseCreator& creator,
+                                       const ConstHttpRequestPtr& request,
+                                       const BasicHttpAuthMap& credentials,
+                                       const std::string& realm) {
     try {
         string value = request->getHeaderValue("Authorization");
         // Trim space characters.
@@ -43,7 +43,7 @@ HttpResponsePtr checkBasicHttpAuth(HttpResponseCreatorPtr creator,
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                       HTTP_CLIENT_REQUEST_AUTHORIZED)
                 .arg(it->second);
-            return (HttpResponsePtr());
+            return (HttpResponseJsonPtr());
         }
         LOG_INFO(http_logger, HTTP_CLIENT_REQUEST_NOT_AUTHORIZED);
     } catch (const HttpMessageNonExistingHeader&) {
@@ -53,13 +53,13 @@ HttpResponsePtr checkBasicHttpAuth(HttpResponseCreatorPtr creator,
             .arg(ex.what());
     }
     HttpResponsePtr response =
-        creator->createStockHttpResponse(request, HttpStatusCode::UNAUTHORIZED);
+        creator.createStockHttpResponse(request, HttpStatusCode::UNAUTHORIZED);
     response->reset();
     response->context()->headers_.push_back(
         HttpHeaderContext("WWW-Authenticate",
                           "Basic realm=\"" + realm + "\""));
     response->finalize();
-    return (response);
+    return (boost::dynamic_pointer_cast<HttpResponseJson>(response));
 }
 
 } // end of namespace isc::http

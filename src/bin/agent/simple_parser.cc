@@ -90,7 +90,7 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     ctx->setHttpHost(SimpleParser::getString(config, "http-host"));
     ctx->setHttpPort(SimpleParser::getIntType<uint16_t>(config, "http-port"));
     ctx->setBasicAuthRealm(SimpleParser::getString(config,
-	"basic-authentication-realm"));
+        "basic-authentication-realm"));
 
     // Control sockets are second.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
@@ -102,6 +102,9 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     }
 
     // Basic HTTP authentications are third.
+    ConstElementPtr auth_config = config->get("basic-authentications");
+    ctx->getBasicAuthConfig().clear();
+    ctx->getBasicAuthConfig().parse(auth_config);
 
     // User context can be done at anytime.
     ConstElementPtr user_context = config->get("user-context");

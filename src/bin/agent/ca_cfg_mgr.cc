@@ -27,7 +27,9 @@ CtrlAgentCfgContext::CtrlAgentCfgContext()
 CtrlAgentCfgContext::CtrlAgentCfgContext(const CtrlAgentCfgContext& orig)
     : ConfigBase(), ctrl_sockets_(orig.ctrl_sockets_),
       http_host_(orig.http_host_), http_port_(orig.http_port_),
-      hooks_config_(orig.hooks_config_) {
+      basic_auth_realm_(orig.basic_auth_realm_),
+      hooks_config_(orig.hooks_config_),
+      basic_auth_config_(orig.basic_auth_config_) {
 }
 
 CtrlAgentCfgMgr::CtrlAgentCfgMgr()
@@ -50,7 +52,11 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     // Then print the control-sockets
     s << ctx->getControlSocketInfoSummary();
 
-    // @todo: add something if authentication is required
+    // Add something if authentication is required.
+    const isc::http::BasicHttpAuthConfig& auth = ctx->getBasicAuthConfig();
+    if (!auth.getClientList().empty()) {
+        s << ", requires basic HTTP authentication";
+    }
 
     // Finally, print the hook libraries names
     const isc::hooks::HookLibsCollection libs = ctx->getHooksConfig().get();
@@ -165,7 +171,11 @@ CtrlAgentCfgContext::toElement() const {
         control_sockets->set(si->first, socket);
     }
     ca->set("control-sockets", control_sockets);
-    // @todo: Set authentication.
+    // Set basic HTTP authentication
+    const isc::http::BasicHttpAuthConfig& auth = basic_auth_config_;
+    if (!basic_auth_config_.getClientList().empty()) {
+        ca->set("basic-authentications", basic_auth_config_.toElement());
+    }
     // Set Control-agent
     ElementPtr result = Element::createMap();
     result->set("Control-agent", ca);
