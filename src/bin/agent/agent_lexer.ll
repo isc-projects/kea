@@ -200,11 +200,21 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"basic-authentication-realm\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+        return AgentParser::make_BASIC_AUTHENTICATION_REALM(driver.loc_);
+    default:
+        return AgentParser::make_STRING("basic-authentication-realm", driver.loc_);
+    }
+}
+
 \"user-context\" {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
     case ParserContext::SERVER:
     case ParserContext::LOGGERS:
+    case ParserContext::BASIC_AUTHENTICATIONS:
         return AgentParser::make_USER_CONTEXT(driver.loc_);
     default:
         return AgentParser::make_STRING("user-context", driver.loc_);
@@ -216,6 +226,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case ParserContext::AGENT:
     case ParserContext::SERVER:
     case ParserContext::LOGGERS:
+    case ParserContext::BASIC_AUTHENTICATIONS:
         return AgentParser::make_COMMENT(driver.loc_);
     default:
         return AgentParser::make_STRING("comment", driver.loc_);
@@ -399,6 +410,33 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return AgentParser::make_SEVERITY(driver.loc_);
     default:
         return AgentParser::make_STRING("severity", driver.loc_);
+    }
+}
+
+\"basic-authentications\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+        return AgentParser::make_BASIC_AUTHENTICATIONS(driver.loc_);
+    default:
+        return AgentParser::make_STRING("basic-authentications", driver.loc_);
+    }
+}
+
+\"user\" {
+    switch(driver.ctx_) {
+    case ParserContext::BASIC_AUTHENTICATIONS:
+        return AgentParser::make_USER(driver.loc_);
+    default:
+        return AgentParser::make_STRING("user", driver.loc_);
+    }
+}
+
+\"password\" {
+    switch(driver.ctx_) {
+    case ParserContext::BASIC_AUTHENTICATIONS:
+        return AgentParser::make_PASSWORD(driver.loc_);
+    default:
+        return AgentParser::make_STRING("password", driver.loc_);
     }
 }
 

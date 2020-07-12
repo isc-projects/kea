@@ -174,7 +174,10 @@ public:
         LOGGERS,
 
         ///< Used while parsing Control-agent/loggers/output_options structures.
-        OUTPUT_OPTIONS
+        OUTPUT_OPTIONS,
+
+        ///< Used while parsing Control-agent/basic-authentications.
+        BASIC_AUTHENTICATIONS
 
     } LexerContext;
 
@@ -258,7 +261,7 @@ public:
     isc::data::ElementPtr parseCommon();
 };
 
-}; // end of isc::eval namespace
-}; // end of isc namespace
+} // end of isc::eval namespace
+} // end of isc namespace
 
 #endif

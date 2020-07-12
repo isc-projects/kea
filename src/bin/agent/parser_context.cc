@@ -135,10 +135,12 @@ ParserContext::contextName()
         return ("loggers");
     case OUTPUT_OPTIONS:
         return ("output-options");
+    case BASIC_AUTHENTICATIONS:
+        return ("basic-authentications");
     default:
         return ("__unknown__");
     }
 }
 
-};
-};
+} // end of isc::eval namespace
+} // end of isc namespace
