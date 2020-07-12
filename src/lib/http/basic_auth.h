@@ -7,9 +7,9 @@
 #ifndef BASIC_HTTP_AUTH_H
 #define BASIC_HTTP_AUTH_H
 
+#include <http/header_context.h>
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
-#include <string>
 #include <unordered_set>
 
 namespace isc {
@@ -23,7 +23,7 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param user User name
+    /// @param user User id
     /// @param password Password
     /// @throw BadValue if user contains the ':' character.
     BasicHttpAuth(const std::string& user, const std::string& password);
@@ -52,7 +52,7 @@ private:
     /// @brief Build the credential from the secret.
     void buildCredential();
 
-    /// @brief User name.
+    /// @brief User id.
     std::string user_;
 
     /// @brief Password.
@@ -68,15 +68,17 @@ private:
 /// @brief Type of pointers to basic HTTP authentication objects.
 typedef boost::shared_ptr<BasicHttpAuth> BasicHttpAuthPtr;
 
-/// @brief Type of basic HTTP authentication credential list.
-typedef std::unordered_set<std::string> BasicHttpAuthList;
+/// @brief Represents basic HTTP authentication header.
+struct BasicAuthHttpHeaderContext : public HttpHeaderContext {
 
-/// @brief Verify if a credential is authorized.
-///
-/// @param credential Credential to validate.
-/// @param list List of authorized credentials.
-/// @return True if authorized, false otherwise.
-bool allow(const std::string& credential, const BasicHttpAuthList& list);
+    /// @brief Constructor.
+    ///
+    /// @param basic_auth Basic HTTP authentication object.
+    explicit BasicAuthHttpHeaderContext(const BasicHttpAuth& basic_auth)
+        : HttpHeaderContext("Authorization",
+                            "Basic " + basic_auth.getCredential()) {
+    }
+};
 
 } // end of namespace isc::http
 } // end of namespace isc

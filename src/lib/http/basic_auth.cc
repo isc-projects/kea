@@ -41,9 +41,5 @@ void BasicHttpAuth::buildCredential() {
     credential_ = encodeBase64(encodeUtf8(secret_));
 }
 
-bool allow(const std::string& credential, const BasicHttpAuthList& list) {
-    return (list.count(credential) != 0);
-}
-
 } // end of namespace isc::http
 } // end of namespace isc

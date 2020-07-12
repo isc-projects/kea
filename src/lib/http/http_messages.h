@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/http/http_messages.mes on Mon Jun 22 2020 17:27
+// File created from ../../../src/lib/http/http_messages.mes on Sun Jul 12 2020 02:08
 
 #ifndef HTTP_MESSAGES_H
 #define HTTP_MESSAGES_H
@@ -12,6 +12,10 @@ extern const isc::log::MessageID HTTP_BAD_CLIENT_REQUEST_RECEIVED;
 extern const isc::log::MessageID HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS;
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED;
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS;
+extern const isc::log::MessageID HTTP_CLIENT_REQUEST_AUTHORIZED;
+extern const isc::log::MessageID HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER;
+extern const isc::log::MessageID HTTP_CLIENT_REQUEST_NOT_AUTHORIZED;
+extern const isc::log::MessageID HTTP_CLIENT_REQUEST_NO_AUTH_HEADER;
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_RECEIVED;
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_RECEIVED_DETAILS;
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_SEND;

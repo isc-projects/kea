@@ -45,9 +45,7 @@ HttpRequest::HttpRequest(const Method& method,
     context()->headers_.push_back(HttpHeaderContext(host_header.getName(),
                                                     host_header.getValue()));
     if (basic_auth) {
-        context()->headers_.push_back(HttpHeaderContext("Authorization",
-                                                        "Basic " +
-                                                        basic_auth->getCredential()));
+        context()->headers_.push_back(BasicAuthHttpHeaderContext(*basic_auth));
     }
 }
 

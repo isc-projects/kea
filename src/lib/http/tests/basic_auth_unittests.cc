@@ -52,4 +52,14 @@ TEST(BasicHttpAuthTest, utf8) {
     EXPECT_EQ("Zm9vCjpiB3I=", basic_auth->getCredential());
 }
 
+// Test that a header context for basic HTTP authentication can be created.
+TEST(BasicHttpAuthTest, headerContext) {
+    BasicHttpAuthPtr basic_auth;
+    EXPECT_NO_THROW(basic_auth.reset(new BasicHttpAuth("foo", "bar")));
+    ASSERT_TRUE(basic_auth);
+    BasicAuthHttpHeaderContext ctx(*basic_auth);
+    EXPECT_EQ("Authorization", ctx.name_);
+    EXPECT_EQ("Basic Zm9vOmJhcg==", ctx.value_);
+}
+
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/http/http_messages.mes on Mon Jun 22 2020 17:27
+// File created from ../../../src/lib/http/http_messages.mes on Sun Jul 12 2020 02:08
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -11,6 +11,10 @@ extern const isc::log::MessageID HTTP_BAD_CLIENT_REQUEST_RECEIVED = "HTTP_BAD_CL
 extern const isc::log::MessageID HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS = "HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS";
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED = "HTTP_BAD_SERVER_RESPONSE_RECEIVED";
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS = "HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS";
+extern const isc::log::MessageID HTTP_CLIENT_REQUEST_AUTHORIZED = "HTTP_CLIENT_REQUEST_AUTHORIZED";
+extern const isc::log::MessageID HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER = "HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER";
+extern const isc::log::MessageID HTTP_CLIENT_REQUEST_NOT_AUTHORIZED = "HTTP_CLIENT_REQUEST_NOT_AUTHORIZED";
+extern const isc::log::MessageID HTTP_CLIENT_REQUEST_NO_AUTH_HEADER = "HTTP_CLIENT_REQUEST_NO_AUTH_HEADER";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_RECEIVED = "HTTP_CLIENT_REQUEST_RECEIVED";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_RECEIVED_DETAILS = "HTTP_CLIENT_REQUEST_RECEIVED_DETAILS";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_SEND = "HTTP_CLIENT_REQUEST_SEND";
@@ -38,6 +42,10 @@ const char* values[] = {
     "HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS", "detailed information about bad request received from %1:\n%2",
     "HTTP_BAD_SERVER_RESPONSE_RECEIVED", "bad response received when communicating with %1: %2",
     "HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS", "detailed information about bad response received from %1:\n%2",
+    "HTTP_CLIENT_REQUEST_AUTHORIZED", "received HTTP request authorized for '%1'",
+    "HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER", "received HTTP request with malformed authentication header: %1",
+    "HTTP_CLIENT_REQUEST_NOT_AUTHORIZED", "received HTTP request with not matching authentication header",
+    "HTTP_CLIENT_REQUEST_NO_AUTH_HEADER", "received HTTP request without required authentication header",
     "HTTP_CLIENT_REQUEST_RECEIVED", "received HTTP request from %1",
     "HTTP_CLIENT_REQUEST_RECEIVED_DETAILS", "detailed information about well formed request received from %1:\n%2",
     "HTTP_CLIENT_REQUEST_SEND", "sending HTTP request %1 to %2",

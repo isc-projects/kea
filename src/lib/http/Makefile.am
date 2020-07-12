@@ -35,6 +35,7 @@ libkea_http_la_SOURCES += response.cc response.h
 libkea_http_la_SOURCES += response_parser.cc response_parser.h
 libkea_http_la_SOURCES += response_context.h
 libkea_http_la_SOURCES += response_creator.cc response_creator.h
+libkea_http_la_SOURCES += response_creator_auth.cc response_creator_auth.h
 libkea_http_la_SOURCES += response_creator_factory.h
 libkea_http_la_SOURCES += response_json.cc response_json.h
 libkea_http_la_SOURCES += url.cc url.h

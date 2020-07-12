@@ -43,8 +43,9 @@ libhttp_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 libhttp_unittests_LDFLAGS  = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
 libhttp_unittests_LDADD  = $(top_builddir)/src/lib/http/libkea-http.la
-libhttp_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libhttp_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libhttp_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,6 +32,22 @@ This debug message is issued when an HTTP client receives malformed response
 from the server. The first argument specifies an URL of the server. The
 second argument provides a response in the textual format. The request is
 truncated by the logger if it is too large to be printed.
+
+% HTTP_CLIENT_REQUEST_AUTHORIZED received HTTP request authorized for '%1'
+This debug message is issued when the server receives with a matching
+authentication header. The argument provides the user name.
+
+% HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER received HTTP request with malformed authentication header: %1
+This information message is issued when the server receives a request with
+a malformed authentication header. The argument explains the problem.
+
+% HTTP_CLIENT_REQUEST_NOT_AUTHORIZED received HTTP request with not matching authentication header
+This information message is issued when the server receives a request with
+authentication header carrying not recognized credential.
+
+% HTTP_CLIENT_REQUEST_NO_AUTH_HEADER received HTTP request without required authentication header
+This information message is issued when the server receives a request without
+a required authentication header.
 
 % HTTP_CLIENT_REQUEST_RECEIVED received HTTP request from %1
 This debug message is issued when the server finished receiving a HTTP
