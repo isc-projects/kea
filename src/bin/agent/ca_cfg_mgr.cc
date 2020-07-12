@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,7 @@ namespace isc {
 namespace agent {
 
 CtrlAgentCfgContext::CtrlAgentCfgContext()
-    :http_host_(""), http_port_(0) {
+    : http_host_(""), http_port_(0), basic_auth_realm_("") {
 }
 
 CtrlAgentCfgContext::CtrlAgentCfgContext(const CtrlAgentCfgContext& orig)
@@ -49,6 +49,8 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
 
     // Then print the control-sockets
     s << ctx->getControlSocketInfoSummary();
+
+    // @todo: add something if authentication is required
 
     // Finally, print the hook libraries names
     const isc::hooks::HookLibsCollection libs = ctx->getHooksConfig().get();
@@ -152,6 +154,8 @@ CtrlAgentCfgContext::toElement() const {
     ca->set("http-host", Element::create(http_host_));
     // Set http-port
     ca->set("http-port", Element::create(static_cast<int64_t>(http_port_)));
+    // Set basic-authentication-realm
+    ca->set("basic-authentication-realm", Element::create(basic_auth_realm_));
     // Set hooks-libraries
     ca->set("hooks-libraries", hooks_config_.toElement());
     // Set control-sockets
@@ -161,6 +165,7 @@ CtrlAgentCfgContext::toElement() const {
         control_sockets->set(si->first, socket);
     }
     ca->set("control-sockets", control_sockets);
+    // @todo: Set authentication.
     // Set Control-agent
     ElementPtr result = Element::createMap();
     result->set("Control-agent", ca);

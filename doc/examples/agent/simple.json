@@ -11,6 +11,28 @@
         // Another mandatory parameter is the HTTP port.
         "http-port": 8000,
 
+        // An optional parameter is the basic HTTP authentication realm.
+        // Its default is "kea-control-agent".
+        "basic-authentication-realm": "kea-control-agent",
+
+        // This list specifies the user ids and passwords to use for
+        // basic HTTP authentication. If empty or not present any client
+        // is authorized.
+        "basic-authentications":
+        [
+            // This specifies an authorized client.
+            {
+                "comment": "admin is authorized",
+
+                // The user id must not be empty or contain the ':' character.
+                // It is a mandatory parameter.
+                "user": "admin",
+
+                // If password is not specified an empty password is used.
+                "password": "1234"
+            }
+        ],
+
         // This map specifies where control channel of each server is configured
         // to listen on. See 'control-socket' object in the respective
         // servers. At this time the only supported socket type is "unix".

@@ -7,15 +7,13 @@
 #ifndef HTTP_RESPONSE_CREATOR_AUTH_H
 #define HTTP_RESPONSE_CREATOR_AUTH_H
 
+#include <http/basic_auth_config.h>
 #include <http/response_creator.h>
 #include <string.h>
 #include <unordered_map>
 
 namespace isc {
 namespace http {
-
-/// @brief Type of basic HTTP authentication credential and user id map.
-typedef std::unordered_map<std::string, std::string> BasicHttpAuthMap;
 
 /// @brief Validate basic HTTP authentication.
 ///

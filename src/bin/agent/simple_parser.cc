@@ -36,8 +36,9 @@ namespace agent {
 ///
 /// These are global Control Agent parameters.
 const SimpleDefaults AgentSimpleParser::AGENT_DEFAULTS = {
-    { "http-host",    Element::string,  "127.0.0.1"},
-    { "http-port",    Element::integer,  "8000"}
+    { "http-host",                  Element::string,  "127.0.0.1" },
+    { "http-port",                  Element::integer, "8000" },
+    { "basic-authentication-realm", Element::string,  "kea-control-agent" }
 };
 
 /// @brief This table defines default values for control sockets.
@@ -88,6 +89,8 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     // Let's get the HTTP parameters first.
     ctx->setHttpHost(SimpleParser::getString(config, "http-host"));
     ctx->setHttpPort(SimpleParser::getIntType<uint16_t>(config, "http-port"));
+    ctx->setBasicAuthRealm(SimpleParser::getString(config,
+	"basic-authentication-realm"));
 
     // Control sockets are second.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
@@ -97,6 +100,8 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
             ctx->setControlSocketInfo(cs->second, cs->first);
         }
     }
+
+    // Basic HTTP authentications are third.
 
     // User context can be done at anytime.
     ConstElementPtr user_context = config->get("user-context");

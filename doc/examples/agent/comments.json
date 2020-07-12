@@ -10,6 +10,17 @@
 
         "http-host": "127.0.0.1",
         "http-port": 8000,
+        "basic-authentication-realm": "kea-control-agent",
+
+        // In basoc HTTP authentication
+        "basic-authentications":
+        [
+            {
+                "comment": "admin is authorized",
+                "user": "admin",
+                "password": "1234"
+            }
+        ],
 
         // In control socket
         "control-sockets":

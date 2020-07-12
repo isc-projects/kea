@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -98,6 +98,20 @@ public:
         return (http_port_);
     }
 
+    /// @brief Sets basic-authentication-realm parameter
+    ///
+    /// @param real Basic HTTP authentication realm
+    void setBasicAuthRealm(const std::string& realm) {
+        basic_auth_realm_ = realm;
+    }
+
+    /// @brief Returns basic-authentication-realm parameter
+    ///
+    /// @return Basic HTTP authentication realm.
+    std::string getBasicAuthRealm() const {
+        return (basic_auth_realm_);
+    }
+
     /// @brief Returns non-const reference to configured hooks libraries.
     ///
     /// @return non-const reference to configured hooks libraries.
@@ -146,6 +160,9 @@ private:
 
     /// TCP port the CA should listen on.
     uint16_t http_port_;
+
+    /// Basic HTTP authentication realm.
+    std::string basic_auth_realm_;
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
