@@ -50,6 +50,7 @@ The following example demonstrates the basic CA configuration.
        "Control-agent": {
            "http-host": "10.20.30.40",
            "http-port": 8000,
+           "basic-authentication-realm": "kea-control-agent",
 
            "control-sockets": {
                "dhcp4": {
@@ -67,6 +68,12 @@ The following example demonstrates the basic CA configuration.
                    "socket-name": "/path/to/the/unix/socket-d2"
                },
            },
+
+           "basic-authentications": [
+           {
+               "user": "admin",
+               "password": "1234"
+           } ],
 
            "hooks-libraries": [
            {
@@ -125,10 +132,32 @@ formatting; please consult the relevant hook library documentation for
 details.
 
 User contexts can be specified on either global scope, control socket,
-or loggers. One other useful feature is the ability to store comments or
-descriptions; the parser translates a "comment" entry into a user
-context with the entry, which allows a comment to be attached within the
-configuration itself.
+basic authentication, or loggers. One other useful feature is the
+ability to store comments or descriptions; the parser translates a
+"comment" entry into a user context with the entry, which allows a
+comment to be attached within the configuration itself.
+
+The basic HTTP authentication was added by Kea 1.7.10. It protects
+not authorized uses of the control agent by local users. For the
+protection against remote attackers HTTPS and reverse proxy of
+:ref:`agent-secure-connection` provide a stronger security.
+
+The ``basic-authentication-realm`` is used for error message when
+the basic HTTP authentication is mandatory but the client is not
+authorized.
+
+When the ``basic-authentications`` list is configured and not empty
+the basic HTTP authentication is required. Each element of the list
+specifies a user id and a password. The user id is mandatory, must
+be not empty and must not contain the colon (:) character. The
+password is optional: when it is not specified an empty password
+is used.
+
+.. note::
+
+   The basic HTTP authentication user id and password are encoded
+   in UTF-8 but the current Kea JSON syntax only supports the latin-1
+   (i.e. 0x00..0xff) unicode subset.
 
 Hooks libraries can be loaded by the Control Agent in the same way as
 they are loaded by the DHCPv4 and DHCPv6 servers. The CA currently
@@ -151,7 +180,7 @@ The Control Agent does not natively support secure HTTP connections like
 SSL or TLS. In order to setup a secure connection, please use one of the
 available third-party HTTP servers and configure it to run as a reverse
 proxy to the Control Agent. Kea has been tested with two major HTTP
-server implentations working as a reverse proxy: Apache2 and nginx.
+server implementations working as a reverse proxy: Apache2 and nginx.
 Example configurations, including extensive comments, are provided in
 the ``doc/examples/https/`` directory.
 
@@ -205,6 +234,7 @@ server enables authentication of the clients using certificates.
    #        -H Content-Type:application/json -d '{ "command": "list-commands" }' \
    #         https://kea.example.org/kea
    #
+   #   curl syntax for basic authentication is -u user:password
    #
    #
    #   nginx configuration starts here.

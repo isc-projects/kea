@@ -22,6 +22,8 @@ As the primary purpose of the Kea shell is as a tool in a scripting
 environment, it is not interactive. However, following simple guidelines it can
 be run manually.
 
+Kea 1.7.10 introduced basic HTTP authentication support.
+
 Shell Usage
 ===========
 
@@ -29,7 +31,7 @@ Shell Usage
 
 .. code-block:: console
 
-   $ kea-shell [--host hostname] [--port number] [--path path] [--timeout seconds] [--service service-name] [command]
+   $ kea-shell [--host hostname] [--port number] [--path path] [--auth-user] [--auth-password] [--timeout seconds] [--service service-name] [command]
 
 where:
 
@@ -42,6 +44,13 @@ where:
 -  ``--path path`` specifies the path in the URL to connect to. If not
    specified, an empty path is used. As the CA listens at the empty
    path, this parameter is useful only with a reverse proxy.
+
+-  ``--auth-user`` specifies the user id for basic HTTP authentication.
+   If not specified or specified as the empty string authentication is
+   not used.
+
+- ``--auth-password`` specifies the password for basic HTTP authentication.
+   If not specified but the user id is specified an empty password is used.
 
 -  ``--timeout seconds`` specifies the timeout (in seconds) for the
    connection. If not given, 10 seconds is used.

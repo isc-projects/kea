@@ -51,12 +51,12 @@ The arguments are as follows:
    parameter is useful only with a reverse proxy.
 
 ``--auth-user``
-   Specifies the user name for basic HTTP authentication. If not specified
+   Specifies the user id for basic HTTP authentication. If not specified
    or specified as the empty string authentication is not used.
 
 ``--auth-password``
    Specifies the password for basic HTTP authentication. If not specified
-   but the user name is specified an empty password is used.
+   but the user id is specified an empty password is used.
 
 ``--timeout``
    Specifies the connection timeout in seconds. If not specified, 10
