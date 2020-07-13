@@ -79,16 +79,20 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
         "                \"name\": \"server1\","
         "                \"url\": \"http://127.0.0.1:8080/\","
         "                \"role\": \"primary\","
+        "                \"basic-auth-password\": \"1234\","
         "                \"auto-failover\": false"
         "            },"
         "            {"
         "                \"name\": \"server2\","
         "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"basic-auth-user\": \"\","
         "                \"role\": \"secondary\""
         "            },"
         "            {"
         "                \"name\": \"server3\","
         "                \"url\": \"http://127.0.0.1:8082/\","
+        "                \"basic-auth-user\": \"foo\","
+        "                \"basic-auth-password\": \"bar\","
         "                \"role\": \"backup\","
         "                \"auto-failover\": false"
         "            }"
@@ -133,6 +137,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(cfg->getLogLabel(), "server1 (http://127.0.0.1:8080/)");
     EXPECT_EQ(HAConfig::PeerConfig::PRIMARY, cfg->getRole());
     EXPECT_FALSE(cfg->isAutoFailover());
+    EXPECT_FALSE(cfg->getBasicAuth());
 
     cfg = impl->getConfig()->getPeerConfig("server2");
     ASSERT_TRUE(cfg);
@@ -141,6 +146,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(cfg->getLogLabel(), "server2 (http://127.0.0.1:8081/)");
     EXPECT_EQ(HAConfig::PeerConfig::SECONDARY, cfg->getRole());
     EXPECT_TRUE(cfg->isAutoFailover());
+    EXPECT_FALSE(cfg->getBasicAuth());
 
     cfg = impl->getConfig()->getPeerConfig("server3");
     ASSERT_TRUE(cfg);
@@ -149,6 +155,8 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(cfg->getLogLabel(), "server3 (http://127.0.0.1:8082/)");
     EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
     EXPECT_FALSE(cfg->isAutoFailover());
+    ASSERT_TRUE(cfg->getBasicAuth());
+    EXPECT_EQ("foo:bar", cfg->getBasicAuth()->getSecret());
 
     // Verify that per-state configuration is correct.x
 
@@ -200,6 +208,7 @@ TEST_F(HAConfigTest, configureHotStandby) {
         "            {"
         "                \"name\": \"server1\","
         "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"basic-auth-user\": \"admin\","
         "                \"role\": \"primary\","
         "                \"auto-failover\": false"
         "            },"
@@ -238,6 +247,8 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_EQ("http://127.0.0.1:8080/", cfg->getUrl().toText());
     EXPECT_EQ(HAConfig::PeerConfig::PRIMARY, cfg->getRole());
     EXPECT_FALSE(cfg->isAutoFailover());
+    ASSERT_TRUE(cfg->getBasicAuth());
+    EXPECT_EQ("admin:", cfg->getBasicAuth()->getSecret());
 
     cfg = impl->getConfig()->getPeerConfig("server2");
     ASSERT_TRUE(cfg);
@@ -245,6 +256,7 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_EQ("http://127.0.0.1:8081/", cfg->getUrl().toText());
     EXPECT_EQ(HAConfig::PeerConfig::STANDBY, cfg->getRole());
     EXPECT_TRUE(cfg->isAutoFailover());
+    EXPECT_FALSE(cfg->getBasicAuth());
 
     cfg = impl->getConfig()->getPeerConfig("server3");
     ASSERT_TRUE(cfg);
@@ -252,6 +264,7 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_EQ("http://127.0.0.1:8082/", cfg->getUrl().toText());
     EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
     EXPECT_FALSE(cfg->isAutoFailover());
+    EXPECT_FALSE(cfg->getBasicAuth());
 
     HAConfig::StateConfigPtr state_cfg;
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
@@ -312,6 +325,8 @@ TEST_F(HAConfigTest, configurePassiveBackup) {
         "            {"
         "                \"name\": \"server3\","
         "                \"url\": \"http://127.0.0.1:8082/\","
+        "                \"basic-auth-user\": \"test\","
+        "                \"basic-auth-password\": \"123\\u00a3\","
         "                \"role\": \"backup\""
         "            }"
         "        ]"
@@ -330,18 +345,22 @@ TEST_F(HAConfigTest, configurePassiveBackup) {
     EXPECT_EQ("server1", cfg->getName());
     EXPECT_EQ("http://127.0.0.1:8080/", cfg->getUrl().toText());
     EXPECT_EQ(HAConfig::PeerConfig::PRIMARY, cfg->getRole());
+    EXPECT_FALSE(cfg->getBasicAuth());
 
     cfg = impl->getConfig()->getPeerConfig("server2");
     ASSERT_TRUE(cfg);
     EXPECT_EQ("server2", cfg->getName());
     EXPECT_EQ("http://127.0.0.1:8081/", cfg->getUrl().toText());
     EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
+    EXPECT_FALSE(cfg->getBasicAuth());
 
     cfg = impl->getConfig()->getPeerConfig("server3");
     ASSERT_TRUE(cfg);
     EXPECT_EQ("server3", cfg->getName());
     EXPECT_EQ("http://127.0.0.1:8082/", cfg->getUrl().toText());
     EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
+    ASSERT_TRUE(cfg->getBasicAuth());
+    EXPECT_EQ("dGVzdDoxMjPCow==", cfg->getBasicAuth()->getCredential());
 }
 
 // This server name must not be empty.
@@ -1133,6 +1152,33 @@ TEST_F(HAConfigTest, passiveBackupNoPrimary) {
         "    }"
         "]",
         "primary server required in the passive backup configuration");
+}
+
+// Test that empty name id is forbidden for basic HTTP authentication.
+TEST_F(HAConfigTest, invalidUser) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \":http//127.0.0.1:8080/\","
+        "                \"basic-auth-user\": \"foo:bar\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "user 'foo:bar' must not contain a ':' in peer 'server2'");
 }
 
 

@@ -986,6 +986,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(config->getUrl().getHostname()));
+    config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(command);
     request->finalize();
 
@@ -1268,6 +1269,7 @@ HAService::asyncSendHeartbeat() {
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(partner_config->getUrl().getHostname()));
+    partner_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createHeartbeat(server_type_));
     request->finalize();
 
@@ -1406,6 +1408,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getHostname()));
 
+    remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createDHCPDisable(max_period,
                                                              server_type_));
     request->finalize();
@@ -1479,6 +1482,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getHostname()));
+    remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createDHCPEnable(server_type_));
     request->finalize();
 
@@ -1612,6 +1616,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(partner_config->getUrl().getHostname()));
+    partner_config->addBasicAuthHttpHeader(request);
     if (server_type_ == HAServerType::DHCPv4) {
         request->setBodyAsJson(CommandCreator::createLease4GetPage(
             boost::dynamic_pointer_cast<Lease4>(last_lease), config_->getSyncPageLimit()));
@@ -1949,6 +1954,7 @@ HAService::processMaintenanceStart() {
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getHostname()));
+    remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createMaintenanceNotify(false, server_type_));
     request->finalize();
 
@@ -2070,6 +2076,7 @@ HAService::processMaintenanceCancel() {
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getHostname()));
+    remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createMaintenanceNotify(true, server_type_));
     request->finalize();
 

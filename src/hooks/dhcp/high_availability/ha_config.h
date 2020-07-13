@@ -8,6 +8,8 @@
 #define HA_CONFIG_H
 
 #include <exceptions/exceptions.h>
+#include <http/basic_auth.h>
+#include <http/post_request_json.h>
 #include <http/url.h>
 #include <util/state_model.h>
 #include <boost/shared_ptr.hpp>
@@ -148,13 +150,26 @@ public:
             auto_failover_ = auto_failover;
         }
 
+        /// @brief Returns non-const basic HTTP authentication.
+        http::BasicHttpAuthPtr& getBasicAuth() {
+            return (basic_auth_);
+        }
+
+        /// @brief Returns const basic HTTP authentication.
+        const http::BasicHttpAuthPtr& getBasicAuth() const {
+            return (basic_auth_);
+        }
+
+        /// @brief Adds a basic HTTP authentication header to a request.
+        void addBasicAuthHttpHeader(http::PostHttpRequestJsonPtr request) const;
+
     private:
 
-        std::string name_;   ///< Server name.
-        http::Url url_;      ///< Server URL.
-        Role role_;          ///< Server role.
-        bool auto_failover_; ///< Auto failover state.
-
+        std::string name_;                  ///< Server name.
+        http::Url url_;                     ///< Server URL.
+        Role role_;                         ///< Server role.
+        bool auto_failover_;                ///< Auto failover state.
+        http::BasicHttpAuthPtr basic_auth_; ///< Basic HTTP authentication.
     };
 
     /// @brief Pointer to the server's configuration.

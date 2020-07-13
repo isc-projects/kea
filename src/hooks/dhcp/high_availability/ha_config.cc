@@ -10,13 +10,15 @@
 #include <ha_service_states.h>
 #include <sstream>
 
+using namespace isc::http;
 using namespace isc::util;
 
 namespace isc {
 namespace ha {
 
 HAConfig::PeerConfig::PeerConfig()
-    : name_(), url_(""), role_(STANDBY), auto_failover_(false) {
+    : name_(), url_(""), role_(STANDBY), auto_failover_(false),
+      basic_auth_() {
 }
 
 void
@@ -77,6 +79,15 @@ HAConfig::PeerConfig::roleToString(const HAConfig::PeerConfig::Role& role) {
         ;
     }
     return ("");
+}
+
+void
+HAConfig::PeerConfig::addBasicAuthHttpHeader(PostHttpRequestJsonPtr request) const {
+    const BasicHttpAuthPtr& auth = getBasicAuth();
+    if (!request || !auth) {
+        return;
+    }
+    request->context()->headers_.push_back(BasicAuthHttpHeaderContext(*auth));
 }
 
 HAConfig::StateConfig::StateConfig(const int state)

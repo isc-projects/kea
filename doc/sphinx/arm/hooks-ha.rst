@@ -470,6 +470,8 @@ with the only difference that ``this-server-name`` should be set to
                        "name": "server3",
                        "url": "http://192.168.56.99:8000/",
                        "role": "backup",
+                       "basic-auth-user": "foo",
+                       "basic-auth-password": "bar",
                        "auto-failover": false
                    }]
                }]
@@ -579,6 +581,9 @@ server. It may also contain an unlimited number of backup servers. In
 this example, there is one backup server which receives lease updates
 from the active servers.
 
+Since Kea version 1.7.10 the basic HTTP authentication is available
+to protect the Kea control agent against local attackers.
+
 These are the parameters specified for each of the peers within this
 list:
 
@@ -587,6 +592,15 @@ list:
 -  ``url`` - specifies the URL to be used to contact this server over
    the control channel. Other servers use this URL to send control
    commands to that server.
+
+-  ``basic-auth-user`` - specifies the user id for basic HTTP
+   authentication. If not specified or specified to the empty string
+   no authentication header will be added to HTTP transactions.
+   Must not contain the colon (:) character.
+
+-  ``basic-auth-password`` - specifies the password for basic HTTP
+   authentication. Ignored when the user id is not specified or empty.
+   The password is optional: if not specified an empty password is used.
 
 -  ``role`` - denotes the role of the server in the HA setup. The
    following roles are supported in the load-balancing configuration:
@@ -608,7 +622,9 @@ state, it can serve leases from both pools and it selects the pool which
 is appropriate for the received query. In other words, if the query
 would normally be processed by ``server2`` but this server is not
 available, ``server1`` will allocate the lease from the pool of
-"192.0.3.200 - 192.0.3.250".
+"192.0.3.200 - 192.0.3.250". The Kea control agent in front of the
+``server3`` requires basic HTTP authentication and authorizes the
+user id "foo" with the password "bar".
 
 .. _ha-load-balancing-advanced-config:
 
@@ -754,6 +770,8 @@ hot-standby configuration:
                    }, {
                        "name": "server3",
                        "url": "http://192.168.56.99:8000/",
+                       "basic-auth-user": "foo",
+                       "basic-auth-password": "bar",
                        "role": "backup",
                        "auto-failover": false
                    }]
@@ -830,6 +848,8 @@ passive-backup configuration:
                    }, {
                        "name": "server3",
                        "url": "http://192.168.56.99:8000/",
+                       "basic-auth-user": "foo",
+                       "basic-auth-password": "bar",
                        "role": "backup"
                    }]
                }]
@@ -1270,6 +1290,8 @@ load-balancing and the hot-standby cases presented in previous sections.
        }
    }
    }
+
+Since Kea version 1.7.10 the basic HTTP authentication is supported.
 
 .. _ha-maintenance:
 

@@ -185,6 +185,27 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
 
         // Auto failover configuration.
         cfg->setAutoFailover(getBoolean(*p, "auto-failover"));
+
+        // Basic HTTP authentication password.
+        std::string password;
+        if ((*p)->contains("basic-auth-password")) {
+            password = getString((*p), "basic-auth-password");
+        }
+
+        // Basic HTTP authentication user.
+        if ((*p)->contains("basic-auth-user")) {
+            std::string user = getString((*p), "basic-auth-user");
+            BasicHttpAuthPtr& auth = cfg->getBasicAuth();
+            try {
+                if (!user.empty()) {
+                    // Validate the user id value.
+                    auth.reset(new BasicHttpAuth(user, password));
+                }
+            } catch (const std::exception& ex) {
+                isc_throw(dhcp::DhcpConfigError, ex.what() << " in peer '"
+                          << cfg->getName() << "'");
+            }
+        }
     }
 
     // Per state configuration is optional.
