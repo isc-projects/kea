@@ -1,0 +1,175 @@
+# Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Path to the temporary configuration file.
+CFG_FILE=@abs_top_builddir@/src/bin/shell/tests/test_config.json
+# Path to the Control Agent log file.
+LOG_FILE=@abs_top_builddir@/src/bin/shell/tests/test.log
+
+# Control Agent configuration to be stored in the configuration file.
+# todo: use actual configuration once we support it.
+CONFIG="{
+    \"Control-agent\":
+    {
+        \"http-host\": \"127.0.0.1\",
+        \"http-port\": 8081,
+        \"basic-authentication-realm\": \"ISC.ORG\",
+        \"basic-authentications\": [
+        {
+            \"user\": \"pet\",
+            \"password\": \"meow\"
+        }
+        ],
+        \"loggers\": [
+        {
+            \"name\": \"kea-ctrl-agent\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"DEBUG\"
+        }
+        ]
+    }
+}"
+
+# In these tests we need to use two binaries: Control Agent and Kea shell.
+# Using bin and bin_path would be confusing, so we omit defining bin
+# and bin_path on purpose.
+ca_bin="kea-ctrl-agent"
+ca_bin_path=@abs_top_builddir@/src/bin/agent
+
+shell_bin="kea-shell"
+shell_bin_path=@abs_top_builddir@/src/bin/shell
+
+tmpfile_path=@abs_top_builddir@/src/bin/shell/tests
+
+# Import common test library.
+. @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+
+# This test verifies that Control Agent is shut down gracefully when it
+# receives a SIGINT or SIGTERM signal.
+shell_command_test() {
+    test_name=${1}  # Test name
+    auth=${2}       # Authentication
+    cmd=${3}        # Command to be sent
+    exp_result=${4} # Expected result
+    exp_rsp=${5}    # Expected response
+
+    # Setup phase: start CA.
+
+    # Log the start of the test and print test name.
+    test_start ${test_name}
+
+    # Remove any dangling CA instances and remove log files.
+    cleanup
+
+    # Create new configuration file.
+    create_config "${CONFIG}"
+
+    # Instruct Control Agent to log to the specific file.
+    set_logger
+    # Start Control Agent.
+    start_kea ${ca_bin_path}/${ca_bin}
+    # Wait up to 20s for Control Agent to start.
+    wait_for_kea 20
+    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+        printf "ERROR: timeout waiting for Control Agent to start.\n"
+        clean_exit 1
+    fi
+
+    # Check if it is still running. It could have terminated (e.g. as a result
+    # of configuration failure).
+    get_pid ${ca_bin}
+    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+        printf "ERROR: expected one Control Agent process to be started.\
+ Found %d processes started.\n" ${_GET_PIDS_NUM}
+        clean_exit 1
+    fi
+
+    # Check in the log file, how many times server has been configured.
+    # It should be just once on startup.
+    get_reconfigs
+    if [ ${_GET_RECONFIGS} -ne 1 ]; then
+        printf "ERROR: server been configured ${_GET_RECONFIGS} time(s),\
+ but exactly 1 was expected.\n"
+        clean_exit 1
+    else
+        printf "Server successfully configured.\n"
+    fi
+
+    # Main test phase: send command, check response.
+    tmp="echo | ${shell_bin_path}/${shell_bin} --host \
+ 127.0.0.1 --port 8081 ${auth} ${cmd} > ${tmpfile_path}/shell-stdout.txt"
+    echo "Executing kea-shell ($tmp)"
+
+    echo | ${shell_bin_path}/${shell_bin} --host 127.0.0.1 \
+ --port 8081 ${auth} ${cmd} > ${tmpfile_path}/shell-stdout.txt
+
+    # Check the exit code
+    shell_exit_code=$?
+    if [ ${exp_result} == "fail" ]; then
+        if [ ${shell_exit_code} -eq 0 ]; then
+            echo "ERROR:" \
+            "kea-shell returned ${shell_exit_code} exit code, expected 1."
+        else
+            echo "kea-shell returned ${shell_exit_code} exit code as expected."
+        fi
+    elif [ ${shell_exit_code} -ne 0 ]; then
+        echo "ERROR:" \
+        "kea-shell returned ${shell_exit_code} exit code, expected 0."
+    else
+        echo "kea-shell returned ${shell_exit_code} exit code as expected."
+    fi
+
+    # Now check the response
+    rm -f ${tmpfile_path}/shell-expected.txt
+    echo ${exp_rsp} > ${tmpfile_path}/shell-expected.txt
+    diff ${tmpfile_path}/shell-stdout.txt ${tmpfile_path}/shell-expected.txt
+    diff_code=$?
+    if [ ${diff_code} -ne 0 ]; then
+        echo "ERROR:" \
+        "content returned is different than expected." \
+        "See ${tmpfile_path}/shell-*.txt"
+        echo "EXPECTED:"
+        cat ${tmpfile_path}/shell-expected.txt
+        echo "ACTUAL RESULT:"
+        cat ${tmpfile_path}/shell-stdout.txt
+        clean_exit 1
+    else
+        echo "Content returned by kea-shell meets expectation."
+        rm ${tmpfile_path}/shell-*.txt
+    fi
+    # Main test phase ends.
+
+    # Cleanup phase: shutdown CA
+    # Send SIGTERM signal to Control Agent
+    send_signal 15 ${ca_bin}
+
+    # Now wait for process to log that it is exiting.
+    wait_for_message 10 "DCTL_SHUTDOWN" 1
+    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+        printf "ERROR: Control Agent did not log shutdown.\n"
+        clean_exit 1
+    fi
+
+    # Make sure the server is down.
+    wait_for_server_down 5 ${ca_bin}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
+
+    test_finish 0
+}
+
+shell_command_test "shell.no-auth" "" "list-commands" "fail" \
+    "Failed to run: HTTP Error 401: Unauthorized"
+shell_command_test "shell.bad-auth" \
+    "--auth-user foo --auth-password bar" "list-commands" "fail" \
+    "Failed to run: HTTP Error 401: Unauthorized"
+shell_command_test "shell.authorized" \
+    "--auth-user pet --auth-password meow" "list-commands" "" \
+    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"

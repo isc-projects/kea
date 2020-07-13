@@ -1521,12 +1521,12 @@ if test "x$enable_fuzzing" != "xno" ; then
     AC_DEFINE([ENABLE_AFL], [1], [AFL fuzzing was enabled.])
     AC_MSG_CHECKING([for AFL enabled compiler])
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
-					  [#ifndef __AFL_COMPILER
-					   #error AFL compiler required
-					   #endif
-					  ])],
-			 [AC_MSG_RESULT([yes])],
-			 [AC_MSG_ERROR([set CXX to afl-clang-fast++ when --enable-fuzzing is used])])
+                                          [#ifndef __AFL_COMPILER
+                                           #error AFL compiler required
+                                           #endif
+                                          ])],
+                         [AC_MSG_RESULT([yes])],
+                         [AC_MSG_ERROR([set CXX to afl-clang-fast++ when --enable-fuzzing is used])])
 fi
 
 
@@ -1625,6 +1625,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/shell/Makefile
                  src/bin/shell/kea-shell
                  src/bin/shell/tests/Makefile
+                 src/bin/shell/tests/basic_auth_tests.sh
                  src/bin/shell/tests/shell_process_tests.sh
                  src/bin/shell/tests/shell_unittest.py
                  src/hooks/Makefile
