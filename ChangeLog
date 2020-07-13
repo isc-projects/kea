@@ -1,4 +1,4 @@
-1770.	[perf]		fdupont
+1772.	[perf]		fdupont
 	Set kea-lfc process priority to lower than default.
 	This change should alleviate CPU utilization spikes caused
 	by LFC process observed on some systems.
