@@ -5,26 +5,31 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <agent/ca_controller.h>
+#include <agent/ca_process.h>
 #include <agent/ca_command_mgr.h>
 #include <agent/ca_response_creator.h>
 #include <cc/command_interpreter.h>
 #include <http/post_request.h>
 #include <http/post_request_json.h>
 #include <http/response_json.h>
+#include <process/testutils/d_test_stubs.h>
 #include <gtest/gtest.h>
 #include <boost/pointer_cast.hpp>
 #include <functional>
 
+using namespace isc;
 using namespace isc::agent;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
+using namespace isc::process;
 namespace ph = std::placeholders;
 
 namespace {
 
 /// @brief Test fixture class for @ref CtrlAgentResponseCreator.
-class CtrlAgentResponseCreatorTest : public ::testing::Test {
+class CtrlAgentResponseCreatorTest : public DControllerTest {
 public:
 
     /// @brief Constructor.
@@ -33,7 +38,8 @@ public:
     /// create "empty" request. It also removes registered commands from the
     /// command manager.
     CtrlAgentResponseCreatorTest()
-        : response_creator_(),
+        : DControllerTest(CtrlAgentController::instance),
+          response_creator_(),
           request_(response_creator_.createNewHttpRequest()) {
         // Deregisters commands.
         CtrlAgentCommandMgr::instance().deregisterAll();
@@ -46,6 +52,13 @@ public:
         if (!request_) {
             ADD_FAILURE() << "CtrlAgentResponseCreator::createNewHttpRequest"
                 " returns NULL!";
+        }
+        // Initialize process and cfgmgr.
+        try {
+            initProcess();
+            static_cast<void>(getCtrlAgentCfgContext());
+        } catch (const std::exception& ex) {
+            ADD_FAILURE() << "Initialization failed: " << ex.what();
         }
     }
 
@@ -112,6 +125,24 @@ public:
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
     }
 
+    /// @brief Returns a pointer to the configuration context.
+    CtrlAgentCfgContextPtr getCtrlAgentCfgContext() {
+        CtrlAgentProcessPtr process =
+            boost::dynamic_pointer_cast<CtrlAgentProcess>(getProcess());
+        if (!process) {
+            isc_throw(Unexpected, "no process");
+        }
+        CtrlAgentCfgMgrPtr cfgmgr = process->getCtrlAgentCfgMgr();
+        if (!cfgmgr) {
+            isc_throw(Unexpected, "no cfgmgr");
+        }
+        CtrlAgentCfgContextPtr ctx = cfgmgr->getCtrlAgentCfgContext();
+        if (!ctx) {
+            isc_throw(Unexpected, "no context");
+        }
+        return (ctx);
+    }
+
     /// @brief Instance of the response creator.
     CtrlAgentResponseCreator response_creator_;
 
@@ -120,7 +151,6 @@ public:
     /// The context belonging to this request may be modified by the unit
     /// tests to verify various scenarios of response creation.
     HttpRequestPtr request_;
-
 };
 
 // This test verifies that the created "empty" request has valid type.
@@ -204,7 +234,80 @@ TEST_F(CtrlAgentResponseCreatorTest, createDynamicHttpResponseInvalidType) {
     // Response must contain Internal Server Error status code.
     EXPECT_TRUE(response_json->toString().find("HTTP/1.1 500 Internal Server Error") !=
                 std::string::npos);
+}
 
+// This test verifies that Unauthorized is returned when authentication is
+// required but not provided by request.
+TEST_F(CtrlAgentResponseCreatorTest, noAuth) {
+    setBasicContext(request_);
+
+    // Body: "list-commands" is natively supported by the command manager.
+    request_->context()->body_ = "{ \"command\": \"list-commands\" }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Require authentication.
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+    ctx->setBasicAuthRealm("ISC.ORG");
+    BasicHttpAuthConfig& auth = ctx->getBasicAuthConfig();
+    auth.add("foo", "bar");
+
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Response must be convertible to HttpResponseJsonPtr.
+    HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
+        HttpResponseJson>(response);
+    ASSERT_TRUE(response_json);
+
+    // Response must contain Unauthorized status code.
+    std::string expected = "HTTP/1.1 401 Unauthorized";
+    EXPECT_TRUE(response_json->toString().find(expected) != std::string::npos);
+    // Reponse should contain WWW-Authenticate header with configured realm.
+    expected = "WWW-Authenticate: Basic realm=\"ISC.ORG\"";
+    EXPECT_TRUE(response_json->toString().find(expected) != std::string::npos);
+}
+
+// Test successful server response when the client is authenticated.
+TEST_F(CtrlAgentResponseCreatorTest, basicAuth) {
+    setBasicContext(request_);
+
+    // Body: "list-commands" is natively supported by the command manager.
+    request_->context()->body_ = "{ \"command\": \"list-commands\" }";
+
+    // Add basic HTTP authentication header.
+    const BasicHttpAuth& basic_auth = BasicHttpAuth("foo", "bar");
+    const BasicAuthHttpHeaderContext& basic_auth_header =
+        BasicAuthHttpHeaderContext(basic_auth);
+    request_->context()->headers_.push_back(basic_auth_header);
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Require authentication.
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+    BasicHttpAuthConfig& auth = ctx->getBasicAuthConfig();
+    auth.add("foo", "bar");
+
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Response must be convertible to HttpResponseJsonPtr.
+    HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
+        HttpResponseJson>(response);
+    ASSERT_TRUE(response_json);
+
+    // Response must be successful.
+    EXPECT_TRUE(response_json->toString().find("HTTP/1.1 200 OK") !=
+                std::string::npos);
+    // Response must contain JSON body with "result" of 0.
+    EXPECT_TRUE(response_json->toString().find("\"result\": 0") !=
+                std::string::npos);
 }
 
 }

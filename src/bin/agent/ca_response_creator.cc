@@ -82,10 +82,13 @@ createDynamicHttpResponse(const ConstHttpRequestPtr& request) {
                 ctx = cfgmgr->getCtrlAgentCfgContext();
                 if (ctx) {
                     const BasicHttpAuthConfig& auth = ctx->getBasicAuthConfig();
-                    http_response =
-                        checkBasicHttpAuth(*this, request,
-                                           auth.getCredentialMap(),
-                                           ctx->getBasicAuthRealm());
+                    const BasicHttpAuthMap& auth_map = auth.getCredentialMap();
+                    // Check authentication when required.
+                    if (!auth_map.empty()) {
+                        http_response =
+                            checkBasicHttpAuth(*this, request, auth_map,
+                                               ctx->getBasicAuthRealm());
+                    }
                 }
             }
         }
