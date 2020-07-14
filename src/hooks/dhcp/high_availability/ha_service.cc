@@ -2156,6 +2156,8 @@ HAService::processMaintenanceCancel() {
 
 ConstElementPtr
 HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
+    // Set the return code to error in case of early throw.
+    rcode = CONTROL_RESULT_ERROR;
     // The response must cast to JSON type.
     HttpResponseJsonPtr json_response =
         boost::dynamic_pointer_cast<HttpResponseJson>(response);
@@ -2169,9 +2171,22 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
         isc_throw(CtrlChannelError, "no body found in the response");
     }
 
-    // Body must contain a list of responses form multiple servers.
+    // Body should contain a list of responses from multiple servers.
     if (body->getType() != Element::list) {
-        isc_throw(CtrlChannelError, "body of the response must be a list");
+        // Some control agent errors are returned as a map.
+        if (body->getType() == Element::map) {
+            ElementPtr list = Element::createList();
+            ElementPtr answer = Element::createMap();
+            answer->set(CONTROL_RESULT, Element::create(rcode));
+            ConstElementPtr text = body->get(CONTROL_TEXT);
+            if (text) {
+                answer->set(CONTROL_TEXT, text);
+            }
+            list->add(answer);
+            body = list;
+        } else {
+            isc_throw(CtrlChannelError, "body of the response must be a list");
+        }
     }
 
     // There must be at least one response.

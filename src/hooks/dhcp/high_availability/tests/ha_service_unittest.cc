@@ -26,6 +26,7 @@
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/subnet_id.h>
 #include <hooks/parking_lots.h>
+#include <http/basic_auth_config.h>
 #include <http/date_time.h>
 #include <http/http_types.h>
 #include <http/listener.h>
@@ -214,7 +215,7 @@ public:
     TestHttpResponseCreator() :
         requests_(), control_result_(CONTROL_RESULT_SUCCESS),
         arguments_(), per_request_control_result_(),
-        per_request_arguments_(), request_index_() {
+        per_request_arguments_(), request_index_(), basic_auth_() {
     }
 
     /// @brief Removes all received requests.
@@ -308,6 +309,21 @@ public:
         return (HttpRequestPtr(new PostHttpRequestJson()));
     }
 
+    /// @brief Get basic HTTP authentication credentials.
+    ///
+    /// @return Basic HTTP authentication credentials and user id map.
+    const BasicHttpAuthMap& getCredentials() const {
+        return (basic_auth_.getCredentialMap());
+    }
+
+    /// @brief Add basic HTTP authentication client.
+    ///
+    /// @param user The user id to authorize.
+    /// @param password The password.
+    void addBasicAuth(const std::string& user, const std::string& password) {
+        basic_auth_.add(user, password);
+    }
+
 private:
 
     /// @brief Creates HTTP response.
@@ -340,6 +356,31 @@ private:
     /// @return Pointer to the generated HTTP OK response.
     virtual HttpResponsePtr
     createDynamicHttpResponse(const ConstHttpRequestPtr& request) {
+        // Check authentication.
+        const BasicHttpAuthMap& credentials = getCredentials();
+        if (!credentials.empty()) {
+            bool authorized = false;
+            try {
+                std::string value = request->getHeaderValue("Authorization");
+                if (value.size() < 8) {
+                    isc_throw(isc::BadValue, "header content is too short");
+                }
+                if (value.substr(0, 6) != "Basic ") {
+                    isc_throw(isc::BadValue, "no basic authentication");
+                }
+                value = value.substr(6);
+                if (credentials.count(value) != 0) {
+                    authorized = true;
+                }
+            } catch (const std::exception&) {
+                authorized = false;
+            }
+            if (!authorized) {
+                return (createStockHttpResponse(request,
+                                                HttpStatusCode::UNAUTHORIZED));
+            }
+        }
+
         // Request must always be JSON.
         ConstPostHttpRequestJsonPtr request_json =
             boost::dynamic_pointer_cast<const PostHttpRequestJson>(request);
@@ -447,6 +488,9 @@ private:
 
     /// @brief Index of the next request of the given type.
     std::map<std::string, size_t> request_index_;
+
+    /// @brief Basic HTTP authentication configuration.
+    BasicHttpAuthConfig basic_auth_;
 };
 
 /// @brief Shared pointer to the @c TestHttpResponseCreator.
@@ -532,7 +576,13 @@ public:
                                       HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                                       HttpListener::IdleTimeout(IDLE_TIMEOUT))),
           leases4_(),
-          leases6_() {
+          leases6_(),
+          user1_(""),
+          password1_(""),
+          user2_(""),
+          password2_(""),
+          user3_(""),
+          password3_("") {
         MultiThreadingMgr::instance().setMode(false);
     }
 
@@ -658,6 +708,43 @@ public:
         factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
     }
 
+    /// @brief Set basic HTTP authentication in a config.
+    ///
+    /// @param config Configuration to update.
+    void setBasicAuth(HAConfigPtr config) {
+        if (!config) {
+            ADD_FAILURE() << "null config";
+            return;
+        }
+        if (!user1_.empty()) {
+            HAConfig::PeerConfigPtr peer = config->getPeerConfig("server1");
+            if (!peer) {
+                ADD_FAILURE() << "null server1 config";
+                return;
+            }
+            BasicHttpAuthPtr& auth = peer->getBasicAuth();
+            auth.reset(new BasicHttpAuth(user1_, password1_));
+        }
+        if (!user2_.empty()) {
+            HAConfig::PeerConfigPtr peer = config->getPeerConfig("server2");
+            if (!peer) {
+                ADD_FAILURE() << "null server2 config";
+                return;
+            }
+            BasicHttpAuthPtr& auth = peer->getBasicAuth();
+            auth.reset(new BasicHttpAuth(user2_, password2_));
+        }
+        if (!user3_.empty()) {
+            HAConfig::PeerConfigPtr peer = config->getPeerConfig("server3");
+            if (!peer) {
+                ADD_FAILURE() << "null server3 config";
+                return;
+            }
+            BasicHttpAuthPtr& auth = peer->getBasicAuth();
+            auth.reset(new BasicHttpAuth(user3_, password3_));
+        }
+    }
+
     /// @brief Tests scenarios when lease updates are sent to a partner while
     /// the partner is online or offline.
     ///
@@ -677,6 +764,7 @@ public:
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
         config_storage->setWaitBackupAck(wait_backup_ack);
+        setBasicAuth(config_storage);
 
         // Create parking lot where query is going to be parked and unparked.
         ParkingLotPtr parking_lot(new ParkingLot());
@@ -779,6 +867,7 @@ public:
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
         config_storage->setWaitBackupAck(wait_backup_ack);
+        setBasicAuth(config_storage);
 
         // Create parking lot where query is going to be parked and unparked.
         ParkingLotPtr parking_lot(new ParkingLot());
@@ -871,6 +960,7 @@ public:
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
         config_storage->setHeartbeatDelay(1000);
+        setBasicAuth(config_storage);
 
         // Create a valid static response to the heartbeat command.
         ElementPtr response_arguments = Element::createMap();
@@ -1035,7 +1125,7 @@ public:
         // Instruct the server 2 to return an error as a result of receiving a command.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
 
-        // Start only two servers out of three. The server 3 is not running.
+        // Start HTTP servers.
         ASSERT_NO_THROW({
                 listener_->start();
                 listener2_->start();
@@ -1062,6 +1152,44 @@ public:
             factory2_->getResponseCreator()->findRequest("lease4-del",
                                                          "192.2.3.4");
         EXPECT_TRUE(delete_request2);
+
+        // Lease updates should be successfully sent to server3.
+        EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+
+        // Check that the server 3 has received lease4-update command.
+        auto update_request3 =
+            factory3_->getResponseCreator()->findRequest("lease4-update",
+                                                         "192.1.2.3");
+        EXPECT_TRUE(update_request3);
+
+        // Check that the server 3 has received lease4-del command.
+        auto delete_request3 =
+            factory3_->getResponseCreator()->findRequest("lease4-del",
+                                                         "192.2.3.4");
+        EXPECT_TRUE(delete_request3);
+    }
+
+    /// @brief Tests scenarios when one of the servers to which a
+    /// lease update is sent does not authorize the local server.
+    void testSndUpdatesControlResultUnauthorized() {
+        // Instruct the server 2 to require authentication.
+        factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        testSendLeaseUpdates([] {
+            ADD_FAILURE() << "unpark function called but expected that "
+                "the packet is dropped";
+        }, false, 1);
+
+        // The updates should be sent to server 2 and this server should
+        // return error code.
+        EXPECT_TRUE(factory2_->getResponseCreator()->getReceivedRequests().empty());
 
         // Lease updates should be successfully sent to server3.
         EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
@@ -1249,7 +1377,7 @@ public:
         // Instruct the server 2 to return an error as a result of receiving a command.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
 
-        // Start only two servers out of three. The server 3 is not running.
+        // Start HTTP servers.
         ASSERT_NO_THROW({
                 listener_->start();
                 listener2_->start();
@@ -1270,6 +1398,28 @@ public:
                                                          "2001:db8:1::cafe",
                                                          "2001:db8:1::efac");
         EXPECT_TRUE(update_request2);
+    }
+
+    /// @brief Tests scenarios when one of the servers to which a
+    /// lease update is sent does not authorize the local server.
+    void testSendUpdatesControlResultUnauthorized6() {
+        // Instruct the server 2 to require authentication.
+        factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        testSendLeaseUpdates6([] {
+            ADD_FAILURE() << "unpark function called but expected that "
+                "the packet is dropped";
+        }, false, 1);
+
+        // The updates should be sent to server 2 and this server should return error code.
+        EXPECT_TRUE(factory2_->getResponseCreator()->getReceivedRequests().empty());
     }
 
     /// @brief These tests verify that the server accepts the response
@@ -1365,6 +1515,7 @@ public:
         // Create HA configuration for 3 servers. This server is
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
+        setBasicAuth(config_storage);
 
         // Leases are fetched in pages, so the lease4-get-page should be
         // sent multiple times. The server is configured to return leases
@@ -1413,6 +1564,7 @@ public:
         // Create HA configuration for 3 servers. This server is
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
+        setBasicAuth(config_storage);
 
         // Leases are fetched in pages, so the lease6-get-page should be
         // sent multiple times. The server is configured to return leases
@@ -1466,6 +1618,24 @@ public:
 
     /// @brief IPv6 leases to be used in the tests.
     std::vector<Lease6Ptr> leases6_;
+
+    /// @brief Basic HTTP authentication user id for server1.
+    std::string user1_;
+
+    /// @brief Basic HTTP authentication password for server1.
+    std::string password1_;
+
+    /// @brief Basic HTTP authentication user id for server2.
+    std::string user2_;
+
+    /// @brief Basic HTTP authentication password for server2.
+    std::string password2_;
+
+    /// @brief Basic HTTP authentication user id for server3.
+    std::string user3_;
+
+    /// @brief Basic HTTP authentication password for server3.
+    std::string password3_;
 };
 
 // Test that server performs load balancing and assigns appropriate classes
@@ -1627,6 +1797,33 @@ TEST_F(HAServiceTest, sendSuccessfulUpdatesMultiThreading) {
     testSendSuccessfulUpdates();
 }
 
+// Test scenario when all lease updates are sent successfully.
+TEST_F(HAServiceTest, sendSuccessfulUpdatesAuthorized) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+    testSendSuccessfulUpdates();
+}
+
+// Test scenario when all lease updates are sent successfully.
+TEST_F(HAServiceTest, sendSuccessfulUpdatesAuthorizedMultiThreading) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+    MultiThreadingMgr::instance().setMode(true);
+    testSendSuccessfulUpdates();
+}
+
 // Test scenario when lease updates are not sent to the failover peer.
 TEST_F(HAServiceTest, sendUpdatesPartnerDown) {
     testSendUpdatesPartnerDown();
@@ -1673,6 +1870,19 @@ TEST_F(HAServiceTest, sendUpdatesControlResultErrorMultiThreading) {
     testSndUpdatesControlResultError();
 }
 
+// Test scenario when one of the servers to which a lease update is sent
+// requires not provided authentication.
+TEST_F(HAServiceTest, sendUpdatesControlResultUnauthorized) {
+    testSndUpdatesControlResultUnauthorized();
+}
+
+// Test scenario when one of the servers to which a lease update is sent
+// requires not provided authentication.
+TEST_F(HAServiceTest, sendUpdatesControlResultUnauthorizedMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSndUpdatesControlResultUnauthorized();
+}
+
 // Test scenario when all lease updates are sent successfully.
 TEST_F(HAServiceTest, sendSuccessfulUpdates6) {
     testSendSuccessfulUpdates6();
@@ -1683,6 +1893,34 @@ TEST_F(HAServiceTest, sendSuccessfulUpdates6MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     testSendSuccessfulUpdates6();
 }
+
+// Test scenario when all lease updates are sent successfully.
+TEST_F(HAServiceTest, sendSuccessfulUpdates6Authorized) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+    testSendSuccessfulUpdates6();
+}
+
+// Test scenario when all lease updates are sent successfully.
+TEST_F(HAServiceTest, sendSuccessfulUpdates6AuthorizedMultiThreading) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+    MultiThreadingMgr::instance().setMode(true);
+    testSendSuccessfulUpdates6();
+}
+
 // Test scenario when lease updates are not sent to the failover peer.
 TEST_F(HAServiceTest, sendUpdatesPartnerDown6) {
     testSendUpdatesPartnerDown6();
@@ -1727,6 +1965,19 @@ TEST_F(HAServiceTest, sendUpdatesControlResultError6) {
 TEST_F(HAServiceTest, sendUpdatesControlResultError6MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     testSendUpdatesControlResultError6();
+}
+
+// Test scenario when one of the servers to which a lease update is sent
+// requires not provided authentication.
+TEST_F(HAServiceTest, sendUpdatesControlResultUnauthorized6) {
+    testSendUpdatesControlResultUnauthorized6();
+}
+
+// Test scenario when one of the servers to which a lease update is sent
+// requires not provided authentication.
+TEST_F(HAServiceTest, sendUpdatesControlResultUnauthorized6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesControlResultUnauthorized6();
 }
 
 // This test verifies that the server accepts the response to the lease6-bulk-apply
@@ -1870,6 +2121,32 @@ TEST_F(HAServiceTest, recurringHeartbeat) {
     EXPECT_GE(factory2_->getResponseCreator()->getReceivedRequests().size(), 0);
 }
 
+// This test verifies that the heartbeat is periodically sent to the
+// other server.
+TEST_F(HAServiceTest, recurringHeartbeatAuthorized) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    // All servers are configured to return success and all servers are online.
+    // The heartbeat should be successful (as indicated by the 'true' argument).
+    ASSERT_NO_FATAL_FAILURE(testRecurringHeartbeat(CONTROL_RESULT_SUCCESS, true));
+
+    // Server 2 should have received the heartbeat
+    EXPECT_GE(factory2_->getResponseCreator()->getReceivedRequests().size(), 0);
+}
+
 // This test verifies that the heartbeat is considered being unsuccessful if the
 // partner is offline.
 TEST_F(HAServiceTest, recurringHeartbeatServerOffline) {
@@ -1903,6 +2180,28 @@ TEST_F(HAServiceTest, recurringHeartbeatControlResultError) {
 
     // Server 2 should have received the heartbeat.
     EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+}
+
+// This test verifies that the heartbeat is considered being unsuccessful if
+// the partner requires not provided authentication.
+TEST_F(HAServiceTest, recurringHeartbeatControlResultUnauthorized) {
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    // Run the actual test. The servers return a control error and it is expected
+    // that the state is not poked.
+    ASSERT_NO_FATAL_FAILURE(testRecurringHeartbeat(CONTROL_RESULT_ERROR, false));
+
+    // Server 2 should have received the heartbeat.
+    EXPECT_TRUE(factory2_->getResponseCreator()->getReceivedRequests().empty());
 }
 
 // This test verifies that IPv4 leases can be fetched from the peer and inserted
@@ -1946,6 +2245,136 @@ TEST_F(HAServiceTest, asyncSyncLeases) {
 
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Convert leases to the JSON format, the same as used by the lease_cmds
+    // hook library. Configure our test HTTP servers to return those
+    // leases in this format.
+    ElementPtr response_arguments = Element::createMap();
+
+    // Leases are fetched in pages, so the lease4-get-page should be
+    // sent multiple times. The server is configured to return leases
+    // in 3-element chunks.
+    createPagedSyncResponses4();
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage);
+    // Setting the heartbeat delay to 0 disables the recurring heartbeat.
+    // We just want to synchronize leases and not send the heartbeat.
+    config_storage->setHeartbeatDelay(0);
+
+    // Start fetching leases asynchronously.
+    ASSERT_NO_THROW(service.asyncSyncLeases());
+
+    // Run IO service to actually perform the transaction.
+    ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, []() {
+        // Stop running the IO service if we see a lease in the lease
+        // database which is expected to be inserted as a result of lease
+        // syncing.
+        return (!LeaseMgrFactory::instance().getLeases4(SubnetID(10)).empty());
+    }));
+
+    // Check if all leases have been stored in the local database.
+    for (size_t i = 0; i < leases4_.size(); ++i) {
+        if (i == 1) {
+            // This lease was purposely malformed and thus shouldn't be
+            // inserted into the database.
+            EXPECT_FALSE(LeaseMgrFactory::instance().getLease4(leases4_[i]->addr_))
+                << "lease " << leases4_[i]->addr_.toText()
+                << " was inserted into the database, but it shouldn't";
+
+        } else {
+            // All other leases should be in the database.
+            Lease4Ptr existing_lease = LeaseMgrFactory::instance().getLease4(leases4_[i]->addr_);
+            ASSERT_TRUE(existing_lease) << "lease " << leases4_[i]->addr_.toText()
+                                        << " not in the lease database";
+            // The lease with #2 returned by the partner is older than its local instance.
+            // The local server should reject this lease.
+            if (i == 2) {
+                // The existing lease should have unmodified timestamp because the
+                // update is expected to be rejected. Same for valid lifetime.
+                EXPECT_LT(leases4_[i]->cltt_, existing_lease->cltt_);
+                EXPECT_NE(leases4_[i]->valid_lft_, existing_lease->valid_lft_);
+
+            } else {
+                // All other leases should have the same cltt.
+                EXPECT_EQ(leases4_[i]->cltt_, existing_lease->cltt_);
+
+                // Leases with even indexes were added to the database with modified
+                // valid lifetime. Thus the local copy of each such lease should have
+                // this modified valid lifetime. The lease #0 should be updated from
+                // the partner because of the partner's cltt was set to later time.
+                if ((i != 0) && (i % 2) == 0) {
+                    EXPECT_EQ(leases4_[i]->valid_lft_ - 1, existing_lease->valid_lft_);
+
+                } else {
+                    // All other leases should have been fetched from the partner and
+                    // inserted with no change.
+                    EXPECT_EQ(leases4_[i]->valid_lft_, existing_lease->valid_lft_);
+                }
+            }
+        }
+    }
+}
+
+// This test verifies that IPv4 leases can be fetched from the peer and inserted
+// or updated in the local lease database.
+TEST_F(HAServiceTest, asyncSyncLeasesAuthorized) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create lease manager.
+    ASSERT_NO_THROW(LeaseMgrFactory::create("universe=4 type=memfile persist=false"));
+
+    // Create IPv4 leases which will be fetched from the other server.
+    ASSERT_NO_THROW(generateTestLeases4());
+
+    for (size_t i = 0; i < leases4_.size(); ++i) {
+        // For every even lease index we add this lease to the database to exercise
+        // the scenario when a lease is already in the database and may be updated
+        // by the lease synchronization procedure.
+        if ((i % 2) == 0) {
+            // Add a copy of the lease to make sure that by modifying the lease
+            // contents we don't affect the lease in the database.
+            Lease4Ptr lease_to_add(new Lease4(*leases4_[i]));
+            // Modify valid lifetime of the lease in the database so we can
+            // later use this value to verify if the lease has been updated.
+            --lease_to_add->valid_lft_;
+            LeaseMgrFactory::instance().addLease(lease_to_add);
+        }
+    }
+
+    // Modify cltt of the first lease. This lease should be updated as a result
+    // of synchrnonization process because cltt is checked and the lease is
+    // updated if the cltt of the fetched lease is later than the cltt of the
+    // existing lease.
+    ++leases4_[0]->cltt_;
+
+    // For the second lease, set the wrong subnet identifier. This should be
+    // rejected and this lease shouldn't be inserted into the database.
+    // Other leases should be inserted/updated just fine.
+    ++leases4_[1]->subnet_id_ = 0;
+
+    // Modify the partner's lease cltt so it is earlier than the local lease.
+    // Therfore, this lease update should be rejected.
+    --leases4_[2]->cltt_;
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
 
     // Convert leases to the JSON format, the same as used by the lease_cmds
     // hook library. Configure our test HTTP servers to return those
@@ -2079,6 +2508,43 @@ TEST_F(HAServiceTest, asyncSyncLeasesServerOffline) {
     ASSERT_NO_THROW(runIOService(1000));
 }
 
+// Test that there is no exception thrown during leases synchronization
+// when servers require not provided authentication.
+TEST_F(HAServiceTest, asyncSyncLeasesServerUnauthorized) {
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create lease manager.
+    ASSERT_NO_THROW(LeaseMgrFactory::create("universe=4 type=memfile persist=false"));
+
+    // Create IPv4 leases which will be fetched from the other server.
+    ASSERT_NO_THROW(generateTestLeases4());
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Setting the heartbeat delay to 0 disables the recurring heartbeat.
+    // We just want to synchronize leases and not send the heartbeat.
+    config_storage->setHeartbeatDelay(0);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    // Start fetching leases asynchronously.
+    ASSERT_NO_THROW(service.asyncSyncLeases());
+
+    // Run IO service for 1 second.
+    ASSERT_NO_THROW(runIOService(1000));
+}
+
 // This test verifies that IPv6 leases can be fetched from the peer and inserted
 // or updated in the local lease database.
 TEST_F(HAServiceTest, asyncSyncLeases6) {
@@ -2120,6 +2586,137 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
 
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Convert leases to the JSON format, the same as used by the lease_cmds
+    // hook library. Configure our test HTTP servers to return those
+    // leases in this format.
+    ElementPtr response_arguments = Element::createMap();
+
+    // Leases are fetched in pages, so the lease4-get-page should be
+    // sent multiple times. We need to configure the server side to
+    // return leases in 3-element chunks.
+    createPagedSyncResponses6();
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage,
+                          HAServerType::DHCPv6);
+    // Setting the heartbeat delay to 0 disables the recurring heartbeat.
+    // We just want to synchronize leases and not send the heartbeat.
+    config_storage->setHeartbeatDelay(0);
+
+    // Start fetching leases asynchronously.
+    ASSERT_NO_THROW(service.asyncSyncLeases());
+
+    // Run IO service to actually perform the transaction.
+    ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, []() {
+        // Stop running the IO service if we see a lease in the lease
+        // database which is expected to be inserted as a result of lease
+        // syncing.
+        return (!LeaseMgrFactory::instance().getLeases6(SubnetID(10)).empty());
+    }));
+
+    // Check if all leases have been stored in the local database.
+    for (size_t i = 0; i < leases6_.size(); ++i) {
+        if (i == 1) {
+            // This lease was purposely malformed and thus shouldn't be
+            // inserted into the database.
+            EXPECT_FALSE(LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               leases6_[i]->addr_))
+                << "lease " << leases6_[i]->addr_.toText()
+                << " was inserted into the database, but it shouldn't";
+        } else {
+            // Other leases should be inserted/updated.
+            Lease6Ptr existing_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                                             leases6_[i]->addr_);
+            ASSERT_TRUE(existing_lease) << "lease " << leases6_[i]->addr_.toText()
+                                        << " not in the lease database";
+
+            if (i == 2) {
+                // The existing lease should have unmodified timestamp because the
+                // update is expected to be rejected. Same for valid lifetime.
+                EXPECT_LT(leases6_[i]->cltt_, existing_lease->cltt_);
+                EXPECT_NE(leases6_[i]->valid_lft_, existing_lease->valid_lft_);
+
+            } else {
+                // All other leases should have the same cltt.
+                EXPECT_EQ(leases6_[i]->cltt_, existing_lease->cltt_);
+
+                // Leases with even indexes were added to the database with modified
+                // valid lifetime. Thus the local copy of each such lease should have
+                // this modified valid lifetime. The lease #0 should be updated from
+                // the partner because of the partner's cltt was set to later time.
+                if ((i != 0) && (i % 2) == 0) {
+                    EXPECT_EQ(leases6_[i]->valid_lft_ - 1, existing_lease->valid_lft_);
+
+                } else {
+                    // All other leases should have been fetched from the partner and
+                    // inserted with no change.
+                    EXPECT_EQ(leases6_[i]->valid_lft_, existing_lease->valid_lft_);
+                }
+            }
+        }
+    }
+}
+
+// This test verifies that IPv6 leases can be fetched from the peer and inserted
+// or updated in the local lease database.
+TEST_F(HAServiceTest, asyncSyncLeases6Authorized) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create lease manager.
+    ASSERT_NO_THROW(LeaseMgrFactory::create("universe=6 type=memfile persist=false"));
+
+    // Create IPv6 leases which will be fetched from the other server.
+    ASSERT_NO_THROW(generateTestLeases6());
+
+    for (size_t i = 0; i < leases6_.size(); ++i) {
+        // For every even lease index we add this lease to the database to exercise
+        // the scenario when a lease is already in the database and may be updated
+        // by the lease synchronization procedure.
+        if ((i % 2) == 0) {
+            // Add a copy of the lease to make sure that by modifying the lease
+            // contents we don't affect the lease in the database.
+            Lease6Ptr lease_to_add(new Lease6(*leases6_[i]));
+            // Modify valid lifetime of the lease in the database so we can
+            // later use this value to verify if the lease has been updated.
+            --lease_to_add->valid_lft_;
+            LeaseMgrFactory::instance().addLease(lease_to_add);
+        }
+    }
+
+    // Modify cltt of the first lease. This lease should be updated as a result
+    // of synchrnonization process because cltt is checked and the lease is
+    // updated if the cltt of the fetched lease is later than the cltt of the
+    // existing lease.
+    ++leases6_[0]->cltt_;
+
+    // For the second lease, set the wrong subnet identifier. This should be
+    // rejected and this lease shouldn't be inserted into the database.
+    // Other leases should be inserted/updated just fine.
+    ++leases6_[1]->subnet_id_ = 0;
+
+    // Modify the partner's lease cltt so it is earlier than the local lease.
+    // Therfore, this lease update should be rejected.
+    --leases6_[2]->cltt_;
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
 
     // Convert leases to the JSON format, the same as used by the lease_cmds
     // hook library. Configure our test HTTP servers to return those
@@ -2256,9 +2853,83 @@ TEST_F(HAServiceTest, asyncSyncLeases6ServerOffline) {
     ASSERT_NO_THROW(runIOService(1000));
 }
 
+// Test that there is no exception thrown during IPv6 leases synchronization
+// when server requires not provided authentication.
+TEST_F(HAServiceTest, asyncSyncLeases6Unauthorized) {
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create lease manager.
+    ASSERT_NO_THROW(LeaseMgrFactory::create("universe=6 type=memfile persist=false"));
+
+    // Create IPv6 leases which will be fetched from the other server.
+    ASSERT_NO_THROW(generateTestLeases6());
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Setting the heartbeat delay to 0 disables the recurring heartbeat.
+    // We just want to synchronize leases and not send the heartbeat.
+    config_storage->setHeartbeatDelay(0);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage,
+                          HAServerType::DHCPv6);
+
+    // Start fetching leases asynchronously.
+    ASSERT_NO_THROW(service.asyncSyncLeases());
+
+    // Run IO service to actually perform the transaction.
+    ASSERT_NO_THROW(runIOService(1000));
+}
+
 // This test verifies that the ha-sync command is processed successfully for the
 // DHCPv4 server.
 TEST_F(HAServiceTest, processSynchronize4) {
+
+    // Run HAService::processSynchronize and gather a response.
+    ConstElementPtr rsp;
+    runProcessSynchronize4(rsp);
+
+    // The response should indicate success.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Lease database synchronization"
+                " complete.");
+
+    // All leases should have been inserted into the database.
+    for (size_t i = 0; i < leases4_.size(); ++i) {
+        Lease4Ptr existing_lease = LeaseMgrFactory::instance().getLease4(leases4_[i]->addr_);
+        ASSERT_TRUE(existing_lease) << "lease " << leases4_[i]->addr_.toText()
+                                    << " not in the lease database";
+    }
+
+    // The following commands should have been sent to the server2: dhcp-disable,
+    // lease4-get-page and dhcp-enable.
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+}
+
+// This test verifies that the ha-sync command is processed successfully for the
+// DHCPv4 server.
+TEST_F(HAServiceTest, processSynchronize4Authorized) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
@@ -2303,6 +2974,24 @@ TEST_F(HAServiceTest, processSynchronizeDisableError) {
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+}
+
+// This test verifies that an error is reported when sending any not
+// authenticated command causes a not authorized error.
+TEST_F(HAServiceTest, processSynchronizeUnauthorized) {
+    // Instruct server2 to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+
+    // Run HAService::processSynchronize and gather a response.
+    ConstElementPtr rsp;
+    runProcessSynchronize4(rsp);
+
+    // The response should indicate an error
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR);
+
+    // The server2 should only receive dhcp-disable commands.
+    EXPECT_TRUE(factory2_->getResponseCreator()->getReceivedRequests().empty());
 }
 
 // This test verifies that an error is reported when sending a lease4-get-page
@@ -2376,6 +3065,43 @@ TEST_F(HAServiceTest, processSynchronize6) {
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
+// This test verifies that the ha-sync command is processed successfully for the
+// DHCPv6 server.
+TEST_F(HAServiceTest, processSynchronize6Authorized) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Run HAService::processSynchronize and gather a response.
+    ConstElementPtr rsp;
+    runProcessSynchronize6(rsp);
+
+    // The response should indicate success.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Lease database synchronization"
+                " complete.");
+
+    // All leases should have been inserted into the database.
+    for (size_t i = 0; i < leases6_.size(); ++i) {
+        Lease6Ptr existing_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                                         leases6_[i]->addr_);
+        ASSERT_TRUE(existing_lease) << "lease " << leases6_[i]->addr_.toText()
+                                    << " not in the lease database";
+    }
+
+    // The following commands should have been sent to the server2: dhcp-disable,
+    // lease6-get-page and dhcp-enable.
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+}
+
 // This test verifies that an error is reported when sending a dhcp-disable
 // command causes an error.
 TEST_F(HAServiceTest, processSynchronize6DisableError) {
@@ -2396,6 +3122,24 @@ TEST_F(HAServiceTest, processSynchronize6DisableError) {
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+}
+
+// This test verifies that an error is reported when sending any not
+// authenticated command causes a not authorized error.
+TEST_F(HAServiceTest, processSynchronize6Unauthorized) {
+    // Instruct server2 to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+
+    // Run HAService::processSynchronize and gather a response.
+    ConstElementPtr rsp;
+    runProcessSynchronize6(rsp);
+
+    // The response should indicate an error
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR);
+
+    // The server2 should only receive dhcp-disable commands.
+    EXPECT_TRUE(factory2_->getResponseCreator()->getReceivedRequests().empty());
 }
 
 // This test verifies that an error is reported when sending a lease6-get-page
@@ -2445,6 +3189,52 @@ TEST_F(HAServiceTest, processSynchronize6EnableError) {
 TEST_F(HAServiceTest, asyncDisableDHCPService4) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    // Send dhcp-disable command with max-period of 10 seconds.
+    // When the transaction is finished, the IO service gets stopped.
+    ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
+                                                    [this](const bool success,
+                                                           const std::string& error_message) {
+        EXPECT_TRUE(success);
+        EXPECT_TRUE(error_message.empty());
+        io_service_->stop();
+    }));
+
+    // Run IO service to actually perform the transaction.
+    ASSERT_NO_THROW(runIOService(TEST_TIMEOUT));
+
+    // The second server should not receive the command.
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-disable","10"));
+    // The third server should receive the dhcp-disable command with the max-period
+    // value of 10.
+    EXPECT_TRUE(factory3_->getResponseCreator()->findRequest("dhcp-disable","10"));
+}
+
+// This test verifies that the DHCPv4 service can be disabled on the remote server.
+TEST_F(HAServiceTest, asyncDisableDHCPService4Authorized) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
 
     // Start the servers.
     ASSERT_NO_THROW({
@@ -2531,10 +3321,88 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4ControlResultError) {
     ASSERT_NO_THROW(runIOService(TEST_TIMEOUT));
 }
 
+// This test verifies that an error is returned when the remote server
+// requires not provided authentication.
+TEST_F(HAServiceTest, asyncDisableDHCPService4ControlResultUnauthorized) {
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    // Send dhcp-disable command with max-period of 10 seconds.
+    // When the transaction is finished, the IO service gets stopped.
+    ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
+                                                    [this](const bool success,
+                                                           const std::string& error_message) {
+        EXPECT_FALSE(success);
+        EXPECT_FALSE(error_message.empty());
+        io_service_->stop();
+    }));
+
+    // Run IO service to actually perform the transaction.
+    ASSERT_NO_THROW(runIOService(TEST_TIMEOUT));
+}
+
 // This test verifies that the DHCPv4 service can be enabled on the remote server.
 TEST_F(HAServiceTest, asyncEnableDHCPService4) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    // Send dhcp-enable command. When the transaction is finished,
+    // the IO service gets stopped.
+    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+                                                   [this](const bool success,
+                                                          const std::string& error_message) {
+        EXPECT_TRUE(success);
+        EXPECT_TRUE(error_message.empty());
+        io_service_->stop();
+    }));
+
+    // Run IO service to actually perform the transaction.
+    ASSERT_NO_THROW(runIOService(TEST_TIMEOUT));
+
+    // The second server should receive the dhcp-enable.
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+    // The third server should not receive the command.
+    EXPECT_FALSE(factory3_->getResponseCreator()->findRequest("dhcp-enable",""));
+}
+
+// This test verifies that the DHCPv4 service can be enabled on the remote server.
+TEST_F(HAServiceTest, asyncEnableDHCPService4Authorized) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
 
     // Start the servers.
     ASSERT_NO_THROW({
@@ -2596,6 +3464,39 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4ControlResultError) {
     // command.
     factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
     factory3_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    // Send dhcp-enable command. When the transaction is finished,
+    // the IO service gets stopped.
+    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+                                                   [this](const bool success,
+                                                          const std::string& error_message) {
+        EXPECT_FALSE(success);
+        EXPECT_FALSE(error_message.empty());
+        io_service_->stop();
+    }));
+
+    // Run IO service to actually perform the transaction.
+    ASSERT_NO_THROW(runIOService(TEST_TIMEOUT));
+}
+
+// This test verifies that an error is returned when the remote server
+// requires not provided authentication.
+TEST_F(HAServiceTest, asyncEnableDHCPService4ControlResultUnauthorized) {
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidConfiguration();
 
     // Start the servers.
     ASSERT_NO_THROW({
@@ -2785,6 +3686,59 @@ TEST_F(HAServiceTest, processMaintenanceStartSuccess) {
     // Create HA configuration for 3 servers. This server is
     // server 1.
     HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    HAService service(io_service_, network_state_, config_storage);
+
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-start command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceStart());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->get_io_service().reset();
+    io_service_->poll();
+
+    // The partner of our server is online and should have responded with
+    // the success status. Therefore, this server should have transitioned
+    // to the partner-in-maintenance state.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server is now in the partner-in-maintenance state"
+                " and its partner is in-maintenance state. The partner can be now safely"
+                " shut down.");
+
+    EXPECT_EQ(HA_PARTNER_IN_MAINTENANCE_ST, service.getCurrState());
+}
+
+// This test verifies the case when the server receiving the ha-maintenance-start
+// command successfully transitions to the partner-in-maintenance state and its
+// partner transitions to the in-maintenance state.
+TEST_F(HAServiceTest, processMaintenanceStartSuccessAuthorized) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
 
     // Start the servers.
     ASSERT_NO_THROW({
@@ -2905,6 +3859,48 @@ TEST_F(HAServiceTest, processMaintenanceStartPartnerError) {
 
 // This test verifies the case when the server is receiving
 // ha-maintenance-start command and tries to notify the partner
+// which requires not provided authentication.
+TEST_F(HAServiceTest, processMaintenanceStartPartnerUnauthorized) {
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    HAService service(io_service_, network_state_, config_storage);
+
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-start command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceStart());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->get_io_service().reset();
+    io_service_->poll();
+
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS,
+                "Server is now in the partner-down state as its"
+                " partner appears to be offline for maintenance.");
+
+    EXPECT_EQ(HA_PARTNER_DOWN_ST, service.getCurrState());
+}
+
+// This test verifies the case when the server is receiving
+// ha-maintenance-start command and tries to notify the partner
 // which returns a special result indicating that it can't enter
 // the in-maintenance state.
 TEST_F(HAServiceTest, processMaintenanceStartNotAllowed) {
@@ -2956,6 +3952,58 @@ TEST_F(HAServiceTest, processMaintenanceCancelSuccess) {
     // Create HA configuration for 3 servers. This server is
     // server 1.
     HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    ASSERT_NO_THROW(service.verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST));
+
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-cancel command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceCancel());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->get_io_service().reset();
+    io_service_->poll();
+
+    // The partner of our server is online and should have responded with
+    // the success status. Therefore, this server should have transitioned
+    // to the partner-in-maintenance state.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server maintenance successfully canceled.");
+
+    EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
+}
+
+// This test verifies the case when the server receiving the ha-maintenance-cancel
+// command successfully transitions out of the partner-in-maintenance state.
+TEST_F(HAServiceTest, processMaintenanceCancelSuccessAuthorized) {
+    // Update config to provide authentication.
+    user2_ = "foo";
+    password2_ = "bar";
+    user3_ = "test";
+    password3_ = "1234";
+
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
 
     // Start the servers.
     ASSERT_NO_THROW({
@@ -3030,6 +4078,52 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerError) {
                 "Unable to cancel maintenance. The partner server responded"
                 " with the following message to the ha-maintenance-notify"
                 " commmand: response returned, error code 1.");
+
+    // The state of this server should not change.
+    EXPECT_EQ(HA_PARTNER_IN_MAINTENANCE_ST, service.getCurrState());
+}
+
+// This test verifies that the maintenance is not canceled in case the
+// partner requires not provided authentication.
+TEST_F(HAServiceTest, processMaintenanceCancelPartnerUnauthorized) {
+    // Instruct servers to require authentication.
+    factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
+    factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    ASSERT_NO_THROW(service.verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST));
+
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-cancel command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceCancel());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->get_io_service().reset();
+    io_service_->poll();
+
+    // The partner should have responded with an error.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR,
+                "Unable to cancel maintenance. The partner server responded"
+                " with the following message to the ha-maintenance-notify"
+                " commmand: Unauthorized, error code 1.");
 
     // The state of this server should not change.
     EXPECT_EQ(HA_PARTNER_IN_MAINTENANCE_ST, service.getCurrState());
