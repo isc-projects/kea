@@ -970,7 +970,7 @@ TEST_F(StatsMgrTest, commandSetMaxSampleAgeAll) {
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
 
     ElementPtr params = Element::createMap();
-    params->set("duration", Element::create(3765)); // dur1245
+    params->set("duration", Element::create(3765)); // set duration to 3765 seconds
 
     ConstElementPtr rsp =
         StatsMgr::instance().statisticSetMaxSampleAgeAllHandler(params);
@@ -979,8 +979,7 @@ TEST_F(StatsMgrTest, commandSetMaxSampleAgeAll) {
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
 
     // check defaults
-    EXPECT_EQ(StatsMgr::instance().getMaxSampleAgeDefault(),
-              seconds(1245));
+    EXPECT_EQ(StatsMgr::instance().getMaxSampleAgeDefault(), seconds(3765));
     EXPECT_EQ(StatsMgr::instance().getMaxSampleCountDefault(), 0);
 
     // check if time limit was set properly and whether count limit is disabled
