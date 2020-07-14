@@ -15,7 +15,7 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <process/logging_info.h>
 #include <stats/stats_mgr.h>
-#include <util/boost_time_utils.h>
+#include <util/chrono_time_utils.h>
 
 #include <boost/scoped_ptr.hpp>
 

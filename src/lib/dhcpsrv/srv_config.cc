@@ -277,13 +277,7 @@ SrvConfig::updateStatistics() {
         getConfiguredGlobal("statistic-default-sample-age");
     if (duration) {
         int64_t time_duration = duration->intValue();
-        int64_t hours = time_duration / 3600;
-        time_duration -= hours * 3600;
-        int64_t minutes = time_duration / 60;
-        time_duration -= minutes * 60;
-        int64_t seconds = time_duration;
-        auto max_age =
-            boost::posix_time::time_duration(hours, minutes, seconds, 0);
+        auto max_age = std::chrono::seconds(time_duration);
         stats_mgr.setMaxSampleAgeDefault(max_age);
         if (max_samples == 0) {
             stats_mgr.setMaxSampleAgeAll(max_age);
