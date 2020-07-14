@@ -31,7 +31,7 @@
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <testutils/log_utils.h>
-#include <util/boost_time_utils.h>
+#include <util/chrono_time_utils.h>
 #include <util/doubles.h>
 
 #include "marker_file.h"

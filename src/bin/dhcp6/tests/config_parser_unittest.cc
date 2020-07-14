@@ -30,7 +30,7 @@
 #include <process/config_ctl_info.h>
 #include <stats/stats_mgr.h>
 #include <testutils/log_utils.h>
-#include <util/boost_time_utils.h>
+#include <util/chrono_time_utils.h>
 
 #include "test_data_files_config.h"
 #include "test_libraries.h"
