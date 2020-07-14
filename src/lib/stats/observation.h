@@ -402,8 +402,7 @@ private:
     ///
     /// By default the MaxSampleCount is set to 20
     /// and MaxSampleAge is disabled
-    std::pair<bool, StatsDuration> max_sample_age_ = std::make_pair(false,
-        StatsDuration::zero());
+    static std::pair<bool, StatsDuration> default_max_sample_age_;
 
     /// @defgroup samples_storage Storage for supported observations
     ///

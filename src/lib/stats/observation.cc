@@ -24,7 +24,7 @@ Observation::default_max_sample_count_ = std::make_pair(true, 20);
 
 std::pair<bool, StatsDuration>
 Observation::default_max_sample_age_ =
-    std::make_pair(false, time_duration(0, 0, 0, 0));
+    std::make_pair(false, StatsDuration::zero());
 
 Observation::Observation(const std::string& name, const int64_t value) :
     name_(name), type_(STAT_INTEGER),
