@@ -172,6 +172,21 @@ AC_COMPILE_IFELSE(
     [Define to 1 if std::is_base_of is available])],
     [AC_MSG_RESULT(no)])
 
+# Check if system and steady clocks use the same duration type.
+AC_MSG_CHECKING([for different std::chrono::duration types])
+AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM(
+        [#include <chrono>
+        #include <type_traits>]
+	[static_assert(!std::is_same<
+                           std::chrono::system_clock::duration,
+	                   std::chrono::steady_clock::duration
+			            >::value, "");])],
+    [AC_MSG_RESULT(yes)],
+    [AC_MSG_RESULT(no)
+    AC_DEFINE([CHRONO_SAME_DURATION], [1],
+    [Define to 1 if system and steady clocks use the same duration type])])
+
 dnl Determine if we are using GNU sed
 GNU_SED=no
 $SED --version 2> /dev/null | grep GNU > /dev/null 2>&1

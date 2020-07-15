@@ -92,9 +92,11 @@ template std::string
 durationToText<system_clock::duration>(system_clock::duration dur,
                                        size_t fsecs_precision);
 
+#if !CHRONO_SAME_DURATION
 template std::string
 durationToText<steady_clock::duration>(steady_clock::duration dur,
                                        size_t fsecs_precision);
+#endif
 
 } // end of isc::util namespace
 } // end of isc namespace
