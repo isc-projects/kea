@@ -676,7 +676,7 @@ ControlledDhcpv4Srv::commandStatisticSetMaxSampleAgeAllHandler(const string&,
     ConstElementPtr answer = stats_mgr.statisticSetMaxSampleAgeAllHandler(args);
     // Update the default parameter.
     auto duration = stats_mgr.getMaxSampleAgeDefault();
-    long max_age = duration.count(); // do we need to check if this is in seconds?
+    long max_age = toSeconds(duration);
     CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal(
         "statistic-default-sample-age", Element::create(max_age));
     return (answer);

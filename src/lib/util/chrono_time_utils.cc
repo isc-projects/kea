@@ -12,8 +12,11 @@
 
 using namespace std::chrono;
 
+namespace isc {
+namespace util {
+
 std::string
-isc::util::clockToText(system_clock::time_point t, size_t fsecs_precision) {
+clockToText(std::chrono::system_clock::time_point t, size_t fsecs_precision) {
     time_t tt = system_clock::to_time_t(t);
     struct tm tm;
     localtime_r(&tt, &tm);
@@ -48,8 +51,8 @@ isc::util::clockToText(system_clock::time_point t, size_t fsecs_precision) {
     return (s.str());
 }
 
-std::string
-isc::util::durationToText(system_clock::duration dur, size_t fsecs_precision) {
+template<typename Duration> std::string
+durationToText(Duration dur, size_t fsecs_precision) {
     seconds unfrac = duration_cast<seconds>(dur);
     auto secs = unfrac.count();
     std::stringstream s;
@@ -83,3 +86,15 @@ isc::util::durationToText(system_clock::duration dur, size_t fsecs_precision) {
 
     return (s.str());
 }
+
+// Instantiate for standard clocks.
+template std::string
+durationToText<system_clock::duration>(system_clock::duration dur,
+                                       size_t fsecs_precision);
+
+template std::string
+durationToText<steady_clock::duration>(steady_clock::duration dur,
+                                       size_t fsecs_precision);
+
+} // end of isc::util namespace
+} // end of isc namespace

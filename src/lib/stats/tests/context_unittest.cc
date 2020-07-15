@@ -124,4 +124,3 @@ TEST(ContextTest, basic) {
     EXPECT_NO_THROW(ctx.clear());
     EXPECT_EQ(0, ctx.size());
 }
-

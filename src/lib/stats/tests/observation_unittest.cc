@@ -31,6 +31,13 @@ static const StatsDuration& dur681012(hours(6) + minutes(8) + seconds(10) +
                                       milliseconds(12));
 static const StatsDuration& dur453(minutes(4) + seconds(5) + milliseconds(3));
 
+// This test verifies that the number of seconds can be retrieved.
+TEST(StatsDurationTest, toSeconds) {
+    StatsDuration dur = StatsDuration::zero();
+    dur += hours(1) + minutes(1) + seconds(1) + milliseconds(1);
+    EXPECT_EQ(3661, toSeconds(dur));
+}
+
 /// @brief Test class for Observation
 ///
 /// This simple fixture class initializes four observations:
@@ -609,4 +616,4 @@ TEST_F(ObservationTest, names) {
     EXPECT_EQ("delta", d.getName());
 }
 
-};
+}

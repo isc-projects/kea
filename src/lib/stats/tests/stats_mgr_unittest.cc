@@ -45,9 +45,11 @@ public:
     }
 
     /// @brief Destructor
-    /// Removes all statistics.
+    /// Removes all statistics and restores class defaults.
     ~StatsMgrTest() {
         StatsMgr::instance().removeAll();
+        StatsMgr::instance().setMaxSampleAgeDefault(StatsDuration::zero());
+        StatsMgr::instance().setMaxSampleCountDefault(20);
     }
 };
 
@@ -228,7 +230,7 @@ TEST_F(StatsMgrTest, setLimitsDefault) {
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
-    StatsMgr::instance().setValue("gamma", std::chrono::seconds(1234));
+    StatsMgr::instance().setValue("gamma", seconds(1234));
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
 
     // check what default applied
@@ -1108,4 +1110,4 @@ TEST_F(StatsMgrTest, commandSetMaxSampleCountAllZero) {
     EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
 }
 
-};
+}

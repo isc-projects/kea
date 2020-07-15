@@ -31,15 +31,18 @@ std::string clockToText(std::chrono::system_clock::time_point t,
 /// @brief Converts StatsDuration to text
 ///
 /// See @ref clockToText for explanation why we chose our own implementation.
+/// @tparam Duration duration type instance for instance
+/// @c std::chrono::system_clock::duration.
 /// @param dur duration value to convert to text
 /// @param fsecs_precision number of digits of precision for fractional seconds.
 /// Zero omits the value.
 ///
 /// @return a string representing time
-std::string durationToText(std::chrono::system_clock::duration,
+template<typename Duration>
+std::string durationToText(Duration dur,
                            size_t fsecs_precision = MAX_FSECS_PRECISION);
 
-}; // end of isc::util namespace
-}; // end of isc namespace
+} // end of isc::util namespace
+} // end of isc namespace
 
 #endif

@@ -27,13 +27,24 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// @brief Define clock
+/// @brief Define clock type.
 ///
+/// @note: we use the system clock i.e. the wall clock because this
+/// clock can be converted from and to standard Unix time (time_t).
 typedef std::chrono::system_clock SampleClock;
 
-/// @brief Defines duration resolution
+/// @brief Defines duration type.
 ///
+/// @note: the precision depends on the system,
 typedef std::chrono::system_clock::duration StatsDuration;
+
+/// @brief Returns the number of seconds in a duration.
+///
+/// @param dur The duration.
+/// @return The number of seconds in the given duration.
+inline long toSeconds(const StatsDuration& dur) {
+    return ((std::chrono::duration_cast<std::chrono::seconds>(dur)).count());
+}
 
 /// @defgroup stat_samples Specifies supported observation types.
 ///
@@ -428,7 +439,7 @@ private:
 /// @brief Observation pointer
 typedef boost::shared_ptr<Observation> ObservationPtr;
 
-};
-};
+}
+}
 
 #endif // OBSERVATION_H

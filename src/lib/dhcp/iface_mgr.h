@@ -144,7 +144,7 @@ public:
     ///
     /// @param name name of the interface
     /// @param ifindex interface index (unique integer identifier)
-    /// @param BadValue when name is empty.
+    /// @throw BadValue when name is empty.
     Iface(const std::string& name, unsigned int ifindex);
 
     /// @brief Destructor.

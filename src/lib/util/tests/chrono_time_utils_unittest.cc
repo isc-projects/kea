@@ -146,3 +146,12 @@ TEST(ChronoTimeUtilsTest, bastilleDay) {
     sbast = clockToText(tpbast, MAX_FSECS_PRECISION + 1);
     EXPECT_EQ(expected, sbast);
 }
+
+// Try steady clock duration.
+TEST(ChronoTimeUtilsTest, steadyClock) {
+    steady_clock::duration p12345 = hours(1) + minutes(2) + seconds(3) +
+        milliseconds(4) + microseconds(5);
+    std::string expected("01:02:03.004005");
+    std::string s12345 = durationToText(p12345, 6);
+    EXPECT_EQ(expected, s12345);
+}
