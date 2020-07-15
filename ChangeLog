@@ -1,3 +1,8 @@
+1773.	[perf]		fdupont
+	Kea statistics now uses standard c++11 chrono library instead
+	of POSIX time library from boost.
+	(Gitlab #1174)
+
 1772.	[perf]		fdupont
 	Set kea-lfc process priority to lower than default.
 	This change should alleviate CPU utilization spikes caused
