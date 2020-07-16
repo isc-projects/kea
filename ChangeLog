@@ -1,3 +1,9 @@
+1668.	[func]		tmark
+	The order of lease and host reservation lookups have been swapped.
+	This may provide a modest to moderate performance boost in cases
+	where host reservations are used.
+	(Gitlab #1141)
+
 1667.	[func]		marcin
 	Implemented status-get command which returns general status
 	information about a Kea server status and optionally
