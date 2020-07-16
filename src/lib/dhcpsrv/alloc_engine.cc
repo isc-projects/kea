@@ -1015,17 +1015,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                                                          ctx.query_->getClasses(),
                                                          ctx.duid_,
                                                          hint);
-
-            /// In-pool reservations: Check if this address is reserved for someone
-            /// else. There is no need to check for whom it is reserved, because if
-            /// it has been reserved for us we would have already allocated a lease.
-            if (hr_mode == Network::HR_ALL &&
-                HostMgr::instance().get6(subnet->getID(), candidate)) {
-
-                // Don't allocate.
-                continue;
-            }
-
             // The first step is to find out prefix length. It is 128 for
             // non-PD leases.
             uint8_t prefix_len = 128;
@@ -1039,9 +1028,20 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 }
             }
 
+            // Look for an existing lease for the candidate.
             Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
-                                                                   candidate);
+								       candidate);
             if (!existing) {
+                /// In-pool reservations: Check if this address is reserved for someone
+                /// else. There is no need to check for whom it is reserved, because if
+                /// it has been reserved for us we would have already allocated a lease.
+                if (hr_mode == Network::HR_ALL &&
+                    HostMgr::instance().get6(subnet->getID(), candidate)) {
+
+                    // Don't allocate.
+                    continue;
+                }
+
 
                 // there's no existing lease for selected candidate, so it is
                 // free. Let's allocate it.
@@ -1067,6 +1067,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 // allocation attempts.
             } else {
                 if (existing->expired()) {
+                    // Make sure it's not reserved.
+                    if (hr_mode == Network::HR_ALL &&
+                        HostMgr::instance().get6(subnet->getID(), candidate)) {
+                        // Don't allocate.
+                        continue;
+                    }
+
                     // Copy an existing, expired lease so as it can be returned
                     // to the caller.
                     Lease6Ptr old_lease(new Lease6(*existing));
