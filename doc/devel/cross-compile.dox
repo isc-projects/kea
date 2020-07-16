@@ -1,0 +1,226 @@
+// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+ @page crossCompile Kea Cross-Compiling Example
+
+The idea is to install Kea on a Raspberry Pi 4 Model B running Raspbian
+operation system (e.g. the
+<a href="https://www.raspberrypi.org/downloads/raspbian/">
+Raspbian Buster with desktop and recommended software</a> distribution)
+without having to compile Kea on the Raspberry Pi box itself as it
+takes some hours so using a standard Linux box with a x86_64 processor.
+
+To cross-compile anything for Raspbian you need:
+ - a cross-compiler running on x86_64 producing arm binaries
+ - either an image of system copied from a Raspberry disk or extracted
+  from a Raspbian repository.
+
+@section toolChain Cross-Compile Tool Chain
+
+A priori it is possible to compile your own tool chain or to use
+a package as the arm-linux-gnueabihf one on Ubuntu. But there is
+reported compatibility issue with old Raspberry Pi versions) so
+we recommend a pre-built dedicated tool chain for this purpose:
+<a href="https://github.com/Pro/raspi-toolchain"></a>.
+
+The documentation of this tool chain gives a rsync command which
+copies selected parts of the Raspberry Pi root filesystem ("rootfs").
+If you have no access to a running Raspberry Pi it is still possible
+to get them following next section instructions. If you have simply
+skip this part.
+
+@section noRaspberry How to get system and packages without a running Raspberry Pi
+
+It is not required to have access to a running Raspberry Pi.
+The system disk image is available at the Raspbian URL.
+Packages are in the Raspian repository which is given in
+sources list files in this disk image or below.
+
+The "sources.list" file content is:
+@verbatim
+deb http://raspbian.raspberrypi.org/raspbian/ buster main contrib non-free rpi
+# Uncomment line below then 'apt-get update' to enable 'apt-get source'
+# deb-src http://raspbian.raspberrypi.org/raspbian/ buster main contrib non-free rpi
+@endverbatim
+
+and the "sources.list.d/raspi.list" file content is:
+@verbatim
+deb http://archive.raspberrypi.org/debian/ buster main
+# Uncomment line below then 'apt-get update' to enable 'apt-get source'
+# deb-src http://archive.raspberrypi.org/debian/ buster main
+@endverbatim
+
+The disk image is a zipped image of a 4GB disk with a standard MSDOS
+boot block with two volumes:
+ - boot (useless for this purpose)
+ - rootfs (the Raspberry Pi root filesystem)
+
+The idea is to mount the rootfs on the Linux box (it can work on another
+system as soon as it supports the ext4 file system type):
+ - first use fdisk or similar tool to get the offset of the first block
+  of the rootfs (second) volume
+ - if the offset is in block unit multiply by 512 (block size)
+ - mount as root (sudo mount ...) with the loop option, the offset option,
+  the unzipped image file name and a mount point (absolute path of
+  a directory)
+If you have a SD card with Raspbian installed on it and a SD reader
+you can directly mount the rootfs from it.
+
+If a dependency (i.e. the Raspbian version of a library) is not in the
+rootfs image you need to simulate its installation:
+ - get the .deb file from a Raspbian repository
+ - extract files using the "dpkg-deb -R" tool on the .deb file
+ - install the files (usually in the "rootfs"/usr directory)
+The idea is the files (includes and libraries) can be find by
+the cross-compiling tool chain.
+
+It is possible to emulate a Raspberry Pi using qemu even I do not think
+it can run Kea. But at least it can run some tests as the hello world sample
+of the tool chain. Required qemu kernels can be found at
+<a href="https://github.com/dhruvvyas90/qemu-rpi-kernel></a> with
+a (please read) documentation.
+
+@section crossCompilePitfalls Usual problems
+
+There are two usual problems when cross-compiling:
+ - have a binary for the wrong processor, e.g. either trying to run
+  an arm binary on the x86_64 box or building a x86_64 binary when
+  it will be run by the Raspberry Pi
+ - use the x86_64 system include or library instead of the Raspberry Pi
+  one from the rootfs image. Usually it gives a direct error for a library
+  but a wrong include is more subtle.
+Note that Kea has a build tool (kea-msg-compiler) but its use is optional
+so it should not be a problem. If anyway you need it simply copy it from
+a native (i.e. not cross-compiled) Kea build.
+
+@section raspbianDependencies Usual Kea Dependencies
+
+Required and optional Kea dependencies, usually available as packages:
+ - Python (built-in)
+ - Cassandra (skipped here)
+ - libssl-dev (built-in in the full image)
+ - liblog4cplus-dev (in liblog4cplus package, load both the library and
+  the development part)
+ - libboost-system-dev (in boost-xxx, load both the boost-system and
+  the boost-libraries packages, the second includes header files)
+ - googletest (download the last release from github)
+ - doc (sphinx, texlive, etc: just generate docs on the build system)
+ - MySQL (in mysql-defaults and mariadb-* packages?)
+ - PostgreSQL (in postgresql-12?)
+
+@section prepareCrossCompile Prepare Cross Compiling
+
+This script was used with success: it sets the environment variables
+before calling ./configure.
+@code
+# change when at another location
+export ROOTFS="$HOME/rpi/rootfs"
+
+# build commands
+export BUILD=x86_64-pc-linux-gnu
+export HOST=arm-linux-gnueabihf
+export CC="${HOST}-gcc"
+export CXX="${HOST}-g++"
+export LD="${HOST}-ld"
+export AR="${HOST}-ar"
+export RANLIB="${HOST}-ranlib"
+export STRIP="${HOST}-strip"
+export NM="${HOST}-nm"
+
+# g++ flags
+CXXFLAGS="-O2 -g -isysroot ${ROOTFS} -I${ROOTFS}/usr/include"
+CXXFLAGS+=" -I${ROOTFS}/usr/include/${HOST}"
+
+# ld flags
+LDFLAGS="--sysroot=${ROOTFS}"
+LDFLAGS+=" -L/opt/cross-pi-gcc/arm-linux-gnueabihf/lib -Wl,-rpath-link,/opt/cross-pi-gcc/arm-linux-gnueabihf/lib"
+LDFLAGS+=" -L/opt/cross-pi-gcc/lib -Wl,-rpath-link,/opt/cross-pi-gcc/lib"
+LDFLAGS+=" -L${ROOTFS}/opt/vc/lib -Wl,-rpath-link,${ROOTFS}/opt/vc/lib"
+LDFLAGS+=" -L${ROOTFS}/lib/${HOST} -Wl,-rpath-link,${ROOTFS}/lib/${HOST}"
+LDFLAGS+=" -L${ROOTFS}/usr/local/lib -Wl,-rpath-link,${ROOTFS}/usr/local/lib"
+LDFLAGS+=" -L${ROOTFS}/usr/lib/${HOST} -Wl,-rpath-link,${ROOTFS}/usr/lib/${HOST}"
+LDFLAGS+=" -L${ROOTFS}/usr/lib -Wl,-rpath-link,${ROOTFS}/usr/lib"
+LDFLAGS+=" -L${ROOTFS}/usr/lib/${HOST}/blas -Wl,-rpath-link,${ROOTFS}/usr/lib/${HOST}/blas"
+LDFLAGS+=" -L${ROOTFS}/usr/lib/${HOST}/lapack -Wl,-rpath-link,${ROOTFS}/usr/lib/${HOST}/lapack"
+
+# CPU tuning (use the most generic one)
+# PI 4 (not sure for the FPU)
+# CXXFLAGS+=" -mcpu=cortex-a72 -mfpu=neon-vfpv4 -mfloat-abi=hard"
+# PI 3
+# CXXFLAGS+=" -mcpu=cortex-a53 -mfpu=neon-vfpv4 -mfloat-abi=hard"
+# PI 2
+# CXXFLAGS+=" -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard"
+# PI 1, zero, ...
+CXXFLAGS+=" -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard"
+
+export CXXFLAGS
+export LDFLAGS
+
+export PKG_CONFIG_PATH="${ROOTFS}/usr/lib/pkgconfig"
+
+export PATH=/opt/cross-pi-gcc/bin:/opt/cross-pi-gcc/libexec/gcc/arm-linux-gnueabihf/8.3.0:$PATH
+
+# libraries are in fact in ${ROOTFS}/usr/lib/${HOST} but
+# the library path can be set only for boost.
+CONF_CMD="./configure --build=${BUILD} --host=${HOST}"
+CONF_CMD+=" --with-sysroot=${ROOTFS}"
+CONF_CMD+=" --with-openssl=${ROOTFS}/usr"
+CONF_CMD+=" --with-log4cplus=${ROOTFS}/usr"
+CONF_CMD+=" --with-boost-include=${ROOTFS}/usr/include"
+CONF_CMD+=" --with-boost-lib-dir=${ROOTFS}/usr/lib/${HOST}"
+@endcode
+
+Some explainations:
+ - the rootfs was copied or mounted in rpi/rootfs in the home directory.
+ - the build system triplet is x86_64-pc-linux-gnu (processor,
+  system, application binary interface). It is returned by the config.guess
+  script so please verify.
+ - the host system triplet is arm-linux-gnueabihf. It is used as the prefix
+  for cross-compiling tools so this value is critical.
+ - all tool variables are set to the cross-compiling tool name
+ - CXXFLAGS is defined to use the rootfs image for includes. It is critical
+  it does not use any build system include.
+ - LDFLAGS is defined to use the rootfs, all cross-compiler support libraries
+  and libraries from the rootfs image. It is critical it does not use
+  any build system library.
+ - CXXFLAGS can be tuned for a specific Raspberry Pi version. Proposed
+  tuning supports all versions.
+ - even if Kea ./configure does not depends on pkgconfig its path is set/
+ - PATH is updated to find first cross-compiling tools.
+ - I did not try yet database config scripts: perhaps they detect
+  cross-compiling and produce correct paths.
+ - CONF_CMD contains the ./configure common arguments.
+The script can be used by:
+ - eventually run "autoreconf -i" (if sources are from git)
+ - put its content in a file, e.g. ccenv
+ - load the file by ". ccenv"
+ - configure Kea build by "$CONF_CMD <your arguments>"
+
+Known problems:
+ - AC_TRY_RUN and AC_CHECK_FILE[S] autoconf macros do not support
+  cross-compiling. They were removed from ./configure.ac in Kea 1.7.10.
+ - libtool is a disaster for cross-compiling, in particular it produces
+  silly libtool archive (.la) files. Fortunately they are useless.
+ - bad paths for mkdir or sed on Raspbian.
+ - recent Debian systems including recent Ubuntu modified libtool to
+  not accept indirect dependencies. Makefiles were updated to have no
+  such indirect dependencies in common cases as it is in Kea Makefile
+  writing guidelines.
+ - the libtool variable managing this is link_all_deplibs. You can
+  edit the libtool script to set it to unknown or yes. Or simply
+  use another Linux distrib.
+ - there is no ldd in cross-compiling tools. The table of used
+  shared libraries in available by readelf -d which is in the
+  cross-compiling tools.
+
+Final words: this is still highly experimental and does not cover
+everything. New ways to offload almost everything outside the Raspberry
+Pi are still to be found. Currently to provide Raspbian Kea packages
+is not possible for ISC.
+
+*/

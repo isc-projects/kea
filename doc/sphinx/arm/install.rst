@@ -388,6 +388,19 @@ relevant linker cache configuration file for your OS):
        cannot open shared object file: No such file or directory
 
 
+Cross-Building
+--------------
+
+It is possible to cross-build Kea, i.e. to create binaries in another
+system (the ``build`` system) than the system where Kea will run
+(the ``host`` system).
+
+It is outside of the scope of common administrator operations and requires
+some developer skills so the Developer Guide explains how to do that
+using a x86_64 Linux system to build Kea for a Raspberry Pi box running
+Raspbian: `Kea Cross-Compiling Example
+<https://jenkins.isc.org/job/Kea_doc/doxygen/de/d9a/crossCompile.html>`__.
+
 .. _dhcp-install-configure:
 
 DHCP Database Installation and Configuration

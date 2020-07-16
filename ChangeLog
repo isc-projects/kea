@@ -1,3 +1,8 @@
+1777.	[doc]		fdupont
+	Added in the Developer's Guide an example about how to cross
+	compile Kea for a Raspberry Pi.
+	(Gitlab #1221)
+
 1776.	[func]		fdupont
 	DHCP servers now log a fatal error message when a reconfiguration
 	attempt left a no longer working server. Documentation was
