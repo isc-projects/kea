@@ -1,0 +1,114 @@
+@startuml
+
+title Allocate a lease for DHCPREQUEST
+
+agent "Find client lease" as findClientLease
+note right : entry point
+
+agent "Check requested reservation" as addressReserved
+
+agent "Get reservation" as hasAddressReservation
+
+agent "Update requested address" as update_hint
+
+rectangle "Check requested address" as check_hint {
+ rectangle "Get lease for requested address" as get_existing {
+  agent "Check requested lease" as existing
+ }
+
+ agent "Check lease for reserved address" as getReservedLease
+
+ agent "Check out-of-pool address" as out_of_pool
+}
+
+rectangle "Check client lease" as check_done {
+ agent "Check renew" as client_lease
+}
+
+rectangle "Allocate a new lease" as new_lease {
+ together {
+  rectangle "Allocate or reuse lease" as allocateOrReuseLease4 {
+   agent "Get candidate lease" as candidate
+
+   agent "Reuse expired lease" as reuseExpiredLease4
+
+   agent "Reclaim expired lease" as reclaimExpiredLease
+
+   agent "update lease information" as updateLease4Information
+
+   agent "Callout lease4_select" as lease4_select
+   note right : hook
+
+   agent "Update lease" as updateLease4
+  }
+
+  rectangle "Allocate unreserved lease" as allocateUnreservedLease4 {
+   agent "Iterate pools and subnets" as iterate
+
+   agent "Pick address" as pick
+
+   agent "Check reserved addressed" as pick_reserved
+
+   agent "Check lease" as pick_lease
+  }
+ }
+
+ agent "Create a new lease" as create
+
+ agent "Delete old lease" as old_lease
+}
+
+agent "Return no lease" as no_lease
+note right : exit point
+
+agent "Return renewed lease" as renew
+note right : exit point
+
+agent "Return lease" as return
+note right : exit point
+
+findClientLease --> addressReserved : has requested address (hint)
+findClientLease --> hasAddressReservation : no requested address (hint)
+addressReserved --> check_hint : no conflicting reservation
+addressReserved --> no_lease : revervation owned by another client
+hasAddressReservation -> update_hint : has a reservation
+update_hint --> check_hint : request reserved address
+hasAddressReservation --> check_done : no reservation
+check_hint --> get_existing
+get_existing --> existing : has requested lease
+existing ---> no_lease : not expired lease owned by another client
+get_existing --> out_of_pool : no reservation
+get_existing --> out_of_pool : has requested reservation
+get_existing --> getReservedLease : has reservation for another address
+getReservedLease ---> no_lease : no active reserved lease
+getReservedLease --> out_of_pool
+out_of_pool --> check_done : owned reservation for the requested address
+out_of_pool --> check_done : requested address is in allowed an pool
+out_of_pool -->	no_lease : address not reserved and not in allowed pool
+check_done --> client_lease : has a client lease
+client_lease -> renew : requested address was already assigned to the client
+client_lease --> new_lease
+new_lease --> allocateOrReuseLease4 : has a requested address
+new_lease --> allocateUnreservedLease4 : no requested address
+allocateOrReuseLease4 --> candidate
+candidate --> reuseExpiredLease4 : expired candidate lease
+candidate --> no_lease : conflicting candidate lease
+candidate --> create : no candidate lease
+reuseExpiredLease4 --> reclaimExpiredLease
+reclaimExpiredLease --> updateLease4Information
+updateLease4Information --> lease4_select
+lease4_select ---> no_lease : SKIP
+lease4_select --> updateLease4
+updateLease4 --> old_lease
+allocateUnreservedLease4 --> iterate
+iterate --> pick
+pick --> pick_reserved
+pick_reserved -up-> iterate : address reserved to another client
+pick_reserved --> pick_lease
+pick_lease -up-> iterate : active lease
+pick_lease --> reuseExpiredLease4 : expired lease
+pick_lease --> create : no lease
+create --> old_lease
+old_lease --> return
+
+@enduml

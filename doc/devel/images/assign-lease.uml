@@ -1,0 +1,63 @@
+@startuml
+
+title DHCPv4 Assign Lease
+
+agent "Check Subnet" as subnet
+note left : entry point
+
+agent "Get server id" as server_id
+
+agent "Get hint" as hint
+
+agent "Get hardware address and client id" as ident
+
+rectangle "INIT-REBOOT state" as init_reboot {
+ agent "Get existing lease by client id" as by_client_id
+
+ agent "Get existing lease by hardware address" as by_hw_addr
+
+ agent "Get authoritative" as authoritative
+}
+
+agent "Process hostname" as hostname
+
+agent "Request lease" as allocate
+
+rectangle "Lease allocated" as allocated {
+ agent "update DDNS" as ddns
+ agent "Send ACK" as ack
+}
+
+agent "No lease allocated" as failed
+note right : exit point
+
+agent "Send NAK" as nak
+note right : exit point
+
+agent "No response" as no_response
+note right : exit point
+
+subnet --> server_id
+subnet ---> nak : no subnet
+server_id --> hint
+hint --> ident : use requested address option
+hint --> ident : use client address
+hint --> ident : no hint
+ident --> init_reboot : requested address and no server id
+ident ---> hostname
+init_reboot --> by_client_id : has a client id
+init_reboot --> by_hw_addr : no client id
+by_client_id --> by_hw_addr : not fount
+by_hw_addr --> authoritative
+authoritative ---> no_response : not authoritative and no owned lease
+authoritative --> nak : owned lease with hint mismatch
+authoritative --> nak : authoritative and no owned lease
+authoritative --> hostname : other cases
+hostname --> allocate
+allocate --> allocated : lease allocated
+allocated --> ddns
+ddns --> ack
+allocate --> failed : no lease allocated
+failed --> nak
+
+@enduml
