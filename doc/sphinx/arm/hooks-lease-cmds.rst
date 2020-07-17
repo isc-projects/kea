@@ -777,7 +777,7 @@ a pair of values: the type and the actual identifier. The currently
 supported identifiers are "hw-address" (IPv4 only), "client-id" (IPv4
 only), and "duid" (IPv6 only).
 
-An example command for deleting a lease by address is:
+An example command for deleting a lease by address is
 
 ::
 
@@ -800,6 +800,28 @@ An example IPv4 lease deletion by "hw-address" is:
        "subnet-id": 44
      }
    }
+
+
+As of Kea 1.7.9, a new parameter, "update-ddns", is supported (IPv4 and IPv6).
+When ```true``` it instructs the server to queue a request to kea-dhcp-ddns to
+remove DNS entries after the lease is succesfully deleted if:
+
+- DDNS updating is enabled. (i.e. "dhcp-ddns":{ "enable-updates": true"})
+- The lease's hostname is not be empty.
+- At least one of the lease's DNS direction flags (fdqn_fwd or fdqn_rev) is true.
+
+This parameter defaults to false. An example of its use is shown below:
+
+::
+
+   {
+       "command": "lease4-del",
+       "arguments": {
+           "ip-address": "192.0.2.202",
+           "update-ddns": true
+       }
+   }
+
 
 ``leaseX-del`` returns a result that indicates the outcome of the
 operation. It has one of the following values: 0 (success), 1 (error),

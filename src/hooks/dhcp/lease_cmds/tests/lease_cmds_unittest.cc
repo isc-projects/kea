@@ -4034,6 +4034,33 @@ TEST_F(LeaseCmdsTest, Lease4DelByAddr) {
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
 }
 
+// Checks that leaseX-del checks update-ddns input
+TEST_F(LeaseCmdsTest, LeaseXDelBadUpdateDdnsParam) {
+
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.1.0\","
+        "        \"update-ddns\": 77"
+        "    }\n"
+        "}";
+
+    string exp_rsp = "'update-ddns' is not a boolean";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\","
+        "        \"update-ddns\": \"bogus\""
+        "    }\n"
+        "}";
+
+    exp_rsp = "'update-ddns' is not a boolean";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
 
 // Checks that lease4-del sanitizes its input.
 TEST_F(LeaseCmdsTest, Lease4DelByAddrBadParam) {
@@ -5240,6 +5267,326 @@ TEST_F(LeaseCmdsTest, lease6ResendDdnsEnabled) {
         verifyNameChangeRequest(CHG_ADD, scenario.fqdn_rev_, scenario.fqdn_fwd_,
                                 "2001:db8:1::1", "myhost.example.com.");
     }
+}
+
+// Checks that lease4-del does (or does not) generate an NCR to remove
+// DNS for a given lease based on lease content when DDNS updates are enabled.
+TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Enabled) {
+    // Initialize lease manager (false = v4, true = leases)
+    initLeaseMgr(false, true);
+
+    // Structure detailing a test scenario.
+    struct Scenario {
+        std::string description_;
+        std::string hostname_;
+        bool fqdn_fwd_;
+        bool fqdn_rev_;
+        std::string udpate_ddns_;
+        bool exp_ncr_;
+    };
+
+    bool fwd = true;
+    bool rev = true;
+    bool ncr = true;
+
+    // Three test scenarios to verify each combination of true flags.
+    std::vector<Scenario> scenarios = {
+        {
+            "no_host",
+            "",
+            fwd, rev,
+            "\"update-ddns\": true",
+            !ncr
+        },
+        {
+            "no directions",
+            "myhost.example.com.",
+            !fwd, !rev,
+            "\"update-ddns\": true",
+            !ncr
+        },
+        {
+            "fwd_only",
+            "myhost.example.com.",
+            fwd, !rev,
+            "\"update-ddns\": true",
+            ncr
+        },
+        {
+            "rev_only",
+            "myhost.example.com.",
+            !fwd, rev,
+            "\"update-ddns\": true",
+            ncr
+        },
+        {
+            "both directions",
+            "myhost.example.com.",
+            fwd, rev,
+            "\"update-ddns\": true",
+            ncr
+        },
+        {
+            "default update-ddns",
+            "myhost.example.com.",
+            fwd, rev,
+            "",
+            !ncr
+        },
+        {
+            "update-ddns = false",
+            "myhost.example.com.",
+            fwd, rev,
+            "\"update-ddns\": false",
+            !ncr
+        },
+    };
+
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        // Let's create a lease with scenario attributes.
+        Lease4Ptr lease = createLease4("192.0.2.8", 44, 0x08, 0x42);
+        lease->hostname_ = scenario.hostname_;
+        lease->fqdn_rev_ = scenario.fqdn_rev_;
+        lease->fqdn_fwd_ = scenario.fqdn_fwd_;
+        ASSERT_TRUE(lmptr_->addLease(lease));
+
+        // NCR Queue should be empty.
+        ASSERT_EQ(ncrQueueSize(), 0);
+
+        // Build the command
+        std::stringstream cmd;
+        cmd <<
+            "{"
+            "    \"command\": \"lease4-del\","
+            "    \"arguments\": {"
+            "        \"ip-address\": \"192.0.2.8\"";
+
+        if (!scenario.udpate_ddns_.empty()) {
+            cmd << "," << scenario.udpate_ddns_;
+        }
+
+        cmd << "}}";
+
+        // Execute the delete command.
+        static_cast<void>(testCommand(cmd.str(), CONTROL_RESULT_SUCCESS, "IPv4 lease deleted."));
+
+        if (!scenario.exp_ncr_) {
+            // Should not have an ncr.
+            ASSERT_EQ(ncrQueueSize(), 0);
+        } else {
+            // We should have an ncr, verify it.
+            ASSERT_EQ(ncrQueueSize(), 1);
+            verifyNameChangeRequest(CHG_REMOVE, scenario.fqdn_rev_, scenario.fqdn_fwd_,
+                                    lease->addr_.toText(), lease->hostname_);
+        }
+
+        // Lease should have been deleted.
+        lease = lmptr_->getLease4(lease->addr_);
+        ASSERT_FALSE(lease);
+    }
+}
+
+// Checks that lease4-del does not generate an NCR to remove
+// DNS for a given lease based on lease content when DDNS
+// updates are disabled.
+TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Disabled) {
+    // Initialize lease manager (false = v4, true = leases)
+    initLeaseMgr(true, true);
+    disableD2();
+
+    // Delete for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {\n"
+        "        \"ip-address\": \"192.0.2.8\",\n"
+        "        \"update-ddns\": true\n"
+        "    }\n"
+        "}";
+
+
+    // Let's create a lease with scenario attributes.
+    Lease4Ptr lease = createLease4("192.0.2.8", 44, 0x08, 0x42);
+    lease->hostname_ = "myhost.example.com.";
+    lease->fqdn_rev_ = true;
+    lease->fqdn_fwd_ = true;
+    ASSERT_TRUE(lmptr_->addLease(lease));
+
+    // NCR Queue is not enabled.
+    ASSERT_EQ(ncrQueueSize(), -1);
+
+    // Execute the delete command.
+    static_cast<void>(testCommand(cmd, CONTROL_RESULT_SUCCESS, "IPv4 lease deleted."));
+
+    // NCR Queue is not enabled.
+    ASSERT_EQ(ncrQueueSize(), -1);
+
+    // Lease should have been deleted.
+    lease = lmptr_->getLease4(lease->addr_);
+    ASSERT_FALSE(lease);
+}
+
+// Checks that lease6-del does (or does not) generate an NCR to remove
+// DNS for a given lease based on lease content when DDNS updates are enabled.
+TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Enabled) {
+    // Initialize lease manager (true = v6, false = no leases)
+    initLeaseMgr(true, true);
+
+    // Structure detailing a test scenario.
+    struct Scenario {
+        std::string description_;
+        std::string hostname_;
+        bool fqdn_fwd_;
+        bool fqdn_rev_;
+        std::string udpate_ddns_;
+        bool exp_ncr_;
+    };
+
+    bool fwd = true;
+    bool rev = true;
+    bool ncr = true;
+
+    // Three test scenarios to verify each combination of true flags.
+    std::vector<Scenario> scenarios = {
+        {
+            "no_host",
+            "",
+            fwd, rev,
+            "\"update-ddns\": true",
+            !ncr
+        },
+        {
+            "no directions",
+            "myhost.example.com.",
+            !fwd, !rev,
+            "\"update-ddns\": true",
+            !ncr
+        },
+        {
+            "fwd_only",
+            "myhost.example.com.",
+            fwd, !rev,
+            "\"update-ddns\": true",
+            ncr
+        },
+        {
+            "rev_only",
+            "myhost.example.com.",
+            !fwd, rev,
+            "\"update-ddns\": true",
+            ncr
+        },
+        {
+            "both directions",
+            "myhost.example.com.",
+            fwd, rev,
+            "\"update-ddns\": true",
+            ncr
+        },
+        {
+            "default update-ddns",
+            "myhost.example.com.",
+            fwd, rev,
+            "",
+            !ncr
+        },
+        {
+            "update-ddns = false",
+            "myhost.example.com.",
+            fwd, rev,
+            "\"update-ddns\": false",
+            !ncr
+        },
+    };
+
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        // Let's create a lease with scenario attributes.
+        Lease6Ptr lease = createLease6("2001:db8:1::8", 66, 0x77);
+        lease->hostname_ = scenario.hostname_;
+        lease->fqdn_rev_ = scenario.fqdn_rev_;
+        lease->fqdn_fwd_ = scenario.fqdn_fwd_;
+        ASSERT_TRUE(lmptr_->addLease(lease));
+
+        // NCR Queue should be empty.
+        ASSERT_EQ(ncrQueueSize(), 0);
+
+        // Build the command
+        std::stringstream cmd;
+        cmd <<
+            "{"
+            "    \"command\": \"lease6-del\","
+            "    \"arguments\": {"
+            "        \"subnet-id\": 66,\n"
+            "        \"ip-address\": \"2001:db8:1::8\"\n";
+
+        if (!scenario.udpate_ddns_.empty()) {
+            cmd << "," << scenario.udpate_ddns_;
+        }
+
+        cmd << "}}";
+
+        // Execute the delete command.
+        static_cast<void>(testCommand(cmd.str(), CONTROL_RESULT_SUCCESS, "IPv6 lease deleted."));
+
+        if (!scenario.exp_ncr_) {
+            // Should not have an ncr.
+            ASSERT_EQ(ncrQueueSize(), 0);
+        } else {
+            // We should have an ncr, verify it.
+            ASSERT_EQ(ncrQueueSize(), 1);
+            verifyNameChangeRequest(CHG_REMOVE, scenario.fqdn_rev_, scenario.fqdn_fwd_,
+                                    lease->addr_.toText(), lease->hostname_);
+        }
+
+        // Lease should have been deleted.
+        lease = lmptr_->getLease6(Lease::TYPE_NA, lease->addr_);
+        ASSERT_FALSE(lease);
+    }
+}
+
+// Checks that lease6-del does not generate an NCR to remove
+// DNS for a given lease based on lease content when DDNS
+// updates are disabled.
+TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Disabled) {
+    // Initialize lease manager (true = v6, true = leases)
+    initLeaseMgr(true, true);
+    disableD2();
+
+    // Delete for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {\n"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::8\",\n"
+        "        \"update-ddns\": true\n"
+        "    }\n"
+        "}";
+
+
+    // Let's create a lease with scenario attributes.
+    Lease6Ptr lease = createLease6("2001:db8:1::8", 66, 0x77);
+    lease->hostname_ = "myhost.example.com.";
+    lease->fqdn_rev_ = true;
+    lease->fqdn_fwd_ = true;
+    ASSERT_TRUE(lmptr_->addLease(lease));
+
+    // NCR Queue is not enabled.
+    ASSERT_EQ(ncrQueueSize(), -1);
+
+    // Execute the delete command.
+    static_cast<void>(testCommand(cmd, CONTROL_RESULT_SUCCESS, "IPv6 lease deleted."));
+
+    // NCR Queue is not enabled.
+    ASSERT_EQ(ncrQueueSize(), -1);
+
+    // Lease should have been deleted.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, lease->addr_);
+    ASSERT_FALSE(lease);
 }
 
 } // end of anonymous namespace

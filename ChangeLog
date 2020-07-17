@@ -1,3 +1,9 @@
+1774.	[func]		tmark
+	leaseX-del commands now support a new parameter, update-ddns,
+	which instructs the server to remove DNS entries for a
+	lease after it has been deleted.
+	(Gitlab #544)
+
 1773.	[perf]		fdupont
 	Kea statistics now uses standard c++11 chrono library instead
 	of POSIX time library from boost.

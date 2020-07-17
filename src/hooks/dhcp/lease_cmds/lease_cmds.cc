@@ -111,10 +111,13 @@ public:
         /// @brief IAID identifier used for v6 leases
         uint32_t iaid;
 
+        /// @brief Indicates whether or not DNS should be updated.
+        bool updateDDNS;
+
         /// @brief Default constructor.
         Parameters()
             : addr("::"), query_type(TYPE_ADDR), lease_type(Lease::TYPE_NA),
-              iaid(0) {
+              iaid(0), updateDDNS(false) {
         }
     };
 
@@ -484,6 +487,15 @@ LeaseCmdsImpl::getParameters(bool v6, const ConstElementPtr& params) {
         isc_throw(BadValue, "Parameters missing or are not a map.");
     }
 
+    if (params->contains("update-ddns")) {
+        ConstElementPtr tmp = params->get("update-ddns");
+        if (tmp->getType() != Element::boolean) {
+            isc_throw(BadValue, "'update-ddns' is not a boolean");
+        } else {
+            x.updateDDNS = tmp->boolValue();
+        }
+    }
+
     // We support several sets of parameters for leaseX-get/lease-del:
     // lease-get(type, address)
     // lease-get(type, subnet-id, identifier-type, identifier)
@@ -581,6 +593,7 @@ LeaseCmdsImpl::getParameters(bool v6, const ConstElementPtr& params) {
                   " is not supported.");
     }
     }
+
     return (x);
 }
 
@@ -1157,6 +1170,12 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
         } else {
             setErrorResponse (handle, "IPv4 lease not found.", CONTROL_RESULT_EMPTY);
         }
+
+        // Queue an NCR to remove DNS if configured and the lease has it.
+        if (p.updateDDNS) {
+            queueNCR(CHG_REMOVE, lease4);
+        }
+
     } catch (const std::exception& ex) {
         setErrorResponse(handle, ex.what());
         return (1);
@@ -1435,6 +1454,12 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
         } else {
             setErrorResponse (handle, "IPv6 lease not found.", CONTROL_RESULT_EMPTY);
         }
+
+        // Queue an NCR to remove DNS if configured and the lease has it.
+        if (p.updateDDNS) {
+            queueNCR(CHG_REMOVE, lease6);
+        }
+
     } catch (const std::exception& ex) {
         setErrorResponse(handle, ex.what());
         return (1);

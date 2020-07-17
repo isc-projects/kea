@@ -1479,10 +1479,6 @@ Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
 bool
 Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
     const isc::asiolink::IOAddress& addr = lease->addr_;
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_DELETE_ADDR)
-        .arg(addr.toText());
-
     Lease4Storage::iterator l = storage4_.find(addr);
     if (l == storage4_.end()) {
         // No such lease
@@ -1518,10 +1514,6 @@ Memfile_LeaseMgr::deleteLease(const Lease4Ptr& lease) {
 bool
 Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
     const isc::asiolink::IOAddress& addr = lease->addr_;
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_DELETE_ADDR)
-        .arg(addr.toText());
-
     Lease6Storage::iterator l = storage6_.find(addr);
     if (l == storage6_.end()) {
         // No such lease

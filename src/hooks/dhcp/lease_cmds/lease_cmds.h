@@ -345,7 +345,9 @@ public:
     /// criteria.
     /// It extracts the command name and arguments from the given Callouthandle,
     /// attempts to process them, and then set's the handle's "response"
-    /// argument accordingly.
+    /// argument accordingly.  If the lease is deleted successfully, then a call
+    /// to @ref isc::dhcp::queueNCR() is issued, which to generate an
+    /// CHG_REMOVE request to kea-dhcp-ddns, if appropriate.
     ///
     /// Two types of parameters are supported: (subnet-id, address) or
     /// (subnet-id, identifier-type, identifier).
@@ -381,7 +383,9 @@ public:
     /// This command attempts to delete a lease that match selected criteria.
     /// It extracts the command name and arguments from the given Callouthandle,
     /// attempts to process them, and then set's the handle's "response"
-    /// argument accordingly.
+    /// argument accordingly.  If the lease is deleted successfully, then a call
+    /// to @ref isc::dhcp::queueNCR() is issued, which to generate an
+    /// CHG_REMOVE request to kea-dhcp-ddns, if appropriate.
     ///
     /// Two types of parameters are supported: (subnet-id, address) or
     /// (subnet-id, type, iaid, identifier-type, identifier).
