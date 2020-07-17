@@ -1,0 +1,59 @@
+@startuml
+
+title DHCPREQUEST processing
+
+agent "Entry point" as entry
+
+agent "Select subnet" as selectSubnet
+note right : hook point
+
+agent "Find host reservation" as findReservation
+
+agent "Add either KNOWN or UNKNOWN class" as known
+
+agent "Classify (2nd pass)" as classify2
+
+agent "Process client name" as processClientName
+
+agent "Assign a lease" as assignLease
+
+rectangle "A lease was assigned" as ack {
+ agent "Add reserved classes" as setReservedClasses
+ agent "Classify required classes" as requiredClassify
+ agent "Build configured option list" as buildCfgOptionList
+ agent "Append requested options" as appendRequestedOptions
+ agent "Append requested vendor options" as appendRequestedVendorOptions
+ agent "Append basic options" as appendBasicOptions
+ agent "Set fixed fields" as setFixedFields
+}
+
+agent "Adjust interface data" as common
+
+agent "Append server ID" as appendServerID
+note left : on success exit point
+
+agent "Return no response" as drop
+note left : on error exit point
+
+entry --> selectSubnet
+selectSubnet --> findReservation
+selectSubnet ---> drop : hook set DROP
+findReservation --> known
+known --> classify2
+classify2 --> processClientName
+processClientName --> assignLease
+assignLease --> ack : DHCPACK
+assignLease --> common : DHCPNAK
+assignLease ---> drop : on error
+ack --> setReservedClasses
+setReservedClasses --> requiredClassify
+requiredClassify --> buildCfgOptionList
+buildCfgOptionList --> appendRequestedOptions
+appendRequestedOptions --> appendRequestedVendorOptions
+appendRequestedVendorOptions --> appendBasicOptions
+appendBasicOptions --> setFixedFields
+setFixedFields --> common
+common --> appendServerID
+appendServerID -[hidden]-> drop
+
+@enduml

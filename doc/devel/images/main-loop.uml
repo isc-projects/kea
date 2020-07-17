@@ -1,0 +1,58 @@
+@startuml
+
+title DHCP server main loop
+
+skinparam linetype ortho
+
+rectangle "Main Loop" {
+ agent "Wait for next event" as run
+
+ rectangle "Event Loop" as run_one {
+  together {
+   agent "Signal" as signal
+
+   agent "Handle Signal" as handleSignal
+  }
+
+  together {
+   agent "External Socket" as external_socket
+
+   agent "Handle External Socket" as handleExternalSocket
+  }
+
+  together {
+   agent "DHCP Query" as query
+
+   agent "Process Query" as processQuery
+  }
+
+   agent "Timeout" as timeout
+ }
+
+ together {
+  agent "I/O Service" as poll
+
+  agent "Execute ready handler" as ready
+ }
+
+ agent "Check Shutdown" as shutdown
+}
+
+run --> run_one : get next event
+run_one --> signal
+signal -right-> handleSignal : got signal
+handleSignal --> poll
+signal -[dashed]-> external_socket
+external_socket -right-> handleExternalSocket : external socket ready
+handleExternalSocket --> poll
+external_socket -[dashed]-> query
+query -right-> processQuery : DHCP socket ready
+processQuery --> poll
+query -[dashed]-> timeout
+timeout --> poll : timeout expired
+poll -> ready : handler ready
+poll ---> shutdown : no ready handler
+ready -> ready : execute ready handler
+shutdown -u-> run
+
+@enduml

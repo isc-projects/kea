@@ -1,0 +1,84 @@
+@startuml
+
+title DHCPv4 packet processing
+
+agent "Receive query" as receivePacket
+note left : input
+
+agent "Service Enabled" as isServiceEnabled
+
+agent "Callout buffer4_receive" as buffer4_receive
+note right : hook
+
+agent "Unpack query" as unpack
+
+agent "Classify query" as classify
+
+agent "Callout pkt4_receive" as pkt4_receive
+note right : hook
+
+agent "Check DROP class" as drop_class
+
+rectangle "Process Query on its Message Type" as process {
+ agent "Process Discover" as processDiscover
+ agent "Process Request" as processRequest
+ agent "Process Release" as processRelease
+ agent "Process Decline" as processDecline
+ agent "Process Inform" as processInform
+}
+
+agent "Callout lease4_committed" as lease4_committed
+note right : hook
+
+agent "Park" as park
+
+agent "Callout pkt4_send" as pkt4_send
+
+agent "Send response" as send
+
+agent "Pack response" as pack
+
+agent "Callout buffer4_send" as buffer4_send
+
+agent "Send response" as send
+note left : output
+
+agent "Drop packet" as drop
+note left : error
+
+receivePacket --> isServiceEnabled
+isServiceEnabled --> buffer4_receive : service is enabled
+isServiceEnabled ----> drop : service is disabled
+buffer4_receive --> unpack : CONTINUE
+buffer4_receive --> classify : SKIP
+buffer4_receive ----> drop : DROP
+unpack --> classify
+unpack ---> drop : on error
+classify --> pkt4_receive
+pkt4_receive --> drop_class : CONTINUE
+pkt4_receive ---> drop : DROP
+drop_class --> process
+drop_class ---> drop : query in DROP class
+process ---> drop : unknown message type
+processDiscover --> lease4_committed
+processDiscover ---> drop : on error
+processRequest --> lease4_committed
+processRequest ---> drop : on error
+processRelease --> lease4_committed
+processRelease ---> drop : on error
+processDecline --> lease4_committed
+processDecline ---> drop : on error
+processInform --> lease4_committed
+processInform ---> drop : on error
+lease4_committed --> pkt4_send : CONTINUE
+lease4_committed ---> drop : DROP
+lease4_committed --> park : PARK
+park -[dashed]-> pkt4_send : unpark
+pkt4_send --> pack : CONTINUE
+pkt4_send --> buffer4_send : SKIP
+pkt4_send ---> drop : DROP
+pack --> buffer4_send
+buffer4_send --> send : CONTINUE
+buffer4_send ---> drop : DROP
+send -[hidden]-> drop
+@enduml

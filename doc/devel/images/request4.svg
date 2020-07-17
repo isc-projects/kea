@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="1782px" preserveAspectRatio="none" style="width:740px;height:1782px;" version="1.1" viewBox="0 0 740 1782" width="740px" zoomAndPan="magnify"><defs><filter height="300%" id="f60sn3t2och8t" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacingAndGlyphs" textLength="225" x="248.5" y="17.4023">DHCPREQUEST processing</text><!--MD5=[638108c05bc1ef8eca3fbd57a1e57fe7]
+cluster ack--><rect fill="#FFFFFF" filter="url(#f60sn3t2och8t)" height="762.86" style="stroke: #000000; stroke-width: 1.5;" width="304" x="419" y="717.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="154" x="494" y="732.7344">A lease was assigned</text><!--MD5=[bf2e5648ffce4090541457b458b3eec7]
+entity setReservedClasses--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="163" x="449.5" y="806.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="143" x="459.5" y="829.5944">Add reserved classes</text><!--MD5=[b4c6d216ba631a143bfc1836b312cb78]
+entity requiredClassify--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="187" x="447.5" y="903.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="167" x="457.5" y="926.5944">Classify required classes</text><!--MD5=[f89e27cff326c32e9ba835d84fbfe859]
+entity buildCfgOptionList--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="206" x="455" y="1000.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="186" x="465" y="1023.5944">Build configured option list</text><!--MD5=[66aecdc5adcec4353637f7b7b5526ad2]
+entity appendRequestedOptions--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="203" x="464.5" y="1113.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="183" x="474.5" y="1136.5944">Append requested options</text><!--MD5=[c1e338234dc43680cac932baec853545]
+entity appendRequestedVendorOptions--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="255" x="443.5" y="1226.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="235" x="453.5" y="1249.5944">Append requested vendor options</text><!--MD5=[c9adb4adbcc3777a62f0437095b92421]
+entity appendBasicOptions--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="169" x="485.5" y="1323.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="149" x="495.5" y="1346.5944">Append basic options</text><!--MD5=[f001f897bdcc87f34b1f31db09c9e4bc]
+entity setFixedFields--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="121" x="508.5" y="1420.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="101" x="518.5" y="1443.5944">Set fixed fields</text><!--MD5=[e3476fda087b0512b1cf4e3a66ca5e59]
+entity entry--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="95" x="78.5" y="28.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="75" x="88.5" y="51.7344">Entry point</text><!--MD5=[a7ec37c34d1a4a150f9193e171f7b981]
+entity selectSubnet--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="111" x="70.5" y="125.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="91" x="80.5" y="148.7344">Select subnet</text><path d="M217,130.6992 L217,139.1992 L181.52,143.1992 L217,147.1992 L217,156.0098 A0,0 0 0 0 217,156.0098 L307,156.0098 A0,0 0 0 0 307,156.0098 L307,140.6992 L297,130.6992 L217,130.6992 A0,0 0 0 0 217,130.6992 " fill="#FBFB77" filter="url(#f60sn3t2och8t)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M297,130.6992 L297,140.6992 L307,140.6992 L297,130.6992 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="69" x="223" y="148.2676">hook point</text><!--MD5=[bd2ef8d619eb080c7e3a318a85d9bc74]
+entity findReservation--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="165" x="187.5" y="222.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="145" x="197.5" y="245.7344">Find host reservation</text><!--MD5=[2cdbe39ce7f7beceaf096677903e27aa]
+entity known--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="280" x="174" y="319.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="260" x="184" y="342.7344">Add either KNOWN or UNKNOWN class</text><!--MD5=[63b5186a9d9ded916d56a4c496be57e4]
+entity classify2--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="148" x="248" y="416.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="128" x="258" y="439.7344">Classify (2nd pass)</text><!--MD5=[40832264567e158d4eae9eb68a571da4]
+entity processClientName--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="155" x="248.5" y="513.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="135" x="258.5" y="536.7344">Process client name</text><!--MD5=[2a562006d844a2c20ab5026a88816353]
+entity assignLease--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="117" x="269.5" y="610.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="97" x="279.5" y="633.7344">Assign a lease</text><!--MD5=[8274bfb416b6365278739ca5c48d26ea]
+entity common--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="162" x="487" y="1535.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="142" x="497" y="1558.5944">Adjust interface data</text><!--MD5=[ca1312f187078c0b4317d510df91f0fb]
+entity appendServerID--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="138" x="499" y="1632.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="118" x="509" y="1655.5944">Append server ID</text><path d="M308,1637.5592 L308,1662.8698 A0,0 0 0 0 308,1662.8698 L464,1662.8698 A0,0 0 0 0 464,1662.8698 L464,1655.5592 L498.67,1650.0592 L464,1647.5592 L464,1647.5592 L454,1637.5592 L308,1637.5592 A0,0 0 0 0 308,1637.5592 " fill="#FBFB77" filter="url(#f60sn3t2och8t)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M454,1637.5592 L454,1647.5592 L464,1647.5592 L454,1637.5592 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="135" x="314" y="1655.1276">on success exit point</text><!--MD5=[c92710f32fe9c293a125fb7e80204a05]
+entity drop--><rect fill="#FEFECE" filter="url(#f60sn3t2och8t)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="155" x="177.5" y="1729.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="135" x="187.5" y="1752.5944">Return no response</text><path d="M6,1734.5592 L6,1759.8698 A0,0 0 0 0 6,1759.8698 L142,1759.8698 A0,0 0 0 0 142,1759.8698 L142,1752.5592 L177.47,1747.0592 L142,1744.5592 L142,1744.5592 L132,1734.5592 L6,1734.5592 A0,0 0 0 0 6,1734.5592 " fill="#FBFB77" filter="url(#f60sn3t2och8t)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M132,1734.5592 L132,1744.5592 L142,1744.5592 L132,1734.5592 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="115" x="12" y="1752.1276">on error exit point</text><!--MD5=[f1b2710c384eb85faf81d18e639f63a6]
+link entry to selectSubnet--><path d="M126,64.6192 C126,80.1592 126,102.9792 126,119.8592 " fill="none" id="entry-&gt;selectSubnet" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="126,124.8892,130,115.8892,126,119.8892,122,115.8892,126,124.8892" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[b2566f3d1f41175aa140f0cd50933407]
+link selectSubnet to findReservation--><path d="M152.08,161.3992 C176.75,177.6792 213.76,202.0992 239.73,219.2292 " fill="none" id="selectSubnet-&gt;findReservation" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="244.12,222.1192,238.8174,213.8197,239.9488,219.3622,234.4062,220.4936,244.12,222.1192" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[1a93233187986d890dbf5eee85d4aa4a]
+link selectSubnet to drop--><path d="M120.11,161.4792 C114.21,180.3392 106,211.5592 106,239.1992 C106,239.1992 106,239.1992 106,1651.0592 C106,1689.5192 141.74,1713.0992 178.21,1727.1392 " fill="none" id="selectSubnet-&gt;drop" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="183.12,1728.9792,176.0975,1722.0738,178.4384,1727.2236,173.2885,1729.5644,183.12,1728.9792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="94" x="107" y="926.1276">hook set DROP</text><!--MD5=[ec2fdd3e226382e0a9d3911ff6fdaa1e]
+link findReservation to known--><path d="M278.07,258.6192 C285.33,274.2892 296.02,297.3792 303.85,314.2892 " fill="none" id="findReservation-&gt;known" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="305.98,318.8892,305.8344,309.0414,303.882,314.3507,298.5728,312.3982,305.98,318.8892" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[9b534dc7ab92ef37bc4e582dc201fb22]
+link known to classify2--><path d="M315.47,355.6192 C316.78,371.1592 318.7,393.9792 320.12,410.8592 " fill="none" id="known-&gt;classify2" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="320.54,415.8892,323.781,406.5889,320.126,410.9064,315.8085,407.2514,320.54,415.8892" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[96b9d5e38c2d93af2aa0f6088adcad57]
+link classify2 to processClientName--><path d="M322.73,452.6192 C323.39,468.1592 324.35,490.9792 325.06,507.8592 " fill="none" id="classify2-&gt;processClientName" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="325.27,512.8892,328.9071,503.7365,325.0702,507.8932,320.9135,504.0563,325.27,512.8892" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[ad449cd118a7a2b2ce8548c9076b781b]
+link processClientName to assignLease--><path d="M326.37,549.6192 C326.69,565.1592 327.17,587.9792 327.53,604.8592 " fill="none" id="processClientName-&gt;assignLease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="327.64,609.8892,331.4592,600.811,327.54,604.8902,323.4608,600.971,327.64,609.8892" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[dbcae5b7ba85be5e06360ecde09c32a7]
+link assignLease to ack--><path d="M350.16,646.3192 C370.48,662.0192 401.2825,685.8217 427.3263,705.9467 C430.5817,708.4623 433.7628,710.9205 436.8398,713.2982 C438.3783,714.4871 439.8908,715.6558 441.3735,716.8015 " fill="none" id="assignLease-&gt;ack" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="441.3735,716.8015,436.6977,708.1333,437.4171,713.7443,431.8061,714.4636,441.3735,716.8015" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="62" x="407" y="689.7676">DHCPACK</text><!--MD5=[2f984fc865edd3cdda8891855a184a01]
+link assignLease to common--><path d="M328.48,646.2492 C329.08,668.5892 330,709.0092 330,743.5592 C330,743.5592 330,743.5592 330,1439.0592 C330,1508.3792 413.41,1535.2292 481.47,1545.5992 " fill="none" id="assignLease-&gt;common" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="486.76,1546.3692,478.4373,1541.103,481.8131,1545.6422,477.274,1549.018,486.76,1546.3692" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="63" x="331" y="1079.6276">DHCPNAK</text><!--MD5=[1a01e4a77361624092d23c61082f06c9]
+link assignLease to drop--><path d="M308.05,646.4192 C286.44,667.0992 255,703.9892 255,743.5592 C255,743.5592 255,743.5592 255,1651.0592 C255,1675.9292 255,1704.4692 255,1723.7292 " fill="none" id="assignLease-&gt;drop" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="255,1728.8992,259,1719.8992,255,1723.8992,251,1719.8992,255,1728.8992" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="50" x="256" y="1192.6276">on error</text><!--MD5=[45361b0d0807638813b657d9c2aeacea]
+link ack to setReservedClasses--><path d="M476.04,745.1192 C477.12,746.6492 499.89,778.9392 515.78,801.4792 " fill="none" id="ack-&gt;setReservedClasses" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="518.86,805.8392,516.9576,796.1758,515.985,801.7484,510.4124,800.7758,518.86,805.8392" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[59a85614cff14ca40e3cee07aa3bbe30]
+link setReservedClasses to requiredClassify--><path d="M532.83,842.4792 C534.47,858.0192 536.87,880.8392 538.65,897.7192 " fill="none" id="setReservedClasses-&gt;requiredClassify" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="539.18,902.7492,542.206,893.3768,538.6514,897.7772,534.2509,894.2226,539.18,902.7492" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[2efe0b9050a6d4600ee0e20f04479830]
+link requiredClassify to buildCfgOptionList--><path d="M544.12,939.4792 C546.9,955.0192 550.98,977.8392 554,994.7192 " fill="none" id="requiredClassify-&gt;buildCfgOptionList" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="554.9,999.7492,557.2671,990.1891,554.027,994.826,549.39,991.5859,554.9,999.7492" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[7441c48dbaadb9becd02fb7c753a194c]
+link buildCfgOptionList to appendRequestedOptions--><path d="M559.25,1036.3992 C560.64,1055.6292 562.87,1086.6892 564.39,1107.7192 " fill="none" id="buildCfgOptionList-&gt;appendRequestedOptions" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="564.76,1112.8392,568.1067,1103.5764,564.4027,1107.852,560.1272,1104.148,564.76,1112.8392" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[47343daf35e3c3d46fb0ba57547a88fa]
+link appendRequestedOptions to appendRequestedVendorOptions--><path d="M566.78,1149.3992 C567.65,1168.6292 569.05,1199.6892 569.99,1220.7192 " fill="none" id="appendRequestedOptions-&gt;appendRequestedVendorOptions" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="570.22,1225.8392,573.8048,1216.6659,569.9917,1220.8444,565.8132,1217.0313,570.22,1225.8392" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[58b55c53e5f94649550176181093f5f5]
+link appendRequestedVendorOptions to appendBasicOptions--><path d="M570.82,1262.4792 C570.65,1278.0192 570.41,1300.8392 570.24,1317.7192 " fill="none" id="appendRequestedVendorOptions-&gt;appendBasicOptions" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="570.18,1322.7492,574.2572,1313.7839,570.223,1317.7494,566.2575,1313.7152,570.18,1322.7492" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[7264f1f21cb707b81d802a97c78240a4]
+link appendBasicOptions to setFixedFields--><path d="M569.82,1359.4792 C569.65,1375.0192 569.41,1397.8392 569.24,1414.7192 " fill="none" id="appendBasicOptions-&gt;setFixedFields" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="569.18,1419.7492,573.2572,1410.7839,569.223,1414.7494,565.2575,1410.7152,569.18,1419.7492" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[6bbcaa41c57dc9195ee921caca416269]
+link setFixedFields to common--><path d="M568.85,1456.2192 C568.67,1475.7992 568.39,1507.8892 568.2,1529.4892 " fill="none" id="setFixedFields-&gt;common" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="568.15,1534.7392,572.227,1525.7738,568.1929,1529.7394,564.2273,1525.7053,568.15,1534.7392" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[132fd8477c39c92905ed9637c759fac2]
+link common to appendServerID--><path d="M568,1571.4792 C568,1587.0192 568,1609.8392 568,1626.7192 " fill="none" id="common-&gt;appendServerID" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="568,1631.7492,572,1622.7492,568,1626.7492,564,1622.7492,568,1631.7492" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[c3fa6a6e0f86213585b749ab16a0c5af]
+link appendServerID to drop--><!--MD5=[da6537993b0c75cf7b1e1dfe95a6f951]
+@startuml
+
+title DHCPREQUEST processing
+
+agent "Entry point" as entry
+
+agent "Select subnet" as selectSubnet
+note right : hook point
+
+agent "Find host reservation" as findReservation
+
+agent "Add either KNOWN or UNKNOWN class" as known
+
+agent "Classify (2nd pass)" as classify2
+
+agent "Process client name" as processClientName
+
+agent "Assign a lease" as assignLease
+
+rectangle "A lease was assigned" as ack {
+ agent "Add reserved classes" as setReservedClasses
+ agent "Classify required classes" as requiredClassify
+ agent "Build configured option list" as buildCfgOptionList
+ agent "Append requested options" as appendRequestedOptions
+ agent "Append requested vendor options" as appendRequestedVendorOptions
+ agent "Append basic options" as appendBasicOptions
+ agent "Set fixed fields" as setFixedFields
+}
+
+agent "Adjust interface data" as common
+
+agent "Append server ID" as appendServerID
+note left : on success exit point
+
+agent "Return no response" as drop
+note left : on error exit point
+
+entry - -> selectSubnet
+selectSubnet - -> findReservation
+selectSubnet - - -> drop : hook set DROP
+findReservation - -> known
+known - -> classify2
+classify2 - -> processClientName
+processClientName - -> assignLease
+assignLease - -> ack : DHCPACK
+assignLease - -> common : DHCPNAK
+assignLease - - -> drop : on error
+ack - -> setReservedClasses
+setReservedClasses - -> requiredClassify
+requiredClassify - -> buildCfgOptionList
+buildCfgOptionList - -> appendRequestedOptions
+appendRequestedOptions - -> appendRequestedVendorOptions
+appendRequestedVendorOptions - -> appendBasicOptions
+appendBasicOptions - -> setFixedFields
+setFixedFields - -> common
+common - -> appendServerID
+appendServerID -[hidden]-> drop
+
+@enduml
+
+PlantUML version 1.2020.15(Sun Jun 28 13:39:45 CEST 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: US
+--></g></svg>

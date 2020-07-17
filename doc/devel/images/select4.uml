@@ -1,0 +1,82 @@
+@startuml
+
+title DHCPv4 subnet selection
+
+agent "Entry point" as entry
+
+agent "Try RAI link select" as rai_link_select
+
+rectangle "Relayed" as relayed {
+ agent "Relay address matches subnet" as relay_subnet
+ agent "Relay address matches shared network" as relay_network
+ agent "Check client class" as relay_class
+}
+
+rectangle "Set address for lookup" as set_address {
+ agent "Set relay address" as relay_address
+ agent "Set client address" as client_address
+ agent "Set source address" as source_address
+}
+
+rectangle "Try incoming interface" as interface {
+ agent "Interface matches subnet" as interface_subnet
+ agent "Interface atches shared network" as interface_network
+ agent "Check client class" as interface_class
+ agent "Set interface address" as interface_address
+}
+
+rectangle "Try address" as address {
+ agent "Check subnet prefix" as inRange
+ agent "Check client class" as address_class
+}
+
+agent "Found a subnet" as found
+
+agent "Found no subnet" as not_found
+
+agent "Callout subnet4_select" as subnet4_select
+
+agent "Return a subnet" as success
+
+agent "Return no subnet" as no_subnet
+
+agent "Drop query" as drop
+
+entry --> rai_link_select
+rai_link_select --> relayed : relayed
+rai_link_select --> set_address : not relayed
+relayed --> relay_subnet
+relay_subnet --> relay_network : no match
+relay_subnet --> relay_class : match
+relay_network --> set_address : no match
+relay_network --> relay_class : match
+relay_class ---> found : compatible
+relay_class --> set_address : not compatible
+set_address --> relay_address : try the relay addreess
+relay_address -r-> client_address : has no relay address
+client_address -r-> source_address : has no client addrss
+source_address --> interface_subnet : no suitable address
+relay_address --> inRange : has a relay address
+client_address --> inRange : has a client address
+source_address --> inRange : has source addess and use unicast
+interface_subnet ---> not_found : no interface
+interface_subnet --> interface_class : match
+interface_subnet --> interface_network : no match
+interface_network --> interface_class : march
+interface_network ---> not_found : no match
+interface_class ---> found : compatible
+interface_class ---> interface_address : not compatible
+interface_address --> inRange : has an interface address
+interface_address ---> not_found : no interface address
+inRange ---> address_class : match
+inRange ---> not_found : no match
+address_class ---> found : compatible
+address_class ---> not_found : not compatible
+found --> subnet4_select
+not_found --> subnet4_select
+found -[hidden]> not_found
+subnet4_select --> success : CONTINUE and subnet set
+subnet4_select --> no_subnet : SKIP or subnet not set
+subnet4_select --> drop : DROP
+
+@endutl
