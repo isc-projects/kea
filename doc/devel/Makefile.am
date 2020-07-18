@@ -42,3 +42,11 @@ devel:
 
 clean-local:
 	rm -rf html
+
+if HAVE_PLANTUML
+.uml.png:
+	@PLANTUML@ $<
+
+.uml.svg:
+	@PLANTUML@ -svg $<
+endif
