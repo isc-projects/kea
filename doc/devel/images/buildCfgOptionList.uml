@@ -1,0 +1,52 @@
+@startuml
+
+title buildCfgOptionList: build configured option list
+
+start
+:Get (empty) configured option list;
+
+if (no subnet) then (yes)
+  :return;
+  stop
+else (no)
+endif
+
+if (current host reservation) then (yes)
+  :push back host configured options;
+else (no)
+endif
+
+if (assigned address) then (yes)
+  :get pool of assigned address;
+  if (pool) then (yes)
+    :push back pool configured options;
+  else (no)
+  endif
+else (no)
+endif
+
+:push back subnet configured options;
+
+:get shared network from subnet;
+if (shared network) then (yes)
+  :push back shared network configured options;
+else (no)
+endif
+
+while (for each query client class)
+ :get client class definition from current configuration;
+ if (found) then (no)
+    if (built-in client class) then (yes)
+    else (no)
+      :log debug "class unconfigured";
+    endif
+  else (yes)
+    :push back client class definition configured options;
+  endif
+endwhile
+
+:push back global configured options;
+:return;
+stop
+
+@enduml

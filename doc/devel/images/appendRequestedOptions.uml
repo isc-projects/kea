@@ -1,0 +1,31 @@
+@startuml
+
+Title Append requested options
+
+:get configured option list;
+
+:get parameter request list (PRL) from query;
+
+while (for each item from configured option list)
+  :get configured options in dhcp4 space;
+  while (for each persistent option)
+    :push back option code to PRL;
+  endwhile
+endwhile
+
+while (for each code in PRL)
+  if (option is not set in response) then (yes)
+    while (for each item from configured option list)
+      :get configured options in dhcp4 space;
+      if (found) then (first)
+        :add option to response;
+      else (not found or already found)
+      endif
+    endwhile
+  else (no)
+  endif
+endwhile
+->done;
+stop
+
+@enduml

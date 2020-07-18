@@ -1,0 +1,53 @@
+@startuml
+
+Title Append vendor requested options
+
+:get vendor id from query vivso option;
+:get vendor id from response vivso option;
+if (vendor id) then (no)
+  :return;
+  stop
+else (yes)
+endif
+
+:get configured option list;
+
+:get option request list (ORO) from query DOCSIS vendor option;
+
+while (for each item from configured option list)
+  :get configured options in vendor id space;
+  while (for each persistent option)
+    :push back option code to ORO;
+  endwhile
+endwhile
+
+if (response vivso option) then (no)
+  :create vivso option for vendor id;
+else (yes)
+endif
+
+:added = false;
+while (for each code in ORO)
+  if (sub-option is not set in vivso option) then (yes)
+    while (for each item from configured option list)
+      :get configured options in vendor id space;
+      if (found) then (first)
+        :add sub-option to vivso option;
+        :added = true;
+      else (not found or already found)
+      endif
+    endwhile
+  else (no)
+  endif
+  if (added) then (yes)
+    if (vivso option in response) then (no)
+      :add vivso option in response;
+    else (yes)
+    endif
+  else (no)
+  endif
+endwhile
+->done;
+stop
+
+@enduml
