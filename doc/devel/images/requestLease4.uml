@@ -1,0 +1,145 @@
+@startuml
+
+start
+:get lease for the client;
+
+if (reserved address) then (yes)
+  if (requested address) then (no)
+    :requested address = reserved address;
+  else (yes)
+    if (requested address is reserved for another client) then (yes)
+      :return no lease;
+      stop
+    else (no)
+    endif
+  endif
+  if (lease for requested address) then (yes)
+    if (active and owned by another client) then (yes)
+      :return no lease;
+      stop
+    else (no)
+    endif
+  else (no)
+  endif
+  if (requested address == reserved address) then (no)
+    if (lease for requested address) then (yes)
+      if (active) then (yes)
+        :return no lease;
+        stop
+      else (no)
+      endif
+    else (no)
+    endif
+    if (requested address in allowed pool) then (no)
+      :return no lease;
+      stop
+    else (yes)
+    endif
+  else (yes)
+  endif
+
+else (no)
+
+  if (requested address) then (yes)
+    if (requested address is reserved for another client) then (yes)
+      :return no lease;
+      stop
+    else (no)
+    endif
+    if (lease for requested address) then (yes)
+      if (active and owned by another client) then (yes)
+        :return no lease;
+        stop
+      else (no)
+      endif
+    else (no) 
+    endif
+    if (requested address in allowed pool) then (no)
+      :return no lease;
+      stop
+    else (yes)
+    endif
+  else (no)
+    if (client lease and lease address in allowed pool) then (no)
+      while (iterate over pools and subnect)
+        :pick candidate address;
+        if (candidate is reserved for another client) then (no)
+          if (lease for candidate) then (no)
+            :create and return new lease;
+            stop
+          else (yes)
+            if (expired) then (yes)
+              :reclaim expired lease;
+              :update lease information;
+              :callout lease4_select;
+              if (callout return) then (SKIP)
+                :return no lease;
+                stop
+              else (CONTINUE)
+                :update lease;
+                :return reused lease;
+                stop
+              endif
+            else (no)
+            endif     
+          endif
+        else (yes)
+        endif
+      endwhile
+      :maximum attempts;
+      :return no lease;
+      stop
+    else (yes)
+    endif
+  endif
+endif
+
+' after check
+if (client lease) then (yes)
+  if (no requested address or requested address == client lease address) then (yes)
+    if (has reserved address or client lease address in allowed pool) then (yes)
+      :update lease information;
+      if (old lease expired) then (yes)
+        :reclaim expired lease;
+      else (no)
+      endif
+      :callout lease4_renew;
+      if (callout return) then (SKIP)
+        :return old client lease;
+        stop
+      else (CONTINUE)
+        :update lease;
+        :return renewed client lease;
+        stop
+      endif
+    else (no)
+    endif
+  else (no)
+  endif
+else (no)
+endif
+
+:get lease for requested address;
+if (requested lease) then (yes)
+  if (expired) then (no)
+    :return no lease;
+    stop
+  else (yes)
+    :reclaim expired lease;
+    :update lease information;
+    :callout lease4_select;
+    if (callout return) then (SKIP)
+      :return no lease;
+      stop
+    else (CONTINUE)
+      :update lease;
+      :return reused lease;
+      stop
+    endif
+  endif
+else (no)
+ :create and return new lease;
+ stop
+endif
+
+@enduml
