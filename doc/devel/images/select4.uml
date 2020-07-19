@@ -20,7 +20,7 @@ rectangle "Set address for lookup" as set_address {
 
 rectangle "Try incoming interface" as interface {
  agent "Interface matches subnet" as interface_subnet
- agent "Interface atches shared network" as interface_network
+ agent "Interface matches shared network" as interface_network
  agent "Check client class" as interface_class
  agent "Set interface address" as interface_address
 }
