@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,21 +33,23 @@ IfacesConfigParser::parseInterfacesList(const CfgIfacePtr& cfg_iface,
     }
 }
 
-IfacesConfigParser::IfacesConfigParser(const uint16_t protocol)
-    : protocol_(protocol) {
+IfacesConfigParser::IfacesConfigParser(const uint16_t protocol, bool test_mode)
+    : protocol_(protocol), test_mode_(test_mode) {
 }
 
 void
 IfacesConfigParser::parse(const CfgIfacePtr& cfg,
                           const isc::data::ConstElementPtr& ifaces_config) {
 
+    // Close sockets if not in test mode.
+    if (!test_mode_) {
+        IfaceMgr::instance().closeSockets();
+    }
+
     // Check for re-detect before calling parseInterfacesList()
     bool re_detect = getBoolean(ifaces_config, "re-detect");
     cfg->setReDetect(re_detect);
-    if (re_detect) {
-        // Interface clear will drop opened socket information
-        // so close them if the caller did not.
-        IfaceMgr::instance().closeSockets();
+    if (re_detect && !test_mode_) {
         IfaceMgr::instance().clearIfaces();
         IfaceMgr::instance().detectIfaces();
     }

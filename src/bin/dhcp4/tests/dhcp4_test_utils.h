@@ -440,7 +440,11 @@ public:
     /// @param config String holding server configuration in JSON format.
     /// @param commit A boolean flag indicating if the new configuration
     /// should be committed (if true), or not (if false).
-    void configure(const std::string& config, const bool commit = true);
+    /// @param open_sockets  A boolean flag indicating if sockets should
+    /// be opened (if true), or not (if false).
+    void configure(const std::string& config,
+                   const bool commit = true,
+                   const bool open_sockets = true);
 
     /// @brief Configure specified DHCP server using JSON string.
     ///
@@ -448,8 +452,12 @@ public:
     /// @param srv Instance of the server to be configured.
     /// @param commit A boolean flag indicating if the new configuration
     /// should be committed (if true), or not (if false).
-    void configure(const std::string& config, NakedDhcpv4Srv& srv,
-                   const bool commit = true);
+    /// @param open_sockets  A boolean flag indicating if sockets should
+    /// be opened (if true), or not (if false).
+    void configure(const std::string& config,
+                   NakedDhcpv4Srv& srv,
+                   const bool commit = true,
+                   const bool open_sockets = true);
 
     /// @brief Configure specified DHCP server using JSON string.
     ///

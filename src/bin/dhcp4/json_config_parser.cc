@@ -416,13 +416,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         ConstElementPtr ifaces_config = mutable_cfg->get("interfaces-config");
         if (ifaces_config) {
             parameter_name = "interfaces-config";
-            ElementPtr mutable_cfg =
-                boost::const_pointer_cast<Element>(ifaces_config);
-            if (check_only) {
-                // No re-detection in check only mode
-                mutable_cfg->set("re-detect", Element::create(false));
-            }
-            IfacesConfigParser parser(AF_INET);
+            IfacesConfigParser parser(AF_INET, check_only);
             CfgIfacePtr cfg_iface = srv_cfg->getCfgIface();
             parser.parse(cfg_iface, ifaces_config);
         }

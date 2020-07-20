@@ -609,13 +609,17 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 }
 
 void
-Dhcpv4SrvTest::configure(const std::string& config, const bool commit) {
-    configure(config, srv_, commit);
+Dhcpv4SrvTest::configure(const std::string& config,
+                         const bool commit,
+                         const bool open_sockets) {
+    configure(config, srv_, commit, open_sockets);
 }
 
 void
-Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
-                         const bool commit) {
+Dhcpv4SrvTest::configure(const std::string& config,
+                         NakedDhcpv4Srv& srv,
+                         const bool commit,
+                         const bool open_sockets) {
     ConstElementPtr json;
     try {
         json = parseJSON(config);
@@ -648,7 +652,12 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
     if (commit) {
         CfgMgr::instance().commit();
     }
- }
+
+    // Opening sockets.
+    if (open_sockets) {
+        IfaceMgr::instance().openSockets4();
+    }
+}
 
 std::pair<int, std::string>
 Dhcpv4SrvTest::configureWithStatus(const std::string& config, NakedDhcpv4Srv& srv,
@@ -752,6 +761,6 @@ Dhcpv4SrvTest::pretendReceivingPkt(NakedDhcpv4Srv& srv, const std::string& confi
     EXPECT_EQ(1, tested_stat->getInteger().first);
 }
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp::test namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace

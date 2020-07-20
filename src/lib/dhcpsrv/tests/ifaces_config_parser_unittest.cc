@@ -1,4 +1,4 @@
-// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,7 +59,7 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse the configuration.
-    IfacesConfigParser parser(AF_INET);
+    IfacesConfigParser parser(AF_INET, false);
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     ASSERT_TRUE(cfg_iface);
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
@@ -98,6 +98,36 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));
 }
 
+// This test checks that the parser does not re-detect interfaces in test mode.
+TEST_F(IfacesConfigParserTest, testMode) {
+    // Creates fake interfaces with fake addresses.
+    IfaceMgrTestConfig test_config(true);
+
+    // Configuration with wildcard..
+    std::string config =
+         "{ \"interfaces\": [ \"*\" ], \"re-detect\": true }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse the configuration in test mode.
+    IfacesConfigParser parser(AF_INET, true);
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(cfg_iface);
+    ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+
+    // Verify we still have the eth1961 interface.
+    EXPECT_TRUE(IfaceMgr::instance().getIface("eth1961"));
+
+    // Reparse in not test mode.
+    IfacesConfigParser parser2(AF_INET, false);
+    CfgMgr::instance().clear();
+    cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(cfg_iface);
+    ASSERT_NO_THROW(parser2.parse(cfg_iface, config_element));
+
+    // The eth1961 interface no longer exists.
+    EXPECT_FALSE(IfaceMgr::instance().getIface("eth1961"));
+}
 
 // This test checks that the parsed structure can be converted back to Element
 // tree.
@@ -116,7 +146,7 @@ TEST_F(IfacesConfigParserTest, toElement) {
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse the configuration.
-    IfacesConfigParser parser(AF_INET);
+    IfacesConfigParser parser(AF_INET, false);
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     ASSERT_TRUE(cfg_iface);
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
@@ -141,7 +171,7 @@ TEST_F(IfacesConfigParserTest, socketTypeRaw) {
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse the configuration.
-    IfacesConfigParser parser(AF_INET);
+    IfacesConfigParser parser(AF_INET, false);
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
 
@@ -168,7 +198,7 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse the configuration.
-    IfacesConfigParser parser(AF_INET);
+    IfacesConfigParser parser(AF_INET, false);
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     ASSERT_TRUE(cfg_iface);
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
@@ -188,7 +218,7 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
 // Test that the configuration rejects the invalid socket type.
 TEST_F(IfacesConfigParserTest, socketTypeInvalid) {
     // For DHCPv4 we only accept the raw socket or datagram socket.
-    IfacesConfigParser parser4(AF_INET);
+    IfacesConfigParser parser4(AF_INET, false);
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     std::string config = "{ \"interfaces\": [ ],"
         "\"dhcp-socket-type\": \"default\","
@@ -197,7 +227,7 @@ TEST_F(IfacesConfigParserTest, socketTypeInvalid) {
     ASSERT_THROW(parser4.parse(cfg_iface, config_element), DhcpConfigError);
 
     // For DHCPv6 we don't accept any socket type.
-    IfacesConfigParser parser6(AF_INET6);
+    IfacesConfigParser parser6(AF_INET6, false);
     config = "{ \"interfaces\": [ ],"
         " \"dhcp-socket-type\": \"udp\","
         " \"re-detect\": false }";
@@ -208,10 +238,10 @@ TEST_F(IfacesConfigParserTest, socketTypeInvalid) {
 // Tests that outbound-interface is parsed properly.
 TEST_F(IfacesConfigParserTest, outboundInterface) {
     // For DHCPv4 we accept 'use-routing' or 'same-as-inbound'.
-    IfacesConfigParser parser4(AF_INET);
+    IfacesConfigParser parser4(AF_INET, false);
 
     // For DHCPv6 we don't accept this at all.
-    IfacesConfigParser parser6(AF_INET6);
+    IfacesConfigParser parser6(AF_INET6, false);
 
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
 

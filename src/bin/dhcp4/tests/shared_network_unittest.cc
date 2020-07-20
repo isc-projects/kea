@@ -1025,7 +1025,6 @@ public:
     Dhcpv4SharedNetworkTest()
         : Dhcpv4SrvTest(),
           iface_mgr_test_config_(true) {
-        IfaceMgr::instance().openSockets4();
         StatsMgr::instance().removeAll();
     }
 

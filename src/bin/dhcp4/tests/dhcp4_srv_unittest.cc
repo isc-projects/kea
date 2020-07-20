@@ -2252,8 +2252,6 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
 // Checks if received relay agent info option is echoed back to the client
 TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
     IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // Use of the captured DHCPDISCOVER packet requires that
@@ -2299,8 +2297,6 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
 // to the client
 TEST_F(Dhcpv4SrvTest, badRelayAgentInfoEcho) {
     IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // Use of the captured DHCPDISCOVER packet requires that
@@ -2345,8 +2341,6 @@ TEST_F(Dhcpv4SrvTest, badRelayAgentInfoEcho) {
 // Checks if client port can be overridden in packets being sent.
 TEST_F(Dhcpv4SrvTest, portsClientPort) {
     IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // By default te client port is supposed to be zero.
@@ -2388,7 +2382,6 @@ TEST_F(Dhcpv4SrvTest, portsClientPort) {
 // Checks if server port can be overridden in packets being sent.
 TEST_F(Dhcpv4SrvTest, portsServerPort) {
     IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
 
     // Do not use DHCP4_SERVER_PORT here as 0 means don't open sockets.
     NakedDhcpv4Srv srv(0);
@@ -3145,7 +3138,7 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
         "],"
         "\"valid-lifetime\": 4000 }";
 
-    ASSERT_NO_THROW(configure(config));
+    ASSERT_NO_THROW(configure(config, true, false));
 
     // Create a simple packet that we'll use for classification
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
@@ -3468,7 +3461,6 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
 // Checks effect of persistency (aka always-true) flag on the PRL
 TEST_F(Dhcpv4SrvTest, prlPersistency) {
     IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
 
     ASSERT_NO_THROW(configure(CONFIGS[2]));
 
@@ -3547,7 +3539,7 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
         "\"valid-lifetime\": 4000 }";
 
     // Use this config to set up the server
-    ASSERT_NO_THROW(configure(config));
+    ASSERT_NO_THROW(configure(config, true, false));
 
     // Let's get the subnet configuration objects
     const Subnet4Collection* subnets =
@@ -3634,7 +3626,7 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
         "\"valid-lifetime\": 4000 }";
 
     // Use this config to set up the server
-    ASSERT_NO_THROW(configure(config));
+    ASSERT_NO_THROW(configure(config, true, false));
 
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
@@ -3695,7 +3687,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
         "\"valid-lifetime\": 4000 }";
 
     // Use this config to set up the server
-    ASSERT_NO_THROW(configure(config));
+    ASSERT_NO_THROW(configure(config, true, false));
 
     // Let's get the subnet configuration objects
     const Subnet4Collection* subnets =
@@ -3814,7 +3806,7 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
         "\"valid-lifetime\": 4000 }";
 
     // Use this config to set up the server
-    ASSERT_NO_THROW(configure(config));
+    ASSERT_NO_THROW(configure(config, true, false));
 
     // Let's get the subnet configuration objects
     const Subnet4Collection* subnets =
@@ -4099,7 +4091,6 @@ TEST_F(Dhcpv4SrvTest, statisticsUnknownRcvd) {
 // in incoming client message.
 TEST_F(Dhcpv4SrvTest, emptyClientId) {
     IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
     Dhcp4Client client;
 
     EXPECT_NO_THROW(configure(CONFIGS[0], *client.getServer()));
@@ -4123,7 +4114,6 @@ TEST_F(Dhcpv4SrvTest, emptyClientId) {
 // in incoming client message.
 TEST_F(Dhcpv4SrvTest, tooLongClientId) {
     IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
     Dhcp4Client client;
 
     EXPECT_NO_THROW(configure(CONFIGS[0], *client.getServer()));

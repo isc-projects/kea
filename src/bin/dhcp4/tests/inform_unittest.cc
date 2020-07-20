@@ -135,8 +135,6 @@ public:
     InformTest()
         : Dhcpv4SrvTest(),
           iface_mgr_test_config_(true) {
-        IfaceMgr::instance().openSockets4();
-
         // Let's wipe all existing statistics.
         isc::stats::StatsMgr::instance().removeAll();
     }
