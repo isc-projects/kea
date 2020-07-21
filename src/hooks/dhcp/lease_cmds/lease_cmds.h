@@ -92,6 +92,9 @@ public:
     /// where multiple IPv6 addresses and/or prefixes can be allocated for
     /// a single DHCPv6 packet.
     ///
+    /// @note Unlike leaseX-del, this command does not support "update-ddns" and
+    /// this will not generate CHG_REMOVEs for deleted leases.
+    ///
     /// Example structure of the command:
     ///
     /// {

@@ -5520,7 +5520,6 @@ TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Enabled) {
             "{"
             "    \"command\": \"lease6-del\","
             "    \"arguments\": {"
-            "        \"subnet-id\": 66,\n"
             "        \"ip-address\": \"2001:db8:1::8\"\n";
 
         if (!scenario.update_ddns_.empty()) {
@@ -5561,7 +5560,6 @@ TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Disabled) {
         "{\n"
         "    \"command\": \"lease6-del\",\n"
         "    \"arguments\": {\n"
-        "        \"subnet-id\": 66,\n"
         "        \"ip-address\": \"2001:db8:1::8\",\n"
         "        \"update-ddns\": true\n"
         "    }\n"

@@ -723,8 +723,8 @@ leases were found.
 
 .. _command-lease6-get-by-hostname:
 
-The lease4-get-by-*, lease6-get-by-* Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The lease4-get-by-\*, lease6-get-by-\* Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``leaseX-get-by-Y`` can be used to query the lease database and
 retrieve all existing leases with a specified hardware address (IPv4
@@ -802,7 +802,7 @@ An example IPv4 lease deletion by "hw-address" is:
    }
 
 
-As of Kea 1.7.10, a new parameter, "update-ddns", is supported (IPv4 and IPv6).
+As of Kea 1.7.10, a new parameter, ``update-ddns``, is supported (IPv4 and IPv6).
 When true it instructs the server to queue a request to kea-dhcp-ddns to
 remove DNS entries after the lease is successfully deleted if:
 
