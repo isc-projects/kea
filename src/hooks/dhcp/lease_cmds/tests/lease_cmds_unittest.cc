@@ -5281,7 +5281,7 @@ TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Enabled) {
         std::string hostname_;
         bool fqdn_fwd_;
         bool fqdn_rev_;
-        std::string udpate_ddns_;
+        std::string update_ddns_;
         bool exp_ncr_;
     };
 
@@ -5363,8 +5363,8 @@ TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Enabled) {
             "    \"arguments\": {"
             "        \"ip-address\": \"192.0.2.8\"";
 
-        if (!scenario.udpate_ddns_.empty()) {
-            cmd << "," << scenario.udpate_ddns_;
+        if (!scenario.update_ddns_.empty()) {
+            cmd << "," << scenario.update_ddns_;
         }
 
         cmd << "}}";
@@ -5440,7 +5440,7 @@ TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Enabled) {
         std::string hostname_;
         bool fqdn_fwd_;
         bool fqdn_rev_;
-        std::string udpate_ddns_;
+        std::string update_ddns_;
         bool exp_ncr_;
     };
 
@@ -5523,8 +5523,8 @@ TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Enabled) {
             "        \"subnet-id\": 66,\n"
             "        \"ip-address\": \"2001:db8:1::8\"\n";
 
-        if (!scenario.udpate_ddns_.empty()) {
-            cmd << "," << scenario.udpate_ddns_;
+        if (!scenario.update_ddns_.empty()) {
+            cmd << "," << scenario.update_ddns_;
         }
 
         cmd << "}}";
