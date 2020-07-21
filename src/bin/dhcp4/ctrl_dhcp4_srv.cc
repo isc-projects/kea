@@ -265,8 +265,8 @@ ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
     } catch (const std::exception& ex) {
         // Log the unsuccessful reconfiguration. The reason for failure
         // should be already logged. Don't rethrow an exception so as
-        // the server keeps working.
-        LOG_ERROR(dhcp4_logger, DHCP4_DYNAMIC_RECONFIGURATION_FAIL)
+        // the control channel perhaps keeps working.
+        LOG_FATAL(dhcp4_logger, DHCP4_DYNAMIC_RECONFIGURATION_FAIL)
             .arg(file);
         return (createAnswer(CONTROL_RESULT_ERROR,
                              "Config reload failed: " + string(ex.what())));
@@ -421,6 +421,13 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
         // there were problems with the config. As such, we need to back off
         // and revert to the previous logging configuration.
         CfgMgr::instance().getCurrentCfg()->applyLoggingCfg();
+
+        if (CfgMgr::instance().getCurrentCfg()->getSequence() != 0) {
+            // Not initial configuration so someone can believe we reverted
+            // to the previous configuration. It is not the case so be clear
+            // about this.
+            LOG_FATAL(dhcp4_logger, DHCP4_CONFIG_UNRECOVERABLE_ERROR);
+        }
     }
 
     return (result);

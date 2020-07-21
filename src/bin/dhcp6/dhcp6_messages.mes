@@ -124,6 +124,11 @@ This is a debug message that is issued every time the server receives a
 configuration. That happens start up and also when a server configuration
 change is committed by the administrator.
 
+% DHCP6_CONFIG_UNRECOVERABLE_ERROR DHCPv6 server new configuration failed with an error which cannot be recovered
+This fatal error message is issued when a new configuration raised an error
+which cannot be recovered. A correct configuration must be applied as soon
+as possible as the server is no longer working.
+
 % DHCP6_CONFIG_UNSUPPORTED_OBJECT DHCPv6 server configuration includes an unsupported object: %1
 This error message is issued when the configuration includes an unsupported
 object (i.e. a top level element).
@@ -305,7 +310,7 @@ This is the info message logged when the DHCPv6 server starts reconfiguration
 as a result of receiving SIGHUP signal or config-reload command.
 
 % DHCP6_DYNAMIC_RECONFIGURATION_FAIL dynamic server reconfiguration failed with file: %1
-This is an error message logged when the dynamic reconfiguration of the
+This is a fatal error message logged when the dynamic reconfiguration of the
 DHCP server failed.
 
 % DHCP6_FLEX_ID flexible identifier generated for incoming packet: %1

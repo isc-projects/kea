@@ -269,7 +269,7 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&,
         // Log the unsuccessful reconfiguration. The reason for failure
         // should be already logged. Don't rethrow an exception so as
         // the server keeps working.
-        LOG_ERROR(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL)
+        LOG_FATAL(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL)
             .arg(file);
         return (createAnswer(CONTROL_RESULT_ERROR,
                              "Config reload failed: " + string(ex.what())));
@@ -424,6 +424,13 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
         // there were problems with the config. As such, we need to back off
         // and revert to the previous logging configuration.
         CfgMgr::instance().getCurrentCfg()->applyLoggingCfg();
+
+        if (CfgMgr::instance().getCurrentCfg()->getSequence() != 0) {
+            // Not initial configuration so someone can believe we reverted
+            // to the previous configuration. It is not the case so be clear
+            // about this.
+            LOG_FATAL(dhcp6_logger, DHCP6_CONFIG_UNRECOVERABLE_ERROR);
+        }
     }
 
     return (result);

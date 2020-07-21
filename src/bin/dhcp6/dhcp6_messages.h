@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jun 25 2020 14:35
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Jul 21 2020 17:17
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -28,6 +28,7 @@ extern const isc::log::MessageID DHCP6_CONFIG_LOAD_FAIL;
 extern const isc::log::MessageID DHCP6_CONFIG_PACKET_QUEUE;
 extern const isc::log::MessageID DHCP6_CONFIG_RECEIVED;
 extern const isc::log::MessageID DHCP6_CONFIG_START;
+extern const isc::log::MessageID DHCP6_CONFIG_UNRECOVERABLE_ERROR;
 extern const isc::log::MessageID DHCP6_CONFIG_UNSUPPORTED_OBJECT;
 extern const isc::log::MessageID DHCP6_CONFIG_UPDATE;
 extern const isc::log::MessageID DHCP6_DB_BACKEND_STARTED;

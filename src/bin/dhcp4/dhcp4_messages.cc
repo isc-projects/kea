@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu Jun 25 2020 13:36
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Tue Jul 21 2020 17:10
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -36,6 +36,7 @@ extern const isc::log::MessageID DHCP4_CONFIG_OPTION_DUPLICATE = "DHCP4_CONFIG_O
 extern const isc::log::MessageID DHCP4_CONFIG_PACKET_QUEUE = "DHCP4_CONFIG_PACKET_QUEUE";
 extern const isc::log::MessageID DHCP4_CONFIG_RECEIVED = "DHCP4_CONFIG_RECEIVED";
 extern const isc::log::MessageID DHCP4_CONFIG_START = "DHCP4_CONFIG_START";
+extern const isc::log::MessageID DHCP4_CONFIG_UNRECOVERABLE_ERROR = "DHCP4_CONFIG_UNRECOVERABLE_ERROR";
 extern const isc::log::MessageID DHCP4_CONFIG_UNSUPPORTED_OBJECT = "DHCP4_CONFIG_UNSUPPORTED_OBJECT";
 extern const isc::log::MessageID DHCP4_CONFIG_UPDATE = "DHCP4_CONFIG_UPDATE";
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_ATTEMPT_FAILED = "DHCP4_DB_RECONNECT_ATTEMPT_FAILED";
@@ -187,6 +188,7 @@ const char* values[] = {
     "DHCP4_CONFIG_PACKET_QUEUE", "DHCPv4 packet queue info after configuration: %1",
     "DHCP4_CONFIG_RECEIVED", "received configuration %1",
     "DHCP4_CONFIG_START", "DHCPv4 server is processing the following configuration: %1",
+    "DHCP4_CONFIG_UNRECOVERABLE_ERROR", "DHCPv4 server new configuration failed with an error which cannot be recovered",
     "DHCP4_CONFIG_UNSUPPORTED_OBJECT", "DHCPv4 server configuration includes an unsupported object: %1",
     "DHCP4_CONFIG_UPDATE", "updated configuration received: %1",
     "DHCP4_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",

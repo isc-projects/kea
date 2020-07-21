@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu Jun 25 2020 13:36
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Tue Jul 21 2020 17:10
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -37,6 +37,7 @@ extern const isc::log::MessageID DHCP4_CONFIG_OPTION_DUPLICATE;
 extern const isc::log::MessageID DHCP4_CONFIG_PACKET_QUEUE;
 extern const isc::log::MessageID DHCP4_CONFIG_RECEIVED;
 extern const isc::log::MessageID DHCP4_CONFIG_START;
+extern const isc::log::MessageID DHCP4_CONFIG_UNRECOVERABLE_ERROR;
 extern const isc::log::MessageID DHCP4_CONFIG_UNSUPPORTED_OBJECT;
 extern const isc::log::MessageID DHCP4_CONFIG_UPDATE;
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_ATTEMPT_FAILED;
