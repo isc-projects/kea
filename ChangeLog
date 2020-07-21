@@ -1,3 +1,7 @@
+1775.	[doc]		vicky
+	A Code of Conduct has been added.
+	(Gitlab #1143)
+
 1774.	[func]		tmark
 	leaseX-del commands now support a new parameter, update-ddns,
 	which instructs the server to remove DNS entries for a
