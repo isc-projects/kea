@@ -53,7 +53,7 @@ DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_CONTRIB_CONFIGURE_FLAG)
 # keerp the sysrepo config
 DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_SYSREPO_CONFIGURE_FLAG)
 
-dist_doc_DATA = AUTHORS COPYING ChangeLog README CONTRIBUTING.md platforms.rst
+dist_doc_DATA = AUTHORS COPYING ChangeLog README CONTRIBUTING.md platforms.rst code_of_conduct.md
 
 .PHONY: check-valgrind check-valgrind-suppress
 
