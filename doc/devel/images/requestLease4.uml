@@ -52,7 +52,7 @@ else (no)
         stop
       else (no)
       endif
-    else (no) 
+    else (no)
     endif
     if (requested address in allowed pool) then (no)
       :return no lease;
@@ -64,24 +64,27 @@ else (no)
       while (iterate over pools and subnect)
         :pick candidate address;
         if (candidate is reserved for another client) then (no)
-          if (lease for candidate) then (no)
-            :create and return new lease;
-            stop
-          else (yes)
-            if (expired) then (yes)
-              :reclaim expired lease;
-              :update lease information;
-              :callout lease4_select;
-              if (callout return) then (SKIP)
-                :return no lease;
-                stop
-              else (CONTINUE)
-                :update lease;
-                :return reused lease;
-                stop
+          if (candidate is used by another thread) then (no)
+            if (lease for candidate) then (no)
+              :create and return new lease;
+              stop
+            else (yes)
+              if (expired) then (yes)
+                :reclaim expired lease;
+                :update lease information;
+                :callout lease4_select;
+                if (callout return) then (SKIP)
+                  :return no lease;
+                  stop
+                else (CONTINUE)
+                  :update lease;
+                  :return reused lease;
+                  stop
+                endif
+              else (no)
               endif
-            else (no)
-            endif     
+            endif
+          else (yes)
           endif
         else (yes)
         endif

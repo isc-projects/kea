@@ -19,6 +19,9 @@ note right : hook
 
 agent "Check DROP class" as drop_class
 
+agent "Avoid same client race in multi-threade mode" as same_client
+note right : postpone processing or drop
+
 rectangle "Process Query on its Message Type" as process {
  agent "Process Discover" as processDiscover
  agent "Process Request" as processRequest
@@ -57,8 +60,10 @@ unpack ---> drop : on error
 classify --> pkt4_receive
 pkt4_receive --> drop_class : CONTINUE
 pkt4_receive ---> drop : DROP
-drop_class --> process
+drop_class --> same_client
 drop_class ---> drop : query in DROP class
+same_client ---> process
+same_client ---> drop : queries from the same client possible race
 process ---> drop : unknown message type
 processDiscover --> lease4_committed
 processDiscover ---> drop : on error
@@ -81,4 +86,7 @@ pack --> buffer4_send
 buffer4_send --> send : CONTINUE
 buffer4_send ---> drop : DROP
 send -[hidden]-> drop
+
+footer dashed arrow means asynchronous processing
+
 @enduml

@@ -55,4 +55,6 @@ poll ---> shutdown : no ready handler
 ready -> ready : execute ready handler
 shutdown -u-> run
 
+footer dashed arrow means priority
+
 @enduml

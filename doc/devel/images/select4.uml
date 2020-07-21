@@ -6,6 +6,8 @@ agent "Entry point" as entry
 
 agent "Try RAI link select" as rai_link_select
 
+agent "Try subnet selection option" as subnet_select
+
 rectangle "Relayed" as relayed {
  agent "Relay address matches subnet" as relay_subnet
  agent "Relay address matches shared network" as relay_network
@@ -43,8 +45,9 @@ agent "Return no subnet" as no_subnet
 agent "Drop query" as drop
 
 entry --> rai_link_select
-rai_link_select --> relayed : relayed
-rai_link_select --> set_address : not relayed
+rai_link_select --> subnet_select
+subnet_select --> relayed : relayed
+subnet_select --> set_address : not relayed
 relayed --> relay_subnet
 relay_subnet --> relay_network : no match
 relay_subnet --> relay_class : match

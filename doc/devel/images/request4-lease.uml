@@ -49,6 +49,8 @@ rectangle "Allocate a new lease" as new_lease {
 
    agent "Check reserved addressed" as pick_reserved
 
+   agent "Check already in use by another thread" as mt_in_use
+
    agent "Check lease" as pick_lease
   }
  }
@@ -84,7 +86,7 @@ getReservedLease ---> no_lease : no active reserved lease
 getReservedLease --> out_of_pool
 out_of_pool --> check_done : owned reservation for the requested address
 out_of_pool --> check_done : requested address is in allowed an pool
-out_of_pool -->	no_lease : address not reserved and not in allowed pool
+out_of_pool --> no_lease : address not reserved and not in allowed pool
 check_done --> client_lease : has a client lease
 client_lease -> renew : requested address was already assigned to the client
 client_lease --> new_lease
@@ -104,7 +106,9 @@ allocateUnreservedLease4 --> iterate
 iterate --> pick
 pick --> pick_reserved
 pick_reserved -up-> iterate : address reserved to another client
-pick_reserved --> pick_lease
+pick_reserved --> mt_in_use
+mt_in_use -up-> iterate : address already in use by another thread
+mt_in_use --> pick_lease
 pick_lease -up-> iterate : active lease
 pick_lease --> reuseExpiredLease4 : expired lease
 pick_lease --> create : no lease
