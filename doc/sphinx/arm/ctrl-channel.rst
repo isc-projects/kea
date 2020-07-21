@@ -293,6 +293,10 @@ invocation looks like this:
        "command": "config-reload"
    }
 
+If the configuration file is incorrect reloading it can raise an error
+which cannot be recovered. Look at :ref:`command-config-set` what to do
+to recover a working server.
+
 .. _command-config-test:
 
 The config-test Command
@@ -471,7 +475,13 @@ as "Dhcp4" or "Dhcp6". For example:
    }
 
 If the new configuration proves to be invalid, the server retains its
-current configuration. Please note that the new configuration is
+current configuration but in some cases a fatal error message is logged
+indicating that the server no longer provides any service: a working
+configuration must be loaded as soon as possible. If the control channel
+is dead the configuration file can still be reloaded using the SIGHUP
+signal. Of course a last chance solution is to restart the server.
+
+Please note that the new configuration is
 retained in memory only; if the server is restarted or a configuration
 reload is triggered via a signal, the server uses the configuration
 stored in its configuration file. The server's response contains a

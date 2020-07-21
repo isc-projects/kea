@@ -1,3 +1,9 @@
+1776.	[func]		fdupont
+	DHCP servers now log a fatal error message when a reconfiguration
+	attempt left a no longer working server. Documentation was
+	updated tp propose remedy actions.
+	(Gitlab #507,#1166)
+
 1775.	[doc]		vicky
 	A Code of Conduct has been added.
 	(Gitlab #1143)
