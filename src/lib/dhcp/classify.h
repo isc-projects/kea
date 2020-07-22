@@ -7,10 +7,11 @@
 #ifndef CLASSIFY_H
 #define CLASSIFY_H
 
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/identity.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index_container.hpp>
 #include <string>
-#include <iterator>
-#include <list>
-#include <unordered_set>
 
 /// @file   classify.h
 ///
@@ -36,6 +37,28 @@ namespace dhcp {
     /// @brief Defines a single class name.
     typedef std::string ClientClass;
 
+    /// @brief Tag for the sequence index.
+    struct ClassSequenceTag { };
+
+    /// @brief Tag for the name index.
+    struct ClassNameTag { };
+
+    /// @brief the client class multi-index.
+    typedef boost::multi_index_container<
+        ClientClass,
+        boost::multi_index::indexed_by<
+            // First index is the sequence one.
+            boost::multi_index::sequenced<
+                boost::multi_index::tag<ClassSequenceTag>
+            >,
+            // Second index is the name hash one.
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<ClassNameTag>,
+                boost::multi_index::identity<ClientClass>
+            >
+        >
+    > ClientClassContainer;
+
     /// @brief Container for storing client class names
     ///
     /// Both a list to iterate on it in insert order and unordered
@@ -44,10 +67,10 @@ namespace dhcp {
     public:
 
         /// @brief Type of iterators
-        typedef std::list<ClientClass>::const_iterator const_iterator;
+        typedef ClientClassContainer::const_iterator const_iterator;
 
         /// @brief Default constructor.
-        ClientClasses() : list_(), set_() {
+        ClientClasses() : container_() {
         }
 
         /// @brief Constructor from comma separated values.
@@ -60,8 +83,7 @@ namespace dhcp {
         ///
         /// @param class_name The name of the class to insert
         void insert(const ClientClass& class_name) {
-            list_.push_back(class_name);
-            set_.insert(class_name);
+            static_cast<void>(container_.push_back(class_name));
         }
 
         /// @brief Erase element by name.
@@ -71,7 +93,7 @@ namespace dhcp {
 
         /// @brief Check if classes is empty.
         bool empty() const {
-            return (list_.empty());
+            return (container_.empty());
         }
 
         /// @brief Returns the number of classes.
@@ -79,31 +101,28 @@ namespace dhcp {
         /// @note; in C++ 11 list size complexity is constant so
         /// there is no advantage to use the set part.
         size_t size() const {
-            return (list_.size());
+            return (container_.size());
         }
 
         /// @brief Iterator to the first element.
         const_iterator cbegin() const {
-            return (list_.cbegin());
+            return (container_.cbegin());
         }
 
         /// @brief Iterator to the past the end element.
         const_iterator cend() const {
-            return (list_.cend());
+            return (container_.cend());
         }
 
         /// @brief returns if class x belongs to the defined classes
         ///
         /// @param x client class to be checked
         /// @return true if x belongs to the classes
-        bool contains(const ClientClass& x) const {
-            return (set_.count(x) != 0);
-        }
+        bool contains(const ClientClass& x) const;
 
         /// @brief Clears containers.
         void clear() {
-            list_.clear();
-            set_.clear();
+            container_.clear();
         }
 
         /// @brief Returns all class names as text
@@ -114,15 +133,11 @@ namespace dhcp {
         std::string toText(const std::string& separator = ", ") const;
 
     private:
-        /// @brief List/ordered part
-        std::list<ClientClass> list_;
-
-        /// @brief Set/unordered part
-        std::unordered_set<ClientClass> set_;
+        /// @brief container part
+        ClientClassContainer container_;
     };
+}
 
-};
-
-};
+}
 
 #endif /* CLASSIFY_H */

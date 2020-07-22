@@ -17,7 +17,7 @@ namespace isc {
 namespace dhcp {
 
 ClientClasses::ClientClasses(const std::string& class_names)
-    : list_(), set_() {
+    : container_() {
     std::vector<std::string> split_text;
     boost::split(split_text, class_names, boost::is_any_of(","),
                  boost::algorithm::token_compress_off);
@@ -32,8 +32,17 @@ ClientClasses::ClientClasses(const std::string& class_names)
 
 void
 ClientClasses::erase(const ClientClass& class_name) {
-    list_.remove(class_name);
-    static_cast<void>(set_.erase(class_name));
+    auto& idx = container_.get<ClassNameTag>();
+    auto it = idx.find(class_name);
+    if (it != idx.end()) {
+        static_cast<void>(idx.erase(it));
+    }
+}
+
+bool
+ClientClasses::contains(const ClientClass& x) const {
+    auto const& idx = container_.get<ClassNameTag>();
+    return (idx.count(x) != 0);
 }
 
 std::string
@@ -47,6 +56,6 @@ ClientClasses::toText(const std::string& separator) const {
     }
     return (s.str());
 }
-    
+
 } // end of namespace isc::dhcp
 } // end of namespace isc
