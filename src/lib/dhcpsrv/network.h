@@ -251,7 +251,7 @@ public:
     util::Optional<std::string>
     getIface(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network>(&Network::getIface, iface_name_,
-                                     inheritance, "interface"));
+                                     inheritance));
     };
 
     /// @brief Sets information about relay

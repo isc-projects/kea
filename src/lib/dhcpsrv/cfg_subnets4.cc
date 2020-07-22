@@ -398,10 +398,8 @@ CfgSubnets4::selectSubnet(const std::string& iface,
         Subnet4Ptr subnet_selected;
 
         // First, try subnet specific interface name.
-        if (!(*subnet)->getIface().empty()) {
-            if ((*subnet)->getIface() == iface) {
-                subnet_selected = (*subnet);
-            }
+       if ((*subnet)->getIface(Network4::Inheritance::NONE) == iface) {
+            subnet_selected = (*subnet);
 
         } else {
             // Interface not specified for a subnet, so let's try if
@@ -409,8 +407,8 @@ CfgSubnets4::selectSubnet(const std::string& iface,
             // the interface.
             SharedNetwork4Ptr network;
             (*subnet)->getSharedNetwork(network);
-            if (network && !network->getIface().empty() &&
-                (network->getIface() == iface)) {
+            if (network &&
+                (network->getIface(Network4::Inheritance::NONE) == iface)) {
                 subnet_selected = (*subnet);
             }
         }
