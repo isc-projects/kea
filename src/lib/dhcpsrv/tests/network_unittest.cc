@@ -160,7 +160,6 @@ TEST_F(NetworkTest, hrModeFromString) {
 // network parameters.
 TEST_F(NetworkTest, inheritanceSupport4) {
     // Set global values for each parameter.
-    globals_->set("interface", Element::create("g"));
     globals_->set("valid-lifetime", Element::create(80));
     globals_->set("renew-timer", Element::create(80));
     globals_->set("rebind-timer", Element::create(80));
@@ -186,11 +185,6 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
 
-    {
-        SCOPED_TRACE("interface");
-        testNetworkInheritance<TestNetwork>(&Network::getIface, &Network::setIface,
-                                            "n", "g");
-    }
     {
         SCOPED_TRACE("client_class");
         testNetworkInheritance<TestNetwork>(&Network::getClientClass,
@@ -458,62 +452,62 @@ TEST_F(NetworkTest, inheritanceSupport6) {
 // parent no global value exists.
 TEST_F(NetworkTest, getPropertyNoParentNoChild) {
     NetworkPtr net_child(new Network());
-    EXPECT_TRUE(net_child->getIface().unspecified());
+    EXPECT_TRUE(net_child->getValid().unspecified());
 }
 
 // Test that child network returns specified value.
 TEST_F(NetworkTest, getPropertyNoParentChild) {
     NetworkPtr net_child(new Network());
-    net_child->setIface("child_iface");
+    net_child->setValid(12345);
 
-    EXPECT_FALSE(net_child->getIface().unspecified());
-    EXPECT_FALSE(net_child->getIface(Network::Inheritance::NONE).unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_FALSE(net_child->getValid().unspecified());
+    EXPECT_FALSE(net_child->getValid(Network::Inheritance::NONE).unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ("child_iface", net_child->getIface(Network::Inheritance::NONE).get());
-    EXPECT_EQ("child_iface", net_child->getIface().get());
+    EXPECT_EQ(12345, net_child->getValid(Network::Inheritance::NONE).get());
+    EXPECT_EQ(12345, net_child->getValid().get());
 }
 
 // Test that parent specific value is returned when the value
 // is not specified for the child network.
 TEST_F(NetworkTest, getPropertyParentNoChild) {
     TestNetworkPtr net_child(new TestNetwork());
-    EXPECT_TRUE(net_child->getIface().unspecified());
+    EXPECT_TRUE(net_child->getValid().unspecified());
 
     TestNetworkPtr net_parent(new TestNetwork());
-    net_parent->setIface("parent_iface");
-    EXPECT_EQ("parent_iface", net_parent->getIface().get());
+    net_parent->setValid(23456);
+    EXPECT_EQ(23456, net_parent->getValid().get());
 
     ASSERT_NO_THROW(net_child->setParent(net_parent));
 
-    EXPECT_FALSE(net_child->getIface().unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::NONE).unspecified());
-    EXPECT_FALSE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_FALSE(net_child->getValid().unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::NONE).unspecified());
+    EXPECT_FALSE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ("parent_iface", net_child->getIface().get());
+    EXPECT_EQ(23456, net_child->getValid().get());
 }
 
 // Test that value specified for the child network takes
 // precedence over the value specified for the parent network.
 TEST_F(NetworkTest, getPropertyParentChild) {
     TestNetworkPtr net_child(new TestNetwork());
-    net_child->setIface("child_iface");
-    EXPECT_EQ("child_iface", net_child->getIface().get());
+    net_child->setValid(12345);
+    EXPECT_EQ(12345, net_child->getValid().get());
 
     TestNetworkPtr net_parent(new TestNetwork());
-    net_parent->setIface("parent_iface");
-    EXPECT_EQ("parent_iface", net_parent->getIface().get());
+    net_parent->setValid(23456);
+    EXPECT_EQ(23456, net_parent->getValid().get());
 
     ASSERT_NO_THROW(net_child->setParent(net_parent));
 
-    EXPECT_FALSE(net_child->getIface().unspecified());
-    EXPECT_FALSE(net_child->getIface(Network::Inheritance::NONE).unspecified());
-    EXPECT_FALSE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_FALSE(net_child->getValid().unspecified());
+    EXPECT_FALSE(net_child->getValid(Network::Inheritance::NONE).unspecified());
+    EXPECT_FALSE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ("child_iface", net_child->getIface().get());
+    EXPECT_EQ(12345, net_child->getValid().get());
 }
 
 // Test that global value is inherited if there is no network
@@ -521,16 +515,16 @@ TEST_F(NetworkTest, getPropertyParentChild) {
 TEST_F(NetworkTest, getPropertyGlobalNoParentNoChild) {
     TestNetworkPtr net_child(new TestNetwork());
 
-    globals_->set("interface", Element::create("global_iface"));
+    globals_->set("valid-lifetime", Element::create(34567));
 
     net_child->setFetchGlobalsFn(getFetchGlobalsFn());
 
-    EXPECT_FALSE(net_child->getIface().unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::NONE).unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
-    EXPECT_FALSE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_FALSE(net_child->getValid().unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::NONE).unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_FALSE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ("global_iface", net_child->getIface().get());
+    EXPECT_EQ(34567, net_child->getValid().get());
 }
 
 // Test that getSiaddr() never fails.
