@@ -1892,15 +1892,10 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
     } else {
         // That is only fake (SOLICIT without rapid-commit) allocation
 
-        // It is for advertise only. We should not insert the lease into LeaseMgr,
-        // but rather check that we could have inserted it.
-        Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(
-                             ctx.currentIA().type_, addr);
-        if (!existing) {
-            return (lease);
-        } else {
-            return (Lease6Ptr());
-        }
+        // It is for advertise only. We should not insert the lease
+        // into LeaseMgr and callers have already verified the lease
+        // does not exist in the database.
+        return (lease);
     }
 }
 
@@ -3744,14 +3739,10 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     } else {
         // That is only fake (DISCOVER) allocation
 
-        // It is for OFFER only. We should not insert the lease into LeaseMgr,
-        // but rather check that we could have inserted it.
-        Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(addr);
-        if (!existing) {
-            return (lease);
-        } else {
-            return (Lease4Ptr());
-        }
+        // It is for OFFER only. We should not insert the lease into LeaseMgr
+        // and callers have already verified the lease does not exist
+        // in the database.
+        return (lease);
     }
 }
 
