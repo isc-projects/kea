@@ -417,8 +417,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // so newly recreated configuration starts with first subnet-id equal 1.
     Subnet::resetSubnetID();
 
-    // Remove any existing timers.
+    // Close DHCP sockets and remove any existing timers.
     if (!check_only) {
+        IfaceMgr::instance().closeSockets();
         TimerMgr::instance()->unregisterTimers();
         server.discardPackets();
         server.getCBControl()->reset();

@@ -41,11 +41,6 @@ void
 IfacesConfigParser::parse(const CfgIfacePtr& cfg,
                           const isc::data::ConstElementPtr& ifaces_config) {
 
-    // Close sockets if not in test mode.
-    if (!test_mode_) {
-        IfaceMgr::instance().closeSockets();
-    }
-
     // Check for re-detect before calling parseInterfacesList()
     bool re_detect = getBoolean(ifaces_config, "re-detect");
     cfg->setReDetect(re_detect);
