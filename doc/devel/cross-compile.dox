@@ -48,7 +48,7 @@ deb http://raspbian.raspberrypi.org/raspbian/ buster main contrib non-free rpi
 # deb-src http://raspbian.raspberrypi.org/raspbian/ buster main contrib non-free rpi
 @endverbatim
 
-and the sources.list.d/raspi.list file content is:
+and the /etc/apt/sources.list.d/raspi.list file content is:
 @verbatim
 deb http://archive.raspberrypi.org/debian/ buster main
 # Uncomment line below then 'apt-get update' to enable 'apt-get source'
