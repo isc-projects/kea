@@ -31,7 +31,7 @@ we recommend a pre-built dedicated tool chain for this purpose:
 The documentation of this tool chain gives a rsync command which
 copies selected parts of the Raspberry Pi root filesystem ("rootfs").
 If you have no access to a running Raspberry Pi it is still possible
-to get them following next section instructions. If you have simply
+to get them following next section instructions. If you have, simply
 skip this part.
 
 @section noRaspberry How to get system and packages without a running Raspberry Pi
