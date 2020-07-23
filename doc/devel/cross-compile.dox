@@ -26,7 +26,7 @@ A priori it is possible to compile your own tool chain or to use
 a package as the arm-linux-gnueabihf one on Ubuntu. But there is
 reported compatibility issue with old Raspberry Pi versions) so
 we recommend a pre-built dedicated tool chain for this purpose:
-<a href="https://github.com/Pro/raspi-toolchain"></a>.
+<a href="https://github.com/Pro/raspi-toolchain">RaspberryPi toolchain on github</a>.
 
 The documentation of this tool chain gives a rsync command which
 copies selected parts of the Raspberry Pi root filesystem ("rootfs").
@@ -41,14 +41,14 @@ The system disk image is available at the Raspbian URL.
 Packages are in the Raspian repository which is given in
 sources list files in this disk image or below.
 
-The "sources.list" file content is:
+The /etc/apt/sources.list file content is:
 @verbatim
 deb http://raspbian.raspberrypi.org/raspbian/ buster main contrib non-free rpi
 # Uncomment line below then 'apt-get update' to enable 'apt-get source'
 # deb-src http://raspbian.raspberrypi.org/raspbian/ buster main contrib non-free rpi
 @endverbatim
 
-and the "sources.list.d/raspi.list" file content is:
+and the sources.list.d/raspi.list file content is:
 @verbatim
 deb http://archive.raspberrypi.org/debian/ buster main
 # Uncomment line below then 'apt-get update' to enable 'apt-get source'
@@ -74,15 +74,15 @@ you can directly mount the rootfs from it.
 If a dependency (i.e. the Raspbian version of a library) is not in the
 rootfs image you need to simulate its installation:
  - get the .deb file from a Raspbian repository
- - extract files using the "dpkg-deb -R" tool on the .deb file
+ - extract files using the dpkg-deb -R tool on the .deb file
  - install the files (usually in the "rootfs"/usr directory)
 The idea is the files (includes and libraries) can be found by
 the cross-compiling tool chain.
 
 It is possible to emulate a Raspberry Pi using qemu even I do not think
 it can run Kea. But at least it can run some tests as the hello world sample
-of the tool chain. Required qemu kernels can be found at
-<a href="https://github.com/dhruvvyas90/qemu-rpi-kernel>this link</a> with
+of the tool chain. Required qemu kernels can be found in
+<a href="https://github.com/dhruvvyas90/qemu-rpi-kernel">this github repo</a> with
 a documentation, which is well worth reading.
 
 @section crossCompilePitfalls Usual problems
@@ -190,11 +190,12 @@ Some explainations:
   any build system library.
  - CXXFLAGS can be tuned for a specific Raspberry Pi version. Proposed
   tuning supports all versions.
- - even if Kea ./configure does not depends on pkgconfig its path is set/
+ - even if Kea ./configure does not depends on pkgconfig its path is set.
  - PATH is updated to find first cross-compiling tools.
  - I did not try yet database config scripts: perhaps they detect
   cross-compiling and produce correct paths.
  - CONF_CMD contains the ./configure common arguments.
+ 
 The script can be used by:
  - eventually run "autoreconf -i" (if sources are from git)
  - put its content in a file, e.g. ccenv
