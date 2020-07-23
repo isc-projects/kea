@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="579px" preserveAspectRatio="none" style="width:695px;height:579px;" version="1.1" viewBox="0 0 695 579" width="695px" zoomAndPan="magnify"><defs><filter height="300%" id="flyhtqb8kyfck" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacingAndGlyphs" textLength="102" x="287.5" y="17.4023">lease states</text><!--MD5=[4278daa906671312366ccb0dccb3e92f]
+entity free--><rect fill="#FEFECE" filter="url(#flyhtqb8kyfck)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="50" x="219" y="28.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="30" x="229" y="51.7344">Free</text><path d="M6,33.6992 L6,59.0098 A0,0 0 0 0 6,59.0098 L184,59.0098 A0,0 0 0 0 184,59.0098 L184,51.6992 L218.71,46.1992 L184,43.6992 L184,43.6992 L174,33.6992 L6,33.6992 A0,0 0 0 0 6,33.6992 " fill="#FBFB77" filter="url(#flyhtqb8kyfck)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M174,33.6992 L174,43.6992 L184,43.6992 L174,33.6992 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="157" x="12" y="51.2676">not in the lease database</text><!--MD5=[4c0421e83b31106584008715812a1ea8]
+entity assigned--><rect fill="#FEFECE" filter="url(#flyhtqb8kyfck)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="83" x="189.5" y="203.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="63" x="199.5" y="226.7344">Assigned</text><!--MD5=[046a8c2cc2caa2564a440430281543c8]
+entity assigned_expired--><rect fill="#FEFECE" filter="url(#flyhtqb8kyfck)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="140" x="150" y="316.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="120" x="160" y="339.7344">Assigned expired</text><!--MD5=[be39be446611673079158bd75084bb29]
+entity declined--><rect fill="#FEFECE" filter="url(#flyhtqb8kyfck)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="79" x="288.5" y="429.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="59" x="298.5" y="452.7344">Declined</text><!--MD5=[b74f0280ed02bec002eedfc3903cd610]
+entity declined_expired--><rect fill="#FEFECE" filter="url(#flyhtqb8kyfck)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="136" x="542" y="429.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="116" x="552" y="452.7344">Declined expired</text><!--MD5=[309798e71ae1dfa592ce5bb406cc7544]
+entity reclaimed--><rect fill="#FEFECE" filter="url(#flyhtqb8kyfck)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="151" x="71.5" y="526.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="131" x="81.5" y="549.7344">Expired-Reclaimed</text><!--MD5=[219c0a330ff1ab87a7e7f51a72cedfde]
+link free to assigned--><path d="M230.58,64.2892 C219.67,79.3592 205.11,102.3992 199,125.1992 C192.19,150.6192 204.59,179.1492 215.88,198.2492 " fill="none" id="free-&gt;assigned" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="218.71,202.8892,217.4235,193.1247,216.0999,198.6246,210.6,197.301,218.71,202.8892" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="73" x="200" y="138.7676">assignment</text><!--MD5=[d0e432b1584877a475e5f2fe76611e15]
+reverse link free to assigned--><path d="M260,69.0992 C271.95,88.1692 285.09,116.6792 278,142.1992 C271.65,165.0492 256.6,187.8992 245.23,202.9092 " fill="none" id="free&lt;-assigned" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="257,64.4692,258.5406,74.1968,259.7204,68.6644,265.2529,69.8442,257,64.4692" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="83" x="281" y="138.7676">release query</text><!--MD5=[7534ad65a31e40f6f58c860fbe4b1334]
+link assigned to assigned_expired--><path d="M229.28,239.5392 C227.38,258.7692 224.3,289.8292 222.21,310.8592 " fill="none" id="assigned-&gt;assigned_expired" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="221.71,315.9792,226.5906,307.4247,222.2103,311.0043,218.6307,306.6241,221.71,315.9792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="115" x="228" y="282.7676">after valid lifetime</text><!--MD5=[fde569cd6ac85f95e2a638ce16dc5096]
+reverse link assigned to assigned_expired--><path d="M201.3,242.7692 C193.17,250.0792 185.39,259.0492 181,269.1992 C173.77,285.9192 186.11,303.4892 198.78,315.9892 " fill="none" id="assigned&lt;-assigned_expired" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="205.31,239.3192,195.8788,242.1569,201.5198,242.5802,201.0964,248.2212,205.31,239.3192" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="34" x="182" y="282.7676">reuse</text><!--MD5=[21716a85bcf00f22f38541e3e291568a]
+link assigned to assigned--><path d="M272.71,212.3392 C291.36,211.4992 307.5,214.4492 307.5,221.1992 C307.5,227.3192 294.25,230.3192 277.88,230.1992 " fill="none" id="assigned-&gt;assigned" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="272.71,230.0592,281.6042,234.2892,277.7083,230.1877,281.8098,226.2919,272.71,230.0592" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="76" x="313.5" y="226.2676">renew query</text><!--MD5=[8bb46c3b4dde016c313b8e321f1d7e1a]
+link assigned to declined--><path d="M272.51,226.9592 C299.2,232.4092 331.98,244.0992 349,269.1992 C381.33,316.8692 355.54,388.7992 339.06,424.4992 " fill="none" id="assigned-&gt;declined" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="336.9,429.0892,344.3564,422.6547,339.0324,424.5667,337.1204,419.2428,336.9,429.0892" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="84" x="365" y="339.2676">decline query</text><!--MD5=[8dc60d8855cbb8c3dba4463bc36210b7]
+link declined to declined_expired--><path d="M367.51,447.1992 C411.27,447.1992 482.77,447.1992 536.82,447.1992 " fill="none" id="declined-&gt;declined_expired" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="542,447.1992,533,443.1992,537,447.1992,533,451.1992,542,447.1992" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="138" x="385.75" y="440.7676">after probation period</text><!--MD5=[6d44915acfde63a8254178afd3aa27e3]
+reverse link assigned to declined_expired--><path d="M277.82,234.0992 C307.45,242.3492 346.22,254.4792 379,269.1992 C470.03,310.0792 558.09,393.2292 593.59,429.0992 " fill="none" id="assigned&lt;-declined_expired" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="272.77,232.6992,280.3816,238.9493,277.5898,234.0293,282.5098,231.2375,272.77,232.6992" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="34" x="509" y="339.2676">reuse</text><!--MD5=[bdcfcd9c1cacddd2a3f75c7ff5da35a5]
+link assigned_expired to reclaimed--><path d="M214.03,352.2192 C200.87,389.6992 169.41,479.3392 154.76,521.0992 " fill="none" id="assigned_expired-&gt;reclaimed" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="153.06,525.9392,159.7989,518.7568,154.7054,521.2177,152.2445,516.1242,153.06,525.9392" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="46" x="187" y="452.2676">reclaim</text><!--MD5=[1c9e2837121ab398f7070aba53df7029]
+link declined_expired to free--><path d="M611.51,428.9092 C613.29,407.0892 616,368.3892 616,335.1992 C616,132.6992 616,132.6992 616,132.6992 C616,62.7692 363.18,50.0292 274.38,47.7092 " fill="none" id="declined_expired-&gt;free" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="269.28,47.5892,278.1742,51.8192,274.2783,47.7177,278.3798,43.8219,269.28,47.5892" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="46" x="617" y="226.2676">remove</text><!--MD5=[b52d5a7ca53f64269da3993e04180d07]
+reverse link assigned to reclaimed--><path d="M196.93,242.3092 C173.09,258.6892 143.51,284.2992 132,316.1992 C105.19,390.4992 129.42,487.2592 141.31,526.0292 " fill="none" id="assigned&lt;-reclaimed" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="201.31,239.3592,191.6094,241.0618,197.1608,242.1492,196.0734,247.7006,201.31,239.3592" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="34" x="122" y="395.7676">reuse</text><!--MD5=[d78006695828b24d5c043b2b2f6223cc]
+reverse link free to reclaimed--><path d="M214.23,58.9792 C209.8,60.7392 205.28,62.5192 201,64.1992 C123.27,94.7792 26,49.1792 26,132.6992 C26,132.6992 26,132.6992 26,448.1992 C26,486.2592 63.49,511.3792 96.74,526.1792 " fill="none" id="free&lt;-reclaimed" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="218.99,57.0992,209.1496,56.6913,214.3408,58.9389,212.0932,64.1301,218.99,57.0992" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="46" x="27" y="282.7676">remove</text><!--MD5=[7a97b2a903c7311ebfa1bcbf72f0a383]
+link declined_expired to reclaimed--><!--MD5=[5f95ddd3d218ff148243e13346213f9b]
+@startuml
+
+title lease states
+
+agent "Free" as free
+note left : not in the lease database
+
+agent "Assigned" as assigned
+
+agent "Assigned expired" as assigned_expired
+
+agent "Declined" as declined
+
+agent "Declined expired" as declined_expired
+
+agent "Expired-Reclaimed" as reclaimed
+
+free - - -> assigned : assignment
+
+assigned -> assigned_expired : after valid lifetime
+assigned -> assigned : renew query
+assigned - - -> declined : decline query
+assigned -up-> free : release query
+
+declined -> declined_expired : after probation period
+
+assigned_expired -up-> assigned : reuse
+declined_expired -up-> assigned : reuse
+
+assigned_expired - - -> reclaimed : reclaim
+declined_expired - - -> free : remove
+
+reclaimed -up-> assigned : reuse
+reclaimed -up- -> free : remove
+
+declined_expired -[hidden]-> reclaimed
+
+@enduml
+
+PlantUML version 1.2020.15(Sun Jun 28 13:39:45 CEST 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: US
+--></g></svg>

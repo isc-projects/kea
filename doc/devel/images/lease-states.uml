@@ -1,0 +1,38 @@
+@startuml
+
+title lease states
+
+agent "Free" as free
+note left : not in the lease database
+
+agent "Assigned" as assigned
+
+agent "Assigned expired" as assigned_expired
+
+agent "Declined" as declined
+
+agent "Declined expired" as declined_expired
+
+agent "Expired-Reclaimed" as reclaimed
+
+free ---> assigned : assignment
+
+assigned -> assigned_expired : after valid lifetime
+assigned -> assigned : renew query
+assigned ---> declined : decline query
+assigned -up-> free : release query
+
+declined -> declined_expired : after probation period
+
+assigned_expired -up-> assigned : reuse
+declined_expired -up-> assigned : reuse
+
+assigned_expired ---> reclaimed : reclaim
+declined_expired ---> free : remove
+
+reclaimed -up-> assigned : reuse
+reclaimed -up--> free : remove
+
+declined_expired -[hidden]-> reclaimed
+
+@enduml
