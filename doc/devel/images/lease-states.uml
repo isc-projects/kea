@@ -22,7 +22,7 @@ assigned -> assigned : renew query
 assigned ---> declined : decline query
 assigned -up-> free : release query
 
-declined -> declined_expired : after probation period
+declined --> declined_expired : after probation period
 
 assigned_expired -up-> assigned : reuse
 declined_expired -up-> assigned : reuse
