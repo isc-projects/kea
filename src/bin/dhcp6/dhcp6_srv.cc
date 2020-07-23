@@ -1007,7 +1007,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         Lease6CollectionPtr deleted_leases(new Lease6Collection());
 
         // Do per IA lists
-        for (auto const iac : ctx.ias_) {
+        for (auto const& iac : ctx.ias_) {
             if (!iac.old_leases_.empty()) {
                 for (auto old_lease : iac.old_leases_) {
                     if (ctx.new_leases_.empty()) {
@@ -1015,7 +1015,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
                         continue;
                     }
                     bool in_new = false;
-                    for (auto const new_lease : ctx.new_leases_) {
+                    for (auto const& new_lease : ctx.new_leases_) {
                         if ((new_lease->addr_ == old_lease->addr_) &&
                             (new_lease->prefixlen_ == old_lease->prefixlen_)) {
                             in_new = true;

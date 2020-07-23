@@ -228,7 +228,7 @@ FlexOptionImpl::logAction(Action action, uint16_t code,
         repr << "'" << value << "'";
     } else {
         repr << "0x" << hex;
-        for (const unsigned char& ch : value) {
+        for (const char& ch : value) {
             repr << setw(2) << setfill('0') << static_cast<unsigned>(ch);
         }
     }
