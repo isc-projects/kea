@@ -76,7 +76,7 @@ rootfs image you need to simulate its installation:
  - get the .deb file from a Raspbian repository
  - extract files using the "dpkg-deb -R" tool on the .deb file
  - install the files (usually in the "rootfs"/usr directory)
-The idea is the files (includes and libraries) can be find by
+The idea is the files (includes and libraries) can be found by
 the cross-compiling tool chain.
 
 It is possible to emulate a Raspberry Pi using qemu even I do not think
