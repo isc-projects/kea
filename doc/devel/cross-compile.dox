@@ -82,7 +82,7 @@ the cross-compiling tool chain.
 It is possible to emulate a Raspberry Pi using qemu even I do not think
 it can run Kea. But at least it can run some tests as the hello world sample
 of the tool chain. Required qemu kernels can be found at
-<a href="https://github.com/dhruvvyas90/qemu-rpi-kernel></a> with
+<a href="https://github.com/dhruvvyas90/qemu-rpi-kernel>this link</a> with
 a documentation, which is well worth reading.
 
 @section crossCompilePitfalls Usual problems
