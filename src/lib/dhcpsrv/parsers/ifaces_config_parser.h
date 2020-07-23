@@ -28,6 +28,9 @@ public:
 
     /// @brief Constructor
     ///
+    /// In test mode only the configuration is checked. In particular
+    /// sockets are not opened or closed.
+    ///
     /// @param protocol AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
     /// @param test_mode True if in test mode, False if not.
     IfacesConfigParser(const uint16_t protocol, bool test_mode);
