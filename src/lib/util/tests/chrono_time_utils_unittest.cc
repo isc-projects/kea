@@ -26,7 +26,8 @@ TEST(ChronoTimeUtilsTest, epoch) {
     memset(&epoch, 0, sizeof(epoch));
     epoch.tm_year = 70;
     epoch.tm_mday = 1;
-    time_t tepoch = timelocal(&epoch);
+    epoch.tm_isdst = -1;
+    time_t tepoch = mktime(&epoch);
     system_clock::time_point pepoch = system_clock::from_time_t(tepoch);
 
     // We're going to loop through precision values starting with 0 through
@@ -110,7 +111,8 @@ TEST(ChronoTimeUtilsTest, bastilleDay) {
     tm.tm_hour = 12;
     tm.tm_min = 13;
     tm.tm_sec = 14;
-    time_t tbast = timelocal(&tm);
+    tm.tm_isdst = -1;
+    time_t tbast = mktime(&tm);
     system_clock::time_point tpbast = system_clock::from_time_t(tbast);
     tpbast += milliseconds(500);
 
