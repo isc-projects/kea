@@ -128,6 +128,11 @@ change is committed by the administrator.
 This fatal error message is issued when a new configuration raised an error
 which cannot be recovered. A correct configuration must be applied as soon
 as possible as the server is no longer working.
+The configuration can be fixed in several ways. If the control channel
+is open, config-set with a valid configuration can be
+used. Alternatively, the original config file on disk could be fixed
+and SIGHUP signal could be sent (or the config-reload command
+issued). Finally, the server could be restarted completely.
 
 % DHCP6_CONFIG_UNSUPPORTED_OBJECT DHCPv6 server configuration includes an unsupported object: %1
 This error message is issued when the configuration includes an unsupported
