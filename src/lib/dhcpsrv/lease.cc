@@ -130,6 +130,11 @@ Lease::hasIdenticalFqdn(const Lease& other) const {
             fqdn_rev_ == other.fqdn_rev_);
 }
 
+bool
+Lease::checkUpdateStats() const {
+    return (expired() || stateExpiredReclaimed());
+}
+
 void
 Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& element) {
     if (!element) {

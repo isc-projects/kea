@@ -25,6 +25,7 @@
 #include <lease_cmds.h>
 #include <lease_parser.h>
 #include <lease_cmds_log.h>
+#include <stats/stats_mgr.h>
 #include <util/encode/hex.h>
 #include <util/multi_threading_mgr.h>
 #include <util/strutil.h>
@@ -41,6 +42,7 @@ using namespace isc::dhcp_ddns;
 using namespace isc::config;
 using namespace isc::asiolink;
 using namespace isc::hooks;
+using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
 
@@ -420,6 +422,10 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
                 if (!success) {
                     isc_throw(db::DuplicateEntry, "IPv4 lease already exists.");
                 }
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease4->subnet_id_,
+                                           "assigned-addresses"),
+                    int64_t(1));
                 resp << "Lease for address " << lease4->addr_.toText()
                      << ", subnet-id " << lease4->subnet_id_ << " added.";
             }
@@ -454,6 +460,11 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
                 if (!success) {
                     isc_throw(db::DuplicateEntry, "IPv6 lease already exists.");
                 }
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease6->subnet_id_,
+                                           lease6->type_ == Lease::TYPE_NA ?
+                                           "assigned-nas" : "assigned-pds"),
+                    int64_t(1));
                 if (lease6->type_ == Lease::TYPE_NA) {
                     resp << "Lease for address " << lease6->addr_.toText()
                          << ", subnet-id " << lease6->subnet_id_ << " added.";
@@ -1167,6 +1178,10 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
 
         if (LeaseMgrFactory::instance().deleteLease(lease4)) {
             setSuccessResponse(handle, "IPv4 lease deleted.");
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                 lease4->subnet_id_,
+                                                                 "assigned-addresses"),
+                                          int64_t(-1));
         } else {
             setErrorResponse (handle, "IPv4 lease not found.", CONTROL_RESULT_EMPTY);
         }
@@ -1188,8 +1203,26 @@ namespace { // anonymous namespace.
 
 void updateOrAdd(Lease6Ptr lease) {
     try {
+        Lease6Ptr lease6 =
+            LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_);
         // Try to update.
         LeaseMgrFactory::instance().updateLease6(lease);
+        bool update = lease6->checkUpdateStats();
+        if (lease6->subnet_id_ != lease->subnet_id_) {
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease6->subnet_id_,
+                                       lease->type_ == Lease::TYPE_NA ?
+                                       "assigned-nas" : "assigned-pds"),
+                int64_t(-1));
+            update = true;
+        }
+        if (update) {
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease->subnet_id_,
+                                       lease->type_ == Lease::TYPE_NA ?
+                                       "assigned-nas" : "assigned-pds"),
+                int64_t(1));
+        }
 
     } catch (const NoSuchLease& ex) {
         // Lease to be updated not found, so add it.
@@ -1197,6 +1230,11 @@ void updateOrAdd(Lease6Ptr lease) {
             isc_throw(db::DuplicateEntry,
                       "lost race between calls to update and add");
         }
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   lease->type_ == Lease::TYPE_NA ?
+                                   "assigned-nas" : "assigned-pds"),
+            int64_t(1));
     }
 }
 
@@ -1289,6 +1327,11 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                         // leases.
                         if (LeaseMgrFactory::instance().deleteLease(lease)) {
                             ++success_count;
+                            StatsMgr::instance().addValue(
+                                StatsMgr::generateName("subnet", lease->subnet_id_,
+                                                       lease->type_ == Lease::TYPE_NA ?
+                                                       "assigned-nas" : "assigned-pds"),
+                                int64_t(-1));
 
                         } else {
                             // Lazy creation of the list of leases which failed to delete.
@@ -1451,6 +1494,11 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
 
         if (LeaseMgrFactory::instance().deleteLease(lease6)) {
             setSuccessResponse(handle, "IPv6 lease deleted.");
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease6->subnet_id_,
+                                       lease6->type_ == Lease::TYPE_NA ?
+                                       "assigned-nas" : "assigned-pds"),
+                int64_t(-1));
         } else {
             setErrorResponse (handle, "IPv6 lease not found.", CONTROL_RESULT_EMPTY);
         }
@@ -1471,14 +1519,33 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
 namespace { // anonymous namepace.
 
 bool addOrUpdate4(Lease4Ptr lease, bool force_create) {
-    if (force_create && !LeaseMgrFactory::instance().getLease4(lease->addr_)) {
+    Lease4Ptr lease4 = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    if (force_create && !lease4) {
         if (!LeaseMgrFactory::instance().addLease(lease)) {
             isc_throw(db::DuplicateEntry,
                       "lost race between calls to get and add");
         }
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   "assigned-addresses"),
+            int64_t(1));
         return (true);
     }
     LeaseMgrFactory::instance().updateLease4(lease);
+    bool update = lease4->checkUpdateStats();
+    if (lease4->subnet_id_ != lease->subnet_id_) {
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease4->subnet_id_,
+                                   "assigned-addresses"),
+            int64_t(-1));
+        update = true;
+    }
+    if (update) {
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   "assigned-addresses"),
+            int64_t(1));
+    }
     return (false);
 }
 
@@ -1540,15 +1607,37 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
 namespace { // anonymous namepace.
 
 bool addOrUpdate6(Lease6Ptr lease, bool force_create) {
-    if (force_create &&
-        !LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_)) {
+    Lease6Ptr lease6 =
+        LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_);
+    if (force_create && !lease6) {
         if (!LeaseMgrFactory::instance().addLease(lease)) {
             isc_throw(db::DuplicateEntry,
                       "lost race between calls to get and add");
         }
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   lease->type_ == Lease::TYPE_NA ?
+                                   "assigned-nas" : "assigned-pds"),
+            int64_t(1));
         return (true);
     }
     LeaseMgrFactory::instance().updateLease6(lease);
+    bool update = lease6->checkUpdateStats();
+    if (lease6->subnet_id_ != lease->subnet_id_) {
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease6->subnet_id_,
+                                   lease->type_ == Lease::TYPE_NA ?
+                                   "assigned-nas" : "assigned-pds"),
+            int64_t(-1));
+        update = true;
+    }
+    if (update) {
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   lease->type_ == Lease::TYPE_NA ?
+                                   "assigned-nas" : "assigned-pds"),
+            int64_t(1));
+    }
     return (false);
 }
 
@@ -1628,6 +1717,10 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
             // Wipe a single subnet
             num = LeaseMgrFactory::instance().wipeLeases4(id);
             ids << " " << id;
+            StatsMgr::instance().setValue(StatsMgr::generateName("subnet",
+                                                                 id,
+                                                                 "assigned-addresses"),
+                                          int64_t(0));
         } else {
             // Wipe them all!
             ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
@@ -1638,6 +1731,10 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
             for (auto sub : *subs) {
                 num += LeaseMgrFactory::instance().wipeLeases4(sub->getID());
                 ids << " " << sub->getID();
+                StatsMgr::instance().setValue(StatsMgr::generateName("subnet",
+                                                                     sub->getID(),
+                                                                     "assigned-addresses"),
+                                              int64_t(0));
             }
         }
 
@@ -1680,6 +1777,12 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
             // Wipe a single subnet.
             num = LeaseMgrFactory::instance().wipeLeases6(id);
             ids << " " << id;
+            StatsMgr::instance().setValue(
+                StatsMgr::generateName("subnet", id, "assigned-nas" ),
+                int64_t(0));
+            StatsMgr::instance().setValue(
+                StatsMgr::generateName("subnet", id, "assigned-pds"),
+                int64_t(0));
        } else {
             // Wipe them all!
             ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
@@ -1690,6 +1793,12 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
             for (auto sub : *subs) {
                 num += LeaseMgrFactory::instance().wipeLeases6(sub->getID());
                 ids << " " << sub->getID();
+                StatsMgr::instance().setValue(
+                    StatsMgr::generateName("subnet", sub->getID(), "assigned-nas" ),
+                    int64_t(0));
+                StatsMgr::instance().setValue(
+                    StatsMgr::generateName("subnet", sub->getID(), "assigned-pds"),
+                    int64_t(0));
             }
         }
 

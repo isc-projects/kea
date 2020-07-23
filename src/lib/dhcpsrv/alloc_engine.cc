@@ -1072,7 +1072,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                     continue;
                 }
 
-
                 // there's no existing lease for selected candidate, so it is
                 // free. Let's allocate it.
 
@@ -3838,7 +3837,8 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         LeaseMgrFactory::instance().updateLease4(lease);
 
         // We need to account for the re-assignment of The lease.
-        if (ctx.old_lease_->expired() || ctx.old_lease_->state_ == Lease::STATE_EXPIRED_RECLAIMED) {
+        if (ctx.old_lease_->checkUpdateStats()) {
+
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        "assigned-addresses"),
@@ -4256,7 +4256,6 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
     // Update the lease's user_context.
     lease->setContext(user_context);
 }
-
 
 bool
 AllocEngine::conditionalExtendLifetime(Lease& lease) const {
