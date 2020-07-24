@@ -16,9 +16,8 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/triplet.h>
-#include <boost/multi_index/hashed_index.hpp>
-#include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/random_access_index.hpp>
 #include <boost/multi_index_container.hpp>
@@ -862,7 +861,7 @@ typedef boost::multi_index_container<
         >,
 
         // Fourth index allows for searching using an output from getServerId.
-        boost::multi_index::hashed_non_unique<
+        boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SubnetServerIdIndexTag>,
             boost::multi_index::const_mem_fun<Network4, asiolink::IOAddress,
                                               &Network4::getServerId>

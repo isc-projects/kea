@@ -243,7 +243,7 @@ typedef boost::multi_index_container<
         >,
         // Fourth index allows for access by server identifier specified for the
         // network.
-        boost::multi_index::hashed_non_unique<
+        boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SharedNetworkServerIdIndexTag>,
             boost::multi_index::const_mem_fun<Network4, asiolink::IOAddress,
                                               &Network4::getServerId>
