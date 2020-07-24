@@ -3837,8 +3837,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         LeaseMgrFactory::instance().updateLease4(lease);
 
         // We need to account for the re-assignment of The lease.
-        if (ctx.old_lease_->checkUpdateStats()) {
-
+        if (ctx.old_lease_->expired() || ctx.old_lease_->state_ == Lease::STATE_EXPIRED_RECLAIMED) {
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        "assigned-addresses"),

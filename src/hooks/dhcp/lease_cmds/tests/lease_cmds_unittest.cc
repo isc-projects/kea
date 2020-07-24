@@ -301,8 +301,8 @@ public:
     ///
     /// @param v6 true = v6, false = v4
     /// @param insert_lease governs whether a lease should be pre-inserted
-    /// @param expired governs whether a lease should be expired
-    void initLeaseMgr(bool v6, bool insert_lease, bool expired = false) {
+    /// @param reclaimed governs whether a lease should be in reclaimed state
+    void initLeaseMgr(bool v6, bool insert_lease, bool reclaimed = false) {
 
         LeaseMgrFactory::destroy();
         std::ostringstream s;
@@ -331,10 +331,10 @@ public:
 
         if (insert_lease) {
             if (v6) {
-                lmptr_->addLease(createLease6("2001:db8:1::1", 66, 0x42, expired));
-                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56, expired));
-                lmptr_->addLease(createLease6("2001:db8:2::1", 99, 0x42, expired));
-                lmptr_->addLease(createLease6("2001:db8:2::2", 99, 0x56, expired));
+                lmptr_->addLease(createLease6("2001:db8:1::1", 66, 0x42, reclaimed));
+                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56, reclaimed));
+                lmptr_->addLease(createLease6("2001:db8:2::1", 99, 0x42, reclaimed));
+                lmptr_->addLease(createLease6("2001:db8:2::2", 99, 0x56, reclaimed));
                 StatsMgr::instance().setValue(
                     StatsMgr::generateName("subnet", 66, "assigned-nas" ),
                     int64_t(2));
@@ -342,10 +342,10 @@ public:
                     StatsMgr::generateName("subnet", 99, "assigned-nas" ),
                     int64_t(2));
             } else {
-                lmptr_->addLease(createLease4("192.0.2.1", 44, 0x08, 0x42, expired));
-                lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56, expired));
-                lmptr_->addLease(createLease4("192.0.3.1", 88, 0x08, 0x42, expired));
-                lmptr_->addLease(createLease4("192.0.3.2", 88, 0x09, 0x56, expired));
+                lmptr_->addLease(createLease4("192.0.2.1", 44, 0x08, 0x42, reclaimed));
+                lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56, reclaimed));
+                lmptr_->addLease(createLease4("192.0.3.1", 88, 0x08, 0x42, reclaimed));
+                lmptr_->addLease(createLease4("192.0.3.2", 88, 0x09, 0x56, reclaimed));
                 StatsMgr::instance().setValue(
                     StatsMgr::generateName("subnet", 44, "assigned-addresses"),
                     int64_t(2));
@@ -367,13 +367,13 @@ public:
     /// it 6 times.
     /// @param client_id_pattern value to be used for generating client identifier by
     /// repeating it 8 times.
-    /// @param expired controls weather the lease should be expired.
+    /// @param reclaimed controls weather the lease should be in reclaimed state.
     /// @return Returns the lease created
     Lease4Ptr createLease4(const std::string& ip_address,
                            const SubnetID& subnet_id,
                            const uint8_t hw_address_pattern,
                            const uint8_t client_id_pattern,
-                           bool expired = false) {
+                           bool reclaimed = false) {
         Lease4Ptr lease(new Lease4());
 
         lease->addr_ = IOAddress(ip_address);
@@ -383,12 +383,10 @@ public:
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, client_id_pattern)));
         // Purposely using high cltt and valid lifetime to test that
         // expiration time is cast properly.
-        if (expired) {
-            lease->cltt_ = 0;
-            lease->valid_lft_ = 60;
-        } else {
-            lease->cltt_ = DEC_2030_TIME; // December 11th 2030
-            lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
+        lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
+        lease->cltt_ = DEC_2030_TIME; // December 11th 2030
+        if (reclaimed) {
+            lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
         }
         lease->subnet_id_ = subnet_id;
         lease->fqdn_fwd_ = false;
@@ -408,12 +406,12 @@ public:
     /// @param subnet_id subnet identifier
     /// @param duid_address_pattern value to be used for generating DUID by
     /// repeating it 8 times
-    /// @param expired controls weather the lease should be expired.
+    /// @param reclaimed controls weather the lease should be in reclaimed state.
     /// @return Returns the lease created
     Lease6Ptr createLease6(const std::string& ip_address,
                            const SubnetID& subnet_id,
                            const uint8_t duid_pattern,
-                           bool expired = false) {
+                           bool reclaimed = false) {
         Lease6Ptr lease(new Lease6());
 
         lease->addr_ = IOAddress(ip_address);
@@ -424,12 +422,10 @@ public:
         lease->preferred_lft_ = 1800;
         // Purposely using high cltt and valid lifetime to test that
         // expiration time is cast properly.
-        if (expired) {
-            lease->cltt_ = 0;
-            lease->valid_lft_ = 60;
-        } else {
-            lease->cltt_ = DEC_2030_TIME; // December 11th 2030
-            lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
+        lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
+        lease->cltt_ = DEC_2030_TIME; // December 11th 2030
+        if (reclaimed) {
+            lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
         }
         lease->subnet_id_ = subnet_id;
         lease->fqdn_fwd_ = false;
