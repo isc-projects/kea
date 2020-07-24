@@ -1,3 +1,5 @@
+Kea 1.7.10 (development) released on Jul 29, 2020
+
 1777.	[doc]		fdupont
 	Added in the Developer's Guide an example about how to cross
 	compile Kea for a Raspberry Pi.
