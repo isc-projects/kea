@@ -1218,11 +1218,13 @@ void updateOrAdd(Lease6Ptr lease) {
             }
             if (!lease->stateExpiredReclaimed()) {
                 // new lease is non expired-reclaimed
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease->subnet_id_,
-                                           lease->type_ == Lease::TYPE_NA ?
-                                           "assigned-nas" : "assigned-pds"),
-                    int64_t(1));
+                if (lease6->subnet_id_ != lease->subnet_id_) {
+                    StatsMgr::instance().addValue(
+                        StatsMgr::generateName("subnet", lease->subnet_id_,
+                                               lease->type_ == Lease::TYPE_NA ?
+                                               "assigned-nas" : "assigned-pds"),
+                        int64_t(1));
+                }
             } else {
                 // new lease is expired-reclaimed
                 StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
@@ -1234,7 +1236,7 @@ void updateOrAdd(Lease6Ptr lease) {
             }
         } else {
             // old lease is expired-reclaimed
-            if (lease->stateExpiredReclaimed()) {
+            if (!lease->stateExpiredReclaimed()) {
                 // new lease is non expired-reclaimed
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", lease->subnet_id_,
@@ -1606,10 +1608,12 @@ bool addOrUpdate4(Lease4Ptr lease, bool force_create) {
         }
         if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_,
-                                       "assigned-addresses"),
-                int64_t(1));
+            if (lease4->subnet_id_ != lease->subnet_id_) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_,
+                                           "assigned-addresses"),
+                    int64_t(1));
+            }
         } else {
             // new lease is expired-reclaimed
             StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
@@ -1621,7 +1625,7 @@ bool addOrUpdate4(Lease4Ptr lease, bool force_create) {
         }
     } else {
         // old lease is expired-reclaimed
-        if (lease->stateExpiredReclaimed()) {
+        if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", lease->subnet_id_,
@@ -1748,11 +1752,13 @@ bool addOrUpdate6(Lease6Ptr lease, bool force_create) {
         }
         if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_,
-                                       lease->type_ == Lease::TYPE_NA ?
-                                       "assigned-nas" : "assigned-pds"),
-                int64_t(1));
+            if (lease6->subnet_id_ != lease->subnet_id_) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_,
+                                           lease->type_ == Lease::TYPE_NA ?
+                                           "assigned-nas" : "assigned-pds"),
+                    int64_t(1));
+            }
         } else {
             // new lease is expired-reclaimed
             StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
@@ -1764,7 +1770,7 @@ bool addOrUpdate6(Lease6Ptr lease, bool force_create) {
         }
     } else {
         // old lease is expired-reclaimed
-        if (lease->stateExpiredReclaimed()) {
+        if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", lease->subnet_id_,
