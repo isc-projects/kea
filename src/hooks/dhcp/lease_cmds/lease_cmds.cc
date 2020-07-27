@@ -369,114 +369,100 @@ public:
 
     /// @brief Update stats when adding lease.
     ///
-    /// @param lease4 Added lease.
-    static void updateStatsOnAdd(const Lease4Ptr& lease4);
+    /// @param lease Added lease.
+    static void updateStatsOnAdd(const Lease4Ptr& lease);
 
     /// @brief Update stats when adding lease.
     ///
-    /// @param lease6 Added lease.
-    static void updateStatsOnAdd(const Lease6Ptr& lease6);
+    /// @param lease Added lease.
+    static void updateStatsOnAdd(const Lease6Ptr& lease);
 
     /// @brief Update stats when updating lease.
     ///
-    /// @param lease4 Lease data before update.
+    /// @param existing Lease data before update.
     /// @param lease Lease data after update.
-    static void updateStatsOnUpdate(const Lease4Ptr& lease4,
+    static void updateStatsOnUpdate(const Lease4Ptr& existing,
                                     const Lease4Ptr& lease);
 
     /// @brief Update stats when updating lease.
     ///
-    /// @param lease6 Lease data before update.
+    /// @param existing Lease data before update.
     /// @param lease Lease data after update.
-    static void updateStatsOnUpdate(const Lease6Ptr& lease6,
+    static void updateStatsOnUpdate(const Lease6Ptr& existing,
                                     const Lease6Ptr& lease);
 
     /// @brief Update stats when deleting lease.
     ///
-    /// @param lease4 Deleted lease.
-    static void updateStatsOnDelete(const Lease4Ptr& lease4);
+    /// @param lease Deleted lease.
+    static void updateStatsOnDelete(const Lease4Ptr& lease);
 
     /// @brief Update stats when deleting lease.
     ///
-    /// @param lease6 Deleted lease.
-    static void updateStatsOnDelete(const Lease6Ptr& lease6);
+    /// @param lease Deleted lease.
+    static void updateStatsOnDelete(const Lease6Ptr& lease);
 };
 
 void
-LeaseCmdsImpl::updateStatsOnAdd(const Lease4Ptr& lease4) {
-    if (!lease4->stateExpiredReclaimed()) {
+LeaseCmdsImpl::updateStatsOnAdd(const Lease4Ptr& lease) {
+    if (!lease->stateExpiredReclaimed()) {
         StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease4->subnet_id_,
+            StatsMgr::generateName("subnet", lease->subnet_id_,
                                    "assigned-addresses"),
             int64_t(1));
-        if (lease4->stateDeclined()) {
+        if (lease->stateDeclined()) {
             StatsMgr::instance().addValue("declined-addresses", int64_t(1));
 
             StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease4->subnet_id_,
+                StatsMgr::generateName("subnet", lease->subnet_id_,
                                        "declined-addresses"),
                 int64_t(1));
         }
-    } else {
-        StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
-
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease4->subnet_id_,
-                                   "reclaimed-leases"),
-            int64_t(1));
     }
 }
 
 void
-LeaseCmdsImpl::updateStatsOnAdd(const Lease6Ptr& lease6) {
-    if (!lease6->stateExpiredReclaimed()) {
+LeaseCmdsImpl::updateStatsOnAdd(const Lease6Ptr& lease) {
+    if (!lease->stateExpiredReclaimed()) {
         StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease6->subnet_id_,
-                                   lease6->type_ == Lease::TYPE_NA ?
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   lease->type_ == Lease::TYPE_NA ?
                                    "assigned-nas" : "assigned-pds"),
             int64_t(1));
-        if (lease6->stateDeclined()) {
+        if (lease->stateDeclined()) {
             StatsMgr::instance().addValue("declined-addresses", int64_t(1));
 
             StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease6->subnet_id_,
+                StatsMgr::generateName("subnet", lease->subnet_id_,
                                        "declined-addresses"),
                 int64_t(1));
         }
-    } else {
-        StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
-
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease6->subnet_id_,
-                                   "reclaimed-leases"),
-            int64_t(1));
     }
 }
 
 void
-LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& lease4,
+LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
                                    const Lease4Ptr& lease) {
-    if (!lease4->stateExpiredReclaimed()) {
+    if (!existing->stateExpiredReclaimed()) {
         // old lease is non expired-reclaimed
-        if (lease4->subnet_id_ != lease->subnet_id_) {
+        if (existing->subnet_id_ != lease->subnet_id_) {
             StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease4->subnet_id_,
+                StatsMgr::generateName("subnet", existing->subnet_id_,
                                        "assigned-addresses"),
                 int64_t(-1));
 
-            if (lease4->stateDeclined()) {
+            if (existing->stateDeclined()) {
                 // old lease is declined
                 StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
 
                 StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease4->subnet_id_,
+                    StatsMgr::generateName("subnet", existing->subnet_id_,
                                            "declined-addresses"),
                     int64_t(-1));
             }
         }
         if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
-            if (lease4->subnet_id_ != lease->subnet_id_) {
+            if (existing->subnet_id_ != lease->subnet_id_) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", lease->subnet_id_,
                                            "assigned-addresses"),
@@ -492,14 +478,6 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& lease4,
                         int64_t(1));
                 }
             }
-        } else {
-            // new lease is expired-reclaimed
-            StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_,
-                                       "reclaimed-leases"),
-                int64_t(1));
         }
     } else {
         // old lease is expired-reclaimed
@@ -519,55 +497,35 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& lease4,
                                            "declined-addresses"),
                     int64_t(1));
             }
-
-            StatsMgr::instance().addValue("reclaimed-leases", int64_t(-1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease4->subnet_id_,
-                                       "reclaimed-leases"),
-                int64_t(-1));
-        } else {
-            // new lease is expired-reclaimed
-            if (lease4->subnet_id_ != lease->subnet_id_) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease->subnet_id_,
-                                           "reclaimed-leases"),
-                    int64_t(1));
-
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease4->subnet_id_,
-                                           "reclaimed-leases"),
-                    int64_t(-1));
-            }
         }
     }
 }
 
 void
-LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& lease6,
+LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
                                    const Lease6Ptr& lease) {
-    if (!lease6->stateExpiredReclaimed()) {
+    if (!existing->stateExpiredReclaimed()) {
         // old lease is non expired-reclaimed
-        if (lease6->subnet_id_ != lease->subnet_id_) {
+        if (existing->subnet_id_ != lease->subnet_id_) {
             StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease6->subnet_id_,
+                StatsMgr::generateName("subnet", existing->subnet_id_,
                                        lease->type_ == Lease::TYPE_NA ?
                                        "assigned-nas" : "assigned-pds"),
                 int64_t(-1));
 
-            if (lease6->stateDeclined()) {
+            if (existing->stateDeclined()) {
                 // old lease is declined
                 StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
 
                 StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease6->subnet_id_,
+                    StatsMgr::generateName("subnet", existing->subnet_id_,
                                            "declined-addresses"),
                     int64_t(-1));
             }
         }
         if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
-            if (lease6->subnet_id_ != lease->subnet_id_) {
+            if (existing->subnet_id_ != lease->subnet_id_) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", lease->subnet_id_,
                                            lease->type_ == Lease::TYPE_NA ?
@@ -584,14 +542,6 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& lease6,
                         int64_t(1));
                 }
             }
-        } else {
-            // new lease is expired-reclaimed
-            StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_,
-                                       "reclaimed-leases"),
-                int64_t(1));
         }
     } else {
         // old lease is expired-reclaimed
@@ -612,80 +562,85 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& lease6,
                                            "declined-addresses"),
                     int64_t(1));
             }
-
-            StatsMgr::instance().addValue("reclaimed-leases", int64_t(-1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease6->subnet_id_,
-                                       "reclaimed-leases"),
-                int64_t(-1));
-        } else {
-            // new lease is expired-reclaimed
-            if (lease6->subnet_id_ != lease->subnet_id_) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease->subnet_id_,
-                                           "reclaimed-leases"),
-                    int64_t(1));
-
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease6->subnet_id_,
-                                           "reclaimed-leases"),
-                    int64_t(-1));
-            }
         }
     }
 }
 
 void
-LeaseCmdsImpl::updateStatsOnDelete(const Lease4Ptr& lease4) {
-    if (!lease4->stateExpiredReclaimed()) {
+LeaseCmdsImpl::updateStatsOnDelete(const Lease4Ptr& lease) {
+    if (!lease->stateExpiredReclaimed()) {
         StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease4->subnet_id_,
+            StatsMgr::generateName("subnet", lease->subnet_id_,
                                    "assigned-addresses"),
             int64_t(-1));
-        if (lease4->stateDeclined()) {
+        if (lease->stateDeclined()) {
             StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
 
             StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease4->subnet_id_,
+                StatsMgr::generateName("subnet", lease->subnet_id_,
                                        "declined-addresses"),
                 int64_t(-1));
         }
-    } else {
-        StatsMgr::instance().addValue("reclaimed-leases", int64_t(-1));
-
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease4->subnet_id_,
-                                   "reclaimed-leases"),
-            int64_t(-1));
     }
 }
 
 void
-LeaseCmdsImpl::updateStatsOnDelete(const Lease6Ptr& lease6) {
-    if (!lease6->stateExpiredReclaimed()) {
+LeaseCmdsImpl::updateStatsOnDelete(const Lease6Ptr& lease) {
+    if (!lease->stateExpiredReclaimed()) {
         StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease6->subnet_id_,
-                                   lease6->type_ == Lease::TYPE_NA ?
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   lease->type_ == Lease::TYPE_NA ?
                                    "assigned-nas" : "assigned-pds"),
             int64_t(-1));
-        if (lease6->stateDeclined()) {
+        if (lease->stateDeclined()) {
             StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
 
             StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease6->subnet_id_,
+                StatsMgr::generateName("subnet", lease->subnet_id_,
                                        "declined-addresses"),
                 int64_t(-1));
         }
-    } else {
-        StatsMgr::instance().addValue("reclaimed-leases", int64_t(-1));
-
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease6->subnet_id_,
-                                   "reclaimed-leases"),
-            int64_t(-1));
     }
 }
+
+namespace { // anonymous namespace.
+
+bool
+addOrUpdate4(Lease4Ptr lease, bool force_create) {
+    Lease4Ptr lease4 = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    if (force_create && !lease4) {
+        // lease does not exist
+        if (!LeaseMgrFactory::instance().addLease(lease)) {
+            isc_throw(db::DuplicateEntry,
+                      "lost race between calls to get and add");
+        }
+        LeaseCmdsImpl::updateStatsOnAdd(lease);
+        return (true);
+    }
+    LeaseMgrFactory::instance().updateLease4(lease);
+    LeaseCmdsImpl::updateStatsOnUpdate(lease4, lease);
+    return (false);
+}
+
+bool
+addOrUpdate6(Lease6Ptr lease, bool force_create) {
+    Lease6Ptr lease6 =
+        LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_);
+    if (force_create && !lease6) {
+        // lease does not exist
+        if (!LeaseMgrFactory::instance().addLease(lease)) {
+            isc_throw(db::DuplicateEntry,
+                      "lost race between calls to get and add");
+        }
+        LeaseCmdsImpl::updateStatsOnAdd(lease);
+        return (true);
+    }
+    LeaseMgrFactory::instance().updateLease6(lease);
+    LeaseCmdsImpl::updateStatsOnUpdate(lease6, lease);
+    return (false);
+}
+
+} // end of anonymous namespace.
 
 int
 LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
@@ -1508,27 +1463,6 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
     return (0);
 }
 
-namespace { // anonymous namespace.
-
-void updateOrAdd(Lease6Ptr lease) {
-    try {
-        Lease6Ptr lease6 =
-            LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_);
-        // Try to update.
-        LeaseMgrFactory::instance().updateLease6(lease);
-        LeaseCmdsImpl::updateStatsOnUpdate(lease6, lease);
-    } catch (const NoSuchLease& ex) {
-        // Lease to be updated not found, so add it.
-        if (!LeaseMgrFactory::instance().addLease(lease)) {
-            isc_throw(db::DuplicateEntry,
-                      "lost race between calls to update and add");
-        }
-        LeaseCmdsImpl::updateStatsOnAdd(lease);
-    }
-}
-
-} // end of anonymous namespace.
-
 int
 LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
     try {
@@ -1668,17 +1602,17 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                             use_cs = !resource_handler.tryLock(lease->type_,
                                                                lease->addr_);
                             if (!use_cs) {
-                                updateOrAdd(lease);
+                                addOrUpdate6(lease, true);
                             }
                         }
                         if (use_cs) {
                             // Failed to avoid the race.
                             MultiThreadingCriticalSection cs;
-                            updateOrAdd(lease);
+                            addOrUpdate6(lease, true);
                         }
                     } else {
                         // No multi-threading.
-                        updateOrAdd(lease);
+                        addOrUpdate6(lease, true);
                     }
 
                     ++success_count;
@@ -1797,26 +1731,6 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
     return (0);
 }
 
-namespace { // anonymous namepace.
-
-bool addOrUpdate4(Lease4Ptr lease, bool force_create) {
-    Lease4Ptr lease4 = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    if (force_create && !lease4) {
-        // lease does not exist
-        if (!LeaseMgrFactory::instance().addLease(lease)) {
-            isc_throw(db::DuplicateEntry,
-                      "lost race between calls to get and add");
-        }
-        LeaseCmdsImpl::updateStatsOnAdd(lease);
-        return (true);
-    }
-    LeaseMgrFactory::instance().updateLease4(lease);
-    LeaseCmdsImpl::updateStatsOnUpdate(lease4, lease);
-    return (false);
-}
-
-} // end of anonymous namespace.
-
 int
 LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
     try {
@@ -1869,27 +1783,6 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
 
     return (0);
 }
-
-namespace { // anonymous namepace.
-
-bool addOrUpdate6(Lease6Ptr lease, bool force_create) {
-    Lease6Ptr lease6 =
-        LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_);
-    if (force_create && !lease6) {
-        // lease does not exist
-        if (!LeaseMgrFactory::instance().addLease(lease)) {
-            isc_throw(db::DuplicateEntry,
-                      "lost race between calls to get and add");
-        }
-        LeaseCmdsImpl::updateStatsOnAdd(lease);
-        return (true);
-    }
-    LeaseMgrFactory::instance().updateLease6(lease);
-    LeaseCmdsImpl::updateStatsOnUpdate(lease6, lease);
-    return (false);
-}
-
-} // end of anonymous namespace.
 
 int
 LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
