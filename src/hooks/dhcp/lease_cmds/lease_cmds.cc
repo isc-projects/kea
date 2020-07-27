@@ -620,13 +620,6 @@ addOrUpdate4(Lease4Ptr lease, bool force_create) {
 
 bool
 addOrUpdate6(Lease6Ptr lease, bool force_create) {
-    /// @todo throw if PD address is in declined state
-    /*
-    if (lease->stateDeclined() && lease->type_ == Lease::TYPE_PD) {
-        isc_throw(isc::InvalidOperation,
-                  "invalid PD address in declined state");
-    }
-    */
     Lease6Ptr existing =
         LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_);
     if (force_create && !existing) {
@@ -1592,8 +1585,6 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
 
             // Iterate over all leases.
             for (auto lease : parsed_leases_list) {
-
-                Lease6Parser parser;
 
                 try {
                     if (MultiThreadingMgr::instance().getMode() &&

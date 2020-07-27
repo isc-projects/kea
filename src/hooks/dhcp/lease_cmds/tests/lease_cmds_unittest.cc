@@ -383,7 +383,7 @@ public:
     /// it 6 times.
     /// @param client_id_pattern value to be used for generating client identifier by
     /// repeating it 8 times.
-    /// @param declined controls weather the lease should be in declined state.
+    /// @param declined controls whether the lease should be in declined state.
     ///
     /// @return Returns the lease created
     Lease4Ptr createLease4(const std::string& ip_address,
@@ -423,7 +423,7 @@ public:
     /// @param subnet_id subnet identifier
     /// @param duid_address_pattern value to be used for generating DUID by
     /// repeating it 8 times
-    /// @param declined controls weather the lease should be in declined state.
+    /// @param declined controls whether the lease should be in declined state.
     ///
     /// @return Returns the lease created
     Lease6Ptr createLease6(const std::string& ip_address,
