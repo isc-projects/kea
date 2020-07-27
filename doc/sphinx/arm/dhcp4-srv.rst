@@ -3772,15 +3772,16 @@ An example configuration that sets these parameter looks as follows:
 Multi-threading settings in different backends
 ----------------------------------------------
 
-Both kea-dhcp4 and kea-dhcp6 are tested internally to determine which setting
-is the best. Although this section will describe our results those are just
-recommendations. We strongly advice to run your own performance tests.
+Both kea-dhcp4 and kea-dhcp6 are tested internally to determine which settings
+gave the best performance. Although this section describes our results, those are just
+recommendations and are very dependent on the particular hardware that was used
+for testing. We strongly advice to run your own performance tests.
 
-Full report Kea 1.7 results can be found `here <https://jenkins.isc.org/job/kea-1.7/job/performance/KeaPerformanceReport/>`_.
+Full report of Kea 1.7 performance results can be found `here <https://jenkins.isc.org/job/kea-1.7/job/performance/KeaPerformanceReport/>`_.
 This include hardware description, test scenario descriptions and
 current results.
 
-After enabling multi-threading number of threads is set by ``thread-pool-size``
+After enabling multi-threading, the number of threads is set by ``thread-pool-size``
 parameter, and results from our tests show that best configurations for
 kea-dhcp4 are:
 
@@ -3797,10 +3798,12 @@ on ``thread-pool-size``.
 Our tests reported best results when:
 
 -  ``packet-queue-size``: 7 * ``thread-pool-size`` when using ``memfile`` for
-   storing leases. In our case it's 7 * 4 = 28.
+   storing leases. In our case it's 7 * 4 = 28. This means that at any given
+   time, up to 28 packets could be queued.
 
 -  ``packet-queue-size``: 66 * ``thread-pool-size`` when using ``mysql`` for
-   storing leases. In our case it's 66 * 12 = 792.
+   storing leases. In our case it's 66 * 12 = 792. This means that up to
+   792 packets could be queued.
 
 -  ``packet-queue-size``: 11 * ``thread-pool-size`` when using ``postgresql`` for
    storing leases. In our case it's 11 * 8 = 88.
