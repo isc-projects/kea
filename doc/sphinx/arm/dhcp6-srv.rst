@@ -3292,7 +3292,7 @@ Full report Kea 1.7 results can be found `here <https://jenkins.isc.org/job/kea-
 This include hardware description, test scenario descriptions and
 current results.
 
-After enabeling multi-threading number of threads is set by ``thread-pool-size``
+After enabling multi-threading number of threads is set by ``thread-pool-size``
 parameter, and results from our tests show that best configurations for
 kea-dhcp6 are:
 
