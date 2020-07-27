@@ -535,7 +535,7 @@ public:
 
         // Let's change to a different subnet
         if (subnets->size() > 1) {
-            subnet = (*subnets)[1]; // Let's pick the other subnet
+            subnet = *std::next(subnets->begin()); // Let's pick the other subnet
             callout_handle.setArgument("subnet6", subnet);
         }
 
@@ -1697,14 +1697,14 @@ TEST_F(HooksDhcpv6SrvTest, subnet6Select) {
     // The server is supposed to pick the first subnet, because of matching
     // interface. Check that the value is reported properly.
     ASSERT_TRUE(callback_subnet6_);
-    EXPECT_EQ(callback_subnet6_.get(), exp_subnets->front().get());
+    EXPECT_EQ(callback_subnet6_.get(), exp_subnets->begin()->get());
 
     // Server is supposed to report two subnets
     ASSERT_EQ(exp_subnets->size(), callback_subnet6collection_->size());
 
     // Compare that the available subnets are reported as expected
-    EXPECT_TRUE((*exp_subnets)[0].get() == (*callback_subnet6collection_)[0].get());
-    EXPECT_TRUE((*exp_subnets)[1].get() == (*callback_subnet6collection_)[1].get());
+    EXPECT_TRUE((*exp_subnets->begin())->get() == (*callback_subnet6collection_->begin())->get());
+    EXPECT_TRUE((*std::next(exp_subnets->begin()))->get() == (*std::next(callback_subnet6collection_->begin()))->get());
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
@@ -1788,8 +1788,10 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SselectChange) {
 
     // Advertised address must belong to the second pool (in subnet's range,
     // in dynamic pool)
-    EXPECT_TRUE((*subnets)[1]->inRange(addr_opt->getAddress()));
-    EXPECT_TRUE((*subnets)[1]->inPool(Lease::TYPE_NA, addr_opt->getAddress()));
+    auto subnet = subnets->begin();
+    ++subnet;
+    EXPECT_TRUE((*subnet)->inRange(addr_opt->getAddress()));
+    EXPECT_TRUE((*subnet)->inPool(Lease::TYPE_NA, addr_opt->getAddress()));
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);

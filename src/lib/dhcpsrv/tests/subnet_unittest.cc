@@ -1801,10 +1801,10 @@ TEST(SubnetFetcherTest, getSubnet4ById) {
     EXPECT_FALSE(subnet);
 
     subnet.reset(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 1024));
-    EXPECT_NO_THROW(collection.push_back(subnet));
+    EXPECT_NO_THROW(collection.insert(subnet));
 
     subnet.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 1, 2, 3, 2048));
-    EXPECT_NO_THROW(collection.push_back(subnet));
+    EXPECT_NO_THROW(collection.insert(subnet));
 
     subnet = SubnetFetcher4::get(collection, SubnetID(1024));
     ASSERT_TRUE(subnet);
@@ -1827,10 +1827,10 @@ TEST(SubnetFetcherTest, getSubnet6ById) {
     EXPECT_FALSE(subnet);
 
     subnet.reset(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4, 1024));
-    EXPECT_NO_THROW(collection.push_back(subnet));
+    EXPECT_NO_THROW(collection.insert(subnet));
 
     subnet.reset(new Subnet6(IOAddress("2001:db8:2::"), 64, 1, 2, 3, 4, 2048));
-    EXPECT_NO_THROW(collection.push_back(subnet));
+    EXPECT_NO_THROW(collection.insert(subnet));
 
     subnet = SubnetFetcher6::get(collection, SubnetID(1024));
     ASSERT_TRUE(subnet);

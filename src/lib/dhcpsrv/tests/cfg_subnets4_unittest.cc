@@ -180,7 +180,7 @@ TEST(CfgSubnets4Test, replaceSubnet) {
     ASSERT_TRUE(replaced);
     EXPECT_TRUE(replaced == subnet2);
     ASSERT_EQ(3, cfg.getAll()->size());
-    Subnet4Ptr returned = cfg.getAll()->at(1);
+    Subnet4Ptr returned = cfg.getSubnet(SubnetID(2));
     ASSERT_TRUE(returned);
     EXPECT_TRUE(returned == subnet);
 
@@ -189,7 +189,7 @@ TEST(CfgSubnets4Test, replaceSubnet) {
     ASSERT_TRUE(replaced);
     EXPECT_TRUE(replaced == subnet);
     ASSERT_EQ(3, cfg.getAll()->size());
-    returned = cfg.getAll()->at(1);
+    returned = cfg.getSubnet(SubnetID(2));
     ASSERT_TRUE(returned);
     EXPECT_TRUE(returned == subnet2);
 
@@ -198,7 +198,7 @@ TEST(CfgSubnets4Test, replaceSubnet) {
                              26, 10, 20, 1000,  SubnetID(2)));
     replaced = cfg.replace(subnet);
     EXPECT_FALSE(replaced);
-    returned = cfg.getAll()->at(1);
+    returned = cfg.getSubnet(SubnetID(2));
     ASSERT_TRUE(returned);
     EXPECT_TRUE(returned == subnet2);
 
@@ -208,7 +208,7 @@ TEST(CfgSubnets4Test, replaceSubnet) {
     replaced = cfg.replace(subnet);
     ASSERT_TRUE(replaced);
     EXPECT_TRUE(replaced == subnet2);
-    returned = cfg.getAll()->at(1);
+    returned = cfg.getSubnet(SubnetID(2));
     ASSERT_TRUE(returned);
     EXPECT_TRUE(returned == subnet);
 }

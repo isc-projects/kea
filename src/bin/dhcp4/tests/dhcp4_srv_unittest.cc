@@ -1720,7 +1720,7 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
     ASSERT_EQ(1, subnets->size());
     CfgMgr::instance().clear();
-    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnets->at(0));
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(*subnets->begin());
     CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
     CfgMgr::instance().commit();
 
@@ -1797,7 +1797,7 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
     ASSERT_EQ(1, subnets->size());
     CfgMgr::instance().clear();
-    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnets->at(0));
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(*subnets->begin());
     CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
     CfgMgr::instance().commit();
 
@@ -3547,8 +3547,8 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     ASSERT_EQ(2, subnets->size());
 
     // Let's get them for easy reference
-    Subnet4Ptr subnet1 = (*subnets)[0];
-    Subnet4Ptr subnet2 = (*subnets)[1];
+    Subnet4Ptr subnet1 = *subnets->begin();
+    Subnet4Ptr subnet2 = *std::next(subnets->begin());
     ASSERT_TRUE(subnet1);
     ASSERT_TRUE(subnet2);
 
@@ -3633,8 +3633,8 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
     ASSERT_EQ(2, subnets->size());
 
     // Let's get them for easy reference
-    Subnet4Ptr subnet1 = (*subnets)[0];
-    Subnet4Ptr subnet2 = (*subnets)[1];
+    Subnet4Ptr subnet1 = *subnets->begin();
+    Subnet4Ptr subnet2 = *std::next(subnets->begin());
     ASSERT_TRUE(subnet1);
     ASSERT_TRUE(subnet2);
 
@@ -3695,9 +3695,12 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     ASSERT_EQ(3, subnets->size());
 
     // Let's get them for easy reference
-    Subnet4Ptr subnet1 = (*subnets)[0];
-    Subnet4Ptr subnet2 = (*subnets)[1];
-    Subnet4Ptr subnet3 = (*subnets)[2];
+    auto subnet_it = subnets->begin();
+    Subnet4Ptr subnet1 = *subnet_it;
+    ++subnet_it;
+    Subnet4Ptr subnet2 = *subnet_it;
+    ++subnet_it;
+    Subnet4Ptr subnet3 = *subnet_it;
     ASSERT_TRUE(subnet1);
     ASSERT_TRUE(subnet2);
     ASSERT_TRUE(subnet3);
@@ -3814,9 +3817,12 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
     ASSERT_EQ(3, subnets->size());
 
     // Let's get them for easy reference
-    Subnet4Ptr subnet1 = (*subnets)[0];
-    Subnet4Ptr subnet2 = (*subnets)[1];
-    Subnet4Ptr subnet3 = (*subnets)[2];
+    auto subnet_it = subnets->begin();
+    Subnet4Ptr subnet1 = *subnet_it;
+    ++subnet_it;
+    Subnet4Ptr subnet2 = *subnet_it;
+    ++subnet_it;
+    Subnet4Ptr subnet3 = *subnet_it;
     ASSERT_TRUE(subnet1);
     ASSERT_TRUE(subnet2);
     ASSERT_TRUE(subnet3);
@@ -4154,7 +4160,7 @@ TEST_F(Dhcpv4SrvTest, userContext) {
     ASSERT_EQ(1, subnets->size());
 
     // Let's get the subnet and check its context.
-    Subnet4Ptr subnet1 = (*subnets)[0];
+    Subnet4Ptr subnet1 = *subnets->begin();
     ASSERT_TRUE(subnet1);
     ASSERT_TRUE(subnet1->getContext());
     EXPECT_EQ("{ \"secure\": false }", subnet1->getContext()->str());

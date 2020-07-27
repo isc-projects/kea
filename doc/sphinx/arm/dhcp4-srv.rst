@@ -5166,6 +5166,13 @@ configurations, e.g. shared networks. See :ref:`dhcp4-relay-override` for detail
    classification mechanism alters the way in which a subnet is selected
    for the client, depending on the classes to which the client belongs.
 
+.. note::
+
+   Starting with Kea 1.7.9, the order used to find a subnet which matches
+   required conditions to be selected is the ascending subnet identifier
+   order. When the selected subnet is a member of a shared network the
+   whole shared network is selected.
+
 .. _dhcp4-relay-override:
 
 Using a Specific Relay Agent for a Subnet

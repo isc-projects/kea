@@ -2287,8 +2287,8 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
     ASSERT_EQ(2, subnets->size());
 
     // Let's get them for easy reference
-    Subnet6Ptr subnet1 = (*subnets)[0];
-    Subnet6Ptr subnet2 = (*subnets)[1];
+    Subnet6Ptr subnet1 = *subnets->begin();
+    Subnet6Ptr subnet2 = *std::next(subnets->begin());
     ASSERT_TRUE(subnet1);
     ASSERT_TRUE(subnet2);
 
@@ -2804,7 +2804,7 @@ TEST_F(Dhcpv6SrvTest, userContext) {
     ASSERT_EQ(1, subnets->size());
 
     // Let's get the subnet and check its context.
-    Subnet6Ptr subnet1 = (*subnets)[0];
+    Subnet6Ptr subnet1 = (*subnets->begin());
     ASSERT_TRUE(subnet1);
     ASSERT_TRUE(subnet1->getContext());
     EXPECT_EQ("{ \"secure\": false }", subnet1->getContext()->str());

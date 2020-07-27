@@ -38,7 +38,7 @@ CfgSubnets6::add(const Subnet6Ptr& subnet) {
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET6)
               .arg(subnet->toText());
-    static_cast<void>(subnets_.push_back(subnet));
+    static_cast<void>(subnets_.insert(subnet));
 }
 
 Subnet6Ptr
@@ -161,7 +161,7 @@ CfgSubnets6::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks6Ptr networks,
         }
 
         // Add the "other" subnet to the our collection of subnets.
-        static_cast<void>(subnets_.push_back(*other_subnet));
+        static_cast<void>(subnets_.insert(*other_subnet));
 
         // If it belongs to a shared network, find the network and
         // add the subnet to it

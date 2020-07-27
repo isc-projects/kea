@@ -431,35 +431,40 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     ASSERT_TRUE(subnets);
     ASSERT_EQ(3, subnets->size()); // We expect 3 subnets.
 
-
     // Check subnet 1.
-    EXPECT_EQ("192.0.2.0", subnets->at(0)->get().first.toText());
-    EXPECT_EQ(24, subnets->at(0)->get().second);
+    auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
+    EXPECT_EQ(24, (*subnet)->get().second);
 
     // Check pools in the first subnet.
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
+    const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_V4);
     ASSERT_EQ(1, pools1.size());
     EXPECT_EQ("192.0.2.1", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.100", pools1.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_V4, pools1.at(0)->getType());
 
     // Check subnet 2.
-    EXPECT_EQ("192.0.3.0", subnets->at(1)->get().first.toText());
-    EXPECT_EQ(24, subnets->at(1)->get().second);
+    ++subnet;
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("192.0.3.0", (*subnet)->get().first.toText());
+    EXPECT_EQ(24, (*subnet)->get().second);
 
     // Check pools in the second subnet.
-    const PoolCollection& pools2 = subnets->at(1)->getPools(Lease::TYPE_V4);
+    const PoolCollection& pools2 = (*subnet)->getPools(Lease::TYPE_V4);
     ASSERT_EQ(1, pools2.size());
     EXPECT_EQ("192.0.3.101", pools2.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.3.150", pools2.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_V4, pools2.at(0)->getType());
 
     // And finally check subnet 3.
-    EXPECT_EQ("192.0.4.0", subnets->at(2)->get().first.toText());
-    EXPECT_EQ(24, subnets->at(2)->get().second);
+    ++subnet;
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("192.0.4.0", (*subnet)->get().first.toText());
+    EXPECT_EQ(24, (*subnet)->get().second);
 
     // ... and it's only pool.
-    const PoolCollection& pools3 = subnets->at(2)->getPools(Lease::TYPE_V4);
+    const PoolCollection& pools3 = (*subnet)->getPools(Lease::TYPE_V4);
     EXPECT_EQ("192.0.4.101", pools3.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.4.150", pools3.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_V4, pools3.at(0)->getType());
@@ -503,11 +508,13 @@ TEST_F(JSONFileBackendTest, hashComments) {
     ASSERT_EQ(1, subnets->size());
 
     // Check subnet 1.
-    EXPECT_EQ("192.0.2.0", subnets->at(0)->get().first.toText());
-    EXPECT_EQ(22, subnets->at(0)->get().second);
+    auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
+    EXPECT_EQ(22, (*subnet)->get().second);
 
     // Check pools in the first subnet.
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
+    const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_V4);
     ASSERT_EQ(1, pools1.size());
     EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
@@ -552,11 +559,13 @@ TEST_F(JSONFileBackendTest, cppLineComments) {
     ASSERT_EQ(1, subnets->size());
 
     // Check subnet 1.
-    EXPECT_EQ("192.0.2.0", subnets->at(0)->get().first.toText());
-    EXPECT_EQ(22, subnets->at(0)->get().second);
+    auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
+    EXPECT_EQ(22, (*subnet)->get().second);
 
     // Check pools in the first subnet.
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
+    const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_V4);
     ASSERT_EQ(1, pools1.size());
     EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
@@ -568,7 +577,7 @@ TEST_F(JSONFileBackendTest, cppLineComments) {
 TEST_F(JSONFileBackendTest, cBlockComments) {
 
     string config_c_block_comments = "/* This is a comment. It should be \n"
-      "ignored. Real config starts in line below*/\n"
+        "ignored. Real config starts in line below*/\n"
         "{ \"Dhcp4\": {"
         "\"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
@@ -601,11 +610,13 @@ TEST_F(JSONFileBackendTest, cBlockComments) {
     ASSERT_EQ(1, subnets->size());
 
     // Check subnet 1.
-    EXPECT_EQ("192.0.2.0", subnets->at(0)->get().first.toText());
-    EXPECT_EQ(22, subnets->at(0)->get().second);
+    auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
+    EXPECT_EQ(22, (*subnet)->get().second);
 
     // Check pools in the first subnet.
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
+    const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_V4);
     ASSERT_EQ(1, pools1.size());
     EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
@@ -650,11 +661,13 @@ TEST_F(JSONFileBackendTest, include) {
     ASSERT_EQ(1, subnets->size());
 
     // Check subnet 1.
-    EXPECT_EQ("192.0.2.0", subnets->at(0)->get().first.toText());
-    EXPECT_EQ(22, subnets->at(0)->get().second);
+    auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
+    EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
+    EXPECT_EQ(22, (*subnet)->get().second);
 
     // Check pools in the first subnet.
-    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
+    const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_V4);
     ASSERT_EQ(1, pools1.size());
     EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());

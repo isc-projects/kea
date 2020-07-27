@@ -78,6 +78,9 @@ $(srcdir)/kea-messages.rst: $(mes_files) mes2doc.py
 api-files.txt: api/api_files.mk
 	@sed 's;_files .*%/;/;' $< > $@
 
+# some tools do not use this makefile but still need generate files.
+EXTRA_DIST += mes-files.txt api-files.txt
+
 # this rule is only used for development purposes and is not used in official
 # build process as api.rst is always generated via sphinx's conf.py
 $(srcdir)/api.rst: $(api_files) api-files.txt api2doc.py

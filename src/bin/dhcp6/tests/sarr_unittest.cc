@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -263,7 +263,8 @@ TEST_F(SARRTest, directClientPrefixHint) {
     EXPECT_NE("2001:db8:3:33::", lease_client.addr_.toText());
     EXPECT_NE("2001:db8:3:33::34", lease_client.addr_.toText());
     // Check that the assigned prefix belongs to the pool.
-    (*subnets)[0]->inPool(Lease::TYPE_PD, lease_client.addr_);
+    ASSERT_TRUE(!subnets->empty());
+    (*subnets->begin())->inPool(Lease::TYPE_PD, lease_client.addr_);
     EXPECT_EQ(64, lease_client.prefixlen_);
     EXPECT_EQ(3000, lease_client.preferred_lft_);
     EXPECT_EQ(4000, lease_client.valid_lft_);

@@ -530,7 +530,7 @@ public:
                 // server_tag at 64
 
                 // Subnet ready. Add it to the list.
-                auto ret = subnets.push_back(last_subnet);
+                auto ret = subnets.insert(last_subnet);
 
                 // subnets is a multi index container with unique indexes
                 // but these indexes are unique too in the database,
@@ -618,7 +618,7 @@ public:
         // check if it has matching server tags and toss it if it
         // doesn't. We skip matching the server tags if we're asking
         // for ANY subnet.
-        auto& subnet_index = subnets.get<SubnetRandomAccessIndexTag>();
+        auto& subnet_index = subnets.get<SubnetSubnetIdIndexTag>();
         tossNonMatchingElements(server_selector, subnet_index);
     }
 

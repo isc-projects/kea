@@ -971,7 +971,7 @@ Subnets4ListConfigParser::parse(Subnet4Collection& subnets,
         Subnet4Ptr subnet = parser.parse(subnet_json);
         if (subnet) {
             try {
-                auto ret = subnets.push_back(subnet);
+                auto ret = subnets.insert(subnet);
                 if (!ret.second) {
                     isc_throw(Unexpected,
                               "can't store subnet because of conflict");
@@ -1366,7 +1366,7 @@ Subnets6ListConfigParser::parse(Subnet6Collection& subnets,
         Subnet6Ptr subnet = parser.parse(subnet_json);
         if (subnet) {
             try {
-                auto ret = subnets.push_back(subnet);
+                auto ret = subnets.insert(subnet);
                 if (!ret.second) {
                     isc_throw(Unexpected,
                               "can't store subnet because of conflict");
