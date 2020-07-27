@@ -462,6 +462,14 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& lease4,
                 StatsMgr::generateName("subnet", lease4->subnet_id_,
                                        "assigned-addresses"),
                 int64_t(-1));
+
+            if (lease4->stateDeclined()) {
+                // old lease is declined
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease4->subnet_id_,
+                                           "declined-addresses"),
+                    int64_t(-1));
+            }
         }
         if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
@@ -470,6 +478,14 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& lease4,
                     StatsMgr::generateName("subnet", lease->subnet_id_,
                                            "assigned-addresses"),
                     int64_t(1));
+
+                if (lease->stateDeclined()) {
+                    // new lease is declined
+                    StatsMgr::instance().addValue(
+                        StatsMgr::generateName("subnet", lease->subnet_id_,
+                                               "declined-addresses"),
+                        int64_t(1));
+                }
             }
         } else {
             // new lease is expired-reclaimed
@@ -488,6 +504,14 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& lease4,
                 StatsMgr::generateName("subnet", lease->subnet_id_,
                                        "assigned-addresses"),
                 int64_t(1));
+
+            if (lease->stateDeclined()) {
+                // new lease is declined
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_,
+                                           "declined-addresses"),
+                    int64_t(1));
+            }
 
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", lease4->subnet_id_,
@@ -521,6 +545,14 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& lease6,
                                        lease->type_ == Lease::TYPE_NA ?
                                        "assigned-nas" : "assigned-pds"),
                 int64_t(-1));
+
+            if (lease6->stateDeclined()) {
+                // old lease is declined
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease6->subnet_id_,
+                                           "declined-addresses"),
+                    int64_t(-1));
+            }
         }
         if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
@@ -530,6 +562,14 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& lease6,
                                            lease->type_ == Lease::TYPE_NA ?
                                            "assigned-nas" : "assigned-pds"),
                     int64_t(1));
+
+                if (lease->stateDeclined()) {
+                    // new lease is declined
+                    StatsMgr::instance().addValue(
+                        StatsMgr::generateName("subnet", lease->subnet_id_,
+                                               "declined-addresses"),
+                        int64_t(1));
+                }
             }
         } else {
             // new lease is expired-reclaimed
@@ -549,6 +589,14 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& lease6,
                                        lease->type_ == Lease::TYPE_NA ?
                                        "assigned-nas" : "assigned-pds"),
                 int64_t(1));
+
+            if (lease->stateDeclined()) {
+                // new lease is declined
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_,
+                                           "declined-addresses"),
+                    int64_t(1));
+            }
 
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", lease6->subnet_id_,
