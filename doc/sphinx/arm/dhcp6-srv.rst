@@ -4921,7 +4921,7 @@ DHCPv6 server:
 Using a Specific Relay Agent for a Subnet
 =========================================
 
-The DHCPv6 server follows the same principles than in IPv4 to select
+The DHCPv6 server follows the same principles as DHCPv4 server to select
 a subnet for the client with noticable differences mainly for relays.
 
 .. note::
