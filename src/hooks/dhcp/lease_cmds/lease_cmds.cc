@@ -452,7 +452,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
                                        "assigned-addresses"),
                 int64_t(-1));
         }
-        if (existing->stateDeclined() && !lease->stateDeclined()) {
+        if (existing->stateDeclined()) {
             // old lease is declined
             StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
 
@@ -469,7 +469,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
                                            "assigned-addresses"),
                     int64_t(1));
             }
-            if (lease->stateDeclined() && !existing->stateDeclined()) {
+            if (lease->stateDeclined()) {
                 // new lease is declined
                 StatsMgr::instance().addValue("declined-addresses", int64_t(1));
 
@@ -514,7 +514,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
         }
         // @node current code does not check for declined PD
         // code must be updated in parser (see @todo in lease_parser.cc)
-        if (existing->stateDeclined() && !lease->stateDeclined()) {
+        if (existing->stateDeclined()) {
             // old lease is declined
             StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
 
@@ -534,7 +534,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
             }
             // @node current code does not check for declined PD
             // code must be updated in parser (see @todo in lease_parser.cc)
-            if (lease->stateDeclined() && !existing->stateDeclined()) {
+            if (lease->stateDeclined()) {
                 // new lease is declined
                 StatsMgr::instance().addValue("declined-addresses", int64_t(1));
 
