@@ -1855,9 +1855,6 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
             num = LeaseMgrFactory::instance().wipeLeases4(id);
             ids << " " << id;
 
-            int64_t previous_reclaimed = StatsMgr::instance().getObservation(
-                StatsMgr::generateName("subnet", id, "reclaimed-leases"))->getInteger().first;
-
             int64_t previous_declined = StatsMgr::instance().getObservation(
                 StatsMgr::generateName("subnet", id, "declined-addresses"))->getInteger().first;
 
@@ -1865,15 +1862,10 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
                 StatsMgr::generateName("subnet", id, "assigned-addresses"),
                 int64_t(0));
 
-            StatsMgr::instance().setValue(
-                StatsMgr::generateName("subnet", id, "reclaimed-leases"),
-                int64_t(0));
 
             StatsMgr::instance().setValue(
                 StatsMgr::generateName("subnet", id, "declined-addresses"),
                 int64_t(0));
-
-            StatsMgr::instance().addValue("reclaimed-leases", -previous_reclaimed);
 
             StatsMgr::instance().addValue("declined-addresses", -previous_declined);
         } else {
@@ -1891,15 +1883,9 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
                     int64_t(0));
 
                 StatsMgr::instance().setValue(
-                    StatsMgr::generateName("subnet", sub->getID(), "reclaimed-leases"),
-                    int64_t(0));
-
-                StatsMgr::instance().setValue(
                     StatsMgr::generateName("subnet", sub->getID(), "declined-addresses"),
                     int64_t(0));
             }
-
-            StatsMgr::instance().setValue("reclaimed-leases", int64_t(0));
 
             StatsMgr::instance().setValue("declined-addresses", int64_t(0));
         }
@@ -1944,9 +1930,6 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
             num = LeaseMgrFactory::instance().wipeLeases6(id);
             ids << " " << id;
 
-            int64_t previous_reclaimed = StatsMgr::instance().getObservation(
-                StatsMgr::generateName("subnet", id, "reclaimed-leases"))->getInteger().first;
-
             int64_t previous_declined = StatsMgr::instance().getObservation(
                 StatsMgr::generateName("subnet", id, "declined-addresses"))->getInteger().first;
 
@@ -1959,14 +1942,8 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                 int64_t(0));
 
             StatsMgr::instance().setValue(
-                StatsMgr::generateName("subnet", id, "reclaimed-leases"),
-                int64_t(0));
-
-            StatsMgr::instance().setValue(
                 StatsMgr::generateName("subnet", id, "declined-addresses"),
                 int64_t(0));
-
-            StatsMgr::instance().addValue("reclaimed-leases", -previous_reclaimed);
 
             StatsMgr::instance().addValue("declined-addresses", -previous_declined);
        } else {
@@ -1988,15 +1965,9 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                     int64_t(0));
 
                 StatsMgr::instance().setValue(
-                    StatsMgr::generateName("subnet", sub->getID(), "reclaimed-leases"),
-                    int64_t(0));
-
-                StatsMgr::instance().setValue(
                     StatsMgr::generateName("subnet", sub->getID(), "declined-addresses"),
                     int64_t(0));
             }
-
-            StatsMgr::instance().setValue("reclaimed-leases", int64_t(0));
 
             StatsMgr::instance().setValue("declined-addresses", int64_t(0));
         }
