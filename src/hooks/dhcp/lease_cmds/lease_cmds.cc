@@ -465,6 +465,8 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& lease4,
 
             if (lease4->stateDeclined()) {
                 // old lease is declined
+                StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
+
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", lease4->subnet_id_,
                                            "declined-addresses"),
@@ -481,6 +483,8 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& lease4,
 
                 if (lease->stateDeclined()) {
                     // new lease is declined
+                    StatsMgr::instance().addValue("declined-addresses", int64_t(1));
+
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", lease->subnet_id_,
                                                "declined-addresses"),
@@ -507,11 +511,15 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& lease4,
 
             if (lease->stateDeclined()) {
                 // new lease is declined
+                StatsMgr::instance().addValue("declined-addresses", int64_t(1));
+
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", lease->subnet_id_,
                                            "declined-addresses"),
                     int64_t(1));
             }
+
+            StatsMgr::instance().addValue("reclaimed-leases", int64_t(-1));
 
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", lease4->subnet_id_,
@@ -548,6 +556,8 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& lease6,
 
             if (lease6->stateDeclined()) {
                 // old lease is declined
+                StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
+
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", lease6->subnet_id_,
                                            "declined-addresses"),
@@ -565,6 +575,8 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& lease6,
 
                 if (lease->stateDeclined()) {
                     // new lease is declined
+                    StatsMgr::instance().addValue("declined-addresses", int64_t(1));
+
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", lease->subnet_id_,
                                                "declined-addresses"),
@@ -592,11 +604,15 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& lease6,
 
             if (lease->stateDeclined()) {
                 // new lease is declined
+                StatsMgr::instance().addValue("declined-addresses", int64_t(1));
+
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", lease->subnet_id_,
                                            "declined-addresses"),
                     int64_t(1));
             }
+
+            StatsMgr::instance().addValue("reclaimed-leases", int64_t(-1));
 
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", lease6->subnet_id_,
