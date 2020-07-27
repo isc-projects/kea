@@ -3768,6 +3768,41 @@ An example configuration that sets these parameter looks as follows:
        }
        ...
    }
+Multi-threading settings in different backends
+----------------------------------------------
+
+Both kea-dhcp4 and kea-dhcp6 are tested internally to determine which setting
+is the best. Although this section will describe our results those are just
+recommendations. We strongly advice to run your own performance tests.
+
+Full report Kea 1.7 results can be found `here <https://jenkins.isc.org/job/kea-1.7/job/performance/KeaPerformanceReport/>`_.
+This include hardware description, test scenario descriptions and
+current results.
+
+After enabeling multi-threading number of threads is set by ``thread-pool-size``
+parameter, and results from our tests show that best configurations for
+kea-dhcp4 are:
+
+-  ``thread-pool-size``: 4 when using ``memfile`` for storing leases.
+
+-  ``thread-pool-size``: 12 or more when using ``mysql`` for storing leases.
+
+-  ``thread-pool-size``: 8 when using ``postgresql``.
+
+Another very important parameter is ``packet-queue-size`` and in our tests we
+used it as multiplier of ``thread-pool-size``. So actual setting strongly depends
+on ``thread-pool-size``.
+
+Our tests reported best results when:
+
+-  ``packet-queue-size``: 7 * ``thread-pool-size`` when using ``memfile`` for
+  storing leases. In our case it's 7 * 4 = 28.
+
+-  ``packet-queue-size``: 66 * ``thread-pool-size`` when using ``mysql`` for
+  storing leases. In our case it's 66 * 12 = 792.
+
+-  ``packet-queue-size``: 11 * ``thread-pool-size`` when using ``postgresql`` for
+  storing leases. In our case it's 11 * 8 = 88.
 
 .. _host-reservation-v4:
 
