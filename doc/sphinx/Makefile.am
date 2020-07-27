@@ -144,7 +144,7 @@ endif
 else
 if INSTALL_MANS
 	${MKDIR_P} ${DESTDIR}${mandir}/man8
-	${INSTALL_DATA} $(man8s) ${DESTDIR}${mandir}/man8/
+	${INSTALL_DATA} $(sphinxbuilddir)/man/*.8 ${DESTDIR}${mandir}/man8/
 endif
 endif
 
