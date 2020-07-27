@@ -3309,13 +3309,13 @@ on ``thread-pool-size``.
 Our tests reported best results when:
 
 -  ``packet-queue-size``: 150 * ``thread-pool-size`` when using ``memfile`` for
-  storing leases. In our case it's 150 * 4 = 600.
+   storing leases. In our case it's 150 * 4 = 600.
 
 -  ``packet-queue-size``: 200 * ``thread-pool-size`` when using ``mysql`` for
-  storing leases. In our case it's 200 * 12 = 2400.
+   storing leases. In our case it's 200 * 12 = 2400.
 
 -  ``packet-queue-size``: 11 * ``thread-pool-size`` when using ``postgresql`` for
-  storing leases. In our case it's 11 * 6 = 66.
+   storing leases. In our case it's 11 * 6 = 66.
 
 .. _host-reservation-v6:
 
