@@ -1,6 +1,11 @@
 
 Kea 1.7.10 (development) released on Jul 29, 2020
 
+1780.	[doc]		wlodek
+	Added a section to Kea ARM about tuning performance for kea-dhcp4
+	and kea-dhcp6.
+	(Gitlab #1285)
+
 1779.	[build]		tmark
 	Library version numbers bumped for release.
 	(Gitlab #1346)
