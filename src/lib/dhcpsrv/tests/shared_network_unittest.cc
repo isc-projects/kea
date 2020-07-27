@@ -286,6 +286,7 @@ TEST(SharedNetwork4Test, delSubnet4) {
     // We should be left with only one subnet.
     ASSERT_EQ(1, network->getAllSubnets()->size());
     Subnet4Ptr subnet_returned = *network->getAllSubnets()->begin();
+    ASSERT_TRUE(subnet_returned);
     EXPECT_EQ(subnet2->getID(), subnet_returned->getID());
 
     // Check that shared network has been cleared for the removed subnet.
