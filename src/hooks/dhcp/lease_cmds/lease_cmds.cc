@@ -449,16 +449,15 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
                 StatsMgr::generateName("subnet", existing->subnet_id_,
                                        "assigned-addresses"),
                 int64_t(-1));
+        }
+        if (existing->stateDeclined()) {
+            // old lease is declined
+            StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
 
-            if (existing->stateDeclined()) {
-                // old lease is declined
-                StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
-
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", existing->subnet_id_,
-                                           "declined-addresses"),
-                    int64_t(-1));
-            }
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", existing->subnet_id_,
+                                       "declined-addresses"),
+                int64_t(-1));
         }
         if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
@@ -467,16 +466,15 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
                     StatsMgr::generateName("subnet", lease->subnet_id_,
                                            "assigned-addresses"),
                     int64_t(1));
+            }
+            if (lease->stateDeclined()) {
+                // new lease is declined
+                StatsMgr::instance().addValue("declined-addresses", int64_t(1));
 
-                if (lease->stateDeclined()) {
-                    // new lease is declined
-                    StatsMgr::instance().addValue("declined-addresses", int64_t(1));
-
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", lease->subnet_id_,
-                                               "declined-addresses"),
-                        int64_t(1));
-                }
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_,
+                                           "declined-addresses"),
+                    int64_t(1));
             }
         }
     } else {
@@ -512,16 +510,15 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
                                        lease->type_ == Lease::TYPE_NA ?
                                        "assigned-nas" : "assigned-pds"),
                 int64_t(-1));
+        }
+        if (existing->stateDeclined()) {
+            // old lease is declined
+            StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
 
-            if (existing->stateDeclined()) {
-                // old lease is declined
-                StatsMgr::instance().addValue("declined-addresses", int64_t(-1));
-
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", existing->subnet_id_,
-                                           "declined-addresses"),
-                    int64_t(-1));
-            }
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", existing->subnet_id_,
+                                       "declined-addresses"),
+                int64_t(-1));
         }
         if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
@@ -531,16 +528,15 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
                                            lease->type_ == Lease::TYPE_NA ?
                                            "assigned-nas" : "assigned-pds"),
                     int64_t(1));
+            }
+            if (lease->stateDeclined()) {
+                // new lease is declined
+                StatsMgr::instance().addValue("declined-addresses", int64_t(1));
 
-                if (lease->stateDeclined()) {
-                    // new lease is declined
-                    StatsMgr::instance().addValue("declined-addresses", int64_t(1));
-
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", lease->subnet_id_,
-                                               "declined-addresses"),
-                        int64_t(1));
-                }
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_,
+                                           "declined-addresses"),
+                    int64_t(1));
             }
         }
     } else {

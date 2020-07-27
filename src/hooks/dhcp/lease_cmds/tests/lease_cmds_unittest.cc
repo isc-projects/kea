@@ -301,8 +301,8 @@ public:
     ///
     /// @param v6 true = v6, false = v4
     /// @param insert_lease governs whether a lease should be pre-inserted
-    /// @param reclaimed governs whether a lease should be in reclaimed state
-    void initLeaseMgr(bool v6, bool insert_lease, bool reclaimed = false) {
+    /// @param declined governs whether a lease should be in declined state
+    void initLeaseMgr(bool v6, bool insert_lease, bool declined = false) {
 
         LeaseMgrFactory::destroy();
         std::ostringstream s;
@@ -331,45 +331,43 @@ public:
 
         if (insert_lease) {
             if (v6) {
-                lmptr_->addLease(createLease6("2001:db8:1::1", 66, 0x42, reclaimed));
-                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56, reclaimed));
-                lmptr_->addLease(createLease6("2001:db8:2::1", 99, 0x42, reclaimed));
-                lmptr_->addLease(createLease6("2001:db8:2::2", 99, 0x56, reclaimed));
-                if (reclaimed) {
+                lmptr_->addLease(createLease6("2001:db8:1::1", 66, 0x42, declined));
+                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56, declined));
+                lmptr_->addLease(createLease6("2001:db8:2::1", 99, 0x42, declined));
+                lmptr_->addLease(createLease6("2001:db8:2::2", 99, 0x56, declined));
+                if (declined) {
                     StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", 66, "reclaimed-leases"),
+                        StatsMgr::generateName("subnet", 66, "declined-addresses"),
                         int64_t(2));
                     StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", 99, "reclaimed-leases"),
-                        int64_t(2));
-                } else {
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", 66, "assigned-nas" ),
-                        int64_t(2));
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", 99, "assigned-nas" ),
+                        StatsMgr::generateName("subnet", 99, "declined-addresses"),
                         int64_t(2));
                 }
+                StatsMgr::instance().setValue(
+                    StatsMgr::generateName("subnet", 66, "assigned-nas" ),
+                    int64_t(2));
+                StatsMgr::instance().setValue(
+                    StatsMgr::generateName("subnet", 99, "assigned-nas" ),
+                    int64_t(2));
             } else {
-                lmptr_->addLease(createLease4("192.0.2.1", 44, 0x08, 0x42, reclaimed));
-                lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56, reclaimed));
-                lmptr_->addLease(createLease4("192.0.3.1", 88, 0x08, 0x42, reclaimed));
-                lmptr_->addLease(createLease4("192.0.3.2", 88, 0x09, 0x56, reclaimed));
-                if (reclaimed) {
+                lmptr_->addLease(createLease4("192.0.2.1", 44, 0x08, 0x42, declined));
+                lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56, declined));
+                lmptr_->addLease(createLease4("192.0.3.1", 88, 0x08, 0x42, declined));
+                lmptr_->addLease(createLease4("192.0.3.2", 88, 0x09, 0x56, declined));
+                if (declined) {
                     StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", 44, "reclaimed-leases"),
+                        StatsMgr::generateName("subnet", 44, "declined-addresses"),
                         int64_t(2));
                     StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", 88, "reclaimed-leases"),
-                        int64_t(2));
-                } else {
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", 44, "assigned-addresses"),
-                        int64_t(2));
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", 88, "assigned-addresses"),
+                        StatsMgr::generateName("subnet", 88, "declined-addresses"),
                         int64_t(2));
                 }
+                StatsMgr::instance().setValue(
+                    StatsMgr::generateName("subnet", 44, "assigned-addresses"),
+                    int64_t(2));
+                StatsMgr::instance().setValue(
+                    StatsMgr::generateName("subnet", 88, "assigned-addresses"),
+                    int64_t(2));
             }
         }
     }
@@ -385,13 +383,14 @@ public:
     /// it 6 times.
     /// @param client_id_pattern value to be used for generating client identifier by
     /// repeating it 8 times.
-    /// @param reclaimed controls weather the lease should be in reclaimed state.
+    /// @param declined controls weather the lease should be in declined state.
+    ///
     /// @return Returns the lease created
     Lease4Ptr createLease4(const std::string& ip_address,
                            const SubnetID& subnet_id,
                            const uint8_t hw_address_pattern,
                            const uint8_t client_id_pattern,
-                           bool reclaimed = false) {
+                           bool declined = false) {
         Lease4Ptr lease(new Lease4());
 
         lease->addr_ = IOAddress(ip_address);
@@ -403,8 +402,8 @@ public:
         // expiration time is cast properly.
         lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
         lease->cltt_ = DEC_2030_TIME; // December 11th 2030
-        if (reclaimed) {
-            lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+        if (declined) {
+            lease->state_ = Lease::STATE_DECLINED;
         }
         lease->subnet_id_ = subnet_id;
         lease->fqdn_fwd_ = false;
@@ -424,12 +423,13 @@ public:
     /// @param subnet_id subnet identifier
     /// @param duid_address_pattern value to be used for generating DUID by
     /// repeating it 8 times
-    /// @param reclaimed controls weather the lease should be in reclaimed state.
+    /// @param declined controls weather the lease should be in declined state.
+    ///
     /// @return Returns the lease created
     Lease6Ptr createLease6(const std::string& ip_address,
                            const SubnetID& subnet_id,
                            const uint8_t duid_pattern,
-                           bool reclaimed = false) {
+                           bool declined = false) {
         Lease6Ptr lease(new Lease6());
 
         lease->addr_ = IOAddress(ip_address);
@@ -442,8 +442,8 @@ public:
         // expiration time is cast properly.
         lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
         lease->cltt_ = DEC_2030_TIME; // December 11th 2030
-        if (reclaimed) {
-            lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+        if (declined) {
+            lease->state_ = Lease::STATE_DECLINED;
         }
         lease->subnet_id_ = subnet_id;
         lease->fqdn_fwd_ = false;
@@ -662,6 +662,8 @@ public:
     }
 
     /// @brief Fetches the number of entries in the NCR sender queue.
+    ///
+    /// @return The NCR queue size.
     int ncrQueueSize() {
         int size = -1;
         try {
@@ -3832,16 +3834,16 @@ TEST_F(LeaseCmdsTest, Lease4UpdateWithStats) {
     ASSERT_TRUE(lmptr_);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              44, "assigned-addresses"))->getInteger().first, 0);
+              44, "assigned-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              88, "assigned-addresses"))->getInteger().first, 0);
+              88, "assigned-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              44, "reclaimed-leases"))->getInteger().first, 2);
+              44, "declined-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              88, "reclaimed-leases"))->getInteger().first, 2);
+              88, "declined-addresses"))->getInteger().first, 2);
 
     // Now send the command.
     string txt =
@@ -3858,16 +3860,16 @@ TEST_F(LeaseCmdsTest, Lease4UpdateWithStats) {
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              44, "assigned-addresses"))->getInteger().first, 1);
+              44, "assigned-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              88, "assigned-addresses"))->getInteger().first, 0);
+              88, "assigned-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              44, "reclaimed-leases"))->getInteger().first, 1);
+              44, "declined-addresses"))->getInteger().first, 1);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              88, "reclaimed-leases"))->getInteger().first, 2);
+              88, "declined-addresses"))->getInteger().first, 2);
 
     // Now check that the lease is still there.
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
@@ -3937,16 +3939,16 @@ TEST_F(LeaseCmdsTest, Lease4UpdateNoSubnetIdWithStats) {
     ASSERT_TRUE(lmptr_);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              44, "assigned-addresses"))->getInteger().first, 0);
+              44, "assigned-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              88, "assigned-addresses"))->getInteger().first, 0);
+              88, "assigned-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              44, "reclaimed-leases"))->getInteger().first, 2);
+              44, "declined-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              88, "reclaimed-leases"))->getInteger().first, 2);
+              88, "declined-addresses"))->getInteger().first, 2);
 
     // Now send the command.
     string txt =
@@ -3962,16 +3964,16 @@ TEST_F(LeaseCmdsTest, Lease4UpdateNoSubnetIdWithStats) {
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              44, "assigned-addresses"))->getInteger().first, 1);
+              44, "assigned-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              88, "assigned-addresses"))->getInteger().first, 0);
+              88, "assigned-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              44, "reclaimed-leases"))->getInteger().first, 1);
+              44, "declined-addresses"))->getInteger().first, 1);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              88, "reclaimed-leases"))->getInteger().first, 2);
+              88, "declined-addresses"))->getInteger().first, 2);
 
     // Now check that the lease is still there.
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
@@ -4342,22 +4344,22 @@ TEST_F(LeaseCmdsTest, Lease6Update) {
     ASSERT_TRUE(lmptr_);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              66, "assigned-nas"))->getInteger().first, 0);
+              66, "assigned-nas"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               66, "assigned-pds"))->getInteger().first, 0);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              99, "assigned-nas"))->getInteger().first, 0);
+              99, "assigned-nas"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               99, "assigned-pds"))->getInteger().first, 0);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              66, "reclaimed-leases"))->getInteger().first, 2);
+              66, "declined-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              99, "reclaimed-leases"))->getInteger().first, 2);
+              99, "declined-addresses"))->getInteger().first, 2);
 
     // Now send the command.
     string txt =
@@ -4436,22 +4438,22 @@ TEST_F(LeaseCmdsTest, Lease6UpdateWithStats) {
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              66, "assigned-nas"))->getInteger().first, 1);
+              66, "assigned-nas"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               66, "assigned-pds"))->getInteger().first, 0);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              99, "assigned-nas"))->getInteger().first, 0);
+              99, "assigned-nas"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               99, "assigned-pds"))->getInteger().first, 0);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              66, "reclaimed-leases"))->getInteger().first, 1);
+              66, "declined-addresses"))->getInteger().first, 1);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              99, "reclaimed-leases"))->getInteger().first, 2);
+              99, "declined-addresses"))->getInteger().first, 2);
 
     // Now check that the lease is really there.
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
@@ -4476,22 +4478,22 @@ TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetId) {
     ASSERT_TRUE(lmptr_);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              66, "assigned-nas"))->getInteger().first, 0);
+              66, "assigned-nas"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               66, "assigned-pds"))->getInteger().first, 0);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              99, "assigned-nas"))->getInteger().first, 0);
+              99, "assigned-nas"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               99, "assigned-pds"))->getInteger().first, 0);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              66, "reclaimed-leases"))->getInteger().first, 2);
+              66, "declined-addresses"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              99, "reclaimed-leases"))->getInteger().first, 2);
+              99, "declined-addresses"))->getInteger().first, 2);
 
     // Now send the command.
     string txt =
@@ -4571,22 +4573,22 @@ TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetIdWithStats) {
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              66, "assigned-nas"))->getInteger().first, 1);
+              66, "assigned-nas"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               66, "assigned-pds"))->getInteger().first, 0);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              99, "assigned-nas"))->getInteger().first, 0);
+              99, "assigned-nas"))->getInteger().first, 2);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               99, "assigned-pds"))->getInteger().first, 0);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              66, "reclaimed-leases"))->getInteger().first, 1);
+              66, "declined-addresses"))->getInteger().first, 1);
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              99, "reclaimed-leases"))->getInteger().first, 2);
+              99, "declined-addresses"))->getInteger().first, 2);
 
     // Now check that the lease is really there.
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
