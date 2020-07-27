@@ -175,6 +175,7 @@ typedef boost::shared_ptr<TestCBControlDHCPv6> TestCBControlDHCPv6Ptr;
 /// @c CBControlDHCPv6 object.
 class NakedControlledDhcpv6Srv: public ControlledDhcpv6Srv {
 public:
+
     /// @brief Constructor.
     NakedControlledDhcpv6Srv()
         : ControlledDhcpv6Srv(0) {
@@ -399,6 +400,7 @@ TEST_F(JSONFileBackendTest, jsonFile) {
         " } ],"
         "\"valid-lifetime\": 4000 }"
         "}";
+
     writeFile(TEST_FILE, config);
 
     // Now initialize the server
@@ -415,7 +417,6 @@ TEST_F(JSONFileBackendTest, jsonFile) {
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     ASSERT_TRUE(subnets);
     ASSERT_EQ(3, subnets->size()); // We expect 3 subnets.
-
 
     // Check subnet 1.
     auto subnet = subnets->begin();
@@ -485,7 +486,7 @@ TEST_F(JSONFileBackendTest, hashComments) {
         srv.reset(new ControlledDhcpv6Srv(0))
     );
 
-    // And configure it using config without
+    // And configure it using config with comments.
     EXPECT_NO_THROW(srv->init(TEST_FILE));
 
     // Now check if the configuration has been applied correctly.
@@ -537,7 +538,7 @@ TEST_F(JSONFileBackendTest, cppLineComments) {
         srv.reset(new ControlledDhcpv6Srv(0))
     );
 
-    // And configure it using config without
+    // And configure it using config with comments.
     EXPECT_NO_THROW(srv->init(TEST_FILE));
 
     // Now check if the configuration has been applied correctly.
@@ -581,7 +582,7 @@ TEST_F(JSONFileBackendTest, cBlockComments) {
         "\"valid-lifetime\": 4000 }"
         "}";
 
-      writeFile(TEST_FILE, config_c_block_comments);
+    writeFile(TEST_FILE, config_c_block_comments);
 
     // Now initialize the server
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
@@ -589,7 +590,7 @@ TEST_F(JSONFileBackendTest, cBlockComments) {
         srv.reset(new ControlledDhcpv6Srv(0))
     );
 
-    // And configure it using config without
+    // And configure it using config with comments.
     EXPECT_NO_THROW(srv->init(TEST_FILE));
 
     // Now check if the configuration has been applied correctly.
@@ -641,7 +642,7 @@ TEST_F(JSONFileBackendTest, include) {
         srv.reset(new ControlledDhcpv6Srv(0))
     );
 
-    // And configure it using config without
+    // And configure it using config with comments.
     EXPECT_NO_THROW(srv->init(TEST_FILE));
 
     // Now check if the configuration has been applied correctly.
@@ -687,14 +688,13 @@ TEST_F(JSONFileBackendTest, recursiveInclude) {
     writeFile(TEST_FILE, config_recursive_include);
     writeFile(TEST_INCLUDE, include);
 
-
     // Now initialize the server
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
     ASSERT_NO_THROW(
         srv.reset(new ControlledDhcpv6Srv(0))
     );
 
-    // And configure it using config
+    // And configure it using config with comments.
     try {
         srv->init(TEST_FILE);
         FAIL() << "Expected Dhcp6ParseError but nothing was raised";
@@ -704,7 +704,6 @@ TEST_F(JSONFileBackendTest, recursiveInclude) {
     }
 }
 
-// This test checks if configuration can be read from a JSON file.
 // This test checks if configuration detects failure when trying:
 // - empty file
 // - empty filename
@@ -895,7 +894,6 @@ TEST_F(JSONFileBackendTest, defaultLeaseDbBackend) {
     EXPECT_NO_THROW(static_cast<void>(LeaseMgrFactory::instance()));
 }
 
-
 // This test verifies that the timer triggering configuration updates
 // is invoked according to the configured value of the
 // config-fetch-wait-time.
@@ -958,7 +956,7 @@ public:
     ///
     /// Destroys MySQL schema.
     virtual ~JSONFileBackendMySQLTest() {
-        // If data wipe enabled, delete transient data otherwise destroy the schema
+        // If data wipe enabled, delete transient data otherwise destroy the schema.
         destroyMySQLSchema();
     }
 

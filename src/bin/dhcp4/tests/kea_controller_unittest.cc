@@ -433,6 +433,7 @@ TEST_F(JSONFileBackendTest, jsonFile) {
 
     // Check subnet 1.
     auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
     EXPECT_EQ(24, (*subnet)->get().second);
 
@@ -445,6 +446,7 @@ TEST_F(JSONFileBackendTest, jsonFile) {
 
     // Check subnet 2.
     ++subnet;
+    ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.3.0", (*subnet)->get().first.toText());
     EXPECT_EQ(24, (*subnet)->get().second);
 
@@ -457,6 +459,7 @@ TEST_F(JSONFileBackendTest, jsonFile) {
 
     // And finally check subnet 3.
     ++subnet;
+    ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.4.0", (*subnet)->get().first.toText());
     EXPECT_EQ(24, (*subnet)->get().second);
 
@@ -506,6 +509,7 @@ TEST_F(JSONFileBackendTest, hashComments) {
 
     // Check subnet 1.
     auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
     EXPECT_EQ(22, (*subnet)->get().second);
 
@@ -556,6 +560,7 @@ TEST_F(JSONFileBackendTest, cppLineComments) {
 
     // Check subnet 1.
     auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
     EXPECT_EQ(22, (*subnet)->get().second);
 
@@ -572,7 +577,7 @@ TEST_F(JSONFileBackendTest, cppLineComments) {
 TEST_F(JSONFileBackendTest, cBlockComments) {
 
     string config_c_block_comments = "/* This is a comment. It should be \n"
-      "ignored. Real config starts in line below*/\n"
+        "ignored. Real config starts in line below*/\n"
         "{ \"Dhcp4\": {"
         "\"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
@@ -606,6 +611,7 @@ TEST_F(JSONFileBackendTest, cBlockComments) {
 
     // Check subnet 1.
     auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
     EXPECT_EQ(22, (*subnet)->get().second);
 
@@ -656,6 +662,7 @@ TEST_F(JSONFileBackendTest, include) {
 
     // Check subnet 1.
     auto subnet = subnets->begin();
+    ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
     EXPECT_EQ(22, (*subnet)->get().second);
 
