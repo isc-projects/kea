@@ -607,8 +607,8 @@ namespace { // anonymous namespace.
 
 bool
 addOrUpdate4(Lease4Ptr lease, bool force_create) {
-    Lease4Ptr lease4 = LeaseMgrFactory::instance().getLease4(lease->addr_);
-    if (force_create && !lease4) {
+    Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    if (force_create && !existing) {
         // lease does not exist
         if (!LeaseMgrFactory::instance().addLease(lease)) {
             isc_throw(db::DuplicateEntry,
@@ -618,15 +618,15 @@ addOrUpdate4(Lease4Ptr lease, bool force_create) {
         return (true);
     }
     LeaseMgrFactory::instance().updateLease4(lease);
-    LeaseCmdsImpl::updateStatsOnUpdate(lease4, lease);
+    LeaseCmdsImpl::updateStatsOnUpdate(existing, lease);
     return (false);
 }
 
 bool
 addOrUpdate6(Lease6Ptr lease, bool force_create) {
-    Lease6Ptr lease6 =
+    Lease6Ptr existing =
         LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_);
-    if (force_create && !lease6) {
+    if (force_create && !existing) {
         // lease does not exist
         if (!LeaseMgrFactory::instance().addLease(lease)) {
             isc_throw(db::DuplicateEntry,
@@ -636,7 +636,7 @@ addOrUpdate6(Lease6Ptr lease, bool force_create) {
         return (true);
     }
     LeaseMgrFactory::instance().updateLease6(lease);
-    LeaseCmdsImpl::updateStatsOnUpdate(lease6, lease);
+    LeaseCmdsImpl::updateStatsOnUpdate(existing, lease);
     return (false);
 }
 
