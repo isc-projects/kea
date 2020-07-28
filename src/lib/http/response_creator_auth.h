@@ -16,17 +16,21 @@
 namespace isc {
 namespace http {
 
-/// @brief Validate basic HTTP authentication.
+/// @brief Validate authentication.
+///
+/// Currently it only validates basic HTTP authentication.
+/// Empty credentials map means that basic HTTP authentication is
+/// not required i.e. all requests validate.
 ///
 /// @param creator The HTTP response creator.
 /// @param request The HTTP request to validate.
 /// @param credentials A map of all allowed credentials.
 /// @param realm Realm name.
 /// @return Error HTTP response if validation failed, null otherwise.
-HttpResponseJsonPtr checkBasicHttpAuth(const HttpResponseCreator& creator,
-                                       const ConstHttpRequestPtr& request,
-                                       const BasicHttpAuthMap& credentials,
-                                       const std::string& realm);
+HttpResponseJsonPtr checkAuth(const HttpResponseCreator& creator,
+                              const ConstHttpRequestPtr& request,
+                              const BasicHttpAuthMap& credentials,
+                              const std::string& realm);
 
 } // end of namespace isc::http
 } // end of namespace isc

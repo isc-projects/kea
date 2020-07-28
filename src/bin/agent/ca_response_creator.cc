@@ -83,12 +83,9 @@ createDynamicHttpResponse(const ConstHttpRequestPtr& request) {
                 if (ctx) {
                     const BasicHttpAuthConfig& auth = ctx->getBasicAuthConfig();
                     const BasicHttpAuthMap& auth_map = auth.getCredentialMap();
-                    // Check authentication when required.
-                    if (!auth_map.empty()) {
-                        http_response =
-                            checkBasicHttpAuth(*this, request, auth_map,
-                                               ctx->getBasicAuthRealm());
-                    }
+                    // Check authentication.
+                    http_response = checkAuth(*this, request, auth_map,
+                                              ctx->getBasicAuthRealm());
                 }
             }
         }

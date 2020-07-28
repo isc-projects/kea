@@ -17,11 +17,14 @@ using namespace std;
 namespace isc {
 namespace http {
 
-HttpResponseJsonPtr checkBasicHttpAuth(const HttpResponseCreator& creator,
-                                       const ConstHttpRequestPtr& request,
-                                       const BasicHttpAuthMap& credentials,
-                                       const std::string& realm) {
-    try {
+HttpResponseJsonPtr checkAuth(const HttpResponseCreator& creator,
+                              const ConstHttpRequestPtr& request,
+                              const BasicHttpAuthMap& credentials,
+                              const std::string& realm) {
+    bool authentic = false;
+    if (credentials.empty()) {
+        authentic = true;
+    } else try {
         string value = request->getHeaderValue("Authorization");
         // Trim space characters.
         value = str::trim(value);
@@ -43,21 +46,27 @@ HttpResponseJsonPtr checkBasicHttpAuth(const HttpResponseCreator& creator,
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                       HTTP_CLIENT_REQUEST_AUTHORIZED)
                 .arg(it->second);
-            return (HttpResponseJsonPtr());
+            authentic = true;
+        } else {
+            LOG_INFO(http_logger, HTTP_CLIENT_REQUEST_NOT_AUTHORIZED);
+            authentic = false;
         }
-        LOG_INFO(http_logger, HTTP_CLIENT_REQUEST_NOT_AUTHORIZED);
     } catch (const HttpMessageNonExistingHeader&) {
         LOG_INFO(http_logger, HTTP_CLIENT_REQUEST_NO_AUTH_HEADER);
     } catch (const BadValue& ex) {
         LOG_INFO(http_logger, HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER)
             .arg(ex.what());
     }
+    if (authentic) {
+        return (HttpResponseJsonPtr());
+    }
+    string scheme = "Basic";
     HttpResponsePtr response =
         creator.createStockHttpResponse(request, HttpStatusCode::UNAUTHORIZED);
     response->reset();
     response->context()->headers_.push_back(
         HttpHeaderContext("WWW-Authenticate",
-                          "Basic realm=\"" + realm + "\""));
+                          scheme + " realm=\"" + realm + "\""));
     response->finalize();
     return (boost::dynamic_pointer_cast<HttpResponseJson>(response));
 }
