@@ -12,7 +12,7 @@
         "http-port": 8000,
         "basic-authentication-realm": "kea-control-agent",
 
-        // In basoc HTTP authentication
+        // In basic HTTP authentication
         "basic-authentications":
         [
             {

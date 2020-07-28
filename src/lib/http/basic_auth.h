@@ -52,16 +52,17 @@ private:
     /// @brief Build the credential from the secret.
     void buildCredential();
 
-    /// @brief User id.
+    /// @brief User id e.g. johndoe.
     std::string user_;
 
-    /// @brief Password.
+    /// @brief Password e.g. secret1.
     std::string password_;
 
-    /// @brief Secret.
+    /// @brief Secret e.g. johndoe:secret1.
     std::string secret_;
 
-    /// @brief Credential.
+    /// @brief Credential: base64 encoding of UTF-8 secret,
+    /// e.g. am9obmRvZTpzZWNyZXQx.
     std::string credential_;
 };
 

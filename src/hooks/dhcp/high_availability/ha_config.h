@@ -160,7 +160,8 @@ public:
             return (basic_auth_);
         }
 
-        /// @brief Adds a basic HTTP authentication header to a request.
+        /// @brief Adds a basic HTTP authentication header to a request
+        /// when credentials are specified.
         void addBasicAuthHttpHeader(http::PostHttpRequestJsonPtr request) const;
 
     private:

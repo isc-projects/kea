@@ -20,7 +20,7 @@ namespace http {
 ///
 /// @param creator The HTTP response creator.
 /// @param request The HTTP request to validate.
-/// @param credentials Authorized credentials and user id map.
+/// @param credentials A map of all allowed credentials.
 /// @param realm Realm name.
 /// @return Error HTTP response if validation failed, null otherwise.
 HttpResponseJsonPtr checkBasicHttpAuth(const HttpResponseCreator& creator,

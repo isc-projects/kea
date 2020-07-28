@@ -43,7 +43,8 @@ a malformed authentication header. The argument explains the problem.
 
 % HTTP_CLIENT_REQUEST_NOT_AUTHORIZED received HTTP request with not matching authentication header
 This information message is issued when the server receives a request with
-authentication header carrying not recognized credential.
+authentication header carrying not recognized credential: the user
+provided incorrect user id and/or password.
 
 % HTTP_CLIENT_REQUEST_NO_AUTH_HEADER received HTTP request without required authentication header
 This information message is issued when the server receives a request without
