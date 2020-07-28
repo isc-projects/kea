@@ -76,7 +76,7 @@ $(srcdir)/kea-messages.rst: $(mes_files) mes2doc.py
 
 # build the list of api files
 api-files.txt: api/api_files.mk
-	@sed 's;_files .*%/;/;' $< > $@
+	@sed 's;_files .*/api/;/;' $< > $@
 
 # some tools do not use this makefile but still need generate files.
 EXTRA_DIST += mes-files.txt api-files.txt
