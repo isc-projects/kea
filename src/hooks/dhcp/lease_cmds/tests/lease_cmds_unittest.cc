@@ -909,6 +909,73 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
     EXPECT_EQ(0, l->state_);
 }
 
+// Check that a simple, well formed lease4 can be added.
+TEST_F(LeaseCmdsTest, Lease4AddWithStats) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "assigned-addresses"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "assigned-addresses"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "declined-addresses"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "declined-addresses"))->getInteger().first, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"state\": 1,\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "assigned-addresses"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "assigned-addresses"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "declined-addresses"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "declined-addresses"))->getInteger().first, 0);
+
+    // Now check that the lease is really there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease have proper value set.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    EXPECT_EQ(3, l->valid_lft_); // taken from subnet configuration
+    EXPECT_FALSE(l->fqdn_fwd_);
+    EXPECT_FALSE(l->fqdn_rev_);
+    EXPECT_EQ("", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+
+    // Test execution is fast. The cltt should be set to now. In some rare
+    // cases we could have the seconds counter to tick, so having a value off
+    // by one is ok.
+    EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
+    EXPECT_EQ(1, l->state_);
+}
+
 // Check that a lease4 is not added when it already exists.
 TEST_F(LeaseCmdsTest, Lease4AddExisting) {
 
@@ -983,7 +1050,60 @@ TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissing) {
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
     ASSERT_TRUE(l);
     EXPECT_EQ(44, l->subnet_id_);
+}
 
+// Check that subnet-id is optional. If not specified, Kea should select
+// it on its own.
+TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissingWithStats) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "assigned-addresses"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "assigned-addresses"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "declined-addresses"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "declined-addresses"))->getInteger().first, 0);
+
+    // Now send the command without subnet-id. Kea should select
+    // the subnet id on its own.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"state\": 1,\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "assigned-addresses"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "assigned-addresses"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "declined-addresses"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "declined-addresses"))->getInteger().first, 0);
+
+    // Now check that the lease is really there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_TRUE(l);
+    EXPECT_EQ(44, l->subnet_id_);
 }
 
 // Check that subnet-id is optional. If not specified, Kea should select
@@ -1498,6 +1618,85 @@ TEST_F(LeaseCmdsTest, Lease6Add) {
     ASSERT_TRUE(l);
     EXPECT_EQ("", l->hostname_);
     EXPECT_FALSE(l->getContext());
+
+    // Test execution is fast. The cltt should be set to now. In some rare
+    // cases we could have the seconds counter to tick, so having a value off
+    // by one is ok.
+    EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
+    EXPECT_EQ(0, l->state_);
+}
+
+// Check that a simple, well formed lease6 can be added.
+TEST_F(LeaseCmdsTest, Lease6AddWithStats) {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-nas"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-nas"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "declined-addresses"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "declined-addresses"))->getInteger().first, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
+        "        \"state\": 1,\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-nas"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-nas"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "declined-addresses"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "declined-addresses"))->getInteger().first, 0);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(l);
+    EXPECT_EQ("", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+
+    // Test execution is fast. The cltt should be set to now. In some rare
+    // cases we could have the seconds counter to tick, so having a value off
+    // by one is ok.
+    EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
+    EXPECT_EQ(1, l->state_);
 }
 
 // Check that a lease6 is not added when it already exists.
@@ -1594,6 +1793,72 @@ TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissing) {
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               99, "assigned-pds"))->getInteger().first, 0);
+
+    // Now check that the lease is really there and has correct subnet-id.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(l);
+    EXPECT_EQ(66, l->subnet_id_);
+}
+
+// Check that subnet-id is optional. If not specified, Kea should select
+// it on its own.
+TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissingWithStats) {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-nas"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-nas"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "declined-addresses"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "declined-addresses"))->getInteger().first, 0);
+
+    // Now send the command (without subnet-id)
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
+        "        \"state\": 1,\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-nas"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-nas"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "declined-addresses"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "declined-addresses"))->getInteger().first, 0);
 
     // Now check that the lease is really there and has correct subnet-id.
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
@@ -5050,6 +5315,54 @@ TEST_F(LeaseCmdsTest, Lease4DelByAddr) {
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
 }
 
+// Checks that lease4-del can return a lease by address.
+TEST_F(LeaseCmdsTest, Lease4DelByAddrWithStats) {
+
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true, true);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "assigned-addresses"))->getInteger().first, 2);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "assigned-addresses"))->getInteger().first, 2);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "declined-addresses"))->getInteger().first, 2);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "declined-addresses"))->getInteger().first, 2);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\""
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease deleted.";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "assigned-addresses"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "assigned-addresses"))->getInteger().first, 2);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              44, "declined-addresses"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              88, "declined-addresses"))->getInteger().first, 2);
+
+    // Make sure the lease is really gone.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
 // Checks that leaseX-del checks update-ddns input
 TEST_F(LeaseCmdsTest, LeaseXDelBadUpdateDdnsParam) {
 
@@ -5425,6 +5738,69 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddr) {
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               99, "assigned-pds"))->getInteger().first, 0);
+
+    // Make sure the lease is really gone.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+}
+
+// Checks that lease6-del(subnet-id, addr6) can handle a situation when
+// the query is correctly formed and the lease is returned.
+TEST_F(LeaseCmdsTest, Lease6DelByAddrWithStats) {
+
+    initLeaseMgr(true, true, true); // (true = v6, true = create a lease)
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-nas"))->getInteger().first, 2);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-nas"))->getInteger().first, 2);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "declined-addresses"))->getInteger().first, 2);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "declined-addresses"))->getInteger().first, 2);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\""
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease deleted.";
+
+    // The status expected is success. The lease should be deleted.
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-nas"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-nas"))->getInteger().first, 2);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "declined-addresses"))->getInteger().first, 1);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "declined-addresses"))->getInteger().first, 2);
 
     // Make sure the lease is really gone.
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
@@ -7146,7 +7522,6 @@ TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Disabled) {
         "    }\n"
         "}";
 
-
     // Let's create a lease with scenario attributes.
     Lease4Ptr lease = createLease4("192.0.2.8", 44, 0x08, 0x42);
     lease->hostname_ = "myhost.example.com.";
@@ -7311,7 +7686,6 @@ TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Disabled) {
         "        \"update-ddns\": true\n"
         "    }\n"
         "}";
-
 
     // Let's create a lease with scenario attributes.
     Lease6Ptr lease = createLease6("2001:db8:1::8", 66, 0x77);
