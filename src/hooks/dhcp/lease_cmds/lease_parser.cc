@@ -333,7 +333,7 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
 
     if ((state == Lease::STATE_DECLINED) && (type == Lease::TYPE_PD)) {
         isc_throw(isc::InvalidOperation,
-                  "Invalid PD prefix in declined state.");
+                  "Invalid declined state for PD prefix.");
     }
 
     // Handle user context.
@@ -379,5 +379,5 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     return (l);
 }
 
-};
-};
+} // end of namespace lease_cmds
+} // end of namespace isc

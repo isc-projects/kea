@@ -1282,7 +1282,7 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "2001:db8:1::1";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Invalid PD prefix in declined state.
+    // Invalid declined state for PD prefix.
     txt =
         "{\n"
         "    \"command\": \"lease6-add\",\n"
@@ -1296,7 +1296,7 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "        \"state\": 1"
         "    }\n"
         "}";
-    exp_rsp = "Invalid PD prefix in declined state.";
+    exp_rsp = "Invalid declined state for PD prefix.";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -3676,7 +3676,7 @@ TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
         "'{ \"comment\": \"in user context\" }'";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Invalid PD prefix in declined state.
+    // Invalid declined state for PD prefix.
     txt =
         "{\n"
         "    \"command\": \"lease6-update\",\n"
@@ -3690,7 +3690,7 @@ TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
         "        \"state\": 1"
         "    }\n"
         "}";
-    exp_rsp = "Invalid PD prefix in declined state.";
+    exp_rsp = "Invalid declined state for PD prefix.";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -4713,7 +4713,7 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnlyBadParam) {
         "        ]"
         "    }"
         "}";
-    string exp_rsp = "Invalid PD prefix in declined state.";
+    string exp_rsp = "Invalid declined state for PD prefix.";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Check that the lease was not inserted.
@@ -4791,7 +4791,7 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyUpdatesOnlyBadParam) {
         "        ]"
         "    }"
         "}";
-    string exp_rsp = "Invalid PD prefix in declined state.";
+    string exp_rsp = "Invalid declined state for PD prefix.";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Check that the lease we inserted is stored.
