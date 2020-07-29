@@ -1282,7 +1282,7 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "2001:db8:1::1";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Invalid PD address in declined state.
+    // Invalid PD prefix in declined state.
     txt =
         "{\n"
         "    \"command\": \"lease6-add\",\n"
@@ -1291,12 +1291,12 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"prefix-len\": 48,\n"
         "        \"type\": \"IA_PD\",\n"
-        "        \"state\": 1,"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
-        "        \"iaid\": 1234\n"
+        "        \"iaid\": 1234,\n"
+        "        \"state\": 1"
         "    }\n"
         "}";
-    exp_rsp = "Invalid PD address in declined state.";
+    exp_rsp = "Invalid PD prefix in declined state.";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -3676,7 +3676,7 @@ TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
         "'{ \"comment\": \"in user context\" }'";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Invalid PD address in declined state.
+    // Invalid PD prefix in declined state.
     txt =
         "{\n"
         "    \"command\": \"lease6-update\",\n"
@@ -3685,12 +3685,12 @@ TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
         "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"prefix-len\": 48,\n"
         "        \"type\": \"IA_PD\",\n"
-        "        \"state\": 1,"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
-        "        \"iaid\": 1234\n"
+        "        \"iaid\": 1234,\n"
+        "        \"state\": 1"
         "    }\n"
         "}";
-    exp_rsp = "Invalid PD address in declined state.";
+    exp_rsp = "Invalid PD prefix in declined state.";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -4706,14 +4706,14 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnlyBadParam) {
         "                \"ip-address\": \"2001:db8:1::123\",\n"
         "                \"prefix-len\": 48,\n"
         "                \"type\": \"IA_PD\",\n"
-        "                \"state\": 1,"
         "                \"duid\": \"11:11:11:11:11:11\",\n"
-        "                \"iaid\": 1234\n"
+        "                \"iaid\": 1234,\n"
+        "                \"state\": 1"
         "            }"
         "        ]"
         "    }"
         "}";
-    string exp_rsp = "Invalid PD address in declined state.";
+    string exp_rsp = "Invalid PD prefix in declined state.";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Check that the lease was not inserted.
@@ -4784,14 +4784,14 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyUpdatesOnlyBadParam) {
         "                \"ip-address\": \"2001:db8:1234:ab::\",\n"
         "                \"prefix-len\": 56,\n"
         "                \"type\": \"IA_PD\",\n"
-        "                \"state\": 1,"
         "                \"duid\": \"77:77:77:77:77:77\",\n"
-        "                \"iaid\": 1234\n"
+        "                \"iaid\": 1234,\n"
+        "                \"state\": 1"
         "            }"
         "        ]"
         "    }"
         "}";
-    string exp_rsp = "Invalid PD address in declined state.";
+    string exp_rsp = "Invalid PD prefix in declined state.";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Check that the lease we inserted is stored.
