@@ -4695,7 +4695,8 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnlyBadParam) {
     // Check that the lease manager pointer is there.
     ASSERT_TRUE(lmptr_);
 
-    // Now send the command.
+    // Now send the command. The command uses an invalid state declined (1) for
+    // PD prefix.
     string cmd =
         "{\n"
         "    \"command\": \"lease6-bulk-apply\",\n"
@@ -4773,7 +4774,8 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyUpdatesOnlyBadParam) {
     l->prefixlen_ = 56;
     lmptr_->addLease(l);
 
-    // Now send the command.
+    // Now send the command. The command uses an invalid state declined (1) for
+    // PD prefix.
     string cmd =
         "{\n"
         "    \"command\": \"lease6-bulk-apply\",\n"
