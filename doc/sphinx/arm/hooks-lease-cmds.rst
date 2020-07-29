@@ -230,7 +230,8 @@ The commands can take several additional optional parameters:
 
 -  ``state`` - specify the state of added lease, can be 0 for ``default``,
    1 for ``declined`` and 2 for ``expired-reclaimed`` state. Any other
-   value will cause error.
+   value will cause error. Note that using 1 for a "IA_PD" lease type is
+   illegal and will be rejected.
 
 -  ``user-context`` - specifies the user context to be associated with
    this lease. It must be a JSON map.
