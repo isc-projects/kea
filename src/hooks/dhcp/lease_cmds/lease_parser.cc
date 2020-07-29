@@ -331,6 +331,11 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
                   "values are: 0 (default), 1 (declined) and 2 (expired-reclaimed)");
     }
 
+    if (state == Lease::STATE_DECLINED && type == Lease::TYPE_PD) {
+        isc_throw(isc::InvalidOperation,
+                  "Invalid PD address in declined state.");
+    }
+
     // Handle user context.
     ConstElementPtr ctx = lease_info->get("user-context");
     if (ctx && (ctx->getType() != Element::map)) {

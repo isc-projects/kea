@@ -1282,6 +1282,22 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "2001:db8:1::1";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
+    // Invalid PD address in declined state.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"prefix-len\": 48,\n"
+        "        \"type\": \"IA_PD\",\n"
+        "        \"state\": 1,"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Invalid PD address in declined state.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Check that a simple, well formed lease6 can be added.
@@ -3659,6 +3675,23 @@ TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
     exp_rsp = "Duplicated comment entry '\"direct\"' in user context "
         "'{ \"comment\": \"in user context\" }'";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid PD address in declined state.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"prefix-len\": 48,\n"
+        "        \"type\": \"IA_PD\",\n"
+        "        \"state\": 1,"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Invalid PD address in declined state.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Check that a lease6 can be updated. We're changing hw-address
@@ -4644,13 +4677,47 @@ TEST_F(LeaseCmdsTest, Lease6BulkApply) {
     // The status expected is success.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
-    //  Check that the leases we inserted are stored.
+    // Check that the leases we inserted are stored.
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::123")));
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::123")));
 
     // Check that the leases we deleted are gone,
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
+}
+
+// This test verifies that the lease parameters are checked when adding new
+// leases only with the lease6-bulk-apply.
+TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnlyBadParam) {
+
+    initLeaseMgr(true, false); // (true = v6, false = don't add leases)
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::123\",\n"
+        "                \"prefix-len\": 48,\n"
+        "                \"type\": \"IA_PD\",\n"
+        "                \"state\": 1,"
+        "                \"duid\": \"11:11:11:11:11:11\",\n"
+        "                \"iaid\": 1234\n"
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    string exp_rsp = "Invalid PD address in declined state.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Check that the lease was not inserted.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::123")));
 }
 
 // This test verifies that it is possible to send new leases only
@@ -4685,9 +4752,54 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnly) {
     // The status expected is success.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
-    //  Check that the leases we inserted are stored.
+    // Check that the leases we inserted are stored.
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::123")));
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::123")));
+}
+
+// This test verifies that the lease parameters are checked when updating leases
+// only with the lease6-bulk-apply.
+TEST_F(LeaseCmdsTest, Lease6BulkApplyUpdatesOnlyBadParam) {
+
+    initLeaseMgr(true, false); // (true = v6, false = don't add leases)
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Let's start with regular address lease and make it a prefix lease.
+    Lease6Ptr l = createLease6("2001:db8:1::1", 66, 0x77);
+    l->addr_ = IOAddress("2001:db8:1234:ab::");
+    l->type_ = Lease::TYPE_PD;
+    l->prefixlen_ = 56;
+    lmptr_->addLease(l);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1234:ab::\",\n"
+        "                \"prefix-len\": 56,\n"
+        "                \"type\": \"IA_PD\",\n"
+        "                \"state\": 1,"
+        "                \"duid\": \"77:77:77:77:77:77\",\n"
+        "                \"iaid\": 1234\n"
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    string exp_rsp = "Invalid PD address in declined state.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Check that the lease we inserted is stored.
+    Lease6Ptr lease1 = lmptr_->getLease6(Lease::TYPE_PD, IOAddress("2001:db8:1234:ab::"));
+    ASSERT_TRUE(lease1);
+
+    // The IAID should have not been updated for the existing lease.
+    EXPECT_EQ(42, lease1->iaid_);
 }
 
 // This test verifies that it is possible to update leases with
@@ -4722,7 +4834,7 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyUpdatesOnly) {
     // The status expected is success.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
-    //  Check that the leases we inserted are stored.
+    // Check that the leases we inserted are stored.
     Lease6Ptr lease1 = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
     Lease6Ptr lease2 = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
     ASSERT_TRUE(lease1);
