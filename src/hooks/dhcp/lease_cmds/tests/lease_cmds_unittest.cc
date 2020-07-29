@@ -1282,7 +1282,7 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "2001:db8:1::1";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Invalid declined state for PD prefix.
+    // Invalid declined state (1) for PD prefix.
     txt =
         "{\n"
         "    \"command\": \"lease6-add\",\n"
@@ -3676,7 +3676,7 @@ TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
         "'{ \"comment\": \"in user context\" }'";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Invalid declined state for PD prefix.
+    // Invalid declined state (1) for PD prefix.
     txt =
         "{\n"
         "    \"command\": \"lease6-update\",\n"
