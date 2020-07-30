@@ -1,5 +1,5 @@
 1781.	[bug]		razvan
-	Added check for invalid PD prefix in declined state for add and update
+	Reject invalid declined state of PD prefix in add and update
 	commands in lease-cmds hook.
 	(Gitlab #1349)
 
