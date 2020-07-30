@@ -1,3 +1,7 @@
+1781.	[bug]		razvan
+	Added check for invalid PD prefix in declined state for add and update
+	commands in lease-cmds hook.
+	(Gitlab #1349)
 
 Kea 1.7.10 (development) released on Jul 29, 2020
 
