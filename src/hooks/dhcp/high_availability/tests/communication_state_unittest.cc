@@ -17,11 +17,9 @@
 #include <http/date_time.h>
 #include <util/multi_threading_mgr.h>
 
-
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <gtest/gtest.h>
+#include <functional>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -59,8 +57,8 @@ public:
     /// @brief Returns test heartbeat implementation.
     ///
     /// @return Pointer to heartbeat implementation function under test.
-    boost::function<void()> getHeartbeatImpl() {
-        return (boost::bind(&CommunicationStateTest::heartbeatImpl, this));
+    std::function<void()> getHeartbeatImpl() {
+        return (std::bind(&CommunicationStateTest::heartbeatImpl, this));
     }
 
     /// @brief Test heartbeat implementation.

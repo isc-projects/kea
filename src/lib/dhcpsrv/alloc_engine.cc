@@ -43,7 +43,6 @@
 #include <utility>
 #include <vector>
 
-
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
@@ -51,6 +50,7 @@ using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace isc::data;
+using namespace std::placeholders;
 
 namespace {
 
@@ -2596,8 +2596,8 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
             // expired-reclaimed state or simply remove it.
             LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
             reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_lease,
-                                              boost::bind(&LeaseMgr::updateLease6,
-                                                          &lease_mgr, _1));
+                                              std::bind(&LeaseMgr::updateLease6,
+                                                        &lease_mgr, _1));
         }
     }
 
@@ -2692,8 +2692,8 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
             // expired-reclaimed state or simply remove it.
             LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
             reclaimLeaseInDatabase<Lease4Ptr>(lease, remove_lease,
-                                              boost::bind(&LeaseMgr::updateLease4,
-                                                          &lease_mgr, _1));
+                                              std::bind(&LeaseMgr::updateLease4,
+                                                        &lease_mgr, _1));
         }
     }
 
@@ -2849,7 +2849,7 @@ AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
 template<typename LeasePtrType>
 void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
                                          const bool remove_lease,
-                                         const boost::function<void (const LeasePtrType&)>&
+                                         const std::function<void (const LeasePtrType&)>&
                                          lease_update_fun) const {
 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
@@ -2858,7 +2858,7 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
     // expired-reclaimed state or simply remove it.
     if (remove_lease) {
         lease_mgr.deleteLease(lease);
-    } else if (!lease_update_fun.empty()) {
+    } else if (lease_update_fun) {
         // Clear FQDN information as we have already sent the
         // name change request to remove the DNS record.
         lease->hostname_.clear();

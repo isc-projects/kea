@@ -24,6 +24,7 @@
 #include <set>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace isc;
 using namespace isc::hooks;
 using namespace isc::config;
@@ -657,8 +658,8 @@ public:
         D2ClientConfigPtr cfg(new D2ClientConfig());
         ASSERT_NO_THROW(cfg->enableUpdates(true));
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
-        d2_mgr_.startSender(boost::bind(&LeaseCmdsTest::d2ErrorHandler, this,
-                                        _1, _2));
+        d2_mgr_.startSender(std::bind(&LeaseCmdsTest::d2ErrorHandler, this,
+                                      _1, _2));
     }
 
     /// @brief Disables DHCP-DDNS updates.

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,7 @@
 #include <exceptions/exceptions.h>
 #include <gtest/gtest.h>
 
-#include <boost/bind.hpp>
+#include <functional>
 
 using namespace isc::data;
 using namespace isc::db;
@@ -84,6 +84,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
 TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     /// Create a Database configuration that includes the reconnect
     /// control parameters.
+    using namespace std::placeholders;
     DatabaseConnection::ParameterMap pmap;
     pmap[std::string("type")] = std::string("test");
     pmap[std::string("max-reconnect-tries")] = std::string("3");
@@ -91,7 +92,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
 
     /// Install the callback.
     DatabaseConnection::db_lost_callback =
-        boost::bind(&DatabaseConnectionCallbackTest::dbLostCallback, this, _1);
+        std::bind(&DatabaseConnectionCallbackTest::dbLostCallback, this, _1);
     /// Create the connection..
     DatabaseConnection datasrc(pmap);
 

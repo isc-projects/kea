@@ -11,8 +11,8 @@
 
 #include <exceptions/exceptions.h>
 #include <util/labeled_value.h>
-#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
+#include <functional>
 #include <map>
 #include <mutex>
 #include <string>
@@ -34,7 +34,7 @@ typedef LabeledValue Event;
 typedef LabeledValuePtr EventPtr;
 
 /// @brief Defines a pointer to an instance method for handling a state.
-typedef boost::function<void()> StateHandler;
+typedef std::function<void()> StateHandler;
 
 /// @brief State machine pausing modes.
 ///
@@ -73,7 +73,7 @@ public:
     ///
     /// @code
     ///     State(SOME_INT_VAL, "SOME_INT_VAL",
-    ///            boost::bind(&StateModelDerivation::someHandler, this));
+    ///            std::bind(&StateModelDerivation::someHandler, this));
     /// @endcode
     ///
     /// @throw StateModelError if label is null or blank.
@@ -472,7 +472,7 @@ protected:
     ///
     ///     // Add the states defined by the derivation.
     ///     defineState(SOME_ST, "SOME_ST",
-    ///                 boost::bind(&StateModelDerivation::someHandler, this));
+    ///                 std::bind(&StateModelDerivation::someHandler, this));
     ///     :
     /// }
     /// @endcode

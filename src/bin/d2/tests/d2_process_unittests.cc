@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,10 +13,10 @@
 #include <process/testutils/d_test_stubs.h>
 #include <d2/tests/nc_test_utils.h>
 
-#include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
+#include <functional>
 #include <sstream>
 
 using namespace std;
@@ -549,7 +549,7 @@ TEST_F(D2ProcessTest, normalShutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
     isc::asiolink::IntervalTimer timer(*getIoService());
-    timer.setup(boost::bind(&D2ProcessTest::genShutdownCallback, this),
+    timer.setup(std::bind(&D2ProcessTest::genShutdownCallback, this),
                 2 * 1000);
 
     // Record start time, and invoke run().
@@ -574,7 +574,7 @@ TEST_F(D2ProcessTest, fatalErrorShutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // the exception.  (Note IntervalTimer setup is in milliseconds).
     isc::asiolink::IntervalTimer timer(*getIoService());
-    timer.setup(boost::bind(&D2ProcessTest::genFatalErrorCallback, this),
+    timer.setup(std::bind(&D2ProcessTest::genFatalErrorCallback, this),
                 2 * 1000);
 
     // Record start time, and invoke run().

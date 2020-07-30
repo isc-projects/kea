@@ -14,9 +14,8 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <boost/algorithm/string/join.hpp>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
+#include <functional>
 #include <list>
 #include <sstream>
 
@@ -724,8 +723,8 @@ public:
         : Dhcpv6SrvTest(),
           iface_mgr_test_config_(true),
           client_(),
-          do_solicit_(boost::bind(&Dhcp6Client::doSolicit, &client_, true)),
-          do_solicit_request_(boost::bind(&Dhcp6Client::doSARR, &client_)) {
+          do_solicit_(std::bind(&Dhcp6Client::doSolicit, &client_, true)),
+          do_solicit_request_(std::bind(&Dhcp6Client::doSARR, &client_)) {
     }
 
     /// @brief Checks that specified option contains a desired address.
@@ -888,7 +887,7 @@ public:
     /// @param h4 Hint 4.
     /// @param h5 Hint 5.
     /// @param h6 Hint 6.
-    void testMultipleIAs(const boost::function<void ()>& client_operation,
+    void testMultipleIAs(const std::function<void ()>& client_operation,
                          const Reservation& r1 = Reservation::UNSPEC(),
                          const Reservation& r2 = Reservation::UNSPEC(),
                          const Reservation& r3 = Reservation::UNSPEC(),
@@ -984,10 +983,10 @@ public:
     Dhcp6Client client_;
 
     /// @brief Pointer to the Dhcp6Client::doSolicit method.
-    boost::function<void() > do_solicit_;
+    std::function<void() > do_solicit_;
 
     /// @brief Pointer to the Dhcp6Client::doSARR method.
-    boost::function<void() > do_solicit_request_;
+    std::function<void() > do_solicit_request_;
 };
 
 void
@@ -1096,7 +1095,7 @@ HostTest::testLeaseForIA(const Hint& h) {
 }
 
 void
-HostTest::testMultipleIAs(const boost::function<void ()>& client_operation,
+HostTest::testMultipleIAs(const std::function<void ()>& client_operation,
                           const Reservation& r1, const Reservation& r2,
                           const Reservation& r3, const Reservation& r4,
                           const Reservation& r5, const Reservation& r6,

@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <util/signal_set.h>
-#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <signal.h>
@@ -16,6 +15,7 @@ namespace {
 
 using namespace isc;
 using namespace isc::util;
+using namespace std::placeholders;
 
 /// @brief Test fixture class for @c isc::util::SignalSet class.
 ///
@@ -109,14 +109,14 @@ TEST_F(SignalSetTest, twoSignals) {
     // second one should be dropped.
     ASSERT_EQ(0, raise(SIGHUP));
     // Execute the first handler (for SIGHUP).
-    signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
+    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
     // The handler should have been called once and the signal
     // handled should be SIGHUP.
     EXPECT_EQ(1, handler_calls_);
     EXPECT_EQ(SIGHUP, signum_);
     // Next signal to be handled should be SIGINT.
     EXPECT_EQ(SIGINT, signal_set_->getNext());
-    signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
+    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
     EXPECT_EQ(2, handler_calls_);
     EXPECT_EQ(SIGINT, signum_);
     // There should be no more waiting handlers.
@@ -143,14 +143,13 @@ TEST_F(SignalSetTest, twoSignalSets) {
     // The signal set owns SIGHUP so it should be the next to handle.
     EXPECT_EQ(SIGHUP, signal_set_->getNext());
     // Handle next signal owned by the secondary signal set.
-    secondary_signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler,
-                                                  _1));
+    secondary_signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
     EXPECT_EQ(1, handler_calls_);
     EXPECT_EQ(SIGINT, signum_);
     // No more signals to be handled for this signal set.
     EXPECT_EQ(-1, secondary_signal_set_->getNext());
     // Handle next signal owned by the signal set.
-    signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
+    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
     EXPECT_EQ(2, handler_calls_);
     EXPECT_EQ(SIGHUP, signum_);
     // No more signals to be handled by this signal set.
@@ -200,8 +199,8 @@ TEST_F(SignalSetTest, duplicates) {
 /// Check that on-receipt processing works.
 TEST_F(SignalSetTest, onReceiptTests) {
     // Install an on-receipt handler.
-    SignalSet::setOnReceiptHandler(boost::bind(&SignalSetTest::onReceiptHandler,
-                                               this, _1));
+    SignalSet::setOnReceiptHandler(std::bind(&SignalSetTest::onReceiptHandler,
+                                             this, _1));
     // Create a SignalSet for SIGHUP and SIGUSR1.
     ASSERT_NO_THROW(signal_set_.reset(new SignalSet(SIGHUP, SIGUSR1)));
 
@@ -220,7 +219,7 @@ TEST_F(SignalSetTest, onReceiptTests) {
     EXPECT_EQ(SIGUSR1, signal_set_->getNext());
 
     // Verify we can process SIGUSR1 with the deferred handler.
-    signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
+    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
     EXPECT_EQ(1, handler_calls_);
     EXPECT_EQ(SIGUSR1, signum_);
 
@@ -235,7 +234,7 @@ TEST_F(SignalSetTest, onReceiptTests) {
     EXPECT_EQ(SIGHUP, signal_set_->getNext());
 
     // Verify we can process it with deferred handler.
-    signal_set_->handleNext(boost::bind(&SignalSetTest::testHandler, _1));
+    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
     EXPECT_EQ(2, handler_calls_);
     EXPECT_EQ(SIGHUP, signum_);
 }

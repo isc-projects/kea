@@ -10,10 +10,10 @@
 #include <process/io_service_signal.h>
 #include <exceptions/exceptions.h>
 
-#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/asio/signal_set.hpp>
+#include <functional>
 
 using namespace isc::asiolink;
 
@@ -82,8 +82,9 @@ IOSignalSetImpl::callback(const boost::system::error_code& ec, int signum) {
 
 void
 IOSignalSetImpl::install() {
-    signal_set_.async_wait(boost::bind(&IOSignalSetImpl::callback,
-                                       shared_from_this(), _1, _2));
+    using namespace std::placeholders;
+    signal_set_.async_wait(std::bind(&IOSignalSetImpl::callback,
+                                     shared_from_this(), _1, _2));
 }
 
 void

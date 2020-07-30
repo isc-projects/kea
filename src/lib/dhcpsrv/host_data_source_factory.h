@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,8 @@
 #include <dhcpsrv/base_host_data_source.h>
 #include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
-#include <boost/function.hpp>
 
+#include <functional>
 #include <string>
 #include <vector>
 #include <map>
@@ -79,7 +79,7 @@ public:
     ///
     /// A factory takes a parameter map and returns a pointer to a host
     /// data source. In case of failure it must throw and not return NULL.
-    typedef boost::function<HostDataSourcePtr (const db::DatabaseConnection::ParameterMap&)> Factory;
+    typedef std::function<HostDataSourcePtr (const db::DatabaseConnection::ParameterMap&)> Factory;
 
     /// @brief Register a host data source factory
     ///

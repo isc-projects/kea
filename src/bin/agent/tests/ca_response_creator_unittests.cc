@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,13 +12,14 @@
 #include <http/post_request_json.h>
 #include <http/response_json.h>
 #include <gtest/gtest.h>
-#include <boost/bind.hpp>
 #include <boost/pointer_cast.hpp>
+#include <functional>
 
 using namespace isc::agent;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
+using namespace std::placeholders;
 
 namespace {
 
@@ -37,9 +38,9 @@ public:
         // Deregisters commands.
         CtrlAgentCommandMgr::instance().deregisterAll();
         CtrlAgentCommandMgr::instance().
-            registerCommand("foo", boost::bind(&CtrlAgentResponseCreatorTest::
-                                               fooCommandHandler,
-                                               this, _1, _2));
+            registerCommand("foo", std::bind(&CtrlAgentResponseCreatorTest::
+                                             fooCommandHandler,
+                                             this, _1, _2));
 
         // Make sure that the request has been initialized properly.
         if (!request_) {

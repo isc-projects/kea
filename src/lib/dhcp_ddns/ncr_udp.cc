@@ -9,7 +9,7 @@
 #include <dhcp_ddns/dhcp_ddns_log.h>
 #include <dhcp_ddns/ncr_udp.h>
 
-#include <boost/bind.hpp>
+#include <functional>
 
 namespace isc {
 namespace dhcp_ddns {
@@ -19,7 +19,7 @@ UDPCallback::UDPCallback (RawBufferPtr& buffer, const size_t buf_size,
                           UDPEndpointPtr& data_source,
                           const UDPCompletionHandler& handler)
     : handler_(handler), data_(new Data(buffer, buf_size, data_source)) {
-    if (handler.empty()) {
+    if (!handler) {
         isc_throw(NcrUDPError, "UDPCallback - handler can't be null");
     }
 
@@ -70,11 +70,12 @@ NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
     // Instantiate the receive callback.  This gets passed into each receive.
     // Note that the callback constructor is passed an instance method
     // pointer to our completion handler method, receiveCompletionHandler.
+    using namespace std::placeholders;
     RawBufferPtr buffer(new uint8_t[RECV_BUF_MAX]);
     UDPEndpointPtr data_source(new asiolink::UDPEndpoint());
     recv_callback_.reset(new
                          UDPCallback(buffer, RECV_BUF_MAX, data_source,
-                                     boost::bind(&NameChangeUDPListener::
+                                     std::bind(&NameChangeUDPListener::
                                      receiveCompletionHandler, this, _1, _2)));
 }
 
@@ -205,10 +206,11 @@ NameChangeUDPSender(const isc::asiolink::IOAddress& ip_address,
     // Instantiate the send callback.  This gets passed into each send.
     // Note that the callback constructor is passed the an instance method
     // pointer to our completion handler, sendCompletionHandler.
+    using namespace std::placeholders;
     RawBufferPtr buffer(new uint8_t[SEND_BUF_MAX]);
     UDPEndpointPtr data_source(new asiolink::UDPEndpoint());
     send_callback_.reset(new UDPCallback(buffer, SEND_BUF_MAX, data_source,
-                                         boost::bind(&NameChangeUDPSender::
+                                         std::bind(&NameChangeUDPSender::
                                          sendCompletionHandler, this,
                                          _1, _2)));
 }

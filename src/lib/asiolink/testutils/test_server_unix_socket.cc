@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/testutils/test_server_unix_socket.h>
-#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <functional>
@@ -55,9 +54,9 @@ public:
     /// @brief Starts asynchronous read from the socket.
     void start() {
        socket_->async_read_some(boost::asio::buffer(&raw_buf_[0], raw_buf_.size()),
-           boost::bind(&Connection::readHandler, shared_from_this(),
-                       boost::asio::placeholders::error,
-                       boost::asio::placeholders::bytes_transferred));
+           std::bind(&Connection::readHandler, shared_from_this(),
+                     std::placeholders::_1,   // error
+                     std::placeholders::_2)); // bytes_transferred
     }
 
     /// @brief Closes the socket.
@@ -253,7 +252,7 @@ TestServerUnixSocket::generateCustomResponse(const uint64_t response_size) {
 
 void
 TestServerUnixSocket::startTimer(const long test_timeout) {
-    test_timer_.setup(boost::bind(&TestServerUnixSocket::timeoutHandler, this),
+    test_timer_.setup(std::bind(&TestServerUnixSocket::timeoutHandler, this),
                       test_timeout, IntervalTimer::ONE_SHOT);
 }
 
@@ -275,8 +274,8 @@ TestServerUnixSocket::bindServerSocket(const bool use_thread) {
     // when the thread has already started and the IO service is running. The
     // main thread can move forward when it receives this signal from the handler.
     if (use_thread) {
-        io_service_.post(boost::bind(&TestServerUnixSocket::signalRunning,
-                                     this));
+        io_service_.post(std::bind(&TestServerUnixSocket::signalRunning,
+                                   this));
     }
 }
 
@@ -293,8 +292,8 @@ TestServerUnixSocket::acceptHandler(const boost::system::error_code& ec) {
 void
 TestServerUnixSocket::accept() {
     server_acceptor_.async_accept(*(connection_pool_->getSocket()),
-        boost::bind(&TestServerUnixSocket::acceptHandler, this,
-                    boost::asio::placeholders::error));
+        std::bind(&TestServerUnixSocket::acceptHandler, this,
+                  std::placeholders::_1)); // error
 }
 
 void

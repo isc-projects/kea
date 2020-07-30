@@ -1864,7 +1864,7 @@ Memfile_LeaseMgr::lfcSetup(bool conversion_needed) {
     }
 
     if (lfc_interval > 0 || conversion_needed) {
-        lfc_setup_.reset(new LFCSetup(boost::bind(&Memfile_LeaseMgr::lfcCallback, this)));
+        lfc_setup_.reset(new LFCSetup(std::bind(&Memfile_LeaseMgr::lfcCallback, this)));
         lfc_setup_->setup(lfc_interval, lease_file4_, lease_file6_, conversion_needed);
     }
 }

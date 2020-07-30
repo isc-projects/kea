@@ -22,7 +22,6 @@
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/bind.hpp>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 
@@ -37,6 +36,7 @@ using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
 using namespace isc::util;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -593,7 +593,7 @@ public:
     HttpListenerTest()
         : io_service_(), factory_(new TestHttpResponseCreatorFactory()),
           test_timer_(io_service_), run_io_service_timer_(io_service_), clients_() {
-        test_timer_.setup(boost::bind(&HttpListenerTest::timeoutHandler, this, true),
+        test_timer_.setup(std::bind(&HttpListenerTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
 
@@ -639,8 +639,8 @@ public:
         io_service_.get_io_service().reset();
 
         if (timeout > 0) {
-            run_io_service_timer_.setup(boost::bind(&HttpListenerTest::timeoutHandler,
-                                                    this, false),
+            run_io_service_timer_.setup(std::bind(&HttpListenerTest::timeoutHandler,
+                                                  this, false),
                                         timeout, IntervalTimer::ONE_SHOT);
         }
         io_service_.run();
@@ -1686,8 +1686,8 @@ public:
             EXPECT_FALSE(ec);
         },
             HttpClient::RequestTimeout(10000),
-            boost::bind(&ExternalMonitor::connectHandler, &monitor, _1, _2),
-            boost::bind(&ExternalMonitor::closeHandler, &monitor, _1)
+            std::bind(&ExternalMonitor::connectHandler, &monitor, ph::_1, ph::_2),
+            std::bind(&ExternalMonitor::closeHandler, &monitor, ph::_1)
         ));
 
         // Initiate another request to the destination.
@@ -1703,8 +1703,8 @@ public:
             EXPECT_FALSE(ec);
         },
             HttpClient::RequestTimeout(10000),
-            boost::bind(&ExternalMonitor::connectHandler, &monitor, _1, _2),
-            boost::bind(&ExternalMonitor::closeHandler, &monitor, _1)
+            std::bind(&ExternalMonitor::connectHandler, &monitor, ph::_1, ph::_2),
+            std::bind(&ExternalMonitor::closeHandler, &monitor, ph::_1)
         ));
 
         // Actually trigger the requests. The requests should be handlded by the
@@ -1790,8 +1790,8 @@ public:
             EXPECT_FALSE(ec);
         },
             HttpClient::RequestTimeout(10000),
-            boost::bind(&ExternalMonitor::connectHandler, &monitor, _1, _2),
-            boost::bind(&ExternalMonitor::closeHandler, &monitor, _1)
+            std::bind(&ExternalMonitor::connectHandler, &monitor, ph::_1, ph::_2),
+            std::bind(&ExternalMonitor::closeHandler, &monitor, ph::_1)
         ));
 
         // Actually trigger the requests. The requests should be handlded by the
@@ -1848,8 +1848,8 @@ public:
             EXPECT_FALSE(ec);
         },
             HttpClient::RequestTimeout(10000),
-            boost::bind(&ExternalMonitor::connectHandler, &monitor, _1, _2),
-            boost::bind(&ExternalMonitor::closeHandler, &monitor, _1)
+            std::bind(&ExternalMonitor::connectHandler, &monitor, ph::_1, ph::_2),
+            std::bind(&ExternalMonitor::closeHandler, &monitor, ph::_1)
         ));
 
         // Actually trigger the requests. The requests should be handlded by the

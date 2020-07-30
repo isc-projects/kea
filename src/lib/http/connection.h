@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,11 +12,11 @@
 #include <http/http_acceptor.h>
 #include <http/request_parser.h>
 #include <http/response_creator_factory.h>
-#include <boost/function.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/system/error_code.hpp>
 #include <boost/shared_ptr.hpp>
 #include <array>
+#include <functional>
 #include <string>
 
 namespace isc {
@@ -45,7 +45,7 @@ private:
 
     /// @brief Type of the function implementing a callback invoked by the
     /// @c SocketCallback functor.
-    typedef boost::function<void(boost::system::error_code ec, size_t length)>
+    typedef std::function<void(boost::system::error_code ec, size_t length)>
     SocketCallbackFunction;
 
     /// @brief Functor associated with the socket object.

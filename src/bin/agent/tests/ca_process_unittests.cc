@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,9 +10,9 @@
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <process/testutils/d_test_stubs.h>
-#include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
+#include <functional>
 
 using namespace boost::posix_time;
 using namespace isc;
@@ -68,7 +68,7 @@ TEST_F(CtrlAgentProcessTest, shutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
     IntervalTimer timer(*getIoService());
-    timer.setup(boost::bind(&CtrlAgentProcessTest::genShutdownCallback, this),
+    timer.setup(std::bind(&CtrlAgentProcessTest::genShutdownCallback, this),
                 200);
 
     // Record start time, and invoke run().

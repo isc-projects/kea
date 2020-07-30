@@ -20,7 +20,7 @@
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <util/range_utilities.h>
-#include <boost/bind.hpp>
+#include <functional>
 #include <utility>
 #include <vector>
 
@@ -72,7 +72,7 @@ void
 HATest::runIOService(long ms) {
     io_service_->get_io_service().reset();
     IntervalTimer timer(*io_service_);
-    timer.setup(boost::bind(&IOService::stop, io_service_), ms,
+    timer.setup(std::bind(&IOService::stop, io_service_), ms,
                 IntervalTimer::ONE_SHOT);
     io_service_->run();
     timer.cancel();
@@ -83,7 +83,7 @@ HATest::runIOService(long ms, std::function<bool()> stop_condition) {
     io_service_->get_io_service().reset();
     IntervalTimer timer(*io_service_);
     bool timeout = false;
-    timer.setup(boost::bind(&HATest::stopIOServiceHandler, this, boost::ref(timeout)),
+    timer.setup(std::bind(&HATest::stopIOServiceHandler, this, std::ref(timeout)),
                 ms, IntervalTimer::ONE_SHOT);
 
     while (!stop_condition() && !timeout) {
@@ -101,10 +101,10 @@ HATest::runIOServiceInThread() {
     std::mutex mutex;
     std::condition_variable condvar;
 
-    io_service_->post(boost::bind(&HATest::signalServiceRunning, this, boost::ref(running),
-                                  boost::ref(mutex), boost::ref(condvar)));
+    io_service_->post(std::bind(&HATest::signalServiceRunning, this, std::ref(running),
+                                  std::ref(mutex), std::ref(condvar)));
     boost::shared_ptr<std::thread>
-        th(new std::thread(boost::bind(&IOService::run, io_service_.get())));
+        th(new std::thread(std::bind(&IOService::run, io_service_.get())));
 
     std::unique_lock<std::mutex> lock(mutex);
     while (!running) {

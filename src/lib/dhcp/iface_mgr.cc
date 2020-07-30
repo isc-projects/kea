@@ -19,11 +19,11 @@
 #include <util/multi_threading_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
-#include <boost/bind.hpp>
 
 #include <cstring>
 #include <errno.h>
 #include <fstream>
+#include <functional>
 #include <limits>
 #include <sstream>
 
@@ -749,7 +749,7 @@ IfaceMgr::startDHCPReceiver(const uint16_t family) {
         }
 
         dhcp_receiver_.reset(new WatchedThread());
-        dhcp_receiver_->start(boost::bind(&IfaceMgr::receiveDHCP4Packets, this));
+        dhcp_receiver_->start(std::bind(&IfaceMgr::receiveDHCP4Packets, this));
         break;
     case AF_INET6:
         // If the queue doesn't exist, packet queing has been configured
@@ -759,7 +759,7 @@ IfaceMgr::startDHCPReceiver(const uint16_t family) {
         }
 
         dhcp_receiver_.reset(new WatchedThread());
-        dhcp_receiver_->start(boost::bind(&IfaceMgr::receiveDHCP6Packets, this));
+        dhcp_receiver_->start(std::bind(&IfaceMgr::receiveDHCP6Packets, this));
         break;
     default:
         isc_throw (BadValue, "startDHCPReceiver: invalid family: " << family);

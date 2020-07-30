@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,8 @@
 #include <asiolink/io_service.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <boost/bind.hpp>
 #include <gtest/gtest.h>
+#include <functional>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -51,7 +51,9 @@ public:
     ///
     /// @param timeout_ms Timeout for running IO service in milliseconds.
     void runIOService(const long timeout_ms) {
-        test_timer_.setup(boost::bind(&NetworkStateTest::testTimerCallback, this), timeout_ms,
+        test_timer_.setup(std::bind(&NetworkStateTest::testTimerCallback,
+                                    this),
+                          timeout_ms,
                           IntervalTimer::ONE_SHOT);
         io_service_->run();
     }

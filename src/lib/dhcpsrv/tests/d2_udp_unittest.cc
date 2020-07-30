@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,13 +15,13 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <exceptions/exceptions.h>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include <gtest/gtest.h>
 
+#include <functional>
 #include <sys/select.h>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace isc::dhcp;
 using namespace isc;
 
@@ -165,7 +165,7 @@ public:
 
     /// @brief Returns D2ClientErroHandler bound to this::error_handler_.
     D2ClientErrorHandler getErrorHandler() {
-        return (boost::bind(&D2ClientMgrTest::error_handler, this, _1, _2));
+        return (std::bind(&D2ClientMgrTest::error_handler, this, _1, _2));
     }
 
     /// @brief Constructs a NameChangeRequest message from a fixed JSON string.

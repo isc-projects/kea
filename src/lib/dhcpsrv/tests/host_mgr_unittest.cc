@@ -33,6 +33,7 @@ using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::asiolink;
+using namespace std::placeholders;
 
 namespace {
 
@@ -1131,7 +1132,7 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
 
     // Set the connectivity lost callback.
     DatabaseConnection::db_lost_callback =
-        boost::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, _1);
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, _1);
 
     // Find the most recently opened socket. Our SQL client's socket should
     // be the next one.

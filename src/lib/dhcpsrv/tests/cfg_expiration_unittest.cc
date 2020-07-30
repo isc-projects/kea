@@ -1,4 +1,4 @@
-// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,9 +11,9 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
 #include <testutils/test_to_element.h>
-#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+#include <functional>
 #include <stdint.h>
 
 using namespace isc;
@@ -23,13 +23,13 @@ using namespace isc::dhcp;
 namespace {
 
 /// @brief Type definition of the @c CfgExpiration modified function.
-typedef boost::function<void(CfgExpiration*, const int64_t)> ModifierFun;
+typedef std::function<void(CfgExpiration*, const int64_t)> ModifierFun;
 /// @brief Type definition of the @c CfgExpiration accessor function
 /// returning uint16_t value.
-typedef boost::function<uint16_t(CfgExpiration*)> AccessorFunUint16;
+typedef std::function<uint16_t(CfgExpiration*)> AccessorFunUint16;
 /// @brief Type definition of the @c CfgExpiration accessor function
 /// returning uint32_t value.
-typedef boost::function<uint32_t(CfgExpiration*)> AccessorFunUint32;
+typedef std::function<uint32_t(CfgExpiration*)> AccessorFunUint32;
 
 /// @brief Tests the accessor and modifier function for a particular
 /// configuration parameter held in @c CfgExpiration.
@@ -50,7 +50,7 @@ typedef boost::function<uint32_t(CfgExpiration*)> AccessorFunUint32;
 template<typename ReturnType>
 void
 testAccessModify(const int64_t limit, const ModifierFun& modifier,
-                 const boost::function<ReturnType(CfgExpiration*)>& accessor) {
+                 const std::function<ReturnType(CfgExpiration*)>& accessor) {
     CfgExpiration cfg;
 
     // Setting the value to maximum allowed + 1 should result in

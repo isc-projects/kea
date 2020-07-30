@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,10 +11,11 @@
 #include <config/config_log.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
-#include <boost/bind.hpp>
+#include <functional>
 
 using namespace isc::data;
 using namespace isc::hooks;
+using namespace std::placeholders;
 
 namespace {
 
@@ -40,8 +41,8 @@ namespace isc {
 namespace config {
 
 BaseCommandMgr::BaseCommandMgr() {
-    registerCommand("list-commands", boost::bind(&BaseCommandMgr::listCommandsHandler,
-                                                 this, _1, _2));
+    registerCommand("list-commands", std::bind(&BaseCommandMgr::listCommandsHandler,
+                                               this, _1, _2));
 }
 
 void
@@ -107,7 +108,7 @@ BaseCommandMgr::deregisterAll() {
     // code, just in tests.
     handlers_.clear();
     registerCommand("list-commands",
-        boost::bind(&BaseCommandMgr::listCommandsHandler, this, _1, _2));
+        std::bind(&BaseCommandMgr::listCommandsHandler, this, _1, _2));
 }
 
 isc::data::ConstElementPtr

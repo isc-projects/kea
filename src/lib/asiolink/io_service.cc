@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,19 +17,19 @@ namespace isc {
 namespace asiolink {
 
 namespace {
-// A trivial wrapper for boost::function.  SunStudio doesn't seem to be capable
-// of handling a boost::function object if directly passed to
+// A trivial wrapper for std::function.  SunStudio doesn't seem to be capable
+// of handling a std::function object if directly passed to
 // io_service::post().
 class CallbackWrapper {
 public:
-    CallbackWrapper(const boost::function<void()>& callback) :
+    CallbackWrapper(const std::function<void()>& callback) :
         callback_(callback)
     {}
     void operator()() {
         callback_();
     }
 private:
-    boost::function<void()> callback_;
+    std::function<void()> callback_;
 };
 }
 
@@ -90,7 +90,7 @@ public:
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
     boost::asio::io_service& get_io_service() { return io_service_; };
-    void post(const boost::function<void ()>& callback) {
+    void post(const std::function<void ()>& callback) {
         const CallbackWrapper wrapper(callback);
         io_service_.post(wrapper);
     }
@@ -138,7 +138,7 @@ IOService::get_io_service() {
 }
 
 void
-IOService::post(const boost::function<void ()>& callback) {
+IOService::post(const std::function<void ()>& callback) {
     return (io_impl_->post(callback));
 }
 

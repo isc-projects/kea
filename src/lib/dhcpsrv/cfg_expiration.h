@@ -1,4 +1,4 @@
-// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,8 +10,8 @@
 #include <asiolink/interval_timer.h>
 #include <cc/cfg_to_element.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
+#include <functional>
 #include <stdint.h>
 #include <string>
 
@@ -303,11 +303,11 @@ CfgExpiration::setupTimers(void (Instance::*reclaim_fun)(const size_t,
             1000 * getReclaimTimerWaitTime();
         // Register timer for leases' reclamation routine.
         timer_mgr_->registerTimer(RECLAIM_EXPIRED_TIMER_NAME,
-                                  boost::bind(reclaim_fun, instance_ptr,
-                                              getMaxReclaimLeases(),
-                                              getMaxReclaimTime(),
-                                              flush_timer_disabled,
-                                              getUnwarnedReclaimCycles()),
+                                  std::bind(reclaim_fun, instance_ptr,
+                                            getMaxReclaimLeases(),
+                                            getMaxReclaimTime(),
+                                            flush_timer_disabled,
+                                            getUnwarnedReclaimCycles()),
                                   reclaim_interval,
                                   asiolink::IntervalTimer::ONE_SHOT);
         timer_mgr_->setup(RECLAIM_EXPIRED_TIMER_NAME);
@@ -323,8 +323,8 @@ CfgExpiration::setupTimers(void (Instance::*reclaim_fun)(const size_t,
             1000 * getFlushReclaimedTimerWaitTime();
         // Register and setup the timer.
         timer_mgr_->registerTimer(FLUSH_RECLAIMED_TIMER_NAME,
-                                  boost::bind(delete_fun, instance_ptr,
-                                              getHoldReclaimedTime()),
+                                  std::bind(delete_fun, instance_ptr,
+                                            getHoldReclaimedTime()),
                                   flush_interval,
                                   asiolink::IntervalTimer::ONE_SHOT);
         timer_mgr_->setup(FLUSH_RECLAIMED_TIMER_NAME);

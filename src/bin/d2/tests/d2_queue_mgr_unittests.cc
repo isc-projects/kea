@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,11 +12,10 @@
 #include <dhcp_ddns/ncr_udp.h>
 #include <util/time_utilities.h>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include <gtest/gtest.h>
 #include <gtest/gtest.h>
 #include <algorithm>
+#include <functional>
 #include <vector>
 
 using namespace std;
@@ -224,8 +223,8 @@ public:
                                               FMT_JSON, *this, 100, true));
 
         // Set the test timeout to break any running tasks if they hang.
-        test_timer_.setup(boost::bind(&QueueMgrUDPTest::testTimeoutHandler,
-                                      this),
+        test_timer_.setup(std::bind(&QueueMgrUDPTest::testTimeoutHandler,
+                                    this),
                           TEST_TIMEOUT);
     }
 

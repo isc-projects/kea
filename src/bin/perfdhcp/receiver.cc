@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 
 #include <dhcp/iface_mgr.h>
 
-#include <boost/bind.hpp>
+#include <functional>
 
 using namespace std;
 using namespace isc::dhcp;
@@ -27,7 +27,7 @@ Receiver::start() {
         run_flag_.clear();
         isc_throw(isc::Unexpected, "run_flag_ should be false.");
     }
-    recv_thread_.reset(new std::thread(boost::bind(&Receiver::run, this)));
+    recv_thread_.reset(new std::thread(std::bind(&Receiver::run, this)));
 }
 
 void

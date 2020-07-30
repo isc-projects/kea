@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,7 @@
 
 #include <dns/dns_fwd.h>
 
-#include <boost/function.hpp>
-
+#include <functional>
 #include <string>
 
 namespace isc {
@@ -24,7 +23,7 @@ public:
     /// \brief Functor type of the callback on some issue (error or warning).
     ///
     /// Its parameter indicates the reason for the corresponding issue.
-    typedef boost::function<void(const std::string& reason)> IssueCallback;
+    typedef std::function<void(const std::string& reason)> IssueCallback;
 
     /// \brief Constructor.
     ///
@@ -52,7 +51,7 @@ public:
     ///
     /// \param reason Textual representation of the reason for the error.
     void error(const std::string& reason) const {
-        if (!error_callback_.empty()) {
+        if (error_callback_) {
             error_callback_(reason);
         }
     }
@@ -64,7 +63,7 @@ public:
     ///
     /// \param reason Textual representation of the reason for the issue.
     void warn(const std::string& reason) const {
-        if (!warn_callback_.empty())
+        if (warn_callback_)
             warn_callback_(reason);
     }
 

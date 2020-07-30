@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 #include <exceptions/exceptions.h>
 #include <util/process_spawn.h>
 #include <util/signal_set.h>
-#include <boost/bind.hpp>
+#include <functional>
 #include <map>
 #include <signal.h>
 #include <stdlib.h>
@@ -152,8 +152,8 @@ ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
       executable_(executable), args_(new char*[args.size() + 2]) {
     // Set the handler which is invoked immediately when the signal
     // is received.
-    signals_->setOnReceiptHandler(boost::bind(&ProcessSpawnImpl::waitForProcess,
-                                              this, _1));
+    signals_->setOnReceiptHandler(std::bind(&ProcessSpawnImpl::waitForProcess,
+                                            this, std::placeholders::_1));
     // Conversion of the arguments to the C-style array we start by setting
     // all pointers within an array to NULL to indicate that they haven't
     // been allocated yet.
@@ -243,7 +243,7 @@ ProcessSpawnImpl::isRunning(const pid_t pid) const {
                   << "' hasn't been spawned and it status cannot be"
                   " returned");
     }
-    return (proc->second.running_); 
+    return (proc->second.running_);
 }
 
 bool

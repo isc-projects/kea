@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,10 +8,11 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/unix_domain_socket.h>
-#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <functional>
 #include <iostream>
 using namespace boost::asio::local;
+using namespace std::placeholders;
 
 namespace isc {
 namespace asiolink {
@@ -164,8 +165,9 @@ public:
 void
 UnixDomainSocketImpl::asyncConnect(const stream_protocol::endpoint& endpoint,
                                    const UnixDomainSocket::ConnectHandler& handler) {
-    auto local_handler = boost::bind(&UnixDomainSocketImpl::connectHandler, shared_from_this(),
-                                     handler, _1);
+    auto local_handler = std::bind(&UnixDomainSocketImpl::connectHandler,
+                                   shared_from_this(),
+                                   handler, _1);
     socket_.async_connect(endpoint, local_handler);
 }
 
@@ -193,8 +195,9 @@ UnixDomainSocketImpl::asyncSend(const void* data, const size_t length,
 void
 UnixDomainSocketImpl::doSend(const boost::asio::const_buffers_1& buffer,
                              const UnixDomainSocket::Handler& handler) {
-    auto local_handler = boost::bind(&UnixDomainSocketImpl::sendHandler, shared_from_this(),
-                                     handler, buffer, _1, _2);
+    auto local_handler = std::bind(&UnixDomainSocketImpl::sendHandler,
+                                   shared_from_this(),
+                                   handler, buffer, _1, _2);
     socket_.async_send(buffer, local_handler);
 }
 
@@ -225,8 +228,9 @@ UnixDomainSocketImpl::asyncReceive(void* data, const size_t length,
 void
 UnixDomainSocketImpl::doReceive(const boost::asio::mutable_buffers_1& buffer,
                                 const UnixDomainSocket::Handler& handler) {
-    auto local_handler = boost::bind(&UnixDomainSocketImpl::receiveHandler, shared_from_this(),
-                                     handler, buffer, _1, _2);
+    auto local_handler = std::bind(&UnixDomainSocketImpl::receiveHandler,
+                                   shared_from_this(),
+                                   handler, buffer, _1, _2);
     socket_.async_receive(buffer, 0, local_handler);
 }
 

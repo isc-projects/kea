@@ -14,8 +14,7 @@
 #include <process/config_base.h>
 #include <util/filename.h>
 
-#include <boost/bind.hpp>
-
+#include <functional>
 #include <sstream>
 #include <fstream>
 #include <errno.h>
@@ -62,8 +61,9 @@ void Daemon::shutdown() {
 }
 
 void Daemon::handleSignal() {
+    using namespace std::placeholders;
     if (signal_set_ && signal_handler_) {
-        signal_set_->handleNext(boost::bind(signal_handler_, _1));
+        signal_set_->handleNext(std::bind(signal_handler_, _1));
     }
 }
 

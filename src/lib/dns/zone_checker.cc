@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,9 +15,9 @@
 #include <dns/rrset.h>
 #include <dns/rrset_collection_base.h>
 
-#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <functional>
 #include <string>
 
 using boost::lexical_cast;
@@ -175,10 +175,11 @@ bool
 checkZone(const Name& zone_name, const RRClass& zone_class,
           const RRsetCollectionBase& zone_rrsets,
           const ZoneCheckerCallbacks& callbacks) {
+    using namespace std::placeholders;
     bool had_error = false;
     ZoneCheckerCallbacks my_callbacks(
-        boost::bind(errorWrapper, _1, &callbacks, &had_error),
-        boost::bind(&ZoneCheckerCallbacks::warn, &callbacks, _1));
+        std::bind(errorWrapper, _1, &callbacks, &had_error),
+        std::bind(&ZoneCheckerCallbacks::warn, &callbacks, _1));
 
     checkSOA(zone_name, zone_class, zone_rrsets, my_callbacks);
     checkNS(zone_name, zone_class, zone_rrsets, my_callbacks);

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <http/http_message.h>
 #include <util/state_model.h>
-#include <boost/function.hpp>
+#include <functional>
 #include <string>
 
 namespace isc {
@@ -195,7 +195,7 @@ protected:
     ///
     /// @throw HttpRequestParserError when invalid event occurred.
     void stateWithReadHandler(const std::string& handler_name,
-                              boost::function<void(const char c)>
+                              std::function<void(const char c)>
                               after_read_logic);
 
     /// @brief Generic parser handler which reads multiple bytes of data and
@@ -215,7 +215,7 @@ protected:
     ///
     /// @throw HttpRequestParserError when invalid event occurred.
     void stateWithMultiReadHandler(const std::string& handler_name,
-                                   boost::function<void(const std::string&)>
+                                   std::function<void(const std::string&)>
                                    after_read_logic);
 
     /// @brief Transition parser to failure state.

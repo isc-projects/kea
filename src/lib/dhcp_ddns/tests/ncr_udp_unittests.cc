@@ -16,9 +16,8 @@
 #include <test_utils.h>
 
 #include <boost/asio/ip/udp.hpp>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 
+#include <functional>
 #include <algorithm>
 
 #include <sys/select.h>
@@ -173,8 +172,8 @@ public:
                                               FMT_JSON, *this, true));
 
         // Set the test timeout to break any running tasks if they hang.
-        test_timer_.setup(boost::bind(&NameChangeUDPListenerTest::
-                                      testTimeoutHandler, this),
+        test_timer_.setup(std::bind(&NameChangeUDPListenerTest::
+                                    testTimeoutHandler, this),
                           TEST_TIMEOUT);
     }
 
@@ -978,8 +977,8 @@ public:
                                      FMT_JSON, *this, 100, true));
 
         // Set the test timeout to break any running tasks if they hang.
-        test_timer_.setup(boost::bind(&NameChangeUDPTest::testTimeoutHandler,
-                                      this),
+        test_timer_.setup(std::bind(&NameChangeUDPTest::testTimeoutHandler,
+                                    this),
                           TEST_TIMEOUT);
         // Disble multi-threading
         MultiThreadingMgr::instance().setMode(false);

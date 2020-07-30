@@ -701,9 +701,9 @@ public:
 
         callout_handle.getArgument("query4", callback_qry_pkt4_);
 
-        io_service_->post(boost::bind(&HooksDhcpv4SrvTest::leases4_committed_unpark,
-                                      callout_handle.getParkingLotHandlePtr(),
-                                      callback_qry_pkt4_));
+        io_service_->post(std::bind(&HooksDhcpv4SrvTest::leases4_committed_unpark,
+                                    callout_handle.getParkingLotHandlePtr(),
+                                    callback_qry_pkt4_));
 
         callout_handle.getParkingLotHandlePtr()->reference(callback_qry_pkt4_);
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_PARK);

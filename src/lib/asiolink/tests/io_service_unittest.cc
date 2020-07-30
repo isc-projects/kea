@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 #include <asiolink/io_service.h>
 
 #include <gtest/gtest.h>
-#include <boost/bind.hpp>
+#include <functional>
 #include <vector>
 
 using namespace isc::asiolink;
@@ -26,9 +26,9 @@ TEST(IOService, post) {
     std::vector<int> called;
     IOService service;
     // Post two events
-    service.post(boost::bind(&postedEvent, &called, 1));
-    service.post(boost::bind(&postedEvent, &called, 2));
-    service.post(boost::bind(&postedEvent, &called, 3));
+    service.post(std::bind(&postedEvent, &called, 1));
+    service.post(std::bind(&postedEvent, &called, 2));
+    service.post(std::bind(&postedEvent, &called, 3));
     // They have not yet been called
     EXPECT_TRUE(called.empty());
     // Process two events

@@ -40,8 +40,8 @@ namespace dhcp {
 /// @note Handlers are expected not to throw. In the event a handler does
 /// throw invoking code logs the exception and then swallows it.
 typedef
-boost::function<void(const dhcp_ddns::NameChangeSender::Result result,
-                     dhcp_ddns::NameChangeRequestPtr& ncr)> D2ClientErrorHandler;
+std::function<void(const dhcp_ddns::NameChangeSender::Result result,
+                   dhcp_ddns::NameChangeRequestPtr& ncr)> D2ClientErrorHandler;
 
 /// @brief D2ClientMgr isolates Kea from the details of being a D2 client.
 ///
@@ -375,7 +375,7 @@ public:
     ///
     /// Serves as callback registered for the sender's select-fd with IfaceMgr.
     /// It instructs the sender to execute the next ready IO handler.
-    /// It provides an instance method that can be bound via boost::bind, as
+    /// It provides an instance method that can be bound via std::bind, as
     /// NameChangeSender is abstract.
     void runReadyIO();
 

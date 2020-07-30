@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -88,7 +88,8 @@ HttpListenerImpl::accept() {
     // depends on the use case.
     HttpResponseCreatorPtr response_creator = creator_factory_->create();
     HttpAcceptorCallback acceptor_callback =
-        boost::bind(&HttpListenerImpl::acceptHandler, this, _1);
+        std::bind(&HttpListenerImpl::acceptHandler, this,
+                  std::placeholders::_1);
     HttpConnectionPtr conn = createConnection(response_creator,
                                               acceptor_callback);
     // Add this new connection to the pool.

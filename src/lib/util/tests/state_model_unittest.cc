@@ -8,8 +8,6 @@
 
 #include <util/state_model.h>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -208,23 +206,23 @@ public:
 
         // Define our states.
         defineState(DUMMY_ST, "DUMMY_ST",
-                    boost::bind(&StateModelTest::dummyHandler, this));
+                    std::bind(&StateModelTest::dummyHandler, this));
 
         defineState(READY_ST, "READY_ST",
-            boost::bind(&StateModelTest::readyHandler, this));
+                    std::bind(&StateModelTest::readyHandler, this));
 
         defineState(DO_WORK_ST, "DO_WORK_ST",
-            boost::bind(&StateModelTest::doWorkHandler, this));
+                    std::bind(&StateModelTest::doWorkHandler, this));
 
         defineState(DONE_ST, "DONE_ST",
-            boost::bind(&StateModelTest::doneWorkHandler, this));
+                    std::bind(&StateModelTest::doneWorkHandler, this));
 
         defineState(PAUSE_ALWAYS_ST, "PAUSE_ALWAYS_ST",
-            boost::bind(&StateModelTest::pauseHandler, this),
+                    std::bind(&StateModelTest::pauseHandler, this),
                     STATE_PAUSE_ALWAYS);
 
         defineState(PAUSE_ONCE_ST, "PAUSE_ONCE_ST",
-            boost::bind(&StateModelTest::pauseHandler, this),
+                    std::bind(&StateModelTest::pauseHandler, this),
                     STATE_PAUSE_ONCE);
     }
 
@@ -393,8 +391,8 @@ TEST_F(StateModelTest, stateDefinition) {
 
     // Verify that we can add a state to the dictionary.
     ASSERT_NO_THROW(defineState(READY_ST, "READY_ST",
-                                boost::bind(&StateModelTest::dummyHandler,
-                                            this)));
+                                std::bind(&StateModelTest::dummyHandler,
+                                          this)));
 
     // Verify that we can find the state by its value.
     StatePtr state;
@@ -417,7 +415,7 @@ TEST_F(StateModelTest, stateDefinition) {
 
     // Verify that we cannot add a duplicate.
     EXPECT_THROW(defineState(READY_ST, "READY_ST",
-                             boost::bind(&StateModelTest::readyHandler, this)),
+                             std::bind(&StateModelTest::readyHandler, this)),
                  StateModelError);
 
     // Verify that we can still find the state.
@@ -604,8 +602,8 @@ TEST_F(StateModelTest, statusMethods) {
     // Verify that events and states can be added before the model is started.
     EXPECT_NO_THROW(defineEvent(9998, "9998"));
     EXPECT_NO_THROW(defineState(9998, "9998",
-                                boost::bind(&StateModelTest::readyHandler,
-                                            this)));
+                                std::bind(&StateModelTest::readyHandler,
+                                          this)));
 
     // "START" the model.
     // Fake out starting the model by calling transition to move from NEW_ST
@@ -617,7 +615,7 @@ TEST_F(StateModelTest, statusMethods) {
     // Verify that events and states cannot be added after the model is started.
     EXPECT_THROW(defineEvent(9999, "9999"), StateModelError);
     EXPECT_THROW(defineState(9999, "9999",
-                             boost::bind(&StateModelTest::readyHandler, this)),
+                             std::bind(&StateModelTest::readyHandler, this)),
                  StateModelError);
 
     // The state and event combos set above, should show the model as

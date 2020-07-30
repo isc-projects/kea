@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,11 +16,11 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <process/testutils/d_test_stubs.h>
-#include <boost/bind.hpp>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <testutils/sandbox.h>
 #include <cstdlib>
+#include <functional>
 #include <vector>
 #include <thread>
 
@@ -228,7 +228,7 @@ public:
         // to this we need to run the server side socket at the same time as the
         // client. Running IO service in a thread guarantees that the server
         //responds as soon as it receives the control command.
-        std::thread th(boost::bind(&IOService::run, getIOService().get()));
+        std::thread th(std::bind(&IOService::run, getIOService().get()));
 
 
         // Wait for the IO service in thread to actually run.
@@ -384,7 +384,7 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     // to this we need to run the server side socket at the same time.
     // Running IO service in a thread guarantees that the server responds
     // as soon as it receives the control command.
-    std::thread th(boost::bind(&IOService::run, getIOService().get()));
+    std::thread th(std::bind(&IOService::run, getIOService().get()));
 
     // Wait for the IO service in thread to actually run.
     server_socket_->waitForRunning();

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <http/http_message_parser_base.h>
-#include <boost/bind.hpp>
+#include <functional>
 #include <sstream>
 
 using namespace isc::util;
@@ -126,15 +126,15 @@ HttpMessageParserBase::defineStates() {
     StateModel::defineStates();
 
     defineState(HTTP_PARSE_OK_ST, "HTTP_PARSE_OK_ST",
-                boost::bind(&HttpMessageParserBase::parseEndedHandler, this));
+                std::bind(&HttpMessageParserBase::parseEndedHandler, this));
 
     defineState(HTTP_PARSE_FAILED_ST, "HTTP_PARSE_FAILED_ST",
-                boost::bind(&HttpMessageParserBase::parseEndedHandler, this));
+                std::bind(&HttpMessageParserBase::parseEndedHandler, this));
 }
 
 void
 HttpMessageParserBase::stateWithReadHandler(const std::string& handler_name,
-                                            boost::function<void(const char c)>
+                                            std::function<void(const char c)>
                                             after_read_logic) {
     std::string bytes;
     getNextFromBuffer(bytes);
@@ -153,7 +153,7 @@ HttpMessageParserBase::stateWithReadHandler(const std::string& handler_name,
 
 void
 HttpMessageParserBase::stateWithMultiReadHandler(const std::string& handler_name,
-                                                 boost::function<void(const std::string&)>
+                                                 std::function<void(const std::string&)>
                                                  after_read_logic) {
     std::string bytes;
     getNextFromBuffer(bytes, 0);

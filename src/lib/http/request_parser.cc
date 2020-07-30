@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <http/request_parser.h>
-#include <boost/bind.hpp>
+#include <functional>
 #include <iostream>
 
 using namespace isc::util;
@@ -61,83 +61,83 @@ HttpRequestParser::defineStates() {
 
     // Define HTTP parser specific states.
     defineState(RECEIVE_START_ST, "RECEIVE_START_ST",
-                boost::bind(&HttpRequestParser::receiveStartHandler, this));
+                std::bind(&HttpRequestParser::receiveStartHandler, this));
 
     defineState(HTTP_METHOD_ST, "HTTP_METHOD_ST",
-                boost::bind(&HttpRequestParser::httpMethodHandler, this));
+                std::bind(&HttpRequestParser::httpMethodHandler, this));
 
     defineState(HTTP_URI_ST, "HTTP_URI_ST",
-                boost::bind(&HttpRequestParser::uriHandler, this));
+                std::bind(&HttpRequestParser::uriHandler, this));
 
     defineState(HTTP_VERSION_H_ST, "HTTP_VERSION_H_ST",
-                boost::bind(&HttpRequestParser::versionHTTPHandler, this, 'H',
-                            HTTP_VERSION_T1_ST));
+                std::bind(&HttpRequestParser::versionHTTPHandler, this, 'H',
+                          HTTP_VERSION_T1_ST));
 
     defineState(HTTP_VERSION_T1_ST, "HTTP_VERSION_T1_ST",
-                boost::bind(&HttpRequestParser::versionHTTPHandler, this, 'T',
-                            HTTP_VERSION_T2_ST));
+                std::bind(&HttpRequestParser::versionHTTPHandler, this, 'T',
+                          HTTP_VERSION_T2_ST));
 
     defineState(HTTP_VERSION_T2_ST, "HTTP_VERSION_T2_ST",
-                boost::bind(&HttpRequestParser::versionHTTPHandler, this, 'T',
-                            HTTP_VERSION_P_ST));
+                std::bind(&HttpRequestParser::versionHTTPHandler, this, 'T',
+                          HTTP_VERSION_P_ST));
 
     defineState(HTTP_VERSION_P_ST, "HTTP_VERSION_P_ST",
-                boost::bind(&HttpRequestParser::versionHTTPHandler, this, 'P',
-                            HTTP_VERSION_SLASH_ST));
+                std::bind(&HttpRequestParser::versionHTTPHandler, this, 'P',
+                          HTTP_VERSION_SLASH_ST));
 
     defineState(HTTP_VERSION_SLASH_ST, "HTTP_VERSION_SLASH_ST",
-                boost::bind(&HttpRequestParser::versionHTTPHandler, this, '/',
-                            HTTP_VERSION_MAJOR_ST));
+                std::bind(&HttpRequestParser::versionHTTPHandler, this, '/',
+                          HTTP_VERSION_MAJOR_ST));
 
     defineState(HTTP_VERSION_MAJOR_START_ST, "HTTP_VERSION_MAJOR_START_ST",
-                boost::bind(&HttpRequestParser::versionNumberStartHandler, this,
-                            HTTP_VERSION_MAJOR_ST,
-                            &context_->http_version_major_));
+                std::bind(&HttpRequestParser::versionNumberStartHandler, this,
+                          HTTP_VERSION_MAJOR_ST,
+                          &context_->http_version_major_));
 
     defineState(HTTP_VERSION_MAJOR_ST, "HTTP_VERSION_MAJOR_ST",
-                boost::bind(&HttpRequestParser::versionNumberHandler, this,
-                            '.', HTTP_VERSION_MINOR_START_ST,
-                            &context_->http_version_major_));
+                std::bind(&HttpRequestParser::versionNumberHandler, this,
+                          '.', HTTP_VERSION_MINOR_START_ST,
+                          &context_->http_version_major_));
 
     defineState(HTTP_VERSION_MINOR_START_ST, "HTTP_VERSION_MINOR_START_ST",
-                boost::bind(&HttpRequestParser::versionNumberStartHandler, this,
-                            HTTP_VERSION_MINOR_ST,
-                            &context_->http_version_minor_));
+                std::bind(&HttpRequestParser::versionNumberStartHandler, this,
+                          HTTP_VERSION_MINOR_ST,
+                          &context_->http_version_minor_));
 
     defineState(HTTP_VERSION_MINOR_ST, "HTTP_VERSION_MINOR_ST",
-                boost::bind(&HttpRequestParser::versionNumberHandler, this,
-                            '\r', EXPECTING_NEW_LINE1_ST,
-                            &context_->http_version_minor_));
+                std::bind(&HttpRequestParser::versionNumberHandler, this,
+                          '\r', EXPECTING_NEW_LINE1_ST,
+                          &context_->http_version_minor_));
 
     defineState(EXPECTING_NEW_LINE1_ST, "EXPECTING_NEW_LINE1_ST",
-                boost::bind(&HttpRequestParser::expectingNewLineHandler, this,
-                            HEADER_LINE_START_ST));
+                std::bind(&HttpRequestParser::expectingNewLineHandler, this,
+                          HEADER_LINE_START_ST));
 
     defineState(HEADER_LINE_START_ST, "HEADER_LINE_START_ST",
-                boost::bind(&HttpRequestParser::headerLineStartHandler, this));
+                std::bind(&HttpRequestParser::headerLineStartHandler, this));
 
     defineState(HEADER_LWS_ST, "HEADER_LWS_ST",
-                boost::bind(&HttpRequestParser::headerLwsHandler, this));
+                std::bind(&HttpRequestParser::headerLwsHandler, this));
 
     defineState(HEADER_NAME_ST, "HEADER_NAME_ST",
-                boost::bind(&HttpRequestParser::headerNameHandler, this));
+                std::bind(&HttpRequestParser::headerNameHandler, this));
 
     defineState(SPACE_BEFORE_HEADER_VALUE_ST, "SPACE_BEFORE_HEADER_VALUE_ST",
-                boost::bind(&HttpRequestParser::spaceBeforeHeaderValueHandler, this));
+                std::bind(&HttpRequestParser::spaceBeforeHeaderValueHandler, this));
 
     defineState(HEADER_VALUE_ST, "HEADER_VALUE_ST",
-                boost::bind(&HttpRequestParser::headerValueHandler, this));
+                std::bind(&HttpRequestParser::headerValueHandler, this));
 
     defineState(EXPECTING_NEW_LINE2_ST, "EXPECTING_NEW_LINE2",
-                boost::bind(&HttpRequestParser::expectingNewLineHandler, this,
-                            HEADER_LINE_START_ST));
+                std::bind(&HttpRequestParser::expectingNewLineHandler, this,
+                          HEADER_LINE_START_ST));
 
     defineState(EXPECTING_NEW_LINE3_ST, "EXPECTING_NEW_LINE3_ST",
-                boost::bind(&HttpRequestParser::expectingNewLineHandler, this,
-                            HTTP_PARSE_OK_ST));
+                std::bind(&HttpRequestParser::expectingNewLineHandler, this,
+                          HTTP_PARSE_OK_ST));
 
     defineState(HTTP_BODY_ST, "HTTP_BODY_ST",
-                boost::bind(&HttpRequestParser::bodyHandler, this));
+                std::bind(&HttpRequestParser::bodyHandler, this));
 }
 
 void

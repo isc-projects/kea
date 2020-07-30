@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,8 @@
 #include <http/connection_pool.h>
 #include <http/http_log.h>
 #include <http/http_messages.h>
-#include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
+#include <functional>
 
 using namespace isc::asiolink;
 
@@ -105,9 +105,9 @@ HttpConnection::asyncAccept() {
     // Create instance of the callback. It is safe to pass the local instance
     // of the callback, because the underlying boost functions make copies
     // as needed.
-    HttpAcceptorCallback cb = boost::bind(&HttpConnection::acceptorCallback,
-                                          shared_from_this(),
-                                          boost::asio::placeholders::error);
+    HttpAcceptorCallback cb = std::bind(&HttpConnection::acceptorCallback,
+                                        shared_from_this(),
+                                        std::placeholders::_1); // error
     try {
         acceptor_.asyncAccept(socket_, cb);
 
@@ -129,13 +129,13 @@ HttpConnection::doRead(TransactionPtr transaction) {
         }
 
         // Create instance of the callback. It is safe to pass the local instance
-        // of the callback, because the underlying boost functions make copies
+        // of the callback, because the underlying std functions make copies
         // as needed.
-        SocketCallback cb(boost::bind(&HttpConnection::socketReadCallback,
-                                      shared_from_this(),
-                                      transaction,
-                                      boost::asio::placeholders::error,
-                                      boost::asio::placeholders::bytes_transferred));
+        SocketCallback cb(std::bind(&HttpConnection::socketReadCallback,
+                                    shared_from_this(),
+                                    transaction,
+                                    std::placeholders::_1,   // error
+                                    std::placeholders::_2)); //bytes_transferred
         socket_.asyncReceive(static_cast<void*>(transaction->getInputBufData()),
                              transaction->getInputBufSize(),
                              0, &endpoint, cb);
@@ -150,13 +150,13 @@ HttpConnection::doWrite(HttpConnection::TransactionPtr transaction) {
     try {
         if (transaction->outputDataAvail()) {
             // Create instance of the callback. It is safe to pass the local instance
-            // of the callback, because the underlying boost functions make copies
+            // of the callback, because the underlying std functions make copies
             // as needed.
-            SocketCallback cb(boost::bind(&HttpConnection::socketWriteCallback,
-                                          shared_from_this(),
-                                          transaction,
-                                          boost::asio::placeholders::error,
-                                          boost::asio::placeholders::bytes_transferred));
+            SocketCallback cb(std::bind(&HttpConnection::socketWriteCallback,
+                                        shared_from_this(),
+                                        transaction,
+                                        std::placeholders::_1,   // error
+                                        std::placeholders::_2)); // bytes_transferred
             socket_.asyncSend(transaction->getOutputBufData(),
                               transaction->getOutputBufSize(),
                               cb);
@@ -359,15 +359,15 @@ HttpConnection::setupRequestTimer(TransactionPtr transaction) {
     // because IntervalTimer already passes shared pointer to the
     // IntervalTimerImpl to make sure that the callback remains
     // valid.
-    request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback,
-                                     this, transaction),
+    request_timer_.setup(std::bind(&HttpConnection::requestTimeoutCallback,
+                                   this, transaction),
                          request_timeout_, IntervalTimer::ONE_SHOT);
 }
 
 void
 HttpConnection::setupIdleTimer() {
-    request_timer_.setup(boost::bind(&HttpConnection::idleTimeoutCallback,
-                                     this),
+    request_timer_.setup(std::bind(&HttpConnection::idleTimeoutCallback,
+                                   this),
                          idle_timeout_, IntervalTimer::ONE_SHOT);
 }
 

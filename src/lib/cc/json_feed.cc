@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 
 #include <cc/data.h>
 #include <cc/json_feed.h>
-#include <boost/bind.hpp>
+#include <functional>
 
 using namespace isc::data;
 using namespace isc::util;
@@ -135,17 +135,17 @@ JSONFeed::defineStates() {
     StateModel::defineStates();
 
     defineState(RECEIVE_START_ST, "RECEIVE_START_ST",
-                boost::bind(&JSONFeed::receiveStartHandler, this));
+                std::bind(&JSONFeed::receiveStartHandler, this));
     defineState(WHITESPACE_BEFORE_JSON_ST, "WHITESPACE_BEFORE_JSON_ST",
-                boost::bind(&JSONFeed::whiteSpaceBeforeJSONHandler, this));
+                std::bind(&JSONFeed::whiteSpaceBeforeJSONHandler, this));
     defineState(INNER_JSON_ST, "INNER_JSON_ST",
-                boost::bind(&JSONFeed::innerJSONHandler, this));
+                std::bind(&JSONFeed::innerJSONHandler, this));
     defineState(STRING_JSON_ST, "STRING_JSON_ST",
-                boost::bind(&JSONFeed::stringJSONHandler, this));
+                std::bind(&JSONFeed::stringJSONHandler, this));
     defineState(ESCAPE_JSON_ST, "ESCAPE_JSON_ST",
-                boost::bind(&JSONFeed::escapeJSONHandler, this));
+                std::bind(&JSONFeed::escapeJSONHandler, this));
     defineState(JSON_END_ST, "JSON_END_ST",
-                boost::bind(&JSONFeed::endJSONHandler, this));
+                std::bind(&JSONFeed::endJSONHandler, this));
 }
 
 void

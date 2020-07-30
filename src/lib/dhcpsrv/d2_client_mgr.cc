@@ -11,8 +11,7 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
-#include <boost/bind.hpp>
-
+#include <functional>
 #include <string>
 
 using namespace std;
@@ -259,8 +258,8 @@ D2ClientMgr::startSender(D2ClientErrorHandler error_handler,
     // IO error handling in the sender may alter its select-fd.
     registered_select_fd_ = name_change_sender_->getSelectFd();
     IfaceMgr::instance().addExternalSocket(registered_select_fd_,
-                                           boost::bind(&D2ClientMgr::runReadyIO,
-                                                       this));
+                                           std::bind(&D2ClientMgr::runReadyIO,
+                                                     this));
 }
 
 bool

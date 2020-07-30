@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 
 using namespace isc::config;
 using namespace isc::process;
+using namespace std::placeholders;
 
 namespace isc {
 namespace d2 {
@@ -53,31 +54,31 @@ D2Controller::registerCommands() {
     // These are the commands always supported by the D2 server.
     // Please keep the list in alphabetic order.
     CommandMgr::instance().registerCommand(BUILD_REPORT_COMMAND,
-        boost::bind(&D2Controller::buildReportHandler, this, _1, _2));
+        std::bind(&D2Controller::buildReportHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand(CONFIG_GET_COMMAND,
-        boost::bind(&D2Controller::configGetHandler, this, _1, _2));
+        std::bind(&D2Controller::configGetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand(CONFIG_RELOAD_COMMAND,
-        boost::bind(&D2Controller::configReloadHandler, this, _1, _2));
+        std::bind(&D2Controller::configReloadHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand(CONFIG_SET_COMMAND,
-        boost::bind(&D2Controller::configSetHandler, this, _1, _2));
+        std::bind(&D2Controller::configSetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand(CONFIG_TEST_COMMAND,
-        boost::bind(&D2Controller::configTestHandler, this, _1, _2));
+        std::bind(&D2Controller::configTestHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand(CONFIG_WRITE_COMMAND,
-        boost::bind(&D2Controller::configWriteHandler, this, _1, _2));
+        std::bind(&D2Controller::configWriteHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand(SHUT_DOWN_COMMAND,
-        boost::bind(&D2Controller::shutdownHandler, this, _1, _2));
+        std::bind(&D2Controller::shutdownHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand(STATUS_GET_COMMAND,
-        boost::bind(&DControllerBase::statusGetHandler, this, _1, _2));
+        std::bind(&DControllerBase::statusGetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand(VERSION_GET_COMMAND,
-        boost::bind(&D2Controller::versionGetHandler, this, _1, _2));
+        std::bind(&D2Controller::versionGetHandler, this, _1, _2));
 }
 
 void

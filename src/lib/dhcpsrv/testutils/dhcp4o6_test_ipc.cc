@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #include <config.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/testutils/dhcp4o6_test_ipc.h>
-#include <boost/bind.hpp>
+#include <functional>
 
 namespace isc {
 namespace dhcp {
@@ -27,7 +27,7 @@ Dhcp4o6TestIpc::open() {
     if (socket_fd_ != -1) {
         IfaceMgr& iface_mgr = IfaceMgr::instance();
         iface_mgr.addExternalSocket(socket_fd_,
-                boost::bind(&Dhcp4o6TestIpc::receiveHandler, this));
+                std::bind(&Dhcp4o6TestIpc::receiveHandler, this));
     }
 }
 

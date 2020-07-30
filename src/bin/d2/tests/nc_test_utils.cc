@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace isc;
 using namespace isc::d2;
 
@@ -96,10 +97,10 @@ FauxServer::receive (const ResponseMode& response_mode,
     server_socket_->async_receive_from(boost::asio::buffer(receive_buffer_,
                                                     sizeof(receive_buffer_)),
                                        remote_,
-                                       boost::bind(&FauxServer::requestHandler,
-                                                   this, _1, _2,
-                                                   response_mode,
-                                                   response_rcode));
+                                       std::bind(&FauxServer::requestHandler,
+                                                 this, _1, _2,
+                                                 response_mode,
+                                                 response_rcode));
 }
 
 void
@@ -226,7 +227,7 @@ TimedIO::runTimedIO(int run_time) {
     run_time_ = run_time;
     int cnt = io_service_->get_io_service().poll();
     if (cnt == 0) {
-        timer_.setup(boost::bind(&TimedIO::timesUp, this), run_time_);
+        timer_.setup(std::bind(&TimedIO::timesUp, this), run_time_);
         cnt = io_service_->get_io_service().run_one();
         timer_.cancel();
     }

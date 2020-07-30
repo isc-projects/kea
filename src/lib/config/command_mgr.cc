@@ -20,9 +20,9 @@
 #include <config/config_log.h>
 #include <config/timeouts.h>
 #include <util/watch_socket.h>
-#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <array>
+#include <functional>
 #include <unistd.h>
 #include <sys/file.h>
 
@@ -30,6 +30,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+using namespace std::placeholders;
 
 namespace {
 
@@ -94,7 +95,7 @@ public:
 
     /// @brief This method schedules timer or reschedules existing timer.
     void scheduleTimer() {
-        timeout_timer_.setup(boost::bind(&Connection::timeoutHandler, this),
+        timeout_timer_.setup(std::bind(&Connection::timeoutHandler, this),
                              timeout_, IntervalTimer::ONE_SHOT);
     }
 
@@ -137,8 +138,8 @@ public:
     /// process received data.
     void doReceive() {
         socket_->asyncReceive(&buf_[0], sizeof(buf_),
-                              boost::bind(&Connection::receiveHandler,
-                                          shared_from_this(), _1, _2));
+                              std::bind(&Connection::receiveHandler,
+                                        shared_from_this(), _1, _2));
     }
 
     /// @brief Starts asynchronous send over the unix domain socket.
@@ -151,7 +152,7 @@ public:
     void doSend() {
         size_t chunk_size = (response_.size() < BUF_SIZE) ? response_.size() : BUF_SIZE;
         socket_->asyncSend(&response_[0], chunk_size,
-           boost::bind(&Connection::sendHandler, shared_from_this(), _1, _2));
+           std::bind(&Connection::sendHandler, shared_from_this(), _1, _2));
 
         // Asynchronous send has been scheduled and we need to indicate this
         // to break the synchronous select(). The handler should clear this

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,14 +19,14 @@
 
 #include <gtest/gtest.h>
 
-#include <boost/bind.hpp>
-
+#include <functional>
 #include <sstream>
 #include <vector>
 
 using std::vector;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using namespace std::placeholders;
 
 namespace {
 
@@ -46,7 +46,7 @@ protected:
     RRCollatorTest() :
         origin_("example.com"), rrclass_(RRClass::IN()), rrttl_(3600),
         throw_from_callback_(false),
-        collator_(boost::bind(addRRset, _1, &rrsets_, &throw_from_callback_)),
+        collator_(std::bind(addRRset, _1, &rrsets_, &throw_from_callback_)),
         rr_callback_(collator_.getCallback()),
         a_rdata1_(createRdata(RRType::A(), rrclass_, "192.0.2.1")),
         a_rdata2_(createRdata(RRType::A(), rrclass_, "192.0.2.2")),

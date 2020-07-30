@@ -21,9 +21,9 @@
 #include <util/boost_time_utils.h>
 #include <util/multi_threading_mgr.h>
 
-#include <boost/bind.hpp>
 #include <boost/pointer_cast.hpp>
 
+#include <functional>
 #include <sstream>
 #include <utility>
 
@@ -112,13 +112,13 @@ CommunicationState::setPartnerScopes(ConstElementPtr new_scopes) {
 
 void
 CommunicationState::startHeartbeat(const long interval,
-                                   const boost::function<void()>& heartbeat_impl) {
+                                   const std::function<void()>& heartbeat_impl) {
     startHeartbeatInternal(interval, heartbeat_impl);
 }
 
 void
 CommunicationState::startHeartbeatInternal(const long interval,
-                                           const boost::function<void()>& heartbeat_impl) {
+                                           const std::function<void()>& heartbeat_impl) {
     bool settings_modified = false;
 
     // If we're setting the heartbeat for the first time, it should

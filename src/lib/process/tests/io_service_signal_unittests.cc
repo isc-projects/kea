@@ -9,9 +9,9 @@
 #include <process/io_service_signal.h>
 #include <process/testutils/d_test_stubs.h>
 
-#include <boost/bind.hpp>
 #include <gtest/gtest.h>
 
+#include <functional>
 #include <queue>
 
 namespace isc {
@@ -52,8 +52,8 @@ public:
 
         io_signal_set_.reset(new IOSignalSet(
                                      io_service_,
-                                     boost::bind(&IOSignalTest::processSignal,
-                                                 this, _1)));
+                                     std::bind(&IOSignalTest::processSignal,
+                                               this, std::placeholders::_1)));
     }
 
     /// @brief Destructor.
@@ -91,8 +91,7 @@ public:
     void setTestTime(int test_time_ms) {
         // Fail safe shutdown
         test_time_ms_ = test_time_ms;
-        test_timer_.setup(boost::bind(&IOSignalTest::testTimerHandler,
-                                      this),
+        test_timer_.setup(std::bind(&IOSignalTest::testTimerHandler, this),
                           test_time_ms_, asiolink::IntervalTimer::ONE_SHOT);
     }
 

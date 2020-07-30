@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,8 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <functional>
 #include <string>
 
 namespace {
@@ -65,8 +65,8 @@ public:
     void createTimer(const unsigned int seconds) {
         destroyTimer();
         timer_mgr_->registerTimer(NETWORK_STATE_TIMER_NAME,
-                                  boost::bind(&NetworkStateImpl::enableAll,
-                                              shared_from_this()),
+                                  std::bind(&NetworkStateImpl::enableAll,
+                                            shared_from_this()),
                                   seconds * 1000,
                                   asiolink::IntervalTimer::ONE_SHOT);
         timer_mgr_->setup(NETWORK_STATE_TIMER_NAME);

@@ -22,9 +22,9 @@
 #include <util/multi_threading_mgr.h>
 #include <util/stopwatch.h>
 #include <boost/pointer_cast.hpp>
-#include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/weak_ptr.hpp>
+#include <functional>
 #include <sstream>
 
 using namespace isc::asiolink;
@@ -35,6 +35,7 @@ using namespace isc::hooks;
 using namespace isc::http;
 using namespace isc::log;
 using namespace isc::util;
+using namespace std::placeholders;
 
 namespace isc {
 namespace ha {
@@ -99,47 +100,47 @@ HAService::defineStates() {
     StateModel::defineStates();
 
     defineState(HA_BACKUP_ST, stateToString(HA_BACKUP_ST),
-                boost::bind(&HAService::backupStateHandler, this),
+                std::bind(&HAService::backupStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_BACKUP_ST)->getPausing());
 
     defineState(HA_HOT_STANDBY_ST, stateToString(HA_HOT_STANDBY_ST),
-                boost::bind(&HAService::normalStateHandler, this),
+                std::bind(&HAService::normalStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_HOT_STANDBY_ST)->getPausing());
 
     defineState(HA_LOAD_BALANCING_ST, stateToString(HA_LOAD_BALANCING_ST),
-                boost::bind(&HAService::normalStateHandler, this),
+                std::bind(&HAService::normalStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_LOAD_BALANCING_ST)->getPausing());
 
     defineState(HA_IN_MAINTENANCE_ST, stateToString(HA_IN_MAINTENANCE_ST),
-                boost::bind(&HAService::inMaintenanceStateHandler, this),
+                std::bind(&HAService::inMaintenanceStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_IN_MAINTENANCE_ST)->getPausing());
 
     defineState(HA_PARTNER_DOWN_ST, stateToString(HA_PARTNER_DOWN_ST),
-                boost::bind(&HAService::partnerDownStateHandler, this),
+                std::bind(&HAService::partnerDownStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_PARTNER_DOWN_ST)->getPausing());
 
     defineState(HA_PARTNER_IN_MAINTENANCE_ST, stateToString(HA_PARTNER_IN_MAINTENANCE_ST),
-                boost::bind(&HAService::partnerInMaintenanceStateHandler, this),
+                std::bind(&HAService::partnerInMaintenanceStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_PARTNER_IN_MAINTENANCE_ST)->getPausing());
 
     defineState(HA_PASSIVE_BACKUP_ST, stateToString(HA_PASSIVE_BACKUP_ST),
-                boost::bind(&HAService::passiveBackupStateHandler, this),
+                std::bind(&HAService::passiveBackupStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_PASSIVE_BACKUP_ST)->getPausing());
 
     defineState(HA_READY_ST, stateToString(HA_READY_ST),
-                boost::bind(&HAService::readyStateHandler, this),
+                std::bind(&HAService::readyStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_READY_ST)->getPausing());
 
     defineState(HA_SYNCING_ST, stateToString(HA_SYNCING_ST),
-                boost::bind(&HAService::syncingStateHandler, this),
+                std::bind(&HAService::syncingStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_SYNCING_ST)->getPausing());
 
     defineState(HA_TERMINATED_ST, stateToString(HA_TERMINATED_ST),
-                boost::bind(&HAService::terminatedStateHandler, this),
+                std::bind(&HAService::terminatedStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_TERMINATED_ST)->getPausing());
 
     defineState(HA_WAITING_ST, stateToString(HA_WAITING_ST),
-                boost::bind(&HAService::waitingStateHandler, this),
+                std::bind(&HAService::waitingStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_WAITING_ST)->getPausing());
 }
 
@@ -1092,8 +1093,8 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
             }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
-        boost::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, _1, _2),
+        std::bind(&HAService::clientCloseHandler, this, _1)
     );
 
     // The number of pending requests is the number of requests for which we
@@ -1372,8 +1373,8 @@ HAService::asyncSendHeartbeat() {
             runModel(HA_HEARTBEAT_COMPLETE_EVT);
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
-        boost::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, _1, _2),
+        std::bind(&HAService::clientCloseHandler, this, _1)
     );
 }
 
@@ -1388,8 +1389,8 @@ void
 HAService::startHeartbeat() {
     if (config_->getHeartbeatDelay() > 0) {
         communication_state_->startHeartbeat(config_->getHeartbeatDelay(),
-                                             boost::bind(&HAService::asyncSendHeartbeat,
-                                                         this));
+                                             std::bind(&HAService::asyncSendHeartbeat,
+                                                       this));
     }
 }
 
@@ -1463,8 +1464,8 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
              }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
-        boost::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, _1, _2),
+        std::bind(&HAService::clientCloseHandler, this, _1)
     );
 }
 
@@ -1535,8 +1536,8 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
              }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
-        boost::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, _1, _2),
+        std::bind(&HAService::clientCloseHandler, this, _1)
     );
 }
 
@@ -1776,8 +1777,8 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
             }
         },
         HttpClient::RequestTimeout(config_->getSyncTimeout()),
-        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
-        boost::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, _1, _2),
+        std::bind(&HAService::clientCloseHandler, this, _1)
     );
 
 }
@@ -2011,8 +2012,8 @@ HAService::processMaintenanceStart() {
              captured_error_message = error_message;
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
-        boost::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, _1, _2),
+        std::bind(&HAService::clientCloseHandler, this, _1)
     );
 
     // Run the IO service until it is stopped by any of the callbacks. This
@@ -2119,8 +2120,8 @@ HAService::processMaintenanceCancel() {
              }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
-        boost::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, _1, _2),
+        std::bind(&HAService::clientCloseHandler, this, _1)
     );
 
     // Run the IO service until it is stopped by any of the callbacks. This
@@ -2203,7 +2204,7 @@ HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_nat
         // We are registerin the socket only to interrupt main-thread
         // select().
         IfaceMgr::instance().addExternalSocket(tcp_native_fd,
-            boost::bind(&HAService::socketReadyHandler, this, _1)
+            std::bind(&HAService::socketReadyHandler, this, _1)
         );
     }
 

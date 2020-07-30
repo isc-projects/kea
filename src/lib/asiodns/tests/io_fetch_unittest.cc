@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,23 +20,24 @@
 #include <util/io_utilities.h>
 
 #include <gtest/gtest.h>
-#include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <algorithm>
 #include <cstdlib>
+#include <functional>
 #include <string>
 #include <iostream>
 #include <iomanip>
 #include <iterator>
 #include <vector>
 
+using namespace boost::asio::ip;
 using namespace boost::asio;
+using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::util;
-using namespace boost::asio::ip;
+using namespace std::placeholders;
 using namespace std;
-using namespace isc::asiolink;
 
 namespace isc {
 namespace asiodns {
@@ -241,7 +242,7 @@ public:
         // Initiate a read on the socket.
         cumulative_ = 0;
         socket->async_receive(boost::asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
-            boost::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
+            std::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
     }
 
     /// \brief Completion handler for receiving TCP data
@@ -278,7 +279,7 @@ public:
         if (!complete) {
             socket->async_receive(boost::asio::buffer((receive_buffer_ + cumulative_),
                 (sizeof(receive_buffer_) - cumulative_)),
-                boost::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
+                std::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
             return;
         }
 
@@ -336,7 +337,7 @@ public:
                                     // Pointer to data to send
         size_t amount = 16;         // Amount of data to send
         if (send_cumulative_ < (2 * amount)) {
-            
+
             // First or second time through, send at most 16 bytes
             amount = min(amount, (send_buffer_.size() - send_cumulative_));
 
@@ -366,8 +367,8 @@ public:
         // ... and send it.  The amount sent is also passed as the first
         // argument of the send callback, as a check.
         socket->async_send(boost::asio::buffer(send_ptr, amount),
-                           boost::bind(&IOFetchTest::tcpSendHandler, this,
-                                       amount, socket, _1, _2));
+                           std::bind(&IOFetchTest::tcpSendHandler, this,
+                                     amount, socket, _1, _2));
     }
 
     /// \brief Completion Handler for Sending TCP data
@@ -409,8 +410,8 @@ public:
             // socket over which data should be sent as an argument to that
             // function.
             timer_.expires_from_now(boost::posix_time::milliseconds(SEND_INTERVAL));
-            timer_.async_wait(boost::bind(&IOFetchTest::tcpSendData, this,
-                                          socket));
+            timer_.async_wait(std::bind(&IOFetchTest::tcpSendData, this,
+                                        socket));
         }
     }
 
@@ -475,10 +476,10 @@ public:
         // Post the query
         service_.get_io_service().post(fetch);
 
-        // Post query_.stop() (yes, the boost::bind thing is just
+        // Post query_.stop() (yes, the std::bind thing is just
         // query_.stop()).
         service_.get_io_service().post(
-            boost::bind(&IOFetch::stop, fetch, IOFetch::STOPPED));
+            std::bind(&IOFetch::stop, fetch, IOFetch::STOPPED));
 
         // Run both of them.  run() returns when everything in the I/O service
         // queue has completed.
@@ -549,7 +550,7 @@ public:
         tcp::acceptor acceptor(service_.get_io_service(),
                                tcp::endpoint(tcp::v4(), TEST_PORT));
         acceptor.async_accept(socket,
-            boost::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, _1));
+            std::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, _1));
 
         // Post the TCP fetch object to send the query and receive the response.
         service_.get_io_service().post(tcp_fetch_);
@@ -583,9 +584,9 @@ public:
         socket.async_receive_from(boost::asio::buffer(receive_buffer_,
                                                sizeof(receive_buffer_)),
                                   remote,
-                                  boost::bind(&IOFetchTest::udpReceiveHandler,
-                                              this, &remote, &socket,
-                                              _1, _2, bad_qid, second_send));
+                                  std::bind(&IOFetchTest::udpReceiveHandler,
+                                            this, &remote, &socket,
+                                            _1, _2, bad_qid, second_send));
         service_.get_io_service().post(udp_fetch_);
         if (debug_) {
             cout << "udpSendReceive: async_receive_from posted,"

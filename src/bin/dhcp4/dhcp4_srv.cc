@@ -63,11 +63,11 @@
 #include <dhcpsrv/memfile_lease_mgr.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <functional>
 #include <iomanip>
 #include <set>
 #include <cstdlib>
@@ -82,6 +82,7 @@ using namespace isc::log;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
+using namespace std::placeholders;
 
 namespace {
 
@@ -3839,8 +3840,8 @@ Dhcpv4Srv::startD2() {
         // Updates are enabled, so lets start the sender, passing in
         // our error handler.
         // This may throw so wherever this is called needs to ready.
-        d2_mgr.startSender(boost::bind(&Dhcpv4Srv::d2ClientErrorHandler,
-                                       this, _1, _2));
+        d2_mgr.startSender(std::bind(&Dhcpv4Srv::d2ClientErrorHandler,
+                                     this, _1, _2));
     }
 }
 

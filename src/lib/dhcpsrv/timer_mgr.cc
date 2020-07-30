@@ -11,8 +11,7 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
 
-#include <boost/bind.hpp>
-
+#include <functional>
 #include <utility>
 
 using namespace isc;
@@ -263,8 +262,8 @@ TimerMgrImpl::setup(const std::string& timer_name) {
    // Schedule the execution of the timer using the parameters supplied
    // during the registration.
    const TimerInfoPtr& timer_info = timer_info_it->second;
-   IntervalTimer::Callback cb = boost::bind(&TimerMgrImpl::timerCallback, this,
-                                            timer_name);
+   IntervalTimer::Callback cb = std::bind(&TimerMgrImpl::timerCallback, this,
+                                          timer_name);
    timer_info->interval_timer_.setup(cb, timer_info->interval_,
                                      timer_info->scheduling_mode_);
 }

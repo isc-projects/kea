@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <process/testutils/d_test_stubs.h>
 #include <process/daemon.h>
 #include <cc/command_interpreter.h>
-#include <boost/bind.hpp>
+#include <functional>
 
 using namespace boost::asio;
 
@@ -194,7 +194,7 @@ DControllerTest::scheduleTimedWrite(const std::string& config,
                                     int write_time_ms) {
     new_cfg_content_ = config;
     write_timer_.reset(new asiolink::IntervalTimer(*getIOService()));
-    write_timer_->setup(boost::bind(&DControllerTest::timedWriteCallback, this),
+    write_timer_->setup(std::bind(&DControllerTest::timedWriteCallback, this),
                         write_time_ms, asiolink::IntervalTimer::ONE_SHOT);
 }
 

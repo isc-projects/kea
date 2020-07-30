@@ -10,8 +10,8 @@
 #include <util/watch_socket.h>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
 
+#include <functional>
 #include <mutex>
 #include <thread>
 
@@ -80,7 +80,7 @@ public:
     /// Creates the thread, passing into it the given function to run.
     ///
     /// @param thread_main function the thread should run
-    void start(const boost::function<void()>& thread_main);
+    void start(const std::function<void()>& thread_main);
 
     /// @brief Returns true if the thread is running
     bool isRunning() {

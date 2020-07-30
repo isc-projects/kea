@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -127,7 +127,7 @@ public:
 
 class UDPCallback;
 /// @brief Defines a function pointer for NameChangeRequest completion handlers.
-typedef boost::function<void(const bool, const UDPCallback*)>
+typedef std::function<void(const bool, const UDPCallback*)>
           UDPCompletionHandler;
 
 /// @brief Defines a dynamically allocated shared array.

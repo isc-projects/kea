@@ -25,10 +25,10 @@
 #include <util/multi_threading_mgr.h>
 #include <util/readwrite_mutex.h>
 
-#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <functional>
 #include <list>
 #include <map>
 #include <mutex>
@@ -1268,7 +1268,7 @@ private:
     template<typename LeasePtrType>
     void reclaimLeaseInDatabase(const LeasePtrType& lease,
                                 const bool remove_lease,
-                                const boost::function<void (const LeasePtrType&)>&
+                                const std::function<void (const LeasePtrType&)>&
                                 lease_update_fun) const;
 
     /// @anchor reclaimDeclinedLease4

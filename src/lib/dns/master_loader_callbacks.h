@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,9 +9,9 @@
 
 #include <exceptions/exceptions.h>
 
-#include <string>
-#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
+#include <functional>
+#include <string>
 
 namespace isc {
 namespace dns {
@@ -35,9 +35,9 @@ typedef boost::shared_ptr<Rdata> RdataPtr;
 /// \param rrtype Type of the RR.
 /// \param rrttl Time to live of the RR.
 /// \param rdata The actual carried data of the RR.
-typedef boost::function<void(const Name& name, const RRClass& rrclass,
-                             const RRType& rrtype, const RRTTL& rrttl,
-                             const rdata::RdataPtr& rdata)>
+typedef std::function<void(const Name& name, const RRClass& rrclass,
+                           const RRType& rrtype, const RRTTL& rrttl,
+                           const rdata::RdataPtr& rdata)>
     AddRRCallback;
 
 /// \brief Set of issue callbacks for a loader.
@@ -58,9 +58,9 @@ public:
     /// \param source_line Position of the problem, counted in lines from the
     ///     beginning of the source.
     /// \param reason Human readable description of what happened.
-    typedef boost::function<void(const std::string& source_name,
-                                 size_t source_line,
-                                 const std::string& reason)> IssueCallback;
+    typedef std::function<void(const std::string& source_name,
+                               size_t source_line,
+                               const std::string& reason)> IssueCallback;
 
     /// \brief Constructor
     ///
@@ -74,7 +74,7 @@ public:
         error_(error),
         warning_(warning)
     {
-        if (error_.empty() || warning_.empty()) {
+        if (!error_ || !warning) {
             isc_throw(isc::InvalidParameter,
                       "Empty function passed as callback");
         }

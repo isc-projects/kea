@@ -9,7 +9,6 @@
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 
-#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -17,6 +16,7 @@
 #include <exceptions/exceptions.h>
 
 #include <atomic>
+#include <functional>
 #include <mutex>
 
 using namespace std;
@@ -118,7 +118,7 @@ IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
                                  "equal to 0");
     }
     // Call back function should not be empty.
-    if (cbfunc.empty()) {
+    if (!cbfunc) {
         isc_throw(isc::InvalidParameter, "Callback function is empty");
     }
 
@@ -140,9 +140,9 @@ IntervalTimerImpl::update() {
         timer_.expires_from_now(boost::posix_time::millisec(long(interval_)));
         // Reset timer.
         // Pass a function bound with a shared_ptr to this.
-        timer_.async_wait(boost::bind(&IntervalTimerImpl::callback,
-                                      shared_from_this(),
-                                      boost::asio::placeholders::error));
+        timer_.async_wait(std::bind(&IntervalTimerImpl::callback,
+                                    shared_from_this(),
+                                    std::placeholders::_1)); //error
     } catch (const boost::system::system_error& e) {
         isc_throw(isc::Unexpected, "Failed to update timer: " << e.what());
     } catch (const boost::bad_weak_ptr&) {

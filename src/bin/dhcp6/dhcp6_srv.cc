@@ -66,7 +66,6 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
-#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/erase.hpp>
@@ -74,6 +73,7 @@
 #include <boost/algorithm/string/split.hpp>
 
 #include <algorithm>
+#include <functional>
 #include <stdlib.h>
 #include <time.h>
 #include <iomanip>
@@ -91,6 +91,7 @@ using namespace isc::log;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
+using namespace std::placeholders;
 
 namespace {
 
@@ -3989,8 +3990,8 @@ Dhcpv6Srv::startD2() {
         // Updates are enabled, so lets start the sender, passing in
         // our error handler.
         // This may throw so wherever this is called needs to ready.
-        d2_mgr.startSender(boost::bind(&Dhcpv6Srv::d2ClientErrorHandler,
-                                       this, _1, _2));
+        d2_mgr.startSender(std::bind(&Dhcpv6Srv::d2ClientErrorHandler,
+                                     this, _1, _2));
     }
 }
 

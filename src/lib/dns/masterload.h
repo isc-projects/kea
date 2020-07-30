@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,13 +7,11 @@
 #ifndef MASTERLOAD_H
 #define MASTERLOAD_H 1
 
-#include <iosfwd>
-
-#include <boost/function.hpp>
-
+#include <dns/rrset.h>
 #include <exceptions/exceptions.h>
 
-#include <dns/rrset.h>
+#include <functional>
+#include <iosfwd>
 
 namespace isc {
 namespace dns {
@@ -32,7 +30,7 @@ public:
 ///
 /// This represents a functor object or a function that takes one parameter
 /// of type \c RRsetPtr and returns nothing.
-typedef boost::function<void(RRsetPtr)> MasterLoadCallback;
+typedef std::function<void(RRsetPtr)> MasterLoadCallback;
 
 ///
 /// \name Master zone file loader functions.
@@ -48,7 +46,7 @@ typedef boost::function<void(RRsetPtr)> MasterLoadCallback;
 /// The \c callback parameter is a functor object or a function that
 /// takes one parameter of type \c RRsetPtr and returns nothing,
 /// i.e. \c void (see below for specific examples).
-/// More precisely, it can be anything that this form of boost::function
+/// More precisely, it can be anything that this form of std::function
 /// can represent, but the caller normally doesn't have to care about
 /// that level of details.
 ///
@@ -104,7 +102,7 @@ typedef boost::function<void(RRsetPtr)> MasterLoadCallback;
 ///    masterLoad(zone_file, Name("example.com"), RRClass::IN(), zoneDumper);
 /// \endcode
 /// Or, if you want to use it with a member function of some other class,
-/// wrapping things with \c boost::bind would be handy:
+/// wrapping things with \c std::bind would be handy:
 /// \code class ZoneDumper {
 /// public:
 ///    void dump(ConstRRsetPtr rrset) const {
@@ -114,7 +112,7 @@ typedef boost::function<void(RRsetPtr)> MasterLoadCallback;
 /// ...
 ///    ZoneDumper dumper;
 ///    masterLoad(rr_stream, Name("example.com"), RRClass::IN(),
-///               boost::bind(&ZoneDumper::dump, &dumper, _1));
+///               std::bind(&ZoneDumper::dump, &dumper, _1));
 /// \endcode
 /// You can find a bit more complicated examples in the unit tests code for
 /// this function.

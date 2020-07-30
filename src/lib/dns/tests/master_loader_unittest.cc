@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,16 +17,17 @@
 
 #include <gtest/gtest.h>
 
-#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include <functional>
 #include <string>
 #include <vector>
 #include <list>
 #include <sstream>
 
 using namespace isc::dns;
+using namespace std::placeholders;
 using std::vector;
 using std::string;
 using std::list;
@@ -38,10 +39,10 @@ namespace {
 class MasterLoaderTest : public ::testing::Test {
 public:
     MasterLoaderTest() :
-        callbacks_(boost::bind(&MasterLoaderTest::callback, this,
-                               &errors_, _1, _2, _3),
-                   boost::bind(&MasterLoaderTest::callback, this,
-                               &warnings_, _1, _2, _3))
+        callbacks_(std::bind(&MasterLoaderTest::callback, this,
+                             &errors_, _1, _2, _3),
+                   std::bind(&MasterLoaderTest::callback, this,
+                             &warnings_, _1, _2, _3))
     {}
 
     void TearDown() {
@@ -71,8 +72,8 @@ public:
                    const RRClass& rrclass, const MasterLoader::Options options)
     {
         loader_.reset(new MasterLoader(file, origin, rrclass, callbacks_,
-                                       boost::bind(&MasterLoaderTest::addRRset,
-                                                   this, _1, _2, _3, _4, _5),
+                                       std::bind(&MasterLoaderTest::addRRset,
+                                                 this, _1, _2, _3, _4, _5),
                                        options));
     }
 
@@ -80,8 +81,8 @@ public:
                    const RRClass& rrclass, const MasterLoader::Options options)
     {
         loader_.reset(new MasterLoader(stream, origin, rrclass, callbacks_,
-                                       boost::bind(&MasterLoaderTest::addRRset,
-                                                   this, _1, _2, _3, _4, _5),
+                                       std::bind(&MasterLoaderTest::addRRset,
+                                                 this, _1, _2, _3, _4, _5),
                                        options));
     }
 

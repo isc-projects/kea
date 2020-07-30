@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,9 +11,9 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
 
-#include <boost/bind.hpp>
 #include <gtest/gtest.h>
 
+#include <functional>
 #include <sstream>
 #include <unistd.h>
 
@@ -73,10 +73,10 @@ public:
     ///
     /// This is just a wrapped to make it a bit more convenient
     /// in the test.
-    boost::function<void ()> makeCallback(const std::string& timer_name);
+    std::function<void ()> makeCallback(const std::string& timer_name);
 
     /// @brief Create a callback which generates exception.
-    boost::function<void ()> makeCallbackWithException();
+    std::function<void ()> makeCallbackWithException();
 
     /// @brief Callback for timeout.
     ///
@@ -154,14 +154,14 @@ TimerMgrTest::timerCallbackWithException() {
     isc_throw(Exception, "timerCallbackWithException");
 }
 
-boost::function<void ()>
+std::function<void ()>
 TimerMgrTest::makeCallback(const std::string& timer_name) {
-    return (boost::bind(&TimerMgrTest::timerCallback, this, timer_name));
+    return (std::bind(&TimerMgrTest::timerCallback, this, timer_name));
 }
 
-boost::function<void ()>
+std::function<void ()>
 TimerMgrTest::makeCallbackWithException() {
-    return (boost::bind(&TimerMgrTest::timerCallbackWithException, this));
+    return (std::bind(&TimerMgrTest::timerCallbackWithException, this));
 }
 
 // This test checks that certain errors are returned when invalid

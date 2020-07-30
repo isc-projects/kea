@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,11 +11,10 @@
 #include <asiolink/io_service.h>
 #include <asiolink/tcp_acceptor.h>
 #include <asiolink/tcp_endpoint.h>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+#include <functional>
 #include <list>
 #include <netinet/in.h>
 #include <string>
@@ -83,7 +82,8 @@ public:
             endpoint(boost::asio::ip::address::from_string(SERVER_ADDRESS),
                      SERVER_PORT);
         socket_.async_connect(endpoint,
-                              boost::bind(&TCPClient::connectHandler, this,_1));
+                              std::bind(&TCPClient::connectHandler, this,
+                                        std::placeholders::_1));
     }
 
     /// @brief Callback function for connect().
@@ -128,7 +128,7 @@ typedef boost::shared_ptr<TCPClient> TCPClientPtr;
 
 /// @brief A signature of the function implementing callback for the
 /// TCPAcceptor.
-typedef boost::function<void(const boost::system::error_code&)> TCPAcceptorCallback;
+typedef std::function<void(const boost::system::error_code&)> TCPAcceptorCallback;
 
 /// @brief TCPAcceptor using TCPAcceptorCallback.
 typedef TCPAcceptor<TCPAcceptorCallback> TestTCPAcceptor;
@@ -205,8 +205,8 @@ public:
           endpoint_(asio_endpoint_), test_timer_(io_service_), connections_(),
           clients_(), connections_num_(0), aborted_connections_num_(0),
           max_connections_(1) {
-        test_timer_.setup(boost::bind(&TCPAcceptorTest::timeoutHandler, this),
-                                      TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
+        test_timer_.setup(std::bind(&TCPAcceptorTest::timeoutHandler, this),
+                                    TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
 
     /// @brief Destructor.
@@ -250,8 +250,8 @@ public:
     /// accepting new connections. The instance of the Acceptor object is
     /// retained in the connections_ list.
     void accept() {
-        TCPAcceptorCallback cb = boost::bind(&TCPAcceptorTest::acceptHandler,
-                                             this, _1);
+        TCPAcceptorCallback cb = std::bind(&TCPAcceptorTest::acceptHandler,
+                                           this, std::placeholders::_1);
         AcceptorPtr conn(new Acceptor(io_service_, acceptor_, cb));
         connections_.push_back(conn);
         connections_.back()->accept();

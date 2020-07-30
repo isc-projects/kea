@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,8 +13,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/bind.hpp>
-
 #include <gtest/gtest.h>
 
 #include <dns/masterload.h>
@@ -24,6 +22,7 @@
 #include <dns/rrset.h>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace isc::dns;
 
 namespace {
@@ -95,7 +94,7 @@ TEST_F(MasterLoadTest, loadWithFunctionCallback) {
     // object)
     rr_stream << txt_rr << a_rr1 << soa_rr;
     masterLoad(rr_stream, origin, zclass,
-               boost::bind(&testCallback, _1, &results));
+               std::bind(&testCallback, _1, &results));
     ASSERT_EQ(3, results.size());
     EXPECT_EQ(txt_rr, results[0]->toText());
     EXPECT_EQ(a_rr1, results[1]->toText());
@@ -104,10 +103,10 @@ TEST_F(MasterLoadTest, loadWithFunctionCallback) {
 
 TEST_F(MasterLoadTest, loadWithMemFunctionCallback) {
     // The same test as loadRRs but using a class member function (with a
-    // help of Boost.bind)
+    // help of std.bind)
     rr_stream << txt_rr << a_rr1 << soa_rr;
     masterLoad(rr_stream, origin, zclass,
-               boost::bind(&MasterLoadTest::rrsetCallback, this, _1));
+               std::bind(&MasterLoadTest::rrsetCallback, this, _1));
     ASSERT_EQ(3, results.size());
     EXPECT_EQ(txt_rr, results[0]->toText());
     EXPECT_EQ(a_rr1, results[1]->toText());

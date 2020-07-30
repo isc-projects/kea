@@ -10,11 +10,10 @@
 #include <d2/d2_cfg_mgr.h>
 #include <d2/nc_add.h>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
-
 #include <util/buffer.h>
 #include <dns/rdataclass.h>
+
+#include <functional>
 
 namespace isc {
 namespace d2 {
@@ -80,30 +79,30 @@ NameAddTransaction::defineStates() {
 
     // Define NameAddTransaction states.
     defineState(READY_ST, "READY_ST",
-             boost::bind(&NameAddTransaction::readyHandler, this));
+             std::bind(&NameAddTransaction::readyHandler, this));
 
     defineState(SELECTING_FWD_SERVER_ST, "SELECTING_FWD_SERVER_ST",
-             boost::bind(&NameAddTransaction::selectingFwdServerHandler, this));
+             std::bind(&NameAddTransaction::selectingFwdServerHandler, this));
 
     defineState(SELECTING_REV_SERVER_ST, "SELECTING_REV_SERVER_ST",
-             boost::bind(&NameAddTransaction::selectingRevServerHandler, this));
+             std::bind(&NameAddTransaction::selectingRevServerHandler, this));
 
     defineState(ADDING_FWD_ADDRS_ST, "ADDING_FWD_ADDRS_ST",
-             boost::bind(&NameAddTransaction::addingFwdAddrsHandler, this));
+             std::bind(&NameAddTransaction::addingFwdAddrsHandler, this));
 
     defineState(REPLACING_FWD_ADDRS_ST, "REPLACING_FWD_ADDRS_ST",
-             boost::bind(&NameAddTransaction::replacingFwdAddrsHandler, this));
+             std::bind(&NameAddTransaction::replacingFwdAddrsHandler, this));
 
     defineState(REPLACING_REV_PTRS_ST, "REPLACING_REV_PTRS_ST",
-             boost::bind(&NameAddTransaction::replacingRevPtrsHandler, this));
+             std::bind(&NameAddTransaction::replacingRevPtrsHandler, this));
 
     defineState(PROCESS_TRANS_OK_ST, "PROCESS_TRANS_OK_ST",
-             boost::bind(&NameAddTransaction::processAddOkHandler, this));
+             std::bind(&NameAddTransaction::processAddOkHandler, this));
 
     defineState(PROCESS_TRANS_FAILED_ST, "PROCESS_TRANS_FAILED_ST",
-             boost::bind(&NameAddTransaction::processAddFailedHandler, this));
-
+             std::bind(&NameAddTransaction::processAddFailedHandler, this));
 }
+
 void
 NameAddTransaction::verifyStates() {
     // Call superclass implementation first to verify its states. These are

@@ -10,8 +10,7 @@
 #include <d2/d2_cfg_mgr.h>
 #include <d2/nc_remove.h>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
+#include <functional>
 
 namespace isc {
 namespace d2 {
@@ -77,35 +76,35 @@ NameRemoveTransaction::defineStates() {
 
     // Define NameRemoveTransaction states.
     defineState(READY_ST, "READY_ST",
-                boost::bind(&NameRemoveTransaction::readyHandler, this));
+                std::bind(&NameRemoveTransaction::readyHandler, this));
 
     defineState(SELECTING_FWD_SERVER_ST, "SELECTING_FWD_SERVER_ST",
-                boost::bind(&NameRemoveTransaction::selectingFwdServerHandler,
-                            this));
+                std::bind(&NameRemoveTransaction::selectingFwdServerHandler,
+                          this));
 
     defineState(SELECTING_REV_SERVER_ST, "SELECTING_REV_SERVER_ST",
-                boost::bind(&NameRemoveTransaction::selectingRevServerHandler,
-                            this));
+                std::bind(&NameRemoveTransaction::selectingRevServerHandler,
+                          this));
 
     defineState(REMOVING_FWD_ADDRS_ST, "REMOVING_FWD_ADDRS_ST",
-                boost::bind(&NameRemoveTransaction::removingFwdAddrsHandler,
-                            this));
+                std::bind(&NameRemoveTransaction::removingFwdAddrsHandler,
+                          this));
 
     defineState(REMOVING_FWD_RRS_ST, "REMOVING_FWD_RRS_ST",
-                boost::bind(&NameRemoveTransaction::removingFwdRRsHandler,
-                            this));
+                std::bind(&NameRemoveTransaction::removingFwdRRsHandler,
+                          this));
 
     defineState(REMOVING_REV_PTRS_ST, "REMOVING_REV_PTRS_ST",
-                boost::bind(&NameRemoveTransaction::removingRevPtrsHandler,
-                            this));
+                std::bind(&NameRemoveTransaction::removingRevPtrsHandler,
+                          this));
 
     defineState(PROCESS_TRANS_OK_ST, "PROCESS_TRANS_OK_ST",
-                boost::bind(&NameRemoveTransaction::processRemoveOkHandler,
-                            this));
+                std::bind(&NameRemoveTransaction::processRemoveOkHandler,
+                          this));
 
     defineState(PROCESS_TRANS_FAILED_ST, "PROCESS_TRANS_FAILED_ST",
-                boost::bind(&NameRemoveTransaction::processRemoveFailedHandler,
-                            this));
+                std::bind(&NameRemoveTransaction::processRemoveFailedHandler,
+                          this));
 }
 
 void

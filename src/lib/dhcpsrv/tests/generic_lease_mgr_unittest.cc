@@ -26,6 +26,7 @@
 #include <sstream>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::db;
@@ -3284,7 +3285,7 @@ LeaseMgrDbLostCallbackTest::TearDown() {
 void
 LeaseMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     DatabaseConnection::db_lost_callback =
-        boost::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, _1);
+        std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, _1);
 
     callback_called_ = false;
     ASSERT_THROW(LeaseMgrFactory::create(invalidConnectString()),
@@ -3297,7 +3298,7 @@ void
 LeaseMgrDbLostCallbackTest::testDbLostCallback() {
     // Set the connectivity lost callback.
     DatabaseConnection::db_lost_callback =
-        boost::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, _1);
+        std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, _1);
 
     // Connect to the lease backend.
     ASSERT_NO_THROW(LeaseMgrFactory::create(validConnectString()));

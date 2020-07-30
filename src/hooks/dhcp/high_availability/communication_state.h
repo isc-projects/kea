@@ -15,7 +15,6 @@
 #include <dhcp/pkt.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/function.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -25,6 +24,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <functional>
 #include <map>
 #include <mutex>
 #include <set>
@@ -129,7 +129,7 @@ public:
     /// @param heartbeat_impl pointer to the heartbeat implementation
     /// function.
     void startHeartbeat(const long interval,
-                        const boost::function<void()>& heartbeat_impl);
+                        const std::function<void()>& heartbeat_impl);
 
 protected:
 
@@ -139,7 +139,7 @@ protected:
     /// @param heartbeat_impl pointer to the heartbeat implementation
     /// function.
     void startHeartbeatInternal(const long interval = 0,
-                                const boost::function<void()>& heartbeat_impl = 0);
+                                const std::function<void()>& heartbeat_impl = 0);
 
 public:
 
@@ -394,7 +394,7 @@ protected:
     boost::posix_time::ptime poke_time_;
 
     /// @brief Pointer to the function providing heartbeat implementation.
-    boost::function<void()> heartbeat_impl_;
+    std::function<void()> heartbeat_impl_;
 
     /// @brief Last known state of the partner server.
     ///

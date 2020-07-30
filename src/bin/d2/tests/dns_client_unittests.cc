@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,12 +13,13 @@
 #include <dns/messagerenderer.h>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/socket_base.hpp>
-#include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <nc_test_utils.h>
+#include <functional>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
@@ -83,7 +84,7 @@ public:
         dns_client_.reset(new DNSClient(response_, this));
 
         // Set the test timeout to break any running tasks if they hang.
-        test_timer_.setup(boost::bind(&DNSClientTest::testTimeoutHandler, this),
+        test_timer_.setup(std::bind(&DNSClientTest::testTimeoutHandler, this),
                           TEST_TIMEOUT);
     }
 
@@ -371,9 +372,9 @@ public:
         udp_socket.async_receive_from(boost::asio::buffer(receive_buffer_,
                                                    sizeof(receive_buffer_)),
                                       remote,
-                                      boost::bind(&DNSClientTest::udpReceiveHandler,
-                                                  this, &udp_socket, &remote, _2,
-                                                  corrupt_response));
+                                      std::bind(&DNSClientTest::udpReceiveHandler,
+                                                this, &udp_socket, &remote, _2,
+                                                corrupt_response));
 
         // The socket is now ready to receive the data. Let's post some request
         // message then. Set timeout to some reasonable value to make sure that
@@ -431,10 +432,10 @@ public:
         udp_socket.async_receive_from(boost::asio::buffer(receive_buffer_,
                                                    sizeof(receive_buffer_)),
                                       remote,
-                                      boost::bind(&DNSClientTest::
-                                                  TSIGReceiveHandler, this,
-                                                  &udp_socket, &remote, _2,
-                                                  client_key, server_key));
+                                      std::bind(&DNSClientTest::
+                                                TSIGReceiveHandler, this,
+                                                &udp_socket, &remote, _2,
+                                                client_key, server_key));
 
         // The socket is now ready to receive the data. Let's post some request
         // message then. Set timeout to some reasonable value to make sure that

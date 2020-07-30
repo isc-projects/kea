@@ -17,12 +17,12 @@
 #include <util/multi_threading_mgr.h>
 #include <util/unlock_guard.h>
 
-#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/weak_ptr.hpp>
 
 #include <atomic>
 #include <array>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -41,7 +41,7 @@ namespace {
 constexpr size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
 
 /// @brief TCP socket callback function type.
-typedef boost::function<void(boost::system::error_code ec, size_t length)>
+typedef std::function<void(boost::system::error_code ec, size_t length)>
 SocketCallbackFunction;
 
 /// @brief Socket callback class required by the TCPSocket API.
@@ -831,8 +831,9 @@ Connection::doTransactionInternal(const HttpRequestPtr& request,
         /// over for names.
         TCPEndpoint endpoint(url_.getStrippedHostname(),
                              static_cast<unsigned short>(url_.getPort()));
-        SocketCallback socket_cb(boost::bind(&Connection::connectCallback, shared_from_this(),
-                                             connect_callback, current_transid_, _1));
+        SocketCallback socket_cb(std::bind(&Connection::connectCallback, shared_from_this(),
+                                           connect_callback, current_transid_,
+                                           std::placeholders::_1));
 
         // Establish new connection or use existing connection.
         socket_.open(&endpoint, socket_cb);
@@ -991,15 +992,18 @@ Connection::terminateInternal(const boost::system::error_code& ec,
 void
 Connection::scheduleTimer(const long request_timeout) {
     if (request_timeout > 0) {
-        timer_.setup(boost::bind(&Connection::timerCallback, this), request_timeout,
+        timer_.setup(std::bind(&Connection::timerCallback, this), request_timeout,
                      IntervalTimer::ONE_SHOT);
     }
 }
 
 void
 Connection::doSend(const uint64_t transid) {
-    SocketCallback socket_cb(boost::bind(&Connection::sendCallback, shared_from_this(),
-                                         transid, _1, _2));
+    SocketCallback socket_cb(std::bind(&Connection::sendCallback,
+                                       shared_from_this(),
+                                       transid,
+                                       std::placeholders::_1,
+                                       std::placeholders::_2));
     try {
         socket_.asyncSend(&buf_[0], buf_.size(), socket_cb);
 
@@ -1011,8 +1015,11 @@ Connection::doSend(const uint64_t transid) {
 void
 Connection::doReceive(const uint64_t transid) {
     TCPEndpoint endpoint;
-    SocketCallback socket_cb(boost::bind(&Connection::receiveCallback, shared_from_this(),
-                                         transid, _1, _2));
+    SocketCallback socket_cb(std::bind(&Connection::receiveCallback,
+                                       shared_from_this(),
+                                       transid,
+                                       std::placeholders::_1,
+                                       std::placeholders::_2));
 
     try {
         socket_.asyncReceive(static_cast<void*>(input_buf_.data()), input_buf_.size(), 0,

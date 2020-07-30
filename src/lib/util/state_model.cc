@@ -6,7 +6,6 @@
 
 #include <config.h>
 #include <util/state_model.h>
-#include <boost/bind.hpp>
 #include <string>
 
 namespace isc {
@@ -245,9 +244,9 @@ StateModel::verifyEvents() {
 void
 StateModel::defineStates() {
     defineState(NEW_ST, "NEW_ST",
-                boost::bind(&StateModel::nopStateHandler, this));
+                std::bind(&StateModel::nopStateHandler, this));
     defineState(END_ST, "END_ST",
-                boost::bind(&StateModel::nopStateHandler, this));
+                std::bind(&StateModel::nopStateHandler, this));
 }
 
 void

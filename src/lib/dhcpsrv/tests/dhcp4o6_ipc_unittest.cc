@@ -15,9 +15,8 @@
 #include <dhcp/option_int.h>
 #include <dhcpsrv/dhcp4o6_ipc.h>
 #include <dhcpsrv/testutils/dhcp4o6_test_ipc.h>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <gtest/gtest.h>
+#include <functional>
 #include <sstream>
 #include <string>
 
@@ -35,7 +34,7 @@ const uint16_t TEST_PORT = 12345;
 const uint16_t TEST_ITERATIONS = 10;
 
 /// @brief Type definition for the function creating DHCP message.
-typedef boost::function<Pkt6Ptr(uint16_t, uint16_t)> CreateMsgFun;
+typedef std::function<Pkt6Ptr(uint16_t, uint16_t)> CreateMsgFun;
 
 /// @brief Define short name for test IPC class.
 typedef Dhcp4o6TestIpc TestIpc;

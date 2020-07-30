@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,9 @@
 #ifndef ASIOLINK_IO_SERVICE_H
 #define ASIOLINK_IO_SERVICE_H 1
 
-#include <boost/function.hpp>
+#include <boost/version.hpp>
+#include <boost/shared_ptr.hpp>
+#include <functional>
 
 namespace boost {
 namespace asio {
@@ -90,7 +92,7 @@ public:
     ///
     /// It may be used to implement "background" work, for example (doing stuff
     /// by small bits that are called from time to time).
-    void post(const boost::function<void ()>& callback);
+    void post(const std::function<void ()>& callback);
 
 private:
     IOServiceImpl* io_impl_;

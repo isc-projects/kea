@@ -15,7 +15,7 @@
 #include <process/d_controller.h>
 #include <process/config_base.h>
 #include <kea_version.h>
-#include <boost/bind.hpp>
+#include <functional>
 #include <sstream>
 #include <unistd.h>
 
@@ -739,9 +739,10 @@ DControllerBase::initSignalHandling() {
 
     // Create our signal set.
     io_signal_set_.reset(new IOSignalSet(io_service_,
-                                         boost::bind(&DControllerBase::
-                                                     processSignal,
-                                                     this, _1)));
+                                         std::bind(&DControllerBase::
+                                                   processSignal,
+                                                   this,
+                                                   std::placeholders::_1)));
     // Register for the signals we wish to handle.
     io_signal_set_->add(SIGHUP);
     io_signal_set_->add(SIGINT);

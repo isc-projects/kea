@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,9 +8,9 @@
 #define SIGNAL_SET_H
 
 #include <exceptions/exceptions.h>
-#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <functional>
 #include <set>
 #include <list>
 #include <pthread.h>
@@ -44,14 +44,14 @@ class SignalSet;
 /// @brief Pointer to the @c isc::util::SignalSet.
 typedef boost::shared_ptr<SignalSet> SignalSetPtr;
 /// @brief Pointer to the signal handling function.
-typedef boost::function<void(int signum)> SignalHandler;
+typedef std::function<void(int signum)> SignalHandler;
 
 /// @brief Pointer to a signal handling function which returns bool result.
 ///
 /// The handler is expected to return true if the signal it was given has
 /// been processed (i.e. should not be recorded for deferred processing) or
 /// false in which case it will be recorded.
-typedef boost::function<bool(int signum)> BoolSignalHandler;
+typedef std::function<bool(int signum)> BoolSignalHandler;
 
 /// @brief Represents a collection of signals handled in a customized way.
 ///

@@ -11,7 +11,7 @@ namespace isc {
 namespace util {
 
 void
-WatchedThread::start(const boost::function<void()>& thread_main) {
+WatchedThread::start(const std::function<void()>& thread_main) {
     clearReady(ERROR);
     clearReady(READY);
     clearReady(TERMINATE);

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1019,7 +1019,7 @@ MasterLoader::MasterLoader(const char* master_file,
                            const AddRRCallback& add_callback,
                            Options options)
 {
-    if (add_callback.empty()) {
+    if (!add_callback) {
         isc_throw(isc::InvalidParameter, "Empty add RR callback");
     }
     impl_ = new MasterLoaderImpl(master_file, zone_origin,
@@ -1033,7 +1033,7 @@ MasterLoader::MasterLoader(std::istream& stream,
                            const AddRRCallback& add_callback,
                            Options options)
 {
-    if (add_callback.empty()) {
+    if (!add_callback) {
         isc_throw(isc::InvalidParameter, "Empty add RR callback");
     }
     unique_ptr<MasterLoaderImpl>

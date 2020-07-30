@@ -13,10 +13,9 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/lease.h>
 
-#include <ctime>
-#include <boost/bind.hpp>
 #include <gtest/gtest.h>
-
+#include <ctime>
+#include <functional>
 #include <stdint.h>
 #include <string>
 
@@ -24,6 +23,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
+using namespace std::placeholders;
 
 namespace {
 
@@ -81,8 +81,8 @@ public:
         D2ClientConfigPtr cfg(new D2ClientConfig());
         ASSERT_NO_THROW(cfg->enableUpdates(true));
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
-        d2_mgr_.startSender(boost::bind(&NCRGeneratorTest::d2ErrorHandler, this,
-                                        _1, _2));
+        d2_mgr_.startSender(std::bind(&NCRGeneratorTest::d2ErrorHandler, this,
+                                      _1, _2));
     }
 
     /// @brief Disables DHCP-DDNS updates.

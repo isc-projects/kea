@@ -20,7 +20,6 @@
 #include <util/watch_socket.h>
 #include <util/watched_thread.h>
 
-#include <boost/function.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
@@ -29,6 +28,7 @@
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <functional>
 #include <list>
 #include <vector>
 #include <mutex>
@@ -621,7 +621,7 @@ typedef boost::shared_ptr<IfaceMgr> IfaceMgrPtr;
 ///
 /// @param errmsg An error message.
 typedef
-boost::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
+std::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
 
 /// @brief Handles network interfaces, transmission and reception.
 ///
@@ -633,7 +633,7 @@ class IfaceMgr : public boost::noncopyable {
 public:
     /// Defines callback used when data is received over external sockets.
     /// @param fd socket descriptor of the ready socket
-    typedef boost::function<void (int fd)> SocketCallback;
+    typedef std::function<void (int fd)> SocketCallback;
 
     /// Keeps callback information for external sockets.
     struct SocketCallbackInfo {

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,10 +22,10 @@
 #include <util/buffer.h>
 #include <util/random/qid_gen.h>
 
-#include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
+#include <functional>
 #include <unistd.h>             // for some IPC/network system calls
 #include <netinet/in.h>
 #include <stdint.h>
@@ -252,7 +252,7 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
                 // first two bytes of the packet).
                 data_->msgbuf->writeUint16At(data_->qid, 0);
 
-            } 
+            }
         }
 
         // If we timeout, we stop, which will can cancel outstanding I/Os and
@@ -260,7 +260,7 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
         if (data_->timeout != -1) {
             data_->timer.expires_from_now(boost::posix_time::milliseconds(
                 data_->timeout));
-            data_->timer.async_wait(boost::bind(&IOFetch::stop, *this,
+            data_->timer.async_wait(std::bind(&IOFetch::stop, *this,
                 TIME_OUT));
         }
 
@@ -279,7 +279,7 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
             data_->origin = ASIODNS_SEND_DATA;
             BOOST_ASIO_CORO_YIELD data_->socket->asyncSend(data_->msgbuf->getData(),
                 data_->msgbuf->getLength(), data_->remote_snd.get(), *this);
-    
+
             // Now receive the response.  Since TCP may not receive the entire
             // message in one operation, we need to loop until we have received
             // it. (This can't be done within the asyncReceive() method because
@@ -298,7 +298,7 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
             // the expected amount of data.  Then we need to loop until we have
             // received all the data before copying it back to the user's buffer.
             // And we want to minimize the amount of copying...
-    
+
             data_->origin = ASIODNS_READ_DATA;
             data_->cumulative = 0;          // No data yet received
             data_->offset = 0;              // First data into start of buffer

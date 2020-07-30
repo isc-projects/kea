@@ -41,6 +41,7 @@
 #include <unistd.h>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
@@ -1556,8 +1557,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longCommand) {
 
     ASSERT_NO_THROW(
         CommandMgr::instance().registerCommand("foo",
-             boost::bind(&CtrlChannelDhcpv6SrvTest::longCommandHandler,
-                         command.str(), _1, _2));
+             std::bind(&CtrlChannelDhcpv6SrvTest::longCommandHandler,
+                       command.str(), _1, _2));
     );
 
     createUnixChannelServer();
@@ -1615,7 +1616,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longResponse) {
     // of a desired size.
     ASSERT_NO_THROW(
         CommandMgr::instance().registerCommand("foo",
-             boost::bind(&CtrlChannelDhcpv6SrvTest::longResponseHandler, _1, _2));
+             std::bind(&CtrlChannelDhcpv6SrvTest::longResponseHandler, _1, _2));
     );
 
     createUnixChannelServer();

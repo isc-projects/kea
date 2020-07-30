@@ -37,6 +37,7 @@ using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
+using namespace std::placeholders;
 
 namespace {
 
@@ -800,7 +801,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // Re-open lease and host database with new parameters.
     try {
         DatabaseConnection::db_lost_callback =
-            boost::bind(&ControlledDhcpv6Srv::dbLostCallback, srv, _1);
+            std::bind(&ControlledDhcpv6Srv::dbLostCallback, srv, _1);
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=6");
         cfg_db->createManagers();
@@ -905,9 +906,9 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
             boost::shared_ptr<unsigned> failure_count(new unsigned(0));
             TimerMgr::instance()->
                 registerTimer("Dhcp6CBFetchTimer",
-                              boost::bind(&ControlledDhcpv6Srv::cbFetchUpdates,
-                                          server_, CfgMgr::instance().getStagingCfg(),
-                                          failure_count),
+                              std::bind(&ControlledDhcpv6Srv::cbFetchUpdates,
+                                        server_, CfgMgr::instance().getStagingCfg(),
+                                        failure_count),
                               fetch_time,
                               asiolink::IntervalTimer::ONE_SHOT);
             TimerMgr::instance()->setup("Dhcp6CBFetchTimer");
@@ -992,80 +993,80 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     // These are the commands always supported by the DHCPv6 server.
     // Please keep the list in alphabetic order.
     CommandMgr::instance().registerCommand("build-report",
-        boost::bind(&ControlledDhcpv6Srv::commandBuildReportHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandBuildReportHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-backend-pull",
-        boost::bind(&ControlledDhcpv6Srv::commandConfigBackendPullHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigBackendPullHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-get",
-        boost::bind(&ControlledDhcpv6Srv::commandConfigGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigGetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-reload",
-        boost::bind(&ControlledDhcpv6Srv::commandConfigReloadHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigReloadHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-test",
-        boost::bind(&ControlledDhcpv6Srv::commandConfigTestHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigTestHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-write",
-        boost::bind(&ControlledDhcpv6Srv::commandConfigWriteHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigWriteHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("dhcp-disable",
-        boost::bind(&ControlledDhcpv6Srv::commandDhcpDisableHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandDhcpDisableHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("dhcp-enable",
-        boost::bind(&ControlledDhcpv6Srv::commandDhcpEnableHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandDhcpEnableHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("leases-reclaim",
-        boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("server-tag-get",
-        boost::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("libreload",
-        boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-set",
-        boost::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("shutdown",
-        boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("status-get",
-        boost::bind(&ControlledDhcpv6Srv::commandStatusGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandStatusGetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("version-get",
-        boost::bind(&ControlledDhcpv6Srv::commandVersionGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandVersionGetHandler, this, _1, _2));
 
     // Register statistic related commands
     CommandMgr::instance().registerCommand("statistic-get",
-        boost::bind(&StatsMgr::statisticGetHandler, _1, _2));
+        std::bind(&StatsMgr::statisticGetHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-get-all",
-        boost::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
+        std::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-reset",
-        boost::bind(&StatsMgr::statisticResetHandler, _1, _2));
+        std::bind(&StatsMgr::statisticResetHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-reset-all",
-        boost::bind(&StatsMgr::statisticResetAllHandler, _1, _2));
+        std::bind(&StatsMgr::statisticResetAllHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-remove",
-        boost::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
+        std::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-remove-all",
-        boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
+        std::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-sample-age-set",
-        boost::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, _1, _2));
+        std::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-sample-age-set-all",
-        boost::bind(&ControlledDhcpv6Srv::commandStatisticSetMaxSampleAgeAllHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandStatisticSetMaxSampleAgeAllHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-sample-count-set",
-        boost::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
+        std::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-sample-count-set-all",
-        boost::bind(&ControlledDhcpv6Srv::commandStatisticSetMaxSampleCountAllHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandStatisticSetMaxSampleCountAllHandler, this, _1, _2));
 }
 
 void ControlledDhcpv6Srv::shutdownServer(int exit_value) {
@@ -1198,8 +1199,8 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
         if (!TimerMgr::instance()->isTimerRegistered("Dhcp6DbReconnectTimer")) {
             TimerMgr::instance()->registerTimer("Dhcp6DbReconnectTimer",
-                            boost::bind(&ControlledDhcpv6Srv::dbReconnect, this,
-                                        db_reconnect_ctl),
+                            std::bind(&ControlledDhcpv6Srv::dbReconnect, this,
+                                      db_reconnect_ctl),
                             db_reconnect_ctl->retryInterval(),
                             asiolink::IntervalTimer::ONE_SHOT);
         }

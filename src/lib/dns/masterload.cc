@@ -1,22 +1,10 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-
-#include <istream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <cctype>
-#include <cerrno>
-
-#include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
-
-#include <exceptions/exceptions.h>
 
 #include <dns/masterload.h>
 #include <dns/master_loader.h>
@@ -28,9 +16,19 @@
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
 #include <dns/rrcollator.h>
+#include <exceptions/exceptions.h>
+
+#include <boost/scoped_ptr.hpp>
+
+#include <functional>
+#include <istream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <cctype>
+#include <cerrno>
 
 using namespace std;
-using namespace boost;
 using namespace isc::dns::rdata;
 
 namespace isc {
@@ -64,8 +62,8 @@ void
 loadHelper(InputType input, const Name& origin,
            const RRClass& zone_class, MasterLoadCallback callback)
 {
-    RRCollator rr_collator(boost::bind(callbackWrapper, _1,
-                                       callback, &origin));
+    RRCollator rr_collator(std::bind(callbackWrapper, std::placeholders::_1,
+                                     callback, &origin));
     MasterLoader loader(input, origin, zone_class,
                         MasterLoaderCallbacks::getNullCallbacks(),
                         rr_collator.getCallback());

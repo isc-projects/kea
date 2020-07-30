@@ -9,9 +9,9 @@
 
 #include <cc/data.h>
 #include <boost/noncopyable.hpp>
-#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <exceptions/exceptions.h>
+#include <functional>
 #include <map>
 #include <string>
 
@@ -220,7 +220,7 @@ public:
     bool configuredReadOnly() const;
 
     /// @brief Defines a callback prototype for propogating events upward
-    typedef boost::function<bool (ReconnectCtlPtr db_retry)> DbLostCallback;
+    typedef std::function<bool (ReconnectCtlPtr db_retry)> DbLostCallback;
 
     /// @brief Invokes the connection's lost connectivity callback
     ///

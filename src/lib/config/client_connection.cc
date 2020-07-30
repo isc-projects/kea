@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,9 +11,9 @@
 #include <asiolink/unix_domain_socket.h>
 #include <cc/json_feed.h>
 #include <config/client_connection.h>
-#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <array>
+#include <functional>
 
 using namespace isc::asiolink;
 
@@ -123,8 +123,8 @@ ClientConnectionImpl::ClientConnectionImpl(IOService& io_service)
 void
 ClientConnectionImpl::scheduleTimer(ClientConnection::Handler handler) {
     if (timeout_ > 0) {
-        timer_.setup(boost::bind(&ClientConnectionImpl::timeoutCallback,
-                                 this, handler),
+        timer_.setup(std::bind(&ClientConnectionImpl::timeoutCallback,
+                               this, handler),
                      timeout_, IntervalTimer::ONE_SHOT);
     }
 }

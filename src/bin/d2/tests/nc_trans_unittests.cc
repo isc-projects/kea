@@ -16,10 +16,9 @@
 #include <util/buffer.h>
 #include <nc_test_utils.h>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
+#include <functional>
 
 using namespace std;
 using namespace isc;
@@ -194,25 +193,25 @@ public:
 
         // Define our states.
         defineState(READY_ST, "READY_ST",
-                             boost::bind(&NameChangeStub::readyHandler, this));
+                             std::bind(&NameChangeStub::readyHandler, this));
 
         defineState(SELECTING_FWD_SERVER_ST, "SELECTING_FWD_SERVER_ST",
-                             boost::bind(&NameChangeStub::dummyHandler, this));
+                             std::bind(&NameChangeStub::dummyHandler, this));
 
         defineState(SELECTING_REV_SERVER_ST, "SELECTING_REV_SERVER_ST",
-                             boost::bind(&NameChangeStub::dummyHandler, this));
+                             std::bind(&NameChangeStub::dummyHandler, this));
 
         defineState(DOING_UPDATE_ST, "DOING_UPDATE_ST",
-                             boost::bind(&NameChangeStub::doingUpdateHandler,
-                                         this));
+                             std::bind(&NameChangeStub::doingUpdateHandler,
+                                       this));
 
         defineState(PROCESS_TRANS_OK_ST, "PROCESS_TRANS_OK_ST",
-                             boost::bind(&NameChangeStub::
-                                         processTransDoneHandler, this));
+                             std::bind(&NameChangeStub::
+                                       processTransDoneHandler, this));
 
         defineState(PROCESS_TRANS_FAILED_ST, "PROCESS_TRANS_FAILED_ST",
-                             boost::bind(&NameChangeStub::
-                                         processTransDoneHandler, this));
+                             std::bind(&NameChangeStub::
+                                       processTransDoneHandler, this));
     }
 
     /// @brief Verify the event dictionary.

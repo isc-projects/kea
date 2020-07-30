@@ -37,6 +37,7 @@ using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
+using namespace std::placeholders;
 
 namespace {
 
@@ -797,7 +798,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // Re-open lease and host database with new parameters.
     try {
         DatabaseConnection::db_lost_callback =
-            boost::bind(&ControlledDhcpv4Srv::dbLostCallback, srv, _1);
+            std::bind(&ControlledDhcpv4Srv::dbLostCallback, srv, _1);
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=4");
         cfg_db->createManagers();
@@ -884,9 +885,9 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
             boost::shared_ptr<unsigned> failure_count(new unsigned(0));
             TimerMgr::instance()->
                 registerTimer("Dhcp4CBFetchTimer",
-                              boost::bind(&ControlledDhcpv4Srv::cbFetchUpdates,
-                                          server_, CfgMgr::instance().getStagingCfg(),
-                                          failure_count),
+                              std::bind(&ControlledDhcpv4Srv::cbFetchUpdates,
+                                        server_, CfgMgr::instance().getStagingCfg(),
+                                        failure_count),
                               fetch_time,
                               asiolink::IntervalTimer::ONE_SHOT);
             TimerMgr::instance()->setup("Dhcp4CBFetchTimer");
@@ -973,80 +974,80 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     // These are the commands always supported by the DHCPv4 server.
     // Please keep the list in alphabetic order.
     CommandMgr::instance().registerCommand("build-report",
-        boost::bind(&ControlledDhcpv4Srv::commandBuildReportHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandBuildReportHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-backend-pull",
-        boost::bind(&ControlledDhcpv4Srv::commandConfigBackendPullHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandConfigBackendPullHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-get",
-        boost::bind(&ControlledDhcpv4Srv::commandConfigGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandConfigGetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-reload",
-        boost::bind(&ControlledDhcpv4Srv::commandConfigReloadHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandConfigReloadHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-set",
-        boost::bind(&ControlledDhcpv4Srv::commandConfigSetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandConfigSetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-test",
-        boost::bind(&ControlledDhcpv4Srv::commandConfigTestHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandConfigTestHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-write",
-        boost::bind(&ControlledDhcpv4Srv::commandConfigWriteHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandConfigWriteHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("dhcp-enable",
-        boost::bind(&ControlledDhcpv4Srv::commandDhcpEnableHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandDhcpEnableHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("dhcp-disable",
-        boost::bind(&ControlledDhcpv4Srv::commandDhcpDisableHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandDhcpDisableHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("libreload",
-        boost::bind(&ControlledDhcpv4Srv::commandLibReloadHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandLibReloadHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("leases-reclaim",
-        boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("server-tag-get",
-        boost::bind(&ControlledDhcpv4Srv::commandServerTagGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandServerTagGetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("shutdown",
-        boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("status-get",
-        boost::bind(&ControlledDhcpv4Srv::commandStatusGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandStatusGetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("version-get",
-        boost::bind(&ControlledDhcpv4Srv::commandVersionGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandVersionGetHandler, this, _1, _2));
 
     // Register statistic related commands
     CommandMgr::instance().registerCommand("statistic-get",
-        boost::bind(&StatsMgr::statisticGetHandler, _1, _2));
+        std::bind(&StatsMgr::statisticGetHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-reset",
-        boost::bind(&StatsMgr::statisticResetHandler, _1, _2));
+        std::bind(&StatsMgr::statisticResetHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-remove",
-        boost::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
+        std::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-get-all",
-        boost::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
+        std::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-reset-all",
-        boost::bind(&StatsMgr::statisticResetAllHandler, _1, _2));
+        std::bind(&StatsMgr::statisticResetAllHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-remove-all",
-        boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
+        std::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-sample-age-set",
-        boost::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, _1, _2));
+        std::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-sample-age-set-all",
-        boost::bind(&ControlledDhcpv4Srv::commandStatisticSetMaxSampleAgeAllHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandStatisticSetMaxSampleAgeAllHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-sample-count-set",
-        boost::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
+        std::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-sample-count-set-all",
-        boost::bind(&ControlledDhcpv4Srv::commandStatisticSetMaxSampleCountAllHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv4Srv::commandStatisticSetMaxSampleCountAllHandler, this, _1, _2));
 }
 
 void ControlledDhcpv4Srv::shutdownServer(int exit_value) {
@@ -1179,8 +1180,8 @@ ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
         if (!TimerMgr::instance()->isTimerRegistered("Dhcp4DbReconnectTimer")) {
             TimerMgr::instance()->registerTimer("Dhcp4DbReconnectTimer",
-                            boost::bind(&ControlledDhcpv4Srv::dbReconnect, this,
-                                        db_reconnect_ctl),
+                            std::bind(&ControlledDhcpv4Srv::dbReconnect, this,
+                                      db_reconnect_ctl),
                             db_reconnect_ctl->retryInterval(),
                             asiolink::IntervalTimer::ONE_SHOT);
         }

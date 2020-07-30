@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,10 +20,10 @@
 
 #include <gtest/gtest.h>
 
-#include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <algorithm>
+#include <functional>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -31,6 +31,7 @@
 using isc::Unexpected;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using namespace std::placeholders;
 
 namespace {
 
@@ -46,8 +47,8 @@ protected:
         zname_("example.com"), zclass_(RRClass::IN()),
         soa_(new RRset(zname_, zclass_, RRType::SOA(), RRTTL(60))),
         ns_(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60))),
-        callbacks_(boost::bind(&ZoneCheckerTest::callback, this, _1, true),
-                   boost::bind(&ZoneCheckerTest::callback, this, _1, false))
+        callbacks_(std::bind(&ZoneCheckerTest::callback, this, _1, true),
+                   std::bind(&ZoneCheckerTest::callback, this, _1, false))
     {
         std::stringstream ss;
         ss << "example.com. 60 IN SOA " << soa_txt << "\n";
@@ -58,7 +59,7 @@ protected:
     }
 
 public:
-    // This one is passed to boost::bind.  Some compilers seem to require
+    // This one is passed to std::bind.  Some compilers seem to require
     // it be public.
     void callback(const std::string& reason, bool is_error) {
         if (is_error) {
@@ -132,7 +133,7 @@ TEST_F(ZoneCheckerTest, checkSOA) {
     // If null callback is specified, checkZone() only returns the final
     // result.
     ZoneCheckerCallbacks noerror_callbacks(
-        0, boost::bind(&ZoneCheckerTest::callback, this, _1, false));
+        0, std::bind(&ZoneCheckerTest::callback, this, _1, false));
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, noerror_callbacks));
     checkIssues();
 
@@ -196,7 +197,7 @@ TEST_F(ZoneCheckerTest, checkNSData) {
     // Same check, but disabling warning callback.  Same result, but without
     // the warning.
     ZoneCheckerCallbacks nowarn_callbacks(
-        boost::bind(&ZoneCheckerTest::callback, this, _1, true), 0);
+        std::bind(&ZoneCheckerTest::callback, this, _1, true), 0);
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, nowarn_callbacks));
     checkIssues();
 

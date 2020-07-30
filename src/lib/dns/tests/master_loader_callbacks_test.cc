@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,12 +15,13 @@
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
-#include <boost/bind.hpp>
+#include <functional>
 
 namespace {
 
 using std::string;
 using namespace isc::dns;
+  using namespace std::placeholders;
 
 class MasterLoaderCallbacksTest : public ::testing::Test {
 protected:
@@ -29,10 +30,10 @@ protected:
         issue_called_(false),
         rrset_(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
                          RRTTL(3600))),
-        error_(boost::bind(&MasterLoaderCallbacksTest::checkCallback, this,
-                           true, _1, _2, _3)),
-        warning_(boost::bind(&MasterLoaderCallbacksTest::checkCallback, this,
-                             false, _1, _2, _3)),
+        error_(std::bind(&MasterLoaderCallbacksTest::checkCallback, this,
+                         true, _1, _2, _3)),
+        warning_(std::bind(&MasterLoaderCallbacksTest::checkCallback, this,
+                           false, _1, _2, _3)),
         callbacks_(error_, warning_)
     {}
 

@@ -15,7 +15,7 @@ namespace isc {
 namespace process {
 
 /// @brief Defines a handler function for an IOSignal.
-typedef boost::function<void(int signum)> IOSignalHandler;
+typedef std::function<void(int signum)> IOSignalHandler;
 
 class IOSignalSetImpl;
 

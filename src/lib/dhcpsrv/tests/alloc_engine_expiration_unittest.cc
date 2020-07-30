@@ -13,9 +13,8 @@
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <gtest/gtest.h>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <boost/static_assert.hpp>
+#include <functional>
 #include <iomanip>
 #include <sstream>
 #include <time.h>
@@ -23,6 +22,7 @@
 #include <vector>
 
 using namespace std;
+using namespace std::placeholders;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -160,9 +160,9 @@ class ExpirationAllocEngineTest : public ::testing::Test {
 public:
 
     /// @brief Type definition for the lease algorithm.
-    typedef boost::function<bool (const LeasePtrType)> LeaseAlgorithmFun;
+    typedef std::function<bool (const LeasePtrType)> LeaseAlgorithmFun;
     /// @brief type definition for the lease index algorithm.
-    typedef boost::function<bool (const size_t)> IndexAlgorithmFun;
+    typedef std::function<bool (const size_t)> IndexAlgorithmFun;
 
     /// @brief Constructor.
     ///
@@ -232,7 +232,7 @@ public:
         D2ClientConfigPtr cfg(new D2ClientConfig());
         cfg->enableUpdates(true);
         mgr.setD2ClientConfig(cfg);
-        mgr.startSender(boost::bind(&ExpirationAllocEngineTest::d2ErrorHandler, _1, _2));
+        mgr.startSender(std::bind(&ExpirationAllocEngineTest::d2ErrorHandler, _1, _2));
     }
 
     /// @brief No-op error handler for the D2 client.

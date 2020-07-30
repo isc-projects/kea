@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,7 +43,7 @@ class ConnectionPool;
 /// using @ref TestServerUnixSocket::getResponseNum.
 ///
 /// This class uses @c shared_from_this() to pass its instance to the
-/// @c boost::bind function, thus the caller must store shared pointer
+/// @c std::bind function, thus the caller must store shared pointer
 /// to this object.
 class TestServerUnixSocket {
 public:

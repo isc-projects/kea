@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
-#include <boost/function.hpp>
+#include <functional>
 #include <map>
 #include <string>
 
@@ -79,7 +79,7 @@ public:
     /// @param name name of the commands
     /// @param params parameters specific to the command
     /// @return response (created with createAnswer())
-    typedef boost::function<isc::data::ConstElementPtr (const std::string& name,
+    typedef std::function<isc::data::ConstElementPtr (const std::string& name,
         const isc::data::ConstElementPtr& params)> CommandHandler;
 
     /// @brief Defines extended command handler type.
@@ -92,7 +92,7 @@ public:
     /// @param params parameters specific to the command
     /// @param original original control command.
     /// @return response (created with createAnswer())
-    typedef boost::function<isc::data::ConstElementPtr (const std::string& name,
+    typedef std::function<isc::data::ConstElementPtr (const std::string& name,
         const isc::data::ConstElementPtr& params,
         const isc::data::ConstElementPtr& original)> ExtendedCommandHandler;
 

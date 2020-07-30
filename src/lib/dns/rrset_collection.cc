@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <boost/bind.hpp>
+#include <functional>
 
 using namespace isc;
 
@@ -45,10 +45,11 @@ void
 RRsetCollection::constructHelper(T source, const isc::dns::Name& origin,
                                  const isc::dns::RRClass& rrclass)
 {
-    RRCollator collator(boost::bind(&RRsetCollection::addRRset, this, _1));
+    using namespace std::placeholders;
+    RRCollator collator(std::bind(&RRsetCollection::addRRset, this, _1));
     MasterLoaderCallbacks callbacks
-        (boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3),
-         boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3));
+        (std::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3),
+         std::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3));
     MasterLoader loader(source, origin, rrclass, callbacks,
                         collator.getCallback(),
                         MasterLoader::DEFAULT);
