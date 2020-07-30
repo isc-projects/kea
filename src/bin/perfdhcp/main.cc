@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,7 +33,7 @@ main(int argc, char* argv[]) {
         if (command_options.parse(argc, argv, true)) {
             return (ret_code);
         }
-    } catch(isc::Exception& e) {
+    } catch (const isc::Exception& e) {
         ret_code = 1;
         command_options.usage();
         std::cerr << "\nERROR: parsing command line options: "
@@ -53,7 +53,7 @@ main(int argc, char* argv[]) {
             AvalancheScen scen(command_options, socket);
             ret_code = scen.run();
         }
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         ret_code = 1;
         std::cerr << "\nERROR: running perfdhcp: " << e.what() << std::endl;
         if (diags.find('e') != std::string::npos) {

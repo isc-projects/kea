@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,7 +61,7 @@ public:
                 std::string queue_type ;
                 try {
                     queue_type = data::SimpleParser::getString(parameters, "queue-type");
-                } catch (std::exception& ex) {
+                } catch (const std::exception& ex) {
                     isc_throw(InvalidQueueParameter,
                               "queue-type missing or invalid: " << ex.what());
                 }

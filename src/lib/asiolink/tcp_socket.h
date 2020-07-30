@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -326,7 +326,7 @@ TCPSocket<C>::asyncSend(const void* data, size_t length, C& callback)
             socket_.async_send(boost::asio::buffer(send_buffer_->getData(),
                                                    send_buffer_->getLength()),
                                callback);
-        } catch (boost::numeric::bad_numeric_cast&) {
+        } catch (const boost::numeric::bad_numeric_cast&) {
             isc_throw(BufferTooLarge,
                       "attempt to send buffer larger than 64kB");
         }
@@ -358,7 +358,7 @@ TCPSocket<C>::asyncSend(const void* data, size_t length,
             // ... and send it
             socket_.async_send(boost::asio::buffer(send_buffer_->getData(),
                                send_buffer_->getLength()), callback);
-        } catch (boost::numeric::bad_numeric_cast&) {
+        } catch (const boost::numeric::bad_numeric_cast&) {
             isc_throw(BufferTooLarge,
                       "attempt to send buffer larger than 64kB");
         }

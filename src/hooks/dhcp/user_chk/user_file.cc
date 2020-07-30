@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,7 +72,7 @@ UserFile::makeUser(const std::string& user_string) {
     isc::data::ElementPtr elements;
     try {
         elements = isc::data::Element::fromJSON(user_string);
-    } catch (isc::data::JSONError& ex) {
+    } catch (const isc::data::JSONError& ex) {
         isc_throw(UserFileError,
                   "UserFile entry is malformed JSON: " << ex.what());
     }

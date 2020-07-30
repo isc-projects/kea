@@ -759,7 +759,7 @@ ControlledDhcpv6Srv::processCommand(const string& command,
         return (isc::config::createAnswer(1, "Unrecognized command:"
                                           + command));
 
-    } catch (const Exception& ex) {
+    } catch (const isc::Exception& ex) {
         return (isc::config::createAnswer(1, "Error while processing command '"
                                           + command + "':" + ex.what() +
                                           ", params: '" + txt + "'"));

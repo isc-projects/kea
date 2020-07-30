@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,7 @@ void raise_foobar() {
 TEST_F(ExceptionTest, basicMethods) {
     try {
         isc_throw(Exception, teststring);
-    } catch (Exception& ex) {
+    } catch (const Exception& ex) {
         EXPECT_EQ(ex.getMessage(), std::string(teststring));
         EXPECT_EQ(ex.getFile(), std::string(__FILE__));
         EXPECT_EQ(ex.getLine(), __LINE__ - 4);
@@ -43,7 +43,7 @@ TEST_F(ExceptionTest, basicMethods) {
 TEST_F(ExceptionTest, string) {
     try {
         isc_throw(Exception, std::string(teststring));
-    } catch (Exception& ex) {
+    } catch (const Exception& ex) {
         EXPECT_EQ(ex.getMessage(), std::string(teststring));
         EXPECT_EQ(ex.getFile(), std::string(__FILE__));
         EXPECT_EQ(ex.getLine(), __LINE__ - 4);
@@ -54,7 +54,7 @@ TEST_F(ExceptionTest, string) {
 TEST_F(ExceptionTest, stdInheritance) {
     try {
         isc_throw(Exception, teststring);
-    } catch (std::exception& ex) {
+    } catch (const std::exception& ex) {
         EXPECT_EQ(std::string(ex.what()), std::string(teststring));
     }
 }

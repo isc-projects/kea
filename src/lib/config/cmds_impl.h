@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,7 @@ protected:
             data::ConstElementPtr command;
             handle.getArgument("command", command);
             cmd_name_ = parseCommand(cmd_args_, command);
-        } catch (std::exception& ex) {
+        } catch (const std::exception& ex) {
             isc_throw(isc::BadValue, "JSON command text is invalid: " << ex.what());
         }
     }

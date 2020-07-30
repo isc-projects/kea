@@ -1777,7 +1777,7 @@ Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     uint32_t max_row_errors = 0;
     try {
         max_row_errors = boost::lexical_cast<uint32_t>(max_row_errors_str);
-    } catch (boost::bad_lexical_cast&) {
+    } catch (const boost::bad_lexical_cast&) {
         isc_throw(isc::BadValue, "invalid value of the max-row-errors "
                   << max_row_errors_str << " specified");
     }
@@ -1858,7 +1858,7 @@ Memfile_LeaseMgr::lfcSetup(bool conversion_needed) {
     uint32_t lfc_interval = 0;
     try {
         lfc_interval = boost::lexical_cast<uint32_t>(lfc_interval_str);
-    } catch (boost::bad_lexical_cast&) {
+    } catch (const boost::bad_lexical_cast&) {
         isc_throw(isc::BadValue, "invalid value of the lfc-interval "
                   << lfc_interval_str << " specified");
     }

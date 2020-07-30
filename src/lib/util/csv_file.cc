@@ -264,7 +264,7 @@ CSVFile::next(CSVRow& row, const bool skip_validation) {
         // Check that stream is "ready" for any IO operations.
         checkStreamStatusAndReset("get next row");
 
-    } catch (isc::Exception& ex) {
+    } catch (const isc::Exception& ex) {
         setReadMsg(ex.what());
         return (false);
     }

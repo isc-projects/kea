@@ -305,7 +305,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             try {
                 drop_time_[drop_time_set_] =
                     boost::lexical_cast<double>(optarg);
-            } catch (boost::bad_lexical_cast&) {
+            } catch (const boost::bad_lexical_cast&) {
                 isc_throw(isc::InvalidParameter,
                           "value of drop time: -d<value>"
                           " must be positive number");
@@ -325,7 +325,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                 try {
                     drop_percent =
                         boost::lexical_cast<double>(drop_arg.substr(0, percent_loc));
-                } catch (boost::bad_lexical_cast&) {
+                } catch (const boost::bad_lexical_cast&) {
                     isc_throw(isc::InvalidParameter,
                               "value of drop percentage: -D<value%>"
                               " must be 0..100");
@@ -474,7 +474,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             try {
                 code = boost::lexical_cast<int>(opt_text.substr(0,coma_loc));
                 check(code <= 0, "Option code can't be negative");
-            } catch (boost::bad_lexical_cast&) {
+            } catch (const boost::bad_lexical_cast&) {
                 isc_throw(InvalidParameter, "Invalid option code specified for "
                           "-o option, expected format: -o<integer>,<hexstring>");
             }
@@ -484,7 +484,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             std::vector<uint8_t> bin;
             try {
                 isc::util::encode::decodeHex(opt_text, bin);
-            } catch (BadValue& e) {
+            } catch (const BadValue& e) {
                 isc_throw(InvalidParameter, "Error during encoding option -o:"
                           << e.what());
             }
@@ -682,7 +682,7 @@ CommandOptions::initClientsNum() {
         long long clients_num = boost::lexical_cast<long long>(optarg);
         check(clients_num < 0, errmsg);
         clients_num_ = boost::lexical_cast<uint32_t>(optarg);
-    } catch (boost::bad_lexical_cast&) {
+    } catch (const boost::bad_lexical_cast&) {
         isc_throw(isc::InvalidParameter, errmsg);
     }
 }
@@ -736,7 +736,7 @@ CommandOptions::decodeMacBase(const std::string& base) {
             try {
                 // Do actual conversion
                 ui = convertHexString(token);
-            } catch (isc::InvalidParameter&) {
+            } catch (const isc::InvalidParameter&) {
                 isc_throw(isc::InvalidParameter,
                           "invalid characters in MAC provided");
 
@@ -769,7 +769,7 @@ CommandOptions::decodeDuid(const std::string& base) {
         try {
             // Do actual conversion
             ui = convertHexString(b.substr(i, 2));
-        } catch (isc::InvalidParameter&) {
+        } catch (const isc::InvalidParameter&) {
             isc_throw(isc::InvalidParameter,
                       "invalid characters in DUID provided,"
                       " expected hex digits");
@@ -886,7 +886,7 @@ bool CommandOptions::decodeMacString(const std::string& line) {
       try {
         // Do actual conversion
         ui = convertHexString(token);
-      } catch (isc::InvalidParameter&) {
+      } catch (const isc::InvalidParameter&) {
         return (true);
       }
       // If conversion succeeded store byte value
@@ -1007,7 +1007,7 @@ CommandOptions::positiveInteger(const std::string& errmsg) const {
         int value = boost::lexical_cast<int>(optarg);
         check(value <= 0, errmsg);
         return (value);
-    } catch (boost::bad_lexical_cast&) {
+    } catch (const boost::bad_lexical_cast&) {
         isc_throw(InvalidParameter, errmsg);
     }
 }
@@ -1018,7 +1018,7 @@ CommandOptions::nonNegativeInteger(const std::string& errmsg) const {
         int value = boost::lexical_cast<int>(optarg);
         check(value < 0, errmsg);
         return (value);
-    } catch (boost::bad_lexical_cast&) {
+    } catch (const boost::bad_lexical_cast&) {
         isc_throw(InvalidParameter, errmsg);
     }
 }

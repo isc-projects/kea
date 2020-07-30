@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -248,7 +248,7 @@ NameChangeRequest::fromFormat(const NameChangeFormat format,
             // NameChangeRequest instance.  Note the factory may throw
             // NcrMessageError.
             ncr = NameChangeRequest::fromJSON(string_data);
-        } catch (isc::util::InvalidBufferPosition& ex) {
+        } catch (const isc::util::InvalidBufferPosition& ex) {
             // Read error accessing data in InputBuffer.
             isc_throw(NcrMessageError, "fromFormat: buffer read error: "
                       << ex.what());
@@ -299,7 +299,7 @@ NameChangeRequest::fromJSON(const std::string& json) {
     isc::data::ElementPtr elements;
     try {
         elements = isc::data::Element::fromJSON(json);
-    } catch (isc::data::JSONError& ex) {
+    } catch (const isc::data::JSONError& ex) {
         isc_throw(NcrMessageError,
                   "Malformed NameChangeRequest JSON: " << ex.what());
     }
@@ -420,7 +420,7 @@ NameChangeRequest::setChangeType(isc::data::ConstElementPtr element) {
     try {
         // Get the element's integer value.
         raw_value = element->intValue();
-    } catch (isc::data::TypeError& ex) {
+    } catch (const isc::data::TypeError& ex) {
         // We expect a integer Element type, don't have one.
         isc_throw(NcrMessageError,
                   "Wrong data type for change_type: " << ex.what());
@@ -447,7 +447,7 @@ NameChangeRequest::setForwardChange(isc::data::ConstElementPtr element) {
     try {
         // Get the element's boolean value.
         value = element->boolValue();
-    } catch (isc::data::TypeError& ex) {
+    } catch (const isc::data::TypeError& ex) {
         // We expect a boolean Element type, don't have one.
         isc_throw(NcrMessageError,
                   "Wrong data type for forward-change: " << ex.what());
@@ -468,7 +468,7 @@ NameChangeRequest::setReverseChange(isc::data::ConstElementPtr element) {
     try {
         // Get the element's boolean value.
         value = element->boolValue();
-    } catch (isc::data::TypeError& ex) {
+    } catch (const isc::data::TypeError& ex) {
         // We expect a boolean Element type, don't have one.
         isc_throw(NcrMessageError,
                   "Wrong data type for reverse_change: " << ex.what());
@@ -532,7 +532,7 @@ void
 NameChangeRequest::setLeaseExpiresOn(const std::string&  value) {
     try {
         lease_expires_on_ = isc::util::timeFromText64(value);
-    } catch(...) {
+    } catch (...) {
         // We were given an invalid string, so throw.
         isc_throw(NcrMessageError,
             "Invalid date-time string: [" << value << "]");
@@ -556,7 +556,7 @@ NameChangeRequest::setLeaseLength(isc::data::ConstElementPtr element) {
     try {
         // Get the element's integer value.
         value = element->intValue();
-    } catch (isc::data::TypeError& ex) {
+    } catch (const isc::data::TypeError& ex) {
         // We expect a integer Element type, don't have one.
         isc_throw(NcrMessageError,
                   "Wrong data type for lease_length: " << ex.what());

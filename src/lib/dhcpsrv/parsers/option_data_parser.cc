@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -163,7 +163,7 @@ OptionDataParser::extractSpace(ConstElementPtr parent) const {
                       << "' option space name is reserved for DHCPv6 server");
         }
 
-    } catch (std::exception& ex) {
+    } catch (const std::exception& ex) {
         // Append position of the option space parameter.
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << getPosition("space", parent) << ")");

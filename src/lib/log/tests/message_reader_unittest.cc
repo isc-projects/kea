@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -83,7 +83,7 @@ processLineException(MessageReader& reader, const char* what,
         reader.processLine(what);
         FAIL() << "MessageReader::processLine() should throw an exception " <<
             " with message ID " << expected << " for '" << what << "'\n";
-    } catch (MessageException& e) {
+    } catch (const MessageException& e) {
         EXPECT_EQ(boost::lexical_cast<string>(expected),
             boost::lexical_cast<string>(e.id()));
     } catch (...) {

@@ -146,7 +146,7 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
             lease->setContext(ctx);
         }
 
-    } catch (std::exception& ex) {
+    } catch (const std::exception& ex) {
         // bump the read error count
         ++read_errs_;
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -210,7 +210,7 @@ int main(int argc, char** argv) {
             }
             try {
                 cur_opt.maxver = boost::lexical_cast<unsigned int>(optarg);
-            } catch (boost::bad_lexical_cast&) {
+            } catch (const boost::bad_lexical_cast&) {
                 std::cerr << "Maximum version (-m) argument must be a positive "
                              "integer\n";
                 return (1);
@@ -244,7 +244,7 @@ int main(int argc, char** argv) {
             }
             try {
                 cur_opt.maxsize = boost::lexical_cast<size_t>(optarg);
-            } catch (boost::bad_lexical_cast&) {
+            } catch (const boost::bad_lexical_cast&) {
                 std::cerr << "File size (-z) argument must be a positive "
                              "integer\n";
                 return (1);

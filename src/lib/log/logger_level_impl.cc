@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -163,7 +163,7 @@ LoggerLevelImpl::logLevelFromString(const log4cplus::tstring& level) {
                     }
                     return convertFromBindLevel(Level(DEBUG, dbglevel));
                 }
-                catch (boost::bad_lexical_cast&) {
+                catch (const boost::bad_lexical_cast&) {
                     LOG_ERROR(logger, LOGIMPL_BAD_DEBUG_STRING).arg(name);
                     return (NOT_SET_LOG_LEVEL);
                 }

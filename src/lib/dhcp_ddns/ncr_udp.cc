@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -102,7 +102,7 @@ NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
 
         // Bind the low level socket to our endpoint.
         asio_socket_->bind(endpoint.getASIOEndpoint());
-    } catch (boost::system::system_error& ex) {
+    } catch (const boost::system::system_error& ex) {
         asio_socket_.reset();
         isc_throw (NcrUDPError, ex.code().message());
     }
@@ -132,7 +132,7 @@ NameChangeUDPListener::close() {
         if (asio_socket_->is_open()) {
             try {
                 asio_socket_->close();
-            } catch (boost::system::system_error& ex) {
+            } catch (const boost::system::system_error& ex) {
                 // It is really unlikely that this will occur.
                 // If we do reopen later it will be with a new socket
                 // instance. Repackage exception as one that is conformant
@@ -237,7 +237,7 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
 
         // Bind the low level socket to our endpoint.
         asio_socket_->bind(endpoint.getASIOEndpoint());
-    } catch (boost::system::system_error& ex) {
+    } catch (const boost::system::system_error& ex) {
         isc_throw (NcrUDPError, ex.code().message());
     }
 
@@ -265,7 +265,7 @@ NameChangeUDPSender::close() {
         if (asio_socket_->is_open()) {
             try {
                 asio_socket_->close();
-            } catch (boost::system::system_error& ex) {
+            } catch (const boost::system::system_error& ex) {
                 // It is really unlikely that this will occur.
                 // If we do reopen later it will be with a new socket
                 // instance. Repackage exception as one that is conformant
