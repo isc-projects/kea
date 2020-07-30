@@ -881,7 +881,7 @@ LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
                          s.str(), args);
         setResponse(handle, response);
 
-    } catch (std::exception& ex) {
+    } catch (const std::exception& ex) {
         setErrorResponse(handle, ex.what());
         return (CONTROL_RESULT_ERROR);
     }
