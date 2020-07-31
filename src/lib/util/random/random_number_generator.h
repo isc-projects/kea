@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -92,12 +92,12 @@ class WeightedRandomIntegerGenerator {
 public:
     /// \brief Constructor
     ///
-    /// \param probabilities The probabilities for all the integers, the probability must be 
+    /// \param probabilities The probabilities for all the integers, the probability must be
     /// between 0 and 1.0, the sum of probabilities must be equal to 1.
     /// For example, if the probabilities contains the following values:
     /// 0.5 0.3 0.2, the 1st integer will be generated more frequently than the
     /// other integers and the probability is proportional to its value.
-    /// \param min The minimum integer that generated, other integers will be 
+    /// \param min The minimum integer that generated, other integers will be
     /// min, min + 1, ..., min + probabilities.size() - 1
     WeightedRandomIntegerGenerator(const std::vector<double>& probabilities,
         size_t min = 0):
@@ -105,7 +105,7 @@ public:
     {
         // The probabilities must be valid.  Checking is quite an expensive
         // operation, so is only done in a debug build.
-        assert(areProbabilitiesValid(probabilities));
+        areProbabilitiesValid(probabilities);
 
         // Calculate the partial sum of probabilities
         std::partial_sum(probabilities.begin(), probabilities.end(),
@@ -129,7 +129,7 @@ public:
     void reset(const std::vector<double>& probabilities, size_t min = 0)
     {
         // The probabilities must be valid.
-        assert(areProbabilitiesValid(probabilities));
+        areProbabilitiesValid(probabilities);
 
         // Reset the cumulative sum
         cumulative_.clear();
@@ -145,7 +145,7 @@ public:
     /// \brief Generate weighted random integer
     size_t operator()()
     {
-        return std::lower_bound(cumulative_.begin(), cumulative_.end(), uniform_real_gen_()) 
+        return std::lower_bound(cumulative_.begin(), cumulative_.end(), uniform_real_gen_())
             - cumulative_.begin() + min_;
     }
 
@@ -161,31 +161,31 @@ private:
     /// error, an exception is thrown.  This makes unit testing somewhat easier.
     ///
     /// \param probabilities Vector of probabilities.
-    bool areProbabilitiesValid(const std::vector<double>& probabilities) const
+    /// \throw InvalidProbValue or SumNotOne when not valid.
+    void areProbabilitiesValid(const std::vector<double>& probabilities) const
     {
-        typedef std::vector<double>::const_iterator Iterator;
         double sum = probabilities.empty() ? 1.0 : 0.0;
-        for(Iterator it = probabilities.begin(); it != probabilities.end(); ++it){
+        for (const double it : probabilities) {
             //The probability must be in [0, 1.0]
-            if(*it < 0.0 || *it > 1.0) {
+            if (it < 0.0 || it > 1.0) {
                 isc_throw(InvalidProbValue,
                           "probability must be in the range 0..1");
             }
 
-            sum += *it;
+            sum += it;
         }
 
         double epsilon = 0.0001;
         // The sum must be equal to 1
-       if (std::fabs(sum - 1.0) >= epsilon) {
-           isc_throw(SumNotOne, "Sum of probabilities is not equal to 1");
-       }
+        if (std::fabs(sum - 1.0) >= epsilon) {
+            isc_throw(SumNotOne, "Sum of probabilities is not equal to 1");
+        }
 
-       return true;
+        return;
     }
 
     std::vector<double> cumulative_;    ///< Partial sum of the probabilities
-    boost::mt19937 rng_;                ///< Mersenne Twister: A 623-dimensionally equidistributed uniform pseudo-random number generator 
+    boost::mt19937 rng_;                ///< Mersenne Twister: A 623-dimensionally equidistributed uniform pseudo-random number generator
     boost::uniform_real<> dist_;        ///< Uniformly distributed real numbers
 
     // Shortcut typedef

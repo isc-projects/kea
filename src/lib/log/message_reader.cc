@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <cassert>
 #include <errno.h>
 #include <string.h>
 #include <iostream>
@@ -14,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 
+#include <exceptions/isc_assert.h>
 #include <log/log_messages.h>
 #include <log/message_exception.h>
 #include <log/message_reader.h>
@@ -121,7 +121,7 @@ void
 MessageReader::parsePrefix(const vector<string>& tokens) {
 
     // Should not get here unless there is something in the tokens array.
-    assert(!tokens.empty());
+    isc_throw_assert(!tokens.empty());
 
     // Process $PREFIX.  With no arguments, the prefix is set to the empty
     // string.  One argument sets the prefix to the to its value and more than
@@ -219,7 +219,7 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
 
     // The line passed should be at least one character long and start with the
     // message introducer (else we should not have got here).
-    assert((text.size() >= 1) && (text[0] == MESSAGE_FLAG));
+    isc_throw_assert((text.size() >= 1) && (text[0] == MESSAGE_FLAG));
 
     // A line comprising just the message introducer is not valid.
     if (text.size() == 1) {

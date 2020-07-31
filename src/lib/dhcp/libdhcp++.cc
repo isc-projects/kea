@@ -18,6 +18,7 @@
 #include <dhcp/std_option_defs.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <exceptions/exceptions.h>
+#include <exceptions/isc_assert.h>
 #include <util/buffer.h>
 
 #include <boost/lexical_cast.hpp>
@@ -433,7 +434,7 @@ LibDHCP::unpackOptions6(const OptionBuffer& buf,
                 // The option definition has been found. Use it to create
                 // the option instance from the provided buffer chunk.
                 const OptionDefinitionPtr& def = *(range.first);
-                assert(def);
+                isc_throw_assert(def);
                 opt = def->optionFactory(Option::V6, opt_type,
                                          buf.begin() + offset,
                                          buf.begin() + offset + opt_len);
@@ -586,7 +587,7 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf,
                 // The option definition has been found. Use it to create
                 // the option instance from the provided buffer chunk.
                 const OptionDefinitionPtr& def = *(range.first);
-                assert(def);
+                isc_throw_assert(def);
                 opt = def->optionFactory(Option::V4, opt_type,
                                          buf.begin() + offset,
                                          buf.begin() + offset + opt_len);
@@ -675,7 +676,7 @@ LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
                 // The option definition has been found. Use it to create
                 // the option instance from the provided buffer chunk.
                 const OptionDefinitionPtr& def = *(range.first);
-                assert(def);
+                isc_throw_assert(def);
                 opt = def->optionFactory(Option::V6, opt_type,
                                          buf.begin() + offset,
                                          buf.begin() + offset + opt_len);
@@ -786,7 +787,7 @@ LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffer& buf,
                     // The option definition has been found. Use it to create
                     // the option instance from the provided buffer chunk.
                     const OptionDefinitionPtr& def = *(range.first);
-                    assert(def);
+                    isc_throw_assert(def);
                     opt = def->optionFactory(Option::V4, opt_type,
                                              buf.begin() + offset,
                                              buf.begin() + offset + opt_len);

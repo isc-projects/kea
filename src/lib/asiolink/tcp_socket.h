@@ -16,7 +16,6 @@
 #include <unistd.h>             // for some IPC/network system calls
 
 #include <algorithm>
-#include <cassert>
 #include <cstddef>
 
 #include <boost/numeric/conversion/cast.hpp>
@@ -28,6 +27,8 @@
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_service.h>
 #include <asiolink/tcp_endpoint.h>
+
+#include <exceptions/isc_assert.h>
 
 namespace isc {
 namespace asiolink {
@@ -299,7 +300,7 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
     // IOEndpoint is the base class of UDPEndpoint and TCPEndpoint, it does not
     // contain a method for getting at the underlying endpoint type - that is in
     /// the derived class and the two classes differ on return type.
-    assert(endpoint->getProtocol() == IPPROTO_TCP);
+    isc_throw_assert(endpoint->getProtocol() == IPPROTO_TCP);
     const TCPEndpoint* tcp_endpoint =
         static_cast<const TCPEndpoint*>(endpoint);
 
@@ -381,7 +382,7 @@ TCPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
         // does not contain a method for getting at the underlying endpoint
         // type - that is in the derived class and the two classes differ on
         // return type.
-        assert(endpoint->getProtocol() == IPPROTO_TCP);
+        isc_throw_assert(endpoint->getProtocol() == IPPROTO_TCP);
         TCPEndpoint* tcp_endpoint = static_cast<TCPEndpoint*>(endpoint);
 
         // Write the endpoint details from the communications link.  Ideally

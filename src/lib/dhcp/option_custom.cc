@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_custom.h>
+#include <exceptions/isc_assert.h>
 #include <util/encode/hex.h>
 
 using namespace isc::asiolink;
@@ -316,7 +317,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                 // Code copied from the standard array case
                 size_t data_size = bufferLength(fields.back(), true,
                                                 data, data_buf.end());
-                assert(data_size > 0);
+                isc_throw_assert(data_size > 0);
                 if (std::distance(data, data_buf.end()) < data_size) {
                     break;
                 }
@@ -355,7 +356,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                 // etc. This is because OptionDefinition::validate function should
                 // have checked this already. Thus data_size must be greater than
                 // zero.
-                assert(data_size > 0);
+                isc_throw_assert(data_size > 0);
                 // Get chunks of data and store as a collection of buffers.
                 // Truncate any remaining part which length is not divisible by
                 // data_size. Note that it is ok to truncate the data if and only

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,6 @@
 #include <csignal>
 #include <cstddef>
 #include <cstring>
-#include <cassert>
 
 #include <string>
 #include <vector>
@@ -30,6 +29,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <exceptions/exceptions.h>
+#include <exceptions/isc_assert.h>
 
 #include <util/buffer.h>
 
@@ -105,7 +105,7 @@ SocketSessionForwarder::SocketSessionForwarder(const std::string& unix_file) :
     memset(&impl.sock_un_.sun_path, 0, sizeof(impl.sock_un_.sun_path));
     strncpy(impl.sock_un_.sun_path, unix_file.c_str(),
             sizeof(impl.sock_un_.sun_path) - 1);
-    assert(impl.sock_un_.sun_path[sizeof(impl.sock_un_.sun_path) - 1] == '\0');
+    isc_throw_assert(impl.sock_un_.sun_path[sizeof(impl.sock_un_.sun_path) - 1] == '\0');
     impl.sock_un_len_ = offsetof(struct sockaddr_un, sun_path) +
         unix_file.length();
 #ifdef HAVE_SA_LEN
@@ -232,7 +232,7 @@ SocketSessionForwarder::push(int sock, int family, int type, int protocol,
     impl_->buf_.writeData(&remote_end, getSALength(remote_end));
     // Data length.  Must be fit uint32 due to the range check above.
     const uint32_t data_len32 = static_cast<uint32_t>(data_len);
-    assert(data_len == data_len32); // shouldn't cause overflow.
+    isc_throw_assert(data_len == data_len32); // shouldn't cause overflow.
     impl_->buf_.writeUint32(data_len32);
     // Write the resulting header length at the beginning of the buffer
     impl_->buf_.writeUint16At(impl_->buf_.getLength() - sizeof(uint16_t), 0);

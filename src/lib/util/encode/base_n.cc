@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <util/encode/base64.h>
 
 #include <exceptions/exceptions.h>
+#include <exceptions/isc_assert.h>
 
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
@@ -26,7 +27,6 @@
 
 #include <stdint.h>
 #include <stdexcept>
-#include <cassert>
 #include <iterator>
 #include <string>
 #include <vector>
@@ -308,7 +308,7 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::encode(
     result.reserve(len);
     result.assign(Encoder(EncodeNormalizer(binary.begin(), binary.end())),
                   Encoder(EncodeNormalizer(binary.end(), binary.end())));
-    assert(len >= result.length());
+    isc_throw_assert(len >= result.length());
     result.append(len - result.length(), BASE_PADDING_CHAR);
     return (result);
 }
@@ -402,7 +402,7 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
     // data, that is, that the first byte of padding is indeed 0.
     // (DecodeNormalizer and binary_from_baseXX ensure that the rest of the
     // padding is all zero).
-    assert(result.size() >= padbytes);
+    isc_throw_assert(result.size() >= padbytes);
     if (padbytes > 0 && *(result.end() - padbytes) != 0) {
             isc_throw(BadValue, "Non 0 bits included in " << algorithm
                       << " padding: " << input);

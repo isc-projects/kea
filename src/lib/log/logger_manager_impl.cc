@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,6 +27,8 @@
 #include <log/logger_name.h>
 #include <log/logger_specification.h>
 #include <log/buffer_appender_impl.h>
+
+#include <exceptions/isc_assert.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -275,7 +277,7 @@ void LoggerManagerImpl::flushBufferAppenders() {
     for (it = copy.begin(); it != copy.end(); ++it) {
         internal::BufferAppender* app =
             dynamic_cast<internal::BufferAppender*>(it->get());
-        assert(app != NULL);
+        isc_throw_assert(app);
         app->flush();
     }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
+#include <exceptions/isc_assert.h>
 #include <util/io_utilities.h>
 
 namespace isc {
@@ -256,7 +257,7 @@ public:
         checkDataType<T>(index);
         // When we created the buffer we have checked that it has a
         // valid size so this condition here should be always fulfilled.
-        assert(buffers_[index].size() == OptionDataTypeTraits<T>::len);
+        isc_throw_assert(buffers_[index].size() == OptionDataTypeTraits<T>::len);
         // Read an integer value.
         return (OptionDataTypeUtil::readInt<T>(buffers_[index]));
     }
@@ -490,7 +491,7 @@ OptionCustom::checkDataType(const uint32_t index) const {
             // When we initialized buffers we have already checked that
             // the number of these buffers is equal to number of option
             // fields in the record so the condition below should be met.
-            assert(index < record_fields.size());
+            isc_throw_assert(index < record_fields.size());
             // Get the data type to be returned.
             data_type = record_fields[index];
         }

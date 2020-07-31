@@ -394,10 +394,12 @@ IOFetch::stop(Result result) {
 void IOFetch::logIOFailure(boost::system::error_code ec) {
 
     // Should only get here with a known error code.
-    assert((data_->origin == ASIODNS_OPEN_SOCKET) ||
-           (data_->origin == ASIODNS_SEND_DATA) ||
-           (data_->origin == ASIODNS_READ_DATA) ||
-           (data_->origin == ASIODNS_UNKNOWN_ORIGIN));
+    if ((data_->origin != ASIODNS_OPEN_SOCKET) &&
+        (data_->origin != ASIODNS_SEND_DATA) &&
+        (data_->origin != ASIODNS_READ_DATA) &&
+        (data_->origin != ASIODNS_UNKNOWN_ORIGIN)) {
+        isc_throw(isc::Unexpected, "impossible error code " << data_->origin);
+    }
 
     LOG_ERROR(logger, data_->origin).arg(ec.value()).
         arg((data_->remote_snd->getProtocol() == IPPROTO_TCP) ?

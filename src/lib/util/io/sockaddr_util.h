@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#include <cassert>
+#include <exceptions/isc_assert.h>
 
 // These definitions in this file are for the convenience of internal
 // implementation and test code, and are not intended to be used publicly.
@@ -27,7 +27,7 @@ getSALength(const struct sockaddr& sa) {
     if (sa.sa_family == AF_INET) {
         return (sizeof(struct sockaddr_in));
     } else {
-        assert(sa.sa_family == AF_INET6);
+        isc_throw_assert(sa.sa_family == AF_INET6);
         return (sizeof(struct sockaddr_in6));
     }
 }

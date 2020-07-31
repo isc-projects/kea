@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -152,7 +152,9 @@ D2UpdateMessage::fromWire(const void* received_data, size_t bytes_received,
         // If the Zone counter is greater than 0 (which we have checked)
         // there must be a valid Question pointer stored in the message_
         // object. If there isn't, it is a programming error.
-        assert(question);
+        if (!question) {
+            isc_throw(isc::Unexpected, "question is null?!");
+        }
         zone_.reset(new D2Zone(question->getName(), question->getClass()));
 
     } else {
@@ -226,4 +228,3 @@ D2UpdateMessage::validateResponse() const {
 
 } // namespace d2
 } // namespace isc
-

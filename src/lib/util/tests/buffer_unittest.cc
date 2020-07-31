@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -181,21 +181,7 @@ TEST_F(BufferTest, outputBufferReadAt) {
     for (int i = 0; i < sizeof(testdata); i ++) {
         EXPECT_EQ(testdata[i], obuffer[i]);
     }
-#ifdef EXPECT_DEATH
-    // We use assert now, so we check it dies
-    if (!isc::util::unittests::runningOnValgrind()) {
-        EXPECT_DEATH({
-            isc::util::unittests::dontCreateCoreDumps();
-
-            try {
-                obuffer[sizeof(testdata)];
-            } catch (...) {
-                // Prevent exceptions killing the application, we need
-                // to make sure it dies the real hard way
-            }
-            }, "");
-    }
-#endif
+    EXPECT_THROW(obuffer[sizeof(testdata)], isc::util::InvalidBufferPosition);
 }
 
 TEST_F(BufferTest, outputBufferClear) {

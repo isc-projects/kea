@@ -11,7 +11,7 @@
 
 //  See http://www.boost.org for updates, documentation, and revision history.
 
-#include <cassert>
+#include <exceptions/isc_assert.h>
 
 #include <cstddef> // size_t
 #include <boost/config.hpp> // for BOOST_DEDUCED_TYPENAME
@@ -42,7 +42,7 @@ struct from_5_bit {
         const char * lookup_table = 
             "0123456789"
             "ABCDEFGHIJKLMNOPQRSTUV";
-        assert(t < 32);
+        isc_throw_assert(t < 32);
         return (lookup_table[static_cast<size_t>(t)]);
     }
 };

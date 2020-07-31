@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,8 @@
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_service.h>
 #include <asiolink/udp_endpoint.h>
+
+#include <exceptions/isc_assert.h>
 
 namespace isc {
 namespace asiolink {
@@ -228,7 +230,7 @@ UDPSocket<C>::asyncSend(const void* data, size_t length,
         // does not contain a method for getting at the underlying endpoint
         // type - that is in the derived class and the two classes differ on
         // return type.
-        assert(endpoint->getProtocol() == IPPROTO_UDP);
+        isc_throw_assert(endpoint->getProtocol() == IPPROTO_UDP);
         const UDPEndpoint* udp_endpoint =
             static_cast<const UDPEndpoint*>(endpoint);
 
@@ -251,7 +253,7 @@ UDPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
     if (isopen_) {
 
         // Upconvert the endpoint again.
-        assert(endpoint->getProtocol() == IPPROTO_UDP);
+        isc_throw_assert(endpoint->getProtocol() == IPPROTO_UDP);
         UDPEndpoint* udp_endpoint = static_cast<UDPEndpoint*>(endpoint);
 
         // Ensure we can write into the buffer

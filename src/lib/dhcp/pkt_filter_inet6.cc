@@ -9,6 +9,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter_inet6.h>
+#include <exceptions/isc_assert.h>
 #include <util/io/pktinfo_utilities.h>
 
 #include <fcntl.h>
@@ -305,7 +306,7 @@ PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
     // CMSG_FIRSTHDR() is coded to return NULL as a possibility.  The
     // following assertion should never fail, but if it did and you came
     // here, fix the code. :)
-    assert(cmsg != NULL);
+    isc_throw_assert(cmsg != NULL);
 
     cmsg->cmsg_level = IPPROTO_IPV6;
     cmsg->cmsg_type = IPV6_PKTINFO;
