@@ -46,10 +46,6 @@ Kea 1.7.10 (development) released on Jul 29, 2020
 	by LFC process observed on some systems.
 	(Gitlab #1311)
 
-1771.	[func]		fdupont
-	Added a stats-recount command to kea-admin tool, which recounts
-	cached statistics in MySQL and PostgreSQL lease databases.
-
 1770.	[func]		fdupont
 	Added kea-admin lease-stat-recount command which recounts cached
 	statistics in MySQL and PostgreSQL lease databases.
@@ -300,7 +296,7 @@ Kea 1.7.6 (development) released on Mar 25, 2020
 
 1732.	[func]		marcin
 	Client classes specified within host reservations can be used
-	to influence subnet selection within a shared network and pool
+	to influence subnet choice within a shared network and pool
 	selection within a subnet.
 	(Gitlab #1139)
 
