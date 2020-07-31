@@ -61,9 +61,8 @@ void Daemon::shutdown() {
 }
 
 void Daemon::handleSignal() {
-    using namespace std::placeholders;
     if (signal_set_ && signal_handler_) {
-        signal_set_->handleNext(std::bind(signal_handler_, _1));
+        signal_set_->handleNext(std::bind(signal_handler_, std::placeholders::_1));
     }
 }
 
@@ -251,5 +250,5 @@ Daemon::writeConfigFile(const std::string& config_file,
     return (bytes);
 }
 
-};
-};
+}
+}

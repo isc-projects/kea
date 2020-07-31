@@ -31,12 +31,12 @@
 #include <unistd.h>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using boost::scoped_ptr;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -1854,7 +1854,7 @@ TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
     // should be called when the IfaceMgr fails to open socket on an interface
     // on which the server is configured to listen.
     isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
-        std::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, _1);
+        std::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, ph::_1);
 
     ASSERT_NO_THROW(IfaceMgr::instance().openSockets4(DHCP4_SERVER_PORT, true,
                                                       error_handler));
@@ -1957,7 +1957,7 @@ TEST_F(IfaceMgrTest, openSocket4ErrorHandler) {
     // Install an error handler before trying to open sockets. This handler
     // should be called when the IfaceMgr fails to open socket on eth0.
     isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
-        std::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, _1);
+        std::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, ph::_1);
     // The openSockets4 should detect that there is another socket already
     // open and bound to the same address and port. An attempt to open
     // another socket and bind to this address and port should fail.
@@ -2297,7 +2297,7 @@ TEST_F(IfaceMgrTest, openSockets6IfaceDown) {
     // Install an error handler before trying to open sockets. This handler
     // should be called when the IfaceMgr fails to open socket on eth0.
     isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
-        std::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, _1);
+        std::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, ph::_1);
 
     // Simulate opening sockets using the dummy packet filter.
     bool success = false;
@@ -2424,7 +2424,7 @@ TEST_F(IfaceMgrTest, openSocket6ErrorHandler) {
     // Install an error handler before trying to open sockets. This handler
     // should be called when the IfaceMgr fails to open socket on eth0.
     isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
-        std::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, _1);
+        std::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, ph::_1);
     // The openSockets6 should detect that a socket has been already
     // opened on eth0 and an attempt to open another socket and bind to
     // the same address and port should fail.

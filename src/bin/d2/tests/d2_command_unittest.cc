@@ -26,7 +26,6 @@
 #include <unistd.h>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
@@ -35,6 +34,7 @@ using namespace isc::data;
 using namespace isc::dhcp::test;
 using namespace isc::process;
 using namespace boost::asio;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace d2 {
@@ -1161,7 +1161,7 @@ TEST_F(CtrlChannelD2Test, longCommand) {
     ASSERT_NO_THROW(
         CommandMgr::instance().registerCommand("foo",
             std::bind(&CtrlChannelD2Test::longCommandHandler,
-                      command.str(), _1, _2));
+                      command.str(), ph::_1, ph::_2));
     );
 
     createUnixChannelServer();
@@ -1219,7 +1219,7 @@ TEST_F(CtrlChannelD2Test, longResponse) {
     // of a desired size
     ASSERT_NO_THROW(
         CommandMgr::instance().registerCommand("foo",
-            std::bind(&CtrlChannelD2Test::longResponseHandler, _1, _2));
+            std::bind(&CtrlChannelD2Test::longResponseHandler, ph::_1, ph::_2));
     );
 
     createUnixChannelServer();

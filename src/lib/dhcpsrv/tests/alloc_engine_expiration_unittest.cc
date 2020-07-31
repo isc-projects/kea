@@ -22,7 +22,6 @@
 #include <vector>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -30,6 +29,7 @@ using namespace isc::dhcp::test;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::stats;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -232,7 +232,7 @@ public:
         D2ClientConfigPtr cfg(new D2ClientConfig());
         cfg->enableUpdates(true);
         mgr.setD2ClientConfig(cfg);
-        mgr.startSender(std::bind(&ExpirationAllocEngineTest::d2ErrorHandler, _1, _2));
+        mgr.startSender(std::bind(&ExpirationAllocEngineTest::d2ErrorHandler, ph::_1, ph::_2));
     }
 
     /// @brief No-op error handler for the D2 client.

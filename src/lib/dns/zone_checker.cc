@@ -175,10 +175,9 @@ bool
 checkZone(const Name& zone_name, const RRClass& zone_class,
           const RRsetCollectionBase& zone_rrsets,
           const ZoneCheckerCallbacks& callbacks) {
-    using namespace std::placeholders;
     bool had_error = false;
     ZoneCheckerCallbacks my_callbacks(
-        std::bind(errorWrapper, _1, &callbacks, &had_error),
+        std::bind(errorWrapper, std::placeholders::_1, &callbacks, &had_error),
         std::bind(&ZoneCheckerCallbacks::warn, &callbacks, _1));
 
     checkSOA(zone_name, zone_class, zone_rrsets, my_callbacks);

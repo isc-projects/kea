@@ -82,9 +82,10 @@ IOSignalSetImpl::callback(const boost::system::error_code& ec, int signum) {
 
 void
 IOSignalSetImpl::install() {
-    using namespace std::placeholders;
     signal_set_.async_wait(std::bind(&IOSignalSetImpl::callback,
-                                     shared_from_this(), _1, _2));
+                                     shared_from_this(),
+                                     std::placeholders::_1,
+                                     std::placeholders::_2));
 }
 
 void
@@ -113,5 +114,5 @@ IOSignalSet::add(int signum) {
     impl_->add(signum);
 }
 
-}; // end of isc::process namespace
-}; // end of isc namespace
+} // end of isc::process namespace
+} // end of isc namespace

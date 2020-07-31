@@ -31,7 +31,7 @@
 using isc::Unexpected;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -47,8 +47,8 @@ protected:
         zname_("example.com"), zclass_(RRClass::IN()),
         soa_(new RRset(zname_, zclass_, RRType::SOA(), RRTTL(60))),
         ns_(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60))),
-        callbacks_(std::bind(&ZoneCheckerTest::callback, this, _1, true),
-                   std::bind(&ZoneCheckerTest::callback, this, _1, false))
+        callbacks_(std::bind(&ZoneCheckerTest::callback, this, ph::_1, true),
+                   std::bind(&ZoneCheckerTest::callback, this, ph::_1, false))
     {
         std::stringstream ss;
         ss << "example.com. 60 IN SOA " << soa_txt << "\n";
@@ -133,7 +133,7 @@ TEST_F(ZoneCheckerTest, checkSOA) {
     // If null callback is specified, checkZone() only returns the final
     // result.
     ZoneCheckerCallbacks noerror_callbacks(
-        0, std::bind(&ZoneCheckerTest::callback, this, _1, false));
+        0, std::bind(&ZoneCheckerTest::callback, this, ph::_1, false));
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, noerror_callbacks));
     checkIssues();
 
@@ -197,7 +197,7 @@ TEST_F(ZoneCheckerTest, checkNSData) {
     // Same check, but disabling warning callback.  Same result, but without
     // the warning.
     ZoneCheckerCallbacks nowarn_callbacks(
-        std::bind(&ZoneCheckerTest::callback, this, _1, true), 0);
+        std::bind(&ZoneCheckerTest::callback, this, ph::_1, true), 0);
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, nowarn_callbacks));
     checkIssues();
 

@@ -16,6 +16,7 @@
 #include <functional>
 
 using namespace isc;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace dns {
@@ -45,11 +46,10 @@ void
 RRsetCollection::constructHelper(T source, const isc::dns::Name& origin,
                                  const isc::dns::RRClass& rrclass)
 {
-    using namespace std::placeholders;
-    RRCollator collator(std::bind(&RRsetCollection::addRRset, this, _1));
+    RRCollator collator(std::bind(&RRsetCollection::addRRset, this, ph::_1));
     MasterLoaderCallbacks callbacks
-        (std::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3),
-         std::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3));
+        (std::bind(&RRsetCollection::loaderCallback, this, ph::_1, ph::_2, ph::_3),
+         std::bind(&RRsetCollection::loaderCallback, this, ph::_1, ph::_2, ph::_3));
     MasterLoader loader(source, origin, rrclass, callbacks,
                         collator.getCallback(),
                         MasterLoader::DEFAULT);

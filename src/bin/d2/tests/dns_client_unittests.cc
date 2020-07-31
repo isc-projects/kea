@@ -19,7 +19,6 @@
 #include <functional>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
@@ -30,6 +29,8 @@ using namespace isc::dns;
 using namespace isc::util;
 using namespace boost::asio;
 using namespace boost::asio::ip;
+
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -373,7 +374,7 @@ public:
                                                    sizeof(receive_buffer_)),
                                       remote,
                                       std::bind(&DNSClientTest::udpReceiveHandler,
-                                                this, &udp_socket, &remote, _2,
+                                                this, &udp_socket, &remote, ph::_2,
                                                 corrupt_response));
 
         // The socket is now ready to receive the data. Let's post some request
@@ -434,7 +435,7 @@ public:
                                       remote,
                                       std::bind(&DNSClientTest::
                                                 TSIGReceiveHandler, this,
-                                                &udp_socket, &remote, _2,
+                                                &udp_socket, &remote, ph::_2,
                                                 client_key, server_key));
 
         // The socket is now ready to receive the data. Let's post some request

@@ -21,7 +21,7 @@ namespace {
 
 using std::string;
 using namespace isc::dns;
-  using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 class MasterLoaderCallbacksTest : public ::testing::Test {
 protected:
@@ -31,9 +31,9 @@ protected:
         rrset_(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
                          RRTTL(3600))),
         error_(std::bind(&MasterLoaderCallbacksTest::checkCallback, this,
-                         true, _1, _2, _3)),
+                         true, ph::_1, ph::_2, ph::_3)),
         warning_(std::bind(&MasterLoaderCallbacksTest::checkCallback, this,
-                           false, _1, _2, _3)),
+                           false, ph::_1, ph::_2, ph::_3)),
         callbacks_(error_, warning_)
     {}
 

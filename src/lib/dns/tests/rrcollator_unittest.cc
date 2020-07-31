@@ -26,7 +26,7 @@
 using std::vector;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -46,7 +46,7 @@ protected:
     RRCollatorTest() :
         origin_("example.com"), rrclass_(RRClass::IN()), rrttl_(3600),
         throw_from_callback_(false),
-        collator_(std::bind(addRRset, _1, &rrsets_, &throw_from_callback_)),
+        collator_(std::bind(addRRset, ph::_1, &rrsets_, &throw_from_callback_)),
         rr_callback_(collator_.getCallback()),
         a_rdata1_(createRdata(RRType::A(), rrclass_, "192.0.2.1")),
         a_rdata2_(createRdata(RRType::A(), rrclass_, "192.0.2.2")),

@@ -28,12 +28,12 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 using isc::UnitTestUtil;
 using isc::util::unittests::matchWireData;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace dns {
@@ -137,9 +137,9 @@ TEST_F(RdataTest, createRdataWithLexer) {
     CreateRdataCallback callback;
     MasterLoaderCallbacks callbacks(
         std::bind(&CreateRdataCallback::callback, &callback,
-                  CreateRdataCallback::ERROR, _1, _2, _3),
+                  CreateRdataCallback::ERROR, ph::_1, ph::_2, ph::_3),
         std::bind(&CreateRdataCallback::callback, &callback,
-                  CreateRdataCallback::WARN,  _1, _2, _3));
+                  CreateRdataCallback::WARN,  ph::_1, ph::_2, ph::_3));
 
     size_t line = 0;
 

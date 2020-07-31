@@ -11,8 +11,9 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <functional>
 #include <iostream>
+
 using namespace boost::asio::local;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace asiolink {
@@ -167,7 +168,7 @@ UnixDomainSocketImpl::asyncConnect(const stream_protocol::endpoint& endpoint,
                                    const UnixDomainSocket::ConnectHandler& handler) {
     auto local_handler = std::bind(&UnixDomainSocketImpl::connectHandler,
                                    shared_from_this(),
-                                   handler, _1);
+                                   handler, ph::_1);
     socket_.async_connect(endpoint, local_handler);
 }
 
@@ -197,7 +198,7 @@ UnixDomainSocketImpl::doSend(const boost::asio::const_buffers_1& buffer,
                              const UnixDomainSocket::Handler& handler) {
     auto local_handler = std::bind(&UnixDomainSocketImpl::sendHandler,
                                    shared_from_this(),
-                                   handler, buffer, _1, _2);
+                                   handler, buffer, ph::_1, ph::_2);
     socket_.async_send(buffer, local_handler);
 }
 
@@ -230,7 +231,7 @@ UnixDomainSocketImpl::doReceive(const boost::asio::mutable_buffers_1& buffer,
                                 const UnixDomainSocket::Handler& handler) {
     auto local_handler = std::bind(&UnixDomainSocketImpl::receiveHandler,
                                    shared_from_this(),
-                                   handler, buffer, _1, _2);
+                                   handler, buffer, ph::_1, ph::_2);
     socket_.async_receive(buffer, 0, local_handler);
 }
 

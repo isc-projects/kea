@@ -27,22 +27,22 @@
 #include <sstream>
 
 using namespace isc::dns;
-using namespace std::placeholders;
 using std::vector;
 using std::string;
 using std::list;
 using std::stringstream;
 using std::endl;
 using boost::lexical_cast;
+namespace ph = std::placeholders;
 
 namespace {
 class MasterLoaderTest : public ::testing::Test {
 public:
     MasterLoaderTest() :
         callbacks_(std::bind(&MasterLoaderTest::callback, this,
-                             &errors_, _1, _2, _3),
+                             &errors_, ph::_1, ph::_2, ph::_3),
                    std::bind(&MasterLoaderTest::callback, this,
-                             &warnings_, _1, _2, _3))
+                             &warnings_, ph::_1, ph::_2, ph::_3))
     {}
 
     void TearDown() {
@@ -73,7 +73,8 @@ public:
     {
         loader_.reset(new MasterLoader(file, origin, rrclass, callbacks_,
                                        std::bind(&MasterLoaderTest::addRRset,
-                                                 this, _1, _2, _3, _4, _5),
+                                                 this, ph::_1, ph::_2, ph::_3,
+                                                 ph::_4, ph::_5),
                                        options));
     }
 
@@ -82,7 +83,8 @@ public:
     {
         loader_.reset(new MasterLoader(stream, origin, rrclass, callbacks_,
                                        std::bind(&MasterLoaderTest::addRRset,
-                                                 this, _1, _2, _3, _4, _5),
+                                                 this, ph::_1, ph::_2, ph::_3,
+                                                 ph::_4, ph::_5),
                                        options));
     }
 

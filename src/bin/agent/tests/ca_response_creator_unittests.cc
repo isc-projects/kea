@@ -19,7 +19,7 @@ using namespace isc::agent;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -40,7 +40,7 @@ public:
         CtrlAgentCommandMgr::instance().
             registerCommand("foo", std::bind(&CtrlAgentResponseCreatorTest::
                                              fooCommandHandler,
-                                             this, _1, _2));
+                                             this, ph::_1, ph::_2));
 
         // Make sure that the request has been initialized properly.
         if (!request_) {

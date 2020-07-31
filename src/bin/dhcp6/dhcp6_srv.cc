@@ -91,7 +91,7 @@ using namespace isc::log;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -3991,7 +3991,7 @@ Dhcpv6Srv::startD2() {
         // our error handler.
         // This may throw so wherever this is called needs to ready.
         d2_mgr.startSender(std::bind(&Dhcpv6Srv::d2ClientErrorHandler,
-                                     this, _1, _2));
+                                     this, ph::_1, ph::_2));
     }
 }
 

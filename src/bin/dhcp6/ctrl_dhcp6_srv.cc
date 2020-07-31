@@ -37,7 +37,7 @@ using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -801,7 +801,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // Re-open lease and host database with new parameters.
     try {
         DatabaseConnection::db_lost_callback =
-            std::bind(&ControlledDhcpv6Srv::dbLostCallback, srv, _1);
+            std::bind(&ControlledDhcpv6Srv::dbLostCallback, srv, ph::_1);
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=6");
         cfg_db->createManagers();
@@ -993,80 +993,80 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     // These are the commands always supported by the DHCPv6 server.
     // Please keep the list in alphabetic order.
     CommandMgr::instance().registerCommand("build-report",
-        std::bind(&ControlledDhcpv6Srv::commandBuildReportHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandBuildReportHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("config-backend-pull",
-        std::bind(&ControlledDhcpv6Srv::commandConfigBackendPullHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigBackendPullHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("config-get",
-        std::bind(&ControlledDhcpv6Srv::commandConfigGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigGetHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("config-reload",
-        std::bind(&ControlledDhcpv6Srv::commandConfigReloadHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigReloadHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("config-test",
-        std::bind(&ControlledDhcpv6Srv::commandConfigTestHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigTestHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("config-write",
-        std::bind(&ControlledDhcpv6Srv::commandConfigWriteHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigWriteHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("dhcp-disable",
-        std::bind(&ControlledDhcpv6Srv::commandDhcpDisableHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandDhcpDisableHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("dhcp-enable",
-        std::bind(&ControlledDhcpv6Srv::commandDhcpEnableHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandDhcpEnableHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("leases-reclaim",
-        std::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("server-tag-get",
-        std::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("libreload",
-        std::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("config-set",
-        std::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("shutdown",
-        std::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("status-get",
-        std::bind(&ControlledDhcpv6Srv::commandStatusGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandStatusGetHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("version-get",
-        std::bind(&ControlledDhcpv6Srv::commandVersionGetHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandVersionGetHandler, this, ph::_1, ph::_2));
 
     // Register statistic related commands
     CommandMgr::instance().registerCommand("statistic-get",
-        std::bind(&StatsMgr::statisticGetHandler, _1, _2));
+        std::bind(&StatsMgr::statisticGetHandler, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("statistic-get-all",
-        std::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
+        std::bind(&StatsMgr::statisticGetAllHandler, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("statistic-reset",
-        std::bind(&StatsMgr::statisticResetHandler, _1, _2));
+        std::bind(&StatsMgr::statisticResetHandler, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("statistic-reset-all",
-        std::bind(&StatsMgr::statisticResetAllHandler, _1, _2));
+        std::bind(&StatsMgr::statisticResetAllHandler, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("statistic-remove",
-        std::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
+        std::bind(&StatsMgr::statisticRemoveHandler, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("statistic-remove-all",
-        std::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
+        std::bind(&StatsMgr::statisticRemoveAllHandler, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("statistic-sample-age-set",
-        std::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, _1, _2));
+        std::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("statistic-sample-age-set-all",
-        std::bind(&ControlledDhcpv6Srv::commandStatisticSetMaxSampleAgeAllHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandStatisticSetMaxSampleAgeAllHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("statistic-sample-count-set",
-        std::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
+        std::bind(&StatsMgr::statisticSetMaxSampleCountHandler, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("statistic-sample-count-set-all",
-        std::bind(&ControlledDhcpv6Srv::commandStatisticSetMaxSampleCountAllHandler, this, _1, _2));
+        std::bind(&ControlledDhcpv6Srv::commandStatisticSetMaxSampleCountAllHandler, this, ph::_1, ph::_2));
 }
 
 void ControlledDhcpv6Srv::shutdownServer(int exit_value) {

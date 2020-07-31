@@ -11,6 +11,8 @@
 
 #include <functional>
 
+namespace ph = std::placeholders;
+
 namespace isc {
 namespace dhcp_ddns {
 
@@ -70,13 +72,12 @@ NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
     // Instantiate the receive callback.  This gets passed into each receive.
     // Note that the callback constructor is passed an instance method
     // pointer to our completion handler method, receiveCompletionHandler.
-    using namespace std::placeholders;
     RawBufferPtr buffer(new uint8_t[RECV_BUF_MAX]);
     UDPEndpointPtr data_source(new asiolink::UDPEndpoint());
     recv_callback_.reset(new
                          UDPCallback(buffer, RECV_BUF_MAX, data_source,
                                      std::bind(&NameChangeUDPListener::
-                                     receiveCompletionHandler, this, _1, _2)));
+                                     receiveCompletionHandler, this, ph::_1, ph::_2)));
 }
 
 NameChangeUDPListener::~NameChangeUDPListener() {
@@ -206,13 +207,12 @@ NameChangeUDPSender(const isc::asiolink::IOAddress& ip_address,
     // Instantiate the send callback.  This gets passed into each send.
     // Note that the callback constructor is passed the an instance method
     // pointer to our completion handler, sendCompletionHandler.
-    using namespace std::placeholders;
     RawBufferPtr buffer(new uint8_t[SEND_BUF_MAX]);
     UDPEndpointPtr data_source(new asiolink::UDPEndpoint());
     send_callback_.reset(new UDPCallback(buffer, SEND_BUF_MAX, data_source,
                                          std::bind(&NameChangeUDPSender::
                                          sendCompletionHandler, this,
-                                         _1, _2)));
+                                         ph::_1, ph::_2)));
 }
 
 NameChangeUDPSender::~NameChangeUDPSender() {

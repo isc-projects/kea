@@ -16,9 +16,9 @@
 #include <gtest/gtest.h>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace isc;
 using namespace isc::d2;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace d2 {
@@ -98,7 +98,7 @@ FauxServer::receive (const ResponseMode& response_mode,
                                                     sizeof(receive_buffer_)),
                                        remote_,
                                        std::bind(&FauxServer::requestHandler,
-                                                 this, _1, _2,
+                                                 this, ph::_1, ph::_2,
                                                  response_mode,
                                                  response_rcode));
 }

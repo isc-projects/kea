@@ -87,9 +87,9 @@ RRCollator::~RRCollator() {
 
 AddRRCallback
 RRCollator::getCallback() {
-    using namespace std::placeholders;
+    namespace ph = std::placeholders;
     return (std::bind(&RRCollator::Impl::addRR, this->impl_,
-                      _1, _2, _3, _4, _5));
+                      ph::_1, ph::_2, ph::_3, ph::_4, ph::_5));
 }
 
 void

@@ -15,7 +15,7 @@
 
 using namespace isc::config;
 using namespace isc::process;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace d2 {
@@ -54,31 +54,31 @@ D2Controller::registerCommands() {
     // These are the commands always supported by the D2 server.
     // Please keep the list in alphabetic order.
     CommandMgr::instance().registerCommand(BUILD_REPORT_COMMAND,
-        std::bind(&D2Controller::buildReportHandler, this, _1, _2));
+        std::bind(&D2Controller::buildReportHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand(CONFIG_GET_COMMAND,
-        std::bind(&D2Controller::configGetHandler, this, _1, _2));
+        std::bind(&D2Controller::configGetHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand(CONFIG_RELOAD_COMMAND,
-        std::bind(&D2Controller::configReloadHandler, this, _1, _2));
+        std::bind(&D2Controller::configReloadHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand(CONFIG_SET_COMMAND,
-        std::bind(&D2Controller::configSetHandler, this, _1, _2));
+        std::bind(&D2Controller::configSetHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand(CONFIG_TEST_COMMAND,
-        std::bind(&D2Controller::configTestHandler, this, _1, _2));
+        std::bind(&D2Controller::configTestHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand(CONFIG_WRITE_COMMAND,
-        std::bind(&D2Controller::configWriteHandler, this, _1, _2));
+        std::bind(&D2Controller::configWriteHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand(SHUT_DOWN_COMMAND,
-        std::bind(&D2Controller::shutdownHandler, this, _1, _2));
+        std::bind(&D2Controller::shutdownHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand(STATUS_GET_COMMAND,
-        std::bind(&DControllerBase::statusGetHandler, this, _1, _2));
+        std::bind(&DControllerBase::statusGetHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand(VERSION_GET_COMMAND,
-        std::bind(&D2Controller::versionGetHandler, this, _1, _2));
+        std::bind(&D2Controller::versionGetHandler, this, ph::_1, ph::_2));
 }
 
 void

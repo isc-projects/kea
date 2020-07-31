@@ -23,7 +23,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -82,7 +82,7 @@ public:
         ASSERT_NO_THROW(cfg->enableUpdates(true));
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
         d2_mgr_.startSender(std::bind(&NCRGeneratorTest::d2ErrorHandler, this,
-                                      _1, _2));
+                                      ph::_1, ph::_2));
     }
 
     /// @brief Disables DHCP-DDNS updates.

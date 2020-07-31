@@ -16,6 +16,7 @@
 
 using namespace isc::data;
 using namespace isc::db;
+namespace ph = std::placeholders;
 
 /// @brief Test fixture for exercising DbLostCallback invocation
 class DatabaseConnectionCallbackTest : public ::testing::Test {
@@ -84,7 +85,6 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
 TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     /// Create a Database configuration that includes the reconnect
     /// control parameters.
-    using namespace std::placeholders;
     DatabaseConnection::ParameterMap pmap;
     pmap[std::string("type")] = std::string("test");
     pmap[std::string("max-reconnect-tries")] = std::string("3");
@@ -92,7 +92,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
 
     /// Install the callback.
     DatabaseConnection::db_lost_callback =
-        std::bind(&DatabaseConnectionCallbackTest::dbLostCallback, this, _1);
+        std::bind(&DatabaseConnectionCallbackTest::dbLostCallback, this, ph::_1);
     /// Create the connection..
     DatabaseConnection datasrc(pmap);
 

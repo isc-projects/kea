@@ -15,7 +15,7 @@ namespace {
 
 using namespace isc;
 using namespace isc::util;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 /// @brief Test fixture class for @c isc::util::SignalSet class.
 ///
@@ -109,14 +109,14 @@ TEST_F(SignalSetTest, twoSignals) {
     // second one should be dropped.
     ASSERT_EQ(0, raise(SIGHUP));
     // Execute the first handler (for SIGHUP).
-    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
+    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, ph::_1));
     // The handler should have been called once and the signal
     // handled should be SIGHUP.
     EXPECT_EQ(1, handler_calls_);
     EXPECT_EQ(SIGHUP, signum_);
     // Next signal to be handled should be SIGINT.
     EXPECT_EQ(SIGINT, signal_set_->getNext());
-    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
+    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, ph::_1));
     EXPECT_EQ(2, handler_calls_);
     EXPECT_EQ(SIGINT, signum_);
     // There should be no more waiting handlers.
@@ -143,13 +143,13 @@ TEST_F(SignalSetTest, twoSignalSets) {
     // The signal set owns SIGHUP so it should be the next to handle.
     EXPECT_EQ(SIGHUP, signal_set_->getNext());
     // Handle next signal owned by the secondary signal set.
-    secondary_signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
+    secondary_signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, ph::_1));
     EXPECT_EQ(1, handler_calls_);
     EXPECT_EQ(SIGINT, signum_);
     // No more signals to be handled for this signal set.
     EXPECT_EQ(-1, secondary_signal_set_->getNext());
     // Handle next signal owned by the signal set.
-    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
+    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, ph::_1));
     EXPECT_EQ(2, handler_calls_);
     EXPECT_EQ(SIGHUP, signum_);
     // No more signals to be handled by this signal set.
@@ -200,7 +200,7 @@ TEST_F(SignalSetTest, duplicates) {
 TEST_F(SignalSetTest, onReceiptTests) {
     // Install an on-receipt handler.
     SignalSet::setOnReceiptHandler(std::bind(&SignalSetTest::onReceiptHandler,
-                                             this, _1));
+                                             this, ph::_1));
     // Create a SignalSet for SIGHUP and SIGUSR1.
     ASSERT_NO_THROW(signal_set_.reset(new SignalSet(SIGHUP, SIGUSR1)));
 
@@ -219,7 +219,7 @@ TEST_F(SignalSetTest, onReceiptTests) {
     EXPECT_EQ(SIGUSR1, signal_set_->getNext());
 
     // Verify we can process SIGUSR1 with the deferred handler.
-    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
+    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, ph::_1));
     EXPECT_EQ(1, handler_calls_);
     EXPECT_EQ(SIGUSR1, signum_);
 
@@ -234,7 +234,7 @@ TEST_F(SignalSetTest, onReceiptTests) {
     EXPECT_EQ(SIGHUP, signal_set_->getNext());
 
     // Verify we can process it with deferred handler.
-    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, _1));
+    signal_set_->handleNext(std::bind(&SignalSetTest::testHandler, ph::_1));
     EXPECT_EQ(2, handler_calls_);
     EXPECT_EQ(SIGHUP, signum_);
 }

@@ -21,9 +21,9 @@
 #include <sys/select.h>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace isc::dhcp;
 using namespace isc;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -165,7 +165,7 @@ public:
 
     /// @brief Returns D2ClientErroHandler bound to this::error_handler_.
     D2ClientErrorHandler getErrorHandler() {
-        return (std::bind(&D2ClientMgrTest::error_handler, this, _1, _2));
+      return (std::bind(&D2ClientMgrTest::error_handler, this, ph::_1, ph::_2));
     }
 
     /// @brief Constructs a NameChangeRequest message from a fixed JSON string.

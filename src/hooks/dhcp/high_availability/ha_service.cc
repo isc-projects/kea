@@ -35,7 +35,7 @@ using namespace isc::hooks;
 using namespace isc::http;
 using namespace isc::log;
 using namespace isc::util;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace ha {
@@ -1093,8 +1093,8 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
             }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        std::bind(&HAService::clientConnectHandler, this, _1, _2),
-        std::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 
     // The number of pending requests is the number of requests for which we
@@ -1373,8 +1373,8 @@ HAService::asyncSendHeartbeat() {
             runModel(HA_HEARTBEAT_COMPLETE_EVT);
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        std::bind(&HAService::clientConnectHandler, this, _1, _2),
-        std::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 }
 
@@ -1464,8 +1464,8 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
              }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        std::bind(&HAService::clientConnectHandler, this, _1, _2),
-        std::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 }
 
@@ -1536,8 +1536,8 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
              }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        std::bind(&HAService::clientConnectHandler, this, _1, _2),
-        std::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 }
 
@@ -1777,8 +1777,8 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
             }
         },
         HttpClient::RequestTimeout(config_->getSyncTimeout()),
-        std::bind(&HAService::clientConnectHandler, this, _1, _2),
-        std::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 
 }
@@ -2012,8 +2012,8 @@ HAService::processMaintenanceStart() {
              captured_error_message = error_message;
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        std::bind(&HAService::clientConnectHandler, this, _1, _2),
-        std::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 
     // Run the IO service until it is stopped by any of the callbacks. This
@@ -2120,8 +2120,8 @@ HAService::processMaintenanceCancel() {
              }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
-        std::bind(&HAService::clientConnectHandler, this, _1, _2),
-        std::bind(&HAService::clientCloseHandler, this, _1)
+        std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 
     // Run the IO service until it is stopped by any of the callbacks. This
@@ -2204,7 +2204,7 @@ HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_nat
         // We are registerin the socket only to interrupt main-thread
         // select().
         IfaceMgr::instance().addExternalSocket(tcp_native_fd,
-            std::bind(&HAService::socketReadyHandler, this, _1)
+            std::bind(&HAService::socketReadyHandler, this, ph::_1)
         );
     }
 

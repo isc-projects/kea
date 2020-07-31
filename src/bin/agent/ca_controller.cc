@@ -13,7 +13,7 @@
 #include <functional>
 
 using namespace isc::process;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace agent {
@@ -53,31 +53,31 @@ CtrlAgentController::parseFile(const std::string& name) {
 void
 CtrlAgentController::registerCommands() {
     CtrlAgentCommandMgr::instance().registerCommand(BUILD_REPORT_COMMAND,
-        std::bind(&DControllerBase::buildReportHandler, this, _1, _2));
+        std::bind(&DControllerBase::buildReportHandler, this, ph::_1, ph::_2));
 
     CtrlAgentCommandMgr::instance().registerCommand(CONFIG_GET_COMMAND,
-        std::bind(&DControllerBase::configGetHandler, this, _1, _2));
+        std::bind(&DControllerBase::configGetHandler, this, ph::_1, ph::_2));
 
     CtrlAgentCommandMgr::instance().registerCommand(CONFIG_RELOAD_COMMAND,
-        std::bind(&DControllerBase::configReloadHandler, this, _1, _2));
+        std::bind(&DControllerBase::configReloadHandler, this, ph::_1, ph::_2));
 
     CtrlAgentCommandMgr::instance().registerCommand(CONFIG_SET_COMMAND,
-        std::bind(&DControllerBase::configSetHandler, this, _1, _2));
+        std::bind(&DControllerBase::configSetHandler, this, ph::_1, ph::_2));
 
     CtrlAgentCommandMgr::instance().registerCommand(CONFIG_TEST_COMMAND,
-        std::bind(&DControllerBase::configTestHandler, this, _1, _2));
+        std::bind(&DControllerBase::configTestHandler, this, ph::_1, ph::_2));
 
     CtrlAgentCommandMgr::instance().registerCommand(CONFIG_WRITE_COMMAND,
-        std::bind(&DControllerBase::configWriteHandler, this, _1, _2));
+        std::bind(&DControllerBase::configWriteHandler, this, ph::_1, ph::_2));
 
     CtrlAgentCommandMgr::instance().registerCommand(SHUT_DOWN_COMMAND,
-        std::bind(&DControllerBase::shutdownHandler, this, _1, _2));
+        std::bind(&DControllerBase::shutdownHandler, this, ph::_1, ph::_2));
 
     CtrlAgentCommandMgr::instance().registerCommand(STATUS_GET_COMMAND,
-        std::bind(&DControllerBase::statusGetHandler, this, _1, _2));
+        std::bind(&DControllerBase::statusGetHandler, this, ph::_1, ph::_2));
 
     CtrlAgentCommandMgr::instance().registerCommand(VERSION_GET_COMMAND,
-        std::bind(&DControllerBase::versionGetHandler, this, _1, _2));
+        std::bind(&DControllerBase::versionGetHandler, this, ph::_1, ph::_2));
 }
 
 void

@@ -14,7 +14,7 @@
 
 using namespace isc::asiolink;
 using namespace isc::data;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace dhcp {
@@ -152,7 +152,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // for some specific interface. This callback will simply log a
     // warning message.
     IfaceMgrErrorMsgCallback error_callback =
-        std::bind(&CfgIface::socketOpenErrorHandler, _1);
+        std::bind(&CfgIface::socketOpenErrorHandler, ph::_1);
     bool sopen;
     if (family == AF_INET) {
         // Use broadcast only if we're using raw sockets. For the UDP sockets,

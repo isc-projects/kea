@@ -22,8 +22,8 @@
 #include <dns/rrset.h>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace isc::dns;
+namespace ph = std::placeholders;
 
 namespace {
 // A callback functor for masterLoad() commonly used for the following tests.
@@ -94,7 +94,7 @@ TEST_F(MasterLoadTest, loadWithFunctionCallback) {
     // object)
     rr_stream << txt_rr << a_rr1 << soa_rr;
     masterLoad(rr_stream, origin, zclass,
-               std::bind(&testCallback, _1, &results));
+               std::bind(&testCallback, ph::_1, &results));
     ASSERT_EQ(3, results.size());
     EXPECT_EQ(txt_rr, results[0]->toText());
     EXPECT_EQ(a_rr1, results[1]->toText());
@@ -106,7 +106,7 @@ TEST_F(MasterLoadTest, loadWithMemFunctionCallback) {
     // help of std.bind)
     rr_stream << txt_rr << a_rr1 << soa_rr;
     masterLoad(rr_stream, origin, zclass,
-               std::bind(&MasterLoadTest::rrsetCallback, this, _1));
+               std::bind(&MasterLoadTest::rrsetCallback, this, ph::_1));
     ASSERT_EQ(3, results.size());
     EXPECT_EQ(txt_rr, results[0]->toText());
     EXPECT_EQ(a_rr1, results[1]->toText());
