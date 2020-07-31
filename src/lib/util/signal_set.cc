@@ -10,6 +10,7 @@
 
 #include <array>
 #include <cerrno>
+#include <cstring>
 #include <list>
 
 using namespace isc;
