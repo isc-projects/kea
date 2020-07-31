@@ -30,7 +30,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -139,7 +139,7 @@ public:
     void doReceive() {
         socket_->asyncReceive(&buf_[0], sizeof(buf_),
                               std::bind(&Connection::receiveHandler,
-                                        shared_from_this(), _1, _2));
+                                        shared_from_this(), ph::_1, ph::_2));
     }
 
     /// @brief Starts asynchronous send over the unix domain socket.
@@ -152,7 +152,7 @@ public:
     void doSend() {
         size_t chunk_size = (response_.size() < BUF_SIZE) ? response_.size() : BUF_SIZE;
         socket_->asyncSend(&response_[0], chunk_size,
-           std::bind(&Connection::sendHandler, shared_from_this(), _1, _2));
+           std::bind(&Connection::sendHandler, shared_from_this(), ph::_1, ph::_2));
 
         // Asynchronous send has been scheduled and we need to indicate this
         // to break the synchronous select(). The handler should clear this

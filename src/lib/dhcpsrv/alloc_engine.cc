@@ -50,7 +50,7 @@ using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace isc::data;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -2597,7 +2597,7 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
             LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
             reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_lease,
                                               std::bind(&LeaseMgr::updateLease6,
-                                                        &lease_mgr, _1));
+                                                        &lease_mgr, ph::_1));
         }
     }
 
@@ -2693,7 +2693,7 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
             LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
             reclaimLeaseInDatabase<Lease4Ptr>(lease, remove_lease,
                                               std::bind(&LeaseMgr::updateLease4,
-                                                        &lease_mgr, _1));
+                                                        &lease_mgr, ph::_1));
         }
     }
 

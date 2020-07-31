@@ -15,7 +15,7 @@
 
 using namespace isc::data;
 using namespace isc::hooks;
-using namespace std::placeholders;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -42,7 +42,7 @@ namespace config {
 
 BaseCommandMgr::BaseCommandMgr() {
     registerCommand("list-commands", std::bind(&BaseCommandMgr::listCommandsHandler,
-                                               this, _1, _2));
+                                               this, ph::_1, ph::_2));
 }
 
 void
@@ -108,7 +108,7 @@ BaseCommandMgr::deregisterAll() {
     // code, just in tests.
     handlers_.clear();
     registerCommand("list-commands",
-        std::bind(&BaseCommandMgr::listCommandsHandler, this, _1, _2));
+        std::bind(&BaseCommandMgr::listCommandsHandler, this, ph::_1, ph::_2));
 }
 
 isc::data::ConstElementPtr

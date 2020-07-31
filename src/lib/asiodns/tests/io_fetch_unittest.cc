@@ -36,8 +36,8 @@ using namespace boost::asio;
 using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::util;
-using namespace std::placeholders;
 using namespace std;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace asiodns {
@@ -242,7 +242,7 @@ public:
         // Initiate a read on the socket.
         cumulative_ = 0;
         socket->async_receive(boost::asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
-            std::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
+            std::bind(&IOFetchTest::tcpReceiveHandler, this, socket, ph::_1, ph::_2));
     }
 
     /// \brief Completion handler for receiving TCP data
@@ -279,7 +279,7 @@ public:
         if (!complete) {
             socket->async_receive(boost::asio::buffer((receive_buffer_ + cumulative_),
                 (sizeof(receive_buffer_) - cumulative_)),
-                std::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
+                std::bind(&IOFetchTest::tcpReceiveHandler, this, socket, ph::_1, ph::_2));
             return;
         }
 
@@ -368,7 +368,7 @@ public:
         // argument of the send callback, as a check.
         socket->async_send(boost::asio::buffer(send_ptr, amount),
                            std::bind(&IOFetchTest::tcpSendHandler, this,
-                                     amount, socket, _1, _2));
+                                     amount, socket, ph::_1, ph::_2));
     }
 
     /// \brief Completion Handler for Sending TCP data
@@ -550,7 +550,7 @@ public:
         tcp::acceptor acceptor(service_.get_io_service(),
                                tcp::endpoint(tcp::v4(), TEST_PORT));
         acceptor.async_accept(socket,
-            std::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, _1));
+            std::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, ph::_1));
 
         // Post the TCP fetch object to send the query and receive the response.
         service_.get_io_service().post(tcp_fetch_);
@@ -586,7 +586,7 @@ public:
                                   remote,
                                   std::bind(&IOFetchTest::udpReceiveHandler,
                                             this, &remote, &socket,
-                                            _1, _2, bad_qid, second_send));
+                                            ph::_1, ph::_2, bad_qid, second_send));
         service_.get_io_service().post(udp_fetch_);
         if (debug_) {
             cout << "udpSendReceive: async_receive_from posted,"
