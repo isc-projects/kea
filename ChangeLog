@@ -1,46 +1,46 @@
 
 Kea 1.7.10 (development) released on Jul 29, 2020
 
-1780.	[doc]		wlodek
+1779.	[doc]		wlodek
 	Added a section to Kea ARM about tuning performance for kea-dhcp4
 	and kea-dhcp6.
 	(Gitlab #1285)
 
-1779.	[build]		tmark
+1778.	[build]		tmark
 	Library version numbers bumped for release.
 	(Gitlab #1346)
 
-1778.	[func]*		fdupont
+1777.	[func]*		fdupont
 	Changed the order of subnets to follow ascending subnet identifier.
 	(Gitlab #1265)
 
-1777.	[doc]		fdupont
+1776.	[doc]		fdupont
 	Added in the Developer's Guide an example about how to cross
 	compile Kea for a Raspberry Pi.
 	(Gitlab #1221)
 
-1776.	[func]		fdupont
+1775.	[func]		fdupont
 	DHCP servers now log a fatal error message when a reconfiguration
 	attempt left a no longer working server. Documentation was
 	updated tp propose remedy actions.
 	(Gitlab #507,#1166)
 
-1775.	[doc]		vicky
+1774.	[doc]		vicky
 	A Code of Conduct has been added.
 	(Gitlab #1143)
 
-1774.	[func]		tmark
+1773.	[func]		tmark
 	leaseX-del commands now support a new parameter, update-ddns,
 	which instructs the server to remove DNS entries for a
 	lease after it has been deleted.
 	(Gitlab #544)
 
-1773.	[perf]		fdupont
+1772.	[perf]		fdupont
 	Kea statistics now uses standard c++11 chrono library instead
 	of POSIX time library from boost.
 	(Gitlab #1174)
 
-1772.	[perf]		fdupont
+1771.	[perf]		fdupont
 	Set kea-lfc process priority to lower than default.
 	This change should alleviate CPU utilization spikes caused
 	by LFC process observed on some systems.
