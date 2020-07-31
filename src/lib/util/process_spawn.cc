@@ -9,6 +9,7 @@
 #include <exceptions/exceptions.h>
 #include <util/process_spawn.h>
 #include <util/signal_set.h>
+#include <cstring>
 #include <functional>
 #include <map>
 #include <signal.h>
