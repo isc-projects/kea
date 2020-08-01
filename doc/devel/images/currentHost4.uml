@@ -22,6 +22,12 @@ agent "Has an address reservation?" as hasAddressReservation
 
 agent "Set subnet to address reservation subnet" as setAddressReservation
 
+agent "Is the address in an allowed pool?" as pool
+
+agent "Iterate on allowed subnets with pool" as pool_iterate
+
+agent "Set subnet to address pool subnet" as inAllowedPool
+
 agent "Get subnet host reservation mode" as getHRmode
 
 agent "Is subnet host reservation mode global?" as checkHRmode
@@ -47,8 +53,14 @@ hwaddr_iterate --> found_hwaddr : found a lease
 found_hwaddr ----> hasAddressReservation
 hwaddr_iterate --> hasAddressReservation : not found
 hasAddressReservation --> setAddressReservation : yes
-hasAddressReservation --> getHRmode : no
-setAddressReservation --> getHRmode
+hasAddressReservation --> pool : no
+setAddressReservation --> pool
+pool --> pool_iterate
+pool ---> getHRmode : pool check is not in all branches
+pool_iterate -> pool_iterate : address not in an allowed pool
+pool_iterate --> inAllowedPool : address in an allowed pool
+pool_iterate ---> getHRmode : no allowed pool
+inAllowedPool --> getHRmode
 getHRmode --> checkHRmode
 checkHRmode --> global : yes
 checkHRmode --> bySubnet : no
