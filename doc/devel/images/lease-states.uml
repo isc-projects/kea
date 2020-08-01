@@ -1,6 +1,6 @@
 @startuml
 
-title lease states
+title lease states (Kea 1.7.11)
 
 agent "Free" as free
 note left : not in the lease database

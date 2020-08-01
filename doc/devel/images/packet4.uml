@@ -1,6 +1,6 @@
 @startuml
 
-title DHCPv4 packet processing
+title DHCPv4 packet processing (Kea 1.7.11)
 
 agent "Receive query" as receivePacket
 note left : input

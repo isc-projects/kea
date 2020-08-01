@@ -1,0 +1,58 @@
+@startuml
+
+title currentHost DHCPv4 (Kea 1.7.11)
+
+agent "Subnet Selection" as entry
+
+agent "Set subnet to the selected subnet" as setSelected
+
+agent "Has client a lease for its client id?" as clientid_lookup
+
+agent "Iterate on allowed subnets for client id" as clientid_iterate
+
+agent "Set subnet to the by client id lease" as found_clientid
+
+agent "Has client a matching lease?" as hwaddr_lookup
+
+agent "Iterate on allowed subnets for hardware address" as hwaddr_iterate
+
+agent "Set subnet to the matching lease" as found_hwaddr
+
+agent "Has an address reservation?" as hasAddressReservation
+
+agent "Set subnet to address reservation subnet" as setAddressReservation
+
+agent "Get subnet host reservation mode" as getHRmode
+
+agent "Is subnet host reservation mode global?" as checkHRmode
+
+agent "Get global host reservation" as global
+
+agent "Get subnet host reservation" as bySubnet
+
+agent "Return current host reservation" as return
+
+entry --> setSelected
+setSelected --> clientid_lookup
+clientid_lookup ---> hwaddr_lookup : no client id option
+clientid_lookup --> clientid_iterate
+clientid_iterate -> clientid_iterate : match-client-id is false or no lease
+clientid_iterate --> found_clientid : found a lease
+found_clientid ----> hasAddressReservation
+clientid_iterate --> hwaddr_lookup : not found by client id, try by hardware address
+hwaddr_lookup ---> hasAddressReservation : no hardware address
+hwaddr_lookup --> hwaddr_iterate
+hwaddr_iterate -> hwaddr_iterate : no lease or client id mismatch
+hwaddr_iterate --> found_hwaddr : found a lease
+found_hwaddr ----> hasAddressReservation
+hwaddr_iterate --> hasAddressReservation : not found
+hasAddressReservation --> setAddressReservation : yes
+hasAddressReservation --> getHRmode : no
+setAddressReservation --> getHRmode
+getHRmode --> checkHRmode
+checkHRmode --> global : yes
+checkHRmode --> bySubnet : no
+global --> return : return global host reservation
+bySubnet --> return : return subnet host reservation
+
+@enduml

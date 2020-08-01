@@ -1,6 +1,6 @@
 @startuml
 
-title buildCfgOptionList: build configured option list
+title buildCfgOptionList: build configured option list algorithm (Kea 1.7.11)
 
 start
 :Get (empty) configured option list;

@@ -1,6 +1,6 @@
 @startuml
 
-title DHCP server main loop
+title DHCP server main loop (Kea 1.7.11)
 
 skinparam linetype ortho
 

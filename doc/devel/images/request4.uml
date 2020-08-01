@@ -1,6 +1,6 @@
 @startuml
 
-title DHCPREQUEST processing
+title DHCPREQUEST processing (Kea 1.7.11)
 
 agent "Entry point" as entry
 
