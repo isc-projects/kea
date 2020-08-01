@@ -28,6 +28,12 @@ agent "Iterate on allowed subnets with pool" as pool_iterate
 
 agent "Set subnet to address pool subnet" as inAllowedPool
 
+agent "Allocate a new lease" as allocate
+
+agent "Iterate on allowed subnets" as allocate_iterate
+
+agent "Set subnet to allocated lease subnet" as allocated
+
 agent "Get subnet host reservation mode" as getHRmode
 
 agent "Is subnet host reservation mode global?" as checkHRmode
@@ -53,18 +59,25 @@ hwaddr_iterate --> found_hwaddr : found a lease
 found_hwaddr ----> hasAddressReservation
 hwaddr_iterate --> hasAddressReservation : not found
 hasAddressReservation --> setAddressReservation : yes
-hasAddressReservation --> pool : no
+hasAddressReservation --> pool : no or not check in the taken branch
 setAddressReservation --> pool
 pool --> pool_iterate
-pool ---> getHRmode : pool check is not in all branches
+pool ---> allocate : pool check is not in all branches
 pool_iterate -> pool_iterate : address not in an allowed pool
 pool_iterate --> inAllowedPool : address in an allowed pool
-pool_iterate ---> getHRmode : no allowed pool
-inAllowedPool --> getHRmode
+pool_iterate ---> allocate : no allowed pool
+inAllowedPool --> allocate
+allocate --> allocate_iterate : start from preferred (last used) subnet
+allocate ---> getHRmode : allocation is not in all branches
+allocate_iterate -> allocate_iterate : no free address
+allocate_iterate --> allocated : found a free address
+allocated --> getHRmode
 getHRmode --> checkHRmode
 checkHRmode --> global : yes
 checkHRmode --> bySubnet : no
 global --> return : return global host reservation
 bySubnet --> return : return subnet host reservation
+
+footer Only the initial lookup is always performed: other occasions to change the subnet so the current host are only in some branches
 
 @enduml
