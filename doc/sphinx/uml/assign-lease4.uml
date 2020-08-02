@@ -47,7 +47,8 @@ ident --> init_reboot : requested address and no server id
 ident ---> hostname
 init_reboot --> by_client_id : has a client id
 init_reboot --> by_hw_addr : no client id
-by_client_id --> by_hw_addr : not fount
+by_client_id ---> authoritative : found
+by_client_id --> by_hw_addr : not found
 by_hw_addr --> authoritative
 authoritative ---> no_response : not authoritative and no owned lease
 authoritative --> nak : owned lease with hint mismatch

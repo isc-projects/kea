@@ -11,43 +11,6 @@ EXTRA_DIST += mainpage.dox
 EXTRA_DIST += terminology.dox
 EXTRA_DIST += unit-tests.dox
 
-EXTRA_DIST += images/appendRequestedOptions.png
-EXTRA_DIST += images/appendRequestedOptions.svg
-EXTRA_DIST += images/appendRequestedOptions.uml
-EXTRA_DIST += images/appendRequestedVendorOptions.png
-EXTRA_DIST += images/appendRequestedVendorOptions.svg
-EXTRA_DIST += images/appendRequestedVendorOptions.uml
-EXTRA_DIST += images/assign-lease4.png
-EXTRA_DIST += images/assign-lease4.svg
-EXTRA_DIST += images/assign-lease4.uml
-EXTRA_DIST += images/buildCfgOptionList.png
-EXTRA_DIST += images/buildCfgOptionList.svg
-EXTRA_DIST += images/buildCfgOptionList.uml
-EXTRA_DIST += images/currentHost4.png
-EXTRA_DIST += images/currentHost4.svg
-EXTRA_DIST += images/currentHost4.uml
-EXTRA_DIST += images/lease-states.png
-EXTRA_DIST += images/lease-states.svg
-EXTRA_DIST += images/lease-states.uml
-EXTRA_DIST += images/main-loop.png
-EXTRA_DIST += images/main-loop.svg
-EXTRA_DIST += images/main-loop.uml
-EXTRA_DIST += images/packet4.png
-EXTRA_DIST += images/packet4.svg
-EXTRA_DIST += images/packet4.uml
-EXTRA_DIST += images/request4-lease.png
-EXTRA_DIST += images/request4-lease.svg
-EXTRA_DIST += images/request4-lease.uml
-EXTRA_DIST += images/request4.png
-EXTRA_DIST += images/request4.svg
-EXTRA_DIST += images/request4.uml
-EXTRA_DIST += images/requestLease4.png
-EXTRA_DIST += images/requestLease4.svg
-EXTRA_DIST += images/requestLease4.uml
-EXTRA_DIST += images/select4.png
-EXTRA_DIST += images/select4.svg
-EXTRA_DIST += images/select4.uml
-
 all: # do nothing, used only by developers manually
 
 devel:
@@ -57,11 +20,3 @@ devel:
 
 clean-local:
 	rm -rf html
-
-if HAVE_PLANTUML
-.uml.png:
-	@PLANTUML@ $<
-
-.uml.svg:
-	@PLANTUML@ -svg $<
-endif
