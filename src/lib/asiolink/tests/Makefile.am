@@ -20,6 +20,7 @@ TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += addr_utilities_unittest.cc
 run_unittests_SOURCES += io_address_unittest.cc
+run_unittests_SOURCES += hash_address_unittest.cc
 run_unittests_SOURCES += io_endpoint_unittest.cc
 run_unittests_SOURCES += io_socket_unittest.cc
 run_unittests_SOURCES += interval_timer_unittest.cc
