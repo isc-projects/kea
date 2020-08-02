@@ -9,8 +9,9 @@
 #include <cc/data.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/dhcp_queue_control_parser.h>
-#include <util/multi_threading_mgr.h>
+#include <testutils/multi_threading_utils.h>
 #include <testutils/test_to_element.h>
+#include <util/multi_threading_mgr.h>
 #include <gtest/gtest.h>
 
 using namespace isc::data;
@@ -196,15 +197,9 @@ TEST_F(DHCPQueueControlParserTest, multiThreading) {
     EXPECT_EQ("true", queue_control->get("enable-queue")->str());
 
     // Retry with multi-threading.
-    ASSERT_NO_THROW(MultiThreadingMgr::instance().setMode(true));
-    EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
-    try {
-        queue_control = parser.parse(config_elems);
-        MultiThreadingMgr::instance().setMode(false);
-    } catch (const std::exception& ex) {
-        MultiThreadingMgr::instance().setMode(false);
-        FAIL() << "parser threw an exception: " << ex.what();
-    }
+    MultiThreadingTest mt(true);
+    ASSERT_TRUE(MultiThreadingMgr::instance().getMode());
+    ASSERT_NO_THROW(queue_control = parser.parse(config_elems));
     ASSERT_TRUE(queue_control);
     ASSERT_TRUE(queue_control->get("enable-queue"));
     EXPECT_EQ("false", queue_control->get("enable-queue")->str());

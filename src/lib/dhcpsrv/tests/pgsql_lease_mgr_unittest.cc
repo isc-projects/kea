@@ -14,6 +14,7 @@
 #include <exceptions/exceptions.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/testutils/pgsql_schema.h>
+#include <testutils/multi_threading_utils.h>
 #include <util/multi_threading_mgr.h>
 
 #include <gtest/gtest.h>
@@ -30,6 +31,7 @@ using namespace isc::db;
 using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 using namespace isc::util;
 using namespace std;
 
@@ -202,7 +204,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 /// @brief Check that database can be opened with Multi-Threading
 TEST(PgSqlOpenTest, OpenDatabaseMultiThreading) {
     // Enable Multi-Threading.
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     // Schema needs to be created for the test to work.
     createPgSQLSchema();
@@ -223,9 +225,6 @@ TEST(PgSqlOpenTest, OpenDatabaseMultiThreading) {
     // Tidy up after the test
     destroyPgSQLSchema();
     LeaseMgrFactory::destroy();
-
-    // Disable Multi-Threading.
-    MultiThreadingMgr::instance().setMode(false);
 }
 
 /// @brief Check the getType() method
@@ -264,7 +263,7 @@ TEST_F(PgSqlLeaseMgrTest, basicLease4) {
 
 /// @brief Basic Lease4 Checks
 TEST_F(PgSqlLeaseMgrTest, basicLease4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testBasicLease4();
 }
 
@@ -275,7 +274,7 @@ TEST_F(PgSqlLeaseMgrTest, maxDate4) {
 
 /// @brief Check that Lease4 code safely handles invalid dates.
 TEST_F(PgSqlLeaseMgrTest, maxDate4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testMaxDate4();
 }
 
@@ -293,7 +292,7 @@ TEST_F(PgSqlLeaseMgrTest, updateLease4) {
 
 /// @brief Lease4 update tests
 TEST_F(PgSqlLeaseMgrTest, updateLease4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testUpdateLease4();
 }
 
@@ -308,7 +307,7 @@ TEST_F(PgSqlLeaseMgrTest, concurrentUpdateLease4) {
 ///
 /// Checks that we are not able to concurrently update a lease in the database.
 TEST_F(PgSqlLeaseMgrTest, concurrentUpdateLease4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testConcurrentUpdateLease4();
 }
 
@@ -319,7 +318,7 @@ TEST_F(PgSqlLeaseMgrTest, getLease4HWAddr1) {
 
 /// @brief Check GetLease4 methods - access by Hardware Address
 TEST_F(PgSqlLeaseMgrTest, getLease4HWAddr1MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLease4HWAddr1();
 }
 
@@ -330,7 +329,7 @@ TEST_F(PgSqlLeaseMgrTest, getLease4HWAddr2) {
 
 /// @brief Check GetLease4 methods - access by Hardware Address
 TEST_F(PgSqlLeaseMgrTest, getLease4HWAddr2MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLease4HWAddr2();
 }
 
@@ -344,7 +343,7 @@ TEST_F(PgSqlLeaseMgrTest, getLease4HWAddrSize) {
 
 /// @brief Get lease4 by hardware address (2)
 TEST_F(PgSqlLeaseMgrTest, getLease4HWAddrSizeMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLease4HWAddrSize();
 }
 
@@ -358,7 +357,7 @@ TEST_F(PgSqlLeaseMgrTest, getLease4HwaddrSubnetId) {
 
 /// @brief Check GetLease4 methods - access by Hardware Address & Subnet ID
 TEST_F(PgSqlLeaseMgrTest, getLease4HwaddrSubnetIdMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLease4HWAddrSubnetId();
 }
 
@@ -372,7 +371,7 @@ TEST_F(PgSqlLeaseMgrTest, getLease4HWAddrSubnetIdSize) {
 
 /// @brief Get lease4 by hardware address and subnet ID (2)
 TEST_F(PgSqlLeaseMgrTest, getLease4HWAddrSubnetIdSizeMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLease4HWAddrSubnetIdSize();
 }
 
@@ -383,7 +382,7 @@ TEST_F(PgSqlLeaseMgrTest, getLease4ClientId) {
 
 /// @brief This test was derived from memfile.
 TEST_F(PgSqlLeaseMgrTest, getLease4ClientIdMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLease4ClientId();
 }
 
@@ -397,7 +396,7 @@ TEST_F(PgSqlLeaseMgrTest, getLease4ClientId2) {
 
 /// @brief Check GetLease4 methods - access by Client ID
 TEST_F(PgSqlLeaseMgrTest, getLease4ClientId2MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLease4ClientId2();
 }
 
@@ -410,7 +409,7 @@ TEST_F(PgSqlLeaseMgrTest, getLease4ClientIdSize) {
 
 /// @brief Get Lease4 by client ID (2)
 TEST_F(PgSqlLeaseMgrTest, getLease4ClientIdSizeMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLease4ClientIdSize();
 }
 
@@ -424,7 +423,7 @@ TEST_F(PgSqlLeaseMgrTest, getLease4ClientIdSubnetId) {
 
 /// @brief Check GetLease4 methods - access by Client ID & Subnet ID
 TEST_F(PgSqlLeaseMgrTest, getLease4ClientIdSubnetIdMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLease4ClientIdSubnetId();
 }
 
@@ -435,7 +434,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases4SubnetId) {
 
 /// @brief This test checks that all IPv4 leases for a specified subnet id are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases4SubnetIdMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLeases4SubnetId();
 }
 
@@ -446,7 +445,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases4Hostname) {
 
 /// @brief This test checks that all IPv4 leases with a specified hostname are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases4HostnameMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLeases4Hostname();
 }
 
@@ -457,7 +456,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases4) {
 
 /// @brief This test checks that all IPv4 leases are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLeases4();
 }
 
@@ -468,7 +467,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases4Paged) {
 
 /// @brief Test that a range of IPv4 leases is returned with paging.
 TEST_F(PgSqlLeaseMgrTest, getLeases4PagedMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLeases4Paged();
 }
 
@@ -479,7 +478,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetId) {
 
 /// @brief This test checks that all IPv6 leases for a specified subnet id are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetIdMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLeases6SubnetId();
 }
 
@@ -490,7 +489,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6Hostname) {
 
 /// @brief This test checks that all IPv6 leases with a specified hostname are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases6HostnameMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLeases6Hostname();
 }
 
@@ -501,7 +500,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6) {
 
 /// @brief This test checks that all IPv6 leases are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLeases6();
 }
 
@@ -512,7 +511,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6Paged) {
 
 /// @brief Test that a range of IPv6 leases is returned with paging.
 TEST_F(PgSqlLeaseMgrTest, getLeases6PagedMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLeases6Paged();
 }
 
@@ -527,7 +526,7 @@ TEST_F(PgSqlLeaseMgrTest, lease4NullClientId) {
 
 /// @brief Basic Lease4 Checks
 TEST_F(PgSqlLeaseMgrTest, lease4NullClientIdMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testLease4NullClientId();
 }
 
@@ -541,7 +540,7 @@ TEST_F(PgSqlLeaseMgrTest, lease4InvalidHostname) {
 
 /// @brief Verify that too long hostname for Lease4 is not accepted.
 TEST_F(PgSqlLeaseMgrTest, lease4InvalidHostnameMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testLease4InvalidHostname();
 }
 
@@ -558,7 +557,7 @@ TEST_F(PgSqlLeaseMgrTest, getExpiredLeases4) {
 
 /// @brief Check that the expired DHCPv4 leases can be retrieved.
 TEST_F(PgSqlLeaseMgrTest, getExpiredLeases4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetExpiredLeases4();
 }
 
@@ -575,7 +574,7 @@ TEST_F(PgSqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
 
 /// @brief Check that expired reclaimed DHCPv4 leases are removed.
 TEST_F(PgSqlLeaseMgrTest, deleteExpiredReclaimedLeases4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testDeleteExpiredReclaimedLeases4();
 }
 
@@ -592,7 +591,7 @@ TEST_F(PgSqlLeaseMgrTest, testAddGetDelete6) {
 /// @brief Test checks whether simple add, get and delete operations
 /// are possible on Lease6
 TEST_F(PgSqlLeaseMgrTest, testAddGetDelete6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testAddGetDelete6();
 }
 
@@ -606,7 +605,7 @@ TEST_F(PgSqlLeaseMgrTest, basicLease6) {
 
 /// @brief Basic Lease6 Checks
 TEST_F(PgSqlLeaseMgrTest, basicLease6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testBasicLease6();
 }
 
@@ -617,7 +616,7 @@ TEST_F(PgSqlLeaseMgrTest, maxDate6) {
 
 /// @brief Check that Lease6 code safely handles invalid dates.
 TEST_F(PgSqlLeaseMgrTest, maxDate6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testMaxDate6();
 }
 
@@ -636,7 +635,7 @@ TEST_F(PgSqlLeaseMgrTest, lease6InvalidHostname) {
 
 /// @brief Verify that too long hostname for Lease6 is not accepted.
 TEST_F(PgSqlLeaseMgrTest, lease6InvalidHostnameMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testLease6InvalidHostname();
 }
 
@@ -650,7 +649,7 @@ TEST_F(PgSqlLeaseMgrTest, leases6LargeIaidCheck) {
 
 /// @brief Verify that large IAID values work correctly.
 TEST_F(PgSqlLeaseMgrTest, leases6LargeIaidCheckMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testLease6LargeIaidCheck();
 }
 
@@ -664,7 +663,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6DuidIaid) {
 
 /// @brief Check GetLease6 methods - access by DUID/IAID
 TEST_F(PgSqlLeaseMgrTest, getLeases6DuidIaidMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLeases6DuidIaid();
 }
 
@@ -675,7 +674,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6DuidSize) {
 
 /// @brief Check that the system can cope with a DUID of allowed size.
 TEST_F(PgSqlLeaseMgrTest, getLeases6DuidSizeMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLeases6DuidSize();
 }
 
@@ -691,7 +690,7 @@ TEST_F(PgSqlLeaseMgrTest, lease6LeaseTypeCheck) {
 
 /// @brief Check that getLease6 methods discriminate by lease type.
 TEST_F(PgSqlLeaseMgrTest, lease6LeaseTypeCheckMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testLease6LeaseTypeCheck();
 }
 
@@ -705,7 +704,7 @@ TEST_F(PgSqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
 
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
 TEST_F(PgSqlLeaseMgrTest, getLease6DuidIaidSubnetIdMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLease6DuidIaidSubnetId();
 }
 
@@ -716,7 +715,7 @@ TEST_F(PgSqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
 
 /// @brief Test checks that getLease6() works with different DUID sizes
 TEST_F(PgSqlLeaseMgrTest, getLease6DuidIaidSubnetIdSizeMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLease6DuidIaidSubnetIdSize();
 }
 
@@ -730,7 +729,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6Duid) {
 
 /// @brief check leases could be retrieved by DUID
 TEST_F(PgSqlLeaseMgrTest, getLeases6DuidMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetLeases6Duid();
 }
 
@@ -743,7 +742,7 @@ TEST_F(PgSqlLeaseMgrTest, updateLease6) {
 
 /// @brief Lease6 update tests
 TEST_F(PgSqlLeaseMgrTest, updateLease6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testUpdateLease6();
 }
 
@@ -758,7 +757,7 @@ TEST_F(PgSqlLeaseMgrTest, concurrentUpdateLease6) {
 ///
 /// Checks that we are not able to concurrently update a lease in the database.
 TEST_F(PgSqlLeaseMgrTest, concurrentUpdateLease6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testConcurrentUpdateLease6();
 }
 
@@ -773,7 +772,7 @@ TEST_F(PgSqlLeaseMgrTest, testRecreateLease4) {
 
 /// @brief DHCPv4 Lease recreation tests
 TEST_F(PgSqlLeaseMgrTest, testRecreateLease4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testRecreateLease4();
 }
 
@@ -788,7 +787,7 @@ TEST_F(PgSqlLeaseMgrTest, testRecreateLease6) {
 
 /// @brief DHCPv6 Lease recreation tests
 TEST_F(PgSqlLeaseMgrTest, testRecreateLease6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testRecreateLease6();
 }
 
@@ -799,7 +798,7 @@ TEST_F(PgSqlLeaseMgrTest, nullDuid) {
 
 /// @brief Checks that null DUID is not allowed.
 TEST_F(PgSqlLeaseMgrTest, nullDuidMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testNullDuid();
 }
 
@@ -810,7 +809,7 @@ TEST_F(PgSqlLeaseMgrTest, testLease6Mac) {
 
 /// @brief Tests whether PostgreSQL can store and retrieve hardware addresses
 TEST_F(PgSqlLeaseMgrTest, testLease6MacMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testLease6MAC();
 }
 
@@ -821,7 +820,7 @@ TEST_F(PgSqlLeaseMgrTest, testLease6HWTypeAndSource) {
 
 /// @brief Tests whether PostgreSQL can store and retrieve hardware addresses
 TEST_F(PgSqlLeaseMgrTest, testLease6HWTypeAndSourceMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testLease6HWTypeAndSource();
 }
 
@@ -838,7 +837,7 @@ TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6) {
 
 /// @brief Check that the expired DHCPv6 leases can be retrieved.
 TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testGetExpiredLeases6();
 }
 
@@ -855,7 +854,7 @@ TEST_F(PgSqlLeaseMgrTest, deleteExpiredReclaimedLeases6) {
 
 /// @brief Check that expired reclaimed DHCPv6 leases are removed.
 TEST_F(PgSqlLeaseMgrTest, deleteExpiredReclaimedLeases6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testDeleteExpiredReclaimedLeases6();
 }
 
@@ -866,7 +865,7 @@ TEST_F(PgSqlLeaseMgrTest, recountLeaseStats4) {
 
 /// @brief Verifies that IPv4 lease statistics can be recalculated.
 TEST_F(PgSqlLeaseMgrTest, recountLeaseStats4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testRecountLeaseStats4();
 }
 
@@ -877,7 +876,7 @@ TEST_F(PgSqlLeaseMgrTest, recountLeaseStats6) {
 
 /// @brief Verifies that IPv6 lease statistics can be recalculated.
 TEST_F(PgSqlLeaseMgrTest, recountLeaseStats6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testRecountLeaseStats6();
 }
 
@@ -888,7 +887,7 @@ TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4) {
 
 /// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testWipeLeases4();
 }
 
@@ -899,7 +898,7 @@ TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6) {
 
 /// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testWipeLeases6();
 }
 
@@ -927,25 +926,25 @@ public:
 
 /// @brief Verifies that db lost callback is not invoked on an open failure
 TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
-    MultiThreadingMgr::instance().setMode(false);
+    MultiThreadingTest mt(false);
     testDbLostCallback();
 }
 
 /// @brief Verifies that db lost callback is not invoked on an open failure
 TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testDbLostCallback();
 }
 
 /// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
 TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostCallback) {
-    MultiThreadingMgr::instance().setMode(false);
+    MultiThreadingTest mt(false);
     testDbLostCallback();
 }
 
 /// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
 TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostCallbackMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testDbLostCallback();
 }
 
@@ -956,7 +955,7 @@ TEST_F(PgSqlLeaseMgrTest, leaseStatsQuery4) {
 
 /// @brief Tests v4 lease stats query variants.
 TEST_F(PgSqlLeaseMgrTest, leaseStatsQuery4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testLeaseStatsQuery4();
 }
 
@@ -967,7 +966,7 @@ TEST_F(PgSqlLeaseMgrTest, leaseStatsQuery6) {
 
 /// @brief Tests v6 lease stats query variants.
 TEST_F(PgSqlLeaseMgrTest, leaseStatsQuery6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testLeaseStatsQuery6();
 }
 
@@ -978,7 +977,7 @@ TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryAttribution4) {
 
 /// @brief Tests v4 lease stats to be attributed to the wrong subnet.
 TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryAttribution4MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testLeaseStatsQueryAttribution4();
 }
 
@@ -989,7 +988,7 @@ TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryAttribution6) {
 
 /// @brief Tests v6 lease stats to be attributed to the wrong subnet.
 TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryAttribution6MultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testLeaseStatsQueryAttribution6();
 }
 

@@ -18,7 +18,7 @@
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
-#include <util/multi_threading_mgr.h>
+#include <testutils/multi_threading_utils.h>
 
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -32,7 +32,7 @@ using boost::scoped_ptr;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
-using namespace isc::util;
+using namespace isc::test;
 
 namespace {
 
@@ -709,7 +709,7 @@ TEST(Subnet4Test, lastAllocated) {
 
 // Checks if last allocated address/prefix is stored/retrieved properly
 TEST(Subnet4Test, lastAllocatedMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     IOAddress addr("192.0.2.17");
 
     IOAddress last("192.0.2.255");
@@ -727,7 +727,6 @@ TEST(Subnet4Test, lastAllocatedMultiThreading) {
     EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_TA, addr), BadValue);
     EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_TA, addr), BadValue);
     EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_PD, addr), BadValue);
-    MultiThreadingMgr::instance().setMode(false);
 }
 
 // Checks if the V4 is the only allowed type for Pool4 and if getPool()
@@ -1756,7 +1755,7 @@ TEST(Subnet6Test, lastAllocated) {
 
 // Checks if last allocated address/prefix is stored/retrieved properly
 TEST(Subnet6Test, lastAllocatedMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     IOAddress ia("2001:db8:1::1");
     IOAddress ta("2001:db8:1::abcd");
     IOAddress pd("2001:db8:1::1234:5678");
@@ -1788,7 +1787,6 @@ TEST(Subnet6Test, lastAllocatedMultiThreading) {
 
     // No, you can't set the last allocated IPv4 address in IPv6 subnet
     EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_V4, ia), BadValue);
-    MultiThreadingMgr::instance().setMode(false);
 }
 
 // This test verifies that the IPv4 subnet can be fetched by id.

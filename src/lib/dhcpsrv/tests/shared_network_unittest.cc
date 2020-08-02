@@ -13,7 +13,7 @@
 #include <dhcpsrv/triplet.h>
 #include <exceptions/exceptions.h>
 #include <testutils/test_to_element.h>
-#include <util/multi_threading_mgr.h>
+#include <testutils/multi_threading_utils.h>
 
 #include <gtest/gtest.h>
 #include <cstdint>
@@ -22,7 +22,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
-using namespace isc::util;
+using namespace isc::test;
 
 namespace {
 
@@ -456,7 +456,7 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
 // This test verifies that preferred subnet is returned based on the timestamp
 // when the subnet was last used and allowed client classes.
 TEST(SharedNetwork4Test, getPreferredSubnetMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     SharedNetwork4Ptr network(new SharedNetwork4("frog"));
 
     // Create four subnets.
@@ -534,7 +534,6 @@ TEST(SharedNetwork4Test, getPreferredSubnetMultiThreading) {
     // Repeat the test for subnet3 being a selected subnet.
     preferred = network->getPreferredSubnet(subnet3);
     EXPECT_EQ(subnet3->getID(), preferred->getID());
-    MultiThreadingMgr::instance().setMode(false);
 }
 
 // This test verifies that subnetsIncludeMatchClientId() works as expected.
@@ -1201,7 +1200,7 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
 // This test verifies that preferred subnet is returned based on the timestamp
 // when the subnet was last used and allowed client classes.
 TEST(SharedNetwork6Test, getPreferredSubnetMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     SharedNetwork6Ptr network(new SharedNetwork6("frog"));
 
     // Create four subnets.
@@ -1294,7 +1293,6 @@ TEST(SharedNetwork6Test, getPreferredSubnetMultiThreading) {
     // Repeat the test for subnet3 being a selected subnet.
     preferred = network->getPreferredSubnet(subnet3, Lease::TYPE_NA);
     EXPECT_EQ(subnet3->getID(), preferred->getID());
-    MultiThreadingMgr::instance().setMode(false);
 }
 
 // This test verifies that subnetsAllHRGlobal() works as expected.
