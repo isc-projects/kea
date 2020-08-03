@@ -114,8 +114,8 @@ LeaseMgr::recountLeaseStats4() {
     LeaseStatsRow row;
     while (query->getNextRow(row)) {
         if (row.lease_state_ == Lease::STATE_DEFAULT) {
-            // Set subnet level value.
-            stats_mgr.setValue(StatsMgr::generateName("subnet", row.subnet_id_,
+            // Add to subnet level value.
+            stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
                                                       "assigned-addresses"),
                                row.state_count_);
         } else if (row.lease_state_ == Lease::STATE_DECLINED) {
@@ -126,6 +126,11 @@ LeaseMgr::recountLeaseStats4() {
 
             // Add to the global value.
             stats_mgr.addValue("declined-addresses", row.state_count_);
+
+            // Add to subnet level value.
+            stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                      "assigned-addresses"),
+                               row.state_count_);
         }
     }
 }
@@ -208,6 +213,7 @@ LeaseMgr::recountLeaseStats6() {
     if (!stats_mgr.getObservation("cumulative-assigned-nas")) {
         stats_mgr.setValue("cumulative-assigned-nas", zero);
     }
+
     if (!stats_mgr.getObservation("cumulative-assigned-pds")) {
         stats_mgr.setValue("cumulative-assigned-pds", zero);
     }
@@ -249,8 +255,8 @@ LeaseMgr::recountLeaseStats6() {
         switch(row.lease_type_) {
             case Lease::TYPE_NA:
                 if (row.lease_state_ == Lease::STATE_DEFAULT) {
-                    // Set subnet level value.
-                    stats_mgr.setValue(StatsMgr::
+                    // Add subnet level value.
+                    stats_mgr.addValue(StatsMgr::
                                        generateName("subnet", row.subnet_id_,
                                                     "assigned-nas"),
                                        row.state_count_);
@@ -263,6 +269,12 @@ LeaseMgr::recountLeaseStats6() {
 
                     // Add to the global value.
                     stats_mgr.addValue("declined-addresses", row.state_count_);
+
+                    // Add subnet level value.
+                    stats_mgr.addValue(StatsMgr::
+                                       generateName("subnet", row.subnet_id_,
+                                                    "assigned-nas"),
+                                       row.state_count_);
                 }
                 break;
 

@@ -3047,7 +3047,7 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     makeLease4("192.0.1.4", subnet_id);
 
     // Update the expected stats list for subnet 1.
-    expectedStats[subnet_id - 1]["assigned-addresses"] = 2;
+    expectedStats[subnet_id - 1]["assigned-addresses"] = 3; // 2 + 1 declined
     expectedStats[subnet_id - 1]["declined-addresses"] = 1;
 
     // Now let's add leases to subnet 2.
@@ -3057,6 +3057,7 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     makeLease4("192.0.2.2", subnet_id, Lease::STATE_DECLINED);
 
     // Update the expected stats.
+    expectedStats[subnet_id - 1]["assigned-addresses"] = 1; // 0 + 1 declined
     expectedStats[subnet_id - 1]["declined-addresses"] = 1;
 
     // Now Recount the stats.
@@ -3067,9 +3068,10 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
 
     // Delete some leases from subnet, and update the expected stats.
     EXPECT_TRUE(lmptr_->deleteLease(lease1));
-    expectedStats[0]["assigned-addresses"] = 1;
+    expectedStats[0]["assigned-addresses"] = 2;
 
     EXPECT_TRUE(lmptr_->deleteLease(lease2));
+    expectedStats[0]["assigned-addresses"] = 1;
     expectedStats[0]["declined-addresses"] = 0;
 
     // Recount the stats.
@@ -3148,7 +3150,7 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     makeLease6(Lease::TYPE_NA, "3001:1::1", 0, subnet_id);
     Lease6Ptr lease2 = makeLease6(Lease::TYPE_NA, "3001:1::2", 0, subnet_id);
     makeLease6(Lease::TYPE_NA, "3001:1::3", 0, subnet_id);
-    expectedStats[subnet_id - 1]["assigned-nas"] = 3;
+    expectedStats[subnet_id - 1]["assigned-nas"] = 5; // 3 + 2 declined
 
     // Insert two declined NAs.
     makeLease6(Lease::TYPE_NA, "3001:1::4", 0, subnet_id,
@@ -3178,7 +3180,7 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     // Insert two assigned NAs.
     makeLease6(Lease::TYPE_NA, "2001:db81::1", 0, subnet_id);
     makeLease6(Lease::TYPE_NA, "2001:db81::2", 0, subnet_id);
-    expectedStats[subnet_id - 1]["assigned-nas"] = 2;
+    expectedStats[subnet_id - 1]["assigned-nas"] = 3; // 2 + 1 declined
 
     // Insert one declined NA.
     Lease6Ptr lease3 = makeLease6(Lease::TYPE_NA, "2001:db81::3", 0, subnet_id,
@@ -3193,9 +3195,10 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
 
     // Delete some leases and update the expected stats.
     EXPECT_TRUE(lmptr_->deleteLease(lease2));
-    expectedStats[0]["assigned-nas"] = 2;
+    expectedStats[0]["assigned-nas"] = 4;
 
     EXPECT_TRUE(lmptr_->deleteLease(lease3));
+    expectedStats[1]["assigned-nas"] = 2;
     expectedStats[1]["declined-addresses"] = 0;
 
     // Recount the stats.
