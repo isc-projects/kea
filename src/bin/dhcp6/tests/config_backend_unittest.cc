@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -348,14 +348,15 @@ TEST_F(Dhcp6CBTest, mergeOptions) {
 
     // bootfile-url should come from the first config back end.
     // (overwriting the original).
-    OptionDescriptor found_opt = options->get("dhcp6", D6O_BOOTFILE_URL);
+    OptionDescriptor found_opt =
+        options->get(DHCP6_OPTION_SPACE, D6O_BOOTFILE_URL);
     ASSERT_TRUE(found_opt.option_);
     OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(found_opt.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("updated-boot-file", opstr->getValue());
 
     // sol-maxt-rt should come from the original config
-    found_opt = options->get("dhcp6", D6O_SOL_MAX_RT);
+    found_opt = options->get(DHCP6_OPTION_SPACE, D6O_SOL_MAX_RT);
     ASSERT_TRUE(found_opt.option_);
     OptionUint32Ptr opint = boost::dynamic_pointer_cast<OptionUint32>(found_opt.option_);
     ASSERT_TRUE(opint);

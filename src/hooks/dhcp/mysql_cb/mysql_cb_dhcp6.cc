@@ -2377,7 +2377,7 @@ public:
     void createUpdateOptionDef6(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
 
-        createUpdateOptionDef(server_selector, option_def, "dhcp6",
+        createUpdateOptionDef(server_selector, option_def, DHCP6_OPTION_SPACE,
                               MySqlConfigBackendDHCPv6Impl::GET_OPTION_DEF6_CODE_SPACE,
                               MySqlConfigBackendDHCPv6Impl::INSERT_OPTION_DEF6,
                               MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION_DEF6,

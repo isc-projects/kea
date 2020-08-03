@@ -193,7 +193,7 @@ TEST(AdaptorOptionTest, initCodesInternal) {
     const size_t DEFS_SIZE = sizeof(DEFS) / sizeof(DEFS[0]);
     OptionCodes codes;
     ASSERT_NO_THROW(TestAdaptorOption::initCodesInternal(codes,
-                                                         "dhcp4",
+                                                         DHCP4_OPTION_SPACE,
                                                          DEFS,
                                                          DEFS_SIZE));
     ASSERT_EQ(2, codes.size());

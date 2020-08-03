@@ -588,7 +588,8 @@ private:
 
             // If empty or null space provided, use a default top level space.
             if (space.empty()) {
-                space = (universe_ == Option::V4 ? "dhcp4" : "dhcp6");
+                space = (universe_ == Option::V4 ?
+                         DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE);
             }
 
             // persistent: BOOL default false

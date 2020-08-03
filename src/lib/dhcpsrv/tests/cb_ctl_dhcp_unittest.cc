@@ -489,7 +489,7 @@ public:
         // modification time is later than last audit revision time it should
         // be merged.
         auto options = srv_cfg->getCfgOption();
-        auto found_opt = options->get("dhcp4", DHO_HOST_NAME);
+        auto found_opt = options->get(DHCP4_OPTION_SPACE, DHO_HOST_NAME);
         if (hasConfigElement("dhcp4_options") &&
             (getTimestamp("dhcp4_options") > lb_modification_time)) {
             ASSERT_TRUE(found_opt.option_);
@@ -603,8 +603,10 @@ public:
         {
             SCOPED_TRACE("global options");
             // One of the options should still be there.
-            EXPECT_TRUE(srv_cfg->getCfgOption()->get("dhcp4", DHO_TFTP_SERVER_NAME).option_);
-            auto found_opt = srv_cfg->getCfgOption()->get("dhcp4", DHO_HOST_NAME);
+            EXPECT_TRUE(srv_cfg->getCfgOption()->get(DHCP4_OPTION_SPACE,
+                                                     DHO_TFTP_SERVER_NAME).option_);
+            auto found_opt = srv_cfg->getCfgOption()->get(DHCP4_OPTION_SPACE,
+                                                          DHO_HOST_NAME);
             if (deleteConfigElement("dhcp4_options", 1)) {
                 EXPECT_FALSE(found_opt.option_);
 
@@ -1135,7 +1137,7 @@ public:
         // modification time is later than last audit revision time it should
         // be merged.
         auto options = srv_cfg->getCfgOption();
-        auto found_opt = options->get("dhcp6", D6O_BOOTFILE_URL);
+        auto found_opt = options->get(DHCP6_OPTION_SPACE, D6O_BOOTFILE_URL);
         if (hasConfigElement("dhcp6_options") &&
             (getTimestamp("dhcp6_options") > lb_modification_time)) {
             ASSERT_TRUE(found_opt.option_);
@@ -1249,8 +1251,10 @@ public:
         {
             SCOPED_TRACE("global options");
             // One of the options should still be there.
-            EXPECT_TRUE(srv_cfg->getCfgOption()->get("dhcp6", D6O_AFTR_NAME).option_);
-            auto found_opt = srv_cfg->getCfgOption()->get("dhcp6", D6O_AFTR_NAME);
+            EXPECT_TRUE(srv_cfg->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                     D6O_AFTR_NAME).option_);
+            auto found_opt = srv_cfg->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                          D6O_AFTR_NAME);
             if (deleteConfigElement("dhcp6_options", 1)) {
                 EXPECT_FALSE(found_opt.option_);
 

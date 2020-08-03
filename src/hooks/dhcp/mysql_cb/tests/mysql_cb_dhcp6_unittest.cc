@@ -368,15 +368,15 @@ public:
 
         OptionDefinitionPtr option_def(new OptionDefinition("foo", 1234, "string",
                                                             "espace"));
-        option_def->setOptionSpaceName("dhcp6");
+        option_def->setOptionSpaceName(DHCP6_OPTION_SPACE);
         test_option_defs_.push_back(option_def);
 
         option_def.reset(new OptionDefinition("bar", 1234, "uint32", true));
-        option_def->setOptionSpaceName("dhcp6");
+        option_def->setOptionSpaceName(DHCP6_OPTION_SPACE);
         test_option_defs_.push_back(option_def);
 
         option_def.reset(new OptionDefinition("fish", 5235, "record", true));
-        option_def->setOptionSpaceName("dhcp6");
+        option_def->setOptionSpaceName(DHCP6_OPTION_SPACE);
         option_def->addRecordField("uint32");
         option_def->addRecordField("string");
         test_option_defs_.push_back(option_def);
@@ -386,7 +386,7 @@ public:
         test_option_defs_.push_back(option_def);
 
         option_def.reset(new OptionDefinition("bar", 1234, "uint64", true));
-        option_def->setOptionSpaceName("dhcp6");
+        option_def->setOptionSpaceName(DHCP6_OPTION_SPACE);
         test_option_defs_.push_back(option_def);
     }
 

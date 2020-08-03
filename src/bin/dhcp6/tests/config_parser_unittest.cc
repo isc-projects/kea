@@ -3584,7 +3584,8 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
     Pool6Ptr pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
     ASSERT_TRUE(pool6);
 
-    OptionContainerPtr options1 = pool6->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options1 =
+        pool6->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(1, options1->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -3611,7 +3612,8 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
     pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
     ASSERT_TRUE(pool6);
 
-    OptionContainerPtr options2 = pool6->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options2 =
+        pool6->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(1, options2->size());
 
     const OptionContainerTypeIndex& idx2 = options2->get<1>();
@@ -3632,7 +3634,8 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
     pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
     ASSERT_TRUE(pool6);
 
-    OptionContainerPtr options3 = pool6->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options3 =
+        pool6->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(1, options3->size());
 
     const OptionContainerTypeIndex& idx3 = options3->get<1>();
@@ -3652,7 +3655,8 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
     pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
     ASSERT_TRUE(pool6);
 
-    OptionContainerPtr options4 = pool6->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options4 =
+        pool6->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(1, options4->size());
 
     const OptionContainerTypeIndex& idx4 = options4->get<1>();

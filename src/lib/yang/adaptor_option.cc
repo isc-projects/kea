@@ -77,7 +77,7 @@ AdaptorOption::setCode(ElementPtr option, const OptionCodes& codes) {
 
 void
 AdaptorOption::initCodes(OptionCodes& codes, const string& space) {
-    if (space == "dhcp4") {
+    if (space == DHCP4_OPTION_SPACE) {
         initCodesInternal(codes, space, STANDARD_V4_OPTION_DEFINITIONS,
                           STANDARD_V4_OPTION_DEFINITIONS_SIZE);
         initCodesInternal(codes, space, LAST_RESORT_V4_OPTION_DEFINITIONS,
@@ -85,7 +85,7 @@ AdaptorOption::initCodes(OptionCodes& codes, const string& space) {
         initCodesInternal(codes, "vendor-4491",
                           DOCSIS3_V4_OPTION_DEFINITIONS,
                           DOCSIS3_V4_OPTION_DEFINITIONS_SIZE);
-    } else if (space == "dhcp6") {
+    } else if (space == DHCP6_OPTION_SPACE) {
         initCodesInternal(codes, space, STANDARD_V6_OPTION_DEFINITIONS,
                           STANDARD_V6_OPTION_DEFINITIONS_SIZE);
         initCodesInternal(codes, "vendor-4491",

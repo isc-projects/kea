@@ -608,7 +608,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     defs->add((OptionDefinitionPtr(new OptionDefinition("two", 2, "uint8", true))), "isc");
 
     // We'll try a standard V4 option first.
-    std::string space = "dhcp4";
+    std::string space = DHCP4_OPTION_SPACE;
     std::string value = "v4.example.com";
     OptionPtr option(new Option(Option::V6, DHO_HOST_NAME));
     option->setData(value.begin(), value.end());
@@ -622,7 +622,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     EXPECT_EQ("v4.example.com", opstr->getValue());
 
     // Next we'll try a standard V6 option.
-    space = "dhcp6";
+    space = DHCP6_OPTION_SPACE;
     std::vector<uint8_t> fqdn =
         { 2, 'v', '6', 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 3, 'c', 'o', 'm', 0 };
     option.reset(new Option(Option::V6, D6O_AFTR_NAME));

@@ -1962,7 +1962,7 @@ public:
     void createUpdateOptionDef4(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
 
-        createUpdateOptionDef(server_selector, option_def, "dhcp4",
+        createUpdateOptionDef(server_selector, option_def, DHCP4_OPTION_SPACE,
                               MySqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
                               MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
                               MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4,

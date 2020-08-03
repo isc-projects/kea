@@ -1282,7 +1282,7 @@ TEST_F(LibDhcpTest, emptyHostName) {
     list<uint16_t> deferred;
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(packed, "dhcp4", options, deferred, false);
+        LibDHCP::unpackOptions4(packed, DHCP4_OPTION_SPACE, options, deferred, false);
     );
 
     // Host Name should not exist, we quietly drop it when empty.
@@ -2370,7 +2370,7 @@ TEST_F(LibDhcpTest, sw46options) {
 
     size_t parsed = 0;
 
-    EXPECT_NO_THROW (parsed = LibDHCP::unpackOptions6(buf, "dhcp6", options));
+    EXPECT_NO_THROW (parsed = LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE, options));
     EXPECT_EQ(mape_bin.size(), parsed);
 
     // We expect to have exactly one option (with tons of suboptions, but we'll

@@ -806,7 +806,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     EXPECT_EQ(1, subnets->size());
 
-    OptionDefinitionPtr def = LibDHCP::getRuntimeOptionDef("dhcp4", 163);
+    OptionDefinitionPtr def =
+        LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
     ASSERT_TRUE(def);
 
     // Create a config with malformed subnet that should fail to parse.
@@ -835,7 +836,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     EXPECT_EQ(1, subnets->size());
 
-    def = LibDHCP::getRuntimeOptionDef("dhcp4", 163);
+    def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
     ASSERT_TRUE(def);
 
     // Create a valid config with two subnets and no command channel.

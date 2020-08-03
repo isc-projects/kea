@@ -322,15 +322,15 @@ public:
 
         OptionDefinitionPtr option_def(new OptionDefinition("foo", 234, "string",
                                                             "espace"));
-        option_def->setOptionSpaceName("dhcp4");
+        option_def->setOptionSpaceName(DHCP4_OPTION_SPACE);
         test_option_defs_.push_back(option_def);
 
         option_def.reset(new OptionDefinition("bar", 234, "uint32", true));
-        option_def->setOptionSpaceName("dhcp4");
+        option_def->setOptionSpaceName(DHCP4_OPTION_SPACE);
         test_option_defs_.push_back(option_def);
 
         option_def.reset(new OptionDefinition("fish", 235, "record", true));
-        option_def->setOptionSpaceName("dhcp4");
+        option_def->setOptionSpaceName(DHCP4_OPTION_SPACE);
         option_def->addRecordField("uint32");
         option_def->addRecordField("string");
         test_option_defs_.push_back(option_def);
@@ -340,7 +340,7 @@ public:
         test_option_defs_.push_back(option_def);
 
         option_def.reset(new OptionDefinition("foobar", 234, "uint64", true));
-        option_def->setOptionSpaceName("dhcp4");
+        option_def->setOptionSpaceName(DHCP4_OPTION_SPACE);
         test_option_defs_.push_back(option_def);
     }
 
