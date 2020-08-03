@@ -1858,7 +1858,6 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
                 StatsMgr::generateName("subnet", id, "assigned-addresses"),
                 int64_t(0));
 
-
             StatsMgr::instance().setValue(
                 StatsMgr::generateName("subnet", id, "declined-addresses"),
                 int64_t(0));

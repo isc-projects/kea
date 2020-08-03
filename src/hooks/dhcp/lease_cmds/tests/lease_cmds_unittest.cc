@@ -4620,12 +4620,6 @@ TEST_F(LeaseCmdsTest, Lease6Update) {
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               99, "assigned-pds"))->getInteger().first, 0);
 
-    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              66, "declined-addresses"))->getInteger().first, 2);
-
-    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              99, "declined-addresses"))->getInteger().first, 2);
-
     // Now send the command.
     string txt =
         "{\n"
@@ -4686,6 +4680,12 @@ TEST_F(LeaseCmdsTest, Lease6UpdateWithStats) {
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               99, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "declined-addresses"))->getInteger().first, 2);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "declined-addresses"))->getInteger().first, 2);
 
     // Now send the command.
     string txt =
@@ -4754,12 +4754,6 @@ TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetId) {
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               99, "assigned-pds"))->getInteger().first, 0);
 
-    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              66, "declined-addresses"))->getInteger().first, 2);
-
-    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
-              99, "declined-addresses"))->getInteger().first, 2);
-
     // Now send the command.
     string txt =
         "{\n"
@@ -4822,6 +4816,12 @@ TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetIdWithStats) {
 
     ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
               99, "assigned-pds"))->getInteger().first, 0);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              66, "declined-addresses"))->getInteger().first, 2);
+
+    ASSERT_EQ(StatsMgr::instance().getObservation(StatsMgr::generateName("subnet",
+              99, "declined-addresses"))->getInteger().first, 2);
 
     // Now send the command.
     string txt =
