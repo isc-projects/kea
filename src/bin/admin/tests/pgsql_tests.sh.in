@@ -969,6 +969,8 @@ pgsql_unused_subnet_id_test() {
 
     # Let's wipe the whole database
     pgsql_wipe
+
+    test_finish 0
 }
 
 
