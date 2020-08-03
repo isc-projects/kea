@@ -1285,12 +1285,12 @@ mysql_unused_subnet_id_test() {
 
     run_statement "insert options" "$qry"
 
-    # Ok, we have a 4.0 database with hosts and options. Let's upgrade it to 5.0
-    ${keaadmin} db-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
-    ERRCODE=$?
+    # Ok, we have a 6.0 database with hosts and options. Let's upgrade it to 7.0
+    mysql_upgrade_schema_to_version 7.0
 
-    # Upgrade should succeed
-    assert_eq 0 $ERRCODE "upgrade failed"
+    # Version should be new 7.0
+    version=$(${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
+    assert_str_eq "7.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Two hosts should have null v4 subnet ids
     qry="select count(host_id) from hosts where dhcp4_subnet_id is null;"
