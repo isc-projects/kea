@@ -330,7 +330,7 @@ Kea 1.7.6 (development) released on Mar 25, 2020
 	(Gitlab #608)
 
 1727.	[bug]		tmark
-	When shutting down due to lost backend database connetivity,
+	When shutting down due to lost backend database connectivity,
 	kea-dhcp4 and kea-dhcp6 processes will exit with a non-zero value.
 	This was temporarily altered by #1108. In addition, the "shutdown"
 	command now supports an "exit-value" argument.
