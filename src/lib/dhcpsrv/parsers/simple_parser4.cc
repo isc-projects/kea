@@ -347,7 +347,7 @@ const SimpleDefaults SimpleParser4::IFACE4_DEFAULTS = {
 const SimpleDefaults SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS = {
     { "enable-queue",   Element::boolean, "false"},
     { "queue-type",     Element::string,  "kea-ring4"},
-    { "capacity",       Element::integer, "500"}
+    { "capacity",       Element::integer, "64"}
 };
 
 /// @brief This table defines default values for multi-threading in DHCPv4.

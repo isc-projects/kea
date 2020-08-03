@@ -101,7 +101,7 @@ where:
 
 -  ``capacity`` = n [packets] - this is the maximum number of packets the
    queue can hold before packets are discarded. The optimal value for
-   this is extremely site-dependent. The default value is 500 for both
+   this is extremely site-dependent. The default value is 64 for both
    kea-ring4 and kea-ring6.
 
 The following example enables the default packet queue for kea-dhcp4,

@@ -359,7 +359,7 @@ const SimpleDefaults SimpleParser6::IFACE6_DEFAULTS = {
 const SimpleDefaults SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS = {
     { "enable-queue",   Element::boolean, "false"},
     { "queue-type",     Element::string,  "kea-ring6"},
-    { "capacity",       Element::integer, "500"}
+    { "capacity",       Element::integer, "64"}
 };
 
 /// @brief This table defines default values for multi-threading in DHCPv6.
