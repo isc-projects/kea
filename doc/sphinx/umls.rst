@@ -10,11 +10,11 @@
 
 .. _umls:
 
-UML files
-=========
+Kea Flow Diagrams
+=================
 
-These UML files describe the DHCPv4 server implementation. They are
-provided in UML (source), PNG and SVG formats.
+These flow diagram files describe the Kea DHCPv4 server implementation.
+They are provided in UML (source), PNG and SVG formats.
 
 The main loop is common to DHCPv4 and DHPCv6 servers.
 
