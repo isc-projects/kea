@@ -910,7 +910,7 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
 }
 
 // Check that a simple, well formed lease4 can be added.
-TEST_F(LeaseCmdsTest, Lease4AddWithStats) {
+TEST_F(LeaseCmdsTest, Lease4AddDeclinedLeases) {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -1054,7 +1054,7 @@ TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissing) {
 
 // Check that subnet-id is optional. If not specified, Kea should select
 // it on its own.
-TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissingWithStats) {
+TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissingDeclinedLeases) {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -1627,7 +1627,7 @@ TEST_F(LeaseCmdsTest, Lease6Add) {
 }
 
 // Check that a simple, well formed lease6 can be added.
-TEST_F(LeaseCmdsTest, Lease6AddWithStats) {
+TEST_F(LeaseCmdsTest, Lease6AddDeclinedLeases) {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1802,7 +1802,7 @@ TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissing) {
 
 // Check that subnet-id is optional. If not specified, Kea should select
 // it on its own.
-TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissingWithStats) {
+TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissingDeclinedLeases) {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -4090,7 +4090,7 @@ TEST_F(LeaseCmdsTest, Lease4Update) {
 
 // Check that a lease4 can be updated. We're changing hw-address
 // and a hostname.
-TEST_F(LeaseCmdsTest, Lease4UpdateWithStats) {
+TEST_F(LeaseCmdsTest, Lease4UpdateDeclinedLeases) {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true, true);
@@ -4195,7 +4195,7 @@ TEST_F(LeaseCmdsTest, Lease4UpdateNoSubnetId) {
 
 // Check that a lease4 can be updated. We're changing hw-address
 // and a hostname. The subnet-id is not specified.
-TEST_F(LeaseCmdsTest, Lease4UpdateNoSubnetIdWithStats) {
+TEST_F(LeaseCmdsTest, Lease4UpdateNoSubnetIdDeclinedLeases) {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true, true);
@@ -4661,7 +4661,7 @@ TEST_F(LeaseCmdsTest, Lease6Update) {
 
 // Check that a lease6 can be updated. We're changing hw-address
 // and a hostname.
-TEST_F(LeaseCmdsTest, Lease6UpdateWithStats) {
+TEST_F(LeaseCmdsTest, Lease6UpdateDeclinedLeases) {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true, true);
@@ -4797,7 +4797,7 @@ TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetId) {
 
 // Check that a lease6 can be updated. We're changing hw-address
 // and a hostname. The subnet-id is not specified.
-TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetIdWithStats) {
+TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetIdDeclinedLeases) {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true, true);
@@ -5316,7 +5316,7 @@ TEST_F(LeaseCmdsTest, Lease4DelByAddr) {
 }
 
 // Checks that lease4-del can return a lease by address.
-TEST_F(LeaseCmdsTest, Lease4DelByAddrWithStats) {
+TEST_F(LeaseCmdsTest, Lease4DelByAddrDeclinedLeases) {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true, true);
@@ -5745,7 +5745,7 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddr) {
 
 // Checks that lease6-del(subnet-id, addr6) can handle a situation when
 // the query is correctly formed and the lease is returned.
-TEST_F(LeaseCmdsTest, Lease6DelByAddrWithStats) {
+TEST_F(LeaseCmdsTest, Lease6DelByAddrDeclinedLeases) {
 
     initLeaseMgr(true, true, true); // (true = v6, true = create a lease)
 

@@ -85,7 +85,9 @@ public:
         /// Supported values are: "address", hw-address and duid.
         ///
         /// @param txt text to be converted
+        ///
         /// @return value converted to Parameters::Type
+        ///
         /// @throw BadValue if unsupported type is specified
         static Type txtToType(const std::string& txt) {
             if (txt == "address") {
@@ -131,6 +133,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// add command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise
     int
     leaseAddHandler(CalloutHandle& handle);
@@ -142,6 +145,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// add command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise
     int
     lease6BulkApplyHandler(CalloutHandle& handle);
@@ -152,6 +156,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise
     int
     leaseGetHandler(CalloutHandle& handle);
@@ -165,6 +170,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise.
     int
     leaseGetAllHandler(CalloutHandle& handle);
@@ -181,6 +187,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get commands JSON text in the "command" argument.
+    ///
     /// @return 0 if the handler has been invoked successfully, 1 if an
     /// error occurs, 3 if no leases are returned.
     int
@@ -192,6 +199,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
+    ///
     /// @return 0 if the handler has been invoked successfully, 1 if an
     /// error occurs, 3 if no leases are returned.
     int
@@ -203,6 +211,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
+    ///
     /// @return 0 if the handler has been invoked successfully, 1 if an
     /// error occurs, 3 if no leases are returned.
     int
@@ -214,6 +223,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
+    ///
     /// @return 0 if the handler has been invoked successfully, 1 if an
     /// error occurs, 3 if no leases are returned.
     int
@@ -226,6 +236,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
+    ///
     /// @return 0 if the handler has been invoked successfully, 1 if an
     /// error occurs, 3 if no leases are returned.
     int
@@ -237,6 +248,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// delete command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise
     int
     lease4DelHandler(CalloutHandle& handle);
@@ -247,6 +259,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// delete command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise
     int
     lease6DelHandler(CalloutHandle& handle);
@@ -257,6 +270,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// update command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise
     int
     lease4UpdateHandler(CalloutHandle& handle);
@@ -267,6 +281,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// update command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise
     int
     lease6UpdateHandler(CalloutHandle& handle);
@@ -277,6 +292,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// wipe command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise
     int
     lease4WipeHandler(CalloutHandle& handle);
@@ -287,6 +303,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// wipe command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise
     int
     lease6WipeHandler(CalloutHandle& handle);
@@ -297,6 +314,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// lease4-resend-ddns command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise
     int lease4ResendDdnsHandler(CalloutHandle& handle);
 
@@ -306,6 +324,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// lease6-resend-ddns command JSON text in the "command" argument
+    ///
     /// @return 0 upon success, non-zero otherwise
     int lease6ResendDdnsHandler(CalloutHandle& handle);
 
@@ -316,7 +335,9 @@ public:
     ///
     /// @param v6 whether addresses allowed are v4 (false) or v6 (true)
     /// @param args arguments passed to command
+    ///
     /// @return parsed parameters
+    ///
     /// @throw BadValue if input arguments don't make sense.
     Parameters getParameters(bool v6, const ConstElementPtr& args);
 
@@ -351,6 +372,8 @@ public:
     /// @param control_result Control result: "empty" of the lease was
     /// not found, "error" otherwise.
     /// @param error_message Error message.
+    ///
+    /// @return The JSON map of the failed leases.
     ElementPtr createFailedLeaseMap(const Lease::Type& lease_type,
                                     const IOAddress& lease_address,
                                     const DuidPtr& duid,
@@ -358,11 +381,14 @@ public:
                                     const std::string& error_message) const;
 
     /// @brief Fetches an IP address parameter from a map of parameters
+    ///
     /// @param map of parameters in which to look
     /// @name name of the parameter desired
     /// @param family expected protocol family of the address parameter,
     /// AF_INET or AF_INET6
+    ///
     /// @return IOAddress containing the value of the parameter.
+    ///
     /// @throw BadValue if the parameter is missing or invalid
     IOAddress getAddressParam(ConstElementPtr params, const std::string name,
                               short family = AF_INET) const;
@@ -400,6 +426,26 @@ public:
     ///
     /// @param lease Deleted lease.
     static void updateStatsOnDelete(const Lease6Ptr& lease);
+
+    /// @brief Add or update lease.
+    ///
+    /// @param lease The lease to be added or updated (if exists).
+    /// @param force_create Flag to indicate if the function should try to
+    /// create the lease if it does not exists, or simply update and fail in
+    /// such case.
+    ///
+    /// @return true if lease has been successfully added, false otherwise.
+    static bool addOrUpdate4(Lease4Ptr lease, bool force_create);
+
+    /// @brief Add or update lease.
+    ///
+    /// @param lease The lease to be added or updated (if exists).
+    /// @param force_create Flag to indicate if the function should try to
+    /// create the lease if it does not exists, or simply update and fail in
+    /// such case.
+    ///
+    /// @return true if lease has been successfully added, false otherwise.
+    static bool addOrUpdate6(Lease6Ptr lease, bool force_create);
 };
 
 void
@@ -597,10 +643,8 @@ LeaseCmdsImpl::updateStatsOnDelete(const Lease6Ptr& lease) {
     }
 }
 
-namespace { // anonymous namespace.
-
 bool
-addOrUpdate4(Lease4Ptr lease, bool force_create) {
+LeaseCmdsImpl::addOrUpdate4(Lease4Ptr lease, bool force_create) {
     Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(lease->addr_);
     if (force_create && !existing) {
         // lease does not exist
@@ -617,7 +661,7 @@ addOrUpdate4(Lease4Ptr lease, bool force_create) {
 }
 
 bool
-addOrUpdate6(Lease6Ptr lease, bool force_create) {
+LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
     Lease6Ptr existing =
         LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_);
     if (force_create && !existing) {
@@ -633,8 +677,6 @@ addOrUpdate6(Lease6Ptr lease, bool force_create) {
     LeaseCmdsImpl::updateStatsOnUpdate(existing, lease);
     return (false);
 }
-
-} // end of anonymous namespace.
 
 int
 LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
@@ -1847,12 +1889,18 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
         }
 
         if (id) {
-            // Wipe a single subnet
+            // Wipe a single subnet.
             num = LeaseMgrFactory::instance().wipeLeases4(id);
             ids << " " << id;
 
-            int64_t previous_declined = StatsMgr::instance().getObservation(
-                StatsMgr::generateName("subnet", id, "declined-addresses"))->getInteger().first;
+            auto observation = StatsMgr::instance().getObservation(
+                StatsMgr::generateName("subnet", id, "declined-addresses"));
+
+            int64_t previous_declined = 0;
+
+            if (observation) {
+                previous_declined = observation->getInteger().first;
+            }
 
             StatsMgr::instance().setValue(
                 StatsMgr::generateName("subnet", id, "assigned-addresses"),
@@ -1925,8 +1973,14 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
             num = LeaseMgrFactory::instance().wipeLeases6(id);
             ids << " " << id;
 
-            int64_t previous_declined = StatsMgr::instance().getObservation(
-                StatsMgr::generateName("subnet", id, "declined-addresses"))->getInteger().first;
+            auto observation = StatsMgr::instance().getObservation(
+                StatsMgr::generateName("subnet", id, "declined-addresses"));
+
+            int64_t previous_declined = 0;
+
+            if (observation) {
+                previous_declined = observation->getInteger().first;
+            }
 
             StatsMgr::instance().setValue(
                 StatsMgr::generateName("subnet", id, "assigned-nas" ),
