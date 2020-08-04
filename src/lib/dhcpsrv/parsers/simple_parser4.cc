@@ -146,7 +146,7 @@ const SimpleKeywords SimpleParser4::OPTION4_DEF_PARAMETERS = {
 /// definitions. This array lists default values for those option definitions.
 const SimpleDefaults SimpleParser4::OPTION4_DEF_DEFAULTS = {
     { "record-types", Element::string,  ""},
-    { "space",        Element::string,  "dhcp4"},
+    { "space",        Element::string,  "dhcp4"}, // DHCP4_OPTION_SPACE
     { "array",        Element::boolean, "false"},
     { "encapsulate",  Element::string,  "" }
 };
@@ -174,7 +174,7 @@ const SimpleKeywords SimpleParser4::OPTION4_PARAMETERS = {
 /// subnet, class or host reservations scopes. This array lists default values
 /// for those option-data declarations.
 const SimpleDefaults SimpleParser4::OPTION4_DEFAULTS = {
-    { "space",        Element::string,  "dhcp4"},
+    { "space",        Element::string,  "dhcp4"}, // DHCP4_OPTION_SPACE
     { "csv-format",   Element::boolean, "true"},
     { "always-send",  Element::boolean, "false"}
 };

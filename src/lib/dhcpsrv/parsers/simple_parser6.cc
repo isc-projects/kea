@@ -142,7 +142,7 @@ const SimpleKeywords SimpleParser6::OPTION6_DEF_PARAMETERS = {
 /// definitions. This array lists default values for those option definitions.
 const SimpleDefaults SimpleParser6::OPTION6_DEF_DEFAULTS = {
     { "record-types", Element::string,  ""},
-    { "space",        Element::string,  "dhcp6"},
+    { "space",        Element::string,  "dhcp6"}, // DHCP6_OPTION_SPACE
     { "array",        Element::boolean, "false"},
     { "encapsulate",  Element::string,  "" }
 };
@@ -170,7 +170,7 @@ const SimpleKeywords SimpleParser6::OPTION6_PARAMETERS = {
 /// subnet, class or host reservations scopes. This array lists default values
 /// for those option-data declarations.
 const SimpleDefaults SimpleParser6::OPTION6_DEFAULTS = {
-    { "space",        Element::string,  "dhcp6"},
+    { "space",        Element::string,  "dhcp6"}, // DHCP6_OPTION_SPACE
     { "csv-format",   Element::boolean, "true"},
     { "always-send",  Element::boolean, "false"}
 };
