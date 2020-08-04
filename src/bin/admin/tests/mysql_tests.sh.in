@@ -1286,6 +1286,9 @@ mysql_unused_subnet_id_test() {
     run_statement "insert options" "$qry"
 
     # Ok, we have a 6.0 database with hosts and options. Let's upgrade it to 7.0
+    # For versions higher than 7.0 some new constraints fail to be added
+    # with the not empty tables, for instance the 9.1 -> 9.2 upgrade script
+    # can raise a MySQL error 1452 for fk_dhcp4_options_subnet constraint.
     mysql_upgrade_schema_to_version 7.0
 
     # Version should be new 7.0
