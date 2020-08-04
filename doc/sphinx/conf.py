@@ -47,6 +47,7 @@ version = release
 # ones.
 extensions = [
     'sphinx.ext.todo',
+    'sphinx.ext.mathjax',
 ]
 
 # The suffix(es) of source filenames.
