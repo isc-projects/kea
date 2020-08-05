@@ -335,6 +335,9 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
                 .arg(PQerrorMessage(conn_))
                 .arg(sqlstate ? sqlstate : "<sqlstate null>");
 
+            // Mark this connection as no longer usable.
+            markUnusable();
+
             // If there's no lost db callback or it returns false,
             // then we're not attempting to recover so we're done.
             if (!invokeDbLostCallback()) {
@@ -344,7 +347,7 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
 
             // We still need to throw so caller can error out of the current
             // processing.
-            isc_throw(DbOperationError,
+            isc_throw(DbConnectionUnusable,
                       "fatal database error or connectivity lost");
         }
 

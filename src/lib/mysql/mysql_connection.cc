@@ -299,6 +299,7 @@ MySqlConnection::getVersion(const ParameterMap& parameters) {
 
 void
 MySqlConnection::prepareStatement(uint32_t index, const char* text) {
+    checkUnusable();
     // Validate that there is space for the statement in the statements array
     // and that nothing has been placed there before.
     if ((index >= statements_.size()) || (statements_[index] != NULL)) {
@@ -325,6 +326,7 @@ MySqlConnection::prepareStatement(uint32_t index, const char* text) {
 void
 MySqlConnection::prepareStatements(const TaggedStatement* start_statement,
                                    const TaggedStatement* end_statement) {
+    checkUnusable();
     // Created the MySQL prepared statements for each DML statement.
     for (const TaggedStatement* tagged_statement = start_statement;
          tagged_statement != end_statement; ++tagged_statement) {
@@ -390,6 +392,7 @@ MySqlConnection::convertFromDatabaseTime(const MYSQL_TIME& expire,
 void
 MySqlConnection::startTransaction() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_START_TRANSACTION);
+    checkUnusable();
     // We create prepared statements for all other queries, but MySQL
     // don't support prepared statements for START TRANSACTION.
     int status = mysql_query(mysql_, "START TRANSACTION");
@@ -402,6 +405,7 @@ MySqlConnection::startTransaction() {
 void
 MySqlConnection::commit() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_COMMIT);
+    checkUnusable();
     if (mysql_commit(mysql_) != 0) {
         isc_throw(DbOperationError, "commit failed: "
                   << mysql_error(mysql_));
@@ -411,6 +415,7 @@ MySqlConnection::commit() {
 void
 MySqlConnection::rollback() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_ROLLBACK);
+    checkUnusable();
     if (mysql_rollback(mysql_) != 0) {
         isc_throw(DbOperationError, "rollback failed: "
                   << mysql_error(mysql_));

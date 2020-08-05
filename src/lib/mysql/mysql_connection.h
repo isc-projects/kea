@@ -399,6 +399,7 @@ public:
                      const MySqlBindingCollection& in_bindings,
                      MySqlBindingCollection& out_bindings,
                      ConsumeResultFun process_result) {
+        checkUnusable();
         // Extract native input bindings.
         std::vector<MYSQL_BIND> in_bind_vec;
         for (MySqlBindingPtr in_binding : in_bindings) {
@@ -476,6 +477,7 @@ public:
     template<typename StatementIndex>
     void insertQuery(const StatementIndex& index,
                      const MySqlBindingCollection& in_bindings) {
+        checkUnusable();
         std::vector<MYSQL_BIND> in_bind_vec;
         for (MySqlBindingPtr in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
@@ -519,6 +521,7 @@ public:
     template<typename StatementIndex>
     uint64_t updateDeleteQuery(const StatementIndex& index,
                                const MySqlBindingCollection& in_bindings) {
+        checkUnusable();
         std::vector<MYSQL_BIND> in_bind_vec;
         for (MySqlBindingPtr in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
@@ -603,7 +606,7 @@ public:
     ///        failed.
     template<typename StatementIndex>
     void checkError(const int status, const StatementIndex& index,
-                    const char* what) const {
+                    const char* what) {
         if (status != 0) {
             switch(mysql_errno(mysql_)) {
                 // These are the ones we consider fatal. Remember this method is
@@ -622,6 +625,9 @@ public:
                     .arg(mysql_error(mysql_))
                     .arg(mysql_errno(mysql_));
 
+                // Mark the connection as no longer usuable.
+                markUnusable();
+
                 // If there's no lost db callback or it returns false,
                 // then we're not attempting to recover so we're done.
                 if (!invokeDbLostCallback()) {
@@ -631,7 +637,7 @@ public:
 
                 // We still need to throw so caller can error out of the current
                 // processing.
-                isc_throw(db::DbOperationError,
+                isc_throw(db::DbConnectionUnusable,
                           "fatal database errror or connectivity lost");
             default:
                 // Connection is ok, so it must be an SQL error

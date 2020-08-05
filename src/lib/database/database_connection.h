@@ -47,6 +47,15 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Exception thrown when a specific connection has been rendered unusable
+/// either through loss of connectivity or API lib error
+class DbConnectionUnusable: public Exception {
+public:
+    DbConnectionUnusable(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+
 /// @brief Invalid type exception
 ///
 /// Thrown when the factory doesn't recognize the type of the backend.
@@ -164,7 +173,7 @@ public:
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
     DatabaseConnection(const ParameterMap& parameters)
-        :parameters_(parameters) {
+        :parameters_(parameters), unusable_(false) {
     }
 
     /// @brief Destructor
@@ -240,6 +249,18 @@ public:
     /// open connection subsequently fails
     static DbLostCallback db_lost_callback;
 
+    /// @brief Throws an exception if the connection is not usable.
+    void checkUnusable() {
+        if (unusable_)  {
+            isc_throw (DbConnectionUnusable, "Attempt to use an invalid connection");
+        }
+    }
+
+protected:
+    /// @brief Sets the usable flag to the given value.
+    /// @param usable new value for the flag.
+    void markUnusable() { unusable_ = true; }
+
 private:
 
     /// @brief List of parameters passed in dbconfig
@@ -249,6 +270,13 @@ private:
     /// intended to keep any DHCP-related parameters.
     ParameterMap parameters_;
 
+    /// @brief Indicates if the connection can no longer be used for normal
+    /// operations. Typically a connection is marked unusable after an unrecoverable
+    /// DB error.  There may be a time during which the connection exists after
+    /// such an every during which it cannot be used for anything beyond checking
+    /// parameters and error information.  This flag can be used as a guard in
+    /// code to prevent inadvertant use of a broken connection.
+    bool unusable_;
 };
 
 }  // namespace db

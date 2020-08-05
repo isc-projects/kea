@@ -3319,9 +3319,9 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
-    // A query should fail with DbOperationError.
+    // A query should fail with DbConnectionUnusable.
     ASSERT_THROW(lease = lm.getLease4(IOAddress("192.0.1.0")),
-                 DbOperationError);
+                 DbConnectionUnusable);
 
     // Our lost connectivity callback should have been invoked.
     EXPECT_TRUE(callback_called_);

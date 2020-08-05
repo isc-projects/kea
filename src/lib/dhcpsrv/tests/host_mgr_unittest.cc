@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1109,7 +1109,7 @@ public:
     /// valid query.  Next it simulates connectivity lost by identifying and
     /// closing the socket connection to the host backend.  It then reissues
     /// the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws  DbConnectionUnusable (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     void testDbLostCallback();
 #endif
@@ -1154,9 +1154,9 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
     // Now close the sql socket out from under backend client
     ASSERT_FALSE(close(sql_socket)) << "failed to close socket";
 
-    // A query should fail with DbOperationError.
+    // A query should fail with DbConnectionUnusable.
     ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
-                 DbOperationError);
+                 DbConnectionUnusable);
 
     // Our lost connectivity callback should have been invoked.
     EXPECT_TRUE(callback_called_);
