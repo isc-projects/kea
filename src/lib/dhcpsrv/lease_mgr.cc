@@ -291,7 +291,7 @@ LeaseMgr::recountLeaseStats6() {
         switch(row.lease_type_) {
             case Lease::TYPE_NA:
                 if (row.lease_state_ == Lease::STATE_DEFAULT) {
-                    // Add subnet level value.
+                    // Add to subnet level value.
                     stats_mgr.addValue(StatsMgr::
                                        generateName("subnet", row.subnet_id_,
                                                     "assigned-nas"),
@@ -306,7 +306,7 @@ LeaseMgr::recountLeaseStats6() {
                     // Add to the global value.
                     stats_mgr.addValue("declined-addresses", row.state_count_);
 
-                    // Add subnet level value.
+                    // Add to subnet level value.
                     // Declined leases also count as assigned.
                     stats_mgr.addValue(StatsMgr::
                                        generateName("subnet", row.subnet_id_,
