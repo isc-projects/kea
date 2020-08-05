@@ -14,7 +14,7 @@ namespace test {
 
 /// @brief A RAII class which disables the multi threading on exit of scope.
 ///
-/// Usually the multi threading is disabled by the fixture destructor ot
+/// Usually the multi threading is disabled by the fixture destructor or
 /// TearDown but of course this works only when a fixture class is used.
 class MultiThreadingTest {
 public:
@@ -25,7 +25,7 @@ public:
     MultiThreadingTest(bool mode = true) {
         isc::util::MultiThreadingMgr::instance().setMode(mode);
     }
- 
+
     /// @brief Destructor (disable multi threading).
     ~MultiThreadingTest() {
         isc::util::MultiThreadingMgr::instance().setMode(false);
