@@ -411,7 +411,7 @@ public:
     ///
     /// @throw isc::db::DbOperationError Detailed PostgreSQL failure
     void checkStatementError(const PgSqlResult& r,
-                             PgSqlTaggedStatement& statement) const;
+                             PgSqlTaggedStatement& statement);
 
     /// @brief PgSql connection handle
     ///

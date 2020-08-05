@@ -316,7 +316,7 @@ PgSqlConnection::compareError(const PgSqlResult& r, const char* error_state) {
 
 void
 PgSqlConnection::checkStatementError(const PgSqlResult& r,
-                                     PgSqlTaggedStatement& statement) const {
+                                     PgSqlTaggedStatement& statement) {
     int s = PQresultStatus(r);
     if (s != PGRES_COMMAND_OK && s != PGRES_TUPLES_OK) {
         // We're testing the first two chars of SQLSTATE, as this is the
