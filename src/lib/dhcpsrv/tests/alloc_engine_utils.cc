@@ -163,6 +163,8 @@ AllocEngine6Test::AllocEngine6Test() {
                64, 80);
 
     initFqdn("", false, false);
+
+    StatsMgr::instance().resetAll();
 }
 
 void
@@ -644,6 +646,8 @@ AllocEngine4Test::AllocEngine4Test() {
     ctx_.hwaddr_ = hwaddr_;
     ctx_.callout_handle_ = HooksManager::createCalloutHandle();
     ctx_.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    StatsMgr::instance().resetAll();
 }
 
 }  // namespace test
