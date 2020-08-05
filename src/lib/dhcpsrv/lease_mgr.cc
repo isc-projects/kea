@@ -74,10 +74,20 @@ LeaseMgr::recountLeaseStats4() {
     }
 
     // Zero out the global stats.
+    // Cumulative counters ("reclaimed-declined-addresses", "reclaimed-leases",
+    // "cumulative-assigned-addresses") never gets zeroed.
     int64_t zero = 0;
     stats_mgr.setValue("declined-addresses", zero);
-    stats_mgr.setValue("reclaimed-declined-addresses", zero);
-    stats_mgr.setValue("reclaimed-leases", zero);
+
+    // Create if it does not exit reclaimed declined leases global stats.
+    if (!stats_mgr.getObservation("reclaimed-declined-addresses")) {
+        stats_mgr.setValue("reclaimed-declined-addresses", zero);
+    }
+
+    // Create if it does not exit reclaimed leases global stats.
+    if (!stats_mgr.getObservation("reclaimed-leases")) {
+        stats_mgr.setValue("reclaimed-leases", zero);
+    }
 
     // Create if it does not exit cumulative global stats.
     if (!stats_mgr.getObservation("cumulative-assigned-addresses")) {
@@ -100,13 +110,23 @@ LeaseMgr::recountLeaseStats4() {
                                                   "declined-addresses"),
                            zero);
 
-        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                  "reclaimed-declined-addresses"),
-                           zero);
+        if (!stats_mgr.getObservation(
+                StatsMgr::generateName("subnet", subnet_id,
+                                       "reclaimed-declined-addresses"))) {
+            stats_mgr.setValue(
+                StatsMgr::generateName("subnet", subnet_id,
+                                       "reclaimed-declined-addresses"),
+                zero);
+        }
 
-        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                  "reclaimed-leases"),
-                           zero);
+        if (!stats_mgr.getObservation(
+                StatsMgr::generateName("subnet", subnet_id,
+                                       "reclaimed-leases"))) {
+            stats_mgr.setValue(
+                StatsMgr::generateName("subnet", subnet_id,
+                                       "reclaimed-leases"),
+                zero);
+        }
     }
 
     // Get counts per state per subnet. Iterate over the result set
@@ -128,6 +148,7 @@ LeaseMgr::recountLeaseStats4() {
             stats_mgr.addValue("declined-addresses", row.state_count_);
 
             // Add to subnet level value.
+            // Declined leases also count as assigned.
             stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
                                                       "assigned-addresses"),
                                row.state_count_);
@@ -200,20 +221,26 @@ LeaseMgr::recountLeaseStats6() {
         return;
     }
 
-    // Zero out the global stats. (Ok, so currently there's only one
-    // that should be cleared.  "reclaimed-declined-addresses" never
-    // gets zeroed. @todo discuss with Tomek the rational of not
-    // clearing it when we clear the rest.
+    // Zero out the global stats.
+    // Cumulative counters ("reclaimed-declined-addresses", "reclaimed-leases",
+    // "cumulative-assigned-nas", "cumulative-assigned-pds") never gets zeroed.
     int64_t zero = 0;
     stats_mgr.setValue("declined-addresses", zero);
-    stats_mgr.setValue("reclaimed-declined-addresses", zero);
-    stats_mgr.setValue("reclaimed-leases", zero);
 
-    // Create if it does not exit cumulative global stats.
+    if (!stats_mgr.getObservation("reclaimed-declined-addresses")) {
+        stats_mgr.setValue("reclaimed-declined-addresses", zero);
+    }
+
+    if (!stats_mgr.getObservation("reclaimed-leases")) {
+        stats_mgr.setValue("reclaimed-leases", zero);
+    }
+
+    // Create if it does not exit cumulative nas global stats.
     if (!stats_mgr.getObservation("cumulative-assigned-nas")) {
         stats_mgr.setValue("cumulative-assigned-nas", zero);
     }
 
+    // Create if it does not exit cumulative pds global stats.
     if (!stats_mgr.getObservation("cumulative-assigned-pds")) {
         stats_mgr.setValue("cumulative-assigned-pds", zero);
     }
@@ -234,18 +261,27 @@ LeaseMgr::recountLeaseStats6() {
                                                   "declined-addresses"),
                            zero);
 
-        stats_mgr.setValue(StatsMgr::
-                           generateName("subnet", subnet_id,
-                                        "reclaimed-declined-addresses"),
-                           zero);
+        if (!stats_mgr.getObservation(
+                StatsMgr::generateName("subnet", subnet_id,
+                                       "reclaimed-declined-addresses"))) {
+            stats_mgr.setValue(
+                StatsMgr::generateName("subnet", subnet_id,
+                                       "reclaimed-declined-addresses"),
+                zero);
+        }
 
         stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
                                                   "assigned-pds"),
                            zero);
 
-        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                  "reclaimed-leases"),
-                           zero);
+        if (!stats_mgr.getObservation(
+                StatsMgr::generateName("subnet", subnet_id,
+                                       "reclaimed-leases"))) {
+            stats_mgr.setValue(
+                StatsMgr::generateName("subnet", subnet_id,
+                                       "reclaimed-leases"),
+                zero);
+        }
     }
 
     // Get counts per state per subnet. Iterate over the result set
@@ -271,6 +307,7 @@ LeaseMgr::recountLeaseStats6() {
                     stats_mgr.addValue("declined-addresses", row.state_count_);
 
                     // Add subnet level value.
+                    // Declined leases also count as assigned.
                     stats_mgr.addValue(StatsMgr::
                                        generateName("subnet", row.subnet_id_,
                                                     "assigned-nas"),

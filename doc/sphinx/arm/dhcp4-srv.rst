@@ -5722,9 +5722,16 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | server startup. It is              |
    |                                           |                | incremented each time              |
    |                                           |                | an expired lease is                |
-   |                                           |                | reclaimed and is                   |
-   |                                           |                | reset when the server              |
-   |                                           |                | is reconfigured.                   |
+   |                                           |                | reclaimed.                         |
+   |                                           |                | This statistic never               |
+   |                                           |                | decreases. It can be               |
+   |                                           |                | used as a long-term                |
+   |                                           |                | indicator of how many              |
+   |                                           |                | actual leases have been            |
+   |                                           |                | reclaimed.                         |
+   |                                           |                | This is a global                   |
+   |                                           |                | statistic that covers              |
+   |                                           |                | all subnets.                       |
    +-------------------------------------------+----------------+------------------------------------+
    | subnet[id].reclaimed-leases               | integer        | Number of expired                  |
    |                                           |                | leases associated                  |
@@ -5735,9 +5742,13 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | server startup. It is              |
    |                                           |                | incremented each time              |
    |                                           |                | an expired lease is                |
-   |                                           |                | reclaimed and is                   |
-   |                                           |                | reset when the server              |
-   |                                           |                | is reconfigured.                   |
+   |                                           |                | reclaimed.                         |
+   |                                           |                | The *id* is the                    |
+   |                                           |                | subnet-id of a                     |
+   |                                           |                | given subnet. This                 |
+   |                                           |                | statistic is exposed               |
+   |                                           |                | for each subnet                    |
+   |                                           |                | separately.                        |
    +-------------------------------------------+----------------+------------------------------------+
    | declined-addresses                        | integer        | Number of IPv4                     |
    |                                           |                | addresses that are                 |
