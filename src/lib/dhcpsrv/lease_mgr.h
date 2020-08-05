@@ -587,10 +587,8 @@ public:
     /// per-subnet:
     /// - assigned-addresses
     /// - declined-addresses
-    /// - reclaimed-declined-addresses (reset to zero)
     /// global:
     /// - declined-addresses
-    /// - reclaimed-declined-addresses (reset to zero)
     ///
     /// It invokes the virtual method, startLeaseStatsQuery4(), which
     /// returns an instance of an LeaseStatsQuery.  The query
@@ -644,12 +642,10 @@ public:
     /// per-subnet:
     /// - assigned-nas
     /// - declined-addresses
-    /// - reclaimed-declined-addresses (reset to zero)
     /// - assigned-pds
     /// global:
     /// - assigned-nas
     /// - declined-addresses
-    /// - reclaimed-declined-addresses (reset to zero)
     /// - assigned-pds
     ///
     /// It invokes the virtual method, startLeaseStatsQuery6(), which
