@@ -1,4 +1,4 @@
-1792.	[bug]		tmark
+1782.	[bug]		tmark
 	Corrected a bug that causes kea-dhcp4/kea-dhcp6 servers to crash after
 	losing connectivity to a configuration backend database.  The servers
 	now correctly honor the max-reconnect-tries parameter.
