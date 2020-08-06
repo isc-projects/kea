@@ -15,12 +15,12 @@ Kea Flow Diagrams
 
 These UML activity diagrams describe the Kea DHCPv4 server implementation. They may be useful for system administrators to understand for several reasons. In order to design a configuration that will result in clients getting the intended addresses and options it is important to understand the sequence of request processing steps. For example, Kea will iterate looking for a suitable address, and will conditionally accept the first available address, so the order in which addresses are evaluated matters.
 
-It is also useful to understand Kea's request processing logic because there are configuration choices which can make the process far more efficient. Kea is very flexible so that it can be applied to very different use cases and in different environments.  In an environment where throughput and efficiency are a priority, the administrator can choose to limit some of the processing steps. For example, it is possible to limit the number of different client identifiers Kea evaluates in looking for a host reservation, or even to skip the whole step of checking for host reservations.
+It is also useful to understand Kea's processing logic because there are configuration choices which can make the process far more efficient. Kea is very flexible so that it can be applied to very different use cases and in different environments.  In an environment where throughput and efficiency are a priority, the administrator can choose to limit some of the processing steps. For example, it is possible to limit the number of different client identifiers Kea evaluates in looking for a host reservation, or even to skip the whole step of checking for host reservations.
 
 These diagrams are focused on those aspects of Kea processing that will be most useful to operators. The diagrams illustrate DHCPv4 request processing, but most of the logic applies to DHCPv6. Following the title of each diagram is a Kea version number. Kea behavior has evolved over time, and the diagrams document the behavior as of the Kea version indicated. The diagrams are provided in the Kea source tree in UML (source), PNG and SVG formats.
 
 Main Loop
-=========
+^^^^^^^^^
 
 The main loop is common to both DHCPv4 and DHPCv6 servers.
 
@@ -31,9 +31,9 @@ The main loop is common to both DHCPv4 and DHPCv6 servers.
 
 .. _uml_packet4:
 DHCPv4 Packet Processing
-========================
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-Next is the DHCPv4 packet processing, where we determine what sort of DHCP message this is, Discover, Request, Release, Decline or Inform. 
+Next is the DHCPv4 packet processing, where we determine what sort of DHCP message this is, Discover, Request, Release, Decline or Inform. The server itself sends the Offer and Acknowledge messages, so these are two of the classic DORA sequence that the server does not have to parse. 
 
 .. figure:: uml/packet4.*
 
@@ -42,9 +42,9 @@ Next is the DHCPv4 packet processing, where we determine what sort of DHCP messa
 
 .. _uml_request4:
 DHCP Request Processing
-=======================
+^^^^^^^^^^^^^^^^^^^^^^^
 
-The following diagram and subsequent charts focus on DHCPREQUEST processing.  The first step, Subnet Selection, is expanded in a subsequent section :ref:`uml_select4`. There is also a section below that expands on :ref:`CfgOptionList`.
+The following diagram and subsequent charts focus on DHCPREQUEST processing. This chart gives an overview of the process, beginning with subnet selection, proceeding to checking for Host Reservations and evaluating client classes. Finally, before acknowledging the lease, the options are evaluated and added to the message. 
 
 .. figure:: uml/request4.*
 
@@ -54,9 +54,9 @@ The following diagram and subsequent charts focus on DHCPREQUEST processing.  Th
 
 .. _uml_select4:
 DHCPv4 Subnet Selection
-=======================
+^^^^^^^^^^^^^^^^^^^^^^^
 
-Packet processing begins with subnet selection. Subnet selection is the process of ensuring the selected subnet is topologically appropriate for the client. Note that when the selected subnet is a member of a shared network the whole shared network is selected.
+Subnet selection is the process of choosing a subnet that is topologically appropriate for the client. Note that when the selected subnet is a member of a shared network the whole shared network is selected.  During subnet selection the client class may be checked more than once while iterating through subnets, to determine if it is permitted in the selected subnet.
 
 
 .. figure:: uml/select4.*
@@ -65,10 +65,10 @@ Packet processing begins with subnet selection. Subnet selection is the process 
 
 
 .. _uml_assign-lease4:
-DHCPv4 Assign Lease
-===================
+DHCPv4 Special Case of Double-booting
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-After the subnet selection and before the lease allocation the DHCPv4 server handles the special case of clients restarting with an image provided by PXE boot or bootp.  The "Request lease" box in this diagram is expanded below as :ref:'request4-lease'.
+After the subnet selection and before the lease allocation the DHCPv4 server handles the special case of clients restarting with an image provided by PXE boot or bootp.  Note that the Lease Request box is expanded below. 
 
 .. figure:: uml/assign-lease4.*
 
@@ -77,14 +77,15 @@ After the subnet selection and before the lease allocation the DHCPv4 server han
 
 .. _uml_request4-lease:
 DHCPv4 Allocate Lease
-====================
+^^^^^^^^^^^^^^^^^^^^^
 
-This diagram provides the details of the lease request process. Note that when a new lease is required and Kea iterates over pools and subnets, it starts with the subnet selected above in the subnet selection process. 
+This diagram provides the details of the processing the client request, showing renewing an existing lease, assigning a reserved lease and allocating an unreserved lease. The next diagram after this one shows the algorithm in more detail.  
 
 .. figure:: uml/request4-lease.*
 
     Allocate a lease for DHCPREQUEST
     
+This diagram shows the algorithm used to validate a requested lease or select a new address to offer. The far right side of the diagram shows how a new address is selected when a new lease is required and the client has neither a requested address nor a reservation. Note that when a new lease is required and Kea iterates over pools and subnets, it starts with the subnet selected above in the subnet selection process.
 
 .. figure:: uml/requestLease4.*
 
@@ -93,12 +94,12 @@ This diagram provides the details of the lease request process. Note that when a
 
 .. note::
 
-    In statistics declined addresses are counted with the assigned addresses
-    so the :math:`assigned + free = total` equation stands.
+    Declined addresses are included in the statistic for assigned addresses
+    so the :math:`assigned + free = total` equation is true.
 
 .. _uml_lease-states:
 Lease States
-============
+^^^^^^^^^^^^
 
 This diagram illustrates the different lease states including the free one where no lease object exists.
 
@@ -109,16 +110,14 @@ This diagram illustrates the different lease states including the free one where
 
 .. _uml_currentHost4:
 Checking for Host Reservations
-===================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The allocation engine checks for host reservations after selecting a subnet. This diagram shows the details of that operation. Subnet selection is based on network topology. Host reservations are primarily for assigning options, and options are evaluated after subnet selection. However if client classes are added in the host reservation, those will also be evaluated against the selected subnet in a further check (added in Kea 1.7.10)
+The allocation engine checks for host reservations after selecting a subnet. This diagram shows the details of that operation. Subnet selection is based on network topology. Host reservations are primarily for assigning options, and options are evaluated after subnet selection. However if client classes are added in the host reservation, those will also be evaluated against the selected subnet in a further check (added in Kea 1.7.10).  Kea includes several options to skip checking for host reservations, which can make this process much more efficient if you are not using reservations.
 
 .. note::
 
     To find a free lease the allocation engine begins with evaluating the most recently used subnet. 
     The current subnet depends on the history of prior queries.
-
-Kea includes several options to minimize checking for host reservations. Storing host reservations in an `optional MySQL or PostgreSQL backend <https://kea.readthedocs.io/en/latest/arm/dhcp4-srv.html#storing-host-reservations-in-mysql-postgresql-or-cassandra/>` is a popular feature. Keep in mind that accessing anything in a separate database will be slower than a lookup in a local in-memory file, so be sure to configure the approriate host reservation mode for more efficient processing when using a host reservation database backend 
 
 
 .. figure:: uml/currentHost4.*
@@ -127,7 +126,7 @@ Kea includes several options to minimize checking for host reservations. Storing
 
 .. _uml_CfgOptionList:
 Building the Options List
-=========================
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Before sending a response options are added:
  - evaluate required client classes
