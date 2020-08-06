@@ -1,3 +1,9 @@
+1792.	[bug]		tmark
+	Corrected a bug that causes kea-dhcp4/kea-dhcp6 servers to crash after
+	losing connectivity to a configuration backend database.  The servers
+	now correctly honor the max-reconnect-tries parameter.
+	(Gitlab #1369)
+
 1781.	[bug]		razvan
 	Reject invalid declined state for PD prefix in add and update
 	commands in lease-cmds hook.

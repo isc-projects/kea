@@ -1155,10 +1155,17 @@ void
 ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     bool reopened = false;
 
-    // Re-open lease and host database with new parameters.
+    // We lost at least one of them, Reopen all of them (lease, host, and CB databases)
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
         cfg_db->createManagers();
+
+        auto ctl_info = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo();
+        if (ctl_info) {
+            auto srv_cfg = CfgMgr::instance().getCurrentCfg();
+            server_->getCBControl()->databaseConfigConnect(srv_cfg);
+        }
+
         reopened = true;
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_ATTEMPT_FAILED).arg(ex.what());
