@@ -362,7 +362,7 @@ public:
 
         return (result.str());
 #else
-        // In order to handle embedded nuls, we have to process it nul-terminated
+        // In order to handle embedded nuls, we have to process in nul-terminated
         // chunks.  We iterate over the original data, doing pattern replacement
         // on each chunk.
         const char* orig_data = original.data();
