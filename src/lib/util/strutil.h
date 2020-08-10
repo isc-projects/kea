@@ -296,7 +296,7 @@ class StringSanitizerImpl;
 
 /// @brief Implements a regular expression based string scrubber
 ///
-/// The implementation uses C++11 regex IF the environemnt supports it
+/// The implementation uses C++11 regex IF the environment supports it
 /// (tested in configure.ac). If not it falls back to C lib regcomp/regexec.
 /// Older compilers, such as pre Gnu g++ 4.9.0, provided only experimental
 /// implementations of regex which are recognized as buggy.
@@ -332,6 +332,10 @@ public:
     /// @param original the string to scrub
     /// @throw Unexpected if an error occurs during scrubbing
     std::string scrub(const std::string& original);
+
+    /// @brief The maximum size for regex parameters.
+    static const uint32_t MAX_DATA_SIZE;
+
 private:
     /// @brief Pointer to the @c StringSanitizerImpl.
     StringSanitizerImpl* impl_;

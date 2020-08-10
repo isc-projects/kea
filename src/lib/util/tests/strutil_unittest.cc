@@ -511,7 +511,15 @@ void sanitizeStringTest(
 TEST(StringUtilTest, stringSanitizer) {
     // Bad regular expression should throw.
     StringSanitizerPtr ss;
-    ASSERT_THROW (ss.reset(new StringSanitizer("[bogus-regex","")), BadValue);
+    ASSERT_THROW(ss.reset(new StringSanitizer("[bogus-regex","")), BadValue);
+
+    std::string good_data(StringSanitizer::MAX_DATA_SIZE, '0');
+    std::string bad_data(StringSanitizer::MAX_DATA_SIZE + 1, '0');
+
+    ASSERT_NO_THROW(ss.reset(new StringSanitizer(good_data, good_data)));
+
+    ASSERT_THROW(ss.reset(new StringSanitizer(bad_data, "")), BadValue);
+    ASSERT_THROW(ss.reset(new StringSanitizer("", bad_data)), BadValue);
 
     // List of invalid chars should work: (b,c,2 are invalid)
     sanitizeStringTest("abc.123", "[b-c2]", "*",

@@ -311,6 +311,17 @@ class StringSanitizerImpl {
 public:
     StringSanitizerImpl(const std::string& char_set, const std::string& char_replacement)
         : char_set_(char_set), char_replacement_(char_replacement) {
+        if (char_set.size() > StringSanitizer::MAX_DATA_SIZE) {
+            isc_throw(isc::BadValue, "char set size: '" << char_set.size()
+                      << "' exceeds max size: '"
+                      << StringSanitizer::MAX_DATA_SIZE << "'");
+        }
+
+        if (char_replacement.size() > StringSanitizer::MAX_DATA_SIZE) {
+            isc_throw(isc::BadValue, "char replacement size: '"
+                      << char_replacement.size() << "' exceeds max size: '"
+                      << StringSanitizer::MAX_DATA_SIZE << "'");
+        }
 #ifdef USE_REGEX
         try {
             scrub_exp_ = std::regex(char_set, std::regex::extended);
@@ -405,7 +416,10 @@ public:
     }
 
 private:
+    /// @brief The char set data for regex.
     std::string char_set_;
+
+    /// @brief The char replacement data for regex.
     std::string char_replacement_;
 
 #ifdef USE_REGEX
@@ -414,6 +428,8 @@ private:
     regex_t scrub_exp_;
 #endif
 };
+
+const uint32_t StringSanitizer::MAX_DATA_SIZE = 4096;
 
 StringSanitizer::StringSanitizer(const std::string& char_set,
                                  const std::string& char_replacement)
