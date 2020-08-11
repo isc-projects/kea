@@ -660,7 +660,12 @@ ControlledDhcpv4Srv::commandStatusGetHandler(const string&,
         status->set("reload", Element::create(reload.total_seconds()));
     }
 
-    // todo: number of service threads.
+    if (MultiThreadingMgr::instance().getMode()) {
+        status->set("thread-pool-size", Element::create(
+                    long(MultiThreadingMgr::instance().getThreadPoolSize())));
+        status->set("packet-queue-size", Element::create(
+                    long(MultiThreadingMgr::instance().getPacketQueueSize())));
+    }
 
     return (createAnswer(0, status));
 }
