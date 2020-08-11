@@ -1136,7 +1136,7 @@ void
 ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     bool reopened = false;
 
-    // We lost at least one of them, Reopen all of them (lease, host, and CB databases)
+    // We lost at least one of them, Reopen all of them (lease, host, and CB databases).
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
         cfg_db->createManagers();
@@ -1228,9 +1228,11 @@ ControlledDhcpv4Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
         server_->getCBControl()->databaseConfigFetch(srv_cfg,
                                                      CBControlDHCPv4::FetchMode::FETCH_UPDATE);
         (*failure_count) = 0;
+
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_CB_PERIODIC_FETCH_UPDATES_FAIL)
             .arg(ex.what());
+
         // We allow at most 10 consecutive failures after which we stop
         // making further attempts to fetch the configuration updates.
         // Let's return without re-scheduling the timer.

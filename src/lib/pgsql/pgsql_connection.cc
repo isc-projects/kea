@@ -363,6 +363,7 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
 void
 PgSqlConnection::startTransaction() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_START_TRANSACTION);
+    checkUnusable();
     PgSqlResult r(PQexec(conn_, "START TRANSACTION"));
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
         const char* error_message = PQerrorMessage(conn_);
@@ -374,6 +375,7 @@ PgSqlConnection::startTransaction() {
 void
 PgSqlConnection::commit() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_COMMIT);
+    checkUnusable();
     PgSqlResult r(PQexec(conn_, "COMMIT"));
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
         const char* error_message = PQerrorMessage(conn_);
@@ -384,6 +386,7 @@ PgSqlConnection::commit() {
 void
 PgSqlConnection::rollback() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_ROLLBACK);
+    checkUnusable();
     PgSqlResult r(PQexec(conn_, "ROLLBACK"));
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
         const char* error_message = PQerrorMessage(conn_);

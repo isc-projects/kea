@@ -299,7 +299,6 @@ MySqlConnection::getVersion(const ParameterMap& parameters) {
 
 void
 MySqlConnection::prepareStatement(uint32_t index, const char* text) {
-    checkUnusable();
     // Validate that there is space for the statement in the statements array
     // and that nothing has been placed there before.
     if ((index >= statements_.size()) || (statements_[index] != NULL)) {
@@ -326,7 +325,6 @@ MySqlConnection::prepareStatement(uint32_t index, const char* text) {
 void
 MySqlConnection::prepareStatements(const TaggedStatement* start_statement,
                                    const TaggedStatement* end_statement) {
-    checkUnusable();
     // Created the MySQL prepared statements for each DML statement.
     for (const TaggedStatement* tagged_statement = start_statement;
          tagged_statement != end_statement; ++tagged_statement) {
