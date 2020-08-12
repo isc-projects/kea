@@ -1155,7 +1155,7 @@ void
 ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     bool reopened = false;
 
-    // We lost at least one of them, Reopen all of them (lease, host, and CB databases)
+    // We lost at least one of them. Reopen all of them (lease, host, and CB databases).
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
         cfg_db->createManagers();

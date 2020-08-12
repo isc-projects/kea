@@ -250,6 +250,7 @@ public:
     static DbLostCallback db_lost_callback;
 
     /// @brief Throws an exception if the connection is not usable.
+    /// @throw DbConnectionUnusable
     void checkUnusable() {
         if (unusable_)  {
             isc_throw (DbConnectionUnusable, "Attempt to use an invalid connection");
@@ -257,8 +258,7 @@ public:
     }
 
 protected:
-    /// @brief Sets the usable flag to the given value.
-    /// @param usable new value for the flag.
+    /// @brief Sets the unusable flag to true.
     void markUnusable() { unusable_ = true; }
 
 private:
@@ -272,10 +272,10 @@ private:
 
     /// @brief Indicates if the connection can no longer be used for normal
     /// operations. Typically a connection is marked unusable after an unrecoverable
-    /// DB error.  There may be a time during which the connection exists after
+    /// DB error. There may be a time during which the connection exists after
     /// such an every during which it cannot be used for anything beyond checking
-    /// parameters and error information.  This flag can be used as a guard in
-    /// code to prevent inadvertant use of a broken connection.
+    /// parameters and error information. This flag can be used as a guard in
+    /// code to prevent inadvertent use of a broken connection.
     bool unusable_;
 };
 
