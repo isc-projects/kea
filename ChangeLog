@@ -1,3 +1,16 @@
+1787.	[bug]		razvan
+	The recount leases functions consider leases in 'declined' state as
+	'assigned' so that when the lease is reclaimed or reused, no negative
+	counters are generated. The 'subnet[X].reclaimed-leases' and
+	'reclaimed-leases' are now cumulative counters and are never
+	decremented or reset until server restart. Removed references to non
+	existent 'declined-reclaimed-addresses' counters.
+	(Gitlab #1336)
+
+1786.	[bug]		razvan
+	Update lease stats when using commands from lease-cmds hook.
+	(Gitlab #1065)
+
 1785.	[func]		fdupont
 	If enabled, the default value for queue capacity in congestion control
 	has been trimmed down from 500 to 64. The feature continues to be disabled
