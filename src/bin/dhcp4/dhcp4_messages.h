@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu Jul 23 2020 21:31
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Aug 12 2020 14:18
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -127,6 +127,7 @@ extern const isc::log::MessageID DHCP4_PARSER_EXCEPTION;
 extern const isc::log::MessageID DHCP4_PARSER_FAIL;
 extern const isc::log::MessageID DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL;
 extern const isc::log::MessageID DHCP4_QUERY_DATA;
+extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_FAIL;
 extern const isc::log::MessageID DHCP4_RELEASE;
 extern const isc::log::MessageID DHCP4_RELEASE_EXCEPTION;
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL;

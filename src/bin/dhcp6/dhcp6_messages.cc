@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jul 23 2020 21:32
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed Aug 12 2020 14:22
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -125,6 +125,7 @@ extern const isc::log::MessageID DHCP6_PROCESS_IA_PD_EXTEND = "DHCP6_PROCESS_IA_
 extern const isc::log::MessageID DHCP6_PROCESS_IA_PD_REQUEST = "DHCP6_PROCESS_IA_PD_REQUEST";
 extern const isc::log::MessageID DHCP6_QUERY_DATA = "DHCP6_QUERY_DATA";
 extern const isc::log::MessageID DHCP6_RAPID_COMMIT = "DHCP6_RAPID_COMMIT";
+extern const isc::log::MessageID DHCP6_RECLAIM_EXPIRED_LEASES_FAIL = "DHCP6_RECLAIM_EXPIRED_LEASES_FAIL";
 extern const isc::log::MessageID DHCP6_RELEASE_NA = "DHCP6_RELEASE_NA";
 extern const isc::log::MessageID DHCP6_RELEASE_NA_FAIL = "DHCP6_RELEASE_NA_FAIL";
 extern const isc::log::MessageID DHCP6_RELEASE_NA_FAIL_WRONG_DUID = "DHCP6_RELEASE_NA_FAIL_WRONG_DUID";
@@ -277,6 +278,7 @@ const char* values[] = {
     "DHCP6_PROCESS_IA_PD_REQUEST", "%1: server is processing IA_PD option with iaid=%2 and hint=%3",
     "DHCP6_QUERY_DATA", "%1, packet details: %2",
     "DHCP6_RAPID_COMMIT", "%1: Rapid Commit option received, following 2-way exchange",
+    "DHCP6_RECLAIM_EXPIRED_LEASES_FAIL", "failed to reclaim expired leases: %1",
     "DHCP6_RELEASE_NA", "%1: binding for address %2 and iaid=%3 was released properly",
     "DHCP6_RELEASE_NA_FAIL", "%1: failed to remove address lease for address %2 and iaid=%3",
     "DHCP6_RELEASE_NA_FAIL_WRONG_DUID", "%1: client tried to release address %2, but it belongs to another client using duid=%3",

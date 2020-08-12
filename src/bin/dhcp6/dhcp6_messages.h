@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jul 23 2020 21:32
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed Aug 12 2020 14:22
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -126,6 +126,7 @@ extern const isc::log::MessageID DHCP6_PROCESS_IA_PD_EXTEND;
 extern const isc::log::MessageID DHCP6_PROCESS_IA_PD_REQUEST;
 extern const isc::log::MessageID DHCP6_QUERY_DATA;
 extern const isc::log::MessageID DHCP6_RAPID_COMMIT;
+extern const isc::log::MessageID DHCP6_RECLAIM_EXPIRED_LEASES_FAIL;
 extern const isc::log::MessageID DHCP6_RELEASE_NA;
 extern const isc::log::MessageID DHCP6_RELEASE_NA_FAIL;
 extern const isc::log::MessageID DHCP6_RELEASE_NA_FAIL_WRONG_DUID;

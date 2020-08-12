@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Thu Jul 23 2020 21:31
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Aug 12 2020 14:18
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -126,6 +126,7 @@ extern const isc::log::MessageID DHCP4_PARSER_EXCEPTION = "DHCP4_PARSER_EXCEPTIO
 extern const isc::log::MessageID DHCP4_PARSER_FAIL = "DHCP4_PARSER_FAIL";
 extern const isc::log::MessageID DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL = "DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL";
 extern const isc::log::MessageID DHCP4_QUERY_DATA = "DHCP4_QUERY_DATA";
+extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_FAIL = "DHCP4_RECLAIM_EXPIRED_LEASES_FAIL";
 extern const isc::log::MessageID DHCP4_RELEASE = "DHCP4_RELEASE";
 extern const isc::log::MessageID DHCP4_RELEASE_EXCEPTION = "DHCP4_RELEASE_EXCEPTION";
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL = "DHCP4_RELEASE_FAIL";
@@ -278,6 +279,7 @@ const char* values[] = {
     "DHCP4_PARSER_FAIL", "failed to create or run parser for configuration element %1: %2",
     "DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL", "%1: failed to update hostname %2 in a lease after address allocation: %3",
     "DHCP4_QUERY_DATA", "%1, packet details: %2",
+    "DHCP4_RECLAIM_EXPIRED_LEASES_FAIL", "failed to reclaim expired leases: %1",
     "DHCP4_RELEASE", "%1: address %2 was released properly.",
     "DHCP4_RELEASE_EXCEPTION", "%1: while trying to release address %2 an exception occurred: %3",
     "DHCP4_RELEASE_FAIL", "%1: failed to remove lease for address %2",

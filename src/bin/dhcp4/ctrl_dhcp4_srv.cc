@@ -1118,6 +1118,7 @@ void
 ControlledDhcpv4Srv::reclaimExpiredLeases(const size_t max_leases,
                                           const uint16_t timeout,
                                           const bool remove_lease,
+                                          const uint16_t max_unwarned_cycles) {
     try {
         server_->alloc_engine_->reclaimExpiredLeases4(max_leases, timeout,
                                                       remove_lease,
