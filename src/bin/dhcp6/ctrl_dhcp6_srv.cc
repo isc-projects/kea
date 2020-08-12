@@ -1138,9 +1138,14 @@ ControlledDhcpv6Srv::reclaimExpiredLeases(const size_t max_leases,
                                           const uint16_t timeout,
                                           const bool remove_lease,
                                           const uint16_t max_unwarned_cycles) {
-    server_->alloc_engine_->reclaimExpiredLeases6(max_leases, timeout,
-                                                  remove_lease,
-                                                  max_unwarned_cycles);
+    try {
+        server_->alloc_engine_->reclaimExpiredLeases6(max_leases, timeout,
+                                                      remove_lease,
+                                                      max_unwarned_cycles);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcp6_logger, DHCP6_RECLAIM_EXPIRED_LEASES_FAIL)
+            .arg(ex.what());
+    }
     // We're using the ONE_SHOT timer so there is a need to re-schedule it.
     TimerMgr::instance()->setup(CfgExpiration::RECLAIM_EXPIRED_TIMER_NAME);
 }
