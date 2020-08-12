@@ -23,7 +23,7 @@
   "port": 53001,
   "control-socket": {
       "socket-type": "unix",
-      "socket-name": "/tmp/ddns-ctrl-socket"
+      "socket-name": "/tmp/kea-ddns-ctrl-socket"
   },
   "tsig-keys": [],
   "forward-ddns" : {},
