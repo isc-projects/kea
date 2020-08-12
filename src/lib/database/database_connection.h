@@ -272,8 +272,8 @@ private:
 
     /// @brief Indicates if the connection can no longer be used for normal
     /// operations. Typically a connection is marked unusable after an unrecoverable
-    /// DB error. There may be a time during which the connection exists after
-    /// such an every during which it cannot be used for anything beyond checking
+    /// DB error. There may be a time when the connection exists, after
+    /// such an event, during which it cannot be used for anything beyond checking
     /// parameters and error information. This flag can be used as a guard in
     /// code to prevent inadvertent use of a broken connection.
     bool unusable_;
