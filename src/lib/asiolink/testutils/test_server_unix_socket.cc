@@ -15,6 +15,7 @@
 #include <sstream>
 
 using namespace boost::asio::local;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace asiolink {
@@ -55,8 +56,8 @@ public:
     void start() {
        socket_->async_read_some(boost::asio::buffer(&raw_buf_[0], raw_buf_.size()),
            std::bind(&Connection::readHandler, shared_from_this(),
-                     std::placeholders::_1,   // error
-                     std::placeholders::_2)); // bytes_transferred
+                     ph::_1,   // error
+                     ph::_2)); // bytes_transferred
     }
 
     /// @brief Closes the socket.
@@ -293,7 +294,7 @@ void
 TestServerUnixSocket::accept() {
     server_acceptor_.async_accept(*(connection_pool_->getSocket()),
         std::bind(&TestServerUnixSocket::acceptHandler, this,
-                  std::placeholders::_1)); // error
+                  ph::_1)); // error
 }
 
 void

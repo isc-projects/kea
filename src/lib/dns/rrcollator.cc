@@ -22,9 +22,11 @@
 #include <algorithm>
 #include <functional>
 
+using namespace isc::dns::rdata;
+namespace ph = std::placeholders;
+
 namespace isc {
 namespace dns {
-using namespace rdata;
 
 class RRCollator::Impl {
 public:
@@ -87,7 +89,6 @@ RRCollator::~RRCollator() {
 
 AddRRCallback
 RRCollator::getCallback() {
-    namespace ph = std::placeholders;
     return (std::bind(&RRCollator::Impl::addRR, this->impl_,
                       ph::_1, ph::_2, ph::_3, ph::_4, ph::_5));
 }

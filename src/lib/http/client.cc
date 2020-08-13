@@ -32,6 +32,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::http;
 using namespace isc::util;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -833,7 +834,7 @@ Connection::doTransactionInternal(const HttpRequestPtr& request,
                              static_cast<unsigned short>(url_.getPort()));
         SocketCallback socket_cb(std::bind(&Connection::connectCallback, shared_from_this(),
                                            connect_callback, current_transid_,
-                                           std::placeholders::_1));
+                                           ph::_1));
 
         // Establish new connection or use existing connection.
         socket_.open(&endpoint, socket_cb);
@@ -1002,8 +1003,8 @@ Connection::doSend(const uint64_t transid) {
     SocketCallback socket_cb(std::bind(&Connection::sendCallback,
                                        shared_from_this(),
                                        transid,
-                                       std::placeholders::_1,
-                                       std::placeholders::_2));
+                                       ph::_1,
+                                       ph::_2));
     try {
         socket_.asyncSend(&buf_[0], buf_.size(), socket_cb);
 
@@ -1018,8 +1019,8 @@ Connection::doReceive(const uint64_t transid) {
     SocketCallback socket_cb(std::bind(&Connection::receiveCallback,
                                        shared_from_this(),
                                        transid,
-                                       std::placeholders::_1,
-                                       std::placeholders::_2));
+                                       ph::_1,
+                                       ph::_2));
 
     try {
         socket_.asyncReceive(static_cast<void*>(input_buf_.data()), input_buf_.size(), 0,

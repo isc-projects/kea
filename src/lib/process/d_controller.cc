@@ -21,6 +21,7 @@
 
 using namespace isc::data;
 using namespace isc::config;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace process {
@@ -741,8 +742,7 @@ DControllerBase::initSignalHandling() {
     io_signal_set_.reset(new IOSignalSet(io_service_,
                                          std::bind(&DControllerBase::
                                                    processSignal,
-                                                   this,
-                                                   std::placeholders::_1)));
+                                                   this, ph::_1)));
     // Register for the signals we wish to handle.
     io_signal_set_->add(SIGHUP);
     io_signal_set_->add(SIGINT);

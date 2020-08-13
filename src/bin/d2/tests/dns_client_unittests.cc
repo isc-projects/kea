@@ -29,7 +29,6 @@ using namespace isc::dns;
 using namespace isc::util;
 using namespace boost::asio;
 using namespace boost::asio::ip;
-
 namespace ph = std::placeholders;
 
 namespace {

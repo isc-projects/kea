@@ -16,6 +16,7 @@
 #include <functional>
 
 using namespace isc::asiolink;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace process {
@@ -83,9 +84,7 @@ IOSignalSetImpl::callback(const boost::system::error_code& ec, int signum) {
 void
 IOSignalSetImpl::install() {
     signal_set_.async_wait(std::bind(&IOSignalSetImpl::callback,
-                                     shared_from_this(),
-                                     std::placeholders::_1,
-                                     std::placeholders::_2));
+                                     shared_from_this(), ph::_1, ph::_2));
 }
 
 void

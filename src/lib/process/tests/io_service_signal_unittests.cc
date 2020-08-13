@@ -14,6 +14,8 @@
 #include <functional>
 #include <queue>
 
+namespace ph = std::placeholders;
+
 namespace isc {
 namespace process {
 
@@ -53,7 +55,7 @@ public:
         io_signal_set_.reset(new IOSignalSet(
                                      io_service_,
                                      std::bind(&IOSignalTest::processSignal,
-                                               this, std::placeholders::_1)));
+                                               this, ph::_1)));
     }
 
     /// @brief Destructor.

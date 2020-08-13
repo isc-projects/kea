@@ -18,6 +18,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+namespace ph = std::placeholders;
+
 namespace isc {
 namespace util {
 
@@ -154,7 +156,7 @@ ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
     // Set the handler which is invoked immediately when the signal
     // is received.
     signals_->setOnReceiptHandler(std::bind(&ProcessSpawnImpl::waitForProcess,
-                                            this, std::placeholders::_1));
+                                            this, ph::_1));
     // Conversion of the arguments to the C-style array we start by setting
     // all pointers within an array to NULL to indicate that they haven't
     // been allocated yet.

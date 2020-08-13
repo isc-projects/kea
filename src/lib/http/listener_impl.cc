@@ -11,6 +11,7 @@
 #include <http/listener_impl.h>
 
 using namespace isc::asiolink;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace http {
@@ -88,8 +89,7 @@ HttpListenerImpl::accept() {
     // depends on the use case.
     HttpResponseCreatorPtr response_creator = creator_factory_->create();
     HttpAcceptorCallback acceptor_callback =
-        std::bind(&HttpListenerImpl::acceptHandler, this,
-                  std::placeholders::_1);
+        std::bind(&HttpListenerImpl::acceptHandler, this, ph::_1);
     HttpConnectionPtr conn = createConnection(response_creator,
                                               acceptor_callback);
     // Add this new connection to the pool.

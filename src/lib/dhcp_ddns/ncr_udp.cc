@@ -76,7 +76,7 @@ NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
     UDPEndpointPtr data_source(new asiolink::UDPEndpoint());
     recv_callback_.reset(new UDPCallback(buffer, RECV_BUF_MAX, data_source,
         std::bind(&NameChangeUDPListener::receiveCompletionHandler,
-	          this, ph::_1, ph::_2)));
+                  this, ph::_1, ph::_2)));
 }
 
 NameChangeUDPListener::~NameChangeUDPListener() {

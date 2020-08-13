@@ -28,8 +28,10 @@
 #include <cctype>
 #include <cerrno>
 
-using namespace std;
 using namespace isc::dns::rdata;
+
+using namespace std;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace dns {
@@ -62,8 +64,8 @@ void
 loadHelper(InputType input, const Name& origin,
            const RRClass& zone_class, MasterLoadCallback callback)
 {
-    RRCollator rr_collator(std::bind(callbackWrapper, std::placeholders::_1,
-                                     callback, &origin));
+    RRCollator rr_collator(std::bind(callbackWrapper, ph::_1, callback,
+                                     &origin));
     MasterLoader loader(input, origin, zone_class,
                         MasterLoaderCallbacks::getNullCallbacks(),
                         rr_collator.getCallback());

@@ -15,6 +15,7 @@
 #include <functional>
 
 using namespace isc::asiolink;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -107,7 +108,7 @@ HttpConnection::asyncAccept() {
     // as needed.
     HttpAcceptorCallback cb = std::bind(&HttpConnection::acceptorCallback,
                                         shared_from_this(),
-                                        std::placeholders::_1); // error
+                                        ph::_1); // error
     try {
         acceptor_.asyncAccept(socket_, cb);
 
@@ -134,8 +135,8 @@ HttpConnection::doRead(TransactionPtr transaction) {
         SocketCallback cb(std::bind(&HttpConnection::socketReadCallback,
                                     shared_from_this(),
                                     transaction,
-                                    std::placeholders::_1,   // error
-                                    std::placeholders::_2)); //bytes_transferred
+                                    ph::_1,   // error
+                                    ph::_2)); //bytes_transferred
         socket_.asyncReceive(static_cast<void*>(transaction->getInputBufData()),
                              transaction->getInputBufSize(),
                              0, &endpoint, cb);
@@ -155,8 +156,8 @@ HttpConnection::doWrite(HttpConnection::TransactionPtr transaction) {
             SocketCallback cb(std::bind(&HttpConnection::socketWriteCallback,
                                         shared_from_this(),
                                         transaction,
-                                        std::placeholders::_1,   // error
-                                        std::placeholders::_2)); // bytes_transferred
+                                        ph::_1,   // error
+                                        ph::_2)); // bytes_transferred
             socket_.asyncSend(transaction->getOutputBufData(),
                               transaction->getOutputBufSize(),
                               cb);

@@ -86,7 +86,6 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     bool depend_on_known = false;
     if (test_cfg) {
         ExpressionParser parser;
-        using std::placeholders::_1;
         auto check_defined =
             [&class_dictionary, &depend_on_known]
             (const ClientClass& cclass) {

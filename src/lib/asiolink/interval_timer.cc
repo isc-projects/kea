@@ -20,6 +20,7 @@
 #include <mutex>
 
 using namespace std;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace asiolink {
@@ -142,7 +143,7 @@ IntervalTimerImpl::update() {
         // Pass a function bound with a shared_ptr to this.
         timer_.async_wait(std::bind(&IntervalTimerImpl::callback,
                                     shared_from_this(),
-                                    std::placeholders::_1)); //error
+                                    ph::_1)); //error
     } catch (const boost::system::system_error& e) {
         isc_throw(isc::Unexpected, "Failed to update timer: " << e.what());
     } catch (const boost::bad_weak_ptr&) {

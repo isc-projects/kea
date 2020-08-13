@@ -22,6 +22,7 @@
 
 using boost::lexical_cast;
 using std::string;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace dns {
@@ -177,8 +178,8 @@ checkZone(const Name& zone_name, const RRClass& zone_class,
           const ZoneCheckerCallbacks& callbacks) {
     bool had_error = false;
     ZoneCheckerCallbacks my_callbacks(
-        std::bind(errorWrapper, std::placeholders::_1, &callbacks, &had_error),
-        std::bind(&ZoneCheckerCallbacks::warn, &callbacks, std::placeholders::_1));
+        std::bind(errorWrapper, ph::_1, &callbacks, &had_error),
+        std::bind(&ZoneCheckerCallbacks::warn, &callbacks, ph::_1));
 
     checkSOA(zone_name, zone_class, zone_rrsets, my_callbacks);
     checkNS(zone_name, zone_class, zone_rrsets, my_callbacks);

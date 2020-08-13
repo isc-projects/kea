@@ -20,6 +20,7 @@
 #include <string>
 
 using namespace isc::asiolink;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -83,7 +84,7 @@ public:
                      SERVER_PORT);
         socket_.async_connect(endpoint,
                               std::bind(&TCPClient::connectHandler, this,
-                                        std::placeholders::_1));
+                                        ph::_1));
     }
 
     /// @brief Callback function for connect().
@@ -251,7 +252,7 @@ public:
     /// retained in the connections_ list.
     void accept() {
         TCPAcceptorCallback cb = std::bind(&TCPAcceptorTest::acceptHandler,
-                                           this, std::placeholders::_1);
+                                           this, ph::_1);
         AcceptorPtr conn(new Acceptor(io_service_, acceptor_, cb));
         connections_.push_back(conn);
         connections_.back()->accept();

@@ -20,6 +20,7 @@
 #include <errno.h>
 
 using namespace isc::data;
+namespace ph = std::placeholders;
 
 /// @brief provides default implementation for basic daemon operations
 ///
@@ -62,7 +63,7 @@ void Daemon::shutdown() {
 
 void Daemon::handleSignal() {
     if (signal_set_ && signal_handler_) {
-        signal_set_->handleNext(std::bind(signal_handler_, std::placeholders::_1));
+        signal_set_->handleNext(std::bind(signal_handler_, ph::_1));
     }
 }
 
