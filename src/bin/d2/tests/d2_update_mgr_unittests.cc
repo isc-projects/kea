@@ -12,8 +12,6 @@
 #include <process/testutils/d_test_stubs.h>
 #include <util/time_utilities.h>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include <gtest/gtest.h>
 #include <gtest/gtest.h>
 #include <algorithm>

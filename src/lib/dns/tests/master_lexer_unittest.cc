@@ -14,9 +14,7 @@
 #include <gtest/gtest.h>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/bind.hpp>
 
 #include <string>
 #include <sstream>

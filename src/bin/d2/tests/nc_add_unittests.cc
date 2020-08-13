@@ -13,8 +13,6 @@
 #include <dns/messagerenderer.h>
 #include <nc_test_utils.h>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;

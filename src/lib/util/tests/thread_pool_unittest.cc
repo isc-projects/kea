@@ -11,8 +11,6 @@
 #include <exceptions/exceptions.h>
 #include <util/thread_pool.h>
 
-#include <boost/function.hpp>
-
 using namespace isc;
 using namespace isc::util;
 using namespace std;

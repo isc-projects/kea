@@ -9,7 +9,6 @@
 
 #include <dhcp/packet_queue.h>
 
-#include <boost/function.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <sstream>

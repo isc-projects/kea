@@ -9,8 +9,6 @@
 #include <exceptions/exceptions.h>
 #include <user.h>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 

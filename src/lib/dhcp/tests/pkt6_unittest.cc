@@ -24,7 +24,6 @@
 #include <dhcp/tests/pkt_captures.h>
 #include <testutils/gtest_utils.h>
 #include <util/range_utilities.h>
-#include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/pointer_cast.hpp>

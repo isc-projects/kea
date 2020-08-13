@@ -35,7 +35,6 @@
 #include <http/response_json.h>
 #include <util/multi_threading_mgr.h>
 
-#include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>

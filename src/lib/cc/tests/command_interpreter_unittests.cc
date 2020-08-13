@@ -7,11 +7,13 @@
 #include <config.h>
 
 #include <gtest/gtest.h>
+
 #include <cc/command_interpreter.h>
 #include <config/tests/data_def_unittests_config.h>
 #include <log/logger_name.h>
+
 #include <boost/scoped_ptr.hpp>
-#include <boost/bind.hpp>
+
 #include <fstream>
 
 using namespace isc::data;

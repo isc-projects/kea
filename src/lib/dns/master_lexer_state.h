@@ -9,8 +9,6 @@
 
 #include <dns/master_lexer.h>
 
-#include <boost/function.hpp>
-
 namespace isc {
 namespace dns {
 

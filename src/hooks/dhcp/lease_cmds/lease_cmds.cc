@@ -30,7 +30,6 @@
 #include <util/multi_threading_mgr.h>
 #include <util/strutil.h>
 
-#include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string.hpp>
 #include <string>

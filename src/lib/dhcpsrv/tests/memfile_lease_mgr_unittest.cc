@@ -23,7 +23,6 @@
 #include <util/range_utilities.h>
 #include <util/stopwatch.h>
 
-#include <boost/bind.hpp>
 #include <gtest/gtest.h>
 
 #include <cstdlib>

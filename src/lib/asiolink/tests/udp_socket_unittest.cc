@@ -18,7 +18,6 @@
 #include <util/buffer.h>
 #include <util/io_utilities.h>
 
-#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 

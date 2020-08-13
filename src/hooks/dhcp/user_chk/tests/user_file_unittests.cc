@@ -10,8 +10,6 @@
 #include <test_data_files_config.h>
 #include <user_file.h>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 

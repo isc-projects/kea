@@ -21,7 +21,6 @@
 #include <dns/master_loader.h>
 
 #include <boost/scoped_ptr.hpp>
-#include <boost/bind.hpp>
 
 using namespace std;
 using namespace isc::dns;

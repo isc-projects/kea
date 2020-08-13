@@ -19,8 +19,6 @@
 
 #include <gtest/gtest.h>
 
-#include <boost/bind.hpp>
-
 #include <string>
 #include <sstream>
 #include <vector>
