@@ -74,10 +74,9 @@ NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
     // pointer to our completion handler method, receiveCompletionHandler.
     RawBufferPtr buffer(new uint8_t[RECV_BUF_MAX]);
     UDPEndpointPtr data_source(new asiolink::UDPEndpoint());
-    recv_callback_.reset(new
-                         UDPCallback(buffer, RECV_BUF_MAX, data_source,
-                                     std::bind(&NameChangeUDPListener::
-                                     receiveCompletionHandler, this, ph::_1, ph::_2)));
+    recv_callback_.reset(new UDPCallback(buffer, RECV_BUF_MAX, data_source,
+        std::bind(&NameChangeUDPListener::receiveCompletionHandler,
+	          this, ph::_1, ph::_2)));
 }
 
 NameChangeUDPListener::~NameChangeUDPListener() {
@@ -210,9 +209,8 @@ NameChangeUDPSender(const isc::asiolink::IOAddress& ip_address,
     RawBufferPtr buffer(new uint8_t[SEND_BUF_MAX]);
     UDPEndpointPtr data_source(new asiolink::UDPEndpoint());
     send_callback_.reset(new UDPCallback(buffer, SEND_BUF_MAX, data_source,
-                                         std::bind(&NameChangeUDPSender::
-                                         sendCompletionHandler, this,
-                                         ph::_1, ph::_2)));
+        std::bind(&NameChangeUDPSender::sendCompletionHandler,
+                  this, ph::_1, ph::_2)));
 }
 
 NameChangeUDPSender::~NameChangeUDPSender() {

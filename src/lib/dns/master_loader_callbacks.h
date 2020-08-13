@@ -74,7 +74,7 @@ public:
         error_(error),
         warning_(warning)
     {
-        if (!error_ || !warning) {
+        if (!error_ || !warning_) {
             isc_throw(isc::InvalidParameter,
                       "Empty function passed as callback");
         }

@@ -102,7 +102,7 @@ HATest::runIOServiceInThread() {
     std::condition_variable condvar;
 
     io_service_->post(std::bind(&HATest::signalServiceRunning, this, std::ref(running),
-                                  std::ref(mutex), std::ref(condvar)));
+                                std::ref(mutex), std::ref(condvar)));
     boost::shared_ptr<std::thread>
         th(new std::thread(std::bind(&IOService::run, io_service_.get())));
 
