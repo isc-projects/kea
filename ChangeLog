@@ -1,4 +1,10 @@
-1784. [build]		wlodek
+1783.	[func]		fdupont
+	If enabled, the default value for queue capacity in congestion control
+	has been trimmed down from 500 to 64. The feature continues to be disabled
+	by default.
+	(Gitlab #285)
+
+1784.	[build]		wlodek
 	Socket path in kea ddns default config was changed to
 	/tmp/kea-ddns-ctrl-socket.
 	(Gitlab #1379)
