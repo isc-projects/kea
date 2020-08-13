@@ -1,4 +1,4 @@
-1783.	[func]		fdupont
+1785.	[func]		fdupont
 	If enabled, the default value for queue capacity in congestion control
 	has been trimmed down from 500 to 64. The feature continues to be disabled
 	by default.
