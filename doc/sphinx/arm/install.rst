@@ -247,6 +247,19 @@ options. Some commonly used options are:
    Build the optional ``perfdhcp`` DHCP benchmarking tool. The default
    is to not build it.
 
+ - ``--with-freeradius``
+   Build the optional ``RADIUS`` hook. This option specifies path to the
+   patched version of FreeRADIUS client. Available in subscriber only version.
+   This option requires subscription-only RADIUS hook.
+
+ - ``--with-freeradius-dictionary``
+   Specifies a non-standard location for a FreeRADIUS dictionary file. That
+   file contains list of supported RADIUS attributes. Available in subscriber
+   only version. This option requires subscription-only RADIUS hook.
+
+If you don't see the RADIUS options, make sure you have RADIUS hook sources in
+the ``premium`` directory and rerun ``autoreconf -i``.
+
 .. note::
 
    The ``--runstatedir`` in the installation directories is particular.
