@@ -75,7 +75,7 @@ LeaseMgr::recountLeaseStats4() {
 
     // Zero out the global stats.
     // Cumulative counters ("reclaimed-declined-addresses", "reclaimed-leases",
-    // "cumulative-assigned-addresses") never gets zeroed.
+    // "cumulative-assigned-addresses") never get zeroed.
     int64_t zero = 0;
     stats_mgr.setValue("declined-addresses", zero);
 
@@ -223,7 +223,7 @@ LeaseMgr::recountLeaseStats6() {
 
     // Zero out the global stats.
     // Cumulative counters ("reclaimed-declined-addresses", "reclaimed-leases",
-    // "cumulative-assigned-nas", "cumulative-assigned-pds") never gets zeroed.
+    // "cumulative-assigned-nas", "cumulative-assigned-pds") never get zeroed.
     int64_t zero = 0;
     stats_mgr.setValue("declined-addresses", zero);
 

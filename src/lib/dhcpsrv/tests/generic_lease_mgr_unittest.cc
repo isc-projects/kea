@@ -3134,7 +3134,7 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
 
 
     // Recount stats.  We should have the same results.
-    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats6());
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
