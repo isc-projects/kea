@@ -1,3 +1,8 @@
+1784. [build]		wlodek
+	Socket path in kea ddns default config was changed to
+	/tmp/kea-ddns-ctrl-socket.
+	(Gitlab #1379)
+
 1783.	[doc]		tomek
 	Installation instructions for RADIUS hook updated.
 	(Gitlab #1310)
