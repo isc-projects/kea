@@ -1,3 +1,7 @@
+1783.	[doc]		tomek
+	Installation instructions for RADIUS hook updated.
+	(Gitlab #1310)
+
 1782.	[bug]		tmark
 	Corrected a bug that causes kea-dhcp4/kea-dhcp6 servers to crash after
 	losing connectivity to a configuration backend database. The servers
