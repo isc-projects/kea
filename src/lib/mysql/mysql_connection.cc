@@ -218,8 +218,8 @@ MySqlConnection::openDatabase() {
     // caused issues for some unit tests which were unable to cleanup
     // the database after the test because of pending transactions.
     // Use of autocommit will eliminate this problem.
-    result = mysql_autocommit(mysql_, 1);
-    if (result != 0) {
+    my_bool autocommit_result = mysql_autocommit(mysql_, 1);
+    if (autocommit_result != 0) {
         isc_throw(DbOperationError, mysql_error(mysql_));
     }
 
