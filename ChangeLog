@@ -1,3 +1,8 @@
+1789.	[bug]		razvan
+	Fixed a bug in the lease reclaim process which would not reschedule the
+	timer if the operation failed.
+	(Gitlab #1335)
+
 1788.	[bug]*		fdupont
 	When a host reservation in a subnet reserves an address, the
 	address must be within the subnet. This check was previously
