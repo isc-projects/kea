@@ -429,6 +429,9 @@ private:
 #endif
 };
 
+// @note The regex engine is implemented using recursion and can cause
+// stack overflow if the input data is too large. An arbitrary size of
+// 4096 should be enough for all cases.
 const uint32_t StringSanitizer::MAX_DATA_SIZE = 4096;
 
 StringSanitizer::StringSanitizer(const std::string& char_set,

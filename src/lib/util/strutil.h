@@ -334,6 +334,10 @@ public:
     std::string scrub(const std::string& original);
 
     /// @brief The maximum size for regex parameters.
+    ///
+    /// @note The regex engine is implemented using recursion and can cause
+    /// stack overflow if the input data is too large. An arbitrary size of
+    /// 4096 should be enough for all cases.
     static const uint32_t MAX_DATA_SIZE;
 
 private:
