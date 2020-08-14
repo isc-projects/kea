@@ -3356,9 +3356,8 @@ specify a hostname and DHCPv6 options for a given host.
 
 .. note::
 
-   Accepting reserved addresses from outside the subnet range is supported
-   until 1.7.10 (included). All newer versions require the reserved
-   addresses to be within the subnet range.
+   Kea requires that reserved addresses must be within the subnet.
+   Kea 1.7.10 is the last release that does not enforce this.
    This does not apply to reserved prefixes.
 
 The following example shows how to reserve addresses and prefixes for

@@ -3843,9 +3843,8 @@ DHCPv4 message such as siaddr, sname, or file.
 
 .. note::
 
-   Accepting reserved address from outside the subnet range is supported
-   until Kea 1.7.10 (included). All newer versions require the reserved
-   address to be within the subnet range.
+   Kea requires that reserved address must be within the subnet.
+   Kea 1.7.10 is the last release that does not enforce this.
 
 The following example shows how to reserve addresses for specific hosts
 in a subnet:
