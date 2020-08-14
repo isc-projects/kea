@@ -210,6 +210,24 @@ MySqlConnection::openDatabase() {
     if (status != mysql_) {
         isc_throw(DbOpenError, mysql_error(mysql_));
     }
+
+    // Enable autocommit. In case transaction is explicitly used, this
+    // setting will be overwritten for the transaction. However, there are
+    // cases when lack of autocommit could cause transactions to hang
+    // until commit or rollback is explicitly called. This already
+    // caused issues for some unit tests which were unable to cleanup
+    // the database after the test because of pending transactions.
+    // Use of autocommit will eliminate this problem.
+    my_bool result = mysql_autocommit(mysql_, 1);
+    if (result != 0) {
+        isc_throw(DbOperationError, mysql_error(ctx->conn_.mysql_));
+    }
+
+    // To avoid a flush to disk on every commit, the global parameter
+    // innodb_flush_log_at_trx_commit should be set to 2. This will cause the
+    // changes to be written to the log, but flushed to disk in the background
+    // every second. Setting the parameter to that value will speed up the
+    // system, but at the risk of losing data if the system crashes.
 }
 
 // Get schema version.

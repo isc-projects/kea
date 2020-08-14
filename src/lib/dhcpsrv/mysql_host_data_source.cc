@@ -2634,18 +2634,6 @@ MySqlHostDataSourceImpl::createContext() const {
     // Open the database.
     ctx->conn_.openDatabase();
 
-    // Enable autocommit. In case transaction is explicitly used, this
-    // setting will be overwritten for the transaction. However, there are
-    // cases when lack of autocommit could cause transactions to hang
-    // until commit or rollback is explicitly called. This already
-    // caused issues for some unit tests which were unable to cleanup
-    // the database after the test because of pending transactions.
-    // Use of autocommit will eliminate this problem.
-    my_bool result = mysql_autocommit(ctx->conn_.mysql_, 1);
-    if (result != 0) {
-        isc_throw(DbOperationError, mysql_error(ctx->conn_.mysql_));
-    }
-
     // Prepare query statements. Those are will be only used to retrieve
     // information from the database, so they can be used even if the
     // database is read only for the current user.

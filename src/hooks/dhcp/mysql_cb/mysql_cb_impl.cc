@@ -58,18 +58,6 @@ MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters)
 
     // Open the database.
     conn_.openDatabase();
-
-    // Enable autocommit. In case transaction is explicitly used, this
-    // setting will be overwritten for the transaction. However, there are
-    // cases when lack of autocommit could cause transactions to hang
-    // until commit or rollback is explicitly called. This already
-    // caused issues for some unit tests which were unable to cleanup
-    // the database after the test because of pending transactions.
-    // Use of autocommit will eliminate this problem.
-    my_bool result = mysql_autocommit(conn_.mysql_, 1);
-    if (result != MLM_FALSE) {
-        isc_throw(DbOperationError, mysql_error(conn_.mysql_));
-    }
 }
 
 MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {

@@ -1805,16 +1805,6 @@ MySqlLeaseMgr::createContext() const {
     // Open the database.
     ctx->conn_.openDatabase();
 
-    // Enable autocommit.  To avoid a flush to disk on every commit, the global
-    // parameter innodb_flush_log_at_trx_commit should be set to 2.  This will
-    // cause the changes to be written to the log, but flushed to disk in the
-    // background every second.  Setting the parameter to that value will speed
-    // up the system, but at the risk of losing data if the system crashes.
-    my_bool result = mysql_autocommit(ctx->conn_.mysql_, 1);
-    if (result != 0) {
-        isc_throw(DbOperationError, mysql_error(ctx->conn_.mysql_));
-    }
-
     // Prepare all statements likely to be used.
     ctx->conn_.prepareStatements(tagged_statements.begin(),
                                  tagged_statements.end());
