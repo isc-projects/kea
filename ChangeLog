@@ -1,8 +1,8 @@
 17xx.	[bug]*		fdupont
 	When a host reservation in a subnet reserves an address, the
-	address must in the subnet prefix. This check was previously
+	address must be within the subnet. This check was previously
 	only done by the host command hook library. Note it does not
-	applies the prefix delegation.
+	apply to prefix delegation.
 	(Gitlab #1254)
 
 1787.	[bug]		razvan

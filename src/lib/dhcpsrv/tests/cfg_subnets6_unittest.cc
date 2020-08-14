@@ -1830,7 +1830,7 @@ TEST(CfgSubnets6Test, outOfRangeHost) {
 
     Subnet6ConfigParser parser;
     std::string msg = "specified reservation '2001:db8:2::1' is ";
-    msg += "not matching the IPv6 subnet prefix '2001:db8:1::/48'";
+    msg += "not within the IPv6 subnet '2001:db8:1::/48'";
     EXPECT_THROW_MSG(parser.parse(elems), DhcpConfigError, msg);
 }
 

@@ -3843,8 +3843,7 @@ DHCPv4 message such as siaddr, sname, or file.
 
 .. note::
 
-   Beginning with Kea 1.7.11 the reserved address must be in the subnet
-   prefix.
+   Beginning with Kea 1.7.11 the reserved address must be within the subnet.
 
 The following example shows how to reserve addresses for specific hosts
 in a subnet:

@@ -936,7 +936,7 @@ Subnet4ConfigParser::validateResv(const Subnet4Ptr& subnet, ConstHostPtr host) {
     const IOAddress& address = host->getIPv4Reservation();
     if (!address.isV4Zero() && !subnet->inRange(address)) {
         isc_throw(DhcpConfigError, "specified reservation '" << address
-                  << "' is not matching the IPv4 subnet prefix '"
+                  << "' is not within the IPv4 subnet '"
                   << subnet->toText() << "'");
     }
 }
@@ -1346,7 +1346,7 @@ Subnet6ConfigParser::validateResvs(const Subnet6Ptr& subnet, ConstHostPtr host) 
         const IOAddress& address = it->second.getPrefix();
         if (!subnet->inRange(address)) {
             isc_throw(DhcpConfigError, "specified reservation '" << address
-                      << "' is not matching the IPv6 subnet prefix '"
+                      << "' is not within the IPv6 subnet '"
                       << subnet->toText() << "'");
         }
     }

@@ -1953,8 +1953,8 @@ TEST(CfgSubnets4Test, outOfRangeHost) {
         << "invalid JSON:" << json << "\n test is broken";
 
     Subnet4ConfigParser parser;
-    std::string msg = "specified reservation '10.2.2.1' is not matching ";
-    msg += "the IPv4 subnet prefix '10.1.2.0/24'";
+    std::string msg = "specified reservation '10.2.2.1' is not within ";
+    msg += "the IPv4 subnet '10.1.2.0/24'";
     EXPECT_THROW_MSG(parser.parse(elems), DhcpConfigError, msg);
 }
 
