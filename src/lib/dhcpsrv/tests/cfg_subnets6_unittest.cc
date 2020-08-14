@@ -1853,9 +1853,9 @@ TEST(CfgSubnets6Test, hostPD) {
     Subnet6ConfigParser parser;
     Subnet6Ptr subnet;
     try {
-      subnet = parser.parse(elems);
+        subnet = parser.parse(elems);
     } catch (const std::exception& ex) {
-      std::cerr << "parse fail with " << ex.what() << std::endl;
+        std::cerr << "parse fail with " << ex.what() << std::endl;
     }
     //EXPECT_NO_THROW(subnet = parser.parse(elems));
     ASSERT_TRUE(subnet);

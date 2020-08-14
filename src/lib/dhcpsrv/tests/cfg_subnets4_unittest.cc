@@ -1902,7 +1902,7 @@ TEST(CfgSubnets4Test, removeStatistics) {
                                "reclaimed-leases"));
     ASSERT_FALSE(observation);
 }
-    
+
 // This test verifies that in range host reservation works as expected.
 TEST(CfgSubnets4Test, host) {
     // Create a configuration.
