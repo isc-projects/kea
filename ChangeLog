@@ -1,4 +1,4 @@
-17xx.	[bug]*		fdupont
+1788.	[bug]*		fdupont
 	When a host reservation in a subnet reserves an address, the
 	address must be within the subnet. This check was previously
 	only done by the host command hook library. Note it does not
