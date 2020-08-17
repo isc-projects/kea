@@ -92,7 +92,7 @@ public:
 
     /// @brief Constructor.
     ///
-    /// Sets the time of the last fetched audit entry to Jan 1st, 1970,
+    /// Sets the time of the last fetched audit entry to Jan 1st, 2000,
     /// with id 0.
     CBControlBase()
         : last_audit_revision_time_(getInitialAuditRevisionTime()),
@@ -316,10 +316,10 @@ protected:
     /// @brief Convenience method returning initial timestamp to set the
     /// @c last_audit_revision_time_ to.
     ///
-    /// @return Returns 1970-Jan-01 00:00:00 in local time.
+    /// @return Returns 2000-Jan-01 00:00:00 in local time.
     static boost::posix_time::ptime getInitialAuditRevisionTime() {
         static boost::posix_time::ptime
-            initial_time(boost::gregorian::date(1970, boost::gregorian::Jan, 1));
+            initial_time(boost::gregorian::date(2000, boost::gregorian::Jan, 1));
         return (initial_time);
     }
 

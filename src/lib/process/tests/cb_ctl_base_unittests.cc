@@ -10,6 +10,7 @@
 #include <config_backend/base_config_backend_pool.h>
 #include <process/cb_ctl_base.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <map>
@@ -417,6 +418,20 @@ public:
 TEST_F(CBControlBaseTest, getMgr) {
     auto mgr = cb_ctl_.getMgr();
     EXPECT_EQ(TEST_INSTANCE_ID, mgr.getInstanceId());
+}
+
+// This test verifies that the initial audit revision time is set to
+// local time of 2000-01-01.
+TEST_F(CBControlBaseTest, getInitialAuditRevisionTime) {
+    auto initial_time = cb_ctl_.getInitialAuditRevisionTime();
+    ASSERT_FALSE(initial_time.is_not_a_date_time());
+    auto tm = boost::posix_time::to_tm(initial_time);
+    EXPECT_EQ(100, tm.tm_year);
+    EXPECT_EQ(0, tm.tm_mon);
+    EXPECT_EQ(0, tm.tm_yday);
+    EXPECT_EQ(0, tm.tm_hour);
+    EXPECT_EQ(0, tm.tm_min);
+    EXPECT_EQ(0, tm.tm_sec);
 }
 
 // This test verifies that last audit entry time is reset upon the
