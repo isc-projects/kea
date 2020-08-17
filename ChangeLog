@@ -1,3 +1,13 @@
+1790.	[bug]		marcin
+	Fixed a bug in Kea Configuration Backend observed when using certain
+	MariaDB	database versions. As a result of this bug the Kea servers were
+	unable to fetch configurations stored in the database upon startup. The
+	bug was related to the usage of timestamps which in MariaDB must be
+	set to 1970-01-01 00:00:01 UTC or later. In some cases the Kea CB used
+	out of bounds timestamp values. This bug was observed when using MariaDB
+	10.4.13.
+	(Gitlab #1382)
+
 1789.	[bug]		razvan
 	Fixed a bug in the lease reclaim process which would not reschedule the
 	timer if the operation failed.
