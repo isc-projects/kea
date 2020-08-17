@@ -476,7 +476,7 @@ is assumed.
 
 ``leaseX-get`` returns a result that indicates a result of the operation
 and lease details, if found. It has one of the following values: 0
-(success), 1 (error), or 2 (empty). An empty result means that a query
+(success), 1 (error), or 3 (empty). An empty result means that a query
 has been completed properly, but the object (a lease in this case) has
 not been found. The lease parameters, if found, are returned as
 arguments.
@@ -923,7 +923,7 @@ An example of ``lease6-wipe`` is:
    }
 
 The commands return a text description of the number of leases removed,
-plus the status code 0 (success) if any leases were removed or 2 (empty)
+plus the status code 0 (success) if any leases were removed or 3 (empty)
 if there were no leases. Status code 1 (error) may be returned if the
 parameters are incorrect or some other exception is encountered.
 
@@ -975,7 +975,7 @@ An example of the ``lease6-resend-ddns`` query is:
    }
 
 ``leaseX-resend-ddns`` returns a result that indicates a result of the operation.
-It has one of the following values: 0 (success), 1 (error), or 2 (empty). An empty
+It has one of the following values: 0 (success), 1 (error), or 3 (empty). An empty
 result means that a query has been completed properly, but the object (a lease in
 this case) has not been found.
 
