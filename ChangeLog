@@ -1,3 +1,10 @@
+17xx.	[doc]		tmark
+	Updated the ARM section for the Lease Commands hook library
+	which incorrectly stated that a command return value of 2 would
+	be returned when no lease(s) matched the command. The value
+	returned is actually 3.
+	(Gitlab #1384)
+
 1790.	[bug]		marcin
 	Fixed a bug in Kea Configuration Backend observed when using certain
 	MariaDB	database versions. As a result of this bug the Kea servers were
