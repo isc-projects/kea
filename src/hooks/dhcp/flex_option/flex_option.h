@@ -8,10 +8,18 @@
 #define FLEX_OPTION_H
 
 #include <cc/data.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option.h>
+#include <dhcp/option_definition.h>
+#include <dhcp/std_option_defs.h>
 #include <eval/evaluate.h>
 #include <eval/token.h>
-#include <string>
+
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+
 #include <map>
+#include <string>
 
 namespace isc {
 namespace flex_option {
@@ -148,11 +156,15 @@ public:
     template <typename PktType>
     void process(isc::dhcp::Option::Universe universe,
                  PktType query, PktType response) {
+        std::string space = (universe == isc::dhcp::Option::V4 ?
+                             DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE);
+
         for (auto pair : getOptionConfigMap()) {
             const OptionConfigPtr& opt_cfg = pair.second;
             std::string value;
             isc::dhcp::OptionBuffer buffer;
             isc::dhcp::OptionPtr opt = response->getOption(opt_cfg->getCode());
+            isc::dhcp::OptionDefinitionPtr def;
             switch (opt_cfg->getAction()) {
             case NONE:
                 break;
@@ -166,10 +178,29 @@ public:
                 if (value.empty()) {
                     break;
                 }
+
+                def = isc::dhcp::LibDHCP::getOptionDef(space, opt_cfg->getCode());
+
+                if (!def) {
+                    def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, opt_cfg->getCode());
+                }
+
+                if (!def) {
+                    def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, opt_cfg->getCode());
+                }
+
+                if (!def) {
+                    buffer.assign(value.begin(), value.end());
+                    opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
+                                                    buffer));
+                } else {
+                    std::vector<std::string> split_vec;
+                    boost::split(split_vec, value, boost::is_any_of(","));
+                    opt = def->optionFactory(universe, opt_cfg->getCode(),
+                                             split_vec);
+                }
+
                 // Add the option.
-                buffer.assign(value.begin(), value.end());
-                opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
-                                                buffer));
                 response->addOption(opt);
                 logAction(ADD, opt_cfg->getCode(), value);
                 break;
@@ -184,10 +215,29 @@ public:
                     response->delOption(opt_cfg->getCode());
                     opt = response->getOption(opt_cfg->getCode());
                 }
+
+                def = isc::dhcp::LibDHCP::getOptionDef(space, opt_cfg->getCode());
+
+                if (!def) {
+                    def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, opt_cfg->getCode());
+                }
+
+                if (!def) {
+                    def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, opt_cfg->getCode());
+                }
+
+                if (!def) {
+                    buffer.assign(value.begin(), value.end());
+                    opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
+                                                    buffer));
+                } else {
+                    std::vector<std::string> split_vec;
+                    boost::split(split_vec, value, boost::is_any_of(","));
+                    opt = def->optionFactory(universe, opt_cfg->getCode(),
+                                             split_vec);
+                }
+
                 // Add the option.
-                buffer.assign(value.begin(), value.end());
-                opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
-                                                buffer));
                 response->addOption(opt);
                 logAction(SUPERSEDE, opt_cfg->getCode(), value);
                 break;

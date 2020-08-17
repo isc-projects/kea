@@ -9,6 +9,7 @@
 #include <config.h>
 #include <flex_option.h>
 #include <flex_option_log.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_string.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -761,12 +762,21 @@ TEST_F(FlexOptionTest, processAdd) {
     option->set("code", code);
     ElementPtr add = Element::create(string("'abc'"));
     option->set("add", add);
+
+    option = Element::createMap();
+    options->add(option);
+    code = Element::create(DHO_DOMAIN_SEARCH);
+    option->set("code", code);
+    add = Element::create(string("'example.com'"));
+    option->set("add", add);
+
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
     EXPECT_FALSE(response->getOption(DHO_HOST_NAME));
+    EXPECT_FALSE(response->getOption(DHO_DOMAIN_SEARCH));
 
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
 
@@ -776,6 +786,16 @@ TEST_F(FlexOptionTest, processAdd) {
     const OptionBuffer& buffer = opt->getData();
     ASSERT_EQ(3, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+
+    opt = response->getOption(DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_DOMAIN_SEARCH, opt->getType());
+    const OptionBuffer& buffer_fqdn = opt->getData();
+    ASSERT_EQ(13, buffer_fqdn.size());
+    EXPECT_EQ(7, buffer_fqdn[0]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
+    EXPECT_EQ(3, buffer_fqdn[8]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
 }
 
 // Verify that ADD action does not add an already existing option.
@@ -837,12 +857,21 @@ TEST_F(FlexOptionTest, processSupersede) {
     option->set("code", code);
     ElementPtr supersede = Element::create(string("'abc'"));
     option->set("supersede", supersede);
+
+    option = Element::createMap();
+    options->add(option);
+    code = Element::create(DHO_DOMAIN_SEARCH);
+    option->set("code", code);
+    supersede = Element::create(string("'example.com'"));
+    option->set("supersede", supersede);
+
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
     EXPECT_FALSE(response->getOption(DHO_HOST_NAME));
+    EXPECT_FALSE(response->getOption(DHO_DOMAIN_SEARCH));
 
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
 
@@ -852,6 +881,16 @@ TEST_F(FlexOptionTest, processSupersede) {
     const OptionBuffer& buffer = opt->getData();
     ASSERT_EQ(3, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+
+    opt = response->getOption(DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_DOMAIN_SEARCH, opt->getType());
+    const OptionBuffer& buffer_fqdn = opt->getData();
+    ASSERT_EQ(13, buffer_fqdn.size());
+    EXPECT_EQ(7, buffer_fqdn[0]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
+    EXPECT_EQ(3, buffer_fqdn[8]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
 }
 
 // Verify that SUPERSEDE action supersedes an already existing option.
@@ -865,6 +904,14 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     option->set("code", code);
     ElementPtr supersede = Element::create(string("0xabcdef"));
     option->set("supersede", supersede);
+
+    option = Element::createMap();
+    options->add(option);
+    code = Element::create(D6O_DOMAIN_SEARCH);
+    option->set("code", code);
+    supersede = Element::create(string("'example.com'"));
+    option->set("supersede", supersede);
+
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
@@ -872,6 +919,10 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
     OptionStringPtr str(new OptionString(Option::V6, D6O_BOOTFILE_URL, "http"));
     response->addOption(str);
+    OptionDefinition def("domain-name", D6O_DOMAIN_SEARCH, OPT_FQDN_TYPE);
+    OptionCustomPtr option_domain_name(new OptionCustom(def, Option::V6));
+    option_domain_name->writeFqdn("old.example.com");
+    response->addOption(option_domain_name);
 
     EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
 
@@ -882,6 +933,16 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     ASSERT_EQ(3, buffer.size());
     uint8_t expected[] = { 0xab, 0xcd, 0xef };
     EXPECT_EQ(0, memcmp(&buffer[0], expected, 3));
+
+    opt = response->getOption(D6O_DOMAIN_SEARCH);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(D6O_DOMAIN_SEARCH, opt->getType());
+    const OptionBuffer& buffer_fqdn = opt->getData();
+    ASSERT_EQ(13, buffer_fqdn.size());
+    EXPECT_EQ(7, buffer_fqdn[0]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
+    EXPECT_EQ(3, buffer_fqdn[8]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
 }
 
 // Verify that SUPERSEDE action does not supersede an empty value.
