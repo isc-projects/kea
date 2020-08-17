@@ -796,6 +796,7 @@ TEST_F(FlexOptionTest, processAdd) {
     EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
     EXPECT_EQ(3, buffer_fqdn[8]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
+    EXPECT_EQ(0, buffer_fqdn[12]);
 }
 
 // Verify that ADD action does not add an already existing option.
@@ -891,6 +892,7 @@ TEST_F(FlexOptionTest, processSupersede) {
     EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
     EXPECT_EQ(3, buffer_fqdn[8]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
+    EXPECT_EQ(0, buffer_fqdn[12]);
 }
 
 // Verify that SUPERSEDE action supersedes an already existing option.
@@ -943,6 +945,7 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
     EXPECT_EQ(3, buffer_fqdn[8]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
+    EXPECT_EQ(0, buffer_fqdn[12]);
 }
 
 // Verify that SUPERSEDE action does not supersede an empty value.
