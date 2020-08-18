@@ -1,3 +1,10 @@
+1794.	[func]		razvan
+	The 'status-get' command send to DHCPv4 or DHCPv6 servers will return
+	information about multi threading settings ('multi-threading-enabled',
+	and only if this setting is active, 'thread-pool-size' and
+	'packet-queue-size').
+	(Gitlab #1305)
+
 1793.	[doc]		tmark
 	Added Leasequery hook library to the list of available hook
 	libraries in the ARM.
