@@ -456,7 +456,7 @@ loaded by the correct process per the table below.
    |                 |               |BOOTP client class and get infinite lifetime leases.        |
    +-----------------+---------------+------------------------------------------------------------+
    | Leasequery      | Support       |The Leasequery hooks library adds support for DHCPv4        |
-   |                 | customers     |for Leasequery as described in RFC 4388; and for DHCPv6     |
+   |                 | customers     |Leasequery as described in RFC 4388; and for DHCPv6         |
    |                 | (DHCPv4 since |Leasequery as described in RFC 5007.                        |
    |                 | 1.7.8, DHCPv6 |                                                            |
    |                 | since 1.7.9)  |                                                            |
