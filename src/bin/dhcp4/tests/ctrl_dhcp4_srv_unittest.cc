@@ -1120,6 +1120,16 @@ TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
     EXPECT_LE(found_reload->intValue(), 5);
     EXPECT_GE(found_reload->intValue(), 0);
 
+    auto found_multi_threading = arguments->get("multi-threading-enabled");
+    ASSERT_TRUE(found_multi_threading);
+    EXPECT_EQ(false, found_multi_threading->boolValue());
+
+    auto found_thread_count = arguments->get("thread-pool-size");
+    ASSERT_FALSE(found_thread_count);
+
+    auto found_queue_size = arguments->get("packet-queue-size");
+    ASSERT_FALSE(found_queue_size);
+
     MultiThreadingMgr::instance().setMode(true);
     MultiThreadingMgr::instance().setThreadPoolSize(4);
     MultiThreadingMgr::instance().setPacketQueueSize(64);
@@ -1153,11 +1163,15 @@ TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
     EXPECT_LE(found_reload->intValue(), 5);
     EXPECT_GE(found_reload->intValue(), 0);
 
-    auto found_thread_count = arguments->get("thread-pool-size");
+    found_multi_threading = arguments->get("multi-threading-enabled");
+    ASSERT_TRUE(found_multi_threading);
+    EXPECT_EQ(true, found_multi_threading->boolValue());
+
+    found_thread_count = arguments->get("thread-pool-size");
     ASSERT_TRUE(found_thread_count);
     EXPECT_EQ(found_thread_count->intValue(), 4);
 
-    auto found_queue_size = arguments->get("packet-queue-size");
+    found_queue_size = arguments->get("packet-queue-size");
     ASSERT_TRUE(found_queue_size);
     EXPECT_EQ(found_queue_size->intValue(), 64);
 }

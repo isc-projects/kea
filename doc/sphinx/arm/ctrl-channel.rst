@@ -580,9 +580,20 @@ The ``status-get`` command returns server's runtime information:
      * remote: for the remote server the last known state, served
        HA scopes and the role of the server in HA relationship.
 
-The ``high-availability`` information is only returned when the command is
+ - multi-threading-enabled: flag indicating if multi-threading is enabled.
+
+ - thread-pool-size: number of dhcp service threads.
+
+ - packet-queue-size: size of the packet queue size.
+
+The ``high-availability`` information is returned only when the command is
 sent to the DHCP servers being in the HA setup. This parameter is
 never returned when the ``status-get`` command is sent to the
+Control Agent or DDNS deamon.
+
+The ``thread-pool-size`` and ``packet-queue-size`` information is returned only
+when the command is send to DHCP servers with multi-threading enabled. This
+parameter is never returned when the ``status-get`` command is sent to the
 Control Agent or DDNS deamon.
 
 To learn more about the HA status information returned by the

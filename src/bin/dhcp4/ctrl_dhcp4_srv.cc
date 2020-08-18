@@ -661,10 +661,13 @@ ControlledDhcpv4Srv::commandStatusGetHandler(const string&,
     }
 
     if (MultiThreadingMgr::instance().getMode()) {
-        status->set("thread-pool-size", Element::create(
-                    long(MultiThreadingMgr::instance().getThreadPoolSize())));
-        status->set("packet-queue-size", Element::create(
-                    long(MultiThreadingMgr::instance().getPacketQueueSize())));
+        status->set("multi-threading-enabled", Element::create(true));
+        status->set("thread-pool-size", Element::create(static_cast<int32_t>(
+                        MultiThreadingMgr::instance().getThreadPoolSize())));
+        status->set("packet-queue-size", Element::create(static_cast<int32_t>(
+                        MultiThreadingMgr::instance().getPacketQueueSize())));
+    } else {
+        status->set("multi-threading-enabled", Element::create(false));
     }
 
     return (createAnswer(0, status));
