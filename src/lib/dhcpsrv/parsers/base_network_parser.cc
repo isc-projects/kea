@@ -100,12 +100,32 @@ BaseNetworkParser::parseLifetime(const ConstElementPtr& scope,
 void
 BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
                                NetworkPtr& network) {
-    if (network_data->contains("renew-timer")) {
-        network->setT1(getInteger(network_data, "renew-timer"));
+    bool has_renew = network_data->contains("renew-timer");
+    bool has_rebind = network_data->contains("rebind-timer");
+    int64_t renew = -1;
+    int64_t rebind = -1;
+
+    if (has_renew) {
+        renew = getInteger(network_data, "renew-timer");
+        if (renew < 0) {
+            isc_throw(DhcpConfigError, "the value of renew-timer" << " ("
+                      << renew << ") must be a positive number");
+        }
+        network->setT1(renew);
     }
 
-    if (network_data->contains("rebind-timer")) {
-        network->setT2(getInteger(network_data, "rebind-timer"));
+    if (has_rebind) {
+        rebind = getInteger(network_data, "rebind-timer");
+        if (rebind < 0) {
+            isc_throw(DhcpConfigError, "the value of rebind-timer" << " ("
+                      << rebind << ") must be a positive number");
+        }
+        network->setT2(rebind);
+    }
+
+    if (has_renew && has_rebind && (renew > rebind)) {
+        isc_throw(DhcpConfigError, "the value of renew-timer" << " (" << renew
+                  << ") is not less than rebind-timer" << " (" << rebind << ")");
     }
 
     network->setValid(parseLifetime(network_data, "valid-lifetime"));

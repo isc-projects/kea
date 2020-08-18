@@ -747,20 +747,34 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet4);
     parseCommon(params, network);
 
-    stringstream s;
-    s << addr << "/" << static_cast<int>(len) << " with params: ";
+    std::ostringstream output;
+    output << addr << "/" << static_cast<int>(len) << " with params: ";
+
+    bool has_renew = !subnet4->getT1().unspecified();
+    bool has_rebind = !subnet4->getT2().unspecified();
+    int64_t renew = -1;
+    int64_t rebind = -1;
+
     // t1 and t2 are optional may be not specified.
-    if (!subnet4->getT1().unspecified()) {
-        s << "t1=" << subnet4->getT1().get() << ", ";
+    if (has_renew) {
+        renew = subnet4->getT1().get();
+        output << "t1=" << renew << ", ";
     }
-    if (!subnet4->getT2().unspecified()) {
-        s << "t2=" << subnet4->getT2().get() << ", ";
-    }
-    if (!subnet4->getValid().unspecified()) {
-        s << "valid-lifetime=" << subnet4->getValid().get();
+    if (rebind) {
+        rebind = subnet4->getT2().get();
+        output << "t2=" << rebind << ", ";
     }
 
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET4).arg(s.str());
+    if (has_renew && has_rebind && (renew > rebind)) {
+        isc_throw(DhcpConfigError, "the value of renew-timer" << " (" << renew
+                  << ") is not less than rebind-timer" << " (" << rebind << ")");
+    }
+
+    if (!subnet4->getValid().unspecified()) {
+        output << "valid-lifetime=" << subnet4->getValid().get();
+    }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET4).arg(output.str());
 
     // Set the match-client-id value for the subnet.
     if (params->contains("match-client-id")) {
@@ -1231,12 +1245,26 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     std::ostringstream output;
     output << addr << "/" << static_cast<int>(len) << " with params: ";
     // t1 and t2 are optional may be not specified.
-    if (!subnet6->getT1().unspecified()) {
-        output << "t1=" << subnet6->getT1().get() << ", ";
+
+    bool has_renew = !subnet6->getT1().unspecified();
+    bool has_rebind = !subnet6->getT2().unspecified();
+    int64_t renew = -1;
+    int64_t rebind = -1;
+
+    if (has_renew) {
+        renew = subnet6->getT1().get();
+        output << "t1=" << renew << ", ";
     }
-    if (!subnet6->getT2().unspecified()) {
-        output << "t2=" << subnet6->getT2().get() << ", ";
+    if (has_rebind) {
+        rebind = subnet6->getT2().get();
+        output << "t2=" << rebind << ", ";
     }
+
+    if (has_renew && has_rebind && (renew > rebind)) {
+        isc_throw(DhcpConfigError, "the value of renew-timer" << " (" << renew
+                  << ") is not less than rebind-timer" << " (" << rebind << ")");
+    }
+
     if (!subnet6->getPreferred().unspecified()) {
         output << "preferred-lifetime=" << subnet6->getPreferred().get() << ", ";
     }

@@ -469,6 +469,27 @@ TEST_F(SharedNetwork4ParserTest, iface) {
     EXPECT_EQ("eth1", network->getIface().get());
 }
 
+// This test verifies that shared network parser for IPv4 works properly
+// when using invalid renew and rebind timers.
+TEST_F(SharedNetwork4ParserTest, parseWithInvalidRenewRebind) {
+    IfaceMgrTestConfig ifmgr(true);
+
+    // Basic configuration for shared network. A bunch of parameters
+    // have to be specified for subnets because subnet parsers expect
+    // that default and global values are set.
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+    ConstElementPtr valid_element = config_element->get("renew-timer");
+    ElementPtr invalid_element = boost::const_pointer_cast<Element>(valid_element);
+    invalid_element->setValue(200);
+
+    // Parse configuration specified above.
+    SharedNetwork4Parser parser;
+    SharedNetwork4Ptr network;
+
+    ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
+    ASSERT_FALSE(network);
+}
 
 /// @brief Test fixture class for SharedNetwork6Parser class.
 class SharedNetwork6ParserTest : public SharedNetworkParserTest {
@@ -575,7 +596,7 @@ public:
     bool use_iface_id_;
 };
 
-// This test verifies that shared network parser for IPv4 works properly
+// This test verifies that shared network parser for IPv6 works properly
 // in a positive test scenario.
 TEST_F(SharedNetwork6ParserTest, parse) {
     IfaceMgrTestConfig ifmgr(true);
@@ -673,7 +694,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ("2001:db8:1::cafe", addresses[0].toText());
 }
 
-// This test verifies that shared network parser for IPv4 works properly
+// This test verifies that shared network parser for IPv6 works properly
 // in a positive test scenario.
 TEST_F(SharedNetwork6ParserTest, parseWithInterfaceId) {
     IfaceMgrTestConfig ifmgr(true);
@@ -692,6 +713,27 @@ TEST_F(SharedNetwork6ParserTest, parseWithInterfaceId) {
     // Check that interface-id has been parsed.
     auto opt_iface_id = network->getInterfaceId();
     ASSERT_TRUE(opt_iface_id);
+}
+
+// This test verifies that shared network parser for IPv6 works properly
+// when using invalid renew and rebind timers.
+TEST_F(SharedNetwork6ParserTest, parseWithInvalidRenewRebind) {
+    IfaceMgrTestConfig ifmgr(true);
+
+    // Use the configuration with interface-id instead of interface parameter.
+    use_iface_id_ = true;
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+    ConstElementPtr valid_element = config_element->get("renew-timer");
+    ElementPtr invalid_element = boost::const_pointer_cast<Element>(valid_element);
+    invalid_element->setValue(200);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+
+    ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
+    ASSERT_FALSE(network);
 }
 
 // This test verifies that error is returned when trying to configure a
