@@ -592,7 +592,7 @@ never returned when the ``status-get`` command is sent to the
 Control Agent or DDNS deamon.
 
 The ``thread-pool-size`` and ``packet-queue-size`` parameters are returned only
-when the command is send to DHCP servers with multi-threading enabled. These two
+when the command is sent to DHCP servers with multi-threading enabled. These two
 parameters and ``multi-threading-enabled`` are never returned when the
 ``status-get`` command is sent to the Control Agent or DDNS deamon.
 
