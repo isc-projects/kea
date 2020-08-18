@@ -455,6 +455,12 @@ loaded by the correct process per the table below.
    |                 |               |they are translated into DHCPREQUEST packets, put into the  |
    |                 |               |BOOTP client class and get infinite lifetime leases.        |
    +-----------------+---------------+------------------------------------------------------------+
+   | Leasequery      | Support       |The Leasequery hooks library adds support for DHCPv4        |
+   |                 | customers     |for Leasequery as described in RFC 4388; and for DHCPv6     |
+   |                 | (DHCPv4 since |Leasequery as described in RFC 5007.                        |
+   |                 | 1.7.8, DHCPv6 |                                                            |
+   |                 | since 1.7.9)  |                                                            |
+   +-----------------+---------------+------------------------------------------------------------+
 
 ISC hopes to see more hooks libraries become available as time
 progresses, developed both internally and externally. Since this list

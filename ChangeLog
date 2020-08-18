@@ -1,3 +1,8 @@
+1793.	[doc]		tmark
+	Added Leasequery hook library to the list of available hook
+	libraries in the ARM.
+	(Gitlab #1372)
+
 1792.	[doc]		tmark
 	Added the Database Connectivity section to the ARM which explains
 	how Kea servers respond to back end database connectivity issues.
