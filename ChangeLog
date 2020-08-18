@@ -1,3 +1,8 @@
+1792.	[doc]		tmark
+	Added the Database Connectivity section to the ARM which explains
+	how Kea servers respond to back end database connectivity issues.
+	(Gitlab #1284)
+
 1791.	[doc]		tmark
 	Updated the ARM section for the Lease Commands hook library
 	which incorrectly stated that a command return value of 2 would

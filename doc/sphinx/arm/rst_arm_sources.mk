@@ -31,3 +31,4 @@ rst_arm_sources += arm/quickstart.rst
 rst_arm_sources += arm/shell.rst
 rst_arm_sources += arm/stats.rst
 rst_arm_sources += arm/stork.rst
+rst_arm_sources += arm/database-connectivity.rst
