@@ -8,14 +8,16 @@ database back ends for leases, hosts and configuration.  All of them may be
 configured to support automatic recovery when connectivity is lost (see 
 ``max-reconnect-tries`` and ``reconnect-wait-time``).
 
-It is important to understand how and when automatic recovery comes into play.  Automatic recovery, when configured, only operates after a successful start up 
+It is important to understand how and when automatic recovery comes into play.  
+Automatic recovery, when configured, only operates after a successful start up 
 or reconfiguration during which connectivity to all back ends has been 
 successfully established.
 
 During server start up the inability to connect to any of the configured back
-ends is always considered fatal.  A fatal error will be logged and server will
-exit.  This is done based on the idea that configuration should be valid at 
-start up. Exiting to the system allows nanny scripts to detect the problem.
+ends is always considered fatal.  A fatal error will be logged and the server
+will exit.  This is done based on the idea that configuration should be valid
+at start up. Exiting to the operating system allows nanny scripts to detect
+the problem.
 
 During dynamic reconfiguration, all back ends are disconnected and then
 reconnected using the new configuration.  If connectivity to any of the
