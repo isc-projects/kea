@@ -23,7 +23,7 @@ sys.setrecursionlimit(5000)
 # -- Project information -----------------------------------------------------
 
 project = 'Kea'
-copyright = '2019, Internet Systems Consortium'
+copyright = '2019-2020, Internet Systems Consortium'
 author = 'Internet Systems Consortium'
 
 # get current kea version
