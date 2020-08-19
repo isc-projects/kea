@@ -490,7 +490,7 @@ public:
         }
     }
 
-    /// @brief Closes a connection if it has an out-of-bandwidth socket event
+    /// @brief Closes a connection if it has an out-of-band socket event
     ///
     /// If the pool contains a connection using the given socket and that
     /// connection is currently in a transaction the method returns as this
@@ -502,12 +502,12 @@ public:
     /// case is the other end of the socket being closed.
     ///
     /// @param socket_fd socket descriptor to check
-    void closeIfOutOfBandwidth(int socket_fd) {
+    void closeIfOutOfBand(int socket_fd) {
         if (MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<std::mutex> lk(mutex_);
-            closeIfOutOfBandwidthInternal(socket_fd);
+            closeIfOutOfBandInternal(socket_fd);
         } else {
-            closeIfOutOfBandwidthInternal(socket_fd);
+            closeIfOutOfBandInternal(socket_fd);
         }
     }
 
@@ -624,7 +624,7 @@ private:
         queue_.clear();
     }
 
-    /// @brief Closes a connection if it has an out-of-bandwidth socket event
+    /// @brief Closes a connection if it has an out-of-band socket event
     ///
     /// If the pool contains a connection using the given socket and that
     /// connection is currently in a transaction the method returns as this
@@ -638,7 +638,7 @@ private:
     /// This method should be called in a thread safe context.
     ///
     /// @param socket_fd socket descriptor to check
-    void closeIfOutOfBandwidthInternal(int socket_fd) {
+    void closeIfOutOfBandInternal(int socket_fd) {
         // First we look for a connection with the socket.
         for (auto conns_it = conns_.begin(); conns_it != conns_.end();
              ++conns_it) {
@@ -654,7 +654,7 @@ private:
             }
 
             // Socket has no transaction, so any ready event is
-            // out-of-bandwidth (other end probably closed), so
+            // out-of-band (other end probably closed), so
             // let's close it.  Note we do not remove any queued
             // requests, as this might somehow be occurring in
             // between them.
@@ -1246,8 +1246,8 @@ HttpClient::asyncSendRequest(const Url& url, const HttpRequestPtr& request,
 }
 
 void
-HttpClient::closeIfOutOfBandwidth(int socket_fd)  {
-    return (impl_->conn_pool_->closeIfOutOfBandwidth(socket_fd));
+HttpClient::closeIfOutOfBand(int socket_fd)  {
+    return (impl_->conn_pool_->closeIfOutOfBand(socket_fd));
 }
 
 void

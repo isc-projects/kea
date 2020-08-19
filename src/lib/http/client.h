@@ -191,7 +191,7 @@ public:
     /// @brief Closes all connections.
     void stop();
 
-    /// @brief Closes a connection if it has an out-of-bandwidth socket event
+    /// @brief Closes a connection if it has an out-of-band socket event
     ///
     /// If the  client owns a connection using the given socket and that
     /// connection is currently in a transaction the method returns as this
@@ -199,11 +199,11 @@ public:
     /// ongoing transaction, then the connection is closed.
     ///
     /// This is method is intended to be used to detect and clean up then
-    /// sockets that are marked ready outside of transactions. The most comman
+    /// sockets that are marked ready outside of transactions. The most common
     /// case is the other end of the socket being closed.
     ///
     /// @param socket_fd socket descriptor to check
-    void closeIfOutOfBandwidth(int socket_fd);
+    void closeIfOutOfBand(int socket_fd);
 
 private:
 

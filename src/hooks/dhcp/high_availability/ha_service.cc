@@ -2221,7 +2221,7 @@ HAService::socketReadyHandler(int tcp_native_fd) {
     // ongoing transactions, we close it.  This will unregister it from
     // IfaceMgr and ensure the client starts over with a fresh connection
     // if it needs to do so.
-    client_.closeIfOutOfBandwidth(tcp_native_fd);
+    client_.closeIfOutOfBand(tcp_native_fd);
 }
 
 void

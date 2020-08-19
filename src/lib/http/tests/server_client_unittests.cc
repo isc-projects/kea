@@ -1739,20 +1739,20 @@ public:
         EXPECT_EQ(-1, monitor.registered_fd_);
     }
 
-    /// @brief Tests detection and handling out-of-bandwidth socket events
+    /// @brief Tests detection and handling out-of-band socket events
     ///
-    /// It initiates a transacation and verifies that a mid-transacation call
-    /// to HttpClient::closeIfOutOfBandwidth() has no affect on the connection.
-    /// After succesful completion of the transaction, a second call is made
-    /// HttpClient::closeIfOutOfBandwidth().  This should result in the connection
-    /// being closed.
+    /// It initiates a transaction and verifies that a mid-transaction call
+    /// to HttpClient::closeIfOutOfBand() has no affect on the connection.
+    /// After successful completion of the transaction, a second call to
+    /// HttpClient::closeIfOutOfBand() is made. This should result in the
+    /// connection being closed.
     /// This step is repeated to verify that after an OOB closure, transactions
     /// to the same destination can be processed.
     ///
     /// Lastly, we verify that HttpClient::stop() closes the connection correctly.
     ///
     /// @param version HTTP version to be used.
-    void testCloseIfOutOfBandwidth(const HttpVersion& version) {
+    void testCloseIfOutOfBand(const HttpVersion& version) {
         // Start the server.
         ASSERT_NO_THROW(listener_.start());
 
@@ -1780,7 +1780,7 @@ public:
             int orig_fd = monitor.registered_fd_;
 
             // Test our socket for OOBness.
-            client.closeIfOutOfBandwidth(monitor.registered_fd_);
+            client.closeIfOutOfBand(monitor.registered_fd_);
 
             // Since we're in a transaction, we should have no closes and
             // the same valid fd.
@@ -1812,7 +1812,7 @@ public:
         EXPECT_GT(monitor.registered_fd_, -1);
 
         // Test our socket for OOBness.
-        client.closeIfOutOfBandwidth(monitor.registered_fd_);
+        client.closeIfOutOfBand(monitor.registered_fd_);
 
         // Since we're in a transaction, we should have no closes and
         // the same valid fd.
@@ -1838,7 +1838,7 @@ public:
             int orig_fd = monitor.registered_fd_;
 
             // Test our socket for OOBness.
-            client.closeIfOutOfBandwidth(monitor.registered_fd_);
+            client.closeIfOutOfBand(monitor.registered_fd_);
 
             // Since we're in a transaction, we should have no closes and
             // the same valid fd.
@@ -2080,15 +2080,15 @@ TEST_F(HttpClientTest, connectCloseCallbacksMultiThreading) {
     ASSERT_NO_FATAL_FAILURE(testConnectCloseCallbacks(HttpVersion(1, 1)));
 }
 
-/// Tests that HttpClient::closeIfOutOfBandwidth works correctly.
-TEST_F(HttpClientTest, closeIfOutOfBandwidth) {
-    ASSERT_NO_FATAL_FAILURE(testCloseIfOutOfBandwidth(HttpVersion(1, 1)));
+/// Tests that HttpClient::closeIfOutOfBand works correctly.
+TEST_F(HttpClientTest, closeIfOutOfBand) {
+    ASSERT_NO_FATAL_FAILURE(testCloseIfOutOfBand(HttpVersion(1, 1)));
 }
 
-/// Tests that HttpClient::closeIfOutOfBandwidth works correctly.
-TEST_F(HttpClientTest, closeIfOutOfBandwidthMultiThreading) {
+/// Tests that HttpClient::closeIfOutOfBand works correctly.
+TEST_F(HttpClientTest, closeIfOutOfBandMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    ASSERT_NO_FATAL_FAILURE(testCloseIfOutOfBandwidth(HttpVersion(1, 1)));
+    ASSERT_NO_FATAL_FAILURE(testCloseIfOutOfBand(HttpVersion(1, 1)));
 }
 
 }
