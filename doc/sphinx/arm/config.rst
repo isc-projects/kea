@@ -98,8 +98,8 @@ directory.
    removed in Kea 1.7.10.
 
    The specification for supporting several elements (e.g. "Dhcp4", "Dhcp6")
-   in one file has been removed, so that each component requires one separate
-   configuration file.
+   in one file has been removed in Kea 1.7.10, so that each component
+   requires one separate configuration file.
 
 To avoid repetition of mostly similar structures, examples in the rest
 of this guide will showcase only the subset of parameters appropriate
