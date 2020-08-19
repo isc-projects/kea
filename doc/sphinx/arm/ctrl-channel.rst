@@ -520,8 +520,8 @@ been initiated.  The optional parameter, "exit-value", specifies the
 numeric value with which the server process will exit to the system.
 The default value is zero.
 
-The DDNS deamon supports an extra parameter "type" which controls
-the way the DDNS process cleans up on exit. The supported shutdown types are:
+The DDNS deamon supports an extra parameter "type" which controls the way
+the process cleans up on exit. The supported shutdown types are:
 
  -  "normal" - Stops the queue manager and finishes all current transactions
     before exiting. This is the default.
