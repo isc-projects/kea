@@ -298,6 +298,30 @@ The D2 server supports the following operational commands:
 -  status-get
 -  version-get
 
+The ``shutdown`` command supports extra ``type`` argument which controls the
+way the D2 server cleans up on exit.
+The supported shutdown types are:
+
+-  ``normal`` - Stops the queue manager and finishes all current transactions
+   before exiting. This is the default.
+
+-  ``drain_first`` - Stops the queue manager but continues processing requests
+   from the queue until it is empty.
+
+-  ``now`` - Exits immediately.
+
+An example command may look like this:
+
+::
+
+   {
+       "command": "shutdown"
+       "arguments": {
+           "exit-value": 3,
+           "type": "drain_first"
+       }
+   }
+
 .. _d2-tsig-key-list-config:
 
 TSIG Key List
