@@ -48,8 +48,8 @@ Kea components use an extended JSON with additional features allowed:
    statement of the form \<?include "file.json"?\>.
 
 The configuration file consists of a single object (often colloquially
-called a map) started with a curly bracket. It comprises one or more of
-the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent", and "Netconf" objects.
+called a map) started with a curly bracket. It comprises only one of
+the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent", or "Netconf" objects.
 It is possible to define additional elements but they will be ignored.
 
 A very simple configuration for DHCPv4 could look like this:
@@ -97,11 +97,9 @@ directory.
    level. Finally, support for the top-level "Logging" object was
    removed in Kea 1.7.10.
 
-   The specification of several supported elements (e.g. "Dhcp4",
-   "Dhcp6") in a single configuration file can be confusing and works
-   badly with the commands that fetch and write new configurations.
-   Support for it will be removed in a future release of Kea, after
-   which each component will require its own configuration file.
+   The specification for supporting several elements (e.g. "Dhcp4", "Dhcp6")
+   in one file has been removed, so that each component requires one separate
+   configuration file.
 
 To avoid repetition of mostly similar structures, examples in the rest
 of this guide will showcase only the subset of parameters appropriate
