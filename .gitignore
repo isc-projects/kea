@@ -37,6 +37,7 @@ config.h.in~
 /stamp-h1
 /test-driver
 /ylwrap
+/kea_version.h
 
 /all.info
 /coverage-cpp-html
