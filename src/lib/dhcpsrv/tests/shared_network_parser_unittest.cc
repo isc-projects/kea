@@ -474,14 +474,14 @@ TEST_F(SharedNetwork4ParserTest, iface) {
 TEST_F(SharedNetwork4ParserTest, parseWithInvalidRenewRebind) {
     IfaceMgrTestConfig ifmgr(true);
 
-    // Basic configuration for shared network. A bunch of parameters
-    // have to be specified for subnets because subnet parsers expect
-    // that default and global values are set.
+    // Basic configuration for shared network.
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
-    ConstElementPtr valid_element = config_element->get("renew-timer");
-    ElementPtr invalid_element = boost::const_pointer_cast<Element>(valid_element);
-    invalid_element->setValue(200);
+    ConstElementPtr valid_element = config_element->get("rebind-timer");
+    int64_t value = valid_element->intValue();
+    valid_element = config_element->get("renew-timer");
+    ElementPtr mutable_element = boost::const_pointer_cast<Element>(valid_element);
+    mutable_element->setValue(value + 1);
 
     // Parse configuration specified above.
     SharedNetwork4Parser parser;
@@ -489,6 +489,28 @@ TEST_F(SharedNetwork4ParserTest, parseWithInvalidRenewRebind) {
 
     ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
     ASSERT_FALSE(network);
+}
+
+// This test verifies that shared network parser for IPv4 works properly
+// when renew and rebind timers are equal.
+TEST_F(SharedNetwork4ParserTest, parseValidWithEqualRenewRebind) {
+    IfaceMgrTestConfig ifmgr(true);
+
+    // Basic configuration for shared network.
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+    ConstElementPtr valid_element = config_element->get("rebind-timer");
+    int64_t value = valid_element->intValue();
+    valid_element = config_element->get("renew-timer");
+    ElementPtr mutable_element = boost::const_pointer_cast<Element>(valid_element);
+    mutable_element->setValue(value);
+
+    // Parse configuration specified above.
+    SharedNetwork4Parser parser;
+    SharedNetwork4Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
 }
 
 /// @brief Test fixture class for SharedNetwork6Parser class.

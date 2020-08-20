@@ -125,7 +125,7 @@ BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
 
     if (has_renew && has_rebind && (renew > rebind)) {
         isc_throw(DhcpConfigError, "the value of renew-timer" << " (" << renew
-                  << ") is not less than rebind-timer" << " (" << rebind << ")");
+                  << ") is greater than rebind-timer" << " (" << rebind << ")");
     }
 
     network->setValid(parseLifetime(network_data, "valid-lifetime"));
