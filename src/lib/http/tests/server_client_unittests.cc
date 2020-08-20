@@ -1480,20 +1480,29 @@ public:
         // rest of the response to be provided and will eventually time out.
         PostHttpRequestJsonPtr request1 = createRequest("partial-response", true);
         HttpResponseJsonPtr response1(new HttpResponseJson());
+        // This value will be set to true if the connection close callback is
+        // invoked upon time out.
+        auto connection_closed = false;
         ASSERT_NO_THROW(client.asyncSendRequest(url, request1, response1,
             [this, &cb_num](const boost::system::error_code& ec,
                             const HttpResponsePtr& response,
                             const std::string&) {
-            if (++cb_num > 1) {
-                io_service_.stop();
-            }
-            // In this particular case we know exactly the type of the
-            // IO error returned, because the client explicitly sets this
-            // error code.
-            EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
-            // There should be no response returned.
-            EXPECT_FALSE(response);
-        }, HttpClient::RequestTimeout(100)));
+                if (++cb_num > 1) {
+                    io_service_.stop();
+                }
+                // In this particular case we know exactly the type of the
+                // IO error returned, because the client explicitly sets this
+                // error code.
+                EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
+                // There should be no response returned.
+                EXPECT_FALSE(response);
+            }, HttpClient::RequestTimeout(100), HttpClient::ConnectHandler(),
+            [&connection_closed](const int) {
+                // This callback is called when the connection gets closed
+                // by the client.
+                connection_closed = true;
+            })
+        );
 
         // Create another request after the timeout. It should be handled ok.
         PostHttpRequestJsonPtr request2 = createRequest("sequence", 1);
@@ -1509,6 +1518,8 @@ public:
 
         // Actually trigger the requests.
         ASSERT_NO_THROW(runIOService());
+        // Make sure that the client has closed the connection upon timeout.
+        EXPECT_TRUE(connection_closed);
     }
 
     /// @brief Test that client times out when connection takes too long.
@@ -1527,9 +1538,9 @@ public:
         PostHttpRequestJsonPtr request = createRequest("sequence", 1);
         HttpResponseJsonPtr response(new HttpResponseJson());
         ASSERT_NO_THROW(client.asyncSendRequest(url, request, response,
-            [this, &cb_num](const boost::system::error_code& ec,
-                            const HttpResponsePtr& response,
-                            const std::string&) {
+            [this, &cb_num, &client](const boost::system::error_code& ec,
+                                     const HttpResponsePtr& response,
+                                     const std::string&) {
             if (++cb_num > 1) {
                 io_service_.stop();
             }

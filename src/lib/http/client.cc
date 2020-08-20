@@ -968,9 +968,9 @@ Connection::terminateInternal(const boost::system::error_code& ec,
         } catch (...) {
         }
 
-        // If we're not requesting connection persistence, we should close the socket.
-        // We're going to reconnect for the next transaction.
-        if (!current_request_->isPersistent()) {
+        // If we're not requesting connection persistence or the connection has timed out,
+        // we should close the socket. We're going to reconnect for the next transaction.
+        if (!current_request_->isPersistent() || (ec == boost::asio::error::timed_out)) {
             closeInternal();
         }
 
