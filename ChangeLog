@@ -1,6 +1,6 @@
 1795.	[bug]		razvan
-	Added check for 'renew-timer' value to be lower than 'rebind-timer'
-	value at subnet and shared network level.
+	Added check for 'renew-timer' value to be lower or equal than
+	'rebind-timer' value at subnet and shared network level.
 	(Gitlab #505)
 
 1794.	[func]		razvan
