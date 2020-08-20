@@ -128,7 +128,7 @@ The allocation engine checks for host reservations after selecting a subnet. Thi
 Building the Options List
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Before sending a response options are added:
+Before sending a response, options are added:
  - evaluate required client classes
  - build the configured option list
  - append requested options
