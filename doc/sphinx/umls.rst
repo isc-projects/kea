@@ -30,6 +30,7 @@ The main loop is common to both DHCPv4 and DHPCv6 servers.
 
 
 .. _uml_packet4:
+
 DHCPv4 Packet Processing
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -41,6 +42,7 @@ Next is the DHCPv4 packet processing, where we determine what sort of DHCP messa
 
 
 .. _uml_request4:
+
 DHCP Request Processing
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -53,6 +55,7 @@ The following diagrams focus on DHCPREQUEST processing. This chart gives an over
 . 
 
 .. _uml_select4:
+
 DHCPv4 Subnet Selection
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -65,6 +68,7 @@ Subnet selection is the process of choosing a subnet that is topologically appro
 
 
 .. _uml_assign-lease4:
+
 DHCPv4 Special Case of Double-booting
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -76,6 +80,7 @@ After the subnet selection and before the lease allocation the DHCPv4 server han
 
 
 .. _uml_request4-lease:
+
 DHCPv4 Allocate Lease
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -98,6 +103,7 @@ This diagram shows the algorithm used to validate a requested lease or select a 
     so the :math:`assigned + free = total` equation is true.
 
 .. _uml_lease-states:
+
 Lease States
 ^^^^^^^^^^^^
 
@@ -109,6 +115,7 @@ This diagram illustrates the different lease states including the free one where
 
 
 .. _uml_currentHost4:
+
 Checking for Host Reservations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -125,6 +132,7 @@ The allocation engine checks for host reservations after selecting a subnet. Thi
     currentHost
 
 .. _uml_CfgOptionList:
+
 Building the Options List
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
