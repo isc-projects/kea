@@ -746,9 +746,11 @@ TEST_F(SharedNetwork6ParserTest, parseWithInvalidRenewRebind) {
     use_iface_id_ = true;
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
-    ConstElementPtr valid_element = config_element->get("renew-timer");
-    ElementPtr invalid_element = boost::const_pointer_cast<Element>(valid_element);
-    invalid_element->setValue(200);
+    ConstElementPtr valid_element = config_element->get("rebind-timer");
+    int64_t value = valid_element->intValue();
+    valid_element = config_element->get("renew-timer");
+    ElementPtr mutable_element = boost::const_pointer_cast<Element>(valid_element);
+    mutable_element->setValue(value + 1);
 
     // Parse configuration specified above.
     SharedNetwork6Parser parser;
@@ -756,6 +758,29 @@ TEST_F(SharedNetwork6ParserTest, parseWithInvalidRenewRebind) {
 
     ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
     ASSERT_FALSE(network);
+}
+
+// This test verifies that shared network parser for IPv6 works properly
+// when renew and rebind timers are equal.
+TEST_F(SharedNetwork6ParserTest, parseValidWithEqualRenewRebind) {
+    IfaceMgrTestConfig ifmgr(true);
+
+    // Use the configuration with interface-id instead of interface parameter.
+    use_iface_id_ = true;
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+    ConstElementPtr valid_element = config_element->get("rebind-timer");
+    int64_t value = valid_element->intValue();
+    valid_element = config_element->get("renew-timer");
+    ElementPtr mutable_element = boost::const_pointer_cast<Element>(valid_element);
+    mutable_element->setValue(value);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
 }
 
 // This test verifies that error is returned when trying to configure a
