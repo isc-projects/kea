@@ -1,3 +1,11 @@
+1796.	[bug]		marcin
+	Kea HTTP client re-establishes connection with the HTTP server when
+	timeout occurs. Prior to this change the client tried to reuse
+	the connection after timeout often getting subsequent timeouts.
+	Re-establishing the connection may help avoiding further timeouts
+	during the High Availability operation.
+	(Gitlab #1390)
+
 1795.	[bug]		razvan
 	Added check for 'renew-timer' value to be lower than or equal to
 	'rebind-timer' value at subnet and shared network level.
