@@ -33,7 +33,7 @@ The main loop is common to both DHCPv4 and DHPCv6 servers.
 DHCPv4 Packet Processing
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Next is the DHCPv4 packet processing, where we determine what sort of DHCP message this is, Discover, Request, Release, Decline or Inform. The server itself sends the Offer and Acknowledge messages, so these are two of the classic DORA sequence that the server does not have to parse. 
+Next is the DHCPv4 packet processing, where we determine what sort of DHCP message this is, Discover, Request, Release, Decline or Inform. This diagram shows the general, high level flow for processing an inbound client DHCP packet (e.g. Discover, Request, Release, etc) from receipt to the server's response.. 
 
 .. figure:: uml/packet4.*
 
