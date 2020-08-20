@@ -44,7 +44,7 @@ Next is the DHCPv4 packet processing, where we determine what sort of DHCP messa
 DHCP Request Processing
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The following diagram and subsequent charts focus on DHCPREQUEST processing. This chart gives an overview of the process, beginning with subnet selection, proceeding to checking for Host Reservations and evaluating client classes. Finally, before acknowledging the lease, the options are evaluated and added to the message. 
+The following diagrams focus on DHCPREQUEST processing. This chart gives an overview of the process, beginning with subnet selection, proceeding to checking for Host Reservations and evaluating client classes. Finally, before acknowledging the lease, the options are evaluated and added to the message. 
 
 .. figure:: uml/request4.*
 
