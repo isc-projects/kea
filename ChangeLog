@@ -2,7 +2,7 @@
 	Kea HTTP client re-establishes connection with the HTTP server when
 	timeout occurs. Prior to this change the client tried to reuse
 	the connection after timeout often getting subsequent timeouts.
-	Re-establishing the connection may help avoiding further timeouts
+	Re-establishing the connection may help avoid further timeouts
 	during the High Availability operation.
 	(Gitlab #1390)
 
