@@ -1538,9 +1538,9 @@ public:
         PostHttpRequestJsonPtr request = createRequest("sequence", 1);
         HttpResponseJsonPtr response(new HttpResponseJson());
         ASSERT_NO_THROW(client.asyncSendRequest(url, request, response,
-            [this, &cb_num, &client](const boost::system::error_code& ec,
-                                     const HttpResponsePtr& response,
-                                     const std::string&) {
+            [this, &cb_num](const boost::system::error_code& ec,
+                            const HttpResponsePtr& response,
+                            const std::string&) {
             if (++cb_num > 1) {
                 io_service_.stop();
             }
