@@ -168,7 +168,9 @@ enum DHCPOptionType {
     DHO_GEOCONF_CIVIC                = 99,
     DHO_PCODE                        = 100,
     DHO_TCODE                        = 101,
-    // 102-111 are removed/unassigned
+    // 102-107 are removed/unassigned
+    DHO_V6_ONLY_PREFFERED_OPTION_V4  = 108,
+    // 109-111 are removed/unassigned
     DHO_NETINFO_ADDR                 = 112,
     DHO_NETINFO_TAG                  = 113,
     DHO_URL                          = 114,
