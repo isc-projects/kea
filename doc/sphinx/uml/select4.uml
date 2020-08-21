@@ -1,6 +1,6 @@
 @startuml
 
-title DHCPv4 subnet selection (Kea 1.7.11)
+title DHCPv4 subnet selection (Kea 1.8.0)
 
 agent "Entry point" as entry
 

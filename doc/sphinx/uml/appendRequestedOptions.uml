@@ -1,6 +1,6 @@
 @startuml
 
-Title Append requested options algorithm (Kea 1.7.11)
+Title Append requested options algorithm (Kea 1.8.0)
 
 :get configured option list;
 

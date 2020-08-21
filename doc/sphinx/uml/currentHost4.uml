@@ -1,6 +1,6 @@
 @startuml
 
-title currentHost DHCPv4 (Kea 1.7.11)
+title currentHost DHCPv4 (Kea 1.8.0)
 
 agent "Subnet Selection" as entry
 

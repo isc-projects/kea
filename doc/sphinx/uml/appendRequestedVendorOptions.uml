@@ -1,6 +1,6 @@
 @startuml
 
-Title Append vendor requested options algorithm (Kea 1.7.11)
+Title Append vendor requested options algorithm (Kea 1.8.0)
 
 :get vendor id from query vivso option;
 :get vendor id from response vivso option;

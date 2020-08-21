@@ -1,6 +1,6 @@
 @startuml
 
-title requestLease4 algorithm (Kea 1.7.11)
+title requestLease4 algorithm (Kea 1.8.0)
 
 start
 :get lease for the client;
