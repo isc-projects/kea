@@ -236,7 +236,11 @@ public:
                                                     buffer));
                 } else {
                     std::vector<std::string> split_vec;
-                    boost::split(split_vec, value, boost::is_any_of(","));
+                    if (def->getType() != isc::dhcp::OPT_STRING_TYPE) {
+                        boost::split(split_vec, value, boost::is_any_of(","));
+                    } else {
+                        split_vec.push_back(value);
+                    }
                     opt = def->optionFactory(universe, opt_cfg->getCode(),
                                              split_vec);
                 }
