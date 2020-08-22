@@ -1087,4 +1087,64 @@ TEST_F(FlexOptionTest, processFullTest) {
     EXPECT_EQ(0, memcmp(&buffer[0], "foo.boot", 8));
 }
 
+TEST_F(FlexOptionTest, processFullAddWithComplexString) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(D6O_NEW_POSIX_TIMEZONE);
+    option->set("code", code);
+    string expr = "ifelse(option[39].exists,'EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00','')";
+    ElementPtr add = Element::create(expr);
+    option->set("add", add);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
+    Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
+    OptionDefinitionPtr def = isc::dhcp::LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_CLIENT_FQDN);
+    OptionCustomPtr str(new OptionCustom(*def, Option::V6));
+    query->addOption(str);
+    EXPECT_FALSE(response->getOption(D6O_NEW_POSIX_TIMEZONE));
+
+    EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
+
+    OptionPtr opt = response->getOption(D6O_NEW_POSIX_TIMEZONE);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(D6O_NEW_POSIX_TIMEZONE, opt->getType());
+    const OptionBuffer& buffer = opt->getData();
+    EXPECT_EQ(37, buffer->size());
+    std::string data("EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00");
+    EXPECT_EQ(0, memcmp(&buffer[0]), &data[0]);
+}
+
+TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(D6O_NEW_POSIX_TIMEZONE);
+    option->set("code", code);
+    string expr = "ifelse(option[39].exists,'EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00','')";
+    ElementPtr supersede = Element::create(expr);
+    option->set("supersede", supersede);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
+    Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
+    OptionDefinitionPtr def = isc::dhcp::LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_CLIENT_FQDN);
+    OptionCustomPtr str(new OptionCustom(*def, Option::V6));
+    query->addOption(str);
+    EXPECT_FALSE(response->getOption(D6O_NEW_POSIX_TIMEZONE));
+
+    EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
+
+    OptionPtr opt = response->getOption(D6O_NEW_POSIX_TIMEZONE);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(D6O_NEW_POSIX_TIMEZONE, opt->getType());
+    const OptionBuffer& buffer = opt->getData();
+    EXPECT_EQ(37, buffer->size());
+    std::string data("EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00");
+    EXPECT_EQ(0, memcmp(&buffer[0]), &data[0]);
+}
+
 } // end of anonymous namespace
