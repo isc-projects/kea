@@ -1112,9 +1112,9 @@ TEST_F(FlexOptionTest, processFullAddWithComplexString) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(D6O_NEW_POSIX_TIMEZONE, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    EXPECT_EQ(37, buffer->size());
+    EXPECT_EQ(37, buffer.size());
     std::string data("EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00");
-    EXPECT_EQ(0, memcmp(&buffer[0]), &data[0]);
+    EXPECT_EQ(0, memcmp(&buffer[0], &data[0], buffer.size()));
 }
 
 TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
@@ -1142,9 +1142,9 @@ TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(D6O_NEW_POSIX_TIMEZONE, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    EXPECT_EQ(37, buffer->size());
+    EXPECT_EQ(37, buffer.size());
     std::string data("EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00");
-    EXPECT_EQ(0, memcmp(&buffer[0]), &data[0]);
+    EXPECT_EQ(0, memcmp(&buffer[0], &data[0], buffer.size()));
 }
 
 } // end of anonymous namespace
