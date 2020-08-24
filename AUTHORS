@@ -17,7 +17,7 @@ Primary developers:
  - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
-                   radius, netconf, config backend)
+                   radius, netconf, config backend, flexible option)
  - Brian Reid (logo design)
  - Shawn Routhier (lease file cleanup)
  - Michal Nowikowski (testing, hammer, release engineering)
