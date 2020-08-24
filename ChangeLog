@@ -1,3 +1,5 @@
+Kea 1.8.0 (stable) released on Aug 26, 2020
+
 1797.	[build]		razvan
 	Bump up libs version for Kea 1.8.0 release.
 	(Gitlab #1395)

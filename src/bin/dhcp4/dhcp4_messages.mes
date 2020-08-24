@@ -433,10 +433,6 @@ and transaction identification information. The second argument contains
 the client's IPv4 address to which the response will be sent. The third
 argument contains the local interface name.
 
-% DHCP4_RECLAIM_EXPIRED_LEASES_FAIL failed to reclaim expired leases: %1
-This error message indicates that the reclaim expired leases operation failed
-and provides the cause of failure.
-
 % DHCP4_INIT_FAIL failed to initialize Kea server: %1
 The server has failed to initialize. This may be because the configuration
 was not successful, or it encountered any other critical error on startup.
@@ -732,6 +728,10 @@ initially selected for allocation) from the same shared network.
 A debug message printing the details of the received packet. The first
 argument includes the client and the transaction identification
 information.
+
+% DHCP4_RECLAIM_EXPIRED_LEASES_FAIL failed to reclaim expired leases: %1
+This error message indicates that the reclaim expired leases operation failed
+and provides the cause of failure.
 
 % DHCP4_RELEASE %1: address %2 was released properly.
 This informational message indicates that an address was released properly. It
