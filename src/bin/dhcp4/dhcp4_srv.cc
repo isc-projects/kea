@@ -1925,7 +1925,7 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
 void
 Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
     // It is possible that client has sent both Client FQDN and Hostname
-    // option. In such case, server should prefer Client FQDN option and
+    // option. In that the server should prefer Client FQDN option and
     // ignore the Hostname option.
     try {
         Pkt4Ptr resp = ex.getResponse();
@@ -1942,6 +1942,47 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
                     .arg(ex.getQuery()->getLabel());
             processHostnameOption(ex);
         }
+
+        // Based on the output option added to the response above, we figure out
+        // the values for the hostname and dns flags to set in the context.  These
+        // will be used to populate the lease.
+        std::string hostname;
+        bool fqdn_fwd = false;
+        bool fqdn_rev = false;
+        OptionStringPtr opt_hostname;
+        fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+        if (fqdn) {
+            hostname = fqdn->getDomainName();
+            CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn, fqdn_fwd, fqdn_rev);
+        } else {
+            opt_hostname = boost::dynamic_pointer_cast<OptionString>
+                (resp->getOption(DHO_HOST_NAME));
+
+            if (opt_hostname) {
+                hostname = opt_hostname->getValue();
+                // DHO_HOST_NAME is string option which cannot be blank,
+                // we use "." to know we should replace it with a fully
+                // generated name. The local string variable needs to be
+                // blank in logic below.
+                if (hostname == ".") {
+                    hostname = "";
+                }
+
+                /// @todo It could be configurable what sort of updates the
+                /// server is doing when Hostname option was sent.
+                if (ex.getContext()->getDdnsParams()->getEnableUpdates()) {
+                    fqdn_fwd = true;
+                    fqdn_rev = true;
+                }
+            }
+        }
+
+        // Update the context
+        auto ctx = ex.getContext();
+        ctx->fwd_dns_update_ = fqdn_fwd;
+        ctx->rev_dns_update_ = fqdn_rev;
+        ctx->hostname_ = hostname;
+
     } catch (const Exception& e) {
         // In some rare cases it is possible that the client's name processing
         // fails. For example, the Hostname option may be malformed, or there
@@ -1955,6 +1996,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
             .arg(ex.getQuery()->getLabel())
             .arg(e.what());
     }
+
 }
 
 void
@@ -2030,57 +2072,24 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     AllocEngine::ClientContext4Ptr ctx = ex.getContext();
 
     // Hostname reservations take precedence over any other configuration,
-    // i.e. DDNS configuration.
+    // i.e. DDNS configuration.  If we have HR with a hostname we should
+    // use it and send it back.
     if (ctx->currentHost() && !ctx->currentHost()->getHostname().empty()) {
-        // In order to send a reserved hostname value we expect that at least
-        // one of the following is the case: the client has sent us a hostname
-        // option, or the client has sent Parameter Request List option with
-        // the hostname option code included.
-
-        // It is going to be less expensive to first check the presence of the
-        // hostname option.
-        bool should_send_hostname = static_cast<bool>(opt_hostname);
-        // Hostname option is not present, so we have to check PRL option.
-        if (!should_send_hostname) {
-            OptionUint8ArrayPtr
-                option_prl = boost::dynamic_pointer_cast<OptionUint8Array>
-                (ex.getQuery()->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
-            if (option_prl) {
-                // PRL option exists, so check if the hostname option code is
-                // included in it.
-                const std::vector<uint8_t>&
-                    requested_opts = option_prl->getValues();
-                if (std::find(requested_opts.begin(), requested_opts.end(),
-                              DHO_HOST_NAME) != requested_opts.end()) {
-                    // Client has requested hostname via Parameter Request
-                    // List option.
-                    should_send_hostname = true;
-                }
-            }
-        }
-
-        // If the hostname or PRL option indicates that the server should
-        // send back a hostname option, send this option with a reserved
-        // name for this client.
-        if (should_send_hostname) {
-            std::string hostname =
-                d2_mgr.qualifyName(ctx->currentHost()->getHostname(),
-                                   *(ex.getContext()->getDdnsParams()), false);
-            // Convert hostname to lower case.
-            boost::algorithm::to_lower(hostname);
-
-            LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA,
-                      DHCP4_RESERVED_HOSTNAME_ASSIGNED)
+        // Qualify if there is an a suffix configured.
+        std::string hostname = d2_mgr.qualifyName(ctx->currentHost()->getHostname(),
+                                                  *(ex.getContext()->getDdnsParams()), false);
+        // Convert it to lower case.
+        boost::algorithm::to_lower(hostname);
+        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESERVED_HOSTNAME_ASSIGNED)
                 .arg(ex.getQuery()->getLabel())
                 .arg(hostname);
-            OptionStringPtr opt_hostname_resp(new OptionString(Option::V4,
-                                                               DHO_HOST_NAME,
-                                                               hostname));
-            ex.getResponse()->addOption(opt_hostname_resp);
 
-            // We're done here.
-            return;
-        }
+        // Add it to the response
+        OptionStringPtr opt_hostname_resp(new OptionString(Option::V4, DHO_HOST_NAME, hostname));
+        ex.getResponse()->addOption(opt_hostname_resp);
+
+        // We're done here.
+        return;
     }
 
     // There is no reservation for this client or the client hasn't requested
@@ -2380,49 +2389,28 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         }
     }
 
-
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-    std::string hostname;
-    bool fqdn_fwd = false;
-    bool fqdn_rev = false;
-    OptionStringPtr opt_hostname;
-    Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
-        Option4ClientFqdn>(resp->getOption(DHO_FQDN));
-    if (fqdn) {
-        hostname = fqdn->getDomainName();
-        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn,
-                                                                fqdn_fwd,
-                                                                fqdn_rev);
-    } else {
-        opt_hostname = boost::dynamic_pointer_cast<OptionString>
-            (resp->getOption(DHO_HOST_NAME));
-
-        if (opt_hostname) {
-            hostname = opt_hostname->getValue();
-            // DHO_HOST_NAME is string option which cannot be blank,
-            // we use "." to know we should replace it with a fully
-            // generated name. The local string variable needs to be
-            // blank in logic below.
-            if (hostname == ".") {
-                hostname = "";
-            }
-            /// @todo It could be configurable what sort of updates the
-            /// server is doing when Hostname option was sent.
-            fqdn_fwd = true;
-            fqdn_rev = true;
-        }
-    }
 
     // We need to set these values in the context as they haven't been set yet.
     ctx->requested_address_ = hint;
-    ctx->fwd_dns_update_ = fqdn_fwd;
-    ctx->rev_dns_update_ = fqdn_rev;
-    ctx->hostname_ = hostname;
     ctx->fake_allocation_ = fake_allocation;
     ctx->callout_handle_ = callout_handle;
 
+    // If client query contains an FQDN or Hostname option, server
+    // should respond to the client with the appropriate FQDN or Hostname
+    // option to indicate if it takes responsibility for the DNS updates.
+    // This is also the source for the hostname and dns flags that are
+    // initially added to the lease.  In most cases, this information is
+    // good now.  If we end up changing subnets in allocation we'll have to
+    // do it again and then update the lease.
+    processClientName(ex);
+
+    // Get a lease.
     Lease4Ptr lease = alloc_engine_->allocateLease4(*ctx);
+
+    // Tracks whether or not the client name (FQDN or host) has changed since
+    // the lease was allocated.
+    bool client_name_changed = false;
 
     // Subnet may be modified by the allocation engine, if the initial subnet
     // belongs to a shared network.
@@ -2430,13 +2418,45 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         SharedNetwork4Ptr network;
         subnet->getSharedNetwork(network);
         if (network) {
+            // @todo Why do we only log it if it's part of a shared-network?
             LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_DYNAMICALLY_CHANGED)
                 .arg(query->getLabel())
                 .arg(subnet->toText())
                 .arg(ctx->subnet_->toText())
                 .arg(network->getName());
         }
+
         subnet = ctx->subnet_;
+
+        if (lease) {
+            // We changed subnets and that means DDNS parameters might be different
+            // so we need to rerun client name processing logic.  Arguably we could
+            // compare DDNS parameters for both subnets and then decide if we need
+            // to rerun the name logic, but that's not likely to be any faster than
+            // just re-running the name logic.
+
+            // First, we need to remove the prior values from the response and reset
+            // those in context, to gove processClientName a clean slate.
+            resp->delOption(DHO_FQDN);
+            resp->delOption(DHO_HOST_NAME);
+            ctx->hostname_ = "";
+            ctx->fwd_dns_update_  = false;
+            ctx->rev_dns_update_ = false;
+
+            // Regenerate the name and dns flags.
+            processClientName(ex);
+
+            // If the results are different from the values already on the
+            // lease, flag it so the lease gets updated down below.
+            if ((lease->hostname_ != ctx->hostname_) ||
+                (lease->fqdn_fwd_ != ctx->fwd_dns_update_) ||
+                (lease->fqdn_rev_ != ctx->rev_dns_update_)) {
+                lease->hostname_ = ctx->hostname_;
+                lease->fqdn_fwd_ = ctx->fwd_dns_update_;
+                lease->fqdn_rev_ = ctx->rev_dns_update_;
+                client_name_changed = true;
+            }
+        }
     }
 
     if (lease) {
@@ -2478,73 +2498,9 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         }
 
         // We may need to update FQDN or hostname if the server is to generate
-        // new name from the allocated IP address or if the allocation engine
-        // has switched to a different subnet (from the same shared network)
-        // where the client has hostname reservations.
-        if (fqdn || opt_hostname) {
-            bool should_update = false;
-
-            // If there is a reservation in the current subnet for a hostname,
-            // we need to use this reserved name.
-            if (ctx->currentHost() && !ctx->currentHost()->getHostname().empty()) {
-
-                lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
-                    .qualifyName(ctx->currentHost()->getHostname(),
-                                 *(ex.getContext()->getDdnsParams()), static_cast<bool>(fqdn));
-                should_update = true;
-
-            // If there has been Client FQDN or Hostname option sent, but the
-            // hostname is empty, it means that server is responsible for
-            // generating the entire hostname for the client. The example of the
-            // client's name, generated from the IP address is: host-192-0-2-3.
-            } else if (lease->hostname_.empty()) {
-
-                // Note that if we have received the hostname option, rather than
-                // Client FQDN the trailing dot is not appended to the generated
-                // hostname because some clients don't handle the trailing dot in
-                // the hostname. Whether the trailing dot is appended or not is
-                // controlled by the second argument to the generateFqdn().
-                lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
-                    .generateFqdn(lease->addr_, *(ex.getContext()->getDdnsParams()),
-                                  static_cast<bool>(fqdn));
-
-                LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_RESPONSE_HOSTNAME_GENERATE)
-                    .arg(query->getLabel())
-                    .arg(lease->hostname_);
-
-                should_update = true;
-            }
-
-            if (should_update) {
-
-                // The operations below are rather safe, but we want to catch
-                // any potential exceptions (e.g. invalid lease database backend
-                // implementation) and log an error.
-                try {
-                    if (!fake_allocation) {
-                        // The lease update should be safe, because the lease should
-                        // be already in the database. In most cases the exception
-                        // would be thrown if the lease was missing.
-                        LeaseMgrFactory::instance().updateLease4(lease);
-                    }
-
-                    // The name update in the option should be also safe,
-                    // because the generated name is well formed.
-                    if (fqdn) {
-                        fqdn->setDomainName(lease->hostname_,
-                                            Option4ClientFqdn::FULL);
-                    } else if (opt_hostname) {
-                        opt_hostname->setValue(lease->hostname_);
-                    }
-
-                } catch (const Exception& ex) {
-                    LOG_ERROR(ddns4_logger, DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL)
-                        .arg(query->getLabel())
-                        .arg(lease->hostname_)
-                        .arg(ex.what());
-                }
-            }
-        }
+        // a new name from the allocated IP address or if the allocation engine
+        // switched to a different subnet within a shared network.
+        postAllocateNameUpdate(ctx, lease, query, resp, client_name_changed);
 
         // IP Address Lease time (type 51)
         OptionPtr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME,
@@ -2587,6 +2543,69 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         resp->delOption(DHO_FQDN);
         resp->delOption(DHO_HOST_NAME);
+    }
+}
+
+void
+Dhcpv4Srv::postAllocateNameUpdate(const AllocEngine::ClientContext4Ptr& ctx, const Lease4Ptr& lease,
+                                 const Pkt4Ptr& query, const Pkt4Ptr& resp, bool client_name_changed) {
+    // We may need to update FQDN or hostname if the server is to generate
+    // new name from the allocated IP address or if the allocation engine
+    // has switched to a different subnet within a shared network.  Get
+    // FQDN and hostname options from the response.
+    OptionStringPtr opt_hostname;
+    Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
+                Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+    if (!fqdn) {
+        opt_hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+        if (!opt_hostname) {
+            // We don't have either one, nothing to do.
+            return;
+        }
+    }
+
+    // Empty hostname on the lease means we need to generate it.
+    if (lease->hostname_.empty()) {
+        // Note that if we have received the hostname option, rather than
+        // Client FQDN the trailing dot is not appended to the generated
+        // hostname because some clients don't handle the trailing dot in
+        // the hostname. Whether the trailing dot is appended or not is
+        // controlled by the second argument to the generateFqdn().
+        lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
+                    .generateFqdn(lease->addr_, *(ctx->getDdnsParams()), static_cast<bool>(fqdn));
+
+        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_RESPONSE_HOSTNAME_GENERATE)
+            .arg(query->getLabel())
+            .arg(lease->hostname_);
+
+        client_name_changed = true;
+    }
+
+    if (client_name_changed) {
+        // The operations below are rather safe, but we want to catch
+        // any potential exceptions (e.g. invalid lease database backend
+        // implementation) and log an error.
+        try {
+            if (!ctx->fake_allocation_) {
+                // The lease update should be safe, because the lease should
+                // be already in the database. In most cases the exception
+                // would be thrown if the lease was missing.
+                LeaseMgrFactory::instance().updateLease4(lease);
+            }
+
+            // The name update in the outbound option should be also safe,
+            // because the generated name is well formed.
+            if (fqdn) {
+                fqdn->setDomainName(lease->hostname_, Option4ClientFqdn::FULL);
+            } else {
+                opt_hostname->setValue(lease->hostname_);
+            }
+        } catch (const Exception& ex) {
+            LOG_ERROR(ddns4_logger, DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL)
+                .arg(query->getLabel())
+                .arg(lease->hostname_)
+                .arg(ex.what());
+        }
     }
 }
 
@@ -2949,12 +2968,6 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
         return (Pkt4Ptr());
     }
 
-    // If DHCPDISCOVER message contains the FQDN or Hostname option, server
-    // may respond to the client with the appropriate FQDN or Hostname
-    // option to indicate that whether it will take responsibility for
-    // updating DNS when the client sends DHCPREQUEST message.
-    processClientName(ex);
-
     if (MultiThreadingMgr::instance().getMode()) {
         // The lease reclamation cannot run at the same time.
         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
@@ -3018,12 +3031,6 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
     if (drop) {
         return (Pkt4Ptr());
     }
-
-    // If DHCPREQUEST message contains the FQDN or Hostname option, server
-    // should respond to the client with the appropriate FQDN or Hostname
-    // option to indicate if it takes responsibility for the DNS updates.
-    // This is performed by the function below.
-    processClientName(ex);
 
     // Note that we treat REQUEST message uniformly, regardless if this is a
     // first request (requesting for new address), renewing existing address

@@ -538,20 +538,19 @@ AllocEngine::ClientContext6::hasGlobalReservation(const IPv6Resrv& resv) const {
 
 DdnsParamsPtr
 AllocEngine::ClientContext6::getDdnsParams() {
-    // We already have it, return it.
-    if (ddns_params_) {
+    // We already have it return it unless the context subnet has changed.
+    if (ddns_params_ && subnet_ && (subnet_->getID() == ddns_params_->getSubnet()->getID())) {
         return (ddns_params_);
     }
 
-    // Haven't created it, so this is the first time we've needed it
-    // since being given a subnet.
+    // Doesn't exist yet or is stale, (re)create it.
     if (subnet_) {
         ddns_params_ = CfgMgr::instance().getCurrentCfg()->getDdnsParams(subnet_);
         return (ddns_params_);
     }
 
     // Asked for it without a subnet? This case really shouldn't occur but
-    // for now let's an instance with default values.
+    // for now let's return an instance with default values.
     return (DdnsParamsPtr(new DdnsParams()));
 }
 
@@ -3155,20 +3154,19 @@ AllocEngine::ClientContext4::globalHost() const {
 
 DdnsParamsPtr
 AllocEngine::ClientContext4::getDdnsParams() {
-    // We already have it, return it.
-    if (ddns_params_) {
+    // We already have it return it unless the context subnet has changed.
+    if (ddns_params_ && subnet_ && (subnet_->getID() == ddns_params_->getSubnet()->getID())) {
         return (ddns_params_);
     }
 
-    // Haven't created it, so this is the first time we've needed it
-    // since being given a subnet.
+    // Doesn't exist yet or is stale, (re)create it.
     if (subnet_) {
         ddns_params_ = CfgMgr::instance().getCurrentCfg()->getDdnsParams(subnet_);
         return (ddns_params_);
     }
 
     // Asked for it without a subnet? This case really shouldn't occur but
-    // for now let's an instance with default values.
+    // for now let's return an instance with default values.
     return (DdnsParamsPtr(new DdnsParams()));
 }
 

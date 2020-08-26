@@ -658,6 +658,27 @@ protected:
     /// @param ex DHCPv4 exchange holding the client's message to be checked.
     void assignLease(Dhcpv4Exchange& ex);
 
+    /// @brief Update client name and DNS flags in the lease and response
+    ///
+    /// There are two cases when the client name (FQDN or hostname) and DNS
+    /// flags need to updated after the lease has been allocated:
+    /// 1. If the name is being generated from the lease address
+    /// 2. If the allocation changed the chosen subnet
+    ///
+    /// In the first case this function will generate the name from the
+    /// lease address.  In either case, the name and DNS flags are updated
+    /// in the lease and in the response packet.
+    ///
+    /// @param ctx reference to the client context
+    /// @param lease reference to the client lease
+    /// @param query reference to the client query
+    /// @param resp reference to the client response
+    /// @param client_name_changed - true if the new values are already in
+    /// the lease
+    void postAllocateNameUpdate(const AllocEngine::ClientContext4Ptr& ctx,
+                                const Lease4Ptr& lease, const Pkt4Ptr& query,
+                                const Pkt4Ptr& resp, bool client_name_changed);
+
     /// @brief Adds the T1 and T2 timers to the outbound response as appropriate
     ///
     /// This method determines if either of the timers T1 (option 58) and T2
