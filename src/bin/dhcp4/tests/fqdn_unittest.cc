@@ -267,7 +267,7 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
         "}"
     "}",
-    // 10 
+    // 10
     // D2 enabled
     // shared-network with two subnets with
     // different DDNS parameters
@@ -298,7 +298,6 @@ const char* CONFIGS[] = {
     "           \"ddns-qualifying-suffix\": \"two.example.com.\" \n"
     "       }] \n"
     "   }] \n"
->>>>>>> [#1389] Added DHCPV4 unit tests
     "}"
 };
 
@@ -335,16 +334,9 @@ public:
     NameDhcpv4SrvTest()
         : Dhcpv4SrvTest(),
           d2_mgr_(CfgMgr::instance().getD2ClientMgr()),
-<<<<<<< HEAD
           iface_mgr_test_config_(true)
     {
         srv_ = boost::make_shared<NakedDhcpv4Srv>(0);
-=======
-          srv_(),
-          iface_mgr_test_config_(true)
-    {
-        srv_ = boost::shared_ptr<NakedDhcpv4Srv>(new NakedDhcpv4Srv(0));
->>>>>>> [#1389] Added DHCPV4 unit tests
         IfaceMgr::instance().openSockets4();
         // Config DDNS to be enabled, all controls off
         enableD2();
@@ -2455,11 +2447,12 @@ TEST_F(NameDhcpv4SrvTest, processReuseExpired) {
             ASSERT_NO_THROW(LeaseMgrFactory::instance().deleteLease(lease));
         }
     }
+}
 
 // Verifies that the DDNS parameters used for a lease in subnet in
 // shared-network belong to lease's subnet.  This checks that we
 // get the right results even when the allocation engine changes the
-// subnet chosen.
+// subnet choice.
 TEST_F(NameDhcpv4SrvTest, ddnsSharedNetworkTest) {
     // Load a configuration with D2 enabled
     ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[10], *srv_));
