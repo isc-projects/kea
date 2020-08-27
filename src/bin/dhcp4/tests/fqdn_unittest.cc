@@ -1538,8 +1538,8 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
         verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                                 resp->getYiaddr().toText(),
                                 "unique-host.example.com.",
-                                "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
-                                "0D280858B1ED7696E174C4479E3372",
+                                "000001B6547DCC62E44C4D1A42D0A05B149EA1168"
+                                "01A9481A98E3A876A9E0D261F8326",
                                 time(NULL), subnet_->getValid(), true);
     }
 
@@ -1582,8 +1582,8 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
         verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                                 resp->getYiaddr().toText(),
                                 "unique-host.example.com.",
-                                "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
-                                "0D280858B1ED7696E174C4479E3372",
+                                "000001B6547DCC62E44C4D1A42D0A05B149EA1168"
+                                "01A9481A98E3A876A9E0D261F8326",
                                 time(NULL), subnet_->getValid(), true);
     }
 
@@ -1655,8 +1655,8 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
         verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                                 resp->getYiaddr().toText(),
                                 "unique-host.example.com.",
-                                "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
-                                "0D280858B1ED7696E174C4479E3372",
+                                "000001B6547DCC62E44C4D1A42D0A05B149EA1168"
+                                "01A9481A98E3A876A9E0D261F8326",
                                 time(NULL), subnet_->getValid(), true);
     }
 
@@ -1693,8 +1693,8 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
         verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                                 resp->getYiaddr().toText(),
                                 "unique-host.example.com.",
-                                "000001ACB52196C8F3BCC1DF3BA1F40BAC39BF23"
-                                "0D280858B1ED7696E174C4479E3372",
+                                "000001B6547DCC62E44C4D1A42D0A05B149EA1168"
+                                "01A9481A98E3A876A9E0D261F8326",
                                 time(NULL), subnet_->getValid(), true);
     }
 
