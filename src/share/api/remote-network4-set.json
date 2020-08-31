@@ -1,0 +1,37 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command creates or replaces an IPv4 shared network in the configuration database."
+    ],
+    "cmd-comment": [
+        "The provided list must contain exactly one shared network specification, and must not contain subnets (the \"subnet4\" parameter). The subnets are added to the shared network using the ``remote-subnet4-set`` command. The ``server-tags`` list is mandatory and must contain one or more server tags as strings to explicitly associate the shared network with one or more user-defined servers. It may include the special server tag \"all\" to associate the network with all servers."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-network4-set\",",
+        "    \"arguments\": {",
+        "        \"shared-networks\": [",
+        "            {",
+        "                <shared network specification excluding subnets list>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <first server tag>, <second server tag>, ... ]",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-network4-set",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv4 shared network successfully set.\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

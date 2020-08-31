@@ -1,0 +1,24 @@
+{
+    "access": "write",
+    "avail": "1.3.0",
+    "brief": [
+        "This command deletes a lease from the lease database."
+    ],
+    "cmd-comment": [
+        "The lease to be deleted can be specified either by IP address or by identifier-type and identifier value. The currently supported identifiers are \"hw-address\" and \"client-id\"."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"lease4-del\",",
+        "    \"arguments\": {",
+        "        \"ip-address\": \"192.0.2.202\"",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-lease4-del\"/>",
+    "hook": "lease_cmds",
+    "name": "lease4-del",
+    "support": [
+        "kea-dhcp4"
+    ]
+}

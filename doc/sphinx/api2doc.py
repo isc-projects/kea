@@ -108,6 +108,17 @@ API Reference
         rst += '(:ref:`%s <commands-%s>` hook library)' % (func['hook'], func['hook']) if 'hook' in func else '(built-in)'
         rst += '\n\n'
 
+        # access
+        try:
+            access = func['access']
+        except:
+            print('\naccess missing in %s\n\n' % name)
+            raise
+        if not access in ['read', 'write']:
+            print('\nUnknown access %s in %s\n\n' % (access, name))
+            raise ValueError('access must be read or write')
+        rst += 'Access: %s *(parameter ignored in this Kea version)* \n\n' % access
+
         # description and examples
         rst += 'Description and examples: see :ref:`%s command <command-%s>`\n\n' % (name, name)
 

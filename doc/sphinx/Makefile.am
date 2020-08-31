@@ -51,14 +51,7 @@ EXTRA_DIST += mes_files.mk
 
 # list of api files that are used to generate api.rst
 api_files =
-include $(srcdir)/api/api_files.mk
-
-EXTRA_DIST += api/api_files.mk
-EXTRA_DIST += api/README
-EXTRA_DIST += api/_template.json
-EXTRA_DIST += api/generate-templates
-EXTRA_DIST += api/cmds-list
-EXTRA_DIST += $(api_files)
+include $(top_srcdir)/src/share/api/api_files.mk
 
 if HAVE_PDFLATEX
 all: html mans pdf
@@ -76,8 +69,8 @@ $(srcdir)/kea-messages.rst: $(mes_files) mes2doc.py
 	$(PYTHON) $(srcdir)/mes2doc.py -o $@ $(mes_files)
 
 # build the list of api files
-api-files.txt: api/api_files.mk
-	@sed 's;_files .*/api/;/;' $< > $@
+api-files.txt: $(top_srcdir)/src/share/api/api_files.mk
+	@sed 's;api_files .*)/;;' $< > $@
 
 # some tools do not use this makefile but still need generate files.
 EXTRA_DIST += mes-files.txt api-files.txt

@@ -1,0 +1,49 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command creates or replaces a DHCPv4 option in a shared network in the configuration database."
+    ],
+    "cmd-comment": [
+        "The provided lists must contain exactly one name of the shared network and one option specification. Specifying an empty list, a value of ``null``, or a server tag will result in an error."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-option4-network-set\",",
+        "    \"arguments\": {",
+        "        \"shared-networks\": [",
+        "            {",
+        "                \"name\": <shared network name>",
+        "            }",
+        "        ],",
+        "        \"options\": [",
+        "            {",
+        "                <shared network option specification>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-option4-network-set",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv4 option successfully set.\",",
+        "    \"arguments\": {",
+        "        \"options\": [",
+        "            {",
+        "                \"code\": <option code>,",
+        "                \"space\": <option space>",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

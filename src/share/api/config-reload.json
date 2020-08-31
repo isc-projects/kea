@@ -1,0 +1,20 @@
+{
+    "access": "write",
+    "avail": "1.2.0",
+    "brief": [
+        "This command instructs Kea to reload the configuration file that was used previously."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"config-reload\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-config-reload\"/>",
+    "name": "config-reload",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6",
+        "kea-dhcp-ddns",
+        "kea-ctrl-agent"
+    ]
+}

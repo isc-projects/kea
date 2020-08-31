@@ -1,0 +1,28 @@
+{
+    "access": "write",
+    "avail": "1.3.0",
+    "brief": [
+        "This command adds existing subnets to existing shared networks."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"network4-subnet-add\",",
+        "    \"arguments\": {",
+        "        \"name\": \"floor13\",",
+        "        \"id\": 5",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp77\"/>",
+    "hook": "subnet_cmds",
+    "name": "network4-subnet-add",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv4 subnet 10.0.0.0/8 (id 5) is now part of shared network 'floor1'\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

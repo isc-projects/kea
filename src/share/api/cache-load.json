@@ -1,0 +1,20 @@
+{
+    "access": "write",
+    "avail": "1.4.0",
+    "brief": [
+        "This command allows the contents of a file on disk to be loaded into an in-memory cache."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"cache-load\",",
+        "    \"arguments\": \"/tmp/kea-host-cache.json\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-cache-load\"/>",
+    "hook": "host_cache",
+    "name": "cache-load",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

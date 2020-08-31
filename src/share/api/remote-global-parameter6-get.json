@@ -1,0 +1,45 @@
+{
+    "access": "read",
+    "avail": "1.6.0",
+    "brief": [
+        "This command fetches the selected global parameter for the server from the specified database."
+    ],
+    "cmd-comment": [
+        "This command carries a list including exactly one name of the parameter to be fetched. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed; it fetches the global parameter value shared by all servers."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-global-parameter6-get\",",
+        "    \"arguments\": {",
+        "        \"parameters\": [ <parameter name as string> ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <single server tag as string> ]",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-global-parameter6-get",
+    "resp-comment": [
+        "The returned response contains a map with a global parameter name/value pair. The value may be a JSON string, integer, real, or boolean. The metadata is included and provides database-specific information associated with the returned object. If the \"all\" server tag is specified, the command attempts to fetch the global parameter value associated with all servers. If the explicit server tag is specified, the command fetches the value associated with the given server. If the server-specific value does not exist, the ``remote-global-parameter6-get`` fetches the value associated with all servers."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv6 global parameter found.\",",
+        "    \"arguments\": {",
+        "        \"parameters\": {",
+        "            <parameter name>: <parameter value>,",
+        "            \"metadata\": {",
+        "                \"server-tags\": [ <server tag> ]",
+        "            }",
+        "        },",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

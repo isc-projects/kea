@@ -1,0 +1,24 @@
+{
+    "access": "read",
+    "avail": "1.0.0",
+    "brief": [
+        "This command retrieves a list of all commands supported by the server."
+    ],
+    "cmd-comment": [
+        "The server responds with a list of all supported commands."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"list-commands\",",
+        "    \"arguments\": { }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-list-commands\"/>",
+    "name": "list-commands",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6",
+        "kea-dhcp-ddns",
+        "kea-ctrl-agent"
+    ]
+}

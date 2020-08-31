@@ -1,0 +1,20 @@
+{
+    "access": "read",
+    "avail": "1.4.0",
+    "brief": [
+        "This command returns the full content of the host cache."
+    ],
+    "hook": "host_cache",
+    "name": "cache-get",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"123 entries returned.\",",
+        "    \"arguments\": <list of host reservations>",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

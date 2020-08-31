@@ -1,0 +1,26 @@
+{
+    "access": "write",
+    "avail": "1.0.0",
+    "brief": [
+        "This command instructs the server to initiate its shutdown procedure."
+    ],
+    "cmd-comment": [
+        "The server responds with a confirmation that the shutdown procedure has been initiated."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"shutdown\"",
+        "    \"arguments\": {",
+        "        \"exit-value\": 123",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-shutdown\"/>",
+    "name": "shutdown",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6",
+        "kea-dhcp-ddns",
+        "kea-ctrl-agent"
+    ]
+}

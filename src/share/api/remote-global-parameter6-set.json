@@ -1,0 +1,43 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command creates or updates one or more global parameters in the configuration database."
+    ],
+    "cmd-comment": [
+        "This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter; in some cases, only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the ``remote-global-parameter6-get-all`` command may be useful to verify the contents of the database after the update. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed; it associates the specified parameters with all servers."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-global-parameter6-set\",",
+        "    \"arguments\": {",
+        "        \"parameters\": {",
+        "            <first parameter name>: <first parameter value>,",
+        "            <second parameter name>: <second parameter value>",
+        "        },",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <single server tag as string> ]",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-global-parameter6-set",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv6 global parameter(s) successfully set.\",",
+        "    \"arguments\": {",
+        "        \"parameters\": {",
+        "            <first parameter name>: <first parameter value>,",
+        "            <second parameter name>: <second parameter value>",
+        "        },",
+        "        \"count\": 2",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

@@ -1,0 +1,40 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command deletes an IPv4 shared network from the configuration database."
+    ],
+    "cmd-comment": [
+        "This command includes a list with exactly one name of the shared network to be deleted. The ``subnets-action`` parameter denotes whether the subnets in this shared network should be deleted. The ``server-tags`` parameter must not be specified for this command."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-network4-del\",",
+        "    \"arguments\": {",
+        "        \"shared-networks\": [",
+        "            {",
+        "                \"name\": <shared network name>",
+        "            }",
+        "        ],",
+        "        \"subnets-action\": <'keep' | 'delete'>,",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-network4-del",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"1 IPv4 shared network(s) deleted.\",",
+        "    \"arguments\": {",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

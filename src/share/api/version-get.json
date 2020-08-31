@@ -1,0 +1,20 @@
+{
+    "access": "read",
+    "avail": "1.2.0",
+    "brief": [
+        "This command returns extended information about the Kea version that is running. The returned string is the same as if Kea were run with the ``-V`` command-line option."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"version-get\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-version-get\"/>",
+    "name": "version-get",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6",
+        "kea-dhcp-ddns",
+        "kea-ctrl-agent"
+    ]
+}

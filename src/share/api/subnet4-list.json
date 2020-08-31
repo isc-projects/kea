@@ -1,0 +1,39 @@
+{
+    "access": "read",
+    "avail": "1.3.0",
+    "brief": [
+        "This command lists all currently configured subnets. The subnets are returned in a brief format, i.e. a subnet identifier and subnet prefix are included for each subnet."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"subnet4-list\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp65\"/>",
+    "hook": "subnet_cmds",
+    "name": "subnet4-list",
+    "resp-comment": [
+        "If no IPv4 subnets are found, an error code is returned along with the error description."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"2 IPv4 subnets found\",",
+        "    \"arguments\": {",
+        "        \"subnets\": [",
+        "            {",
+        "                \"id\": 10,",
+        "                \"subnet\": \"10.0.0.0/8\"",
+        "            },",
+        "            {",
+        "                \"id\": 100,",
+        "                \"subnet\": \"192.0.2.0/24\"",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

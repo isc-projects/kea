@@ -1,0 +1,75 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command creates, updates, or deletes multiple IPv6 leases in a single transaction. It communicates lease changes between HA peers, but may be used in all cases where it is desirable to apply multiple lease updates in a single transaction."
+    ],
+    "cmd-comment": [
+        "If any of the leases is malformed, all changes are rolled back. If the leases are well-formed but the operation fails for one or more leases, these leases are listed in the response; however, the changes are preserved for all leases for which the operation was successful. The \"deleted-leases\" and \"leases\" are optional parameters, but one of them must be specified."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"lease6-bulk-apply\",",
+        "    \"arguments\": {",
+        "        \"deleted-leases\": [",
+        "            {",
+        "                \"ip-address\": \"2001:db8:abcd::\",",
+        "                \"type\": \"IA_PD\",",
+        "                ...",
+        "            },",
+        "            {",
+        "                \"ip-address\": \"2001:db8:abcd::234\",",
+        "                \"type\": \"IA_NA\",",
+        "                ...",
+        "            }",
+        "        ],",
+        "        \"leases\": [",
+        "            {",
+        "                \"subnet-id\": 66,",
+        "                \"ip-address\": \"2001:db8:cafe::\",",
+        "                \"type\": \"IA_PD\",",
+        "                ...",
+        "            },",
+        "            {",
+        "                \"subnet-id\": 66,",
+        "                \"ip-address\": \"2001:db8:abcd::333\",",
+        "                \"type\": \"IA_NA\",",
+        "                ...",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "hook": "lease_cmds",
+    "name": "lease6-bulk-apply",
+    "resp-comment": [
+        "The \"failed-deleted-leases\" holds the list of leases which failed to delete; this includes leases which were not found in the database. The \"failed-leases\" includes the list of leases which failed to create or update. For each lease for which there was an error during processing, insertion into the database, etc., the result is set to 1. For each lease which was not deleted because the server did not find it in the database, the result of 3 is returned."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv6 leases bulk apply completed.\",",
+        "    \"arguments\": {",
+        "        \"failed-deleted-leases\": [",
+        "            {",
+        "                \"ip-address\": \"2001:db8:abcd::\",",
+        "                \"type\": \"IA_PD\",",
+        "                \"result\": <control result>,",
+        "                \"error-message\": <error message>",
+        "            }",
+        "        ],",
+        "        \"failed-leases\": [",
+        "            {",
+        "                \"ip-address\": \"2001:db8:cafe::\",",
+        "                \"type\": \"IA_PD\",",
+        "                \"result\": <control result>,",
+        "                \"error-message\": <error message>",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

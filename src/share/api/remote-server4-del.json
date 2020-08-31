@@ -1,0 +1,39 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command deletes information about a DHCPv4 server from the configuration database. Any configuration explicitly associated with the deleted server is automatically disassociated. In addition, configuration elements not shareable with other servers (e.g. global DHCP parameters) are deleted. Shareable configuration elements (e.g. subnets, shared networks) are not deleted as they may be used by other servers."
+    ],
+    "cmd-comment": [
+        "This command carries the list including exactly one map with the tag of the server to be deleted."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-server4-del\",",
+        "    \"arguments\": {",
+        "        \"servers\": [",
+        "            {",
+        "                \"server-tag\": <server name>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-server4-del",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"1 DHCPv4 server(s) deleted.\",",
+        "    \"arguments\": {",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

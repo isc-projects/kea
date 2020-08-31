@@ -1,0 +1,48 @@
+{
+    "access": "read",
+    "avail": "1.6.0",
+    "brief": [
+        "This command fetches information about the DHCPv6 server, such as the server tag and description."
+    ],
+    "cmd-comment": [
+        "This command carries the list including exactly one map with the tag of the server to be fetched."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-server6-get\",",
+        "    \"arguments\": {",
+        "        \"servers\": [",
+        "            {",
+        "                \"server-tag\": <server tag>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-server6-get",
+    "resp-comment": [
+        "The server tag is the unique identifier of the server, used to associate the configuration elements in the database with the particular server instance. The returned server description is specified by the user when setting the server information."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCP server 'server tag' found.\",",
+        "    \"arguments\": {",
+        "        \"servers\": [",
+        "            {",
+        "                \"server-tag\": <server tag>,",
+        "                \"description\": <server description>",
+        "            }",
+        "        ],",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

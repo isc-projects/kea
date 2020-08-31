@@ -1,0 +1,25 @@
+{
+    "access": "read",
+    "avail": "1.7.1",
+    "brief": [
+        "This command retrieves all host reservations for a specified hostname and optionally a specified subnet."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"reservation-get-by-hostname\",",
+        "    \"arguments\": {",
+        "        \"hostname\": <hostname>,",
+        "        \"subnet-id\": <integer>",
+        "    }",
+        "}"
+    ],
+    "hook": "host_cmds",
+    "name": "reservation-get-by-hostname",
+    "resp-comment": [
+        "The reservation-get-by-hostname command may result in large responses."
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

@@ -1,0 +1,45 @@
+{
+    "access": "read",
+    "avail": "1.5.0",
+    "brief": [
+        "This command returns detailed information about an existing client class."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"class-get\",",
+        "    \"arguments\": {",
+        "        \"name\": <name of the class>",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-class-get\"/>",
+    "hook": "class_cmds",
+    "name": "class-get",
+    "resp-comment": [
+        "The returned information depends on the DHCP server type, i.e. some parameters are specific to the DHCPv4 server. Also, some parameters may not be returned if they are not set for the client class. If a class with the specified name does not exist, a result of 3 (empty) is returned. If the client class is found, the result of 0 is returned. If there is an error while processing the command, the result of 1 is returned."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"Class '<class-name>' definition returned\",",
+        "    \"arguments\": {",
+        "        \"client-classes\": [",
+        "            {",
+        "                \"name\": <name of the class>,",
+        "                \"only-if-required\": <only if required boolean value>,",
+        "                \"test\": <test expression to be evaluated on incoming packets>,",
+        "                \"option-data\": [ <option values here> ],",
+        "                \"option-def\": [ <option definitions here> ],",
+        "                \"next-server\": <ipv4 address>,",
+        "                \"server-hostname\": <string>,",
+        "                \"boot-file-name\": <name of the boot file>",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

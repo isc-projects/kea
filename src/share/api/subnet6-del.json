@@ -1,0 +1,33 @@
+{
+    "access": "write",
+    "avail": "1.3.0",
+    "brief": [
+        "This command removes a subnet from the server's configuration. This command has no effect on other configured subnets, but removing a subnet has certain implications which the server's administrator should be aware of."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"subnet6-del\",",
+        "    \"arguments\": {",
+        "        \"id\": 234",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp72\"/>",
+    "hook": "subnet_cmds",
+    "name": "subnet6-del",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv6 subnet 2001:db8:1::/64 (id 234) deleted\",",
+        "    \"subnets\": [",
+        "        {",
+        "            \"id\": 234,",
+        "            \"subnet\": \"2001:db8:1::/64\"",
+        "        }",
+        "    ]",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

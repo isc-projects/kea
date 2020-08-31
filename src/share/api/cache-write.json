@@ -1,0 +1,22 @@
+{
+    "access": "write",
+    "avail": "1.4.0",
+    "brief": [
+        "This command instructs Kea to write its host cache content to disk."
+    ],
+    "cmd-comment": [
+        "The command takes one mandatory argument that specifies the filename path of a file to be written."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"cache-write\",",
+        "    \"arguments\": \"/path/to/the/file.json\"",
+        "}"
+    ],
+    "hook": "host_cache",
+    "name": "cache-write",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

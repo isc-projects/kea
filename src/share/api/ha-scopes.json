@@ -1,0 +1,26 @@
+{
+    "access": "write",
+    "avail": "1.4.0",
+    "brief": [
+        "This command modifies the scope that the server is responsible for serving when operating in High Availability (HA) mode."
+    ],
+    "cmd-comment": [
+        "In the example below, the arguments configure the server to handle traffic from both the HA_server1 and HA_server2 scopes."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"ha-scopes\",",
+        "    \"service\": [ <service, typically 'dhcp4' or 'dhcp6'> ],",
+        "    \"arguments\": {",
+        "        \"scopes\": [ \"HA_server1\", \"HA_server2\" ]",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-ha-scopes\"/>",
+    "hook": "high_availability",
+    "name": "ha-scopes",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

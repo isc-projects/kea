@@ -1,0 +1,19 @@
+{
+    "access": "write",
+    "avail": "1.7.4",
+    "brief": [
+        "This command is sent to instruct one of the servers to transition",
+        "to the partner-in-maintenance state in which it will be responding to",
+        "all DHCP queries. The server receiving this command sends the",
+        "ha-maintenance-notify to its partner to cause the partner to",
+        "transition to the in-maintenance state."
+    ],
+    "cmd-comment": [ "This command takes no arguments." ],
+    "description": [ "See <xref linkend=\"command-ha-maintenance-start\"/>" ],
+    "hook": "high_availability",
+    "name": "ha-maintenance-start",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

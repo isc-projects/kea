@@ -1,0 +1,45 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command creates or replaces a DHCPv6 global option in the configuration database."
+    ],
+    "cmd-comment": [
+        "The provided list must contain exactly one option specification. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed; it associates the specified option with all servers."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-option6-global-set\",",
+        "    \"arguments\": {",
+        "        \"options\": [",
+        "            {",
+        "                <global option specification>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <single server tag as string> ]",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-option6-global-set",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv6 option set.\",",
+        "    \"arguments\": {",
+        "        \"options\": [",
+        "            {",
+        "                \"code\": <option code>,",
+        "                \"space\": <option space>",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

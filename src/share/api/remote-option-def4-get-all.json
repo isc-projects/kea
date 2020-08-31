@@ -1,0 +1,52 @@
+{
+    "access": "read",
+    "avail": "1.6.0",
+    "brief": [
+        "This command fetches all DHCPv4 option definitions from the configuration database."
+    ],
+    "cmd-comment": [
+        "The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The special server tag \"all\" is allowed, to fetch the option definitions shared by all servers."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-option-def4-get-all\",",
+        "    \"arguments\": {",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <single server tag as string> ]",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-option-def4-get-all",
+    "resp-comment": [
+        "The returned response contains a list of maps. Each map contains an option definition specification and the metadata, including database-specific information associated with the returned objects. If the server tag \"all\" is included in the command, the response contains the option definitions shared among all servers. It excludes server-specific option definitions. If an explicit server tag is included in the command, the response contains all option definitions directly associated with the given server, and the option definitions associated with all servers when server-specific option definitions are not present."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"2 DHCPv4 option definition(s) found.\",",
+        "    \"arguments\": {",
+        "        \"option-defs\": [",
+        "            {",
+        "                <first option definition>,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <server tag> ]",
+        "                }",
+        "            },",
+        "            {",
+        "                <second option definition>,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <server tag> ]",
+        "                }",
+        "            }",
+        "        ],",
+        "        \"count\": 2",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

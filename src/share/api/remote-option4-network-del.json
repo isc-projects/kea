@@ -1,0 +1,45 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command deletes a DHCPv4 option from a shared network from the configuration database."
+    ],
+    "cmd-comment": [
+        "This command includes two lists with exactly one name of the shared network and exactly one option specification, comprising an option name and code. Specifying an empty list, a value of ``null``, or a server tag will result in an error."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-option4-network-del\",",
+        "    \"arguments\": {",
+        "        \"shared-networks\": [",
+        "            {",
+        "                \"name\": <shared network name>",
+        "            }",
+        "        ],",
+        "        \"options\": [",
+        "            {",
+        "                \"code\": <option code>,",
+        "                \"space\": <option space>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-option4-network-del",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"1 DHCPv4 option(s) deleted.\",",
+        "    \"arguments\": {",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

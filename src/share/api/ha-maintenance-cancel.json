@@ -1,0 +1,17 @@
+{
+    "access": "write",
+    "avail": "1.7.4",
+    "brief": [
+        "This command is sent to instruct a server in the partner-in-maintenance",
+        "state to transition back to the previous state, effectively canceling the",
+        "maintenance."
+    ],
+    "cmd-comment": [ "This command takes no arguments." ],
+    "description": [ "See <xref linkend=\"command-ha-maintenance-cancel\"/>" ],
+    "hook": "high_availability",
+    "name": "ha-maintenance-cancel",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

@@ -1,0 +1,37 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command creates or replaces a DHCPv4 option definition in the configuration database."
+    ],
+    "cmd-comment": [
+        "The provided list must contain exactly one option definition specification. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed; it associates the specified option definition with all servers."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-option-def4-set\",",
+        "    \"arguments\": {",
+        "        \"option-defs\": [",
+        "            {",
+        "                <option definition specification>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <single server tag as string> ]",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-option-def4-set",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv4 option definition set.\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

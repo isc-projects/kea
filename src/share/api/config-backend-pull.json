@@ -1,0 +1,31 @@
+{
+    "access": "write",
+    "avail": "1.7.1",
+    "brief": [
+        "This command forces an immediate update of the server using Config Backends.",
+        "This command does not take any parameters."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"config-backend-pull\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-config-backend-pull\"/>",
+    "name": "config-backend-pull",
+    "resp-comment": [
+        "When no Config Backends are configured this command returns empty (3); ",
+        "If an error occurs error (1) is returned with the error details; ",
+        "otherwise success (0) is returned."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"On demand configuration update successful.\"",
+        "}"
+    ],
+
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

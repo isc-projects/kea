@@ -1,0 +1,38 @@
+{
+    "access": "read",
+    "avail": "1.4.0",
+    "brief": [
+        "This command fetches lease statistics for a range of known IPv6 subnets."
+    ],
+    "cmd-syntax": [
+        "{",
+        "  \"command\": \"stat-lease6-get\",",
+        "  \"arguments\": {",
+        "    \"subnet-id\" : 10",
+        "  }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-stat-lease6-get\"/>",
+    "hook": "stat_cmds",
+    "name": "stat-lease6-get",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"stat-lease6-get: 2 rows found\",",
+        "    \"arguments\": {",
+        "      \"result-set\": {",
+        "        \"columns\": [ \"subnet-id\", \"total-nas\", \"cumulative-assigned-nas\", \"assigned-nas\", \"declined-nas\", \"total-pds\",  \"cumulative-assigned-pds\", \"assigned-pds\" ],",
+        "        \"rows\": [",
+        "          [ 10, 4096, 3000, 2400, 3, 0, 0],",
+        "          [ 20, 0, 0, 0, 1048, 500, 233 ],",
+        "          [ 30, 256, 300, 60, 0, 1048, 15, 15 ]",
+        "        ],",
+        "      \"timestamp\": \"2018-05-04 15:03:37.000000\"",
+        "      }",
+        "    }",
+        "  }"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

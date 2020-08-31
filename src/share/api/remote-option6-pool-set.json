@@ -1,0 +1,49 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command creates or replaces a DHCPv6 option in an address pool in the configuration database."
+    ],
+    "cmd-comment": [
+        "This command includes two lists with exactly address pool specification and exactly one option specification. Specifying an empty list, a value of ``null``, or a server tag will result in an error."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-option6-pool-set\",",
+        "    \"arguments\": {",
+        "        \"pools\": [",
+        "            {",
+        "                \"pool\": <pool range or prefix>",
+        "            }",
+        "        ],",
+        "        \"options\": [",
+        "            {",
+        "                <address pool option specification>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-option6-pool-set",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv6 option successfully set.\",",
+        "    \"arguments\": {",
+        "        \"options\": [",
+        "            {",
+        "                \"code\": <option code>,",
+        "                \"space\": <option space>",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

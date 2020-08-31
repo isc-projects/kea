@@ -1,0 +1,52 @@
+{
+    "access": "read",
+    "avail": "1.6.0",
+    "brief": [
+        "This command fetches the selected IPv6 shared network for the server from the specified database."
+    ],
+    "cmd-comment": [
+        "This command includes a list with exactly one name of the shared network to be returned. The ``subnets-include`` optional parameter allows for specifying whether the subnets belonging to the shared network should also be returned. The ``server-tags`` parameter must not be specified for this command."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-network6-get\",",
+        "    \"arguments\": {",
+        "        \"shared-networks\": [",
+        "            {",
+        "                \"name\": <shared network name>",
+        "            }",
+        "        ],",
+        "        \"subnets-include\": <'full' | 'no'>,",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-network6-get",
+    "resp-comment": [
+        "If the subnets are returned with the shared network, they are carried in the ``subnet6`` list within the shared network definition. The metadata is included in the returned shared network definition and provides the database-specific information associated with the returned object."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv6 shared network found.\",",
+        "    \"arguments\": {",
+        "        \"shared-networks\": [",
+        "            {",
+        "                \"name\": <shared network name>,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <first server tag>, <second server tag>, ... ]",
+        "                },",
+        "                <the rest of the shared network information, potentially including subnets>",
+        "            }",
+        "        ],",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

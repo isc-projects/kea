@@ -204,7 +204,7 @@ def run_generate_docs(_):
     import api2doc
     with open(os.path.join(src_dir, 'api-files.txt')) as af:
         api_files = af.read().split()
-    api_files = [os.path.abspath(os.path.join(src_dir, af)) for af in api_files]
+    api_files = [os.path.abspath(os.path.join(src_dir, '../..', af)) for af in api_files]
     api2doc.generate(api_files, os.path.join(src_dir, 'api.rst'))
 
     import mes2doc

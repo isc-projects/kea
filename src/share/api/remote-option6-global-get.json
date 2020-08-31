@@ -1,0 +1,51 @@
+{
+    "access": "read",
+    "avail": "1.6.0",
+    "brief": [
+        "This command fetches a global DHCPv6 option for the server from the specified database."
+    ],
+    "cmd-comment": [
+        "The option is identified by the pair of option code/space values. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed, to fetch the global option instance shared by all servers."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-option6-global-get\",",
+        "    \"arguments\": {",
+        "        \"options\": [",
+        "            {",
+        "                \"code\": <option code>,",
+        "                \"space\": <option space>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <single server tag as string> ]",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-option6-global-get",
+    "resp-comment": [
+        "The metadata is included and provides database-specific information associated with the returned object. If the \"all\" server tag is specified, the command attempts to fetch the global option associated with all servers. If the explicit server tag is specified, the command will fetch the global option associated with the given server. If the server-specific option does not exist, it fetches the option associated with all servers."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv6 option is found.\",",
+        "    \"arguments\": {",
+        "        \"options\": [",
+        "            {",
+        "                <option information>,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <server tag> ]",
+        "                }",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

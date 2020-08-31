@@ -1,0 +1,53 @@
+{
+    "access": "read",
+    "avail": "1.6.0",
+    "brief": [
+        "This command fetches the selected IPv6 subnet by ID from the configuration database."
+    ],
+    "cmd-comment": [
+        "This command includes a list with exactly one ID of the subnet to be returned. The ``server-tags`` parameter must not be specified for this command."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-subnet6-get-by-id\",",
+        "    \"arguments\": {",
+        "        \"subnets\": [",
+        "            {",
+        "                \"id\": <subnet identifier>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-subnet6-get-by-id",
+    "resp-comment": [
+        "If the shared network name is null, it means that the returned subnet does not belong to any shared network (a global subnet). The metadata is included in the returned subnet definition and provides database-specific information associated with the returned object."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv6 subnet found.\",",
+        "    \"arguments\": {",
+        "        \"subnets\": [",
+        "            {",
+        "                \"id\": <subnet identifier>,",
+        "                \"subnet\": <subnet prefix>,",
+        "                \"shared-network-name\": <shared network name> | null,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <first server tag>, <second server tag>, ... ]",
+        "                },",
+        "                <the rest of the subnet specification here>",
+        "            }",
+        "        ],",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

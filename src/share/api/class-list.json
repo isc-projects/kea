@@ -1,0 +1,48 @@
+{
+    "access": "read",
+    "avail": "1.5.0",
+    "brief": [
+        "This command retrieves a list of all client classes from the server configuration."
+    ],
+    "cmd-comment": [
+        "This command includes no arguments."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"class-list\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-class-list\"/>",
+    "hook": "class_cmds",
+    "name": "class-list",
+    "resp-comment": [
+        "The returned list of classes merely contains their names.",
+        "In order to retrieve full information about one of these",
+        "classes, use :ref:`command-class-get`.",
+        "The returned result is 3 (empty) if no classes are found.",
+        "If the command is processed successfully and the list of",
+        "client classes is not empty, the result of 0 is returned.",
+        "If there is an error while processing the command, the",
+        "result of 1 is returned."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"'<number of>' classes found\",",
+        "    \"arguments\": {",
+        "        \"client-classes\": [",
+        "            {",
+        "                \"name\": <first class name>",
+        "            },",
+        "            {",
+        "                \"name\": <second class name>",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

@@ -1,0 +1,39 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command updates a subnet in the existing server configuration. This operation has no impact on other subnets."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"subnet6-update\",",
+        "    \"arguments\": {",
+        "        \"subnet6\": [ {",
+        "            \"id\": 234,",
+        "            \"subnet\": \"2001:db8:1::/64\",",
+        "            ...",
+        "        } ]",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp70\"/>",
+    "hook": "subnet_cmds",
+    "name": "subnet6-update",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv6 subnet updated\",",
+        "    \"arguments\": {",
+        "        \"subnet6\": [",
+        "            {",
+        "                \"id\": 234,",
+        "                \"subnet\": \"2001:db8:1::/64\"",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

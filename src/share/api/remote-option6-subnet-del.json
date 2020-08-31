@@ -1,0 +1,45 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command deletes a DHCPv6 option from a subnet from the configuration database."
+    ],
+    "cmd-comment": [
+        "This command includes two lists with exactly one ID of the subnet and exactly one option specification, comprising an option name and code. Specifying an empty list, a value of ``null``, or a server tag will result in an error."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-option6-subnet-del\",",
+        "    \"arguments\": {",
+        "        \"subnets\": [",
+        "            {",
+        "                \"id\": <subnet identifier>",
+        "            }",
+        "        ],",
+        "        \"options\": [",
+        "            {",
+        "                \"code\": <option code>,",
+        "                \"space\": <option space>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-option6-subnet-del",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"1 DHCPv6 option(s) deleted.\",",
+        "    \"arguments\": {",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

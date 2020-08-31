@@ -1,0 +1,21 @@
+{
+    "access": "write",
+    "avail": "1.0.0",
+    "brief": [
+        "This command instructs the server to reclaim all expired leases immediately."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"leases-reclaim\",",
+        "    \"arguments\": {",
+        "        \"remove\": true",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-leases-reclaim\"/>",
+    "name": "leases-reclaim",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

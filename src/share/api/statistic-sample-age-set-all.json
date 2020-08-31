@@ -1,0 +1,24 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command sets a time-based limit for all statistics. It takes a single integer parameter called duration."
+    ],
+    "cmd-comment": [
+        "The server responds with a message about successfully set limits for all statistics, with a result of 0 indicating success, and an empty parameters field. If an error is encountered, the server returns a status code of 1 (error) and the text field contains the error description."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"statistic-sample-age-set-all\",",
+        "    \"arguments\": {",
+        "        \"duration\": 1245",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-statistic-sample-age-set-all\"/>",
+    "name": "statistic-sample-age-set-all",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

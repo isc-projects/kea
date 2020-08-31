@@ -1,0 +1,32 @@
+{
+    "access": "write",
+    "avail": "1.4.0",
+    "brief": [
+        "This command removes entries from the host cache. It takes parameters similar to the ``reservation-get`` command."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"cache-remove\",",
+        "    \"arguments\": {",
+        "        \"ip-address\": \"192.0.2.1\",",
+        "        \"subnet-id\": 123",
+        "    }",
+        "}",
+        "",
+        "Another example that removes the IPv6 host identifier by DUID and specific subnet-id is:",
+        "{",
+        "    \"command\": \"cache-remove\",",
+        "    \"arguments\": {",
+        "        \"duid\": \"00:01:ab:cd:f0:a1:c2:d3:e4\",",
+        "        \"subnet-id\": 123",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-cache-remove\"/>",
+    "hook": "host_cache",
+    "name": "cache-remove",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

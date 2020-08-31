@@ -1,0 +1,27 @@
+{
+    "access": "write",
+    "avail": "1.2.0",
+    "brief": [
+        "This command deletes an existing host reservation."
+    ],
+    "cmd-comment": [
+        "The host reservation can be identified by either the (subnet-id, ip-address) pair or a triplet of (subnet-id, identifier-type, identifier)."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"reservation-del\",",
+        "    \"arguments\": {",
+        "        \"subnet-id\": <integer>,",
+        "        \"ip-address\": <string>,",
+        "        \"identifier-type\": <one of 'hw-address', 'duid', 'circuit-id', 'client-id' and 'flex-id'>,",
+        "        \"identifier\": <string>",
+        "    }",
+        "}"
+    ],
+    "hook": "host_cmds",
+    "name": "reservation-del",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

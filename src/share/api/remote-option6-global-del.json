@@ -1,0 +1,41 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command deletes a DHCPv6 global option from the configuration database."
+    ],
+    "cmd-comment": [
+        "This command includes a list with exactly one option specification, comprising an option name and code. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-option6-global-del\",",
+        "    \"arguments\": {",
+        "        \"options\": [",
+        "            {",
+        "                \"code\": <option code>,",
+        "                \"space\": <option space>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <single server tag as string> ]",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-option6-global-del",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"1 DHCPv6 option(s) deleted.\",",
+        "    \"arguments\": {",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

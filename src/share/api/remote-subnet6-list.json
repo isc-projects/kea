@@ -1,0 +1,56 @@
+{
+    "access": "read",
+    "avail": "1.6.0",
+    "brief": [
+        "This command fetches a list of all IPv6 subnets from the configuration database."
+    ],
+    "cmd-comment": [
+        "The ``server-tags`` list is required for this command, and must not be empty. It may either contain one or multiple server tags as strings, or a single ``null`` value."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-subnet6-list\",",
+        "    \"arguments\": {",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <first server tag>, <second server tag>, ... ]",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-subnet6-list",
+    "resp-comment": [
+        "The returned response contains a list of maps. Each map contains a subnet identifier, prefix, and shared network name to which the subnet belongs. If the subnet does not belong to a shared network, the name is null. The metadata includes database-specific information associated with the subnets. The returned list does not contain full subnet definitions; use ``remote-subnet6-get`` to fetch the full information about the selected subnets. If the command includes explicit server tags as strings (including the special server tag \"all\"), the list contains all subnets which are associated with any of the specified tags. A subnet is returned even if it is associated with multiple servers and only one of the specified tags matches. If the command includes the ``null`` value in the ``server-tags`` list, the response contains all subnets which are assigned to no servers (unassigned)."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"2 IPv6 subnets found.\",",
+        "    \"arguments\": {",
+        "        \"subnets\": [",
+        "            {",
+        "                \"id\": <first subnet identifier>,",
+        "                \"subnet\": <first subnet prefix>,",
+        "                \"shared-network-name\": <shared network name> | null,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <first server tag>, <second server tag>, ... ]",
+        "                }",
+        "            },",
+        "            {",
+        "                \"id\": <second subnet identifier>,",
+        "                \"subnet\": <second subnet prefix>,",
+        "                \"shared-network-name\": <shared network name> | null,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <first server tag>, ... ]",
+        "                }",
+        "            }",
+        "        ],",
+        "        \"count\": 2",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

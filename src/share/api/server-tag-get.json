@@ -1,0 +1,30 @@
+{
+    "access": "read",
+    "avail": "1.6.0",
+    "brief": [
+        "This command returns the server tag used by the server. ",
+        "Server tag is essential configuration parameter in the Config Backend configuration.",
+        "This parameter is configured in the local config file.",
+        "This command does not take any parameters."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"server-tag-get\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-server-tag-get\"/>",
+    "name": "server-tag-get",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"arguments\": {",
+        "        \"server-tag\": \"office1\"",
+        "    }",
+        "}"
+    ],
+
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

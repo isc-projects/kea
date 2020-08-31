@@ -1,0 +1,25 @@
+{
+    "access": "write",
+    "avail": "1.6.0",
+    "brief": [
+        "This command sets a time-based limit for a single statistic. It takes two parameters: a string called name and an integer value called duration."
+    ],
+    "cmd-comment": [
+        "The server responds with a message about a successfully set limit for the given statistic, with a result of 0 indicating success, and an empty parameters field. If an error is encountered (e.g. the requested statistic was not found), the server returns a status code of 1 (error) and the text field contains the error description."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"statistic-sample-age-set\",",
+        "    \"arguments\": {",
+        "        \"name\": \"pkt4-received\",",
+        "        \"duration\": 1245",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-statistic-sample-age-set\"/>",
+    "name": "statistic-sample-age-set",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

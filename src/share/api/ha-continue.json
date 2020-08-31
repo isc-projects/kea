@@ -1,0 +1,14 @@
+{
+    "access": "write",
+    "avail": "1.4.0",
+    "brief": [
+        "This command resumes the operation of a paused HA state machine."
+    ],
+    "description": "See <xref linkend=\"command-ha-continue\"/>",
+    "hook": "high_availability",
+    "name": "ha-continue",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

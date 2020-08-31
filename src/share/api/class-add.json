@@ -1,0 +1,42 @@
+{
+    "access": "write",
+    "avail": "1.5.0",
+    "brief": [
+        "This command adds a new class to the existing server configuration."
+    ],
+    "cmd-comment": [
+        "The ``next-server``, ``server-hostname``, and ``boot-file-name`` are DHCPv4-specific. Only one client class can be added with a single command. "
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"class-add\",",
+        "    \"arguments\": {",
+        "        \"client-classes\": [ {",
+        "           \"name\": <name of the class>,",
+        "           \"test\": <test expression to be evaluated on incoming packets>,",
+        "           \"option-data\": [ <option values here> ],",
+        "           \"option-def\": [ <option definitions here> ],",
+        "           \"next-server\": <ipv4 address>,",
+        "           \"server-hostname\": <string>,",
+        "           \"boot-file-name\": <name of the boot file>",
+        "        } ]",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-class-add\"/>",
+    "hook": "class_cmds",
+    "name": "class-add",
+    "resp-comment": [
+        "The command is successful (result 0), unless the class name is a duplicate or another error occurs (result 1)."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"Class '<class-name>' added.\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

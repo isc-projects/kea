@@ -1,0 +1,20 @@
+{
+    "access": "read",
+    "avail": "1.6.0",
+    "brief": [
+        "This command returns the number of entries in the host cache."
+    ],
+    "hook": "host_cache",
+    "name": "cache-size",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"123 entries.\",",
+        "    \"arguments\": { \"size\": 123 }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}
