@@ -1012,7 +1012,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
 
     auto found_multi_threading = arguments->get("multi-threading-enabled");
     ASSERT_TRUE(found_multi_threading);
-    EXPECT_EQ(false, found_multi_threading->boolValue());
+    EXPECT_FALSE(found_multi_threading->boolValue());
 
     auto found_thread_count = arguments->get("thread-pool-size");
     ASSERT_FALSE(found_thread_count);
@@ -1055,7 +1055,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
 
     found_multi_threading = arguments->get("multi-threading-enabled");
     ASSERT_TRUE(found_multi_threading);
-    EXPECT_EQ(true, found_multi_threading->boolValue());
+    EXPECT_TRUE(found_multi_threading->boolValue());
 
     found_thread_count = arguments->get("thread-pool-size");
     ASSERT_TRUE(found_thread_count);
