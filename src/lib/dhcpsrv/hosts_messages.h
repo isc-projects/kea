@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Mon Jun 22 2020 17:23
+// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Tue Sep 01 2020 12:49
 
 #ifndef HOSTS_MESSAGES_H
 #define HOSTS_MESSAGES_H
@@ -16,12 +16,15 @@ extern const isc::log::MessageID HOSTS_CFG_CACHE_HOST_DATA_SOURCE;
 extern const isc::log::MessageID HOSTS_CFG_CLOSE_HOST_DATA_SOURCE;
 extern const isc::log::MessageID HOSTS_CFG_DEL_ALL_SUBNET4;
 extern const isc::log::MessageID HOSTS_CFG_DEL_ALL_SUBNET6;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS4;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS4_COUNT;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS4_HOST;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6_COUNT;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6_HOST;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_COUNT;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOST;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_COUNT;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_HOST;

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -252,6 +252,60 @@ public:
     virtual ConstHostCollection
     getPage6(const SubnetID& subnet_id,
              size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
+
+    /// @brief Returns range of hosts.
+    ///
+    /// This method returns a page of @c Host objects representing
+    /// reservations as documented in the @c BaseHostDataSource::getPage4
+    ///
+    /// The typical usage of this method is as follows:
+    /// - Get the first page of hosts by specifying zero index and id
+    ///   as the beginning of the range.
+    /// - Index and last id of the returned range should be used as
+    ///   starting index and id for the next page in the subsequent call.
+    /// - All returned hosts are from the same source so if the number of
+    ///   hosts returned is lower than the page size, it does not indicate
+    ///   that the last page has been retrieved.
+    /// - If there are no hosts returned it indicates that the previous page
+    ///   was the last page.
+    ///
+    /// @param source_index Index of the source.
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Host collection (may be empty).
+    virtual ConstHostCollection
+    getPage4(size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
+
+    /// @brief Returns range of hosts.
+    ///
+    /// This method returns a page of @c Host objects representing
+    /// reservations as documented in the @c BaseHostDataSource::getPage6
+    ///
+    /// The typical usage of this method is as follows:
+    /// - Get the first page of hosts by specifying zero index and id
+    ///   as the beginning of the range.
+    /// - Index and last id of the returned range should be used as
+    ///   starting index and id for the next page in the subsequent call.
+    /// - All returned hosts are from the same source so if the number of
+    ///   hosts returned is lower than the page size, it does not indicate
+    ///   that the last page has been retrieved.
+    /// - If there are no hosts returned it indicates that the previous page
+    ///   was the last page.
+    ///
+    /// @param source_index Index of the source.
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Host collection (may be empty).
+    virtual ConstHostCollection
+    getPage6(size_t& source_index,
              uint64_t lower_host_id,
              const HostPageSize& page_size) const;
 

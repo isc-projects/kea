@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -231,6 +231,66 @@ HostMgr::getPage6(const SubnetID& subnet_id,
     // Note the recursion is limited to the number of sources in all cases.
     ++source_index;
     return (getPage6(subnet_id, source_index, 0UL, page_size));
+}
+
+ConstHostCollection
+HostMgr::getPage4(size_t& source_index,
+                  uint64_t lower_host_id,
+                  const HostPageSize& page_size) const {
+    // Return empty if (and only if) sources are exhausted.
+    if (source_index > alternate_sources_.size()) {
+        return (ConstHostCollection());
+    }
+
+    ConstHostCollection hosts;
+    // Source index 0 means config file.
+    if (source_index == 0) {
+        hosts = getCfgHosts()->
+            getPage4(source_index, lower_host_id, page_size);
+    } else {
+        hosts = alternate_sources_[source_index - 1]->
+            getPage4(source_index, lower_host_id, page_size);
+    }
+
+    // When got something return it.
+    if (!hosts.empty()) {
+        return (hosts);
+    }
+
+    // Nothing from this source: try the next one.
+    // Note the recursion is limited to the number of sources in all cases.
+    ++source_index;
+    return (getPage4(source_index, 0UL, page_size));
+}
+
+ConstHostCollection
+HostMgr::getPage6(size_t& source_index,
+                  uint64_t lower_host_id,
+                  const HostPageSize& page_size) const {
+    // Return empty if (and only if) sources are exhausted.
+    if (source_index > alternate_sources_.size()) {
+        return (ConstHostCollection());
+    }
+
+    ConstHostCollection hosts;
+    // Source index 0 means config file.
+    if (source_index == 0) {
+        hosts = getCfgHosts()->
+            getPage6(source_index, lower_host_id, page_size);
+    } else {
+        hosts = alternate_sources_[source_index - 1]->
+            getPage6(source_index, lower_host_id, page_size);
+    }
+
+    // When got something return it.
+    if (!hosts.empty()) {
+        return (hosts);
+    }
+
+    // Nothing from this source: try the next one.
+    // Note the recursion is limited to the number of sources in all cases.
+    ++source_index;
+    return (getPage6(source_index, 0UL, page_size));
 }
 
 ConstHostCollection

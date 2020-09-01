@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,6 +42,17 @@ the specified subnet. The first argument specifies how many hosts
 have been deleted. The second argument specifies how many IPv6
 (addresses and prefixes) have been deleted. The third argument is the
 subnet identifier.
+
+% HOSTS_CFG_GET_ALL get all hosts with reservations
+This debug message is issued when starting to retrieve all hosts.
+
+% HOSTS_CFG_GET_ALL_COUNT found %1 host(s)
+This debug message include the details of the host found. The argument
+specifies the number of hosts found.
+
+% HOSTS_CFG_GET_ALL_HOST found host: %1
+This debug message includes the details of the host found. The argument
+specifies found host details.
 
 % HOSTS_CFG_GET_ALL_ADDRESS4 get all hosts with reservations for IPv4 address %1
 This debug message is issued when starting to retrieve all hosts, holding the

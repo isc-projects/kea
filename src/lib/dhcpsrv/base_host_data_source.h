@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -218,6 +218,48 @@ public:
     virtual ConstHostCollection
     getPage6(const SubnetID& subnet_id,
              size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const = 0;
+
+    /// @brief Returns range of hosts.
+    ///
+    /// This method implements paged browsing of host databases. The
+    /// parameters specify a page size, an index in sources and the
+    /// starting host id of the range. If not zero this host id is
+    /// excluded from the returned range. When a source is exhausted
+    /// the index is updated. There is no guarantee about the order
+    /// of returned host reservations, only the sources and
+    /// reservations from the same source are ordered.
+    ///
+    /// @param source_index Index of the source.
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Host collection (may be empty).
+    virtual ConstHostCollection
+    getPage4(size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const = 0;
+
+    /// @brief Returns range of hosts.
+    ///
+    /// This method implements paged browsing of host databases. The
+    /// parameters specify a page size, an index in sources and the
+    /// starting host id of the range. If not zero this host id is
+    /// excluded from the returned range. When a source is exhausted
+    /// the index is updated. There is no guarantee about the order
+    /// of returned host reservations, only the sources and
+    /// reservations from the same source are ordered.
+    ///
+    /// @param source_index Index of the source.
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Host collection (may be empty).
+    virtual ConstHostCollection
+    getPage6(size_t& source_index,
              uint64_t lower_host_id,
              const HostPageSize& page_size) const = 0;
 

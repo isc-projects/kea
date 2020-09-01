@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -119,6 +119,40 @@ MemHostDataSource::getPage6(const SubnetID& subnet_id,
         if ((*h)->getIPv6SubnetID() != subnet_id) {
             continue;
         }
+        if (lower_host_id && ((*h)->getHostId() <= lower_host_id)) {
+            continue;
+        }
+        hosts.push_back(*h);
+        if (hosts.size() == page_size.page_size_) {
+            break;
+        }
+    }
+    return (hosts);
+}
+
+ConstHostCollection
+MemHostDataSource::getPage4(size_t& /*source_index*/,
+                            uint64_t lower_host_id,
+                            const HostPageSize& page_size) const {
+    ConstHostCollection hosts;
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        if (lower_host_id && ((*h)->getHostId() <= lower_host_id)) {
+            continue;
+        }
+        hosts.push_back(*h);
+        if (hosts.size() == page_size.page_size_) {
+            break;
+        }
+    }
+    return (hosts);
+}
+
+ConstHostCollection
+MemHostDataSource::getPage6(size_t& /*source_index*/,
+                            uint64_t lower_host_id,
+                            const HostPageSize& page_size) const {
+    ConstHostCollection hosts;
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
         if (lower_host_id && ((*h)->getHostId() <= lower_host_id)) {
             continue;
         }

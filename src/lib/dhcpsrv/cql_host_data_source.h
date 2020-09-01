@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2018 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -261,6 +261,36 @@ public:
     virtual ConstHostCollection
     getPage6(const SubnetID& subnet_id,
              size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const override;
+
+    /// @brief Returns range of hosts.
+    ///
+    /// Not implemented.
+    ///
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of const @c Host objects (may be empty).
+    virtual ConstHostCollection
+    getPage4(size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const override;
+
+    /// @brief Returns range of hosts.
+    ///
+    /// Not implemented.
+    ///
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of const @c Host objects (may be empty).
+    virtual ConstHostCollection
+    getPage6(size_t& source_index,
              uint64_t lower_host_id,
              const HostPageSize& page_size) const override;
 

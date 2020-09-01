@@ -1368,6 +1368,8 @@ public:
         GET_HOST_HOSTNAME_SUBID6, // Gets hosts by hostname and IPv6 SubnetID
         GET_HOST_SUBID4_PAGE,   // Gets hosts by IPv4 SubnetID beginning by HID
         GET_HOST_SUBID6_PAGE,   // Gets hosts by IPv6 SubnetID beginning by HID
+        GET_HOST_PAGE4,         // Gets v4 hosts beginning by HID
+        GET_HOST_PAGE6,         // Gets v6 hosts beginning by HID
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
         INSERT_V4_HOST_OPTION,  // Insert DHCPv4 option
@@ -1903,6 +1905,57 @@ TaggedStatementArray tagged_statements = { {
      "       WHERE h.dhcp6_subnet_id = $1 AND h.host_id > $2 "
      "       ORDER BY h.host_id "
      "       LIMIT $3 ) AS h "
+     "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
+     "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
+     "ORDER BY h.host_id, o.option_id, r.reservation_id"
+    },
+
+    // PgSqlHostDataSourceImpl::GET_HOST_PAGE4
+    // Retrieves host information along with the DHCPv4 options associated with
+    // it. Left joining the dhcp4_options table results in multiple rows being
+    // returned for the same host. The hosts are retrieved starting from
+    // specified host id. Specified number of hosts is returned.
+    {2,
+     { OID_INT8, OID_INT8 },
+     "get_host_page4",
+     "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+     "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+     "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
+     "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
+     "  o.persistent, o.user_context "
+     "FROM ( SELECT * FROM hosts AS h "
+     "       WHERE h.host_id > $1 "
+     "       ORDER BY h.host_id "
+     "       LIMIT $2 ) AS h "
+     "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
+     "ORDER BY h.host_id, o.option_id"
+    },
+
+    // PgSqlHostDataSourceImpl::GET_HOST_PAGE6
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with a host using IPv6 subnet id. This query returns
+    // host information for a single host. However, multiple rows are
+    // returned due to left joining IPv6 reservations and DHCPv6 options.
+    // The number of rows returned is multiplication of number of existing
+    // IPv6 reservations and DHCPv6 options.
+    {2,
+     { OID_INT8, OID_INT8 },
+     "get_host_page6",
+     "SELECT h.host_id, h.dhcp_identifier, "
+     "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+     "  h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+     "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
+     "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
+     "  o.persistent, o.user_context, "
+     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "FROM ( SELECT * FROM hosts AS h "
+     "       WHERE h.host_id > $1 "
+     "       ORDER BY h.host_id "
+     "       LIMIT $2 ) AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
@@ -2593,6 +2646,58 @@ PgSqlHostDataSource::getPage6(const SubnetID& subnet_id,
 
     ConstHostCollection result;
     impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE,
+                             bind_array, ctx->host_ipv6_exchange_, result, false);
+
+    return (result);
+}
+
+ConstHostCollection
+PgSqlHostDataSource::getPage4(size_t& /*source_index*/,
+                              uint64_t lower_host_id,
+                              const HostPageSize& page_size) const {
+    // Get a context
+    PgSqlHostContextAlloc get_context(*impl_);
+    PgSqlHostContextPtr ctx = get_context.ctx_;
+
+    // Set up the WHERE clause value
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Add the lower bound host id.
+    bind_array->add(lower_host_id);
+
+    // Add the page size value.
+    string page_size_data =
+        boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array->add(page_size_data);
+
+    ConstHostCollection result;
+    impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_PAGE4,
+                             bind_array, ctx->host_ipv4_exchange_, result, false);
+
+    return (result);
+}
+
+ConstHostCollection
+PgSqlHostDataSource::getPage6(size_t& /*source_index*/,
+                              uint64_t lower_host_id,
+                              const HostPageSize& page_size) const {
+    // Get a context
+    PgSqlHostContextAlloc get_context(*impl_);
+    PgSqlHostContextPtr ctx = get_context.ctx_;
+
+    // Set up the WHERE clause value
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Add the lower bound host id.
+    bind_array->add(lower_host_id);
+
+    // Add the page size value.
+    string page_size_data =
+        boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array->add(page_size_data);
+
+    ConstHostCollection result;
+    impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_PAGE6,
                              bind_array, ctx->host_ipv6_exchange_, result, false);
 
     return (result);

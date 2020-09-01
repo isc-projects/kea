@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -369,6 +369,22 @@ public:
     // (paging).
     static constexpr StatementTag GET_HOST_BY_IPV6_SUBNET_ID_PAGE =
         "GET_HOST_BY_IPV6_SUBNET_ID_PAGE";
+
+    // Retrieves host information; reservations and options associated
+    // with it from first host (paging).
+    static constexpr StatementTag GET_HOST_LIMIT = "GET_HOST_LIMIT";
+
+    // Retrieves host information; reservations and options associated
+    // with it from host (paging).
+    static constexpr StatementTag GET_HOST_KEY = "GET_HOST_KEY";
+
+    // Retrieves host information; reservations and options associated
+    // with it from next host (paging).
+    static constexpr StatementTag GET_HOST_NEXT_KEY = "GET_HOST_NEXT_KEY";
+
+    // Retrieves host information; reservations and options associated
+    // with it from host with a limit (paging).
+    static constexpr StatementTag GET_HOST_PAGE = "GET_HOST_PAGE";
     /// @}
 
     /// @brief Cassandra statements
@@ -498,6 +514,10 @@ constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_KEY;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_KEY;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_PAGE;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_PAGE;
+constexpr StatementTag CqlHostExchange::GET_HOST_LIMIT;
+constexpr StatementTag CqlHostExchange::GET_HOST_NEXT_KEY;
+constexpr StatementTag CqlHostExchange::GET_HOST_KEY;
+constexpr StatementTag CqlHostExchange::GET_HOST_PAGE;
 constexpr StatementTag CqlHostExchange::DELETE_HOST;
 
 StatementMap CqlHostExchange::tagged_statements_ = {
@@ -1342,6 +1362,156 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "ALLOW FILTERING "
      }},
 
+    {GET_HOST_LIMIT,
+     {GET_HOST_LIMIT,
+      "SELECT "
+      "key, "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM hosts "
+      "LIMIT 1 "
+      "ALLOW FILTERING "
+     }},
+
+    {GET_HOST_NEXT_KEY,
+     {GET_HOST_NEXT_KEY,
+      "SELECT "
+      "key, "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM hosts "
+      "WHERE TOKEN(key) > TOKEN(?) "
+      "LIMIT 1 "
+      "ALLOW FILTERING "
+     }},
+
+    {GET_HOST_KEY,
+     {GET_HOST_KEY,
+      "SELECT "
+      "key, "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM hosts "
+      "WHERE key = ? "
+      "ALLOW FILTERING "
+     }},
+
+    {GET_HOST_PAGE,
+     {GET_HOST_PAGE,
+      "SELECT "
+      "key, "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM hosts "
+      "WHERE id = ? "
+      "LIMIT 1 "
+      "ALLOW FILTERING "
+     }},
+
     {DELETE_HOST,
      {DELETE_HOST,
       "DELETE FROM hosts WHERE key = ? AND id = ? "
@@ -2112,6 +2282,28 @@ public:
              uint64_t lower_host_id,
              const HostPageSize& page_size) const;
 
+    /// @brief Implementation of @ref CqlHostDataSource::getPage4()
+    ///
+    /// See @ref CqlHostDataSource::getPage4() for parameter details.
+    ///
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    virtual ConstHostCollection
+    getPage4(uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
+
+    /// @brief Implementation of @ref CqlHostDataSource::getPage6()
+    ///
+    /// See @ref CqlHostDataSource::getPage6() for parameter details.
+    ///
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    virtual ConstHostCollection
+    getPage6(uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
+
     /// @brief Implementation of @ref CqlHostDataSource::getAll4()
     ///
     /// See @ref CqlHostDataSource::getAll4() for parameter details.
@@ -2221,6 +2413,26 @@ protected:
                                                        uint64_t lower_host_id,
                                                        size_t count = 0) const;
 
+    /// @brief Retrieves a page of hosts.
+    ///
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param count the size of the page
+    ///
+    /// @return a collection of hosts containing one or more hosts
+    virtual ConstHostCollection getHostCollectionPage4(uint64_t lower_host_id,
+                                                       size_t count = 0) const;
+
+    /// @brief Retrieves a page of hosts.
+    ///
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param count the size of the page
+    ///
+    /// @return a collection of hosts containing one or more hosts
+    virtual ConstHostCollection getHostCollectionPage6(uint64_t lower_host_id,
+                                                       size_t count = 0) const;
+
     /// @brief Retrieves a host by key.
     ///
     /// @param key identifier of the host
@@ -2235,6 +2447,13 @@ protected:
     /// @return a host for the specific key
     virtual ConstHostPtr getHostByKey6(uint64_t key) const;
 
+    /// @brief Retrieves a host by key.
+    ///
+    /// @param key identifier of the host
+    ///
+    /// @return a host for the specific key
+    virtual ConstHostPtr getHostByKey(uint64_t key) const;
+
     /// @brief Retrieves a valid host key.
     /// if lower_host_id is 0 the key parameter will be updated with the key of
     /// the first host
@@ -2246,7 +2465,7 @@ protected:
     /// returned range.
     /// @param key identifier of the host which will be updated
     ///
-    /// @return true if there is sunh a host
+    /// @return true if there is such a host
     virtual bool getHostKey4(const SubnetID& subnet_id,
                              uint64_t lower_host_id,
                              uint64_t& key) const;
@@ -2262,10 +2481,24 @@ protected:
     /// returned range.
     /// @param key identifier of the host which will be updated
     ///
-    /// @return true if there is sunh a host
+    /// @return true if there is such a host
     virtual bool getHostKey6(const SubnetID& subnet_id,
                              uint64_t lower_host_id,
                              uint64_t& key) const;
+
+    /// @brief Retrieves a valid host key.
+    /// if lower_host_id is 0 the key parameter will be updated with the key of
+    /// the first host
+    /// if lower_host_id is not 0 the key parameter will be updated with the
+    /// next valid host key
+    ///
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param key identifier of the host which will be updated
+    ///
+    /// @return true if there is such a host
+    virtual bool getHostKey(uint64_t lower_host_id,
+                            uint64_t& key) const;
 
     /// @brief Retrieves next valid host key.
     ///
@@ -2286,6 +2519,14 @@ protected:
     /// @return true if there is such a host
     virtual bool getNextHostKey6(const SubnetID& subnet_id,
                                  uint64_t& key) const;
+
+    /// @brief Retrieves next valid host key.
+    ///
+    /// @param key identifier of the host which will be updated with the next
+    /// valid host key
+    ///
+    /// @return true if there is such a host
+    virtual bool getNextHostKey(uint64_t& key) const;
 
     /// @brief Inserts or deletes a single host.
     ///
@@ -2708,6 +2949,26 @@ CqlHostDataSourceImpl::getPage6(const SubnetID& subnet_id,
 }
 
 ConstHostCollection
+CqlHostDataSourceImpl::getPage4(uint64_t lower_host_id,
+                                const HostPageSize& page_size) const {
+    // Run statement.
+    ConstHostCollection result =
+        getHostCollectionPage4(lower_host_id, page_size.page_size_);
+
+    return (result);
+}
+
+ConstHostCollection
+CqlHostDataSourceImpl::getPage6(uint64_t lower_host_id,
+                                const HostPageSize& page_size) const {
+    // Run statement.
+    ConstHostCollection result =
+        getHostCollectionPage6(lower_host_id, page_size.page_size_);
+
+    return (result);
+}
+
+ConstHostCollection
 CqlHostDataSourceImpl::getAll4(const asiolink::IOAddress& address) const {
     // Convert to CQL data types.
     cass_int32_t host_ipv4_address = static_cast<cass_int32_t>(address.toUint32());
@@ -2933,6 +3194,31 @@ CqlHostDataSourceImpl::getHostByKey6(uint64_t key) const {
     return (*collection.begin());
 }
 
+ConstHostPtr
+CqlHostDataSourceImpl::getHostByKey(uint64_t key) const {
+    // Bind to array.
+    AnyArray where_values;
+    cass_int64_t key_data = static_cast<cass_int64_t>(key);
+    where_values.add(&key_data);
+
+    // Run statement.
+    ConstHostCollection collection =
+            getHostCollection(CqlHostExchange::GET_HOST_KEY,
+                              where_values);
+
+    if (collection.empty()) {
+        return (ConstHostPtr());
+    }
+
+    if (collection.size() >= 2u) {
+        isc_throw(MultipleRecords, "CqlHostDataSourceImpl::getHost(): multiple records were "
+                  "found in the database where only one was expected for statement "
+                  << CqlHostExchange::GET_HOST_KEY);
+    }
+
+    return (*collection.begin());
+}
+
 ConstHostCollection
 CqlHostDataSourceImpl::getHostCollectionPage4(const SubnetID& subnet_id,
                                               uint64_t lower_host_id,
@@ -2962,6 +3248,46 @@ CqlHostDataSourceImpl::getHostCollectionPage6(const SubnetID& subnet_id,
     for (; count; count--) {
         uint64_t key;
         bool valid_key = getHostKey6(subnet_id, lower_host_id, key);
+
+        if (!valid_key) {
+            break;
+        }
+
+        ConstHostPtr host = getHostByKey6(key);
+        result_collection.push_back(host);
+        lower_host_id = host->getHostId();
+    }
+
+    return (result_collection);
+}
+
+ConstHostCollection
+CqlHostDataSourceImpl::getHostCollectionPage4(uint64_t lower_host_id,
+                                              size_t count) const {
+    ConstHostCollection result_collection;
+    for (; count; count--) {
+        uint64_t key;
+        bool valid_key = getHostKey(lower_host_id, key);
+
+        if (!valid_key) {
+            break;
+        }
+
+        ConstHostPtr host = getHostByKey(key);
+        result_collection.push_back(host);
+        lower_host_id = host->getHostId();
+    }
+
+    return (result_collection);
+}
+
+ConstHostCollection
+CqlHostDataSourceImpl::getHostCollectionPage6(uint64_t lower_host_id,
+                                              size_t count) const {
+    ConstHostCollection result_collection;
+    for (; count; count--) {
+        uint64_t key;
+        bool valid_key = getHostKey(lower_host_id, key);
 
         if (!valid_key) {
             break;
@@ -3076,6 +3402,50 @@ CqlHostDataSourceImpl::getHostKey6(const SubnetID& subnet_id,
 }
 
 bool
+CqlHostDataSourceImpl::getHostKey(uint64_t lower_host_id,
+                                  uint64_t& key) const {
+    // Bind to array.
+    AnyArray where_values;
+    cass_int64_t host_data = 0;
+    if (lower_host_id) {
+        host_data = static_cast<cass_int64_t>(lower_host_id);
+        where_values.add(&host_data);
+    }
+
+    // Run statement.
+    // This will retrieve first row of the first host (lower_host_id == 0)
+    // or the first row of the host (lower_host_id != 0)
+    std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange());
+    AnyArray collection;
+    if (lower_host_id) {
+        collection = host_exchange->executeSelect(dbconn_, where_values,
+                CqlHostExchange::GET_HOST_PAGE, false);
+    } else {
+        collection = host_exchange->executeSelect(dbconn_, where_values,
+                CqlHostExchange::GET_HOST_LIMIT, false);
+    }
+
+    // Create HostPtr objects.
+    HostCollection host_collection;
+    for (boost::any& host : collection) {
+        host_collection.push_back(HostPtr(boost::any_cast<Host*>(host)));
+    }
+
+    // If there is no host, just exit
+    if (host_collection.empty()) {
+        return false;
+    }
+
+    key = host_exchange->hashIntoKey();
+
+    if (lower_host_id) {
+        return getNextHostKey(key);
+    }
+
+    return true;
+}
+
+bool
 CqlHostDataSourceImpl::getNextHostKey4(const SubnetID& subnet_id,
                                        uint64_t& key) const {
     // Convert to CQL data types.
@@ -3122,6 +3492,34 @@ CqlHostDataSourceImpl::getNextHostKey6(const SubnetID& subnet_id,
     std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange());
     AnyArray collection = host_exchange->executeSelect(dbconn_, where_values,
             CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_NEXT_KEY, false);
+
+    // Create HostPtr objects.
+    HostCollection host_collection;
+    for (boost::any& host : collection) {
+        host_collection.push_back(HostPtr(boost::any_cast<Host*>(host)));
+    }
+
+    if (host_collection.empty()) {
+        return false;
+    }
+
+    key = host_exchange->hashIntoKey();
+    return true;
+}
+
+bool
+CqlHostDataSourceImpl::getNextHostKey(uint64_t& key) const {
+    // Convert to CQL data types.
+    cass_int64_t key_data = static_cast<cass_int64_t>(key);
+
+    // Bind to array.
+    AnyArray where_values;
+    where_values.add(&key_data);
+
+    // This will retrieve first row of the next host (lower_host_id != 0)
+    std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange());
+    AnyArray collection = host_exchange->executeSelect(dbconn_, where_values,
+            CqlHostExchange::GET_HOST_NEXT_KEY, false);
 
     // Create HostPtr objects.
     HostCollection host_collection;
@@ -3303,6 +3701,24 @@ CqlHostDataSource::getPage6(const SubnetID& subnet_id,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
 
     return (impl_->getPage6(subnet_id, lower_host_id, page_size));
+}
+
+ConstHostCollection
+CqlHostDataSource::getPage4(size_t& /*source_index*/,
+                            uint64_t lower_host_id,
+                            const HostPageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
+
+    return (impl_->getPage4(lower_host_id, page_size));
+}
+
+ConstHostCollection
+CqlHostDataSource::getPage6(size_t& /*source_index*/,
+                            uint64_t lower_host_id,
+                            const HostPageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
+
+    return (impl_->getPage6(lower_host_id, page_size));
 }
 
 ConstHostCollection

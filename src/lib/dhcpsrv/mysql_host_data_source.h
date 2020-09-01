@@ -233,6 +233,36 @@ public:
                                          uint64_t lower_host_id,
                                          const HostPageSize& page_size) const;
 
+    /// @brief Returns range of hosts.
+    ///
+    /// This method returns a page of @c Host objects which represent
+    /// reservations.
+    ///
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of const @c Host objects (may be empty).
+    virtual ConstHostCollection getPage4(size_t& source_index,
+                                         uint64_t lower_host_id,
+                                         const HostPageSize& page_size) const;
+
+    /// @brief Returns range of hosts.
+    ///
+    /// This method returns a page of @c Host objects which represent
+    /// reservations.
+    ///
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of const @c Host objects (may be empty).
+    virtual ConstHostCollection getPage6(size_t& source_index,
+                                         uint64_t lower_host_id,
+                                         const HostPageSize& page_size) const;
+
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
     /// This method may return multiple @c Host objects if they are connected

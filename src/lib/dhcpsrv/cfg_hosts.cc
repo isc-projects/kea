@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -197,6 +197,58 @@ CfgHosts::getPage6(const SubnetID& subnet_id,
                                      lower_host_id,
                                      page_size,
                                      collection);
+    return (collection);
+}
+
+ConstHostCollection
+CfgHosts::getPage4(size_t& /*source_index*/,
+                   uint64_t lower_host_id,
+                   const HostPageSize& page_size) const {
+    // Do not issue logging message here because it will be logged by
+    // the getPageInternal method.
+    ConstHostCollection collection;
+    getPageInternal<ConstHostCollection>(lower_host_id,
+                                         page_size,
+                                         collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getPage4(size_t& /*source_index*/,
+                   uint64_t lower_host_id,
+                   const HostPageSize& page_size) {
+    // Do not issue logging message here because it will be logged by
+    // the getPageInternal method.
+    HostCollection collection;
+    getPageInternal<HostCollection>(lower_host_id,
+                                    page_size,
+                                    collection);
+    return (collection);
+}
+
+ConstHostCollection
+CfgHosts::getPage6(size_t& /*source_index*/,
+                   uint64_t lower_host_id,
+                   const HostPageSize& page_size) const {
+    // Do not issue logging message here because it will be logged by
+    // the getPageInternal method.
+    ConstHostCollection collection;
+    getPageInternal<ConstHostCollection>(lower_host_id,
+                                         page_size,
+                                         collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getPage6(size_t& /*source_index*/,
+                   uint64_t lower_host_id,
+                   const HostPageSize& page_size) {
+    // Do not issue logging message here because it will be logged by
+    // the getPageInternal method.
+    HostCollection collection;
+    getPageInternal<HostCollection>(lower_host_id,
+                                    page_size,
+                                    collection);
     return (collection);
 }
 
@@ -430,6 +482,40 @@ CfgHosts::getAllbyHostnameInternal6(const std::string& hostname,
               HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_COUNT)
         .arg(hostname)
         .arg(subnet_id)
+        .arg(storage.size());
+}
+
+template<typename Storage>
+void
+CfgHosts::getPageInternal(uint64_t lower_host_id,
+                          const HostPageSize& page_size,
+                          Storage& storage) const {
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL);
+
+    // Use the host id last index.
+    const HostContainerIndex4& idx = hosts_.get<4>();
+    HostContainerIndex4::const_iterator host = idx.lower_bound(lower_host_id);
+
+    // Exclude the lower bound id when it is not zero.
+    if (lower_host_id &&
+        (host != idx.end()) && ((*host)->getHostId() == lower_host_id)) {
+        ++host;
+    }
+
+    // Return hosts within the page size.
+    for (; host != idx.end(); ++host) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_HOST)
+            .arg((*host)->toText());
+        storage.push_back(*host);
+        if (storage.size() >= page_size.page_size_) {
+            break;
+        }
+    }
+
+    // Log how many hosts have been found.
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_COUNT)
         .arg(storage.size());
 }
 

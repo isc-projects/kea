@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -258,6 +258,70 @@ public:
     virtual HostCollection
     getPage6(const SubnetID& subnet_id,
              size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size);
+
+    /// @brief Returns range of hosts.
+    ///
+    /// This method returns a page of @c Host objects which represent
+    /// reservations.
+    ///
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of const @c Host objects (may be empty).
+    virtual ConstHostCollection
+    getPage4(size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
+
+    /// @brief Returns range of hosts.
+    ///
+    /// This method returns a page of @c Host objects which represent
+    /// reservations.
+    ///
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of non-const @c Host objects (may be empty).
+    virtual HostCollection
+    getPage4(size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size);
+
+    /// @brief Returns range of hosts.
+    ///
+    /// This method returns a page of @c Host objects which represent
+    /// reservations.
+    ///
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of const @c Host objects (may be empty).
+    virtual ConstHostCollection
+    getPage6(size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
+
+    /// @brief Returns range of hosts.
+    ///
+    /// This method returns a page of @c Host objects which represent
+    /// reservations.
+    ///
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of non-const @c Host objects (may be empty).
+    virtual HostCollection
+    getPage6(size_t& source_index,
              uint64_t lower_host_id,
              const HostPageSize& page_size);
 
@@ -629,6 +693,23 @@ private:
                           uint64_t lower_host_id,
                           const HostPageSize& page_size,
                           Storage& storage) const;
+
+    /// @brief Returns a page of @c Host objects.
+    ///
+    /// This private method is called by the @c CfgHosts::getPage4
+    /// and @c CfgHosts::getPage6 methods which find the @c Host objects.
+    /// The retrieved objects are appended to the @c storage container.
+    ///
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection of @c HostCollection.
+    template<typename Storage>
+    void getPageInternal(uint64_t lower_host_id,
+                         const HostPageSize& page_size,
+                         Storage& storage) const;
 
     /// @brief Returns @c Host objects for the specified IPv4 address.
     ///

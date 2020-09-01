@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Mon Jun 22 2020 17:23
+// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Tue Sep 01 2020 12:49
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -15,12 +15,15 @@ extern const isc::log::MessageID HOSTS_CFG_CACHE_HOST_DATA_SOURCE = "HOSTS_CFG_C
 extern const isc::log::MessageID HOSTS_CFG_CLOSE_HOST_DATA_SOURCE = "HOSTS_CFG_CLOSE_HOST_DATA_SOURCE";
 extern const isc::log::MessageID HOSTS_CFG_DEL_ALL_SUBNET4 = "HOSTS_CFG_DEL_ALL_SUBNET4";
 extern const isc::log::MessageID HOSTS_CFG_DEL_ALL_SUBNET6 = "HOSTS_CFG_DEL_ALL_SUBNET6";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL = "HOSTS_CFG_GET_ALL";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS4 = "HOSTS_CFG_GET_ALL_ADDRESS4";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS4_COUNT = "HOSTS_CFG_GET_ALL_ADDRESS4_COUNT";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS4_HOST = "HOSTS_CFG_GET_ALL_ADDRESS4_HOST";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6 = "HOSTS_CFG_GET_ALL_ADDRESS6";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6_COUNT = "HOSTS_CFG_GET_ALL_ADDRESS6_COUNT";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6_HOST = "HOSTS_CFG_GET_ALL_ADDRESS6_HOST";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_COUNT = "HOSTS_CFG_GET_ALL_COUNT";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOST = "HOSTS_CFG_GET_ALL_HOST";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME = "HOSTS_CFG_GET_ALL_HOSTNAME";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_COUNT = "HOSTS_CFG_GET_ALL_HOSTNAME_COUNT";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_HOST = "HOSTS_CFG_GET_ALL_HOSTNAME_HOST";
@@ -78,12 +81,15 @@ const char* values[] = {
     "HOSTS_CFG_CLOSE_HOST_DATA_SOURCE", "Closing host data source: %1",
     "HOSTS_CFG_DEL_ALL_SUBNET4", "deleted all %1 host(s) for subnet id %2",
     "HOSTS_CFG_DEL_ALL_SUBNET6", "deleted all %1 host(s) including %2 IPv6 reservation(s) for subnet id %3",
+    "HOSTS_CFG_GET_ALL", "get all hosts with reservations",
     "HOSTS_CFG_GET_ALL_ADDRESS4", "get all hosts with reservations for IPv4 address %1",
     "HOSTS_CFG_GET_ALL_ADDRESS4_COUNT", "using address %1, found %2 host(s)",
     "HOSTS_CFG_GET_ALL_ADDRESS4_HOST", "using address %1 found host: %2",
     "HOSTS_CFG_GET_ALL_ADDRESS6", "get all hosts with reservations for IPv6 address %1",
     "HOSTS_CFG_GET_ALL_ADDRESS6_COUNT", "using address %1, found %2 host(s)",
     "HOSTS_CFG_GET_ALL_ADDRESS6_HOST", "using address %1 found host: %2",
+    "HOSTS_CFG_GET_ALL_COUNT", "found %1 host(s)",
+    "HOSTS_CFG_GET_ALL_HOST", "found host: %1",
     "HOSTS_CFG_GET_ALL_HOSTNAME", "get all hosts with reservations for hostname %1",
     "HOSTS_CFG_GET_ALL_HOSTNAME_COUNT", "using hostname %1, found %2 host(s)",
     "HOSTS_CFG_GET_ALL_HOSTNAME_HOST", "using hostname %1, found host: %2",
