@@ -385,6 +385,16 @@ TEST_F(CqlHostDataSourceTest, getPage6Subnets) {
     testGetPage6Subnets();
 }
 
+// Verifies that all IPv4 host reservations can be retrieved by pages.
+TEST_F(CqlHostDataSourceTest, getPage4All) {
+    testGetPage4All();
+}
+
+// Verifies that all IPv6 host reservations can be retrieved by pages.
+TEST_F(CqlHostDataSourceTest, getPage6All) {
+    testGetPage6All();
+}
+
 // Test verifies if a host reservation can be added and later retrieved by IPv4
 // address. Host uses client-id (DUID) as identifier.
 TEST_F(CqlHostDataSourceTest, basic4ClientId) {

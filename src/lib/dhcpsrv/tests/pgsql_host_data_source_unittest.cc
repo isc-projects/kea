@@ -591,6 +591,28 @@ TEST_F(PgSqlHostDataSourceTest, getPage6SubnetsMultiThreading) {
     testGetPage6Subnets();
 }
 
+// Verifies that all IPv4 host reservations can be retrieved by pages.
+TEST_F(PgSqlHostDataSourceTest, getPage4All) {
+    testGetPage4All();
+}
+
+// Verifies that all IPv4 host reservations can be retrieved by pages.
+TEST_F(PgSqlHostDataSourceTest, getPage4AllMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetPage4All();
+}
+
+// Verifies that all IPv6 host reservations can be retrieved by pages.
+TEST_F(PgSqlHostDataSourceTest, getPage6All) {
+    testGetPage6All();
+}
+
+// Verifies that all IPv6 host reservations can be retrieved by pages.
+TEST_F(PgSqlHostDataSourceTest, getPage6AllMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetPage6All();
+}
+
 /// @brief Test verifies if a host reservation can be added and later retrieved by IPv4
 /// address. Host uses client-id (DUID) as identifier.
 TEST_F(PgSqlHostDataSourceTest, basic4ClientId) {

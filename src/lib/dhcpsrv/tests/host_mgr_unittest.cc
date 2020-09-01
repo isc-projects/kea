@@ -182,6 +182,26 @@ protected:
     /// in a database.
     void testGetPage6(bool use_database);
 
+    /// @brief This test verifies that HostMgr returns all reservations
+    /// by pages.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param use_database True when the second reservation is inserted
+    /// in a database.
+    void testGetPage4All(bool use_database);
+
+    /// @brief This test verifies that HostMgr returns all reservations
+    /// by pages.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param use_database True when the second reservation is inserted
+    /// in a database.
+    void testGetPage6All(bool use_database);
+
     /// @brief This test verifies that it is possible to retrieve IPv4
     /// reservation for the particular host using HostMgr.
     ///
@@ -729,6 +749,164 @@ HostMgrTest::testGetPage6(bool use_database) {
 }
 
 void
+HostMgrTest::testGetPage4All(bool use_database) {
+    BaseHostDataSource& data_source1 = *getCfgHosts();
+    BaseHostDataSource& data_source2 = HostMgr::instance();
+
+    // Initially, no reservations should be present.
+    size_t idx(0);
+    HostPageSize page_size(10);
+    ConstHostCollection hosts =
+        HostMgr::instance().getPage4(idx, 0, page_size);
+    ASSERT_TRUE(hosts.empty());
+    if (use_database) {
+        EXPECT_EQ(2, idx);
+    } else {
+        EXPECT_EQ(1, idx);
+    }
+
+    // Add two reservations.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(use_database ? data_source2 : data_source1,
+             hwaddrs_[1], SubnetID(2), IOAddress("192.0.2.6"));
+
+    CfgMgr::instance().commit();
+
+    // There should be two reservations.
+    idx = 0;
+    hosts = HostMgr::instance().getPage4(idx, 0, page_size);
+    if (use_database) {
+        ASSERT_EQ(1, hosts.size());
+    } else {
+        ASSERT_EQ(2, hosts.size());
+    }
+
+    // Make sure that returned values are correct.
+    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    if (!use_database) {
+        EXPECT_EQ(2, hosts[1]->getIPv4SubnetID());
+        EXPECT_EQ("192.0.2.6", hosts[1]->getIPv4Reservation().toText());
+
+        // Check it was the last page.
+        uint64_t hid = hosts[1]->getHostId();
+        hosts = HostMgr::instance().getPage4(idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 1;
+        hosts = HostMgr::instance().getPage4(idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+
+    if (use_database) {
+        uint64_t hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        ASSERT_EQ(0, idx);
+        hosts = HostMgr::instance().getPage4(idx, hid, page_size);
+        ASSERT_EQ(1, hosts.size());
+        ASSERT_NE(0, idx);
+        EXPECT_EQ(2, hosts[0]->getIPv4SubnetID());
+        EXPECT_EQ("192.0.2.6", hosts[0]->getIPv4Reservation().toText());
+
+        // Alternate way to use the database.
+        idx = 1;
+        hosts = HostMgr::instance().getPage4(idx, 0, page_size);
+        ASSERT_EQ(1, hosts.size());
+        EXPECT_EQ(2, hosts[0]->getIPv4SubnetID());
+        EXPECT_EQ("192.0.2.6", hosts[0]->getIPv4Reservation().toText());
+
+        // Check it was the last page.
+        hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        hosts = HostMgr::instance().getPage4(idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 2;
+        hosts = HostMgr::instance().getPage4(idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+}
+
+void
+HostMgrTest::testGetPage6All(bool use_database) {
+    BaseHostDataSource& data_source1 = *getCfgHosts();
+    BaseHostDataSource& data_source2 = HostMgr::instance();
+
+    // Initially, no reservations should be present.
+    size_t idx(0);
+    HostPageSize page_size(10);
+    ConstHostCollection hosts =
+        HostMgr::instance().getPage6(idx, 0, page_size);
+    ASSERT_TRUE(hosts.empty());
+    if (use_database) {
+        EXPECT_EQ(2, idx);
+    } else {
+        EXPECT_EQ(1, idx);
+    }
+
+    // Add two reservations.
+    addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost6(use_database ? data_source2 : data_source1,
+             duids_[1], SubnetID(2), IOAddress("2001:db8:1::6"));
+
+    CfgMgr::instance().commit();
+
+    // There should be two reservations.
+    idx = 0;
+    hosts = HostMgr::instance().getPage6(idx, 0, page_size);
+    if (use_database) {
+        ASSERT_EQ(1, hosts.size());
+    } else {
+        ASSERT_EQ(2, hosts.size());
+    }
+
+    // Make sure that returned values are correct.
+    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+    EXPECT_TRUE(hosts[0]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+    if (!use_database) {
+        EXPECT_EQ(2, hosts[1]->getIPv6SubnetID());
+        EXPECT_TRUE(hosts[1]->hasReservation(
+                    IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+
+        // Check it was the last page.
+        uint64_t hid = hosts[1]->getHostId();
+        hosts = HostMgr::instance().getPage6(idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 1;
+        hosts = HostMgr::instance().getPage6(idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+
+    if (use_database) {
+        uint64_t hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        ASSERT_EQ(0, idx);
+        hosts = HostMgr::instance().getPage6(idx, hid, page_size);
+        ASSERT_EQ(1, hosts.size());
+        ASSERT_NE(0, idx);
+        EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+        EXPECT_TRUE(hosts[0]->hasReservation(
+                    IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+
+        // Alternate way to use the database.
+        idx = 1;
+        hosts = HostMgr::instance().getPage6(idx, 0, page_size);
+        ASSERT_EQ(1, hosts.size());
+        EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+        EXPECT_TRUE(hosts[0]->hasReservation(
+                    IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+
+        // Check it was the last page.
+        hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        hosts = HostMgr::instance().getPage6(idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 2;
+        hosts = HostMgr::instance().getPage6(idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+}
+
+void
 HostMgrTest::testGetAll4(BaseHostDataSource& data_source1,
                          BaseHostDataSource& data_source2) {
     // Initially, no hosts should be present.
@@ -1008,11 +1186,23 @@ TEST_F(HostMgrTest, getPage4) {
     testGetPage4(false);
 }
 
+// This test verifies that HostMgr returns all v4 reservations by pages.
+// The reservations are defined in the server's configuration.
+TEST_F(HostMgrTest, getPage4All) {
+    testGetPage4All(false);
+}
+
 // This test verifies that HostMgr returns all reservations for the
 // specified DHCPv6 subnet by pages. The reservations are defined in
 // the server's configuration.
 TEST_F(HostMgrTest, getPage6) {
     testGetPage6(false);
+}
+
+// This test verifies that HostMgr returns all v6 reservations by pages.
+// The reservations are defined in the server's configuration.
+TEST_F(HostMgrTest, getPage6All) {
+    testGetPage6All(false);
 }
 
 // This test verifies that it is possible to gather all reservations for the
@@ -1272,11 +1462,23 @@ TEST_F(MySQLHostMgrTest, getPage4) {
     testGetPage4(true);
 }
 
+// This test verifies that all v4 reservations be retrieved by pages
+// from the configuration file and a database simultaneously.
+TEST_F(MySQLHostMgrTest, getPage4All) {
+    testGetPage4All(true);
+}
+
 // This test verifies that reservations for a particular subnet can
 // be retrieved by pages from the configuration file and a database
 // simultaneously.
 TEST_F(MySQLHostMgrTest, getPage6) {
     testGetPage6(true);
+}
+
+// This test verifies that all v6 reservations be retrieved by pages
+// from the configuration file and a database simultaneously.
+TEST_F(MySQLHostMgrTest, getPage6All) {
+    testGetPage6All(true);
 }
 
 // This test verifies that IPv4 reservations for a particular client can
@@ -1417,11 +1619,23 @@ TEST_F(PostgreSQLHostMgrTest, getPage4) {
     testGetPage4(true);
 }
 
+// This test verifies that all v4 reservations be retrieved by pages
+// from the configuration file and a database simultaneously.
+TEST_F(PostgreSQLHostMgrTest, getPage4All) {
+    testGetPage4All(true);
+}
+
 // This test verifies that reservations for a particular subnet can
 // be retrieved by pages from the configuration file and a database
 // simultaneously.
 TEST_F(PostgreSQLHostMgrTest, getPage6) {
     testGetPage6(true);
+}
+
+// This test verifies that all v6 reservations be retrieved by pages
+// from the configuration file and a database simultaneously.
+TEST_F(PostgreSQLHostMgrTest, getPage6All) {
+    testGetPage6All(true);
 }
 
 // This test verifies that IPv4 reservations for a particular client can
@@ -1543,11 +1757,23 @@ TEST_F(CQLHostMgrTest, getPage4) {
     testGetPage4(true);
 }
 
+// This test verifies that all v4 reservations be retrieved by pages
+// from the configuration file and a database simultaneously.
+TEST_F(CQLHostMgrTest, getPage4All) {
+    testGetPage4All(true);
+}
+
 // This test verifies that reservations for a particular subnet can
 // be retrieved by pages from the configuration file and a database
 // simultaneously.
 TEST_F(CQLHostMgrTest, getPage6) {
     testGetPage6(true);
+}
+
+// This test verifies that all v6 reservations be retrieved by pages
+// from the configuration file and a database simultaneously.
+TEST_F(CQLHostMgrTest, getPage6All) {
+    testGetPage6All(true);
 }
 
 // This test verifies that IPv4 reservations for a particular client can

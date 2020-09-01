@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -349,6 +349,77 @@ TEST_F(CfgHostsTest, getPage6) {
 
     // Verify we have everything.
     page = cfg.getPage6(SubnetID(1), idx, host_id, page_size);
+    EXPECT_EQ(0, page.size());
+}
+
+// This test checks that all hosts can be retrieved from the host
+// configuration by pages.
+TEST_F(CfgHostsTest, getPage4All) {
+    CfgHosts cfg;
+    // Add 25 hosts identified by DUID.
+    for (unsigned i = 0; i < 25; ++i) {
+        cfg.add(HostPtr(new Host(duids_[i]->toText(), "duid",
+                                 SubnetID(i), SubnetID(i),
+                                 addressesa_[i])));
+    }
+    size_t idx(0);
+    uint64_t host_id(0);
+    HostPageSize page_size(10);
+
+    // Try to retrieve all added reservations.
+    // Get first page.
+    HostCollection page = cfg.getPage4(idx, host_id, page_size);
+    EXPECT_EQ(10, page.size());
+    host_id = page[9]->getHostId();
+
+    // Get second and last pages.
+    page = cfg.getPage4(idx, host_id, page_size);
+    EXPECT_EQ(10, page.size());
+    host_id = page[9]->getHostId();
+    page = cfg.getPage4(idx, host_id, page_size);
+    EXPECT_EQ(5, page.size());
+    host_id = page[4]->getHostId();
+
+    // Verify we have everything.
+    page = cfg.getPage4(idx, host_id, page_size);
+    EXPECT_EQ(0, page.size());
+}
+
+// This test checks that all hosts can be retrieved from the host
+// configuration by pages.
+TEST_F(CfgHostsTest, getPage6All) {
+    CfgHosts cfg;
+    // Add 25 hosts identified by HW address.
+    for (unsigned i = 0; i < 25; ++i) {
+        HostPtr host = HostPtr(new Host(hwaddrs_[i]->toText(false),
+                                        "hw-address",
+                                        SubnetID(i), SubnetID(i),
+                                        IOAddress("0.0.0.0")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress("2001:db8:1::1"),
+                                                i)));
+        cfg.add(host);
+    }
+    size_t idx(0);
+    uint64_t host_id(0);
+    HostPageSize page_size(10);
+
+    // Try to retrieve all added reservations.
+    // Get first page.
+    HostCollection page = cfg.getPage6(idx, host_id, page_size);
+    EXPECT_EQ(10, page.size());
+    host_id = page[9]->getHostId();
+
+    // Get second and last pages.
+    page = cfg.getPage6(idx, host_id, page_size);
+    EXPECT_EQ(10, page.size());
+    host_id = page[9]->getHostId();
+    page = cfg.getPage6(idx, host_id, page_size);
+    EXPECT_EQ(5, page.size());
+    host_id = page[4]->getHostId();
+
+    // Verify we have everything.
+    page = cfg.getPage6(idx, host_id, page_size);
     EXPECT_EQ(0, page.size());
 }
 
