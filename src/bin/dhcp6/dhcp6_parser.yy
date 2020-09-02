@@ -2275,7 +2275,6 @@ dhcp_ddns_params: dhcp_ddns_param
                 ;
 
 dhcp_ddns_param: enable_updates
-               | qualifying_suffix
                | server_ip
                | server_port
                | sender_ip
@@ -2287,6 +2286,7 @@ dhcp_ddns_param: enable_updates
                | dep_override_client_update
                | dep_replace_client_name
                | dep_generated_prefix
+               | dep_qualifying_suffix
                | dep_hostname_char_set
                | dep_hostname_char_replacement
                | user_context
@@ -2299,7 +2299,8 @@ enable_updates: ENABLE_UPDATES COLON BOOLEAN {
     ctx.stack_.back()->set("enable-updates", b);
 };
 
-qualifying_suffix: QUALIFYING_SUFFIX {
+// Deprecated, moved to global/network scopes. Eventually it should be removed.
+dep_qualifying_suffix: QUALIFYING_SUFFIX {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
