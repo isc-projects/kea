@@ -16,10 +16,22 @@ namespace dhcp {
 namespace test {
 
 ConstHostCollection
-MemHostDataSource::getAll(const Host::IdentifierType& /*identifier_type*/,
-                          const uint8_t* /*identifier_begin*/,
-                          const size_t /*identifier_len*/) const {
-    return (ConstHostCollection());
+MemHostDataSource::getAll(const Host::IdentifierType& identifier_type,
+                          const uint8_t* identifier_begin,
+                          const size_t identifier_len) const {
+    vector<uint8_t> ident(identifier_begin, identifier_begin + identifier_len);
+    ConstHostCollection hosts;
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        // If identifier type do not match, it's not for us
+        if ((*h)->getIdentifierType() != identifier_type) {
+            continue;
+        }
+        // If the identifier matches, we found one!
+        if ((*h)->getIdentifier() == ident) {
+            hosts.push_back(*h);
+        }
+    }
+    return (hosts);
 }
 
 ConstHostCollection

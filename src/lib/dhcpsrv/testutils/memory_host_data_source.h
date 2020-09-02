@@ -34,13 +34,10 @@ public:
     ///
     /// This may return hosts from multiple subnets.
     ///
-    /// Currently not implemented.
-    ///
     /// @param identifier_type Identifier type.
     /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
-    /// @return Empty collection of const @c Host objects.
     virtual ConstHostCollection
     getAll(const Host::IdentifierType& identifier_type,
            const uint8_t* identifier_begin,
