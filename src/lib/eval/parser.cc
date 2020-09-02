@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.6.4.
+// A Bison parser, made by GNU Bison 3.7.1.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -209,45 +209,45 @@ namespace isc { namespace eval {
   {
     switch (that.kind ())
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.YY_MOVE_OR_COPY< TokenOption::RepresentationType > (YY_MOVE (that.value));
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.YY_MOVE_OR_COPY< TokenPkt4::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.YY_MOVE_OR_COPY< TokenPkt6::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.YY_MOVE_OR_COPY< TokenPkt::MetadataType > (YY_MOVE (that.value));
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.YY_MOVE_OR_COPY< TokenRelay6Field::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.YY_MOVE_OR_COPY< int8_t > (YY_MOVE (that.value));
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.YY_MOVE_OR_COPY< uint16_t > (YY_MOVE (that.value));
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.YY_MOVE_OR_COPY< uint32_t > (YY_MOVE (that.value));
         break;
 
@@ -266,45 +266,45 @@ namespace isc { namespace eval {
   {
     switch (that.kind ())
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.move< TokenOption::RepresentationType > (YY_MOVE (that.value));
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.move< TokenPkt4::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.move< TokenPkt6::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.move< TokenPkt::MetadataType > (YY_MOVE (that.value));
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.move< TokenRelay6Field::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.move< int8_t > (YY_MOVE (that.value));
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.move< std::string > (YY_MOVE (that.value));
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.move< uint16_t > (YY_MOVE (that.value));
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.move< uint32_t > (YY_MOVE (that.value));
         break;
 
@@ -323,45 +323,45 @@ namespace isc { namespace eval {
     state = that.state;
     switch (that.kind ())
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.copy< TokenOption::RepresentationType > (that.value);
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.copy< TokenPkt4::FieldType > (that.value);
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.copy< TokenPkt6::FieldType > (that.value);
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.copy< TokenPkt::MetadataType > (that.value);
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.copy< TokenRelay6Field::FieldType > (that.value);
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.copy< int8_t > (that.value);
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.copy< std::string > (that.value);
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.copy< uint16_t > (that.value);
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.copy< uint32_t > (that.value);
         break;
 
@@ -379,45 +379,45 @@ namespace isc { namespace eval {
     state = that.state;
     switch (that.kind ())
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.move< TokenOption::RepresentationType > (that.value);
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.move< TokenPkt4::FieldType > (that.value);
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.move< TokenPkt6::FieldType > (that.value);
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.move< TokenPkt::MetadataType > (that.value);
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.move< TokenRelay6Field::FieldType > (that.value);
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.move< int8_t > (that.value);
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.move< std::string > (that.value);
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.move< uint16_t > (that.value);
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.move< uint32_t > (that.value);
         break;
 
@@ -457,91 +457,91 @@ namespace isc { namespace eval {
             << yysym.location << ": ";
         switch (yykind)
     {
-      case 50: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 464 "parser.cc"
         break;
 
-      case 51: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 470 "parser.cc"
         break;
 
-      case 52: // "constant hexstring"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 476 "parser.cc"
         break;
 
-      case 53: // "option name"
+      case symbol_kind::S_OPTION_NAME: // "option name"
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 482 "parser.cc"
         break;
 
-      case 54: // "ip address"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 488 "parser.cc"
         break;
 
-      case 60: // integer_expr
+      case symbol_kind::S_integer_expr: // integer_expr
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < uint32_t > (); }
 #line 494 "parser.cc"
         break;
 
-      case 61: // option_code
+      case symbol_kind::S_option_code: // option_code
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < uint16_t > (); }
 #line 500 "parser.cc"
         break;
 
-      case 62: // sub_option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < uint16_t > (); }
 #line 506 "parser.cc"
         break;
 
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < TokenOption::RepresentationType > (); }
 #line 512 "parser.cc"
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < int8_t > (); }
 #line 518 "parser.cc"
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < TokenPkt::MetadataType > (); }
 #line 524 "parser.cc"
         break;
 
-      case 66: // enterprise_id
+      case symbol_kind::S_enterprise_id: // enterprise_id
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < uint32_t > (); }
 #line 530 "parser.cc"
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < TokenPkt4::FieldType > (); }
 #line 536 "parser.cc"
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < TokenPkt6::FieldType > (); }
 #line 542 "parser.cc"
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
 #line 112 "parser.yy"
                  { yyoutput << yysym.value.template as < TokenRelay6Field::FieldType > (); }
 #line 548 "parser.cc"
@@ -774,45 +774,45 @@ namespace isc { namespace eval {
          when using variants.  */
       switch (yyr1_[yyn])
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         yylhs.value.emplace< TokenOption::RepresentationType > ();
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         yylhs.value.emplace< TokenPkt4::FieldType > ();
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         yylhs.value.emplace< TokenPkt6::FieldType > ();
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         yylhs.value.emplace< TokenPkt::MetadataType > ();
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         yylhs.value.emplace< TokenRelay6Field::FieldType > ();
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         yylhs.value.emplace< int8_t > ();
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         yylhs.value.emplace< std::string > ();
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         yylhs.value.emplace< uint16_t > ();
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         yylhs.value.emplace< uint32_t > ();
         break;
 
@@ -836,7 +836,7 @@ namespace isc { namespace eval {
         {
           switch (yyn)
             {
-  case 6:
+  case 6: // bool_expr: "not" bool_expr
 #line 132 "parser.yy"
                 {
                     TokenPtr neg(new TokenNot());
@@ -845,7 +845,7 @@ namespace isc { namespace eval {
 #line 846 "parser.cc"
     break;
 
-  case 7:
+  case 7: // bool_expr: bool_expr "and" bool_expr
 #line 137 "parser.yy"
                 {
                     TokenPtr neg(new TokenAnd());
@@ -854,7 +854,7 @@ namespace isc { namespace eval {
 #line 855 "parser.cc"
     break;
 
-  case 8:
+  case 8: // bool_expr: bool_expr "or" bool_expr
 #line 142 "parser.yy"
                 {
                     TokenPtr neg(new TokenOr());
@@ -863,7 +863,7 @@ namespace isc { namespace eval {
 #line 864 "parser.cc"
     break;
 
-  case 9:
+  case 9: // bool_expr: string_expr "==" string_expr
 #line 147 "parser.yy"
                 {
                     TokenPtr eq(new TokenEqual());
@@ -872,7 +872,7 @@ namespace isc { namespace eval {
 #line 873 "parser.cc"
     break;
 
-  case 10:
+  case 10: // bool_expr: "option" "[" option_code "]" "." "exists"
 #line 152 "parser.yy"
                 {
                     TokenPtr opt(new TokenOption(yystack_[3].value.as < uint16_t > (), TokenOption::EXISTS));
@@ -881,7 +881,7 @@ namespace isc { namespace eval {
 #line 882 "parser.cc"
     break;
 
-  case 11:
+  case 11: // bool_expr: "option" "[" option_code "]" "." "option" "[" sub_option_code "]" "." "exists"
 #line 157 "parser.yy"
                 {
                     TokenPtr opt(new TokenSubOption(yystack_[8].value.as < uint16_t > (), yystack_[3].value.as < uint16_t > (), TokenOption::EXISTS));
@@ -890,7 +890,7 @@ namespace isc { namespace eval {
 #line 891 "parser.cc"
     break;
 
-  case 12:
+  case 12: // bool_expr: "relay4" "[" sub_option_code "]" "." "exists"
 #line 162 "parser.yy"
                 {
                    switch (ctx.getUniverse()) {
@@ -914,7 +914,7 @@ namespace isc { namespace eval {
 #line 915 "parser.cc"
     break;
 
-  case 13:
+  case 13: // bool_expr: "relay6" "[" nest_level "]" "." "option" "[" sub_option_code "]" "." "exists"
 #line 182 "parser.yy"
                 {
                     switch (ctx.getUniverse()) {
@@ -932,7 +932,7 @@ namespace isc { namespace eval {
 #line 933 "parser.cc"
     break;
 
-  case 14:
+  case 14: // bool_expr: "vendor-class" "[" enterprise_id "]" "." "exists"
 #line 196 "parser.yy"
               {
                   // Expression: vendor-class[1234].exists
@@ -945,7 +945,7 @@ namespace isc { namespace eval {
 #line 946 "parser.cc"
     break;
 
-  case 15:
+  case 15: // bool_expr: "vendor" "[" enterprise_id "]" "." "exists"
 #line 205 "parser.yy"
               {
                   // Expression: vendor[1234].exists
@@ -958,7 +958,7 @@ namespace isc { namespace eval {
 #line 959 "parser.cc"
     break;
 
-  case 16:
+  case 16: // bool_expr: "vendor" "[" enterprise_id "]" "." "option" "[" sub_option_code "]" "." "exists"
 #line 214 "parser.yy"
               {
                   // Expression vendor[1234].option[123].exists
@@ -972,7 +972,7 @@ namespace isc { namespace eval {
 #line 973 "parser.cc"
     break;
 
-  case 17:
+  case 17: // bool_expr: "member" "(" "constant string" ")"
 #line 224 "parser.yy"
               {
                   // Expression member('foo')
@@ -991,7 +991,7 @@ namespace isc { namespace eval {
 #line 992 "parser.cc"
     break;
 
-  case 18:
+  case 18: // string_expr: "constant string"
 #line 241 "parser.yy"
                   {
                       TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
@@ -1000,7 +1000,7 @@ namespace isc { namespace eval {
 #line 1001 "parser.cc"
     break;
 
-  case 19:
+  case 19: // string_expr: "constant hexstring"
 #line 246 "parser.yy"
                   {
                       TokenPtr hex(new TokenHexString(yystack_[0].value.as < std::string > ()));
@@ -1009,7 +1009,7 @@ namespace isc { namespace eval {
 #line 1010 "parser.cc"
     break;
 
-  case 20:
+  case 20: // string_expr: "ip address"
 #line 251 "parser.yy"
                   {
                       TokenPtr ip(new TokenIpAddress(yystack_[0].value.as < std::string > ()));
@@ -1018,7 +1018,7 @@ namespace isc { namespace eval {
 #line 1019 "parser.cc"
     break;
 
-  case 21:
+  case 21: // string_expr: "option" "[" option_code "]" "." option_repr_type
 #line 256 "parser.yy"
                   {
                       TokenPtr opt(new TokenOption(yystack_[3].value.as < uint16_t > (), yystack_[0].value.as < TokenOption::RepresentationType > ()));
@@ -1027,7 +1027,7 @@ namespace isc { namespace eval {
 #line 1028 "parser.cc"
     break;
 
-  case 22:
+  case 22: // string_expr: "option" "[" option_code "]" "." "option" "[" sub_option_code "]" "." option_repr_type
 #line 261 "parser.yy"
                   {
                       TokenPtr opt(new TokenSubOption(yystack_[8].value.as < uint16_t > (), yystack_[3].value.as < uint16_t > (), yystack_[0].value.as < TokenOption::RepresentationType > ()));
@@ -1036,7 +1036,7 @@ namespace isc { namespace eval {
 #line 1037 "parser.cc"
     break;
 
-  case 23:
+  case 23: // string_expr: "relay4" "[" sub_option_code "]" "." option_repr_type
 #line 266 "parser.yy"
                   {
                      switch (ctx.getUniverse()) {
@@ -1060,7 +1060,7 @@ namespace isc { namespace eval {
 #line 1061 "parser.cc"
     break;
 
-  case 24:
+  case 24: // string_expr: "relay6" "[" nest_level "]" "." "option" "[" sub_option_code "]" "." option_repr_type
 #line 287 "parser.yy"
                   {
                      switch (ctx.getUniverse()) {
@@ -1078,7 +1078,7 @@ namespace isc { namespace eval {
 #line 1079 "parser.cc"
     break;
 
-  case 25:
+  case 25: // string_expr: "pkt" "." pkt_metadata
 #line 302 "parser.yy"
                   {
                       TokenPtr pkt_metadata(new TokenPkt(yystack_[0].value.as < TokenPkt::MetadataType > ()));
@@ -1087,7 +1087,7 @@ namespace isc { namespace eval {
 #line 1088 "parser.cc"
     break;
 
-  case 26:
+  case 26: // string_expr: "pkt4" "." pkt4_field
 #line 307 "parser.yy"
                   {
                      switch (ctx.getUniverse()) {
@@ -1105,7 +1105,7 @@ namespace isc { namespace eval {
 #line 1106 "parser.cc"
     break;
 
-  case 27:
+  case 27: // string_expr: "pkt6" "." pkt6_field
 #line 321 "parser.yy"
                   {
                      switch (ctx.getUniverse()) {
@@ -1123,7 +1123,7 @@ namespace isc { namespace eval {
 #line 1124 "parser.cc"
     break;
 
-  case 28:
+  case 28: // string_expr: "relay6" "[" nest_level "]" "." relay6_field
 #line 335 "parser.yy"
                   {
                      switch (ctx.getUniverse()) {
@@ -1141,7 +1141,7 @@ namespace isc { namespace eval {
 #line 1142 "parser.cc"
     break;
 
-  case 29:
+  case 29: // string_expr: "substring" "(" string_expr "," start_expr "," length_expr ")"
 #line 350 "parser.yy"
                   {
                       TokenPtr sub(new TokenSubstring());
@@ -1150,7 +1150,7 @@ namespace isc { namespace eval {
 #line 1151 "parser.cc"
     break;
 
-  case 30:
+  case 30: // string_expr: "concat" "(" string_expr "," string_expr ")"
 #line 355 "parser.yy"
                   {
                       TokenPtr conc(new TokenConcat());
@@ -1159,7 +1159,7 @@ namespace isc { namespace eval {
 #line 1160 "parser.cc"
     break;
 
-  case 31:
+  case 31: // string_expr: "ifelse" "(" bool_expr "," string_expr "," string_expr ")"
 #line 360 "parser.yy"
                   {
                       TokenPtr cond(new TokenIfElse());
@@ -1168,7 +1168,7 @@ namespace isc { namespace eval {
 #line 1169 "parser.cc"
     break;
 
-  case 32:
+  case 32: // string_expr: "hexstring" "(" string_expr "," string_expr ")"
 #line 365 "parser.yy"
                   {
                       TokenPtr tohex(new TokenToHexString());
@@ -1177,7 +1177,7 @@ namespace isc { namespace eval {
 #line 1178 "parser.cc"
     break;
 
-  case 33:
+  case 33: // string_expr: "vendor" "." "enterprise"
 #line 370 "parser.yy"
                 {
                     // expression: vendor.enterprise
@@ -1190,7 +1190,7 @@ namespace isc { namespace eval {
 #line 1191 "parser.cc"
     break;
 
-  case 34:
+  case 34: // string_expr: "vendor-class" "." "enterprise"
 #line 379 "parser.yy"
                 {
                     // expression: vendor-class.enterprise
@@ -1204,7 +1204,7 @@ namespace isc { namespace eval {
 #line 1205 "parser.cc"
     break;
 
-  case 35:
+  case 35: // string_expr: "vendor" "[" enterprise_id "]" "." "option" "[" sub_option_code "]" "." option_repr_type
 #line 389 "parser.yy"
                 {
                     // This token will search for vendor option with
@@ -1217,7 +1217,7 @@ namespace isc { namespace eval {
 #line 1218 "parser.cc"
     break;
 
-  case 36:
+  case 36: // string_expr: "vendor-class" "[" enterprise_id "]" "." "data"
 #line 398 "parser.yy"
                 {
                     // expression: vendor-class[1234].data
@@ -1234,7 +1234,7 @@ namespace isc { namespace eval {
 #line 1235 "parser.cc"
     break;
 
-  case 37:
+  case 37: // string_expr: "vendor-class" "[" enterprise_id "]" "." "data" "[" "integer" "]"
 #line 411 "parser.yy"
                 {
                     // expression: vendor-class[1234].data[5]
@@ -1251,7 +1251,7 @@ namespace isc { namespace eval {
 #line 1252 "parser.cc"
     break;
 
-  case 38:
+  case 38: // string_expr: integer_expr
 #line 424 "parser.yy"
                 {
                     TokenPtr integer(new TokenInteger(yystack_[0].value.as < uint32_t > ()));
@@ -1260,7 +1260,7 @@ namespace isc { namespace eval {
 #line 1261 "parser.cc"
     break;
 
-  case 39:
+  case 39: // integer_expr: "integer"
 #line 431 "parser.yy"
                  {
                      yylhs.value.as < uint32_t > () = ctx.convertUint32(yystack_[0].value.as < std::string > (), yystack_[0].location);
@@ -1268,7 +1268,7 @@ namespace isc { namespace eval {
 #line 1269 "parser.cc"
     break;
 
-  case 40:
+  case 40: // option_code: "integer"
 #line 437 "parser.yy"
                  {
                      yylhs.value.as < uint16_t > () = ctx.convertOptionCode(yystack_[0].value.as < std::string > (), yystack_[0].location);
@@ -1276,7 +1276,7 @@ namespace isc { namespace eval {
 #line 1277 "parser.cc"
     break;
 
-  case 41:
+  case 41: // option_code: "option name"
 #line 441 "parser.yy"
                  {
                      yylhs.value.as < uint16_t > () = ctx.convertOptionName(yystack_[0].value.as < std::string > (), yystack_[0].location);
@@ -1284,7 +1284,7 @@ namespace isc { namespace eval {
 #line 1285 "parser.cc"
     break;
 
-  case 42:
+  case 42: // sub_option_code: "integer"
 #line 447 "parser.yy"
                  {
                      yylhs.value.as < uint16_t > () = ctx.convertOptionCode(yystack_[0].value.as < std::string > (), yystack_[0].location);
@@ -1292,7 +1292,7 @@ namespace isc { namespace eval {
 #line 1293 "parser.cc"
     break;
 
-  case 43:
+  case 43: // option_repr_type: "text"
 #line 453 "parser.yy"
                       {
                           yylhs.value.as < TokenOption::RepresentationType > () = TokenOption::TEXTUAL;
@@ -1300,7 +1300,7 @@ namespace isc { namespace eval {
 #line 1301 "parser.cc"
     break;
 
-  case 44:
+  case 44: // option_repr_type: "hex"
 #line 457 "parser.yy"
                       {
                           yylhs.value.as < TokenOption::RepresentationType > () = TokenOption::HEXADECIMAL;
@@ -1308,7 +1308,7 @@ namespace isc { namespace eval {
 #line 1309 "parser.cc"
     break;
 
-  case 45:
+  case 45: // nest_level: "integer"
 #line 463 "parser.yy"
                  {
                      yylhs.value.as < int8_t > () = ctx.convertNestLevelNumber(yystack_[0].value.as < std::string > (), yystack_[0].location);
@@ -1316,7 +1316,7 @@ namespace isc { namespace eval {
 #line 1317 "parser.cc"
     break;
 
-  case 46:
+  case 46: // pkt_metadata: "iface"
 #line 472 "parser.yy"
                   {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::IFACE;
@@ -1324,7 +1324,7 @@ namespace isc { namespace eval {
 #line 1325 "parser.cc"
     break;
 
-  case 47:
+  case 47: // pkt_metadata: "src"
 #line 476 "parser.yy"
                   {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::SRC;
@@ -1332,7 +1332,7 @@ namespace isc { namespace eval {
 #line 1333 "parser.cc"
     break;
 
-  case 48:
+  case 48: // pkt_metadata: "dst"
 #line 480 "parser.yy"
                   {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::DST;
@@ -1340,7 +1340,7 @@ namespace isc { namespace eval {
 #line 1341 "parser.cc"
     break;
 
-  case 49:
+  case 49: // pkt_metadata: "len"
 #line 484 "parser.yy"
                   {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::LEN;
@@ -1348,7 +1348,7 @@ namespace isc { namespace eval {
 #line 1349 "parser.cc"
     break;
 
-  case 50:
+  case 50: // enterprise_id: "integer"
 #line 490 "parser.yy"
                    {
                        yylhs.value.as < uint32_t > () = ctx.convertUint32(yystack_[0].value.as < std::string > (), yystack_[0].location);
@@ -1356,7 +1356,7 @@ namespace isc { namespace eval {
 #line 1357 "parser.cc"
     break;
 
-  case 51:
+  case 51: // enterprise_id: "*"
 #line 494 "parser.yy"
                    {
                        yylhs.value.as < uint32_t > () = 0;
@@ -1364,7 +1364,7 @@ namespace isc { namespace eval {
 #line 1365 "parser.cc"
     break;
 
-  case 52:
+  case 52: // pkt4_field: "mac"
 #line 500 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::CHADDR;
@@ -1372,7 +1372,7 @@ namespace isc { namespace eval {
 #line 1373 "parser.cc"
     break;
 
-  case 53:
+  case 53: // pkt4_field: "hlen"
 #line 504 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::HLEN;
@@ -1380,7 +1380,7 @@ namespace isc { namespace eval {
 #line 1381 "parser.cc"
     break;
 
-  case 54:
+  case 54: // pkt4_field: "htype"
 #line 508 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::HTYPE;
@@ -1388,7 +1388,7 @@ namespace isc { namespace eval {
 #line 1389 "parser.cc"
     break;
 
-  case 55:
+  case 55: // pkt4_field: "ciaddr"
 #line 512 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::CIADDR;
@@ -1396,7 +1396,7 @@ namespace isc { namespace eval {
 #line 1397 "parser.cc"
     break;
 
-  case 56:
+  case 56: // pkt4_field: "giaddr"
 #line 516 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::GIADDR;
@@ -1404,7 +1404,7 @@ namespace isc { namespace eval {
 #line 1405 "parser.cc"
     break;
 
-  case 57:
+  case 57: // pkt4_field: "yiaddr"
 #line 520 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::YIADDR;
@@ -1412,7 +1412,7 @@ namespace isc { namespace eval {
 #line 1413 "parser.cc"
     break;
 
-  case 58:
+  case 58: // pkt4_field: "siaddr"
 #line 524 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::SIADDR;
@@ -1420,7 +1420,7 @@ namespace isc { namespace eval {
 #line 1421 "parser.cc"
     break;
 
-  case 59:
+  case 59: // pkt4_field: "msgtype"
 #line 528 "parser.yy"
                  {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::MSGTYPE;
@@ -1428,7 +1428,7 @@ namespace isc { namespace eval {
 #line 1429 "parser.cc"
     break;
 
-  case 60:
+  case 60: // pkt4_field: "transid"
 #line 532 "parser.yy"
                  {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::TRANSID;
@@ -1436,7 +1436,7 @@ namespace isc { namespace eval {
 #line 1437 "parser.cc"
     break;
 
-  case 61:
+  case 61: // pkt6_field: "msgtype"
 #line 538 "parser.yy"
                  {
                      yylhs.value.as < TokenPkt6::FieldType > () = TokenPkt6::MSGTYPE;
@@ -1444,7 +1444,7 @@ namespace isc { namespace eval {
 #line 1445 "parser.cc"
     break;
 
-  case 62:
+  case 62: // pkt6_field: "transid"
 #line 542 "parser.yy"
                  {
                      yylhs.value.as < TokenPkt6::FieldType > () = TokenPkt6::TRANSID;
@@ -1452,7 +1452,7 @@ namespace isc { namespace eval {
 #line 1453 "parser.cc"
     break;
 
-  case 63:
+  case 63: // relay6_field: "peeraddr"
 #line 548 "parser.yy"
                    {
                        yylhs.value.as < TokenRelay6Field::FieldType > () = TokenRelay6Field::PEERADDR;
@@ -1460,7 +1460,7 @@ namespace isc { namespace eval {
 #line 1461 "parser.cc"
     break;
 
-  case 64:
+  case 64: // relay6_field: "linkaddr"
 #line 552 "parser.yy"
                    {
                        yylhs.value.as < TokenRelay6Field::FieldType > () = TokenRelay6Field::LINKADDR;
@@ -1468,7 +1468,7 @@ namespace isc { namespace eval {
 #line 1469 "parser.cc"
     break;
 
-  case 65:
+  case 65: // start_expr: "integer"
 #line 558 "parser.yy"
                 {
                     TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
@@ -1477,7 +1477,7 @@ namespace isc { namespace eval {
 #line 1478 "parser.cc"
     break;
 
-  case 66:
+  case 66: // length_expr: "integer"
 #line 565 "parser.yy"
                  {
                      TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
@@ -1486,7 +1486,7 @@ namespace isc { namespace eval {
 #line 1487 "parser.cc"
     break;
 
-  case 67:
+  case 67: // length_expr: "all"
 #line 570 "parser.yy"
                  {
                      TokenPtr str(new TokenString("all"));

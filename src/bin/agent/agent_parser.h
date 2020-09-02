@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.6.4.
+// A Bison parser, made by GNU Bison 3.7.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -704,25 +704,25 @@ namespace isc { namespace agent {
       {
         switch (this->kind ())
     {
-      case 50: // value
-      case 53: // map_value
-      case 104: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.move< ElementPtr > (std::move (that.value));
         break;
 
-      case 41: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.move< bool > (std::move (that.value));
         break;
 
-      case 40: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.move< double > (std::move (that.value));
         break;
 
-      case 39: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.move< int64_t > (std::move (that.value));
         break;
 
-      case 38: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -836,25 +836,25 @@ namespace isc { namespace agent {
         // Value type destructor.
 switch (yykind)
     {
-      case 50: // value
-      case 53: // map_value
-      case 104: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 41: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 40: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 39: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 38: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1838,7 +1838,7 @@ switch (yykind)
       void move (by_state& that);
 
       /// The symbol kind (corresponding to \a state).
-      /// \a S_YYEMPTY when empty.
+      /// \a symbol_kind::S_YYEMPTY when empty.
       symbol_kind_type kind () const YY_NOEXCEPT;
 
       /// The state number used to denote an empty symbol.
@@ -2069,11 +2069,12 @@ switch (yykind)
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41
     };
-    const int user_token_number_max_ = 296;
+    // Last valid token kind.
+    const int code_max = 296;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
-    else if (t <= user_token_number_max_)
+    else if (t <= code_max)
       return YY_CAST (symbol_kind_type, translate_table[t]);
     else
       return symbol_kind::S_YYUNDEF;
@@ -2088,25 +2089,25 @@ switch (yykind)
   {
     switch (this->kind ())
     {
-      case 50: // value
-      case 53: // map_value
-      case 104: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.copy< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 41: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 40: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case 39: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.copy< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 38: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -2139,25 +2140,25 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
-      case 50: // value
-      case 53: // map_value
-      case 104: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
-      case 41: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 40: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 39: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.move< int64_t > (YY_MOVE (s.value));
         break;
 
-      case 38: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -2224,8 +2225,7 @@ switch (yykind)
 
 #line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2228 "agent_parser.h"
-
+#line 2229 "agent_parser.h"
 
 
 

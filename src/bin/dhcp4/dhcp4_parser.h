@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.6.4.
+// A Bison parser, made by GNU Bison 3.7.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -1321,30 +1321,30 @@ namespace isc { namespace dhcp {
       {
         switch (this->kind ())
     {
-      case 205: // value
-      case 209: // map_value
-      case 250: // ddns_replace_client_name_value
-      case 272: // socket_type
-      case 275: // outbound_interface_value
-      case 297: // db_type
-      case 391: // hr_mode
-      case 546: // ncr_protocol_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_socket_type: // socket_type
+      case symbol_kind::S_outbound_interface_value: // outbound_interface_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
         value.move< ElementPtr > (std::move (that.value));
         break;
 
-      case 189: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.move< bool > (std::move (that.value));
         break;
 
-      case 188: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.move< double > (std::move (that.value));
         break;
 
-      case 187: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.move< int64_t > (std::move (that.value));
         break;
 
-      case 186: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -1458,30 +1458,30 @@ namespace isc { namespace dhcp {
         // Value type destructor.
 switch (yykind)
     {
-      case 205: // value
-      case 209: // map_value
-      case 250: // ddns_replace_client_name_value
-      case 272: // socket_type
-      case 275: // outbound_interface_value
-      case 297: // db_type
-      case 391: // hr_mode
-      case 546: // ncr_protocol_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_socket_type: // socket_type
+      case symbol_kind::S_outbound_interface_value: // outbound_interface_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 189: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 188: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 187: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 186: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -4685,7 +4685,7 @@ switch (yykind)
       void move (by_state& that);
 
       /// The symbol kind (corresponding to \a state).
-      /// \a S_YYEMPTY when empty.
+      /// \a symbol_kind::S_YYEMPTY when empty.
       symbol_kind_type kind () const YY_NOEXCEPT;
 
       /// The state number used to denote an empty symbol.
@@ -4931,11 +4931,12 @@ switch (yykind)
      175,   176,   177,   178,   179,   180,   181,   182,   183,   184,
      185,   186,   187,   188,   189
     };
-    const int user_token_number_max_ = 444;
+    // Last valid token kind.
+    const int code_max = 444;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
-    else if (t <= user_token_number_max_)
+    else if (t <= code_max)
       return YY_CAST (symbol_kind_type, translate_table[t]);
     else
       return symbol_kind::S_YYUNDEF;
@@ -4950,30 +4951,30 @@ switch (yykind)
   {
     switch (this->kind ())
     {
-      case 205: // value
-      case 209: // map_value
-      case 250: // ddns_replace_client_name_value
-      case 272: // socket_type
-      case 275: // outbound_interface_value
-      case 297: // db_type
-      case 391: // hr_mode
-      case 546: // ncr_protocol_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_socket_type: // socket_type
+      case symbol_kind::S_outbound_interface_value: // outbound_interface_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
         value.copy< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 189: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 188: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case 187: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.copy< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 186: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -5006,30 +5007,30 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
-      case 205: // value
-      case 209: // map_value
-      case 250: // ddns_replace_client_name_value
-      case 272: // socket_type
-      case 275: // outbound_interface_value
-      case 297: // db_type
-      case 391: // hr_mode
-      case 546: // ncr_protocol_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_socket_type: // socket_type
+      case symbol_kind::S_outbound_interface_value: // outbound_interface_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
-      case 189: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 188: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 187: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.move< int64_t > (YY_MOVE (s.value));
         break;
 
-      case 186: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -5096,8 +5097,7 @@ switch (yykind)
 
 #line 14 "dhcp4_parser.yy"
 } } // isc::dhcp
-#line 5100 "dhcp4_parser.h"
-
+#line 5101 "dhcp4_parser.h"
 
 
 

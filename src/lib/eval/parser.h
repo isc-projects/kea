@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.6.4.
+// A Bison parser, made by GNU Bison 3.7.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -674,45 +674,45 @@ namespace isc { namespace eval {
       {
         switch (this->kind ())
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.move< TokenOption::RepresentationType > (std::move (that.value));
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.move< TokenPkt4::FieldType > (std::move (that.value));
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.move< TokenPkt6::FieldType > (std::move (that.value));
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.move< TokenPkt::MetadataType > (std::move (that.value));
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.move< TokenRelay6Field::FieldType > (std::move (that.value));
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.move< int8_t > (std::move (that.value));
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.move< std::string > (std::move (that.value));
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.move< uint16_t > (std::move (that.value));
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.move< uint32_t > (std::move (that.value));
         break;
 
@@ -878,45 +878,45 @@ namespace isc { namespace eval {
         // Value type destructor.
 switch (yykind)
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.template destroy< TokenOption::RepresentationType > ();
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.template destroy< TokenPkt4::FieldType > ();
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.template destroy< TokenPkt6::FieldType > ();
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.template destroy< TokenPkt::MetadataType > ();
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.template destroy< TokenRelay6Field::FieldType > ();
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.template destroy< int8_t > ();
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.template destroy< std::string > ();
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.template destroy< uint16_t > ();
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.template destroy< uint32_t > ();
         break;
 
@@ -2056,7 +2056,7 @@ switch (yykind)
       void move (by_state& that);
 
       /// The symbol kind (corresponding to \a state).
-      /// \a S_YYEMPTY when empty.
+      /// \a symbol_kind::S_YYEMPTY when empty.
       symbol_kind_type kind () const YY_NOEXCEPT;
 
       /// The state number used to denote an empty symbol.
@@ -2288,11 +2288,12 @@ switch (yykind)
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
       45,    46,    47,    48,    49,    50,    51,    52,    53,    54
     };
-    const int user_token_number_max_ = 309;
+    // Last valid token kind.
+    const int code_max = 309;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
-    else if (t <= user_token_number_max_)
+    else if (t <= code_max)
       return YY_CAST (symbol_kind_type, translate_table[t]);
     else
       return symbol_kind::S_YYUNDEF;
@@ -2307,45 +2308,45 @@ switch (yykind)
   {
     switch (this->kind ())
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.copy< TokenOption::RepresentationType > (YY_MOVE (that.value));
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.copy< TokenPkt4::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.copy< TokenPkt6::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.copy< TokenPkt::MetadataType > (YY_MOVE (that.value));
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.copy< TokenRelay6Field::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.copy< int8_t > (YY_MOVE (that.value));
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.copy< uint16_t > (YY_MOVE (that.value));
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.copy< uint32_t > (YY_MOVE (that.value));
         break;
 
@@ -2378,45 +2379,45 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.move< TokenOption::RepresentationType > (YY_MOVE (s.value));
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.move< TokenPkt4::FieldType > (YY_MOVE (s.value));
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.move< TokenPkt6::FieldType > (YY_MOVE (s.value));
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.move< TokenPkt::MetadataType > (YY_MOVE (s.value));
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.move< TokenRelay6Field::FieldType > (YY_MOVE (s.value));
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.move< int8_t > (YY_MOVE (s.value));
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.move< uint16_t > (YY_MOVE (s.value));
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.move< uint32_t > (YY_MOVE (s.value));
         break;
 
@@ -2483,8 +2484,7 @@ switch (yykind)
 
 #line 14 "parser.yy"
 } } // isc::eval
-#line 2487 "parser.h"
-
+#line 2488 "parser.h"
 
 
 

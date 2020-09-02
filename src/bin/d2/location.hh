@@ -1,5 +1,5 @@
-// Generated 202007240900
-// A Bison parser, made by GNU Bison 3.6.4.
+// Generated 202009021531
+// A Bison parser, made by GNU Bison 3.7.1.
 
 // Locations for Bison parsers in C++
 
@@ -62,11 +62,13 @@ namespace isc { namespace d2 {
   class position
   {
   public:
+    /// Type for file name.
+    typedef const std::string filename_type;
     /// Type for line and column numbers.
     typedef int counter_type;
 
     /// Construct a position.
-    explicit position (std::string* f = YY_NULLPTR,
+    explicit position (filename_type* f = YY_NULLPTR,
                        counter_type l = 1,
                        counter_type c = 1)
       : filename (f)
@@ -76,7 +78,7 @@ namespace isc { namespace d2 {
 
 
     /// Initialization.
-    void initialize (std::string* fn = YY_NULLPTR,
+    void initialize (filename_type* fn = YY_NULLPTR,
                      counter_type l = 1,
                      counter_type c = 1)
     {
@@ -105,7 +107,7 @@ namespace isc { namespace d2 {
     /** \} */
 
     /// File name to which this position refers.
-    std::string* filename;
+    filename_type* filename;
     /// Current line number.
     counter_type line;
     /// Current column number.
@@ -148,24 +150,6 @@ namespace isc { namespace d2 {
     return res -= width;
   }
 
-  /// Compare two position objects.
-  inline bool
-  operator== (const position& pos1, const position& pos2)
-  {
-    return (pos1.line == pos2.line
-            && pos1.column == pos2.column
-            && (pos1.filename == pos2.filename
-                || (pos1.filename && pos2.filename
-                    && *pos1.filename == *pos2.filename)));
-  }
-
-  /// Compare two position objects.
-  inline bool
-  operator!= (const position& pos1, const position& pos2)
-  {
-    return !(pos1 == pos2);
-  }
-
   /** \brief Intercept output stream redirection.
    ** \param ostr the destination output stream
    ** \param pos a reference to the position to redirect
@@ -183,6 +167,8 @@ namespace isc { namespace d2 {
   class location
   {
   public:
+    /// Type for file name.
+    typedef position::filename_type filename_type;
     /// Type for line and column numbers.
     typedef position::counter_type counter_type;
 
@@ -199,7 +185,7 @@ namespace isc { namespace d2 {
     {}
 
     /// Construct a 0-width location in \a f, \a l, \a c.
-    explicit location (std::string* f,
+    explicit location (filename_type* f,
                        counter_type l = 1,
                        counter_type c = 1)
       : begin (f, l, c)
@@ -208,7 +194,7 @@ namespace isc { namespace d2 {
 
 
     /// Initialization.
-    void initialize (std::string* f = YY_NULLPTR,
+    void initialize (filename_type* f = YY_NULLPTR,
                      counter_type l = 1,
                      counter_type c = 1)
     {
@@ -290,20 +276,6 @@ namespace isc { namespace d2 {
     return res -= width;
   }
 
-  /// Compare two location objects.
-  inline bool
-  operator== (const location& loc1, const location& loc2)
-  {
-    return loc1.begin == loc2.begin && loc1.end == loc2.end;
-  }
-
-  /// Compare two location objects.
-  inline bool
-  operator!= (const location& loc1, const location& loc2)
-  {
-    return !(loc1 == loc2);
-  }
-
   /** \brief Intercept output stream redirection.
    ** \param ostr the destination output stream
    ** \param loc a reference to the location to redirect
@@ -330,6 +302,6 @@ namespace isc { namespace d2 {
 
 #line 14 "d2_parser.yy"
 } } // isc::d2
-#line 333 "location.hh"
+#line 305 "location.hh"
 
 #endif // !YY_D2_PARSER_LOCATION_HH_INCLUDED
