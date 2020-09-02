@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@ kea-dhcp6 - DHCPv6 server in Kea
 Synopsis
 ~~~~~~~~
 
-:program:`kea-dhcp6` [**-v**] [**-V**] [**-W**] [**-d**] [**-c** config-file] [**-t** config-file] [**-p** server-port-number]
+:program:`kea-dhcp6` [**-v**] [**-V**] [**-W**] [**-d**] [**-c** config-file] [**-t** config-file] [**-p** server-port-number] [**-P** client-port-number]
 
 Description
 ~~~~~~~~~~~
@@ -51,6 +51,10 @@ The arguments are as follows:
 
 ``-p server-port-number``
    Specifies the server port number (1-65535) on which the server listens. This is
+   useful for testing purposes only.
+
+``-P client-port-number``
+   Specifies the client port number (1-65535) to which the server responds. This is
    useful for testing purposes only.
 
 Documentation

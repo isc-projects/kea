@@ -15,7 +15,7 @@ perfdhcp - DHCP benchmarking tool
 Synopsis
 ~~~~~~~~
 
-:program:`perfdhcp` [**-1**] [**-4** | **-6**] [**-A** encapsulation-level] [**-b** base] [**-B**] [**-c**] [**-d** drop-time] [**-D** max-drop] [-e lease-type] [**-E** time-offset] [**-f** renew-rate] [**-F** release-rate] [**-g** thread-mode] [**-h**] [**-i**] [**-I** ip-offset] [**-l** local-address|interface] [**-L** local-port] [**-M** mac-list-file] [**-n** num-request] [**-N** remote-port] [**-O** random-offset] [**-o** code,hexstring] [**-p** test-period] [**-P** preload] [**-r** rate] [**-R** num-clients] [**-s** seed] [**-S** srvid-offset] [**--scenario** name] [**-t** report] [**-T** template-file] [**-v**] [**-W** exit-wait-time] [**-w** script_name] [**-x** diagnostic-selector] [**-X** xid-offset] [server]
+:program:`perfdhcp` [**-1**] [**-4** | **-6**] [**-A** encapsulation-level] [**-b** base] [**-B**] [**-c**] [**-C** separator] [**-d** drop-time] [**-D** max-drop] [-e lease-type] [**-E** time-offset] [**-f** renew-rate] [**-F** release-rate] [**-g** thread-mode] [**-h**] [**-i**] [**-I** ip-offset] [**-J** giaddr-list-file] [**-l** local-address|interface] [**-L** local-port] [**-M** mac-list-file] [**-n** num-request] [**-N** remote-port] [**-O** random-offset] [**-o** code,hexstring] [**-p** test-period] [**-P** preload] [**-r** rate] [**-R** num-clients] [**-s** seed] [**-S** srvid-offset] [**--scenario** name] [**-t** report] [**-T** template-file] [**-u**] [**-v**] [**-W** exit-wait-time] [**-w** script_name] [**-x** diagnostic-selector] [**-X** xid-offset] [server]
 
 Description
 ~~~~~~~~~~~
@@ -141,11 +141,6 @@ Options
 ``-6``
    Establishes DHCPv6 operation. This is incompatible with the ``-4`` option.
 
-``-u``
-   Enable checking address uniqueness. Lease valid lifetime should not be shorter
-   than test duration and clients should not request address more than once without
-   releasing it first.
-
 ``-b basetype=value``
    Indicates the base MAC or DUID used to simulate different clients. The basetype
    may be "mac" or "duid". (The keyword "ether" may alternatively used
@@ -270,6 +265,11 @@ Options
    controls the contents of the packets sent (see the "Templates"
    section above).
 
+``-u``
+   Enable checking address uniqueness. Lease valid lifetime should not be shorter
+   than test duration and clients should not request address more than once without
+   releasing it first.
+
 ``-v``
    Prints the version of this program.
 
@@ -316,7 +316,7 @@ The following options only apply for DHCPv4 (i.e. when ``-4`` is given).
 ``-B``
    Forces broadcast handling.
 
-``-J<giaddr-list-file>``
+``-J giaddr-list-file``
     Text file that include multiple addresses. If provided perfdhcp will choose
     randomly one of addresses for each exchange. This is used to generate traffic
     from multiple subnets. Designed to test shared-networks in kea-dhcp4. Kea should
@@ -403,7 +403,7 @@ Options Controlling a Test
 ``-t interval``
    Sets the delay (in seconds) between two successive reports.
 
-``-C<separator>``
+``-C separator``
     Output reduced, an argument is a separator for periodic (-t) reports
     generated in easy parsable mode. Data output won't be changed,
     remain identical as in -t option.
