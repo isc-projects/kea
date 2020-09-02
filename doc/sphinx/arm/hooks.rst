@@ -1310,9 +1310,12 @@ host reservation), reservation-get (which returns an existing reservation
 if specified criteria are matched), reservation-get-all (which returns
 all reservations in a specified subnet), reservation-get-page (a variant
 of reservation-get-all which returns all reservations in a specified
-subnet by pages), reservation-get-by-hostname (which returns all reservations
+subnet by pages and since Kea version 1.9.0 all reservations),
+reservation-get-by-hostname (which returns all reservations
 with a specified hostname and optionally in a subnet) since Kea version
-1.7.1, and reservation-del (which attempts to delete a
+1.7.1, reservation-get-by-id (which returns all reservations with a
+specified identifier) since Kea version 1.9.0,
+and reservation-del (which attempts to delete a
 reservation matching specified criteria). To use commands that change
 the reservation information (currently these are reservation-add and
 reservation-del, but this rule applies to other commands that may be
@@ -1353,7 +1356,9 @@ The subnet-id Parameter
 Prior to diving into the individual commands, it is worth discussing the
 parameter, ``subnet-id``. Currently this parameter is mandatory for all of the
 commands supplied by this library with the exception of
-reservation-get-by-hostname where it is optional.
+reservation-get-by-hostname where it is optional, and since Kea 1.9.0
+reservation-get-page where it is optional and reservation-get-by-id
+where it is forbidden.
 In previous versions of Kea, reservations had
 to belong to a specific subnet; as of Kea 1.5.0, reservations may
 be specified globally. In other words, they are not specific to any
@@ -1364,6 +1369,12 @@ host commands, it is necessary to explicitly identify the scope to which
 the reservation belongs. This is done via the ``subnet-id`` parameter.
 For global reservations, use a value of zero (0). For reservations
 scoped to a specific subnet, use that subnet's ID.
+
+At the opposite when the subnet id is not specified in the command
+parameters it is added to each host in responses. If the subnet id
+has the unused special value this means the host entry belongs only
+to the other IP version (i.e. IPv6 in DHCPv4 server or IPv4 in DHCPv6
+server) and this entry is ignored.
 
 .. _command-reservation-add:
 
@@ -1631,6 +1642,7 @@ uses parameters providing the mandatory subnet-id. Use a value of zero
 (0) to fetch global reservations. The second mandatory parameter is the
 page size limit. Optional source-index and from host id, both defaulting
 to 0, are used to chain page queries.
+Since Kea version 1.9.0 the subnet id parameter is optional.
 
 The usage of from and source-index parameters requires additional
 explanation. For the first call, those parameters should not be specified
@@ -1822,6 +1834,72 @@ For a reference, see :ref:`command-reservation-get-by-hostname`.
    the hostname column in the hosts table uses a case-insensitive
    collation as explained in the :ref:`mysql-database` section of
    :ref:`admin`.
+
+.. _command-reservation-get-by-id:
+
+The reservation-get-by-id Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``reservation-get-by-id`` can be used to query the host database and
+retrieve all reservations with a specified identifier (identifier-type
+and identifier parameters) independently of subnets. The syntax for
+parameters is the same as for ref:`command-reservation-get`.
+The subnet-id parameter is forbidden to avoid confusion.
+This command is available since Kea version 1.9.0.
+
+For instance, retrieving host reservations for the 01:02:03:04:05:06 MAC
+address:
+
+::
+
+   {
+       "command": "reservation-get-by-id",
+       "arguments": {
+           "identifier-type": "hw-address",
+           "identifier": "01:02:03:04:05:06"
+        }
+    }
+
+returns some IPv4 hosts:
+
+::
+
+   {
+       "arguments": {
+           "hosts": [
+               {
+                   "boot-file-name": "bootfile.efi",
+                   "client-classes": [ ],
+                   "hostname": "foo.example.org",
+                   "hw-address": "01:02:03:04:05:06",
+                   "ip-address": "192.0.2.100",
+                   "next-server": "192.0.0.2",
+                   "option-data": [ ],
+                   "server-hostname": "server-hostname.example.org",
+                   "subnet-id": 123
+               },
+               ...
+               {
+                   "boot-file-name": "bootfile.efi",
+                   "client-classes": [ ],
+                   "hostname": "bar.example.org",
+                   "hw-address": "01:02:03:04:05:06",
+                   "ip-address": "192.0.2.200",
+                   "next-server": "192.0.0.2",
+                   "option-data": [ ],
+                   "server-hostname": "server-hostname.example.org",
+                   "subnet-id": 345
+               }
+           ]
+       },
+       "result": 0,
+       "text": "5 IPv4 host(s) found."
+   }
+
+The response returned by ``reservation-get-by-id`` can be long
+in particular when responses are not limited to a subnet.
+
+For a reference, see :ref:`command-reservation-get-by-id`.
 
 .. _command-reservation-del:
 

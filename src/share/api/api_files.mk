@@ -135,6 +135,7 @@ api_files += $(top_srcdir)/src/share/api/reservation-add.json
 api_files += $(top_srcdir)/src/share/api/reservation-del.json
 api_files += $(top_srcdir)/src/share/api/reservation-get-all.json
 api_files += $(top_srcdir)/src/share/api/reservation-get-by-hostname.json
+api_files += $(top_srcdir)/src/share/api/reservation-get-by-id.json
 api_files += $(top_srcdir)/src/share/api/reservation-get-page.json
 api_files += $(top_srcdir)/src/share/api/reservation-get.json
 api_files += $(top_srcdir)/src/share/api/server-tag-get.json

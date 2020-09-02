@@ -135,6 +135,7 @@ src/share/api/reservation-add.json
 src/share/api/reservation-del.json
 src/share/api/reservation-get-all.json
 src/share/api/reservation-get-by-hostname.json
+src/share/api/reservation-get-by-id.json
 src/share/api/reservation-get-page.json
 src/share/api/reservation-get.json
 src/share/api/server-tag-get.json

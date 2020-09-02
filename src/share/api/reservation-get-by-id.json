@@ -1,0 +1,25 @@
+{
+    "access": "read",
+    "avail": "1.9.0",
+    "brief": [
+        "This command retrieves all host reservations for a specified identifier (type and value)."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"reservation-get-by-id\",",
+        "    \"arguments\": {",
+        "        \"identifier-type\": <one of 'hw-address', 'duid', 'circuit-id', 'client-id' and 'flex-id'>,",
+        "        \"identifier\": <string>",
+        "    }",
+        "}"
+    ],
+    "hook": "host_cmds",
+    "name": "reservation-get-by-id",
+    "resp-comment": [
+        "The reservation-get-by-id command may result in large responses."
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}
