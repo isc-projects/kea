@@ -25,7 +25,6 @@
 
 /// @brief encapsulated option spaces
 #define DHCP_AGENT_OPTION_SPACE          "dhcp-agent-options-space"
-#define VENDOR_OPTION_SPACE              "vendor-opts-space"
 #define VENDOR_ENCAPSULATED_OPTION_SPACE "vendor-encapsulated-options-space"
 
 // NOTE:
@@ -383,7 +382,7 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "vendor-class", D6O_VENDOR_CLASS, OPT_RECORD_TYPE, false,
       RECORD_DEF(VENDOR_CLASS_RECORDS), "" },
     { "vendor-opts", D6O_VENDOR_OPTS, OPT_UINT32_TYPE, false,
-      NO_RECORD_DEF, VENDOR_OPTION_SPACE },
+      NO_RECORD_DEF, "" },
     { "interface-id", D6O_INTERFACE_ID, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "reconf-msg", D6O_RECONF_MSG, OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
     { "reconf-accept", D6O_RECONF_ACCEPT, OPT_EMPTY_TYPE, false,

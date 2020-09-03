@@ -1837,8 +1837,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, vopt_buf.begin(),
                                     vopt_buf.end(),
-                                    typeid(OptionVendor),
-                                    VENDOR_OPTION_SPACE);
+                                    typeid(OptionVendor));
 
     LibDhcpTest::testStdOptionDefs6(D6O_INTERFACE_ID, begin, end,
                                     typeid(Option));

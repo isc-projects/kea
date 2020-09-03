@@ -1853,15 +1853,13 @@ unsigned integers.
 DHCPv6 Vendor-Specific Options
 ------------------------------
 
-Currently there are two option spaces defined for the DHCPv6 daemon:
-"dhcp6" (for the top-level DHCPv6 options) and "vendor-opts-space", which is
-empty by default but in which options can be defined. Those options are
-carried in the Vendor-Specific Information option (code 17). The
-following examples show how to define an option "foo" with code 1 that
-consists of an IPv6 address, an unsigned 16-bit integer, and a string.
-The "foo" option is conveyed in a Vendor-Specific Information option,
-which comprises a single uint32 value that is set to "12345". The
-sub-option "foo" follows the data field holding this value.
+Vendor options in DHCPv6 are carried in the Vendor-Specific
+Information option (code 17). The following examples show how to
+define an option "foo" with code 1 that consists of an IPv6 address,
+an unsigned 16-bit integer, and a string.  The "foo" option is
+conveyed in a Vendor-Specific Information option, which comprises a
+single uint32 value that is set to "12345". The sub-option "foo"
+follows the data field holding this value.
 
 The first step is to define the format of the option:
 
@@ -1872,7 +1870,7 @@ The first step is to define the format of the option:
            {
                "name": "foo",
                "code": 1,
-               "space": "vendor-opts-space",
+               "space": "vendor-12345",
                "type": "record",
                "array": false,
                "record-types": "ipv6-address, uint16, string",
@@ -1882,7 +1880,7 @@ The first step is to define the format of the option:
        ...
    }
 
-(Note that the option space is set to ``vendor-opts-space``.) Once the
+(Note that the option space is set to ``vendor-12345``.) Once the
 option format is defined, the next step is to define actual values for
 that option:
 
@@ -1892,7 +1890,7 @@ that option:
        "option-data": [
            {
                "name": "foo",
-               "space": "vendor-opts-space",
+               "space": "vendor-12345",
                "data": "2001:db8:1::10, 123, Hello World"
            },
            ...
@@ -1930,6 +1928,9 @@ Alternatively, the option can be specified using its code.
        ],
        ...
    }
+
+A common configuration is to set the always-send flag to true so the
+vendor option is sent even when the client did not mention it in the query.
 
 .. _dhcp6-option-spaces:
 

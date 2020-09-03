@@ -3829,7 +3829,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     // standard option #17. This option comprises an enterprise
     // number and sub options. By convention (introduced in
     // std_option_defs.h) option named 'vendor-opts'
-    // encapsulates the option space named 'vendor-opts-space'.
+    // encapsulates the option space named 'vendor-encapsulated-options-space'.
     // We add our dummy options to this option space and thus
     // they should be included as sub-options in the 'vendor-opts'
     // option.
