@@ -485,7 +485,7 @@ OptionDefinition::haveVendor4Format() const {
 
 bool
 OptionDefinition::haveVendor6Format() const {
-    return  (getType() == OPT_UINT32_TYPE && !getEncapsulatedSpace().empty());
+    return (getType() == OPT_UINT32_TYPE);
 }
 
 bool
