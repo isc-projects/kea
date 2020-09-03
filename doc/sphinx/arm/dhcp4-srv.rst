@@ -2326,8 +2326,7 @@ following:
            "option-data": [
                {
                    "name": "vivso-suboptions",
-                   "data": "25167",
-                   "encapsulate": "vendor-25167"
+                   "data": "25167"
                },
 
                // The suboption 2 value is defined as any other option. However,
