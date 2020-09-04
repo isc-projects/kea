@@ -1847,15 +1847,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
     // FQDN option will be NULL. This is valid state, so we simply return.
     Option6ClientFqdnPtr opt_fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
-
     if (!opt_fqdn) {
-        // This lease has no FQDN, remove DNS entries for any changed leases
-        // that have it.
-        for (Lease6Collection::const_iterator l = ctx.currentIA().changed_leases_.begin();
-                l != ctx.currentIA().changed_leases_.end(); ++l) {
-            queueNCR(CHG_REMOVE, *l);
-        }
-
         return;
     }
 

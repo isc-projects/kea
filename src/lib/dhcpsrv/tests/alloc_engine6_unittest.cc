@@ -1203,15 +1203,14 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
 
-    // Check that the changed lease has been returned.
-    Lease6Ptr changed_lease = expectOneLease(ctx.currentIA().changed_leases_);
-    ASSERT_TRUE(changed_lease);
+    // Check that the old lease has been returned.
+    Lease6Ptr old_lease = expectOneLease(ctx.currentIA().old_leases_);
     // It should at least have the same IPv6 address.
-    EXPECT_EQ(lease->addr_, changed_lease->addr_);
+    EXPECT_EQ(lease->addr_, old_lease->addr_);
     // Check that it carries not updated FQDN data.
-    EXPECT_EQ("myhost.example.com.", changed_lease->hostname_);
-    EXPECT_TRUE(changed_lease->fqdn_fwd_);
-    EXPECT_TRUE(changed_lease->fqdn_rev_);
+    EXPECT_EQ("myhost.example.com.", old_lease->hostname_);
+    EXPECT_TRUE(old_lease->fqdn_fwd_);
+    EXPECT_TRUE(old_lease->fqdn_rev_);
 
     // Check that the lease is indeed updated in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
