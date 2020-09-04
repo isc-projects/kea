@@ -941,9 +941,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             if (!host) {
 
                 // Copy an existing, expired lease so as it can be returned
-                // to the caller.
+                // to the caller as changed so caller can deal with DNS as
+                // needed.
                 Lease6Ptr old_lease(new Lease6(*lease));
-                ctx.currentIA().old_leases_.push_back(old_lease);
+                ctx.currentIA().changed_leases_.push_back(old_lease);
 
                 /// We found a lease and it is expired, so we can reuse it
                 lease = reuseExpiredLease(lease, ctx, pool->getLength(),
@@ -2530,7 +2531,6 @@ void
 AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
                                  const DbReclaimMode& reclaim_mode,
                                  const CalloutHandlePtr& callout_handle) {
-
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
               ALLOC_ENGINE_V6_LEASE_RECLAIM)
         .arg(Pkt6::makeLabel(lease->duid_, lease->hwaddr_))
@@ -2564,12 +2564,6 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
     /// Not sure if we need to support every possible status everywhere.
 
     if (!skipped) {
-
-        // Generate removal name change request for D2, if required.
-        // This will return immediately if the DNS wasn't updated
-        // when the lease was created.
-        queueNCR(CHG_REMOVE, lease);
-
         // Let's check if the lease that just expired is in DECLINED state.
         // If it is, we need to perform a couple extra steps.
         bool remove_lease = (reclaim_mode == DB_RECLAIM_REMOVE);
@@ -2586,6 +2580,15 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
         }
 
         if (reclaim_mode != DB_RECLAIM_LEAVE_UNCHANGED) {
+            // Generate removal name change request for D2, if required.
+            // We're doing this here because the lease either being updated
+            // or removed.  If the lease is being reused, higher level logic
+            // will decide what to do for DNS and we won't be in this block.
+            queueNCR(CHG_REMOVE, lease);
+            lease->hostname_.clear();
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = false;
+
             // Reclaim the lease - depending on the configuration, set the
             // expired-reclaimed state or simply remove it.
             LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
@@ -2628,7 +2631,6 @@ void
 AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
                                  const DbReclaimMode& reclaim_mode,
                                  const CalloutHandlePtr& callout_handle) {
-
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
               ALLOC_ENGINE_V4_LEASE_RECLAIM)
         .arg(Pkt4::makeLabel(lease->hwaddr_, lease->client_id_))
@@ -2660,12 +2662,6 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
     /// Not sure if we need to support every possible status everywhere.
 
     if (!skipped) {
-
-        // Generate removal name change request for D2, if required.
-        // This will return immediately if the DNS wasn't updated
-        // when the lease was created.
-        queueNCR(CHG_REMOVE, lease);
-
         // Let's check if the lease that just expired is in DECLINED state.
         // If it is, we need to perform a couple extra steps.
         bool remove_lease = (reclaim_mode == DB_RECLAIM_REMOVE);
@@ -2682,6 +2678,15 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
         }
 
         if (reclaim_mode != DB_RECLAIM_LEAVE_UNCHANGED) {
+            // Generate removal name change request for D2, if required.
+            // We're doing this here because the lease either being updated
+            // or removed.  If the lease is being reused, higher level logic
+            // will decide what to do for DNS and we won't be in this block.
+            queueNCR(CHG_REMOVE, lease);
+            lease->hostname_.clear();
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = false;
+
             // Reclaim the lease - depending on the configuration, set the
             // expired-reclaimed state or simply remove it.
             LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
@@ -2853,14 +2858,8 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
     if (remove_lease) {
         lease_mgr.deleteLease(lease);
     } else if (lease_update_fun) {
-        // Clear FQDN information as we have already sent the
-        // name change request to remove the DNS record.
-        lease->hostname_.clear();
-        lease->fqdn_fwd_ = false;
-        lease->fqdn_rev_ = false;
         lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
         lease_update_fun(lease);
-
     } else {
         return;
     }
