@@ -4877,7 +4877,6 @@ TEST_F(Dhcp6ParserTest, d2ClientConfigValid) {
 
     string config_str = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
-        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
@@ -4947,7 +4946,6 @@ TEST_F(Dhcp6ParserTest, d2ClientConfigMoveToGlobal) {
 
     string config_str = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
-        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
@@ -5025,7 +5023,6 @@ TEST_F(Dhcp6ParserTest, d2ClientConfigBoth) {
 
     string config_str = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
-        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "

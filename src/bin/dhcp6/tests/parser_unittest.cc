@@ -525,6 +525,12 @@ TEST(ParserTest, errors) {
               "<string>:1.3: syntax error, unexpected {, "
               "expecting end of file");
 
+    // duplicate in map
+    testError("{ \"foo\": 1, \"foo\": true }\n",
+              Parser6Context::PARSER_JSON,
+              "<string>:1:13: duplicate foo entries in "
+              "JSON map (previous at <string>:1:10)");
+
     // bad commas
     testError("{ , }\n",
               Parser6Context::PARSER_JSON,
@@ -606,6 +612,21 @@ TEST(ParserTest, errors) {
               "  \"comment\": \"second\" }}\n",
               Parser6Context::PARSER_DHCP6,
               "<string>:2.23: syntax error, unexpected \",\", expecting }");
+
+    // duplicate of not string entries
+    testError("{ \"Dhcp6\":{\n"
+              " \"subnet6\": [],\n"
+              " \"subnet6\": [] }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:3:2: duplicate subnet6 entries in "
+              "Dhcp6 map (previous at <string>:2:2)");
+
+    // duplicate of string entries
+    testError("{ \"data\": \"foo\",\n"
+              " \"data\": \"bar\" }\n",
+              Parser6Context::PARSER_OPTION_DATA,
+              "<string>:2:2: duplicate data entries in "
+              "option-data map (previous at <string>:1:11)");
 }
 
 // Check unicode escapes

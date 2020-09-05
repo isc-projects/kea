@@ -489,6 +489,12 @@ TEST(ParserTest, errors) {
               "<string>:1.3: syntax error, unexpected {, "
               "expecting end of file");
 
+    // duplicate in map
+    testError("{ \"foo\": 1, \"foo\": true }\n",
+              D2ParserContext::PARSER_JSON,
+              "<string>:1:13: duplicate foo entries in "
+              "JSON map (previous at <string>:1:10)");
+
     // bad commas
     testError("{ , }\n",
               D2ParserContext::PARSER_JSON,
