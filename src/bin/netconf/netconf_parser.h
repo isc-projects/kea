@@ -614,86 +614,84 @@ namespace isc { namespace netconf {
         S_unknown_map_entry = 67,                // unknown_map_entry
         S_netconf_syntax_map = 68,               // netconf_syntax_map
         S_69_7 = 69,                             // $@7
-        S_global_objects = 70,                   // global_objects
-        S_global_object = 71,                    // global_object
-        S_netconf_object = 72,                   // netconf_object
-        S_73_8 = 73,                             // $@8
-        S_global_params = 74,                    // global_params
-        S_not_empty_global_params = 75,          // not_empty_global_params
-        S_global_param = 76,                     // global_param
-        S_boot_update = 77,                      // boot_update
-        S_subscribe_changes = 78,                // subscribe_changes
-        S_validate_changes = 79,                 // validate_changes
-        S_user_context = 80,                     // user_context
-        S_81_9 = 81,                             // $@9
-        S_comment = 82,                          // comment
-        S_83_10 = 83,                            // $@10
-        S_hooks_libraries = 84,                  // hooks_libraries
-        S_85_11 = 85,                            // $@11
-        S_hooks_libraries_list = 86,             // hooks_libraries_list
-        S_not_empty_hooks_libraries_list = 87,   // not_empty_hooks_libraries_list
-        S_hooks_library = 88,                    // hooks_library
-        S_89_12 = 89,                            // $@12
-        S_hooks_params = 90,                     // hooks_params
-        S_hooks_param = 91,                      // hooks_param
-        S_library = 92,                          // library
-        S_93_13 = 93,                            // $@13
-        S_parameters = 94,                       // parameters
-        S_95_14 = 95,                            // $@14
-        S_managed_servers = 96,                  // managed_servers
-        S_97_15 = 97,                            // $@15
-        S_servers_entries = 98,                  // servers_entries
-        S_not_empty_servers_entries = 99,        // not_empty_servers_entries
-        S_server_entry = 100,                    // server_entry
-        S_dhcp4_server = 101,                    // dhcp4_server
-        S_102_16 = 102,                          // $@16
-        S_dhcp6_server = 103,                    // dhcp6_server
-        S_104_17 = 104,                          // $@17
-        S_d2_server = 105,                       // d2_server
-        S_106_18 = 106,                          // $@18
-        S_ca_server = 107,                       // ca_server
-        S_108_19 = 108,                          // $@19
-        S_managed_server_params = 109,           // managed_server_params
-        S_managed_server_param = 110,            // managed_server_param
-        S_model = 111,                           // model
-        S_112_20 = 112,                          // $@20
-        S_control_socket = 113,                  // control_socket
-        S_114_21 = 114,                          // $@21
-        S_control_socket_params = 115,           // control_socket_params
-        S_control_socket_param = 116,            // control_socket_param
-        S_socket_type = 117,                     // socket_type
-        S_118_22 = 118,                          // $@22
-        S_socket_type_value = 119,               // socket_type_value
-        S_socket_name = 120,                     // socket_name
-        S_121_23 = 121,                          // $@23
-        S_socket_url = 122,                      // socket_url
-        S_123_24 = 123,                          // $@24
-        S_loggers = 124,                         // loggers
-        S_125_25 = 125,                          // $@25
-        S_loggers_entries = 126,                 // loggers_entries
-        S_logger_entry = 127,                    // logger_entry
-        S_128_26 = 128,                          // $@26
-        S_logger_params = 129,                   // logger_params
-        S_logger_param = 130,                    // logger_param
-        S_name = 131,                            // name
-        S_132_27 = 132,                          // $@27
-        S_debuglevel = 133,                      // debuglevel
-        S_severity = 134,                        // severity
-        S_135_28 = 135,                          // $@28
-        S_output_options_list = 136,             // output_options_list
-        S_137_29 = 137,                          // $@29
-        S_output_options_list_content = 138,     // output_options_list_content
-        S_output_entry = 139,                    // output_entry
-        S_140_30 = 140,                          // $@30
-        S_output_params_list = 141,              // output_params_list
-        S_output_params = 142,                   // output_params
-        S_output = 143,                          // output
-        S_144_31 = 144,                          // $@31
-        S_flush = 145,                           // flush
-        S_maxsize = 146,                         // maxsize
-        S_maxver = 147,                          // maxver
-        S_pattern = 148,                         // pattern
-        S_149_32 = 149                           // $@32
+        S_global_object = 70,                    // global_object
+        S_71_8 = 71,                             // $@8
+        S_global_params = 72,                    // global_params
+        S_not_empty_global_params = 73,          // not_empty_global_params
+        S_global_param = 74,                     // global_param
+        S_boot_update = 75,                      // boot_update
+        S_subscribe_changes = 76,                // subscribe_changes
+        S_validate_changes = 77,                 // validate_changes
+        S_user_context = 78,                     // user_context
+        S_79_9 = 79,                             // $@9
+        S_comment = 80,                          // comment
+        S_81_10 = 81,                            // $@10
+        S_hooks_libraries = 82,                  // hooks_libraries
+        S_83_11 = 83,                            // $@11
+        S_hooks_libraries_list = 84,             // hooks_libraries_list
+        S_not_empty_hooks_libraries_list = 85,   // not_empty_hooks_libraries_list
+        S_hooks_library = 86,                    // hooks_library
+        S_87_12 = 87,                            // $@12
+        S_hooks_params = 88,                     // hooks_params
+        S_hooks_param = 89,                      // hooks_param
+        S_library = 90,                          // library
+        S_91_13 = 91,                            // $@13
+        S_parameters = 92,                       // parameters
+        S_93_14 = 93,                            // $@14
+        S_managed_servers = 94,                  // managed_servers
+        S_95_15 = 95,                            // $@15
+        S_servers_entries = 96,                  // servers_entries
+        S_not_empty_servers_entries = 97,        // not_empty_servers_entries
+        S_server_entry = 98,                     // server_entry
+        S_dhcp4_server = 99,                     // dhcp4_server
+        S_100_16 = 100,                          // $@16
+        S_dhcp6_server = 101,                    // dhcp6_server
+        S_102_17 = 102,                          // $@17
+        S_d2_server = 103,                       // d2_server
+        S_104_18 = 104,                          // $@18
+        S_ca_server = 105,                       // ca_server
+        S_106_19 = 106,                          // $@19
+        S_managed_server_params = 107,           // managed_server_params
+        S_managed_server_param = 108,            // managed_server_param
+        S_model = 109,                           // model
+        S_110_20 = 110,                          // $@20
+        S_control_socket = 111,                  // control_socket
+        S_112_21 = 112,                          // $@21
+        S_control_socket_params = 113,           // control_socket_params
+        S_control_socket_param = 114,            // control_socket_param
+        S_socket_type = 115,                     // socket_type
+        S_116_22 = 116,                          // $@22
+        S_socket_type_value = 117,               // socket_type_value
+        S_socket_name = 118,                     // socket_name
+        S_119_23 = 119,                          // $@23
+        S_socket_url = 120,                      // socket_url
+        S_121_24 = 121,                          // $@24
+        S_loggers = 122,                         // loggers
+        S_123_25 = 123,                          // $@25
+        S_loggers_entries = 124,                 // loggers_entries
+        S_logger_entry = 125,                    // logger_entry
+        S_126_26 = 126,                          // $@26
+        S_logger_params = 127,                   // logger_params
+        S_logger_param = 128,                    // logger_param
+        S_name = 129,                            // name
+        S_130_27 = 130,                          // $@27
+        S_debuglevel = 131,                      // debuglevel
+        S_severity = 132,                        // severity
+        S_133_28 = 133,                          // $@28
+        S_output_options_list = 134,             // output_options_list
+        S_135_29 = 135,                          // $@29
+        S_output_options_list_content = 136,     // output_options_list_content
+        S_output_entry = 137,                    // output_entry
+        S_138_30 = 138,                          // $@30
+        S_output_params_list = 139,              // output_params_list
+        S_output_params = 140,                   // output_params
+        S_output = 141,                          // output
+        S_142_31 = 142,                          // $@31
+        S_flush = 143,                           // flush
+        S_maxsize = 144,                         // maxsize
+        S_maxver = 145,                          // maxver
+        S_pattern = 146,                         // pattern
+        S_147_32 = 147                           // $@32
       };
     };
 
@@ -2148,8 +2146,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 223,     ///< Last index in yytable_.
-      yynnts_ = 101,  ///< Number of nonterminal symbols.
+      yylast_ = 219,     ///< Last index in yytable_.
+      yynnts_ = 99,  ///< Number of nonterminal symbols.
       yyfinal_ = 8 ///< Termination state number.
     };
 
@@ -2357,7 +2355,7 @@ switch (yykind)
 
 #line 14 "netconf_parser.yy"
 } } // isc::netconf
-#line 2361 "netconf_parser.h"
+#line 2359 "netconf_parser.h"
 
 
 
