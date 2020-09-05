@@ -110,7 +110,7 @@ const char* INFORM_CONFIGS[] = {
         "\"valid-lifetime\": 600,"
         "\"next-server\": \"10.0.0.1\","
         "\"server-hostname\": \"nohost\","
-        "\"server-hostname\": \"nofile\","
+        "\"boot-file-name\": \"nofile\","
         "\"subnet4\": [ { "
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"reservations\": [ "
