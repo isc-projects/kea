@@ -179,11 +179,13 @@ map_content: %empty // empty map
 // covers all longer lists recursively.
 not_empty_map: STRING COLON value {
                   // map containing a single entry
+                  ctx.unique($1, ctx.loc2pos(@1));
                   ctx.stack_.back()->set($1, $3);
                   }
              | not_empty_map COMMA STRING COLON value {
                   // map consisting of a shorter map followed by
                   // comma and string:value
+                  ctx.unique($3, ctx.loc2pos(@3));
                   ctx.stack_.back()->set($3, $5);
                   }
              ;
@@ -277,16 +279,19 @@ global_param: boot_update
             ;
 
 boot_update: BOOT_UPDATE COLON BOOLEAN {
+    ctx.unique("boot-update", ctx.loc2pos(@1));
     ElementPtr flag(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("boot-update", flag);
 };
 
 subscribe_changes: SUBSCRIBE_CHANGES COLON BOOLEAN {
+    ctx.unique("subscribe-changes", ctx.loc2pos(@1));
     ElementPtr flag(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("subscribe-changes", flag);
 };
 
 validate_changes: VALIDATE_CHANGES COLON BOOLEAN {
+    ctx.unique("validate-changes", ctx.loc2pos(@1));
     ElementPtr flag(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("validate-changes", flag);
 };
@@ -345,6 +350,7 @@ comment: COMMENT {
 
 // --- hooks-libraries ---------------------------------------------------------
 hooks_libraries: HOOKS_LIBRARIES {
+    ctx.unique("hooks-libraries", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("hooks-libraries", l);
     ctx.stack_.push_back(l);
@@ -380,6 +386,7 @@ hooks_param: library
            ;
 
 library: LIBRARY {
+    ctx.unique("library", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr lib(new StringElement($4, ctx.loc2pos(@4)));
@@ -388,6 +395,7 @@ library: LIBRARY {
 };
 
 parameters: PARAMETERS {
+    ctx.unique("parameters", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON map_value {
     ctx.stack_.back()->set("parameters", $4);
@@ -398,6 +406,7 @@ parameters: PARAMETERS {
 
 // --- managed-servsers starts here ---------------------------------------------
 managed_servers: MANAGED_SERVERS COLON LCURLY_BRACKET {
+    ctx.unique("managed-servers", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("managed-servers", m);
     ctx.stack_.push_back(m);
@@ -427,6 +436,7 @@ server_entry: dhcp4_server
 
 // That's an entry for dhcp4 server.
 dhcp4_server: DHCP4_SERVER {
+    ctx.unique("dhcp4", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("dhcp4", m);
     ctx.stack_.push_back(m);
@@ -438,6 +448,7 @@ dhcp4_server: DHCP4_SERVER {
 
 // That's an entry for dhcp6 server.
 dhcp6_server: DHCP6_SERVER {
+    ctx.unique("dhcp6", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("dhcp6", m);
     ctx.stack_.push_back(m);
@@ -449,6 +460,7 @@ dhcp6_server: DHCP6_SERVER {
 
 // That's an entry for d2 server.
 d2_server: D2_SERVER {
+    ctx.unique("d2", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("d2", m);
     ctx.stack_.push_back(m);
@@ -460,6 +472,7 @@ d2_server: D2_SERVER {
 
 // That's an entry for ca server.
 ca_server: CA_SERVER {
+    ctx.unique("ca", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("ca", m);
     ctx.stack_.push_back(m);
@@ -487,6 +500,7 @@ managed_server_param: model
 
 // YANG model
 model: MODEL {
+    ctx.unique("model", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr model(new StringElement($4, ctx.loc2pos(@4)));
@@ -496,6 +510,7 @@ model: MODEL {
 
 // Control socket.
 control_socket: CONTROL_SOCKET {
+    ctx.unique("control-socket", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("control-socket", m);
     ctx.stack_.push_back(m);
@@ -519,6 +534,7 @@ control_socket_param: socket_type
                     ;
 
 socket_type: SOCKET_TYPE {
+    ctx.unique("socket-type", ctx.loc2pos(@1));
     ctx.enter(ctx.SOCKET_TYPE);
 } COLON socket_type_value {
     ctx.stack_.back()->set("socket-type", $4);
@@ -532,6 +548,7 @@ socket_type_value : UNIX { $$ = ElementPtr(new StringElement("unix", ctx.loc2pos
                   ;
 // Unix name.
 socket_name: SOCKET_NAME {
+    ctx.unique("socket-name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
@@ -541,6 +558,7 @@ socket_name: SOCKET_NAME {
 
 // HTTP url.
 socket_url: SOCKET_URL {
+    ctx.unique("socket-url", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr url(new StringElement($4, ctx.loc2pos(@4)));
@@ -553,6 +571,7 @@ socket_url: SOCKET_URL {
 // --- Loggers starts here -----------------------------------------------------
 
 loggers: LOGGERS {
+    ctx.unique("loggers", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
@@ -591,6 +610,7 @@ logger_param: name
             ;
 
 name: NAME {
+    ctx.unique("name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
@@ -599,11 +619,13 @@ name: NAME {
 };
 
 debuglevel: DEBUGLEVEL COLON INTEGER {
+    ctx.unique("debuglevel", ctx.loc2pos(@1));
     ElementPtr dl(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("debuglevel", dl);
 };
 
 severity: SEVERITY {
+    ctx.unique("severity", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
@@ -612,6 +634,7 @@ severity: SEVERITY {
 };
 
 output_options_list: OUTPUT_OPTIONS {
+    ctx.unique("output_options", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
@@ -645,6 +668,7 @@ output_params: output
              ;
 
 output: OUTPUT {
+    ctx.unique("output", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
@@ -653,21 +677,25 @@ output: OUTPUT {
 };
 
 flush: FLUSH COLON BOOLEAN {
+    ctx.unique("flush", ctx.loc2pos(@1));
     ElementPtr flush(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("flush", flush);
 };
 
 maxsize: MAXSIZE COLON INTEGER {
+    ctx.unique("maxsize", ctx.loc2pos(@1));
     ElementPtr maxsize(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxsize", maxsize);
 };
 
 maxver: MAXVER COLON INTEGER {
+    ctx.unique("maxver", ctx.loc2pos(@1));
     ElementPtr maxver(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxver", maxver);
 };
 
 pattern: PATTERN {
+    ctx.unique("pattern", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));

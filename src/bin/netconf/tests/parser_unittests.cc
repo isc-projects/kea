@@ -673,6 +673,24 @@ TEST(ParserTest, errors) {
               "  \"comment\": \"second\" }}\n",
               ParserContext::PARSER_NETCONF,
               "<string>:2.23: syntax error, unexpected \",\", expecting }");
+
+    // duplicate of not string entries
+    testError("{ \"Netconf\":{\n"
+              " \"boot-update\": true,\n"
+              " \"boot-update\": false }}\n",
+              ParserContext::PARSER_NETCONF,
+              "<string>:3:2: duplicate boot-update entries in "
+              "Netconf map (previous at <string>:2:17)");
+
+    // duplicate of string entries
+    testError("{ \"Netconf\":{\n"
+              "  \"managed-servers\": {\n"
+              "    \"d2\": {\n"
+              "      \"model\": \"foo\",\n"
+              "      \"model\": \"bar\" }}}}\n",
+              ParserContext::PARSER_NETCONF,
+              "<string>:5:7: duplicate model entries in "
+              "managed-servers entry map (previous at <string>:4:16)");
 }
 
 // Check unicode escapes

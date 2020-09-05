@@ -616,6 +616,22 @@ TEST(ParserTest, errors) {
               "  \"comment\": \"second\" }}\n",
               Parser4Context::PARSER_DHCP4,
               "<string>:2.23: syntax error, unexpected \",\", expecting }");
+
+    // duplicate of not string entries
+    testError("{ \"Dhcp4\":{\n"
+              " \"subnet4\": [],\n"
+              " \"subnet4\": [] }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:3:2: duplicate subnet4 entries in "
+              "Dhcp4 map (previous at <string>:2:2)");
+
+    // duplicate of string entries
+    testError("{\n"
+              " \"server-hostname\": \"nohost\",\n"
+              " \"server-hostname\": \"nofile\" }\n",
+              Parser4Context::PARSER_HOST_RESERVATION,
+              "<string>:3:2: duplicate server-hostname entries in "
+              "reservations map (previous at <string>:2:21)");
 }
 
 // Check unicode escapes

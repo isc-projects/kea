@@ -563,6 +563,22 @@ TEST(ParserTest, errors) {
               "  \"comment\": \"second\" }}\n",
               D2ParserContext::PARSER_DHCPDDNS,
               "<string>:2.23: syntax error, unexpected \",\", expecting }");
+
+    // duplicate of not string entries
+    testError("{ \"DhcpDdns\":{\n"
+              "  \"port\": 53001,\n"
+              "  \"port\": 53002 }}\n",
+              D2ParserContext::PARSER_DHCPDDNS,
+              "<string>:3:3: duplicate port entries in "
+              "DhcpDdns map (previous at <string>:2:11)");
+
+    // duplicate of string entries
+    testError("{ \"DhcpDdns\":{\n"
+              "  \"ip-address\": \"127.0.0.1\",\n"
+              "  \"ip-address\": \"::1\" }}\n",
+              D2ParserContext::PARSER_DHCPDDNS,
+              "<string>:3:3: duplicate ip-address entries in "
+              "DhcpDdns map (previous at <string>:2:17)");
 }
 
 // Check unicode escapes

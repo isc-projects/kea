@@ -619,6 +619,22 @@ TEST(ParserTest, errors) {
               "  \"comment\": \"second\" }}\n",
               ParserContext::PARSER_AGENT,
               "<string>:2.23: syntax error, unexpected \",\", expecting }");
+
+    // duplicate of not string entries
+    testError("{ \"Control-agent\":{\n"
+              " \"http-port\": 8000,\n"
+              " \"http-port\": 8001 }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:3:2: duplicate http-port entries in "
+              "Control-agent map (previous at <string>:2:15)");
+
+    // duplicate of string entries
+    testError("{ \"Control-agent\":{\n"
+              " \"http-host\": \"127.0.0.1\",\n"
+              " \"http-host\": \"::1\" }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:3:2: duplicate http-host entries in "
+              "Control-agent map (previous at <string>:2:15)");
 }
 
 // Check unicode escapes

@@ -159,7 +159,7 @@ ParserContext::contextName()
     case MANAGED_SERVERS:
         return ("managed-servers");
     case SERVER:
-        return ("managed-servers/*");
+        return ("managed-servers entry");
     case CONTROL_SOCKET:
         return ("control-socket");
     case SOCKET_TYPE:

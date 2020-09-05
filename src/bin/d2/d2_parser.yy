@@ -167,11 +167,13 @@ map_content: %empty // empty map
 
 not_empty_map: STRING COLON value {
                   // map containing a single entry
+                  ctx.unique($1, ctx.loc2pos(@1));
                   ctx.stack_.back()->set($1, $3);
                   }
              | not_empty_map COMMA STRING COLON value {
                   // map consisting of a shorter map followed by
                   // comma and string:value
+                  ctx.unique($3, ctx.loc2pos(@3));
                   ctx.stack_.back()->set($3, $5);
                   }
              ;
@@ -225,6 +227,7 @@ syntax_map: LCURLY_BRACKET {
 // --- dhcp ddns ---------------------------------------------
 // This represents the single top level entry, e.g. DhcpDdns.
 global_object: DHCPDDNS {
+    ctx.unique("DhcpDdns", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("DhcpDdns", m);
     ctx.stack_.push_back(m);
@@ -263,6 +266,7 @@ dhcpddns_param: ip_address
               ;
 
 ip_address: IP_ADDRESS {
+    ctx.unique("ip-address", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -271,6 +275,7 @@ ip_address: IP_ADDRESS {
 };
 
 port: PORT COLON INTEGER {
+    ctx.unique("port", ctx.loc2pos(@1));
     if ($3 <= 0 || $3 >= 65536 ) {
         error(@3, "port must be greater than zero but less than 65536");
     }
@@ -279,6 +284,7 @@ port: PORT COLON INTEGER {
 };
 
 dns_server_timeout: DNS_SERVER_TIMEOUT COLON INTEGER {
+    ctx.unique("dns-server-timeout", ctx.loc2pos(@1));
     if ($3 <= 0) {
         error(@3, "dns-server-timeout must be greater than zero");
     } else {
@@ -288,6 +294,7 @@ dns_server_timeout: DNS_SERVER_TIMEOUT COLON INTEGER {
 };
 
 ncr_protocol: NCR_PROTOCOL {
+    ctx.unique("ncr-protocol", ctx.loc2pos(@1));
     ctx.enter(ctx.NCR_PROTOCOL);
 } COLON ncr_protocol_value {
     ctx.stack_.back()->set("ncr-protocol", $4);
@@ -300,6 +307,7 @@ ncr_protocol_value:
   ;
 
 ncr_format: NCR_FORMAT {
+    ctx.unique("ncr-format", ctx.loc2pos(@1));
     ctx.enter(ctx.NCR_FORMAT);
 } COLON JSON {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(@4)));
@@ -360,6 +368,7 @@ comment: COMMENT {
 };
 
 forward_ddns : FORWARD_DDNS {
+    ctx.unique("forward-ddns", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("forward-ddns", m);
     ctx.stack_.push_back(m);
@@ -370,6 +379,7 @@ forward_ddns : FORWARD_DDNS {
 };
 
 reverse_ddns : REVERSE_DDNS {
+    ctx.unique("reverse-ddns", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("reverse-ddns", m);
     ctx.stack_.push_back(m);
@@ -394,6 +404,7 @@ ddns_mgr_param: ddns_domains
 
 // --- ddns-domains ----------------------------------------
 ddns_domains: DDNS_DOMAINS {
+    ctx.unique("ddns-domains", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("ddns-domains", l);
     ctx.stack_.push_back(l);
@@ -447,6 +458,7 @@ ddns_domain_param: ddns_domain_name
 
 //  @todo NAME needs to be an FQDN sort of thing
 ddns_domain_name: NAME {
+    ctx.unique("name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     if ($4 == "") {
@@ -459,6 +471,7 @@ ddns_domain_name: NAME {
 };
 
 ddns_domain_key_name: KEY_NAME {
+    ctx.unique("key-name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
@@ -471,6 +484,7 @@ ddns_domain_key_name: KEY_NAME {
 
 // --- dns-servers ----------------------------------------
 dns_servers: DNS_SERVERS {
+    ctx.unique("dns-servers", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("dns-servers", l);
     ctx.stack_.push_back(l);
@@ -519,6 +533,7 @@ dns_server_param: dns_server_hostname
               ;
 
 dns_server_hostname: HOSTNAME {
+    ctx.unique("hostname", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     if ($4 != "") {
@@ -531,6 +546,7 @@ dns_server_hostname: HOSTNAME {
 };
 
 dns_server_ip_address: IP_ADDRESS {
+    ctx.unique("ip-address", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -539,6 +555,7 @@ dns_server_ip_address: IP_ADDRESS {
 };
 
 dns_server_port: PORT COLON INTEGER {
+    ctx.unique("port", ctx.loc2pos(@1));
     if ($3 <= 0 || $3 >= 65536 ) {
         error(@3, "port must be greater than zero but less than 65536");
     }
@@ -553,6 +570,7 @@ dns_server_port: PORT COLON INTEGER {
 // --- tsig-keys ----------------------------------------
 // "tsig-keys" : [ ... ]
 tsig_keys: TSIG_KEYS {
+    ctx.unique("tsig-keys", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("tsig-keys", l);
     ctx.stack_.push_back(l);
@@ -608,6 +626,7 @@ tsig_key_param: tsig_key_name
               ;
 
 tsig_key_name: NAME {
+    ctx.unique("name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     if ($4 == "") {
@@ -620,6 +639,7 @@ tsig_key_name: NAME {
 };
 
 tsig_key_algorithm: ALGORITHM {
+    ctx.unique("algorithm", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     if ($4 == "") {
@@ -631,6 +651,7 @@ tsig_key_algorithm: ALGORITHM {
 };
 
 tsig_key_digest_bits: DIGEST_BITS COLON INTEGER {
+    ctx.unique("digest-bits", ctx.loc2pos(@1));
     if ($3 < 0 || ($3 > 0  && ($3 % 8 != 0))) {
         error(@3, "TSIG key digest-bits must either be zero or a positive, multiple of eight");
     }
@@ -639,6 +660,7 @@ tsig_key_digest_bits: DIGEST_BITS COLON INTEGER {
 };
 
 tsig_key_secret: SECRET {
+    ctx.unique("secret", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     if ($4 == "") {
@@ -655,6 +677,7 @@ tsig_key_secret: SECRET {
 // --- control socket ----------------------------------------
 
 control_socket: CONTROL_SOCKET {
+    ctx.unique("control-socket", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("control-socket", m);
     ctx.stack_.push_back(m);
@@ -676,6 +699,7 @@ control_socket_param: control_socket_type
                     ;
 
 control_socket_type: SOCKET_TYPE {
+    ctx.unique("socket-type", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr stype(new StringElement($4, ctx.loc2pos(@4)));
@@ -684,6 +708,7 @@ control_socket_type: SOCKET_TYPE {
 };
 
 control_socket_name: SOCKET_NAME {
+    ctx.unique("socket-name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
@@ -694,6 +719,7 @@ control_socket_name: SOCKET_NAME {
 // --- loggers entry -----------------------------------------
 
 loggers: LOGGERS {
+    ctx.unique("loggers", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
@@ -732,6 +758,7 @@ logger_param: name
             ;
 
 name: NAME {
+    ctx.unique("name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
@@ -740,10 +767,13 @@ name: NAME {
 };
 
 debuglevel: DEBUGLEVEL COLON INTEGER {
+    ctx.unique("debuglevel", ctx.loc2pos(@1));
     ElementPtr dl(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("debuglevel", dl);
 };
+
 severity: SEVERITY {
+    ctx.unique("severity", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
@@ -752,6 +782,7 @@ severity: SEVERITY {
 };
 
 output_options_list: OUTPUT_OPTIONS {
+    ctx.unique("output_options", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
@@ -785,6 +816,7 @@ output_params: output
              ;
 
 output: OUTPUT {
+    ctx.unique("output", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
@@ -793,21 +825,25 @@ output: OUTPUT {
 };
 
 flush: FLUSH COLON BOOLEAN {
+    ctx.unique("flush", ctx.loc2pos(@1));
     ElementPtr flush(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("flush", flush);
 }
 
 maxsize: MAXSIZE COLON INTEGER {
+    ctx.unique("maxsize", ctx.loc2pos(@1));
     ElementPtr maxsize(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
 
 maxver: MAXVER COLON INTEGER {
+    ctx.unique("maxver", ctx.loc2pos(@1));
     ElementPtr maxver(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxver", maxver);
 }
 
 pattern: PATTERN {
+    ctx.unique("pattern", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
