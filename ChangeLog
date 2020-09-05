@@ -1,3 +1,8 @@
+1803.	[doc]		fdupont
+	Corrected Kea ARM sections describing how to send DHCPv6
+	Vendor-specific Information Option (code 17) with sub-options.
+	(Gitlab #1025)
+
 1802.	[bug]		fdupont
 	Removed the bug which allowed for repeating the same configuration
 	parameter multiple times in the same scope. The second occurrence
