@@ -555,6 +555,14 @@ TEST(ParserTest, errors) {
               D2ParserContext::PARSER_DHCPDDNS,
               "<string>:3.3-11: duplicate user-context/comment entries "
               "(previous at <string>:2:19)");
+
+    // duplicate DhcpDdns entries
+    testError("{ \"DhcpDdns\":{\n"
+              "  \"comment\": \"first\" },\n"
+              "  \"DhcpDdns\":{\n"
+              "  \"comment\": \"second\" }}\n",
+              D2ParserContext::PARSER_DHCPDDNS,
+              "<string>:2.23: syntax error, unexpected \",\", expecting }");
 }
 
 // Check unicode escapes

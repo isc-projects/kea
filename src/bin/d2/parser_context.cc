@@ -93,6 +93,24 @@ D2ParserContext::loc2pos(isc::d2::location& loc)
 }
 
 void
+D2ParserContext::unique(const std::string& name,
+                        isc::data::Element::Position loc)
+{
+    ConstElementPtr value = stack_.back()->get(name);
+    if (value) {
+        if (ctx_ != NO_KEYWORD) {
+            isc_throw(D2ParseError, loc << ": duplicate " << name
+                      << " entries in " << contextName()
+                      << " map (previous at " << value->getPosition() << ")");
+        } else {
+            isc_throw(D2ParseError, loc << ": duplicate " << name
+                      << " entries in JSON"
+                  << " map (previous at " << value->getPosition() << ")");
+        }
+    }
+}
+
+void
 D2ParserContext::enter(const ParserContext& ctx)
 {
     cstack_.push_back(ctx_);
@@ -157,5 +175,5 @@ D2ParserContext::contextName()
     }
 }
 
-};
-};
+}
+}

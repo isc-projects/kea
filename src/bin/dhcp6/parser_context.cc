@@ -117,9 +117,15 @@ Parser6Context::unique(const std::string& name,
 {
     ConstElementPtr value = stack_.back()->get(name);
     if (value) {
-        isc_throw(Dhcp6ParseError, loc << ": duplicate " << name
-                  << " entries in " << contextName()
-                  << " map (previous at " << value->getPosition() << ")");
+        if (ctx_ != NO_KEYWORD) {
+            isc_throw(Dhcp6ParseError, loc << ": duplicate " << name
+                      << " entries in " << contextName()
+                      << " map (previous at " << value->getPosition() << ")");
+        } else {
+            isc_throw(Dhcp6ParseError, loc << ": duplicate " << name
+                      << " entries in JSON"
+                      << " map (previous at " << value->getPosition() << ")");
+        }
     }
 }
 

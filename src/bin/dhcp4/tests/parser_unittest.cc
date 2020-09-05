@@ -615,8 +615,7 @@ TEST(ParserTest, errors) {
               "  \"Dhcp4\":{\n"
               "  \"comment\": \"second\" }}\n",
               Parser4Context::PARSER_DHCP4,
-              "<string>:3:3: duplicate Dhcp4 entries in toplevel map "
-              "(previous at <string>:1:3)");
+              "<string>:2.23: syntax error, unexpected \",\", expecting }");
 }
 
 // Check unicode escapes

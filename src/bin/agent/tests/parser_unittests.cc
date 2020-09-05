@@ -611,6 +611,14 @@ TEST(ParserTest, errors) {
               ParserContext::PARSER_AGENT,
               "<string>:3.3-11: duplicate user-context/comment entries "
               "(previous at <string>:2:19)");
+
+    // duplicate Control-agent entries
+    testError("{ \"Control-agent\":{\n"
+              "  \"comment\": \"first\" },\n"
+              "  \"Control-agent\":{\n"
+              "  \"comment\": \"second\" }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:2.23: syntax error, unexpected \",\", expecting }");
 }
 
 // Check unicode escapes

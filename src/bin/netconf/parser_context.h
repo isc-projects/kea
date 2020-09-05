@@ -286,7 +286,7 @@ public:
     isc::data::ElementPtr parseCommon();
 };
 
-}; // end of isc::netconf namespace
-}; // end of isc namespace
+} // end of isc::netconf namespace
+} // end of isc namespace
 
 #endif

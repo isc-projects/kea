@@ -328,11 +328,13 @@ map_content: %empty // empty map
 
 not_empty_map: STRING COLON value {
                   // map containing a single entry
+                  ctx.unique($1, ctx.loc2pos(@1));
                   ctx.stack_.back()->set($1, $3);
                   }
              | not_empty_map COMMA STRING COLON value {
                   // map consisting of a shorter map followed by
                   // comma and string:value
+                  ctx.unique($3, ctx.loc2pos(@3));
                   ctx.stack_.back()->set($3, $5);
                   }
              ;
@@ -496,51 +498,61 @@ global_param: valid_lifetime
             ;
 
 valid_lifetime: VALID_LIFETIME COLON INTEGER {
+    ctx.unique("valid-lifetime", ctx.loc2pos(@1));
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("valid-lifetime", prf);
 };
 
 min_valid_lifetime: MIN_VALID_LIFETIME COLON INTEGER {
+    ctx.unique("min-valid-lifetime", ctx.loc2pos(@1));
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("min-valid-lifetime", prf);
 };
 
 max_valid_lifetime: MAX_VALID_LIFETIME COLON INTEGER {
+    ctx.unique("max-valid-lifetime", ctx.loc2pos(@1));
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-valid-lifetime", prf);
 };
 
 renew_timer: RENEW_TIMER COLON INTEGER {
+    ctx.unique("renew-timer", ctx.loc2pos(@1));
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("renew-timer", prf);
 };
 
 rebind_timer: REBIND_TIMER COLON INTEGER {
+    ctx.unique("rebind-timer", ctx.loc2pos(@1));
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("rebind-timer", prf);
 };
 
 calculate_tee_times: CALCULATE_TEE_TIMES COLON BOOLEAN {
+    ctx.unique("calculate-tee-times", ctx.loc2pos(@1));
     ElementPtr ctt(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("calculate-tee-times", ctt);
 };
 
 t1_percent: T1_PERCENT COLON FLOAT {
+    ctx.unique("t1-percent", ctx.loc2pos(@1));
     ElementPtr t1(new DoubleElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("t1-percent", t1);
 };
 
 t2_percent: T2_PERCENT COLON FLOAT {
+    ctx.unique("t2-percent", ctx.loc2pos(@1));
     ElementPtr t2(new DoubleElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("t2-percent", t2);
 };
 
 decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
+    ctx.unique("decline-probation-period", ctx.loc2pos(@1));
     ElementPtr dpp(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("decline-probation-period", dpp);
 };
 
 server_tag: SERVER_TAG {
+    ctx.unique("server-tag", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr stag(new StringElement($4, ctx.loc2pos(@4)));
@@ -549,37 +561,44 @@ server_tag: SERVER_TAG {
 };
 
 echo_client_id: ECHO_CLIENT_ID COLON BOOLEAN {
+    ctx.unique("echo-client-id", ctx.loc2pos(@1));
     ElementPtr echo(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("echo-client-id", echo);
 };
 
 match_client_id: MATCH_CLIENT_ID COLON BOOLEAN {
+    ctx.unique("match-client-id", ctx.loc2pos(@1));
     ElementPtr match(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("match-client-id", match);
 };
 
 authoritative: AUTHORITATIVE COLON BOOLEAN {
+    ctx.unique("authoritative", ctx.loc2pos(@1));
     ElementPtr prf(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("authoritative", prf);
 };
 
 ddns_send_updates: DDNS_SEND_UPDATES COLON BOOLEAN {
+    ctx.unique("ddns-send-updates", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("ddns-send-updates", b);
 };
 
 ddns_override_no_update: DDNS_OVERRIDE_NO_UPDATE COLON BOOLEAN {
+    ctx.unique("ddns-override-no-update", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("ddns-override-no-update", b);
 };
 
 ddns_override_client_update: DDNS_OVERRIDE_CLIENT_UPDATE COLON BOOLEAN {
+    ctx.unique("ddns-override-client-update", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("ddns-override-client-update", b);
 };
 
 ddns_replace_client_name: DDNS_REPLACE_CLIENT_NAME {
     ctx.enter(ctx.REPLACE_CLIENT_NAME);
+    ctx.unique("ddns-replace-client-name", ctx.loc2pos(@1));
 } COLON ddns_replace_client_name_value {
     ctx.stack_.back()->set("ddns-replace-client-name", $4);
     ctx.leave();
@@ -605,6 +624,7 @@ ddns_replace_client_name_value:
   ;
 
 ddns_generated_prefix: DDNS_GENERATED_PREFIX {
+    ctx.unique("ddns-generated-prefix", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -613,6 +633,7 @@ ddns_generated_prefix: DDNS_GENERATED_PREFIX {
 };
 
 ddns_qualifying_suffix: DDNS_QUALIFYING_SUFFIX {
+    ctx.unique("ddns-qualifying-suffix", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -621,6 +642,7 @@ ddns_qualifying_suffix: DDNS_QUALIFYING_SUFFIX {
 };
 
 hostname_char_set: HOSTNAME_CHAR_SET {
+    ctx.unique("hostname-char-set", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -629,6 +651,7 @@ hostname_char_set: HOSTNAME_CHAR_SET {
 };
 
 hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
+    ctx.unique("hostname-char-replacement", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -637,21 +660,25 @@ hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
 };
 
 store_extended_info: STORE_EXTENDED_INFO COLON BOOLEAN {
+    ctx.unique("store-extended-info", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("store-extended-info", b);
 };
 
 statistic_default_sample_count: STATISTIC_DEFAULT_SAMPLE_COUNT COLON INTEGER {
+    ctx.unique("statistic-default-sample-count", ctx.loc2pos(@1));
     ElementPtr count(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("statistic-default-sample-count", count);
 };
 
 statistic_default_sample_age: STATISTIC_DEFAULT_SAMPLE_AGE COLON INTEGER {
+    ctx.unique("statistic-default-sample-age", ctx.loc2pos(@1));
     ElementPtr age(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("statistic-default-sample-age", age);
 };
 
 interfaces_config: INTERFACES_CONFIG {
+    ctx.unique("interfaces-config", ctx.loc2pos(@1));
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces-config", i);
     ctx.stack_.push_back(i);
@@ -685,6 +712,7 @@ sub_interfaces4: LCURLY_BRACKET {
 };
 
 interfaces_list: INTERFACES {
+    ctx.unique("interfaces", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces", l);
     ctx.stack_.push_back(l);
@@ -695,6 +723,7 @@ interfaces_list: INTERFACES {
 };
 
 dhcp_socket_type: DHCP_SOCKET_TYPE {
+    ctx.unique("dhcp-socket-type", ctx.loc2pos(@1));
     ctx.enter(ctx.DHCP_SOCKET_TYPE);
 } COLON socket_type {
     ctx.stack_.back()->set("dhcp-socket-type", $4);
@@ -706,6 +735,7 @@ socket_type: RAW { $$ = ElementPtr(new StringElement("raw", ctx.loc2pos(@1))); }
            ;
 
 outbound_interface: OUTBOUND_INTERFACE {
+    ctx.unique("outbound-interface", ctx.loc2pos(@1));
     ctx.enter(ctx.OUTBOUND_INTERFACE);
 } COLON outbound_interface_value {
     ctx.stack_.back()->set("outbound-interface", $4);
@@ -719,12 +749,14 @@ outbound_interface_value: SAME_AS_INBOUND {
     } ;
 
 re_detect: RE_DETECT COLON BOOLEAN {
+    ctx.unique("re-detect", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("re-detect", b);
 };
 
 
 lease_database: LEASE_DATABASE {
+    ctx.unique("lease-database", ctx.loc2pos(@1));
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("lease-database", i);
     ctx.stack_.push_back(i);
@@ -737,6 +769,7 @@ lease_database: LEASE_DATABASE {
 };
 
 sanity_checks: SANITY_CHECKS {
+    ctx.unique("sanity-checks", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("sanity-checks", m);
     ctx.stack_.push_back(m);
@@ -752,6 +785,7 @@ sanity_checks_params: sanity_checks_param
 sanity_checks_param: lease_checks;
 
 lease_checks: LEASE_CHECKS {
+    ctx.unique("lease-checks", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
 
@@ -770,6 +804,7 @@ lease_checks: LEASE_CHECKS {
 }
 
 hosts_database: HOSTS_DATABASE {
+    ctx.unique("hosts-database", ctx.loc2pos(@1));
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("hosts-database", i);
     ctx.stack_.push_back(i);
@@ -782,6 +817,7 @@ hosts_database: HOSTS_DATABASE {
 };
 
 hosts_databases: HOSTS_DATABASES {
+    ctx.unique("hosts-databases", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("hosts-databases", l);
     ctx.stack_.push_back(l);
@@ -837,6 +873,7 @@ database_map_param: database_type
                   ;
 
 database_type: TYPE {
+    ctx.unique("type", ctx.loc2pos(@1));
     ctx.enter(ctx.DATABASE_TYPE);
 } COLON db_type {
     ctx.stack_.back()->set("type", $4);
@@ -850,6 +887,7 @@ db_type: MEMFILE { $$ = ElementPtr(new StringElement("memfile", ctx.loc2pos(@1))
        ;
 
 user: USER {
+    ctx.unique("user", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
@@ -858,6 +896,7 @@ user: USER {
 };
 
 password: PASSWORD {
+    ctx.unique("password", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr pwd(new StringElement($4, ctx.loc2pos(@4)));
@@ -866,6 +905,7 @@ password: PASSWORD {
 };
 
 host: HOST {
+    ctx.unique("host", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr h(new StringElement($4, ctx.loc2pos(@4)));
@@ -874,11 +914,13 @@ host: HOST {
 };
 
 port: PORT COLON INTEGER {
+    ctx.unique("port", ctx.loc2pos(@1));
     ElementPtr p(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("port", p);
 };
 
 name: NAME {
+    ctx.unique("name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
@@ -887,41 +929,49 @@ name: NAME {
 };
 
 persist: PERSIST COLON BOOLEAN {
+    ctx.unique("persist", ctx.loc2pos(@1));
     ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("persist", n);
 };
 
 lfc_interval: LFC_INTERVAL COLON INTEGER {
+    ctx.unique("lfc-interval", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("lfc-interval", n);
 };
 
 readonly: READONLY COLON BOOLEAN {
+    ctx.unique("readonly", ctx.loc2pos(@1));
     ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("readonly", n);
 };
 
 connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
+    ctx.unique("connect-timeout", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("connect-timeout", n);
 };
 
 request_timeout: REQUEST_TIMEOUT COLON INTEGER {
+    ctx.unique("request-timeout", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("request-timeout", n);
 };
 
 tcp_keepalive: TCP_KEEPALIVE COLON INTEGER {
+    ctx.unique("tcp-keepalive", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("tcp-keepalive", n);
 };
 
 tcp_nodelay: TCP_NODELAY COLON BOOLEAN {
+    ctx.unique("tcp-nodelay", ctx.loc2pos(@1));
     ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("tcp-nodelay", n);
 };
 
 contact_points: CONTACT_POINTS {
+    ctx.unique("contact-points", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr cp(new StringElement($4, ctx.loc2pos(@4)));
@@ -930,6 +980,7 @@ contact_points: CONTACT_POINTS {
 };
 
 keyspace: KEYSPACE {
+    ctx.unique("keyspace", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr ks(new StringElement($4, ctx.loc2pos(@4)));
@@ -938,6 +989,7 @@ keyspace: KEYSPACE {
 };
 
 consistency: CONSISTENCY {
+    ctx.unique("consistency", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr c(new StringElement($4, ctx.loc2pos(@4)));
@@ -946,6 +998,7 @@ consistency: CONSISTENCY {
 };
 
 serial_consistency: SERIAL_CONSISTENCY {
+    ctx.unique("serial-consistency", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr c(new StringElement($4, ctx.loc2pos(@4)));
@@ -954,22 +1007,26 @@ serial_consistency: SERIAL_CONSISTENCY {
 };
 
 max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
+    ctx.unique("max-reconnect-tries", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-reconnect-tries", n);
 };
 
 reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
+    ctx.unique("reconnect-wait-time", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("reconnect-wait-time", n);
 };
 
 max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
+    ctx.unique("max-row-errors", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-row-errors", n);
 };
 
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
+    ctx.unique("host-reservation-identifiers", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("host-reservation-identifiers", l);
     ctx.stack_.push_back(l);
@@ -1018,6 +1075,7 @@ flex_id: FLEX_ID {
 // --- multi-threading ------------------------------------------------
 
 dhcp_multi_threading: DHCP_MULTI_THREADING {
+    ctx.unique("multi-threading", ctx.loc2pos(@1));
     ElementPtr mt(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("multi-threading", mt);
     ctx.stack_.push_back(mt);
@@ -1042,21 +1100,25 @@ multi_threading_param: enable_multi_threading
                      ;
 
 enable_multi_threading: ENABLE_MULTI_THREADING COLON BOOLEAN {
+    ctx.unique("enable-multi-threading", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("enable-multi-threading", b);
 };
 
 thread_pool_size: THREAD_POOL_SIZE COLON INTEGER {
+    ctx.unique("thread-pool-size", ctx.loc2pos(@1));
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("thread-pool-size", prf);
 };
 
 packet_queue_size: PACKET_QUEUE_SIZE COLON INTEGER {
+    ctx.unique("packet-queue-size", ctx.loc2pos(@1));
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("packet-queue-size", prf);
 };
 
 hooks_libraries: HOOKS_LIBRARIES {
+    ctx.unique("hooks-libraries", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("hooks-libraries", l);
     ctx.stack_.push_back(l);
@@ -1104,6 +1166,7 @@ hooks_param: library
            ;
 
 library: LIBRARY {
+    ctx.unique("library", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr lib(new StringElement($4, ctx.loc2pos(@4)));
@@ -1112,6 +1175,7 @@ library: LIBRARY {
 };
 
 parameters: PARAMETERS {
+    ctx.unique("parameters", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON map_value {
     ctx.stack_.back()->set("parameters", $4);
@@ -1120,6 +1184,7 @@ parameters: PARAMETERS {
 
 // --- expired-leases-processing ------------------------
 expired_leases_processing: EXPIRED_LEASES_PROCESSING {
+    ctx.unique("expired-leases-processing", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("expired-leases-processing", m);
     ctx.stack_.push_back(m);
@@ -1143,31 +1208,37 @@ expired_leases_param: reclaim_timer_wait_time
                     ;
 
 reclaim_timer_wait_time: RECLAIM_TIMER_WAIT_TIME COLON INTEGER {
+    ctx.unique("reclaim-timer-wait-time", ctx.loc2pos(@1));
     ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("reclaim-timer-wait-time", value);
 };
 
 flush_reclaimed_timer_wait_time: FLUSH_RECLAIMED_TIMER_WAIT_TIME COLON INTEGER {
+    ctx.unique("flush-reclaimed-timer-wait-time", ctx.loc2pos(@1));
     ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("flush-reclaimed-timer-wait-time", value);
 };
 
 hold_reclaimed_time: HOLD_RECLAIMED_TIME COLON INTEGER {
+    ctx.unique("hold-reclaimed-time", ctx.loc2pos(@1));
     ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("hold-reclaimed-time", value);
 };
 
 max_reclaim_leases: MAX_RECLAIM_LEASES COLON INTEGER {
+    ctx.unique("max-reclaim-leases", ctx.loc2pos(@1));
     ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-reclaim-leases", value);
 };
 
 max_reclaim_time: MAX_RECLAIM_TIME COLON INTEGER {
+    ctx.unique("max-reclaim-time", ctx.loc2pos(@1));
     ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-reclaim-time", value);
 };
 
 unwarned_reclaim_cycles: UNWARNED_RECLAIM_CYCLES COLON INTEGER {
+    ctx.unique("unwarned-reclaim-cycles", ctx.loc2pos(@1));
     ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("unwarned-reclaim-cycles", value);
 };
@@ -1176,6 +1247,7 @@ unwarned_reclaim_cycles: UNWARNED_RECLAIM_CYCLES COLON INTEGER {
 // This defines subnet4 as a list of maps.
 // "subnet4": [ ... ]
 subnet4_list: SUBNET4 {
+    ctx.unique("subnet4", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("subnet4", l);
     ctx.stack_.push_back(l);
@@ -1283,6 +1355,7 @@ subnet4_param: valid_lifetime
              ;
 
 subnet: SUBNET {
+    ctx.unique("subnet", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr subnet(new StringElement($4, ctx.loc2pos(@4)));
@@ -1291,6 +1364,7 @@ subnet: SUBNET {
 };
 
 subnet_4o6_interface: SUBNET_4O6_INTERFACE {
+    ctx.unique("4o6-interface", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
@@ -1299,6 +1373,7 @@ subnet_4o6_interface: SUBNET_4O6_INTERFACE {
 };
 
 subnet_4o6_interface_id: SUBNET_4O6_INTERFACE_ID {
+    ctx.unique("4o6-interface-id", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
@@ -1307,6 +1382,7 @@ subnet_4o6_interface_id: SUBNET_4O6_INTERFACE_ID {
 };
 
 subnet_4o6_subnet: SUBNET_4O6_SUBNET {
+    ctx.unique("4o6-subnet", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
@@ -1315,6 +1391,7 @@ subnet_4o6_subnet: SUBNET_4O6_SUBNET {
 };
 
 interface: INTERFACE {
+    ctx.unique("interface", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
@@ -1323,6 +1400,7 @@ interface: INTERFACE {
 };
 
 client_class: CLIENT_CLASS {
+    ctx.unique("client-class", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr cls(new StringElement($4, ctx.loc2pos(@4)));
@@ -1331,6 +1409,7 @@ client_class: CLIENT_CLASS {
 };
 
 require_client_classes: REQUIRE_CLIENT_CLASSES {
+    ctx.unique("require-client-classes", ctx.loc2pos(@1));
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("require-client-classes", c);
     ctx.stack_.push_back(c);
@@ -1341,6 +1420,7 @@ require_client_classes: REQUIRE_CLIENT_CLASSES {
 };
 
 reservation_mode: RESERVATION_MODE {
+    ctx.unique("reservation-mode", ctx.loc2pos(@1));
     ctx.enter(ctx.RESERVATION_MODE);
 } COLON hr_mode {
     ctx.stack_.back()->set("reservation-mode", $4);
@@ -1354,6 +1434,7 @@ hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1
        ;
 
 id: ID COLON INTEGER {
+    ctx.unique("id", ctx.loc2pos(@1));
     ElementPtr id(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("id", id);
 };
@@ -1361,6 +1442,7 @@ id: ID COLON INTEGER {
 // ---- shared-networks ---------------------
 
 shared_networks: SHARED_NETWORKS {
+    ctx.unique("shared-networks", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("shared-networks", l);
     ctx.stack_.push_back(l);
@@ -1432,6 +1514,7 @@ shared_network_param: name
 // This defines the "option-def": [ ... ] entry that may appear
 // at a global option.
 option_def_list: OPTION_DEF {
+    ctx.unique("option-def", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("option-def", l);
     ctx.stack_.push_back(l);
@@ -1515,6 +1598,7 @@ option_def_param: option_def_name
 option_def_name: name;
 
 code: CODE COLON INTEGER {
+    ctx.unique("code", ctx.loc2pos(@1));
     ElementPtr code(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("code", code);
 };
@@ -1522,6 +1606,7 @@ code: CODE COLON INTEGER {
 option_def_code: code;
 
 option_def_type: TYPE {
+    ctx.unique("type", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
@@ -1530,6 +1615,7 @@ option_def_type: TYPE {
 };
 
 option_def_record_types: RECORD_TYPES {
+    ctx.unique("record-types", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr rtypes(new StringElement($4, ctx.loc2pos(@4)));
@@ -1538,6 +1624,7 @@ option_def_record_types: RECORD_TYPES {
 };
 
 space: SPACE {
+    ctx.unique("space", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr space(new StringElement($4, ctx.loc2pos(@4)));
@@ -1548,6 +1635,7 @@ space: SPACE {
 option_def_space: space;
 
 option_def_encapsulate: ENCAPSULATE {
+    ctx.unique("encapsulate", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr encap(new StringElement($4, ctx.loc2pos(@4)));
@@ -1556,6 +1644,7 @@ option_def_encapsulate: ENCAPSULATE {
 };
 
 option_def_array: ARRAY COLON BOOLEAN {
+    ctx.unique("array", ctx.loc2pos(@1));
     ElementPtr array(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("array", array);
 };
@@ -1565,6 +1654,7 @@ option_def_array: ARRAY COLON BOOLEAN {
 // This defines the "option-data": [ ... ] entry that may appear
 // in several places, but most notably in subnet4 entries.
 option_data_list: OPTION_DATA {
+    ctx.unique("option-data", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("option-data", l);
     ctx.stack_.push_back(l);
@@ -1638,6 +1728,7 @@ option_data_param: option_data_name
 option_data_name: name;
 
 option_data_data: DATA {
+    ctx.unique("data", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr data(new StringElement($4, ctx.loc2pos(@4)));
@@ -1650,11 +1741,13 @@ option_data_code: code;
 option_data_space: space;
 
 option_data_csv_format: CSV_FORMAT COLON BOOLEAN {
+    ctx.unique("csv-format", ctx.loc2pos(@1));
     ElementPtr space(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("csv-format", space);
 };
 
 option_data_always_send: ALWAYS_SEND COLON BOOLEAN {
+    ctx.unique("always-send", ctx.loc2pos(@1));
     ElementPtr persist(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("always-send", persist);
 };
@@ -1663,6 +1756,7 @@ option_data_always_send: ALWAYS_SEND COLON BOOLEAN {
 
 // This defines the "pools": [ ... ] entry that may appear in subnet4.
 pools_list: POOLS {
+    ctx.unique("pools", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("pools", l);
     ctx.stack_.push_back(l);
@@ -1716,6 +1810,7 @@ pool_param: pool_entry
           ;
 
 pool_entry: POOL {
+    ctx.unique("pool", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr pool(new StringElement($4, ctx.loc2pos(@4)));
@@ -1779,6 +1874,7 @@ comment: COMMENT {
 
 // --- reservations ------------------------------------------
 reservations: RESERVATIONS {
+    ctx.unique("reservations", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("reservations", l);
     ctx.stack_.push_back(l);
@@ -1841,6 +1937,7 @@ reservation_param: duid
                  ;
 
 next_server: NEXT_SERVER {
+    ctx.unique("next-server", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr next_server(new StringElement($4, ctx.loc2pos(@4)));
@@ -1849,6 +1946,7 @@ next_server: NEXT_SERVER {
 };
 
 server_hostname: SERVER_HOSTNAME {
+    ctx.unique("server-hostname", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr srv(new StringElement($4, ctx.loc2pos(@4)));
@@ -1857,6 +1955,7 @@ server_hostname: SERVER_HOSTNAME {
 };
 
 boot_file_name: BOOT_FILE_NAME {
+    ctx.unique("boot-file-name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr bootfile(new StringElement($4, ctx.loc2pos(@4)));
@@ -1865,6 +1964,7 @@ boot_file_name: BOOT_FILE_NAME {
 };
 
 ip_address: IP_ADDRESS {
+    ctx.unique("ip-address", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr addr(new StringElement($4, ctx.loc2pos(@4)));
@@ -1873,6 +1973,7 @@ ip_address: IP_ADDRESS {
 };
 
 ip_addresses: IP_ADDRESSES {
+    ctx.unique("ip-addresses", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("ip-addresses", l);
     ctx.stack_.push_back(l);
@@ -1883,6 +1984,7 @@ ip_addresses: IP_ADDRESSES {
 };
 
 duid: DUID {
+    ctx.unique("duid", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr d(new StringElement($4, ctx.loc2pos(@4)));
@@ -1891,6 +1993,7 @@ duid: DUID {
 };
 
 hw_address: HW_ADDRESS {
+    ctx.unique("hw-address", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
@@ -1899,6 +2002,7 @@ hw_address: HW_ADDRESS {
 };
 
 client_id_value: CLIENT_ID {
+    ctx.unique("client-id", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
@@ -1907,6 +2011,7 @@ client_id_value: CLIENT_ID {
 };
 
 circuit_id_value: CIRCUIT_ID {
+    ctx.unique("circuit-id", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
@@ -1915,6 +2020,7 @@ circuit_id_value: CIRCUIT_ID {
 };
 
 flex_id_value: FLEX_ID {
+    ctx.unique("flex-id", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
@@ -1923,6 +2029,7 @@ flex_id_value: FLEX_ID {
 };
 
 hostname: HOSTNAME {
+    ctx.unique("hostname", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr host(new StringElement($4, ctx.loc2pos(@4)));
@@ -1931,6 +2038,7 @@ hostname: HOSTNAME {
 };
 
 reservation_client_classes: CLIENT_CLASSES {
+    ctx.unique("client-classes", ctx.loc2pos(@1));
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("client-classes", c);
     ctx.stack_.push_back(c);
@@ -1944,6 +2052,7 @@ reservation_client_classes: CLIENT_CLASSES {
 
 // --- relay -------------------------------------------------
 relay: RELAY {
+    ctx.unique("relay", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("relay", m);
     ctx.stack_.push_back(m);
@@ -1961,6 +2070,7 @@ relay_map: ip_address
 
 // --- client classes ----------------------------------------
 client_classes: CLIENT_CLASSES {
+    ctx.unique("client-classes", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("client-classes", l);
     ctx.stack_.push_back(l);
@@ -2008,6 +2118,7 @@ client_class_param: client_class_name
 client_class_name: name;
 
 client_class_test: TEST {
+    ctx.unique("test", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr test(new StringElement($4, ctx.loc2pos(@4)));
@@ -2016,6 +2127,7 @@ client_class_test: TEST {
 };
 
 only_if_required: ONLY_IF_REQUIRED COLON BOOLEAN {
+    ctx.unique("only-if-required", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("only-if-required", b);
 };
@@ -2023,6 +2135,7 @@ only_if_required: ONLY_IF_REQUIRED COLON BOOLEAN {
 // --- end of client classes ---------------------------------
 
 dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
+    ctx.unique("dhcp4o6-port", ctx.loc2pos(@1));
     ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("dhcp4o6-port", time);
 };
@@ -2030,6 +2143,7 @@ dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
 // --- control socket ----------------------------------------
 
 control_socket: CONTROL_SOCKET {
+    ctx.unique("control-socket", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("control-socket", m);
     ctx.stack_.push_back(m);
@@ -2051,6 +2165,7 @@ control_socket_param: control_socket_type
                     ;
 
 control_socket_type: SOCKET_TYPE {
+    ctx.unique("socket-type", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr stype(new StringElement($4, ctx.loc2pos(@4)));
@@ -2059,6 +2174,7 @@ control_socket_type: SOCKET_TYPE {
 };
 
 control_socket_name: SOCKET_NAME {
+    ctx.unique("socket-name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
@@ -2070,6 +2186,7 @@ control_socket_name: SOCKET_NAME {
 // --- dhcp-queue-control ---------------------------------------------
 
 dhcp_queue_control: DHCP_QUEUE_CONTROL {
+    ctx.unique("dhcp-queue-control", ctx.loc2pos(@1));
     ElementPtr qc(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("dhcp-queue-control", qc);
     ctx.stack_.push_back(qc);
@@ -2094,11 +2211,13 @@ queue_control_param: enable_queue
                    ;
 
 enable_queue: ENABLE_QUEUE COLON BOOLEAN {
+    ctx.unique("enable-queue", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("enable-queue", b);
 };
 
 queue_type: QUEUE_TYPE {
+    ctx.unique("queue-type", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr qt(new StringElement($4, ctx.loc2pos(@4)));
@@ -2107,11 +2226,13 @@ queue_type: QUEUE_TYPE {
 };
 
 capacity: CAPACITY COLON INTEGER {
+    ctx.unique("capacity", ctx.loc2pos(@1));
     ElementPtr c(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("capacity", c);
 };
 
 arbitrary_map_entry: STRING {
+    ctx.unique($1, ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON value {
     ctx.stack_.back()->set($1, $4);
@@ -2121,6 +2242,7 @@ arbitrary_map_entry: STRING {
 // --- dhcp ddns ---------------------------------------------
 
 dhcp_ddns: DHCP_DDNS {
+    ctx.unique("dhcp-ddns", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("dhcp-ddns", m);
     ctx.stack_.push_back(m);
@@ -2167,11 +2289,13 @@ dhcp_ddns_param: enable_updates
                ;
 
 enable_updates: ENABLE_UPDATES COLON BOOLEAN {
+    ctx.unique("enable-updates", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("enable-updates", b);
 };
 
 server_ip: SERVER_IP {
+    ctx.unique("server-ip", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -2180,11 +2304,13 @@ server_ip: SERVER_IP {
 };
 
 server_port: SERVER_PORT COLON INTEGER {
+    ctx.unique("server-port", ctx.loc2pos(@1));
     ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("server-port", i);
 };
 
 sender_ip: SENDER_IP {
+    ctx.unique("sender-ip", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -2193,16 +2319,19 @@ sender_ip: SENDER_IP {
 };
 
 sender_port: SENDER_PORT COLON INTEGER {
+    ctx.unique("sender-port", ctx.loc2pos(@1));
     ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("sender-port", i);
 };
 
 max_queue_size: MAX_QUEUE_SIZE COLON INTEGER {
+    ctx.unique("max-queue-size", ctx.loc2pos(@1));
     ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-queue-size", i);
 };
 
 ncr_protocol: NCR_PROTOCOL {
+    ctx.unique("ncr-protocol", ctx.loc2pos(@1));
     ctx.enter(ctx.NCR_PROTOCOL);
 } COLON ncr_protocol_value {
     ctx.stack_.back()->set("ncr-protocol", $4);
@@ -2215,6 +2344,7 @@ ncr_protocol_value:
   ;
 
 ncr_format: NCR_FORMAT {
+    ctx.unique("ncr-format", ctx.loc2pos(@1));
     ctx.enter(ctx.NCR_FORMAT);
 } COLON JSON {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(@4)));
@@ -2224,6 +2354,7 @@ ncr_format: NCR_FORMAT {
 
 // Deprecated, moved to global/network scopes. Eventually it should be removed.
 dep_qualifying_suffix: QUALIFYING_SUFFIX {
+    ctx.unique("qualifying-suffix", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -2233,18 +2364,21 @@ dep_qualifying_suffix: QUALIFYING_SUFFIX {
 
 // Deprecated, moved to global/network scopes. Eventually it should be removed.
 dep_override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {
+    ctx.unique("override-no-update", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("override-no-update", b);
 };
 
 // Deprecated, moved to global/network scopes. Eventually it should be removed.
 dep_override_client_update: OVERRIDE_CLIENT_UPDATE COLON BOOLEAN {
+    ctx.unique("override-client-update", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("override-client-update", b);
 };
 
 // Deprecated, moved to global/network scopes. Eventually it should be removed.
 dep_replace_client_name: REPLACE_CLIENT_NAME {
+    ctx.unique("replace-client-name", ctx.loc2pos(@1));
     ctx.enter(ctx.REPLACE_CLIENT_NAME);
 } COLON ddns_replace_client_name_value {
     ctx.stack_.back()->set("replace-client-name", $4);
@@ -2253,6 +2387,7 @@ dep_replace_client_name: REPLACE_CLIENT_NAME {
 
 // Deprecated, moved to global/network scopes. Eventually it should be removed.
 dep_generated_prefix: GENERATED_PREFIX {
+    ctx.unique("generated-prefix", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -2262,6 +2397,7 @@ dep_generated_prefix: GENERATED_PREFIX {
 
 // Deprecated, moved to global/network scopes. Eventually it should be removed.
 dep_hostname_char_set: HOSTNAME_CHAR_SET {
+    ctx.unique("hostname-char-set", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -2271,6 +2407,7 @@ dep_hostname_char_set: HOSTNAME_CHAR_SET {
 
 // Deprecated, moved to global/network scopes. Eventually it should be removed.
 dep_hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
+    ctx.unique("hostname-char-replacement", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -2282,6 +2419,7 @@ dep_hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
 // Config control information element
 
 config_control: CONFIG_CONTROL {
+    ctx.unique("config-control", ctx.loc2pos(@1));
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("config-control", i);
     ctx.stack_.push_back(i);
@@ -2312,6 +2450,7 @@ config_control_param: config_databases
                     ;
 
 config_databases: CONFIG_DATABASES {
+    ctx.unique("config-databases", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("config-databases", l);
     ctx.stack_.push_back(l);
@@ -2322,6 +2461,7 @@ config_databases: CONFIG_DATABASES {
 };
 
 config_fetch_wait_time: CONFIG_FETCH_WAIT_TIME COLON INTEGER {
+    ctx.unique("config-fetch-wait-time", ctx.loc2pos(@1));
     ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("config-fetch-wait-time", value);
 };
@@ -2329,6 +2469,7 @@ config_fetch_wait_time: CONFIG_FETCH_WAIT_TIME COLON INTEGER {
 // --- loggers entry -----------------------------------------
 
 loggers: LOGGERS {
+    ctx.unique("loggers", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
@@ -2367,11 +2508,13 @@ logger_param: name
             ;
 
 debuglevel: DEBUGLEVEL COLON INTEGER {
+    ctx.unique("debuglevel", ctx.loc2pos(@1));
     ElementPtr dl(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("debuglevel", dl);
 };
 
 severity: SEVERITY {
+    ctx.unique("severity", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
@@ -2380,6 +2523,7 @@ severity: SEVERITY {
 };
 
 output_options_list: OUTPUT_OPTIONS {
+    ctx.unique("output_options", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
@@ -2413,6 +2557,7 @@ output_params: output
              ;
 
 output: OUTPUT {
+    ctx.unique("output", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
@@ -2421,21 +2566,25 @@ output: OUTPUT {
 };
 
 flush: FLUSH COLON BOOLEAN {
+    ctx.unique("flush", ctx.loc2pos(@1));
     ElementPtr flush(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("flush", flush);
 };
 
 maxsize: MAXSIZE COLON INTEGER {
+    ctx.unique("maxsize", ctx.loc2pos(@1));
     ElementPtr maxsize(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxsize", maxsize);
 };
 
 maxver: MAXVER COLON INTEGER {
+    ctx.unique("maxver", ctx.loc2pos(@1));
     ElementPtr maxver(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxver", maxver);
 };
 
 pattern: PATTERN {
+    ctx.unique("pattern", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));

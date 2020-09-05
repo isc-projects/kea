@@ -605,8 +605,7 @@ TEST(ParserTest, errors) {
               "  \"Dhcp6\":{\n"
               "  \"comment\": \"second\" }}\n",
               Parser6Context::PARSER_DHCP6,
-              "<string>:3:3: duplicate Dhcp6 entries in toplevel map "
-              "(previous at <string>:1:3)");
+              "<string>:2.23: syntax error, unexpected \",\", expecting }");
 }
 
 // Check unicode escapes

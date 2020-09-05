@@ -160,6 +160,17 @@ public:
     /// @return Position in format accepted by Element
     isc::data::Element::Position loc2pos(isc::d2::location& loc);
 
+    /// @brief Check if a parameter is already present
+    ///
+    /// Check if a parameter is already present in the map at the top
+    /// of the stack and raise an error when it is.
+    ///
+    /// @param name name of the parameter to check
+    /// @param loc location of the current parameter
+    /// @throw Dhcp4ParseError
+    void unique(const std::string& name,
+                isc::data::Element::Position loc);
+
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
         ///< This one is used in pure JSON mode.
@@ -292,7 +303,7 @@ public:
     isc::data::ElementPtr parseCommon();
 };
 
-}; // end of isc::eval namespace
-}; // end of isc namespace
+} // end of isc::eval namespace
+} // end of isc namespace
 
 #endif

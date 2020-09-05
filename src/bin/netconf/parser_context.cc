@@ -117,9 +117,15 @@ ParserContext::unique(const std::string& name,
 {
     ConstElementPtr value = stack_.back()->get(name);
     if (value) {
-        isc_throw(ParseError, loc << ": duplicate " << name
-                  << " entries in " << contextName()
-                  << " map (previous at " << value->getPosition() << ")");
+        if (ctx_ != NO_KEYWORDS) {
+            isc_throw(ParseError, loc << ": duplicate " << name
+                      << " entries in " << contextName()
+                      << " map (previous at " << value->getPosition() << ")");
+        } else {
+            isc_throw(ParseError, loc << ": duplicate " << name
+                      << " entries in JSON"
+                      << " map (previous at " << value->getPosition() << ")");
+        }
     }
 }
 
@@ -169,5 +175,5 @@ ParserContext::contextName()
     }
 }
 
-};
-};
+}
+}
