@@ -229,22 +229,14 @@ agent_syntax_map: LCURLY_BRACKET {
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
-} global_objects RCURLY_BRACKET {
+} global_object RCURLY_BRACKET {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 };
 
-// This represents top-level entries: Control-agent.
-global_objects: global_object
-              ;
-
-// This represents a single top level entry, e.g. Control-agent.
-global_object: agent_object
-             ;
-
-// This define the Control-agent object.
-agent_object: CONTROL_AGENT {
+// This represents the single top level entry, e.g. Control-agent.
+global_object: CONTROL_AGENT {
 
     // Let's create a MapElement that will represent it, add it to the
     // top level map (that's already on the stack) and put the new map

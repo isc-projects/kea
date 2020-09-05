@@ -216,23 +216,15 @@ syntax_map: LCURLY_BRACKET {
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
-} global_objects RCURLY_BRACKET {
+} global_object RCURLY_BRACKET {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 };
 
-// This represents top-level entries: DhcpDdns.
-global_objects: global_object
-              ;
-
-// This represents a single top level entry, e.g. DhcpDdns.
-global_object: dhcpddns_object
-             ;
-
 // --- dhcp ddns ---------------------------------------------
-
-dhcpddns_object: DHCPDDNS {
+// This represents the single top level entry, e.g. DhcpDdns.
+global_object: DHCPDDNS {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("DhcpDdns", m);
     ctx.stack_.push_back(m);

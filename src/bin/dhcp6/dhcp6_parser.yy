@@ -406,7 +406,7 @@ syntax_map: LCURLY_BRACKET {
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
-} global_objects RCURLY_BRACKET {
+} global_object RCURLY_BRACKET {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
@@ -415,16 +415,8 @@ syntax_map: LCURLY_BRACKET {
     ctx.require("Dhcp6", ctx.loc2pos(@1), ctx.loc2pos(@4));
 };
 
-// This represents top-level entries: Dhcp6
-global_objects: global_object
-              | global_objects COMMA global_object
-              ;
-
-// This represents a single top level entry, e.g. Dhcp6.
-global_object: dhcp6_object
-             ;
-
-dhcp6_object: DHCP6 {
+// This represents the single top level entry, e.g. Dhcp6.
+global_object: DHCP6 {
     // This code is executed when we're about to start parsing
     // the content of the map
     // Prevent against duplicate.

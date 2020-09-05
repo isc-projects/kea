@@ -228,23 +228,14 @@ netconf_syntax_map: LCURLY_BRACKET {
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
-} global_objects RCURLY_BRACKET {
+} global_object RCURLY_BRACKET {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 };
 
-// This represents top-level entries: Netconf.
-global_objects: global_object
-              | global_objects COMMA global_object
-              ;
-
-// This represents a single top level entry, e.g. Netconf.
-global_object: netconf_object
-             ;
-
-// This define the Netconf object.
-netconf_object: NETCONF {
+// This represents the single top level entry, e.g. Netconf.
+global_object: NETCONF {
 
     // Let's create a MapElement that will represent it, add it to the
     // top level map (that's already on the stack) and put the new map
