@@ -450,6 +450,11 @@ TEST_F(ThreadPoolTest, startAndStop) {
     ASSERT_EQ(thread_pool.count(), 0);
     // the thread count should be 0
     ASSERT_EQ(thread_pool.size(), 0);
+
+    /// statistics
+    std::cout << "stat10: " << thread_pool.getQueueStat(10) << std::endl;
+    std::cout << "stat100: " << thread_pool.getQueueStat(100) << std::endl;
+    std::cout << "stat1000: " << thread_pool.getQueueStat(1000) << std::endl;
 }
 
 /// @brief test ThreadPool max queue size
@@ -524,6 +529,18 @@ TEST_F(ThreadPoolTest, addFront) {
     EXPECT_NO_THROW(ret = thread_pool.addFront(boost::make_shared<CallBack>(call_back)));
     EXPECT_FALSE(ret);
     EXPECT_EQ(thread_pool.count(), items_count);
+}
+
+/// @brief test ThreadPool get queue statistics.
+TEST_F(ThreadPoolTest, getQueueStat) {
+    ThreadPool<CallBack> thread_pool;
+    EXPECT_THROW(thread_pool.getQueueStat(0), InvalidParameter);
+    EXPECT_THROW(thread_pool.getQueueStat(1), InvalidParameter);
+    EXPECT_THROW(thread_pool.getQueueStat(-10), InvalidParameter);
+    EXPECT_THROW(thread_pool.getQueueStat(10000), InvalidParameter);
+    EXPECT_NO_THROW(thread_pool.getQueueStat(10));
+    EXPECT_NO_THROW(thread_pool.getQueueStat(100));
+    EXPECT_NO_THROW(thread_pool.getQueueStat(1000));
 }
 
 }  // namespace
