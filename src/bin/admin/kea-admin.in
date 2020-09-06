@@ -140,7 +140,7 @@ mysql_can_create() {
     # determines basic functional access to db.
     RESULT=$(mysql_execute "select @@global.version;")
     ERRCODE=$?
-    if [ $ERRCODE -ne  0 ]
+    if [ $ERRCODE -ne 0 ]
     then
         log_error "mysql_can_create: get MySQL version failed, mysql status = $ERRCODE"
         exit 1
@@ -163,7 +163,7 @@ END;"
     # Let's clean up just in case.
     RESULT=$(mysql_execute "$cleanup_sql")
     ERRCODE=$?
-    if [ $ERRCODE -ne  0 ]
+    if [ $ERRCODE -ne 0 ]
     then
         log_error "mysql_can_create cannot run pre cleanup, mysql status = $ERRCODE"
         exit 1;
@@ -173,7 +173,7 @@ END;"
     perms_ok=1
     RESULT=$(mysql_execute "$table_sql")
     ERRCODE=$?
-    if [ $ERRCODE -ne  0 ]
+    if [ $ERRCODE -ne 0 ]
     then
         log_error "mysql_can_create cannot create table, check user permissions, mysql status = $ERRCODE"
         perms_ok=0;
@@ -181,7 +181,7 @@ END;"
         # Now attempt to make trigger
         RESULT=$(mysql_execute "$trigger_sql")
         ERRCODE=$?
-        if [ $ERRCODE -ne  0 ]
+        if [ $ERRCODE -ne 0 ]
         then
             log_error "mysql_can_create cannot trigger, check user permissions, mysql status = $ERRCODE"
             perms_ok=0;
@@ -191,7 +191,7 @@ END;"
     # Try to cleanup no matter what happened above
     RESULT=$(mysql_execute "$cleanup_sql")
     ERRCODE=$?
-    if [ $ERRCODE -ne  0 ]
+    if [ $ERRCODE -ne 0 ]
     then
         log_error "mysql_can_create cannot run post cleanup, mysql status = $ERRCODE"
         exit 1;
@@ -219,7 +219,7 @@ mysql_init() {
     #
     RESULT=$(mysql_execute "SHOW TABLES;")
     ERRCODE=$?
-    if [ $ERRCODE -ne  0 ]
+    if [ $ERRCODE -ne 0 ]
     then
         log_error "mysql_init table query failed, mysql status = $ERRCODE"
         exit 1
