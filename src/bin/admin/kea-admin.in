@@ -247,7 +247,7 @@ mysql_init() {
 
     if [ "$ERRCODE" -eq 0 ]; then
         printf "Database version reported after initialization: "
-        mysql_version
+        checked_mysql_version
         printf "\n"
     fi
 
@@ -282,7 +282,7 @@ pgsql_init() {
         exit 1
     fi
 
-    version=$(pgsql_version)
+    version=$(checked_pgsql_version)
     printf "Database version reported after initialization: %s\n" "$version"
     exit 0
 }
@@ -315,6 +315,26 @@ memfile_version() {
     exit 1
 }
 
+checked_mysql_version() {
+    mysql_version
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        log_error "Failed to get schema version, mysql status = $ERRCODE"
+        exit 1
+    fi
+}
+
+checked_pgsql_version() {
+    pgsql_version
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        log_error "Failed to get schema version, pgsql status = $ERRCODE"
+        exit 1
+    fi
+}
+
 ### Functions used for upgrade
 memfile_upgrade() {
     # Useless as Kea converts CSV versions at startup.
@@ -331,7 +351,7 @@ memfile_upgrade() {
 mysql_upgrade() {
 
     printf "Database version reported before upgrade: "
-    mysql_version
+    checked_mysql_version
     printf "\n"
 
     # Check if the scripts directory exists at all.
@@ -360,12 +380,12 @@ mysql_upgrade() {
     done
 
     printf "Database version reported after upgrade: "
-    mysql_version
+    checked_mysql_version
     printf "\n"
 }
 
 pgsql_upgrade() {
-    version=$(pgsql_version)
+    version=$(checked_pgsql_version)
     printf "Database version reported before upgrade: %s\n" "$version"
 
     # Check if the scripts directory exists at all.
@@ -391,7 +411,7 @@ pgsql_upgrade() {
         sh "${script}" -U "${db_user}" -h "${db_host}" -d "${db_name}"
     done
 
-    version=$(pgsql_version)
+    version=$(checked_pgsql_version)
     printf "Database version reported after upgrade: %s\n" "$version"
     exit 0
 }
@@ -817,11 +837,11 @@ case ${command} in
                 memfile_version
                 ;;
             mysql)
-                mysql_version
+                checked_mysql_version
                 printf "\n"
                 ;;
             pgsql)
-                pgsql_version
+                checked_pgsql_version
                 ;;
             cql)
                 cql_version
