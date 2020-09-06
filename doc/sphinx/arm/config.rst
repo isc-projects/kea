@@ -34,6 +34,16 @@ defined in `RFC 7159 <https://tools.ietf.org/html/rfc7159>`__ and `ECMA
 In particular, the only boolean values allowed are true or false (all
 lowercase). The capitalized versions (True or False) are not accepted.
 
+Even if the JSON standard (ECMA 404) does not require JSON objects
+(i.e. name/value maps) to have unique entries Kea implements them
+using a std::map so:
+
+-  if there are multiple values for the same name in an object/map
+   the last value overwrites previous values
+
+-  configuration file parsers since Kea 1.9.0 version raise a syntax error
+   in such cases
+
 Kea components use an extended JSON with additional features allowed:
 
 -  shell comments: any text after the hash (#) character is ignored.
