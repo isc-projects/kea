@@ -509,7 +509,7 @@ mysql_dump() {
     fi
 
     # If output file exists, notify user, allow them a chance to bail
-    check_file_overwrite $dump_file
+    check_file_overwrite "$dump_file"
 
     # Check the temp file too
     tmp_file="$dump_file.tmp"
@@ -528,7 +528,7 @@ mysql_dump() {
     fi
 
     # Now translate tabs to commas.
-    tr '\t' ',' < $tmp_file >$dump_file
+    tr '\t' ',' < $tmp_file >"$dump_file"
     retcode=$?
     if [ $retcode -ne 0 ]; then
         log_error "lease-dump: reformatting failed";
@@ -537,7 +537,7 @@ mysql_dump() {
 
     # delete the tmp file on success
     rm $tmp_file
-    echo lease$dump_type successfully dumped to $dump_file
+    echo lease$dump_type successfully dumped to "$dump_file"
     exit 0
 }
 
@@ -562,14 +562,14 @@ pgsql_dump() {
     fi
 
     # If output file exists, notify user, allow them a chance to bail
-    check_file_overwrite $dump_file
+    check_file_overwrite "$dump_file"
 
     # psql does not accept password as a parameter but will look in the environment
     export PGPASSWORD=$db_password
 
     # Call psql and redirect output to the dump file. We don't use psql "to csv"
     # as it can only be run as db superuser.
-    echo "$dump_qry" | psql --set ON_ERROR_STOP=1 -t -h $db_host -q --user=$db_user --dbname=$db_name -w --no-align --field-separator=',' >$dump_file
+    echo "$dump_qry" | psql --set ON_ERROR_STOP=1 -t -h $db_host -q --user=$db_user --dbname=$db_name -w --no-align --field-separator=',' >"$dump_file"
     retcode=$?
 
     # Check for errors.
@@ -578,7 +578,7 @@ pgsql_dump() {
         exit 1
     fi
 
-    echo lease$dump_type successfully dumped to $dump_file
+    echo lease$dump_type successfully dumped to "$dump_file"
     exit 0
 }
 
@@ -603,7 +603,7 @@ cql_dump() {
     fi
 
     # If output file exists, notify user, allow them a chance to bail.
-    check_file_overwrite $dump_file
+    check_file_overwrite "$dump_file"
 
     # Run query, check for failure.
     result=$(cql_execute "$dump_query")
@@ -614,13 +614,13 @@ cql_dump() {
     fi
 
     # Parse and display header.
-    echo "$result" | head -n 2 | tail -n 1 | sed -e 's/[[:space:]]*//g' | sed -e 's/|/,/g' > $dump_file
+    echo "$result" | head -n 2 | tail -n 1 | sed -e 's/[[:space:]]*//g' | sed -e 's/|/,/g' > "$dump_file"
 
     # Parse and display contents - done separately from header to allow sorting
     # by address. awk script replaces head -n -2 which is not portable.
-    echo "$result" | tail -n +4 | awk 'n>=2 { print a[n%2] } { a[n%2]=$0; n=n+1 }' | sed -e 's/[[:space:]]*//g' | sed -e 's/|/,/g' | sort -r >> $dump_file
+    echo "$result" | tail -n +4 | awk 'n>=2 { print a[n%2] } { a[n%2]=$0; n=n+1 }' | sed -e 's/[[:space:]]*//g' | sed -e 's/|/,/g' | sort -r >> "$dump_file"
 
-    echo lease$dump_type successfully dumped to $dump_file
+    echo lease$dump_type successfully dumped to "$dump_file"
     exit 0
 }
 
