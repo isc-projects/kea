@@ -249,6 +249,23 @@ const char* CONFIGS[] = {
         "       \"ddns-send-updates\": true\n"
         "   }\n"
         "]\n"
+    "}",
+    // 9
+    // Simple config with DDNS updates enabled.  Note pool is one address
+    // large to ensure we get a specific address back.
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 3000,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"192.0.2.10-192.0.2.10\" } ]"
+        " }],"
+        "\"dhcp-ddns\": {"
+            "\"enable-updates\": true,"
+            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+        "}"
     "}"
 };
 
@@ -258,7 +275,7 @@ public:
     D2ClientMgr& d2_mgr_;
 
     /// @brief Pointer to the DHCP server instance.
-    NakedDhcpv4Srv* srv_;
+    boost::shared_ptr<NakedDhcpv4Srv> srv_;
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
@@ -285,17 +302,15 @@ public:
     NameDhcpv4SrvTest()
         : Dhcpv4SrvTest(),
           d2_mgr_(CfgMgr::instance().getD2ClientMgr()),
-          srv_(NULL),
           iface_mgr_test_config_(true)
     {
-        srv_ = new NakedDhcpv4Srv(0);
+        srv_ = boost::shared_ptr<NakedDhcpv4Srv>(new NakedDhcpv4Srv(0));
         IfaceMgr::instance().openSockets4();
         // Config DDNS to be enabled, all controls off
         enableD2();
     }
 
     virtual ~NameDhcpv4SrvTest() {
-        delete srv_;
         // CfgMgr singleton doesn't get wiped between tests, so  we'll
         // disable D2 explicitly between tests.
         disableD2();
@@ -586,7 +601,7 @@ public:
         // Create the configuration and configure the server
         char config_buf[1024];
         sprintf(config_buf, config_template, mode);
-        ASSERT_NO_THROW(configure(config_buf, srv_)) << "configuration failed";
+        ASSERT_NO_THROW(configure(config_buf, *srv_)) << "configuration failed";
 
         // Build our client packet
         Pkt4Ptr query;
@@ -2251,6 +2266,155 @@ TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
                             resp->getYiaddr().toText(),
                             "two.example.org.", "",
                             time(NULL), 7200, true);
+}
+
+// Verifies that when reusing an expired lesae, whether or not it is given to its
+// original owner or not, appropriate DNS updates are done if needed.
+TEST_F(NameDhcpv4SrvTest, processReuseExpired) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Configure with a one address pool with DDNS enabled.
+    configure(CONFIGS[9], *srv_);
+
+    struct Scenario {
+        std::string label_;
+        std::string client_id1_;
+        std::string dhcid1_;
+        std::string hostname1_;
+
+        std::string client_id2_;
+        std::string dhcid2_;
+        std::string hostname2_;
+        bool expect_remove_;
+        bool expect_add_;
+    };
+
+    std::string cid1 = "11:11:11:11";
+    std::string dhcid1 = "0001013904F56A5BD4E926EB6BC36C825CEA1159FF2AFBE28E4391E67CC040F6A35785";
+    std::string cid2 = "22:22:22:22";
+    std::string dhcid2 = "000101459343356AC37A73A372ECE989F9C4397E7FBBD6658239EA4B3B77B6B904A46F";
+    bool remove = true;
+    bool add = true;
+
+    std::vector<Scenario> scenarios = {
+        {
+            "same client, hostname added",
+            cid1, dhcid1, "",
+            cid1, dhcid1, "one.example.com.",
+            !remove, add
+        },
+        {
+            "same client, same host",
+            cid1, dhcid1, "one.example.com.",
+            cid1, dhcid1, "one.example.com.",
+            remove, add
+        },
+        {
+            "same client, hostname removed",
+            cid1, dhcid1, "one.example.com.",
+            cid1, dhcid1, "",
+            remove, !add
+        },
+        {
+            "different client, hostname added",
+            cid1, dhcid1, "",
+            cid2, dhcid2, "two.example.com.",
+            !remove, add
+        },
+        {
+            "different client, different host",
+            cid1, dhcid1, "one.example.com.",
+            cid2, dhcid2, "two.example.com.",
+            remove, add
+        },
+        {
+            "different client, hostname removed",
+            cid1, dhcid1, "one.example.com.",
+            cid2, dhcid2, "",
+            remove, !add
+        }
+    };
+
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.label_);
+        {
+            // Create the original leasing client.
+            boost::shared_ptr<Dhcp4Client> client1(new Dhcp4Client(srv_, Dhcp4Client::SELECTING));
+            client1->setIfaceName("eth1");
+            client1->setIfaceIndex(ETH1_INDEX);
+            client1->includeClientId(scenario.client_id1_);
+            if (!scenario.hostname1_.empty()) {
+                ASSERT_NO_THROW(client1->includeHostname(scenario.hostname1_));
+            }
+
+            ASSERT_NO_THROW(client1->doDORA());
+            Pkt4Ptr resp = client1->getContext().response_;
+            ASSERT_TRUE(resp);
+            ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+            // Verify that there is one NameChangeRequest generated.
+            if (scenario.hostname1_.empty()) {
+                ASSERT_EQ(0, d2_mgr_.getQueueSize());
+            } else {
+                ASSERT_EQ(1, d2_mgr_.getQueueSize());
+                verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD,
+                                true, true,
+                                resp->getYiaddr().toText(), scenario.hostname1_,
+                                scenario.dhcid1_,
+                                time(NULL), subnet_->getValid(), true);
+            }
+
+            // Expire the lease
+            Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(resp->getYiaddr());
+            ASSERT_TRUE(lease);
+            lease->cltt_ =  0;
+            ASSERT_NO_THROW(LeaseMgrFactory::instance().updateLease4(lease));
+            lease = LeaseMgrFactory::instance().getLease4(resp->getYiaddr());
+            ASSERT_TRUE(lease->expired());
+
+            // Create the requesting/returning client.
+            boost::shared_ptr<Dhcp4Client> client2;
+            if (scenario.client_id1_ == scenario.client_id2_) {
+                client2 = client1;
+            } else {
+                client2.reset(new Dhcp4Client(srv_, Dhcp4Client::SELECTING));
+                client2->setIfaceName("eth1");
+                client2->setIfaceIndex(ETH1_INDEX);
+                client2->includeClientId(scenario.client_id2_);
+            }
+
+            ASSERT_NO_THROW(client2->includeHostname(scenario.hostname2_));
+
+            ASSERT_NO_THROW(client2->doDORA());
+            resp = client2->getContext().response_;
+            ASSERT_TRUE(resp);
+            ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+            // Verify that there is one NameChangeRequest generated.
+            size_t expected_count = (scenario.expect_remove_ ? 1 : 0) +
+                                    (scenario.expect_add_ ? 1 : 0);
+
+            ASSERT_EQ(expected_count, d2_mgr_.getQueueSize());
+            if (scenario.expect_remove_) {
+                verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
+                                true, true,
+                                resp->getYiaddr().toText(), scenario.hostname1_,
+                                scenario.dhcid1_,
+                                time(NULL), subnet_->getValid(), true);
+            }
+
+            if (scenario.expect_add_) {
+                verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD,
+                                true, true,
+                                resp->getYiaddr().toText(), scenario.hostname2_,
+                                scenario.dhcid2_,
+                                time(NULL), subnet_->getValid(), true);
+            }
+
+            ASSERT_NO_THROW(LeaseMgrFactory::instance().deleteLease(lease));
+        }
+    }
 }
 
 } // end of anonymous namespace

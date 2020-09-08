@@ -2665,6 +2665,10 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
         // This will return immediately if the DNS wasn't updated
         // when the lease was created.
         queueNCR(CHG_REMOVE, lease);
+        // Clear DNS fields so we avoid redundant removes.
+        lease->hostname_.clear();
+        lease->fqdn_fwd_ = false;
+        lease->fqdn_rev_ = false;
 
         // Let's check if the lease that just expired is in DECLINED state.
         // If it is, we need to perform a couple extra steps.
@@ -3961,6 +3965,12 @@ AllocEngine::allocateOrReuseLease4(const IOAddress& candidate, ClientContext4& c
     if (exist_lease) {
         if (exist_lease->expired()) {
             ctx.old_lease_ = Lease4Ptr(new Lease4(*exist_lease));
+            // reuseExpiredLease4() will reclaim the use which will
+            // queue an NCR remove it needed.  Clear the DNS fields in
+            // the old lease to avoid a redundant remove in server logic.
+            ctx.old_lease_->hostname_.clear();
+            ctx.old_lease_->fqdn_fwd_ = false;
+            ctx.old_lease_->fqdn_rev_ = false;
             return (reuseExpiredLease4(exist_lease, ctx, callout_status));
 
         } else {

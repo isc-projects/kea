@@ -449,9 +449,12 @@ Dhcp4Client::includeFQDN(const uint8_t flags, const std::string& fqdn_name,
 
 void
 Dhcp4Client::includeHostname(const std::string& name) {
-    hostname_.reset(new OptionString(Option::V4, DHO_HOST_NAME, name));
+    if (name.empty()) {
+       hostname_.reset();
+    } else {
+        hostname_.reset(new OptionString(Option::V4, DHO_HOST_NAME, name));
+    }
 }
-
 
 HWAddrPtr
 Dhcp4Client::generateHWAddr(const uint8_t htype) const {
