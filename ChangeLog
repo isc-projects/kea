@@ -1,3 +1,12 @@
+1798.	[bug]		tmark
+	kea-dhcp4 now correctly updates DNS when a client
+	returns for lease after the lease has expired.  Prior
+	to this, the server would remove the entries but then
+	fail to add them unless the hostname (or FQDN) changed.
+	This change also eliminates redundant DNS removes when 
+	expired leases are reclaimed and given to different clients.
+	(Gitlab #1409)
+
 Kea 1.8.0 (stable) released on Aug 26, 2020
 
 1797.	[build]		razvan
