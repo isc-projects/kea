@@ -304,7 +304,7 @@ public:
           d2_mgr_(CfgMgr::instance().getD2ClientMgr()),
           iface_mgr_test_config_(true)
     {
-        srv_ = boost::shared_ptr<NakedDhcpv4Srv>(new NakedDhcpv4Srv(0));
+        srv_ = boost::make_shared<NakedDhcpv4Srv>(0);
         IfaceMgr::instance().openSockets4();
         // Config DDNS to be enabled, all controls off
         enableD2();
@@ -2268,7 +2268,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
                             time(NULL), 7200, true);
 }
 
-// Verifies that when reusing an expired lesae, whether or not it is given to its
+// Verifies that when reusing an expired lease, whether or not it is given to its
 // original owner or not, appropriate DNS updates are done if needed.
 TEST_F(NameDhcpv4SrvTest, processReuseExpired) {
     IfaceMgrTestConfig test_config(true);
