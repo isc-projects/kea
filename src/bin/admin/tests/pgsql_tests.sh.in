@@ -114,6 +114,12 @@ pgsql_db_version_test() {
     # Wipe the whole database
     pgsql_wipe
 
+    # Do not create any table so db-version will raise an error
+    printf "Checking db-version error case. Please ignore errors.\n"
+    ${keaadmin} db-version pgsql -u $db_user -p $db_password -n $db_name
+    ERRCODE=$?
+    assert_eq 1 $ERRCODE "schema_version table still exists. (expected %d, exit code %d)"
+
     # Create the database
     ${keaadmin} db-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     assert_eq 0 $? "cannot initialize the database, expected exit code: %d, actual: %d"

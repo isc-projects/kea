@@ -124,6 +124,12 @@ mysql_db_version_test() {
     # Let's wipe the whole database
     mysql_wipe
 
+    # Do not create any table so db-version will raise an error
+    printf "Checking db-version error case. Please ignore errors.\n"
+    ${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name
+    ERRCODE=$?
+    assert_eq 1 $ERRCODE "schema_version table still exists. (expected %d, exit code %d)"
+
     # Ok, now let's create a version 1.7
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
 CREATE TABLE schema_version (
