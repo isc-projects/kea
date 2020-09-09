@@ -52,6 +52,16 @@ mysql_version() {
     return $?
 }
 
+checked_mysql_version() {
+    mysql_version
+    retcode=$?
+    if [ $retcode -ne 0 ]
+    then
+        printf "Failed to get schema version, mysql status  %s\n" "${retcode}"
+        exit 1
+    fi
+}
+
 # Submits given SQL text to PostgreSQL
 # There are two ways of calling this method.
 # pgsql_execute SQL_QUERY - This call is simpler, but requires db_user,
@@ -103,6 +113,16 @@ pgsql_execute_script() {
 pgsql_version() {
     pgsql_execute "SELECT version || '.' || minor FROM schema_version" "$@"
     return $?
+}
+
+checked_pgsql_version() {
+    pgsql_version
+    retcode=$?
+    if [ $retcode -ne 0 ]
+    then
+        printf "Failed to get schema version, pgsql status %s\n" "${retcode}"
+        exit 1
+    fi
 }
 
 cql_execute() {

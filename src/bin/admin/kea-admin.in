@@ -315,26 +315,6 @@ memfile_version() {
     exit 1
 }
 
-checked_mysql_version() {
-    mysql_version
-    ERRCODE=$?
-    if [ $ERRCODE -ne 0 ]
-    then
-        log_error "Failed to get schema version, mysql status = $ERRCODE"
-        exit 1
-    fi
-}
-
-checked_pgsql_version() {
-    pgsql_version
-    ERRCODE=$?
-    if [ $ERRCODE -ne 0 ]
-    then
-        log_error "Failed to get schema version, pgsql status = $ERRCODE"
-        exit 1
-    fi
-}
-
 ### Functions used for upgrade
 memfile_upgrade() {
     # Useless as Kea converts CSV versions at startup.
