@@ -53,13 +53,14 @@ mysql_version() {
 }
 
 checked_mysql_version() {
-    mysql_version
+    mysql_execute "SELECT CONCAT_WS('.', version, minor) FROM schema_version" "$@"
     retcode=$?
     if [ $retcode -ne 0 ]
     then
         printf "Failed to get schema version, mysql status  %s\n" "${retcode}"
         exit 1
     fi
+    return $retcode
 }
 
 # Submits given SQL text to PostgreSQL
@@ -116,13 +117,14 @@ pgsql_version() {
 }
 
 checked_pgsql_version() {
-    pgsql_version
+    pgsql_execute "SELECT version || '.' || minor FROM schema_version" "$@"
     retcode=$?
     if [ $retcode -ne 0 ]
     then
         printf "Failed to get schema version, pgsql status %s\n" "${retcode}"
         exit 1
     fi
+    return $retcode
 }
 
 cql_execute() {
