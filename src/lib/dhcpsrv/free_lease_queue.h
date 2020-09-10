@@ -8,6 +8,7 @@
 #define FREE_LEASE_QUEUE_H
 
 #include <asiolink/io_address.h>
+#include <dhcpsrv/address_range.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -74,20 +75,7 @@ class FreeLeaseQueue {
 public:
 
     /// @brief Structure representing address range in the @c FreeLeaseQueue.
-    struct Range {
-        /// IP address denoting the start of the address range.
-        asiolink::IOAddress start_;
-        /// IP address denoting the end of the address range.
-        asiolink::IOAddress end_;
-
-        /// @brief Constructor.
-        ///
-        /// @param start beginning of the address range.
-        /// @param end end of the address range.
-        /// @throw BadValue if the @c start is greater than the end or
-        /// specified boundaries do not belong to the same family.
-        Range(const asiolink::IOAddress& start, const asiolink::IOAddress& end);
-    };
+    typedef AddressRange Range;
 
     /// @brief Constructor.
     FreeLeaseQueue();

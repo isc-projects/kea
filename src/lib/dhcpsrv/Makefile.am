@@ -63,6 +63,7 @@ CLEANFILES += *.csv
 
 lib_LTLIBRARIES = libkea-dhcpsrv.la
 libkea_dhcpsrv_la_SOURCES  =
+libkea_dhcpsrv_la_SOURCES += address_range.h address_range.cc
 libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.h alloc_engine_messages.cc

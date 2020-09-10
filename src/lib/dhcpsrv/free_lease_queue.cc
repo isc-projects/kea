@@ -20,19 +20,6 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-FreeLeaseQueue::Range::Range(const IOAddress& start, const IOAddress& end)
-    : start_(start), end_(end) {
-    // The start must be lower or equal the end.
-    if (end_ < start_) {
-        isc_throw(BadValue, "invalid address range boundaries " << start_ << ":" << end_);
-    }
-    // Two IPv4 or two IPv6 addresses are expected as range boundaries.
-    if (start_.getFamily() != end_.getFamily()) {
-        isc_throw(BadValue, "address range boundaries must have the same type: " << start_
-                  << ":" << end_);
-    }
-}
-
 FreeLeaseQueue::FreeLeaseQueue()
     : containers_() {
 }
