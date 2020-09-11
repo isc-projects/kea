@@ -970,6 +970,44 @@ protected:
     void setStatusCode(boost::shared_ptr<Option6IA>& container,
                        const OptionPtr& status);
 
+    /// @brief Iterates over new leases, update stale DNS entries
+    ///
+    /// Checks the context's current subnet (most recently selected) against
+    /// an original selected subnet.  If they are the same the function
+    /// simply returns.
+    ///
+    /// If they differ, we treat this as a dynamic subnet change made by the
+    /// allocation engine. It is possible that DDNS subnet parameters for
+    /// the new subnet are different and this needs to handled. We first
+    /// save the current DNS-related values from the context and then
+    /// re-run processClientFqdn().  This will rebuild the FQDN option
+    /// to send back to the client based on the new subnet as well as
+    /// update the context.  If the new values are different from the
+    /// previous values, we iterate over the leases and update the
+    /// DNS values.
+    ///
+    /// @param question Client's message.
+    /// @param answer Server's response to a client. If server generated
+    /// @param ctx client context (contains subnet, duid and other parameters)
+    /// @param orig_subnet the originally selected subnet
+    ///
+    /// @note
+    /// Subnet may be modified by the allocation engine, if the initial subnet
+    /// belongs to a shared network.  Note that this will only handle cases
+    /// where all IA_xx's in a client request result in a subnet change.  It is
+    /// possible, currently, for the last IA_xx in request to end up using the
+    /// same subnet as originally selected, and we will miss a change incurred
+    /// by preceding IA_xx's.  In general users should be strongly encouraged to
+    /// avoid situations where all of the following are true:
+    ///
+    /// 1. clients send more than one IA_xx in a query
+    /// 2. subnets in the shared-network are equally eligible (i.e don't have
+    /// class guards etc)
+    /// 3. subnets have differing options or DDNS parameters
+    //
+    void checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                  AllocEngine::ClientContext6& ctx,
+                                  const Subnet6Ptr orig_subnet);
 public:
 
     /// Used for DHCPv4-over-DHCPv6 too.

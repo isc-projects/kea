@@ -1701,8 +1701,8 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
 void
 Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
                         AllocEngine::ClientContext6& ctx) {
-
-    Subnet6Ptr subnet = ctx.subnet_;
+    // Save the originally selected subnet.
+    Subnet6Ptr orig_subnet = ctx.subnet_;
 
     // We need to allocate addresses for all IA_NA options in the client's
     // question (i.e. SOLICIT or REQUEST) message.
@@ -1743,21 +1743,10 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
     }
 
-    // Subnet may be modified by the allocation engine, if the initial subnet
-    // belongs to a shared network.
-    if (ctx.subnet_ && subnet && (subnet->getID() != ctx.subnet_->getID())) {
-        SharedNetwork6Ptr network;
-        subnet->getSharedNetwork(network);
-        if (network) {
-            LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_SUBNET_DYNAMICALLY_CHANGED)
-                .arg(question->getLabel())
-                .arg(subnet->toText())
-                .arg(ctx.subnet_->toText())
-                .arg(network->getName());
-        }
-    }
+    // Subnet may be modified by the allocation engine, there are things
+    // we need to do when that happens.
+    checkDynamicSubnetChange(question, answer, ctx, orig_subnet);
 }
-
 
 void
 Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
@@ -2607,6 +2596,9 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
     // DUID. There is no need to check for the presence of the DUID here
     // because we have already checked it in the sanityCheck().
 
+    // Save the originally selected subnet.
+    Subnet6Ptr orig_subnet = ctx.subnet_;
+
     for (OptionCollection::iterator opt = query->options_.begin();
          opt != query->options_.end(); ++opt) {
         switch (opt->second->getType()) {
@@ -2634,6 +2626,10 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
             break;
         }
     }
+
+    // Subnet may be modified by the allocation engine, there are things
+    // we need to do when that happens.
+    checkDynamicSubnetChange(query, reply, ctx, orig_subnet);
 }
 
 void
@@ -4240,5 +4236,57 @@ Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6
     }
 }
 
+void
+Dhcpv6Srv::checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                    AllocEngine::ClientContext6& ctx,
+                                    const Subnet6Ptr orig_subnet) {
+    // If the subnet's are the same there's nothing to do.
+    if ((!ctx.subnet_) || (!orig_subnet) || (orig_subnet->getID() == ctx.subnet_->getID())) {
+        return;
+    }
+
+    // We get the network for logging only. It should always be set as this a dynamic
+    // change should only happen within shared-networks.  Not having one might not be
+    // an error if a hook changed the subnet?
+    SharedNetwork6Ptr network;
+    orig_subnet->getSharedNetwork(network);
+    LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_SUBNET_DYNAMICALLY_CHANGED)
+             .arg(question->getLabel())
+             .arg(orig_subnet->toText())
+             .arg(ctx.subnet_->toText())
+             .arg(network ? network->getName() : "<no network?>");
+
+    // The DDNS parameters may have changed with the subnet, so we need to
+    // recalculate the client name.
+
+    // Save the current DNS values on the context.
+    std::string prev_hostname = ctx.hostname_;
+    bool prev_fwd_dns_update = ctx.fwd_dns_update_;
+    bool prev_rev_dns_update = ctx.rev_dns_update_;
+
+    // Remove the current FQDN option from the answer.
+    answer->delOption(D6O_CLIENT_FQDN);
+
+    // Recalculate the client's FQDN.  This will replace the FQDN option and
+    // update the context values for hostname_ and DNS directions.
+    processClientFqdn(question, answer, ctx);
+
+    // If this is a real allocation and the DNS values changed we need to
+    // update the leases.
+    if (!ctx.fake_allocation_ &&
+        ((prev_hostname != ctx.hostname_) ||
+        (prev_fwd_dns_update != ctx.fwd_dns_update_) ||
+        (prev_rev_dns_update != ctx.rev_dns_update_))) {
+        for (Lease6Collection::const_iterator l = ctx.new_leases_.begin();
+            l != ctx.new_leases_.end(); ++l) {
+            (*l)->hostname_ = ctx.hostname_;
+            (*l)->fqdn_fwd_ = ctx.fwd_dns_update_;
+            (*l)->fqdn_rev_ = ctx.rev_dns_update_;
+            LeaseMgrFactory::instance().updateLease6(*l);
+        }
+    }
+}
+
 }  // namespace dhcp
 }  // namespace isc
+

@@ -527,10 +527,10 @@ Dhcp6Client::doRenew() {
     // RFC 8415.
     appendRequestedIAs(query);
 
+    context_.query_ = query;
+
     // Add Client FQDN if configured.
     appendFQDN();
-
-    context_.query_ = query;
 
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
