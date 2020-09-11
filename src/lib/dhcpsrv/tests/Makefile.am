@@ -58,6 +58,7 @@ TESTS += libdhcpsrv_unittests
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
 libdhcpsrv_unittests_SOURCES += address_range_unittest.cc
+libdhcpsrv_unittests_SOURCES += address_range_permutation_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_utils.cc alloc_engine_utils.h
 libdhcpsrv_unittests_SOURCES += alloc_engine_expiration_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_hooks_unittest.cc
