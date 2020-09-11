@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,13 +8,14 @@
 #define POOL_H
 
 #include <asiolink/io_address.h>
-#include <dhcp/classify.h>
-#include <dhcp/option6_pdexclude.h>
-#include <boost/shared_ptr.hpp>
 #include <cc/data.h>
 #include <cc/user_context.h>
+#include <dhcp/classify.h>
+#include <dhcp/option6_pdexclude.h>
+#include <dhcpsrv/address_range_permutation.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
+
 #include <boost/shared_ptr.hpp>
 
 #include <vector>
@@ -166,6 +167,13 @@ public:
     /// @return A pointer to unparsed pool configuration.
     virtual data::ElementPtr toElement() const;
 
+    /// @brief Returns pointer to the permutation associated with the pool.
+    ///
+    /// @return Pointer to the address range permutation.
+    AddressRangePermutationPtr getPermutation() const {
+        return (permutation_);
+    }
+
 protected:
 
     /// @brief protected constructor
@@ -234,6 +242,12 @@ protected:
 
     /// @brief Status of last allocated address
     bool last_allocated_valid_;
+
+    /// @brief Pointer to the permutation object.
+    ///
+    /// It may be initialized for certain pools and poo types to provide
+    /// address randomization capabilities.
+    AddressRangePermutationPtr permutation_;
 };
 
 class Pool4;

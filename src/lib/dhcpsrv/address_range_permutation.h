@@ -10,6 +10,8 @@
 #include <asiolink/io_address.h>
 #include <dhcpsrv/address_range.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <map>
 #include <random>
 
@@ -112,6 +114,9 @@ private:
     /// Random generator.
     std::mt19937 generator_;
 };
+
+/// @brief Pointer to the @c AddressRangePermutation.
+typedef boost::shared_ptr<AddressRangePermutation> AddressRangePermutationPtr;
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
