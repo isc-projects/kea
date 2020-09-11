@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -79,6 +79,18 @@ int prefixLengthFromRange(const IOAddress& min, const IOAddress& max);
 /// @param delegated_len length of the prefixes to be delegated from the pool
 /// @return number of prefixes in range
 uint64_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len);
+
+/// @brief Finds the address increased by offset.
+///
+/// Adds offset to the IPv4 or iPv6 address and finds the resulting address.
+/// Note that the current limitation is the maximum value of the offset,
+/// i.e. max uint64_t.
+///
+/// @param addr input address
+/// @param offset distance of the returned address from the input address.
+/// @return address being offset greater than the input address
+IOAddress offsetAddress(const IOAddress& addr, uint64_t offset);
+
 };
 };
 
