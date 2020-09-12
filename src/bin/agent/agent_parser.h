@@ -416,6 +416,7 @@ namespace isc { namespace agent {
       // value
       // map_value
       // socket_type_value
+      // auth_type_value
       char dummy1[sizeof (ElementPtr)];
 
       // "boolean"
@@ -490,39 +491,42 @@ namespace isc { namespace agent {
     TOKEN_CONTROL_AGENT = 265,     // "Control-agent"
     TOKEN_HTTP_HOST = 266,         // "http-host"
     TOKEN_HTTP_PORT = 267,         // "http-port"
-    TOKEN_BASIC_AUTHENTICATION_REALM = 268, // "basic-authentication-realm"
-    TOKEN_USER_CONTEXT = 269,      // "user-context"
-    TOKEN_COMMENT = 270,           // "comment"
-    TOKEN_CONTROL_SOCKETS = 271,   // "control-sockets"
-    TOKEN_DHCP4_SERVER = 272,      // "dhcp4"
-    TOKEN_DHCP6_SERVER = 273,      // "dhcp6"
-    TOKEN_D2_SERVER = 274,         // "d2"
-    TOKEN_SOCKET_NAME = 275,       // "socket-name"
-    TOKEN_SOCKET_TYPE = 276,       // "socket-type"
-    TOKEN_UNIX = 277,              // "unix"
-    TOKEN_BASIC_AUTHENTICATIONS = 278, // "basic-authentications"
-    TOKEN_USER = 279,              // "user"
-    TOKEN_PASSWORD = 280,          // "password"
-    TOKEN_HOOKS_LIBRARIES = 281,   // "hooks-libraries"
-    TOKEN_LIBRARY = 282,           // "library"
-    TOKEN_PARAMETERS = 283,        // "parameters"
-    TOKEN_LOGGERS = 284,           // "loggers"
-    TOKEN_NAME = 285,              // "name"
-    TOKEN_OUTPUT_OPTIONS = 286,    // "output_options"
-    TOKEN_OUTPUT = 287,            // "output"
-    TOKEN_DEBUGLEVEL = 288,        // "debuglevel"
-    TOKEN_SEVERITY = 289,          // "severity"
-    TOKEN_FLUSH = 290,             // "flush"
-    TOKEN_MAXSIZE = 291,           // "maxsize"
-    TOKEN_MAXVER = 292,            // "maxver"
-    TOKEN_PATTERN = 293,           // "pattern"
-    TOKEN_START_JSON = 294,        // START_JSON
-    TOKEN_START_AGENT = 295,       // START_AGENT
-    TOKEN_START_SUB_AGENT = 296,   // START_SUB_AGENT
-    TOKEN_STRING = 297,            // "constant string"
-    TOKEN_INTEGER = 298,           // "integer"
-    TOKEN_FLOAT = 299,             // "floating point"
-    TOKEN_BOOLEAN = 300            // "boolean"
+    TOKEN_USER_CONTEXT = 268,      // "user-context"
+    TOKEN_COMMENT = 269,           // "comment"
+    TOKEN_AUTHENTICATION = 270,    // "authentication"
+    TOKEN_TYPE = 271,              // "type"
+    TOKEN_BASIC = 272,             // "basic"
+    TOKEN_REALM = 273,             // "realm"
+    TOKEN_CLIENTS = 274,           // "clients"
+    TOKEN_USER = 275,              // "user"
+    TOKEN_PASSWORD = 276,          // "password"
+    TOKEN_CONTROL_SOCKETS = 277,   // "control-sockets"
+    TOKEN_DHCP4_SERVER = 278,      // "dhcp4"
+    TOKEN_DHCP6_SERVER = 279,      // "dhcp6"
+    TOKEN_D2_SERVER = 280,         // "d2"
+    TOKEN_SOCKET_NAME = 281,       // "socket-name"
+    TOKEN_SOCKET_TYPE = 282,       // "socket-type"
+    TOKEN_UNIX = 283,              // "unix"
+    TOKEN_HOOKS_LIBRARIES = 284,   // "hooks-libraries"
+    TOKEN_LIBRARY = 285,           // "library"
+    TOKEN_PARAMETERS = 286,        // "parameters"
+    TOKEN_LOGGERS = 287,           // "loggers"
+    TOKEN_NAME = 288,              // "name"
+    TOKEN_OUTPUT_OPTIONS = 289,    // "output_options"
+    TOKEN_OUTPUT = 290,            // "output"
+    TOKEN_DEBUGLEVEL = 291,        // "debuglevel"
+    TOKEN_SEVERITY = 292,          // "severity"
+    TOKEN_FLUSH = 293,             // "flush"
+    TOKEN_MAXSIZE = 294,           // "maxsize"
+    TOKEN_MAXVER = 295,            // "maxver"
+    TOKEN_PATTERN = 296,           // "pattern"
+    TOKEN_START_JSON = 297,        // START_JSON
+    TOKEN_START_AGENT = 298,       // START_AGENT
+    TOKEN_START_SUB_AGENT = 299,   // START_SUB_AGENT
+    TOKEN_STRING = 300,            // "constant string"
+    TOKEN_INTEGER = 301,           // "integer"
+    TOKEN_FLOAT = 302,             // "floating point"
+    TOKEN_BOOLEAN = 303            // "boolean"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -539,7 +543,7 @@ namespace isc { namespace agent {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 46, ///< Number of tokens.
+        YYNTOKENS = 49, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -554,142 +558,152 @@ namespace isc { namespace agent {
         S_CONTROL_AGENT = 10,                    // "Control-agent"
         S_HTTP_HOST = 11,                        // "http-host"
         S_HTTP_PORT = 12,                        // "http-port"
-        S_BASIC_AUTHENTICATION_REALM = 13,       // "basic-authentication-realm"
-        S_USER_CONTEXT = 14,                     // "user-context"
-        S_COMMENT = 15,                          // "comment"
-        S_CONTROL_SOCKETS = 16,                  // "control-sockets"
-        S_DHCP4_SERVER = 17,                     // "dhcp4"
-        S_DHCP6_SERVER = 18,                     // "dhcp6"
-        S_D2_SERVER = 19,                        // "d2"
-        S_SOCKET_NAME = 20,                      // "socket-name"
-        S_SOCKET_TYPE = 21,                      // "socket-type"
-        S_UNIX = 22,                             // "unix"
-        S_BASIC_AUTHENTICATIONS = 23,            // "basic-authentications"
-        S_USER = 24,                             // "user"
-        S_PASSWORD = 25,                         // "password"
-        S_HOOKS_LIBRARIES = 26,                  // "hooks-libraries"
-        S_LIBRARY = 27,                          // "library"
-        S_PARAMETERS = 28,                       // "parameters"
-        S_LOGGERS = 29,                          // "loggers"
-        S_NAME = 30,                             // "name"
-        S_OUTPUT_OPTIONS = 31,                   // "output_options"
-        S_OUTPUT = 32,                           // "output"
-        S_DEBUGLEVEL = 33,                       // "debuglevel"
-        S_SEVERITY = 34,                         // "severity"
-        S_FLUSH = 35,                            // "flush"
-        S_MAXSIZE = 36,                          // "maxsize"
-        S_MAXVER = 37,                           // "maxver"
-        S_PATTERN = 38,                          // "pattern"
-        S_START_JSON = 39,                       // START_JSON
-        S_START_AGENT = 40,                      // START_AGENT
-        S_START_SUB_AGENT = 41,                  // START_SUB_AGENT
-        S_STRING = 42,                           // "constant string"
-        S_INTEGER = 43,                          // "integer"
-        S_FLOAT = 44,                            // "floating point"
-        S_BOOLEAN = 45,                          // "boolean"
-        S_YYACCEPT = 46,                         // $accept
-        S_start = 47,                            // start
-        S_48_1 = 48,                             // $@1
-        S_49_2 = 49,                             // $@2
-        S_50_3 = 50,                             // $@3
-        S_sub_agent = 51,                        // sub_agent
-        S_52_4 = 52,                             // $@4
-        S_json = 53,                             // json
-        S_value = 54,                            // value
-        S_map = 55,                              // map
-        S_56_5 = 56,                             // $@5
-        S_map_value = 57,                        // map_value
-        S_map_content = 58,                      // map_content
-        S_not_empty_map = 59,                    // not_empty_map
-        S_list_generic = 60,                     // list_generic
-        S_61_6 = 61,                             // $@6
-        S_list_content = 62,                     // list_content
-        S_not_empty_list = 63,                   // not_empty_list
-        S_unknown_map_entry = 64,                // unknown_map_entry
-        S_agent_syntax_map = 65,                 // agent_syntax_map
-        S_66_7 = 66,                             // $@7
-        S_global_objects = 67,                   // global_objects
-        S_global_object = 68,                    // global_object
-        S_agent_object = 69,                     // agent_object
-        S_70_8 = 70,                             // $@8
-        S_global_params = 71,                    // global_params
-        S_global_param = 72,                     // global_param
-        S_http_host = 73,                        // http_host
-        S_74_9 = 74,                             // $@9
-        S_http_port = 75,                        // http_port
-        S_basic_authentication_realm = 76,       // basic_authentication_realm
-        S_77_10 = 77,                            // $@10
-        S_user_context = 78,                     // user_context
-        S_79_11 = 79,                            // $@11
-        S_comment = 80,                          // comment
-        S_81_12 = 81,                            // $@12
-        S_hooks_libraries = 82,                  // hooks_libraries
-        S_83_13 = 83,                            // $@13
-        S_hooks_libraries_list = 84,             // hooks_libraries_list
-        S_not_empty_hooks_libraries_list = 85,   // not_empty_hooks_libraries_list
-        S_hooks_library = 86,                    // hooks_library
-        S_87_14 = 87,                            // $@14
-        S_hooks_params = 88,                     // hooks_params
-        S_hooks_param = 89,                      // hooks_param
-        S_library = 90,                          // library
-        S_91_15 = 91,                            // $@15
-        S_parameters = 92,                       // parameters
-        S_93_16 = 93,                            // $@16
-        S_control_sockets = 94,                  // control_sockets
-        S_95_17 = 95,                            // $@17
-        S_control_sockets_params = 96,           // control_sockets_params
-        S_control_socket = 97,                   // control_socket
-        S_dhcp4_server_socket = 98,              // dhcp4_server_socket
-        S_99_18 = 99,                            // $@18
-        S_dhcp6_server_socket = 100,             // dhcp6_server_socket
-        S_101_19 = 101,                          // $@19
-        S_d2_server_socket = 102,                // d2_server_socket
-        S_103_20 = 103,                          // $@20
-        S_control_socket_params = 104,           // control_socket_params
-        S_control_socket_param = 105,            // control_socket_param
-        S_socket_name = 106,                     // socket_name
-        S_107_21 = 107,                          // $@21
-        S_socket_type = 108,                     // socket_type
-        S_109_22 = 109,                          // $@22
-        S_socket_type_value = 110,               // socket_type_value
-        S_basic_authentications = 111,           // basic_authentications
-        S_112_23 = 112,                          // $@23
-        S_basic_auth_list = 113,                 // basic_auth_list
-        S_not_empty_basic_auth_list = 114,       // not_empty_basic_auth_list
-        S_basic_auth = 115,                      // basic_auth
-        S_116_24 = 116,                          // $@24
-        S_basic_auth_params = 117,               // basic_auth_params
-        S_basic_auth_param = 118,                // basic_auth_param
-        S_user = 119,                            // user
-        S_120_25 = 120,                          // $@25
-        S_password = 121,                        // password
-        S_122_26 = 122,                          // $@26
-        S_loggers = 123,                         // loggers
-        S_124_27 = 124,                          // $@27
-        S_loggers_entries = 125,                 // loggers_entries
-        S_logger_entry = 126,                    // logger_entry
-        S_127_28 = 127,                          // $@28
-        S_logger_params = 128,                   // logger_params
-        S_logger_param = 129,                    // logger_param
-        S_name = 130,                            // name
-        S_131_29 = 131,                          // $@29
-        S_debuglevel = 132,                      // debuglevel
-        S_severity = 133,                        // severity
-        S_134_30 = 134,                          // $@30
-        S_output_options_list = 135,             // output_options_list
-        S_136_31 = 136,                          // $@31
-        S_output_options_list_content = 137,     // output_options_list_content
-        S_output_entry = 138,                    // output_entry
-        S_139_32 = 139,                          // $@32
-        S_output_params_list = 140,              // output_params_list
-        S_output_params = 141,                   // output_params
-        S_output = 142,                          // output
-        S_143_33 = 143,                          // $@33
-        S_flush = 144,                           // flush
-        S_maxsize = 145,                         // maxsize
-        S_maxver = 146,                          // maxver
-        S_pattern = 147,                         // pattern
-        S_148_34 = 148                           // $@34
+        S_USER_CONTEXT = 13,                     // "user-context"
+        S_COMMENT = 14,                          // "comment"
+        S_AUTHENTICATION = 15,                   // "authentication"
+        S_TYPE = 16,                             // "type"
+        S_BASIC = 17,                            // "basic"
+        S_REALM = 18,                            // "realm"
+        S_CLIENTS = 19,                          // "clients"
+        S_USER = 20,                             // "user"
+        S_PASSWORD = 21,                         // "password"
+        S_CONTROL_SOCKETS = 22,                  // "control-sockets"
+        S_DHCP4_SERVER = 23,                     // "dhcp4"
+        S_DHCP6_SERVER = 24,                     // "dhcp6"
+        S_D2_SERVER = 25,                        // "d2"
+        S_SOCKET_NAME = 26,                      // "socket-name"
+        S_SOCKET_TYPE = 27,                      // "socket-type"
+        S_UNIX = 28,                             // "unix"
+        S_HOOKS_LIBRARIES = 29,                  // "hooks-libraries"
+        S_LIBRARY = 30,                          // "library"
+        S_PARAMETERS = 31,                       // "parameters"
+        S_LOGGERS = 32,                          // "loggers"
+        S_NAME = 33,                             // "name"
+        S_OUTPUT_OPTIONS = 34,                   // "output_options"
+        S_OUTPUT = 35,                           // "output"
+        S_DEBUGLEVEL = 36,                       // "debuglevel"
+        S_SEVERITY = 37,                         // "severity"
+        S_FLUSH = 38,                            // "flush"
+        S_MAXSIZE = 39,                          // "maxsize"
+        S_MAXVER = 40,                           // "maxver"
+        S_PATTERN = 41,                          // "pattern"
+        S_START_JSON = 42,                       // START_JSON
+        S_START_AGENT = 43,                      // START_AGENT
+        S_START_SUB_AGENT = 44,                  // START_SUB_AGENT
+        S_STRING = 45,                           // "constant string"
+        S_INTEGER = 46,                          // "integer"
+        S_FLOAT = 47,                            // "floating point"
+        S_BOOLEAN = 48,                          // "boolean"
+        S_YYACCEPT = 49,                         // $accept
+        S_start = 50,                            // start
+        S_51_1 = 51,                             // $@1
+        S_52_2 = 52,                             // $@2
+        S_53_3 = 53,                             // $@3
+        S_sub_agent = 54,                        // sub_agent
+        S_55_4 = 55,                             // $@4
+        S_json = 56,                             // json
+        S_value = 57,                            // value
+        S_map = 58,                              // map
+        S_59_5 = 59,                             // $@5
+        S_map_value = 60,                        // map_value
+        S_map_content = 61,                      // map_content
+        S_not_empty_map = 62,                    // not_empty_map
+        S_list_generic = 63,                     // list_generic
+        S_64_6 = 64,                             // $@6
+        S_list_content = 65,                     // list_content
+        S_not_empty_list = 66,                   // not_empty_list
+        S_unknown_map_entry = 67,                // unknown_map_entry
+        S_agent_syntax_map = 68,                 // agent_syntax_map
+        S_69_7 = 69,                             // $@7
+        S_global_objects = 70,                   // global_objects
+        S_global_object = 71,                    // global_object
+        S_agent_object = 72,                     // agent_object
+        S_73_8 = 73,                             // $@8
+        S_global_params = 74,                    // global_params
+        S_global_param = 75,                     // global_param
+        S_http_host = 76,                        // http_host
+        S_77_9 = 77,                             // $@9
+        S_http_port = 78,                        // http_port
+        S_user_context = 79,                     // user_context
+        S_80_10 = 80,                            // $@10
+        S_comment = 81,                          // comment
+        S_82_11 = 82,                            // $@11
+        S_hooks_libraries = 83,                  // hooks_libraries
+        S_84_12 = 84,                            // $@12
+        S_hooks_libraries_list = 85,             // hooks_libraries_list
+        S_not_empty_hooks_libraries_list = 86,   // not_empty_hooks_libraries_list
+        S_hooks_library = 87,                    // hooks_library
+        S_88_13 = 88,                            // $@13
+        S_hooks_params = 89,                     // hooks_params
+        S_hooks_param = 90,                      // hooks_param
+        S_library = 91,                          // library
+        S_92_14 = 92,                            // $@14
+        S_parameters = 93,                       // parameters
+        S_94_15 = 94,                            // $@15
+        S_control_sockets = 95,                  // control_sockets
+        S_96_16 = 96,                            // $@16
+        S_control_sockets_params = 97,           // control_sockets_params
+        S_control_socket = 98,                   // control_socket
+        S_dhcp4_server_socket = 99,              // dhcp4_server_socket
+        S_100_17 = 100,                          // $@17
+        S_dhcp6_server_socket = 101,             // dhcp6_server_socket
+        S_102_18 = 102,                          // $@18
+        S_d2_server_socket = 103,                // d2_server_socket
+        S_104_19 = 104,                          // $@19
+        S_control_socket_params = 105,           // control_socket_params
+        S_control_socket_param = 106,            // control_socket_param
+        S_socket_name = 107,                     // socket_name
+        S_108_20 = 108,                          // $@20
+        S_socket_type = 109,                     // socket_type
+        S_110_21 = 110,                          // $@21
+        S_socket_type_value = 111,               // socket_type_value
+        S_authentication = 112,                  // authentication
+        S_113_22 = 113,                          // $@22
+        S_auth_params = 114,                     // auth_params
+        S_auth_param = 115,                      // auth_param
+        S_auth_type = 116,                       // auth_type
+        S_117_23 = 117,                          // $@23
+        S_auth_type_value = 118,                 // auth_type_value
+        S_realm = 119,                           // realm
+        S_120_24 = 120,                          // $@24
+        S_clients = 121,                         // clients
+        S_122_25 = 122,                          // $@25
+        S_clients_list = 123,                    // clients_list
+        S_not_empty_clients_list = 124,          // not_empty_clients_list
+        S_basic_auth = 125,                      // basic_auth
+        S_126_26 = 126,                          // $@26
+        S_clients_params = 127,                  // clients_params
+        S_clients_param = 128,                   // clients_param
+        S_user = 129,                            // user
+        S_130_27 = 130,                          // $@27
+        S_password = 131,                        // password
+        S_132_28 = 132,                          // $@28
+        S_loggers = 133,                         // loggers
+        S_134_29 = 134,                          // $@29
+        S_loggers_entries = 135,                 // loggers_entries
+        S_logger_entry = 136,                    // logger_entry
+        S_137_30 = 137,                          // $@30
+        S_logger_params = 138,                   // logger_params
+        S_logger_param = 139,                    // logger_param
+        S_name = 140,                            // name
+        S_141_31 = 141,                          // $@31
+        S_debuglevel = 142,                      // debuglevel
+        S_severity = 143,                        // severity
+        S_144_32 = 144,                          // $@32
+        S_output_options_list = 145,             // output_options_list
+        S_146_33 = 146,                          // $@33
+        S_output_options_list_content = 147,     // output_options_list_content
+        S_output_entry = 148,                    // output_entry
+        S_149_34 = 149,                          // $@34
+        S_output_params_list = 150,              // output_params_list
+        S_output_params = 151,                   // output_params
+        S_output = 152,                          // output
+        S_153_35 = 153,                          // $@35
+        S_flush = 154,                           // flush
+        S_maxsize = 155,                         // maxsize
+        S_maxver = 156,                          // maxver
+        S_pattern = 157,                         // pattern
+        S_158_36 = 158                           // $@36
       };
     };
 
@@ -729,6 +743,7 @@ namespace isc { namespace agent {
       case symbol_kind::S_value: // value
       case symbol_kind::S_map_value: // map_value
       case symbol_kind::S_socket_type_value: // socket_type_value
+      case symbol_kind::S_auth_type_value: // auth_type_value
         value.move< ElementPtr > (std::move (that.value));
         break;
 
@@ -861,6 +876,7 @@ switch (yykind)
       case symbol_kind::S_value: // value
       case symbol_kind::S_map_value: // map_value
       case symbol_kind::S_socket_type_value: // socket_type_value
+      case symbol_kind::S_auth_type_value: // auth_type_value
         value.template destroy< ElementPtr > ();
         break;
 
@@ -970,13 +986,13 @@ switch (yykind)
       symbol_type (int tok, location_type l)
         : super_type(token_type (tok), std::move (l))
       {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_AGENT_error || tok == token::TOKEN_AGENT_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_BASIC_AUTHENTICATION_REALM || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_BASIC_AUTHENTICATIONS || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
+        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_AGENT_error || tok == token::TOKEN_AGENT_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_AUTHENTICATION || tok == token::TOKEN_TYPE || tok == token::TOKEN_BASIC || tok == token::TOKEN_REALM || tok == token::TOKEN_CLIENTS || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
       }
 #else
       symbol_type (int tok, const location_type& l)
         : super_type(token_type (tok), l)
       {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_AGENT_error || tok == token::TOKEN_AGENT_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_BASIC_AUTHENTICATION_REALM || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_BASIC_AUTHENTICATIONS || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
+        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_AGENT_error || tok == token::TOKEN_AGENT_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_AUTHENTICATION || tok == token::TOKEN_TYPE || tok == token::TOKEN_BASIC || tok == token::TOKEN_REALM || tok == token::TOKEN_CLIENTS || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1277,21 +1293,6 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_BASIC_AUTHENTICATION_REALM (location_type l)
-      {
-        return symbol_type (token::TOKEN_BASIC_AUTHENTICATION_REALM, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_BASIC_AUTHENTICATION_REALM (const location_type& l)
-      {
-        return symbol_type (token::TOKEN_BASIC_AUTHENTICATION_REALM, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
       make_USER_CONTEXT (location_type l)
       {
         return symbol_type (token::TOKEN_USER_CONTEXT, std::move (l));
@@ -1317,6 +1318,111 @@ switch (yykind)
       make_COMMENT (const location_type& l)
       {
         return symbol_type (token::TOKEN_COMMENT, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_AUTHENTICATION (location_type l)
+      {
+        return symbol_type (token::TOKEN_AUTHENTICATION, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_AUTHENTICATION (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_AUTHENTICATION, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_TYPE (location_type l)
+      {
+        return symbol_type (token::TOKEN_TYPE, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_TYPE (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_TYPE, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_BASIC (location_type l)
+      {
+        return symbol_type (token::TOKEN_BASIC, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_BASIC (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_BASIC, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_REALM (location_type l)
+      {
+        return symbol_type (token::TOKEN_REALM, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_REALM (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_REALM, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_CLIENTS (location_type l)
+      {
+        return symbol_type (token::TOKEN_CLIENTS, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_CLIENTS (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_CLIENTS, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_USER (location_type l)
+      {
+        return symbol_type (token::TOKEN_USER, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_USER (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_USER, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_PASSWORD (location_type l)
+      {
+        return symbol_type (token::TOKEN_PASSWORD, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_PASSWORD (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_PASSWORD, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1422,51 +1528,6 @@ switch (yykind)
       make_UNIX (const location_type& l)
       {
         return symbol_type (token::TOKEN_UNIX, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_BASIC_AUTHENTICATIONS (location_type l)
-      {
-        return symbol_type (token::TOKEN_BASIC_AUTHENTICATIONS, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_BASIC_AUTHENTICATIONS (const location_type& l)
-      {
-        return symbol_type (token::TOKEN_BASIC_AUTHENTICATIONS, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_USER (location_type l)
-      {
-        return symbol_type (token::TOKEN_USER, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_USER (const location_type& l)
-      {
-        return symbol_type (token::TOKEN_USER, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_PASSWORD (location_type l)
-      {
-        return symbol_type (token::TOKEN_PASSWORD, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_PASSWORD (const location_type& l)
-      {
-        return symbol_type (token::TOKEN_PASSWORD, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -2099,8 +2160,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 197,     ///< Last index in yytable_.
-      yynnts_ = 103,  ///< Number of nonterminal symbols.
+      yylast_ = 219,     ///< Last index in yytable_.
+      yynnts_ = 110,  ///< Number of nonterminal symbols.
       yyfinal_ = 8 ///< Termination state number.
     };
 
@@ -2150,10 +2211,10 @@ switch (yykind)
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45
+      45,    46,    47,    48
     };
     // Last valid token kind.
-    const int code_max = 300;
+    const int code_max = 303;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -2175,6 +2236,7 @@ switch (yykind)
       case symbol_kind::S_value: // value
       case symbol_kind::S_map_value: // map_value
       case symbol_kind::S_socket_type_value: // socket_type_value
+      case symbol_kind::S_auth_type_value: // auth_type_value
         value.copy< ElementPtr > (YY_MOVE (that.value));
         break;
 
@@ -2226,6 +2288,7 @@ switch (yykind)
       case symbol_kind::S_value: // value
       case symbol_kind::S_map_value: // map_value
       case symbol_kind::S_socket_type_value: // socket_type_value
+      case symbol_kind::S_auth_type_value: // auth_type_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
@@ -2308,7 +2371,7 @@ switch (yykind)
 
 #line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2312 "agent_parser.h"
+#line 2375 "agent_parser.h"
 
 
 
