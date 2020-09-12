@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.6.4.
+// A Bison parser, made by GNU Bison 3.7.2.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -209,25 +209,25 @@ namespace isc { namespace agent {
   {
     switch (that.kind ())
     {
-      case 54: // value
-      case 57: // map_value
-      case 110: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.YY_MOVE_OR_COPY< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 45: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.YY_MOVE_OR_COPY< bool > (YY_MOVE (that.value));
         break;
 
-      case 44: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.YY_MOVE_OR_COPY< double > (YY_MOVE (that.value));
         break;
 
-      case 43: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.YY_MOVE_OR_COPY< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 42: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
         break;
 
@@ -246,25 +246,25 @@ namespace isc { namespace agent {
   {
     switch (that.kind ())
     {
-      case 54: // value
-      case 57: // map_value
-      case 110: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.move< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 45: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.move< bool > (YY_MOVE (that.value));
         break;
 
-      case 44: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.move< double > (YY_MOVE (that.value));
         break;
 
-      case 43: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.move< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 42: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.move< std::string > (YY_MOVE (that.value));
         break;
 
@@ -283,25 +283,25 @@ namespace isc { namespace agent {
     state = that.state;
     switch (that.kind ())
     {
-      case 54: // value
-      case 57: // map_value
-      case 110: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.copy< ElementPtr > (that.value);
         break;
 
-      case 45: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.copy< bool > (that.value);
         break;
 
-      case 44: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.copy< double > (that.value);
         break;
 
-      case 43: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.copy< int64_t > (that.value);
         break;
 
-      case 42: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.copy< std::string > (that.value);
         break;
 
@@ -319,25 +319,25 @@ namespace isc { namespace agent {
     state = that.state;
     switch (that.kind ())
     {
-      case 54: // value
-      case 57: // map_value
-      case 110: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.move< ElementPtr > (that.value);
         break;
 
-      case 45: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.move< bool > (that.value);
         break;
 
-      case 44: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.move< double > (that.value);
         break;
 
-      case 43: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.move< int64_t > (that.value);
         break;
 
-      case 42: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.move< std::string > (that.value);
         break;
 
@@ -377,43 +377,43 @@ namespace isc { namespace agent {
             << yysym.location << ": ";
         switch (yykind)
     {
-      case 42: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 384 "agent_parser.cc"
         break;
 
-      case 43: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < int64_t > (); }
 #line 390 "agent_parser.cc"
         break;
 
-      case 44: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < double > (); }
 #line 396 "agent_parser.cc"
         break;
 
-      case 45: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < bool > (); }
 #line 402 "agent_parser.cc"
         break;
 
-      case 54: // value
+      case symbol_kind::S_value: // value
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
 #line 408 "agent_parser.cc"
         break;
 
-      case 57: // map_value
+      case symbol_kind::S_map_value: // map_value
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
 #line 414 "agent_parser.cc"
         break;
 
-      case 110: // socket_type_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
 #line 104 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
 #line 420 "agent_parser.cc"
@@ -646,25 +646,25 @@ namespace isc { namespace agent {
          when using variants.  */
       switch (yyr1_[yyn])
     {
-      case 54: // value
-      case 57: // map_value
-      case 110: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         yylhs.value.emplace< ElementPtr > ();
         break;
 
-      case 45: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         yylhs.value.emplace< bool > ();
         break;
 
-      case 44: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         yylhs.value.emplace< double > ();
         break;
 
-      case 43: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         yylhs.value.emplace< int64_t > ();
         break;
 
-      case 42: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         yylhs.value.emplace< std::string > ();
         break;
 
@@ -688,25 +688,25 @@ namespace isc { namespace agent {
         {
           switch (yyn)
             {
-  case 2:
+  case 2: // $@1: %empty
 #line 115 "agent_parser.yy"
                        { ctx.ctx_ = ctx.NO_KEYWORDS; }
 #line 695 "agent_parser.cc"
     break;
 
-  case 4:
+  case 4: // $@2: %empty
 #line 116 "agent_parser.yy"
                        { ctx.ctx_ = ctx.CONFIG; }
 #line 701 "agent_parser.cc"
     break;
 
-  case 6:
+  case 6: // $@3: %empty
 #line 117 "agent_parser.yy"
                        { ctx.ctx_ = ctx.AGENT; }
 #line 707 "agent_parser.cc"
     break;
 
-  case 8:
+  case 8: // $@4: %empty
 #line 125 "agent_parser.yy"
                           {
     // Parse the Control-agent map
@@ -716,7 +716,7 @@ namespace isc { namespace agent {
 #line 717 "agent_parser.cc"
     break;
 
-  case 9:
+  case 9: // sub_agent: "{" $@4 global_params "}"
 #line 129 "agent_parser.yy"
                                {
     // parsing completed
@@ -724,7 +724,7 @@ namespace isc { namespace agent {
 #line 725 "agent_parser.cc"
     break;
 
-  case 10:
+  case 10: // json: value
 #line 136 "agent_parser.yy"
             {
     // Push back the JSON value on the stack
@@ -733,49 +733,49 @@ namespace isc { namespace agent {
 #line 734 "agent_parser.cc"
     break;
 
-  case 11:
+  case 11: // value: "integer"
 #line 142 "agent_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
 #line 740 "agent_parser.cc"
     break;
 
-  case 12:
+  case 12: // value: "floating point"
 #line 143 "agent_parser.yy"
              { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
 #line 746 "agent_parser.cc"
     break;
 
-  case 13:
+  case 13: // value: "boolean"
 #line 144 "agent_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
 #line 752 "agent_parser.cc"
     break;
 
-  case 14:
+  case 14: // value: "constant string"
 #line 145 "agent_parser.yy"
               { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
 #line 758 "agent_parser.cc"
     break;
 
-  case 15:
+  case 15: // value: "null"
 #line 146 "agent_parser.yy"
                  { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
 #line 764 "agent_parser.cc"
     break;
 
-  case 16:
+  case 16: // value: map
 #line 147 "agent_parser.yy"
            { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 770 "agent_parser.cc"
     break;
 
-  case 17:
+  case 17: // value: list_generic
 #line 148 "agent_parser.yy"
                     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 776 "agent_parser.cc"
     break;
 
-  case 18:
+  case 18: // $@5: %empty
 #line 152 "agent_parser.yy"
                     {
     // This code is executed when we're about to start parsing
@@ -786,7 +786,7 @@ namespace isc { namespace agent {
 #line 787 "agent_parser.cc"
     break;
 
-  case 19:
+  case 19: // map: "{" $@5 map_content "}"
 #line 157 "agent_parser.yy"
                              {
     // map parsing completed. If we ever want to do any wrap up
@@ -796,13 +796,13 @@ namespace isc { namespace agent {
 #line 797 "agent_parser.cc"
     break;
 
-  case 20:
+  case 20: // map_value: map
 #line 163 "agent_parser.yy"
                { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 803 "agent_parser.cc"
     break;
 
-  case 23:
+  case 23: // not_empty_map: "constant string" ":" value
 #line 177 "agent_parser.yy"
                                   {
                   // map containing a single entry
@@ -811,7 +811,7 @@ namespace isc { namespace agent {
 #line 812 "agent_parser.cc"
     break;
 
-  case 24:
+  case 24: // not_empty_map: not_empty_map "," "constant string" ":" value
 #line 181 "agent_parser.yy"
                                                       {
                   // map consisting of a shorter map followed by
@@ -821,7 +821,7 @@ namespace isc { namespace agent {
 #line 822 "agent_parser.cc"
     break;
 
-  case 25:
+  case 25: // $@6: %empty
 #line 188 "agent_parser.yy"
                               {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -830,14 +830,14 @@ namespace isc { namespace agent {
 #line 831 "agent_parser.cc"
     break;
 
-  case 26:
+  case 26: // list_generic: "[" $@6 list_content "]"
 #line 191 "agent_parser.yy"
                                {
 }
 #line 838 "agent_parser.cc"
     break;
 
-  case 29:
+  case 29: // not_empty_list: value
 #line 198 "agent_parser.yy"
                       {
                   // List consisting of a single element.
@@ -846,7 +846,7 @@ namespace isc { namespace agent {
 #line 847 "agent_parser.cc"
     break;
 
-  case 30:
+  case 30: // not_empty_list: not_empty_list "," value
 #line 202 "agent_parser.yy"
                                            {
                   // List ending with , and a value.
@@ -855,7 +855,7 @@ namespace isc { namespace agent {
 #line 856 "agent_parser.cc"
     break;
 
-  case 31:
+  case 31: // unknown_map_entry: "constant string" ":"
 #line 215 "agent_parser.yy"
                                 {
     const std::string& where = ctx.contextName();
@@ -866,7 +866,7 @@ namespace isc { namespace agent {
 #line 867 "agent_parser.cc"
     break;
 
-  case 32:
+  case 32: // $@7: %empty
 #line 223 "agent_parser.yy"
                                  {
     // This code is executed when we're about to start parsing
@@ -877,7 +877,7 @@ namespace isc { namespace agent {
 #line 878 "agent_parser.cc"
     break;
 
-  case 33:
+  case 33: // agent_syntax_map: "{" $@7 global_objects "}"
 #line 228 "agent_parser.yy"
                                 {
     // map parsing completed. If we ever want to do any wrap up
@@ -887,7 +887,7 @@ namespace isc { namespace agent {
 #line 888 "agent_parser.cc"
     break;
 
-  case 36:
+  case 36: // $@8: %empty
 #line 243 "agent_parser.yy"
                             {
 
@@ -903,7 +903,7 @@ namespace isc { namespace agent {
 #line 904 "agent_parser.cc"
     break;
 
-  case 37:
+  case 37: // agent_object: "Control-agent" $@8 ":" "{" global_params "}"
 #line 253 "agent_parser.yy"
                                                     {
     // Ok, we're done with parsing control-agent. Let's take the map
@@ -914,7 +914,7 @@ namespace isc { namespace agent {
 #line 915 "agent_parser.cc"
     break;
 
-  case 50:
+  case 50: // $@9: %empty
 #line 278 "agent_parser.yy"
                      {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -922,7 +922,7 @@ namespace isc { namespace agent {
 #line 923 "agent_parser.cc"
     break;
 
-  case 51:
+  case 51: // http_host: "http-host" $@9 ":" "constant string"
 #line 280 "agent_parser.yy"
                {
     ElementPtr host(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -932,7 +932,7 @@ namespace isc { namespace agent {
 #line 933 "agent_parser.cc"
     break;
 
-  case 52:
+  case 52: // http_port: "http-port" ":" "integer"
 #line 286 "agent_parser.yy"
                                    {
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
@@ -941,7 +941,7 @@ namespace isc { namespace agent {
 #line 942 "agent_parser.cc"
     break;
 
-  case 53:
+  case 53: // $@10: %empty
 #line 291 "agent_parser.yy"
                                                        {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -949,7 +949,7 @@ namespace isc { namespace agent {
 #line 950 "agent_parser.cc"
     break;
 
-  case 54:
+  case 54: // basic_authentication_realm: "basic-authentication-realm" $@10 ":" "constant string"
 #line 293 "agent_parser.yy"
                {
     ElementPtr realm(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -959,7 +959,7 @@ namespace isc { namespace agent {
 #line 960 "agent_parser.cc"
     break;
 
-  case 55:
+  case 55: // $@11: %empty
 #line 299 "agent_parser.yy"
                            {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -967,7 +967,7 @@ namespace isc { namespace agent {
 #line 968 "agent_parser.cc"
     break;
 
-  case 56:
+  case 56: // user_context: "user-context" $@11 ":" map_value
 #line 301 "agent_parser.yy"
                   {
     ElementPtr parent = ctx.stack_.back();
@@ -994,7 +994,7 @@ namespace isc { namespace agent {
 #line 995 "agent_parser.cc"
     break;
 
-  case 57:
+  case 57: // $@12: %empty
 #line 324 "agent_parser.yy"
                  {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -1002,7 +1002,7 @@ namespace isc { namespace agent {
 #line 1003 "agent_parser.cc"
     break;
 
-  case 58:
+  case 58: // comment: "comment" $@12 ":" "constant string"
 #line 326 "agent_parser.yy"
                {
     ElementPtr parent = ctx.stack_.back();
@@ -1031,7 +1031,7 @@ namespace isc { namespace agent {
 #line 1032 "agent_parser.cc"
     break;
 
-  case 59:
+  case 59: // $@13: %empty
 #line 352 "agent_parser.yy"
                                  {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1042,7 +1042,7 @@ namespace isc { namespace agent {
 #line 1043 "agent_parser.cc"
     break;
 
-  case 60:
+  case 60: // hooks_libraries: "hooks-libraries" $@13 ":" "[" hooks_libraries_list "]"
 #line 357 "agent_parser.yy"
                                                              {
     ctx.stack_.pop_back();
@@ -1051,7 +1051,7 @@ namespace isc { namespace agent {
 #line 1052 "agent_parser.cc"
     break;
 
-  case 65:
+  case 65: // $@14: %empty
 #line 370 "agent_parser.yy"
                               {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1061,7 +1061,7 @@ namespace isc { namespace agent {
 #line 1062 "agent_parser.cc"
     break;
 
-  case 66:
+  case 66: // hooks_library: "{" $@14 hooks_params "}"
 #line 374 "agent_parser.yy"
                               {
     ctx.stack_.pop_back();
@@ -1069,7 +1069,7 @@ namespace isc { namespace agent {
 #line 1070 "agent_parser.cc"
     break;
 
-  case 72:
+  case 72: // $@15: %empty
 #line 387 "agent_parser.yy"
                  {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -1077,7 +1077,7 @@ namespace isc { namespace agent {
 #line 1078 "agent_parser.cc"
     break;
 
-  case 73:
+  case 73: // library: "library" $@15 ":" "constant string"
 #line 389 "agent_parser.yy"
                {
     ElementPtr lib(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -1087,7 +1087,7 @@ namespace isc { namespace agent {
 #line 1088 "agent_parser.cc"
     break;
 
-  case 74:
+  case 74: // $@16: %empty
 #line 395 "agent_parser.yy"
                        {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -1095,16 +1095,16 @@ namespace isc { namespace agent {
 #line 1096 "agent_parser.cc"
     break;
 
-  case 75:
+  case 75: // parameters: "parameters" $@16 ":" map_value
 #line 397 "agent_parser.yy"
-              {
+                  {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
 #line 1105 "agent_parser.cc"
     break;
 
-  case 76:
+  case 76: // $@17: %empty
 #line 405 "agent_parser.yy"
                                                       {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[2].location)));
@@ -1115,7 +1115,7 @@ namespace isc { namespace agent {
 #line 1116 "agent_parser.cc"
     break;
 
-  case 77:
+  case 77: // control_sockets: "control-sockets" ":" "{" $@17 control_sockets_params "}"
 #line 410 "agent_parser.yy"
                                         {
     ctx.stack_.pop_back();
@@ -1124,7 +1124,7 @@ namespace isc { namespace agent {
 #line 1125 "agent_parser.cc"
     break;
 
-  case 84:
+  case 84: // $@18: %empty
 #line 431 "agent_parser.yy"
                                   {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1135,7 +1135,7 @@ namespace isc { namespace agent {
 #line 1136 "agent_parser.cc"
     break;
 
-  case 85:
+  case 85: // dhcp4_server_socket: "dhcp4" $@18 ":" "{" control_socket_params "}"
 #line 436 "agent_parser.yy"
                                                             {
     ctx.stack_.pop_back();
@@ -1144,7 +1144,7 @@ namespace isc { namespace agent {
 #line 1145 "agent_parser.cc"
     break;
 
-  case 86:
+  case 86: // $@19: %empty
 #line 442 "agent_parser.yy"
                                   {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1155,7 +1155,7 @@ namespace isc { namespace agent {
 #line 1156 "agent_parser.cc"
     break;
 
-  case 87:
+  case 87: // dhcp6_server_socket: "dhcp6" $@19 ":" "{" control_socket_params "}"
 #line 447 "agent_parser.yy"
                                                             {
     ctx.stack_.pop_back();
@@ -1164,7 +1164,7 @@ namespace isc { namespace agent {
 #line 1165 "agent_parser.cc"
     break;
 
-  case 88:
+  case 88: // $@20: %empty
 #line 453 "agent_parser.yy"
                             {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1175,7 +1175,7 @@ namespace isc { namespace agent {
 #line 1176 "agent_parser.cc"
     break;
 
-  case 89:
+  case 89: // d2_server_socket: "d2" $@20 ":" "{" control_socket_params "}"
 #line 458 "agent_parser.yy"
                                                             {
     ctx.stack_.pop_back();
@@ -1184,7 +1184,7 @@ namespace isc { namespace agent {
 #line 1185 "agent_parser.cc"
     break;
 
-  case 97:
+  case 97: // $@21: %empty
 #line 477 "agent_parser.yy"
                          {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -1192,7 +1192,7 @@ namespace isc { namespace agent {
 #line 1193 "agent_parser.cc"
     break;
 
-  case 98:
+  case 98: // socket_name: "socket-name" $@21 ":" "constant string"
 #line 479 "agent_parser.yy"
                {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -1202,7 +1202,7 @@ namespace isc { namespace agent {
 #line 1203 "agent_parser.cc"
     break;
 
-  case 99:
+  case 99: // $@22: %empty
 #line 486 "agent_parser.yy"
                          {
     ctx.enter(ctx.SOCKET_TYPE);
@@ -1210,7 +1210,7 @@ namespace isc { namespace agent {
 #line 1211 "agent_parser.cc"
     break;
 
-  case 100:
+  case 100: // socket_type: "socket-type" $@22 ":" socket_type_value
 #line 488 "agent_parser.yy"
                           {
     ctx.stack_.back()->set("socket-type", yystack_[0].value.as < ElementPtr > ());
@@ -1219,13 +1219,13 @@ namespace isc { namespace agent {
 #line 1220 "agent_parser.cc"
     break;
 
-  case 101:
+  case 101: // socket_type_value: "unix"
 #line 494 "agent_parser.yy"
                          { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("unix", ctx.loc2pos(yystack_[0].location))); }
 #line 1226 "agent_parser.cc"
     break;
 
-  case 102:
+  case 102: // $@23: %empty
 #line 501 "agent_parser.yy"
                                              {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1236,7 +1236,7 @@ namespace isc { namespace agent {
 #line 1237 "agent_parser.cc"
     break;
 
-  case 103:
+  case 103: // basic_authentications: "basic-authentications" $@23 ":" "[" basic_auth_list "]"
 #line 506 "agent_parser.yy"
                                                         {
     ctx.stack_.pop_back();
@@ -1245,7 +1245,7 @@ namespace isc { namespace agent {
 #line 1246 "agent_parser.cc"
     break;
 
-  case 108:
+  case 108: // $@24: %empty
 #line 519 "agent_parser.yy"
                            {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1255,7 +1255,7 @@ namespace isc { namespace agent {
 #line 1256 "agent_parser.cc"
     break;
 
-  case 109:
+  case 109: // basic_auth: "{" $@24 basic_auth_params "}"
 #line 523 "agent_parser.yy"
                                    {
     ctx.stack_.pop_back();
@@ -1263,7 +1263,7 @@ namespace isc { namespace agent {
 #line 1264 "agent_parser.cc"
     break;
 
-  case 117:
+  case 117: // $@25: %empty
 #line 538 "agent_parser.yy"
            {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -1271,7 +1271,7 @@ namespace isc { namespace agent {
 #line 1272 "agent_parser.cc"
     break;
 
-  case 118:
+  case 118: // user: "user" $@25 ":" "constant string"
 #line 540 "agent_parser.yy"
                {
     ElementPtr user(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -1281,7 +1281,7 @@ namespace isc { namespace agent {
 #line 1282 "agent_parser.cc"
     break;
 
-  case 119:
+  case 119: // $@26: %empty
 #line 546 "agent_parser.yy"
                    {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -1289,7 +1289,7 @@ namespace isc { namespace agent {
 #line 1290 "agent_parser.cc"
     break;
 
-  case 120:
+  case 120: // password: "password" $@26 ":" "constant string"
 #line 548 "agent_parser.yy"
                {
     ElementPtr password(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -1299,7 +1299,7 @@ namespace isc { namespace agent {
 #line 1300 "agent_parser.cc"
     break;
 
-  case 121:
+  case 121: // $@27: %empty
 #line 558 "agent_parser.yy"
                  {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1310,7 +1310,7 @@ namespace isc { namespace agent {
 #line 1311 "agent_parser.cc"
     break;
 
-  case 122:
+  case 122: // loggers: "loggers" $@27 ":" "[" loggers_entries "]"
 #line 563 "agent_parser.yy"
                                                          {
     ctx.stack_.pop_back();
@@ -1319,7 +1319,7 @@ namespace isc { namespace agent {
 #line 1320 "agent_parser.cc"
     break;
 
-  case 125:
+  case 125: // $@28: %empty
 #line 575 "agent_parser.yy"
                              {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1329,7 +1329,7 @@ namespace isc { namespace agent {
 #line 1330 "agent_parser.cc"
     break;
 
-  case 126:
+  case 126: // logger_entry: "{" $@28 logger_params "}"
 #line 579 "agent_parser.yy"
                                {
     ctx.stack_.pop_back();
@@ -1337,7 +1337,7 @@ namespace isc { namespace agent {
 #line 1338 "agent_parser.cc"
     break;
 
-  case 136:
+  case 136: // $@29: %empty
 #line 596 "agent_parser.yy"
            {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -1345,7 +1345,7 @@ namespace isc { namespace agent {
 #line 1346 "agent_parser.cc"
     break;
 
-  case 137:
+  case 137: // name: "name" $@29 ":" "constant string"
 #line 598 "agent_parser.yy"
                {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -1355,7 +1355,7 @@ namespace isc { namespace agent {
 #line 1356 "agent_parser.cc"
     break;
 
-  case 138:
+  case 138: // debuglevel: "debuglevel" ":" "integer"
 #line 604 "agent_parser.yy"
                                      {
     ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
@@ -1364,7 +1364,7 @@ namespace isc { namespace agent {
 #line 1365 "agent_parser.cc"
     break;
 
-  case 139:
+  case 139: // $@30: %empty
 #line 609 "agent_parser.yy"
                    {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -1372,7 +1372,7 @@ namespace isc { namespace agent {
 #line 1373 "agent_parser.cc"
     break;
 
-  case 140:
+  case 140: // severity: "severity" $@30 ":" "constant string"
 #line 611 "agent_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -1382,7 +1382,7 @@ namespace isc { namespace agent {
 #line 1383 "agent_parser.cc"
     break;
 
-  case 141:
+  case 141: // $@31: %empty
 #line 617 "agent_parser.yy"
                                     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1393,7 +1393,7 @@ namespace isc { namespace agent {
 #line 1394 "agent_parser.cc"
     break;
 
-  case 142:
+  case 142: // output_options_list: "output_options" $@31 ":" "[" output_options_list_content "]"
 #line 622 "agent_parser.yy"
                                                                     {
     ctx.stack_.pop_back();
@@ -1402,7 +1402,7 @@ namespace isc { namespace agent {
 #line 1403 "agent_parser.cc"
     break;
 
-  case 145:
+  case 145: // $@32: %empty
 #line 631 "agent_parser.yy"
                              {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1412,7 +1412,7 @@ namespace isc { namespace agent {
 #line 1413 "agent_parser.cc"
     break;
 
-  case 146:
+  case 146: // output_entry: "{" $@32 output_params_list "}"
 #line 635 "agent_parser.yy"
                                     {
     ctx.stack_.pop_back();
@@ -1420,7 +1420,7 @@ namespace isc { namespace agent {
 #line 1421 "agent_parser.cc"
     break;
 
-  case 154:
+  case 154: // $@33: %empty
 #line 650 "agent_parser.yy"
                {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -1428,7 +1428,7 @@ namespace isc { namespace agent {
 #line 1429 "agent_parser.cc"
     break;
 
-  case 155:
+  case 155: // output: "output" $@33 ":" "constant string"
 #line 652 "agent_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -1438,7 +1438,7 @@ namespace isc { namespace agent {
 #line 1439 "agent_parser.cc"
     break;
 
-  case 156:
+  case 156: // flush: "flush" ":" "boolean"
 #line 658 "agent_parser.yy"
                            {
     ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
@@ -1447,7 +1447,7 @@ namespace isc { namespace agent {
 #line 1448 "agent_parser.cc"
     break;
 
-  case 157:
+  case 157: // maxsize: "maxsize" ":" "integer"
 #line 663 "agent_parser.yy"
                                {
     ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
@@ -1456,7 +1456,7 @@ namespace isc { namespace agent {
 #line 1457 "agent_parser.cc"
     break;
 
-  case 158:
+  case 158: // maxver: "maxver" ":" "integer"
 #line 668 "agent_parser.yy"
                              {
     ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
@@ -1465,7 +1465,7 @@ namespace isc { namespace agent {
 #line 1466 "agent_parser.cc"
     break;
 
-  case 159:
+  case 159: // $@34: %empty
 #line 673 "agent_parser.yy"
                  {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -1473,7 +1473,7 @@ namespace isc { namespace agent {
 #line 1474 "agent_parser.cc"
     break;
 
-  case 160:
+  case 160: // pattern: "pattern" $@34 ":" "constant string"
 #line 675 "agent_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
@@ -1833,40 +1833,40 @@ namespace isc { namespace agent {
   }
 
 
-  const signed char AgentParser::yypact_ninf_ = -103;
+  const short AgentParser::yypact_ninf_ = -140;
 
   const signed char AgentParser::yytable_ninf_ = -1;
 
   const short
   AgentParser::yypact_[] =
   {
-      56,  -103,  -103,  -103,     8,     2,    -5,     3,  -103,  -103,
-    -103,  -103,  -103,  -103,  -103,  -103,  -103,  -103,  -103,  -103,
-    -103,  -103,  -103,  -103,     2,   -14,    42,     1,  -103,    44,
-      51,    60,    62,    97,  -103,    93,  -103,  -103,  -103,    98,
-    -103,  -103,  -103,    99,  -103,  -103,  -103,   101,  -103,    57,
-    -103,  -103,  -103,  -103,  -103,  -103,  -103,  -103,  -103,  -103,
-    -103,     2,     2,  -103,    65,   104,  -103,   109,    71,   111,
-     114,   115,   113,   117,   118,   119,  -103,     1,  -103,  -103,
-    -103,   120,   121,    85,  -103,    87,   123,    89,  -103,   127,
-     128,   129,  -103,     2,     1,  -103,  -103,  -103,  -103,  -103,
-      40,   130,   131,   132,  -103,    59,  -103,  -103,  -103,  -103,
-      63,  -103,  -103,  -103,  -103,  -103,   134,   122,  -103,  -103,
-     135,   133,  -103,  -103,    15,  -103,  -103,   138,   139,   140,
-      40,  -103,    11,  -103,   130,    21,  -103,   131,   -11,   132,
-    -103,   141,   142,   143,  -103,  -103,  -103,  -103,  -103,  -103,
-      80,  -103,  -103,  -103,  -103,  -103,  -103,  -103,    81,  -103,
-    -103,  -103,  -103,  -103,  -103,   147,  -103,  -103,  -103,  -103,
-      82,  -103,  -103,  -103,  -103,  -103,  -103,    19,    19,    19,
-     148,   149,    11,  -103,   150,   151,    14,  -103,   153,   154,
-      92,   155,   -11,  -103,  -103,  -103,  -103,  -103,  -103,    83,
-    -103,  -103,  -103,    84,    90,   103,   105,  -103,   125,     2,
-    -103,   126,   157,  -103,   136,  -103,   159,   160,    19,  -103,
-    -103,  -103,  -103,  -103,  -103,  -103,  -103,   158,  -103,   137,
-     124,  -103,  -103,    26,  -103,  -103,  -103,  -103,    43,   158,
-    -103,  -103,   165,   168,   169,  -103,    91,  -103,  -103,  -103,
-    -103,  -103,  -103,  -103,   170,   144,   145,   152,   171,    43,
-    -103,   156,  -103,  -103,  -103,   161,  -103,  -103,  -103
+      75,  -140,  -140,  -140,     4,     2,     1,     3,  -140,  -140,
+    -140,  -140,  -140,  -140,  -140,  -140,  -140,  -140,  -140,  -140,
+    -140,  -140,  -140,  -140,     2,   -36,    39,     6,  -140,    56,
+       9,    59,    62,    61,  -140,    63,  -140,  -140,  -140,    98,
+    -140,  -140,  -140,   100,  -140,  -140,  -140,   105,  -140,    28,
+    -140,  -140,  -140,  -140,  -140,  -140,  -140,  -140,  -140,  -140,
+    -140,     2,     2,  -140,    50,   106,  -140,   113,    80,   114,
+     115,   116,    92,   117,   118,   120,  -140,     6,  -140,  -140,
+    -140,   121,   122,    89,  -140,    90,   123,    91,  -140,   129,
+     130,   131,  -140,     2,     6,  -140,  -140,  -140,  -140,  -140,
+      41,   132,   133,   134,  -140,    58,  -140,  -140,  -140,  -140,
+      76,  -140,  -140,  -140,  -140,  -140,   136,   124,  -140,  -140,
+     137,   125,  -140,  -140,    94,  -140,  -140,   140,   141,   142,
+      41,  -140,    -1,  -140,   132,   -12,  -140,   133,    23,   134,
+    -140,   143,   144,   145,  -140,  -140,  -140,  -140,  -140,  -140,
+      77,  -140,  -140,  -140,  -140,  -140,  -140,  -140,    78,  -140,
+    -140,  -140,  -140,  -140,  -140,   149,  -140,  -140,  -140,  -140,
+      79,  -140,  -140,  -140,  -140,  -140,  -140,    13,    13,    13,
+     150,   154,    -1,  -140,   155,   156,    -2,  -140,   157,   158,
+     104,   159,    23,  -140,  -140,  -140,  -140,  -140,  -140,    85,
+    -140,  -140,  -140,    86,    87,    96,   107,  -140,   126,   123,
+    -140,   127,   165,  -140,   135,  -140,   160,   167,    13,  -140,
+    -140,  -140,  -140,  -140,  -140,  -140,  -140,   166,  -140,   138,
+     152,  -140,  -140,    95,  -140,  -140,  -140,  -140,    40,   166,
+    -140,  -140,   168,   171,   172,  -140,    88,  -140,  -140,  -140,
+    -140,  -140,  -140,  -140,   174,   103,   139,   146,   175,    40,
+    -140,   148,  -140,  -140,  -140,   151,  -140,  -140,  -140
   };
 
   const unsigned char
@@ -1901,20 +1901,20 @@ namespace isc { namespace agent {
      146,     0,   156,   157,   158,     0,   148,   155,   160
   };
 
-  const signed char
+  const short
   AgentParser::yypgoto_[] =
   {
-    -103,  -103,  -103,  -103,  -103,  -103,  -103,  -103,   -24,    94,
-    -103,  -103,  -103,  -103,  -103,  -103,  -103,  -103,   -26,  -103,
-    -103,  -103,  -103,  -103,  -103,    32,   100,  -103,  -103,  -103,
-    -103,  -103,   -22,  -103,   -21,  -103,  -103,  -103,  -103,  -103,
-      39,  -103,  -103,    -4,  -103,  -103,  -103,  -103,  -103,  -103,
-    -103,    53,  -103,  -103,  -103,  -103,  -103,  -103,  -102,   -37,
-    -103,  -103,  -103,  -103,  -103,  -103,  -103,  -103,  -103,    50,
-    -103,  -103,     4,  -103,  -103,  -103,  -103,  -103,  -103,  -103,
-      48,  -103,  -103,    -2,  -103,  -103,  -103,  -103,  -103,  -103,
-    -103,  -103,   -48,  -103,  -103,   -67,  -103,  -103,  -103,  -103,
-    -103,  -103,  -103
+    -140,  -140,  -140,  -140,  -140,  -140,  -140,  -140,   -19,   -83,
+    -140,   -72,  -140,  -140,  -140,  -140,  -140,  -140,   -27,  -140,
+    -140,  -140,  -140,  -140,  -140,    93,   108,  -140,  -140,  -140,
+    -140,  -140,   -26,  -140,   -25,  -140,  -140,  -140,  -140,  -140,
+      44,  -140,  -140,    -3,  -140,  -140,  -140,  -140,  -140,  -140,
+    -140,    54,  -140,  -140,  -140,  -140,  -140,  -140,  -139,   -32,
+    -140,  -140,  -140,  -140,  -140,  -140,  -140,  -140,  -140,    57,
+    -140,  -140,    10,  -140,  -140,  -140,  -140,  -140,  -140,  -140,
+      49,  -140,  -140,     5,  -140,  -140,  -140,  -140,  -140,  -140,
+    -140,  -140,   -45,  -140,  -140,   -64,  -140,  -140,  -140,  -140,
+    -140,  -140,  -140
   };
 
   const short
@@ -1936,53 +1936,51 @@ namespace isc { namespace agent {
   const short
   AgentParser::yytable_[] =
   {
-      28,    48,    20,    41,    42,    54,    55,     9,     8,    10,
-      22,    11,    38,    39,    40,    41,    42,    43,   139,   163,
-     164,   140,   165,   166,    44,    41,    42,    45,    31,   239,
-      46,    47,   240,    41,    42,   145,   146,    79,    80,   194,
-     195,   155,   156,    47,    12,    13,    14,    15,   155,   156,
-      60,    48,    34,    47,    61,    54,    55,   106,   107,   108,
-      77,    47,    77,    47,    62,    78,   130,   126,    48,   104,
-      63,   131,    54,    55,   109,   241,   203,   204,   242,   243,
-     244,   245,    47,   182,   186,   192,   218,   218,   183,   187,
-     193,   219,   220,   218,   259,     1,     2,     3,   221,   260,
-      64,    66,    68,    72,   109,    76,   147,    81,    82,   157,
-     148,   149,   167,    83,    84,    85,   168,   169,    86,    87,
-      88,    89,    90,    91,    93,   134,   105,    95,    94,    96,
-      10,    99,   101,   102,   103,   213,   137,   115,   119,   123,
-     133,   136,   141,   142,   143,   222,   236,   223,   177,   178,
-     179,   190,   205,   206,   208,   209,   147,   211,   212,   214,
-     148,   149,   227,   229,   230,   232,   167,   224,   226,   255,
-     168,   169,   256,   257,   261,   265,   162,    92,   228,   235,
-      97,   231,   210,   144,   154,   225,   207,   176,   263,   262,
-     215,   253,   266,     0,     0,   264,     0,     0,   267,     0,
-       0,     0,     0,   268
+      48,    54,    55,    97,     8,    28,    31,     9,    20,    10,
+      22,    11,    61,    41,    42,   155,   156,    38,    39,    40,
+      41,    42,    43,   145,   146,   155,   156,    41,    42,    44,
+      47,    77,    45,   194,   195,    46,    78,    41,    42,   203,
+     204,    47,    79,    80,    12,    13,    14,    15,    47,    34,
+      48,    54,    55,   163,   164,    47,   165,   166,   106,   107,
+     108,    77,    60,    62,    64,    47,   126,    48,    54,    55,
+      63,    66,   241,   109,   104,   242,   243,   244,   245,   130,
+     182,   186,   192,    47,   131,   183,   187,   193,   218,   218,
+     218,   259,    81,   219,   220,   221,   260,   139,   239,    88,
+     140,   240,    68,   109,    72,   147,   148,   149,   157,    76,
+      82,   167,   168,   169,     1,     2,     3,    83,    85,    86,
+      87,    89,    90,    84,    91,    93,    97,   134,   137,    94,
+      10,    95,    96,    99,   101,   102,   103,   225,   222,   115,
+     119,   123,   133,   136,   141,   142,   143,   213,   262,   223,
+     177,   178,   179,   190,   205,   147,   148,   149,   206,   208,
+     209,   211,   212,   214,   229,   167,   168,   169,   224,   226,
+     227,   230,   255,   232,   236,   256,   257,   228,   261,   265,
+     235,   162,   263,   210,   144,    92,   231,   105,   176,   264,
+     267,   154,   207,   268,   253,   266,     0,   215
   };
 
   const short
   AgentParser::yycheck_[] =
   {
-      24,    27,     7,    14,    15,    27,    27,     5,     0,     7,
-       7,     9,    11,    12,    13,    14,    15,    16,     3,    30,
-      31,     6,    33,    34,    23,    14,    15,    26,    42,     3,
-      29,    42,     6,    14,    15,    24,    25,    61,    62,    20,
-      21,    27,    28,    42,    42,    43,    44,    45,    27,    28,
-       6,    77,    10,    42,     3,    77,    77,    17,    18,    19,
-       3,    42,     3,    42,     4,     8,     3,     8,    94,    93,
-       8,     8,    94,    94,   100,    32,   178,   179,    35,    36,
-      37,    38,    42,     3,     3,     3,     3,     3,     8,     8,
-       8,     8,     8,     3,     3,    39,    40,    41,     8,     8,
-       3,     8,     4,     4,   130,     4,   132,    42,     4,   135,
-     132,   132,   138,     4,    43,     4,   138,   138,     4,     4,
-       7,     4,     4,     4,     4,     3,    94,    42,     7,    42,
-       7,    42,     5,     5,     5,    43,     3,     7,     7,     7,
-       6,     6,     4,     4,     4,    42,    22,    42,     7,     7,
-       7,     4,     4,     4,     4,     4,   182,     4,     4,     4,
-     182,   182,     5,     4,     4,     7,   192,    42,    42,     4,
-     192,   192,     4,     4,     4,     4,   137,    77,    42,    42,
-      86,   218,   186,   130,   134,   209,   182,   139,    43,    45,
-     192,   239,   259,    -1,    -1,    43,    -1,    -1,    42,    -1,
-      -1,    -1,    -1,    42
+      27,    27,    27,    86,     0,    24,    42,     5,     7,     7,
+       7,     9,     3,    14,    15,    27,    28,    11,    12,    13,
+      14,    15,    16,    24,    25,    27,    28,    14,    15,    23,
+      42,     3,    26,    20,    21,    29,     8,    14,    15,   178,
+     179,    42,    61,    62,    42,    43,    44,    45,    42,    10,
+      77,    77,    77,    30,    31,    42,    33,    34,    17,    18,
+      19,     3,     6,     4,     3,    42,     8,    94,    94,    94,
+       8,     8,    32,   100,    93,    35,    36,    37,    38,     3,
+       3,     3,     3,    42,     8,     8,     8,     8,     3,     3,
+       3,     3,    42,     8,     8,     8,     8,     3,     3,     7,
+       6,     6,     4,   130,     4,   132,   132,   132,   135,     4,
+       4,   138,   138,   138,    39,    40,    41,     4,     4,     4,
+       4,     4,     4,    43,     4,     4,   209,     3,     3,     7,
+       7,    42,    42,    42,     5,     5,     5,   209,    42,     7,
+       7,     7,     6,     6,     4,     4,     4,    43,    45,    42,
+       7,     7,     7,     4,     4,   182,   182,   182,     4,     4,
+       4,     4,     4,     4,     4,   192,   192,   192,    42,    42,
+       5,     4,     4,     7,    22,     4,     4,    42,     4,     4,
+      42,   137,    43,   186,   130,    77,   218,    94,   139,    43,
+      42,   134,   182,    42,   239,   259,    -1,   192
   };
 
   const unsigned char
@@ -2010,7 +2008,7 @@ namespace isc { namespace agent {
        4,   134,     3,     8,    20,    21,    64,    78,    80,   104,
      105,   106,   108,   104,   104,     4,     4,   118,     4,     4,
       89,     4,     4,    43,     4,   129,   107,   109,     3,     8,
-       8,     8,    42,    42,    42,    54,    42,     5,    42,     4,
+       8,     8,    42,    42,    42,    57,    42,     5,    42,     4,
        4,   105,     7,   137,   138,    42,    22,   110,   139,     3,
        6,    32,    35,    36,    37,    38,   140,   141,   142,   144,
      145,   146,   147,   138,   143,     4,     4,     4,   148,     3,
@@ -2158,7 +2156,7 @@ namespace isc { namespace agent {
 
 #line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2162 "agent_parser.cc"
+#line 2160 "agent_parser.cc"
 
 #line 681 "agent_parser.yy"
 

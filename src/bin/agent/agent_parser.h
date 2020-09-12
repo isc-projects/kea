@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.6.4.
+// A Bison parser, made by GNU Bison 3.7.2.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -726,25 +726,25 @@ namespace isc { namespace agent {
       {
         switch (this->kind ())
     {
-      case 54: // value
-      case 57: // map_value
-      case 110: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.move< ElementPtr > (std::move (that.value));
         break;
 
-      case 45: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.move< bool > (std::move (that.value));
         break;
 
-      case 44: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.move< double > (std::move (that.value));
         break;
 
-      case 43: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.move< int64_t > (std::move (that.value));
         break;
 
-      case 42: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -858,25 +858,25 @@ namespace isc { namespace agent {
         // Value type destructor.
 switch (yykind)
     {
-      case 54: // value
-      case 57: // map_value
-      case 110: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 45: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 44: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 43: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 42: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1821,7 +1821,7 @@ switch (yykind)
     /// \param yyvalue   the value to check
     static bool yy_table_value_is_error_ (int yyvalue);
 
-    static const signed char yypact_ninf_;
+    static const short yypact_ninf_;
     static const signed char yytable_ninf_;
 
     /// Convert a scanner token kind \a t to a symbol kind.
@@ -1847,7 +1847,7 @@ switch (yykind)
     static const unsigned char yydefact_[];
 
     // YYPGOTO[NTERM-NUM].
-    static const signed char yypgoto_[];
+    static const short yypgoto_[];
 
     // YYDEFGOTO[NTERM-NUM].
     static const short yydefgoto_[];
@@ -1920,7 +1920,7 @@ switch (yykind)
       void move (by_state& that);
 
       /// The symbol kind (corresponding to \a state).
-      /// \a S_YYEMPTY when empty.
+      /// \a symbol_kind::S_YYEMPTY when empty.
       symbol_kind_type kind () const YY_NOEXCEPT;
 
       /// The state number used to denote an empty symbol.
@@ -2099,7 +2099,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 203,     ///< Last index in yytable_.
+      yylast_ = 197,     ///< Last index in yytable_.
       yynnts_ = 103,  ///< Number of nonterminal symbols.
       yyfinal_ = 8 ///< Termination state number.
     };
@@ -2152,11 +2152,12 @@ switch (yykind)
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
       45
     };
-    const int user_token_number_max_ = 300;
+    // Last valid token kind.
+    const int code_max = 300;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
-    else if (t <= user_token_number_max_)
+    else if (t <= code_max)
       return YY_CAST (symbol_kind_type, translate_table[t]);
     else
       return symbol_kind::S_YYUNDEF;
@@ -2171,25 +2172,25 @@ switch (yykind)
   {
     switch (this->kind ())
     {
-      case 54: // value
-      case 57: // map_value
-      case 110: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.copy< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 45: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 44: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case 43: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.copy< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 42: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -2222,25 +2223,25 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
-      case 54: // value
-      case 57: // map_value
-      case 110: // socket_type_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_socket_type_value: // socket_type_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
-      case 45: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 44: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 43: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.move< int64_t > (YY_MOVE (s.value));
         break;
 
-      case 42: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -2307,8 +2308,7 @@ switch (yykind)
 
 #line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2311 "agent_parser.h"
-
+#line 2312 "agent_parser.h"
 
 
 
