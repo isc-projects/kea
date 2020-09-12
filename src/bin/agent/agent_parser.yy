@@ -51,10 +51,17 @@ using namespace std;
   CONTROL_AGENT "Control-agent"
   HTTP_HOST "http-host"
   HTTP_PORT "http-port"
-  BASIC_AUTHENTICATION_REALM "basic-authentication-realm"
 
   USER_CONTEXT "user-context"
   COMMENT "comment"
+
+  AUTHENTICATION "authentication"
+  TYPE "type"
+  BASIC "basic"
+  REALM "realm"
+  CLIENTS "clients"
+  USER "user"
+  PASSWORD "password"
 
   CONTROL_SOCKETS "control-sockets"
   DHCP4_SERVER "dhcp4"
@@ -63,10 +70,6 @@ using namespace std;
   SOCKET_NAME "socket-name"
   SOCKET_TYPE "socket-type"
   UNIX "unix"
-
-  BASIC_AUTHENTICATIONS "basic-authentications"
-  USER "user"
-  PASSWORD "password"
 
   HOOKS_LIBRARIES "hooks-libraries"
   LIBRARY "library"
@@ -265,9 +268,8 @@ global_params: global_param
 // Dhcp6.
 global_param: http_host
             | http_port
-            | basic_authentication_realm
+            | authentication
             | control_sockets
-            | basic_authentications
             | hooks_libraries
             | loggers
             | user_context
@@ -286,14 +288,6 @@ http_host: HTTP_HOST {
 http_port: HTTP_PORT COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("http-port", prf);
-};
-
-basic_authentication_realm: BASIC_AUTHENTICATION_REALM {
-    ctx.enter(ctx.NO_KEYWORDS);
-} COLON STRING {
-    ElementPtr realm(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("basic-authentication-realm", realm);
-    ctx.leave();
 };
 
 user_context: USER_CONTEXT {
@@ -496,44 +490,87 @@ socket_type_value : UNIX { $$ = ElementPtr(new StringElement("unix", ctx.loc2pos
 
 // --- control-sockets end here ------------------------------------------------
 
-// --- basic-authentications starts here -----------------------------------------------------
+// --- authentication starts here -----------------------------------------------------
 
-basic_authentications: BASIC_AUTHENTICATIONS {
-    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("basic-authentications", l);
-    ctx.stack_.push_back(l);
-    ctx.enter(ctx.BASIC_AUTHENTICATIONS);
-} COLON LSQUARE_BRACKET basic_auth_list RSQUARE_BRACKET {
+authentication: AUTHENTICATION {
+    // Add unique here
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("authentication", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.AUTHENTICATION);
+} COLON LCURLY_BRACKET auth_params RCURLY_BRACKET {
+    // The type parameter is required
+    ctx.require("type", ctx.loc2pos(@4), ctx.loc2pos(@6));
     ctx.stack_.pop_back();
     ctx.leave();
 };
 
-basic_auth_list: %empty
-               | not_empty_basic_auth_list
-               ;
+auth_params: auth_param
+           | auth_params COMMA auth_param
+           ;
 
-not_empty_basic_auth_list: basic_auth
-                         | not_empty_basic_auth_list COMMA basic_auth
-                         ;
+auth_param: type
+          | realm
+          | clients
+          ;
+
+type: TYPE {
+    // Add unique here
+    ctx.enter(ctx.AUTH_TYPE);
+} COLON auth_type {
+    ctx.stack_.back()->set("type", $4);
+    ctx.leave();
+};
+
+auth_type: BASIC { $$ = ElementPtr(new StringElement("basic", ctx.loc2pos(@1))); }
+         ;
+
+realm: REALM {
+    // Add unique here
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr realm(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("realm", realm);
+    ctx.leave();
+};
+
+clients: CLIENTS {
+    // Add unique here
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("clients", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.CLIENTS);
+} COLON LSQUARE_BRACKET clients_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+clients_list: %empty
+            | not_empty_clients_list
+            ;
+
+not_empty_clients_list: basic_auth
+                      | not_empty_clients_list COMMA basic_auth
+                      ;
 
 basic_auth: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
-} basic_auth_params RCURLY_BRACKET {
+} clients_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
-basic_auth_params: basic_auth_param
-                 | basic_auth_params COMMA basic_auth_param
-                 ;
+clients_params: clients_param
+              | clients_params COMMA clients_param
+              ;
 
-basic_auth_param: user
-                | password
-                | user_context
-                | comment
-                | unknown_map_entry
-                ;
+clients_param: user
+             | password
+             | user_context
+             | comment
+             | unknown_map_entry
+             ;
 
 user: USER {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -551,7 +588,7 @@ password: PASSWORD {
     ctx.leave();
 };
 
-// --- basic-authentications end here -----------------------------------------------------
+// --- authentication end here -----------------------------------------------------
 
 // --- Loggers starts here -----------------------------------------------------
 

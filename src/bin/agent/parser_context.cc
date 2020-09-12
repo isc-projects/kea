@@ -123,6 +123,12 @@ ParserContext::contextName()
         return ("toplevel");
     case AGENT:
         return ("Control-agent");
+    case AUTHENTICATION:
+        return ("authentication");
+    case AUTH_TYPE:
+        return ("auth-type");
+    case CLIENTS:
+        return ("clients");
     case CONTROL_SOCKETS:
         return ("control-sockets");
     case SERVER:
@@ -135,8 +141,6 @@ ParserContext::contextName()
         return ("loggers");
     case OUTPUT_OPTIONS:
         return ("output-options");
-    case BASIC_AUTHENTICATIONS:
-        return ("basic-authentications");
     default:
         return ("__unknown__");
     }

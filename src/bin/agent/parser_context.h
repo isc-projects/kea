@@ -158,6 +158,15 @@ public:
         ///< Used while parsing content of Agent.
         AGENT,
 
+        ///< Used while parsing Control-agent/Authentication.
+        AUTHENTICATION,
+
+        ///< Used while parsing Control-agent/Authentication/type.
+        AUTH_TYPE,
+
+        ///< Used while parsing Control-agent/Authentication/clients.
+        CLIENTS,
+
         ///< Used while parsing Control-agent/control-sockets.
         CONTROL_SOCKETS,
 
@@ -174,11 +183,7 @@ public:
         LOGGERS,
 
         ///< Used while parsing Control-agent/loggers/output_options structures.
-        OUTPUT_OPTIONS,
-
-        ///< Used while parsing Control-agent/basic-authentications.
-        BASIC_AUTHENTICATIONS
-
+        OUTPUT_OPTIONS
     } LexerContext;
 
     /// @brief File name
