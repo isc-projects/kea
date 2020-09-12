@@ -103,6 +103,7 @@ using namespace std;
 %type <ElementPtr> value
 %type <ElementPtr> map_value
 %type <ElementPtr> socket_type_value
+%type <ElementPtr> auth_type_value
 
 %printer { yyoutput << $$; } <*>;
 
@@ -509,20 +510,20 @@ auth_params: auth_param
            | auth_params COMMA auth_param
            ;
 
-auth_param: type
+auth_param: auth_type
           | realm
           | clients
           ;
 
-type: TYPE {
+auth_type: TYPE {
     // Add unique here
     ctx.enter(ctx.AUTH_TYPE);
-} COLON auth_type {
+} COLON auth_type_value {
     ctx.stack_.back()->set("type", $4);
     ctx.leave();
 };
 
-auth_type: BASIC { $$ = ElementPtr(new StringElement("basic", ctx.loc2pos(@1))); }
+auth_type_value: BASIC { $$ = ElementPtr(new StringElement("basic", ctx.loc2pos(@1))); }
          ;
 
 realm: REALM {
