@@ -22,7 +22,7 @@ As the primary purpose of the Kea shell is as a tool in a scripting
 environment, it is not interactive. However, following simple guidelines it can
 be run manually.
 
-Kea 1.7.10 introduced basic HTTP authentication support.
+Kea 1.9.0 introduced basic HTTP authentication support.
 
 Shell Usage
 ===========
@@ -127,3 +127,8 @@ people interested in integrating their management environments with Kea)
 than as a serious management client. It is not likely to be
 significantly expanded in the future; it is, and will remain, a simple
 tool.
+
+.. note::
+
+   When using this tool with basic HTTP authentication please not forget
+   that command line arguments are not hidden to local users.

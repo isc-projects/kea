@@ -581,7 +581,7 @@ server. It may also contain an unlimited number of backup servers. In
 this example, there is one backup server which receives lease updates
 from the active servers.
 
-Since Kea version 1.7.10 the basic HTTP authentication is available
+Since Kea version 1.9.0 the basic HTTP authentication is available
 to protect the Kea control agent against local attackers.
 
 These are the parameters specified for each of the peers within this
@@ -1291,7 +1291,7 @@ load-balancing and the hot-standby cases presented in previous sections.
    }
    }
 
-Since Kea version 1.7.10 the basic HTTP authentication is supported.
+Since Kea version 1.9.0 the basic HTTP authentication is supported.
 
 .. _ha-maintenance:
 

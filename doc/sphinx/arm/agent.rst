@@ -137,7 +137,7 @@ ability to store comments or descriptions; the parser translates a
 "comment" entry into a user context with the entry, which allows a
 comment to be attached within the configuration itself.
 
-The basic HTTP authentication was added by Kea 1.7.10. It protects
+The basic HTTP authentication was added by Kea 1.9.0. It protects
 against not authorized uses of the control agent by local users. For the
 protection against remote attackers HTTPS and reverse proxy of
 :ref:`agent-secure-connection` provide a stronger security.

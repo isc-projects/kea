@@ -18,7 +18,11 @@
 namespace isc {
 namespace http {
 
-/// @brief Type of basic HTTP authentication credential and user id map.
+/// @brief Type of basic HTTP authentication credential and user id map,
+/// e.g. map["am9obmRvZTpzZWNyZXQx" = "johndoe".
+///
+/// The map is used to verify a received credential: if it is not in it
+/// the authentication fails, if it is in it the user id is logged.
 typedef std::unordered_map<std::string, std::string> BasicHttpAuthMap;
 
 /// @brief Basic HTTP authentication client configuration.
@@ -52,10 +56,10 @@ public:
 
 private:
 
-    /// @brief The user id.
+    /// @brief The user id e.g. johndoe.
     std::string user_;
 
-    /// @brief The password.
+    /// @brief The password e.g. secret1.
     std::string password_;
 };
 
