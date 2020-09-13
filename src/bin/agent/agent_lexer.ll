@@ -203,7 +203,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"user-context\" {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
-    case ParserContext::AUTHENTICATION;
+    case ParserContext::AUTHENTICATION:
     case ParserContext::CLIENTS:
     case ParserContext::SERVER:
     case ParserContext::LOGGERS:
@@ -216,7 +216,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"comment\" {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
-    case ParserContext::AUTHENTICATION;
+    case ParserContext::AUTHENTICATION:
     case ParserContext::CLIENTS:
     case ParserContext::SERVER:
     case ParserContext::LOGGERS:
