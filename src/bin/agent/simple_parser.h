@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,9 +43,10 @@ public:
 
     // see simple_parser.cc for comments for those parameters
     static const isc::data::SimpleDefaults AGENT_DEFAULTS;
+    static const isc::data::SimpleDefaults AUTH_DEFAULTS;
     static const isc::data::SimpleDefaults SOCKET_DEFAULTS;
 };
 
-};
-};
+}
+}
 #endif

@@ -97,6 +97,21 @@ ParserContext::loc2pos(isc::agent::location& loc)
 }
 
 void
+ParserContext::require(const std::string& name,
+                       isc::data::Element::Position open_loc,
+                       isc::data::Element::Position close_loc)
+{
+    ConstElementPtr value = stack_.back()->get(name);
+    if (!value) {
+        isc_throw(ParseError,
+                  "missing parameter '" << name << "' ("
+                  << stack_.back()->getPosition() << ") ["
+                  << contextName() << " map between "
+                  << open_loc << " and " << close_loc << "]");
+    }
+}
+
+void
 ParserContext::enter(const LexerContext& ctx)
 {
     cstack_.push_back(ctx_);

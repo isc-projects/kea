@@ -11,6 +11,7 @@
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
+#include <http/basic_auth_config.h>
 #include <boost/foreach.hpp>
 
 using namespace isc::data;
@@ -36,15 +37,20 @@ namespace agent {
 ///
 /// These are global Control Agent parameters.
 const SimpleDefaults AgentSimpleParser::AGENT_DEFAULTS = {
-    { "http-host",                  Element::string,  "127.0.0.1" },
-    { "http-port",                  Element::integer, "8000" },
-    { "basic-authentication-realm", Element::string,  "kea-control-agent" }
+    { "http-host",    Element::string,  "127.0.0.1" },
+    { "http-port",    Element::integer, "8000" }
+};
+
+/// @brief This table defines default values for authentication.
+const SimpleDefaults AgentSimpleParser::AUTH_DEFAULTS = {
+    { "type",   Element::string,  "basic" },
+    { "realm",  Element::string,  "kea-control-agent" }
 };
 
 /// @brief This table defines default values for control sockets.
 ///
 const SimpleDefaults AgentSimpleParser::SOCKET_DEFAULTS = {
-    { "socket-type",  Element::string,  "unix"}
+    { "socket-type",  Element::string,  "unix" }
 };
 
 /// @}
@@ -58,6 +64,15 @@ size_t AgentSimpleParser::setAllDefaults(const isc::data::ElementPtr& global) {
 
     // Set global defaults first.
     cnt = setDefaults(global, AGENT_DEFAULTS);
+
+    // After set the defaults for authentication if it exists.
+    ConstElementPtr authentication = global->get("authentication");
+    if (authentication) {
+        ElementPtr auth = boost::const_pointer_cast<Element>(authentication);
+        if (auth) {
+            cnt += SimpleParser::setDefaults(auth, AUTH_DEFAULTS);
+        }
+    }
 
     // Now set the defaults for control-sockets, if any.
     ConstElementPtr sockets = global->get("control-sockets");
@@ -89,8 +104,6 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     // Let's get the HTTP parameters first.
     ctx->setHttpHost(SimpleParser::getString(config, "http-host"));
     ctx->setHttpPort(SimpleParser::getIntType<uint16_t>(config, "http-port"));
-    ctx->setBasicAuthRealm(SimpleParser::getString(config,
-        "basic-authentication-realm"));
 
     // Control sockets are second.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
@@ -102,9 +115,13 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     }
 
     // Basic HTTP authentications are third.
-    ConstElementPtr auth_config = config->get("basic-authentications");
-    ctx->getBasicAuthConfig().clear();
-    ctx->getBasicAuthConfig().parse(auth_config);
+    ConstElementPtr auth_config = config->get("authentications");
+    if (auth_config) {
+        using namespace isc::http;
+        BasicHttpAuthConfigPtr auth(new BasicHttpAuthConfig());
+        auth->parse(auth_config);
+        ctx->setAuthConfig(auth);
+    }
 
     // User context can be done at anytime.
     ConstElementPtr user_context = config->get("user-context");
@@ -113,7 +130,6 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     }
 
     // Finally, let's get the hook libs!
-
     using namespace isc::hooks;
     HooksConfig& libraries = ctx->getHooksConfig();
     ConstElementPtr hooks = config->get("hooks-libraries");

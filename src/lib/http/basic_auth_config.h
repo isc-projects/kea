@@ -7,10 +7,7 @@
 #ifndef HTTP_BASIC_AUTH_CONFIG_H
 #define HTTP_BASIC_AUTH_CONFIG_H
 
-#include <cc/cfg_to_element.h>
-#include <cc/data.h>
-#include <cc/simple_parser.h>
-#include <cc/user_context.h>
+#include <http/auth_config.h>
 #include <http/basic_auth.h>
 #include <list>
 #include <unordered_map>
@@ -67,8 +64,11 @@ private:
 typedef std::list<BasicHttpAuthClient> BasicHttpAuthClientList;
 
 /// @brief Basic HTTP authentication configuration.
-class BasicHttpAuthConfig : public isc::data::CfgToElement {
+class BasicHttpAuthConfig : public HttpAuthConfig {
 public:
+
+    /// @brief Destructor.
+    virtual ~BasicHttpAuthConfig() { }
 
     /// @brief Add a client configuration.
     ///
@@ -80,8 +80,13 @@ public:
              const std::string& password,
              const isc::data::ConstElementPtr& user_context = isc::data::ConstElementPtr());
 
+    /// @brief Empty predicate.
+    /// @return true if the configuration is empty so authentication
+    /// is not required.
+    virtual bool empty() const;
+
     /// @brief Clear configuration.
-    void clear();
+    virtual void clear();
 
     /// @brief Returns the list of client configuration.
     ///
@@ -109,6 +114,15 @@ public:
     /// @return A pointer to unparsed basic HTTP authentication configuration.
     virtual isc::data::ElementPtr toElement() const;
 
+    /// @brief Validate HTTP request.
+    ///
+    /// @param creator The HTTP response creator.
+    /// @param request The HTTP request to validate.
+    /// @return Error HTTP response if validation failed, null otherwise.
+    virtual isc::http::HttpResponseJsonPtr
+    checkAuth(const isc::http::HttpResponseCreator& creator,
+              const isc::http::ConstHttpRequestPtr& request) const;
+
 private:
 
     /// @brief The list of basic HTTP authentication client configuration.
@@ -117,6 +131,9 @@ private:
     /// @brief The basic HTTP authentication credential and user id map.
     BasicHttpAuthMap map_;
 };
+
+/// @brief Type of shared pointers to basic HTTP authentication configuration.
+typedef boost::shared_ptr<BasicHttpAuthConfig> BasicHttpAuthConfigPtr;
 
 } // end of namespace isc::http
 } // end of namespace isc

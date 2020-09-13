@@ -513,6 +513,9 @@ auth_params: auth_param
 auth_param: auth_type
           | realm
           | clients
+          | comment
+          | user_context
+          | unknown_map_entry
           ;
 
 auth_type: TYPE {
@@ -528,7 +531,7 @@ auth_type_value: BASIC { $$ = ElementPtr(new StringElement("basic", ctx.loc2pos(
 
 realm: REALM {
     // Add unique here
-    ctx.enter(ctx.NO_KEYWORD);
+    ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr realm(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("realm", realm);

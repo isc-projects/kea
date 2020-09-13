@@ -35,11 +35,11 @@ libkea_http_la_SOURCES += response.cc response.h
 libkea_http_la_SOURCES += response_parser.cc response_parser.h
 libkea_http_la_SOURCES += response_context.h
 libkea_http_la_SOURCES += response_creator.cc response_creator.h
-libkea_http_la_SOURCES += response_creator_auth.cc response_creator_auth.h
 libkea_http_la_SOURCES += response_creator_factory.h
 libkea_http_la_SOURCES += response_json.cc response_json.h
 libkea_http_la_SOURCES += url.cc url.h
 libkea_http_la_SOURCES += basic_auth.cc basic_auth.h
+libkea_http_la_SOURCES += auth_config.h
 libkea_http_la_SOURCES += basic_auth_config.cc basic_auth_config.h
 
 libkea_http_la_CXXFLAGS = $(AM_CXXFLAGS)
@@ -91,6 +91,7 @@ endif
 # Specify the headers for copying into the installation directory tree.
 libkea_http_includedir = $(pkgincludedir)/http
 libkea_http_include_HEADERS = \
+	auth_config.h \
 	basic_auth.h \
 	basic_auth_config.h \
 	client.h \
@@ -115,7 +116,6 @@ libkea_http_include_HEADERS = \
 	response.h \
 	response_context.h \
 	response_creator.h \
-	response_creator_auth.h \
 	response_creator_factory.h \
 	response_json.h \
 	response_parser.h \

@@ -1269,7 +1269,7 @@ namespace isc { namespace agent {
 #line 529 "agent_parser.yy"
              {
     // Add unique here
-    ctx.enter(ctx.NO_KEYWORD);
+    ctx.enter(ctx.NO_KEYWORDS);
 }
 #line 1275 "agent_parser.cc"
     break;

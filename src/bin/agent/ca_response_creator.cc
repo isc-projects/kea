@@ -13,7 +13,6 @@
 #include <agent/ca_response_creator.h>
 #include <cc/data.h>
 #include <http/post_request_json.h>
-#include <http/response_creator_auth.h>
 #include <http/response_json.h>
 #include <boost/pointer_cast.hpp>
 #include <iostream>
@@ -81,11 +80,11 @@ createDynamicHttpResponse(const ConstHttpRequestPtr& request) {
             if (cfgmgr) {
                 ctx = cfgmgr->getCtrlAgentCfgContext();
                 if (ctx) {
-                    const BasicHttpAuthConfig& auth = ctx->getBasicAuthConfig();
-                    const BasicHttpAuthMap& auth_map = auth.getCredentialMap();
-                    // Check authentication.
-                    http_response = checkAuth(*this, request, auth_map,
-                                              ctx->getBasicAuthRealm());
+                    const HttpAuthConfigPtr& auth = ctx->getAuthConfig();
+                    if (auth) {
+                        // Check authentication.
+                        http_response = auth->checkAuth(*this, request);
+                    }
                 }
             }
         }

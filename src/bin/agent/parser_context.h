@@ -147,6 +147,19 @@ public:
     /// @return Position in format accepted by Element
     isc::data::Element::Position loc2pos(isc::agent::location& loc);
 
+    /// @brief Check if a required parameter is present
+    ///
+    /// Check if a required parameter is present in the map at the top
+    /// of the stack and raise an error when it is not.
+    ///
+    /// @param name name of the parameter to check
+    /// @param open_loc location of the opening curly bracket
+    /// @param close_loc location of the closing curly bracket
+    /// @throw ParseError
+    void require(const std::string& name,
+                 isc::data::Element::Position open_loc,
+                 isc::data::Element::Position close_loc);
+
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
         ///< This one is used in pure JSON mode.

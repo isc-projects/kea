@@ -10,6 +10,7 @@
 #include <agent/simple_parser.h>
 #include <cc/simple_parser.h>
 #include <cc/command_interpreter.h>
+#include <http/basic_auth_config.h>
 #include <exceptions/exceptions.h>
 
 using namespace isc::config;
@@ -21,15 +22,13 @@ namespace isc {
 namespace agent {
 
 CtrlAgentCfgContext::CtrlAgentCfgContext()
-    : http_host_(""), http_port_(0), basic_auth_realm_("") {
+    : http_host_(""), http_port_(0) {
 }
 
 CtrlAgentCfgContext::CtrlAgentCfgContext(const CtrlAgentCfgContext& orig)
     : ConfigBase(), ctrl_sockets_(orig.ctrl_sockets_),
       http_host_(orig.http_host_), http_port_(orig.http_port_),
-      basic_auth_realm_(orig.basic_auth_realm_),
-      hooks_config_(orig.hooks_config_),
-      basic_auth_config_(orig.basic_auth_config_) {
+      hooks_config_(orig.hooks_config_), auth_config_(orig.auth_config_) {
 }
 
 CtrlAgentCfgMgr::CtrlAgentCfgMgr()
@@ -53,8 +52,8 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     s << ctx->getControlSocketInfoSummary();
 
     // Add something if authentication is required.
-    const isc::http::BasicHttpAuthConfig& auth = ctx->getBasicAuthConfig();
-    if (!auth.getClientList().empty()) {
+    const isc::http::HttpAuthConfigPtr& auth = ctx->getAuthConfig();
+    if (auth && !auth->empty()) {
         s << ", requires basic HTTP authentication";
     }
 
@@ -160,9 +159,10 @@ CtrlAgentCfgContext::toElement() const {
     ca->set("http-host", Element::create(http_host_));
     // Set http-port
     ca->set("http-port", Element::create(static_cast<int64_t>(http_port_)));
-    // Set basic-authentication-realm
-    ca->set("basic-authentication-realm", Element::create(basic_auth_realm_));
-    // Set hooks-libraries
+    // Set authentication
+    if (auth_config_) {
+        ca->set("authentication", auth_config_->toElement());
+    }
     ca->set("hooks-libraries", hooks_config_.toElement());
     // Set control-sockets
     ElementPtr control_sockets = Element::createMap();
@@ -171,11 +171,6 @@ CtrlAgentCfgContext::toElement() const {
         control_sockets->set(si->first, socket);
     }
     ca->set("control-sockets", control_sockets);
-    // Set basic HTTP authentication
-    const isc::http::BasicHttpAuthConfig& auth = basic_auth_config_;
-    if (!basic_auth_config_.getClientList().empty()) {
-        ca->set("basic-authentications", basic_auth_config_.toElement());
-    }
     // Set Control-agent
     ElementPtr result = Element::createMap();
     result->set("Control-agent", ca);

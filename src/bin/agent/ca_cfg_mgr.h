@@ -9,7 +9,7 @@
 
 #include <cc/data.h>
 #include <hooks/hooks_config.h>
-#include <http/basic_auth_config.h>
+#include <http/auth_config.h>
 #include <process/d_cfg_mgr.h>
 #include <boost/pointer_cast.hpp>
 #include <map>
@@ -99,18 +99,22 @@ public:
         return (http_port_);
     }
 
-    /// @brief Sets basic-authentication-realm parameter
+    /// @brief Sets HTTP authentication configuration.
     ///
-    /// @param real Basic HTTP authentication realm
-    void setBasicAuthRealm(const std::string& realm) {
-        basic_auth_realm_ = realm;
+    /// @note Only the basic HTTP authentication is supported.
+    ///
+    /// @param auth_config HTTP authentication configuration.
+    void setAuthConfig(const isc::http::HttpAuthConfigPtr& auth_config) {
+        auth_config_ = auth_config;
     }
 
-    /// @brief Returns basic-authentication-realm parameter
+    /// @brief Returns HTTP authentication configuration
     ///
-    /// @return Basic HTTP authentication realm.
-    std::string getBasicAuthRealm() const {
-        return (basic_auth_realm_);
+    /// @note Only the basic HTTP authentication is supported.
+    ///
+    /// @return HTTP authentication configuration.
+    const isc::http::HttpAuthConfigPtr& getAuthConfig() const {
+        return (auth_config_);
     }
 
     /// @brief Returns non-const reference to configured hooks libraries.
@@ -125,22 +129,6 @@ public:
     /// @return const reference to configured hooks libraries.
     const isc::hooks::HooksConfig& getHooksConfig() const {
         return (hooks_config_);
-    }
-
-    /// @brief Returns non-const reference to configured basic HTTP
-    /// authentification clients.
-    ///
-    /// @return non-const reference to configured basic auth clients.
-    isc::http::BasicHttpAuthConfig& getBasicAuthConfig() {
-        return (basic_auth_config_);
-    }
-
-    /// @brief Returns const reference to configured basic HTTP
-    /// authentification clients.
-    ///
-    /// @return const reference to configured basic auth clients.
-    const isc::http::BasicHttpAuthConfig& getBasicAuthConfig() const {
-        return (basic_auth_config_);
     }
 
     /// @brief Unparse a configuration object
@@ -178,14 +166,11 @@ private:
     /// TCP port the CA should listen on.
     uint16_t http_port_;
 
-    /// Basic HTTP authentication realm.
-    std::string basic_auth_realm_;
-
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
 
     /// @brief Configured basic HTTP authentification clients.
-    isc::http::BasicHttpAuthConfig basic_auth_config_;
+    isc::http::HttpAuthConfigPtr auth_config_;
 };
 
 /// @brief Ctrl Agent Configuration Manager.

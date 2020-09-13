@@ -203,9 +203,10 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"user-context\" {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
+    case ParserContext::AUTHENTICATION;
+    case ParserContext::CLIENTS:
     case ParserContext::SERVER:
     case ParserContext::LOGGERS:
-    case ParserContext::CLIENTS:
         return AgentParser::make_USER_CONTEXT(driver.loc_);
     default:
         return AgentParser::make_STRING("user-context", driver.loc_);
@@ -215,9 +216,10 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"comment\" {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
+    case ParserContext::AUTHENTICATION;
+    case ParserContext::CLIENTS:
     case ParserContext::SERVER:
     case ParserContext::LOGGERS:
-    case ParserContext::CLIENTS:
         return AgentParser::make_COMMENT(driver.loc_);
     default:
         return AgentParser::make_STRING("comment", driver.loc_);

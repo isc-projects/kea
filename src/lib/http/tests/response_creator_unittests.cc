@@ -6,11 +6,11 @@
 
 #include <config.h>
 #include <http/basic_auth.h>
+#include <http/basic_auth_config.h>
 #include <http/http_types.h>
 #include <http/request.h>
 #include <http/response.h>
 #include <http/response_creator.h>
-#include <http/response_creator_auth.h>
 #include <http/response_json.h>
 #include <http/tests/response_test.h>
 #include <testutils/log_utils.h>
@@ -140,13 +140,14 @@ class HttpResponseCreatorAuthTest : public LogContentTest { };
 // This test verifies that missing required authentication header gives
 // unauthorized error.
 TEST_F(HttpResponseCreatorAuthTest, noAuth) {
-    // Create credentials.
-    BasicHttpAuthPtr basic_auth;
-    EXPECT_NO_THROW(basic_auth.reset(new BasicHttpAuth("test", "123\xa3")));
-    EXPECT_EQ("dGVzdDoxMjPCow==", basic_auth->getCredential());
-    BasicHttpAuthMap credentials;
-    credentials[basic_auth->getCredential()] = "test";
-    string realm = "ISC.ORG";
+    // Create basic HTTP authentication configuration.
+    BasicHttpAuthConfigPtr auth_config(new BasicHttpAuthConfig());
+    EXPECT_NO_THROW(auth_config->add("test", "123\xa3"));
+    const BasicHttpAuthMap& credentials = auth_config->getCredentialMap();
+    auto cred = credentials.find("dGVzdDoxMjPCow==");
+    EXPECT_NE(cred, credentials.end());
+    EXPECT_EQ(cred->second, "test");
+    auth_config->setRealm("ISC.ORG");
 
     // Create request and finalize it.
     HttpRequestPtr request(new HttpRequest());
@@ -158,7 +159,7 @@ TEST_F(HttpResponseCreatorAuthTest, noAuth) {
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
-    ASSERT_NO_THROW(response = checkAuth(*creator, request, credentials, realm));
+    ASSERT_NO_THROW(response = auth_config->checkAuth(*creator, request));
     ASSERT_TRUE(response);
 
     EXPECT_EQ("HTTP/1.0 401 Unauthorized\r\n"
@@ -176,13 +177,14 @@ TEST_F(HttpResponseCreatorAuthTest, noAuth) {
 
 // This test verifies that too short authentication header is rejected.
 TEST_F(HttpResponseCreatorAuthTest, authTooShort) {
-    // Create credentials.
-    BasicHttpAuthPtr basic_auth;
-    EXPECT_NO_THROW(basic_auth.reset(new BasicHttpAuth("test", "123\xa3")));
-    EXPECT_EQ("dGVzdDoxMjPCow==", basic_auth->getCredential());
-    BasicHttpAuthMap credentials;
-    credentials[basic_auth->getCredential()] = "test";
-    string realm = "ISC.ORG";
+    // Create basic HTTP authentication configuration.
+    BasicHttpAuthConfigPtr auth_config(new BasicHttpAuthConfig());
+    EXPECT_NO_THROW(auth_config->add("test", "123\xa3"));
+    const BasicHttpAuthMap& credentials = auth_config->getCredentialMap();
+    auto cred = credentials.find("dGVzdDoxMjPCow==");
+    EXPECT_NE(cred, credentials.end());
+    EXPECT_EQ(cred->second, "test");
+    auth_config->setRealm("ISC.ORG");
 
     // Create request and finalize it.
     HttpRequestPtr request(new HttpRequest());
@@ -196,7 +198,7 @@ TEST_F(HttpResponseCreatorAuthTest, authTooShort) {
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
-    ASSERT_NO_THROW(response = checkAuth(*creator, request, credentials, realm));
+    ASSERT_NO_THROW(response = auth_config->checkAuth(*creator, request));
     ASSERT_TRUE(response);
 
     EXPECT_EQ("HTTP/1.0 401 Unauthorized\r\n"
@@ -215,13 +217,14 @@ TEST_F(HttpResponseCreatorAuthTest, authTooShort) {
 
 // This test verifies that another authentication schema is rejected.
 TEST_F(HttpResponseCreatorAuthTest, badScheme) {
-    // Create credentials.
-    BasicHttpAuthPtr basic_auth;
-    EXPECT_NO_THROW(basic_auth.reset(new BasicHttpAuth("test", "123\xa3")));
-    EXPECT_EQ("dGVzdDoxMjPCow==", basic_auth->getCredential());
-    BasicHttpAuthMap credentials;
-    credentials[basic_auth->getCredential()] = "test";
-    string realm = "ISC.ORG";
+    // Create basic HTTP authentication configuration.
+    BasicHttpAuthConfigPtr auth_config(new BasicHttpAuthConfig());
+    EXPECT_NO_THROW(auth_config->add("test", "123\xa3"));
+    const BasicHttpAuthMap& credentials = auth_config->getCredentialMap();
+    auto cred = credentials.find("dGVzdDoxMjPCow==");
+    EXPECT_NE(cred, credentials.end());
+    EXPECT_EQ(cred->second, "test");
+    auth_config->setRealm("ISC.ORG");
 
     // Create request and finalize it.
     HttpRequestPtr request(new HttpRequest());
@@ -235,7 +238,7 @@ TEST_F(HttpResponseCreatorAuthTest, badScheme) {
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
-    ASSERT_NO_THROW(response = checkAuth(*creator, request, credentials, realm));
+    ASSERT_NO_THROW(response = auth_config->checkAuth(*creator, request));
     ASSERT_TRUE(response);
 
     EXPECT_EQ("HTTP/1.0 401 Unauthorized\r\n"
@@ -254,13 +257,14 @@ TEST_F(HttpResponseCreatorAuthTest, badScheme) {
 
 // This test verifies that not matching credential is rejected.
 TEST_F(HttpResponseCreatorAuthTest, notMatching) {
-    // Create credentials.
-    BasicHttpAuthPtr basic_auth;
-    EXPECT_NO_THROW(basic_auth.reset(new BasicHttpAuth("test", "123\xa3")));
-    EXPECT_EQ("dGVzdDoxMjPCow==", basic_auth->getCredential());
-    BasicHttpAuthMap credentials;
-    credentials[basic_auth->getCredential()] = "test";
-    string realm = "ISC.ORG";
+    // Create basic HTTP authentication configuration.
+    BasicHttpAuthConfigPtr auth_config(new BasicHttpAuthConfig());
+    EXPECT_NO_THROW(auth_config->add("test", "123\xa3"));
+    const BasicHttpAuthMap& credentials = auth_config->getCredentialMap();
+    auto cred = credentials.find("dGVzdDoxMjPCow==");
+    EXPECT_NE(cred, credentials.end());
+    EXPECT_EQ(cred->second, "test");
+    auth_config->setRealm("ISC.ORG");
 
     // Create request and finalize it.
     HttpRequestPtr request(new HttpRequest());
@@ -275,7 +279,7 @@ TEST_F(HttpResponseCreatorAuthTest, notMatching) {
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
-    ASSERT_NO_THROW(response = checkAuth(*creator, request, credentials, realm));
+    ASSERT_NO_THROW(response = auth_config->checkAuth(*creator, request));
     ASSERT_TRUE(response);
 
     EXPECT_EQ("HTTP/1.0 401 Unauthorized\r\n"
@@ -293,13 +297,14 @@ TEST_F(HttpResponseCreatorAuthTest, notMatching) {
 
 // This test verifies that matching credential is accepted.
 TEST_F(HttpResponseCreatorAuthTest, matching) {
-    // Create credentials.
-    BasicHttpAuthPtr basic_auth;
-    EXPECT_NO_THROW(basic_auth.reset(new BasicHttpAuth("test", "123\xa3")));
-    EXPECT_EQ("dGVzdDoxMjPCow==", basic_auth->getCredential());
-    BasicHttpAuthMap credentials;
-    credentials[basic_auth->getCredential()] = "test";
-    string realm = "ISC.ORG";
+    // Create basic HTTP authentication configuration.
+    BasicHttpAuthConfigPtr auth_config(new BasicHttpAuthConfig());
+    EXPECT_NO_THROW(auth_config->add("test", "123\xa3"));
+    const BasicHttpAuthMap& credentials = auth_config->getCredentialMap();
+    auto cred = credentials.find("dGVzdDoxMjPCow==");
+    EXPECT_NE(cred, credentials.end());
+    EXPECT_EQ(cred->second, "test");
+    auth_config->setRealm("ISC.ORG");
 
     // Create request and finalize it.
     HttpRequestPtr request(new HttpRequest());
@@ -307,13 +312,13 @@ TEST_F(HttpResponseCreatorAuthTest, matching) {
     request->context()->http_version_minor_ = 0;
     request->context()->method_ = "GET";
     request->context()->uri_ = "/foo";
-    BasicAuthHttpHeaderContext auth(*basic_auth);
+    HttpHeaderContext auth("Authorization", "Basic dGVzdDoxMjPCow==");
     request->context()->headers_.push_back(auth);
     ASSERT_NO_THROW(request->finalize());
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
-    ASSERT_NO_THROW(response = checkAuth(*creator, request, credentials, realm));
+    ASSERT_NO_THROW(response = auth_config->checkAuth(*creator, request));
     EXPECT_FALSE(response);
 
     addString("HTTP_CLIENT_REQUEST_AUTHORIZED received HTTP request "

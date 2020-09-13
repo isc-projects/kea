@@ -44,15 +44,26 @@ TEST(BasicHttpAuthConfigTest, basic) {
     BasicHttpAuthConfig config;
 
     // Initial configuration is empty.
+    EXPECT_TRUE(config.empty());
+    EXPECT_TRUE(config.getRealm().empty());
     EXPECT_TRUE(config.getClientList().empty());
     EXPECT_TRUE(config.getCredentialMap().empty());
+
+    // Set the realm and user context.
+    EXPECT_NO_THROW(config.setRealm("my-realm"));
+    EXPECT_EQ("my-realm", config.getRealm());
+    ConstElementPtr horse = Element::fromJSON("{ \"value\": \"a horse\" }");
+    EXPECT_NO_THROW(config.setContext(horse));
+    EXPECT_TRUE(horse->equals(*config.getContext()));
 
     // Add rejects user id with embedded ':'.
     EXPECT_THROW(config.add("foo:", "bar"), BadValue);
 
     // Add a client.
+    EXPECT_TRUE(config.empty());
     ConstElementPtr ctx = Element::fromJSON("{ \"foo\": \"bar\" }");
     EXPECT_NO_THROW(config.add("foo", "bar", ctx));
+    EXPECT_FALSE(config.empty());
 
     // Check the client.
     ASSERT_EQ(1, config.getClientList().size());
@@ -68,12 +79,17 @@ TEST(BasicHttpAuthConfigTest, basic) {
     EXPECT_EQ("foo", user);
 
     // Check toElement.
-    ElementPtr expected = Element::createList();
+    ElementPtr expected = Element::createMap();
+    ElementPtr clients = Element::createList();
     ElementPtr elem = Element::createMap();
     elem->set("user", Element::create(string("foo")));
     elem->set("password", Element::create(string("bar")));
     elem->set("user-context", ctx);
-    expected->add(elem);
+    clients->add(elem);
+    expected->set("type", Element::create(string("basic")));
+    expected->set("realm", Element::create(string("my-realm")));
+    expected->set("user-context", horse);
+    expected->set("clients", clients);
     runToElementTest<BasicHttpAuthConfig>(expected, config);
 
     // Add a second client and test it.
@@ -85,7 +101,8 @@ TEST(BasicHttpAuthConfigTest, basic) {
 
     // Check clear.
     config.clear();
-    expected = Element::createList();
+    EXPECT_TRUE(config.empty());
+    expected->set("clients", Element::createList());
     runToElementTest<BasicHttpAuthConfig>(expected, config);
 
     // Add clients again.
@@ -96,8 +113,10 @@ TEST(BasicHttpAuthConfigTest, basic) {
     ElementPtr elem0 = Element::createMap();
     elem0->set("user", Element::create(string("test")));
     elem0->set("password", Element::create(string("123\xa3")));
-    expected->add(elem0);
-    expected->add(elem);
+    clients = Element::createList();
+    clients->add(elem0);
+    clients->add(elem);
+    expected->set("clients", clients);
     runToElementTest<BasicHttpAuthConfig>(expected, config);
 }
 
@@ -108,35 +127,83 @@ TEST(BasicHttpAuthConfigTest, parse) {
 
     // No config is accepted.
     EXPECT_NO_THROW(config.parse(cfg));
+    EXPECT_TRUE(config.empty());
     EXPECT_TRUE(config.getClientList().empty());
     EXPECT_TRUE(config.getCredentialMap().empty());
-    runToElementTest<BasicHttpAuthConfig>(Element::createList(), config);
+    ElementPtr expected = Element::createMap();
+    expected->set("type", Element::create(string("basic")));
+    expected->set("realm", Element::create(string("")));
+    expected->set("clients", Element::createList());
+    runToElementTest<BasicHttpAuthConfig>(expected, config);
 
-    // The config must be a list.
+    // The config must be a map.
+    cfg = Element::createList();
+    EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
+                     "authentication must be a map (:0:0)");
+
+    // The type must be present.
     cfg = Element::createMap();
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
-                     "basic-authentications must be a list (:0:0)");
+                     "type is required in authentication (:0:0)");
+
+    // The type must be a string.
+    cfg->set("type", Element::create(true));
+    EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
+                     "type is must be a string (:0:0)");
+
+    // The type must be basic.
+    cfg->set("type", Element::create(string("foobar")));
+    string errmsg = "only basic HTTP authentication is supported: type is ";
+    errmsg += "'foobar' not 'basic' (:0:0)";
+    EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError, errmsg);
+    cfg->set("type", Element::create(string("basic")));
+    EXPECT_NO_THROW(config.parse(cfg));
+
+    // The realm must be a string.
+    cfg->set("realm", Element::createList());
+    EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
+                     "realm is must be a string (:0:0)");
+    cfg->set("realm", Element::create(string("my-realm")));
+    EXPECT_NO_THROW(config.parse(cfg));
+
+    // The user context must be a map.
+    ElementPtr ctx = Element::createList();
+    cfg->set("user-context", ctx);
+    EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
+                     "user-context must be a map (:0:0)");
+    ctx = Element::fromJSON("{ \"value\": \"a horse\" }");
+    cfg->set("user-context", ctx);
+    EXPECT_NO_THROW(config.parse(cfg));
+
+    // Clients must be a list.
+    ElementPtr clients_cfg = Element::createMap();
+    cfg->set("clients", clients_cfg);
+    EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
+                     "clients must be a list (:0:0)");
 
     // The client config must be a map.
-    cfg = Element::createList();
+    clients_cfg = Element::createList();
     ElementPtr client_cfg = Element::createList();
-    cfg->add(client_cfg);
+    clients_cfg->add(client_cfg);
+    cfg->set("clients", clients_cfg);
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
-                     "basic-authentications items must be maps (:0:0)");
+                     "clients items must be maps (:0:0)");
 
     // The user parameter is mandatory in client config.
     client_cfg = Element::createMap();
-    cfg = Element::createList();
-    cfg->add(client_cfg);
+    clients_cfg = Element::createList();
+    clients_cfg->add(client_cfg);
+    cfg->set("clients", clients_cfg);
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
-                     "user is required in basic-authentications items (:0:0)");
+                     "user is required in clients items (:0:0)");
 
     // The user parameter must be a string.
     ElementPtr user_cfg = Element::create(1);
     client_cfg = Element::createMap();
     client_cfg->set("user", user_cfg);
-    cfg = Element::createList();
-    cfg->add(client_cfg);
+    clients_cfg = Element::createList();
+    clients_cfg->add(client_cfg);
+    cfg->set("clients", clients_cfg);
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
                      "user must be a string (:0:0)");
 
@@ -144,8 +211,9 @@ TEST(BasicHttpAuthConfigTest, parse) {
     user_cfg = Element::create(string(""));
     client_cfg = Element::createMap();
     client_cfg->set("user", user_cfg);
-    cfg = Element::createList();
-    cfg->add(client_cfg);
+    clients_cfg = Element::createList();
+    clients_cfg->add(client_cfg);
+    cfg->set("clients", clients_cfg);
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
                      "user must be not be empty (:0:0)");
 
@@ -153,8 +221,9 @@ TEST(BasicHttpAuthConfigTest, parse) {
     user_cfg = Element::create(string("foo:bar"));
     client_cfg = Element::createMap();
     client_cfg->set("user", user_cfg);
-    cfg = Element::createList();
-    cfg->add(client_cfg);
+    clients_cfg = Element::createList();
+    clients_cfg->add(client_cfg);
+    cfg->set("clients", clients_cfg);
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
                      "user must not contain a ':': 'foo:bar' (:0:0)");
 
@@ -162,8 +231,9 @@ TEST(BasicHttpAuthConfigTest, parse) {
     user_cfg = Element::create(string("foo"));
     client_cfg = Element::createMap();
     client_cfg->set("user", user_cfg);
-    cfg = Element::createList();
-    cfg->add(client_cfg);
+    clients_cfg = Element::createList();
+    clients_cfg->add(client_cfg);
+    cfg->set("clients", clients_cfg);
     EXPECT_NO_THROW(config.parse(cfg));
     ASSERT_EQ(1, config.getClientList().size());
     EXPECT_EQ("", config.getClientList().front().getPassword());
@@ -174,8 +244,9 @@ TEST(BasicHttpAuthConfigTest, parse) {
     client_cfg = Element::createMap();
     client_cfg->set("user", user_cfg);
     client_cfg->set("password", password_cfg);
-    cfg = Element::createList();
-    cfg->add(client_cfg);
+    clients_cfg = Element::createList();
+    clients_cfg->add(client_cfg);
+    cfg->set("clients", clients_cfg);
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
                      "password must be a string (:0:0)");
 
@@ -184,8 +255,9 @@ TEST(BasicHttpAuthConfigTest, parse) {
     client_cfg = Element::createMap();
     client_cfg->set("user", user_cfg);
     client_cfg->set("password", password_cfg);
-    cfg = Element::createList();
-    cfg->add(client_cfg);
+    clients_cfg = Element::createList();
+    clients_cfg->add(client_cfg);
+    cfg->set("clients", clients_cfg);
     EXPECT_NO_THROW(config.parse(cfg));
     ASSERT_EQ(1, config.getClientList().size());
     EXPECT_EQ("", config.getClientList().front().getPassword());
@@ -193,13 +265,14 @@ TEST(BasicHttpAuthConfigTest, parse) {
 
     // User context must be a map.
     password_cfg = Element::create(string("bar"));
-    ElementPtr ctx = Element::createList();
+    ctx = Element::createList();
     client_cfg = Element::createMap();
     client_cfg->set("user", user_cfg);
     client_cfg->set("password", password_cfg);
     client_cfg->set("user-context", ctx);
-    cfg = Element::createList();
-    cfg->add(client_cfg);
+    clients_cfg = Element::createList();
+    clients_cfg->add(client_cfg);
+    cfg->set("clients", clients_cfg);
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
                      "user-context must be a map (:0:0)");
 
@@ -209,8 +282,9 @@ TEST(BasicHttpAuthConfigTest, parse) {
     client_cfg->set("user", user_cfg);
     client_cfg->set("password", password_cfg);
     client_cfg->set("user-context", ctx);
-    cfg = Element::createList();
-    cfg->add(client_cfg);
+    clients_cfg = Element::createList();
+    clients_cfg->add(client_cfg);
+    cfg->set("clients", clients_cfg);
     EXPECT_NO_THROW(config.parse(cfg));
     runToElementTest<BasicHttpAuthConfig>(cfg, config);
 }

@@ -50,7 +50,15 @@ The following example demonstrates the basic CA configuration.
        "Control-agent": {
            "http-host": "10.20.30.40",
            "http-port": 8000,
-           "basic-authentication-realm": "kea-control-agent",
+           "authentication": {
+               "type": "basic",
+               "realm": "kea-control-agent",
+               "clients": [
+               {
+                   "user": "admin",
+                   "password": "1234"
+               } ]
+           },
 
            "control-sockets": {
                "dhcp4": {
@@ -68,12 +76,6 @@ The following example demonstrates the basic CA configuration.
                    "socket-name": "/path/to/the/unix/socket-d2"
                },
            },
-
-           "basic-authentications": [
-           {
-               "user": "admin",
-               "password": "1234"
-           } ],
 
            "hooks-libraries": [
            {
@@ -142,11 +144,15 @@ against not authorized uses of the control agent by local users. For the
 protection against remote attackers HTTPS and reverse proxy of
 :ref:`agent-secure-connection` provide a stronger security.
 
-The ``basic-authentication-realm`` is used for error message when
-the basic HTTP authentication is mandatory but the client is not
+The authentication is described in the ``authentication`` block
+with the mandatory ``type`` parameter which selects the authentication.
+Currently only the basic HTTP authentication (type basic) is supported.
+
+The ``realm`` authentication parameter is used for error message when
+the basic HTTP authentication is required but the client is not
 authorized.
 
-When the ``basic-authentications`` list is configured and not empty
+When the ``clients`` authentication list is configured and not empty
 the basic HTTP authentication is required. Each element of the list
 specifies a user id and a password. The user id is mandatory, must
 be not empty and must not contain the colon (:) character. The

@@ -10,6 +10,7 @@
 #include <agent/ca_command_mgr.h>
 #include <agent/ca_response_creator.h>
 #include <cc/command_interpreter.h>
+#include <http/basic_auth_config.h>
 #include <http/post_request.h>
 #include <http/post_request_json.h>
 #include <http/response_json.h>
@@ -250,9 +251,10 @@ TEST_F(CtrlAgentResponseCreatorTest, noAuth) {
     // Require authentication.
     CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
-    ctx->setBasicAuthRealm("ISC.ORG");
-    BasicHttpAuthConfig& auth = ctx->getBasicAuthConfig();
-    auth.add("foo", "bar");
+    BasicHttpAuthConfigPtr auth(new BasicHttpAuthConfig());
+    ASSERT_NO_THROW(ctx->setAuthConfig(auth));
+    auth->setRealm("ISC.ORG");
+    auth->add("foo", "bar");
 
     HttpResponsePtr response;
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
@@ -290,8 +292,11 @@ TEST_F(CtrlAgentResponseCreatorTest, basicAuth) {
     // Require authentication.
     CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
-    BasicHttpAuthConfig& auth = ctx->getBasicAuthConfig();
-    auth.add("foo", "bar");
+    BasicHttpAuthConfigPtr auth(new BasicHttpAuthConfig());
+    ASSERT_NO_THROW(ctx->setAuthConfig(auth));
+    // In fact the realm is used only on errors... set it anyway.
+    auth->setRealm("ISC.ORG");
+    auth->add("foo", "bar");
 
     HttpResponsePtr response;
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
