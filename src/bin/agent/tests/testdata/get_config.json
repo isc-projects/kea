@@ -1,15 +1,18 @@
 {
     "Control-agent": {
-        "basic-authentication-realm": "kea-control-agent",
-        "basic-authentications": [
-            {
-                "password": "1234",
-                "user": "admin",
-                "user-context": {
-                    "comment": "admin is authorized"
+        "authentication": {
+            "clients": [
+                {
+                    "password": "1234",
+                    "user": "admin",
+                    "user-context": {
+                        "comment": "admin is authorized"
+                    }
                 }
-            }
-        ],
+            ],
+            "realm": "kea-control-agent",
+            "type": "basic"
+        },
         "control-sockets": {
             "d2": {
                 "socket-name": "/tmp/kea-ddns-ctrl-socket",

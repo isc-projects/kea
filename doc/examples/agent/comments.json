@@ -16,6 +16,8 @@
         {
             "comment": "basic HTTP authentication",
 
+            "type": "basic",
+
             // In basic HTTP authentication clients
             "clients":
             [
