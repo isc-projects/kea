@@ -2086,7 +2086,7 @@ YY_RULE_SETUP
     case ParserContext::AUTHENTICATION:
         return AgentParser::make_REALM(driver.loc_);
     default:
-        return AgentParser::make_STRING("authentication", driver.loc_);
+        return AgentParser::make_STRING("realm", driver.loc_);
     }
 }
 	YY_BREAK
