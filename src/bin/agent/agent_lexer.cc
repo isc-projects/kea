@@ -2016,7 +2016,7 @@ YY_RULE_SETUP
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
-    case ParserContext::AUTHENTICATION;
+    case ParserContext::AUTHENTICATION:
     case ParserContext::CLIENTS:
     case ParserContext::SERVER:
     case ParserContext::LOGGERS:
@@ -2032,7 +2032,7 @@ YY_RULE_SETUP
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
-    case ParserContext::AUTHENTICATION;
+    case ParserContext::AUTHENTICATION:
     case ParserContext::CLIENTS:
     case ParserContext::SERVER:
     case ParserContext::LOGGERS:
