@@ -68,11 +68,16 @@ Parser6Context::parseCommon() {
     }
 }
 
-
 void
-Parser6Context::error(const isc::dhcp::location& loc, const std::string& what)
+Parser6Context::error(const isc::dhcp::location& loc,
+                      const std::string& what,
+                      size_t pos)
 {
-    isc_throw(Dhcp6ParseError, loc << ": " << what);
+    if (pos == 0) {
+        isc_throw(Dhcp6ParseError, loc << ": " << what);
+    } else {
+        isc_throw(Dhcp6ParseError, loc << " (near " << pos << "): " << what);
+    }
 }
 
 void

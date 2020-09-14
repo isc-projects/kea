@@ -9,6 +9,7 @@
 /* Generated files do not make clang static analyser so happy */
 #ifndef __clang_analyzer__
 
+#include <cctype>
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
@@ -85,10 +86,10 @@ JSONString                      \"{JSONStringCharacter}*\"
 
 /* for errors */
 
-BadUnicodeEscapeSequence        u[0-9A-Fa-f]{0,3}[^0-9A-Fa-f]
+BadUnicodeEscapeSequence        u[0-9A-Fa-f]{0,3}[^0-9A-Fa-f"]
 BadJSONEscapeSequence           [^"\\/bfnrtu]|{BadUnicodeEscapeSequence}
 ControlCharacter                [\x00-\x1f]
-ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
+ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 %{
 /* This code run each time a pattern is matched. It updates the location
@@ -2015,7 +2016,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
                                  "Overflow unicode escape in \"" + raw + "\"");
                 }
                 if ((raw[pos] != '0') || (raw[pos + 1] != '0')) {
-                    driver.error(driver.loc_, "Unsupported unicode escape in \"" + raw + "\"");
+                    driver.error(driver.loc_,
+                    "Unsupported unicode escape in \"" + raw + "\"",
+                    pos + 1);
                 }
                 pos += 2;
                 c = raw[pos];
@@ -2062,17 +2065,90 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"{JSONStringCharacter}*{ControlCharacter}{ControlCharacterFill}*\" {
     /* Bad string with a forbidden control character inside */
-    driver.error(driver.loc_, "Invalid control in " + std::string(yytext));
+    std::string raw(yytext+1);
+    size_t len = raw.size() - 1;
+    size_t pos = 0;
+    for (; pos < len; ++pos) {
+        char c = raw[pos];
+        if ((c >= 0) && (c < 0x20)) {
+            break;
+        }
+    }
+    driver.error(driver.loc_,
+                 "Invalid control in " + std::string(yytext),
+                 pos + 1);
 }
 
-\"{JSONStringCharacter}*\\{BadJSONEscapeSequence}[^\x00-\x1f"]*\" {
+\"{JSONStringCharacter}*\\{BadJSONEscapeSequence}[^"]*\" {
     /* Bad string with a bad escape inside */
-    driver.error(driver.loc_, "Bad escape in " + std::string(yytext));
+    std::string raw(yytext+1);
+    size_t len = raw.size() - 1;
+    size_t pos = 0;
+    bool found = false;
+    for (; pos < len; ++pos) {
+        if (found) {
+            break;
+        }
+        char c = raw[pos];
+        if (c == '\\') {
+            ++pos;
+            c = raw[pos];
+            switch (c) {
+            case '"':
+            case '\\':
+            case '/':
+            case 'b':
+            case 'f':
+            case 'n':
+            case 'r':
+            case 't':
+                break;
+            case 'u':
+                if ((pos + 4 > len) ||
+                    !std::isxdigit(raw[pos + 1]) ||
+                    !std::isxdigit(raw[pos + 2]) ||
+                    !std::isxdigit(raw[pos + 3]) ||
+                    !std::isxdigit(raw[pos + 4])) {
+                    found = true;
+                }
+                break;
+            default:
+                found = true;
+                break;
+            }
+        }
+    }
+    /* The rule stops on the first " including on \" so add ... in this case */
+    std::string trailer = "";
+    if (raw[len - 1] == '\\') {
+        trailer = "...";
+    }
+    driver.error(driver.loc_,
+                 "Bad escape in " + std::string(yytext) + trailer,
+                 pos);
 }
 
 \"{JSONStringCharacter}*\\\" {
     /* Bad string with an open escape at the end */
-    driver.error(driver.loc_, "Overflow escape in " + std::string(yytext));
+    std::string raw(yytext+1);
+    driver.error(driver.loc_,
+                 "Overflow escape in " + std::string(yytext),
+                 raw.size() + 1);
+}
+
+\"{JSONStringCharacter}*\\u[0-9A-Fa-f]{0,3}\" {
+    /* Bad string with an open unicode escape at the end */
+    std::string raw(yytext+1);
+    size_t pos = raw.size() - 1;
+    for (; pos >= 0; --pos) {
+        char c = raw[pos];
+        if (c == 'u') {
+            break;
+        }
+    }
+    driver.error(driver.loc_,
+                 "Overflow unicode escape in " + std::string(yytext),
+                 pos + 1);
 }
 
 "["    { return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(driver.loc_); }

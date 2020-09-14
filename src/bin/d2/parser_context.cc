@@ -66,9 +66,15 @@ D2ParserContext::parseCommon() {
 
 
 void
-D2ParserContext::error(const isc::d2::location& loc, const std::string& what)
+D2ParserContext::error(const isc::d2::location& loc,
+                       const std::string& what,
+                       size_t pos)
 {
-    isc_throw(D2ParseError, loc << ": " << what);
+    if (pos == 0) {
+        isc_throw(D2ParseError, loc << ": " << what);
+    } else {
+        isc_throw(D2ParseError, loc << " (near " << pos << "): " << what);
+    }
 }
 
 void

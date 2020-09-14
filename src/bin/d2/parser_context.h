@@ -128,10 +128,16 @@ public:
 
     /// @brief Error handler
     ///
+    /// @note The optional position for an error in a string begins by 1
+    /// so the caller should add 1 to the position of the C++ string.
+    ///
     /// @param loc location within the parsed file when experienced a problem.
     /// @param what string explaining the nature of the error.
+    /// @param pos optional position for in string errors.
     /// @throw D2ParseError
-    void error(const isc::d2::location& loc, const std::string& what);
+    void error(const isc::d2::location& loc,
+               const std::string& what,
+               size_t pos = 0);
 
     /// @brief Error handler
     ///

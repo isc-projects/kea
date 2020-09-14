@@ -70,9 +70,15 @@ Parser4Context::parseCommon() {
 
 
 void
-Parser4Context::error(const isc::dhcp::location& loc, const std::string& what)
+Parser4Context::error(const isc::dhcp::location& loc,
+                      const std::string& what,
+                      size_t pos)
 {
-    isc_throw(Dhcp4ParseError, loc << ": " << what);
+    if (pos == 0) {
+        isc_throw(Dhcp4ParseError, loc << ": " << what);
+    } else {
+        isc_throw(Dhcp4ParseError, loc << " (near " << pos << "): " << what);
+    }
 }
 
 void

@@ -70,9 +70,15 @@ ParserContext::parseCommon() {
 
 
 void
-ParserContext::error(const isc::netconf::location& loc, const std::string& what)
+ParserContext::error(const isc::netconf::location& loc,
+                     const std::string& what,
+                     size_t pos)
 {
-    isc_throw(ParseError, loc << ": " << what);
+    if (pos == 0) {
+        isc_throw(ParseError, loc << ": " << what);
+    } else {
+        isc_throw(ParseError, loc << " (near " << pos << "): " << what);
+    }
 }
 
 void

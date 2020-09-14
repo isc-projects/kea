@@ -456,23 +456,43 @@ TEST(ParserTest, errors) {
               "<string>:1.3: Invalid character: e");
     testError("\"a\n\tb\"",
               Parser6Context::PARSER_JSON,
-              "<string>:1.1-6: Invalid control in \"a\n\tb\"");
+              "<string>:1.1-6 (near 2): Invalid control in \"a\n\tb\"");
+    testError("\"a\n\\u12\"",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.1-8 (near 2): Invalid control in \"a\n\\u12\"");
     testError("\"a\\n\\tb\"",
               Parser6Context::PARSER_DHCP6,
               "<string>:1.1-8: syntax error, unexpected constant string, "
               "expecting {");
     testError("\"a\\x01b\"",
               Parser6Context::PARSER_JSON,
-              "<string>:1.1-8: Bad escape in \"a\\x01b\"");
+              "<string>:1.1-8 (near 3): Bad escape in \"a\\x01b\"");
     testError("\"a\\u0162\"",
               Parser6Context::PARSER_JSON,
-              "<string>:1.1-9: Unsupported unicode escape in \"a\\u0162\"");
+              "<string>:1.1-9 (near 4): Unsupported unicode escape "
+              "in \"a\\u0162\"");
     testError("\"a\\u062z\"",
               Parser6Context::PARSER_JSON,
-              "<string>:1.1-9: Bad escape in \"a\\u062z\"");
+              "<string>:1.1-9 (near 3): Bad escape in \"a\\u062z\"");
     testError("\"abc\\\"",
               Parser6Context::PARSER_JSON,
-              "<string>:1.1-6: Overflow escape in \"abc\\\"");
+              "<string>:1.1-6 (near 6): Overflow escape in \"abc\\\"");
+    testError("\"a\\u006\"",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.1-8 (near 3): Overflow unicode escape "
+              "in \"a\\u006\"");
+    testError("\"\\u\"",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.1-4 (near 2): Overflow unicode escape in \"\\u\"");
+    testError("\"\\u\x02\"",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.1-5 (near 2): Bad escape in \"\\u\x02\"");
+    testError("\"\\u\\\"foo\"",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.1-5 (near 2): Bad escape in \"\\u\\\"...");
+    testError("\"\x02\\u\"",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.1-5 (near 1): Invalid control in \"\x02\\u\"");
 
     // from data_unittest.c
     testError("\\a",
