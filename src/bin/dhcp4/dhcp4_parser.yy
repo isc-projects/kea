@@ -110,6 +110,8 @@ using namespace std;
   CALCULATE_TEE_TIMES "calculate-tee-times"
   T1_PERCENT "t1-percent"
   T2_PERCENT "t2-percent"
+  CACHE_THRESHOLD "cache-threshold"
+  CACHE_MAX "cache-max"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
   SERVER_TAG "server-tag"
   STATISTIC_DEFAULT_SAMPLE_COUNT "statistic-default-sample-count"
@@ -481,6 +483,8 @@ global_param: valid_lifetime
             | calculate_tee_times
             | t1_percent
             | t2_percent
+            | cache_threshold
+            | cache_max
             | loggers
             | hostname_char_set
             | hostname_char_replacement
@@ -543,6 +547,18 @@ t2_percent: T2_PERCENT COLON FLOAT {
     ctx.unique("t2-percent", ctx.loc2pos(@1));
     ElementPtr t2(new DoubleElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("t2-percent", t2);
+};
+
+cache_threshold: CACHE_THRESHOLD COLON FLOAT {
+    // Add unique here
+    ElementPtr ct(new DoubleElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("cache-threshold", ct);
+};
+
+cache_max: CACHE_MAX COLON INTEGER {
+    // Add unique here
+    ElementPtr cm(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("cache-max", cm);
 };
 
 decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
@@ -1342,6 +1358,8 @@ subnet4_param: valid_lifetime
              | calculate_tee_times
              | t1_percent
              | t2_percent
+             | cache_threshold
+             | cache_max
              | ddns_send_updates
              | ddns_override_no_update
              | ddns_override_client_update
@@ -1497,6 +1515,8 @@ shared_network_param: name
                     | calculate_tee_times
                     | t1_percent
                     | t2_percent
+                    | cache_threshold
+                    | cache_max
                     | ddns_send_updates
                     | ddns_override_no_update
                     | ddns_override_client_update
