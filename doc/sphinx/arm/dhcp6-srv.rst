@@ -4306,6 +4306,27 @@ network. This restriction applies to the ``interface`` and
 the shared network scope, but they can be specified for each subnet.
 However, care should be taken for each subnet to have the same value.
 
+.. note::
+
+    There is an inherent ambiguity when using clients that send multiple IA
+    options in a single request and shared-networks whose subnets have
+    different values for options and configuration parameters.  The server
+    sequentially processes IA options in the order they are occur in the
+    client's query.  If the leases requested in the IA options end up being
+    fulfilled from different subnets then which parameters and options should
+    apply?  Currently, the code will use the values from the last subnet of
+    the last IA option fulfilled.
+
+    We view this largely as a site configuration issue.  A shared-network
+    generally means the same physical link, so services configured by options
+    from subnet A should be as easily reachable from subnet B and vice versa.
+    There are number of ways to avoid this situation:
+
+    - Use the same values for options and parameters for subnets within the shared-network.
+    - Use subnet selectors or client class guards that ensure that for a single client's query, the same subnet will be used for all IA options in that query.
+    - Avoid using shared-networks with clients that send multiple IA options per query
+
+
 Local and Relayed Traffic in Shared Networks
 --------------------------------------------
 
