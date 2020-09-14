@@ -1,3 +1,8 @@
+1800.	[func]		fdupont
+	Added support of basic HTTP authentication in HTTP library,
+	control agent, kea shell and high availability hook.
+	(Gitlab #1304)
+
 1799.	[bug]		fdupont
 	Checked execution of queries to get schema versions of MySQL
 	and PostgreSQL database in kea-admin.
