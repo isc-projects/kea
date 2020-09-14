@@ -15,22 +15,6 @@ using namespace isc::dhcp;
 
 namespace {
 
-// This test verifies that an exception is thrown upon an attempt to
-// create an address range from invalid values and that no exception
-// is thrown when the values are correct.
-TEST(FreeLeaseQueueRangeTest, constructorWithInvalidValues) {
-    FreeLeaseQueue lq;
-
-    // The start address must be lower or equal the end address.
-    EXPECT_THROW(FreeLeaseQueue::Range(IOAddress("192.0.2.100"), IOAddress("192.0.2.99")),
-                 BadValue);
-    // The start and end address must be of the same family.
-    EXPECT_THROW(FreeLeaseQueue::Range(IOAddress("192.0.2.100"), IOAddress("2001:db8:1::1")),
-                 BadValue);
-    // It is allowed to create address range with a single IP address.
-    EXPECT_NO_THROW(FreeLeaseQueue::Range(IOAddress("192.0.2.100"), IOAddress("192.0.2.100")));
-}
-
 // This test verifies that it is not allowed to add a range that overlaps with
 // any existing range.
 TEST(FreeLeaseQueueTest, addRangeOverlapping) {
@@ -143,6 +127,19 @@ TEST(FreeLeaseQueueTest, addRangeOverlapping) {
                  BadValue);
 }
 
+// This test verifies that it is not allowed to add a prefix range that overlaps with
+// any existing range.
+TEST(FreeLeaseQueueTest, addPrefixRangeOverlapping) {
+    FreeLeaseQueue lq;
+    // Add the initial range. This should succeed.
+    ASSERT_NO_THROW(lq.addRange(IOAddress("2001:db8:1::"), 64, 96));
+
+    EXPECT_THROW(lq.addRange(IOAddress("2001:db8:1:0:0:5:ffff:0"), 96, 120),
+                 BadValue);
+    EXPECT_THROW(lq.addRange(IOAddress("2001:db8:1::0"), 80, 88),
+                 BadValue);
+}
+
 // This test verifies that a range can be removed from the container.
 TEST(FreeLeaseQueueTest, removeRange) {
     FreeLeaseQueue lq;
@@ -175,6 +172,38 @@ TEST(FreeLeaseQueueTest, removeRange) {
     EXPECT_FALSE(removed);
 }
 
+// This test verifies that a prefix range can be removed from the container.
+TEST(FreeLeaseQueueTest, removePrefixRange) {
+    FreeLeaseQueue lq;
+
+    // Add two ranges.
+    FreeLeaseQueue::PrefixRange range1(IOAddress("3000::"), 64, 96);
+    FreeLeaseQueue::PrefixRange range2(IOAddress("3001::"), 64, 96);
+    ASSERT_NO_THROW(lq.addRange(range1));
+    ASSERT_NO_THROW(lq.addRange(range2));
+
+    bool removed;
+
+    // Expect true to be returned when the range is removed.
+    ASSERT_NO_THROW(removed = lq.removeRange(range1));
+    EXPECT_TRUE(removed);
+
+    // An attempt to append a prefix to the removed range should not succeed.
+    EXPECT_FALSE(lq.append(IOAddress("3000::5:0:0"), 96));
+
+    // Removing it the second time should return false to indicate that the range
+    // was no longer there.
+    ASSERT_NO_THROW(removed = lq.removeRange(range1));
+    EXPECT_FALSE(removed);
+
+    // Same for the second range.
+    ASSERT_NO_THROW(removed = lq.removeRange(range2));
+    EXPECT_TRUE(removed);
+
+    ASSERT_NO_THROW(removed = lq.removeRange(range2));
+    EXPECT_FALSE(removed);
+}
+
 // This test verifies that an attempt to use an address from outside the
 // given range throws and that an attempt to use non-existing in-range
 // address returns false.
@@ -190,6 +219,24 @@ TEST(FreeLeaseQueueTest, useInvalidAddress) {
     // Using in-range address but not existing in the container.
     bool used = true;
     ASSERT_NO_THROW(used = lq.use(range, IOAddress("192.0.2.99")));
+    EXPECT_FALSE(used);
+}
+
+// This test verifies that an attempt to use a prefix from outside the
+// given range throws and that an attempt to use non-existing in-range
+// address returns false.
+TEST(FreeLeaseQueueTest, useInvalidPrefix) {
+    FreeLeaseQueue::PrefixRange range(IOAddress("2001:db8:1::"), 64, 96);
+
+    FreeLeaseQueue lq;
+    ASSERT_NO_THROW(lq.addRange(range));
+
+    // Using out of range prefix.
+    EXPECT_THROW(lq.use(range, IOAddress("2001:db8:2::")), BadValue);
+
+    // Using in-range prefix but not existing in the container.
+    bool used = false;
+    ASSERT_NO_THROW(used = lq.use(range, IOAddress("2001:db8:1::5:0:0")));
     EXPECT_FALSE(used);
 }
 
@@ -276,9 +323,48 @@ TEST(FreeLeaseQueueTest, next) {
     EXPECT_EQ("192.0.3.23", next.toText());
 }
 
+// This test verifies that it is possible to pick next prefix from the given
+// range.
+TEST(FreeLeaseQueueTest, nextPrefix) {
+    FreeLeaseQueue lq;
+
+    FreeLeaseQueue::PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
+    ASSERT_NO_THROW(lq.addRange(range1));
+
+    ASSERT_NO_THROW(lq.append(range1, IOAddress("2001:db8:1::4:0")));
+    ASSERT_NO_THROW(lq.append(range1, IOAddress("2001:db8:1::7:0")));
+    ASSERT_NO_THROW(lq.append(range1, IOAddress("2001:db8:1::3:0")));
+    ASSERT_NO_THROW(lq.append(range1, IOAddress("2001:db8:1::")));
+
+    IOAddress next = IOAddress::IPV6_ZERO_ADDRESS();
+    ASSERT_NO_THROW(next = lq.next(range1));
+    EXPECT_EQ("2001:db8:1::4:0", next.toText());
+
+    ASSERT_NO_THROW(next = lq.next(range1));
+    EXPECT_EQ("2001:db8:1::7:0", next.toText());
+
+    ASSERT_NO_THROW(next = lq.next(range1));
+    EXPECT_EQ("2001:db8:1::3:0", next.toText());
+
+    ASSERT_NO_THROW(next = lq.next(range1));
+    EXPECT_EQ("2001:db8:1::", next.toText());
+
+    ASSERT_NO_THROW(next = lq.next(range1));
+    EXPECT_EQ("2001:db8:1::4:0", next.toText());
+
+    // Use (remove) the prefix from the range.
+    bool used = false;
+    ASSERT_NO_THROW(used = lq.use(range1, IOAddress("2001:db8:1::7:0")));
+    EXPECT_TRUE(used);
+
+    // After we have removed the second prefix, the third prefix should be
+    // returned.
+    ASSERT_NO_THROW(next = lq.next(range1));
+    EXPECT_EQ("2001:db8:1::3:0", next.toText());
+}
+
 // This test verifies that it is possible to pop next address from the given
 // range.
-
 TEST(FreeLeaseQueueTest, pop) {
     FreeLeaseQueue lq;
 
@@ -317,6 +403,43 @@ TEST(FreeLeaseQueueTest, pop) {
     ASSERT_NO_THROW(next = lq.pop(range2));
     EXPECT_TRUE(next.isV4Zero());
 }
+
+// This test verifies that it is possible to pop next prefix from the given
+// range.
+TEST(FreeLeaseQueueTest, popPrefix) {
+    FreeLeaseQueue lq;
+
+    // Add the range.
+    FreeLeaseQueue::PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
+    ASSERT_NO_THROW(lq.addRange(range1));
+
+    // Append several prefixes to that range.
+    ASSERT_NO_THROW(lq.append(range1, IOAddress("2001:db8:1::4:0")));
+    ASSERT_NO_THROW(lq.append(range1, IOAddress("2001:db8:1::7:0")));
+    ASSERT_NO_THROW(lq.append(range1, IOAddress("2001:db8:1::3:0")));
+    ASSERT_NO_THROW(lq.append(range1, IOAddress("2001:db8:1::")));
+
+    // Make sure we get retrieve them in the order in which they have
+    // been added.
+    IOAddress next = IOAddress::IPV6_ZERO_ADDRESS();
+    ASSERT_NO_THROW(next = lq.pop(range1));
+    EXPECT_EQ("2001:db8:1::4:0", next.toText());
+
+    ASSERT_NO_THROW(next = lq.pop(range1));
+    EXPECT_EQ("2001:db8:1::7:0", next.toText());
+
+    ASSERT_NO_THROW(next = lq.pop(range1));
+    EXPECT_EQ("2001:db8:1::3:0", next.toText());
+
+    ASSERT_NO_THROW(next = lq.pop(range1));
+    EXPECT_EQ("2001:db8:1::", next.toText());
+
+    // After we went over all of them they should all be gone from the
+    // container and the IPv6 zero address should be returned.
+    ASSERT_NO_THROW(next = lq.pop(range1));
+    EXPECT_TRUE(next.isV6Zero());
+}
+
 
 // Check that out of bounds address can't be appended to the range.
 TEST(FreeLeaseQueueTest, nextRangeMismatch) {
@@ -370,6 +493,50 @@ TEST(FreeLeaseQueueTest, detectRange) {
     EXPECT_FALSE(lq.append(IOAddress("10.0.0.0")));
 }
 
+// Check that it is possible to return a delegated prefix to the range and
+// that the appropriate range is detected.
+TEST(FreeLeaseQueueTest, detectPrefixRange) {
+    FreeLeaseQueue lq;
+
+    // Create three ranges.
+    FreeLeaseQueue::PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
+    FreeLeaseQueue::PrefixRange range2(IOAddress("2001:db8:2::"), 112, 120);
+    FreeLeaseQueue::PrefixRange range3(IOAddress("2001:db8:3::"), 96, 104);
+    ASSERT_NO_THROW(lq.addRange(range1));
+    ASSERT_NO_THROW(lq.addRange(range2));
+    ASSERT_NO_THROW(lq.addRange(range3));
+
+    // Append some prefixes matching the first range.
+    ASSERT_NO_THROW(lq.append(IOAddress("2001:db8:1::7:0"), 96));
+    ASSERT_NO_THROW(lq.append(IOAddress("2001:db8:1::100:0"), 96));
+    ASSERT_NO_THROW(lq.append(IOAddress("2001:db8:1::4:0"), 96));
+
+    // Make sure that these prefixes have been appended to that range.
+    IOAddress next(0);
+    ASSERT_NO_THROW(next = lq.next(range1));
+    EXPECT_EQ("2001:db8:1::7:0", next.toText());
+
+    ASSERT_NO_THROW(next = lq.next(range1));
+    EXPECT_EQ("2001:db8:1::100:0", next.toText());
+
+    ASSERT_NO_THROW(next = lq.next(range1));
+    EXPECT_EQ("2001:db8:1::4:0", next.toText());
+
+    // Append some prefixes matching the remaining two ranges.
+    ASSERT_NO_THROW(lq.append(IOAddress("2001:db8:2::10"), 120));
+    ASSERT_NO_THROW(lq.append(IOAddress("2001:db8:3::50"), 104));
+
+    ASSERT_NO_THROW(next = lq.next(range3));
+    EXPECT_EQ("2001:db8:3::50", next.toText());
+
+    ASSERT_NO_THROW(next = lq.next(range2));
+    EXPECT_EQ("2001:db8:2::10", next.toText());
+
+    // Appending out of bounds prefix should not succeed.
+    EXPECT_FALSE(lq.append(IOAddress("2001:db8:4::10"), 96));
+    EXPECT_FALSE(lq.append(IOAddress("2001:db8:2::30"), 97));
+}
+
 // This test verifies that false is returned if the specified address to be
 // appended does not belong to any of the existing ranges.
 TEST(FreeLeaseQueueTest, detectRangeFailed) {
@@ -410,6 +577,37 @@ TEST(FreeLeaseQueueTest, appendThroughRangeIndex) {
 
     ASSERT_THROW(lq.append(index2, IOAddress("10.1.1.51")), BadValue);
     ASSERT_THROW(lq.append(index3, IOAddress("192.0.3.34")), BadValue);
+}
+
+// This test verifies that it is possible to append delegated prefixes to the
+// selected range via random access index.
+TEST(FreeLeaseQueueTest, appendPrefixThroughRangeIndex) {
+    FreeLeaseQueue lq;
+
+    FreeLeaseQueue::PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
+    FreeLeaseQueue::PrefixRange range2(IOAddress("2001:db8:2::"), 64, 96);
+    FreeLeaseQueue::PrefixRange range3(IOAddress("2001:db8:3::"), 64, 96);
+    ASSERT_NO_THROW(lq.addRange(range1));
+    ASSERT_NO_THROW(lq.addRange(range2));
+    ASSERT_NO_THROW(lq.addRange(range3));
+
+    uint64_t index1 = 0;
+    ASSERT_NO_THROW(index1 = lq.getRangeIndex(range1));
+    uint64_t index2 = 0;
+    ASSERT_NO_THROW(index2 = lq.getRangeIndex(range2));
+    uint64_t index3 = 0;
+    ASSERT_NO_THROW(index3 = lq.getRangeIndex(range3));
+
+    EXPECT_NE(index1, index2);
+    EXPECT_NE(index2, index3);
+    EXPECT_NE(index1, index3);
+
+    ASSERT_NO_THROW(lq.append(index1, IOAddress("2001:db8:1::5:0:0")));
+    ASSERT_NO_THROW(lq.append(index2, IOAddress("2001:db8:2::7:0:0")));
+    ASSERT_NO_THROW(lq.append(index3, IOAddress("2001:db8:3::2:0:0")));
+
+    ASSERT_THROW(lq.append(index2, IOAddress("2001:db8:3::3:0:0")), BadValue);
+    ASSERT_THROW(lq.append(index3, IOAddress("2001:db8:2::8:0:0")), BadValue);
 }
 
 } // end of anonymous namespace
