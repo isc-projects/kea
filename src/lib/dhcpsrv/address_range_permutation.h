@@ -8,7 +8,7 @@
 #define ADDRESS_RANGE_PERMUTATION_H
 
 #include <asiolink/io_address.h>
-#include <dhcpsrv/address_range.h>
+#include <dhcpsrv/ip_range.h>
 
 #include <boost/shared_ptr.hpp>
 

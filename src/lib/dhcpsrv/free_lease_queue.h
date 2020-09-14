@@ -8,7 +8,7 @@
 #define FREE_LEASE_QUEUE_H
 
 #include <asiolink/io_address.h>
-#include <dhcpsrv/address_range.h>
+#include <dhcpsrv/ip_range.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/multi_index_container.hpp>

@@ -7,7 +7,7 @@
 #include <config.h>
 #include <asiolink/addr_utilities.h>
 #include <asiolink/io_address.h>
-#include <dhcpsrv/address_range.h>
+#include <dhcpsrv/ip_range.h>
 #include <exceptions/exceptions.h>
 
 using namespace isc::asiolink;

@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <dhcpsrv/address_range.h>
+#include <dhcpsrv/ip_range.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
