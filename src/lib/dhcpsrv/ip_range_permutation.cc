@@ -6,14 +6,14 @@
 
 #include <config.h>
 #include <asiolink/addr_utilities.h>
-#include <dhcpsrv/address_range_permutation.h>
+#include <dhcpsrv/ip_range_permutation.h>
 
 using namespace isc::asiolink;
 
 namespace isc {
 namespace dhcp {
 
-AddressRangePermutation::AddressRangePermutation(const AddressRangePermutation::Range& range)
+IPRangePermutation::IPRangePermutation(const IPRangePermutation::Range& range)
     : range_(range), cursor_(addrsInRange(range_.start_, range_.end_) - 1),
       state_(), done_(false), generator_() {
     std::random_device rd;
@@ -21,7 +21,7 @@ AddressRangePermutation::AddressRangePermutation(const AddressRangePermutation::
 }
 
 IOAddress
-AddressRangePermutation::next(bool& done) {
+IPRangePermutation::next(bool& done) {
     // If we're done iterating over the pool let's return zero address and
     // set the user supplied done flag to true.
     if (done_) {

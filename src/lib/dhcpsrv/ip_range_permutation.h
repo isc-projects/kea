@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef ADDRESS_RANGE_PERMUTATION_H
-#define ADDRESS_RANGE_PERMUTATION_H
+#ifndef IP_RANGE_PERMUTATION_H
+#define IP_RANGE_PERMUTATION_H
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/ip_range.h>
@@ -18,7 +18,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Random IP address permutation based on Fisher-Yates shuffle.
+/// @brief Random IP address/prefix permutation based on Fisher-Yates shuffle.
 ///
 /// This class is used to shuffle IP addresses within the specified address
 /// range. It is following the Fisher-Yates shuffle algorithm described in
@@ -60,7 +60,7 @@ namespace dhcp {
 /// This algorithm guarantees that all IP addresses beloging to the given
 /// address range are returned and no duplicates are returned. The addresses
 /// are returned in a random order.
-class AddressRangePermutation {
+class IPRangePermutation {
 public:
 
     /// Address range.
@@ -69,7 +69,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param range address range for which the permutation will be generated.
-    AddressRangePermutation(const Range& range);
+    IPRangePermutation(const Range& range);
 
     /// @brief Checks if the address range has been exhausted.
     ///
@@ -115,8 +115,8 @@ private:
     std::mt19937 generator_;
 };
 
-/// @brief Pointer to the @c AddressRangePermutation.
-typedef boost::shared_ptr<AddressRangePermutation> AddressRangePermutationPtr;
+/// @brief Pointer to the @c IPRangePermutation.
+typedef boost::shared_ptr<IPRangePermutation> IPRangePermutationPtr;
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

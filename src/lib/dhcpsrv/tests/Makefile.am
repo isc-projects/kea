@@ -57,7 +57,6 @@ libco3_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 TESTS += libdhcpsrv_unittests
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
-libdhcpsrv_unittests_SOURCES += address_range_permutation_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_utils.cc alloc_engine_utils.h
 libdhcpsrv_unittests_SOURCES += alloc_engine_expiration_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_hooks_unittest.cc
@@ -100,6 +99,7 @@ libdhcpsrv_unittests_SOURCES += host_reservation_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_reservations_list_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += ifaces_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += ip_range_unittest.cc
+libdhcpsrv_unittests_SOURCES += ip_range_permutation_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_file_loader_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_factory_unittest.cc

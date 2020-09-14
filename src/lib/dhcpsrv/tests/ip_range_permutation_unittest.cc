@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <dhcpsrv/address_range_permutation.h>
+#include <dhcpsrv/ip_range_permutation.h>
 
 #include <gtest/gtest.h>
 
@@ -19,23 +19,23 @@ namespace {
 
 // This test verifies that the object can be successfully constructed for
 // both IPv4 and IPv6 address range.
-TEST(AddressRangePermutationTest, constructor) {
+TEST(IPRangePermutationTest, constructor) {
     ASSERT_NO_THROW({
-        AddressRangePermutation::Range range(IOAddress("192.0.2.10"), IOAddress("192.0.2.100"));
-        AddressRangePermutation perm(range);
+        IPRangePermutation::Range range(IOAddress("192.0.2.10"), IOAddress("192.0.2.100"));
+        IPRangePermutation perm(range);
     });
     ASSERT_NO_THROW({
-        AddressRangePermutation::Range range(IOAddress("3000::"), IOAddress("3000::10"));
-        AddressRangePermutation perm(range);
+        IPRangePermutation::Range range(IOAddress("3000::"), IOAddress("3000::10"));
+        IPRangePermutation perm(range);
     });
 }
 
 // This test verifies that a permutation of IPv4 address range can
 // be generated.
-TEST(AddressRangePermutationTest, ipv4) {
+TEST(IPRangePermutationTest, ipv4) {
     // Create address range with 91 addresses.
-    AddressRangePermutation::Range range(IOAddress("192.0.2.10"), IOAddress("192.0.2.100"));
-    AddressRangePermutation perm(range);
+    IPRangePermutation::Range range(IOAddress("192.0.2.10"), IOAddress("192.0.2.100"));
+    IPRangePermutation perm(range);
 
     // This set will record unique IP addresses generated.
     std::set<IOAddress> addrs;
@@ -66,10 +66,10 @@ TEST(AddressRangePermutationTest, ipv4) {
 
 // This test verifies that a permutation of IPv4 address range can
 // be generated.
-TEST(AddressRangePermutationTest, ipv6) {
-    AddressRangePermutation::Range range(IOAddress("2001:db8:1::1:fea0"),
+TEST(IPRangePermutationTest, ipv6) {
+    IPRangePermutation::Range range(IOAddress("2001:db8:1::1:fea0"),
                                          IOAddress("2001:db8:1::2:abcd"));
-    AddressRangePermutation perm(range);
+    IPRangePermutation perm(range);
 
     std::set<IOAddress> addrs;
     bool done = false;

@@ -12,9 +12,9 @@
 #include <cc/user_context.h>
 #include <dhcp/classify.h>
 #include <dhcp/option6_pdexclude.h>
-#include <dhcpsrv/address_range_permutation.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/ip_range_permutation.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -170,7 +170,7 @@ public:
     /// @brief Returns pointer to the permutation associated with the pool.
     ///
     /// @return Pointer to the address range permutation.
-    AddressRangePermutationPtr getPermutation() const {
+    IPRangePermutationPtr getPermutation() const {
         return (permutation_);
     }
 
@@ -247,7 +247,7 @@ protected:
     ///
     /// It may be initialized for certain pools and poo types to provide
     /// address randomization capabilities.
-    AddressRangePermutationPtr permutation_;
+    IPRangePermutationPtr permutation_;
 };
 
 class Pool4;
