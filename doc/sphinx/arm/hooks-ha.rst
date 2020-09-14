@@ -594,7 +594,7 @@ list:
    commands to that server.
 
 -  ``basic-auth-user`` - specifies the user id for basic HTTP
-   authentication. If not specified or specified to the empty string
+   authentication. If not specified or specified as an empty string
    no authentication header will be added to HTTP transactions.
    Must not contain the colon (:) character.
 

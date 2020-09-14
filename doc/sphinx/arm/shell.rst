@@ -130,5 +130,5 @@ tool.
 
 .. note::
 
-   When using this tool with basic HTTP authentication please not forget
-   that command line arguments are not hidden to local users.
+   When using this tool with basic HTTP authentication please keep in
+   mind that command line arguments are not hidden to local users.
