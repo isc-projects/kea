@@ -24,7 +24,7 @@ FreeLeaseQueue::FreeLeaseQueue()
 }
 
 void
-FreeLeaseQueue::addRange(const Range& range) {
+FreeLeaseQueue::addRange(const AddressRange& range) {
     // If the container with ranges is empty, there are is no need for
     // doing any checks. Let's just add the new range.
     if (!containers_.empty()) {
@@ -36,7 +36,7 @@ FreeLeaseQueue::addRange(const Range& range) {
 
 void
 FreeLeaseQueue::addRange(const IOAddress& start, const IOAddress& end) {
-    addRange(FreeLeaseQueue::Range(start, end));
+    addRange(AddressRange(start, end));
 }
 
 void
@@ -52,7 +52,7 @@ FreeLeaseQueue::addRange(const PrefixRange& range) {
 void
 FreeLeaseQueue::addRange(const asiolink::IOAddress& prefix, const uint8_t prefix_length,
                          const uint8_t delegated_length) {
-    addRange(FreeLeaseQueue::PrefixRange(prefix, prefix_length, delegated_length));
+    addRange(PrefixRange(prefix, prefix_length, delegated_length));
 }
 
 bool
@@ -76,7 +76,7 @@ FreeLeaseQueue::append(const IOAddress& address) {
         return (false);
     }
     // Use the range we found and append the address to it.
-    FreeLeaseQueue::Range range(lb->range_start_, lb->range_end_);
+    AddressRange range(lb->range_start_, lb->range_end_);
     append(range, address);
 
     // Everything is fine.
@@ -105,7 +105,7 @@ FreeLeaseQueue::append(const IOAddress& prefix, const uint8_t delegated_length) 
         return (false);
     }
     // Use the range we found and append the prefix to it.
-    FreeLeaseQueue::PrefixRange range(lb->range_start_, lb->range_end_, lb->delegated_length_);
+    PrefixRange range(lb->range_start_, lb->range_end_, lb->delegated_length_);
     append(range, prefix);
 
     // Everything is fine.
@@ -113,7 +113,7 @@ FreeLeaseQueue::append(const IOAddress& prefix, const uint8_t delegated_length) 
 }
 
 void
-FreeLeaseQueue::append(const FreeLeaseQueue::Range& range, const IOAddress& address) {
+FreeLeaseQueue::append(const AddressRange& range, const IOAddress& address) {
     // Make sure the address is within the range boundaries.
     checkRangeBoundaries(range, address);
     auto cont = getContainer(range);
@@ -131,14 +131,14 @@ FreeLeaseQueue::append(const uint64_t range_index, const IOAddress& ip) {
 }
 
 void
-FreeLeaseQueue::append(const FreeLeaseQueue::PrefixRange& range, const asiolink::IOAddress& prefix) {
+FreeLeaseQueue::append(const PrefixRange& range, const asiolink::IOAddress& prefix) {
     checkRangeBoundaries(range, prefix, true);
     auto cont = getContainer(range);
     cont->insert(prefix);
 }
 
 bool
-FreeLeaseQueue::use(const FreeLeaseQueue::Range& range, const IOAddress& address) {
+FreeLeaseQueue::use(const AddressRange& range, const IOAddress& address) {
     checkRangeBoundaries(range, address);
     auto cont = getContainer(range);
     auto found = cont->find(address);
@@ -150,7 +150,7 @@ FreeLeaseQueue::use(const FreeLeaseQueue::Range& range, const IOAddress& address
 }
 
 bool
-FreeLeaseQueue::use(const FreeLeaseQueue::PrefixRange& range, const IOAddress& prefix) {
+FreeLeaseQueue::use(const PrefixRange& range, const IOAddress& prefix) {
     checkRangeBoundaries(range, prefix, true);
     auto cont = getContainer(range);
     auto found = cont->find(prefix);
@@ -216,7 +216,7 @@ FreeLeaseQueue::checkRangeOverlaps(const IOAddress& start, const IOAddress& end)
 
 
 FreeLeaseQueue::ContainerPtr
-FreeLeaseQueue::getContainer(const FreeLeaseQueue::Range& range) const {
+FreeLeaseQueue::getContainer(const AddressRange& range) const {
     auto cont = containers_.find(range.start_);
     if (cont == containers_.end()) {
         isc_throw(BadValue, "conatiner for the specified address range " << range.start_
@@ -226,7 +226,7 @@ FreeLeaseQueue::getContainer(const FreeLeaseQueue::Range& range) const {
 }
 
 FreeLeaseQueue::ContainerPtr
-FreeLeaseQueue::getContainer(const FreeLeaseQueue::PrefixRange& range) const {
+FreeLeaseQueue::getContainer(const PrefixRange& range) const {
     auto cont = containers_.find(range.start_);
     if (cont == containers_.end()) {
         isc_throw(BadValue, "conatiner for the specified prefix " << range.start_

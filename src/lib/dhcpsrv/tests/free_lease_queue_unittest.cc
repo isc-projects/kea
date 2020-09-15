@@ -145,8 +145,8 @@ TEST(FreeLeaseQueueTest, removeRange) {
     FreeLeaseQueue lq;
 
     // Add two ranges.
-    FreeLeaseQueue::Range range1(IOAddress("192.0.2.99"), IOAddress("192.0.2.100"));
-    FreeLeaseQueue::Range range2(IOAddress("192.0.3.99"), IOAddress("192.0.3.100"));
+    AddressRange range1(IOAddress("192.0.2.99"), IOAddress("192.0.2.100"));
+    AddressRange range2(IOAddress("192.0.3.99"), IOAddress("192.0.3.100"));
     ASSERT_NO_THROW(lq.addRange(range1));
     ASSERT_NO_THROW(lq.addRange(range2));
 
@@ -177,8 +177,8 @@ TEST(FreeLeaseQueueTest, removePrefixRange) {
     FreeLeaseQueue lq;
 
     // Add two ranges.
-    FreeLeaseQueue::PrefixRange range1(IOAddress("3000::"), 64, 96);
-    FreeLeaseQueue::PrefixRange range2(IOAddress("3001::"), 64, 96);
+    PrefixRange range1(IOAddress("3000::"), 64, 96);
+    PrefixRange range2(IOAddress("3001::"), 64, 96);
     ASSERT_NO_THROW(lq.addRange(range1));
     ASSERT_NO_THROW(lq.addRange(range2));
 
@@ -208,7 +208,7 @@ TEST(FreeLeaseQueueTest, removePrefixRange) {
 // given range throws and that an attempt to use non-existing in-range
 // address returns false.
 TEST(FreeLeaseQueueTest, useInvalidAddress) {
-    FreeLeaseQueue::Range range(IOAddress("192.0.2.99"), IOAddress("192.0.2.100"));
+    AddressRange range(IOAddress("192.0.2.99"), IOAddress("192.0.2.100"));
 
     FreeLeaseQueue lq;
     ASSERT_NO_THROW(lq.addRange(range));
@@ -226,7 +226,7 @@ TEST(FreeLeaseQueueTest, useInvalidAddress) {
 // given range throws and that an attempt to use non-existing in-range
 // address returns false.
 TEST(FreeLeaseQueueTest, useInvalidPrefix) {
-    FreeLeaseQueue::PrefixRange range(IOAddress("2001:db8:1::"), 64, 96);
+    PrefixRange range(IOAddress("2001:db8:1::"), 64, 96);
 
     FreeLeaseQueue lq;
     ASSERT_NO_THROW(lq.addRange(range));
@@ -245,7 +245,7 @@ TEST(FreeLeaseQueueTest, useInvalidPrefix) {
 TEST(FreeLeaseQueueTest, appendDuplicates) {
     FreeLeaseQueue lq;
 
-    FreeLeaseQueue::Range range(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
+    AddressRange range(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
     ASSERT_NO_THROW(lq.addRange(range));
 
     ASSERT_NO_THROW(lq.append(range, IOAddress("192.0.2.10")));
@@ -270,16 +270,16 @@ TEST(FreeLeaseQueueTest, next) {
     FreeLeaseQueue lq;
 
     // Let's create two distinct address ranges.
-    FreeLeaseQueue::Range range1(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
-    FreeLeaseQueue::Range range2(IOAddress("192.0.3.1"), IOAddress("192.0.3.255"));
+    AddressRange range1(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
+    AddressRange range2(IOAddress("192.0.3.1"), IOAddress("192.0.3.255"));
     ASSERT_NO_THROW(lq.addRange(range1));
     ASSERT_NO_THROW(lq.addRange(range2));
 
     // Append some IP addresses to those address ranges.
-    ASSERT_NO_THROW(lq.append(FreeLeaseQueue::Range(range1), IOAddress("192.0.2.10")));
-    ASSERT_NO_THROW(lq.append(FreeLeaseQueue::Range(range1), IOAddress("192.0.2.5")));
-    ASSERT_NO_THROW(lq.append(FreeLeaseQueue::Range(range2), IOAddress("192.0.3.23")));
-    ASSERT_NO_THROW(lq.append(FreeLeaseQueue::Range(range2), IOAddress("192.0.3.46")));
+    ASSERT_NO_THROW(lq.append(AddressRange(range1), IOAddress("192.0.2.10")));
+    ASSERT_NO_THROW(lq.append(AddressRange(range1), IOAddress("192.0.2.5")));
+    ASSERT_NO_THROW(lq.append(AddressRange(range2), IOAddress("192.0.3.23")));
+    ASSERT_NO_THROW(lq.append(AddressRange(range2), IOAddress("192.0.3.46")));
 
     // Get the first address from the first range.
     IOAddress next(0);
@@ -328,7 +328,7 @@ TEST(FreeLeaseQueueTest, next) {
 TEST(FreeLeaseQueueTest, nextPrefix) {
     FreeLeaseQueue lq;
 
-    FreeLeaseQueue::PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
+    PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
     ASSERT_NO_THROW(lq.addRange(range1));
 
     ASSERT_NO_THROW(lq.append(range1, IOAddress("2001:db8:1::4:0")));
@@ -369,16 +369,16 @@ TEST(FreeLeaseQueueTest, pop) {
     FreeLeaseQueue lq;
 
     // Let's create two distinct address ranges.
-    FreeLeaseQueue::Range range1(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
-    FreeLeaseQueue::Range range2(IOAddress("192.0.3.1"), IOAddress("192.0.3.255"));
+    AddressRange range1(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
+    AddressRange range2(IOAddress("192.0.3.1"), IOAddress("192.0.3.255"));
     ASSERT_NO_THROW(lq.addRange(range1));
     ASSERT_NO_THROW(lq.addRange(range2));
 
     // Append some IP addresses to those address ranges.
-    ASSERT_NO_THROW(lq.append(FreeLeaseQueue::Range(range1), IOAddress("192.0.2.10")));
-    ASSERT_NO_THROW(lq.append(FreeLeaseQueue::Range(range1), IOAddress("192.0.2.5")));
-    ASSERT_NO_THROW(lq.append(FreeLeaseQueue::Range(range2), IOAddress("192.0.3.23")));
-    ASSERT_NO_THROW(lq.append(FreeLeaseQueue::Range(range2), IOAddress("192.0.3.46")));
+    ASSERT_NO_THROW(lq.append(AddressRange(range1), IOAddress("192.0.2.10")));
+    ASSERT_NO_THROW(lq.append(AddressRange(range1), IOAddress("192.0.2.5")));
+    ASSERT_NO_THROW(lq.append(AddressRange(range2), IOAddress("192.0.3.23")));
+    ASSERT_NO_THROW(lq.append(AddressRange(range2), IOAddress("192.0.3.46")));
 
     // Pop first from first range.
     IOAddress next(0);
@@ -410,7 +410,7 @@ TEST(FreeLeaseQueueTest, popPrefix) {
     FreeLeaseQueue lq;
 
     // Add the range.
-    FreeLeaseQueue::PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
+    PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
     ASSERT_NO_THROW(lq.addRange(range1));
 
     // Append several prefixes to that range.
@@ -443,10 +443,10 @@ TEST(FreeLeaseQueueTest, popPrefix) {
 
 // Check that out of bounds address can't be appended to the range.
 TEST(FreeLeaseQueueTest, nextRangeMismatch) {
-    FreeLeaseQueue::Range range(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
+    AddressRange range(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
 
     FreeLeaseQueue lq;
-    EXPECT_THROW(lq.append(FreeLeaseQueue::Range(range), IOAddress("192.0.3.1")),
+    EXPECT_THROW(lq.append(AddressRange(range), IOAddress("192.0.3.1")),
                  isc::BadValue);
 }
 
@@ -456,9 +456,9 @@ TEST(FreeLeaseQueueTest, detectRange) {
     FreeLeaseQueue lq;
 
     // Create three ranges.
-    FreeLeaseQueue::Range range1(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
-    FreeLeaseQueue::Range range2(IOAddress("192.0.3.1"), IOAddress("192.0.3.255"));
-    FreeLeaseQueue::Range range3(IOAddress("10.0.0.1"), IOAddress("10.8.1.45"));
+    AddressRange range1(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
+    AddressRange range2(IOAddress("192.0.3.1"), IOAddress("192.0.3.255"));
+    AddressRange range3(IOAddress("10.0.0.1"), IOAddress("10.8.1.45"));
     ASSERT_NO_THROW(lq.addRange(range1));
     ASSERT_NO_THROW(lq.addRange(range2));
     ASSERT_NO_THROW(lq.addRange(range3));
@@ -499,9 +499,9 @@ TEST(FreeLeaseQueueTest, detectPrefixRange) {
     FreeLeaseQueue lq;
 
     // Create three ranges.
-    FreeLeaseQueue::PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
-    FreeLeaseQueue::PrefixRange range2(IOAddress("2001:db8:2::"), 112, 120);
-    FreeLeaseQueue::PrefixRange range3(IOAddress("2001:db8:3::"), 96, 104);
+    PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
+    PrefixRange range2(IOAddress("2001:db8:2::"), 112, 120);
+    PrefixRange range3(IOAddress("2001:db8:3::"), 96, 104);
     ASSERT_NO_THROW(lq.addRange(range1));
     ASSERT_NO_THROW(lq.addRange(range2));
     ASSERT_NO_THROW(lq.addRange(range3));
@@ -540,7 +540,7 @@ TEST(FreeLeaseQueueTest, detectPrefixRange) {
 // This test verifies that false is returned if the specified address to be
 // appended does not belong to any of the existing ranges.
 TEST(FreeLeaseQueueTest, detectRangeFailed) {
-    FreeLeaseQueue::Range range(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
+    AddressRange range(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
 
     FreeLeaseQueue lq;
     ASSERT_NO_THROW(lq.addRange(range));
@@ -553,9 +553,9 @@ TEST(FreeLeaseQueueTest, detectRangeFailed) {
 TEST(FreeLeaseQueueTest, appendThroughRangeIndex) {
     FreeLeaseQueue lq;
 
-    FreeLeaseQueue::Range range1(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
-    FreeLeaseQueue::Range range2(IOAddress("192.0.3.1"), IOAddress("192.0.3.255"));
-    FreeLeaseQueue::Range range3(IOAddress("10.0.0.1"), IOAddress("10.8.1.45"));
+    AddressRange range1(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
+    AddressRange range2(IOAddress("192.0.3.1"), IOAddress("192.0.3.255"));
+    AddressRange range3(IOAddress("10.0.0.1"), IOAddress("10.8.1.45"));
     ASSERT_NO_THROW(lq.addRange(range1));
     ASSERT_NO_THROW(lq.addRange(range2));
     ASSERT_NO_THROW(lq.addRange(range3));
@@ -584,9 +584,9 @@ TEST(FreeLeaseQueueTest, appendThroughRangeIndex) {
 TEST(FreeLeaseQueueTest, appendPrefixThroughRangeIndex) {
     FreeLeaseQueue lq;
 
-    FreeLeaseQueue::PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
-    FreeLeaseQueue::PrefixRange range2(IOAddress("2001:db8:2::"), 64, 96);
-    FreeLeaseQueue::PrefixRange range3(IOAddress("2001:db8:3::"), 64, 96);
+    PrefixRange range1(IOAddress("2001:db8:1::"), 64, 96);
+    PrefixRange range2(IOAddress("2001:db8:2::"), 64, 96);
+    PrefixRange range3(IOAddress("2001:db8:3::"), 64, 96);
     ASSERT_NO_THROW(lq.addRange(range1));
     ASSERT_NO_THROW(lq.addRange(range2));
     ASSERT_NO_THROW(lq.addRange(range3));

@@ -76,12 +76,6 @@ namespace dhcp {
 class FreeLeaseQueue {
 public:
 
-    /// @brief Structure representing address range in the @c FreeLeaseQueue.
-    typedef AddressRange Range;
-
-    /// @brief Structure representing delegated prefix range in @c FreeLeaseQueue.
-    typedef PrefixRange PrefixRange;
-
     /// @brief Constructor.
     FreeLeaseQueue();
 
@@ -91,7 +85,7 @@ public:
     ///
     /// @param range the new range to be added.
     /// @throw BadValue if the new range overlaps with any of the existing ranges.
-    void addRange(const Range& range);
+    void addRange(const AddressRange& range);
 
     /// @brief Adds new address range to the container.
     ///
@@ -169,7 +163,7 @@ public:
     /// @param address address to be appended to the range queue.
     /// @throw BadValue if the address does not belong to the specified
     /// range or if the given range does not exist.
-    void append(const Range& range, const asiolink::IOAddress& address);
+    void append(const AddressRange& range, const asiolink::IOAddress& address);
 
     /// @brief Appends a prefix at the end of the queue for a range.
     ///
@@ -209,7 +203,7 @@ public:
     /// @return true if the address was found and successfully removed,
     /// false otherwise.
     /// @throw BadValue if the range does not exist.
-    bool use(const Range& range, const asiolink::IOAddress& address);
+    bool use(const AddressRange& range, const asiolink::IOAddress& address);
 
     /// @brief Removes the specified delegated prefix from the free prefixes.
     ///
@@ -228,7 +222,7 @@ public:
     /// for the range.
     ///
     /// @param range range for which next address is to be returned.
-    /// @tparam RangeType type of the range, i.e. @c Range or @c PrefixRange.
+    /// @tparam RangeType type of the range, i.e. @c AddressRange or @c PrefixRange.
     /// @return Next free address or delegated prefix in that range.
     /// @throw BadValue if the range does not exist.
     template<typename RangeType>
@@ -243,7 +237,7 @@ public:
     /// should be appended to the queue using the @c append method.
     ///
     /// @param range range for which next address or prefix is to be returned.
-    /// @tparam RangeType type of the range, i.e. @c Range or @c PrefixRange.
+    /// @tparam RangeType type of the range, i.e. @c AddressRange or @c PrefixRange.
     /// @return Next free address or delegated prefix in that range.
     /// @throw BadValue if the range does not exist.
     template<typename RangeType>
@@ -258,7 +252,7 @@ public:
     /// range itself because it uses random access index.
     ///
     /// @param range range which index is to be returned.
-    /// @tparam RangeType type of the range, i.e. @c Range or PrefixRange.
+    /// @tparam RangeType type of the range, i.e. @c AddressRange or PrefixRange.
     /// @return range index.
     /// @throw BadValue if the range does not exist.
     template<typename RangeType>
@@ -333,7 +327,7 @@ private:
     /// @param ip address or delegated prefix for which the check should be performed.
     /// @param prefix boolean value indicating if the specified IP is an address or
     /// delegated prefix - used in error logging.
-    /// @tparam RangeType type of the range used, i.e. @c Range or @c PrefixRange.
+    /// @tparam RangeType type of the range used, i.e. @c AddressRange or @c PrefixRange.
     /// @throw BadValue of the address or delegated prefix does not belong to the range.
     template<typename RangeType>
     void checkRangeBoundaries(const RangeType& range, const asiolink::IOAddress& ip,
@@ -353,7 +347,7 @@ private:
     /// @param range range for which the container should be returned.
     /// @return Pointer to the container (if found).
     /// @throw BadValue if the specified range does not exist.
-    ContainerPtr getContainer(const Range& range) const;
+    ContainerPtr getContainer(const AddressRange& range) const;
 
     /// @brief Returns container for a given prefix range.
     ///

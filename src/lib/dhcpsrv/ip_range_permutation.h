@@ -63,16 +63,10 @@ namespace dhcp {
 class IPRangePermutation {
 public:
 
-    /// Address range.
-    typedef AddressRange Range;
-
-    /// Prefix range.
-    typedef PrefixRange PrefixRange;
-
     /// @brief Constructor for address ranges.
     ///
     /// @param range address range for which the permutation will be generated.
-    IPRangePermutation(const Range& range);
+    IPRangePermutation(const AddressRange& range);
 
     /// @brief Constructor for prefix ranges.
     ///

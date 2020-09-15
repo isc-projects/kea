@@ -15,14 +15,14 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-IPRangePermutation::IPRangePermutation(const IPRangePermutation::Range& range)
+IPRangePermutation::IPRangePermutation(const AddressRange& range)
     : range_start_(range.start_), step_(1), cursor_(addrsInRange(range_start_, range.end_) - 1),
       state_(), done_(false), generator_() {
     std::random_device rd;
     generator_.seed(rd());
 }
 
-IPRangePermutation::IPRangePermutation(const IPRangePermutation::PrefixRange& range)
+IPRangePermutation::IPRangePermutation(const PrefixRange& range)
     : range_start_(range.start_), step_(static_cast<uint64_t>(1) << (128 - range.delegated_length_)),
       cursor_(prefixesInRange(range.prefix_length_, range.delegated_length_) - 1),
       state_(), done_(false), generator_() {

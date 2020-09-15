@@ -21,11 +21,11 @@ namespace {
 // both IPv4 and IPv6 address range.
 TEST(IPRangePermutationTest, constructor) {
     ASSERT_NO_THROW({
-        IPRangePermutation::Range range(IOAddress("192.0.2.10"), IOAddress("192.0.2.100"));
+        AddressRange range(IOAddress("192.0.2.10"), IOAddress("192.0.2.100"));
         IPRangePermutation perm(range);
     });
     ASSERT_NO_THROW({
-        IPRangePermutation::Range range(IOAddress("3000::"), IOAddress("3000::10"));
+        AddressRange range(IOAddress("3000::"), IOAddress("3000::10"));
         IPRangePermutation perm(range);
     });
 }
@@ -34,7 +34,7 @@ TEST(IPRangePermutationTest, constructor) {
 // be generated.
 TEST(IPRangePermutationTest, ipv4) {
     // Create address range with 91 addresses.
-    IPRangePermutation::Range range(IOAddress("192.0.2.10"), IOAddress("192.0.2.100"));
+    AddressRange range(IOAddress("192.0.2.10"), IOAddress("192.0.2.100"));
     IPRangePermutation perm(range);
 
     // This set will record unique IP addresses generated.
@@ -67,7 +67,7 @@ TEST(IPRangePermutationTest, ipv4) {
 // This test verifies that a permutation of IPv6 address range can
 // be generated.
 TEST(IPRangePermutationTest, ipv6) {
-    IPRangePermutation::Range range(IOAddress("2001:db8:1::1:fea0"),
+    AddressRange range(IOAddress("2001:db8:1::1:fea0"),
                                     IOAddress("2001:db8:1::2:abcd"));
     IPRangePermutation perm(range);
 
@@ -95,7 +95,7 @@ TEST(IPRangePermutationTest, ipv6) {
 // This test verifies that a permutation of delegated prefixes can be
 // generated.
 TEST(IPRangePermutationTest, pd) {
-    IPRangePermutation::PrefixRange range(IOAddress("3000::"), 112, 120);
+    PrefixRange range(IOAddress("3000::"), 112, 120);
     IPRangePermutation perm(range);
 
     std::set<IOAddress> addrs;
