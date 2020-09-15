@@ -150,7 +150,7 @@ TEST(FreeLeaseQueueTest, removeRange) {
     ASSERT_NO_THROW(lq.addRange(range1));
     ASSERT_NO_THROW(lq.addRange(range2));
 
-    bool removed;
+    bool removed = false;
 
     // Expect true to be returned when the range is removed.
     ASSERT_NO_THROW(removed = lq.removeRange(range1));
@@ -182,7 +182,7 @@ TEST(FreeLeaseQueueTest, removePrefixRange) {
     ASSERT_NO_THROW(lq.addRange(range1));
     ASSERT_NO_THROW(lq.addRange(range2));
 
-    bool removed;
+    bool removed = false;
 
     // Expect true to be returned when the range is removed.
     ASSERT_NO_THROW(removed = lq.removeRange(range1));
