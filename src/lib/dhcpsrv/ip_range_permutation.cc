@@ -8,16 +8,24 @@
 #include <asiolink/addr_utilities.h>
 #include <dhcpsrv/ip_range_permutation.h>
 
+#include <iostream>
+
 using namespace isc::asiolink;
 
 namespace isc {
 namespace dhcp {
 
 IPRangePermutation::IPRangePermutation(const IPRangePermutation::Range& range)
-    : range_(range), cursor_(addrsInRange(range_.start_, range_.end_) - 1),
+    : range_start_(range.start_), step_(1), cursor_(addrsInRange(range_start_, range.end_) - 1),
       state_(), done_(false), generator_() {
     std::random_device rd;
     generator_.seed(rd());
+}
+
+IPRangePermutation::IPRangePermutation(const IPRangePermutation::PrefixRange& range)
+    : range_start_(range.start_), step_(static_cast<uint64_t>(1) << (128 - range.delegated_length_)),
+      cursor_(prefixesInRange(range.prefix_length_, range.delegated_length_) - 1),
+      state_(), done_(false), generator_() {
 }
 
 IOAddress
@@ -26,7 +34,7 @@ IPRangePermutation::next(bool& done) {
     // set the user supplied done flag to true.
     if (done_) {
         done = true;
-        return (range_.start_.isV4() ? IOAddress::IPV4_ZERO_ADDRESS() : IOAddress::IPV6_ZERO_ADDRESS());
+        return (range_start_.isV4() ? IOAddress::IPV4_ZERO_ADDRESS() : IOAddress::IPV6_ZERO_ADDRESS());
     }
 
     // If there is one address left, return this address.
@@ -60,7 +68,7 @@ IPRangePermutation::next(bool& done) {
         // if the range is 192.0.2.1-192.0.2.10 and the picked random position is
         // 5, the address we get is 192.0.2.6. This random address will be later
         // returned to the caller.
-        next_loc_address = offsetAddress(range_.start_, next_loc);
+        next_loc_address = offsetAddress(range_start_, next_loc * step_);
     }
 
     // Let's get the address at cursor position in the same way.
@@ -69,7 +77,7 @@ IPRangePermutation::next(bool& done) {
     if (cursor_existing != state_.end()) {
         cursor_address = cursor_existing->second;
     } else {
-        cursor_address = offsetAddress(range_.start_, cursor_);
+        cursor_address = offsetAddress(range_start_, cursor_ * step_);
     }
 
     // Now we swap them.... in fact we don't swap because as an optimization

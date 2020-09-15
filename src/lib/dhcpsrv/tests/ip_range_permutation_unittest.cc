@@ -64,11 +64,11 @@ TEST(IPRangePermutationTest, ipv4) {
     EXPECT_TRUE(addrs.begin()->isV4Zero());
 }
 
-// This test verifies that a permutation of IPv4 address range can
+// This test verifies that a permutation of IPv6 address range can
 // be generated.
 TEST(IPRangePermutationTest, ipv6) {
     IPRangePermutation::Range range(IOAddress("2001:db8:1::1:fea0"),
-                                         IOAddress("2001:db8:1::2:abcd"));
+                                    IOAddress("2001:db8:1::2:abcd"));
     IPRangePermutation perm(range);
 
     std::set<IOAddress> addrs;
@@ -89,6 +89,34 @@ TEST(IPRangePermutationTest, ipv6) {
     }
     // We should have recorded 44335 unique addresses, including the zero address.
     EXPECT_EQ(44335, addrs.size());
+    EXPECT_TRUE(addrs.begin()->isV6Zero());
+}
+
+// This test verifies that a permutation of delegated prefixes can be
+// generated.
+TEST(IPRangePermutationTest, pd) {
+    IPRangePermutation::PrefixRange range(IOAddress("3000::"), 112, 120);
+    IPRangePermutation perm(range);
+
+    std::set<IOAddress> addrs;
+    bool done = false;
+    for (auto i = 0; i < 257; ++i) {
+        auto next = perm.next(done);
+        if (!next.isV6Zero()) {
+            // The IPv6 zero address marks the end of the permutation. In this case
+            // the done flag should be set.
+            EXPECT_LE(range.start_, next);
+            EXPECT_LE(next, range.end_);
+        } else {
+            EXPECT_TRUE(done);
+            EXPECT_TRUE(perm.exhausted());
+        }
+        // Insert the address returned to the set.
+        addrs.insert(next);
+    }
+
+    // We should have recorded 257 unique addresses, including the zero address.
+    EXPECT_EQ(257, addrs.size());
     EXPECT_TRUE(addrs.begin()->isV6Zero());
 }
 

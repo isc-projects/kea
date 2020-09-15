@@ -29,28 +29,29 @@ AddressRange::AddressRange(const IOAddress& start, const IOAddress& end)
 }
 
 PrefixRange::PrefixRange(const asiolink::IOAddress& prefix, const uint8_t length, const uint8_t delegated)
-    : start_(prefix), end_(IOAddress::IPV6_ZERO_ADDRESS()), delegated_length_(delegated) {
+    : start_(prefix), end_(IOAddress::IPV6_ZERO_ADDRESS()), prefix_length_(length),
+      delegated_length_(delegated) {
     if (!start_.isV6()) {
         isc_throw(BadValue, "IPv6 prefix required for prefix delegation range but "
                   << start_ << " was specified");
     }
-    if (delegated_length_ < length) {
+    if (delegated_length_ < prefix_length_) {
         isc_throw(BadValue, "delegated length " << static_cast<int>(delegated_length_)
                   << " must not be lower than prefix length " << static_cast<int>(length));
     }
-    if ((length > 128) || (delegated_length_ > 128)) {
+    if ((prefix_length_ > 128) || (delegated_length_ > 128)) {
         isc_throw(BadValue, "delegated length " << static_cast<int>(delegated_length_)
                   << " and prefix length " << static_cast<int>(length)
                   << " must not be greater than 128");
     }
-    auto prefixes_num = prefixesInRange(length, delegated_length_);
+    auto prefixes_num = prefixesInRange(prefix_length_, delegated_length_);
     uint64_t addrs_in_prefix = static_cast<uint64_t>(1) << (128 - delegated_length_);
     end_ = offsetAddress(prefix, (prefixes_num - 1) * addrs_in_prefix);
 }
 
 PrefixRange::PrefixRange(const asiolink::IOAddress& start, const asiolink::IOAddress& end,
                          const uint8_t delegated)
-    : start_(start), end_(end), delegated_length_(delegated) {
+    : start_(start), end_(end), prefix_length_(0), delegated_length_(delegated) {
     if (!start_.isV6() || !end_.isV6()) {
         isc_throw(BadValue, "IPv6 prefix required for prefix delegation range but "
                   << start_ << ":" << end_ << " was specified");

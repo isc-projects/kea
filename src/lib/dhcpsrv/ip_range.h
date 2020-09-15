@@ -35,6 +35,8 @@ struct PrefixRange {
     /// IP address denoting the first address within the last prefix
     /// in the prefix range.
     asiolink::IOAddress end_;
+    /// Prefix length.
+    uint8_t prefix_length_;
     /// Delegated prefix length.
     uint8_t delegated_length_;
 
