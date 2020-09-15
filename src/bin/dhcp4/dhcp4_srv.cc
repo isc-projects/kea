@@ -221,6 +221,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
             CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
         const ClientClassDefListPtr& defs_ptr = dict->getClasses();
         for (auto def : *defs_ptr) {
+            // Only remove evaluated classes.
             if (def->getMatchExpr()) {
                 context_->query_->classes_.erase(def->getName());
             }

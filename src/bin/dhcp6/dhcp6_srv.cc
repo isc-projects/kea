@@ -471,6 +471,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
             CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
         const ClientClassDefListPtr& defs_ptr = dict->getClasses();
         for (auto def : *defs_ptr) {
+            // Only remove evaluated classes.
             if (def->getMatchExpr()) {
                 ctx.query_->classes_.erase(def->getName());
             }
