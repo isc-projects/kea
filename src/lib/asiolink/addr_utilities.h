@@ -84,7 +84,8 @@ uint64_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len);
 ///
 /// Adds offset to the IPv4 or iPv6 address and finds the resulting address.
 /// Note that the current limitation is the maximum value of the offset,
-/// i.e. max uint64_t.
+/// i.e. max uint64_t. If the sum of the IPv4 address and the offset exceeds
+/// the maximum value of uint32_t type, the 255.255.255.255 is returned.
 ///
 /// @param addr input address
 /// @param offset distance of the returned address from the input address.

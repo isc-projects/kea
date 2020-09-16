@@ -381,21 +381,23 @@ IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {
 
     // If this is IPv4 addrss we utilize the conversion to uint32_t.
     if (addr.isV4()) {
-        return (IOAddress(addr.toUint32() + offset));
+        auto addr_uint32 = static_cast<uint64_t>(addr.toUint32());
+        // If the result would exceed the maximum possible IPv4 address, let's return
+        // the maximum IPv4 address.
+        if (static_cast<uint64_t>(std::numeric_limits<uint32_t>::max() - addr_uint32) < offset) {
+            return (IOAddress(std::numeric_limits<uint32_t>::max()));
+        }
+        return (IOAddress(static_cast<uint32_t>(addr_uint32 + offset)));
     }
 
     // This is IPv6 address. Let's first convert the offset value to network
     // byte order and store within the vector.
     std::vector<uint8_t> offset_bytes(8);
     int offset_idx = 0;
-    offset_bytes[offset_idx++] = static_cast<uint8_t>((offset & 0xff00000000000000) >> 56);
-    offset_bytes[offset_idx++] = static_cast<uint8_t>((offset & 0x00ff000000000000) >> 48);
-    offset_bytes[offset_idx++] = static_cast<uint8_t>((offset & 0x0000ff0000000000) >> 40);
-    offset_bytes[offset_idx++] = static_cast<uint8_t>((offset & 0x000000ff00000000) >> 32);
-    offset_bytes[offset_idx++] = static_cast<uint8_t>((offset & 0x00000000ff000000) >> 24);
-    offset_bytes[offset_idx++] = static_cast<uint8_t>((offset & 0x0000000000ff0000) >> 16);
-    offset_bytes[offset_idx++] = static_cast<uint8_t>((offset & 0x000000000000ff00) >> 8);
-    offset_bytes[offset_idx++] = static_cast<uint8_t>(offset &  0x00000000000000ff);
+    for (int offset_idx = offset_bytes.size() - 1; offset_idx >= 0; --offset_idx) {
+        offset_bytes[offset_idx] = static_cast<uint8_t>(offset & 0x00000000000000ff);
+        offset = offset >> 8;
+    }
 
     // Convert the IPv6 address to vector.
     auto addr_bytes = addr.toBytes();

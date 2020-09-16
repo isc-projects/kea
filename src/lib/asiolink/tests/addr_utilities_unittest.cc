@@ -371,6 +371,8 @@ TEST(AddrUtilitiesTest, prefixesInRange) {
 TEST(AddrUtilitiesTest, offsetIPv4Address) {
     EXPECT_EQ("10.1.2.46", offsetAddress(IOAddress("10.1.1.45"), 257).toText());
     EXPECT_EQ("10.1.7.9", offsetAddress(IOAddress("10.1.1.45"), 1500).toText());
+    // Using very large offset. The maximum IPv4 address should be returned.
+    EXPECT_EQ("255.255.255.255", offsetAddress(IOAddress("255.255.254.254"), 0xFFFFFFFFFFFFFFFA).toText());
 }
 
 // Checks the function which finds an IPv6 address from input address and offset.
