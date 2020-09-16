@@ -55,7 +55,7 @@ IPRangePermutation::next(bool& done) {
 
     IOAddress next_loc_address = IOAddress::IPV4_ZERO_ADDRESS();
 
-    // Check if whether this address exists in our map or not. If it exists
+    // Check whether this address exists in our map or not. If it exists
     // it means it was swapped with some other address in previous calls to
     // this function.
     auto next_loc_existing = state_.find(next_loc);
