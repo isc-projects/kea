@@ -20,18 +20,17 @@ namespace isc {
 namespace dhcp {
 
 FreeLeaseQueue::FreeLeaseQueue()
-    : containers_() {
+    : ranges_() {
 }
 
 void
 FreeLeaseQueue::addRange(const AddressRange& range) {
     // If the container with ranges is empty, there are is no need for
     // doing any checks. Let's just add the new range.
-    if (!containers_.empty()) {
+    if (!ranges_.empty()) {
         checkRangeOverlaps(range.start_, range.end_);
     }
-    containers_.insert(ContainerDescriptor{range.start_, range.end_, 128,
-                                           boost::make_shared<Container>()});
+    ranges_.insert(RangeDescriptor{range.start_, range.end_, 128, boost::make_shared<Leases>()});
 }
 
 void
@@ -41,12 +40,12 @@ FreeLeaseQueue::addRange(const IOAddress& start, const IOAddress& end) {
 
 void
 FreeLeaseQueue::addRange(const PrefixRange& range) {
-    if (!containers_.empty()) {
+    if (!ranges_.empty()) {
         auto last_addr = offsetAddress(range.end_, range.delegated_length_ - 1);
         checkRangeOverlaps(range.start_, last_addr);
     }
-    containers_.insert(ContainerDescriptor{range.start_, range.end_, range.delegated_length_,
-                                           boost::make_shared<Container>()});
+    ranges_.insert(RangeDescriptor{range.start_, range.end_, range.delegated_length_,
+                                   boost::make_shared<Leases>()});
 }
 
 void
@@ -58,16 +57,16 @@ FreeLeaseQueue::addRange(const asiolink::IOAddress& prefix, const uint8_t prefix
 bool
 FreeLeaseQueue::append(const IOAddress& address) {
     // If there are no ranges defined, there is nothing to do.
-    if (containers_.empty()) {
+    if (ranges_.empty()) {
         return (false);
     }
     // Find the beginning of the range which has the start address
     // greater than the address we're appending.
-    auto lb = containers_.upper_bound(address);
+    auto lb = ranges_.upper_bound(address);
     // If the range we found is the first one in the container
     // there is no range matching our address because all existing
     // ranges include higher addresses.
-    if (lb == containers_.begin()) {
+    if (lb == ranges_.begin()) {
         return (false);
     }
     --lb;
@@ -86,16 +85,16 @@ FreeLeaseQueue::append(const IOAddress& address) {
 bool
 FreeLeaseQueue::append(const IOAddress& prefix, const uint8_t delegated_length) {
     // If there are no ranges defined, there is nothing to do.
-    if (containers_.empty()) {
+    if (ranges_.empty()) {
         return (false);
     }
     // Find the beginning of the range which has the start address
     // greater than the address we're appending.
-    auto lb = containers_.upper_bound(prefix);
+    auto lb = ranges_.upper_bound(prefix);
     // If the range we found is the first one in the container
     // there is no range matching our prefix because all existing
     // ranges include higher addresses.
-    if (lb == containers_.begin()) {
+    if (lb == ranges_.begin()) {
         return (false);
     }
     --lb;
@@ -116,31 +115,31 @@ void
 FreeLeaseQueue::append(const AddressRange& range, const IOAddress& address) {
     // Make sure the address is within the range boundaries.
     checkRangeBoundaries(range, address);
-    auto cont = getContainer(range);
+    auto cont = getLeases(range);
     cont->insert(address);
 }
 
 void
 FreeLeaseQueue::append(const uint64_t range_index, const IOAddress& ip) {
-    auto desc = getContainerDescriptor(range_index);
+    auto desc = getRangeDescriptor(range_index);
     if ((ip < desc.range_start_) || (desc.range_end_ < ip)) {
         isc_throw(BadValue, ip << " is not within the range of " << desc.range_start_
                   << ":" << desc.range_end_);
     }
-    desc.container_->insert(ip);
+    desc.leases_->insert(ip);
 }
 
 void
 FreeLeaseQueue::append(const PrefixRange& range, const asiolink::IOAddress& prefix) {
     checkRangeBoundaries(range, prefix, true);
-    auto cont = getContainer(range);
+    auto cont = getLeases(range);
     cont->insert(prefix);
 }
 
 bool
 FreeLeaseQueue::use(const AddressRange& range, const IOAddress& address) {
     checkRangeBoundaries(range, address);
-    auto cont = getContainer(range);
+    auto cont = getLeases(range);
     auto found = cont->find(address);
     if (found != cont->end()) {
         static_cast<void>(cont->erase(found));
@@ -152,7 +151,7 @@ FreeLeaseQueue::use(const AddressRange& range, const IOAddress& address) {
 bool
 FreeLeaseQueue::use(const PrefixRange& range, const IOAddress& prefix) {
     checkRangeBoundaries(range, prefix, true);
-    auto cont = getContainer(range);
+    auto cont = getLeases(range);
     auto found = cont->find(prefix);
     if (found != cont->end()) {
         static_cast<void>(cont->erase(found));
@@ -176,13 +175,13 @@ FreeLeaseQueue::checkRangeOverlaps(const IOAddress& start, const IOAddress& end)
     // Get the next range in the container relative to the start of the new
     // range. The upper_bound returns the range which starts after the start
     // of the new range.
-    auto next_range = containers_.lower_bound(start);
+    auto next_range = ranges_.lower_bound(start);
     // Get the range the range that is before that one. It is also possible that
     // there is no previous range in which case we default to end().
-    auto previous_range = containers_.end();
+    auto previous_range = ranges_.end();
     // If the next range is at the beginning of the container there is no
     // previous range.
-    if (next_range != containers_.begin()) {
+    if (next_range != ranges_.begin()) {
         // This should work fine even if the next range is set to end(). We
         // will get the range that is one position before end() and that
         // should be the range that goes before the new one.
@@ -199,7 +198,7 @@ FreeLeaseQueue::checkRangeOverlaps(const IOAddress& start, const IOAddress& end)
     // are constructed such that the end must be greater or equal the start
     // it is sufficient to check that the start of the new range is not lower
     // or equal the end of the previous range.
-    if ((previous_range != containers_.end()) &&
+    if ((previous_range != ranges_.end()) &&
         (start <= previous_range->range_end_)) {
         isc_throw(BadValue, "new address range " << start << ":" << end
                   << " overlaps with the existing range");
@@ -207,7 +206,7 @@ FreeLeaseQueue::checkRangeOverlaps(const IOAddress& start, const IOAddress& end)
 
     // If the next range exists, let's check that the end of the new range
     // is neither within that range nor higher.
-    if ((next_range != containers_.end()) &&
+    if ((next_range != ranges_.end()) &&
         (next_range->range_start_ <= end)) {
         isc_throw(BadValue, "new address range " << start << ":" << end
                   << " overlaps with the existing range");
@@ -215,34 +214,34 @@ FreeLeaseQueue::checkRangeOverlaps(const IOAddress& start, const IOAddress& end)
 }
 
 
-FreeLeaseQueue::ContainerPtr
-FreeLeaseQueue::getContainer(const AddressRange& range) const {
-    auto cont = containers_.find(range.start_);
-    if (cont == containers_.end()) {
+FreeLeaseQueue::LeasesPtr
+FreeLeaseQueue::getLeases(const AddressRange& range) const {
+    auto cont = ranges_.find(range.start_);
+    if (cont == ranges_.end()) {
         isc_throw(BadValue, "conatiner for the specified address range " << range.start_
                   << ":" << range.end_ << " does not exist");
     }
-    return (cont->container_);
+    return (cont->leases_);
 }
 
-FreeLeaseQueue::ContainerPtr
-FreeLeaseQueue::getContainer(const PrefixRange& range) const {
-    auto cont = containers_.find(range.start_);
-    if (cont == containers_.end()) {
+FreeLeaseQueue::LeasesPtr
+FreeLeaseQueue::getLeases(const PrefixRange& range) const {
+    auto cont = ranges_.find(range.start_);
+    if (cont == ranges_.end()) {
         isc_throw(BadValue, "conatiner for the specified prefix " << range.start_
                   << " and delegated length of " << static_cast<int>(range.delegated_length_)
                   << " does not exist");
     }
-    return (cont->container_);
+    return (cont->leases_);
 }
 
-FreeLeaseQueue::ContainerDescriptor
-FreeLeaseQueue::getContainerDescriptor(const uint64_t range_index) const {
-    if (containers_.get<2>().size() <= range_index) {
+FreeLeaseQueue::RangeDescriptor
+FreeLeaseQueue::getRangeDescriptor(const uint64_t range_index) const {
+    if (ranges_.get<2>().size() <= range_index) {
         isc_throw(BadValue, "conatiner for the specified range index " << range_index
                   << " does not exist");
     }
-    auto cont = containers_.get<2>().at(range_index);
+    auto cont = ranges_.get<2>().at(range_index);
     return (cont);
 }
 

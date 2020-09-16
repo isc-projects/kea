@@ -126,7 +126,7 @@ public:
     /// @return true if the range existed and was removed.
     template<typename RangeType>
     bool removeRange(const RangeType& range) {
-        return (containers_.get<1>().erase(range.start_) > 0);
+        return (ranges_.get<1>().erase(range.start_) > 0);
     }
 
     /// @brief Appends an address at the end of the queue for a range.
@@ -257,12 +257,12 @@ public:
     /// @throw BadValue if the range does not exist.
     template<typename RangeType>
     uint64_t getRangeIndex(const RangeType& range) const {
-        auto cont = containers_.get<1>().find(range.start_);
-        if (cont == containers_.get<1>().end()) {
+        auto cont = ranges_.get<1>().find(range.start_);
+        if (cont == ranges_.get<1>().end()) {
             isc_throw(BadValue, "conatiner for the specified range " << range.start_
                       << ":" << range.end_ << " does not exist");
         }
-        return (std::distance(containers_.get<2>().begin(), containers_.project<2>(cont)));
+        return (std::distance(ranges_.get<2>().begin(), ranges_.project<2>(cont)));
     }
 
 private:
@@ -281,14 +281,14 @@ private:
                 >,
             boost::multi_index::sequenced<>
         >
-    > Container;
+    > Leases;
 
     /// Pointer to the container of free leases for a range.
-    typedef boost::shared_ptr<Container> ContainerPtr;
+    typedef boost::shared_ptr<Leases> LeasesPtr;
 
     /// @brief Helper structure associating a range with the container of
     /// free leases.
-    struct ContainerDescriptor {
+    struct RangeDescriptor {
         /// Range start.
         asiolink::IOAddress range_start_;
         /// Range end.
@@ -296,7 +296,7 @@ private:
         /// Delegated length (used in prefix delegation).
         uint8_t delegated_length_;
         /// Container holding free addresses for the range.
-        ContainerPtr container_;
+        LeasesPtr leases_;
     };
 
     /// @brief Collection (container) of containers for various ranges.
@@ -306,19 +306,19 @@ private:
     /// range start value. The second index is the random access index allowing
     /// faster access once the range index is known.
     typedef boost::multi_index_container<
-        ContainerDescriptor,
+        RangeDescriptor,
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_unique<
-                boost::multi_index::member<ContainerDescriptor, asiolink::IOAddress,
-                                           &ContainerDescriptor::range_start_>
+                boost::multi_index::member<RangeDescriptor, asiolink::IOAddress,
+                                           &RangeDescriptor::range_start_>
             >,
             boost::multi_index::hashed_unique<
-                boost::multi_index::member<ContainerDescriptor, asiolink::IOAddress,
-                                           &ContainerDescriptor::range_start_>
+                boost::multi_index::member<RangeDescriptor, asiolink::IOAddress,
+                                           &RangeDescriptor::range_start_>
             >,
             boost::multi_index::random_access<>
         >
-    > Containers;
+    > Ranges;
 
     /// @brief Checks if the specified address or delegated prefix is within the
     /// range.
@@ -347,14 +347,14 @@ private:
     /// @param range range for which the container should be returned.
     /// @return Pointer to the container (if found).
     /// @throw BadValue if the specified range does not exist.
-    ContainerPtr getContainer(const AddressRange& range) const;
+    LeasesPtr getContainer(const AddressRange& range) const;
 
     /// @brief Returns container for a given prefix range.
     ///
     /// @param range range for which the container should be returned.
     /// @return Pointer to the container (if found).
     /// @throw BadValue if the specified range does not exist.
-    ContainerPtr getContainer(const PrefixRange& range) const;
+    LeasesPtr getContainer(const PrefixRange& range) const;
 
     /// @brief Returns container descriptor for a given range index.
     ///
@@ -365,7 +365,7 @@ private:
     /// returned.
     /// @return Range descriptor if found.
     /// @throw BadValue if the range with the given index does not exist.
-    ContainerDescriptor getContainerDescriptor(const uint64_t range_index) const;
+    RangeDescriptor getContainerDescriptor(const uint64_t range_index) const;
 
     /// @brief This is internal implemenation of the @c next and @c pop
     /// methods.
@@ -394,7 +394,7 @@ private:
 
     /// @brief Holds a collection of containers with free leases for each
     /// address range.
-    Containers containers_;
+    Ranges ranges_;
 };
 
 } // end of namespace isc::dhcp
