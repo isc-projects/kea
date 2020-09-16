@@ -48,16 +48,25 @@ namespace dhcp {
 ///
 /// The queue with free leases is optimized for two use cases. Firstly, it is
 /// optimized to get the next available address or prefix efficiently. In order
-/// to the get the next available lease one should call the
+/// to the get the next available lease the allocation engine can call the
 /// @c FreeLeaseQueue::next function. The range from which the lease is to be
 /// returned must be specified in the call. The range corresponds to the address
-/// or prefix pool boundaries. If the lease returned is rejected by the
-/// allocation engine for any reason, e.g. conflict with existing host
-/// reservations, the lease goes to the end of the queue for that range. The
-/// allocation engine may need to perform multiple calls to the @c next function
-/// until it gets the satifactionary lease. However, it should be typically one
-/// call per allocation when no reservations are present or there is a low
-/// number of in pool reservations.
+/// or prefix pool boundaries. The @c next function puts the returned lease
+/// at the end of the queue. If the lease is rejected by the allocation engine
+/// for any reason, e.g. conflict with existing host reservations, the allocation
+/// engine simply calls @c next function again. It may need to perform multiple
+/// calls to the @c next function until it gets the satifactionary lease.
+/// However, it should be typically one call per allocation when no reservations
+/// are present or there is a low number of in pool reservations. If the
+/// allocation engine decides to allocate the returned lease, it must call
+/// @c FreeLeaseQueue::use to remove this lease from the queue.
+///
+/// If the @c FreeLeaseQueue::pop method is used instead of @c next to get
+/// the next available lease the returned lease is removed from the queue.
+/// In that case, the allocation engine must not call @c FreeLeaseQueue::use
+/// function when this lease is allocated. However, if the allocation engine
+/// rejects this lease the @c FreeLeaseQueue::append must be called to return
+/// the lease to the queue.
 ///
 /// The second use case for which this queue is optimized is the lease
 /// reclamation. This is the process by which expired leases are again made
