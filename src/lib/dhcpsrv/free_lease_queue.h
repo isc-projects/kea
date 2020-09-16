@@ -27,59 +27,53 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Container holding free leases for various address and
-/// prefix ranges.
+/// @brief Queue holding free leases for various address and prefix ranges.
 ///
-/// Free leases can be stored in this container to provide the DHCP
-/// allocation engine with the fast lookup mechanism for available
-/// leases. This avoids costly lookup for available leases in the
-/// lease database backend when the client's packet is being processed.
-/// Instead, when the server is being configured, it iterates over
-/// the addresses and/or prefixes in respective pools, verifies if leases
-/// exist for these addresses and/or prefixes and for each of them for
-/// which it doesn't find the lease it creates an appropriate entry in
-/// this container.
+/// Free leases can be stored in this queue to provide the DHCP allocation
+/// engine with the fast lookup mechanism for available leases. This avoids
+/// costly lookup for available leases in the lease database backend when
+/// the client's packet is being processed. Instead, when the server is being
+/// configured, it iterates over the addresses and/or prefixes in respective
+/// pools, verifies if leases exist for these addresses and/or prefixes and
+/// for each of them for which it doesn't find the lease it creates an
+/// appropriate entry in the queue.
 ///
-/// This effectively moves the free lease lookup to the configuration
-/// phase. When the server is going to allocate a new lease, it will
-/// make an appropriate query to this container to get the next
-/// available lease for the given pool. If the server decides to
-/// use this lease, it is removed from this container. Conversely,
-/// when the lease expires (and is reclaimed) or is released it is
-/// returned to this container so it can be offered to a
-/// requesting client at some later time.
+/// This effectively moves the free lease lookup to the configuration phase.
+/// When the server is going to allocate a new lease, it will make an
+/// appropriate query to this queue to get the next available lease for the
+/// given pool. If the server decides to use this lease, it is removed from
+/// this queue. Conversely, when the lease expires (and is reclaimed) or is
+/// released it is returned to this queue so it can be offered to a requesting
+/// client at some later time.
 ///
-/// The container with free leases is optimized for two use cases.
-/// Firstly, it is optimized to get the next available address or
-/// prefix efficiently. In order to the get the next available lease
-/// one should call the @c FreeLeaseQueue::next function. The range
-/// from which the lease is to be returned must be specified in
-/// the call. The range corresponds to the address or prefix pool
-/// boundaries. If the lease returned is rejected by the allocation
-/// engine for any reason, e.g. conflict with existing host reservations,
-/// the lease goes to the end of the queue for that range. The allocation
-/// engine may need to perform multiple calls to the @c next function
-/// until it gets the satifactionary lease. However, it should be
-/// typically one call per allocation when no reservations are present
-/// or there is a low number of in pool reservations.
+/// The queue with free leases is optimized for two use cases. Firstly, it is
+/// optimized to get the next available address or prefix efficiently. In order
+/// to the get the next available lease one should call the
+/// @c FreeLeaseQueue::next function. The range from which the lease is to be
+/// returned must be specified in the call. The range corresponds to the address
+/// or prefix pool boundaries. If the lease returned is rejected by the
+/// allocation engine for any reason, e.g. conflict with existing host
+/// reservations, the lease goes to the end of the queue for that range. The
+/// allocation engine may need to perform multiple calls to the @c next function
+/// until it gets the satifactionary lease. However, it should be typically one
+/// call per allocation when no reservations are present or there is a low
+/// number of in pool reservations.
 ///
-/// The second use case for which this container is optimized is
-/// the lease reclamation. This is the process by which expired
-/// leases are again made available for allocation. The leases
-/// belonging to different pools expire at various times. When the
-/// expired leases are reclaimed the server doesn't know to which
-/// pools they belong. Since this container associates free leases
-/// with certain ranges it is important that this container can
-/// efficiently identify the range. Once the range is identified,
-/// the reclaimed lease is appended at the end of the queue for that
-/// range.
+/// The second use case for which this queue is optimized is the lease
+/// reclamation. This is the process by which expired leases are again made
+/// available for allocation. The leases belonging to different pools expire at
+/// various times. When the expired leases are reclaimed the server doesn't know
+/// to which pools they belong. Since this queue associates free leases with
+/// certain ranges it is important that this container can efficiently identify
+/// the range. Once the range is identified, the reclaimed lease is appended to
+/// the end of the queue for that range.
 class FreeLeaseQueue {
 public:
 
     /// @brief Constructor.
     FreeLeaseQueue();
 
-    /// @brief Adds new address range to the container.
+    /// @brief Adds new address range to the queue.
     ///
     /// The new range must not overlap with existing ranges.
     ///
@@ -87,7 +81,7 @@ public:
     /// @throw BadValue if the new range overlaps with any of the existing ranges.
     void addRange(const AddressRange& range);
 
-    /// @brief Adds new address range to the container.
+    /// @brief Adds new address range to the queue.
     ///
     /// This variant of the method accepts the address range as a pair of
     /// start/end arguments.
@@ -97,7 +91,7 @@ public:
     /// @throw BadValue if the new range overlaps with any of the existing ranges.
     void addRange(const asiolink::IOAddress& start, const asiolink::IOAddress& end);
 
-    /// @brief Adds new delegated prefix range to the container.
+    /// @brief Adds new delegated prefix range to the queue.
     ///
     /// The new range must not overlap with existing ranges.
     ///
@@ -105,7 +99,7 @@ public:
     /// @throw BadValue of the new range overlaps with any of the existing ranges.
     void addRange(const PrefixRange& range);
 
-    /// @brief Adds new delegated prefix range to the container.
+    /// @brief Adds new delegated prefix range to the queue.
     ///
     /// This variant of the method accepts the prefix range specified with three
     /// parameters: prefix, prefix length and delegated prefix length.
@@ -117,7 +111,7 @@ public:
     void addRange(const asiolink::IOAddress& prefix, const uint8_t prefix_length,
                   const uint8_t delegated_length);
 
-    /// @brief Removes the range from the container.
+    /// @brief Removes the range from the queue.
     ///
     /// It removes all free leases associated with the removed address range.
     ///
@@ -185,7 +179,7 @@ public:
     /// reconfiguration. It is considered faster than the overload of this
     /// method taking the @c Range structure as an argument. The range is
     /// identified by the @c range_index which designates the range index
-    /// in the container returned by the @c getRangeIndex method. Use
+    /// in the queue returned by the @c getRangeIndex method. Use
     /// this method variant to add many addresses to the same range.
     ///
     /// @param range_index address range index returned by @c getRangeIndex.
@@ -247,7 +241,7 @@ public:
 
     /// @brief Returns range index.
     ///
-    /// The range index designates the position of the range within the container.
+    /// The range index designates the position of the range within the queue.
     /// Searching for a range using the index is faster than searching by the
     /// range itself because it uses random access index.
     ///
@@ -267,7 +261,7 @@ public:
 
 private:
 
-    /// @brief Container holding free leases for a range.
+    /// @brief Queue holding free leases for a range.
     ///
     /// This container holds free leases for a given range. It contains two
     /// indexes. The first index orders free leases by address values. The
@@ -283,10 +277,10 @@ private:
         >
     > Leases;
 
-    /// Pointer to the container of free leases for a range.
+    /// Pointer to the queue of free leases for a range.
     typedef boost::shared_ptr<Leases> LeasesPtr;
 
-    /// @brief Helper structure associating a range with the container of
+    /// @brief Helper structure associating a range with the queue of
     /// free leases.
     struct RangeDescriptor {
         /// Range start.
@@ -295,7 +289,7 @@ private:
         asiolink::IOAddress range_end_;
         /// Delegated length (used in prefix delegation).
         uint8_t delegated_length_;
-        /// Container holding free addresses for the range.
+        /// Queue holding free addresses for the range.
         LeasesPtr leases_;
     };
 
@@ -342,24 +336,24 @@ private:
     void checkRangeOverlaps(const asiolink::IOAddress& start,
                             const asiolink::IOAddress& end) const;
 
-    /// @brief Returns container for a given address range.
+    /// @brief Returns queue for a given address range.
     ///
     /// @param range range for which the container should be returned.
     /// @return Pointer to the container (if found).
     /// @throw BadValue if the specified range does not exist.
     LeasesPtr getLeases(const AddressRange& range) const;
 
-    /// @brief Returns container for a given prefix range.
+    /// @brief Returns queue for a given prefix range.
     ///
     /// @param range range for which the container should be returned.
     /// @return Pointer to the container (if found).
     /// @throw BadValue if the specified range does not exist.
     LeasesPtr getLeases(const PrefixRange& range) const;
 
-    /// @brief Returns container descriptor for a given range index.
+    /// @brief Returns descriptor for a given range index.
     ///
     /// The returned descriptor includes the range boundaries and also the
-    /// pointer to the container with free leases for the range.
+    /// pointer to the queue with free leases for the range.
     ///
     /// @param range_index index of the range which descriptor should be
     /// returned.
