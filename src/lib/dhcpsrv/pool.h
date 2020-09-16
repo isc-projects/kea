@@ -245,8 +245,8 @@ protected:
 
     /// @brief Pointer to the permutation object.
     ///
-    /// It may be initialized for certain pools and poo types to provide
-    /// address randomization capabilities.
+    /// It may be initialized for some pools to provide address
+    /// or delegated prefix randomization capabilities.
     IPRangePermutationPtr permutation_;
 };
 
