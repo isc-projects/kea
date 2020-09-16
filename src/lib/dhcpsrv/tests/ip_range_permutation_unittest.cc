@@ -41,7 +41,7 @@ TEST(IPRangePermutationTest, ipv4) {
     std::set<IOAddress> addrs;
     bool done = false;
 
-    // Call the next() function 95 tims. The first 91 calls should return non-zero
+    // Call the next() function 95 times. The first 91 calls should return non-zero
     // IP addresses.
     for (auto i = 0; i < 95; ++i) {
         auto next = perm.next(done);
@@ -49,11 +49,16 @@ TEST(IPRangePermutationTest, ipv4) {
             // Make sure the returned address is within the range.
             EXPECT_LE(range.start_, next);
             EXPECT_LE(next, range.end_);
-        } else {
-            // The IPv4 zero address marks the end of the permutation. In this case
-            // the done flag should be set.
+        }
+        // If we went over all addresses in the range, the flags indicating that
+        // the permutation is exhausted should be set to true.
+        if (i >= 90) {
             EXPECT_TRUE(done);
             EXPECT_TRUE(perm.exhausted());
+        } else {
+            // We're not done yet, so these flag should still be false.
+            EXPECT_FALSE(done);
+            EXPECT_FALSE(perm.exhausted());
         }
         // Insert the address returned to the set.
         addrs.insert(next);
@@ -68,7 +73,7 @@ TEST(IPRangePermutationTest, ipv4) {
 // be generated.
 TEST(IPRangePermutationTest, ipv6) {
     AddressRange range(IOAddress("2001:db8:1::1:fea0"),
-                                    IOAddress("2001:db8:1::2:abcd"));
+                       IOAddress("2001:db8:1::2:abcd"));
     IPRangePermutation perm(range);
 
     std::set<IOAddress> addrs;
@@ -76,13 +81,19 @@ TEST(IPRangePermutationTest, ipv6) {
     for (auto i = 0; i < 44335; ++i) {
         auto next = perm.next(done);
         if (!next.isV6Zero()) {
-            // The IPv6 zero address marks the end of the permutation. In this case
-            // the done flag should be set.
+            // Make sure that the address is within the range.
             EXPECT_LE(range.start_, next);
             EXPECT_LE(next, range.end_);
-        } else {
+        }
+        // If we went over all addresses in the range, the flags indicating that
+        // the permutation is exhausted should be set to true.
+        if (i >= 44333) {
             EXPECT_TRUE(done);
             EXPECT_TRUE(perm.exhausted());
+        } else {
+            // We're not done yet, so these flag should still be false.
+            EXPECT_FALSE(done);
+            EXPECT_FALSE(perm.exhausted());
         }
         // Insert the address returned to the set.
         addrs.insert(next);
@@ -103,15 +114,21 @@ TEST(IPRangePermutationTest, pd) {
     for (auto i = 0; i < 257; ++i) {
         auto next = perm.next(done);
         if (!next.isV6Zero()) {
-            // The IPv6 zero address marks the end of the permutation. In this case
-            // the done flag should be set.
+            // Make sure the prefix is within the range.
             EXPECT_LE(range.start_, next);
             EXPECT_LE(next, range.end_);
-        } else {
+        }
+        // If we went over all delegated prefixes in the range, the flags indicating
+        // that the permutation is exhausted should be set to true.
+        if (i >= 255) {
             EXPECT_TRUE(done);
             EXPECT_TRUE(perm.exhausted());
+        } else {
+            // We're not done yet, so these flag should still be false.
+            EXPECT_FALSE(done);
+            EXPECT_FALSE(perm.exhausted());
         }
-        // Insert the address returned to the set.
+        // Insert the prefix returned to the set.
         addrs.insert(next);
     }
 
