@@ -1,3 +1,8 @@
+1801.	[doc]		fdupont
+	Moved JSON files describing commands to the share directory
+	and adding a new access entry taking read or write values.
+	(Gitlab #1240)
+
 1800.	[func]		fdupont
 	Added support of basic HTTP authentication in HTTP library,
 	control agent, kea shell and high availability hook.

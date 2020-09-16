@@ -3,23 +3,20 @@
 # This script generates API documentation templates.
 # Usage:
 #
-# ./generate-templates file
+# ./generate-templates cmd...
 #
-# File is expected to have a list of commands, one per line.
-# The templates will be created in api/ directory.
+# Arguments are a list of new commands.
+# The templates will be created in local directory.
 
-if [ $# != 1 ]; then
-    echo "Usage: ./generate-templates file"
-    echo
-    echo "File specifies a plain text file with each line having name of a command"
+if [ $# -eq 0 ]; then
+    echo "Usage: ./generate-templates cmd..."
     exit
 fi
 
-
-mkdir -p api/
-
-while read -r CMD; do
-    F=api/$CMD.json
+while [ $# -ne 0 ]; do
+    CMD="$1"
+    shift
+    F=$CMD.json
 
     if [ -e "$F" ]; then
         echo "$F exists, skipping"
@@ -43,4 +40,4 @@ while read -r CMD; do
     echo "}" >> "$F"
 
     echo "$CMD generated."
-done < "$1"
+done

@@ -6,7 +6,7 @@ EXTRA_DIST = api_files.mk
 EXTRA_DIST += README
 EXTRA_DIST += _template.json
 EXTRA_DIST += generate-templates
-EXTRA_DIST += cmds-list
+EXTRA_DIST += generate-api-files
 EXTRA_DIST += $(api_files)
 
 install-data-local:

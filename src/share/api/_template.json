@@ -1,4 +1,4 @@
-// Note the api/*.json files are to be processed by api2doc.py and possibly other
+// Note the *.json files are to be processed by api2doc.py and possibly other
 // JSON tools that do not handle comments. If using this template, make sure you
 // have all the comments removed.
 {

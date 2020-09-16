@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# This script generates api_files.mk
+# Usage:
+#
+# ./generate-api-files > api_files.mk
+
+if [ $# -ne 0 ]; then
+    echo "Usage: ./generate-api-files"
+    exit
+fi
+
+for f in [a-z]*.json ; do
+    echo "api_files += \$(top_srcdir)/src/share/api/$f"
+done
