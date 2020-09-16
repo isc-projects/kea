@@ -46,7 +46,7 @@ namespace dhcp {
 /// available lease for the given pool. If the server decides to
 /// use this lease, it is removed from this container. Conversely,
 /// when the lease expires (and is reclaimed) or is released it is
-/// returned to this container so as it can be offered to a
+/// returned to this container so it can be offered to a
 /// requesting client at some later time.
 ///
 /// The container with free leases is optimized for two use cases.
@@ -129,7 +129,7 @@ public:
         return (ranges_.get<1>().erase(range.start_) > 0);
     }
 
-    /// @brief Appends an address at the end of the queue for a range.
+    /// @brief Appends an address to the end of the queue for a range.
     ///
     /// This method is typically called when a lease expires and is reclaimed.
     /// The range is not specified by the caller. The method identifies
@@ -140,7 +140,7 @@ public:
     /// false otherwise.
     bool append(const asiolink::IOAddress& address);
 
-    /// @brief Appends a delegated prefix at the end of the queue for a range.
+    /// @brief Appends a delegated prefix to the end of the queue for a range.
     ///
     /// This method is typically called when a lease expires and is reclaimed.
     /// The range is not specified by the caller. The method identifies
@@ -151,7 +151,7 @@ public:
     /// false otherwise.
     bool append(const asiolink::IOAddress& prefix, const uint8_t delegated_length);
 
-    /// @brief Appends an address at the end of the queue for a range.
+    /// @brief Appends an address to the end of the queue for a range.
     ///
     /// This method is typically called upon server startup or reconfiguration.
     /// For each address belonging to the pool for which there is no lease
@@ -165,7 +165,7 @@ public:
     /// range or if the given range does not exist.
     void append(const AddressRange& range, const asiolink::IOAddress& address);
 
-    /// @brief Appends a prefix at the end of the queue for a range.
+    /// @brief Appends a prefix to the end of the queue for a range.
     ///
     /// This method is typically called upon server startup or reconfiguration.
     /// For each delegated prefix belonging to the pool for which there is no
@@ -179,7 +179,7 @@ public:
     /// range or if the given range does not exist.
     void append(const PrefixRange& range, const asiolink::IOAddress& prefix);
 
-    /// @brief Appends an address or prefix at the end of the queue for a range.
+    /// @brief Appends an address or prefix to the end of the queue for a range.
     ///
     /// This variant of the @c append method is called upon server startup or
     /// reconfiguration. It is considered faster than the overload of this
@@ -347,14 +347,14 @@ private:
     /// @param range range for which the container should be returned.
     /// @return Pointer to the container (if found).
     /// @throw BadValue if the specified range does not exist.
-    LeasesPtr getContainer(const AddressRange& range) const;
+    LeasesPtr getLeases(const AddressRange& range) const;
 
     /// @brief Returns container for a given prefix range.
     ///
     /// @param range range for which the container should be returned.
     /// @return Pointer to the container (if found).
     /// @throw BadValue if the specified range does not exist.
-    LeasesPtr getContainer(const PrefixRange& range) const;
+    LeasesPtr getLeases(const PrefixRange& range) const;
 
     /// @brief Returns container descriptor for a given range index.
     ///
@@ -365,7 +365,7 @@ private:
     /// returned.
     /// @return Range descriptor if found.
     /// @throw BadValue if the range with the given index does not exist.
-    RangeDescriptor getContainerDescriptor(const uint64_t range_index) const;
+    RangeDescriptor getRangeDescriptor(const uint64_t range_index) const;
 
     /// @brief This is internal implemenation of the @c next and @c pop
     /// methods.
@@ -378,7 +378,7 @@ private:
     /// @throw BadValue if the range does not exist.
     template<typename RangeType>
     asiolink::IOAddress popNextInternal(const RangeType& range, const bool push) {
-        auto cont = getContainer(range);
+        auto cont = getLeases(range);
         if (cont->empty()) {
             return (range.start_.isV4() ? asiolink::IOAddress::IPV4_ZERO_ADDRESS() :
                     asiolink::IOAddress::IPV6_ZERO_ADDRESS());
