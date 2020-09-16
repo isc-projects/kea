@@ -17,14 +17,14 @@ namespace dhcp {
 
 AddressRange::AddressRange(const IOAddress& start, const IOAddress& end)
     : start_(start), end_(end) {
-    // The start must be lower or equal the end.
-    if (end_ < start_) {
-        isc_throw(BadValue, "invalid address range boundaries " << start_ << ":" << end_);
-    }
     // Two IPv4 or two IPv6 addresses are expected as range boundaries.
     if (start_.getFamily() != end_.getFamily()) {
         isc_throw(BadValue, "address range boundaries must have the same type: " << start_
                   << ":" << end_);
+    }
+    // The start must be lower or equal the end.
+    if (end_ < start_) {
+        isc_throw(BadValue, "invalid address range boundaries " << start_ << ":" << end_);
     }
 }
 
@@ -44,6 +44,7 @@ PrefixRange::PrefixRange(const asiolink::IOAddress& prefix, const uint8_t length
                   << " and prefix length " << static_cast<int>(length)
                   << " must not be greater than 128");
     }
+    // Now calculate the last prefix in the range.
     auto prefixes_num = prefixesInRange(prefix_length_, delegated_length_);
     uint64_t addrs_in_prefix = static_cast<uint64_t>(1) << (128 - delegated_length_);
     end_ = offsetAddress(prefix, (prefixes_num - 1) * addrs_in_prefix);
