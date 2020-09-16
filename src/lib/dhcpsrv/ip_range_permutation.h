@@ -60,6 +60,9 @@ namespace dhcp {
 /// This algorithm guarantees that all IP addresses or delegated prefixes
 /// beloging to the given  range are returned and no duplicates are returned.
 /// The addresses or delegated prefixes are returned in a random order.
+///
+/// @todo Methods of this class should be called in thread safe context. Otherwise
+/// they should be made thread safe.
 class IPRangePermutation {
 public:
 

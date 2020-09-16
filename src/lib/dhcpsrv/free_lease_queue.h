@@ -76,6 +76,9 @@ namespace dhcp {
 /// certain ranges it is important that this container can efficiently identify
 /// the range. Once the range is identified, the reclaimed lease is appended to
 /// the end of the queue for that range.
+///
+/// @todo Methods of this class should be called in thread safe context. Otherwise
+/// they should be made thread safe.
 class FreeLeaseQueue {
 public:
 
