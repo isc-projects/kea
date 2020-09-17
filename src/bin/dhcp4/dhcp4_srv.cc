@@ -2072,7 +2072,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     AllocEngine::ClientContext4Ptr ctx = ex.getContext();
 
     // Hostname reservations take precedence over any other configuration,
-    // i.e. DDNS configuration.  If we have HR with a hostname we should
+    // i.e. DDNS configuration.  If we have a reserved hostname we should
     // use it and send it back.
     if (ctx->currentHost() && !ctx->currentHost()->getHostname().empty()) {
         // Qualify if there is an a suffix configured.
@@ -2092,11 +2092,10 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         return;
     }
 
-    // There is no reservation for this client or the client hasn't requested
-    // hostname option. There is still a possibility that we'll have to send
-    // hostname option to this client if the client has included hostname option
-    // but there is no reservation, or the configuration of the server requires
-    // that we send the option regardless.
+    // There is no reservation for this client however there is still a
+    // possibility that we'll have to send hostname option to this client
+    // if the client has included hostname option or the configuration of
+    // the server requires that we send the option regardless.
     D2ClientConfig::ReplaceClientNameMode replace_name_mode =
         ex.getContext()->getDdnsParams()->getReplaceClientNameMode();
 
@@ -2417,14 +2416,11 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     if (subnet->getID() != ctx->subnet_->getID()) {
         SharedNetwork4Ptr network;
         subnet->getSharedNetwork(network);
-        if (network) {
-            // @todo Why do we only log it if it's part of a shared-network?
-            LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_DYNAMICALLY_CHANGED)
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_DYNAMICALLY_CHANGED)
                 .arg(query->getLabel())
                 .arg(subnet->toText())
                 .arg(ctx->subnet_->toText())
-                .arg(network->getName());
-        }
+                .arg(network ? network->getName() : "<no network?>");
 
         subnet = ctx->subnet_;
 
@@ -2433,10 +2429,11 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             // so we need to rerun client name processing logic.  Arguably we could
             // compare DDNS parameters for both subnets and then decide if we need
             // to rerun the name logic, but that's not likely to be any faster than
-            // just re-running the name logic.
+            // just re-running the name logic.  @todo When inherited parameter
+            // performance is improved this argument could be revisisted.
 
             // First, we need to remove the prior values from the response and reset
-            // those in context, to gove processClientName a clean slate.
+            // those in context, to give processClientName a clean slate.
             resp->delOption(DHO_FQDN);
             resp->delOption(DHO_HOST_NAME);
             ctx->hostname_ = "";
