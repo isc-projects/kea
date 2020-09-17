@@ -111,6 +111,7 @@ ParserContext::require(const std::string& name,
     }
 }
 
+void
 ParserContext::unique(const std::string& name,
                       isc::data::Element::Position loc)
 {
