@@ -3826,13 +3826,13 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     CfgMgr::instance().clear();
 
     // Once the definitions have been added we can configure the
-    // standard option #17. This option comprises an enterprise
+    // standard option #43. This option comprises an enterprise
     // number and sub options. By convention (introduced in
-    // std_option_defs.h) option named 'vendor-opts'
+    // std_option_defs.h) option named 'vendor-encapsulated-options'
     // encapsulates the option space named 'vendor-encapsulated-options-space'.
     // We add our dummy options to this option space and thus
-    // they should be included as sub-options in the 'vendor-opts'
-    // option.
+    // they should be included as sub-options in the
+    // 'vendor-encapsulated-options' option.
     config = "{ " + genIfaceConfig() + "," +
         "\"valid-lifetime\": 3000,"
         "\"rebind-timer\": 2000,"
