@@ -221,7 +221,9 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
             CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
         const ClientClassDefListPtr& defs_ptr = dict->getClasses();
         for (auto def : *defs_ptr) {
-            // Only remove evaluated classes.
+            // Only remove evaluated classes. Other classes can be
+            // assigned via hooks libraries and we should not remove
+            // them because there is no way they can be added back.
             if (def->getMatchExpr()) {
                 context_->query_->classes_.erase(def->getName());
             }
