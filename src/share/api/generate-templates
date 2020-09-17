@@ -36,7 +36,7 @@ while [ $# -ne 0 ]; do
     echo "    \"cmd-comment\": [ \"Possibly some extra comments after the syntax.\" ]," >> "$F"
 
     echo "    \"resp-syntax\": [ \"Syntax of the response\" ]," >> "$F"
-    echo "    \"resp-comment\": [ \"Optional extra comments after the resposne syntax.\" ]" >> "$F"
+    echo "    \"resp-comment\": [ \"Optional extra comments after the response syntax.\" ]" >> "$F"
     echo "}" >> "$F"
 
     echo "$CMD generated."
