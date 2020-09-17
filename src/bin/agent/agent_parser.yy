@@ -500,7 +500,7 @@ socket_type_value : UNIX { $$ = ElementPtr(new StringElement("unix", ctx.loc2pos
 // --- authentication starts here -----------------------------------------------------
 
 authentication: AUTHENTICATION {
-    // Add unique here
+    ctx.unique("authentication", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("authentication", m);
     ctx.stack_.push_back(m);
@@ -525,7 +525,7 @@ auth_param: auth_type
           ;
 
 auth_type: TYPE {
-    // Add unique here
+    ctx.unique("type", ctx.loc2pos(@1));
     ctx.enter(ctx.AUTH_TYPE);
 } COLON auth_type_value {
     ctx.stack_.back()->set("type", $4);
@@ -536,7 +536,7 @@ auth_type_value: BASIC { $$ = ElementPtr(new StringElement("basic", ctx.loc2pos(
          ;
 
 realm: REALM {
-    // Add unique here
+    ctx.unique("realm", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr realm(new StringElement($4, ctx.loc2pos(@4)));
@@ -545,7 +545,7 @@ realm: REALM {
 };
 
 clients: CLIENTS {
-    // Add unique here
+    ctx.unique("clients", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("clients", l);
     ctx.stack_.push_back(l);
@@ -583,6 +583,7 @@ clients_param: user
              ;
 
 user: USER {
+    ctx.unique("user", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
@@ -591,6 +592,7 @@ user: USER {
 };
 
 password: PASSWORD {
+    ctx.unique("password", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr password(new StringElement($4, ctx.loc2pos(@4)));
