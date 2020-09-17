@@ -167,7 +167,7 @@ public:
     ///
     /// @param name name of the parameter to check
     /// @param loc location of the current parameter
-    /// @throw Dhcp4ParseError
+    /// @throw D2ParseError
     void unique(const std::string& name,
                 isc::data::Element::Position loc);
 

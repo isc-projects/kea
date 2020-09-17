@@ -36,7 +36,7 @@ lowercase). The capitalized versions (True or False) are not accepted.
 
 Even if the JSON standard (ECMA 404) does not require JSON objects
 (i.e. name/value maps) to have unique entries Kea implements them
-using a std::map so:
+using a C++ STL map with unique entries so:
 
 -  if there are multiple values for the same name in an object/map
    the last value overwrites previous values
