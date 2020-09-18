@@ -393,7 +393,6 @@ IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {
     // This is IPv6 address. Let's first convert the offset value to network
     // byte order and store within the vector.
     std::vector<uint8_t> offset_bytes(8);
-    int offset_idx = 0;
     for (int offset_idx = offset_bytes.size() - 1; offset_idx >= 0; --offset_idx) {
         offset_bytes[offset_idx] = static_cast<uint8_t>(offset & 0x00000000000000ff);
         offset = offset >> 8;
