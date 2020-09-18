@@ -180,6 +180,15 @@ PktFilterLPF::openSocket(Iface& iface,
                   << " on the socket " << sock);
     }
 
+    int one = 1;
+    if(setsockopt(sock, SOL_PACKET, PACKET_AUXDATA, &one, sizeof(one)) < 0)
+    {
+        close(sock);
+        close(fallback);
+        isc_throw(SocketConfigError, "Failed to install packet aux data"
+                  << " on the socket " << sock);
+    }
+
     struct sockaddr_ll sa;
     memset(&sa, 0, sizeof(sockaddr_ll));
     sa.sll_family = AF_PACKET;
@@ -216,6 +225,20 @@ PktFilterLPF::openSocket(Iface& iface,
 Pkt4Ptr
 PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
+    unsigned char cmsgbuf[CMSG_LEN(sizeof(struct tpacket_auxdata))];
+    struct iovec iov;
+    struct msghdr msg;
+    struct cmsghdr *cmsg;
+    uint16_t tp_vlan_tpid;
+
+    iov.iov_base = &raw_buf;
+    iov.iov_len = sizeof(raw_buf);
+
+    memset(&msg, 0, sizeof(msg));
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = cmsgbuf;
+    msg.msg_controllen = sizeof(cmsgbuf);
     // First let's get some data from the fallback socket. The data will be
     // discarded but we don't want the socket buffer to bloat. We get the
     // packets from the socket in loop but most of the time the loop will
@@ -237,13 +260,30 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
 
     // Now that we finished getting data from the fallback socket, we
     // have to get the data from the raw socket too.
-    int data_len = read(socket_info.sockfd_, raw_buf, sizeof(raw_buf));
-    // If negative value is returned by read(), it indicates that an
+    int data_len;
+    do {
+        data_len = recvmsg(socket_info.sockfd_, &msg, 0);
+    } while (data_len < 0 && errno == EINTR);
+    // If negative value is returned by recvmsg(), it indicates that an
     // error occurred. If returned value is 0, no data was read from the
     // socket. In both cases something has gone wrong, because we expect
     // that a chunk of data is there. We signal the lack of data by
     // returning an empty packet.
     if (data_len <= 0) {
+        return Pkt4Ptr();
+    }
+
+    tp_vlan_tpid = 0;
+    for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+        if (cmsg->cmsg_level == SOL_PACKET &&
+            cmsg->cmsg_type == PACKET_AUXDATA) {
+            struct tpacket_auxdata *aux = (struct tpacket_auxdata *)CMSG_DATA(cmsg);
+            tp_vlan_tpid = aux->tp_vlan_tpid;
+        }
+    }
+
+    // Only server non VLAN/QinQ Traffic
+    if (tp_vlan_tpid != 0) {
         return Pkt4Ptr();
     }
 
