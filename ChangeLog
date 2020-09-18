@@ -1,3 +1,8 @@
+1805.	[doc]		tomek
+	API documentation for lease4-get-* and lease6-get-* commands
+	has been updated.
+	(Gitlab #1392)
+
 1804.	[func]		fdupont
 	Added a new reservation-get-by-id command to retrieve all host
 	reservations with an identifier value and type. Made the
