@@ -4,6 +4,12 @@
     "brief": [
         "This command retrieves all IPv6 leases or all leases for the specified set of subnets."
     ],
+    "cmd-comment": [
+        "The ``lease6-get-all`` command may result in very large responses. Please consider using ",
+        "``lease6-get-page`` to get them in chunks. the ``subnets`` parameter is optional. If not ",
+        "specified, leases from all subnets are returned."
+    ],
+
     "cmd-syntax": [
         "{",
         "    \"command\": \"lease6-get-all\",",
@@ -16,7 +22,8 @@
     "hook": "lease_cmds",
     "name": "lease6-get-all",
     "resp-comment": [
-        "The lease6-get-all command may result in very large responses."
+        "Result 0 is returned when at least one lease is found, 1 when parameters are malformed or missing,",
+        "3 is returned if no leases are found with specified parameter."
     ],
     "resp-syntax": [
         "{",
