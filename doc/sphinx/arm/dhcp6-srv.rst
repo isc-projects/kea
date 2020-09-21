@@ -1930,7 +1930,7 @@ Alternatively, the option can be specified using its code.
    }
 
 A common configuration is to set the always-send flag to true so the
-vendor option is sent even when the client did not mention it in the query.
+vendor option is sent even when the client did not specify it in the query.
 
 .. _dhcp6-option-spaces:
 
