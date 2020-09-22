@@ -5,7 +5,7 @@
         "This command retrieves all host reservations or host reservations for a specified subnet by page."
     ],
     "cmd-comment": [
-        "The page size limit is mandatory. The subnet-id is optional since version 1.9.0, The source-index and from host id are optional and default to 0. Values to use to load the next page are returned in responses in a next map."
+        "The page size limit is mandatory. The subnet-id is optional since version 1.9.0, The source-index and from host-id are optional and default to 0. Values to use to load the next page are returned in responses in a next map."
     ],
     "cmd-syntax": [
         "{",
