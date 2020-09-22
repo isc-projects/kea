@@ -108,3 +108,24 @@ That is the last moment to freeze code!
    1. [ ] Trigger rebuilding docs on https://readthedocs.org/projects/kea/builds
    1. [ ] Publish currently released version
    1. [ ] For stable releases change change default version to point to this stable release
+
+
+### On the Day of Public Release
+
+ - [ ] ***(Support)*** Wait for clearance from Security Officer to proceed with the public release (if applicable).
+ - [ ] ***(Support)*** Place tarballs in public location on FTP site.
+ - [ ] ***(Support)*** Publish links to downloads on ISC website.
+ - [ ] ***(Support)*** Write release email to *kea-announce*.
+ - [ ] ***(Support)*** Write email to *kea-users* (if a major release).
+ - [ ] ***(Support)*** Send eligible customers updated links to the Subscription software ftp site.
+ - [ ] ***(Support)*** If it is a new major version, sweng will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Then update support customers that this new private repo exists.
+ - [ ] ***(Support)*** Update tickets in case of waiting support customers.
+ - [ ] ***(QA)*** Inform Marketing of the release.
+ - [ ] ***(QA)*** Update the internal [Kea release dates wiki page](https://wiki.isc.org/bin/view/Main/KeaReleaseDates) when public announcement has been made.
+ - [ ] ***(Marketing)*** Upload Premium hooks tarball to SendOwl. Create a new product if a new branch, otherwise update existing product. Send notifications to existing subscribers of the new version. 
+ - [ ] ***(Marketing)*** Announce on social media.
+ - [ ] ***(Marketing)*** Update [Wikipedia entry for Kea](https://en.wikipedia.org/wiki/Kea_(software)).
+ - [ ] ***(Marketing)*** Write blog article (if a major release).
+ - [ ] ***(Marketing)*** Update [Kea page on web site if any new hooks](https://www.isc.org/kea/)
+ - [ ] ***(Marketing)*** Update Kea Premium and Kea Subscription data sheets if any new hooks.
+ - [ ] ***(Marketing)*** Update [significant features matrix](https://kb.isc.org/docs/en/aa-01615) (if any significant new features)
