@@ -927,13 +927,13 @@ public:
 /// @brief Verifies that db lost callback is not invoked on an open failure
 TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
     MultiThreadingTest mt(false);
-    testDbLostCallback();
+    testNoCallbackOnOpenFailure();
 }
 
 /// @brief Verifies that db lost callback is not invoked on an open failure
 TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreading) {
     MultiThreadingTest mt(true);
-    testDbLostCallback();
+    testNoCallbackOnOpenFailure();
 }
 
 /// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
