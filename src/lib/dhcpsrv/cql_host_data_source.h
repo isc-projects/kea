@@ -262,8 +262,6 @@ public:
 
     /// @brief Returns range of hosts.
     ///
-    /// Not implemented.
-    ///
     /// @param source_index Index of the source (unused).
     /// @param lower_host_id Host identifier used as lower bound for the
     /// returned range.
@@ -276,8 +274,6 @@ public:
              const HostPageSize& page_size) const override;
 
     /// @brief Returns range of hosts.
-    ///
-    /// Not implemented.
     ///
     /// @param source_index Index of the source (unused).
     /// @param lower_host_id Host identifier used as lower bound for the
