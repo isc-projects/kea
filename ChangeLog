@@ -1,3 +1,9 @@
+1804.	[func]		fdupont
+	Added a new reservation-get-by-id command to retrieve all host
+	reservations with an identifier value and type. Made the
+	subnet-id optional in the reservation-get-page command.
+	(Gitlab #1163)
+
 1803.	[doc]		fdupont
 	Corrected Kea ARM sections describing how to send DHCPv6
 	Vendor-specific Information Option (code 17) with sub-options.
