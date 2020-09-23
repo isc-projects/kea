@@ -58,7 +58,8 @@ SYSTEMS = {
                 '12.0'],
     'alpine': [
         '3.10',
-        '3.11'
+        '3.11',
+        '3.12'
     ]
 }
 
@@ -101,13 +102,14 @@ IMAGE_TEMPLATES = {
     'freebsd-12.0-virtualbox': {'bare': 'generic/freebsd12',           'kea': 'godfryd/kea-freebsd-12.0'},
     'alpine-3.10-lxc':         {'bare': 'godfryd/lxc-alpine-3.10',     'kea': 'godfryd/kea-alpine-3.10'},
     'alpine-3.11-lxc':         {'bare': 'isc/lxc-alpine-3.11',         'kea': 'isc/kea-alpine-3.11'},
+    'alpine-3.12-lxc':         {'bare': 'isc/lxc-alpine-3.12',         'kea': 'isc/kea-alpine-3.12'},
 }
 
 # NOTES
 # ** Alpine **
 # 1. Extracting rootfs is failing:
 #    It requires commenting out checking if rootfs has been extraced as it checks for file /bin/true which is a link.
-#    Comment out in ~/.vagrant.d/gems/2.4.9/gems/vagrant-lxc-1.4.3/scripts/lxc-template near 'Failed to extract rootfs'
+#    Comment out in ~/.vagrant.d/gems/2.X.Y/gems/vagrant-lxc-1.4.3/scripts/lxc-template near 'Failed to extract rootfs'
 
 
 LXC_VAGRANTFILE_TPL = """# -*- mode: ruby -*-
@@ -1406,8 +1408,10 @@ def prepare_system_local(features, check_times):
         if 'docs' in features:
             if revision == '3.10':
                 packages.extend(['py-sphinx', 'py-sphinx_rtd_theme'])
-            else:
+            elif revision == '3.11':
                 packages.extend(['py3-sphinx'])
+            else:
+                packages.extend(['py3-sphinx', 'py3-sphinx_rtd_theme'])
 
         if 'unittest' in features:
             _install_gtest_sources()
