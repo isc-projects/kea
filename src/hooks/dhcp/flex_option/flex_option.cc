@@ -75,7 +75,7 @@ namespace isc {
 namespace flex_option {
 
 FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code)
-    : code_(code), action_(NONE) {
+    : code_(code), action_(NONE), csv_format_(true) {
 }
 
 FlexOptionImpl::OptionConfig::~OptionConfig() {
@@ -115,6 +115,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     }
     ConstElementPtr code_elem = option->get("code");
     ConstElementPtr name_elem = option->get("name");
+    ConstElementPtr csv_format_elem = option->get("csv-format");
     if (!code_elem && !name_elem) {
         isc_throw(BadValue, "'code' or 'name' must be specified: "
                   << option->str());
@@ -189,6 +190,15 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         isc_throw(BadValue, "option " << code << " was already specified");
     }
 
+    bool csv_format = true;
+    if (csv_format_elem) {
+        if (csv_format_elem->getType() != Element::boolean) {
+            isc_throw(BadValue, "'csv-format' must be a boolean: "
+                      << csv_format_elem->str());
+        }
+        csv_format = csv_format_elem->boolValue();
+    }
+
     Option::Universe universe;
     if (family == AF_INET) {
         universe = Option::V4;
@@ -197,6 +207,11 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     }
 
     OptionConfigPtr opt_cfg(new OptionConfig(code));
+
+    if (csv_format_elem) {
+        opt_cfg->setCSVFormat(csv_format);
+    }
+
     // opt_cfg initial action is NONE.
     parseAction(option, opt_cfg, universe,
                 "add", ADD, EvalContext::PARSER_STRING);
@@ -208,6 +223,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     if (opt_cfg->getAction() == NONE) {
         isc_throw(BadValue, "no action: " << option->str());
     }
+
     option_config_map_[code] = opt_cfg;
 }
 

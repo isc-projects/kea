@@ -14,6 +14,7 @@
 #include <dhcp/std_option_defs.h>
 #include <eval/evaluate.h>
 #include <eval/token.h>
+#include <util/strutil.h>
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -108,6 +109,20 @@ public:
             return (expr_);
         }
 
+        /// @brief Set csv format.
+        ///
+        /// @param flag the csv format.
+        void setCSVFormat(bool flag) {
+            csv_format_ = flag;
+        }
+
+        /// @brief Return csv format.
+        ///
+        /// @return the csv format.
+        bool getCSVFormat() const {
+            return (csv_format_);
+        }
+
     private:
         /// @brief The code.
         uint16_t code_;
@@ -120,6 +135,9 @@ public:
 
         /// @brief The match expression.
         isc::dhcp::ExpressionPtr expr_;
+
+        /// @brief The csv format flag of the option.
+        bool csv_format_;
     };
 
     /// @brief The type of shared pointers to option config.
@@ -179,29 +197,31 @@ public:
                     break;
                 }
 
-                def = isc::dhcp::LibDHCP::getOptionDef(space, opt_cfg->getCode());
+                if (opt_cfg->getCSVFormat()) {
+                    def = isc::dhcp::LibDHCP::getOptionDef(space, opt_cfg->getCode());
 
-                if (!def) {
-                    def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, opt_cfg->getCode());
-                }
+                    if (!def) {
+                        def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, opt_cfg->getCode());
+                    }
 
-                if (!def) {
-                    def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, opt_cfg->getCode());
-                }
+                    if (!def) {
+                        def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, opt_cfg->getCode());
+                    }
 
-                if (!def) {
+                    if (!def) {
+                        buffer.assign(value.begin(), value.end());
+                        opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
+                                                        buffer));
+                    } else {
+                        std::vector<std::string> split_vec =
+                                isc::util::str::tokens(value, ",", true);
+                        opt = def->optionFactory(universe, opt_cfg->getCode(),
+                                                 split_vec);
+                    }
+                } else {
                     buffer.assign(value.begin(), value.end());
                     opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
                                                     buffer));
-                } else {
-                    std::vector<std::string> split_vec;
-                    if (def->getType() != isc::dhcp::OPT_STRING_TYPE) {
-                        boost::split(split_vec, value, boost::is_any_of(","));
-                    } else {
-                        split_vec.push_back(value);
-                    }
-                    opt = def->optionFactory(universe, opt_cfg->getCode(),
-                                             split_vec);
                 }
 
                 // Add the option.
@@ -220,29 +240,31 @@ public:
                     opt = response->getOption(opt_cfg->getCode());
                 }
 
-                def = isc::dhcp::LibDHCP::getOptionDef(space, opt_cfg->getCode());
+                if (opt_cfg->getCSVFormat()) {
+                    def = isc::dhcp::LibDHCP::getOptionDef(space, opt_cfg->getCode());
 
-                if (!def) {
-                    def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, opt_cfg->getCode());
-                }
+                    if (!def) {
+                        def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, opt_cfg->getCode());
+                    }
 
-                if (!def) {
-                    def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, opt_cfg->getCode());
-                }
+                    if (!def) {
+                        def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, opt_cfg->getCode());
+                    }
 
-                if (!def) {
+                    if (!def) {
+                        buffer.assign(value.begin(), value.end());
+                        opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
+                                                        buffer));
+                    } else {
+                        std::vector<std::string> split_vec =
+                                isc::util::str::tokens(value, ",", true);
+                        opt = def->optionFactory(universe, opt_cfg->getCode(),
+                                                 split_vec);
+                    }
+                } else {
                     buffer.assign(value.begin(), value.end());
                     opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
                                                     buffer));
-                } else {
-                    std::vector<std::string> split_vec;
-                    if (def->getType() != isc::dhcp::OPT_STRING_TYPE) {
-                        boost::split(split_vec, value, boost::is_any_of(","));
-                    } else {
-                        split_vec.push_back(value);
-                    }
-                    opt = def->optionFactory(universe, opt_cfg->getCode(),
-                                             split_vec);
                 }
 
                 // Add the option.

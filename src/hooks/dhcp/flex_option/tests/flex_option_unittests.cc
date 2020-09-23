@@ -311,6 +311,19 @@ TEST_F(FlexOptionTest, optionConfigCodeNameMismatch) {
     EXPECT_EQ(expected, impl_->getErrMsg());
 }
 
+// Verify that the csv-format must be a boolean.
+TEST_F(FlexOptionTest, optionConfigBadCSVFormat) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr csv_format = Element::create(123);
+    option->set("csv-format", csv_format);
+    ElementPtr code = Element::create(12);
+    option->set("code", code);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'csv-format' must be a boolean: 123", impl_->getErrMsg());
+}
+
 // Verify that an option can be configured only once.
 TEST_F(FlexOptionTest, optionConfigTwice) {
     ElementPtr options = Element::createList();
@@ -799,6 +812,55 @@ TEST_F(FlexOptionTest, processAdd) {
     EXPECT_EQ(0, buffer_fqdn[12]);
 }
 
+// Verify that ADD action adds the specified option in binary format.
+TEST_F(FlexOptionTest, processAddDisableCSVFormat) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr csv_format = Element::create(false);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    option->set("csv-format", csv_format);
+
+    option = Element::createMap();
+    options->add(option);
+    code = Element::create(DHO_DOMAIN_SEARCH);
+    option->set("code", code);
+    add = Element::create(string("0x076578616d706c6503636f6d00"));
+    option->set("add", add);
+    option->set("csv-format", csv_format);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    EXPECT_FALSE(response->getOption(DHO_HOST_NAME));
+    EXPECT_FALSE(response->getOption(DHO_DOMAIN_SEARCH));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    OptionPtr opt = response->getOption(DHO_HOST_NAME);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_HOST_NAME, opt->getType());
+    const OptionBuffer& buffer = opt->getData();
+    ASSERT_EQ(3, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+
+    opt = response->getOption(DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_DOMAIN_SEARCH, opt->getType());
+    const OptionBuffer& buffer_fqdn = opt->getData();
+    ASSERT_EQ(13, buffer_fqdn.size());
+    EXPECT_EQ(7, buffer_fqdn[0]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
+    EXPECT_EQ(3, buffer_fqdn[8]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
+    EXPECT_EQ(0, buffer_fqdn[12]);
+}
+
 // Verify that ADD action does not add an already existing option.
 TEST_F(FlexOptionTest, processAddExisting) {
     CfgMgr::instance().setFamily(AF_INET6);
@@ -865,6 +927,55 @@ TEST_F(FlexOptionTest, processSupersede) {
     option->set("code", code);
     supersede = Element::create(string("'example.com'"));
     option->set("supersede", supersede);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    EXPECT_FALSE(response->getOption(DHO_HOST_NAME));
+    EXPECT_FALSE(response->getOption(DHO_DOMAIN_SEARCH));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    OptionPtr opt = response->getOption(DHO_HOST_NAME);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_HOST_NAME, opt->getType());
+    const OptionBuffer& buffer = opt->getData();
+    ASSERT_EQ(3, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+
+    opt = response->getOption(DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_DOMAIN_SEARCH, opt->getType());
+    const OptionBuffer& buffer_fqdn = opt->getData();
+    ASSERT_EQ(13, buffer_fqdn.size());
+    EXPECT_EQ(7, buffer_fqdn[0]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
+    EXPECT_EQ(3, buffer_fqdn[8]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
+    EXPECT_EQ(0, buffer_fqdn[12]);
+}
+
+// Verify that SUPERSEDE action supersedes the specified option in binary format.
+TEST_F(FlexOptionTest, processSupersedeDisableCSVFormat) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr csv_format = Element::create(false);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr supersede = Element::create(string("'abc'"));
+    option->set("supersede", supersede);
+    option->set("csv-format", csv_format);
+
+    option = Element::createMap();
+    options->add(option);
+    code = Element::create(DHO_DOMAIN_SEARCH);
+    option->set("code", code);
+    supersede = Element::create(string("0x076578616d706c6503636f6d00"));
+    option->set("supersede", supersede);
+    option->set("csv-format", csv_format);
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -1112,8 +1223,8 @@ TEST_F(FlexOptionTest, processFullAddWithComplexString) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(D6O_NEW_POSIX_TIMEZONE, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    EXPECT_EQ(37, buffer.size());
-    std::string data("EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00");
+    EXPECT_EQ(35, buffer.size());
+    std::string data("EST5EDT4,M3.2.0/02:00,M11.1.0/02:00");
     EXPECT_EQ(0, memcmp(&buffer[0], &data[0], buffer.size()));
 }
 
@@ -1142,8 +1253,8 @@ TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(D6O_NEW_POSIX_TIMEZONE, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    EXPECT_EQ(37, buffer.size());
-    std::string data("EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00");
+    EXPECT_EQ(35, buffer.size());
+    std::string data("EST5EDT4,M3.2.0/02:00,M11.1.0/02:00");
     EXPECT_EQ(0, memcmp(&buffer[0], &data[0], buffer.size()));
 }
 
