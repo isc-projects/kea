@@ -2182,7 +2182,7 @@ def list_created_systems():
 
 
 def destroy_system(path):
-    "Destroy Vagrant system under given path."""
+    """Destroy Vagrant system under given path."""
     execute('vagrant destroy', cwd=path, interactive=True)
 
 

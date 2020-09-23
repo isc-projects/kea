@@ -14,17 +14,17 @@ Some of those checks and updates can be made before actual freeze.
 
 1. Check Jenkins results:
    1. [ ] Check Jenkins jobs if they look ok (distcheck, etc)
-   1. [ ] Check Jenkins Tests Report: https://jenkins.isc.org/job/kea-1.7/job/jenkins-tests-report/
-   1. [ ] Check tarball check report: https://jenkins.isc.org/job/kea-1.7/job/tarball-internal/Kea_20Build_20Checks/
+   1. [ ] Check Jenkins Tests Report: https://jenkins.isc.org/job/kea-dev/job/jenkins-tests-report/
+   1. [ ] Check tarball check report: https://jenkins.isc.org/job/kea-dev/job/tarball-internal/Kea_20Build_20Checks/
 1. [ ] Check Perflab for drops in performance there (https://perflab.isc.org/)
 1. Check versioning, ask the development team if
    - the library versions are being updated
    - the HOOKS_VERSION is being updated;
    - [ ] create an issue for that for developers in Gitlab
 1. Prepare Release Notes
-   1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" folder, like this one: https://gitlab.isc.org/isc-projects/kea/wikis/release%20notes/Release-notes-1.5-final
+   1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" folder, like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/release%20notes/release-notes-1.7.10
    1. [ ] Finish release notes and conduct its review
-1. [ ] Run https://jenkins.isc.org/job/kea-1.7/job/release-pkgs-upload-internal/ and https://jenkins.isc.org/job/kea-1.7/job/release-pkgs-check-internal/ for testing repos to check if they work correctly.
+1. [ ] Run https://jenkins.isc.org/job/kea-dev/job/release-pkgs-upload-internal/ and https://jenkins.isc.org/job/kea-dev/job/release-pkgs-check-internal/ for testing repos to check if they work correctly.
 
 The following steps may involve changing files in the repository.
 
@@ -97,12 +97,12 @@ That is the last moment to freeze code!
 1. [ ] When the upload is completed then copy SHA checksums from the log and write an email to signers@isc.org requesting signatures
    of final tarballs on repo.isc.org indicating release folders. Attach SHA checksums to the request.
 1. [ ] Upload final RPM & DEB packages to cloudsmith.io
-   1. Go to https://jenkins.isc.org/job/kea-1.7/job/pkg/
+   1. Go to https://jenkins.isc.org/job/kea-dev/job/pkg/
    1. Pick the build for selected tarball in previous steps
-   1. Go to https://jenkins.isc.org/job/kea-1.7/job/release-pkgs-upload-internal/
+   1. Go to https://jenkins.isc.org/job/kea-dev/job/release-pkgs-upload-internal/
    1. Click "Build with Parameters" link
-   1. Pick your selected pkg build in Packages field, and select "prodcion" in Repository_Type field and click Build button.
-   1. When it finishes run check: https://jenkins.isc.org/job/kea-1.7/job/release-pkgs-check-internal/
+   1. Pick your selected pkg build in Packages field, and select "production" in Repository_Type field and click Build button.
+   1. When it finishes run check: https://jenkins.isc.org/job/kea-dev/job/release-pkgs-check-internal/
 1. [ ] Create git tags `Kea-1.x.y` in Kea main and premium repositories
 1. Update ReadTheDocs
    1. [ ] Trigger rebuilding docs on https://readthedocs.org/projects/kea/builds
@@ -122,7 +122,7 @@ That is the last moment to freeze code!
  - [ ] ***(Support)*** Update tickets in case of waiting support customers.
  - [ ] ***(QA)*** Inform Marketing of the release.
  - [ ] ***(QA)*** Update the internal [Kea release dates wiki page](https://wiki.isc.org/bin/view/Main/KeaReleaseDates) when public announcement has been made.
- - [ ] ***(Marketing)*** Upload Premium hooks tarball to SendOwl. Create a new product if a new branch, otherwise update existing product. Send notifications to existing subscribers of the new version. 
+ - [ ] ***(Marketing)*** Upload Premium hooks tarball to SendOwl. Create a new product if a new branch, otherwise update existing product. Send notifications to existing subscribers of the new version.
  - [ ] ***(Marketing)*** Announce on social media.
  - [ ] ***(Marketing)*** Update [Wikipedia entry for Kea](https://en.wikipedia.org/wiki/Kea_(software)).
  - [ ] ***(Marketing)*** Write blog article (if a major release).
