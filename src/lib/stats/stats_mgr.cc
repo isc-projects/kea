@@ -519,7 +519,8 @@ StatsMgr::statisticRemoveAllHandler(const string& /*name*/,
                                     const ConstElementPtr& /*params*/) {
     StatsMgr::instance().removeAll();
     return (createAnswer(CONTROL_RESULT_SUCCESS,
-                         "All statistics removed."));
+                         "Warning: statistic-remove-all command is deprecated."
+                         " All statistics removed."));
 }
 
 ConstElementPtr

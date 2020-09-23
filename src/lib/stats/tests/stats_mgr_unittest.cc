@@ -900,6 +900,10 @@ TEST_F(StatsMgrTest, commandRemoveAll) {
     int status_code;
     ConstElementPtr rep_all = parseAnswer(status_code, rsp);
     ASSERT_EQ(0, status_code);
+    ASSERT_TRUE(rep_all);
+    std::string exp = "\"Warning: statistic-remove-all command is deprecated.";
+    exp += " All statistics removed.\"";
+    EXPECT_EQ(exp, rep_all->str());
 
     EXPECT_FALSE(StatsMgr::instance().getObservation("alpha"));
     EXPECT_FALSE(StatsMgr::instance().getObservation("beta"));

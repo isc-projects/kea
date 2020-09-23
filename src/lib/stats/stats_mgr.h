@@ -219,6 +219,7 @@ public:
     void resetAll();
 
     /// @brief Removes all collected statistics.
+    /// @note This command was deprecated.
     void removeAll();
 
     /// @brief Returns size of specified statistic.
@@ -414,6 +415,8 @@ public:
                              const isc::data::ConstElementPtr& params);
 
     /// @brief Handles statistic-remove-all command
+    ///
+    /// @note The statistic-remove-all command was deprecated.
     ///
     /// This method handles statistic-remove-all command, which removes all
     /// statistics. Params parameter is ignored.
