@@ -45,7 +45,8 @@ configuration:
                 "options": [
                     {
                         "code": 100,
-                        "add": "concat(relay4[2].hex, 'abc')"
+                        "add": "concat(relay4[2].hex, 'abc')",
+                        "csv-format": true
                     }
                 ]
             }
@@ -65,7 +66,8 @@ To configure it for kea-dhcp6, the commands are simply as shown below:
                 "options": [
                     {
                         "code": 100,
-                        "add": "concat(relay6[0].option[37].hex, 'abc')"
+                        "add": "concat(relay6[0].option[37].hex, 'abc')",
+                        "csv-format": true
                     }
                 ]
             }
@@ -91,6 +93,8 @@ The sole parameter is a options list of options with:
    on the query packet. If the expression evaluates to true and the option
    already exists in the response packet, the option is removed from the
    response. Only one action can be specified.
+ - @b csv-format - Specifies the option format used for input. If not
+   specified, it will default to true.
 
 Note for the rare options which can be empty this mechanism does not work.
 The proposed solution in this case is to use a client class to set the
