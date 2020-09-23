@@ -1,3 +1,9 @@
+1809.	[func]		razvan
+	Added csv-format option to flex_option hook to be able to insert
+	option data in csv format. The implicit value is false, maintaining
+	compatibility with the previous default raw format.
+	(Gitlab #1373)
+
 1808.	[func]		razvan
 	Support for new IPv6-only-preferred option for DHCPv4 has been
 	added. It lets Kea to signal to compatible devices that the
