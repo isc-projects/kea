@@ -242,7 +242,7 @@
                 // the specified value will get an address of 2001:db8:1::100.
                 {
                     "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
-                    "ip-addresses": [ "2001:db8:1:0::100" ]
+                    "ip-addresses": [ "2001:db8:1::100" ]
                 },
 
                 // This is similar to the previous one, but this time the
@@ -256,7 +256,7 @@
                 // precedence.
                 {
                     "hw-address": "00:01:02:03:04:05",
-                    "ip-addresses": [ "2001:db8:1:0::101" ],
+                    "ip-addresses": [ "2001:db8:1::101" ],
                     "option-data": [
                         {
                             "name": "dns-servers",
