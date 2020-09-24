@@ -844,7 +844,7 @@ class VagrantEnv(object):
             cmd += 'gpgcheck=0\n'
             cmd += "EOF\n\'"
             self.execute(cmd)
-            self.execute("sudo dnf install -y python36 rpm-build python3-virtualenv")
+            self.execute("sudo dnf install -y python36 rpm-build python3-virtualenv", attempts=3)
             self.python = 'python3'
 
         # select proper python version for running Hammer inside Vagrant system
