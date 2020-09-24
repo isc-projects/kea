@@ -2430,7 +2430,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             // compare DDNS parameters for both subnets and then decide if we need
             // to rerun the name logic, but that's not likely to be any faster than
             // just re-running the name logic.  @todo When inherited parameter
-            // performance is improved this argument could be revisisted.
+            // performance is improved this argument could be revisited.
+            // Another case is the new subnet has a reserved hostname.
 
             // First, we need to remove the prior values from the response and reset
             // those in context, to give processClientName a clean slate.
