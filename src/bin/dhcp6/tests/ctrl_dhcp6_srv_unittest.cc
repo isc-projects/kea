@@ -1280,11 +1280,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
     EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
               response);
 
-    // Check statistic-remove-all
-    sendUnixCommand("{ \"command\" : \"statistic-remove-all\", "
-                    "  \"arguments\": {}}", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics removed.\" }",
-              response);
+    // Check statistic-remove-all (deprecated)
 
     // Check statistic-sample-age-set
     sendUnixCommand("{ \"command\" : \"statistic-sample-age-set\", "
