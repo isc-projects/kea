@@ -17,7 +17,7 @@
     "name": "lease4-get",
     "resp-comment": [
         "lease4-get returns a result that indicates the outcome of the operation and lease details,",
-        "if found. It has one of the following values: 0 (success), 1 (error), or 2 (empty). ",
+        "if found. It has one of the following values: 0 (success), 1 (error), or 3 (empty). ",
         "Result 3 is returned if no leases are found with specified IP address."
     ],
     "resp-syntax": [

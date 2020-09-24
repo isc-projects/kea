@@ -16,7 +16,7 @@
     "hook": "lease_cmds",
     "name": "lease6-resend-ddns",
     "resp-comment": [
-        "lease6-resend-ddns returns a result that indicates the outcome of the operation and lease details, if found. It has one of the following values: 0 (success), 1 (error), or 2 (empty)."
+        "lease6-resend-ddns returns a result that indicates the outcome of the operation and lease details, if found. It has one of the following values: 0 (success), 1 (error), or 3 (empty)."
     ],
     "resp-syntax": [
         "{",
