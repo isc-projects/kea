@@ -539,7 +539,7 @@ AllocEngine::ClientContext6::hasGlobalReservation(const IPv6Resrv& resv) const {
 DdnsParamsPtr
 AllocEngine::ClientContext6::getDdnsParams() {
     // We already have it return it unless the context subnet has changed.
-    if (ddns_params_ && subnet_ && (subnet_->getID() == ddns_params_->getSubnet()->getID())) {
+    if (ddns_params_ && subnet_ && (subnet_->getID() == ddns_params_->getSubnetId())) {
         return (ddns_params_);
     }
 
@@ -3155,7 +3155,7 @@ AllocEngine::ClientContext4::globalHost() const {
 DdnsParamsPtr
 AllocEngine::ClientContext4::getDdnsParams() {
     // We already have it return it unless the context subnet has changed.
-    if (ddns_params_ && subnet_ && (subnet_->getID() == ddns_params_->getSubnet()->getID())) {
+    if (ddns_params_ && subnet_ && (subnet_->getID() == ddns_params_->getSubnetId())) {
         return (ddns_params_);
     }
 

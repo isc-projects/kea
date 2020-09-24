@@ -122,10 +122,14 @@ public:
     /// @throw BadValue if the compilation fails.
     isc::util::str::StringSanitizerPtr getHostnameSanitizer() const;
 
-    /// @brief Returns the subnet associated with these parameters
-    /// @return pointer to the subnet
-    const SubnetPtr getSubnet() const {
-        return subnet_;
+    /// @brief Returns the subnet-id of the subnet associated with these parameters
+    /// @return value of subnet-id (or 0 if no subnet is associated)
+    SubnetID getSubnetId() const {
+        if (subnet_){
+            return subnet_->getID();
+        } else {
+            return 0;
+        }
     }
 
 private:
