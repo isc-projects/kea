@@ -18,7 +18,7 @@
     ],
     "resp-comment": [
         "Result 0 is returned when at least one lease is found, 1 when parameters are malformed or missing,",
-        "3 is returned if no leases are found."
+        "3 is returned if no leases are found with specified parameters."
     ],
     "resp-syntax": [
         "[",

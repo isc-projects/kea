@@ -6,7 +6,7 @@
     ],
     "cmd-comment": [
         "The ``lease4-get-all`` command may result in very large responses. Please consider using ",
-        "``lease4-get-page`` to get them in chunks. the ``subnets`` parameter is optional. If not ",
+        "``lease4-get-page`` to get them in chunks. The ``subnets`` parameter is optional. If not ",
         "specified, leases from all subnets are returned."
     ],
     "cmd-syntax": [
