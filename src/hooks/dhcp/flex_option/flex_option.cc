@@ -74,8 +74,9 @@ parseAction(ConstElementPtr option,
 namespace isc {
 namespace flex_option {
 
-FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code)
-    : code_(code), action_(NONE), csv_format_(false) {
+FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code,
+                                           OptionDefinitionPtr def)
+    : code_(code), def_(def), action_(NONE), csv_format_(false) {
 }
 
 FlexOptionImpl::OptionConfig::~OptionConfig() {
@@ -116,9 +117,19 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     ConstElementPtr code_elem = option->get("code");
     ConstElementPtr name_elem = option->get("name");
     ConstElementPtr csv_format_elem = option->get("csv-format");
+    OptionDefinitionPtr def;
     if (!code_elem && !name_elem) {
         isc_throw(BadValue, "'code' or 'name' must be specified: "
                   << option->str());
+    }
+    string space;
+    Option::Universe universe;
+    if (family == AF_INET) {
+        space = DHCP4_OPTION_SPACE;
+        universe = Option::V4;
+    } else {
+        space = DHCP6_OPTION_SPACE;
+        universe = Option::V6;
     }
     uint16_t code;
     if (code_elem) {
@@ -151,6 +162,17 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
             }
         }
         code = static_cast<uint16_t>(value);
+        def = isc::dhcp::LibDHCP::getOptionDef(space, code);
+        if (!def) {
+            def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, code);
+        }
+        if (!def) {
+            def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, code);
+        }
+        if (!def) {
+            isc_throw(BadValue, "no known option with code '" << code
+                      << "' in '" << space << "' space");
+        }
     }
     if (name_elem) {
         if (name_elem->getType() != Element::string) {
@@ -161,13 +183,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         if (name.empty()) {
             isc_throw(BadValue, "'name' must not be empty");
         }
-        string space;
-        if (family == AF_INET) {
-            space = DHCP4_OPTION_SPACE;
-        } else {
-            space = DHCP6_OPTION_SPACE;
-        }
-        OptionDefinitionPtr def = LibDHCP::getOptionDef(space, name);
+        def = LibDHCP::getOptionDef(space, name);
         if (!def) {
             def = LibDHCP::getRuntimeOptionDef(space, name);
         }
@@ -199,14 +215,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         csv_format = csv_format_elem->boolValue();
     }
 
-    Option::Universe universe;
-    if (family == AF_INET) {
-        universe = Option::V4;
-    } else {
-        universe = Option::V6;
-    }
-
-    OptionConfigPtr opt_cfg(new OptionConfig(code));
+    OptionConfigPtr opt_cfg(new OptionConfig(code, def));
 
     if (csv_format_elem) {
         opt_cfg->setCSVFormat(csv_format);

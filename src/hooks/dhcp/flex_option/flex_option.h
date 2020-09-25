@@ -55,7 +55,7 @@ public:
         /// @brief Constructor.
         ///
         /// @param code the option code.
-        OptionConfig(uint16_t code);
+        OptionConfig(uint16_t code, isc::dhcp::OptionDefinitionPtr def);
 
         /// @brief Destructor.
         virtual ~OptionConfig();
@@ -65,6 +65,13 @@ public:
         /// @return option code.
         uint16_t getCode() const {
             return (code_);
+        }
+
+        /// @brief Return option definition.
+        ///
+        /// @return option definition.
+        isc::dhcp::OptionDefinitionPtr getOptionDef() const {
+            return (def_);
         }
 
         /// @brief Set action.
@@ -127,6 +134,9 @@ public:
         /// @brief The code.
         uint16_t code_;
 
+        /// @brief The option definition.
+        isc::dhcp::OptionDefinitionPtr def_;
+
         /// @brief The action.
         Action action_;
 
@@ -174,15 +184,12 @@ public:
     template <typename PktType>
     void process(isc::dhcp::Option::Universe universe,
                  PktType query, PktType response) {
-        std::string space = (universe == isc::dhcp::Option::V4 ?
-                             DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE);
-
         for (auto pair : getOptionConfigMap()) {
             const OptionConfigPtr& opt_cfg = pair.second;
             std::string value;
             isc::dhcp::OptionBuffer buffer;
             isc::dhcp::OptionPtr opt = response->getOption(opt_cfg->getCode());
-            isc::dhcp::OptionDefinitionPtr def;
+            isc::dhcp::OptionDefinitionPtr def = opt_cfg->getOptionDef();
             switch (opt_cfg->getAction()) {
             case NONE:
                 break;
@@ -196,18 +203,8 @@ public:
                 if (value.empty()) {
                     break;
                 }
-
+                // Check for cvs format.
                 if (opt_cfg->getCSVFormat()) {
-                    def = isc::dhcp::LibDHCP::getOptionDef(space, opt_cfg->getCode());
-
-                    if (!def) {
-                        def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, opt_cfg->getCode());
-                    }
-
-                    if (!def) {
-                        def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, opt_cfg->getCode());
-                    }
-
                     if (!def) {
                         buffer.assign(value.begin(), value.end());
                         opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
@@ -223,7 +220,6 @@ public:
                     opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
                                                     buffer));
                 }
-
                 // Add the option.
                 response->addOption(opt);
                 logAction(ADD, opt_cfg->getCode(), value);
@@ -239,18 +235,8 @@ public:
                     response->delOption(opt_cfg->getCode());
                     opt = response->getOption(opt_cfg->getCode());
                 }
-
+                // Check for cvs format.
                 if (opt_cfg->getCSVFormat()) {
-                    def = isc::dhcp::LibDHCP::getOptionDef(space, opt_cfg->getCode());
-
-                    if (!def) {
-                        def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, opt_cfg->getCode());
-                    }
-
-                    if (!def) {
-                        def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, opt_cfg->getCode());
-                    }
-
                     if (!def) {
                         buffer.assign(value.begin(), value.end());
                         opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
@@ -266,7 +252,6 @@ public:
                     opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
                                                     buffer));
                 }
-
                 // Add the option.
                 response->addOption(opt);
                 logAction(SUPERSEDE, opt_cfg->getCode(), value);

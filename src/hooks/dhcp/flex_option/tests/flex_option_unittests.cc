@@ -170,7 +170,7 @@ TEST_F(FlexOptionTest, optionConfigBadCode4) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
-    code = Element::create(254);
+    code = Element::create(2);
     option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -210,7 +210,7 @@ TEST_F(FlexOptionTest, optionConfigBadCode6) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
-    code = Element::create(65535);
+    code = Element::create(2);
     option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -250,9 +250,22 @@ TEST_F(FlexOptionTest, optionConfigUnknownName) {
     ElementPtr add = Element::create(string("'ab'"));
     option->set("add", add);
     ElementPtr name = Element::create(string("foobar"));
-    option->set("name",name);
+    option->set("name", name);
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
     EXPECT_EQ("no known 'foobar' option in 'dhcp4' space", impl_->getErrMsg());
+}
+
+// Verify that the code must be a known option.
+TEST_F(FlexOptionTest, optionConfigUnknownCode) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'ab'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("no known option with code '109' in 'dhcp4' space", impl_->getErrMsg());
 }
 
 // Verify that the name can be a standard option.
@@ -751,8 +764,9 @@ TEST_F(FlexOptionTest, processEmpty) {
 TEST_F(FlexOptionTest, processNone) {
     CfgMgr::instance().setFamily(AF_INET6);
 
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_BOOTFILE_URL);
     FlexOptionImpl::OptionConfigPtr
-        opt_cfg(new FlexOptionImpl::OptionConfig(D6O_BOOTFILE_URL));
+        opt_cfg(new FlexOptionImpl::OptionConfig(D6O_BOOTFILE_URL, def));
     EXPECT_EQ(FlexOptionImpl::NONE, opt_cfg->getAction());
     auto map = impl_->getMutableOptionConfigMap();
     map[DHO_HOST_NAME] = opt_cfg;
@@ -769,7 +783,6 @@ TEST_F(FlexOptionTest, processNone) {
 // Verify that ADD action adds the specified option in csv format.
 TEST_F(FlexOptionTest, processAddEnableCSVFormat) {
     ElementPtr options = Element::createList();
-    ElementPtr csv_format = Element::create(true);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(DHO_HOST_NAME);
@@ -783,7 +796,8 @@ TEST_F(FlexOptionTest, processAddEnableCSVFormat) {
     option->set("code", code);
     add = Element::create(string("'example.com'"));
     option->set("add", add);
-    option->set("csv-format", csv_format);
+    // fqdn option data is parsed using option definition in csv format.
+    option->set("csv-format", Element::create(true));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -817,7 +831,6 @@ TEST_F(FlexOptionTest, processAddEnableCSVFormat) {
 // Verify that ADD action adds the specified option in raw format.
 TEST_F(FlexOptionTest, processAddDisableCSVFormat) {
     ElementPtr options = Element::createList();
-    ElementPtr csv_format = Element::create(false);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(DHO_HOST_NAME);
@@ -831,7 +844,8 @@ TEST_F(FlexOptionTest, processAddDisableCSVFormat) {
     option->set("code", code);
     add = Element::create(string("0x076578616d706c6503636f6d00"));
     option->set("add", add);
-    option->set("csv-format", csv_format);
+    // fqdn option data is specified in raw format.
+    option->set("csv-format", Element::create(false));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -915,7 +929,6 @@ TEST_F(FlexOptionTest, processAddEmpty) {
 // Verify that SUPERSEDE action supersedes the specified option in csv format.
 TEST_F(FlexOptionTest, processSupersedeEnableCSVFormat) {
     ElementPtr options = Element::createList();
-    ElementPtr csv_format = Element::create(true);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(DHO_HOST_NAME);
@@ -929,7 +942,8 @@ TEST_F(FlexOptionTest, processSupersedeEnableCSVFormat) {
     option->set("code", code);
     supersede = Element::create(string("'example.com'"));
     option->set("supersede", supersede);
-    option->set("csv-format", csv_format);
+    // fqdn option data is parsed using option definition in csv format.
+    option->set("csv-format", Element::create(true));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -963,7 +977,6 @@ TEST_F(FlexOptionTest, processSupersedeEnableCSVFormat) {
 // Verify that SUPERSEDE action supersedes the specified option in raw format.
 TEST_F(FlexOptionTest, processSupersedeDisableCSVFormat) {
     ElementPtr options = Element::createList();
-    ElementPtr csv_format = Element::create(false);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(DHO_HOST_NAME);
@@ -977,7 +990,8 @@ TEST_F(FlexOptionTest, processSupersedeDisableCSVFormat) {
     option->set("code", code);
     supersede = Element::create(string("0x076578616d706c6503636f6d00"));
     option->set("supersede", supersede);
-    option->set("csv-format", csv_format);
+    // fqdn option data is specified in raw format.
+    option->set("csv-format", Element::create(false));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -1013,7 +1027,6 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     CfgMgr::instance().setFamily(AF_INET6);
 
     ElementPtr options = Element::createList();
-    ElementPtr csv_format = Element::create(true);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(D6O_BOOTFILE_URL);
@@ -1027,7 +1040,8 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     option->set("code", code);
     supersede = Element::create(string("'example.com'"));
     option->set("supersede", supersede);
-    option->set("csv-format", csv_format);
+    // fqdn option data is parsed using option definition in csv format.
+    option->set("csv-format", Element::create(true));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -1205,7 +1219,6 @@ TEST_F(FlexOptionTest, processFullTest) {
 // Verify that complex strings with escaped characters are properly parsed on add.
 TEST_F(FlexOptionTest, processFullAddWithComplexString) {
     ElementPtr options = Element::createList();
-    ElementPtr csv_format = Element::create(true);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(D6O_NEW_POSIX_TIMEZONE);
@@ -1213,7 +1226,8 @@ TEST_F(FlexOptionTest, processFullAddWithComplexString) {
     string expr = "ifelse(option[39].exists,'EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00','')";
     ElementPtr add = Element::create(expr);
     option->set("add", add);
-    option->set("csv-format", csv_format);
+    // strings with escape characters are parsed in csv format.
+    option->set("csv-format", Element::create(true));
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
@@ -1238,7 +1252,6 @@ TEST_F(FlexOptionTest, processFullAddWithComplexString) {
 // Verify that complex strings with escaped characters are properly parsed on supersede.
 TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
     ElementPtr options = Element::createList();
-    ElementPtr csv_format = Element::create(true);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(D6O_NEW_POSIX_TIMEZONE);
@@ -1246,7 +1259,8 @@ TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
     string expr = "ifelse(option[39].exists,'EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00','')";
     ElementPtr supersede = Element::create(expr);
     option->set("supersede", supersede);
-    option->set("csv-format", csv_format);
+    // strings with escape characters are parsed in csv format.
+    option->set("csv-format", Element::create(true));
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 

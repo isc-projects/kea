@@ -94,7 +94,9 @@ The sole parameter is a options list of options with:
    already exists in the response packet, the option is removed from the
    response. Only one action can be specified.
  - @b csv-format - Specifies the option format used for input. If not
-   specified, it will default to false (raw data).
+   specified, it will default to false (raw data). When enabled, the option
+   data will be parsed using csv format and packed according to the option
+   definition.
 
 Note for the rare options which can be empty this mechanism does not work.
 The proposed solution in this case is to use a client class to set the
