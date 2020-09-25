@@ -810,7 +810,8 @@ class VagrantEnv(object):
         execute('vagrant ssh-config > %s' % ssh_cfg_path, cwd=self.vagrant_dir)
         return ssh_cfg_path
 
-    def execute(self, cmd, timeout=None, raise_error=True, log_file_path=None, quiet=False, env=None):
+    def execute(self, cmd, timeout=None, raise_error=True, log_file_path=None, quiet=False, env=None,
+                attempts=1, sleep_time_after_attempt=None):
         """Execute provided command inside Vagrant system."""
         if not env:
             env = os.environ.copy()
@@ -818,7 +819,8 @@ class VagrantEnv(object):
 
         return execute('vagrant ssh -c "%s"' % cmd, env=env, cwd=self.vagrant_dir, timeout=timeout,
                        raise_error=raise_error, dry_run=self.dry_run, log_file_path=log_file_path,
-                       quiet=quiet, check_times=self.check_times)
+                       quiet=quiet, check_times=self.check_times,
+                       attempts=attempts, sleep_time_after_attempt=sleep_time_after_attempt)
 
     def prepare_system(self):
         """Prepare Vagrant system for building Kea."""
