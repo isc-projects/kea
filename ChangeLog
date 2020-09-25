@@ -1,3 +1,12 @@
+1806.	[bug]		tmark
+	The DNS update code behaving better when there is a shared network
+	and the code initially selected one subnet, but then later determined
+	that a different subnet will be used. There is still a corner-case
+	in DHCPv6 if the client requests multiple addresses or multiple
+	prefixes and some of them is serviced from one subnet and some
+	from another.
+	(Gitlab #1389)
+
 1805.	[doc]		tomek
 	API documentation for lease4-get-* and lease6-get-* commands
 	has been updated.
