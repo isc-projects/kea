@@ -1818,6 +1818,8 @@ is being sent by the relay agent.
    | dhcp-agent-options                     | 82   | empty                     | false       | true        |
    +----------------------------------------+------+---------------------------+-------------+-------------+
 
+The following table lists all option types used in the previous two tables with a description of
+what values are accepted for them.
 
 .. _dhcp-types:
 

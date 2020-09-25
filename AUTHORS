@@ -2,8 +2,8 @@
 ------------------------------
 
 Primary developers:
- - Tomek Mrugalski (DHCPv4, DHCPv6 components, prefix
-                    delegation, memfile, database interface, core libdhcp++,
+ - Tomek Mrugalski (DHCPv4, DHCPv6 components, prefix delegation,
+                    memfile, database interface, core libdhcp++,
                     host reservation, MAC extraction in DHCPv6,
                     statistics manager, kea-shell, netconf, flex/bison
                     parsers, flex-id, documentation)
