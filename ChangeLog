@@ -1,3 +1,8 @@
+1807.	[doc]		tomek
+	Added separate table with DHCPv4 options that are governed by Kea
+	itself, rather than configured by administrator.
+	(Gitlab #1323, #1398)
+
 1806.	[bug]		tmark
 	The DNS update code behaving better when there is a shared network
 	and the code initially selected one subnet, but then later determined
