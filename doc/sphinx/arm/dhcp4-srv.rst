@@ -1561,7 +1561,7 @@ currently has no means to validate it.
 
 .. _dhcp4-std-options-list:
 
-.. table:: List of Standard DHCPv4 Options (configurable by administrator)
+.. table:: List of standard DHCPv4 options configurable by an administrator
 
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | Name                                   | Code | Type                      | Array?      | Returned if |
