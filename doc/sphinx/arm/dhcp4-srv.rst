@@ -1788,7 +1788,7 @@ never be sent by the server. The `dhcp-renewal-time` and `dhcp-rebinding-time` a
 value sent by the client. The `fqdn` option is part of the DDNS and D2 configuration. The `dhcp-agent-options`
 is being sent by the relay agent.
 
-.. table:: List of Standard DHCPv4 Options (managed by Kea on its own)
+.. table:: List of standard DHCPv4 options managed by Kea on its own and not directly configurable by an administrator
 
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | Name                                   | Code | Type                      | Array?      | Returned if |
