@@ -1218,6 +1218,8 @@ TEST_F(FlexOptionTest, processFullTest) {
 
 // Verify that complex strings with escaped characters are properly parsed on add.
 TEST_F(FlexOptionTest, processFullAddWithComplexString) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();
     options->add(option);
@@ -1251,6 +1253,8 @@ TEST_F(FlexOptionTest, processFullAddWithComplexString) {
 
 // Verify that complex strings with escaped characters are properly parsed on supersede.
 TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();
     options->add(option);
