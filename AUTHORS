@@ -2,29 +2,32 @@
 ------------------------------
 
 Primary developers:
- - Tomek Mrugalski (lead developer: DHCPv4, DHCPv6 components, prefix
+ - Tomek Mrugalski (DHCPv4, DHCPv6 components, prefix
                     delegation, memfile, database interface, core libdhcp++,
                     host reservation, MAC extraction in DHCPv6,
                     statistics manager, kea-shell, netconf, flex/bison
                     parsers, flex-id, documentation)
- - Stephen Morris (Hooks, MySQL)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
                      host reservation, lease file cleanup, lease expiration,
                      control agent, shared networks, high availability,
                      config backend)
  - Thomas Markwalder (DDNS, user_chk, global host reservations, stat commands,
                       congestion handling, config backend)
- - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
-                   radius, netconf, config backend)
- - Brian Reid (logo design)
- - Shawn Routhier (lease file cleanup)
+                   radius, netconf, config backend, multi-threading)
  - Michal Nowikowski (testing, hammer, release engineering)
- - Razvan Becheriu (cassandra, sysrepo)
+ - Razvan Becheriu (cassandra, sysrepo, multi-threading)
+ - Vicky Risk (documentation)
  - Suzanne Goldlust (documentation)
 
-Primary area of work mentioned in parentheses. The list is in a roughly
+Former developers who are no longer active:
+ - Stephen Morris (Hooks, MySQL)
+ - Jeremy C. Reed (documentation, build system, testing, release engineering)
+ - Brian Reid (logo design)
+ - Shawn Routhier (lease file cleanup)
+
+Main area of work mentioned in parentheses. The lists are in a roughly
 chronological order.
 
 Kea uses parts of the code of the now-defunct BIND 10 project. The following
