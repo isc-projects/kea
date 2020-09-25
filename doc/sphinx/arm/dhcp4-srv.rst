@@ -1561,7 +1561,7 @@ currently has no means to validate it.
 
 .. _dhcp4-std-options-list:
 
-.. table:: List of Standard DHCPv4 Options
+.. table:: List of Standard DHCPv4 Options (configurable by administrator)
 
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | Name                                   | Code | Type                      | Array?      | Returned if |
@@ -1774,6 +1774,50 @@ currently has no means to validate it.
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | v4-access-domain                       | 213  | fqdn                      | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
+
+Kea supports more options than the listed above. The following list is mostly useful for readers who
+want to understand whether Kea is able to support certain options. The following options are
+configured by the Kea engine itself and in general should not be configured manually. The
+`subnet-mask` is calculated based on subnet definition. The `host-name` is generally governed by the
+DNS configuration. The `dhcp-requested-address` may be sent by the client and the server should not
+set it. The `dhcp-lease-time` is set by Kea automatically based on the `valid-lifetime` parameter.
+The `dhcp-message-type` is set by the Kea engine depending on the situation and should never be
+configured explicitly by sysadmin. The `dhcp-parameter-request-list` is sent by clients and should
+never be sent by the server. The `dhcp-renewal-time` and `dhcp-rebinding-time` are governed by
+`renew-timer` and `rebind-timer` parameters. The `dhcp-client-identifier` is echoed back with the
+value sent by the client. The `fqdn` option is part of the DDNS and D2 configuration. The `dhcp-agent-options`
+is being sent by the relay agent.
+
+.. table:: List of Standard DHCPv4 Options (managed by Kea on its own)
+
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | Name                                   | Code | Type                      | Array?      | Returned if |
+   |                                        |      |                           |             | not         |
+   |                                        |      |                           |             | requested?  |
+   +========================================+======+===========================+=============+=============+
+   | subnet-mask                            | 1    | ipv4-address              | false       | true        |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | host-name                              | 12   | string                    | false       | false       |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | dhcp-requested-address                 | 50   | ipv6-address              | false       | true        |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | dhcp-lease-time                        | 51   | uint32                    | false       | true        |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | dhcp-message-type                      | 53   | string                    | false       | true        |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | dhcp-parameter-request-list            | 55   | uint8                     | true        | false       |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | dhcp-renewal-time                      | 58   | uint32                    | false       | true        |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | dhcp-rebinding-time                    | 59   | uint32                    | false       | true        |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | dhcp-client-identifier                 | 61   | hex                       | false       | true        |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | fqdn                                   | 81   | fqdn                      | false       | true        |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | dhcp-agent-options                     | 82   | empty                     | false       | true        |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+
 
 .. _dhcp-types:
 
