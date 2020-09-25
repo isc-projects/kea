@@ -1013,6 +1013,7 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     CfgMgr::instance().setFamily(AF_INET6);
 
     ElementPtr options = Element::createList();
+    ElementPtr csv_format = Element::create(true);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(D6O_BOOTFILE_URL);
@@ -1026,6 +1027,7 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     option->set("code", code);
     supersede = Element::create(string("'example.com'"));
     option->set("supersede", supersede);
+    option->set("csv-format", csv_format);
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
