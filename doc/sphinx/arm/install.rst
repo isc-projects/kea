@@ -121,7 +121,9 @@ the system:
    texlive with its extensions and Doxygen, if using the --enable-generate-docs
    configuration option to create the documentation. Particularly,
    in case of Fedora: python3-sphinx, texlive and texlive-collection-latexextra;
-   in case of Ubuntu: python3-sphinx, python3-sphinx-rtd-theme and texlive???
+   in case of Ubuntu: python3-sphinx, python3-sphinx-rtd-theme and texlive-binaries.
+   If LaTeX packages are missing, Kea will skip PDF generation and will produce
+   only HTML documents.
 
 Visit ISC's Knowledgebase at https://kb.isc.org/docs/installing-kea for
 system-specific installation tips.
