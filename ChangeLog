@@ -1,3 +1,11 @@
+1808.	[func]		razvan
+	Support for new IPv6-only-preferred option for DHCPv4 has been
+	added. It lets Kea to signal to compatible devices that the
+	IPv6 connectivity is available and they can disable their
+	IPv4 stack. This implements support for draft-ietf-dhc-v6only-08,
+	which is expected to be soon published by IETF as an RFC.
+	(Gitlab #1351)
+
 1807.	[doc]		tomek
 	Added separate table with DHCPv4 options that are governed by Kea
 	itself, rather than configured by administrator.
