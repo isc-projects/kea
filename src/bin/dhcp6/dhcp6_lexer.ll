@@ -1365,7 +1365,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
-        return isc::dhcp::Dhcp6Parser::make_CACHE_THRESHOLD((driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_CACHE_THRESHOLD(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("cache-threshold", driver.loc_);
     }
@@ -1376,7 +1376,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
-        return isc::dhcp::Dhcp6Parser::make_CACHE_MAX((driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_CACHE_MAX(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("cache-max", driver.loc_);
     }
