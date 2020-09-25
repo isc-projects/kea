@@ -1777,7 +1777,7 @@ currently has no means to validate it.
 
 Kea supports more options than the listed above. The following list is mostly useful for readers who
 want to understand whether Kea is able to support certain options. The following options are
-configured by the Kea engine itself and in general should not be configured manually. The
+returned by the Kea engine itself and in general should not be configured manually. The
 `subnet-mask` is calculated based on subnet definition. The `host-name` is generally governed by the
 DNS configuration. The `dhcp-requested-address` may be sent by the client and the server should not
 set it. The `dhcp-lease-time` is set by Kea automatically based on the `valid-lifetime` parameter.
