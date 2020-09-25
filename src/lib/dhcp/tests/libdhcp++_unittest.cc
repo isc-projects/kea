@@ -1633,6 +1633,9 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_TCODE, begin, end,
                                     typeid(OptionString));
 
+    LibDhcpTest::testStdOptionDefs4(DHO_V6_ONLY_PREFERRED, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
     LibDhcpTest::testStdOptionDefs4(DHO_NETINFO_ADDR, begin, end,
                                     typeid(Option4AddrLst));
 
