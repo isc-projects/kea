@@ -3864,7 +3864,7 @@ RFC specifies a DHCPv4 option to indicate that a host supports an IPv6-only mode
 forgo obtaining an IPv4 address if the network provides IPv6 connectivity. The general idea is that
 a network administrator can enable this option to signal to compatible dual-stack devices that the
 IPv6 connectivity is available and they can shut down their IPv4 stack. The new option
-`v6-only-preferred` is expressed as 32 bit unsigned integer and expressed for how long the device
+`v6-only-preferred` content is a 32 bit unsigned integer and specifies for how long the device
 should disable its stack for. The value is expressed in seconds.
 
 The draft mentions V6ONLY_WAIT timer. This is implemented in Kea by setting the value of
