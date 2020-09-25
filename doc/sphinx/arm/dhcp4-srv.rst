@@ -3855,6 +3855,43 @@ Our tests reported best results when:
 -  ``packet-queue-size``: 11 * ``thread-pool-size`` when using ``postgresql`` for
    storing leases. In our case it's 11 * 8 = 88.
 
+IPv6-only Preferred Networks
+----------------------------
+
+A recent Internet-Draft `draft-ietf-dhc-v6only
+<https://datatracker.ietf.org/doc/html/draft-ietf-dhc-v6only-08>`_ soon to be published by IETF as
+RFC specifies a DHCPv4 option to indicate that a host supports an IPv6-only mode and is willing to
+forgo obtaining an IPv4 address if the network provides IPv6 connectivity. The general idea is that
+a network administrator can enable this option to signal to compatible dual-stack devices that the
+IPv6 connectivity is available and they can shut down their IPv4 stack. The new option
+`v6-only-preferred` is expressed as 32 bit unsigned integer and expressed for how long the device
+should disable its stack for. The value is expressed in seconds.
+
+The draft mentions V6ONLY_WAIT timer. This is implemented in Kea by setting the value of
+v6-only-preferred option. This follows the usual practice of setting options. You can specify the
+option value on pool, subnet, shared network, global levels or even specify it in host reservations.
+
+Note there is no special processing involved. This follows the standard Kea option processing
+regime. The option will not be sent back, unless the client explicitly requests it. For example, to
+enable the option for the whole subnet, the following configuration can be used:
+
+::
+
+    "subnet4": [
+	{
+	    "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+	    "subnet": "192.0.2.0/24",
+	    "option-data": [
+		{
+		    // This will make the v6-only capable devices to disable their
+		    // v4 stack for half an hour and then try again
+		    "name": "v6-only-preferred",
+		    "data": "1800"
+		}
+	    ]
+	}
+    ],
+
 .. _host-reservation-v4:
 
 Host Reservation in DHCPv4
@@ -6120,6 +6157,11 @@ The following standards are currently supported:
    to handle Relay Agent Information Source Port suboption in a received
    message, remembers the UDP port  and sends back reply to the same relay
    agent using this UDP port.
+
+-  *IPv6-Only-Preferred Option for DHCPv4*, `draft-ietf-dhc-v6only-08
+   <https://datatracker.ietf.org/doc/html/draft-ietf-dhc-v6only-08>`__: The Kea
+   server is able to designate its pools and subnets as v6only-preferred and send
+   back the `v6-only-preferred` option to clients that requested it.
 
 .. _dhcp4-limit:
 
