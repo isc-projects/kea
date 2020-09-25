@@ -766,9 +766,10 @@ TEST_F(FlexOptionTest, processNone) {
     EXPECT_EQ(response_txt, response->toText());
 }
 
-// Verify that ADD action adds the specified option.
-TEST_F(FlexOptionTest, processAdd) {
+// Verify that ADD action adds the specified option in csv format.
+TEST_F(FlexOptionTest, processAddEnableCSVFormat) {
     ElementPtr options = Element::createList();
+    ElementPtr csv_format = Element::create(true);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(DHO_HOST_NAME);
@@ -782,6 +783,7 @@ TEST_F(FlexOptionTest, processAdd) {
     option->set("code", code);
     add = Element::create(string("'example.com'"));
     option->set("add", add);
+    option->set("csv-format", csv_format);
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -812,17 +814,16 @@ TEST_F(FlexOptionTest, processAdd) {
     EXPECT_EQ(0, buffer_fqdn[12]);
 }
 
-// Verify that ADD action adds the specified option in binary format.
+// Verify that ADD action adds the specified option in raw format.
 TEST_F(FlexOptionTest, processAddDisableCSVFormat) {
     ElementPtr options = Element::createList();
+    ElementPtr csv_format = Element::create(false);
     ElementPtr option = Element::createMap();
     options->add(option);
-    ElementPtr csv_format = Element::create(false);
     ElementPtr code = Element::create(DHO_HOST_NAME);
     option->set("code", code);
     ElementPtr add = Element::create(string("'abc'"));
     option->set("add", add);
-    option->set("csv-format", csv_format);
 
     option = Element::createMap();
     options->add(option);
@@ -911,9 +912,10 @@ TEST_F(FlexOptionTest, processAddEmpty) {
     EXPECT_FALSE(response->getOption(DHO_HOST_NAME));
 }
 
-// Verify that SUPERSEDE action supersedes the specified option.
-TEST_F(FlexOptionTest, processSupersede) {
+// Verify that SUPERSEDE action supersedes the specified option in csv format.
+TEST_F(FlexOptionTest, processSupersedeEnableCSVFormat) {
     ElementPtr options = Element::createList();
+    ElementPtr csv_format = Element::create(true);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(DHO_HOST_NAME);
@@ -927,6 +929,7 @@ TEST_F(FlexOptionTest, processSupersede) {
     option->set("code", code);
     supersede = Element::create(string("'example.com'"));
     option->set("supersede", supersede);
+    option->set("csv-format", csv_format);
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -957,17 +960,16 @@ TEST_F(FlexOptionTest, processSupersede) {
     EXPECT_EQ(0, buffer_fqdn[12]);
 }
 
-// Verify that SUPERSEDE action supersedes the specified option in binary format.
+// Verify that SUPERSEDE action supersedes the specified option in raw format.
 TEST_F(FlexOptionTest, processSupersedeDisableCSVFormat) {
     ElementPtr options = Element::createList();
+    ElementPtr csv_format = Element::create(false);
     ElementPtr option = Element::createMap();
     options->add(option);
-    ElementPtr csv_format = Element::create(false);
     ElementPtr code = Element::create(DHO_HOST_NAME);
     option->set("code", code);
     ElementPtr supersede = Element::create(string("'abc'"));
     option->set("supersede", supersede);
-    option->set("csv-format", csv_format);
 
     option = Element::createMap();
     options->add(option);
@@ -1198,8 +1200,10 @@ TEST_F(FlexOptionTest, processFullTest) {
     EXPECT_EQ(0, memcmp(&buffer[0], "foo.boot", 8));
 }
 
+// Verify that complex strings with escaped characters are properly parsed on add.
 TEST_F(FlexOptionTest, processFullAddWithComplexString) {
     ElementPtr options = Element::createList();
+    ElementPtr csv_format = Element::create(true);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(D6O_NEW_POSIX_TIMEZONE);
@@ -1207,6 +1211,7 @@ TEST_F(FlexOptionTest, processFullAddWithComplexString) {
     string expr = "ifelse(option[39].exists,'EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00','')";
     ElementPtr add = Element::create(expr);
     option->set("add", add);
+    option->set("csv-format", csv_format);
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
@@ -1228,8 +1233,10 @@ TEST_F(FlexOptionTest, processFullAddWithComplexString) {
     EXPECT_EQ(0, memcmp(&buffer[0], &data[0], buffer.size()));
 }
 
+// Verify that complex strings with escaped characters are properly parsed on supersede.
 TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
     ElementPtr options = Element::createList();
+    ElementPtr csv_format = Element::create(true);
     ElementPtr option = Element::createMap();
     options->add(option);
     ElementPtr code = Element::create(D6O_NEW_POSIX_TIMEZONE);
@@ -1237,6 +1244,7 @@ TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
     string expr = "ifelse(option[39].exists,'EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00','')";
     ElementPtr supersede = Element::create(expr);
     option->set("supersede", supersede);
+    option->set("csv-format", csv_format);
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 

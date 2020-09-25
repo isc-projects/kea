@@ -75,7 +75,7 @@ namespace isc {
 namespace flex_option {
 
 FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code)
-    : code_(code), action_(NONE), csv_format_(true) {
+    : code_(code), action_(NONE), csv_format_(false) {
 }
 
 FlexOptionImpl::OptionConfig::~OptionConfig() {
@@ -190,7 +190,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         isc_throw(BadValue, "option " << code << " was already specified");
     }
 
-    bool csv_format = true;
+    bool csv_format = false;
     if (csv_format_elem) {
         if (csv_format_elem->getType() != Element::boolean) {
             isc_throw(BadValue, "'csv-format' must be a boolean: "
