@@ -550,13 +550,13 @@ t2_percent: T2_PERCENT COLON FLOAT {
 };
 
 cache_threshold: CACHE_THRESHOLD COLON FLOAT {
-    // Add unique here
+    ctx.unique("cache-threshold", ctx.loc2pos(@1));
     ElementPtr ct(new DoubleElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("cache-threshold", ct);
 };
 
 cache_max: CACHE_MAX COLON INTEGER {
-    // Add unique here
+    ctx.unique("cache-max", ctx.loc2pos(@1));
     ElementPtr cm(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("cache-max", cm);
 };
