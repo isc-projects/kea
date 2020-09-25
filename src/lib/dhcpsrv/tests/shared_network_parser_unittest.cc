@@ -147,6 +147,8 @@ public:
                 "    \"hostname-char-set\": \"[^A-Z]\","
                 "    \"hostname-char-replacement\": \"x\","
                 "    \"store-extended-info\": true,"
+                "    \"cache-threshold\": 0.123,"
+                "    \"cache-max\": 123,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"domain-name-servers\","
@@ -178,7 +180,9 @@ public:
                 "            \"calculate-tee-times\": true,"
                 "            \"t1-percent\": .45,"
                 "            \"t2-percent\": .65,"
-                "            \"hostname-char-set\": \"\""
+                "            \"hostname-char-set\": \"\","
+                "            \"cache-threshold\": .20,"
+                "            \"cache-max\": 50"
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -201,7 +205,9 @@ public:
                 "            \"reservation-mode\": \"all\","
                 "            \"calculate-tee-times\": false,"
                 "            \"t1-percent\": .40,"
-                "            \"t2-percent\": .80"
+                "            \"t2-percent\": .80,"
+                "            \"cache-threshold\": .15,"
+                "            \"cache-max\": 5"
                 "        }"
                 "    ]"
                 "}";
@@ -264,6 +270,8 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("[^A-Z]", network->getHostnameCharSet().get());
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
+    EXPECT_EQ(0.123, network->getCacheThreshold());
+    EXPECT_EQ(123, network->getCacheMax());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -556,6 +564,8 @@ public:
                 "    \"hostname-char-set\": \"[^A-Z]\","
                 "    \"hostname-char-replacement\": \"x\","
                 "    \"store-extended-info\": true,"
+                "    \"cache-threshold\": 0.123,"
+                "    \"cache-max\": 123,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -660,6 +670,8 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ("[^A-Z]", network->getHostnameCharSet().get());
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
+    EXPECT_EQ(0.123, network->getCacheThreshold());
+    EXPECT_EQ(123, network->getCacheMax());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();

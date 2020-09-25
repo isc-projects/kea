@@ -181,6 +181,8 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("hostname-char-set", Element::create("gc"));
     globals_->set("hostname-char-replacement", Element::create("gr"));
     globals_->set("store-extended-info", Element::create(true));
+    globals_->set("cache-threshold", Element::create(.25));
+    globals_->set("cache-max", Element::create(20));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -286,7 +288,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
         testNetworkInheritance<TestNetwork4>(&Network4::getDdnsReplaceClientNameMode,
                                              &Network4::setDdnsReplaceClientNameMode,
                                              D2ClientConfig::RCM_WHEN_PRESENT,
-                                             D2ClientConfig::RCM_ALWAYS); 
+                                             D2ClientConfig::RCM_ALWAYS);
     }
     {
         SCOPED_TRACE("ddns-generated-prefix");
@@ -317,6 +319,18 @@ TEST_F(NetworkTest, inheritanceSupport4) {
         testNetworkInheritance<TestNetwork4>(&Network4::getStoreExtendedInfo,
                                              &Network4::setStoreExtendedInfo,
                                              false, true);
+    }
+    {
+        SCOPED_TRACE("cache-threshold");
+        testNetworkInheritance<TestNetwork4>(&Network::getCacheThreshold,
+                                             &Network::setCacheThreshold,
+                                             .1, .25);
+    }
+    {
+        SCOPED_TRACE("cache-max");
+        testNetworkInheritance<TestNetwork4>(&Network::getCacheMax,
+                                             &Network::setCacheMax,
+                                             10, 20);
     }
 }
 
@@ -375,7 +389,7 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork4>(&Network4::getDdnsReplaceClientNameMode,
                                              &Network4::setDdnsReplaceClientNameMode,
                                              D2ClientConfig::RCM_WHEN_PRESENT,
-                                             D2ClientConfig::RCM_ALWAYS); 
+                                             D2ClientConfig::RCM_ALWAYS);
     }
     {
         SCOPED_TRACE("ddns-generated-prefix");

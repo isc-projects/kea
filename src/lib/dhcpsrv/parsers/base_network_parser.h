@@ -45,15 +45,15 @@ protected:
     void parseCommon(const data::ConstElementPtr& network_data,
                      NetworkPtr& network);
 
-    /// @brief Parses parameters related to "percent" timers settngs.
+    /// @brief Parses parameters related to "percent" timers settings.
     ///
     /// The parsed parameters are:
     /// - calculate-tee-times,
     /// - t1-percent,
     /// - t2-percent.
     ///
-    /// @param network_data Data element holding shared network
-    /// configuration to be parsed.
+    /// @param network_data Data element holding network configuration
+    /// to be parsed.
     /// @param [out] network Pointer to a network in which parsed data is
     /// to be stored.
     ///
@@ -61,6 +61,22 @@ protected:
     /// invalid.
     void parseTeePercents(const data::ConstElementPtr& network_data,
                           NetworkPtr& network);
+
+    /// @brief Parses parameters related to lease cache settings.
+    ///
+    /// The parsed parameters are:
+    /// - cache-threshold,
+    /// - cache-max.
+    ///
+    /// @param network_data Data element holding network configuration
+    /// to be parsed.
+    /// @param [out] network Pointer to a network in which parsed data is
+    /// to be stored.
+    ///
+    /// @throw DhcpConfigError if configuration of these parameters is
+    /// invalid.
+    void parseCacheParams(const data::ConstElementPtr& network_data,
+                     NetworkPtr& network);
 
     /// @brief Parses host reservation mode.
     ///

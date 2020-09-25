@@ -1360,6 +1360,28 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"cache-threshold\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_CACHE_THRESHOLD((driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("cache-threshold", driver.loc_);
+    }
+}
+
+\"cache-max\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_CACHE_MAX((driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("cache-max", driver.loc_);
+    }
+}
+
 \"loggers\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

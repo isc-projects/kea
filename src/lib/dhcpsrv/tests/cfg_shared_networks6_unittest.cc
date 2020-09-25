@@ -208,6 +208,7 @@ TEST(CfgSharedNetworks6Test, unparse) {
     network1->setDdnsQualifyingSuffix("example.com.");
     network1->setHostnameCharSet("[^A-Z]");
     network1->setHostnameCharReplacement("x");
+    network1->setCacheThreshold(.20);
 
     network2->setIface("eth1");
     network2->setT1(Triplet<uint32_t>(100));
@@ -216,6 +217,7 @@ TEST(CfgSharedNetworks6Test, unparse) {
     network2->setValid(Triplet<uint32_t>(300));
     network2->setDdnsSendUpdates(false);
     network2->setStoreExtendedInfo(true);
+    network2->setCacheMax(80);
 
     network3->setIface("eth2");
     network3->setPreferred(Triplet<uint32_t>(100,200,300));
@@ -252,7 +254,8 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "    \"subnet6\": [ ],\n"
         "    \"preferred-lifetime\": 200,\n"
         "    \"valid-lifetime\": 300\n,"
-        "    \"store-extended-info\": true\n"
+        "    \"store-extended-info\": true,\n"
+        "    \"cache-max\": 80\n"
         "  },\n"
         "  {\n"
         "    \"calculate-tee-times\": true,\n"
@@ -270,7 +273,8 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "    \"t1-percent\": .35,\n"
         "    \"t2-percent\": .655,\n"
         "    \"hostname-char-replacement\": \"x\",\n"
-        "    \"hostname-char-set\": \"[^A-Z]\"\n"
+        "    \"hostname-char-set\": \"[^A-Z]\",\n"
+        "    \"cache-threshold\": .20\n"
         "  }\n"
         "]\n";
 

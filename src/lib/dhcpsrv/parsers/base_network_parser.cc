@@ -181,6 +181,23 @@ BaseNetworkParser::parseTeePercents(const ConstElementPtr& network_data,
 }
 
 void
+BaseNetworkParser::parseCacheParams(const ConstElementPtr& network_data,
+                                    NetworkPtr& network) {
+    if (network_data->contains("cache-threshold")) {
+        double cache_threshold = getDouble(network_data, "cache-threshold");
+        if ((cache_threshold <= 0.0) || (cache_threshold >= 1.0)) {
+            isc_throw(DhcpConfigError, "cache-threshold: " << cache_threshold
+                      << " is invalid, it must be greater than 0.0 and less than 1.0");
+        }
+        network->setCacheThreshold(cache_threshold);
+    }
+
+    if (network_data->contains("cache-max")) {
+        network->setCacheMax(getInteger(network_data, "cache-max"));
+    }
+}
+
+void
 BaseNetworkParser::parseHostReservationMode(const data::ConstElementPtr& network_data,
                                             NetworkPtr& network) {
     if (network_data->contains("reservation-mode")) {

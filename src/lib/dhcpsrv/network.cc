@@ -280,6 +280,15 @@ Network::toElement() const {
         map->set("store-extended-info", Element::create(store_extended_info_));
     }
 
+    if (!cache_threshold_.unspecified()) {
+        map->set("cache-threshold", Element::create(cache_threshold_));
+    }
+
+    if (!cache_max_.unspecified()) {
+        map->set("cache-max",
+                 Element::create(static_cast<long long>(cache_max_)));
+    }
+
     return (map);
 }
 

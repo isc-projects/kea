@@ -597,6 +597,14 @@
                 // T2 = valid lifetime * .75.
                 "t2-percent": .75,
 
+                // Cache threshold = valid lifetime * .25.
+                "cache-threshold": .25,
+
+                // Cache maximum: when the client last transmission time
+                // is close enough the lease is not renewed and current
+                // lease is returned as it was "cached".
+                "cache-max": 10,
+
                 // Enumeration specifying server's mode of operation when it
                 // fetches host reservations.
                 "reservation-mode": "all",
@@ -790,6 +798,12 @@
                         // T2 = valid lifetime * .75.
                         "t2-percent": .75,
 
+                        // Cache threshold = valid lifetime * .25.
+                        "cache-threshold": .25,
+
+                        // Subnet level cache maximum.
+                        "cache-max": 10,
+
                         // List of static IPv6 reservations assigned to the clients belonging
                         // to this subnet. For detailed example see reservations.json.
                         "reservations": [
@@ -910,6 +924,12 @@
 
         // T2 = valid lifetime * .75.
         "t2-percent": .75,
+
+        // Cache threshold = valid lifetime * .25.
+        "cache-threshold": .25,
+
+        // Global cache maximum.
+        "cache-max": 10,
 
         // String of zero or more characters with which to replace each
         // invalid character in the Client FQDN. The default

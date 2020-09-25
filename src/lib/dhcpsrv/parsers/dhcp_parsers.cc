@@ -944,6 +944,9 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Parse DDNS parameters
     parseDdnsParams(params, network);
+
+    // Parse lease cache parameters
+    parseCacheParams(params, network);
 }
 
 void
@@ -1367,6 +1370,9 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Parse DDNS parameters
     parseDdnsParams(params, network);
+
+    // Parse lease cache parameters
+    parseCacheParams(params, network);
 }
 
 void

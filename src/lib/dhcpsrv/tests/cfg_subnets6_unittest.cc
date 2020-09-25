@@ -625,12 +625,14 @@ TEST(CfgSubnets6Test, unparseSubnet) {
 
     subnet1->setT1Percent(0.45);
     subnet1->setT2Percent(0.70);
+    subnet1->setCacheThreshold(0.20);
 
     subnet2->setIface("lo");
     subnet2->addRelayAddress(IOAddress("2001:db8:ff::2"));
     subnet2->setValid(Triplet<uint32_t>(200));
     subnet2->setPreferred(Triplet<uint32_t>(100));
     subnet2->setStoreExtendedInfo(true);
+    subnet2->setCacheMax(80);
 
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
@@ -667,6 +669,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"subnet\": \"2001:db8:1::/48\",\n"
         "    \"t1-percent\": 0.45,"
         "    \"t2-percent\": 0.7,"
+        "    \"cache-threshold\": .20,\n"
         "    \"interface-id\": \"relay.eth0\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
@@ -691,7 +694,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
         "    \"option-data\": [ ],\n"
-        "    \"store-extended-info\": true\n"
+        "    \"store-extended-info\": true,\n"
+        "    \"cache-max\": 80\n"
         "},{\n"
         "    \"id\": 125,\n"
         "    \"subnet\": \"2001:db8:3::/48\",\n"
@@ -1404,6 +1408,82 @@ TEST(CfgSubnets6Test, hostnameSanitizierValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         EXPECT_EQ("^[A-Z]", subnet->getHostnameCharSet().get());
         EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
+    }
+}
+
+// This test verifies the Subnet6 parser's validation logic for
+// lease cache parameters.
+TEST(CfgSubnets6Test, cacheParamValidation) {
+
+    // Describes a single test scenario.
+    struct Scenario {
+        std::string label;         // label used for logging test failures
+        double threshold;          // value of cache-threshold
+        std::string error_message; // expected error message is parsing should fail
+    };
+
+    // Test Scenarios.
+    std::vector<Scenario> tests = {
+        {"valid", .25, ""},
+        {"negative", -.25,
+         "subnet configuration failed: cache-threshold:"
+         " -0.25 is invalid, it must be greater than 0.0 and less than 1.0"
+        },
+        {"too big", 1.05,
+         "subnet configuration failed: cache-threshold:"
+         " 1.05 is invalid, it must be greater than 0.0 and less than 1.0"
+        }
+    };
+
+    // First we create a set of elements that provides all
+    // required for a Subnet6.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"2001:db8:1::/64\", \n"
+        "            \"interface\": \"\", \n"
+        "            \"renew-timer\": 100, \n"
+        "            \"rebind-timer\": 200, \n"
+        "            \"valid-lifetime\": 300, \n"
+        "            \"client-class\": \"\", \n"
+        "            \"require-client-classes\": [] \n,"
+        "            \"reservation-mode\": \"all\" \n"
+        "        }";
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+                    << "invalid JSON:" << json << "\n test is broken";
+
+    // Iterate over the test scenarios, verifying each prescribed
+    // outcome.
+    for (auto test = tests.begin(); test != tests.end(); ++test) {
+        {
+            SCOPED_TRACE("test: " + (*test).label);
+
+            // Set this scenario's configuration parameters
+            elems->set("cache-threshold", data::Element::create((*test).threshold));
+
+            Subnet6Ptr subnet;
+            try {
+                // Attempt to parse the configuration.
+                Subnet6ConfigParser parser;
+                subnet = parser.parse(elems);
+            } catch (const std::exception& ex) {
+                if (!(*test).error_message.empty()) {
+                    // We expected a failure, did we fail the correct way?
+                    EXPECT_EQ((*test).error_message, ex.what());
+                } else {
+                    // Should not have failed.
+                    ADD_FAILURE() << "Scenario should not have failed: " << ex.what();
+                }
+
+                // Either way we're done with this scenario.
+                continue;
+            }
+
+            // We parsed correctly, make sure the values are right.
+            EXPECT_TRUE(util::areDoublesEquivalent((*test).threshold, subnet->getCacheThreshold()));
+        }
     }
 }
 
