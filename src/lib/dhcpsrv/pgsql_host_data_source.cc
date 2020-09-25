@@ -186,12 +186,14 @@ public:
     /// @param host Host object to be added to the database.
     ///        None of the fields in the host reservation are modified -
     ///        the host data is only read.
+    /// @param unique_ip boolean value indicating if multiple reservations for the
+    ///        same IP address are allowed (false) or not (true).
     ///
     /// @return pointer to newly constructed bind_array containing the
     /// bound values extracted from host
     ///
     /// @throw DbOperationError if bind_array cannot be populated.
-    PsqlBindArrayPtr createBindForSend(const HostPtr& host) {
+    PsqlBindArrayPtr createBindForSend(const HostPtr& host, const bool unique_ip) {
         if (!host) {
             isc_throw(BadValue, "createBindForSend:: host object is NULL");
         }
@@ -264,6 +266,15 @@ public:
             } else {
                 bind_array->add(key);
             }
+
+            // When checking whether the IP is unique we need to bind the IPv4 address
+            // at the end of the query as it has additional binding for the IPv4
+            // address.
+            if (unique_ip) {
+                bind_array->add(host->getIPv4Reservation());
+                bind_array->add(host->getIPv4SubnetID());
+            }
+
 
         } catch (const std::exception& ex) {
             host_.reset();
@@ -1081,13 +1092,16 @@ public:
     /// @param resv The IPv6 reservation to be added to the database.
     ///        None of the fields in the reservation are modified -
     /// @param host_id ID of the host to which this reservation belongs.
+    /// @param unique_ip boolean value indicating if multiple reservations for the
+    ///        same IP address are allowed (false) or not (true).
     ///
     /// @return pointer to newly constructed bind_array containing the
     /// bound values extracted the IPv6 reservation
     ///
     /// @throw DbOperationError if bind_array cannot be populated.
     PsqlBindArrayPtr createBindForSend(const IPv6Resrv& resv,
-                                       const HostID& host_id) {
+                                       const HostID& host_id,
+                                       const bool unique_ip) {
         // Store the values to ensure they remain valid.
         // Technically we don't need this, as currently all the values
         // are converted to strings and stored by the bind array.
@@ -1113,6 +1127,14 @@ public:
 
             // host_id: BIGINT NOT NULL
             bind_array->add(host_id);
+
+            // When checking whether the IP is unique we need to bind the IPv6 address
+            // and prefix length at the end of the query as it has additional binding
+            // for the IPv6 address and prefix length.
+            if (unique_ip) {
+                bind_array->add(resv.getPrefix());
+                bind_array->add(resv.getPrefixLen());
+            }
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from IPv6 Reservation: "
@@ -1354,30 +1376,32 @@ public:
     /// @note: please add new statements doing read only operations before
     /// the WRITE_STMTS_BEGIN position.
     enum StatementIndex {
-        GET_HOST_DHCPID,        // Gets hosts by host identifier
-        GET_HOST_ADDR,          // Gets hosts by IPv4 address
-        GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
-        GET_HOST_SUBID6_DHCPID, // Gets host by IPv6 SubnetID, HW address/DUID
-        GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
-        GET_HOST_PREFIX,        // Gets host by IPv6 prefix
-        GET_HOST_SUBID6_ADDR,   // Gets host by IPv6 SubnetID and IPv6 prefix
-        GET_HOST_SUBID4,        // Gets hosts by IPv4 SubnetID
-        GET_HOST_SUBID6,        // Gets hosts by IPv6 SubnetID
-        GET_HOST_HOSTNAME,      // Gets hosts by hostname
-        GET_HOST_HOSTNAME_SUBID4, // Gets hosts by hostname and IPv4 SubnetID
-        GET_HOST_HOSTNAME_SUBID6, // Gets hosts by hostname and IPv6 SubnetID
-        GET_HOST_SUBID4_PAGE,   // Gets hosts by IPv4 SubnetID beginning by HID
-        GET_HOST_SUBID6_PAGE,   // Gets hosts by IPv6 SubnetID beginning by HID
-        GET_HOST_PAGE4,         // Gets v4 hosts beginning by HID
-        GET_HOST_PAGE6,         // Gets v6 hosts beginning by HID
-        INSERT_HOST,            // Insert new host to collection
-        INSERT_V6_RESRV,        // Insert v6 reservation
-        INSERT_V4_HOST_OPTION,  // Insert DHCPv4 option
-        INSERT_V6_HOST_OPTION,  // Insert DHCPv6 option
-        DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
-        DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
-        DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
-        NUM_STATEMENTS          // Number of statements
+        GET_HOST_DHCPID,           // Gets hosts by host identifier
+        GET_HOST_ADDR,             // Gets hosts by IPv4 address
+        GET_HOST_SUBID4_DHCPID,    // Gets host by IPv4 SubnetID, HW address/DUID
+        GET_HOST_SUBID6_DHCPID,    // Gets host by IPv6 SubnetID, HW address/DUID
+        GET_HOST_SUBID_ADDR,       // Gets host by IPv4 SubnetID and IPv4 address
+        GET_HOST_PREFIX,           // Gets host by IPv6 prefix
+        GET_HOST_SUBID6_ADDR,      // Gets host by IPv6 SubnetID and IPv6 prefix
+        GET_HOST_SUBID4,           // Gets hosts by IPv4 SubnetID
+        GET_HOST_SUBID6,           // Gets hosts by IPv6 SubnetID
+        GET_HOST_HOSTNAME,         // Gets hosts by hostname
+        GET_HOST_HOSTNAME_SUBID4,  // Gets hosts by hostname and IPv4 SubnetID
+        GET_HOST_HOSTNAME_SUBID6,  // Gets hosts by hostname and IPv6 SubnetID
+        GET_HOST_SUBID4_PAGE,      // Gets hosts by IPv4 SubnetID beginning by HID
+        GET_HOST_SUBID6_PAGE,      // Gets hosts by IPv6 SubnetID beginning by HID
+        GET_HOST_PAGE4,            // Gets v4 hosts beginning by HID
+        GET_HOST_PAGE6,            // Gets v6 hosts beginning by HID
+        INSERT_HOST_NON_UNIQUE_IP, // Insert new host to collection with allowing IP duplicates
+        INSERT_HOST_UNIQUE_IP,     // Insert new host to collection with checking for IP duplicates
+        INSERT_V6_RESRV_NON_UNIQUE,// Insert v6 reservation without checking that it is unique
+        INSERT_V6_RESRV_UNIQUE,    // Insert v6 reservation with checking that it is unique
+        INSERT_V4_HOST_OPTION,     // Insert DHCPv4 option
+        INSERT_V6_HOST_OPTION,     // Insert DHCPv6 option
+        DEL_HOST_ADDR4,            // Delete v4 host (subnet-id, addr4)
+        DEL_HOST_SUBID4_ID,        // Delete v4 host (subnet-id, ident.type, identifier)
+        DEL_HOST_SUBID6_ID,        // Delete v6 host (subnet-id, ident.type, identifier)
+        NUM_STATEMENTS             // Number of statements
     };
 
     /// @brief Index of first statement performing write to the database.
@@ -1385,7 +1409,7 @@ public:
     /// This value is used to mark border line between queries and other
     /// statements and statements performing write operation on the database,
     /// such as INSERT, DELETE, UPDATE.
-    static const StatementIndex WRITE_STMTS_BEGIN = INSERT_HOST;
+    static const StatementIndex WRITE_STMTS_BEGIN = INSERT_HOST_UNIQUE_IP;
 
     /// @brief Constructor.
     ///
@@ -1550,6 +1574,10 @@ public:
 
     /// @brief The parameters
     PgSqlConnection::ParameterMap parameters_;
+
+    /// @brief Holds the setting whether the IP reservations must be unique or
+    /// may be non-unique.
+    bool ip_reservations_unique_;
 
     /// @brief The pool of contexts
     PgSqlHostContextPoolPtr pool_;
@@ -1961,30 +1989,73 @@ TaggedStatementArray tagged_statements = { {
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 
-    // PgSqlHostDataSourceImpl::INSERT_HOST
-    // Inserts a host into the 'hosts' table. Returns the inserted host id.
+    // Inserts a host into the 'hosts' table without checking that there is
+    // a reservation for the IP address.
     {13,
      { OID_BYTEA, OID_INT2,
        OID_INT8, OID_INT8, OID_INT8, OID_VARCHAR,
        OID_VARCHAR, OID_VARCHAR, OID_TEXT,
-       OID_INT8, OID_VARCHAR, OID_VARCHAR, OID_VARCHAR },
-     "insert_host",
+       OID_INT8, OID_VARCHAR, OID_VARCHAR, OID_VARCHAR},
+     "insert_host_non_unique_ip",
      "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
      "  dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
      "  dhcp4_client_classes, dhcp6_client_classes, user_context, "
-     "  dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) "
+     "  dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key)"
+     "VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13 ) "
      "RETURNING host_id"
     },
 
-    // PgSqlHostDataSourceImpl::INSERT_V6_RESRV
-    // Inserts a single IPv6 reservation into 'reservations' table.
+    // PgSqlHostDataSourceImpl::INSERT_HOST_UNIQUE_IP
+    // Inserts a host into the 'hosts' table with checking that reserved IP
+    // address is unique. The innermost query checks if there is at least
+    // one host for the given IP/subnet combination. If it not exists the
+    // new host is inserted. If the host with the given IP address already
+    // exists the new host won't be inserted. The caller can check the
+    // number of affected rows to detect that there was a duplicate host
+    // in the database. Returns the inserted host id.
+    {15,
+     { OID_BYTEA, OID_INT2,
+       OID_INT8, OID_INT8, OID_INT8, OID_VARCHAR,
+       OID_VARCHAR, OID_VARCHAR, OID_TEXT,
+       OID_INT8, OID_VARCHAR, OID_VARCHAR, OID_VARCHAR, OID_INT8,
+       OID_INT8},
+     "insert_host_unique_ip",
+     "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
+     "  dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
+     "  dhcp4_client_classes, dhcp6_client_classes, user_context, "
+     "  dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key)"
+     "  SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13"
+     "    WHERE NOT EXISTS ("
+     "      SELECT 1 FROM HOSTS WHERE ipv4_address = $14 AND dhcp4_subnet_id = $15"
+     "    ) "
+     "RETURNING host_id"
+    },
+
+    // PgSqlHostDataSourceImpl::INSERT_V6_RESRV_NON_UNIQUE
+    // Inserts a single IPv6 reservation into 'reservations' table without
+    // checking that the inserted reservation is unique.
     {5,
      { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4 },
-     "insert_v6_resrv",
+     "insert_v6_resrv_non_unique",
      "INSERT INTO ipv6_reservations(address, prefix_len, type, "
      "  dhcp6_iaid, host_id) "
      "VALUES ($1, $2, $3, $4, $5)"
+    },
+
+    // PgSqlHostDataSourceImpl::INSERT_V6_RESRV_UNIQUE
+    // Inserts a single IPv6 reservation into 'reservations' table with
+    // checking that the inserted reservation is unique.
+    {7,
+     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4, OID_VARCHAR, OID_INT2 },
+     "insert_v6_resrv_unique",
+     "INSERT INTO ipv6_reservations(address, prefix_len, type, "
+     "  dhcp6_iaid, host_id) "
+     "SELECT $1, $2, $3, $4, $5 "
+     "  WHERE NOT EXISTS ("
+     "      SELECT 1 FROM ipv6_reservations"
+     "          WHERE address = $6 AND prefix_len = $7"
+     "      LIMIT 1"
+     "  )"
     },
 
     // PgSqlHostDataSourceImpl::INSERT_V4_HOST_OPTION
@@ -2086,7 +2157,7 @@ PgSqlHostDataSource::PgSqlHostContextAlloc::~PgSqlHostContextAlloc() {
 }
 
 PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
-    : parameters_(parameters) {
+    : parameters_(parameters), ip_reservations_unique_(true) {
 
     // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
@@ -2168,6 +2239,22 @@ PgSqlHostDataSourceImpl::addStatement(PgSqlHostContextPtr& ctx,
         ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
     }
 
+    // Get the number of affected rows.
+    char* rows_affected = PQcmdTuples(r);
+    if (!rows_affected) {
+        isc_throw(DbOperationError,
+                  "Could not retrieve the number of affected rows.");
+    }
+
+    // If the number of rows inserted is 0 it means that the query detected
+    // an attempt to insert duplicated data for which there is no unique
+    // index in the database. Unique indexes are not created in the database
+    // when it may be sometimes allowed to insert duplicated records per
+    // server's configuration.
+    if (rows_affected[0] == '0') {
+        isc_throw(DuplicateEntry, "Database duplicate entry error");
+    }
+
     if (return_last_id) {
         PgSqlExchange::getColumnValue(r, 0, 0, last_id);
     }
@@ -2207,9 +2294,11 @@ void
 PgSqlHostDataSourceImpl::addResv(PgSqlHostContextPtr& ctx,
                                  const IPv6Resrv& resv,
                                  const HostID& id) {
-    PsqlBindArrayPtr bind_array = ctx->host_ipv6_reservation_exchange_->createBindForSend(resv, id);
+    PsqlBindArrayPtr bind_array = ctx->host_ipv6_reservation_exchange_->
+        createBindForSend(resv, id, ip_reservations_unique_);
 
-    addStatement(ctx, INSERT_V6_RESRV, bind_array);
+    addStatement(ctx, ip_reservations_unique_ ? INSERT_V6_RESRV_UNIQUE : INSERT_V6_RESRV_NON_UNIQUE,
+                 bind_array);
 }
 
 void
@@ -2349,11 +2438,19 @@ PgSqlHostDataSource::add(const HostPtr& host) {
     // the PgSqlTransaction class.
     PgSqlTransaction transaction(ctx->conn_);
 
+    // If we're configured to check that an IP reservation within a given subnet
+    // is unique, the IP reservation exists and the subnet is actually set
+    // we will be using a special query that checks for uniqueness. Otherwise,
+    // we will use a regular insert statement.
+    bool unique_ip = impl_->ip_reservations_unique_ && !host->getIPv4Reservation().isV4Zero()
+        && host->getIPv4SubnetID() != SUBNET_ID_UNUSED;
+
     // Create the PgSQL Bind array for the host
-    PsqlBindArrayPtr bind_array = ctx->host_ipv4_exchange_->createBindForSend(host);
+    PsqlBindArrayPtr bind_array = ctx->host_ipv4_exchange_->createBindForSend(host, unique_ip);
 
     // ... and insert the host.
-    uint32_t host_id = impl_->addStatement(ctx, PgSqlHostDataSourceImpl::INSERT_HOST,
+    uint32_t host_id = impl_->addStatement(ctx, unique_ip ? PgSqlHostDataSourceImpl::INSERT_HOST_UNIQUE_IP :
+                                           PgSqlHostDataSourceImpl::INSERT_HOST_NON_UNIQUE_IP,
                                            bind_array, true);
 
     // Insert DHCPv4 options.
@@ -2900,6 +2997,12 @@ PgSqlHostDataSource::rollback() {
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly(ctx);
     ctx->conn_.rollback();
+}
+
+bool
+PgSqlHostDataSource::setIPReservationUnique(const bool unique) {
+    impl_->ip_reservations_unique_ = unique;
+    return (true);
 }
 
 }  // namespace dhcp

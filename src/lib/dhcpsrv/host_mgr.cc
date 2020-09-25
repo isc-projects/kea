@@ -604,5 +604,26 @@ HostMgr::cacheNegative(const SubnetID& ipv4_subnet_id,
     }
 }
 
+bool
+HostMgr::setIPReservationUnique(const bool unique) {
+    // Iterate over the alternate sources first, because they may include those
+    // for which the new setting is not supported.
+    for (auto source : alternate_sources_) {
+        if (!source->setIPReservationUnique(unique)) {
+            // One of the sources does not support this new mode of operation.
+            // Let's log a warning and back off the changes to the default
+            // setting which should always be supported.
+            LOG_WARN(hosts_logger, HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED)
+                .arg(source->getType());
+            for (auto source : alternate_sources_) {
+                source->setIPReservationUnique(true);
+            }
+            return (false);
+        }
+    }
+    return (true);
+}
+
+
 } // end of isc::dhcp namespace
 } // end of isc namespace

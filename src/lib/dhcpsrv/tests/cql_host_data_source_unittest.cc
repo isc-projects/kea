@@ -619,6 +619,12 @@ TEST_F(CqlHostDataSourceTest, addDuplicate4) {
     testAddDuplicate4();
 }
 
+/// @brief Test that the CQL backend does not support using non-unique
+/// IP addresses between multiple reservations.
+TEST_F(CqlHostDataSourceTest, disallowDuplicateIP) {
+    testDisallowDuplicateIP();
+}
+
 // This test verifies that DHCPv4 options can be inserted in a binary format
 /// and retrieved from the CQL host database.
 TEST_F(CqlHostDataSourceTest, optionsReservations4) {

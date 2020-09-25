@@ -435,6 +435,23 @@ public:
     /// Rolls back all pending database operations.
     virtual void rollback();
 
+    /// @brief Controls whether IP reservations are unique or non-unique.
+    ///
+    /// In a typical case, the IP reservations are unique and backends verify
+    /// prior to adding a host reservation to the database that the reservation
+    /// for a given IP address/subnet does not exist. In some cases it may be
+    /// required to allow non-unique IP reservations, e.g. in the case when a
+    /// host has several interfaces and independently of which interface is used
+    /// by this host to communicate with the DHCP server the same IP address
+    /// should be assigned. In this case the @c unique value should be set to
+    /// false to disable the checks for uniqueness on the backend side.
+    ///
+    /// @param unique boolean flag indicating if the IP reservations must be
+    /// unique within the subnet or can be non-unique.
+    /// @return always true because this backend supports both the case when
+    /// the addresses must be unique and when they may be non-unique.
+    virtual bool setIPReservationUnique(const bool unique);
+
     /// @brief Context RAII Allocator.
     class PgSqlHostContextAlloc {
     public:

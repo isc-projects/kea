@@ -529,6 +529,26 @@ public:
         disable_single_query_ = disable_single_query;
     }
 
+    /// @brief Controls whether IP reservations are unique or non-unique.
+    ///
+    /// In a typical case, the IP reservations are unique and backends verify
+    /// prior to adding a host reservation to the database that the reservation
+    /// for a given IP address/subnet does not exist. In some cases it may be
+    /// required to allow non-unique IP reservations, e.g. in the case when a
+    /// host has several interfaces and independently of which interface is used
+    /// by this host to communicate with the DHCP server the same IP address
+    /// should be assigned. In this case the @c unique value should be set to
+    /// false to disable the checks for uniqueness on the backend side.
+    ///
+    /// Calling this function on @c HostMgr causes the manager to attempt to
+    /// set this flag on all backends in use.
+    ///
+    /// @param unique boolean flag indicating if the IP reservations must be
+    /// unique or can be non-unique.
+    /// @return true if the new setting was accepted by the backend or false
+    /// otherwise.
+    virtual bool setIPReservationUnique(const bool unique);
+
 protected:
     /// @brief The negative caching flag.
     ///

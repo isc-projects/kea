@@ -126,7 +126,7 @@ pgsql_db_version_test() {
 
     # Verify that kea-admin db-version returns the correct version
     version=$(${keaadmin} db-version pgsql -u $db_user -p $db_password -n $db_name)
-    assert_str_eq "6.1" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "6.2" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -237,10 +237,6 @@ pgsql_upgrade_2_0_to_3_0() {
 }
 
 pgsql_upgrade_3_0_to_6_1() {
-    # Verify upgraded schema reports version 6.1.
-    version=$(${keaadmin} db-version pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "6.1" ${version} "Expected kea-admin to return %s, returned value was %s"
-
     # Added user_context to lease4
     output=`pgsql_execute "select user_context from lease4;"`
     ERRCODE=$?
@@ -255,6 +251,19 @@ pgsql_upgrade_3_0_to_6_1() {
     output=`pgsql_execute "select timestamp, address, log from logs;"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "logs table is missing or broken. (expected status code %d, returned %d)"
+}
+
+pgsql_upgrade_6_1_to_6_2() {
+    # Verify upgraded schema reports version 6.2.
+    version=$(${keaadmin} db-version pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
+    assert_str_eq "6.2" ${version} "Expected kea-admin to return %s, returned value was %s"
+
+    insert_sql="\
+insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_address) values (decode('010101010101', 'hex'), 0, 1, x'FFAF0002'::int);\
+insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_address) values (decode('010101010102', 'hex'), 0, 1, x'FFAF0002'::int);"
+    pgsql_execute "$insert_sql"
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "insert into hosts failed, expected exit code %d, actual %d"
 }
 
 pgsql_upgrade_test() {
@@ -278,6 +287,9 @@ pgsql_upgrade_test() {
 
     # Check 3.0 to 6.1 upgrade
     pgsql_upgrade_3_0_to_6_1
+
+    # Check 6.1 to 6.2 upgrade
+    pgsql_upgrade_6_1_to_6_2
 
     # Let's wipe the whole database
     pgsql_wipe

@@ -1009,7 +1009,7 @@ CfgHosts::add4(const HostPtr& host) {
     }
 
     // Check if the address is already reserved for the specified IPv4 subnet.
-    if (!host->getIPv4Reservation().isV4Zero() &&
+    if (ip_reservations_unique_ && !host->getIPv4Reservation().isV4Zero() &&
         (host->getIPv4SubnetID() != SUBNET_ID_UNUSED) &&
         get4(host->getIPv4SubnetID(), host->getIPv4Reservation())) {
         isc_throw(ReservedAddress, "failed to add new host using the HW"
@@ -1061,15 +1061,17 @@ CfgHosts::add6(const HostPtr& host) {
     for (IPv6ResrvIterator it = reservations.first; it != reservations.second;
          ++it) {
 
-        // If there's an entry for this (subnet-id, address), reject it.
-        if (get6(host->getIPv6SubnetID(), it->second.getPrefix())) {
-            isc_throw(DuplicateHost, "failed to add address reservation for "
-                      << "host using the HW address '"
-                      << (hwaddr ? hwaddr->toText(false) : "(null)")
-                      << " and DUID '" << (duid ? duid->toText() : "(null)")
-                      << "' to the IPv6 subnet id '" << host->getIPv6SubnetID()
-                      << "' for address/prefix " << it->second.getPrefix()
-                      << ": There's already reservation for this address/prefix");
+        if (ip_reservations_unique_) {
+            // If there's an entry for this (subnet-id, address), reject it.
+            if (get6(host->getIPv6SubnetID(), it->second.getPrefix())) {
+                isc_throw(DuplicateHost, "failed to add address reservation for "
+                          << "host using the HW address '"
+                          << (hwaddr ? hwaddr->toText(false) : "(null)")
+                          << " and DUID '" << (duid ? duid->toText() : "(null)")
+                          << "' to the IPv6 subnet id '" << host->getIPv6SubnetID()
+                          << "' for address/prefix " << it->second.getPrefix()
+                          << ": There's already reservation for this address/prefix");
+            }
         }
         hosts6_.insert(HostResrv6Tuple(it->second, host));
     }
@@ -1131,6 +1133,13 @@ CfgHosts::del6(const SubnetID& /*subnet_id*/,
     isc_throw(NotImplemented, "sorry, not implemented");
     return (false);
 }
+
+bool
+CfgHosts::setIPReservationUnique(const bool unique) {
+    ip_reservations_unique_ = unique;
+    return (true);
+}
+
 
 ElementPtr
 CfgHosts::toElement() const {

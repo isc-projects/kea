@@ -692,6 +692,10 @@ public:
         return ("one");
     }
 
+    bool setIPReservationUnique(const bool) {
+        return (true);
+    }
+
     /// Specific methods
 
     /// @brief Set the entry

@@ -1015,6 +1015,33 @@ UPDATE schema_version
 -- Commit the script transaction
 COMMIT;
 
+-- Starting from this version we allow specifying multiple IP reservations
+-- for the same address in certain DHCP configurations. The server may check
+-- uniqueness of the IP addresses on its own. This is no longer checked at
+-- the database level to faciliate the use cases when a single host may
+-- get the same reserved IP address via different interfaces.
+
+-- Replace the unique index with non-unique index so the queries for
+-- hosts by IPv4 address are still efficient.
+DROP INDEX IF EXISTS key_dhcp4_ipv4_address_subnet_id;
+CREATE INDEX key_dhcp4_ipv4_address_subnet_id
+    ON hosts (ipv4_address ASC, dhcp4_subnet_id ASC);
+
+-- Replace the unique index with non-unique index so the queries for
+-- hosts by IPv6 address are still efficient.
+ALTER TABLE ipv6_reservations DROP CONSTRAINT IF EXISTS key_dhcp6_address_prefix_len;
+CREATE INDEX key_dhcp6_address_prefix_len
+    ON ipv6_reservations (address ASC, prefix_len ASC);
+
+-- Update the schema version number
+UPDATE schema_version
+    SET version = '6', minor = '2';
+
+-- Schema 6.2 specification ends here.
+
+-- Commit the script transaction
+COMMIT;
+
 -- Notes:
 
 -- Indexes

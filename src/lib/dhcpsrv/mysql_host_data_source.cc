@@ -235,9 +235,11 @@ public:
     /// @param host Host object to be added to the database.
     ///        None of the fields in the host reservation are modified -
     ///        the host data is only read.
+    /// @param unique_ip boolean value indicating if multiple reservations for the
+    ///        same IP address are allowed (false) or not (true).
     ///
     /// @return Vector of MySQL BIND objects representing the data to be added.
-    std::vector<MYSQL_BIND> createBindForSend(const HostPtr& host) {
+    std::vector<MYSQL_BIND> createBindForSend(const HostPtr& host, const bool unique_ip) {
         // Store host object to ensure it remains valid.
         host_ = host;
 
@@ -381,7 +383,16 @@ public:
         }
 
         // Add the data to the vector.
-        return (std::vector<MYSQL_BIND>(bind_.begin(), bind_.begin() + columns_num_));
+        std::vector<MYSQL_BIND> vec(bind_.begin(), bind_.begin() + HOST_COLUMNS);
+
+        // When checking whether the IP is unique we need to bind the IPv4 address
+        // at the end of the query as it has additional binding for the IPv4
+        // address.
+        if (unique_ip) {
+            vec.push_back(bind_[5]);
+            vec.push_back(bind_[3]);
+        }
+        return (vec);
     };
 
     /// @brief Create BIND array to receive Host data.
@@ -1610,10 +1621,13 @@ public:
     ///        None of the fields in the reservation are modified -
     ///        the reservation data is only read.
     /// @param id ID of a host owning this reservation
+    /// @param unique_ip boolean value indicating if multiple reservations for the
+    ///        same IP address are allowed (false) or not (true).
     ///
     /// @return Vector of MySQL BIND objects representing the data to be added.
     std::vector<MYSQL_BIND> createBindForSend(const IPv6Resrv& resv,
-                                              const HostID& id) {
+                                              const HostID& id,
+                                              const bool unique_ip) {
 
         // Store the values to ensure they remain valid.
         resv_ = resv;
@@ -1672,7 +1686,17 @@ public:
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
         // RESRV_COLUMNS -1 as we do not set reservation_id.
-        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[RESRV_COLUMNS-1]));
+        std::vector<MYSQL_BIND> vec(&bind_[0], &bind_[RESRV_COLUMNS-1]);
+
+        // When checking whether the IP is unique we need to bind the IPv6 address
+        // and prefix length at the end of the query as it has additional binding
+        // for the IPv6 address and prefix length.
+        if (unique_ip) {
+            vec.push_back(bind_[0]);
+            vec.push_back(bind_[1]);
+        }
+
+        return (vec);
     }
 
 private:
@@ -1990,30 +2014,32 @@ public:
     /// @note: please add new statements doing read only operations before
     /// the WRITE_STMTS_BEGIN position.
     enum StatementIndex {
-        GET_HOST_DHCPID,        // Gets hosts by host identifier
-        GET_HOST_ADDR,          // Gets hosts by IPv4 address
-        GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
-        GET_HOST_SUBID6_DHCPID, // Gets host by IPv6 SubnetID, HW address/DUID
-        GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
-        GET_HOST_PREFIX,        // Gets host by IPv6 prefix
-        GET_HOST_SUBID6_ADDR,   // Gets host by IPv6 SubnetID and IPv6 prefix
-        GET_HOST_SUBID4,        // Gets hosts by IPv4 SubnetID
-        GET_HOST_SUBID6,        // Gets hosts by IPv6 SubnetID
-        GET_HOST_HOSTNAME,      // Gets hosts by hostname
-        GET_HOST_HOSTNAME_SUBID4, // Gets hosts by hostname and IPv4 SubnetID
-        GET_HOST_HOSTNAME_SUBID6, // Gets hosts by hostname and IPv6 SubnetID
-        GET_HOST_SUBID4_PAGE,   // Gets hosts by IPv4 SubnetID beginning by HID
-        GET_HOST_SUBID6_PAGE,   // Gets hosts by IPv6 SubnetID beginning by HID
-        GET_HOST_PAGE4,         // Gets v4 hosts beginning by HID
-        GET_HOST_PAGE6,         // Gets v6 hosts beginning by HID
-        INSERT_HOST,            // Insert new host to collection
-        INSERT_V6_RESRV,        // Insert v6 reservation
-        INSERT_V4_HOST_OPTION,  // Insert DHCPv4 option
-        INSERT_V6_HOST_OPTION,  // Insert DHCPv6 option
-        DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
-        DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
-        DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
-        NUM_STATEMENTS          // Number of statements
+        GET_HOST_DHCPID,           // Gets hosts by host identifier
+        GET_HOST_ADDR,             // Gets hosts by IPv4 address
+        GET_HOST_SUBID4_DHCPID,    // Gets host by IPv4 SubnetID, HW address/DUID
+        GET_HOST_SUBID6_DHCPID,    // Gets host by IPv6 SubnetID, HW address/DUID
+        GET_HOST_SUBID_ADDR,       // Gets host by IPv4 SubnetID and IPv4 address
+        GET_HOST_PREFIX,           // Gets host by IPv6 prefix
+        GET_HOST_SUBID6_ADDR,      // Gets host by IPv6 SubnetID and IPv6 prefix
+        GET_HOST_SUBID4,           // Gets hosts by IPv4 SubnetID
+        GET_HOST_SUBID6,           // Gets hosts by IPv6 SubnetID
+        GET_HOST_HOSTNAME,         // Gets hosts by hostname
+        GET_HOST_HOSTNAME_SUBID4,  // Gets hosts by hostname and IPv4 SubnetID
+        GET_HOST_HOSTNAME_SUBID6,  // Gets hosts by hostname and IPv6 SubnetID
+        GET_HOST_SUBID4_PAGE,      // Gets hosts by IPv4 SubnetID beginning by HID
+        GET_HOST_SUBID6_PAGE,      // Gets hosts by IPv6 SubnetID beginning by HID
+        GET_HOST_PAGE4,            // Gets v4 hosts beginning by HID
+        GET_HOST_PAGE6,            // Gets v6 hosts beginning by HID
+        INSERT_HOST_NON_UNIQUE_IP, // Insert new host to collection with allowing IP duplicates
+        INSERT_HOST_UNIQUE_IP,     // Insert new host to collection with checking for IP duplicates
+        INSERT_V6_RESRV_NON_UNIQUE,// Insert v6 reservation without checking that it is unique
+        INSERT_V6_RESRV_UNIQUE,    // Insert v6 reservation with checking that it is unique
+        INSERT_V4_HOST_OPTION,     // Insert DHCPv4 option
+        INSERT_V6_HOST_OPTION,     // Insert DHCPv6 option
+        DEL_HOST_ADDR4,            // Delete v4 host (subnet-id, addr4)
+        DEL_HOST_SUBID4_ID,        // Delete v4 host (subnet-id, ident.type, identifier)
+        DEL_HOST_SUBID6_ID,        // Delete v6 host (subnet-id, ident.type, identifier)
+        NUM_STATEMENTS             // Number of statements
     };
 
     /// @brief Index of first statement performing write to the database.
@@ -2021,7 +2047,7 @@ public:
     /// This value is used to mark border line between queries and other
     /// statements and statements performing write operation on the database,
     /// such as INSERT, DELETE, UPDATE.
-    static const StatementIndex WRITE_STMTS_BEGIN = INSERT_HOST;
+    static const StatementIndex WRITE_STMTS_BEGIN = INSERT_HOST_UNIQUE_IP;
 
     /// @brief Constructor.
     ///
@@ -2196,6 +2222,10 @@ public:
 
     /// @brief The parameters
     DatabaseConnection::ParameterMap parameters_;
+
+    /// @brief Holds the setting whether the IP reservations must be unique or
+    /// may be non-unique.
+    bool ip_reservations_unique_;
 
     /// @brief The pool of contexts
     MySqlHostContextPoolPtr pool_;
@@ -2565,8 +2595,9 @@ TaggedStatementArray tagged_statements = { {
                 "ON h.host_id = r.host_id "
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
-    // Inserts a host into the 'hosts' table.
-    {MySqlHostDataSourceImpl::INSERT_HOST,
+    // Inserts a host into the 'hosts' table without checking that there is
+    // a reservation for the IP address.
+    {MySqlHostDataSourceImpl::INSERT_HOST_NON_UNIQUE_IP,
             "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
                 "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
                 "dhcp4_client_classes, dhcp6_client_classes, "
@@ -2574,11 +2605,45 @@ TaggedStatementArray tagged_statements = { {
                 "dhcp4_server_hostname, dhcp4_boot_file_name, auth_key) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
 
-    // Inserts a single IPv6 reservation into 'reservations' table.
-    {MySqlHostDataSourceImpl::INSERT_V6_RESRV,
+    // Inserts a host into the 'hosts' table with checking that reserved IP
+    // address is unique. The innermost query checks if there is at least
+    // one host for the given IP/subnet combination. If it not exists the
+    // new host is inserted. DUAL is a special MySQL table from which we
+    // can select the values to be inserted. If the host with the given
+    // IP address already exists the new host won't be inserted. The caller
+    // can check the number of affected rows to detect that there was
+    // a duplicate host in the database.
+    {MySqlHostDataSourceImpl::INSERT_HOST_UNIQUE_IP,
+            "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
+                "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
+                "dhcp4_client_classes, dhcp6_client_classes, "
+                "user_context, dhcp4_next_server, "
+                "dhcp4_server_hostname, dhcp4_boot_file_name, auth_key) "
+                "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM DUAL "
+                    "WHERE NOT EXISTS ("
+                        "SELECT ipv4_address FROM hosts "
+                            "WHERE ipv4_address = ? AND dhcp4_subnet_id = ? "
+                        "LIMIT 1"
+                    ")"},
+
+    // Inserts a single IPv6 reservation into 'reservations' table without
+    // checking that the inserted reservation is unique.
+    {MySqlHostDataSourceImpl::INSERT_V6_RESRV_NON_UNIQUE,
             "INSERT INTO ipv6_reservations(address, prefix_len, type, "
                 "dhcp6_iaid, host_id) "
             "VALUES (?, ?, ?, ?, ?)"},
+
+    // Inserts a single IPv6 reservation into 'reservations' table with
+    // checking that the inserted reservation is unique.
+    {MySqlHostDataSourceImpl::INSERT_V6_RESRV_UNIQUE,
+            "INSERT INTO ipv6_reservations(address, prefix_len, type, "
+                "dhcp6_iaid, host_id) "
+                "SELECT ?, ?, ?, ?, ? FROM DUAL "
+                    "WHERE NOT EXISTS ("
+                        "SELECT 1 FROM ipv6_reservations "
+                            "WHERE address = ? AND prefix_len = ? "
+                        "LIMIT 1"
+                    ")"},
 
     // Inserts a single DHCPv4 option into 'dhcp4_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
@@ -2655,7 +2720,7 @@ MySqlHostDataSource::MySqlHostContextAlloc::~MySqlHostContextAlloc() {
 }
 
 MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
-    : parameters_(parameters) {
+    : parameters_(parameters), ip_reservations_unique_(true) {
 
     // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
@@ -2743,6 +2808,16 @@ MySqlHostDataSourceImpl::addStatement(MySqlHostContextPtr& ctx,
         }
         checkError(ctx, status, stindex, "unable to execute");
     }
+
+    // If the number of rows inserted is 0 it means that the query detected
+    // an attempt to insert duplicated data for which there is no unique
+    // index in the database. Unique indexes are not created in the database
+    // when it may be sometimes allowed to insert duplicated records per
+    // server's configuration.
+    my_ulonglong numrows = mysql_stmt_affected_rows(ctx->conn_.statements_[stindex]);
+    if (numrows == 0) {
+        isc_throw(DuplicateEntry, "Database duplicate entry error");
+    }
 }
 
 bool
@@ -2770,9 +2845,10 @@ void
 MySqlHostDataSourceImpl::addResv(MySqlHostContextPtr& ctx,
                                  const IPv6Resrv& resv,
                                  const HostID& id) {
-    std::vector<MYSQL_BIND> bind = ctx->host_ipv6_reservation_exchange_->createBindForSend(resv, id);
+    std::vector<MYSQL_BIND> bind = ctx->host_ipv6_reservation_exchange_->
+        createBindForSend(resv, id, ip_reservations_unique_);
 
-    addStatement(ctx, INSERT_V6_RESRV, bind);
+    addStatement(ctx, ip_reservations_unique_ ? INSERT_V6_RESRV_UNIQUE : INSERT_V6_RESRV_NON_UNIQUE, bind);
 }
 
 void
@@ -2958,11 +3034,19 @@ MySqlHostDataSource::add(const HostPtr& host) {
     // the MySqlTransaction class.
     MySqlTransaction transaction(ctx->conn_);
 
+    // If we're configured to check that an IP reservation within a given subnet
+    // is unique, the IP reservation exists and the subnet is actually set
+    // we will be using a special query that checks for uniqueness. Otherwise,
+    // we will use a regular insert statement.
+    bool unique_ip = impl_->ip_reservations_unique_ && !host->getIPv4Reservation().isV4Zero()
+        && host->getIPv4SubnetID() != SUBNET_ID_UNUSED;
+
     // Create the MYSQL_BIND array for the host
-    std::vector<MYSQL_BIND> bind = ctx->host_ipv4_exchange_->createBindForSend(host);
+    std::vector<MYSQL_BIND> bind = ctx->host_ipv4_exchange_->createBindForSend(host, unique_ip);
 
     // ... and insert the host.
-    impl_->addStatement(ctx, MySqlHostDataSourceImpl::INSERT_HOST, bind);
+    impl_->addStatement(ctx, unique_ip ? MySqlHostDataSourceImpl::INSERT_HOST_UNIQUE_IP :
+                        MySqlHostDataSourceImpl::INSERT_HOST_NON_UNIQUE_IP, bind);
 
     // Gets the last inserted hosts id
     uint64_t host_id = mysql_insert_id(ctx->conn_.mysql_);
@@ -3645,6 +3729,13 @@ MySqlHostDataSource::rollback() {
     impl_->checkReadOnly(ctx);
     ctx->conn_.rollback();
 }
+
+bool
+MySqlHostDataSource::setIPReservationUnique(const bool unique) {
+    impl_->ip_reservations_unique_ = unique;
+    return (true);
+}
+
 
 }  // namespace dhcp
 }  // namespace isc

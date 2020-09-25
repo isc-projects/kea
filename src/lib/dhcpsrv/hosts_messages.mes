@@ -283,3 +283,11 @@ identifier.
 % HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL host not found using subnet id %1 and identifier %2
 This debug message is issued when no host was found using the specified
 subnet id and host identifier.
+
+% HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED host data source %1 does not support the mode in which IP reservations are non-unique
+This warning message is issued when an administrator attempted to configure the
+server to allow multiple host reservations for the same IP address or prefix.
+Some host database backends may not support this mode of operation. In this
+case the administrator should stop using these backends or fall back to the
+default setting which requires that IP addresses are unique within a subnet.
+This setting is guaranteed to work for MySQL and Postgres host backends.

@@ -1809,6 +1809,47 @@ GenericHostDataSourceTest::testAddDuplicate6WithSameHWAddr() {
 }
 
 void
+GenericHostDataSourceTest::testAddDuplicateIPv6() {
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create a host reservation.
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true);
+
+    // Add this reservation once.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Create a host with a different identifier but the same IPv6 address. An attempt
+    // to create the reservation for the same IPv6 address should fail.
+    host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true);
+    EXPECT_THROW(hdsptr_->add(host), DuplicateEntry);
+}
+
+void
+GenericHostDataSourceTest::testAllowDuplicateIPv6() {
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+    ASSERT_TRUE(hdsptr_->setIPReservationUnique(false));
+
+    // Create a host reservations.
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true);
+
+    // Add this reservation once.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Then try to add it again, it should throw an exception because the
+    // HWADDR is the same.
+    ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
+
+    // This time use a different host identifier and try again.
+    // This update should succeed because we permitted to create
+    // multiple IP reservations for the same IP address but different
+    // identifier.
+    ASSERT_NO_THROW(host->setIdentifier("01:02:03:04:05:06", "hw-address"));
+    ASSERT_NO_THROW(hdsptr_->add(host));
+}
+
+void
 GenericHostDataSourceTest::testAddDuplicate4() {
     // Make sure we have the pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
@@ -1832,6 +1873,42 @@ GenericHostDataSourceTest::testAddDuplicate4() {
     // we can now add the host.
     ASSERT_NO_THROW(host->setIPv4Reservation(IOAddress("192.0.2.3")));
     EXPECT_NO_THROW(hdsptr_->add(host));
+}
+
+void
+GenericHostDataSourceTest::testDisallowDuplicateIP() {
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+    // The backend does not support switching to the mode in which multiple
+    // reservations for the same address can be created.
+    EXPECT_FALSE(hdsptr_->setIPReservationUnique(false));
+
+    // The default mode still can be used.
+    EXPECT_TRUE(hdsptr_->setIPReservationUnique(true));
+}
+
+void
+GenericHostDataSourceTest::testAllowDuplicateIPv4() {
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+    ASSERT_TRUE(hdsptr_->setIPReservationUnique(false));
+
+    // Create a host reservations.
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_DUID);
+
+    // Add this reservation once.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Then try to add it again, it should throw an exception because the
+    // DUID is the same.
+    ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
+
+    // This time use a different host identifier and try again.
+    // This update should succeed because we permitted to create
+    // multiple IP reservations for the same IP address but different
+    // identifier.
+    ASSERT_NO_THROW(host->setIdentifier("01:02:03:04:05:06", "hw-address"));
+    ASSERT_NO_THROW(hdsptr_->add(host));
 }
 
 void

@@ -1505,10 +1505,18 @@ TEST_F(MySQLHostMgrTest, get6ByPrefix) {
     testGet6ByPrefix(*getCfgHosts(), HostMgr::instance());
 }
 
+// This test verifies that it is possible to control whether the reserved
+// IP addresses are unique or non unique via the HostMgr.
+TEST_F(MySQLHostMgrTest, setIPReservationUnique) {
+    EXPECT_TRUE(HostMgr::instance().setIPReservationUnique(true));
+    EXPECT_TRUE(HostMgr::instance().setIPReservationUnique(false));
+}
+
 // Verifies that loss of connectivity to MySQL is handled correctly.
 TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostCallback) {
     testDbLostCallback();
 }
+
 #endif
 
 
@@ -1662,6 +1670,13 @@ TEST_F(PostgreSQLHostMgrTest, get6ByPrefix) {
     testGet6ByPrefix(*getCfgHosts(), HostMgr::instance());
 }
 
+// This test verifies that it is possible to control whether the reserved
+// IP addresses are unique or non unique via the HostMgr.
+TEST_F(PostgreSQLHostMgrTest, setIPReservationUnique) {
+    EXPECT_TRUE(HostMgr::instance().setIPReservationUnique(true));
+    EXPECT_TRUE(HostMgr::instance().setIPReservationUnique(false));
+}
+
 // Verifies that loss of connectivity to PostgreSQL is handled correctly.
 TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostCallback) {
     testDbLostCallback();
@@ -1798,6 +1813,14 @@ TEST_F(CQLHostMgrTest, get6) {
 // from a configuration file and a database.
 TEST_F(CQLHostMgrTest, get6ByPrefix) {
     testGet6ByPrefix(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that it is possible to control whether the reserved
+// IP addresses are unique or non unique via the HostMgr.
+TEST_F(CQLHostMgrTest, setIPReservationUnique) {
+    EXPECT_TRUE(HostMgr::instance().setIPReservationUnique(true));
+    // This is currently not supported for Cassandra.
+    EXPECT_FALSE(HostMgr::instance().setIPReservationUnique(false));
 }
 
 #endif

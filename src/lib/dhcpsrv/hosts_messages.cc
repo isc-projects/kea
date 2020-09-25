@@ -66,6 +66,7 @@ extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6 = "
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER = "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER";
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST = "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST";
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL = "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL";
+extern const isc::log::MessageID HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED = "HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED";
 
 } // namespace dhcp
 } // namespace isc
@@ -132,6 +133,7 @@ const char* values[] = {
     "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER", "get one host with IPv6 reservation for subnet id %1, identified by %2",
     "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST", "using subnet id %1 and identifier %2, found in %3 host: %4",
     "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL", "host not found using subnet id %1 and identifier %2",
+    "HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED", "host data source %1 does not support the mode in which IP reservations are non-unique",
     NULL
 };
 

@@ -931,6 +931,29 @@ TEST_F(CfgHostsTest, add4AlreadyReserved) {
     EXPECT_THROW(cfg.add(host2), isc::dhcp::ReservedAddress);
 }
 
+// Test that it is possible to allow inserting multiple reservations for
+// the same IP address.
+TEST_F(CfgHostsTest, allow4AlreadyReserved) {
+    CfgHosts cfg;
+    // Allow creating multiple reservations for the same IP address.
+    ASSERT_TRUE(cfg.setIPReservationUnique(false));
+
+    // First host has a reservation for address 192.0.2.1
+    HostPtr host1 = HostPtr(new Host(hwaddrs_[0]->toText(false),
+                                     "hw-address",
+                                     SubnetID(1), SubnetID(SUBNET_ID_UNUSED),
+                                     IOAddress("192.0.2.1")));
+    ASSERT_NO_THROW(cfg.add(host1));
+
+    // The second host has a reservation for the same address.
+    HostPtr host2 = HostPtr(new Host(hwaddrs_[1]->toText(false),
+                                     "hw-address",
+                                     SubnetID(1), SUBNET_ID_UNUSED,
+                                     IOAddress("192.0.2.1")));
+    // Adding this should work because the HW address is different.
+    EXPECT_NO_THROW(cfg.add(host2));
+}
+
 // Checks that it's not possible for two hosts to have the same address
 // reserved at the same time.
 TEST_F(CfgHostsTest, add6Invalid2Hosts) {
@@ -955,6 +978,33 @@ TEST_F(CfgHostsTest, add6Invalid2Hosts) {
     // This second host has a reservation for an address that is already
     // reserved for the first host, so it should be rejected.
     EXPECT_THROW(cfg.add(host2), isc::dhcp::DuplicateHost);
+}
+
+// Test that it is possible to allow inserting multiple reservations for
+// the same IPv6 address.
+TEST_F(CfgHostsTest, allow6AlreadyReserved) {
+    CfgHosts cfg;
+    // Allow creating multiple reservations for the same IP address.
+    ASSERT_TRUE(cfg.setIPReservationUnique(false));
+
+    // First host has a reservation for address 2001:db8::1
+    HostPtr host1 = HostPtr(new Host(duids_[0]->toText(), "duid",
+                                     SUBNET_ID_UNUSED, SubnetID(1),
+                                     IOAddress("0.0.0.0")));
+    host1->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                    IOAddress("2001:db8::1")));
+    // Adding this should work.
+    EXPECT_NO_THROW(cfg.add(host1));
+
+    // The second host has a reservation for the same address.
+    HostPtr host2 = HostPtr(new Host(duids_[1]->toText(), "duid",
+                                     SUBNET_ID_UNUSED, SubnetID(1),
+                                     IOAddress("0.0.0.0")));
+    host2->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                    IOAddress("2001:db8::1")));
+
+    // Adding this should work because the DUID is different.
+    EXPECT_NO_THROW(cfg.add(host2));
 }
 
 // Check that no error is reported when adding a host with subnet

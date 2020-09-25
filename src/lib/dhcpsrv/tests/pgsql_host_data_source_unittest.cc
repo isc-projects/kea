@@ -1080,6 +1080,17 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithHWAddrMultiThreading) {
     testAddDuplicate6WithSameHWAddr();
 }
 
+/// @brief Test if the same IPv6 reservation can't be inserted multiple times.
+TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv6) {
+    testAddDuplicateIPv6();
+}
+
+/// @brief Test if the same IPv6 reservation can't be inserted multiple times.
+TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testAddDuplicateIPv6();
+}
+
 /// @brief Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
 /// follows: try to add multiple instances of the same host reservation and
 /// verify that the second and following attempts will throw exceptions.
@@ -1093,6 +1104,21 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicate4) {
 TEST_F(PgSqlHostDataSourceTest, addDuplicate4MultiThreading) {
     MultiThreadingTest mt(true);
     testAddDuplicate4();
+}
+
+/// @brief Test if the host reservation for the same IPv4 address can be inserted
+/// multiple times when allowed by the configuration and when the host identifier
+/// is different.
+TEST_F(PgSqlHostDataSourceTest, allowDuplicateIPv4) {
+    testAllowDuplicateIPv4();
+}
+
+/// @brief Test if the host reservation for the same IPv4 address can be inserted
+/// multiple times when allowed by the configuration and when the host identifier
+/// is different.
+TEST_F(PgSqlHostDataSourceTest, allowDuplicateIPv4MultiThreading) {
+    MultiThreadingTest mt(true);
+    testAllowDuplicateIPv4();
 }
 
 /// @brief This test verifies that DHCPv4 options can be inserted in a binary format

@@ -67,6 +67,7 @@ extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6;
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER;
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST;
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL;
+extern const isc::log::MessageID HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED;
 
 } // namespace dhcp
 } // namespace isc

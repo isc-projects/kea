@@ -411,6 +411,25 @@ public:
     /// Rolls back all pending database operations  (no-op for Cassandra)
     virtual void rollback() override;
 
+    /// @brief Controls whether IP reservations are unique or non-unique.
+    ///
+
+    /// In a typical case, the IP reservations are unique and backends verify
+    /// prior to adding a host reservation to the database that the reservation
+    /// for a given IP address does not exist. In some cases it may be required
+    /// to allow non-unique IP reservations, e.g. in the case when a host has
+    /// several interfaces and independently of which interface is used by this
+    /// host to communicate with the DHCP server the same IP address should be
+    /// assigned. In this case the @c unique value should be set to false to
+    /// disable the checks for uniqueness on the backend side.
+    ///
+    /// @param unique boolean flag indicating if the IP reservations must be
+    /// unique within the subnet or can be non-unique.
+    /// @return true when addresses must be unique, false otherwise because
+    /// this backend does not support specifying the same IP address in multiple
+    /// host reservations.
+    virtual bool setIPReservationUnique(const bool unique) override;
+
 private:
     /// @brief Pointer to the implementation of the @ref CqlHostDataSource.
     CqlHostDataSourceImpl* impl_;

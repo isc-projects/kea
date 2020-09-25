@@ -8,4 +8,5 @@
 /upgrade_5.0_to_5.1.sh
 /upgrade_5.1_to_6.0.sh
 /upgrade_6.0_to_6.1.sh
+/upgrade_6.1_to_6.2.sh
 /wipe_data.sh

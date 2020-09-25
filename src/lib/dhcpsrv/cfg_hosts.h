@@ -544,6 +544,23 @@ public:
         return (std::string("configuration file"));
     }
 
+    /// @brief Controls whether IP reservations are unique or non-unique.
+    ///
+    /// In a typical case, the IP reservations are unique and backends verify
+    /// prior to adding a host reservation to the database that the reservation
+    /// for a given IP address/subnet does not exist. In some cases it may be
+    /// required to allow non-unique IP reservations, e.g. in the case when a
+    /// host has several interfaces and independently of which interface is used
+    /// by this host to communicate with the DHCP server the same IP address
+    /// should be assigned. In this case the @c unique value should be set to
+    /// false to disable the checks for uniqueness on the backend side.
+    ///
+    /// @param unique boolean flag indicating if the IP reservations must be
+    /// unique or can be non-unique.
+    /// @return always true because this data source supports both the case when
+    /// the addresses must be unique and when they may be non-unique.
+    virtual bool setIPReservationUnique(const bool unique);
+
     /// @brief Unparse a configuration object
     ///
     /// host reservation lists are not autonomous so they are
@@ -848,6 +865,10 @@ private:
     /// - IPv6 address
     /// - IPv6 prefix
     HostContainer6 hosts6_;
+
+    /// @brief Holds the setting whether the IP reservations must be unique or
+    /// may be non-unique.
+    bool ip_reservations_unique_ = true;
 
     /// @brief Unparse a configuration object (DHCPv4 reservations)
     ///

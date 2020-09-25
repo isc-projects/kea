@@ -1,0 +1,49 @@
+#!/bin/sh
+
+prefix=@prefix@
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`mysql_version "$@"`
+
+if [ "$VERSION" != "9.3" ]; then
+    printf "This script upgrades 9.3 to 9.4. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+mysql "$@" <<EOF
+
+# Starting from this version we allow specifying multiple IP reservations
+# for the same address in certain DHCP configurations. The server may check
+# uniqueness of the IP addresses on its own. This is no longer checked at
+# the database level to faciliate the use cases when a single host may
+# get the same reserved IP address via different interfaces.
+
+# Replace the unique index with non-unique index so the queries for
+# hosts by IPv4 address are still efficient.
+DROP INDEX key_dhcp4_ipv4_address_subnet_id ON hosts;
+CREATE INDEX key_dhcp4_ipv4_address_subnet_id_identifier
+    ON hosts (ipv4_address ASC, dhcp4_subnet_id ASC);
+
+# Replace the unique index with non-unique index so the queries for
+# hosts by IPv6 address are still efficient.
+DROP INDEX key_dhcp6_address_prefix_len ON ipv6_reservations;
+CREATE INDEX key_dhcp6_address_prefix_len
+    ON ipv6_reservations (address ASC, prefix_len ASC);
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '9', minor = '4';
+
+# This line concludes database upgrade to version 9.4.
+
+EOF
+
+RESULT=$?
+
+exit $?

@@ -3660,5 +3660,14 @@ CqlHostDataSource::rollback() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_ROLLBACK);
 }
 
+bool
+CqlHostDataSource::setIPReservationUnique(const bool unique) {
+    // This backend does not support the mode in which multiple reservations
+    // for the same IP address are created. If selecting this mode is
+    // attempted this function returns false to indicate that this is
+    // not allowed.
+    return (unique ? true : false);
+}
+
 }  // namespace dhcp
 }  // namespace isc

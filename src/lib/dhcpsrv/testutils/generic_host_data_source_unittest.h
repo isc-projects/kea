@@ -382,10 +382,31 @@ public:
     /// Uses gtest macros to report failures.
     void testAddDuplicate6WithSameHWAddr();
 
-    /// @brief Test if the duplicate IPv4 host with can't be inserted.
+    /// @brief Test that duplicate IPv6 reservation can't be inserted.
+    ///
+    /// Uses gtest macros to report failures.
+    void testAddDuplicateIPv6();
+
+    /// @brief Test if the reservation for the same IPv6 address can be
+    /// inserted when allowed by the configuration.
+    ///
+    /// Uses gtest macros to report failures.
+    void testAllowDuplicateIPv6();
+
+    /// @brief Test that duplicate IPv4 reservation can't be inserted.
     ///
     /// Uses gtest macros to report failures.
     void testAddDuplicate4();
+
+    /// @brief Test that the backend does not support a mode in which multiple
+    /// host reservations for the same IP address can be created.
+    void testDisallowDuplicateIP();
+
+    /// @brief Test if the reservation for the same IPv4 address can be
+    /// inserted when allowed by the configuration.
+    ///
+    /// Uses gtest macros to report failures.
+    void testAllowDuplicateIPv4();
 
     /// @brief Test that DHCPv4 options can be inserted and retrieved from
     /// the database.
