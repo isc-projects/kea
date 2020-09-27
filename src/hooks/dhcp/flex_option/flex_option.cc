@@ -76,7 +76,7 @@ namespace flex_option {
 
 FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code,
                                            OptionDefinitionPtr def)
-    : code_(code), def_(def), action_(NONE), csv_format_(false) {
+    : code_(code), action_(NONE), def_(def) {
 }
 
 FlexOptionImpl::OptionConfig::~OptionConfig() {
@@ -162,17 +162,6 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
             }
         }
         code = static_cast<uint16_t>(value);
-        def = isc::dhcp::LibDHCP::getOptionDef(space, code);
-        if (!def) {
-            def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, code);
-        }
-        if (!def) {
-            def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, code);
-        }
-        if (!def) {
-            isc_throw(BadValue, "no known option with code '" << code
-                      << "' in '" << space << "' space");
-        }
     }
     if (name_elem) {
         if (name_elem->getType() != Element::string) {
@@ -201,7 +190,6 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         }
         code = def->getCode();
     }
-
     if (option_config_map_.count(code)) {
         isc_throw(BadValue, "option " << code << " was already specified");
     }
@@ -215,11 +203,27 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         csv_format = csv_format_elem->boolValue();
     }
 
-    OptionConfigPtr opt_cfg(new OptionConfig(code, def));
-
-    if (csv_format_elem) {
-        opt_cfg->setCSVFormat(csv_format);
+    if (!csv_format) {
+        // No definition means no csv format.
+        if (def) {
+            def.reset();
+        }
+    } else if (!def) {
+        // Definition is required with csv format.
+        def = isc::dhcp::LibDHCP::getOptionDef(space, code);
+        if (!def) {
+            def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, code);
+        }
+        if (!def) {
+            def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, code);
+        }
+        if (!def) {
+            isc_throw(BadValue, "no known option with code '" << code
+                      << "' in '" << space << "' space");
+        }
     }
+
+    OptionConfigPtr opt_cfg(new OptionConfig(code, def));
 
     // opt_cfg initial action is NONE.
     parseAction(option, opt_cfg, universe,

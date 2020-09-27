@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,6 +55,7 @@ public:
         /// @brief Constructor.
         ///
         /// @param code the option code.
+        /// @param def the option definition.
         OptionConfig(uint16_t code, isc::dhcp::OptionDefinitionPtr def);
 
         /// @brief Destructor.
@@ -116,26 +117,9 @@ public:
             return (expr_);
         }
 
-        /// @brief Set csv format.
-        ///
-        /// @param flag the csv format.
-        void setCSVFormat(bool flag) {
-            csv_format_ = flag;
-        }
-
-        /// @brief Return csv format.
-        ///
-        /// @return the csv format.
-        bool getCSVFormat() const {
-            return (csv_format_);
-        }
-
     private:
         /// @brief The code.
         uint16_t code_;
-
-        /// @brief The option definition.
-        isc::dhcp::OptionDefinitionPtr def_;
 
         /// @brief The action.
         Action action_;
@@ -146,8 +130,9 @@ public:
         /// @brief The match expression.
         isc::dhcp::ExpressionPtr expr_;
 
-        /// @brief The csv format flag of the option.
-        bool csv_format_;
+        /// @brief The option definition.
+        /// @note This value is set only when csv-format is true.
+        isc::dhcp::OptionDefinitionPtr def_;
     };
 
     /// @brief The type of shared pointers to option config.
@@ -203,21 +188,16 @@ public:
                 if (value.empty()) {
                     break;
                 }
-                // Check for cvs format.
-                if (opt_cfg->getCSVFormat()) {
-                    if (!def) {
-                        buffer.assign(value.begin(), value.end());
-                        opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
-                                                        buffer));
-                    } else {
-                        std::vector<std::string> split_vec =
-                                isc::util::str::tokens(value, ",", true);
-                        opt = def->optionFactory(universe, opt_cfg->getCode(),
-                                                 split_vec);
-                    }
+                // Set the value.
+                if (def) {
+                    std::vector<std::string> split_vec =
+                            isc::util::str::tokens(value, ",", true);
+                    opt = def->optionFactory(universe, opt_cfg->getCode(),
+                                             split_vec);
                 } else {
                     buffer.assign(value.begin(), value.end());
-                    opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
+                    opt.reset(new isc::dhcp::Option(universe,
+                                                    opt_cfg->getCode(),
                                                     buffer));
                 }
                 // Add the option.
@@ -235,21 +215,16 @@ public:
                     response->delOption(opt_cfg->getCode());
                     opt = response->getOption(opt_cfg->getCode());
                 }
-                // Check for cvs format.
-                if (opt_cfg->getCSVFormat()) {
-                    if (!def) {
-                        buffer.assign(value.begin(), value.end());
-                        opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
-                                                        buffer));
-                    } else {
-                        std::vector<std::string> split_vec =
-                                isc::util::str::tokens(value, ",", true);
-                        opt = def->optionFactory(universe, opt_cfg->getCode(),
-                                                 split_vec);
-                    }
+                // Set the value.
+                if (def) {
+                    std::vector<std::string> split_vec =
+                            isc::util::str::tokens(value, ",", true);
+                    opt = def->optionFactory(universe, opt_cfg->getCode(),
+                                             split_vec);
                 } else {
                     buffer.assign(value.begin(), value.end());
-                    opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
+                    opt.reset(new isc::dhcp::Option(universe,
+                                                    opt_cfg->getCode(),
                                                     buffer));
                 }
                 // Add the option.

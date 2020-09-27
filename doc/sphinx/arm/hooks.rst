@@ -1277,6 +1277,16 @@ name followed by .boot for content.
 
 The flexible option library supports both DHCPv4 and DHCPv6.
 
+Since kea 1.9.0 add and supersede actions take an optional cvs-format boolean
+parameter. If not specified or specified to false the option data is set
+using the raw value of the evaluated expression. When it is specified
+to true this value is parsed using the option definition in option data
+specified in the configuration file. This eases option setting for options
+using complex record formats or fully qualified domain names.
+
+For instance if the expression evaluation returns "example.com" and
+the option is defined with the fqdn type the domain name will be
+encoded into DNS binary format.
 
 
 .. _host-cmds:

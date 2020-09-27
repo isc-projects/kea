@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -170,7 +170,7 @@ TEST_F(FlexOptionTest, optionConfigBadCode4) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
-    code = Element::create(2);
+    code = Element::create(254);
     option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -210,7 +210,7 @@ TEST_F(FlexOptionTest, optionConfigBadCode6) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
-    code = Element::create(2);
+    code = Element::create(65535);
     option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -255,8 +255,8 @@ TEST_F(FlexOptionTest, optionConfigUnknownName) {
     EXPECT_EQ("no known 'foobar' option in 'dhcp4' space", impl_->getErrMsg());
 }
 
-// Verify that the code must be a known option.
-TEST_F(FlexOptionTest, optionConfigUnknownCode) {
+// Verify that the definition is not required when csv-format is not specified.
+TEST_F(FlexOptionTest, optionConfigUnknownCodeNoCSVFormat) {
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();
     options->add(option);
@@ -264,6 +264,42 @@ TEST_F(FlexOptionTest, optionConfigUnknownCode) {
     option->set("add", add);
     ElementPtr code = Element::create(109);
     option->set("code", code);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    auto map = impl_->getOptionConfigMap();
+    EXPECT_EQ(1, map.count(109));
+}
+
+// Verify that the definition is not required when csv-format is false.
+TEST_F(FlexOptionTest, optionConfigUnknownCodeDisableCSVFormat) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'ab'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    // Disable csv-format.
+    option->set("csv-format", Element::create(false));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    auto map = impl_->getOptionConfigMap();
+    EXPECT_EQ(1, map.count(109));
+}
+
+// Verify that the code must be a known option when csv-format is true.
+TEST_F(FlexOptionTest, optionConfigUnknownCodeEnableCSVFormat) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'ab'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    // Enable csv-format.
+    option->set("csv-format", Element::create(true));
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
     EXPECT_EQ("no known option with code '109' in 'dhcp4' space", impl_->getErrMsg());
 }
