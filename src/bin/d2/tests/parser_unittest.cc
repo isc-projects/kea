@@ -5,12 +5,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <config.h>
 
-#include <gtest/gtest.h>
 #include <cc/data.h>
 #include <d2/parser_context.h>
 #include <d2/tests/parser_unittest.h>
 #include <testutils/io_utils.h>
 #include <testutils/user_context_utils.h>
+#include <gtest/gtest.h>
+#include <fstream>
+
+#include "test_data_files_config.h"
 
 using namespace isc::data;
 using namespace isc::test;
@@ -626,6 +629,72 @@ TEST(ParserTest, unicodeSlash) {
     });
     ASSERT_EQ(Element::string, result->getType());
     EXPECT_EQ("////", result->stringValue());
+}
+
+// This test checks that all map entries are in the sample file.
+TEST(ParserTest, mapEntries) {
+    // Get keywords from the syntax file (d2_parser.yy).
+    ifstream syntax_file(SYNTAX_FILE);
+    EXPECT_TRUE(syntax_file.is_open());
+    string line;
+    KeywordSet syntax_keys = { "user-context" };
+    // Code setting the map entry.
+    const string pattern = "ctx.stack_.back()->set(\"";
+    while (getline(syntax_file, line)) {
+        // Skip comments.
+        size_t comment = line.find("//");
+        if (comment <= pattern.size()) {
+            continue;
+        }
+        if (comment != string::npos) {
+            line.resize(comment);
+        }
+        // Search for the code pattern.
+        size_t key_begin = line.find(pattern);
+        if (key_begin == string::npos) {
+            continue;
+        }
+        // Extract keywords.
+        line = line.substr(key_begin + pattern.size());
+        size_t key_end = line.find_first_of('"');
+        EXPECT_NE(string::npos, key_end);
+        string keyword = line.substr(0, key_end);
+        // Ignore result when adding the keyword to the syntax keyword set.
+        static_cast<void>(syntax_keys.insert(keyword));
+    }
+    syntax_file.close();
+
+    // Get keywords from the sample file
+    string sample_fname(D2_TEST_DATA_DIR);
+    sample_fname += "/get_config.json";
+    D2ParserContext ctx;
+    ElementPtr sample_json;
+    EXPECT_NO_THROW(sample_json =
+        ctx.parseFile(sample_fname, D2ParserContext::PARSER_DHCPDDNS));
+    ASSERT_TRUE(sample_json);
+    KeywordSet sample_keys;
+    // Recursively extract keywords.
+    static void (*extract)(ConstElementPtr, KeywordSet&) =
+        [] (ConstElementPtr json, KeywordSet& set) {
+            if (json->getType() == Element::list) {
+                // Handle lists.
+                for (auto elem : json->listValue()) {
+                    extract(elem, set);
+                }
+            } else if (json->getType() == Element::map) {
+                // Handle maps.
+                for (auto elem : json->mapValue()) {
+                    static_cast<void>(set.insert(elem.first));
+                    if (elem.first != "user-context") {
+                        extract(elem.second, set);
+                    }
+                }
+            }
+        };
+    extract(sample_json, sample_keys);
+
+    // Compare.
+    EXPECT_EQ(syntax_keys, sample_keys);
 }
 
 }

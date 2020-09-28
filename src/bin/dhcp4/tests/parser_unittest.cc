@@ -6,12 +6,14 @@
 
 #include <config.h>
 
-#include <gtest/gtest.h>
 #include <dhcp4/parser_context.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
 #include <testutils/user_context_utils.h>
+#include <gtest/gtest.h>
+#include <fstream>
+#include <set>
 
 using namespace isc::data;
 using namespace isc::test;
@@ -679,6 +681,94 @@ TEST(ParserTest, unicodeSlash) {
     });
     ASSERT_EQ(Element::string, result->getType());
     EXPECT_EQ("////", result->stringValue());
+}
+
+// This test checks that all map entries are in the all-keys file.
+TEST(ParserTest, mapEntries) {
+    // Type of keyword set.
+    typedef set<string> KeywordSet;
+
+    // Get keywords from the syntax file (dhcp4_parser.yy).
+    ifstream syntax_file(SYNTAX_FILE);
+    EXPECT_TRUE(syntax_file.is_open());
+    string line;
+    KeywordSet syntax_keys = { "user-context" };
+    // Code setting the map entry.
+    const string pattern = "ctx.stack_.back()->set(\"";
+    while (getline(syntax_file, line)) {
+        // Skip comments.
+        size_t comment = line.find("//");
+        if (comment <= pattern.size()) {
+            continue;
+        }
+        if (comment != string::npos) {
+            line.resize(comment);
+        }
+        // Search for the code pattern.
+        size_t key_begin = line.find(pattern);
+        if (key_begin == string::npos) {
+            continue;
+        }
+        // Extract keywords.
+        line = line.substr(key_begin + pattern.size());
+        size_t key_end = line.find_first_of('"');
+        EXPECT_NE(string::npos, key_end);
+        string keyword = line.substr(0, key_end);
+        // Ignore result when adding the keyword to the syntax keyword set.
+        static_cast<void>(syntax_keys.insert(keyword));
+    }
+    syntax_file.close();
+
+    // Get keywords from the all keys file
+    string sample_fname(CFG_EXAMPLES);
+    sample_fname += "/all-keys.json";
+    Parser4Context ctx;
+    ElementPtr sample_json;
+    EXPECT_NO_THROW(sample_json =
+        ctx.parseFile(sample_fname, Parser4Context::PARSER_DHCP4));
+    ASSERT_TRUE(sample_json);
+    KeywordSet sample_keys = {
+        "hw-address", "duid", "client-id", "flex-id",
+        "hosts-database"
+    };
+    // Recursively extract keywords.
+    static void (*extract)(ConstElementPtr, KeywordSet&) =
+        [] (ConstElementPtr json, KeywordSet& set) {
+            if (json->getType() == Element::list) {
+                // Handle lists.
+                for (auto elem : json->listValue()) {
+                    extract(elem, set);
+                }
+            } else if (json->getType() == Element::map) {
+                // Handle maps.
+                for (auto elem : json->mapValue()) {
+                    static_cast<void>(set.insert(elem.first));
+                    if (elem.first != "user-context") {
+                        extract(elem.second, set);
+                    }
+                }
+            }
+        };
+    extract(sample_json, sample_keys);
+
+    // Compare.
+    auto print_keys = [](const KeywordSet& keys) {
+        string s = "{";
+        bool first = true;
+        for (auto key : keys) {
+            if (first) {
+                first = false;
+                s += " ";
+            } else {
+                s += ", ";
+            }
+            s += "\"" + key + "\"";
+        }
+        return (s + " }");
+    };
+    EXPECT_EQ(syntax_keys, sample_keys)
+        << "syntax has: " << print_keys(syntax_keys) << endl
+        << "sample has: " << print_keys(sample_keys) << endl;
 }
 
 }

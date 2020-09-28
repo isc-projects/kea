@@ -11,6 +11,9 @@
 {
     // Kea DHCPv4 server configuration begins here.
     "Dhcp4": {
+        // TODO (here and other levels).
+        "authoritative": false,
+
         // Global bootfile name to be set in the 'file' field.
         "boot-file-name": "/dev/null",
 
@@ -284,7 +287,10 @@
                 "type": "mysql",
 
                 // User name to be used to access the database.
-                "user": "kea"
+                "user": "kea",
+
+                // Read only mode.
+                "readonly": false
             },
             {
                 // Name of the database to connect to.
@@ -336,6 +342,9 @@
 
                 // Connection reconnect wait time.
                 "reconnect-wait-time": 100,
+
+                // Connection maximum reconnect tries.
+                "max-reconnect-tries": 3,
 
                 // Connection connect timeout.
                 "connect-timeout": 100,
@@ -853,6 +862,9 @@
                                 // Reserved IP address.
                                 "ip-address": "192.0.2.204",
 
+                                // Hostname.
+                                "hostname": "foo.example.org",
+
                                 // Reservation specific option data.
                                 "option-data": [
                                     {
@@ -945,7 +957,10 @@
             "enable-queue": true,
 
             // Queue type was mandatory.
-            "queue-type": "kea-ring4"
+            "queue-type": "kea-ring4",
+
+            // Capacity is optional.
+            "capacity": 64
         },
 
         // Fetches host reservations.
@@ -1009,6 +1024,9 @@
                 // Specifies logging severity, i.e. "ERROR", "WARN", "INFO", "DEBUG".
                 "severity": "INFO"
             }
-        ]
+        ],
+
+        // Look at advanced example for the use of user-contexts.
+        "user-context": { }
     }
 }
