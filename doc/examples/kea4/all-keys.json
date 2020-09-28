@@ -11,7 +11,9 @@
 {
     // Kea DHCPv4 server configuration begins here.
     "Dhcp4": {
-        // TODO (here and other levels).
+
+        // Global authoritative flag to handle requests by clients for
+        // unknown IP addresses (ignore if disabled, NAK if enabled).
         "authoritative": false,
 
         // Global bootfile name to be set in the 'file' field.
@@ -593,6 +595,9 @@
         // networks group subnets together.
         "shared-networks": [
             {
+                // Shared network level authoritative flag.
+                "authoritative": false,
+
                 // Shared network level bootfile name.
                 "boot-file-name": "/dev/null",
 
@@ -702,6 +707,9 @@
 
                         // Prefix matched against source address. See RFC7341.
                         "4o6-subnet": "2001:db8:1:1::/64",
+
+                        // Subnet level authoritative flag.
+                        "authoritative": true,
 
                         // Subnet level bootfile name, set in 'file' field.
                         "boot-file-name": "",
