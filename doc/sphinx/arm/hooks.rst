@@ -1277,10 +1277,10 @@ name followed by .boot for content.
 
 The flexible option library supports both DHCPv4 and DHCPv6.
 
-Since kea 1.9.0 add and supersede actions take an optional cvs-format boolean
-parameter. If not specified or specified to false the option data is set
-using the raw value of the evaluated expression. When it is specified
-to true this value is parsed using the option definition in option data
+Since Kea 1.9.0, the add and supersede actions take an optional cvs-format
+boolean parameter. If not specified or configured to false, the option data is
+set using the raw value of the evaluated expression. When it is configured
+to true, this value is parsed using the option definition from the option data
 specified in the configuration file. This eases option setting for options
 using complex record formats or fully qualified domain names.
 
