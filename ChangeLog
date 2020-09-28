@@ -1,3 +1,7 @@
+1810.	[build]		fdupont, razvan
+	Bump up libs version for Kea 1.9.0 release.
+	(Gitlab #1400)
+
 1809.	[func]		razvan
 	Added csv-format option to flex_option hook to be able to insert
 	option data in csv format. The implicit value is false, maintaining
