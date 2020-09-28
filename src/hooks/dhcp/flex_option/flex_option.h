@@ -121,6 +121,10 @@ public:
         /// @brief The code.
         uint16_t code_;
 
+        /// @brief The option definition.
+        /// @note This value is set only when csv-format is true.
+        isc::dhcp::OptionDefinitionPtr def_;
+
         /// @brief The action.
         Action action_;
 
@@ -129,10 +133,6 @@ public:
 
         /// @brief The match expression.
         isc::dhcp::ExpressionPtr expr_;
-
-        /// @brief The option definition.
-        /// @note This value is set only when csv-format is true.
-        isc::dhcp::OptionDefinitionPtr def_;
     };
 
     /// @brief The type of shared pointers to option config.

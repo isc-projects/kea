@@ -76,7 +76,7 @@ namespace flex_option {
 
 FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code,
                                            OptionDefinitionPtr def)
-    : code_(code), action_(NONE), def_(def) {
+    : code_(code), def_(def), action_(NONE) {
 }
 
 FlexOptionImpl::OptionConfig::~OptionConfig() {
