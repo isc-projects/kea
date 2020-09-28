@@ -1,3 +1,5 @@
+Kea 1.9.0 (development) released on Sep 30, 2020
+
 1810.	[build]		fdupont, razvan
 	Bump up libs version for Kea 1.9.0 release.
 	(Gitlab #1400)

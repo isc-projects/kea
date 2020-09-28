@@ -46,14 +46,6 @@ subnet identifier.
 % HOSTS_CFG_GET_ALL get all hosts with reservations
 This debug message is issued when starting to retrieve all hosts.
 
-% HOSTS_CFG_GET_ALL_COUNT found %1 host(s)
-This debug message include the details of the host found. The argument
-specifies the number of hosts found.
-
-% HOSTS_CFG_GET_ALL_HOST found host: %1
-This debug message includes the details of the host found. The argument
-specifies found host details.
-
 % HOSTS_CFG_GET_ALL_ADDRESS4 get all hosts with reservations for IPv4 address %1
 This debug message is issued when starting to retrieve all hosts, holding the
 reservation for the specific IPv4 address, from the configuration. The
@@ -83,6 +75,14 @@ of hosts found respectively.
 This debug message is issued when found host with the reservation
 for the specified IPv6 address. The arguments specify the IPv6 address
 and the detailed description of the host found.
+
+% HOSTS_CFG_GET_ALL_COUNT found %1 host(s)
+This debug message include the details of the host found. The argument
+specifies the number of hosts found.
+
+% HOSTS_CFG_GET_ALL_HOST found host: %1
+This debug message includes the details of the host found. The argument
+specifies found host details.
 
 % HOSTS_CFG_GET_ALL_HOSTNAME get all hosts with reservations for hostname %1
 This debug message is issued when starting to retrieve all hosts with
