@@ -764,7 +764,10 @@ TEST(ParserTest, mapEntries) {
 /// @brief Tests a duplicate entry.
 ///
 /// The entry was duplicated by adding a a new <name>DDDD entry.
+/// An error is expected, usually it is a duplicate but there are
+/// a few syntax errors when the syntax allows only one parameter.
 ///
+/// @param json the JSON configuration with the duplicate entry.
 void testDuplicate(ConstElementPtr json) {
     string config = json->str();
     size_t where = config.find("DDDD");
@@ -773,8 +776,8 @@ void testDuplicate(ConstElementPtr json) {
     string after = config.substr(where + 4, string::npos);
     Parser6Context ctx;
     EXPECT_THROW(ctx.parseString(before + after,
-				 Parser6Context::PARSER_DHCP6),
-		 Dhcp6ParseError);
+                                 Parser6Context::PARSER_DHCP6),
+                 Dhcp6ParseError) << "config: " << config;
 }
 
 // This test checks that duplicate entries make parsing to fail.
@@ -790,33 +793,33 @@ TEST(ParserTest, duplicateMapEntries) {
 
     // Recursively check duplicates.
     static void (*test)(ElementPtr, ElementPtr, size_t&) =
-	[] (ElementPtr config, ElementPtr json, size_t& cnt) {
-	    if (json->getType() == Element::list) {
-		// Handle lists.
-		for (auto elem : json->listValue()) {
-		    test(config, elem, cnt);
-		}
-	    } else if (json->getType() == Element::map) {
-		// Handle maps.
-		for (auto elem : json->mapValue()) {
-		    // Perform tests.
-		    string dup = elem.first + "DDDD";
-		    json->set(dup, elem.second);
-		    testDuplicate(config);
-		    json->remove(dup);
-		    ++cnt;
+        [] (ElementPtr config, ElementPtr json, size_t& cnt) {
+            if (json->getType() == Element::list) {
+                // Handle lists.
+                for (auto elem : json->listValue()) {
+                    test(config, elem, cnt);
+                }
+            } else if (json->getType() == Element::map) {
+                // Handle maps.
+                for (auto elem : json->mapValue()) {
+                    // Perform tests.
+                    string dup = elem.first + "DDDD";
+                    json->set(dup, elem.second);
+                    testDuplicate(config);
+                    json->remove(dup);
+                    ++cnt;
 
-		    // Recursive call.
-		    ElementPtr mutable_json =
-			boost::const_pointer_cast<Element>(elem.second);
-		    ASSERT_TRUE(mutable_json);
-		    test(config, mutable_json, cnt);
-		}
-	    }
-	};
+                    // Recursive call.
+                    ElementPtr mutable_json =
+                        boost::const_pointer_cast<Element>(elem.second);
+                    ASSERT_TRUE(mutable_json);
+                    test(config, mutable_json, cnt);
+                }
+            }
+        };
     size_t cnt = 0;
     test(sample_json, sample_json, cnt);
-    cout << "checked " << cnt << " duplicated\n";
+    cout << "checked " << cnt << " duplicated map entries\n";
 }
 
 }
