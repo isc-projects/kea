@@ -658,6 +658,11 @@ public:
         return (getOne());
     }
 
+    ConstHostCollection
+    getAll4(const SubnetID&, const asiolink::IOAddress&) const {
+        return (getCollection());
+    }
+
     ConstHostPtr get6(const SubnetID&, const Host::IdentifierType&,
                       const uint8_t*, const size_t) const {
         return (getOne());
@@ -669,6 +674,11 @@ public:
 
     ConstHostPtr get6(const SubnetID&, const IOAddress&) const {
         return (getOne());
+    }
+
+    ConstHostCollection
+    getAll6(const SubnetID&, const IOAddress&) const {
+        return (getCollection());
     }
 
     void add(const HostPtr&) {

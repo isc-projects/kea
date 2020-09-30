@@ -3580,6 +3580,37 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
     return (result);
 }
 
+ConstHostCollection
+MySqlHostDataSource::getAll4(const SubnetID& subnet_id,
+                             const asiolink::IOAddress& address) const {
+    if (!address.isV4()) {
+        isc_throw(BadValue, "MySqlHostDataSource::getAll4(id, address): "
+                  "wrong address type, address supplied is an IPv6 address");
+    }
+
+    // Get a context
+    MySqlHostContextAlloc get_context(*impl_);
+    MySqlHostContextPtr ctx = get_context.ctx_;
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+    uint32_t subnet = subnet_id;
+    memset(inbind, 0, sizeof(inbind));
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    uint32_t addr4 = address.toUint32();
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&addr4);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection collection;
+    impl_->getHostCollection(ctx, MySqlHostDataSourceImpl::GET_HOST_SUBID_ADDR, inbind,
+                             ctx->host_ipv4_exchange_, collection, false);
+    return (collection);
+}
+
 ConstHostPtr
 MySqlHostDataSource::get6(const SubnetID& subnet_id,
                           const Host::IdentifierType& identifier_type,
@@ -3678,6 +3709,42 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id,
     }
 
     return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getAll6(const SubnetID& subnet_id,
+                             const asiolink::IOAddress& address) const {
+    if (!address.isV6()) {
+        isc_throw(BadValue, "MySqlHostDataSource::getAll6(id, address): "
+                  "wrong address type, address supplied is an IPv4 address");
+    }
+
+    // Get a context
+    MySqlHostContextAlloc get_context(*impl_);
+    MySqlHostContextPtr ctx = get_context.ctx_;
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    uint32_t subnet_buffer = static_cast<uint32_t>(subnet_id);
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet_buffer);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    std::string addr6 = address.toText();
+    unsigned long addr6_length = addr6.size();
+
+    inbind[1].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[1].buffer = reinterpret_cast<char*>
+                        (const_cast<char*>(addr6.c_str()));
+    inbind[1].length = &addr6_length;
+    inbind[1].buffer_length = addr6_length;
+
+    ConstHostCollection collection;
+    impl_->getHostCollection(ctx, MySqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR, inbind,
+                             ctx->host_ipv6_exchange_, collection, false);
+    return (collection);
 }
 
 // Miscellaneous database methods.

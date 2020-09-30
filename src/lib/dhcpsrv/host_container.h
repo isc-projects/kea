@@ -209,7 +209,7 @@ typedef boost::multi_index_container<
 
         // Second index is used to search by (subnet_id, address) pair.
         // This is
-        boost::multi_index::ordered_unique<
+        boost::multi_index::ordered_non_unique<
 
             /// This is a composite key. It uses two keys: subnet-id and
             /// IPv6 address reservation.

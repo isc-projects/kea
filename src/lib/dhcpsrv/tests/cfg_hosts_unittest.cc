@@ -951,7 +951,11 @@ TEST_F(CfgHostsTest, allow4AlreadyReserved) {
                                      SubnetID(1), SUBNET_ID_UNUSED,
                                      IOAddress("192.0.2.1")));
     // Adding this should work because the HW address is different.
-    EXPECT_NO_THROW(cfg.add(host2));
+    ASSERT_NO_THROW(cfg.add(host2));
+
+    ConstHostCollection returned;
+    ASSERT_NO_THROW(returned = cfg.getAll4(host1->getIPv4SubnetID(), IOAddress("192.0.2.1")));
+    EXPECT_EQ(2, returned.size());
 }
 
 // Checks that it's not possible for two hosts to have the same address
@@ -1004,7 +1008,11 @@ TEST_F(CfgHostsTest, allow6AlreadyReserved) {
                                     IOAddress("2001:db8::1")));
 
     // Adding this should work because the DUID is different.
-    EXPECT_NO_THROW(cfg.add(host2));
+    ASSERT_NO_THROW(cfg.add(host2));
+
+    ConstHostCollection returned;
+    ASSERT_NO_THROW(returned = cfg.getAll6(host1->getIPv6SubnetID(), IOAddress("2001:db8::1")));
+    EXPECT_EQ(2, returned.size());
 }
 
 // Check that no error is reported when adding a host with subnet

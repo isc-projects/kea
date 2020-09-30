@@ -42,6 +42,9 @@ extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID4_HOST = "HOSTS_CFG_
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID6 = "HOSTS_CFG_GET_ALL_SUBNET_ID6";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID6_COUNT = "HOSTS_CFG_GET_ALL_SUBNET_ID6_COUNT";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID6_HOST = "HOSTS_CFG_GET_ALL_SUBNET_ID6_HOST";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4 = "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT = "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST = "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6 = "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_COUNT = "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_COUNT";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST = "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST";
@@ -66,6 +69,8 @@ extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6 = "
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER = "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER";
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST = "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST";
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL = "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL";
+extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS4 = "HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS4";
+extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS6 = "HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS6";
 extern const isc::log::MessageID HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED = "HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED";
 
 } // namespace dhcp
@@ -109,6 +114,9 @@ const char* values[] = {
     "HOSTS_CFG_GET_ALL_SUBNET_ID6", "get all hosts with reservations for IPv6 subnet %1",
     "HOSTS_CFG_GET_ALL_SUBNET_ID6_COUNT", "using IPv6 subnet %1, found %2 host(s)",
     "HOSTS_CFG_GET_ALL_SUBNET_ID6_HOST", "using IPv6 subnet %1, found host: %2",
+    "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4", "get all hosts with reservations for subnet id %1 and IPv4 address %2",
+    "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT", "using IPv4 subnet %1 and IPv4 address %2, found %3 host(s)",
+    "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST", "using IPv4 subnet %1 and IPv4 address %2, found host: %3",
     "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6", "get all hosts with reservations for subnet id %1 and IPv6 address %2",
     "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_COUNT", "using subnet id %1 and address %2, found %3 host(s)",
     "HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST", "using subnet id %1 and address %2, found host: %3",
@@ -133,6 +141,8 @@ const char* values[] = {
     "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER", "get one host with IPv6 reservation for subnet id %1, identified by %2",
     "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST", "using subnet id %1 and identifier %2, found in %3 host: %4",
     "HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL", "host not found using subnet id %1 and identifier %2",
+    "HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS4", "trying alternate sources for hosts using subnet id %1 and address %2",
+    "HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS6", "trying alternate sources for hosts using subnet id %1 and address %2",
     "HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED", "host data source %1 does not support the mode in which IP reservations are non-unique",
     NULL
 };

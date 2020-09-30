@@ -43,6 +43,9 @@ extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID4_HOST;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID6;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID6_COUNT;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID6_HOST;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_COUNT;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST;
@@ -67,6 +70,8 @@ extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6;
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER;
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST;
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL;
+extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS4;
+extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS6;
 extern const isc::log::MessageID HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED;
 
 } // namespace dhcp

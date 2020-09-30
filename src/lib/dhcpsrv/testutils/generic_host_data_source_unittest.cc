@@ -1832,21 +1832,33 @@ GenericHostDataSourceTest::testAllowDuplicateIPv6() {
     ASSERT_TRUE(hdsptr_->setIPReservationUnique(false));
 
     // Create a host reservations.
-    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true, true);
+    auto host_id = host->getHostId();
+    auto subnet_id = host->getIPv6SubnetID();
 
     // Add this reservation once.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
     // Then try to add it again, it should throw an exception because the
     // HWADDR is the same.
+    host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true, false);
+    host->setHostId(++host_id);
+    host->setIPv6SubnetID(subnet_id);
     ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
 
     // This time use a different host identifier and try again.
     // This update should succeed because we permitted to create
     // multiple IP reservations for the same IP address but different
     // identifier.
-    ASSERT_NO_THROW(host->setIdentifier("01:02:03:04:05:06", "hw-address"));
+    host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true, true);
+    host->setHostId(++host_id);
+    host->setIPv6SubnetID(subnet_id);
     ASSERT_NO_THROW(hdsptr_->add(host));
+
+    ConstHostCollection returned;
+    ASSERT_NO_THROW(returned = hdsptr_->getAll6(host->getIPv6SubnetID(), IOAddress("2001:db8::1")));
+    EXPECT_EQ(2, returned.size());
+    EXPECT_NE(returned[0]->getIdentifierAsText(), returned[1]->getIdentifierAsText());
 }
 
 void
@@ -1894,21 +1906,33 @@ GenericHostDataSourceTest::testAllowDuplicateIPv4() {
     ASSERT_TRUE(hdsptr_->setIPReservationUnique(false));
 
     // Create a host reservations.
-    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_DUID);
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_DUID, true);
+    auto host_id = host->getHostId();
+    auto subnet_id = host->getIPv4SubnetID();
 
     // Add this reservation once.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
     // Then try to add it again, it should throw an exception because the
     // DUID is the same.
+    host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_DUID, false);
+    host->setHostId(++host_id);
+    host->setIPv4SubnetID(subnet_id);
     ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
 
     // This time use a different host identifier and try again.
     // This update should succeed because we permitted to create
     // multiple IP reservations for the same IP address but different
     // identifier.
-    ASSERT_NO_THROW(host->setIdentifier("01:02:03:04:05:06", "hw-address"));
+    host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_DUID, true);
+    host->setHostId(++host_id);
+    host->setIPv4SubnetID(subnet_id);
     ASSERT_NO_THROW(hdsptr_->add(host));
+
+    ConstHostCollection returned;
+    ASSERT_NO_THROW(returned = hdsptr_->getAll4(host->getIPv4SubnetID(), IOAddress("192.0.2.1")));
+    EXPECT_EQ(2, returned.size());
+    EXPECT_NE(returned[0]->getIdentifierAsText(), returned[1]->getIdentifierAsText());
 }
 
 void

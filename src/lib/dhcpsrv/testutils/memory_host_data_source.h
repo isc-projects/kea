@@ -158,6 +158,17 @@ public:
     get4(const SubnetID& subnet_id,
          const asiolink::IOAddress& address) const;
 
+    /// @brief Returns all hosts connected to the IPv4 subnet and having
+    /// a reservation for a specified address.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv4 address.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll4(const SubnetID& subnet_id,
+            const asiolink::IOAddress& address) const;
+
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
     /// @param subnet_id Subnet identifier.
@@ -191,6 +202,17 @@ public:
     /// @return Const @c Host object using a specified IPv6 address/prefix.
     virtual ConstHostPtr
     get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+
+    /// @brief Returns all hosts connected to the IPv6 subnet and having
+    /// a reservation for a specified address or delegated prefix (lease).
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv6 address/prefix.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll6(const SubnetID& subnet_id,
+            const asiolink::IOAddress& address) const;
 
     /// @brief Adds a new host to the collection.
     ///

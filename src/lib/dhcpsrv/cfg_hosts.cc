@@ -701,6 +701,30 @@ CfgHosts::get4(const SubnetID& subnet_id, const IOAddress& address) const {
     return (ConstHostPtr());
 }
 
+ConstHostCollection
+CfgHosts::getAll4(const SubnetID& subnet_id,
+                  const asiolink::IOAddress& address) const {
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4)
+        .arg(subnet_id).arg(address.toText());
+
+    ConstHostCollection hosts;
+    for (auto host : getAll4(address)) {
+        if (host->getIPv4SubnetID() == subnet_id) {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                      HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST)
+                .arg(subnet_id)
+                .arg(address.toText())
+                .arg(host->toText());
+            hosts.push_back(host);
+        }
+    }
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT)
+        .arg(subnet_id)
+        .arg(address.toText())
+        .arg(hosts.size());
+
+    return (hosts);
+}
 
 ConstHostPtr
 CfgHosts::get6(const SubnetID& subnet_id,
@@ -742,6 +766,14 @@ CfgHosts::get6(const SubnetID& subnet_id,
                const asiolink::IOAddress& address) {
     // Do not log here because getHostInternal6 logs.
     return (getHostInternal6<HostPtr, HostCollection>(subnet_id, address));
+}
+
+ConstHostCollection
+CfgHosts::getAll6(const SubnetID& subnet_id,
+                  const asiolink::IOAddress& address) const {
+    ConstHostCollection hosts;
+    getAllInternal6(subnet_id, address, hosts);
+    return (hosts);
 }
 
 template<typename ReturnType, typename Storage>

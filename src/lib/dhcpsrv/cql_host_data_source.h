@@ -328,6 +328,21 @@ public:
     get4(const SubnetID& subnet_id,
          const asiolink::IOAddress& address) const override;
 
+    /// @brief Returns all hosts connected to the IPv4 subnet and having
+    /// a reservation for a specified address.
+    ///
+    /// This backend does not support a configuration in which multiple
+    /// reservations can be created for a single IPv4 address, so it
+    /// always returns 1 or 0 hosts.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv4 address.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll4(const SubnetID& subnet_id,
+            const asiolink::IOAddress& address) const override;
+
     /// @brief Returns a @ref Host connected to an IPv6 subnet.
     ///
     /// @param subnet_id subnet identifier to filter by
@@ -365,6 +380,21 @@ public:
     virtual ConstHostPtr
     get6(const SubnetID& subnet_id,
          const asiolink::IOAddress& address) const override;
+
+    /// @brief Returns all hosts connected to the IPv6 subnet and having
+    /// a reservation for a specified address or delegated prefix (lease).
+    ///
+    /// This backend does not support a configuration in which multiple
+    /// reservations can be created for a single IPv6 address, so it
+    /// always returns 1 or 0 hosts.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv6 address.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll6(const SubnetID& subnet_id,
+            const asiolink::IOAddress& address) const;
 
     /// @brief Returns a collection of all the hosts.
     ///

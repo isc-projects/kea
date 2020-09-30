@@ -239,6 +239,17 @@ MemHostDataSource::get4(const SubnetID& subnet_id,
     return (ConstHostPtr());
 }
 
+ConstHostCollection
+MemHostDataSource::getAll4(const SubnetID& subnet_id,
+                           const asiolink::IOAddress& address) const {
+    ConstHostCollection hosts;
+    auto host = get4(subnet_id, address);
+    if (host) {
+        hosts.push_back(host);
+    }
+    return (hosts);
+}
+
 ConstHostPtr
 MemHostDataSource::get6(const asiolink::IOAddress& /*prefix*/,
                         const uint8_t /*prefix_len*/) const {
@@ -269,6 +280,17 @@ MemHostDataSource::get6(const SubnetID& subnet_id,
     }
 
     return (ConstHostPtr());
+}
+
+ConstHostCollection
+MemHostDataSource::getAll6(const SubnetID& subnet_id,
+                           const asiolink::IOAddress& address) const {
+    ConstHostCollection hosts;
+    auto host = get6(subnet_id, address);
+    if (host) {
+        hosts.push_back(host);
+    }
+    return (hosts);
 }
 
 void

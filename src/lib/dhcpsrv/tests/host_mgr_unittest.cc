@@ -247,6 +247,33 @@ protected:
     void testGet6ByPrefix(BaseHostDataSource& data_source1,
                           BaseHostDataSource& data_source2);
 
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified DHCPv4 subnet and IPv4 address.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAll4BySubnetIP(BaseHostDataSource& data_source1,
+                               BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified DHCPv6 subnet and IPv6 address.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
+                               BaseHostDataSource& data_source2);
+
+
     /// @brief HW addresses to be used by the tests.
     std::vector<HWAddrPtr> hwaddrs_;
     /// @brief DUIDs to be used by the tests.
@@ -1131,6 +1158,80 @@ HostMgrTest::testGet6ByPrefix(BaseHostDataSource& data_source1,
     EXPECT_FALSE(host);
 }
 
+void
+HostMgrTest::testGetAll4BySubnetIP(BaseHostDataSource& data_source1,
+                                   BaseHostDataSource& data_source2) {
+    // Set the mode of operation with multiple reservations for the same
+    // IP address.
+    ASSERT_TRUE(HostMgr::instance().setIPReservationUnique(false));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->setIPReservationUnique(false);
+
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts = HostMgr::instance().getAll4(SubnetID(1),
+                                                            IOAddress("192.0.2.5"));
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations for the same subnet and IP address.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching subnet is specified, nothing should be returned.
+    hosts = HostMgr::instance().getAll4(SubnetID(100), IOAddress("192.0.2.5"));
+    ASSERT_TRUE(hosts.empty());
+
+    // For the correct subnet, there should be two reservations.
+    hosts = HostMgr::instance().getAll4(SubnetID(1), IOAddress("192.0.2.5"));
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1, hosts[1]->getIPv4SubnetID());
+
+    // Make sure that two hosts were returned.
+    EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    EXPECT_EQ("192.0.2.5", hosts[1]->getIPv4Reservation().toText());
+}
+
+void
+HostMgrTest::testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
+                                   BaseHostDataSource& data_source2) {
+    // Set the mode of operation with multiple reservations for the same
+    // IP address.
+    ASSERT_TRUE(HostMgr::instance().setIPReservationUnique(false));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->setIPReservationUnique(false);
+
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts = HostMgr::instance().getAll6(SubnetID(1),
+                                                            IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations for the same subnet.
+    addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching subnet is specified, nothing should be returned.
+    hosts = HostMgr::instance().getAll6(SubnetID(100), IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(hosts.empty());
+
+    // For the correct subnet, there should be two reservations.
+    hosts = HostMgr::instance().getAll6(SubnetID(1), IOAddress("2001:db8:1::5"));
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+
+    // Make sure that two different hosts were returned.
+    EXPECT_TRUE(hosts[0]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+    EXPECT_TRUE(hosts[1]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+}
+
 // This test verifies that HostMgr returns all reservations for the
 // specified HW address. The reservations are defined in the server's
 // configuration.
@@ -1143,6 +1244,20 @@ TEST_F(HostMgrTest, getAll) {
 // configuration.
 TEST_F(HostMgrTest, getAll4BySubnet) {
     testGetAll4BySubnet(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the specified
+// IPv4 subnet and reserved address. The reservations are specified in the
+// server's configuration.
+TEST_F(HostMgrTest, getAll4BySubnetIP) {
+    testGetAll4BySubnetIP(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the specified
+// IPv6 subnet and reserved address. The reservations are specified in the
+// server's configuration.
+TEST_F(HostMgrTest, getAll6BySubnetIP) {
+    testGetAll6BySubnetIP(*getCfgHosts(), *getCfgHosts());
 }
 
 // This test verifies that HostMgr returns all reservations for the
@@ -1435,6 +1550,18 @@ TEST_F(MySQLHostMgrTest, getAll6BySubnet) {
     testGetAll6BySubnet(*getCfgHosts(), HostMgr::instance());
 }
 
+// This test verifies that HostMgr returns all reservations for the specified
+// IPv4 subnet and reserved address.
+TEST_F(MySQLHostMgrTest, getAll4BySubnetIP) {
+    testGetAll4BySubnetIP(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the specified
+// IPv6 subnet and reserved address.
+TEST_F(MySQLHostMgrTest, getAll6BySubnetIP) {
+    testGetAll6BySubnetIP(*getCfgHosts(), *getCfgHosts());
+}
+
 // This test verifies that reservations for a particular hostname can be
 // retrieved from the configuration file and a database simultaneously.
 TEST_F(MySQLHostMgrTest, getAllbyHostname) {
@@ -1598,6 +1725,18 @@ TEST_F(PostgreSQLHostMgrTest, getAll4BySubnet) {
 // be retrieved from the configuration file and a database simultaneously.
 TEST_F(PostgreSQLHostMgrTest, getAll6BySubnet) {
     testGetAll6BySubnet(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that HostMgr returns all reservations for the specified
+// IPv4 subnet and reserved address.
+TEST_F(PostgreSQLHostMgrTest, getAll4BySubnetIP) {
+    testGetAll4BySubnetIP(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the specified
+// IPv6 subnet and reserved address.
+TEST_F(PostgreSQLHostMgrTest, getAll6BySubnetIP) {
+    testGetAll6BySubnetIP(*getCfgHosts(), *getCfgHosts());
 }
 
 // This test verifies that reservations for a particular hostname can be

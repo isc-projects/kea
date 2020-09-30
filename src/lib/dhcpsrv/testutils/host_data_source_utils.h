@@ -20,14 +20,17 @@ namespace test {
 /// Intended to be used in tests and benchmarks.
 class HostDataSourceUtils {
 public:
-        /// @brief Creates a host reservation for specified IPv4 address.
+    /// @brief Creates a host reservation for specified IPv4 address.
     ///
     /// @param address IPv4 address to be set
     /// @param id Identifier type.
+    /// @param new_identifier Boolean value indicating if new host
+    /// identifier should be generated or the same as previously.
     ///
     /// @return generated Host object
     static isc::dhcp::HostPtr initializeHost4(const std::string& address,
-                                       const Host::IdentifierType& id);
+                                              const Host::IdentifierType& id,
+                                              const bool new_identifier = true);
 
     /// @brief Creates a host reservation for specified IPv6 address.
     ///

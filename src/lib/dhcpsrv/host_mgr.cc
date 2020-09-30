@@ -395,6 +395,40 @@ HostMgr::get4(const SubnetID& subnet_id,
     return (ConstHostPtr());
 }
 
+ConstHostCollection
+HostMgr::getAll4(const SubnetID& subnet_id,
+                 const asiolink::IOAddress& address) const {
+    auto hosts = getCfgHosts()->getAll4(subnet_id, address);
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+              HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS4)
+        .arg(subnet_id)
+        .arg(address.toText());
+
+    if (cache_ptr_) {
+        auto cached = cache_ptr_->getAll4(subnet_id, address);
+        if (!cached.empty()) {
+            for (auto host : cached) {
+                if (!host->getNegative()) {
+                    hosts.push_back(host);
+                }
+            }
+            return (hosts);
+        }
+    }
+
+    for (auto source : alternate_sources_) {
+        if (source == cache_ptr_) {
+            continue;
+        }
+        auto alternate_hosts = source->getAll4(subnet_id, address);
+        for (auto host : alternate_hosts) {
+            cache(host);
+            hosts.push_back(host);
+        }
+    }
+    return (hosts);
+}
 
 ConstHostPtr
 HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
@@ -507,6 +541,41 @@ HostMgr::get6(const SubnetID& subnet_id,
         }
     }
     return (ConstHostPtr());
+}
+
+ConstHostCollection
+HostMgr::getAll6(const SubnetID& subnet_id,
+                 const asiolink::IOAddress& address) const {
+    auto hosts = getCfgHosts()->getAll6(subnet_id, address);
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+              HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS6)
+        .arg(subnet_id)
+        .arg(address.toText());
+
+    if (cache_ptr_) {
+        auto cached = cache_ptr_->getAll6(subnet_id, address);
+        if (!cached.empty()) {
+            for (auto host : cached) {
+                if (!host->getNegative()) {
+                    hosts.push_back(host);
+                }
+            }
+            return (hosts);
+        }
+    }
+
+    for (auto source : alternate_sources_) {
+        if (source == cache_ptr_) {
+            continue;
+        }
+        auto alternate_hosts = source->getAll6(subnet_id, address);
+        for (auto host : alternate_hosts) {
+            cache(host);
+            hosts.push_back(host);
+        }
+    }
+    return (hosts);
 }
 
 void

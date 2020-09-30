@@ -58,12 +58,13 @@ HostDataSourceUtils::generateIdentifier(const bool new_identifier) {
 
 HostPtr
 HostDataSourceUtils::initializeHost4(const std::string& address,
-                                     const Host::IdentifierType& id) {
+                                     const Host::IdentifierType& id,
+                                     const bool new_identifier) {
     std::vector<uint8_t> ident;
     if (id == Host::IDENT_HWADDR) {
-        ident = generateHWAddr();
+        ident = generateHWAddr(new_identifier);
     } else {
-        ident = generateIdentifier();
+        ident = generateIdentifier(new_identifier);
     }
 
     // Let's create ever increasing subnet-ids. Let's keep those different,

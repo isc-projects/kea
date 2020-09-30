@@ -146,6 +146,25 @@ description of the host found.
 This debug message is issued when starting to retrieve all hosts connected to
 the specific DHCPv4 subnet. The argument specifies subnet id.
 
+% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4 get all hosts with reservations for subnet id %1 and IPv4 address %2
+This debug message is issued when starting to retrieve all hosts including
+the reservation for the given IPv4 address within the given subnet. The
+first argument specifies subnet identifier. The second argument specifies
+the IPv4 address for which the reservation is to be returned.
+
+% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT using IPv4 subnet %1 and IPv4 address %2, found %3 host(s)
+This debug message logs the number of hosts found having the reservation
+for the specified IPv4 address within the specified subnet. The first
+argument specifies the subnet identifier. The second argument specifies
+the reserved IPv4 address. The third argument specifies the number of
+hosts found.
+
+% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST using IPv4 subnet %1 and IPv4 address %2, found host: %3
+This debug message is issued when found host having the reservation for
+the specified IPv4 address in the specified subnet.  The first argument
+specifies the subnet identifier. The second argument specifies the reserved
+IPv4 address. The third argument specifies host details.
+
 % HOSTS_CFG_GET_ALL_SUBNET_ID4_COUNT using IPv4 subnet %1, found %2 host(s)
 This debug message include the details of the host found using the DHCPv4
 subnet id. The arguments specify subnet id and the number of hosts found
@@ -283,6 +302,14 @@ identifier.
 % HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL host not found using subnet id %1 and identifier %2
 This debug message is issued when no host was found using the specified
 subnet id and host identifier.
+
+% HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS4 trying alternate sources for hosts using subnet id %1 and address %2
+This debug message is issued when the Host Manager is starting to search
+for hosts in alternate host data sources by subnet ID and IPv4 address.
+
+% HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS6 trying alternate sources for hosts using subnet id %1 and address %2
+This debug message is issued when the Host Manager is starting to search
+for hosts in alternate host data sources by subnet ID and IPv6 address.
 
 % HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED host data source %1 does not support the mode in which IP reservations are non-unique
 This warning message is issued when an administrator attempted to configure the

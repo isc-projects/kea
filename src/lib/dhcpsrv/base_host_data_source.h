@@ -310,6 +310,33 @@ public:
     get4(const SubnetID& subnet_id,
          const asiolink::IOAddress& address) const = 0;
 
+    /// @brief Returns all hosts connected to the IPv4 subnet and having
+    /// a reservation for a specified address.
+    ///
+    /// In most cases it is desired that there is at most one reservation
+    /// for a given IPv4 address within a subnet. In a default configuration,
+    /// the backend does not allow for inserting more than one host with
+    /// the same IPv4 reservation. In that case, the number of hosts returned
+    /// by this function is 0 or 1.
+    ///
+    /// If the backend is configured to allow multiple hosts with reservations
+    /// for the same IPv4 address in the given subnet, this method can return
+    /// more than one host.
+    ///
+    /// The typical use case when a single IPv4 address is reserved for multiple
+    /// hosts is when these hosts represent different interfaces of the same
+    /// machine and each interface comes with a different MAC address. In that
+    /// case, the same IPv4 address is assigned regarless of which interface is
+    /// used by the DHCP client to communicate with the server.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv4 address
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll4(const SubnetID& subnet_id,
+            const asiolink::IOAddress& address) const = 0;
+
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
     /// @param subnet_id Subnet identifier.
@@ -345,6 +372,33 @@ public:
     virtual ConstHostPtr
     get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) const =
  0;
+
+    /// @brief Returns all hosts connected to the IPv6 subnet and having
+    /// a reservation for a specified address or delegated prefix (lease).
+    ///
+    /// In most cases it is desired that there is at most one reservation
+    /// for a given IPv6 lease within a subnet. In a default configuration,
+    /// the backend does not allow for inserting more than one host with
+    /// the same IPv6 address or prefix. In that case, the number of hosts
+    /// returned by this function is 0 or 1.
+    ///
+    /// If the backend is configured to allow multiple hosts with reservations
+    /// for the same IPv6 lease in the given subnet, this method can return
+    /// more than one host.
+    ///
+    /// The typical use case when a single IPv6 lease is reserved for multiple
+    /// hosts is when these hosts represent different interfaces of the same
+    /// machine and each interface comes with a different MAC address. In that
+    /// case, the same IPv6 lease is assigned regarless of which interface is
+    /// used by the DHCP client to communicate with the server.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv6 address/prefix.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll6(const SubnetID& subnet_id,
+            const asiolink::IOAddress& address) const = 0;
 
     /// @brief Adds a new host to the collection.
     ///

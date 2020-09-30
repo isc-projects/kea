@@ -3597,6 +3597,17 @@ CqlHostDataSource::get4(const SubnetID& subnet_id,
     return (impl_->get4(subnet_id, address));
 }
 
+ConstHostCollection
+CqlHostDataSource::getAll4(const SubnetID& subnet_id,
+                           const asiolink::IOAddress& address) const {
+    ConstHostCollection hosts;
+    auto host = get4(subnet_id, address);
+    if (host) {
+        hosts.push_back(host);
+    }
+    return (hosts);
+}
+
 ConstHostPtr
 CqlHostDataSource::get6(const SubnetID& subnet_id,
                         const Host::IdentifierType& identifier_type,
@@ -3621,6 +3632,17 @@ CqlHostDataSource::get6(const SubnetID& subnet_id,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET6);
 
     return (impl_->get6(subnet_id, address));
+}
+
+ConstHostCollection
+CqlHostDataSource::getAll6(const SubnetID& subnet_id,
+                           const asiolink::IOAddress& address) const {
+    ConstHostCollection hosts;
+    auto host = get6(subnet_id, address);
+    if (host) {
+        hosts.push_back(host);
+    }
+    return (hosts);
 }
 
 ConstHostCollection

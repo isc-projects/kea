@@ -2867,6 +2867,33 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
     return (result);
 }
 
+ConstHostCollection
+PgSqlHostDataSource::getAll4(const SubnetID& subnet_id,
+                             const asiolink::IOAddress& address) const {
+    // Get a context
+    PgSqlHostContextAlloc get_context(*impl_);
+    PgSqlHostContextPtr ctx = get_context.ctx_;
+
+    if (!address.isV4()) {
+        isc_throw(BadValue, "PgSqlHostDataSource::get4(id, address) - "
+                  " wrong address type, address supplied is an IPv6 address");
+    }
+
+    // Set up the WHERE clause value
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Add the subnet id
+    bind_array->add(subnet_id);
+
+    // Add the address
+    bind_array->add(address);
+
+    ConstHostCollection collection;
+    impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_SUBID_ADDR,
+                             bind_array, ctx->host_ipv4_exchange_, collection, false);
+    return (collection);
+}
+
 ConstHostPtr
 PgSqlHostDataSource::get6(const SubnetID& subnet_id,
                           const Host::IdentifierType& identifier_type,
@@ -2948,6 +2975,34 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id,
 
     return (result);
 }
+
+ConstHostCollection
+PgSqlHostDataSource::getAll6(const SubnetID& subnet_id,
+                             const asiolink::IOAddress& address) const {
+    if (!address.isV6()) {
+        isc_throw(BadValue, "PgSqlHostDataSource::get6(id, address): "
+                  "wrong address type, address supplied is an IPv4 address");
+    }
+
+    // Get a context
+    PgSqlHostContextAlloc get_context(*impl_);
+    PgSqlHostContextPtr ctx = get_context.ctx_;
+
+    // Set up the WHERE clause value
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Add the subnet id
+    bind_array->add(subnet_id);
+
+    // Add the prefix
+    bind_array->add(address);
+
+    ConstHostCollection collection;
+    impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR,
+                             bind_array, ctx->host_ipv6_exchange_, collection, false);
+    return (collection);
+}
+
 
 // Miscellaneous database methods.
 
