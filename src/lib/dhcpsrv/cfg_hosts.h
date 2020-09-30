@@ -536,7 +536,7 @@ public:
     /// has already been added to the IPv4 or IPv6 subnet.
     virtual void add(const HostPtr& host);
 
-    /// @brief Attempts to delete a host by address.
+    /// @brief Attempts to delete a hosts by address.
     ///
     /// This method supports both v4 and v6.
     /// @todo: Not implemented.

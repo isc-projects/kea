@@ -1859,6 +1859,13 @@ GenericHostDataSourceTest::testAllowDuplicateIPv6() {
     ASSERT_NO_THROW(returned = hdsptr_->getAll6(host->getIPv6SubnetID(), IOAddress("2001:db8::1")));
     EXPECT_EQ(2, returned.size());
     EXPECT_NE(returned[0]->getIdentifierAsText(), returned[1]->getIdentifierAsText());
+
+    // Let's now try to delete the hosts by subnet_id and address.
+    bool deleted = false;
+    ASSERT_NO_THROW(deleted = hdsptr_->del(subnet_id, IOAddress("2001:db8::1")));
+    ASSERT_TRUE(deleted);
+    ASSERT_NO_THROW(returned = hdsptr_->getAll6(host->getIPv6SubnetID(), IOAddress("2001:db8::1")));
+    EXPECT_TRUE(returned.empty());
 }
 
 void
@@ -1933,6 +1940,13 @@ GenericHostDataSourceTest::testAllowDuplicateIPv4() {
     ASSERT_NO_THROW(returned = hdsptr_->getAll4(host->getIPv4SubnetID(), IOAddress("192.0.2.1")));
     EXPECT_EQ(2, returned.size());
     EXPECT_NE(returned[0]->getIdentifierAsText(), returned[1]->getIdentifierAsText());
+
+    // Let's now try to delete the hosts by subnet_id and address.
+    bool deleted = false;
+    ASSERT_NO_THROW(deleted = hdsptr_->del(subnet_id, IOAddress("192.0.2.1")));
+    ASSERT_TRUE(deleted);
+    ASSERT_NO_THROW(returned = hdsptr_->getAll4(host->getIPv4SubnetID(), IOAddress("192.0.2.1")));
+    EXPECT_TRUE(returned.empty());
 }
 
 void

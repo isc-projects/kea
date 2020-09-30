@@ -412,7 +412,7 @@ public:
     /// @param host Pointer to the new @c Host object being added.
     virtual void add(const HostPtr& host) = 0;
 
-    /// @brief Attempts to delete a host by (subnet-id, address)
+    /// @brief Attempts to delete hosts by (subnet-id, address)
     ///
     /// This method supports both v4 and v6.
     ///

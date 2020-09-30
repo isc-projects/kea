@@ -108,7 +108,7 @@ public:
     /// violation
     virtual void add(const HostPtr& host);
 
-    /// @brief Attempts to delete a host by (subnet-id, address)
+    /// @brief Attempts to delete hosts by (subnet-id, address)
     ///
     /// This method supports both v4 and v6.
     ///

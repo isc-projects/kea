@@ -498,7 +498,7 @@ public:
     /// @param host Pointer to the new @c Host object being added.
     virtual void add(const HostPtr& host);
 
-    /// @brief Attempts to delete a host by address.
+    /// @brief Attempts to delete hosts by address.
     ///
     /// This method supports both v4 and v6.
     ///

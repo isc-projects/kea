@@ -105,7 +105,7 @@ public:
     /// @param host pointer to the new @ref Host being added.
     virtual void add(const HostPtr& host) override;
 
-    /// @brief Attempts to delete a host by (subnet-id, address)
+    /// @brief Attempts to delete hosts by (subnet-id, address)
     ///
     /// This method supports both v4 and v6.
     ///

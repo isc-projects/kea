@@ -2037,6 +2037,7 @@ public:
         INSERT_V4_HOST_OPTION,     // Insert DHCPv4 option
         INSERT_V6_HOST_OPTION,     // Insert DHCPv6 option
         DEL_HOST_ADDR4,            // Delete v4 host (subnet-id, addr4)
+        DEL_HOST_ADDR6,            // Delete v6 host (subnet-id, addr6)
         DEL_HOST_SUBID4_ID,        // Delete v4 host (subnet-id, ident.type, identifier)
         DEL_HOST_SUBID6_ID,        // Delete v6 host (subnet-id, ident.type, identifier)
         NUM_STATEMENTS             // Number of statements
@@ -2659,9 +2660,16 @@ TaggedStatementArray tagged_statements = { {
                 "persistent, user_context, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
 
-    // Delete a single IPv4 reservation by subnet id and reserved address.
+    // Delete IPv4 reservations by subnet id and reserved address.
     {MySqlHostDataSourceImpl::DEL_HOST_ADDR4,
             "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND ipv4_address = ?"},
+
+    // Delete IPv6 reservations by subnet id and reserved address/prefix.
+    {MySqlHostDataSourceImpl::DEL_HOST_ADDR6,
+            "DELETE h FROM hosts AS h "
+            "INNER JOIN ipv6_reservations AS r "
+                "ON h.host_id = r.host_id "
+            "WHERE h.dhcp6_subnet_id = ? AND r.address = ?"},
 
     // Delete a single IPv4 reservation by subnet id and identifier.
     {MySqlHostDataSourceImpl::DEL_HOST_SUBID4_ID,
@@ -3088,34 +3096,35 @@ MySqlHostDataSource::del(const SubnetID& subnet_id,
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly(ctx);
 
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+
+    uint32_t subnet = subnet_id;
+    memset(inbind, 0, sizeof(inbind));
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // v4
     if (addr.isV4()) {
-        // Set up the WHERE clause value
-        MYSQL_BIND inbind[2];
-
-        uint32_t subnet = subnet_id;
-        memset(inbind, 0, sizeof(inbind));
-        inbind[0].buffer_type = MYSQL_TYPE_LONG;
-        inbind[0].buffer = reinterpret_cast<char*>(&subnet);
-        inbind[0].is_unsigned = MLM_TRUE;
-
         uint32_t addr4 = addr.toUint32();
         inbind[1].buffer_type = MYSQL_TYPE_LONG;
         inbind[1].buffer = reinterpret_cast<char*>(&addr4);
         inbind[1].is_unsigned = MLM_TRUE;
 
-        ConstHostCollection collection;
         return (impl_->delStatement(ctx, MySqlHostDataSourceImpl::DEL_HOST_ADDR4, inbind));
     }
 
     // v6
-    ConstHostPtr host = get6(subnet_id, addr);
-    if (!host) {
-        return (false);
-    }
+    std::string addr_str = addr.toText();
+    unsigned long addr_len = addr_str.size();
+    inbind[1].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[1].buffer = reinterpret_cast<char*>
+                        (const_cast<char*>(addr_str.c_str()));
+    inbind[1].length = &addr_len;
+    inbind[1].buffer_length = addr_len;
 
-    // Ok, there is a host. Let's delete it.
-    return del6(subnet_id, host->getIdentifierType(), &host->getIdentifier()[0],
-                host->getIdentifier().size());
+    return (impl_->delStatement(ctx, MySqlHostDataSourceImpl::DEL_HOST_ADDR6, inbind));
 }
 
 bool

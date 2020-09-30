@@ -36,6 +36,28 @@ DROP INDEX key_dhcp6_address_prefix_len ON ipv6_reservations;
 CREATE INDEX key_dhcp6_address_prefix_len
     ON ipv6_reservations (address ASC, prefix_len ASC);
 
+# Stop using a trigger to delete entries dependent on hosts table.
+# Use cascade action instead. This works better with complex delete
+# statements.
+DROP TRIGGER IF EXISTS host_BDEL;
+
+# Replace existing constraint to set cascade actions.
+ALTER TABLE ipv6_reservations DROP FOREIGN KEY fk_ipv6_reservations_Host;
+ALTER TABLE ipv6_reservations ADD CONSTRAINT fk_ipv6_reservations_Host
+    FOREIGN KEY (host_id)
+        REFERENCES hosts(host_id)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp4_options ADD CONSTRAINT fk_dhcp4_options_Host
+    FOREIGN KEY (host_id)
+        REFERENCES hosts(host_id)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_Host
+    FOREIGN KEY (host_id)
+        REFERENCES hosts(host_id)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '9', minor = '4';

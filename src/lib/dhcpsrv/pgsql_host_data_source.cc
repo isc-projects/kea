@@ -1399,6 +1399,7 @@ public:
         INSERT_V4_HOST_OPTION,     // Insert DHCPv4 option
         INSERT_V6_HOST_OPTION,     // Insert DHCPv6 option
         DEL_HOST_ADDR4,            // Delete v4 host (subnet-id, addr4)
+        DEL_HOST_ADDR6,            // Delete v6 host (subnet-id, addr6)
         DEL_HOST_SUBID4_ID,        // Delete v4 host (subnet-id, ident.type, identifier)
         DEL_HOST_SUBID6_ID,        // Delete v6 host (subnet-id, ident.type, identifier)
         NUM_STATEMENTS             // Number of statements
@@ -2090,6 +2091,15 @@ TaggedStatementArray tagged_statements = { {
      "DELETE FROM hosts WHERE dhcp4_subnet_id = $1 AND ipv4_address = $2"
     },
 
+    // PgSqlHostDataSourceImpl::DEL_HOST_ADDR6
+    // Deletes a v6 host that matches (subnet-id, addr6)
+    {2,
+     { OID_INT8, OID_VARCHAR },
+     "del_host_addr6",
+     "DELETE FROM hosts USING ipv6_reservations "
+     "  WHERE dhcp6_subnet_id = $1 AND ipv6_reservations.address = $2"
+    },
+
     // PgSqlHostDataSourceImpl::DEL_HOST_SUBID4_ID
     // Deletes a v4 host that matches (subnet4-id, identifier-type, identifier)
     {3,
@@ -2490,21 +2500,21 @@ PgSqlHostDataSource::del(const SubnetID& subnet_id,
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly(ctx);
 
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+    bind_array->add(subnet_id);
+
+    // v4
     if (addr.isV4()) {
-        PsqlBindArrayPtr bind_array(new PsqlBindArray());
-        bind_array->add(subnet_id);
         bind_array->add(addr);
         return (impl_->delStatement(ctx, PgSqlHostDataSourceImpl::DEL_HOST_ADDR4,
                                     bind_array));
     }
 
-    ConstHostPtr host = get6(subnet_id, addr);
-    if (!host) {
-        return (false);
-    }
+    // v6
+    bind_array->add(addr.toText());
 
-    return del6(subnet_id, host->getIdentifierType(), &host->getIdentifier()[0],
-                host->getIdentifier().size());
+    return (impl_->delStatement(ctx, PgSqlHostDataSourceImpl::DEL_HOST_ADDR6,
+                                bind_array));
 }
 
 bool
