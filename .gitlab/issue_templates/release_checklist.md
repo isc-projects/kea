@@ -129,3 +129,4 @@ That is the last moment to freeze code!
  - [ ] ***(Marketing)*** Update [Kea page on web site if any new hooks](https://www.isc.org/kea/)
  - [ ] ***(Marketing)*** Update Kea Premium and Kea Subscription data sheets if any new hooks.
  - [ ] ***(Marketing)*** Update [significant features matrix](https://kb.isc.org/docs/en/aa-01615) (if any significant new features)
+ - [ ] ***(Marketing)*** Update [Kea documentation page in KB](https://kb.isc.org/docs/en/kea-administrator-reference-manual)
