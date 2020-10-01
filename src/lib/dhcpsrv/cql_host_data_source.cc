@@ -3688,7 +3688,7 @@ CqlHostDataSource::setIPReservationUnique(const bool unique) {
     // for the same IP address are created. If selecting this mode is
     // attempted this function returns false to indicate that this is
     // not allowed.
-    return (unique ? true : false);
+    return (unique);
 }
 
 }  // namespace dhcp
