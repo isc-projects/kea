@@ -89,7 +89,8 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "statistic-default-sample-age",   Element::integer },
     { "multi-threading",                Element::map },
     { "cache-threshold",                Element::real },
-    { "cache-max-age",                  Element::integer }
+    { "cache-max-age",                  Element::integer },
+    { "ip-reservations-unique",         Element::boolean }
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -117,7 +118,8 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "hostname-char-replacement",      Element::string,  "" },
     { "store-extended-info",            Element::boolean, "false" },
     { "statistic-default-sample-count", Element::integer, "20" },
-    { "statistic-default-sample-age",   Element::integer, "0" }
+    { "statistic-default-sample-age",   Element::integer, "0" },
+    { "ip-reservations-unique",         Element::boolean, "true" }
 };
 
 /// @brief This table defines all option definition parameters.

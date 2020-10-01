@@ -757,7 +757,8 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "ddns-qualifying-suffix") ||
                  (config_pair.first == "store-extended-info") ||
                  (config_pair.first == "statistic-default-sample-count") ||
-                 (config_pair.first == "statistic-default-sample-age")) {
+                 (config_pair.first == "statistic-default-sample-age") ||
+                 (config_pair.first == "ip-reservations-unique")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;

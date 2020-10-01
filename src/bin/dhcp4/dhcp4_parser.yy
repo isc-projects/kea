@@ -225,6 +225,7 @@ using namespace std;
   WHEN_NOT_PRESENT "when-not-present"
   HOSTNAME_CHAR_SET "hostname-char-set"
   HOSTNAME_CHAR_REPLACEMENT "hostname-char-replacement"
+  IP_RESERVATIONS_UNIQUE "ip-reservations-unique"
 
   LOGGERS "loggers"
   OUTPUT_OPTIONS "output_options"
@@ -498,6 +499,7 @@ global_param: valid_lifetime
             | statistic_default_sample_count
             | statistic_default_sample_age
             | dhcp_multi_threading
+            | ip_reservations_unique
             | unknown_map_entry
             ;
 
@@ -691,6 +693,12 @@ statistic_default_sample_age: STATISTIC_DEFAULT_SAMPLE_AGE COLON INTEGER {
     ctx.unique("statistic-default-sample-age", ctx.loc2pos(@1));
     ElementPtr age(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("statistic-default-sample-age", age);
+};
+
+ip_reservations_unique: IP_RESERVATIONS_UNIQUE COLON BOOLEAN {
+    ctx.unique("ip-reservations-unique", ctx.loc2pos(@1));
+    ElementPtr unique(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ip-reservations-unique", unique);
 };
 
 interfaces_config: INTERFACES_CONFIG {

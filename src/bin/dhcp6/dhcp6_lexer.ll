@@ -1929,6 +1929,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"ip-reservations-unique\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_IP_RESERVATIONS_UNIQUE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("ip-reservations-unique", driver.loc_);
+    }
+}
+
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.

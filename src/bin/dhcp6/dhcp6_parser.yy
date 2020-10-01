@@ -231,6 +231,7 @@ using namespace std;
   WHEN_NOT_PRESENT "when-not-present"
   HOSTNAME_CHAR_SET "hostname-char-set"
   HOSTNAME_CHAR_REPLACEMENT "hostname-char-replacement"
+  IP_RESERVATIONS_UNIQUE "ip-reservations-unique"
 
   LOGGERS "loggers"
   OUTPUT_OPTIONS "output_options"
@@ -506,6 +507,7 @@ global_param: data_directory
             | statistic_default_sample_count
             | statistic_default_sample_age
             | dhcp_multi_threading
+            | ip_reservations_unique
             | unknown_map_entry
             ;
 
@@ -708,6 +710,12 @@ server_tag: SERVER_TAG {
     ElementPtr stag(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("server-tag", stag);
     ctx.leave();
+};
+
+ip_reservations_unique: IP_RESERVATIONS_UNIQUE COLON BOOLEAN {
+    ctx.unique("ip-reservations-unique", ctx.loc2pos(@1));
+    ElementPtr unique(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ip-reservations-unique", unique);
 };
 
 interfaces_config: INTERFACES_CONFIG {
