@@ -326,7 +326,7 @@ public:
     /// The typical use case when a single IPv4 address is reserved for multiple
     /// hosts is when these hosts represent different interfaces of the same
     /// machine and each interface comes with a different MAC address. In that
-    /// case, the same IPv4 address is assigned regarless of which interface is
+    /// case, the same IPv4 address is assigned regardless of which interface is
     /// used by the DHCP client to communicate with the server.
     ///
     /// @param subnet_id Subnet identifier.
@@ -389,7 +389,7 @@ public:
     /// The typical use case when a single IPv6 lease is reserved for multiple
     /// hosts is when these hosts represent different interfaces of the same
     /// machine and each interface comes with a different MAC address. In that
-    /// case, the same IPv6 lease is assigned regarless of which interface is
+    /// case, the same IPv6 lease is assigned regardless of which interface is
     /// used by the DHCP client to communicate with the server.
     ///
     /// @param subnet_id Subnet identifier.
@@ -473,7 +473,6 @@ public:
 
     /// @brief Controls whether IP reservations are unique or non-unique.
     ///
-
     /// In a typical case, the IP reservations are unique and backends verify
     /// prior to adding a host reservation to the database that the reservation
     /// for a given IP address/subnet does not exist. In some cases it may be
