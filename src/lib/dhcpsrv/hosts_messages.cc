@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Mon Sep 28 2020 14:55
+// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Thu Oct 01 2020 13:07
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -86,7 +86,7 @@ const char* values[] = {
     "HOSTS_CFG_CACHE_HOST_DATA_SOURCE", "get host cache data source: %1",
     "HOSTS_CFG_CLOSE_HOST_DATA_SOURCE", "Closing host data source: %1",
     "HOSTS_CFG_DEL_ALL_SUBNET4", "deleted all %1 host(s) for subnet id %2",
-    "HOSTS_CFG_DEL_ALL_SUBNET6", "deleted all %1 host(s) including %2 IPv6 reservation(s) for subnet id %3",
+    "HOSTS_CFG_DEL_ALL_SUBNET6", "deleted all %1 host(s) having %2 IPv6 reservation(s) for subnet id %3",
     "HOSTS_CFG_GET_ALL", "get all hosts with reservations",
     "HOSTS_CFG_GET_ALL_ADDRESS4", "get all hosts with reservations for IPv4 address %1",
     "HOSTS_CFG_GET_ALL_ADDRESS4_COUNT", "using address %1, found %2 host(s)",
@@ -126,7 +126,7 @@ const char* values[] = {
     "HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4", "get one host with reservation for subnet id %1 and IPv4 address %2",
     "HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_HOST", "using subnet id %1 and address %2, found host: %3",
     "HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_NULL", "host not found using subnet id %1 and address %2",
-    "HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6", "get one host with reservation for subnet id %1 and including IPv6 address %2",
+    "HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6", "get one host with reservation for subnet id %1 and having IPv6 address %2",
     "HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6_HOST", "using subnet id %1 and address %2, found host: %3",
     "HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6_NULL", "host not found using subnet id %1 and address %2",
     "HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER", "get one host with %1 reservation for subnet id %2, identified by %3",
