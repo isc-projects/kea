@@ -500,6 +500,11 @@ public:
 
     /// @brief Attempts to delete hosts by address.
     ///
+    /// It deletes hosts from the first alternate source in which at least
+    /// one matching host is found. In unlikely case that the hosts having
+    /// the same IP address exist in other alternate sources, the hosts
+    /// from these other sources are not deleted.
+    ///
     /// This method supports both v4 and v6.
     ///
     /// @param subnet_id subnet identifier.
