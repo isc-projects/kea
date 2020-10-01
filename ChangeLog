@@ -6,8 +6,8 @@ Kea 1.9.0 (development) released on Sep 30, 2020
 
 1809.	[func]		razvan
 	Added csv-format option to flex_option hook to be able to insert
-	option data in csv format. The implicit value is false, maintaining
-	compatibility with the previous default raw format.
+	option data in csv format. The implicit value is false,
+	maintaining compatibility with the previous default raw format.
 	(Gitlab #1373)
 
 1808.	[func]		razvan
@@ -24,12 +24,12 @@ Kea 1.9.0 (development) released on Sep 30, 2020
 	(Gitlab #1323, #1398)
 
 1806.	[bug]		tmark
-	The DNS update code behaving better when there is a shared network
-	and the code initially selected one subnet, but then later determined
-	that a different subnet will be used. There is still a corner-case
-	in DHCPv6 if the client requests multiple addresses or multiple
-	prefixes and some of them is serviced from one subnet and some
-	from another.
+	The DNS update code behaving better when there is a shared
+	network and the code initially selected one subnet, but then
+	later determined that a different subnet will be used. There
+	is still a corner-case in DHCPv6 if the client requests multiple
+	addresses or multiple prefixes and some of them is serviced from
+	one subnet and some from another.
 	(Gitlab #1389)
 
 1805.	[doc]		tomek
@@ -49,12 +49,12 @@ Kea 1.9.0 (development) released on Sep 30, 2020
 	(Gitlab #1025)
 
 1802.	[bug]		fdupont
-	Removed the bug which allowed for repeating the same configuration
-	parameter multiple times in the same scope. The second occurrence
-	of the parameter overwrote the first occurrence causing server
-	misconfiguration. Starting from this change an error is raised
-	when the same parameter occurs multiple times in a given scope.
-	the location of the first value.
+	Removed the bug which allowed for repeating the same
+	configuration parameter multiple times in the same scope.
+	The second occurrence of the parameter overwrote the first
+	occurrence causing server misconfiguration. Starting from
+	this change an error is raised when the same parameter occurs
+	multiple times in a given scope the location of the first value.
 	(Gitlab #1102)
 
 1801.	[doc]		fdupont
@@ -88,11 +88,11 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #1395)
 
 1796.	[bug]		marcin
-	Kea HTTP client re-establishes connection with the HTTP server when
-	timeout occurs. Prior to this change the client tried to reuse
-	the connection after timeout often getting subsequent timeouts.
-	Re-establishing the connection may help avoid further timeouts
-	during the High Availability operation.
+	Kea HTTP client re-establishes connection with the HTTP server
+	when timeout occurs. Prior to this change the client tried to
+	reuse the connection after timeout often getting subsequent
+	timeouts. Re-establishing the connection may help avoid further
+	timeouts during the High Availability operation.
 	(Gitlab #1390)
 
 1795.	[bug]		razvan
