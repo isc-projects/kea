@@ -2608,10 +2608,13 @@ TaggedStatementArray tagged_statements = { {
 
     // Inserts a host into the 'hosts' table with checking that reserved IP
     // address is unique. The innermost query checks if there is at least
-    // one host for the given IP/subnet combination. If it not exists the
-    // new host is inserted. DUAL is a special MySQL table from which we
-    // can select the values to be inserted. If the host with the given
-    // IP address already exists the new host won't be inserted. The caller
+    // one host for the given IP/subnet combination. For checking whether
+    // hosts exists or not it doesn't matter if we select actual columns,
+    // thus SELECT 1 was used as an optimization to avoid selecting data
+    // that will be ignored anyway. If the host does not exist the new
+    // host is inserted. DUAL is a special MySQL table from which we can
+    // select the values to be inserted. If the host with the given IP
+    // address already exists the new host won't be inserted. The caller
     // can check the number of affected rows to detect that there was
     // a duplicate host in the database.
     {MySqlHostDataSourceImpl::INSERT_HOST_UNIQUE_IP,
@@ -2622,7 +2625,7 @@ TaggedStatementArray tagged_statements = { {
                 "dhcp4_server_hostname, dhcp4_boot_file_name, auth_key) "
                 "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM DUAL "
                     "WHERE NOT EXISTS ("
-                        "SELECT ipv4_address FROM hosts "
+                        "SELECT 1 FROM hosts "
                             "WHERE ipv4_address = ? AND dhcp4_subnet_id = ? "
                         "LIMIT 1"
                     ")"},

@@ -2009,11 +2009,14 @@ TaggedStatementArray tagged_statements = { {
     // PgSqlHostDataSourceImpl::INSERT_HOST_UNIQUE_IP
     // Inserts a host into the 'hosts' table with checking that reserved IP
     // address is unique. The innermost query checks if there is at least
-    // one host for the given IP/subnet combination. If it not exists the
-    // new host is inserted. If the host with the given IP address already
-    // exists the new host won't be inserted. The caller can check the
-    // number of affected rows to detect that there was a duplicate host
-    // in the database. Returns the inserted host id.
+    // one host for the given IP/subnet combination. For checking whether
+    // hosts exists or not it doesn't matter if we select actual columns,
+    // thus SELECT 1 was used as an optimization to avoid selecting data
+    // that will be ignored anyway. If it does not exist the new host is
+    // inserted. If the host with the given IP address already exists the
+    // new host won't be inserted. The caller can check the number of
+    // affected rows to detect that there was a duplicate host in the
+    // database. Returns the inserted host id.
     {15,
      { OID_BYTEA, OID_INT2,
        OID_INT8, OID_INT8, OID_INT8, OID_VARCHAR,
