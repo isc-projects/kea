@@ -389,8 +389,8 @@ public:
         // at the end of the query as it has additional binding for the IPv4
         // address.
         if (unique_ip) {
-            vec.push_back(bind_[5]);
-            vec.push_back(bind_[3]);
+            vec.push_back(bind_[5]); // ipv4_address
+            vec.push_back(bind_[3]); // subnet_id
         }
         return (vec);
     };
@@ -1692,8 +1692,8 @@ public:
         // and prefix length at the end of the query as it has additional binding
         // for the IPv6 address and prefix length.
         if (unique_ip) {
-            vec.push_back(bind_[0]);
-            vec.push_back(bind_[1]);
+            vec.push_back(bind_[0]); // address
+            vec.push_back(bind_[1]); // prefix_len
         }
 
         return (vec);

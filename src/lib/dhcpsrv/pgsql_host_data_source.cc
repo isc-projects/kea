@@ -271,8 +271,8 @@ public:
             // at the end of the query as it has additional binding for the IPv4
             // address.
             if (unique_ip) {
-                bind_array->add(host->getIPv4Reservation());
-                bind_array->add(host->getIPv4SubnetID());
+                bind_array->add(host->getIPv4Reservation()); // ipv4_address
+                bind_array->add(host->getIPv4SubnetID()); // subnet_id
             }
 
 
@@ -1132,8 +1132,8 @@ public:
             // and prefix length at the end of the query as it has additional binding
             // for the IPv6 address and prefix length.
             if (unique_ip) {
-                bind_array->add(resv.getPrefix());
-                bind_array->add(resv.getPrefixLen());
+                bind_array->add(resv.getPrefix()); // address
+                bind_array->add(resv.getPrefixLen()); // prefix_len
             }
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
