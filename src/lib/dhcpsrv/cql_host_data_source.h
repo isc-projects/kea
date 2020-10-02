@@ -394,7 +394,7 @@ public:
     /// @return Collection of const @c Host objects.
     virtual ConstHostCollection
     getAll6(const SubnetID& subnet_id,
-            const asiolink::IOAddress& address) const;
+            const asiolink::IOAddress& address) const override;
 
     /// @brief Returns a collection of all the hosts.
     ///
