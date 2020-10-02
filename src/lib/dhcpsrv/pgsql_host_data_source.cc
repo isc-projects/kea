@@ -2021,8 +2021,8 @@ TaggedStatementArray tagged_statements = { {
      { OID_BYTEA, OID_INT2,
        OID_INT8, OID_INT8, OID_INT8, OID_VARCHAR,
        OID_VARCHAR, OID_VARCHAR, OID_TEXT,
-       OID_INT8, OID_VARCHAR, OID_VARCHAR, OID_VARCHAR, OID_INT8,
-       OID_INT8},
+       OID_INT8, OID_VARCHAR, OID_VARCHAR, OID_VARCHAR,
+       OID_INT8, OID_INT8},
      "insert_host_unique_ip",
      "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
      "  dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
@@ -2031,6 +2031,7 @@ TaggedStatementArray tagged_statements = { {
      "  SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13"
      "    WHERE NOT EXISTS ("
      "      SELECT 1 FROM HOSTS WHERE ipv4_address = $14 AND dhcp4_subnet_id = $15"
+     "      LIMIT 1"
      "    ) "
      "RETURNING host_id"
     },
@@ -2310,7 +2311,8 @@ PgSqlHostDataSourceImpl::addResv(PgSqlHostContextPtr& ctx,
     PsqlBindArrayPtr bind_array = ctx->host_ipv6_reservation_exchange_->
         createBindForSend(resv, id, ip_reservations_unique_);
 
-    addStatement(ctx, ip_reservations_unique_ ? INSERT_V6_RESRV_UNIQUE : INSERT_V6_RESRV_NON_UNIQUE,
+    addStatement(ctx,
+                 ip_reservations_unique_ ? INSERT_V6_RESRV_UNIQUE : INSERT_V6_RESRV_NON_UNIQUE,
                  bind_array);
 }
 
@@ -2462,7 +2464,8 @@ PgSqlHostDataSource::add(const HostPtr& host) {
     PsqlBindArrayPtr bind_array = ctx->host_ipv4_exchange_->createBindForSend(host, unique_ip);
 
     // ... and insert the host.
-    uint32_t host_id = impl_->addStatement(ctx, unique_ip ? PgSqlHostDataSourceImpl::INSERT_HOST_UNIQUE_IP :
+    uint32_t host_id = impl_->addStatement(ctx,
+                                           unique_ip ? PgSqlHostDataSourceImpl::INSERT_HOST_UNIQUE_IP :
                                            PgSqlHostDataSourceImpl::INSERT_HOST_NON_UNIQUE_IP,
                                            bind_array, true);
 
