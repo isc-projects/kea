@@ -1189,7 +1189,9 @@ HostMgrTest::testGetAll4BySubnetIP(BaseHostDataSource& data_source1,
     EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(1, hosts[1]->getIPv4SubnetID());
 
-    // Make sure that two hosts were returned.
+    // Make sure that two hosts were returned with different identifiers
+    // but the same address.
+    EXPECT_NE(hosts[0]->getIdentifierAsText(), hosts[1]->getIdentifierAsText());
     EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("192.0.2.5", hosts[1]->getIPv4Reservation().toText());
 }
@@ -1225,7 +1227,9 @@ HostMgrTest::testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
     EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
 
-    // Make sure that two different hosts were returned.
+    // Make sure that two hosts were returned with different identifiers
+    // but the same address.
+    EXPECT_NE(hosts[0]->getIdentifierAsText(), hosts[1]->getIdentifierAsText());
     EXPECT_TRUE(hosts[0]->hasReservation(
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
     EXPECT_TRUE(hosts[1]->hasReservation(
