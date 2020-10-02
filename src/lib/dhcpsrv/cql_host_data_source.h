@@ -443,7 +443,6 @@ public:
 
     /// @brief Controls whether IP reservations are unique or non-unique.
     ///
-
     /// In a typical case, the IP reservations are unique and backends verify
     /// prior to adding a host reservation to the database that the reservation
     /// for a given IP address does not exist. In some cases it may be required
