@@ -355,7 +355,7 @@ Changing MySQL internal value ``innodb_flush_log_at_trx_commit`` from default va
 
 or permanently in ``/etc/mysql/my.cnf``:
 
-.. code-block:: mysql
+.. code-block:: ini
 
     [mysqld]
     innodb_flush_log_at_trx_commit=2
