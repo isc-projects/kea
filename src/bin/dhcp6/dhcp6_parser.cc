@@ -1203,12 +1203,12 @@ namespace isc { namespace dhcp {
 #line 1204 "dhcp6_parser.cc"
     break;
 
-  case 135: // cache_max: "cache-max" ":" "integer"
+  case 135: // cache_max_age: "cache-max-age" ":" "integer"
 #line 593 "dhcp6_parser.yy"
-                                   {
-    ctx.unique("cache-max", ctx.loc2pos(yystack_[2].location));
+                                           {
+    ctx.unique("cache-max-age", ctx.loc2pos(yystack_[2].location));
     ElementPtr cm(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("cache-max", cm);
+    ctx.stack_.back()->set("cache-max-age", cm);
 }
 #line 1214 "dhcp6_parser.cc"
     break;
@@ -5501,7 +5501,7 @@ namespace isc { namespace dhcp {
   "\"valid-lifetime\"", "\"min-valid-lifetime\"", "\"max-valid-lifetime\"",
   "\"renew-timer\"", "\"rebind-timer\"", "\"calculate-tee-times\"",
   "\"t1-percent\"", "\"t2-percent\"", "\"cache-threshold\"",
-  "\"cache-max\"", "\"decline-probation-period\"", "\"server-tag\"",
+  "\"cache-max-age\"", "\"decline-probation-period\"", "\"server-tag\"",
   "\"statistic-default-sample-count\"", "\"statistic-default-sample-age\"",
   "\"ddns-send-updates\"", "\"ddns-override-no-update\"",
   "\"ddns-override-client-update\"", "\"ddns-replace-client-name\"",
@@ -5556,26 +5556,27 @@ namespace isc { namespace dhcp {
   "preferred_lifetime", "min_preferred_lifetime", "max_preferred_lifetime",
   "valid_lifetime", "min_valid_lifetime", "max_valid_lifetime",
   "renew_timer", "rebind_timer", "calculate_tee_times", "t1_percent",
-  "t2_percent", "cache_threshold", "cache_max", "decline_probation_period",
-  "ddns_send_updates", "ddns_override_no_update",
-  "ddns_override_client_update", "ddns_replace_client_name", "$@22",
-  "ddns_replace_client_name_value", "ddns_generated_prefix", "$@23",
-  "ddns_qualifying_suffix", "$@24", "hostname_char_set", "$@25",
-  "hostname_char_replacement", "$@26", "store_extended_info",
-  "statistic_default_sample_count", "statistic_default_sample_age",
-  "server_tag", "$@27", "interfaces_config", "$@28", "sub_interfaces6",
-  "$@29", "interfaces_config_params", "interfaces_config_param",
-  "interfaces_list", "$@30", "re_detect", "lease_database", "$@31",
-  "hosts_database", "$@32", "hosts_databases", "$@33", "database_list",
-  "not_empty_database_list", "database", "$@34", "database_map_params",
-  "database_map_param", "database_type", "$@35", "db_type", "user", "$@36",
-  "password", "$@37", "host", "$@38", "port", "name", "$@39", "persist",
-  "lfc_interval", "readonly", "connect_timeout", "reconnect_wait_time",
-  "max_row_errors", "request_timeout", "tcp_keepalive", "tcp_nodelay",
-  "contact_points", "$@40", "max_reconnect_tries", "keyspace", "$@41",
-  "consistency", "$@42", "serial_consistency", "$@43", "sanity_checks",
-  "$@44", "sanity_checks_params", "sanity_checks_param", "lease_checks",
-  "$@45", "mac_sources", "$@46", "mac_sources_list", "mac_sources_value",
+  "t2_percent", "cache_threshold", "cache_max_age",
+  "decline_probation_period", "ddns_send_updates",
+  "ddns_override_no_update", "ddns_override_client_update",
+  "ddns_replace_client_name", "$@22", "ddns_replace_client_name_value",
+  "ddns_generated_prefix", "$@23", "ddns_qualifying_suffix", "$@24",
+  "hostname_char_set", "$@25", "hostname_char_replacement", "$@26",
+  "store_extended_info", "statistic_default_sample_count",
+  "statistic_default_sample_age", "server_tag", "$@27",
+  "interfaces_config", "$@28", "sub_interfaces6", "$@29",
+  "interfaces_config_params", "interfaces_config_param", "interfaces_list",
+  "$@30", "re_detect", "lease_database", "$@31", "hosts_database", "$@32",
+  "hosts_databases", "$@33", "database_list", "not_empty_database_list",
+  "database", "$@34", "database_map_params", "database_map_param",
+  "database_type", "$@35", "db_type", "user", "$@36", "password", "$@37",
+  "host", "$@38", "port", "name", "$@39", "persist", "lfc_interval",
+  "readonly", "connect_timeout", "reconnect_wait_time", "max_row_errors",
+  "request_timeout", "tcp_keepalive", "tcp_nodelay", "contact_points",
+  "$@40", "max_reconnect_tries", "keyspace", "$@41", "consistency", "$@42",
+  "serial_consistency", "$@43", "sanity_checks", "$@44",
+  "sanity_checks_params", "sanity_checks_param", "lease_checks", "$@45",
+  "mac_sources", "$@46", "mac_sources_list", "mac_sources_value",
   "duid_id", "string_id", "host_reservation_identifiers", "$@47",
   "host_reservation_identifiers_list", "host_reservation_identifier",
   "hw_address_id", "flex_id", "relay_supplied_options", "$@48",
@@ -5767,7 +5768,7 @@ namespace isc { namespace dhcp {
 
 #line 14 "dhcp6_parser.yy"
 } } // isc::dhcp
-#line 5771 "dhcp6_parser.cc"
+#line 5772 "dhcp6_parser.cc"
 
 #line 2743 "dhcp6_parser.yy"
 

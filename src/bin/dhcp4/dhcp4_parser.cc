@@ -1159,12 +1159,12 @@ namespace isc { namespace dhcp {
 #line 1160 "dhcp4_parser.cc"
     break;
 
-  case 127: // cache_max: "cache-max" ":" "integer"
+  case 127: // cache_max_age: "cache-max-age" ":" "integer"
 #line 558 "dhcp4_parser.yy"
-                                   {
-    ctx.unique("cache-max", ctx.loc2pos(yystack_[2].location));
+                                           {
+    ctx.unique("cache-max-age", ctx.loc2pos(yystack_[2].location));
     ElementPtr cm(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("cache-max", cm);
+    ctx.stack_.back()->set("cache-max-age", cm);
 }
 #line 1170 "dhcp4_parser.cc"
     break;
@@ -5340,15 +5340,16 @@ namespace isc { namespace dhcp {
   "\"max-row-errors\"", "\"valid-lifetime\"", "\"min-valid-lifetime\"",
   "\"max-valid-lifetime\"", "\"renew-timer\"", "\"rebind-timer\"",
   "\"calculate-tee-times\"", "\"t1-percent\"", "\"t2-percent\"",
-  "\"cache-threshold\"", "\"cache-max\"", "\"decline-probation-period\"",
-  "\"server-tag\"", "\"statistic-default-sample-count\"",
-  "\"statistic-default-sample-age\"", "\"ddns-send-updates\"",
-  "\"ddns-override-no-update\"", "\"ddns-override-client-update\"",
-  "\"ddns-replace-client-name\"", "\"ddns-generated-prefix\"",
-  "\"ddns-qualifying-suffix\"", "\"store-extended-info\"", "\"subnet4\"",
-  "\"4o6-interface\"", "\"4o6-interface-id\"", "\"4o6-subnet\"",
-  "\"option-def\"", "\"option-data\"", "\"name\"", "\"data\"", "\"code\"",
-  "\"space\"", "\"csv-format\"", "\"always-send\"", "\"record-types\"",
+  "\"cache-threshold\"", "\"cache-max-age\"",
+  "\"decline-probation-period\"", "\"server-tag\"",
+  "\"statistic-default-sample-count\"", "\"statistic-default-sample-age\"",
+  "\"ddns-send-updates\"", "\"ddns-override-no-update\"",
+  "\"ddns-override-client-update\"", "\"ddns-replace-client-name\"",
+  "\"ddns-generated-prefix\"", "\"ddns-qualifying-suffix\"",
+  "\"store-extended-info\"", "\"subnet4\"", "\"4o6-interface\"",
+  "\"4o6-interface-id\"", "\"4o6-subnet\"", "\"option-def\"",
+  "\"option-data\"", "\"name\"", "\"data\"", "\"code\"", "\"space\"",
+  "\"csv-format\"", "\"always-send\"", "\"record-types\"",
   "\"encapsulate\"", "\"array\"", "\"shared-networks\"", "\"pools\"",
   "\"pool\"", "\"user-context\"", "\"comment\"", "\"subnet\"",
   "\"interface\"", "\"id\"", "\"reservation-mode\"", "\"disabled\"",
@@ -5389,7 +5390,7 @@ namespace isc { namespace dhcp {
   "global_param", "valid_lifetime", "min_valid_lifetime",
   "max_valid_lifetime", "renew_timer", "rebind_timer",
   "calculate_tee_times", "t1_percent", "t2_percent", "cache_threshold",
-  "cache_max", "decline_probation_period", "server_tag", "$@20",
+  "cache_max_age", "decline_probation_period", "server_tag", "$@20",
   "echo_client_id", "match_client_id", "authoritative",
   "ddns_send_updates", "ddns_override_no_update",
   "ddns_override_client_update", "ddns_replace_client_name", "$@21",
@@ -5593,7 +5594,7 @@ namespace isc { namespace dhcp {
 
 #line 14 "dhcp4_parser.yy"
 } } // isc::dhcp
-#line 5597 "dhcp4_parser.cc"
+#line 5598 "dhcp4_parser.cc"
 
 #line 2615 "dhcp4_parser.yy"
 
