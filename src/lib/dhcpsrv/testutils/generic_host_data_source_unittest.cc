@@ -1307,6 +1307,24 @@ GenericHostDataSourceTest::testGetByIPv4(const Host::IdentifierType& id) {
     HostDataSourceUtils::compareHosts(host3, from_hds3);
     HostDataSourceUtils::compareHosts(host4, from_hds4);
 
+    // We should get the same result calling getAll4(subnet_id, address)
+    auto coll_hds1 = hdsptr_->getAll4(host1->getIPv4SubnetID(), IOAddress("192.0.2.1"));
+    auto coll_hds2 = hdsptr_->getAll4(host2->getIPv4SubnetID(), IOAddress("192.0.2.2"));
+    auto coll_hds3 = hdsptr_->getAll4(host3->getIPv4SubnetID(), IOAddress("192.0.2.3"));
+    auto coll_hds4 = hdsptr_->getAll4(host4->getIPv4SubnetID(), IOAddress("192.0.2.4"));
+
+    // Make sure exactly one host was returned for each address.
+    ASSERT_EQ(1, coll_hds1.size());
+    ASSERT_EQ(1, coll_hds2.size());
+    ASSERT_EQ(1, coll_hds3.size());
+    ASSERT_EQ(1, coll_hds4.size());
+
+    // Validate the hosts returned.
+    HostDataSourceUtils::compareHosts(host1, *coll_hds1.begin());
+    HostDataSourceUtils::compareHosts(host2, *coll_hds2.begin());
+    HostDataSourceUtils::compareHosts(host3, *coll_hds3.begin());
+    HostDataSourceUtils::compareHosts(host4, *coll_hds4.begin());
+
     // Ok, finally let's check that getting by a different address
     // will not work.
     EXPECT_FALSE(hdsptr_->get4(subnet1, IOAddress("192.0.1.5")));
@@ -1776,6 +1794,24 @@ GenericHostDataSourceTest::testGetBySubnetIPv6() {
     HostDataSourceUtils::compareHosts(host2, from_hds2);
     HostDataSourceUtils::compareHosts(host3, from_hds3);
     HostDataSourceUtils::compareHosts(host4, from_hds4);
+
+    // We should get the same result calling getAll6(subnet_id, address)
+    auto coll_hds1 = hdsptr_->getAll6(host1->getIPv6SubnetID(), IOAddress("2001:db8:1::"));
+    auto coll_hds2 = hdsptr_->getAll6(host2->getIPv6SubnetID(), IOAddress("2001:db8:2::"));
+    auto coll_hds3 = hdsptr_->getAll6(host3->getIPv6SubnetID(), IOAddress("2001:db8:3::"));
+    auto coll_hds4 = hdsptr_->getAll6(host4->getIPv6SubnetID(), IOAddress("2001:db8:4::"));
+
+    // Make sure exactly one host was returned for each address.
+    ASSERT_EQ(1, coll_hds1.size());
+    ASSERT_EQ(1, coll_hds2.size());
+    ASSERT_EQ(1, coll_hds3.size());
+    ASSERT_EQ(1, coll_hds4.size());
+
+    // Validate the hosts returned.
+    HostDataSourceUtils::compareHosts(host1, *coll_hds1.begin());
+    HostDataSourceUtils::compareHosts(host2, *coll_hds2.begin());
+    HostDataSourceUtils::compareHosts(host3, *coll_hds3.begin());
+    HostDataSourceUtils::compareHosts(host4, *coll_hds4.begin());
 }
 
 void
