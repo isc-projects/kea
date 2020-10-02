@@ -89,7 +89,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "statistic-default-sample-age",   Element::integer },
     { "multi-threading",                Element::map },
     { "cache-threshold",                Element::real },
-    { "cache-max",                      Element::integer }
+    { "cache-max-age",                  Element::integer }
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -220,7 +220,7 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "store-extended-info",            Element::boolean },
     { "metadata",                       Element::map },
     { "cache-threshold",                Element::real },
-    { "cache-max",                      Element::integer }
+    { "cache-max-age",                  Element::integer }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -273,7 +273,7 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "t2-percent",
     "store-extended-info",
     "cache-threshold",
-    "cache-max"
+    "cache-max-age"
 };
 
 /// @brief This table defines all pool parameters.
@@ -350,7 +350,7 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "store-extended-info",            Element::boolean },
     { "metadata",                       Element::map },
     { "cache-threshold",                Element::real },
-    { "cache-max",                      Element::integer }
+    { "cache-max-age",                  Element::integer }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.

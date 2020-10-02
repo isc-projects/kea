@@ -88,7 +88,7 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "statistic-default-sample-age",   Element::integer },
     { "multi-threading",                Element::map },
     { "cache-threshold",                Element::real },
-    { "cache-max",                      Element::integer }
+    { "cache-max-age",                  Element::integer }
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -226,7 +226,7 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "store-extended-info",            Element::boolean },
     { "metadata",                       Element::map },
     { "cache-threshold",                Element::real },
-    { "cache-max",                      Element::integer }
+    { "cache-max-age",                  Element::integer }
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -279,7 +279,7 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "t2-percent",
     "store-extended-info",
     "cache-threshold",
-    "cache-max"
+    "cache-max-age"
 };
 
 /// @brief This table defines all pool parameters.
@@ -337,7 +337,7 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "store-extended-info",            Element::boolean },
     { "metadata",                       Element::map },
     { "cache-threshold",                Element::real },
-    { "cache-max",                      Element::integer }
+    { "cache-max-age",                  Element::integer }
 };
 
 /// @brief This table defines default values for each IPv4 shared network.

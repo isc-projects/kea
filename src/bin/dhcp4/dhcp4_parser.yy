@@ -484,7 +484,7 @@ global_param: valid_lifetime
             | t1_percent
             | t2_percent
             | cache_threshold
-            | cache_max
+            | cache_max_age
             | loggers
             | hostname_char_set
             | hostname_char_replacement

@@ -192,8 +192,8 @@ BaseNetworkParser::parseCacheParams(const ConstElementPtr& network_data,
         network->setCacheThreshold(cache_threshold);
     }
 
-    if (network_data->contains("cache-max")) {
-        network->setCacheMax(getInteger(network_data, "cache-max"));
+    if (network_data->contains("cache-max-age")) {
+        network->setCacheMaxAge(getInteger(network_data, "cache-max-age"));
     }
 }
 

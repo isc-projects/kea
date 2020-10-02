@@ -66,7 +66,7 @@ protected:
     ///
     /// The parsed parameters are:
     /// - cache-threshold,
-    /// - cache-max.
+    /// - cache-max-age.
     ///
     /// @param network_data Data element holding network configuration
     /// to be parsed.
