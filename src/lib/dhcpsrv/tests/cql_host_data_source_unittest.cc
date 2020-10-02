@@ -70,6 +70,7 @@ public:
         }
 
         hdsptr_ = HostMgr::instance().getHostDataSource();
+        hdsptr_->setIPReservationUnique(true);
     }
 
     /// @brief Destroys the HDS and the schema.

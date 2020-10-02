@@ -62,6 +62,8 @@ public:
         }
 
         hdsptr_ = HostMgr::instance().getHostDataSource();
+        hdsptr_->setIPReservationUnique(true);
+
 
         MultiThreadingMgr::instance().setMode(false);
     }
