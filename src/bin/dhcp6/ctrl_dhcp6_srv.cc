@@ -663,12 +663,19 @@ ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
         status->set("reload", Element::create(reload.total_seconds()));
     }
 
-    if (MultiThreadingMgr::instance().getMode()) {
+    auto& mt_mgr = MultiThreadingMgr::instance();
+    if (mt_mgr.getMode()) {
         status->set("multi-threading-enabled", Element::create(true));
         status->set("thread-pool-size", Element::create(static_cast<int32_t>(
                         MultiThreadingMgr::instance().getThreadPoolSize())));
         status->set("packet-queue-size", Element::create(static_cast<int32_t>(
                         MultiThreadingMgr::instance().getPacketQueueSize())));
+        ElementPtr queue_stats = Element::createList();
+        queue_stats->add(Element::create(mt_mgr.getThreadPool().getQueueStat(10)));
+        queue_stats->add(Element::create(mt_mgr.getThreadPool().getQueueStat(100)));
+        queue_stats->add(Element::create(mt_mgr.getThreadPool().getQueueStat(1000)));
+        status->set("packet-queue-statistics", queue_stats);
+
     } else {
         status->set("multi-threading-enabled", Element::create(false));
     }

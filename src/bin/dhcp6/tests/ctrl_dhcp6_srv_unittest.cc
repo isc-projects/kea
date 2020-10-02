@@ -1020,6 +1020,9 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
     auto found_queue_size = arguments->get("packet-queue-size");
     ASSERT_FALSE(found_queue_size);
 
+    auto found_queue_stats = arguments->get("packet-queue-statistics");
+    ASSERT_FALSE(found_queue_stats);
+
     MultiThreadingMgr::instance().setMode(true);
     MultiThreadingMgr::instance().setThreadPoolSize(4);
     MultiThreadingMgr::instance().setPacketQueueSize(64);
@@ -1064,6 +1067,11 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
     found_queue_size = arguments->get("packet-queue-size");
     ASSERT_TRUE(found_queue_size);
     EXPECT_EQ(found_queue_size->intValue(), 64);
+
+    found_queue_stats = arguments->get("packet-queue-statistics");
+    ASSERT_TRUE(found_queue_stats);
+    ASSERT_EQ(Element::list, found_queue_stats->getType());
+    EXPECT_EQ(3, found_queue_stats->size());
 }
 
 // This test verifies that the DHCP server handles server-tag-get command

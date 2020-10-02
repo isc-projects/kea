@@ -607,7 +607,10 @@ The ``status-get`` command returns server's runtime information:
 
  - thread-pool-size: number of dhcp service threads.
 
- - packet-queue-size: size of the packet queue size.
+ - packet-queue-size: maximum size of the packet queue.
+
+ - packet-queue-statistics: average queue size for last 10, 100 and 1000
+   packets.
 
 The ``high-availability`` information is returned only when the command is
 sent to the DHCP servers being in the HA setup. This parameter is

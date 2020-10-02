@@ -1,3 +1,9 @@
+1822.	[func]		fdupont
+	When multi-threading is enabled the status-get command displays
+	the average lenght of the multi-threading packet queue for last
+	10, 100 and 1000 packets.
+	(Gitlab #1306)
+
 1821.	[func]		anonymous, fdupont
 	The forensic log hook library now logs release and decline
 	events.

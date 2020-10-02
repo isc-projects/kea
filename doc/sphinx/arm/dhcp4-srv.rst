@@ -3939,18 +3939,18 @@ enable the option for the whole subnet, the following configuration can be used:
 ::
 
     "subnet4": [
-	{
-	    "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
-	    "subnet": "192.0.2.0/24",
-	    "option-data": [
-		{
-		    // This will make the v6-only capable devices to disable their
-		    // v4 stack for half an hour and then try again
-		    "name": "v6-only-preferred",
-		    "data": "1800"
-		}
-	    ]
-	}
+        {
+            "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+            "subnet": "192.0.2.0/24",
+            "option-data": [
+                {
+                    // This will make the v6-only capable devices to disable their
+                    // v4 stack for half an hour and then try again
+                    "name": "v6-only-preferred",
+                    "data": "1800"
+                }
+            ]
+        }
     ],
 
 .. _host-reservation-v4:
