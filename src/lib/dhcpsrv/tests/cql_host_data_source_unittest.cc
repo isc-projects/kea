@@ -616,7 +616,7 @@ TEST_F(CqlHostDataSourceTest, addDuplicate6WithHWAddr) {
 // follows: try to add multiple instances of the same host reservation and
 // verify that the second and following attempts will throw exceptions.
 TEST_F(CqlHostDataSourceTest, addDuplicate4) {
-    testAddDuplicate4();
+    testAddDuplicateIPv4();
 }
 
 /// @brief Test that the CQL backend does not support using non-unique

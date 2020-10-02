@@ -1869,7 +1869,7 @@ GenericHostDataSourceTest::testAllowDuplicateIPv6() {
 }
 
 void
-GenericHostDataSourceTest::testAddDuplicate4() {
+GenericHostDataSourceTest::testAddDuplicateIPv4() {
     // Make sure we have the pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -1892,18 +1892,6 @@ GenericHostDataSourceTest::testAddDuplicate4() {
     // we can now add the host.
     ASSERT_NO_THROW(host->setIPv4Reservation(IOAddress("192.0.2.3")));
     EXPECT_NO_THROW(hdsptr_->add(host));
-}
-
-void
-GenericHostDataSourceTest::testDisallowDuplicateIP() {
-    // Make sure we have the pointer to the host data source.
-    ASSERT_TRUE(hdsptr_);
-    // The backend does not support switching to the mode in which multiple
-    // reservations for the same address can be created.
-    EXPECT_FALSE(hdsptr_->setIPReservationUnique(false));
-
-    // The default mode still can be used.
-    EXPECT_TRUE(hdsptr_->setIPReservationUnique(true));
 }
 
 void
@@ -1947,6 +1935,18 @@ GenericHostDataSourceTest::testAllowDuplicateIPv4() {
     ASSERT_TRUE(deleted);
     ASSERT_NO_THROW(returned = hdsptr_->getAll4(host->getIPv4SubnetID(), IOAddress("192.0.2.1")));
     EXPECT_TRUE(returned.empty());
+}
+
+void
+GenericHostDataSourceTest::testDisallowDuplicateIP() {
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+    // The backend does not support switching to the mode in which multiple
+    // reservations for the same address can be created.
+    EXPECT_FALSE(hdsptr_->setIPReservationUnique(false));
+
+    // The default mode still can be used.
+    EXPECT_TRUE(hdsptr_->setIPReservationUnique(true));
 }
 
 void

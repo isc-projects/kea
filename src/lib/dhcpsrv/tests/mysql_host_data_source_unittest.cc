@@ -1101,7 +1101,7 @@ TEST_F(MySqlHostDataSourceTest, allowDuplicateIPv6MultiThreading) {
 /// follows: try to add multiple instances of the same host reservation and
 /// verify that the second and following attempts will throw exceptions.
 TEST_F(MySqlHostDataSourceTest, addDuplicate4) {
-    testAddDuplicate4();
+    testAddDuplicateIPv4();
 }
 
 /// @brief Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
@@ -1109,7 +1109,7 @@ TEST_F(MySqlHostDataSourceTest, addDuplicate4) {
 /// verify that the second and following attempts will throw exceptions.
 TEST_F(MySqlHostDataSourceTest, addDuplicate4MultiThreading) {
     MultiThreadingTest mt(true);
-    testAddDuplicate4();
+    testAddDuplicateIPv4();
 }
 
 /// @brief Test if the host reservation for the same IPv4 address can be inserted
