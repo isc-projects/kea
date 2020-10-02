@@ -370,8 +370,7 @@ public:
     ///
     /// @return Const @c Host object using a specified IPv6 address/prefix.
     virtual ConstHostPtr
-    get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) const =
- 0;
+    get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) const = 0;
 
     /// @brief Returns all hosts connected to the IPv6 subnet and having
     /// a reservation for a specified address or delegated prefix (lease).
