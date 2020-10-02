@@ -680,6 +680,12 @@ SrvConfig::moveDdnsParams(isc::data::ElementPtr srv_elem) {
     }
 }
 
+void
+SrvConfig::setIPReservationsUnique(const bool unique) {
+    getCfgHosts()->setIPReservationsUnique(unique);
+    getCfgDbAccess()->setIPReservationsUnique(unique);
+}
+
 bool
 DdnsParams::getEnableUpdates() const {
     if (!subnet_) {

@@ -559,6 +559,36 @@ const char* CONFIGS[] = {
         "        \"interface\": \"eth0\"\n"
         "    }\n"
         "]\n"
+    "}",
+
+    // Configuration 13 multiple reservations for the same IP address.
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"valid-lifetime\": 4000,\n"
+        "\"ip-reservations-unique\": false,\n"
+        "\"subnet6\": [\n"
+        "    {\n"
+        "        \"subnet\": \"2001:db8:1::/64\",\n"
+        "        \"id\": 10,"
+        "        \"reservations\": [\n"
+        "            {\n"
+        "                \"duid\": \"01:02:03:04\",\n"
+        "                \"ip-addresses\": [ \"2001:db8:1::15\" ]\n"
+        "            },\n"
+        "            {\n"
+        "                \"duid\": \"01:02:03:05\",\n"
+        "                \"ip-addresses\": [ \"2001:db8:1::15\" ]\n"
+        "            }\n"
+        "        ],\n"
+        "        \"pools\": ["
+        "            {\n"
+        "                \"pool\": \"2001:db8:1::10-2001:db8:1::200\""
+        "            }\n"
+        "        ],\n"
+        "        \"interface\": \"eth0\"\n"
+        "    }\n"
+        "]\n"
     "}"
 };
 
@@ -2355,6 +2385,25 @@ TEST_F(HostTest, clientClassGlobalSubnetSelection) {
 TEST_F(HostTest, clientClassPoolSelection) {
     ASSERT_NO_FATAL_FAILURE(testGlobalClassSubnetPoolSelection(12, "2001:db8:1::10",
                                                                "2001:db8:1::20"));
+}
+
+// Verifies that if the server is configured to allow for specifying
+// multiple reservations for the same IP address the first client
+// matching the reservation will be given this address.
+TEST_F(HostTest, oneOfMultiple) {
+    Dhcp6Client client1;
+    client1.setDUID("01:02:03:04");
+
+    ASSERT_NO_THROW(configure(CONFIGS[13], *client1.getServer()));
+
+    // First client performs 4-way exchange and obtains an address and
+    // prefix indicated in hints.
+    requestIA(client1, Hint(IAID(1), "2001:db8:1::10"));
+
+    ASSERT_NO_THROW(client1.doSARR());
+
+    // Make sure the client has obtained requested leases.
+    ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::15"), IAID(1)));
 }
 
 } // end of anonymous namespace

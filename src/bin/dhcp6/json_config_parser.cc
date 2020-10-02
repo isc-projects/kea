@@ -203,6 +203,23 @@ public:
         srv_config->setServerTag(server_tag);
     }
 
+    /// @brief Sets global parameters before other parameters are parsed.
+    ///
+    /// This method sets selected global parameters before other parameters
+    /// are parsed. This is important when the bahavior of the parsers
+    /// run later depends on these global paramters.
+    ///
+    /// Currently this method sets the following global parameters:
+    /// - ip-reservations-unique
+    ///
+    /// @param global global configuration scope
+    /// @param cfg Server configuration (parsed parameters will be stored here)
+    void parseEarly(const SrvConfigPtr& cfg, const ConstElementPtr& global) {
+        // Set ip-reservations-unique flag.
+        bool ip_reservations_unique = getBoolean(global, "ip-reservations-unique");
+        cfg->setIPReservationsUnique(ip_reservations_unique);
+    }
+
     /// @brief Copies subnets from shared networks to regular subnets container
     ///
     /// @param from pointer to shared networks container (copy from here)
@@ -469,6 +486,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // with the parser code debugability, so I decided to keep it as a
         // series of independent ifs.
 
+        // This parser is used in several places.
+        Dhcp6ConfigParser global_parser;
+
+        // Apply global options in the staging config, e.g. ip-reservations-unique
+        global_parser.parseEarly(srv_config, mutable_cfg);
+
         // Specific check for this global parameter.
         ConstElementPtr data_directory = mutable_cfg->get("data-directory");
         if (data_directory) {
@@ -627,9 +650,6 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 cfg_db_access->setHostDbAccessString(access_string);
             }
         }
-
-        // This parser is used in several places.
-        Dhcp6ConfigParser global_parser;
 
         // Keep relative orders of shared networks and subnets.
         ConstElementPtr shared_networks = mutable_cfg->get("shared-networks");

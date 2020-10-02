@@ -800,6 +800,17 @@ public:
     /// @param srv_elem server top level map to alter
     static void moveDdnsParams(isc::data::ElementPtr srv_elem);
 
+    /// @brief Configures the server to allow or disallow specifying multiple
+    /// hosts with the same IP address.
+    ///
+    /// This setting is applied in @c CfgDbAccess and @c CfgHosts. This function
+    /// should be called when the server is being configured using the configuration
+    /// file, config-set command or via the configuration backend.
+    ///
+    /// @param unique Boolean value indicating if it is allowed (when false)
+    /// or disallowed to specify multiple hosts with the same IP reservation.
+    void setIPReservationsUnique(const bool unique);
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration

@@ -306,6 +306,36 @@ const char* CONFIGS[] = {
         "        \"interface\": \"eth0\"\n"
         "    }\n"
         "]\n"
+    "}",
+
+    // Configuration 7 multiple reservations for the same IP address.
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"valid-lifetime\": 600,\n"
+        "\"ip-reservations-unique\": false,\n"
+        "\"subnet4\": [\n"
+        "    {\n"
+        "        \"subnet\": \"10.0.0.0/24\",\n"
+        "        \"id\": 10,\n"
+        "        \"reservations\": [\n"
+        "            { \n"
+        "                \"hw-address\": \"aa:bb:cc:dd:ee:fe\",\n"
+        "                \"ip-address\": \"10.0.0.123\"\n"
+        "            },\n"
+        "            { \n"
+        "                \"hw-address\": \"aa:bb:cc:dd:ee:ff\",\n"
+        "                \"ip-address\": \"10.0.0.123\"\n"
+        "            }\n"
+        "        ],\n"
+        "        \"pools\": [\n"
+        "            {\n"
+        "                \"pool\": \"10.0.0.10-10.0.0.255\"\n"
+        "            }\n"
+        "        ],\n"
+        "        \"interface\": \"eth0\"\n"
+        "    }\n"
+        "]\n"
     "}"
 };
 
@@ -587,6 +617,18 @@ TEST_F(HostTest, clientClassGlobalSubnetSelection) {
 // used to influence pool selection within a subnet.
 TEST_F(HostTest, clientClassPoolSelection) {
     ASSERT_NO_FATAL_FAILURE(testGlobalClassSubnetPoolSelection(6, "10.0.0.10", "10.0.0.20"));
+}
+
+// Verifies that if the server is configured to allow for specifying
+// multiple reservations for the same IP address the first client
+// matching the reservation will be given this address.
+TEST_F(HostTest, oneOfMultiple) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Hardware address matches all reservations
+    client.setHWAddress("aa:bb:cc:dd:ee:fe");
+
+    runDoraTest(CONFIGS[7], client, "", "10.0.0.123");
 }
 
 } // end of anonymous namespace

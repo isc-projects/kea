@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,6 +74,23 @@ public:
     /// specified with @ref CfgDbAccess::setAppendedParameters
     std::list<std::string> getHostDbAccessStringList() const;
 
+    /// @brief Modifies the setting imposing whether the IP reservations
+    /// are unique or can be non-unique.
+    ///
+    /// This flag can be set to @c false when the server is explicitly
+    /// configured to allow multiple hosts to have the same IP reservation.
+    /// In that case, the @c createManagers function will attempt to use
+    /// this setting for @c HostMgr.
+    ///
+    /// Note that the @c HostMgr can reject the new setting if any of the
+    /// host backends used does not support specifying multipe hosts with
+    /// the same IP address.
+    ///
+    /// @param unique new setting to be used by @c HostMgr.
+    void setIPReservationsUnique(const bool unique) {
+        ip_reservations_unique_ = unique;
+    }
+
     /// @brief Creates instance of lease manager and host data sources
     /// according to the configuration specified.
     void createManagers() const;
@@ -95,6 +112,9 @@ protected:
     /// @brief Holds host database access strings.
     std::list<std::string> host_db_access_;
 
+    /// @brief Holds the setting whether IP reservations should be unique
+    /// or can be non-unique.
+    bool ip_reservations_unique_;
 };
 
 /// @brief A pointer to the @c CfgDbAccess.
