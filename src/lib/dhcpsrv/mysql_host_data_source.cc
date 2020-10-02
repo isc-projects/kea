@@ -2048,7 +2048,7 @@ public:
     /// This value is used to mark border line between queries and other
     /// statements and statements performing write operation on the database,
     /// such as INSERT, DELETE, UPDATE.
-    static const StatementIndex WRITE_STMTS_BEGIN = INSERT_HOST_UNIQUE_IP;
+    static const StatementIndex WRITE_STMTS_BEGIN = INSERT_HOST_NON_UNIQUE_IP;
 
     /// @brief Constructor.
     ///
