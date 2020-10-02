@@ -52,7 +52,7 @@ Note that some libraries are available under different licenses.
 Please also note that some libraries may require additional dependencies and/or
 compilation switches to be enabled, e.g. the RADIUS library introduced in
 Kea 1.4 requires the FreeRadius-client library to be present. If
---with-free-radius option is not specified, the RADIUS library will not
+--with-freeradius option is not specified, the RADIUS library will not
 be built.
 
 Installing Hook Packages

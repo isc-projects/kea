@@ -363,7 +363,9 @@ flags, which correspond to FreeRADIUS client library options:
    feature when running in this mode.
 
 -  ``dictionary`` (default set by configure at build time) - is the
-   attribute and value dictionary. Note that it is a critical parameter.
+   attribute and value dictionary. Note that it is a critical parameter. You
+   may find dictionary examples in the FreeRADIUS repository under the etc
+   directory.
 
 -  ``extract-duid`` (default true) - extracts the embedded duid from an
    RFC 4361-compliant DHCPv4 client-id. Implied by client-id-printable.
@@ -510,7 +512,7 @@ following snippet could be used:
                "expr": "hexstring(pkt4.mac,':')"
            }
            ] # End of attributes
-       } # End of access
+       }, # End of access
 
        # Accounting parameters.
        "accounting": {
@@ -527,6 +529,47 @@ following snippet could be used:
        }
 
    }
+
+Customization is sometimes required for certain attributes by devices belonging
+to various vendors. This is a great way to leverage the expression evaluation
+mechanism. For example, MAC addresses which you might use as a convenience
+value for the User-Name attribute most likely will appear in colon-hexadecimal
+notation ``de:ad:be:ef:ca:fe``, but it might need to be expressed in:
+
+* hyphen-hexadecimal notation ``de-ad-be-ef-ca-fe``
+
+.. code-block:: json
+
+   {
+      "parameters": {
+         "access": {
+            "attributes": [
+               {
+                  "name": "User-Name",
+                  "expr": "hexstring(pkt4.mac, '-')"
+               }
+            ]
+         }
+      }
+   }
+
+* period-separated hexadecimal notation ``dead.beef.cafe``, preferred by Cisco devices
+
+.. code-block:: json
+
+   {
+      "parameters": {
+         "access": {
+            "attributes": [
+               {
+                  "name": "User-Name",
+                  "expr": "concat(concat(concat(substring(hexstring(pkt4.mac, ''), 0, 4), '.'), concat(substring(hexstring(pkt4.mac, ''), 4, 4), '.'), concat(substring(hexstring(pkt4.mac, ''), 8, 4), '.'))"
+               }
+            ]
+         }
+      }
+   }
+
 
 For the RADIUS hooks library to operate properly in DHCPv4,
 the Host Cache hooks library must also be loaded. The reason for this
