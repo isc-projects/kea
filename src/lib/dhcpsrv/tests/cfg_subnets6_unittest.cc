@@ -632,7 +632,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet2->setValid(Triplet<uint32_t>(200));
     subnet2->setPreferred(Triplet<uint32_t>(100));
     subnet2->setStoreExtendedInfo(true);
-    subnet2->setCacheMax(80);
+    subnet2->setCacheMaxAge(80);
 
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
@@ -695,7 +695,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"pd-pools\": [ ],\n"
         "    \"option-data\": [ ],\n"
         "    \"store-extended-info\": true,\n"
-        "    \"cache-max\": 80\n"
+        "    \"cache-max-age\": 80\n"
         "},{\n"
         "    \"id\": 125,\n"
         "    \"subnet\": \"2001:db8:3::/48\",\n"

@@ -284,9 +284,9 @@ Network::toElement() const {
         map->set("cache-threshold", Element::create(cache_threshold_));
     }
 
-    if (!cache_max_.unspecified()) {
-        map->set("cache-max",
-                 Element::create(static_cast<long long>(cache_max_)));
+    if (!cache_max_age_.unspecified()) {
+        map->set("cache-max-age",
+                 Element::create(static_cast<long long>(cache_max_age_)));
     }
 
     return (map);

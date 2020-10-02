@@ -148,7 +148,7 @@ public:
                 "    \"hostname-char-replacement\": \"x\","
                 "    \"store-extended-info\": true,"
                 "    \"cache-threshold\": 0.123,"
-                "    \"cache-max\": 123,"
+                "    \"cache-max-age\": 123,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"domain-name-servers\","
@@ -182,7 +182,7 @@ public:
                 "            \"t2-percent\": .65,"
                 "            \"hostname-char-set\": \"\","
                 "            \"cache-threshold\": .20,"
-                "            \"cache-max\": 50"
+                "            \"cache-max-age\": 50"
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -207,7 +207,7 @@ public:
                 "            \"t1-percent\": .40,"
                 "            \"t2-percent\": .80,"
                 "            \"cache-threshold\": .15,"
-                "            \"cache-max\": 5"
+                "            \"cache-max-age\": 5"
                 "        }"
                 "    ]"
                 "}";
@@ -271,7 +271,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
     EXPECT_EQ(0.123, network->getCacheThreshold());
-    EXPECT_EQ(123, network->getCacheMax());
+    EXPECT_EQ(123, network->getCacheMaxAge());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -565,7 +565,7 @@ public:
                 "    \"hostname-char-replacement\": \"x\","
                 "    \"store-extended-info\": true,"
                 "    \"cache-threshold\": 0.123,"
-                "    \"cache-max\": 123,"
+                "    \"cache-max-age\": 123,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -671,7 +671,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
     EXPECT_EQ(0.123, network->getCacheThreshold());
-    EXPECT_EQ(123, network->getCacheMax());
+    EXPECT_EQ(123, network->getCacheMaxAge());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();

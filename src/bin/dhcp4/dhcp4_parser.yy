@@ -111,7 +111,7 @@ using namespace std;
   T1_PERCENT "t1-percent"
   T2_PERCENT "t2-percent"
   CACHE_THRESHOLD "cache-threshold"
-  CACHE_MAX "cache-max"
+  CACHE_MAX_AGE "cache-max-age"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
   SERVER_TAG "server-tag"
   STATISTIC_DEFAULT_SAMPLE_COUNT "statistic-default-sample-count"
@@ -555,10 +555,10 @@ cache_threshold: CACHE_THRESHOLD COLON FLOAT {
     ctx.stack_.back()->set("cache-threshold", ct);
 };
 
-cache_max: CACHE_MAX COLON INTEGER {
-    ctx.unique("cache-max", ctx.loc2pos(@1));
+cache_max_age: CACHE_MAX_AGE COLON INTEGER {
+    ctx.unique("cache-max-age", ctx.loc2pos(@1));
     ElementPtr cm(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("cache-max", cm);
+    ctx.stack_.back()->set("cache-max-age", cm);
 };
 
 decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
@@ -1359,7 +1359,7 @@ subnet4_param: valid_lifetime
              | t1_percent
              | t2_percent
              | cache_threshold
-             | cache_max
+             | cache_max_age
              | ddns_send_updates
              | ddns_override_no_update
              | ddns_override_client_update
@@ -1516,7 +1516,7 @@ shared_network_param: name
                     | t1_percent
                     | t2_percent
                     | cache_threshold
-                    | cache_max
+                    | cache_max_age
                     | ddns_send_updates
                     | ddns_override_no_update
                     | ddns_override_client_update

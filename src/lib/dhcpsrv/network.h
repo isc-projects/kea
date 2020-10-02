@@ -208,7 +208,7 @@ public:
           ddns_send_updates_(), ddns_override_no_update_(), ddns_override_client_update_(),
           ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
           hostname_char_set_(), hostname_char_replacement_(), store_extended_info_(),
-          cache_threshold_(), cache_max_() {
+          cache_threshold_(), cache_max_age_() {
     }
 
     /// @brief Virtual destructor.
@@ -720,16 +720,16 @@ public:
     ///
     /// @param inheritance inheritance mode to be used.
     util::Optional<uint32_t>
-    getCacheMax(const Inheritance& inheritance = Inheritance::ALL) const {
-        return (getProperty<Network>(&Network::getCacheMax, cache_max_,
-                                     inheritance, "cache-max"));
+    getCacheMaxAge(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getCacheMaxAge, cache_max_age_,
+                                     inheritance, "cache-max-age"));
     }
 
     /// @brief Sets cache max for a network.
     ///
-    /// @param cache_max New cache maximum value in seconds to use.
-    void setCacheMax(const util::Optional<uint32_t>& cache_max) {
-        cache_max_ = cache_max;
+    /// @param cache_max_age New cache maximum value in seconds to use.
+    void setCacheMaxAge(const util::Optional<uint32_t>& cache_max_age) {
+        cache_max_age_ = cache_max_age;
     }
 
     /// @brief Unparses network object.
@@ -1030,7 +1030,7 @@ protected:
     util::Optional<double> cache_threshold_;
 
     /// @brief Value in seconds to use as cache maximal age.
-    util::Optional<uint32_t> cache_max_;
+    util::Optional<uint32_t> cache_max_age_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///

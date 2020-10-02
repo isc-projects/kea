@@ -217,7 +217,7 @@ TEST(CfgSharedNetworks6Test, unparse) {
     network2->setValid(Triplet<uint32_t>(300));
     network2->setDdnsSendUpdates(false);
     network2->setStoreExtendedInfo(true);
-    network2->setCacheMax(80);
+    network2->setCacheMaxAge(80);
 
     network3->setIface("eth2");
     network3->setPreferred(Triplet<uint32_t>(100,200,300));
@@ -255,7 +255,7 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "    \"preferred-lifetime\": 200,\n"
         "    \"valid-lifetime\": 300\n,"
         "    \"store-extended-info\": true,\n"
-        "    \"cache-max\": 80\n"
+        "    \"cache-max-age\": 80\n"
         "  },\n"
         "  {\n"
         "    \"calculate-tee-times\": true,\n"

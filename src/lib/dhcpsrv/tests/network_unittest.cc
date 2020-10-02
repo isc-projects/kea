@@ -182,7 +182,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("hostname-char-replacement", Element::create("gr"));
     globals_->set("store-extended-info", Element::create(true));
     globals_->set("cache-threshold", Element::create(.25));
-    globals_->set("cache-max", Element::create(20));
+    globals_->set("cache-max-age", Element::create(20));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -327,9 +327,9 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              .1, .25);
     }
     {
-        SCOPED_TRACE("cache-max");
-        testNetworkInheritance<TestNetwork4>(&Network::getCacheMax,
-                                             &Network::setCacheMax,
+        SCOPED_TRACE("cache-max-age");
+        testNetworkInheritance<TestNetwork4>(&Network::getCacheMaxAge,
+                                             &Network::setCacheMaxAge,
                                              10, 20);
     }
 }
