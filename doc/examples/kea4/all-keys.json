@@ -638,7 +638,7 @@
                 // Cache maximum: when the client last transmission time
                 // is close enough the lease is not renewed and current
                 // lease is returned as it was "cached".
-                "cache-max": 1000,
+                "cache-max-age": 1000,
 
                 // Enumeration specifying server's mode of operation when it
                 // fetches host reservations.
@@ -811,7 +811,7 @@
                         "cache-threshold": .25,
 
                         // Subnet-level cache maximum.
-                        "cache-max": 1000,
+                        "cache-max-age": 1000,
 
                         // List of static IPv4 reservations assigned to the clients belonging
                         // to this subnet. For detailed example see reservations.json.
@@ -935,7 +935,7 @@
         "cache-threshold": .25,
 
         // Global cache maximum.
-        "cache-max": 1000,
+        "cache-max-age": 1000,
 
         // String of zero or more characters with which to replace each
         // invalid character in the hostname or Client FQDN. The default

@@ -1,3 +1,10 @@
+18xx.	[func]		fdupont
+	Two new parameters were added: cache-threshold and cache-max-age
+	to the DHCPv4 and DHCPv6 global scopes. They will govern the
+	upcoming cache thresfold feature. The parameters can be set and
+	retrieved, but they're not used yet.
+	(Gitlab #1418)
+
 Kea 1.9.0 (development) released on Sep 30, 2020
 
 1810.	[build]		fdupont, razvan
