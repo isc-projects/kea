@@ -1163,8 +1163,8 @@ HostMgrTest::testGetAll4BySubnetIP(BaseHostDataSource& data_source1,
                                    BaseHostDataSource& data_source2) {
     // Set the mode of operation with multiple reservations for the same
     // IP address.
-    ASSERT_TRUE(HostMgr::instance().setIPReservationUnique(false));
-    CfgMgr::instance().getStagingCfg()->getCfgHosts()->setIPReservationUnique(false);
+    ASSERT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->setIPReservationsUnique(false);
 
     // Initially, no reservations should be present.
     ConstHostCollection hosts = HostMgr::instance().getAll4(SubnetID(1),
@@ -1201,8 +1201,8 @@ HostMgrTest::testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
                                    BaseHostDataSource& data_source2) {
     // Set the mode of operation with multiple reservations for the same
     // IP address.
-    ASSERT_TRUE(HostMgr::instance().setIPReservationUnique(false));
-    CfgMgr::instance().getStagingCfg()->getCfgHosts()->setIPReservationUnique(false);
+    ASSERT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->setIPReservationsUnique(false);
 
     // Initially, no reservations should be present.
     ConstHostCollection hosts = HostMgr::instance().getAll6(SubnetID(1),
@@ -1638,9 +1638,9 @@ TEST_F(MySQLHostMgrTest, get6ByPrefix) {
 
 // This test verifies that it is possible to control whether the reserved
 // IP addresses are unique or non unique via the HostMgr.
-TEST_F(MySQLHostMgrTest, setIPReservationUnique) {
-    EXPECT_TRUE(HostMgr::instance().setIPReservationUnique(true));
-    EXPECT_TRUE(HostMgr::instance().setIPReservationUnique(false));
+TEST_F(MySQLHostMgrTest, setIPReservationsUnique) {
+    EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(true));
+    EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
 }
 
 // Verifies that loss of connectivity to MySQL is handled correctly.
@@ -1816,8 +1816,8 @@ TEST_F(PostgreSQLHostMgrTest, get6ByPrefix) {
 // This test verifies that it is possible to control whether the reserved
 // IP addresses are unique or non unique via the HostMgr.
 TEST_F(PostgreSQLHostMgrTest, setIPReservationUnique) {
-    EXPECT_TRUE(HostMgr::instance().setIPReservationUnique(true));
-    EXPECT_TRUE(HostMgr::instance().setIPReservationUnique(false));
+    EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(true));
+    EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
 }
 
 // Verifies that loss of connectivity to PostgreSQL is handled correctly.
@@ -1960,10 +1960,10 @@ TEST_F(CQLHostMgrTest, get6ByPrefix) {
 
 // This test verifies that it is possible to control whether the reserved
 // IP addresses are unique or non unique via the HostMgr.
-TEST_F(CQLHostMgrTest, setIPReservationUnique) {
-    EXPECT_TRUE(HostMgr::instance().setIPReservationUnique(true));
+TEST_F(CQLHostMgrTest, setIPReservationsUnique) {
+    EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(true));
     // This is currently not supported for Cassandra.
-    EXPECT_FALSE(HostMgr::instance().setIPReservationUnique(false));
+    EXPECT_FALSE(HostMgr::instance().setIPReservationsUnique(false));
 }
 
 #endif

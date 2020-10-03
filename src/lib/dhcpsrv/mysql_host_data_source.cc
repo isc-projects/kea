@@ -3810,7 +3810,7 @@ MySqlHostDataSource::rollback() {
 }
 
 bool
-MySqlHostDataSource::setIPReservationUnique(const bool unique) {
+MySqlHostDataSource::setIPReservationsUnique(const bool unique) {
     impl_->ip_reservations_unique_ = unique;
     return (true);
 }

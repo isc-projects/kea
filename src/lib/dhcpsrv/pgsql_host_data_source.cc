@@ -3071,7 +3071,7 @@ PgSqlHostDataSource::rollback() {
 }
 
 bool
-PgSqlHostDataSource::setIPReservationUnique(const bool unique) {
+PgSqlHostDataSource::setIPReservationsUnique(const bool unique) {
     impl_->ip_reservations_unique_ = unique;
     return (true);
 }

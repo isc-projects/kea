@@ -488,7 +488,7 @@ public:
     /// unique or can be non-unique.
     /// @return true if the new setting was accepted by the backend or false
     /// otherwise.
-    virtual bool setIPReservationUnique(const bool unique) = 0;
+    virtual bool setIPReservationsUnique(const bool unique) = 0;
 };
 
 /// @brief HostDataSource pointer

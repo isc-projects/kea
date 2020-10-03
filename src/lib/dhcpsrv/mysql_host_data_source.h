@@ -453,7 +453,7 @@ public:
     /// unique within the subnet or can be non-unique.
     /// @return always true because this backend supports both the case when
     /// the addresses must be unique and when they may be non-unique.
-    virtual bool setIPReservationUnique(const bool unique);
+    virtual bool setIPReservationsUnique(const bool unique);
 
     /// @brief Context RAII Allocator.
     class MySqlHostContextAlloc {

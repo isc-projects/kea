@@ -405,27 +405,9 @@ HostMgr::getAll4(const SubnetID& subnet_id,
         .arg(subnet_id)
         .arg(address.toText());
 
-    if (cache_ptr_) {
-        auto cached = cache_ptr_->getAll4(subnet_id, address);
-        if (!cached.empty()) {
-            for (auto host : cached) {
-                if (!host->getNegative()) {
-                    hosts.push_back(host);
-                }
-            }
-            return (hosts);
-        }
-    }
-
     for (auto source : alternate_sources_) {
-        if (source == cache_ptr_) {
-            continue;
-        }
-        auto alternate_hosts = source->getAll4(subnet_id, address);
-        for (auto host : alternate_hosts) {
-            cache(host);
-            hosts.push_back(host);
-        }
+        auto hosts_plus = source->getAll4(subnet_id, address);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
     }
     return (hosts);
 }
@@ -553,27 +535,9 @@ HostMgr::getAll6(const SubnetID& subnet_id,
         .arg(subnet_id)
         .arg(address.toText());
 
-    if (cache_ptr_) {
-        auto cached = cache_ptr_->getAll6(subnet_id, address);
-        if (!cached.empty()) {
-            for (auto host : cached) {
-                if (!host->getNegative()) {
-                    hosts.push_back(host);
-                }
-            }
-            return (hosts);
-        }
-    }
-
     for (auto source : alternate_sources_) {
-        if (source == cache_ptr_) {
-            continue;
-        }
-        auto alternate_hosts = source->getAll6(subnet_id, address);
-        for (auto host : alternate_hosts) {
-            cache(host);
-            hosts.push_back(host);
-        }
+        auto hosts_plus = source->getAll6(subnet_id, address);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
     }
     return (hosts);
 }
@@ -674,18 +638,18 @@ HostMgr::cacheNegative(const SubnetID& ipv4_subnet_id,
 }
 
 bool
-HostMgr::setIPReservationUnique(const bool unique) {
+HostMgr::setIPReservationsUnique(const bool unique) {
     // Iterate over the alternate sources first, because they may include those
     // for which the new setting is not supported.
     for (auto source : alternate_sources_) {
-        if (!source->setIPReservationUnique(unique)) {
+        if (!source->setIPReservationsUnique(unique)) {
             // One of the sources does not support this new mode of operation.
             // Let's log a warning and back off the changes to the default
             // setting which should always be supported.
             LOG_WARN(hosts_logger, HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED)
                 .arg(source->getType());
             for (auto source : alternate_sources_) {
-                source->setIPReservationUnique(true);
+                source->setIPReservationsUnique(true);
             }
             return (false);
         }

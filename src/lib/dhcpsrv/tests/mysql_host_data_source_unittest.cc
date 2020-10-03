@@ -62,7 +62,7 @@ public:
         }
 
         hdsptr_ = HostMgr::instance().getHostDataSource();
-        hdsptr_->setIPReservationUnique(true);
+        hdsptr_->setIPReservationsUnique(true);
 
 
         MultiThreadingMgr::instance().setMode(false);

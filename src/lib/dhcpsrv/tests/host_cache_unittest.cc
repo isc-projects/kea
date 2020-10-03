@@ -702,7 +702,7 @@ public:
         return ("one");
     }
 
-    bool setIPReservationUnique(const bool) {
+    bool setIPReservationsUnique(const bool) {
         return (true);
     }
 

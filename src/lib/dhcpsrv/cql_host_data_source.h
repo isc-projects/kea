@@ -457,7 +457,7 @@ public:
     /// @return true when addresses must be unique, false otherwise because
     /// this backend does not support specifying the same IP address in multiple
     /// host reservations.
-    virtual bool setIPReservationUnique(const bool unique) override;
+    virtual bool setIPReservationsUnique(const bool unique) override;
 
 private:
     /// @brief Pointer to the implementation of the @ref CqlHostDataSource.

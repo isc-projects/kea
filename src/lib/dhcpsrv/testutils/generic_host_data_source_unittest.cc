@@ -1865,7 +1865,7 @@ void
 GenericHostDataSourceTest::testAllowDuplicateIPv6() {
     // Make sure we have the pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
-    ASSERT_TRUE(hdsptr_->setIPReservationUnique(false));
+    ASSERT_TRUE(hdsptr_->setIPReservationsUnique(false));
 
     // Create a host reservations.
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true, true);
@@ -1934,7 +1934,7 @@ void
 GenericHostDataSourceTest::testAllowDuplicateIPv4() {
     // Make sure we have the pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
-    ASSERT_TRUE(hdsptr_->setIPReservationUnique(false));
+    ASSERT_TRUE(hdsptr_->setIPReservationsUnique(false));
 
     // Create a host reservations.
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_DUID, true);
@@ -1979,10 +1979,10 @@ GenericHostDataSourceTest::testDisallowDuplicateIP() {
     ASSERT_TRUE(hdsptr_);
     // The backend does not support switching to the mode in which multiple
     // reservations for the same address can be created.
-    EXPECT_FALSE(hdsptr_->setIPReservationUnique(false));
+    EXPECT_FALSE(hdsptr_->setIPReservationsUnique(false));
 
     // The default mode still can be used.
-    EXPECT_TRUE(hdsptr_->setIPReservationUnique(true));
+    EXPECT_TRUE(hdsptr_->setIPReservationsUnique(true));
 }
 
 void

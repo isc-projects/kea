@@ -936,7 +936,7 @@ TEST_F(CfgHostsTest, add4AlreadyReserved) {
 TEST_F(CfgHostsTest, allow4AlreadyReserved) {
     CfgHosts cfg;
     // Allow creating multiple reservations for the same IP address.
-    ASSERT_TRUE(cfg.setIPReservationUnique(false));
+    ASSERT_TRUE(cfg.setIPReservationsUnique(false));
 
     // First host has a reservation for address 192.0.2.1
     HostPtr host1 = HostPtr(new Host(hwaddrs_[0]->toText(false),
@@ -995,7 +995,7 @@ TEST_F(CfgHostsTest, add6Invalid2Hosts) {
 TEST_F(CfgHostsTest, allowAddress6AlreadyReserved) {
     CfgHosts cfg;
     // Allow creating multiple reservations for the same IP address.
-    ASSERT_TRUE(cfg.setIPReservationUnique(false));
+    ASSERT_TRUE(cfg.setIPReservationsUnique(false));
 
     // First host has a reservation for address 2001:db8::1
     HostPtr host1 = HostPtr(new Host(duids_[0]->toText(), "duid",
@@ -1036,7 +1036,7 @@ TEST_F(CfgHostsTest, allowAddress6AlreadyReserved) {
 TEST_F(CfgHostsTest, allowPrefix6AlreadyReserved) {
     CfgHosts cfg;
     // Allow creating multiple reservations for the same IP address.
-    ASSERT_TRUE(cfg.setIPReservationUnique(false));
+    ASSERT_TRUE(cfg.setIPReservationsUnique(false));
 
     // First host has a reservation for address 3000::/64.
     HostPtr host1 = HostPtr(new Host(duids_[0]->toText(), "duid",

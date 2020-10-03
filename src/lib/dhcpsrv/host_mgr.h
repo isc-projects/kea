@@ -606,7 +606,7 @@ public:
     /// unique or can be non-unique.
     /// @return true if the new setting was accepted by the backend or false
     /// otherwise.
-    virtual bool setIPReservationUnique(const bool unique);
+    virtual bool setIPReservationsUnique(const bool unique);
 
 protected:
     /// @brief The negative caching flag.
