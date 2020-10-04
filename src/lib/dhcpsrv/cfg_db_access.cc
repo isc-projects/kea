@@ -53,7 +53,7 @@ CfgDbAccess::getHostDbAccessStringList() const {
 }
 
 void
-CfgDbAccess::createManagers() const {
+CfgDbAccess::createManagers() {
     // Recreate lease manager.
     LeaseMgrFactory::destroy();
     LeaseMgrFactory::create(getLeaseDbAccessString());
@@ -74,6 +74,9 @@ CfgDbAccess::createManagers() const {
 
     // Check for a host cache.
     HostMgr::checkCacheBackend(true);
+
+    // Populate the ip-reservations-unique global setting to HostMgr.
+    HostMgr::instance().setIPReservationsUnique(ip_reservations_unique_);
 }
 
 std::string

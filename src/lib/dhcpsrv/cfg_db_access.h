@@ -93,7 +93,7 @@ public:
 
     /// @brief Creates instance of lease manager and host data sources
     /// according to the configuration specified.
-    void createManagers() const;
+    void createManagers();
 
 protected:
 

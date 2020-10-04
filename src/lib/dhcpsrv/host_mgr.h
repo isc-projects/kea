@@ -608,6 +608,15 @@ public:
     /// otherwise.
     virtual bool setIPReservationsUnique(const bool unique);
 
+    /// @brief Returns the boolean flag indicating if the IP reservations
+    /// must be unique or can be non-unique.
+    ///
+    /// @return true if IP reservations must be unique or false if IP
+    /// reservations can be non-unique.
+    bool getIPReservationsUnique() const {
+        return (ip_reservations_unique_);
+    }
+
 protected:
     /// @brief The negative caching flag.
     ///
@@ -643,8 +652,17 @@ protected:
 
 private:
 
+    /// @brief Indicates if backends are running in the mode in which IP
+    /// reservations must be unique (true) or non-unique (false).
+    ///
+    /// This flag is set to false only after calling @c setIPReservationsUnique
+    /// with the @c unique value set to false and after all backends accepted
+    /// this setting.
+    bool ip_reservations_unique_;
+
     /// @brief Private default constructor.
-    HostMgr() : negative_caching_(false), disable_single_query_(false) { }
+    HostMgr() : negative_caching_(false), disable_single_query_(false),
+                ip_reservations_unique_(true) { }
 
     /// @brief List of alternate host data sources.
     HostDataSourceList alternate_sources_;

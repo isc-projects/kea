@@ -192,6 +192,43 @@ TEST_F(CfgMySQLDbAccessTest, createManagers) {
         ASSERT_TRUE(host_data_source);
         EXPECT_EQ("mysql", host_data_source->getType());
     });
+
+    EXPECT_TRUE(HostMgr::instance().getIPReservationsUnique());
+}
+
+// Tests that the createManagers function utilizes the setting in the
+// CfgDbAccess class which controls whether the IP reservations must
+// be unique or can be non-unique.
+TEST_F(CfgMySQLDbAccessTest, createManagersIPResrvUnique) {
+    CfgDbAccess cfg;
+
+    cfg.setIPReservationsUnique(false);
+
+    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(validMySQLConnectionString()));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(validMySQLConnectionString()));
+    ASSERT_NO_THROW(cfg.createManagers());
+
+    ASSERT_NO_THROW({
+        const HostDataSourcePtr& host_data_source =
+            HostMgr::instance().getHostDataSource();
+        ASSERT_TRUE(host_data_source);
+        EXPECT_EQ("mysql", host_data_source->getType());
+    });
+
+    // Because of the lazy initialization of the HostMgr instance, it is
+    // possible that the first call to the instance() function tosses
+    // existing connection to the database created by the call to
+    // createManagers(). Let's make sure that this doesn't happen.
+    ASSERT_NO_THROW(HostMgr::instance());
+
+    ASSERT_NO_THROW({
+        const HostDataSourcePtr& host_data_source =
+            HostMgr::instance().getHostDataSource();
+        ASSERT_TRUE(host_data_source);
+        EXPECT_EQ("mysql", host_data_source->getType());
+    });
+
+    EXPECT_FALSE(HostMgr::instance().getIPReservationsUnique());
 }
 
 #endif

@@ -646,6 +646,7 @@ HostMgr::setIPReservationsUnique(const bool unique) {
             // One of the sources does not support this new mode of operation.
             // Let's log a warning and back off the changes to the default
             // setting which should always be supported.
+            ip_reservations_unique_ = true;
             LOG_WARN(hosts_logger, HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED)
                 .arg(source->getType());
             for (auto source : alternate_sources_) {
@@ -654,6 +655,10 @@ HostMgr::setIPReservationsUnique(const bool unique) {
             return (false);
         }
     }
+    // Successfully configured the HostMgr to use the new setting.
+    // Remember this setting so we can return it via the
+    // getIPReservationsUnique.
+    ip_reservations_unique_ = unique;
     return (true);
 }
 
