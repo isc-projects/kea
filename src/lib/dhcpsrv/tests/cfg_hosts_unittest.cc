@@ -1035,7 +1035,7 @@ TEST_F(CfgHostsTest, allowAddress6AlreadyReserved) {
 // the same IPv6 delegated prefix.
 TEST_F(CfgHostsTest, allowPrefix6AlreadyReserved) {
     CfgHosts cfg;
-    // Allow creating multiple reservations for the same IP address.
+    // Allow creating multiple reservations for the same delegated prefix.
     ASSERT_TRUE(cfg.setIPReservationsUnique(false));
 
     // First host has a reservation for address 3000::/64.
