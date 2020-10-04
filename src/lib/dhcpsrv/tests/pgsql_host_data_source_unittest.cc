@@ -1107,6 +1107,21 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicate4MultiThreading) {
     testAddDuplicateIPv4();
 }
 
+/// @brief Test if the host reservation for the same IPv6 address can be inserted
+/// multiple times when allowed by the configuration and when the host identifier
+/// is different.
+TEST_F(PgSqlHostDataSourceTest, allowDuplicateIPv6) {
+    testAllowDuplicateIPv6();
+}
+
+/// @brief Test if the host reservation for the same IPv6 address can be inserted
+/// multiple times when allowed by the configuration and when the host identifier
+/// is different.
+TEST_F(PgSqlHostDataSourceTest, allowDuplicateIPv6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testAllowDuplicateIPv6();
+}
+
 /// @brief Test if the host reservation for the same IPv4 address can be inserted
 /// multiple times when allowed by the configuration and when the host identifier
 /// is different.
