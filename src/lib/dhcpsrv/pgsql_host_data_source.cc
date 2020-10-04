@@ -2031,7 +2031,7 @@ TaggedStatementArray tagged_statements = { {
      "  dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key)"
      "  SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13"
      "    WHERE NOT EXISTS ("
-     "      SELECT 1 FROM HOSTS WHERE ipv4_address = $14 AND dhcp4_subnet_id = $15"
+     "      SELECT 1 FROM hosts WHERE ipv4_address = $14 AND dhcp4_subnet_id = $15"
      "      LIMIT 1"
      "    ) "
      "RETURNING host_id"
