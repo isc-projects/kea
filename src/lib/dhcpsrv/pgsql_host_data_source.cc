@@ -1990,6 +1990,7 @@ TaggedStatementArray tagged_statements = { {
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 
+    // PgSqlHostDataSourceImpl::INSERT_HOST_NON_UNIQUE_IP
     // Inserts a host into the 'hosts' table without checking that there is
     // a reservation for the IP address.
     {13,
