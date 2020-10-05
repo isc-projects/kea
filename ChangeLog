@@ -1,4 +1,4 @@
-18xx.	[func]		fdupont
+1811.	[func]		fdupont
 	Two new parameters were added: cache-threshold and cache-max-age
 	to the DHCPv4 and DHCPv6 global scopes. They will govern the
 	upcoming cache thresfold feature. The parameters can be set and
