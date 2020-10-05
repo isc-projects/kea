@@ -5,6 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
+#include <config.h>
+
 #include <perfdhcp/perf_socket.h>
 #include <perfdhcp/command_options.h>
 #include <perfdhcp/stats_mgr.h>
