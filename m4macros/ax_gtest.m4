@@ -135,15 +135,16 @@ if test "x$enable_gtest" = "xyes" ; then
             GTEST_FOUND="false"
             for dir in $GTEST_PATHS; do
                 if test -f "$dir/include/gtest/gtest.h"; then
-                    if ! test -f "$dir/lib/libgtest.a"; then
+                    if test -f "$dir/lib/libgtest.a" || \
+                       test -f "$dir/lib/libgtest.so"; then
+                        GTEST_INCLUDES="-I$dir/include"
+                        GTEST_LDFLAGS="-L$dir/lib"
+                        GTEST_LDADD="-lgtest"
+                        GTEST_FOUND="true"
+                        break
+                    else
                         AC_MSG_WARN([Found Google Test include but not the library in $dir.])
-                        continue
                     fi
-                    GTEST_INCLUDES="-I$dir/include"
-                    GTEST_LDFLAGS="-L$dir/lib"
-                    GTEST_LDADD="-lgtest"
-                    GTEST_FOUND="true"
-                    break
                 fi
             done
         fi
