@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -457,11 +457,31 @@ in cases such as the system administrator adding a reservation for an
 address that is currently in use by another client.  The server will fully
 recover from this situation, but clients will change their addresses.
 
-% ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE Prefix %1/%2 was revoked from client %3 as it is reserved for client %4
+% ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE prefix %1/%2 was revoked from client %3 as it is reserved for client %4
 This informational message is an indication that the specified IPv6
 prefix was used by client A but it is now reserved for client B. Client
 A has been told to stop using it so that it can be leased to client B.
 This is a normal occurrence during conflict resolution, which can occur
 in cases such as the system administrator adding a reservation for an
 address that is currently in use by another client.  The server will fully
+recover from this situation, but clients will change their prefixes.
+
+% ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE address %1 was revoked from client %2 as it is reserved for %3 other clients
+This informational message is an indication that the specified IPv6
+address was used by client A but it is now reserved for multiple other
+clients. Client A has been told to stop using it so that it can be
+leased to one of the clients having the reservation for it. This is a
+normal occurrence during conflict resolution, which can occur in cases
+such as the system administrator adding reservations for an address
+that is currently in use by another client.  The server will fully
+recover from this situation, but clients will change their addresses.
+
+% ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE prefix %1/%2 was revoked from client %3 as it is reserved for %4 other clients
+This informational message is an indication that the specified IPv6
+prefix was used by client A but it is now reserved for multiple other
+clients. Client A has been told to stop using it so that it can be
+leased to one of the clients having the reservation for it. This is a
+normal occurrence during conflict resolution, which can occur in cases
+such as the system administrator adding reservations for an address
+that is currently in use by another client.  The server will fully
 recover from this situation, but clients will change their prefixes.

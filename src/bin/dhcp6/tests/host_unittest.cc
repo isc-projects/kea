@@ -589,6 +589,38 @@ const char* CONFIGS[] = {
         "        \"interface\": \"eth0\"\n"
         "    }\n"
         "]\n"
+    "}",
+
+    // Configuration 14 multiple reservations for the same delegated prefix.
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"valid-lifetime\": 4000,\n"
+        "\"ip-reservations-unique\": false,\n"
+        "\"subnet6\": [\n"
+        "    {\n"
+        "        \"subnet\": \"2001:db8:1::/64\",\n"
+        "        \"id\": 10,"
+        "        \"reservations\": [\n"
+        "            {\n"
+        "                \"duid\": \"01:02:03:04\",\n"
+        "                \"prefixes\": [ \"3000::5a:0/112\" ]\n"
+        "            },\n"
+        "            {\n"
+        "                \"duid\": \"01:02:03:05\",\n"
+        "                \"prefixes\": [ \"3000::5a:0/112\" ]\n"
+        "            }\n"
+        "        ],\n"
+        "        \"pd-pools\": ["
+        "            {\n"
+        "                \"prefix\": \"3000::\",\n"
+        "                \"prefix-len\": 64,\n"
+        "                \"delegated-len\": 112\n"
+        "            }\n"
+        "        ],\n"
+        "        \"interface\": \"eth0\"\n"
+        "    }\n"
+        "]\n"
     "}"
 };
 
@@ -998,6 +1030,25 @@ public:
                                             const std::string& first_address = "2001:db8:1::10",
                                             const std::string& second_address = "2001:db8:2::10");
 
+    /// @brief Test that two clients having reservations for the same IP
+    /// address are offered the reserved lease.
+    ///
+    /// This test verifies the case when two clients have reservations for
+    /// the same IP address. The first client sends Solicit and is offered
+    /// the reserved address. At the same time, the second client having
+    /// the reservation for the same IP address performs 4-way exchange
+    /// using the reserved address as a hint in Solicit.
+    /// The client gets the lease for this address. This test verifies
+    /// that the allocation engine correctly identifies that the second
+    /// client has a reservation for this address.
+    ///
+    /// @param duid1 Hardware address of the first client having the
+    /// reservation.
+    /// @param duid2 Hardware address of the second client having the
+    /// reservation.
+    void testMultipleClientsRace(const std::string& duid1,
+                                 const std::string& duid2);
+
     /// @brief Configures client to include 6 IAs without hints.
     ///
     /// This method configures the client to include 3 IA_NAs and
@@ -1377,6 +1428,37 @@ HostTest::testGlobalClassSubnetPoolSelection(const int config_idx,
     ASSERT_EQ(1, client_no_resrv.getLeaseNum());
     lease_client = client_no_resrv.getLease(0);
     EXPECT_EQ(second_address, lease_client.addr_.toText());
+}
+
+void
+HostTest::testMultipleClientsRace(const std::string& duid1,
+                                  const std::string& duid2) {
+    Dhcp6Client client1;
+    client1.setDUID(duid1);
+    ASSERT_NO_THROW(configure(CONFIGS[13], *client1.getServer()));
+    // client1 performs 4-way exchange to get the reserved lease.
+    requestIA(client1, Hint(IAID(1), "2001:db8:1::15"));
+    ASSERT_NO_THROW(client1.doSARR());
+
+    // Make sure the client has obtained reserved lease.
+    ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::15"), IAID(1)));
+
+    // Create another client that has a reservation for the same
+    // IP address.
+    Dhcp6Client client2(client1.getServer());
+    client2.setDUID(duid2);
+    requestIA(client2, Hint(IAID(1), "2001:db8:1::15"));
+
+    // client2 performs 4-way exchange.
+    ASSERT_NO_THROW(client2.doSARR());
+
+    // Make sure the client didn't get the reserved lease. This lease has been
+    // already taken by the client1.
+    EXPECT_FALSE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::15"), IAID(1)));
+
+    // Make sure the client2 got a lease from the configured pool.
+    EXPECT_TRUE(client2.hasLeaseForAddressRange(IOAddress("2001:db8:1::10"),
+                                                IOAddress("2001:db8:1::200")));
 }
 
 void
@@ -2389,21 +2471,120 @@ TEST_F(HostTest, clientClassPoolSelection) {
 
 // Verifies that if the server is configured to allow for specifying
 // multiple reservations for the same IP address the first client
-// matching the reservation will be given this address.
-TEST_F(HostTest, oneOfMultiple) {
+// matching the reservation will be given this address. The second
+// client will be given a different lease.
+TEST_F(HostTest, firstClientGetsReservedAddress) {
+    // Create a client which has DUID matching the reservation.
     Dhcp6Client client1;
     client1.setDUID("01:02:03:04");
-
     ASSERT_NO_THROW(configure(CONFIGS[13], *client1.getServer()));
-
-    // First client performs 4-way exchange and obtains an address and
-    // prefix indicated in hints.
+    // client1 performs 4-way exchange to get the reserved lease.
     requestIA(client1, Hint(IAID(1), "2001:db8:1::10"));
-
     ASSERT_NO_THROW(client1.doSARR());
 
-    // Make sure the client has obtained requested leases.
+    // Make sure the client has obtained reserved lease.
     ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::15"), IAID(1)));
+
+    // Create another client that has a reservation for the same
+    // IP address.
+    Dhcp6Client client2(client1.getServer());
+    client2.setDUID("01:02:03:05");
+    requestIA(client2, Hint(IAID(1), "2001:db8:1::10"));
+
+    // client2 performs 4-way exchange.
+    ASSERT_NO_THROW(client2.doSARR());
+
+    // Make sure the client didn't get the reserved lease. This lease has been
+    // already taken by the client1.
+    EXPECT_FALSE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::15"), IAID(1)));
+
+    // Make sure the client2 got a lease from the configured pool.
+    auto leases = client2.getLeasesByAddressRange(IOAddress("2001:db8:1::10"),
+                                                  IOAddress("2001:db8:1::200"));
+    EXPECT_EQ(1, leases.size());
+
+    // Verify that the client1 can renew the lease.
+    ASSERT_NO_THROW(client1.doRenew());
+    EXPECT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::15"), IAID(1)));
+
+    // The client2 should also renew the lease.
+    ASSERT_NO_THROW(client2.doRenew());
+    EXPECT_FALSE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::15"), IAID(1)));
+    leases = client2.getLeasesByAddressRange(IOAddress("2001:db8:1::10"),
+                                             IOAddress("2001:db8:1::200"));
+    EXPECT_EQ(1, leases.size());
+
+    // If the client1 releases the reserved lease, the client2 should acquire it.
+    ASSERT_NO_THROW(client1.doRelease());
+    ASSERT_NO_THROW(client2.doRenew());
+    EXPECT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::15"), IAID(1)));
+}
+
+// Verifies that if the server is configured to allow for specifying
+// multiple reservations for the same delegated prefix the first client
+// matching the reservation will be given this prefix. The second
+// client will be given a different lease.
+TEST_F(HostTest, firstClientGetsReservedPrefix) {
+    // Create a client which has DUID matching the reservation.
+    Dhcp6Client client1;
+    client1.setDUID("01:02:03:04");
+    ASSERT_NO_THROW(configure(CONFIGS[14], *client1.getServer()));
+    // client1 performs 4-way exchange to get the reserved lease.
+    client1.requestPrefix(1);
+    ASSERT_NO_THROW(client1.doSARR());
+
+    // Make sure the client has obtained reserved lease.
+    ASSERT_TRUE(client1.hasLeaseForPrefix(IOAddress("3000::5a:0"), 112, IAID(1)));
+
+    // Create another client that has a reservation for the same
+    // IP address.
+    Dhcp6Client client2(client1.getServer());
+    client2.setDUID("01:02:03:05");
+    client2.requestPrefix(1);
+
+    // client2 performs 4-way exchange.
+    ASSERT_NO_THROW(client2.doSARR());
+
+    // Make sure the client didn't get the reserved lease. This lease has been
+    // already taken by the client1.
+    EXPECT_FALSE(client2.hasLeaseForPrefix(IOAddress("3000::5a:0"), 112, IAID(1)));
+
+    // Make sure the client2 got a lease from the configured pool.
+    EXPECT_TRUE(client2.hasLeaseForPrefixPool(IOAddress("3000::"), 64, 112));
+
+    // Verify that the client1 can renew the lease.
+    ASSERT_NO_THROW(client1.doRenew());
+    EXPECT_TRUE(client1.hasLeaseForPrefix(IOAddress("3000::5a:0"), 112, IAID(1)));
+
+    // The client2 should also renew the lease.
+    ASSERT_NO_THROW(client2.doRenew());
+    EXPECT_TRUE(client2.hasLeaseForPrefixPool(IOAddress("3000::"), 64, 112));
+
+    // If the client1 releases the reserved lease, the client2 should acquire it.
+    ASSERT_NO_THROW(client1.doRelease());
+    ASSERT_NO_THROW(client2.doRenew());
+    EXPECT_TRUE(client2.hasLeaseForPrefix(IOAddress("3000::5a:0"), 112, IAID(1)));
+}
+
+/// This test verifies the case when two clients have reservations for
+/// the same IP address. The first client sends Solicit and is offered
+/// the reserved address. At the same time, the second client having
+/// the reservation for the same IP address performs 4-way exchange
+/// using the reserved address as a hint in Solicit.
+/// The client gets the lease for this address. This test verifies
+/// that the allocation engine correctly identifies that the second
+/// client has a reservation for this address.
+TEST_F(HostTest, multipleClientsRace1) {
+    ASSERT_NO_FATAL_FAILURE(testMultipleClientsRace("01:02:03:04", "01:02:03:05"));
+}
+
+// This is a second variant of the multipleClientsRace1. The test is almost
+// the same but the client matching the second reservation sends Solicit
+// first and then the client having the first reservation performs 4-way
+// exchange. This is to ensure that the order in which reservations are
+// defined does not matter.
+TEST_F(HostTest, multipleClientsRace2) {
+    ASSERT_NO_FATAL_FAILURE(testMultipleClientsRace("01:02:03:05", "01:02:03:04"));
 }
 
 } // end of anonymous namespace

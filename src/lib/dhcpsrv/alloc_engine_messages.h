@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes on Mon Sep 28 2020 14:52
+// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes on Tue Oct 06 2020 05:22
 
 #ifndef ALLOC_ENGINE_MESSAGES_H
 #define ALLOC_ENGINE_MESSAGES_H
@@ -73,6 +73,8 @@ extern const isc::log::MessageID ALLOC_ENGINE_V6_RENEW_REMOVE_UNRESERVED;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE;
+extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE;
+extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE;
 
 } // namespace dhcp
 } // namespace isc

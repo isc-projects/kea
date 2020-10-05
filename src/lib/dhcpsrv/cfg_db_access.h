@@ -75,7 +75,7 @@ public:
     std::list<std::string> getHostDbAccessStringList() const;
 
     /// @brief Modifies the setting imposing whether the IP reservations
-    /// are unique or can be non-unique.
+    /// are unique or can be non unique.
     ///
     /// This flag can be set to @c false when the server is explicitly
     /// configured to allow multiple hosts to have the same IP reservation.
@@ -89,6 +89,15 @@ public:
     /// @param unique new setting to be used by @c HostMgr.
     void setIPReservationsUnique(const bool unique) {
         ip_reservations_unique_ = unique;
+    }
+
+    /// @brief Returns the setting indicating if the IP reservations are
+    /// unique or can be non unique.
+    ///
+    /// @return true if the IP reservations must be unique or false if
+    /// the reservations can be non unique.
+    bool getIPReservationsUnique() const {
+        return (ip_reservations_unique_);
     }
 
     /// @brief Creates instance of lease manager and host data sources

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes on Mon Sep 28 2020 14:52
+// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes on Tue Oct 06 2020 05:22
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -72,6 +72,8 @@ extern const isc::log::MessageID ALLOC_ENGINE_V6_RENEW_REMOVE_UNRESERVED = "ALLO
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA = "ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE = "ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE = "ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE";
+extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE = "ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE";
+extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE = "ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE";
 
 } // namespace dhcp
 } // namespace isc
@@ -143,7 +145,9 @@ const char* values[] = {
     "ALLOC_ENGINE_V6_RENEW_REMOVE_UNRESERVED", "dynamically allocating leases for the renewing client %1",
     "ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA", "%1: reusing expired lease, updated lease information: %2",
     "ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE", "address %1 was revoked from client %2 as it is reserved for client %3",
-    "ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE", "Prefix %1/%2 was revoked from client %3 as it is reserved for client %4",
+    "ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE", "prefix %1/%2 was revoked from client %3 as it is reserved for client %4",
+    "ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE", "address %1 was revoked from client %2 as it is reserved for %3 other clients",
+    "ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE", "prefix %1/%2 was revoked from client %3 as it is reserved for %4 other clients",
     NULL
 };
 

@@ -314,6 +314,7 @@ const char* CONFIGS[] = {
         "},\n"
         "\"valid-lifetime\": 600,\n"
         "\"ip-reservations-unique\": false,\n"
+        "\"host-reservation-identifiers\": [ \"hw-address\" ],\n"
         "\"subnet4\": [\n"
         "    {\n"
         "        \"subnet\": \"10.0.0.0/24\",\n"
@@ -460,6 +461,55 @@ public:
         resp = client_no_resrv.getContext().response_;
         ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
         EXPECT_EQ(second_address, resp->getYiaddr().toText());
+    }
+
+    /// @brief Test that two clients having reservations for the same IP
+    /// address are offered the reserved lease.
+    ///
+    /// This test verifies the case when two clients have reservations for
+    /// the same IP address. The first client sends DHCPDICOVER and is
+    /// offered the reserved address. At the same time, the second client
+    /// having the reservation for the same IP address performs 4-way
+    /// exchange using the reserved address as a hint in DHCPDISCOVER.
+    /// The client gets the lease for this address. This test verifies
+    /// that the allocation engine correctly identifies that the second
+    /// client has a reservation for this address. In order to verify
+    /// that the allocation engine must fetch all reservations for the
+    /// reserved address and verifies that one of them belongs to the
+    /// second client.
+    ///
+    /// @param hw_address1 Hardware address of the first client having
+    /// the reservation.
+    /// @param hw_address2 Hardware address of the second client having
+    /// the reservation.
+    void testMultipleClientsRace(const std::string& hw_address1,
+                                 const std::string& hw_address2) {
+        // Create first client having the reservation.
+        Dhcp4Client client1(Dhcp4Client::SELECTING);
+        client1.setHWAddress(hw_address1);
+
+        // Configure the server.
+        ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[7], *client1.getServer()));
+
+        // Sends DHCPDISCOVER and make sure the client is offered the
+        // reserved IP address.
+        client1.doDiscover(boost::make_shared<IOAddress>("10.0.0.123"));
+        ASSERT_TRUE(client1.getContext().response_);
+        Pkt4Ptr resp = client1.getContext().response_;
+        ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+        EXPECT_EQ("10.0.0.123", resp->getYiaddr().toText());
+
+        // Create the second client matching the second reservation for
+        // the given IP address.
+        Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+        client2.setHWAddress(hw_address2);
+
+        // Make sure that the second client gets the reserved lease.
+        client2.doDORA(boost::make_shared<IOAddress>("10.0.0.123"));
+        ASSERT_TRUE(client2.getContext().response_);
+        resp = client2.getContext().response_;
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+        EXPECT_EQ("10.0.0.123", resp->getYiaddr().toText());
     }
 };
 
@@ -621,14 +671,76 @@ TEST_F(HostTest, clientClassPoolSelection) {
 
 // Verifies that if the server is configured to allow for specifying
 // multiple reservations for the same IP address the first client
-// matching the reservation will be given this address.
-TEST_F(HostTest, oneOfMultiple) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+// matching the reservation will be given this address. The second
+// client will be given a different lease.
+TEST_F(HostTest, firstClientGetsReservedAddress) {
+    // Create a client which has MAC address matching the reservation.
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.setHWAddress("aa:bb:cc:dd:ee:fe");
+    // Do 4-way exchange for this client to get the reserved address.
+    runDoraTest(CONFIGS[7], client1, "", "10.0.0.123");
 
-    // Hardware address matches all reservations
-    client.setHWAddress("aa:bb:cc:dd:ee:fe");
+    // Create another client that has a reservation for the same
+    // IP address.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Do 4-way exchange with client2.
+    ASSERT_NO_THROW(client2.doDORA());
 
-    runDoraTest(CONFIGS[7], client, "", "10.0.0.123");
+    // Make sure that the server responded with DHCPACK.
+    ASSERT_TRUE(client2.getContext().response_);
+    Pkt4Ptr resp = client2.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Even though the client has reservation for this address the
+    // server should not assign this address because another client
+    // has taken it already.
+    EXPECT_NE("10.0.0.123", resp->getYiaddr().toText());
+
+    // If the client1 releases the reserved lease, the client2 should acquire it.
+    ASSERT_NO_THROW(client1.doRelease());
+
+    // Client2 attempts to renew the currently used lease, but should get the
+    // DHCPNAK.
+    client2.setState(Dhcp4Client::RENEWING);
+    ASSERT_NO_THROW(client2.doRequest());
+    resp = client2.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+
+    // The client falls back to 4-way exchange and gets the reserved address.
+    client2.setState(Dhcp4Client::SELECTING);
+    ASSERT_NO_THROW(client2.doDORA());
+    resp = client2.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    EXPECT_EQ("10.0.0.123", resp->getYiaddr().toText());
+}
+
+// This test verifies the case when two clients have reservations for
+// the same IP address. The first client sends DHCPDICOVER and is
+// offered the reserved address. At the same time, the second client
+// having the reservation for the same IP address performs 4-way
+// exchange using the reserved address as a hint in DHCPDISCOVER.
+// The client gets the lease for this address. This test verifies
+// that the allocation engine correctly identifies that the second
+// client has a reservation for this address. In order to verify
+// that the allocation engine must fetch all reservations for the
+// reserved address and verifies that one of them belongs to the
+// second client.
+TEST_F(HostTest, multipleClientsRace1) {
+    ASSERT_NO_FATAL_FAILURE(testMultipleClientsRace("aa:bb:cc:dd:ee:fe",
+                                                    "aa:bb:cc:dd:ee:ff"));
+}
+
+// This is a second variant of the multipleClientsRace1. The test is almost
+// the same but the client matching the second reservation sends DHCPDISCOVER
+// first and then the client having the first reservation performs 4-way
+// exchange. This is to ensure that the order in which reservations are
+// defined does not matter.
+TEST_F(HostTest, multipleClientsRace2) {
+    ASSERT_NO_FATAL_FAILURE(testMultipleClientsRace("aa:bb:cc:dd:ee:ff",
+                                                    "aa:bb:cc:dd:ee:fe"));
 }
 
 } // end of anonymous namespace

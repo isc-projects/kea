@@ -377,6 +377,37 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
 
 namespace {
 
+/// @brief Find reservations for the given subnet and address or delegated prefix.
+///
+/// @param subnet_id Subnet identifier for which the reservations should
+/// be found.
+/// @param address Address or delegated prefix for which the reservations
+/// should be found.
+///
+/// @return Collection of host reservations.
+ConstHostCollection
+getIPv6Resrv(const SubnetID& subnet_id, const IOAddress& address) {
+    ConstHostCollection reserved;
+    // The global parameter ip-reservations-unique controls whether it is allowed
+    // to specify multiple reservations for the same IP address or delegated prefix
+    // or IP reservations must be unique. Some host backends do not support the
+    // former, thus we can't always use getAll6 calls to get the reservations
+    // for the given IP. When we're in the default mode, when IP reservations
+    // are unique, we should call get6 (supported by all backends). If we're in
+    // the mode in which non-unique reservations are allowed the backends which
+    // don't support it are not used and we can safely call getAll6.
+    if (CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->getIPReservationsUnique()) {
+        auto host = HostMgr::instance().get6(subnet_id, address);
+        if (host) {
+            reserved.push_back(host);
+        }
+    } else {
+        auto hosts = HostMgr::instance().getAll6(subnet_id, address);
+        reserved.insert(reserved.end(), hosts.begin(), hosts.end());
+    }
+    return (reserved);
+}
+
 /// @brief Checks if the specified address belongs to one of the subnets
 /// within a shared network.
 ///
@@ -897,12 +928,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // else. There is no need to check for whom it is reserved, because if
             // it has been reserved for us we would have already allocated a lease.
 
-            ConstHostPtr host;
+            ConstHostCollection hosts;
             if (hr_mode != Network::HR_DISABLED) {
-                host = HostMgr::instance().get6(subnet->getID(), hint);
+                hosts = getIPv6Resrv(subnet->getID(), hint);
             }
 
-            if (!host) {
+            if (hosts.empty()) {
                 // If the in-pool reservations are disabled, or there is no
                 // reservation for a given hint, we're good to go.
 
@@ -931,13 +962,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         } else if (lease->expired()) {
 
             // If the lease is expired, we may likely reuse it, but...
-            ConstHostPtr host;
+            ConstHostCollection hosts;
             if (hr_mode != Network::HR_DISABLED) {
-                host = HostMgr::instance().get6(subnet->getID(), hint);
+                hosts = getIPv6Resrv(subnet->getID(), hint);
             }
 
             // Let's check if there is a reservation for this address.
-            if (!host) {
+            if (hosts.empty()) {
 
                 // Copy an existing, expired lease so as it can be returned
                 // to the caller.
@@ -1041,10 +1072,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             }
 
             // First check for reservation when it is the choice.
-            if (check_reservation_first && (hr_mode == Network::HR_ALL) &&
-                HostMgr::instance().get6(subnet->getID(), candidate)) {
-                // Don't allocate.
-                continue;
+            if (check_reservation_first && (hr_mode == Network::HR_ALL)) {
+                auto hosts = getIPv6Resrv(subnet->getID(), candidate);
+                if (!hosts.empty()) {
+                    // Don't allocate.
+                    continue;
+                }
             }
 
             // Check if the resource is busy i.e. can be being allocated
@@ -1064,11 +1097,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 /// In-pool reservations: Check if this address is reserved for someone
                 /// else. There is no need to check for whom it is reserved, because if
                 /// it has been reserved for us we would have already allocated a lease.
-                if (!check_reservation_first && (hr_mode == Network::HR_ALL) &&
-                    HostMgr::instance().get6(subnet->getID(), candidate)) {
-
-                    // Don't allocate.
-                    continue;
+                if (!check_reservation_first && (hr_mode == Network::HR_ALL)) {
+                    auto hosts = getIPv6Resrv(subnet->getID(), candidate);
+                    if (!hosts.empty()) {
+                        // Don't allocate.
+                        continue;
+                    }
                 }
 
                 // there's no existing lease for selected candidate, so it is
@@ -1095,10 +1129,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 // allocation attempts.
             } else if (existing->expired()) {
                 // Make sure it's not reserved.
-                if (!check_reservation_first && (hr_mode == Network::HR_ALL) &&
-                    HostMgr::instance().get6(subnet->getID(), candidate)) {
-                    // Don't allocate.
-                    continue;
+                if (!check_reservation_first && (hr_mode == Network::HR_ALL)) {
+                    auto hosts = getIPv6Resrv(subnet->getID(), candidate);
+                    if (!hosts.empty()) {
+                        // Don't allocate.
+                        continue;
+                    }
                 }
 
                 // Copy an existing, expired lease so as it can be returned
@@ -1453,30 +1489,43 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // We have to make a bit more expensive operation here to retrieve
         // the reservation for the candidate lease and see if it is
         // reserved for someone else.
-        ConstHostPtr host = HostMgr::instance().get6(ctx.subnet_->getID(),
-                                                     candidate->addr_);
+        auto hosts = getIPv6Resrv(ctx.subnet_->getID(), candidate->addr_);
         // If lease is not reserved to someone else, it means that it can
         // be allocated to us from a dynamic pool, but we must check if
         // this lease belongs to any pool. If it does, we can proceed to
         // checking the next lease.
-        if (!host && inAllowedPool(ctx, candidate->type_,
-                                   candidate->addr_, false)) {
+        if (hosts.empty() && inAllowedPool(ctx, candidate->type_,
+                                           candidate->addr_, false)) {
             continue;
         }
 
-        if (host) {
+        if (!hosts.empty()) {
             // Ok, we have a problem. This host has a lease that is reserved
             // for someone else. We need to recover from this.
-            if (ctx.currentIA().type_ == Lease::TYPE_NA) {
-                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE)
-                    .arg(candidate->addr_.toText()).arg(ctx.duid_->toText())
-                    .arg(host->getIdentifierAsText());
+            if (hosts.size() == 1) {
+                if (ctx.currentIA().type_ == Lease::TYPE_NA) {
+                    LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE)
+                        .arg(candidate->addr_.toText()).arg(ctx.duid_->toText())
+                        .arg(hosts.front()->getIdentifierAsText());
+                } else {
+                    LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE)
+                        .arg(candidate->addr_.toText())
+                        .arg(static_cast<int>(candidate->prefixlen_))
+                        .arg(ctx.duid_->toText())
+                        .arg(hosts.front()->getIdentifierAsText());
+                }
             } else {
-                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE)
-                    .arg(candidate->addr_.toText())
-                    .arg(static_cast<int>(candidate->prefixlen_))
-                    .arg(ctx.duid_->toText())
-                    .arg(host->getIdentifierAsText());
+                if (ctx.currentIA().type_ == Lease::TYPE_NA) {
+                    LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE)
+                        .arg(candidate->addr_.toText()).arg(ctx.duid_->toText())
+                        .arg(hosts.size());
+                } else {
+                    LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE)
+                        .arg(candidate->addr_.toText())
+                        .arg(static_cast<int>(candidate->prefixlen_))
+                        .arg(ctx.duid_->toText())
+                        .arg(hosts.size());
+                }
             }
         }
 
@@ -2902,16 +2951,41 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
         ((ctx.subnet_->getHostReservationMode() == Network::HR_ALL) ||
          ((ctx.subnet_->getHostReservationMode() == Network::HR_OUT_OF_POOL) &&
           (!ctx.subnet_->inPool(Lease::TYPE_V4, address))))) {
-        ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
-        if (host) {
+        // The global parameter ip-reservations-unique controls whether it is allowed
+        // to specify multiple reservations for the same IP address or delegated prefix
+        // or IP reservations must be unique. Some host backends do not support the
+        // former, thus we can't always use getAll4 calls to get the reservations
+        // for the given IP. When we're in the default mode, when IP reservations
+        // are unique, we should call get4 (supported by all backends). If we're in
+        // the mode in which non-unique reservations are allowed the backends which
+        // don't support it are not used and we can safely call getAll4.
+        ConstHostCollection hosts;
+        if (CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->getIPReservationsUnique()) {
+            // Reservations are unique. It is safe to call get4 to get the unique host.
+            ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
+            if (host) {
+                hosts.push_back(host);
+            }
+        } else {
+            // Reservations can be non-unique. Need to get all reservations for that address.
+            hosts = HostMgr::instance().getAll4(ctx.subnet_->getID(), address);
+        }
+
+        for (auto host : hosts) {
             for (auto id = ctx.host_identifiers_.cbegin(); id != ctx.host_identifiers_.cend();
                  ++id) {
-                if (id->first == host->getIdentifierType()) {
-                    return (id->second != host->getIdentifier());
+                // If we find the matching host we know that this address is reserved
+                // for us and we can return immediatelly.
+                if (id->first == host->getIdentifierType() &&
+                    id->second == host->getIdentifier()) {
+                    return (false);
                 }
             }
-            return (true);
         }
+        // We didn't find a matching host. If there are any reservations it means that
+        // address is reserved for another client or multiple clients. If there are
+        // no reservations address is not reserved for another client.
+        return (!hosts.empty());
     }
     return (false);
 }
