@@ -596,7 +596,7 @@
                                 "excluded-prefix": "2001:db8::",
 
                                 // Excluded prefix (length) from client assignments.
-                                "excluded-prefix-len": 48,
+                                "excluded-prefix-len": 72,
 
                                 // Prefix pool level list of DHCP options.
                                 "option-data": [],

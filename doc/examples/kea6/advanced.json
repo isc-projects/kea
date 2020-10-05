@@ -133,7 +133,7 @@
             "prefix-len": 48,
             "delegated-len": 64,
             "excluded-prefix": "2001:db8:abcd:1234::",
-            "excluded-prefix-len": 62,
+            "excluded-prefix-len": 72,
 
             // Another user-context for this PD pool. Again, you can put
             // anything you want in there as long as it's valid JSON and

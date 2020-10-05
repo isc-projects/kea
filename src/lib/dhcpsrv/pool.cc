@@ -309,9 +309,10 @@ Pool6::init(const Lease::Type& type,
 
     // excluded_prefix_len == 0 means there's no excluded prefix at all.
     if (excluded_prefix_len && (excluded_prefix_len < delegated_len)) {
-        isc_throw(BadValue, "Excluded prefix (" << static_cast<int>(excluded_prefix_len)
-                  << ") must be longer than the delegated prefix length ("
-                  << static_cast<int>(delegated_len));
+        isc_throw(BadValue, "Excluded prefix ("
+                                << static_cast<int>(excluded_prefix_len)
+                                << ") must be longer than or equal to the delegated prefix length ("
+                                << static_cast<int>(delegated_len) << ")");
     }
 
     /// @todo: We should probably implement checks against weird addresses
