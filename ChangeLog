@@ -1,3 +1,8 @@
+1812.	[doc]		andrei
+	Document how MAC addresses can be formatted for use as attributes
+	in RADIUS authentication
+	(Gitlab #1441)
+
 1811.	[func]		fdupont
 	Two new parameters were added: cache-threshold and cache-max-age
 	to the DHCPv4 and DHCPv6 global scopes. They will govern the
