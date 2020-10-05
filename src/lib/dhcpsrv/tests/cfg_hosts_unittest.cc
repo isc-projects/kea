@@ -1038,7 +1038,7 @@ TEST_F(CfgHostsTest, allowPrefix6AlreadyReserved) {
     // Allow creating multiple reservations for the same delegated prefix.
     ASSERT_TRUE(cfg.setIPReservationsUnique(false));
 
-    // First host has a reservation for address 3000::/64.
+    // First host has a reservation for prefix 3000::/64.
     HostPtr host1 = HostPtr(new Host(duids_[0]->toText(), "duid",
                                      SUBNET_ID_UNUSED, SubnetID(1),
                                      IOAddress("0.0.0.0")));
@@ -1047,7 +1047,7 @@ TEST_F(CfgHostsTest, allowPrefix6AlreadyReserved) {
     // Adding this should work.
     EXPECT_NO_THROW(cfg.add(host1));
 
-    // The second host has a reservation for the same address.
+    // The second host has a reservation for the same prefix.
     HostPtr host2 = HostPtr(new Host(duids_[1]->toText(), "duid",
                                      SUBNET_ID_UNUSED, SubnetID(1),
                                      IOAddress("0.0.0.0")));
@@ -1061,7 +1061,7 @@ TEST_F(CfgHostsTest, allowPrefix6AlreadyReserved) {
     ASSERT_NO_THROW(returned = cfg.getAll6(host1->getIPv6SubnetID(), IOAddress("3000::")));
     EXPECT_EQ(2, returned.size());
 
-    // Make sure the address is the same but the identifiers are different.
+    // Make sure the prefix is the same but the identifiers are different.
     EXPECT_NE(returned[0]->getIdentifierAsText(), returned[1]->getIdentifierAsText());
 
     auto range0 = returned[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);

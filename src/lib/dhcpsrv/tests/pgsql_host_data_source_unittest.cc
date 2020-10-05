@@ -1092,21 +1092,6 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv6MultiThreading) {
     testAddDuplicateIPv6();
 }
 
-/// @brief Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
-/// follows: try to add multiple instances of the same host reservation and
-/// verify that the second and following attempts will throw exceptions.
-TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv4) {
-    testAddDuplicateIPv4();
-}
-
-/// @brief Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
-/// follows: try to add multiple instances of the same host reservation and
-/// verify that the second and following attempts will throw exceptions.
-TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv4MultiThreading) {
-    MultiThreadingTest mt(true);
-    testAddDuplicateIPv4();
-}
-
 /// @brief Test if the host reservation for the same IPv6 address can be inserted
 /// multiple times when allowed by the configuration and when the host identifier
 /// is different.
@@ -1120,6 +1105,21 @@ TEST_F(PgSqlHostDataSourceTest, allowDuplicateIPv6) {
 TEST_F(PgSqlHostDataSourceTest, allowDuplicateIPv6MultiThreading) {
     MultiThreadingTest mt(true);
     testAllowDuplicateIPv6();
+}
+
+/// @brief Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
+/// follows: try to add multiple instances of the same host reservation and
+/// verify that the second and following attempts will throw exceptions.
+TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv4) {
+    testAddDuplicateIPv4();
+}
+
+/// @brief Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
+/// follows: try to add multiple instances of the same host reservation and
+/// verify that the second and following attempts will throw exceptions.
+TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv4MultiThreading) {
+    MultiThreadingTest mt(true);
+    testAddDuplicateIPv4();
 }
 
 /// @brief Test if the host reservation for the same IPv4 address can be inserted
