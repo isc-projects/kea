@@ -613,7 +613,7 @@ specified:
 
 ::
 
-   "Dhcp6": { "host-database": { "max-reconnect-tries" : number-of-tries, ... }, ... }
+   "Dhcp6": { "hosts-database": { "max-reconnect-tries" : number-of-tries, ... }, ... }
 
 If the server is unable to reconnect to the database after making the
 maximum number of attempts, the server will exit. A value of zero (the
@@ -669,6 +669,11 @@ entry, as in:
 
 For additional Cassandra-specific parameters, see
 :ref:`cassandra-database-configuration4`.
+
+If the same host is configured both in-file and in-database, Kea won't warn of
+the duplicate like it would if you specified them both in the same data source.
+Instead the host configured in-file will have priority over the one configured
+in-database.
 
 .. _read-only-database-configuration6:
 
@@ -3840,8 +3845,75 @@ allocating or renewing a lease for the client. Allowed values are:
    defined will be completely ignored. As the checks are skipped, the
    server may operate faster in this mode.
 
-The parameter can be specified at global, subnet, and shared-network
-levels.
+The ``reservation-mode`` parameter can be specified at:
+
+- global level: ``.Dhcp6["reservation-mode"]`` (lowest priority: gets overridden
+  by all others)
+
+- subnet level: ``.Dhcp6.subnet6[]["reservation-mode"]`` (low priority)
+
+- shared-network level: ``.Dhcp6["shared-networks"][]["reservation-mode"]``
+  (high priority)
+
+- shared-network subnet-level:
+  ``.Dhcp6["shared-networks"][].subnet6[]["reservation-mode"]`` (highest
+  priority: overrides all others)
+
+For deciding what ``"reservation-mode"`` to choose, you may refer to the
+following decision diagram:
+
+::
+
+                                  O
+                                  |
+                                  v
+    +-----------------------------+------------------------------+
+    |         Is per-host configuration needed, such as          |
+    |                reserving specific addresses,               |
+    |               assigning specific options or                |
+    | assigning packets to specific classes on per-device basis? |
+    +-+-----------------+----------------------------------------+
+      |                 |
+    no|              yes|
+      |                 |   +--------------------------------------+
+      |                 |   |         For all given hosts,         |
+      +--> "disabled"   +-->+      can the reserved resources      |
+                            |  be used in all configured subnets?  |
+                            +--------+---------------------------+-+
+                                     |                           |
+    +----------------------------+   |no                         |yes
+    |             Is             |   |                           |
+    |  at least one reservation  +<--+               "global" <--+
+    | used to reserve addresses  |
+    |        or prefixes?        |
+    +-+------------------------+-+
+      |                        |
+    no|                     yes|   +---------------------------+
+      |                        |   | Is high leases-per-second |
+      +--> "out-of-pool"       +-->+ performance or efficient  |
+            ^                      |      resource usage       |
+            |                      |  (CPU ticks, RAM usage,   |
+            |                      |   database roundtrips)    |
+            |                      | important to your setup?  |
+            |                      +-+----------------+--------+
+            |                        |                |
+            |                     yes|              no|
+            |                        |                |
+            |          +-------------+                |
+            |          |                              |
+            |          |   +----------------------+   |
+            |          |   | Can it be guaranteed |   |
+            |          +-->+  that the reserved   |   |
+            |              |  addresses/prefixes  |   |
+            |              |  aren't part of the  |   |
+            |              |   pools configured   |   |
+            |              |  in the respective   |   |
+            |              |       subnet?        |   |
+            |              +-+------------------+-+   |
+            |                |                  |     |
+            |             yes|                no|     |
+            |                |                  |     V
+            +----------------+                  +--> "all"
 
 An example configuration that disables reservation looks as follows:
 

@@ -40,7 +40,7 @@
         "        \"next-server\": <string (IPv4 address)>,",
         "        \"option-data-list\": [ <comma-separated structures defining options> ],",
         "        \"prefixes\": [ <comma-separated IPv6 prefixes> ],",
-        "        \"reservation-client-classes\": [ <comma-separated strings> ],",
+        "        \"client-classes\": [ <comma-separated strings> ],",
         "        \"server-hostname\": <string>,",
         "        \"subnet-id\": <integer>,",
         "        \"user-context\": <any valid JSON>",

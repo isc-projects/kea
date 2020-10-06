@@ -1,3 +1,10 @@
+1818.	[doc]		andrei
+	Add to the reservation documentation:
+	* instructions on how to choose "reservation-mode"
+	* priority of "reservation-mode" specified at all levels
+	* priority of file reservations vs database reservations
+	(Gitlab #1299)
+
 1817.	[func]		fdupont
 	Redact control agent logs to hide basic HTTP authentication
 	passwords from the configuration files. Note that when HTTP
