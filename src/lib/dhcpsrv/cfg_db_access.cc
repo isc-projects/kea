@@ -76,7 +76,12 @@ CfgDbAccess::createManagers() {
     HostMgr::checkCacheBackend(true);
 
     // Populate the ip-reservations-unique global setting to HostMgr.
-    HostMgr::instance().setIPReservationsUnique(ip_reservations_unique_);
+    if (!HostMgr::instance().setIPReservationsUnique(ip_reservations_unique_)) {
+        isc_throw(InvalidOperation, "unable to configure the server to allow "
+                  "non unique IP reservations (ip-reservations-unique=false) "
+                  "because some host backends in use do not support this "
+                  "setting");
+    }
 }
 
 std::string
