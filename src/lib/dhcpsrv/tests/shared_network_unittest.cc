@@ -94,6 +94,9 @@ TEST(SharedNetwork4Test, defaults) {
 
     EXPECT_TRUE(network->getHostnameCharReplacement().unspecified());
     EXPECT_TRUE(network->getHostnameCharReplacement().empty());
+
+    EXPECT_TRUE(network->getDdnsUpdateOnRenew().unspecified());
+    EXPECT_FALSE(network->getDdnsSendUpdates().get());
 }
 
 // This test verifies that shared network can be given a name and that

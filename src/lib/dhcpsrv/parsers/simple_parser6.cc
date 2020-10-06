@@ -90,7 +90,8 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "multi-threading",                Element::map },
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
-    { "ip-reservations-unique",         Element::boolean }
+    { "ip-reservations-unique",         Element::boolean },
+    { "ddns-update-on-renew",           Element::boolean }
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -119,7 +120,8 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "store-extended-info",            Element::boolean, "false" },
     { "statistic-default-sample-count", Element::integer, "20" },
     { "statistic-default-sample-age",   Element::integer, "0" },
-    { "ip-reservations-unique",         Element::boolean, "true" }
+    { "ip-reservations-unique",         Element::boolean, "true" },
+    { "ddns-update-on-renew",           Element::boolean, "false" }
 };
 
 /// @brief This table defines all option definition parameters.
@@ -222,7 +224,8 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "store-extended-info",            Element::boolean },
     { "metadata",                       Element::map },
     { "cache-threshold",                Element::real },
-    { "cache-max-age",                  Element::integer }
+    { "cache-max-age",                  Element::integer },
+    { "ddns-update-on-renew",           Element::boolean }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -352,7 +355,8 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "store-extended-info",            Element::boolean },
     { "metadata",                       Element::map },
     { "cache-threshold",                Element::real },
-    { "cache-max-age",                  Element::integer }
+    { "cache-max-age",                  Element::integer },
+    { "ddns-update-on-renew",           Element::boolean }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.

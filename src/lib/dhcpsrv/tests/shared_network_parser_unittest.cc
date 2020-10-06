@@ -149,6 +149,7 @@ public:
                 "    \"store-extended-info\": true,"
                 "    \"cache-threshold\": 0.123,"
                 "    \"cache-max-age\": 123,"
+                "    \"ddns-update-on-renew\": true,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"domain-name-servers\","
@@ -272,6 +273,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
     EXPECT_EQ(0.123, network->getCacheThreshold());
     EXPECT_EQ(123, network->getCacheMaxAge());
+    EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -566,6 +568,7 @@ public:
                 "    \"store-extended-info\": true,"
                 "    \"cache-threshold\": 0.123,"
                 "    \"cache-max-age\": 123,"
+                "    \"ddns-update-on-renew\": true,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -672,6 +675,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
     EXPECT_EQ(0.123, network->getCacheThreshold());
     EXPECT_EQ(123, network->getCacheMaxAge());
+    EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();

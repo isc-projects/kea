@@ -708,6 +708,7 @@ DdnsParams::getOverrideNoUpdate() const {
 
     return (subnet_->getDdnsOverrideNoUpdate().get());
 }
+
 bool DdnsParams::getOverrideClientUpdate() const {
     if (!subnet_) {
         return (false);
@@ -778,6 +779,15 @@ DdnsParams::getHostnameSanitizer() const {
     }
 
     return (sanitizer);
+}
+
+bool
+DdnsParams::getUpdateOnRenew() const {
+    if (!subnet_) {
+        return (false);
+    }
+
+    return (subnet_->getDdnsUpdateOnRenew().get());
 }
 
 } // namespace dhcp

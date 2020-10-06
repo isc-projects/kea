@@ -289,6 +289,10 @@ Network::toElement() const {
                  Element::create(static_cast<long long>(cache_max_age_)));
     }
 
+    if (!ddns_update_on_renew_.unspecified()) {
+        map->set("ddns-update-on-renew", Element::create(ddns_update_on_renew_));
+    }
+
     return (map);
 }
 

@@ -183,6 +183,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("store-extended-info", Element::create(true));
     globals_->set("cache-threshold", Element::create(.25));
     globals_->set("cache-max-age", Element::create(20));
+    globals_->set("ddns-update-on-renew", Element::create(true));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -332,6 +333,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              &Network::setCacheMaxAge,
                                              10, 20);
     }
+    {
+        SCOPED_TRACE("ddns-update-on-renew");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsUpdateOnRenew,
+                                             &Network4::setDdnsUpdateOnRenew,
+                                             false, true);
+    }
 }
 
 // This test verifies that the inheritance is supported for DHCPv6
@@ -349,6 +356,7 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("hostname-char-set", Element::create("gc"));
     globals_->set("hostname-char-replacement", Element::create("gr"));
     globals_->set("store-extended-info", Element::create(true));
+    globals_->set("ddns-update-on-renew", Element::create(true));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -419,6 +427,12 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         SCOPED_TRACE("store-extended-info");
         testNetworkInheritance<TestNetwork4>(&Network6::getStoreExtendedInfo,
                                              &Network6::setStoreExtendedInfo,
+                                             false, true);
+    }
+    {
+        SCOPED_TRACE("ddns-update-on-renew");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsUpdateOnRenew,
+                                             &Network4::setDdnsUpdateOnRenew,
                                              false, true);
     }
 

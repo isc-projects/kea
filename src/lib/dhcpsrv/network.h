@@ -208,7 +208,7 @@ public:
           ddns_send_updates_(), ddns_override_no_update_(), ddns_override_client_update_(),
           ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
           hostname_char_set_(), hostname_char_replacement_(), store_extended_info_(),
-          cache_threshold_(), cache_max_age_() {
+          cache_threshold_(), cache_max_age_(), ddns_update_on_renew_() {
     }
 
     /// @brief Virtual destructor.
@@ -732,6 +732,23 @@ public:
         cache_max_age_ = cache_max_age;
     }
 
+    /// @brief Returns ddns-update-on-renew
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<bool>
+    getDdnsUpdateOnRenew(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsUpdateOnRenew,
+                                     ddns_update_on_renew_,
+                                     inheritance, "ddns-update-on-renew"));
+    }
+
+    /// @brief Sets new ddns-update-on-renew
+    ///
+    /// @param ddns_update_on_renew New value to use.
+    void setDdnsUpdateOnRenew(const util::Optional<bool>& ddns_update_on_renew) {
+        ddns_update_on_renew_ = ddns_update_on_renew;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -1031,6 +1048,9 @@ protected:
 
     /// @brief Value in seconds to use as cache maximal age.
     util::Optional<uint32_t> cache_max_age_;
+
+    /// @brief Should Kea perform updates when leases are extended 
+    util::Optional<bool> ddns_update_on_renew_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///

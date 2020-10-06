@@ -122,6 +122,15 @@ public:
     /// @throw BadValue if the compilation fails.
     isc::util::str::StringSanitizerPtr getHostnameSanitizer() const;
 
+    /// @brief Returns whether or not DNS should be updated when leases renew.
+    ///
+    /// If this is true, DNS should always be updated when leases are 
+    /// extended (i.e. renewed/rebound) even if the DNS information
+    /// has not changed.
+    ///
+    /// @return True if updates should always be performed.
+    bool getUpdateOnRenew() const;
+
     /// @brief Returns the subnet-id of the subnet associated with these parameters
     /// @return value of subnet-id (or 0 if no subnet is associated)
     SubnetID getSubnetId() const {
