@@ -23,7 +23,7 @@ namespace dhcp {
 
 CfgDbAccess::CfgDbAccess()
     : appended_parameters_(), lease_db_access_("type=memfile"),
-      host_db_access_() {
+      host_db_access_(), ip_reservations_unique_(true) {
 }
 
 std::string

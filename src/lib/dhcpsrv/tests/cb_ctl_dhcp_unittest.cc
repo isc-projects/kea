@@ -12,6 +12,8 @@
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cb_ctl_dhcp6.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/testutils/memory_host_data_source.h>
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp6.h>
@@ -34,6 +36,22 @@ using namespace isc::hooks;
 
 namespace {
 
+/// @brief Derivation of the @c MemHostDataSource which always returns
+/// @c false when setting IP reservations unique/non-unique mode.
+class NonUniqueHostDataSource : public MemHostDataSource {
+public:
+
+    /// @brief Configure unique/non-unique IP reservations.
+    ///
+    /// @return Always false.
+    virtual bool setIPReservationsUnique(const bool) {
+        return (false);
+    }
+};
+
+/// @brief Pointer to the @c NonUniqueHostDataSource instance.
+typedef boost::shared_ptr<NonUniqueHostDataSource> NonUniqueHostDataSourcePtr;
+
 /// @brief Base class for testing derivations of the CBControlDHCP.
 class CBControlDHCPTest : public GenericBackendTest {
 public:
@@ -46,6 +64,7 @@ public:
         initTimestamps();
         callback_name_ = std::string("");
         callback_audit_entries_.reset();
+        HostMgr::create();
     }
 
     /// @brief Destructor.
@@ -60,6 +79,7 @@ public:
         if (!status) {
             std::cerr << "(fixture dtor) unloadLibraries failed" << std::endl;
         }
+        HostDataSourceFactory::deregisterFactory("test");
     }
 
     /// @brief Creates new CREATE audit entry.
@@ -865,6 +885,76 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyHook) {
     EXPECT_TRUE(audit_entries_ == *callback_audit_entries_);
 }
 
+// This test verifies that it is possible to set ip-reservations-unique
+// parameter via configuration backend and that it is successful when
+// host database backend accepts the new setting.
+TEST_F(CBControlDHCPv4Test, ipReservationsNonUniqueAccepted) {
+    // Create host data source which accepts setting non-unique IP
+    // reservations.
+    MemHostDataSourcePtr hds(new MemHostDataSource());
+    auto testFactory = [hds](const DatabaseConnection::ParameterMap&) {
+        return (hds);
+     };
+    HostDataSourceFactory::registerFactory("test", testFactory);
+    HostMgr::addBackend("type=test");
+
+    // Insert ip-reservations-unique value set to false into the database.
+    auto& mgr = ConfigBackendDHCPv4Mgr::instance();
+    StampedValuePtr global_parameter = StampedValue::create("ip-reservations-unique",
+                                                            Element::create(false));
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter4(BackendSelector::UNSPEC(),
+                                                                ServerSelector::ALL(),
+                                                                global_parameter));
+    // Adding audit entry simulates the case when the server is already configured
+    // and we're adding incremental changes. These changes should be applied to
+    // the current configuration.
+    addCreateAuditEntry("dhcp4_global_parameter", 1);
+
+    // Apply the configuration.
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+    // The new setting should be visible in both CfgDbAccess and HostMgr.
+    EXPECT_FALSE(CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->getIPReservationsUnique());
+    EXPECT_FALSE(HostMgr::instance().getIPReservationsUnique());
+}
+
+// This test verifies that the new setting of ip-reservations-unique is not
+// accepted when one of the host database backends does not support it.
+TEST_F(CBControlDHCPv4Test, ipReservationsNonUniqueRefused) {
+    // Create host data source which does not accept setting IP reservations
+    // non-unique setting.
+    NonUniqueHostDataSourcePtr hds(new NonUniqueHostDataSource());
+    auto testFactory = [hds](const DatabaseConnection::ParameterMap&) {
+        return (hds);
+     };
+    HostDataSourceFactory::registerFactory("test", testFactory);
+    HostMgr::addBackend("type=test");
+
+    // Insert ip-reservations-unique value set to false into the database.
+    auto& mgr = ConfigBackendDHCPv4Mgr::instance();
+    StampedValuePtr global_parameter = StampedValue::create("ip-reservations-unique",
+                                                            Element::create(false));
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter4(BackendSelector::UNSPEC(),
+                                                                ServerSelector::ALL(),
+                                                                global_parameter));
+    // Adding audit entry simulates the case when the server is already configured
+    // and we're adding incremental changes. These changes should be applied to
+    // the current configuration.
+    addCreateAuditEntry("dhcp4_global_parameter", 1);
+
+    // Apply the configuration.
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+    // The default setting should be applied, because the backend refused to
+    // set it to false.
+    EXPECT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->getIPReservationsUnique());
+    EXPECT_TRUE(HostMgr::instance().getIPReservationsUnique());
+}
+
 // ************************ V6 tests *********************
 
 /// @brief Naked @c CBControlDHCPv6 class exposing protected methods.
@@ -1510,6 +1600,76 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplyHook) {
     EXPECT_EQ("cb6_updated", callback_name_);
     ASSERT_TRUE(callback_audit_entries_);
     EXPECT_TRUE(audit_entries_ == *callback_audit_entries_);
+}
+
+// This test verifies that it is possible to set ip-reservations-unique
+// parameter via configuration backend and that it is successful when
+// host database backend accepts the new setting.
+TEST_F(CBControlDHCPv6Test, ipReservationsNonUniqueAccepted) {
+    // Create host data source which accepts setting non-unique IP
+    // reservations.
+    MemHostDataSourcePtr hds(new MemHostDataSource());
+    auto testFactory = [hds](const DatabaseConnection::ParameterMap&) {
+        return (hds);
+     };
+    HostDataSourceFactory::registerFactory("test", testFactory);
+    HostMgr::addBackend("type=test");
+
+    // Insert ip-reservations-unique value set to false into the database.
+    auto& mgr = ConfigBackendDHCPv6Mgr::instance();
+    StampedValuePtr global_parameter = StampedValue::create("ip-reservations-unique",
+                                                            Element::create(false));
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter6(BackendSelector::UNSPEC(),
+                                                                ServerSelector::ALL(),
+                                                                global_parameter));
+    // Adding audit entry simulates the case when the server is already configured
+    // and we're adding incremental changes. These changes should be applied to
+    // the current configuration.
+    addCreateAuditEntry("dhcp6_global_parameter", 1);
+
+    // Apply the configuration.
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+    // The new setting should be visible in both CfgDbAccess and HostMgr.
+    EXPECT_FALSE(CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->getIPReservationsUnique());
+    EXPECT_FALSE(HostMgr::instance().getIPReservationsUnique());
+}
+
+// This test verifies that the new setting of ip-reservations-unique is not
+// accepted when one of the host database backends does not support it.
+TEST_F(CBControlDHCPv6Test, ipReservationsNonUniqueRefused) {
+    // Create host data source which does not accept setting IP reservations
+    // non-unique setting.
+    NonUniqueHostDataSourcePtr hds(new NonUniqueHostDataSource());
+    auto testFactory = [hds](const DatabaseConnection::ParameterMap&) {
+        return (hds);
+     };
+    HostDataSourceFactory::registerFactory("test", testFactory);
+    HostMgr::addBackend("type=test");
+
+    // Insert ip-reservations-unique value set to false into the database.
+    auto& mgr = ConfigBackendDHCPv6Mgr::instance();
+    StampedValuePtr global_parameter = StampedValue::create("ip-reservations-unique",
+                                                            Element::create(false));
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter6(BackendSelector::UNSPEC(),
+                                                                ServerSelector::ALL(),
+                                                                global_parameter));
+    // Adding audit entry simulates the case when the server is already configured
+    // and we're adding incremental changes. These changes should be applied to
+    // the current configuration.
+    addCreateAuditEntry("dhcp6_global_parameter", 1);
+
+    // Apply the configuration.
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+    // The default setting should be applied, because the backend refused to
+    // set it to false.
+    EXPECT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->getIPReservationsUnique());
+    EXPECT_TRUE(HostMgr::instance().getIPReservationsUnique());
 }
 
 }

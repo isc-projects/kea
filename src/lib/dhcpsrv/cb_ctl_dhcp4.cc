@@ -8,6 +8,7 @@
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
@@ -150,6 +151,7 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
         globals = getMgr().getPool()->getModifiedGlobalParameters4(backend_selector, server_selector,
                                                                    lb_modification_time);
         addGlobalsToConfig(external_cfg, globals);
+        globals_fetched = true;
     }
 
     // Now we fetch the option definitions and add them.
@@ -229,8 +231,28 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
     }
 
     if (audit_entries.empty()) {
+        // If we're configuring the server after startup, we do not apply the
+        // ip-reservations-unique setting here. It will be applied when the
+        // configuration is committed.
         CfgMgr::instance().mergeIntoStagingCfg(external_cfg->getSequence());
     } else {
+        if (globals_fetched) {
+            // ip-reservations-unique parameter requires special handling because
+            // setting it to false may be unsupported by some host backends.
+            bool ip_unique = true;
+            auto ip_unique_param = external_cfg->getConfiguredGlobal("ip-reservations-unique");
+            if (ip_unique_param && (ip_unique_param->getType() == Element::boolean)) {
+                ip_unique = ip_unique_param->boolValue();
+            }
+            // First try to use the new setting to configure the HostMgr because it
+            // may fail if the backend does not support it.
+            if (!HostMgr::instance().setIPReservationsUnique(ip_unique)) {
+                // The new setting is unsupported by the backend, so do not apply this
+                // setting at all.
+                LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED);
+                external_cfg->addConfiguredGlobal("ip-reservations-unique", Element::create(true));
+            }
+        }
         CfgMgr::instance().mergeIntoCurrentCfg(external_cfg->getSequence());
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_CONFIG4_MERGED);

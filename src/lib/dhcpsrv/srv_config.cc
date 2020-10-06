@@ -243,6 +243,8 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
             }
             else if (name == "server-tag") {
                 setServerTag(element->stringValue());
+            } else if (name == "ip-reservations-unique") {
+                setIPReservationsUnique(element->boolValue());
             }
         } catch(const std::exception& ex) {
             isc_throw (BadValue, "Invalid value:" << element->str()

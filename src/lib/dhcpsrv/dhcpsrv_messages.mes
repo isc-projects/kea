@@ -80,6 +80,24 @@ server configuration. The argument identifies the subnet removed.
 % DHCPSRV_CFGMGR_DEL_SUBNET6 IPv6 subnet %1 removed
 This debug message is issued when a subnet is successfully removed from the
 
+% DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED ignoring "ip-reservations-unique" setting because at least one of the host database backends does not support non unique IP reservations
+This warning message is issued when the server failed to use the new setting
+of the ip-reservations-unique global parameter configured via the configuration
+backend. Some host database backends used apparently do not support specifying
+several reservations for teh same IP address. The administrator should either
+stop using the backend that does not support this setting or set the
+value of the ip-reservations-unique to true to resolve the configuration
+issue.
+
+% DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED ignoring "ip-reservations-unique" setting because at least one of the host database backends does not support non unique IP reservations
+This warning message is issued when the server failed to use the new setting
+of the ip-reservations-unique global parameter configured via the configuration
+backend. Some host database backends used apparently do not support specifying
+several reservations for teh same IP address. The administrator should either
+stop using the backend that does not support this setting or set the
+value of the ip-reservations-unique to true to resolve the configuration
+issue.
+
 % DHCPSRV_CFGMGR_NEW_SUBNET4 a new subnet has been added to configuration: %1
 This is an informational message reporting that the configuration has
 been extended to include the specified IPv4 subnet.

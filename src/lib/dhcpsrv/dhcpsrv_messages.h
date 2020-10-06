@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Mon Sep 28 2020 14:54
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Tue Oct 06 2020 15:05
 
 #ifndef DHCPSRV_MESSAGES_H
 #define DHCPSRV_MESSAGES_H
@@ -21,6 +21,8 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_DDNS_PARAMETER_IGNORED;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DDNS_PARAMETER_MOVED;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET6;
+extern const isc::log::MessageID DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED;
+extern const isc::log::MessageID DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET6;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NO_SUBNET4;

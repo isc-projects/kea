@@ -8,6 +8,7 @@
 #include <dhcpsrv/cb_ctl_dhcp6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
@@ -149,6 +150,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         globals = getMgr().getPool()->getModifiedGlobalParameters6(backend_selector, server_selector,
                                                                    lb_modification_time);
         addGlobalsToConfig(external_cfg, globals);
+        globals_fetched = true;
     }
 
     // Now we fetch the option definitions and add them.
@@ -230,6 +232,23 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
     if (audit_entries.empty()) {
         CfgMgr::instance().mergeIntoStagingCfg(external_cfg->getSequence());
     } else {
+        if (globals_fetched) {
+            // ip-reservations-unique parameter requires special handling because
+            // setting it to false may be unsupported by some host backends.
+            bool ip_unique = true;
+            auto ip_unique_param = external_cfg->getConfiguredGlobal("ip-reservations-unique");
+            if (ip_unique_param && (ip_unique_param->getType() == Element::boolean)) {
+                ip_unique = ip_unique_param->boolValue();
+            }
+            // First try to use the new setting to configure the HostMgr because it
+            // may fail if the backend does not support it.
+            if (!HostMgr::instance().setIPReservationsUnique(ip_unique)) {
+                // The new setting is unsupported by the backend, so do not apply this
+                // setting at all.
+                LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED);
+                external_cfg->addConfiguredGlobal("ip-reservations-unique", Element::create(true));
+            }
+        }
         CfgMgr::instance().mergeIntoCurrentCfg(external_cfg->getSequence());
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_CONFIG6_MERGED);

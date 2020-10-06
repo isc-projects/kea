@@ -1029,6 +1029,10 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     cfg_from.setDhcp4o6Port(888);
     cfg_from.setServerTag("nor_this_server");
 
+    // Add a configured global ip-reservations-unique. It should be populated
+    // to the CfgDbAccess and CfgHosts.
+    cfg_from.addConfiguredGlobal("ip-reservations-unique", Element::create(false));
+
     // Add some configured globals:
     cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
     cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
@@ -1050,6 +1054,9 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     //  server-tag port should be the "from" configured value.
     EXPECT_EQ("use_this_server", cfg_to.getServerTag().get());
 
+    // ip-reservations-unique
+    EXPECT_FALSE(cfg_to.getCfgDbAccess()->getIPReservationsUnique());
+
     // Next we check the explicitly "configured" globals.
     // The list should be all of the "to" + "from", with the
     // latter overwriting the former.
@@ -1057,6 +1064,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
         "{ \n"
         "   \"decline-probation-period\": 300,  \n"
         "   \"dhcp4o6-port\": 999,  \n"
+        "   \"ip-reservations-unique\": false,  \n"
         "   \"server-tag\": \"use_this_server\"  \n"
         "} \n";
 
@@ -1097,6 +1105,10 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     cfg_from.setDhcp4o6Port(888);
     cfg_from.setServerTag("nor_this_server");
 
+    // Add a configured global ip-reservations-unique. It should be populated
+    // to the CfgDbAccess and CfgHosts.
+    cfg_from.addConfiguredGlobal("ip-reservations-unique", Element::create(false));
+
     // Add some configured globals:
     cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
     cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
@@ -1115,6 +1127,9 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     //  server-tag port should be the "from" configured value.
     EXPECT_EQ("use_this_server", cfg_to.getServerTag().get());
 
+    // ip-reservations-unique
+    EXPECT_FALSE(cfg_to.getCfgDbAccess()->getIPReservationsUnique());
+
     // Next we check the explicitly "configured" globals.
     // The list should be all of the "to" + "from", with the
     // latter overwriting the former.
@@ -1122,6 +1137,7 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
         "{ \n"
         "   \"decline-probation-period\": 300,  \n"
         "   \"dhcp4o6-port\": 999,  \n"
+        "   \"ip-reservations-unique\": false,  \n"
         "   \"server-tag\": \"use_this_server\"  \n"
         "} \n";
 
