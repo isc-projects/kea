@@ -684,6 +684,9 @@ SrvConfig::moveDdnsParams(isc::data::ElementPtr srv_elem) {
 
 void
 SrvConfig::setIPReservationsUnique(const bool unique) {
+    if (!getCfgDbAccess()->getIPReservationsUnique() && unique) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE);
+    }
     getCfgHosts()->setIPReservationsUnique(unique);
     getCfgDbAccess()->setIPReservationsUnique(unique);
 }

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Tue Oct 06 2020 15:05
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Wed Oct 07 2020 19:01
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -22,6 +22,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET4 = "DHCPSRV_CFGMGR_DE
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET6 = "DHCPSRV_CFGMGR_DEL_SUBNET6";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED = "DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED = "DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE = "DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET4 = "DHCPSRV_CFGMGR_NEW_SUBNET4";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET6 = "DHCPSRV_CFGMGR_NEW_SUBNET6";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NO_SUBNET4 = "DHCPSRV_CFGMGR_NO_SUBNET4";
@@ -270,6 +271,7 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_DEL_SUBNET6", "IPv6 subnet %1 removed",
     "DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED", "ignoring \"ip-reservations-unique\" setting because at least one of the host database backends does not support non unique IP reservations",
     "DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED", "ignoring \"ip-reservations-unique\" setting because at least one of the host database backends does not support non unique IP reservations",
+    "DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE", "setting \"ip-reservations-unique\" from false to true poses a risk that some host backends may still contain multiple reservations for the same IP address",
     "DHCPSRV_CFGMGR_NEW_SUBNET4", "a new subnet has been added to configuration: %1",
     "DHCPSRV_CFGMGR_NEW_SUBNET6", "a new subnet has been added to configuration: %1",
     "DHCPSRV_CFGMGR_NO_SUBNET4", "no suitable subnet is defined for address hint %1",

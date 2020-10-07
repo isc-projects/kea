@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Tue Oct 06 2020 15:05
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Wed Oct 07 2020 19:01
 
 #ifndef DHCPSRV_MESSAGES_H
 #define DHCPSRV_MESSAGES_H
@@ -23,6 +23,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET6;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED;
+extern const isc::log::MessageID DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET6;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NO_SUBNET4;
