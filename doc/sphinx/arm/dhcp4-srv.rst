@@ -4594,6 +4594,7 @@ An example configuration that disables reservation looks as follows:
        ]
    }
 
+
 An example configuration using global reservations is shown below:
 
 ::
@@ -4631,43 +4632,68 @@ The correspondence of old values are:
 
 ``disabled``:
 
+::
+
+   "Dhcp4": {
+
    "reservation-modes": {
        "global": False,
        "in-subnet": False,
        "out-of-pool": False
-   },
+   }
+   }
 
 ``global``:
 
+::
+
+   "Dhcp4": {
+
    "reservation-modes": {
        "global": True,
        "in-subnet": False,
        "out-of-pool": False
-   },
+   }
+   }
 
 ``out-of-pool``:
+
+::
+
+   "Dhcp4": {
 
    "reservation-modes": {
        "global": False,
        "in-subnet": False,
        "out-of-pool": True
-   },
+   }
+   }
 
 ``all``:
+
+::
+
+   "Dhcp4": {
 
    "reservation-modes": {
        "global": False,
        "in-subnet": True,
        "out-of-pool": True
-   },
+   }
+   }
 
 To activate both ``global`` and ``all``, the following combination can be used:
+
+::
+
+   "Dhcp4": {
 
    "reservation-modes": {
        "global": True,
        "in-subnet": True,
        "out-of-pool": True
-   },
+   }
+   }
 
 The parameter can be specified at global, subnet, and shared-network
 levels.
@@ -4689,6 +4715,7 @@ An example configuration that disables reservation looks as follows:
        }
        ]
    }
+
 
 An example configuration using global reservations is shown below:
 

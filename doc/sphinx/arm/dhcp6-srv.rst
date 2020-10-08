@@ -4077,43 +4077,68 @@ The correspondence of old values are:
 
 ``disabled``:
 
+::
+
+   "Dhcp6": {
+
    "reservation-modes": {
        "global": False,
        "in-subnet": False,
        "out-of-pool": False
-   },
+   }
+   }
 
 ``global``:
 
+::
+
+   "Dhcp6": {
+
    "reservation-modes": {
        "global": True,
        "in-subnet": False,
        "out-of-pool": False
-   },
+   }
+   }
 
 ``out-of-pool``:
+
+::
+
+   "Dhcp6": {
 
    "reservation-modes": {
        "global": False,
        "in-subnet": False,
        "out-of-pool": True
-   },
+   }
+   }
 
 ``all``:
+
+::
+
+   "Dhcp6": {
 
    "reservation-modes": {
        "global": False,
        "in-subnet": True,
        "out-of-pool": True
-   },
+   }
+   }
 
 To activate both ``global`` and ``all``, the following combination can be used:
+
+::
+
+   "Dhcp6": {
 
    "reservation-modes": {
        "global": True,
        "in-subnet": True,
        "out-of-pool": True
-   },
+   }
+   }
 
 The parameter can be specified at global, subnet, and shared-network
 levels.
