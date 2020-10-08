@@ -978,6 +978,17 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"ddns-update-on-renew\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_DDNS_UPDATE_ON_RENEW(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("ddns-update-on-renew", driver.loc_);
+    }
+}
+
 \"subnet6\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

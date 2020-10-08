@@ -614,7 +614,10 @@ public:
             EXPECT_EQ(dhcid, ncr->getDhcid().toStr());
         }
 
-        EXPECT_EQ(expires, ncr->getLeaseExpiresOn());
+        if (expires != 0) {
+            EXPECT_EQ(expires, ncr->getLeaseExpiresOn());
+        }
+
         EXPECT_EQ(len, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
 
@@ -1836,6 +1839,127 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
     lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(lease);
     EXPECT_EQ("client1.one.example.com.", lease->hostname_);
+}
+
+// Verifies that renews only generate NCRs if the situation dictates
+// that it should. It checks:
+//
+// -# enable-updates true or false
+// -# update-on-renew true or false
+// -# Whether or not the FQDN has changed between old and new lease
+TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
+    std::string fqdn1 = "one.example.com.";
+    std::string fqdn2 = "two.example.com.";
+    struct Scenario {
+        std::string description_;
+        bool send_updates_;
+        bool update_on_renew_;
+        std::string old_fqdn_;
+        std::string new_fqdn_;
+        size_t remove_;
+        size_t add_;
+    };
+
+    // Mnemonic constants.
+    const bool send_updates = true;
+    const bool update_on_renew = true;
+    const size_t remove = 1;
+    const size_t add = 1;
+
+    const std::vector<Scenario> scenarios = {
+        {
+        "#1 update-on-renew false, no change in fqdn",
+        send_updates, !update_on_renew, fqdn1, fqdn1, !remove, !add
+        },
+        {
+        "#2 update-on-renew is false, change in fqdn",
+        send_updates, !update_on_renew, fqdn1, fqdn2, remove, add
+        },
+        {
+        "#3 update-on-renew is true, no change in fqdn",
+        send_updates, update_on_renew, fqdn1, fqdn1, remove, add
+        },
+        {
+        "#4 update-on-renew is true, change in fqdn",
+        send_updates, update_on_renew, fqdn1, fqdn2, remove, add
+        },
+        // All prior scenarios test with send-updates true.  We really
+        // only need one with it false.
+        {
+        "#5 send-updates false, update-on-renew is true, change in fqdn",
+        !send_updates, update_on_renew, fqdn1, fqdn2, !remove, !add
+        }
+    };
+
+    enableD2();
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+
+    // Iterate over test scenarios.
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_); {
+            // Make sure the lease does not exist.
+            ASSERT_FALSE(LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                          IOAddress("2001:db8:1:1::dead:beef")));
+            // Set and verify DDNS params flags
+            subnet_->setDdnsSendUpdates(scenario.send_updates_);
+            subnet_->setDdnsUpdateOnRenew(scenario.update_on_renew_);
+
+            ASSERT_EQ(scenario.send_updates_, getDdnsParams()->getEnableUpdates());
+            ASSERT_EQ(scenario.update_on_renew_, getDdnsParams()->getUpdateOnRenew());
+
+            // Create the "old" lease
+            testProcessMessage(DHCPV6_REQUEST, scenario.old_fqdn_, scenario.old_fqdn_);
+
+            // The lease should have been recorded in the database.
+            Lease6Ptr old_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                     IOAddress("2001:db8:1:1::dead:beef"));
+            ASSERT_TRUE(old_lease);
+
+            if (!scenario.send_updates_ || scenario.old_fqdn_.empty()) {
+                // We should not have an NCR.
+                ASSERT_EQ(0, d2_mgr_.getQueueSize());
+            } else {
+                // We should have an NCR add.
+                ASSERT_EQ(1, d2_mgr_.getQueueSize());
+                verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                        old_lease->addr_.toText(), "",
+                                        0, old_lease->valid_lft_,
+                                        old_lease->hostname_);
+            }
+
+            // Now let's renew (or create) the lease.
+            testProcessMessage(DHCPV6_RENEW, scenario.new_fqdn_, scenario.new_fqdn_);
+
+            // The lease should have been recorded in the database.
+            Lease6Ptr new_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                   IOAddress("2001:db8:1:1::dead:beef"));
+            ASSERT_TRUE(new_lease);
+
+            // Verify queue count is correct.
+            ASSERT_EQ((scenario.remove_ + scenario.add_), d2_mgr_.getQueueSize());
+
+            // If we expect a remove, check it.
+            if (scenario.remove_ > 0) {
+                // Verify NCR content
+                verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                        old_lease->addr_.toText(), "",
+                                        0, old_lease->valid_lft_,
+                                        old_lease->hostname_);
+            }
+
+            // If we expect an add, check it.
+            if (scenario.add_ > 0) {
+                // Verify NCR content
+                verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                        new_lease->addr_.toText(), "",
+                                        0, new_lease->valid_lft_,
+                                        new_lease->hostname_);
+            }
+
+            // Now delete the lease.
+            ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(new_lease));
+        }
+    }
 }
 
 } // end of anonymous namespace

@@ -2524,7 +2524,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                 LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_NCR_CREATE)
                     .arg(query->getLabel());
                 createNameChangeRequests(lease, ctx->old_lease_,
-                                         ex.getContext()->getDdnsParams());
+                                         *ex.getContext()->getDdnsParams());
             } catch (const Exception& ex) {
                 LOG_ERROR(ddns4_logger, DHCP4_NCR_CREATION_FAILED)
                     .arg(query->getLabel())

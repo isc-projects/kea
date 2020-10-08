@@ -1896,15 +1896,15 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
              l != ctx.currentIA().changed_leases_.end(); ++l) {
 
             if ((*l)->addr_ == iaaddr->getAddress()) {
-                // The address is the same so this must be renewal?
-                if ((*l)->hostname_ == opt_fqdn->getDomainName() &&
-                    (*l)->fqdn_fwd_ == do_fwd && (*l)->fqdn_rev_ == do_rev) {
-                    // The FQDN is the same, it must be an extension only.
-                    // @todo - If we decide to allow updates on renews, we
-                    // will need to bypass this.
+                // The address is the same so this must be renewal. If we're not
+                // always updating on renew, then we only renew if DNS info has
+                // changed.
+                if (!ctx.getDdnsParams()->getUpdateOnRenew() &&
+                    ((*l)->hostname_ == opt_fqdn->getDomainName() &&
+                     (*l)->fqdn_fwd_ == do_fwd && (*l)->fqdn_rev_ == do_rev)) {
                     extended_only = true;
                 } else {
-                    // The FQDN has changed, queue a CHG_REMOVE of the old data.
+                    // Queue a CHG_REMOVE of the old data.
                     // NCR will only be created if the lease hostname is not
                     // empty and at least one of the direction flags is true
                     queueNCR(CHG_REMOVE, *l);

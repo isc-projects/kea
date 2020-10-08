@@ -108,6 +108,13 @@
         // to kea-dhcp-ddns.
         "ddns-send-updates": true,
 
+        // Boolean flag, which when true instructs the server to always
+        // update DNS when leases are renewed, even if the DNS information
+        // has not changed.  The server's default behavior (i.e. flag is false)
+        // is to only update DNS if the DNS information has changed.  It
+        // may be specified at the global, shared-network and subnet levels.
+        "ddns-update-on-renew": true,
+
         // Time in seconds specifying how long a declined lease should be
         // excluded from DHCP assignments. The default value is 24 hours.
         "decline-probation-period": 86400,
@@ -559,6 +566,9 @@
                 "ddns-send-updates": true,
 
                 // Shared network level value. See description at the global level.
+                "ddns-update-on-renew": true,
+
+                // Shared network level value. See description at the global level.
                 "hostname-char-replacement": "x",
 
                 // Shared network level value. See description at the global level.
@@ -659,6 +669,9 @@
 
                         // Subnet level value. See description at the global level.
                         "ddns-send-updates": true,
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-update-on-renew": true,
 
                         // Subnet level value. See description at the global level.
                         "hostname-char-replacement": "x",
