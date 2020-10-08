@@ -391,6 +391,22 @@
             "re-detect": true
         },
 
+        // Boolean parameter which controls DHCP server's behavior with respect
+        // to creating host reservations for the same IP address. By default
+        // this flag is set to true in which case the server prevents creation
+        // of multiple host reservations for the same IP address. When this
+        // parameter is set to false, the server allows for creating multiple
+        // reservations for the same IP address within a subnet. This setting
+        // is useful in deployments in which a given host may be communicating
+        // with a DHCP server over multiple interfaces and depending on the
+        // chosen interface different MAC address (or other identifier) will
+        // be used to identify the host. Note that some host backends do not
+        // support the mode in which multiple reservations for the same IP
+        // address are used. If these backends are in use and this setting
+        // is attempted a configuration error will occur. The MySQL and
+        // PostgreSQL backends do support this mode.
+        "ip-reservations-unique": true,
+
         // Specifies credentials to access lease database.
         "lease-database": {
             // memfile backend specific parameter specifying the interval
