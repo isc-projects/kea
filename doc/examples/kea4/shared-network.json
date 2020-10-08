@@ -64,7 +64,16 @@
 
             // Timer values can be overridden here.
             "renew-timer": 100,
-            "reservation-mode": "all",
+            // It is deprecated by the "reservation-modes" map.
+            // "reservation-mode": "all",
+
+            // Reservation modes specifying server's mode of operation when it
+            // fetches host reservations.
+            "reservation-modes": {
+                "global": False,
+                "in-subnet": True,
+                "out-of-pool": True
+            },
 
             // This starts a list of subnets allowed in this shared network.
             // In our example, there are two subnets.
@@ -86,7 +95,15 @@
                         "ip-address": "0.0.0.0"
                     },
                     "renew-timer": 10,
-                    "reservation-mode": "all",
+                    // It is deprecated by the "reservation-modes" map.
+                    // "reservation-mode": "all",
+                    // Reservation modes specifying server's mode of operation when it
+                    // fetches host reservations.
+                    "reservation-modes": {
+                        "global": False,
+                        "in-subnet": True,
+                        "out-of-pool": True
+                    },
                     "subnet": "10.0.0.0/8",
                     "valid-lifetime": 30
                 },
@@ -100,7 +117,15 @@
                     "pools": [ ],
                     "rebind-timer": 20,
                     "renew-timer": 10,
-                    "reservation-mode": "all",
+                    // It is deprecated by the "reservation-modes" map.
+                    // "reservation-mode": "all",
+                    // Reservation modes specifying server's mode of operation when it
+                    // fetches host reservations.
+                    "reservation-modes": {
+                        "global": False,
+                        "in-subnet": True,
+                        "out-of-pool": True
+                    },
                     "subnet": "192.0.2.0/24",
                     "valid-lifetime": 30
                 }

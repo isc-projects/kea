@@ -90,6 +90,9 @@ public:
         /// This will parse the input as dhcp-ddns. (D2 client config)
         PARSER_DHCP_DDNS,
 
+        /// This will parse the input as reservation-modes.
+        PARSER_RESERVATION_MODES,
+
         /// This will parse the input as config-control.
         PARSER_CONFIG_CONTROL,
     } ParserType;
@@ -319,6 +322,9 @@ public:
 
         /// Used while parsing Dhcp6/config-control
         CONFIG_CONTROL,
+
+        /// Used while parsing Dhcp6/reservation-modes
+        RESERVATION_MODES,
 
         /// Used while parsing config-control/config-databases
         CONFIG_DATABASE

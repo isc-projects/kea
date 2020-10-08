@@ -152,10 +152,14 @@ using namespace std;
   INTERFACE "interface"
   ID "id"
   RESERVATION_MODE "reservation-mode"
+  RESERVATION_MODES "reservation-modes"
   DISABLED "disabled"
   OUT_OF_POOL "out-of-pool"
   GLOBAL "global"
   ALL "all"
+  HR_GLOBAL "global"
+  HR_IN_SUBNET "in-subnet"
+  HR_OUT_OF_POOL "out-of-pool"
 
   HOST_RESERVATION_IDENTIFIERS "host-reservation-identifiers"
 
@@ -253,6 +257,7 @@ using namespace std;
   SUB_OPTION_DATA
   SUB_HOOKS_LIBRARY
   SUB_DHCP_DDNS
+  SUB_RESERVATION_MODES
   SUB_CONFIG_CONTROL
 ;
 
@@ -291,6 +296,7 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
      | SUB_DHCP_DDNS { ctx.ctx_ = ctx.DHCP_DDNS; } sub_dhcp_ddns
+     | SUB_RESERVATION_MODES { ctx.ctx_ = ctx.RESERVATION_MODES; } sub_reservation_modes
      | SUB_CONFIG_CONTROL { ctx.ctx_ = ctx.CONFIG_CONTROL; } sub_config_control
      ;
 
@@ -1476,6 +1482,53 @@ hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1
        | GLOBAL { $$ = ElementPtr(new StringElement("global", ctx.loc2pos(@1))); }
        | ALL { $$ = ElementPtr(new StringElement("all", ctx.loc2pos(@1))); }
        ;
+
+reservation_modes: RESERVATION_MODES {
+    ctx.unique("reservation-modes", ctx.loc2pos(@1));
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("reservation-modes", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.RESERVATION_MODES);
+} COLON LCURLY_BRACKET reservation_modes_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+sub_reservation_modes: LCURLY_BRACKET {
+    // Parse the reservation-modes map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} reservation_modes_params RCURLY_BRACKET {
+    // No config_control params are required
+    // parsing completed
+};
+
+reservation_modes_params: reservation_modes_param
+                        | reservation_modes_params COMMA reservation_modes_param
+                        ;
+
+reservation_modes_param: hr_global
+                       | hr_in_subnet
+                       | hr_out_of_pool
+                       ;
+
+hr_global: HR_GLOBAL COLON BOOLEAN {
+    ctx.unique("global", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("global", b);
+};
+
+hr_in_subnet: HR_IN_SUBNET COLON BOOLEAN {
+    ctx.unique("in-subnet", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("in-subnet", b);
+};
+
+hr_out_of_pool: HR_OUT_OF_POOL COLON BOOLEAN {
+    ctx.unique("out-of-pool", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("out-of-pool", b);
+};
 
 id: ID COLON INTEGER {
     ctx.unique("id", ctx.loc2pos(@1));

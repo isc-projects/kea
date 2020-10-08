@@ -2950,8 +2950,8 @@ namespace {
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
     if (ctx.subnet_ &&
-        ((ctx.subnet_->getHostReservationMode() == Network::HR_ALL) ||
-         ((ctx.subnet_->getHostReservationMode() == Network::HR_OUT_OF_POOL) &&
+        ((ctx.subnet_->getHostReservationMode() & Network::HR_IN_SUBNET) ||
+         ((ctx.subnet_->getHostReservationMode() & Network::HR_OUT_OF_POOL) &&
           (!ctx.subnet_->inPool(Lease::TYPE_V4, address))))) {
         // The global parameter ip-reservations-unique controls whether it is allowed
         // to specify multiple reservations for the same IP address or delegated prefix
@@ -2974,12 +2974,11 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
         }
 
         for (auto host : hosts) {
-            for (auto id = ctx.host_identifiers_.cbegin(); id != ctx.host_identifiers_.cend();
-                 ++id) {
+            for (auto id : ctx.host_identifiers_) {
                 // If we find the matching host we know that this address is reserved
                 // for us and we can return immediatelly.
-                if (id->first == host->getIdentifierType() &&
-                    id->second == host->getIdentifier()) {
+                if (id.first == host->getIdentifierType() &&
+                    id.second == host->getIdentifier()) {
                     return (false);
                 }
             }
@@ -3015,19 +3014,26 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
 
     Subnet4Ptr subnet = ctx.subnet_;
     while (subnet) {
-        if (subnet->getHostReservationMode() == Network::HR_GLOBAL) {
+        if (subnet->getHostReservationMode() & Network::HR_GLOBAL) {
             auto host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
-            return (host != ctx.hosts_.end() &&
+            bool found = (host != ctx.hosts_.end() &&
                     !(host->second->getIPv4Reservation().isV4Zero()));
             // if we want global + other modes we would need to
             // return only if true, else continue
+            if (subnet->getHostReservationMode() == Network::HR_GLOBAL) {
+                return (found);
+            } else {
+                if (found) {
+                    return (found);
+                }
+            }
         }
 
         auto host = ctx.hosts_.find(subnet->getID());
         if ((host != ctx.hosts_.end()) &&
             !(host->second->getIPv4Reservation().isV4Zero()) &&
-            ((subnet->getHostReservationMode() == Network::HR_ALL) ||
-             ((subnet->getHostReservationMode() == Network::HR_OUT_OF_POOL) &&
+            ((subnet->getHostReservationMode() & Network::HR_IN_SUBNET) ||
+             ((subnet->getHostReservationMode() & Network::HR_OUT_OF_POOL) &&
               (!subnet->inPool(Lease::TYPE_V4, host->second->getIPv4Reservation()))))) {
             ctx.subnet_ = subnet;
             return (true);

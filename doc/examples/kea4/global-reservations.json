@@ -51,7 +51,16 @@
 
 // This directive tells Kea that reservations are global. Note that this
 // can also be specified at shared network and/or subnet level.
-  "reservation-mode": "global",
+// It is deprecated by the "reservation-modes" map.
+// "reservation-mode": "global",
+
+// Since Kea 1.9.1, a more flexible option of configuring the way Kea uses host
+// reservations is available through the 'reservation-modes' map.
+  "reservation-modes": {
+      "global": True,
+      "in-subnet": False,
+      "out-of-pool": False
+  },
 
 // Define several global host reservations.
   "reservations": [

@@ -136,6 +136,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
             return isc::dhcp::Dhcp4Parser::make_SUB_HOOKS_LIBRARY(driver.loc_);
         case Parser4Context::PARSER_DHCP_DDNS:
             return isc::dhcp::Dhcp4Parser::make_SUB_DHCP_DDNS(driver.loc_);
+        case Parser4Context::PARSER_RESERVATION_MODES:
+            return isc::dhcp::Dhcp4Parser::make_SUB_RESERVATION_MODES(driver.loc_);
         case Parser4Context::PARSER_CONFIG_CONTROL:
             return isc::dhcp::Dhcp4Parser::make_SUB_CONFIG_CONTROL(driver.loc_);
         }
@@ -956,6 +958,17 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_RESERVATION_MODE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("reservation-mode", driver.loc_);
+    }
+}
+
+\"reservation-modes\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_RESERVATION_MODES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("reservation-modes", driver.loc_);
     }
 }
 

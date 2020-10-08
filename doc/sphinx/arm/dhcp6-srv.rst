@@ -4067,6 +4067,107 @@ An example configuration using global reservations is shown below:
        ]
    }
 
+Since Kea 1.9.1, the ``reservation-mode`` is deprecated by the
+``reservation-modes`` map.
+The map contains ``global``, ``in-subnet`` and ``out-of-pool`` boolean flags.
+The flags can be activated independently and can produce various combinations,
+some of them being unsuported by the deprecated ``reservation-mode``.
+
+The correspondence of old values are:
+
+``disabled``:
+
+   "reservation-modes": {
+       "global": False,
+       "in-subnet": False,
+       "out-of-pool": False
+   },
+
+``global``:
+
+   "reservation-modes": {
+       "global": True,
+       "in-subnet": False,
+       "out-of-pool": False
+   },
+
+``out-of-pool``:
+
+   "reservation-modes": {
+       "global": False,
+       "in-subnet": False,
+       "out-of-pool": True
+   },
+
+``all``:
+
+   "reservation-modes": {
+       "global": False,
+       "in-subnet": True,
+       "out-of-pool": True
+   },
+
+To activate both ``global`` and ``all``, the following combination can be used:
+
+   "reservation-modes": {
+       "global": True,
+       "in-subnet": True,
+       "out-of-pool": True
+   },
+
+The parameter can be specified at global, subnet, and shared-network
+levels.
+
+An example configuration that disables reservation looks as follows:
+
+::
+
+   "Dhcp6": {
+       "subnet6": [
+           {
+           "subnet": "2001:db8:1::/64",
+           "reservation-modes": {
+               "global": False,
+               "in-subnet": False,
+               "out-of-pool": False
+           },
+           ...
+           }
+       ]
+   }
+
+
+An example configuration using global reservations is shown below:
+
+::
+
+   "Dhcp6": {
+
+
+       "reservation-modes": {
+           "global": True,
+           "in-subnet": False,
+           "out-of-pool": False
+       },
+       "reservations": [
+          {
+           "duid": "00:03:00:01:11:22:33:44:55:66",
+           "hostname": "host-one"
+          },
+          {
+           "duid": "00:03:00:01:99:88:77:66:55:44",
+           "hostname": "host-two"
+          }
+       ],
+
+       "subnet6": [
+       {
+           "subnet": "2001:db8:1::/64",
+           ...
+       }
+       ]
+   }
+
 For more details regarding global reservations, see :ref:`global-reservations6`.
 
 Another aspect of host reservations is the different types of

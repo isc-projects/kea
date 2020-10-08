@@ -4621,6 +4621,106 @@ An example configuration using global reservations is shown below:
        ]
    }
 
+Since Kea 1.9.1, the ``reservation-mode`` is deprecated by the
+``reservation-modes`` map.
+The map contains ``global``, ``in-subnet`` and ``out-of-pool`` boolean flags.
+The flags can be activated independently and can produce various combinations,
+some of them being unsuported by the deprecated ``reservation-mode``.
+
+The correspondence of old values are:
+
+``disabled``:
+
+   "reservation-modes": {
+       "global": False,
+       "in-subnet": False,
+       "out-of-pool": False
+   },
+
+``global``:
+
+   "reservation-modes": {
+       "global": True,
+       "in-subnet": False,
+       "out-of-pool": False
+   },
+
+``out-of-pool``:
+
+   "reservation-modes": {
+       "global": False,
+       "in-subnet": False,
+       "out-of-pool": True
+   },
+
+``all``:
+
+   "reservation-modes": {
+       "global": False,
+       "in-subnet": True,
+       "out-of-pool": True
+   },
+
+To activate both ``global`` and ``all``, the following combination can be used:
+
+   "reservation-modes": {
+       "global": True,
+       "in-subnet": True,
+       "out-of-pool": True
+   },
+
+The parameter can be specified at global, subnet, and shared-network
+levels.
+
+An example configuration that disables reservation looks as follows:
+
+::
+
+   "Dhcp4": {
+       "subnet4": [
+       {
+           "subnet": "192.0.2.0/24",
+           "reservation-modes": {
+               "global": False,
+               "in-subnet": False,
+               "out-of-pool": False
+           },
+           ...
+       }
+       ]
+   }
+
+An example configuration using global reservations is shown below:
+
+::
+
+   "Dhcp4": {
+
+
+       "reservation-modes": {
+           "global": True,
+           "in-subnet": False,
+           "out-of-pool": False
+       },
+       "reservations": [
+          {
+           "hw-address": "01:bb:cc:dd:ee:ff",
+           "hostname": "host-one"
+          },
+          {
+           "hw-address": "02:bb:cc:dd:ee:ff",
+           "hostname": "host-two"
+          }
+       ],
+
+       "subnet4": [
+       {
+           "subnet": "192.0.2.0/24",
+           ...
+       }
+       ]
+   }
+
 For more details regarding global reservations, see :ref:`global-reservations4`.
 
 Another aspect of host reservations is the different types of
