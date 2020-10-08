@@ -1,3 +1,12 @@
+1813.	[func]		tmark
+	A new parameter, ddns-update-on-renew, has been added to kea-dhcp4
+	and kea-dhcp6 configuration.  When true, the server will always
+	update DNS when a lease is renewed even if the DNS information
+	for the lease has not changed. The prior, and now default, behavior
+	is for the server to only update DNS for a renewing lease if its
+	DNS information has changed.
+	(Gitlab #1385)
+
 1812.	[doc]		andrei
 	Document how MAC addresses can be formatted for use as attributes
 	in RADIUS authentication

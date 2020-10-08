@@ -2925,6 +2925,7 @@ DDNS related parameters were split into two groups:
     -  ``ddns-replace-client-name"``
     -  ``ddns-generated-prefix``
     -  ``ddns-qualifying-suffix``
+    -  ``ddns-update-on-renew``
     -  ``hostname-char-set``
     -  ``hostname-char-replacement``
 
@@ -2993,6 +2994,19 @@ together:
    |                 |                    | those with a local value of   |
    |                 |                    | false for ddns-enable-updates |
    +-----------------+--------------------+-------------------------------+
+
+Kea 1.9.1 added a new parameter, ``ddns-update-on-renew``. Normally, when
+leases are renewed the server will only update DNS if the DNS information
+for the lease (e.g. FQDN, DNS update direction flags) have changed. Setting
+``ddns-update-on-renew`` to true instructs the server to always update the
+DNS information when a lease is renewed even if its DNS information has not
+changed.  This always Kea to "self-heal" in the event it was previously unable
+to add DNS entries or they were somehow lost by the DNS server.
+
+.. note::
+
+    Setting ``ddns-update-on-renew`` to true may impact performance, especially
+    for servers with numerous clients who renew often.
 
 .. _dhcpv4-d2-io-config:
 
