@@ -1,0 +1,2 @@
+/mysql_cb_messages.cc   -diff merge=ours
+/mysql_cb_messages.h    -diff merge=ours

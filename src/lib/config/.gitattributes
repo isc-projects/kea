@@ -1,0 +1,2 @@
+/config_messages.cc -diff merge=ours
+/config_messages.h  -diff merge=ours

@@ -1,0 +1,8 @@
+/dhcp4_messages.cc  -diff merge=ours
+/dhcp4_messages.h   -diff merge=ours
+/dhcp4_lexer.cc     -diff merge=ours
+/dhcp4_parser.cc    -diff merge=ours
+/dhcp4_parser.h     -diff merge=ours
+/location.hh        -diff merge=ours
+/position.hh        -diff merge=ours
+/stack.hh           -diff merge=ours

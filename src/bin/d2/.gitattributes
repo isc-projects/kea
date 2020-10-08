@@ -1,0 +1,8 @@
+/d2_messages.cc -diff merge=ours
+/d2_messages.h  -diff merge=ours
+/d2_lexer.cc    -diff merge=ours
+/d2_parser.cc   -diff merge=ours
+/d2_parser.h    -diff merge=ours
+/location.hh    -diff merge=ours
+/position.hh    -diff merge=ours
+/stack.hh       -diff merge=ours

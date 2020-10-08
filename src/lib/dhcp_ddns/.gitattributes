@@ -1,0 +1,2 @@
+/dhcp_ddns_messages.cc  -diff merge=ours
+/dhcp_ddns_messages.h   -diff merge=ours

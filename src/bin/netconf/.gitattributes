@@ -1,0 +1,8 @@
+/netconf_lexer.cc       -diff merge=ours
+/netconf_messages.cc    -diff merge=ours
+/netconf_messages.h     -diff merge=ours
+/netconf_parser.cc      -diff merge=ours
+/netconf_parser.h       -diff merge=ours
+/location.hh            -diff merge=ours
+/position.hh            -diff merge=ours
+/stack.hh               -diff merge=ours

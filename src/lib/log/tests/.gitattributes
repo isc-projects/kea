@@ -1,0 +1,2 @@
+/log_test_messages.cc   -diff merge=ours
+/log_test_messages.h    -diff merge=ours

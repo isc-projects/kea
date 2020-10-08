@@ -1,0 +1,2 @@
+/ha_messages.cc -diff merge=ours
+/ha_messages.h  -diff merge=ours

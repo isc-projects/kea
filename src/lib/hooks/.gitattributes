@@ -1,0 +1,2 @@
+/hooks_messages.cc  -diff merge=ours
+/hooks_messages.h   -diff merge=ours

@@ -1,0 +1,2 @@
+/db_messages.cc -diff merge=ours
+/db_messages.h  -diff merge=ours
