@@ -406,10 +406,11 @@ public:
 
     /// @brief Specifies what type of Host Reservations are supported.
     ///
-    /// Host reservations may be either in-pool (they reserve an address that
-    /// is in the dynamic pool) or out-of-pool (they reserve an address that is
-    /// not in the dynamic pool). HR may also be completely disabled for
-    /// performance reasons.
+    /// Host reservations may be any of the combinations of in-subnet (they
+    /// reserve an address that is in the subnet either in-pool or out-of-pool),
+    /// out-of-pool (they reserve an address that is not in the dynamic pool) or
+    /// global (they are defined at global level). HR may also be completely
+    /// disabled for performance reasons.
     ///
     /// @param inheritance inheritance mode to be used.
     /// @return Host reservation mode enabled.
@@ -442,6 +443,31 @@ public:
                     // reservation mode. However, we want to be 100% sure that this
                     // method doesn't throw. Let's just return unspecified.
                     return (hr_mode);
+                }
+            } else {
+                // Get global reservation modes and merge the values.
+                bool found = false;
+                uint8_t flags = 0;
+                util::Optional<bool> hr_mode_global;
+                getGlobalProperty(hr_mode_global, "reservation-modes.global");
+                if (!hr_mode_global.unspecified()) {
+                    flags |= Network::HR_GLOBAL;
+                    found = true;
+                }
+                util::Optional<bool> hr_mode_in_subnet;
+                getGlobalProperty(hr_mode_in_subnet, "reservation-modes.in-subnet");
+                if (!hr_mode_in_subnet.unspecified()) {
+                    flags |= Network::HR_IN_SUBNET;
+                    found = true;
+                }
+                util::Optional<bool> hr_mode_out_of_pool;
+                getGlobalProperty(hr_mode_out_of_pool, "reservation-modes.out-of-pool");
+                if (!hr_mode_out_of_pool.unspecified()) {
+                    flags |= Network::HR_OUT_OF_POOL;
+                    found = true;
+                }
+                if (found) {
+                    return (static_cast<Network::HRMode>(flags));
                 }
             }
         }
