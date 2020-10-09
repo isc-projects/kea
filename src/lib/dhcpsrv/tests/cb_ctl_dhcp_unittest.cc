@@ -41,6 +41,9 @@ namespace {
 class NonUniqueHostDataSource : public MemHostDataSource {
 public:
 
+    /// @brief Virtual destructor.
+    virtual ~NonUniqueHostDataSource() {}
+
     /// @brief Configure unique/non-unique IP reservations.
     ///
     /// @return Always false.
