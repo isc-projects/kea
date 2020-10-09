@@ -451,19 +451,25 @@ public:
                 util::Optional<bool> hr_mode_global;
                 getGlobalProperty(hr_mode_global, "reservation-modes.global");
                 if (!hr_mode_global.unspecified()) {
-                    flags |= Network::HR_GLOBAL;
+                    if (hr_mode_global.get()) {
+                        flags |= Network::HR_GLOBAL;
+                    }
                     found = true;
                 }
                 util::Optional<bool> hr_mode_in_subnet;
                 getGlobalProperty(hr_mode_in_subnet, "reservation-modes.in-subnet");
                 if (!hr_mode_in_subnet.unspecified()) {
-                    flags |= Network::HR_IN_SUBNET;
+                    if (hr_mode_in_subnet.get()) {
+                        flags |= Network::HR_IN_SUBNET;
+                    }
                     found = true;
                 }
                 util::Optional<bool> hr_mode_out_of_pool;
                 getGlobalProperty(hr_mode_out_of_pool, "reservation-modes.out-of-pool");
                 if (!hr_mode_out_of_pool.unspecified()) {
-                    flags |= Network::HR_OUT_OF_POOL;
+                    if (hr_mode_out_of_pool.get()) {
+                        flags |= Network::HR_OUT_OF_POOL;
+                    }
                     found = true;
                 }
                 if (found) {

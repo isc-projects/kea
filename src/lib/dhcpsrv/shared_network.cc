@@ -399,16 +399,6 @@ SharedNetwork4::subnetsIncludeMatchClientId(const Subnet4Ptr& first_subnet,
     return (false);
 }
 
-Subnet4Ptr
-SharedNetwork4::subnetsAllHRGlobal() const {
-    for (auto subnet : *getAllSubnets()) {
-        if (subnet->getHostReservationMode() != Network::HR_GLOBAL) {
-            return (subnet);
-        }
-    }
-    return (Subnet4Ptr());
-}
-
 ElementPtr
 SharedNetwork4::toElement() const {
     ElementPtr map = Network4::toElement();
@@ -496,16 +486,6 @@ Subnet6Ptr
 SharedNetwork6::getPreferredSubnet(const Subnet6Ptr& selected_subnet,
                                    const Lease::Type& lease_type) const {
     return (Impl::getPreferredSubnet(subnets_, selected_subnet, lease_type));
-}
-
-Subnet6Ptr
-SharedNetwork6::subnetsAllHRGlobal() const {
-    for (auto subnet : *getAllSubnets()) {
-        if (subnet->getHostReservationMode() != Network::HR_GLOBAL) {
-            return (subnet);
-        }
-    }
-    return (Subnet6Ptr());
 }
 
 ElementPtr

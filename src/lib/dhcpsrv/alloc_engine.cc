@@ -536,7 +536,7 @@ ConstHostPtr
 AllocEngine::ClientContext6::currentHost() const {
     Subnet6Ptr subnet = host_subnet_ ? host_subnet_ : subnet_;
     if (subnet) {
-        SubnetID id = (subnet_->getHostReservationMode() == Network::HR_GLOBAL ?
+        SubnetID id = (subnet_->getHostReservationMode() & Network::HR_GLOBAL ?
                        SUBNET_ID_GLOBAL : subnet->getID());
 
         auto host = hosts_.find(id);
@@ -551,7 +551,7 @@ AllocEngine::ClientContext6::currentHost() const {
 ConstHostPtr
 AllocEngine::ClientContext6::globalHost() const {
     Subnet6Ptr subnet = host_subnet_ ? host_subnet_ : subnet_;
-    if (subnet && subnet_->getHostReservationMode() == Network::HR_GLOBAL) {
+    if (subnet && (subnet_->getHostReservationMode() & Network::HR_GLOBAL)) {
         auto host = hosts_.find(SUBNET_ID_GLOBAL);
         if (host != hosts_.cend()) {
             return (host->second);
@@ -599,14 +599,16 @@ void AllocEngine::findReservation(ClientContext6& ctx) {
     SharedNetwork6Ptr network;
     subnet->getSharedNetwork(network);
 
-    if (subnet->getHostReservationMode() == Network::HR_GLOBAL) {
+    if (subnet->getHostReservationMode() & Network::HR_GLOBAL) {
         ConstHostPtr ghost = findGlobalReservation(ctx);
         if (ghost) {
             ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
 
             // @todo In theory, to support global as part of HR_ALL,
             //  we would just keep going, instead of returning.
-            return;
+            if (subnet->getHostReservationMode() == Network::HR_GLOBAL) {
+                return;
+            }
         }
     }
 
@@ -1072,7 +1074,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             }
 
             // First check for reservation when it is the choice.
-            if (check_reservation_first && (hr_mode == Network::HR_ALL)) {
+            if (check_reservation_first && (hr_mode & Network::HR_IN_SUBNET)) {
                 auto hosts = getIPv6Resrv(subnet->getID(), candidate);
                 if (!hosts.empty()) {
                     // Don't allocate.
@@ -1097,7 +1099,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 /// In-pool reservations: Check if this address is reserved for someone
                 /// else. There is no need to check for whom it is reserved, because if
                 /// it has been reserved for us we would have already allocated a lease.
-                if (!check_reservation_first && (hr_mode == Network::HR_ALL)) {
+                if (!check_reservation_first && (hr_mode & Network::HR_IN_SUBNET)) {
                     auto hosts = getIPv6Resrv(subnet->getID(), candidate);
                     if (!hosts.empty()) {
                         // Don't allocate.
@@ -1129,7 +1131,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 // allocation attempts.
             } else if (existing->expired()) {
                 // Make sure it's not reserved.
-                if (!check_reservation_first && (hr_mode == Network::HR_ALL)) {
+                if (!check_reservation_first && (hr_mode & Network::HR_IN_SUBNET)) {
                     auto hosts = getIPv6Resrv(subnet->getID(), candidate);
                     if (!hosts.empty()) {
                         // Don't allocate.
@@ -3211,7 +3213,7 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
 ConstHostPtr
 AllocEngine::ClientContext4::currentHost() const {
     if (subnet_) {
-        SubnetID id = (subnet_->getHostReservationMode() == Network::HR_GLOBAL ?
+        SubnetID id = (subnet_->getHostReservationMode() & Network::HR_GLOBAL ?
                        SUBNET_ID_GLOBAL : subnet_->getID());
 
         auto host = hosts_.find(id);
@@ -3224,7 +3226,7 @@ AllocEngine::ClientContext4::currentHost() const {
 
 ConstHostPtr
 AllocEngine::ClientContext4::globalHost() const {
-    if (subnet_ && subnet_->getHostReservationMode() == Network::HR_GLOBAL) {
+    if (subnet_ && (subnet_->getHostReservationMode() & Network::HR_GLOBAL)) {
         auto host = hosts_.find(SUBNET_ID_GLOBAL);
         if (host != hosts_.cend()) {
             return (host->second);
@@ -3311,7 +3313,7 @@ AllocEngine::findReservation(ClientContext4& ctx) {
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
 
-    if (subnet->getHostReservationMode() == Network::HR_GLOBAL) {
+    if (subnet->getHostReservationMode() & Network::HR_GLOBAL) {
         ConstHostPtr ghost = findGlobalReservation(ctx);
         if (ghost) {
             ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
