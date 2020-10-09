@@ -57,9 +57,9 @@
 // Since Kea 1.9.1, a more flexible option of configuring the way Kea uses host
 // reservations is available through the 'reservation-modes' map.
   "reservation-modes": {
-      "global": True,
-      "in-subnet": False,
-      "out-of-pool": False
+      "global": true,
+      "in-subnet": false,
+      "out-of-pool": false
   },
 
 // Define several global host reservations.

@@ -534,9 +534,9 @@
                 // Reservation modes specifying server's mode of operation when it
                 // fetches host reservations.
                 "reservation-modes": {
-                    "global": False,
-                    "in-subnet": True,
-                    "out-of-pool": True
+                    "global": false,
+                    "in-subnet": true,
+                    "out-of-pool": true
                 },
 
                 // List of client classes which must be evaluated when this shared
@@ -691,9 +691,9 @@
                         // Reservation modes specifying server's mode of operation when it
                         // fetches host reservations.
                         "reservation-modes": {
-                            "global": False,
-                            "in-subnet": True,
-                            "out-of-pool": True
+                            "global": false,
+                            "in-subnet": true,
+                            "out-of-pool": true
                         },
 
                         // Subnet level compute T1 and T2 timers.
@@ -816,9 +816,9 @@
         // Reservation modes specifying server's mode of operation when it
         // fetches host reservations.
         "reservation-modes": {
-            "global": False,
-            "in-subnet": True,
-            "out-of-pool": True
+            "global": false,
+            "in-subnet": true,
+            "out-of-pool": true
         },
 
         // Data directory.

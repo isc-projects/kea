@@ -54,9 +54,9 @@
       // Reservation modes specifying server's mode of operation when it
       // fetches host reservations.
       "reservation-modes": {
-          "global": False,
-          "in-subnet": True,
-          "out-of-pool": True
+          "global": false,
+          "in-subnet": true,
+          "out-of-pool": true
       },
 
       "pools": [ { "pool": "2001:db8:1::/120" } ],

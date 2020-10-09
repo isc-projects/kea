@@ -204,25 +204,36 @@ Network::toElement() const {
     // Set reservation mode
     Optional<Network::HRMode> hrmode = host_reservation_mode_;
     if (!hrmode.unspecified()) {
-        std::string mode;
-        switch (hrmode.get()) {
-        case HR_DISABLED:
-            mode = "disabled";
-            break;
-        case HR_OUT_OF_POOL:
-            mode = "out-of-pool";
-            break;
-        case HR_GLOBAL:
-            mode = "global";
-            break;
-        case HR_ALL:
-            mode = "all";
-            break;
-        default:
-            isc_throw(ToElementError,
-                      "invalid host reservation mode: " << hrmode.get());
+        bool hr_global = false;
+        bool hr_in_sunbet = false;
+        bool hr_out_of_pool = false;
+        if (hrmode & Network::HR_GLOBAL) {
+            hr_global = true;
         }
-        map->set("reservation-mode", Element::create(mode));
+        if (hrmode & Network::HR_IN_SUBNET) {
+            hr_in_sunbet = true;
+        }
+        if (hrmode & Network::HR_OUT_OF_POOL) {
+            hr_out_of_pool = true;
+        }
+        ElementPtr reservation_modes = Element::createMap();
+        if (hrmode == Network::HR_DISABLED) {
+            reservation_modes->set("global", Element::create(false));
+            reservation_modes->set("in-subnet", Element::create(false));
+            reservation_modes->set("out-of-pool", Element::create(false));
+        } else {
+            if (hr_global) {
+                reservation_modes->set("global", Element::create(true));
+            }
+            if (hr_in_sunbet) {
+                reservation_modes->set("in-subnet", Element::create(true));
+            }
+            if (hr_out_of_pool) {
+                reservation_modes->set("out-of-pool", Element::create(true));
+            }
+        }
+
+        map->set("reservation-modes", reservation_modes);
     }
 
     // Set options

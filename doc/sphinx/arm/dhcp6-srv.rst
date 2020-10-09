@@ -4082,9 +4082,9 @@ The correspondence of old values are:
    "Dhcp6": {
 
    "reservation-modes": {
-       "global": False,
-       "in-subnet": False,
-       "out-of-pool": False
+       "global": false,
+       "in-subnet": false,
+       "out-of-pool": false
    }
    }
 
@@ -4095,9 +4095,9 @@ The correspondence of old values are:
    "Dhcp6": {
 
    "reservation-modes": {
-       "global": True,
-       "in-subnet": False,
-       "out-of-pool": False
+       "global": true,
+       "in-subnet": false,
+       "out-of-pool": false
    }
    }
 
@@ -4108,9 +4108,9 @@ The correspondence of old values are:
    "Dhcp6": {
 
    "reservation-modes": {
-       "global": False,
-       "in-subnet": False,
-       "out-of-pool": True
+       "global": false,
+       "in-subnet": false,
+       "out-of-pool": true
    }
    }
 
@@ -4121,9 +4121,9 @@ The correspondence of old values are:
    "Dhcp6": {
 
    "reservation-modes": {
-       "global": False,
-       "in-subnet": True,
-       "out-of-pool": True
+       "global": false,
+       "in-subnet": true,
+       "out-of-pool": true
    }
    }
 
@@ -4134,9 +4134,9 @@ To activate both ``global`` and ``all``, the following combination can be used:
    "Dhcp6": {
 
    "reservation-modes": {
-       "global": True,
-       "in-subnet": True,
-       "out-of-pool": True
+       "global": true,
+       "in-subnet": true,
+       "out-of-pool": true
    }
    }
 
@@ -4152,9 +4152,9 @@ An example configuration that disables reservation looks as follows:
            {
            "subnet": "2001:db8:1::/64",
            "reservation-modes": {
-               "global": False,
-               "in-subnet": False,
-               "out-of-pool": False
+               "global": false,
+               "in-subnet": false,
+               "out-of-pool": false
            },
            ...
            }
@@ -4170,9 +4170,9 @@ An example configuration using global reservations is shown below:
 
 
        "reservation-modes": {
-           "global": True,
-           "in-subnet": False,
-           "out-of-pool": False
+           "global": true,
+           "in-subnet": false,
+           "out-of-pool": false
        },
        "reservations": [
           {
@@ -4299,9 +4299,9 @@ following can be used:
            # Reservation modes specifying server's mode of operation when it
            # fetches host reservations.
            "reservation-modes": {
-               "global": True,
-               "in-subnet": False,
-               "out-of-pool": False
+               "global": true,
+               "in-subnet": false,
+               "out-of-pool": false
            },
            "pools": [ { "pool": "2001:db8:1::-2001:db8:1::100" } ]
        } ]
@@ -4410,9 +4410,9 @@ following example:
         # Reservation modes specifying server's mode of operation when it
         # fetches host reservations.
         "reservation-modes": {
-            "global": True,
-            "in-subnet": False,
-            "out-of-pool": False
+            "global": true,
+            "in-subnet": false,
+            "out-of-pool": false
         },
         "shared-networks": [{
             "subnet6": [
@@ -4446,8 +4446,8 @@ will be assigned an address from the subnet 2001:db8:2::/64. Clients having
 a reservation for the ``reserved_class`` will be assigned an address from
 the subnet 2001:db8:1::/64. The subnets must belong to the same shared network.
 In addition, the reservation for the client class must be specified at the
-global scope (global reservation) and the ``reservation-mode`` must be
-set to ``global``.
+global scope (global reservation) and the ``reservation-modes`` must
+set ``global`` to true.
 
 In the example above the ``client-class`` could also be specified at the
 subnet level rather than pool level yielding the same effect.
@@ -6738,6 +6738,8 @@ the global DHCPv6 options (``option-data``) are modified using
    | require-client-classes      | n/a                        | yes       | yes       | yes       | yes        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+------------+
    | reservation-mode            | yes                        | yes       | yes       | n/a       | n/a        |
+   +-----------------------------+----------------------------+-----------+-----------+-----------+------------+
+   | reservation-modes           | yes                        | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+------------+
    | t1-percent                  | yes                        | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+------------+

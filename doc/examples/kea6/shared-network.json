@@ -75,9 +75,9 @@
             // Reservation modes specifying server's mode of operation when it
             // fetches host reservations.
             "reservation-modes": {
-                "global": False,
-                "in-subnet": True,
-                "out-of-pool": True
+                "global": false,
+                "in-subnet": true,
+                "out-of-pool": true
             },
 
             // List of subnets belonging to this particular shared-network
@@ -99,9 +99,9 @@
                     // Reservation modes specifying server's mode of operation when it
                     // fetches host reservations.
                     "reservation-modes": {
-                        "global": False,
-                        "in-subnet": True,
-                        "out-of-pool": True
+                        "global": false,
+                        "in-subnet": true,
+                        "out-of-pool": true
                     },
                     "subnet": "2001:db8:1::/64",
                     "pools": [ { "pool": "2001:db8:1:abcd::/64" } ],
@@ -123,9 +123,9 @@
                     // Reservation modes specifying server's mode of operation when it
                     // fetches host reservations.
                     "reservation-modes": {
-                        "global": False,
-                        "in-subnet": True,
-                        "out-of-pool": True
+                        "global": false,
+                        "in-subnet": true,
+                        "out-of-pool": true
                     },
                     "subnet": "3000::/16",
                     "valid-lifetime": 40

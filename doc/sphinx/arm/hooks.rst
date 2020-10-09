@@ -2660,9 +2660,9 @@ An example response could look as follows:
                # Reservation modes specifying server's mode of operation when it
                # fetches host reservations.
                "reservation-modes": {
-                   "global": False,
-                   "in-subnet": True,
-                   "out-of-pool": True
+                   "global": false,
+                   "in-subnet": true,
+                   "out-of-pool": true
                },
                "subnet4": [
                    {

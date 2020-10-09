@@ -70,9 +70,9 @@
             // Reservation modes specifying server's mode of operation when it
             // fetches host reservations.
             "reservation-modes": {
-                "global": False,
-                "in-subnet": True,
-                "out-of-pool": True
+                "global": false,
+                "in-subnet": true,
+                "out-of-pool": true
             },
 
             // This starts a list of subnets allowed in this shared network.
@@ -100,9 +100,9 @@
                     // Reservation modes specifying server's mode of operation when it
                     // fetches host reservations.
                     "reservation-modes": {
-                        "global": False,
-                        "in-subnet": True,
-                        "out-of-pool": True
+                        "global": false,
+                        "in-subnet": true,
+                        "out-of-pool": true
                     },
                     "subnet": "10.0.0.0/8",
                     "valid-lifetime": 30
@@ -122,9 +122,9 @@
                     // Reservation modes specifying server's mode of operation when it
                     // fetches host reservations.
                     "reservation-modes": {
-                        "global": False,
-                        "in-subnet": True,
-                        "out-of-pool": True
+                        "global": false,
+                        "in-subnet": true,
+                        "out-of-pool": true
                     },
                     "subnet": "192.0.2.0/24",
                     "valid-lifetime": 30
