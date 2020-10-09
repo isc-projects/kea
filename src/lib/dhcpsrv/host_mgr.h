@@ -656,8 +656,8 @@ private:
     /// reservations must be unique (true) or non-unique (false).
     ///
     /// This flag is set to false only after calling @c setIPReservationsUnique
-    /// with the @c unique value set to false and after all backends accepted
-    /// this setting.
+    /// with the @c unique value set to false and after this setting was
+    /// successfully applied to all backends.
     bool ip_reservations_unique_;
 
     /// @brief Private default constructor.

@@ -53,7 +53,7 @@ CfgDbAccess::getHostDbAccessStringList() const {
 }
 
 void
-CfgDbAccess::createManagers() {
+CfgDbAccess::createManagers() const {
     // Recreate lease manager.
     LeaseMgrFactory::destroy();
     LeaseMgrFactory::create(getLeaseDbAccessString());
@@ -76,6 +76,11 @@ CfgDbAccess::createManagers() {
     HostMgr::checkCacheBackend(true);
 
     // Populate the ip-reservations-unique global setting to HostMgr.
+    // This operation may fail if any of the host backends does not support
+    // the new setting. We throw an exception here to signal configuration
+    // error. The exception does not contain the backend name but the called
+    // function in HostMgr logs a warning message that contains the name of
+    // the backend.
     if (!HostMgr::instance().setIPReservationsUnique(ip_reservations_unique_)) {
         isc_throw(InvalidOperation, "unable to configure the server to allow "
                   "non unique IP reservations (ip-reservations-unique=false) "

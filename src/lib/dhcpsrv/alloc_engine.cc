@@ -1505,7 +1505,8 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
             if (hosts.size() == 1) {
                 if (ctx.currentIA().type_ == Lease::TYPE_NA) {
                     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE)
-                        .arg(candidate->addr_.toText()).arg(ctx.duid_->toText())
+                        .arg(candidate->addr_.toText())
+                        .arg(ctx.duid_->toText())
                         .arg(hosts.front()->getIdentifierAsText());
                 } else {
                     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE)
@@ -1517,7 +1518,8 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
             } else {
                 if (ctx.currentIA().type_ == Lease::TYPE_NA) {
                     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE)
-                        .arg(candidate->addr_.toText()).arg(ctx.duid_->toText())
+                        .arg(candidate->addr_.toText())
+                        .arg(ctx.duid_->toText())
                         .arg(hosts.size());
                 } else {
                     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE)

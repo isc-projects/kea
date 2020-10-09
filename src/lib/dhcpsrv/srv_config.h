@@ -801,7 +801,7 @@ public:
     static void moveDdnsParams(isc::data::ElementPtr srv_elem);
 
     /// @brief Configures the server to allow or disallow specifying multiple
-    /// hosts with the same IP address.
+    /// hosts with the same IP address/subnet.
     ///
     /// This setting is applied in @c CfgDbAccess and @c CfgHosts. This function
     /// should be called when the server is being configured using the configuration

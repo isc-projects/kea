@@ -230,6 +230,9 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
     }
 
     if (audit_entries.empty()) {
+        // If we're configuring the server after startup, we do not apply the
+        // ip-reservations-unique setting here. It will be applied when the
+        // configuration is committed.
         CfgMgr::instance().mergeIntoStagingCfg(external_cfg->getSequence());
     } else {
         if (globals_fetched) {

@@ -87,23 +87,23 @@ backends may still contain multiple reservations for the same IP addresses
 causing problems with lease allocation for certain addresses. Please ensure
 that all such duplicates are removed.
 
-% DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED ignoring "ip-reservations-unique" setting because at least one of the host database backends does not support non unique IP reservations
+% DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED ignoring "ip-reservations-unique" setting because at least one of the host database backends does not support non unique IP reservations in a subnet
 This warning message is issued when the server failed to use the new setting
 of the ip-reservations-unique global parameter configured via the configuration
 backend. Some host database backends used apparently do not support specifying
-several reservations for teh same IP address. The administrator should either
-stop using the backend that does not support this setting or set the
-value of the ip-reservations-unique to true to resolve the configuration
+several reservations for the same IP address in a subnet. The administrator
+should either stop using the backend that does not support this setting or set
+the value of the ip-reservations-unique to true to resolve the configuration
 issue.
 
-% DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED ignoring "ip-reservations-unique" setting because at least one of the host database backends does not support non unique IP reservations
+% DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED ignoring "ip-reservations-unique" setting because at least one of the host database backends does not support non unique IP reservations in a subnet
 This warning message is issued when the server failed to use the new setting
 of the ip-reservations-unique global parameter configured via the configuration
 backend. Some host database backends used apparently do not support specifying
-several reservations for teh same IP address. The administrator should either
-stop using the backend that does not support this setting or set the
-value of the ip-reservations-unique to true to resolve the configuration
-issue.
+several reservations for the same IP address or delegated prefix in a subnet.
+The administrator should either stop using the backend that does not support
+this setting or set the value of the ip-reservations-unique to true to resolve
+the configuration issue.
 
 % DHCPSRV_CFGMGR_NEW_SUBNET4 a new subnet has been added to configuration: %1
 This is an informational message reporting that the configuration has
