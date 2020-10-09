@@ -5661,7 +5661,7 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
     ///       - 2001:db8:3::/64 (reservations disabled)
     ///       - 2001:db8:4::/64 (global reservations)
     ///       - 2001:db8:5::/64 (reservations not specified)
-    const char* HR_CONFIG =
+    const char* hr_config =
         "{"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -5693,8 +5693,8 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
         "\"valid-lifetime\": 4000 }";
 
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP6(HR_CONFIG));
-    extractConfig(HR_CONFIG);
+    ASSERT_NO_THROW(json = parseDHCP6(hr_config));
+    extractConfig(hr_config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -5751,7 +5751,7 @@ TEST_F(Dhcp6ParserTest, hostReservationModesPerSubnet) {
     ///       - 2001:db8:4::/64 (global reservations)
     ///       - 2001:db8:5::/64 (reservations not specified)
     ///       - 2001:db8:5::/64 (global + all enabled)
-    const char* HR_CONFIG =
+    const char* hr_config =
         "{"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -5803,8 +5803,8 @@ TEST_F(Dhcp6ParserTest, hostReservationModesPerSubnet) {
         "\"valid-lifetime\": 4000 }";
 
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP6(HR_CONFIG));
-    extractConfig(HR_CONFIG);
+    ASSERT_NO_THROW(json = parseDHCP6(hr_config));
+    extractConfig(hr_config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -5862,7 +5862,7 @@ TEST_F(Dhcp6ParserTest, hostReservationGlobal) {
     ///   - 2 subnets with:
     ///       - 2001:db8:1::/64 (all reservations enabled)
     ///       - 2001:db8:2::/64 (reservations not specified)
-    const char* HR_CONFIG =
+    const char* hr_config =
         "{"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -5880,8 +5880,8 @@ TEST_F(Dhcp6ParserTest, hostReservationGlobal) {
         "\"valid-lifetime\": 4000 }";
 
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP6(HR_CONFIG));
-    extractConfig(HR_CONFIG);
+    ASSERT_NO_THROW(json = parseDHCP6(hr_config));
+    extractConfig(hr_config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -5919,7 +5919,7 @@ TEST_F(Dhcp6ParserTest, hostReservationModesGlobal) {
     ///   - 2 subnets with:
     ///       - 2001:db8:1::/64 (all reservations enabled)
     ///       - 2001:db8:2::/64 (reservations not specified)
-    const char* HR_CONFIG =
+    const char* hr_config =
         "{"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -5942,8 +5942,8 @@ TEST_F(Dhcp6ParserTest, hostReservationModesGlobal) {
         "\"valid-lifetime\": 4000 }";
 
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP6(HR_CONFIG));
-    extractConfig(HR_CONFIG);
+    ASSERT_NO_THROW(json = parseDHCP6(hr_config));
+    extractConfig(hr_config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));

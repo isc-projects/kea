@@ -3320,7 +3320,9 @@ AllocEngine::findReservation(ClientContext4& ctx) {
 
             // @todo In theory, to support global as part of HR_ALL,
             //  we would just keep going, instead of returning.
-            return;
+            if (subnet->getHostReservationMode() == Network::HR_GLOBAL) {
+                return;
+            }
         }
     }
 
