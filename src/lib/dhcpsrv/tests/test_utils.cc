@@ -123,7 +123,7 @@ int findLastSocketFd() {
     return (last_socket);
 }
 
-fillFdHoles::fillFdHoles(int limit) : fds_() {
+FillFdHoles::FillFdHoles(int limit) : fds_() {
     if (limit <= 0) {
         return;
     }
@@ -141,7 +141,7 @@ fillFdHoles::fillFdHoles(int limit) : fds_() {
     }
 }
 
-fillFdHoles::~fillFdHoles() {
+FillFdHoles::~FillFdHoles() {
     while (!fds_.empty()) {
         static_cast<void>(close(fds_.back()));
         fds_.pop_back();

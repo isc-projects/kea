@@ -57,17 +57,22 @@ int findLastSocketFd();
 /// This tool detects and fills such holes. It uses the RAII idiom to avoid
 /// file descriptor leaks: the destructor called when the object goes out
 /// of scope closes all file descriptors which were opened by the constructor.
-class fillFdHoles {
+class FillFdHoles {
 public:
     /// @brief Constructor
     ///
+    /// Holes between 0 and the specified limit will be filled by opening
+    /// the null device. Typically the limit argument is the result of
+    /// a previous call to @ref findLastSocketFd. Note if the limit is
+    /// 0 or negative the constructor returns doing nothing.
+    ///
     /// @param limit Holes will be filled up to this limit
-    fillFdHoles(int limit);
+    FillFdHoles(int limit);
 
     /// @brief Destructor
     ///
     /// The destructor closes members of the list
-    ~fillFdHoles();
+    ~FillFdHoles();
 
 private:
     /// @brief The list of holes
