@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define LIBDHCPSRV_TEST_UTILS_H
 
 #include <dhcpsrv/lease_mgr.h>
+#include <list>
 #include <vector>
 
 namespace isc {
@@ -48,9 +49,33 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second);
 /// are none.
 int findLastSocketFd();
 
+/// @brief RAII tool which fills holes in the file descriptor sequence
+///
+/// The @ref findLastSocketFd requires new socket descriptors are allocated
+/// after the last open socket descriptor so there is no hole i.e. a free
+/// file descriptor in the sequence.
+/// This tool detects and fills such holes. It uses the RAII idiom to avoid
+/// file descriptor leaks: the destructor called when the object goes out
+/// of scope closes all file descriptors which were opened by the constructor.
+class fillFdHoles {
+public:
+    /// @brief Constructor
+    ///
+    /// @param limit Holes will be filled up to this limit
+    fillFdHoles(int limit);
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+    /// @brief Destructor
+    ///
+    /// The destructor closes members of the list
+    ~fillFdHoles();
+
+private:
+    /// @brief The list of holes
+    std::list<int> fds_;
+};
+
+} // namespace test
+} // namespace dhcp
+} // namespace isc
 
 #endif

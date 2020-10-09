@@ -1447,6 +1447,9 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
     // be the next one.
     int last_open_socket = findLastSocketFd();
 
+    // Fill holes.
+    fillFdHoles holes(last_open_socket);
+
     // Connect to the host backend.
     ASSERT_NO_THROW(HostMgr::addBackend(validConnectString()));
 

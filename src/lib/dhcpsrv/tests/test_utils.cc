@@ -123,6 +123,31 @@ int findLastSocketFd() {
     return (last_socket);
 }
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+fillFdHoles::fillFdHoles(int limit) : fds_() {
+    if (limit <= 0) {
+        return;
+    }
+    for (;;) {
+        int fd = open("/dev/null", O_RDWR, 0);
+        if (fd == -1) {
+            return;
+        }
+        if (fd < limit) {
+            fds_.push_front(fd);
+        } else {
+            static_cast<void>(close(fd));
+            return;
+        }
+    }
+}
+
+fillFdHoles::~fillFdHoles() {
+    while (!fds_.empty()) {
+        static_cast<void>(close(fds_.back()));
+        fds_.pop_back();
+    }
+}
+
+} // namespace test
+} // namespace dhcp
+} // namespace isc
