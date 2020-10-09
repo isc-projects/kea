@@ -155,7 +155,7 @@ public:
 
     /// @brief Specifies allowed host reservation mode.
     ///
-    typedef enum  {
+    typedef enum : uint8_t {
 
         /// None - host reservation is disabled. No reservation types
         /// are allowed.
@@ -181,7 +181,10 @@ public:
         /// AllocEngine code has to check whether there are reservations, even
         /// when dealing with reservations from within the dynamic pools.
         HR_ALL = HR_IN_SUBNET | HR_OUT_OF_POOL
-    } HRMode;
+    } HRModeFlag;
+
+    /// @brief Bitset used to store @ref HRModeFlag flags.
+    typedef uint8_t HRMode;
 
     /// @brief Inheritance "mode" used when fetching an optional @c Network
     /// parameter.
@@ -811,14 +814,39 @@ protected:
     template<typename ReturnType>
     ReturnType getGlobalProperty(ReturnType property,
                                  const std::string& global_name) const {
-        if (!global_name.empty() && fetch_globals_fn_) {
+        std::string member_name;
+        std::string search_name = global_name;
+        auto found = global_name.find('.');
+        if (found != std::string::npos) {
+            if (std::count(global_name.begin(), global_name.end(), '.') > 1) {
+                isc_throw(BadValue, "more than one level of indirection found in: "
+                          << global_name);
+            }
+            member_name = global_name.substr(found + 1, global_name.length() - found - 1);
+            search_name = global_name.substr(0, found);
+        }
+        if (!search_name.empty() && fetch_globals_fn_) {
             data::ConstElementPtr globals = fetch_globals_fn_();
             if (globals && (globals->getType() == data::Element::map)) {
-                data::ConstElementPtr global_param = globals->get(global_name);
+                data::ConstElementPtr global_param = globals->get(search_name);
                 if (global_param) {
-                    // If there is a global parameter, convert it to the
-                    // optional value of the given type and return.
-                    return (data::ElementValue<typename ReturnType::ValueType>()(global_param));
+                    if (!member_name.empty()) {
+                        if (global_param->getType() != data::Element::map) {
+                            isc_throw(BadValue, "the parameter: " << global_name
+                                                 << " must be a map");
+                        }
+                        auto member_element = global_param->get(member_name);
+                        if (member_element) {
+                            // If there is a global parameter with the specified
+                            // member, convert the member to the optional value
+                            // of the given type and return.
+                            return (data::ElementValue<typename ReturnType::ValueType>()(member_element));
+                        }
+                    } else {
+                        // If there is a global parameter, convert it to the
+                        // optional value of the given type and return.
+                        return (data::ElementValue<typename ReturnType::ValueType>()(global_param));
+                    }
                 }
             }
         }

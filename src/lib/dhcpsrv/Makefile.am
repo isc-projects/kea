@@ -45,6 +45,8 @@ EXTRA_DIST += parsers/ifaces_config_parser.h
 EXTRA_DIST += parsers/multi_threading_config_parser.cc
 EXTRA_DIST += parsers/multi_threading_config_parser.h
 EXTRA_DIST += parsers/option_data_parser.h
+EXTRA_DIST += parsers/reservation_modes_parser.cc
+EXTRA_DIST += parsers/reservation_modes_parser.h
 EXTRA_DIST += parsers/sanity_checks_parser.cc
 EXTRA_DIST += parsers/sanity_checks_parser.h
 EXTRA_DIST += parsers/simple_parser4.cc
@@ -178,6 +180,8 @@ libkea_dhcpsrv_la_SOURCES += parsers/option_data_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/option_data_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/dhcp_queue_control_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/dhcp_queue_control_parser.h
+libkea_dhcpsrv_la_SOURCES += parsers/reservation_modes_parser.cc
+libkea_dhcpsrv_la_SOURCES += parsers/reservation_modes_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/sanity_checks_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/sanity_checks_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/shared_network_parser.cc
@@ -408,6 +412,7 @@ libkea_dhcpsrv_parsers_include_HEADERS = \
 	parsers/multi_threading_config_parser.h \
 	parsers/option_data_parser.h \
 	parsers/dhcp_queue_control_parser.h \
+	parsers/reservation_modes_parser.h \
 	parsers/sanity_checks_parser.h \
 	parsers/shared_network_parser.h \
 	parsers/shared_networks_list_parser.h \

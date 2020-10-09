@@ -8,10 +8,8 @@
 
 #include <cc/data.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/parsers/dhcp_queue_control_parser.h>
-#include <testutils/multi_threading_utils.h>
+#include <dhcpsrv/parsers/reservation_modes_parser.h>
 #include <testutils/test_to_element.h>
-#include <util/multi_threading_mgr.h>
 #include <gtest/gtest.h>
 
 using namespace isc::data;
@@ -21,8 +19,8 @@ using namespace isc::util;
 
 namespace {
 
-/// @brief Test fixture class for @c DHCPQueueControlParser
-class DHCPQueueControlParserTest : public ::testing::Test {
+/// @brief Test fixture class for @c HostReservationModesParser
+class HostReservationModesParserTest : public ::testing::Test {
 protected:
 
     /// @brief Setup for each test.
@@ -38,18 +36,18 @@ protected:
 };
 
 void
-DHCPQueueControlParserTest::SetUp() {
+HostReservationModesParserTest::SetUp() {
     CfgMgr::instance().clear();
 }
 
 void
-DHCPQueueControlParserTest::TearDown() {
+HostReservationModesParserTest::TearDown() {
     CfgMgr::instance().clear();
 }
 
-// Verifies that DHCPQueueControlParser handles
-// expected valid dhcp-queue-control content
-TEST_F(DHCPQueueControlParserTest, validContent) {
+// Verifies that HostReservationModesParser handles
+// expected valid reservation-modes content
+TEST_F(HostReservationModesParserTest, validContent) {
     struct Scenario {
         std::string description_;
         std::string json_;
@@ -90,7 +88,7 @@ TEST_F(DHCPQueueControlParserTest, validContent) {
 
     // Iterate over the valid scenarios and verify they succeed.
     ConstElementPtr config_elems;
-    ConstElementPtr queue_control;
+    Network::HRMode reservation_modes;
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
@@ -98,28 +96,23 @@ TEST_F(DHCPQueueControlParserTest, validContent) {
             ASSERT_NO_THROW(config_elems = Element::fromJSON(scenario.json_))
                             << "invalid JSON, test is broken";
 
-            // Parsing config into a queue control should succeed.
-            DHCPQueueControlParser parser;
+            // Parsing config into a reservation modes parser should succeed.
+            HostReservationModesParser parser;
             try {
-                queue_control = parser.parse(config_elems);
+                reservation_modes = parser.parse(config_elems);
             } catch (const std::exception& ex) {
                 ADD_FAILURE() << "parser threw an exception: " << ex.what();
             }
 
-            // Verify the resultant queue control.
-            ASSERT_TRUE(queue_control);
-
-            // The parser should have created a duplicate of the
-            // configuration elements.
-            ASSERT_TRUE(queue_control.get() != config_elems.get());
-            EXPECT_TRUE(queue_control->equals(*config_elems));
+            // Verify the resultant reservation-modes.
+            ASSERT_TRUE(reservation_modes);
         }
     }
 }
 
-// Verifies that DHCPQueueControlParser correctly catches
-// invalid dhcp-queue-control content
-TEST_F(DHCPQueueControlParserTest, invalidContent) {
+// Verifies that HostReservationModesParser correctly catches
+// invalid reservation-modes content
+TEST_F(HostReservationModesParserTest, invalidContent) {
     struct Scenario {
         std::string description_;
         std::string json_;
@@ -162,46 +155,11 @@ TEST_F(DHCPQueueControlParserTest, invalidContent) {
             ASSERT_NO_THROW(config_elems = Element::fromJSON(scenario.json_))
                             << "invalid JSON, test is broken";
 
-            // Parsing config into a queue control should succeed.
-            DHCPQueueControlParser parser;
+            // Parsing config into a reservation modes parser should succeed.
+            HostReservationModesParser parser;
             EXPECT_THROW(parser.parse(config_elems), DhcpConfigError);
         }
     }
-}
-
-// Verifies that DHCPQueueControlParser disables the queue when multi-threading
-// is enabled
-TEST_F(DHCPQueueControlParserTest, multiThreading) {
-    // Enable config with some queue type.
-    std::string config =
-        "{ \n"
-        "   \"enable-queue\": true, \n"
-        "   \"queue-type\": \"some-type\" \n"
-        "} \n";
-
-    // Construct the config JSON.
-    ConstElementPtr config_elems;
-    ASSERT_NO_THROW(config_elems = Element::fromJSON(config))
-        << "invalid JSON, test is broken";
-
-    // Parse config.
-    DHCPQueueControlParser parser;
-    ConstElementPtr queue_control;
-    ASSERT_FALSE(MultiThreadingMgr::instance().getMode());
-    ASSERT_NO_THROW(queue_control = parser.parse(config_elems))
-        << "parse fails, test is broken";
-    // Verify that queue is enabled.
-    ASSERT_TRUE(queue_control);
-    ASSERT_TRUE(queue_control->get("enable-queue"));
-    EXPECT_EQ("true", queue_control->get("enable-queue")->str());
-
-    // Retry with multi-threading.
-    MultiThreadingTest mt(true);
-    ASSERT_TRUE(MultiThreadingMgr::instance().getMode());
-    ASSERT_NO_THROW(queue_control = parser.parse(config_elems));
-    ASSERT_TRUE(queue_control);
-    ASSERT_TRUE(queue_control->get("enable-queue"));
-    EXPECT_EQ("false", queue_control->get("enable-queue")->str());
 }
 
 }; // anonymous namespace

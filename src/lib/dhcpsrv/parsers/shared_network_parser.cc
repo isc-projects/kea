@@ -185,6 +185,9 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
+        // reservation-modes
+        parseHostReservationModes(shared_network_data, network);
+
         // reservation-mode
         parseHostReservationMode(shared_network_data, network);
 
@@ -350,6 +353,9 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
                 shared_network->setRelayInfo(*relay_info);
             }
         }
+
+        // reservation-modes
+        parseHostReservationModes(shared_network_data, network);
 
         // reservation-mode
         parseHostReservationMode(shared_network_data, network);

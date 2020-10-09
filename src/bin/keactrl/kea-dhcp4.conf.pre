@@ -360,7 +360,7 @@
                 // specific options.
                 //
                 // When using reservations, it is useful to configure
-                // reservation-mode (subnet specific parameter) and
+                // reservation-modes (subnet specific parameter) and
                 // host-reservation-identifiers (global parameter).
                 {
                     "client-id": "01:12:23:34:45:56:67",

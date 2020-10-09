@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcpsrv/triplet.h>
 #include <dhcpsrv/parsers/base_network_parser.h>
+#include <dhcpsrv/parsers/reservation_modes_parser.h>
 #include <util/optional.h>
 #include <util/strutil.h>
 
@@ -201,12 +202,37 @@ void
 BaseNetworkParser::parseHostReservationMode(const data::ConstElementPtr& network_data,
                                             NetworkPtr& network) {
     if (network_data->contains("reservation-mode")) {
+        if (network_data->contains("reservation-modes")) {
+            isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
+                                       " and 'reservation-modes' parameters");
+        }
         try {
             std::string hr_mode = getString(network_data, "reservation-mode");
             network->setHostReservationMode(Network::hrModeFromString(hr_mode));
         } catch (const BadValue& ex) {
             isc_throw(DhcpConfigError, "invalid reservation-mode parameter: "
                       << ex.what() << " (" << getPosition("reservation-mode",
+                                                          network_data) << ")");
+        }
+    }
+}
+
+void
+BaseNetworkParser::parseHostReservationModes(const data::ConstElementPtr& network_data,
+                                             NetworkPtr& network) {
+    if (network_data->contains("reservation-modes")) {
+        if (network_data->contains("reservation-mode")) {
+            isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
+                                       " and 'reservation-modes' parameters");
+        }
+        try {
+            auto reservation_modes = network_data->get("reservation-modes");
+            HostReservationModesParser parser;
+            Network::HRMode flags = parser.parse(reservation_modes);
+            network->setHostReservationMode(flags);
+        } catch (const BadValue& ex) {
+            isc_throw(DhcpConfigError, "invalid reservation-modes parameter: "
+                      << ex.what() << " (" << getPosition("reservation-modes",
                                                           network_data) << ")");
         }
     }

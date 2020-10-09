@@ -859,7 +859,11 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         }
     }
 
-    // Let's set host reservation mode.
+    // reservation-modes
+    parseHostReservationModes(params, network);
+
+    // Let's set host reservation mode. If not specified, the default value of
+    // all will be used.
     parseHostReservationMode(params, network);
 
     // Try setting up client class.
@@ -1329,6 +1333,9 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
         subnet6->setIface(iface);
     }
+
+    // reservation-modes
+    parseHostReservationModes(params, network);
 
     // Let's set host reservation mode. If not specified, the default value of
     // all will be used.

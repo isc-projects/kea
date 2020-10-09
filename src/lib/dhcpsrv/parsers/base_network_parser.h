@@ -80,12 +80,24 @@ protected:
 
     /// @brief Parses host reservation mode.
     ///
+    /// @note Configuring 'reservation-mode' is deprecated. The new map
+    /// 'reservation-modes' should be used.
+    ///
     /// @param network_data Data element holding shared network
     /// configuration to be parsed.
     /// @param [out] network Pointer to a network in which parsed data is
     /// to be stored.
     void parseHostReservationMode(const data::ConstElementPtr& network_data,
                                   NetworkPtr& network);
+
+    /// @brief Parses host reservation modes.
+    ///
+    /// @param network_data Data element holding shared network
+    /// configuration to be parsed.
+    /// @param [out] network Pointer to a network in which parsed data is
+    /// to be stored.
+    void parseHostReservationModes(const data::ConstElementPtr& network_data,
+                                   NetworkPtr& network);
 
     /// @brief Parses parameters pertaining to DDNS behavior.
     ///

@@ -564,6 +564,15 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             }
         }
 
+        ConstElementPtr reservation_mode = mutable_cfg->get("reservation-mode");
+        if (reservation_mode) {
+            reservation_mode = mutable_cfg->get("reservation-modes");
+            if (reservation_mode) {
+                isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
+                                           " and 'reservation-modes' parameters");
+            }
+        }
+
         ConstElementPtr config_control = mutable_cfg->get("config-control");
         if (config_control) {
             parameter_name = "config-control";
@@ -628,6 +637,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "boot-file-name") ||
                  (config_pair.first == "server-tag") ||
                  (config_pair.first == "reservation-mode") ||
+                 (config_pair.first == "reservation-modes") ||
                  (config_pair.first == "calculate-tee-times") ||
                  (config_pair.first == "t1-percent") ||
                  (config_pair.first == "t2-percent") ||

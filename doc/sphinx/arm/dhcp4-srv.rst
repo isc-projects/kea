@@ -4853,7 +4853,15 @@ following can be used:
        "valid-lifetime": 600,
        "subnet4": [ {
            "subnet": "10.0.0.0/24",
-           "reservation-mode": "global",
+           # It is deprecated by the "reservation-modes" map.
+           # "reservation-mode": "global",
+           # Reservation modes specifying server's mode of operation when it
+           # fetches host reservations.
+           "reservation-modes": {
+               "global": True,
+               "in-subnet": False,
+               "out-of-pool": False
+           },
            "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ]
        } ]
    }
@@ -4956,7 +4964,15 @@ following example:
             "hw-address": "aa:bb:cc:dd:ee:fe",
             "client-classes": [ "reserved_class" ]
         }],
-        "reservation-mode": "global",
+        # It is deprecated by the "reservation-modes" map.
+        # "reservation-mode": "global",
+        # Reservation modes specifying server's mode of operation when it
+        # fetches host reservations.
+        "reservation-modes": {
+            "global": True,
+            "in-subnet": False,
+            "out-of-pool": False
+        },
         "shared-networks": [{
             "subnet4": [
                 {
