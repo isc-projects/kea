@@ -449,7 +449,8 @@ public:
                 bool found = false;
                 uint8_t flags = 0;
                 util::Optional<bool> hr_mode_global;
-                getGlobalProperty(hr_mode_global, "reservation-modes.global");
+                hr_mode_global = getGlobalProperty(hr_mode_global,
+                                                   "reservation-modes.global");
                 if (!hr_mode_global.unspecified()) {
                     if (hr_mode_global.get()) {
                         flags |= Network::HR_GLOBAL;
@@ -457,7 +458,8 @@ public:
                     found = true;
                 }
                 util::Optional<bool> hr_mode_in_subnet;
-                getGlobalProperty(hr_mode_in_subnet, "reservation-modes.in-subnet");
+                hr_mode_in_subnet = getGlobalProperty(hr_mode_in_subnet,
+                                                      "reservation-modes.in-subnet");
                 if (!hr_mode_in_subnet.unspecified()) {
                     if (hr_mode_in_subnet.get()) {
                         flags |= Network::HR_IN_SUBNET;
@@ -465,7 +467,8 @@ public:
                     found = true;
                 }
                 util::Optional<bool> hr_mode_out_of_pool;
-                getGlobalProperty(hr_mode_out_of_pool, "reservation-modes.out-of-pool");
+                hr_mode_out_of_pool = getGlobalProperty(hr_mode_out_of_pool,
+                                                        "reservation-modes.out-of-pool");
                 if (!hr_mode_out_of_pool.unspecified()) {
                     if (hr_mode_out_of_pool.get()) {
                         flags |= Network::HR_OUT_OF_POOL;
