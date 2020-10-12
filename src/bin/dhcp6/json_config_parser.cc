@@ -420,7 +420,6 @@ void configureCommandChannel() {
 isc::data::ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                      bool check_only) {
-
     if (!config_set) {
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  string("Can't parse NULL config"));
@@ -451,27 +450,38 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // Print the list of known backends.
     HostDataSourceFactory::printRegistered();
 
-    // This is a way to convert ConstElementPtr to ElementPtr.
-    // We need a config that can be edited, because we will insert
-    // default values and will insert derived values as well.
-    ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
-
-    // answer will hold the result.
+    // Answer will hold the result.
     ConstElementPtr answer;
-    // rollback informs whether error occurred and original data
+    // Rollback informs whether error occurred and original data
     // have to be restored to global storages.
     bool rollback = false;
     // Global parameter name in case of an error.
     string parameter_name;
+    ElementPtr mutable_cfg;
     SrvConfigPtr srv_config;
     try {
         // Get the staging configuration.
         srv_config = CfgMgr::instance().getStagingCfg();
 
+        // This is a way to convert ConstElementPtr to ElementPtr.
+        // We need a config that can be edited, because we will insert
+        // default values and will insert derived values as well.
+        mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+
+        ConstElementPtr reservation_mode = mutable_cfg->get("reservation-mode");
+        if (reservation_mode) {
+            // log warning for deprecated option
+            reservation_mode = mutable_cfg->get("reservation-modes");
+            if (reservation_mode) {
+                isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
+                                           " and 'reservation-modes' parameters");
+            }
+        }
+
         // Relocate dhcp-ddns parameters that have moved to global scope.
         // Rule is that a global value overrides the dhcp-ddns value, so
         // we need to do this before we apply global defaults.
-        // Note this is done for backward compatibilty.
+        // Note this is done for backward compatibility.
         srv_config->moveDdnsParams(mutable_cfg);
 
         // Set all default values if not specified by the user.
@@ -688,15 +698,6 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             }
         }
 
-        ConstElementPtr reservation_mode = mutable_cfg->get("reservation-mode");
-        if (reservation_mode) {
-            reservation_mode = mutable_cfg->get("reservation-modes");
-            if (reservation_mode) {
-                isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
-                                           " and 'reservation-modes' parameters");
-            }
-        }
-
         ConstElementPtr config_control = mutable_cfg->get("config-control");
         if (config_control) {
             parameter_name = "config-control";
@@ -829,14 +830,16 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
                   .arg(parameter_name).arg(ex.what());
         answer = isc::config::createAnswer(1, ex.what());
+
         // An error occurred, so make sure that we restore original data.
         rollback = true;
 
     } catch (...) {
-        // for things like bad_cast in boost::lexical_cast
+        // For things like bad_cast in boost::lexical_cast
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_EXCEPTION).arg(parameter_name);
         answer = isc::config::createAnswer(1, "undefined configuration"
                                            " processing error");
+
         // An error occurred, so make sure that we restore original data.
         rollback = true;
     }
@@ -863,7 +866,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 
-            // Apply staged D2ClientConfig, used to be done by parser commit
+            // Apply the staged D2ClientConfig, used to be done by parser commit
             D2ClientConfigPtr cfg;
             cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
             CfgMgr::instance().setD2ClientConfig(cfg);
@@ -883,7 +886,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
-            // for things like bad_cast in boost::lexical_cast
+            // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
             answer = isc::config::createAnswer(2, "undefined configuration"
                                                " parsing error");
@@ -908,7 +911,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
-            // for things like bad_cast in boost::lexical_cast
+            // For things like bad_cast in boost::lexical_cast
             std::ostringstream err;
             err << "during update from config backend database: "
                 << "undefined configuration parsing error";

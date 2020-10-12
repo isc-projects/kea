@@ -367,6 +367,16 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // default values and will insert derived values as well.
         mutable_cfg = boost::const_pointer_cast<Element>(config_set);
 
+        ConstElementPtr reservation_mode = mutable_cfg->get("reservation-mode");
+        if (reservation_mode) {
+            // log warning for deprecated option
+            reservation_mode = mutable_cfg->get("reservation-modes");
+            if (reservation_mode) {
+                isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
+                                           " and 'reservation-modes' parameters");
+            }
+        }
+
         // Relocate dhcp-ddns parameters that have moved to global scope.
         // Rule is that a global value overrides the dhcp-ddns value, so
         // we need to do this before we apply global defaults.
@@ -564,15 +574,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             }
         }
 
-        ConstElementPtr reservation_mode = mutable_cfg->get("reservation-mode");
-        if (reservation_mode) {
-            reservation_mode = mutable_cfg->get("reservation-modes");
-            if (reservation_mode) {
-                isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
-                                           " and 'reservation-modes' parameters");
-            }
-        }
-
         ConstElementPtr config_control = mutable_cfg->get("config-control");
         if (config_control) {
             parameter_name = "config-control";
@@ -585,6 +586,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         ConfigPair config_pair;
         const std::map<std::string, ConstElementPtr>& values_map =
             mutable_cfg->mapValue();
+
         BOOST_FOREACH(config_pair, values_map) {
 
             parameter_name = config_pair.first;
@@ -725,6 +727,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // This operation should be exception safe but let's make sure.
     if (!rollback) {
         try {
+
             // Setup the command channel.
             configureCommandChannel();
 
@@ -748,12 +751,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                                " parsing error");
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         }
     }
@@ -761,6 +766,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // Moved from the commit block to add the config backend indication.
     if (!rollback) {
         try {
+
             // If there are config backends, fetch and merge into staging config
             server.getCBControl()->databaseConfigFetch(srv_cfg,
                                                        CBControlDHCPv4::FetchMode::FETCH_ALL);
@@ -770,6 +776,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             err << "during update from config backend database: " << ex.what();
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
@@ -778,6 +785,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 << "undefined configuration parsing error";
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         }
     }
