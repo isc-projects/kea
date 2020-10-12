@@ -28,28 +28,32 @@ HostReservationModesParser::parse(const ConstElementPtr& control_elem) {
     ConstElementPtr elem;
     uint8_t flags = 0;
 
-    elem  = control_elem->get("global");
-    if (elem) {
-        bool value = elem->boolValue();
-        if (value) {
-            flags |= Network::HR_GLOBAL;
+    try {
+        elem  = control_elem->get("global");
+        if (elem) {
+            bool value = elem->boolValue();
+            if (value) {
+                flags |= Network::HR_GLOBAL;
+            }
         }
-    }
 
-    elem  = control_elem->get("in-subnet");
-    if (elem) {
-        bool value = elem->boolValue();
-        if (value) {
-            flags |= Network::HR_IN_SUBNET;
+        elem  = control_elem->get("in-subnet");
+        if (elem) {
+            bool value = elem->boolValue();
+            if (value) {
+                flags |= Network::HR_IN_SUBNET;
+            }
         }
-    }
 
-    elem  = control_elem->get("out-of-pool");
-    if (elem) {
-        bool value = elem->boolValue();
-        if (value) {
-            flags |= Network::HR_OUT_OF_POOL;
+        elem  = control_elem->get("out-of-pool");
+        if (elem) {
+            bool value = elem->boolValue();
+            if (value) {
+                flags |= Network::HR_OUT_OF_POOL;
+            }
         }
+    } catch (const Exception& ex) {
+        isc_throw(DhcpConfigError, "error parsing element: " << ex.what());
     }
 
     return (static_cast<Network::HRMode>(flags));

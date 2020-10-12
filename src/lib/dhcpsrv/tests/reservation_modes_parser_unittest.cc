@@ -51,39 +51,127 @@ TEST_F(HostReservationModesParserTest, validContent) {
     struct Scenario {
         std::string description_;
         std::string json_;
+        uint8_t expected_result_;
     };
 
     std::vector<Scenario> scenarios = {
         {
-        "queue disabled",
+        "reservation modes disabled",
         "{ \n"
-        "   \"enable-queue\": false \n"
-        "} \n"
+        "   \"global\": false, \n"
+        "   \"in-subnet\": false, \n"
+        "   \"out-of-pool\": false \n"
+        "} \n",
+        Network::HR_DISABLED
         },
         {
-        "queue disabled, arbitrary content allowed",
+        "reservation modes global enabled",
         "{ \n"
-        "   \"enable-queue\": false, \n"
-        "   \"foo\": \"bogus\", \n"
-        "   \"random-int\" : 1234 \n"
-        "} \n"
+        "   \"global\": true, \n"
+        "   \"in-subnet\": false, \n"
+        "   \"out-of-pool\": false \n"
+        "} \n",
+        Network::HR_GLOBAL
         },
         {
-        "queue enabled, with queue-type",
+        "reservation modes in-subnet enabled",
         "{ \n"
-        "   \"enable-queue\": true, \n"
-        "   \"queue-type\": \"some-type\" \n"
-        "} \n"
+        "   \"global\": false, \n"
+        "   \"in-subnet\": true, \n"
+        "   \"out-of-pool\": false \n"
+        "} \n",
+        Network::HR_IN_SUBNET
         },
         {
-        "queue enabled with queue-type and arbitrary content",
+        "reservation modes global and in-subnet enabled",
         "{ \n"
-        "   \"enable-queue\": true, \n"
-        "   \"queue-type\": \"some-type\", \n"
-        "   \"foo\": \"bogus\", \n"
-        "   \"random-int\" : 1234 \n"
-        "} \n"
-        }
+        "   \"global\": true, \n"
+        "   \"in-subnet\": true, \n"
+        "   \"out-of-pool\": false \n"
+        "} \n",
+        Network::HR_GLOBAL|Network::HR_IN_SUBNET
+        },
+        {
+        "reservation modes out-of-pool enabled",
+        "{ \n"
+        "   \"global\": false, \n"
+        "   \"in-subnet\": false, \n"
+        "   \"out-of-pool\": true \n"
+        "} \n",
+        Network::HR_OUT_OF_POOL
+        },
+        {
+        "reservation modes global and out-of-pool enabled",
+        "{ \n"
+        "   \"global\": true, \n"
+        "   \"in-subnet\": false, \n"
+        "   \"out-of-pool\": true \n"
+        "} \n",
+        Network::HR_GLOBAL|Network::HR_OUT_OF_POOL
+        },
+        {
+        "reservation modes in-subnet and out-of-pool enabled",
+        "{ \n"
+        "   \"global\": false, \n"
+        "   \"in-subnet\": true, \n"
+        "   \"out-of-pool\": true \n"
+        "} \n",
+        Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL
+        },
+        {
+        "reservation modes global, in-subnet and out-of-pool enabled",
+        "{ \n"
+        "   \"global\": true, \n"
+        "   \"in-subnet\": true, \n"
+        "   \"out-of-pool\": true \n"
+        "} \n",
+        Network::HR_GLOBAL|Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL
+        },
+        {
+        "only global",
+        "{ \n"
+        "   \"global\": true \n"
+        "} \n",
+        Network::HR_GLOBAL
+        },
+        {
+        "only in-subnet",
+        "{ \n"
+        "   \"in-subnet\": true \n"
+        "} \n",
+        Network::HR_IN_SUBNET
+        },
+        {
+        "only out-of-pool",
+        "{ \n"
+        "   \"out-of-pool\": true \n"
+        "} \n",
+        Network::HR_OUT_OF_POOL
+        },
+        {
+        "only global and in-subnet",
+        "{ \n"
+        "   \"global\": true, \n"
+        "   \"in-subnet\": true \n"
+        "} \n",
+        Network::HR_GLOBAL|Network::HR_IN_SUBNET
+        },
+        {
+        "only global and out-of-pool",
+        "{ \n"
+        "   \"global\": true, \n"
+        "   \"out-of-pool\": true \n"
+        "} \n",
+        Network::HR_GLOBAL|Network::HR_OUT_OF_POOL
+        },
+        {
+        "only in-subnet and out-of-pool",
+        "{ \n"
+        "   \"in-subnet\": true, \n"
+        "   \"out-of-pool\": true \n"
+        "} \n",
+        Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL
+        },
     };
 
     // Iterate over the valid scenarios and verify they succeed.
@@ -105,7 +193,7 @@ TEST_F(HostReservationModesParserTest, validContent) {
             }
 
             // Verify the resultant reservation-modes.
-            ASSERT_TRUE(reservation_modes);
+            ASSERT_EQ(scenario.expected_result_, reservation_modes);
         }
     }
 }
@@ -120,28 +208,21 @@ TEST_F(HostReservationModesParserTest, invalidContent) {
 
     std::vector<Scenario> scenarios = {
         {
-        "enable-queue missing",
+        "global not boolean",
         "{ \n"
-        "   \"enable-type\": \"some-type\" \n"
+        "   \"global\": \"always\" \n"
         "} \n"
         },
         {
-        "enable-queue not boolean",
+        "in-subnet not boolean",
         "{ \n"
-        "   \"enable-queue\": \"always\" \n"
+        "   \"in-subnet\": \"always\" \n"
         "} \n"
         },
         {
-        "queue enabled, type missing",
+        "out-of-pool not boolean",
         "{ \n"
-        "   \"enable-queue\": true \n"
-        "} \n"
-        },
-        {
-        "queue enabled, type not a string",
-        "{ \n"
-        "   \"enable-queue\": true, \n"
-        "   \"queue-type\": 7777 \n"
+        "   \"out-of-pool\": \"always\" \n"
         "} \n"
         }
     };
