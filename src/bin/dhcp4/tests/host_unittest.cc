@@ -234,7 +234,7 @@ const char* CONFIGS[] = {
         "     \"test\": \"not member('reserved_class')\""
         "}"
         "],\n"
-        "\"reservation-mode\": \"global\","
+        "\"reservation-modes\": { \"global\": true },"
         "\"valid-lifetime\": 600,\n"
         "\"reservations\": [ \n"
         "{\n"

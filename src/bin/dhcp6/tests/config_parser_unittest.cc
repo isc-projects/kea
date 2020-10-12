@@ -6893,7 +6893,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
         "    \"rapid-commit\": true,\n"
         "    \"reservation-modes\": {"
         "        \"global\": false"
-        "     }"
+        "     },\n"
         "    \"subnet6\": [\n"
         "    { \n"
         "        \"subnet\": \"2001:db1::/48\",\n"

@@ -1260,17 +1260,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-\"reservation-mode\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DHCP6:
-    case isc::dhcp::Parser6Context::SUBNET6:
-    case isc::dhcp::Parser6Context::SHARED_NETWORK:
-        return isc::dhcp::Dhcp6Parser::make_RESERVATION_MODE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("reservation-mode", driver.loc_);
-    }
-}
-
 \"reservation-modes\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -1279,6 +1268,44 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp6Parser::make_RESERVATION_MODES(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("reservation-modes", driver.loc_);
+    }
+}
+
+\"global\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATION_MODES:
+        return isc::dhcp::Dhcp6Parser::make_GLOBAL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("global", driver.loc_);
+    }
+}
+
+\"in-subnet\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATION_MODES:
+        return isc::dhcp::Dhcp6Parser::make_IN_SUBNET(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("in-subnet", driver.loc_);
+    }
+}
+
+\"out-of-pool\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATION_MODES:
+        return isc::dhcp::Dhcp6Parser::make_OUT_OF_POOL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("out-of-pool", driver.loc_);
+    }
+}
+
+\"reservation-mode\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_RESERVATION_MODE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("reservation-mode", driver.loc_);
     }
 }
 

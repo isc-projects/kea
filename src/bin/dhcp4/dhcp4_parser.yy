@@ -155,11 +155,9 @@ using namespace std;
   RESERVATION_MODES "reservation-modes"
   DISABLED "disabled"
   OUT_OF_POOL "out-of-pool"
+  IN_SUBNET "in-subnet"
   GLOBAL "global"
   ALL "all"
-  HR_GLOBAL "global"
-  HR_IN_SUBNET "in-subnet"
-  HR_OUT_OF_POOL "out-of-pool"
 
   HOST_RESERVATION_IDENTIFIERS "host-reservation-identifiers"
 
@@ -489,6 +487,7 @@ global_param: valid_lifetime
             | config_control
             | server_tag
             | reservation_mode
+            | reservation_modes
             | calculate_tee_times
             | t1_percent
             | t2_percent
@@ -1374,6 +1373,7 @@ subnet4_param: valid_lifetime
              | require_client_classes
              | reservations
              | reservation_mode
+             | reservation_modes
              | relay
              | match_client_id
              | authoritative
@@ -1469,20 +1469,6 @@ require_client_classes: REQUIRE_CLIENT_CLASSES {
     ctx.leave();
 };
 
-reservation_mode: RESERVATION_MODE {
-    ctx.unique("reservation-mode", ctx.loc2pos(@1));
-    ctx.enter(ctx.RESERVATION_MODE);
-} COLON hr_mode {
-    ctx.stack_.back()->set("reservation-mode", $4);
-    ctx.leave();
-};
-
-hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1))); }
-       | OUT_OF_POOL { $$ = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(@1))); }
-       | GLOBAL { $$ = ElementPtr(new StringElement("global", ctx.loc2pos(@1))); }
-       | ALL { $$ = ElementPtr(new StringElement("all", ctx.loc2pos(@1))); }
-       ;
-
 reservation_modes: RESERVATION_MODES {
     ctx.unique("reservation-modes", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
@@ -1499,7 +1485,7 @@ sub_reservation_modes: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } reservation_modes_params RCURLY_BRACKET {
-    // No config_control params are required
+    // No reservation_modes params are required
     // parsing completed
 };
 
@@ -1512,23 +1498,37 @@ reservation_modes_param: hr_global
                        | hr_out_of_pool
                        ;
 
-hr_global: HR_GLOBAL COLON BOOLEAN {
+hr_global: GLOBAL COLON BOOLEAN {
     ctx.unique("global", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("global", b);
 };
 
-hr_in_subnet: HR_IN_SUBNET COLON BOOLEAN {
+hr_in_subnet: IN_SUBNET COLON BOOLEAN {
     ctx.unique("in-subnet", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("in-subnet", b);
 };
 
-hr_out_of_pool: HR_OUT_OF_POOL COLON BOOLEAN {
+hr_out_of_pool: OUT_OF_POOL COLON BOOLEAN {
     ctx.unique("out-of-pool", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("out-of-pool", b);
 };
+
+reservation_mode: RESERVATION_MODE {
+    ctx.unique("reservation-mode", ctx.loc2pos(@1));
+    ctx.enter(ctx.RESERVATION_MODE);
+} COLON hr_mode {
+    ctx.stack_.back()->set("reservation-mode", $4);
+    ctx.leave();
+};
+
+hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1))); }
+       | OUT_OF_POOL { $$ = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(@1))); }
+       | GLOBAL { $$ = ElementPtr(new StringElement("global", ctx.loc2pos(@1))); }
+       | ALL { $$ = ElementPtr(new StringElement("all", ctx.loc2pos(@1))); }
+       ;
 
 id: ID COLON INTEGER {
     ctx.unique("id", ctx.loc2pos(@1));
@@ -1584,6 +1584,7 @@ shared_network_param: name
                     | boot_file_name
                     | relay
                     | reservation_mode
+                    | reservation_modes
                     | client_class
                     | require_client_classes
                     | valid_lifetime

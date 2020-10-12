@@ -6463,7 +6463,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "    },\n"
         "    \"reservation-modes\": {"
         "        \"out-of-pool\": true"
-        "     },"
+        "     },\n"
         "    \"renew-timer\": 10,\n"
         "    \"rebind-timer\": 20,\n"
         "    \"valid-lifetime\": 40,\n"
