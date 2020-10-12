@@ -126,6 +126,9 @@ endif
 
 if GENERATE_PARSER
 
+# Generate parser first.
+all-recursive: dhcp4_lexer.cc location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_parser.h
+
 parser: dhcp4_lexer.cc location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_parser.h
 	@echo "Flex/bison files regenerated"
 

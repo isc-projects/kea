@@ -99,6 +99,9 @@ parser-clean:
 
 if GENERATE_PARSER
 
+# Generate parser first.
+all-recursive: lexer.cc location.hh position.hh stack.hh parser.cc parser.h
+
 parser: lexer.cc location.hh position.hh stack.hh parser.cc parser.h
 	@echo "Flex/bison files regenerated"
 

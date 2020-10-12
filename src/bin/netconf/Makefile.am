@@ -97,6 +97,9 @@ endif
 
 if GENERATE_PARSER
 
+# Generate parser first.
+all-recursive: netconf_lexer.cc location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h
+
 parser: netconf_lexer.cc location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h
 	@echo "Flex/bison files regenerated"
 
