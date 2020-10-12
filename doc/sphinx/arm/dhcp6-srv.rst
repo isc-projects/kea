@@ -4144,30 +4144,30 @@ the same lease within a subnet in the Kea configuration file. The
 in the database for the lease for which the new reservation is being added.
 
 Similar to DHCPv4 (see :ref:`multiple-reservations-same-ip4`), the DHCPv6
-server can also be configured to allow for creating multiple reservations
+server can also be configured to allow creating multiple reservations
 for the same IPv6 address and/or delegated prefix in a given subnet. This
-is supported since Kea 1.9.1 release as optional mode of operation enabled
-with the ``ip-reservations-unique`` global parameter.
+is supported beginning with Kea 1.9.1 release as optional mode of operation
+enabled with the ``ip-reservations-unique`` global parameter.
 
 The ``ip-reservations-unique`` is a boolean parameter, which defaults to
-``true``, in which case it is not allowed to specify multiple reservations
+``true``, which forbids the specification of more than one reservation
 for the same lease in a given subnet. Setting this parameter to ``false``
 allows for creating such reservations both in the Kea configuration
 file and in the host database backends via ``host-cmds`` hooks library.
 
 This setting is currently supported by the most popular host database
 backends, i.e. MySQL and PostgreSQL. It is not supported for Cassandra,
-Host Cache (see :ref:`hooks-host-cache`) and Radius backend
+Host Cache (see :ref:`hooks-host-cache`) or Radius backend
 (see :ref:`hooks-radius`). An attempt to set ``ip-reservations-unique``
 to ``false`` when any of these three backends is in use yields a
 configuration error.
 
 .. note::
 
-   When ``ip-reservations-unique`` is set to ``true`` the server ensures
-   that IP reservations are unique for a subnet within a single host backend
-   and/or Kea configuration file. It does not guarantee that the reservations
-   are unique across multiple backends.
+   When ``ip-reservations-unique`` is set to ``true`` (the default value)
+   the server ensures that IP reservations are unique for a subnet within
+   a single host backend and/or Kea configuration file. It does not guarantee
+   that the reservations are unique across multiple backends.
 
 
 The following is the example configuration with two reservations for
@@ -4199,7 +4199,7 @@ It is possible to control the ``ip-reservations-unique`` via the
 the currently used backends (backends do not support the new setting),
 the new setting is ignored and the warning log message is output.
 The backends continue to use the default setting, i.e. expecting that
-IP reservations are unique within each subnet. In order to allow for
+IP reservations are unique within each subnet. In order to allow
 creating non unique IP reservations the administrator must remove
 the backends which lack support for it from the configuration file.
 
@@ -4209,7 +4209,7 @@ decided to return to the default mode in which this is no longer allowed.
 The administrators must make sure that at most one reservation for
 the given IP address or delegated prefix exists within a subnet prior
 to switching back to the default mode. If such duplicates are left in
-the configuration file, the server reports a configuration error.
+the configuration file, the server will report a configuration error.
 Leaving such reservations in the host databases does not cause
 configuration errors but may lead to lease allocation errors during
 the server operation when it unexpectedly finds multiple reservations
