@@ -4776,6 +4776,14 @@ Host Cache (see :ref:`hooks-host-cache`) and Radius backend
 to ``false`` when any of these three backends is in use yields a
 configuration error.
 
+.. note::
+
+   When ``ip-reservations-unique`` is set to ``true`` the server ensures
+   that IP reservations are unique for a subnet within a single host backend
+   and/or Kea configuration file. It does not guarantee that the reservations
+   are unique across multiple backends.
+
+
 The following is the example configuration with two reservations for
 the same IP address and for different MAC addresses:
 
@@ -4803,11 +4811,11 @@ the same IP address and for different MAC addresses:
 It is possible to control the ``ip-reservations-unique`` via the
 :ref:`dhcp4-cb`. If the new setting of this parameter conflicts with
 the currently used backends (backends do not support the new setting),
-the new setting will be ignored and the warning log message will be
-output. The backends will continue to use the default setting, i.e.
-expecting that IP reservations are unique within each subnet. In order
-to allow for non unique IP reservations the administrator must remove
-the backends which don't support it from the configuration file.
+the new setting is ignored and the warning log message is output.
+The backends continue to use the default setting, i.e. expecting that
+IP reservations are unique within each subnet. In order to allow for
+creating non unique IP reservations the administrator must remove
+the backends which lack support for it from the configuration file.
 
 The administrators must be careful when they have been using multiple
 reservations for the same IP address and later decided to return to
@@ -4829,7 +4837,6 @@ finds multiple reservations for the same IP address.
    The administrator must ensure that there is at most one reservation
    for each IP address within each subnet prior to this configuration
    update.
-
 
 .. _shared-network4:
 

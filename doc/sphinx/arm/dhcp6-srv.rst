@@ -4128,6 +4128,103 @@ set to ``global``.
 In the example above the ``client-class`` could also be specified at the
 subnet level rather than pool level yielding the same effect.
 
+.. _multiple-reservations-same-ip6:
+
+Multiple Reservations for the same IP
+-------------------------------------
+
+Host Reservations were designed to preclude creation of multiple
+reservations for the same IP address or delegated prefix within a
+particular subnet to avoid the situation when two different clients
+compete for the same lease. When using the default settings, the server
+returns a configuration error when it finds two or more reservations for
+the same lease within a subnet in the Kea configuration file. The
+:ref:`host-cmds` hooks library returns an error in response to the
+``reservation-add`` command when it detects that the reservation exists
+in the database for the lease for which the new reservation is being added.
+
+Similar to DHCPv4 (see :ref:`multiple-reservations-same-ip4`), the DHCPv6
+server can also be configured to allow for creating multiple reservations
+for the same IPv6 address and/or delegated prefix in a given subnet. This
+is supported since Kea 1.9.1 release as optional mode of operation enabled
+with the ``ip-reservations-unique`` global parameter.
+
+The ``ip-reservations-unique`` is a boolean parameter, which defaults to
+``true``, in which case it is not allowed to specify multiple reservations
+for the same lease in a given subnet. Setting this parameter to ``false``
+allows for creating such reservations both in the Kea configuration
+file and in the host database backends via ``host-cmds`` hooks library.
+
+This setting is currently supported by the most popular host database
+backends, i.e. MySQL and PostgreSQL. It is not supported for Cassandra,
+Host Cache (see :ref:`hooks-host-cache`) and Radius backend
+(see :ref:`hooks-radius`). An attempt to set ``ip-reservations-unique``
+to ``false`` when any of these three backends is in use yields a
+configuration error.
+
+.. note::
+
+   When ``ip-reservations-unique`` is set to ``true`` the server ensures
+   that IP reservations are unique for a subnet within a single host backend
+   and/or Kea configuration file. It does not guarantee that the reservations
+   are unique across multiple backends.
+
+
+The following is the example configuration with two reservations for
+the same IPv6 address and for different MAC addresses:
+
+::
+
+   "Dhcp6": {
+       "ip-reservations-unique": false,
+       "subnet6": [
+           {
+               "subnet": "2001:db8:1::/64",
+               "reservations": [
+                   {
+                       "hw-address": "1a:1b:1c:1d:1e:1f",
+                       "ip-address": "2001:db8:1::11"
+                   },
+                   {
+                       "hw-address": "2a:2b:2c:2d:2e:2f",
+                       "ip-address": "2001:db8:1::11"
+                   }
+               ]
+           }
+       ]
+   }
+
+It is possible to control the ``ip-reservations-unique`` via the
+:ref:`dhcp6-cb`. If the new setting of this parameter conflicts with
+the currently used backends (backends do not support the new setting),
+the new setting is ignored and the warning log message is output.
+The backends continue to use the default setting, i.e. expecting that
+IP reservations are unique within each subnet. In order to allow for
+creating non unique IP reservations the administrator must remove
+the backends which lack support for it from the configuration file.
+
+The administrators must be careful when they have been using multiple
+reservations for the same IP address and/or delegated prefix and later
+decided to return to the default mode in which this is no longer allowed.
+The administrators must make sure that at most one reservation for
+the given IP address or delegated prefix exists within a subnet prior
+to switching back to the default mode. If such duplicates are left in
+the configuration file, the server reports a configuration error.
+Leaving such reservations in the host databases does not cause
+configuration errors but may lead to lease allocation errors during
+the server operation when it unexpectedly finds multiple reservations
+for the same IP address or delegated prefix.
+
+.. note::
+
+   Currently the server does not verify if multiple reservations for
+   the same IP address and/or delegated prefix exist in the host
+   databases (MySQL and/or PostgreSQL) when ``ip-reservations-unique``
+   is updated from ``true`` to ``false``. This may cause issues with
+   lease allocations. The administrator must ensure that there is at
+   most one reservation for each IP address and/or delegated prefix
+   within each subnet prior to this configuration update.
+
 
 .. _shared-network6:
 
