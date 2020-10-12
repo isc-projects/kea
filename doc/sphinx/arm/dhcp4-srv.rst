@@ -4376,7 +4376,7 @@ Storing Host Reservations in MySQL, PostgreSQL, or Cassandra
 ------------------------------------------------------------
 
 It is possible to store host reservations in MySQL, PostgreSQL, or
-Cassandra. See :ref:`hosts6-storage` for information on how to
+Cassandra. See :ref:`hosts4-storage` for information on how to
 configure Kea to use reservations stored in MySQL, PostgreSQL, or
 Cassandra. Kea provides a dedicated hook for managing reservations in a
 database; section :ref:`host-cmds` provides detailed information.
@@ -4731,6 +4731,104 @@ set to ``global``.
 
 In the example above the ``client-class`` could also be specified at the
 subnet level rather than pool level yielding the same effect.
+
+.. _multiple-reservations-same-ip4:
+
+Multiple Reservations for the Same IP
+-------------------------------------
+
+Host Reservations were designed to preclude creation of multiple
+reservations for the same IP address within a particular subnet to avoid
+the situation when two different clients compete for the same address.
+When using the default settings, the server returns a configuration error
+when it finds two or more reservations for the same IP address within
+a subnet in the Kea configuration file. The :ref:`host-cmds` hooks
+library returns an error in response to the ``reservation-add`` command
+when it detects that the reservation exists in the database for the IP
+address for which the new reservation is being added.
+
+In some deployments a single host can select one of the several network
+interfaces to communicate with the DHCP server and the server must assign
+the same IP address to the host regardless of the interface used. Since
+each interface is assigned a different MAC address, it implies that
+several host reservations must be created to associate all of the MAC
+addresses present on this host with the IP addresses. Using different
+IP addresses for each interface is impractical and is considered a waste
+of the IPv4 address space, especially that the host typically uses only one
+interface for the communication with the server, hence only one IP address
+is in use.
+
+This causes a need for creating multiple host reservations for a single
+IP address within a subnet and it is supported since Kea 1.9.1 release
+as optional mode of operation enabled with the ``ip-reservations-unique``
+global parameter.
+
+The ``ip-reservations-unique`` is a boolean parameter, which defaults to
+``true``, in which case it is not allowed to specify multiple reservations
+for the same IP address in a given subnet. Setting this parameter to
+``false`` allows for creating such reservations both in the Kea configuration
+file and in the host database backends via ``host-cmds`` hooks library.
+
+This setting is currently supported by the most popular host database
+backends, i.e. MySQL and PostgreSQL. It is not supported for Cassandra,
+Host Cache (see :ref:`hooks-host-cache`) and Radius backend
+(see :ref:`hooks-radius`). An attempt to set ``ip-reservations-unique``
+to ``false`` when any of these three backends is in use yields a
+configuration error.
+
+The following is the example configuration with two reservations for
+the same IP address and for different MAC addresses:
+
+::
+
+   "Dhcp4": {
+       "ip-reservations-unique": false,
+       "subnet4": [
+           {
+               "subnet": "192.0.2.0/24",
+               "reservations": [
+                   {
+                       "hw-address": "1a:1b:1c:1d:1e:1f",
+                       "ip-address": "192.0.2.11"
+                   },
+                   {
+                       "hw-address": "2a:2b:2c:2d:2e:2f",
+                       "ip-address": "192.0.2.11"
+                   }
+               ]
+           }
+       ]
+   }
+
+It is possible to control the ``ip-reservations-unique`` via the
+:ref:`dhcp4-cb`. If the new setting of this parameter conflicts with
+the currently used backends (backends do not support the new setting),
+the new setting will be ignored and the warning log message will be
+output. The backends will continue to use the default setting, i.e.
+expecting that IP reservations are unique within each subnet. In order
+to allow for non unique IP reservations the administrator must remove
+the backends which don't support it from the configuration file.
+
+The administrators must be careful when they have been using multiple
+reservations for the same IP address and later decided to return to
+the default mode in which this is no longer allowed. The administrators
+must make sure that at most one reservation for the given IP address
+exists within a subnet prior to switching back to the default mode.
+If such duplicates are left in the configuration file, the server
+reports a configuration error. Leaving such reservations in the host
+databases does not cause configuration errors but may lead to lease
+allocation errors during the server operation when it unexpectedly
+finds multiple reservations for the same IP address.
+
+.. note::
+
+   Currently the server does not verify if multiple reservations for
+   the same IP address exist in the host databases (MySQL and/or
+   PostgreSQL) when ``ip-reservations-unique`` is updated from
+   ``true`` to ``false``. This may cause issues with lease allocations.
+   The administrator must ensure that there is at most one reservation
+   for each IP address within each subnet prior to this configuration
+   update.
 
 
 .. _shared-network4:
