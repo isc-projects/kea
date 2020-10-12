@@ -1,3 +1,14 @@
+1814.	[func]		marcin
+	Added ip-reservations-unique global parameter which controls
+	whether or not it is allowed to create multiple host reservations
+	for the same IP address or delegated prefix. By default, it is
+	not allowed to create multiple reservations for the same lease
+	within the same subnet. This change facilitates the use case
+	in which a single host can communicate with the DHCP server over
+	multiple network interfaces but should be assigned the same
+	reserved lease regardless of which interface is used.
+	(Gitlab #1428)
+
 1813.	[func]		tmark
 	A new parameter, ddns-update-on-renew, has been added to
 	kea-dhcp4 and kea-dhcp6 configuration.  When true, the server
