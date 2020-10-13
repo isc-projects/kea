@@ -28,7 +28,6 @@
 #endif
 
 using namespace isc;
-using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::test;
 
@@ -159,13 +158,13 @@ public:
     /// @brief Constructor.
     CfgMySQLDbAccessTest() {
         // Ensure we have the proper schema with no transient data.
-        createMySQLSchema();
+        db::test::createMySQLSchema();
     }
 
     /// @brief Destructor.
     virtual ~CfgMySQLDbAccessTest() {
         // If data wipe enabled, delete transient data otherwise destroy the schema
-        destroyMySQLSchema();
+        db::test::destroyMySQLSchema();
         LeaseMgrFactory::destroy();
     }
 };
@@ -175,8 +174,8 @@ public:
 // specified configuration.
 TEST_F(CfgMySQLDbAccessTest, createManagers) {
     CfgDbAccess cfg;
-    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(validMySQLConnectionString()));
-    ASSERT_NO_THROW(cfg.setHostDbAccessString(validMySQLConnectionString()));
+    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(db::test::validMySQLConnectionString()));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validMySQLConnectionString()));
     ASSERT_NO_THROW(cfg.createManagers());
 
     ASSERT_NO_THROW({
@@ -215,8 +214,8 @@ TEST_F(CfgMySQLDbAccessTest, createManagersIPResrvUnique) {
 
     cfg.setIPReservationsUnique(false);
 
-    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(validMySQLConnectionString()));
-    ASSERT_NO_THROW(cfg.setHostDbAccessString(validMySQLConnectionString()));
+    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(db::test::validMySQLConnectionString()));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validMySQLConnectionString()));
     ASSERT_NO_THROW(cfg.createManagers());
 
     ASSERT_NO_THROW({
@@ -255,13 +254,13 @@ public:
     /// @brief Constructor.
     CfgPgSQLDbAccessTest() {
         // Ensure we have the proper schema with no transient data.
-        createPgSQLSchema();
+        db::test::createPgSQLSchema();
     }
 
     /// @brief Destructor.
     virtual ~CfgPgSQLDbAccessTest() {
         // If data wipe enabled, delete transient data otherwise destroy the schema
-        destroyPgSQLSchema();
+        db::test::destroyPgSQLSchema();
         LeaseMgrFactory::destroy();
     }
 };
@@ -271,8 +270,8 @@ public:
 // specified configuration.
 TEST_F(CfgPgSQLDbAccessTest, createManagers) {
     CfgDbAccess cfg;
-    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(validPgSQLConnectionString()));
-    ASSERT_NO_THROW(cfg.setHostDbAccessString(validPgSQLConnectionString()));
+    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(db::test::validPgSQLConnectionString()));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validPgSQLConnectionString()));
     ASSERT_NO_THROW(cfg.createManagers());
 
     ASSERT_NO_THROW({
@@ -311,8 +310,8 @@ TEST_F(CfgPgSQLDbAccessTest, createManagersIPResrvUnique) {
 
     cfg.setIPReservationsUnique(false);
 
-    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(validPgSQLConnectionString()));
-    ASSERT_NO_THROW(cfg.setHostDbAccessString(validPgSQLConnectionString()));
+    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(db::test::validPgSQLConnectionString()));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validPgSQLConnectionString()));
     ASSERT_NO_THROW(cfg.createManagers());
 
     ASSERT_NO_THROW({
@@ -351,13 +350,13 @@ public:
     /// @brief Constructor.
     CfgCQLDbAccessTest() {
         // Ensure we have the proper schema with no transient data.
-        createCqlSchema();
+        db::test::createCqlSchema();
     }
 
     /// @brief Destructor.
     virtual ~CfgCQLDbAccessTest() {
         // If data wipe enabled, delete transient data otherwise destroy the schema
-        destroyCqlSchema();
+        db::test::destroyCqlSchema();
         LeaseMgrFactory::destroy();
     }
 };
@@ -367,8 +366,8 @@ public:
 // specified configuration.
 TEST_F(CfgCQLDbAccessTest, createManagers) {
     CfgDbAccess cfg;
-    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(validCqlConnectionString()));
-    ASSERT_NO_THROW(cfg.setHostDbAccessString(validCqlConnectionString()));
+    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(db::test::validCqlConnectionString()));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validCqlConnectionString()));
     ASSERT_NO_THROW(cfg.createManagers());
 
     ASSERT_NO_THROW({
@@ -407,8 +406,8 @@ TEST_F(CfgCQLDbAccessTest, createManagersIPResrvUnique) {
 
     cfg.setIPReservationsUnique(false);
 
-    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(validCqlConnectionString()));
-    ASSERT_NO_THROW(cfg.setHostDbAccessString(validCqlConnectionString()));
+    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(db::test::validCqlConnectionString()));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validCqlConnectionString()));
     EXPECT_THROW(cfg.createManagers(), InvalidOperation);
 }
 
