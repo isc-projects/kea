@@ -32,6 +32,7 @@ DISTCLEANFILES += upgrade_5.1_to_5.2.sh
 DISTCLEANFILES += upgrade_5.2_to_6.0.sh
 DISTCLEANFILES += upgrade_6.0_to_7.0.sh
 DISTCLEANFILES += upgrade_7.0_to_8.0.sh
+DISTCLEANFILES += upgrade_8.0_to_8.1.sh
 DISTCLEANFILES += upgrade_8.1_to_8.2.sh
 DISTCLEANFILES += upgrade_8.2_to_9.0.sh
 DISTCLEANFILES += upgrade_9.0_to_9.1.sh
