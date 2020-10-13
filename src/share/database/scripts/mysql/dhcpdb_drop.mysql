@@ -60,6 +60,7 @@ DROP TABLE IF EXISTS dhcp6_subnet;
 DROP TABLE IF EXISTS dhcp6_subnet_server;
 DROP TABLE IF EXISTS modification;
 DROP TABLE IF EXISTS parameter_data_type;
+DROP TABLE IF EXISTS reservation_mode_type;
 DROP PROCEDURE IF EXISTS createAuditRevisionDHCP4;
 DROP PROCEDURE IF EXISTS createAuditEntryDHCP4;
 DROP PROCEDURE IF EXISTS createOptionAuditDHCP4;

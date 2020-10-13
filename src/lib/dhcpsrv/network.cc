@@ -205,13 +205,13 @@ Network::toElement() const {
     Optional<Network::HRMode> hrmode = host_reservation_mode_;
     if (!hrmode.unspecified()) {
         bool hr_global = false;
-        bool hr_in_sunbet = false;
+        bool hr_in_subnet = false;
         bool hr_out_of_pool = false;
         if (hrmode & Network::HR_GLOBAL) {
             hr_global = true;
         }
         if (hrmode & Network::HR_IN_SUBNET) {
-            hr_in_sunbet = true;
+            hr_in_subnet = true;
         }
         if (hrmode & Network::HR_OUT_OF_POOL) {
             hr_out_of_pool = true;
@@ -225,7 +225,7 @@ Network::toElement() const {
             if (hr_global) {
                 reservation_modes->set("global", Element::create(true));
             }
-            if (hr_in_sunbet) {
+            if (hr_in_subnet) {
                 reservation_modes->set("in-subnet", Element::create(true));
             }
             if (hr_out_of_pool) {
