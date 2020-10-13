@@ -66,7 +66,7 @@ enum HType {
 
 /* DHCP Option codes: */
 enum DHCPOptionType {
-    DHO_PAD                          = 0,
+    DHO_PAD                          = 0, /* RFC2132 */
     DHO_SUBNET_MASK                  = 1,
     DHO_TIME_OFFSET                  = 2,
     DHO_ROUTERS                      = 3,
@@ -128,9 +128,9 @@ enum DHCPOptionType {
     DHO_DHCP_REBINDING_TIME          = 59,
     DHO_VENDOR_CLASS_IDENTIFIER      = 60,
     DHO_DHCP_CLIENT_IDENTIFIER       = 61,
-    DHO_NWIP_DOMAIN_NAME             = 62,
-    DHO_NWIP_SUBOPTIONS              = 63,
-    DHO_NISP_DOMAIN_NAME             = 64,
+    DHO_NWIP_DOMAIN_NAME             = 62, /* RFC2242 */
+    DHO_NWIP_SUBOPTIONS              = 63, /* RFC2242 */
+    DHO_NISP_DOMAIN_NAME             = 64, /* RFC2132 */
     DHO_NISP_SERVER_ADDR             = 65,
     DHO_TFTP_SERVER_NAME             = 66,
     DHO_BOOT_FILE_NAME               = 67,
@@ -143,60 +143,60 @@ enum DHCPOptionType {
     DHO_IRC_SERVER                   = 74,
     DHO_STREETTALK_SERVER            = 75,
     DHO_STDASERVER                   = 76,
-    DHO_USER_CLASS                   = 77,
-    DHO_DIRECTORY_AGENT              = 78,
-    DHO_SERVICE_SCOPE                = 79,
-//  DHO_RAPID_COMMIT                 = 80,
-    DHO_FQDN                         = 81,
-    DHO_DHCP_AGENT_OPTIONS           = 82,
-//  DHO_ISNS                         = 83,
+    DHO_USER_CLASS                   = 77, /* RFC3004 */
+    DHO_DIRECTORY_AGENT              = 78, /* RFC2610 */
+    DHO_SERVICE_SCOPE                = 79, /* RFC4039 */
+//  DHO_RAPID_COMMIT                 = 80, /* RFC4702 */
+    DHO_FQDN                         = 81, /* RFC4702 */
+    DHO_DHCP_AGENT_OPTIONS           = 82, /* RFC3046 */
+//  DHO_ISNS                         = 83, /* RFC4174 */
     // 84 is removed/unassigned
-    DHO_NDS_SERVERS                  = 85,
-    DHO_NDS_TREE_NAME                = 86,
-    DHO_NDS_CONTEXT                  = 87,
-    DHO_BCMCS_DOMAIN_NAME_LIST       = 88,
-    DHO_BCMCS_IPV4_ADDR              = 89,
-    DHO_AUTHENTICATE                 = 90,  /* RFC3118, was 210 */
-    DHO_CLIENT_LAST_TRANSACTION_TIME = 91,
-    DHO_ASSOCIATED_IP                = 92,
+    DHO_NDS_SERVERS                  = 85, /* RFC2241 */
+    DHO_NDS_TREE_NAME                = 86, /* RFC2241 */
+    DHO_NDS_CONTEXT                  = 87, /* RFC2241 */
+    DHO_BCMCS_DOMAIN_NAME_LIST       = 88, /* RFC4280 */
+    DHO_BCMCS_IPV4_ADDR              = 89, /* RFC4280 */
+    DHO_AUTHENTICATE                 = 90, /* RFC3118 */
+    DHO_CLIENT_LAST_TRANSACTION_TIME = 91, /* RFC4388 */
+    DHO_ASSOCIATED_IP                = 92, /* RFC4388 */
     DHO_SYSTEM                       = 93, /* RFC4578 */
     DHO_NDI                          = 94, /* RFC4578 */
-//  DHO_LDAP                         = 95,
+//  DHO_LDAP                         = 95, /* RFC3679 */
     // 96 is removed/unassigned
     DHO_UUID_GUID                    = 97, /* RFC4578 */
-    DHO_USER_AUTH                    = 98,
-    DHO_GEOCONF_CIVIC                = 99,
-    DHO_PCODE                        = 100,
-    DHO_TCODE                        = 101,
+    DHO_USER_AUTH                    = 98, /* RFC2485 */
+    DHO_GEOCONF_CIVIC                = 99, /* RFC4776 */
+    DHO_PCODE                        = 100, /* RFC4833 */
+    DHO_TCODE                        = 101, /* RFC4833 */
     // 102-107 are removed/unassigned
-    DHO_V6_ONLY_PREFERRED            = 108, /* draft-ietf-dhc-v6only */
+    DHO_V6_ONLY_PREFERRED            = 108, /* RFC8925 */
     // 109-111 are removed/unassigned
-    DHO_NETINFO_ADDR                 = 112,
-    DHO_NETINFO_TAG                  = 113,
-    DHO_URL                          = 114,
+    DHO_NETINFO_ADDR                 = 112, /* RFC3679 */
+    DHO_NETINFO_TAG                  = 113, /* RFC3679 */
+    DHO_URL                          = 114, /* RFC3679 */
     // 115 is removed/unassigned
-    DHO_AUTO_CONFIG                  = 116,
-    DHO_NAME_SERVICE_SEARCH          = 117,
+    DHO_AUTO_CONFIG                  = 116, /* RFC2563 */
+    DHO_NAME_SERVICE_SEARCH          = 117, /* RFC2937 */
     DHO_SUBNET_SELECTION             = 118, /* RFC3011 */
     DHO_DOMAIN_SEARCH                = 119, /* RFC3397 */
-//  DHO_SIP_SERVERS                  = 120,
-//  DHO_CLASSLESS_STATIC_ROUTE       = 121,
-//  DHO_CCC                          = 122,
-//  DHO_GEOCONF                      = 123,
-    DHO_VIVCO_SUBOPTIONS             = 124,
-    DHO_VIVSO_SUBOPTIONS             = 125,
+//  DHO_SIP_SERVERS                  = 120, /* RFC3361 */
+//  DHO_CLASSLESS_STATIC_ROUTE       = 121, /* RFC3442 */
+//  DHO_CCC                          = 122, /* RFC3495 */
+//  DHO_GEOCONF                      = 123, /* RFC3825 */
+    DHO_VIVCO_SUBOPTIONS             = 124, /* RFC3925 */
+    DHO_VIVSO_SUBOPTIONS             = 125, /* RFC3925 */
     // 126-127 are removed/unassigned
     // 128-135 have multiple definitions including PXE
-    DHO_PANA_AGENT                   = 136,
-    DHO_V4_LOST                      = 137,
-    DHO_CAPWAP_AC_V4                 = 138,
-//  DHO_IPV4_ADDR_MOS                = 139,
-//  DHO_IPV4_FQDN_MOS                = 140,
-    DHO_SIP_UA_CONF_SERVICE_DOMAINS  = 141,
-//  DHO_IPV4_ADDR_ANDSF              = 142,
+    DHO_PANA_AGENT                   = 136, /* RFC5192 */
+    DHO_V4_LOST                      = 137, /* RFC5223 */
+    DHO_CAPWAP_AC_V4                 = 138, /* RFC5417 */
+//  DHO_IPV4_ADDR_MOS                = 139, /* RFC5678 */
+//  DHO_IPV4_FQDN_MOS                = 140, /* RFC5678 */
+    DHO_SIP_UA_CONF_SERVICE_DOMAINS  = 141, /* RFC6011 */
+//  DHO_IPV4_ADDR_ANDSF              = 142, /* RFC6153 */
     // 143 is removed/unassigned
 //  DHO_GEOLOC                       = 144,
-//  DHO_FORCERENEW_NONCE_CAPABLE     = 145,
+//  DHO_FORCERENEW_NONCE_CAPABLE     = 145, /* RFC5859 */
     DHO_RDNSS_SELECT                 = 146,
     // 147-149 are removed/unassigned
     // 150 have multiple definitions
@@ -211,17 +211,17 @@ enum DHCPOptionType {
     DHO_V4_PORTPARAMS                = 159,
     DHO_V4_CAPTIVE_PORTAL            = 160,
     // 161-209 are removed/unassigned
-//  DHO_PATH_PREFIX                  = 210,
-//  DHO_REBOOT_TIME                  = 211,    
-    DHO_6RD                          = 212,
-    DHO_V4_ACCESS_DOMAIN             = 213,
+//  DHO_PATH_PREFIX                  = 210, /* RFC5071 */
+//  DHO_REBOOT_TIME                  = 211, /* RFC5071 */
+    DHO_6RD                          = 212, /* RFC5969 */
+    DHO_V4_ACCESS_DOMAIN             = 213, /* RFC5986 */
     // 214-219 are removed/unassigned
 //  DHO_SUBNET_ALLOC                 = 220,
-//  DHO_VSS                          = 221,
+//  DHO_VSS                          = 221, /* RFC6607 */
     // 222-223 are removed/unassigned
     // 224-254 are reserved for private use
 
-    DHO_END                          = 255
+    DHO_END                          = 255 /* RFC2132 */
 };
 
 /* DHCP message types. */

@@ -1753,9 +1753,9 @@ currently has no means to validate it.
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | domain-search                          | 119  | fqdn                      | true        | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
-   | vivco-suboptions                       | 124  | binary                    | false       | false       |
+   | vivco-suboptions                       | 124  | record (uint32, binary)   | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
-   | vivso-suboptions                       | 125  | binary                    | false       | false       |
+   | vivso-suboptions                       | 125  | uint32                    | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | pana-agent                             | 136  | ipv4-address              | true        | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
@@ -1786,36 +1786,43 @@ returned by the Kea engine itself and in general should not be configured manual
 
 .. table:: List of standard DHCPv4 options managed by Kea on its own and not directly configurable by an administrator
 
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | Name                       | Code | Type         | Description                                                    |
-   +============================+======+==============+================================================================+
-   | subnet-mask                | 1    | ipv4-address | calculated automatically, based on subnet definition.          |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | host-name                  | 12   | string       | sent by client, generally governed by the DNS configuration.   |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | dhcp-requested-address     | 50   | ipv6-address | may be sent by the client and the server should not set it.    |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | dhcp-lease-time            | 51   | uint32       | set automatically based on the ``valid-lifetime`` parameter.   |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | dhcp-message-type          | 53   | string       | sent by clients and servers. Set by the Kea engine depending on|
-   |                            |      |              | the situation and should never be configured explicitly.       |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | dhcp-parameter-request-list| 55   | uint8 array  | sent by clients and should never be sent by the server.        |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | dhcp-renewal-time          | 58   | uint32       | governed by ``renew-timer`` parameter.                         |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | dhcp-rebinding-time        | 59   | uint32       | governed by ``rebind-timer`` parameter.                        |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | dhcp-client-identifier     | 61   | binary       | send by client, echoed back with the value sent by the client. |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | fqdn                       | 81   | fqdn         | it's part of the DDNS and D2 configuration.                    |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | dhcp-agent-options         | 82   | empty        | sent by the relay agent. It's an empty container option, see   |
-   |                            |      |              | RAI option detail in later part of this section.               |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
-   | subnet-selection           | 118  | ipv4-address | if present in client's messages, will be used in the subnet    |
-   |                            |      |              | selection process.                                             |
-   +----------------------------+------+--------------+----------------------------------------------------------------+
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | Name                           | Code  | Type                                  | Description                                                       |
+   +================================+=======+=======================================+===================================================================+
+   | subnet-mask                    | 1     | ipv4-address                          | calculated automatically, based on subnet definition.             |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | host-name                      | 12    | string                                | sent by client, generally governed by the DNS configuration.      |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | dhcp-requested-address         | 50    | ipv6-address                          | may be sent by the client and the server should not set it.       |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | dhcp-lease-time                | 51    | uint32                                | set automatically based on the ``valid-lifetime`` parameter.      |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | dhcp-message-type              | 53    | string                                | sent by clients and servers. Set by the Kea engine depending on   |
+   |                                |       |                                       | the situation and should never be configured explicitly.          |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | dhcp-parameter-request-list    | 55    | uint8 array                           | sent by clients and should never be sent by the server.           |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | dhcp-renewal-time              | 58    | uint32                                | governed by ``renew-timer`` parameter.                            |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | dhcp-rebinding-time            | 59    | uint32                                | governed by ``rebind-timer`` parameter.                           |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | dhcp-client-identifier         | 61    | binary                                | send by client, echoed back with the value sent by the client.    |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | fqdn                           | 81    | record (uint8, uint8, uint8, fqdn)    | it's part of the DDNS and D2 configuration.                       |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | dhcp-agent-options             | 82    | empty                                 | sent by the relay agent. It's an empty container option, see      |
+   |                                |       |                                       | RAI option detail in later part of this section.                  |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | authenticate                   | 90    | binary                                | sent by client, validated by server, sent encoded back to client  |
+   |                                |       |                                       | with the same secret for validation                               |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | client-last-transaction-time   | 91    | uint32                                | sent by client, server does not set it                            |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | associated-ip                  | 92    | ipv4-address array                    | sent by client, server responds with list of addresses            |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
+   | subnet-selection               | 118   | ipv4-address                          | if present in client's messages, will be used in the subnet       |
+   |                                |       |                                       | selection process.                                                |
+   +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
 
 The following table lists all option types used in the previous two tables with a description of
 what values are accepted for them.

@@ -1,0 +1,2778 @@
+// This example configuration file for DHCPv6 server in Kea contains:
+//
+// - data for all the standard options
+// - custom option definitions at global level along with some associated
+// option data
+// - custom option data with standardized option spaces other than "dhcp6"
+// - custom option spaces
+// - option embedding examples
+// - DOCSIS3 option data
+//
+// The reader is strongly encouraged to take a look at the option formats
+// documented in the Kea ARM:
+// https://kea.readthedocs.io/en/latest/arm/dhcp6-srv.html?highlight=option%20definitions#dhcp6-std-options-list
+//
+// Other options require special logic which is not yet implemented. They are
+// marked with:
+// "Note: special logic not implemented"
+
+{
+  "Dhcp6": {
+    /*                Data for all standard option definitions                */
+    // Option data defined globally
+    "option-data": [
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        OPTION_CLIENTID        |          option-len           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                              DUID                             .
+      .                        (variable length)                      .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code   OPTION_CLIENTID (1).
+
+      option-len    Length of DUID in octets.
+
+      DUID          The DUID for the client.
+      */
+      // Note: not commonly configured in Kea
+      // Type: binary
+      {
+        "always-send": false,  // default
+        "csv-format": true,  // default
+        "code": 1,
+        "data": "01 02 03 04 05 06",
+        "name": "clientid",
+        "space": "dhcp6"  // default
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        OPTION_SERVERID        |          option-len           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                              DUID                             .
+      .                        (variable length)                      .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code   OPTION_SERVERID (2).
+
+      option-len    Length of DUID in octets.
+
+      DUID          The DUID for the server.
+      */
+      // Note: not commonly configured in Kea
+      // Type: binary
+      {
+        "code": 2,
+        "data": "0708090A0B0C",
+        "name": "serverid"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          OPTION_IA_NA         |          option-len           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                        IAID (4 octets)                        |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              T1                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              T2                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      .                         IA_NA-options                         .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code          OPTION_IA_NA (3).
+
+      option-len           12 + length of IA_NA-options field.
+
+      IAID                 The unique identifier for this IA_NA; the
+                           IAID must be unique among the identifiers for
+                           all of this client's IA_NAs.  The number
+                           space for IA_NA IAIDs is separate from the
+                           number space for IA_TA IAIDs.
+
+      T1                   The time at which the client contacts the
+                           server from which the addresses in the IA_NA
+                           were obtained to extend the lifetimes of the
+                           addresses assigned to the IA_NA; T1 is a
+                           time duration relative to the current time
+                           expressed in units of seconds.
+
+      T2                   The time at which the client contacts any
+                           available server to extend the lifetimes of
+                           the addresses assigned to the IA_NA; T2 is a
+                           time duration relative to the current time
+                           expressed in units of seconds.
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint32, uint32, uint32
+      {
+        "code": 3,
+        "data": "1A1D, 3600, 7200",
+        "name": "ia-na"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |         OPTION_IA_TA          |          option-len           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                        IAID (4 octets)                        |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      .                         IA_TA-options                         .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code          OPTION_IA_TA (4).
+
+      option-len           4 + length of IA_TA-options field.
+
+      IAID                 The unique identifier for this IA_TA; the
+                           IAID must be unique among the identifiers
+                           for all of this client's IA_TAs.  The number
+                           space for IA_TA IAIDs is separate from the
+                           number space for IA_NA IAIDs.
+
+      IA_TA-options        Options associated with this IA_TA.
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint32
+      {
+        "code": 4,
+        "data": "1A1D",
+        "name": "ia-ta"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          OPTION_IAADDR        |          option-len           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                         IPv6 address                          |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                      preferred-lifetime                       |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                        valid-lifetime                         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                        IAaddr-options                         .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code   OPTION_IAADDR (5).
+
+      option-len    24 + length of IAaddr-options field.
+
+      IPv6 address  An IPv6 address.
+
+      preferred-lifetime The preferred lifetime for the IPv6 address in
+                    the option, expressed in units of seconds.
+
+      valid-lifetime The valid lifetime for the IPv6 address in the
+                    option, expressed in units of seconds.
+
+      IAaddr-options Options associated with this address.
+      */
+      // Note: not commonly configured in Kea
+      // Type: IPv6 address, uint32 uint32
+      {
+        "code": 5,
+        "data": "2001:db8::1, 3600, 7200",
+        "name": "iaaddr"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |           OPTION_ORO          |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    requested-option-code-1    |    requested-option-code-2    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code   OPTION_ORO (6).
+
+      option-len    2 * number of requested options.
+
+      requested-option-code-n The option code for an option requested by
+                    the client.
+      */
+      // Note: not commonly configured in Kea
+      // Type: array of {uint16}
+      {
+        "code": 6,
+        "data": "16, 32, 42",
+        "name": "oro"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       OPTION_PREFERENCE       |          option-len           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  pref-value   |
+      +-+-+-+-+-+-+-+-+
+
+      option-code   OPTION_PREFERENCE (7).
+
+      option-len    1.
+
+      pref-value    The preference value for the server in this message.
+      */
+      // Type: uint8
+      {
+        "code": 7,
+        "data": "0xf0",
+        "name": "preference"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_ELAPSED_TIME      |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          elapsed-time         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code   OPTION_ELAPSED_TIME (8).
+
+      option-len    2.
+
+      elapsed-time  The amount of time since the client began its
+                    current DHCP transaction.  This time is expressed in
+                    hundredths of a second (10^-2 seconds).
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint16
+      {
+        "code": 8,
+        "data": "2",
+        "name": "elapsed-time"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        OPTION_RELAY_MSG       |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      .                       DHCP-relay-message                      .
+      .                                                               .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code   OPTION_RELAY_MSG (9)
+
+      option-len    Length of DHCP-relay-message
+
+      DHCP-relay-message In a Relay-forward message, the received
+                    message, relayed verbatim to the next relay agent
+                    or server; in a Relay-reply message, the message to
+                    be copied and relayed to the relay agent or client
+                    whose address is in the peer-address field of the
+                    Relay-reply message
+      */
+      // Note: not commonly configured in Kea
+      // Type: binary
+      {
+        "code": 9,
+        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "relay-msg"
+      },
+
+      // Option code 10 is unassigned.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          OPTION_AUTH          |          option-len           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   protocol    |   algorithm   |      RDM      |               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+               |
+      |                                                               |
+      |          replay detection (64 bits)           +-+-+-+-+-+-+-+-+
+      |                                               |   auth-info   |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+               |
+      .                   authentication information                  .
+      .                       (variable length)                       .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code                  OPTION_AUTH (11)
+
+      option-len                   11 + length of authentication
+                                   information field
+
+      protocol                     The authentication protocol used in
+                                   this authentication option
+
+      algorithm                    The algorithm used in the
+                                   authentication protocol
+
+      RDM                          The replay detection method used in
+                                   this authentication option
+
+      Replay detection             The replay detection information for
+                                   the RDM
+
+      authentication information   The authentication information,
+                                   as specified by the protocol and
+                                   algorithm used in this authentication
+                                   option
+      */
+      // Note: not commonly configured in Kea
+      // Type: binary
+      {
+        "code": 11,
+        "data": "CA FE DE CA FB AD 00 12 34 00 1A BB AD AB BA D0",
+        "name": "auth"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          OPTION_UNICAST       |        option-len             |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                       server-address                          |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code     OPTION_UNICAST (12).
+
+      option-len      16.
+
+      server-address  The IP address to which the client should send
+                      messages delivered using unicast.
+      */
+      // Type: IPv6 address
+      {
+        "code": 12,
+        "data": "2001:db8::2",
+        "name": "unicast"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       OPTION_STATUS_CODE      |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          status-code          |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               |
+      .                                                               .
+      .                        status-message                         .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code          OPTION_STATUS_CODE (13).
+
+      option-len           2 + length of status-message.
+
+      status-code          The numeric code for the status encoded in
+                           this option.  The status codes are defined in
+                           section 24.4.
+
+      status-message       A UTF-8 encoded text string suitable for
+                           display to an end user, which MUST NOT be
+                           null-terminated.
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint16, string
+      {
+        "code": 13,
+        "data": "1, Succesfully failed!",
+        "name": "status-code"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_RAPID_COMMIT      |               0               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code     OPTION_RAPID_COMMIT (14).
+
+      option-len      0.
+      */
+      // Note: not commonly configured in Kea
+      // Type: empty
+      {
+        "code": 14,
+        "name": "rapid-commit"
+      },
+
+      /*
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       OPTION_USER_CLASS       |          option-len           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                          user-class-data                      .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code          OPTION_USER_CLASS (15).
+
+      option-len           Length of user class data field.
+
+      user-class-data      The user classes carried by the client.
+      */
+      // Note: not commonly configured in Kea
+      // Type: binary
+      {
+        "code": 15,
+        "data": "05 E4 C1 A5 50 00 01 02 03 04 05 06 07 08 09 0A",
+        "name": "user-class"
+      },
+
+      /*
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_VENDOR_CLASS      |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                       enterprise-number                       |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                       vendor-class-data                       .
+      .                             . . .                             .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code          OPTION_VENDOR_CLASS (16).
+
+      option-len           4 + length of vendor class data field.
+
+      enterprise-number    The vendor's registered Enterprise Number as
+                           registered with IANA [6].
+
+      vendor-class-data    The hardware configuration of the host on
+                           which the client is running.
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint32, binary
+      {
+        "code": 16,
+        // The first two bytes in the vendor-class-data represent the length of
+        // the rest of the buffer.
+        "data": "256, 00 0E 05 E4 C1 A5 50 00 01 02 03 04 05 06 07 0A",
+        "name": "vendor-class"
+      },
+
+      /*
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_VENDOR_OPTS       |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                       enterprise-number                       |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                          option-data                          .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code          OPTION_VENDOR_OPTS (17)
+
+      option-len           4 + length of option-data field
+
+      enterprise-number    The vendor's registered Enterprise Number as
+                           registered with IANA [6].
+
+      option-data          An opaque object of option-len octets,
+                           interpreted by vendor-specific code on the
+                           clients and servers
+      */
+      // Type: uint32
+      {
+        "code": 17,
+        "data": "4294967295",
+        "name": "vendor-opts"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_INTERFACE_ID      |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                         interface-id                          .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code          OPTION_INTERFACE_ID (18).
+
+      option-len           Length of interface-id field.
+
+      interface-id         An opaque value of arbitrary length generated
+                           by the relay agent to identify one of the
+                           relay agent's interfaces.
+      */
+      // Note: not commonly configured in Kea
+      // Type: binary
+      {
+        "code": 18,
+        "data": "FE 01 BA 45 87 89",
+        "name": "interface-id"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_RECONF_MSG        |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    msg-type   |
+      +-+-+-+-+-+-+-+-+
+
+      option-code          OPTION_RECONF_MSG (19).
+
+      option-len           1.
+
+      msg-type             5 for Renew message, 11 for
+                           Information-request message.
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint8
+      {
+        "code": 19,
+        "data": "5",
+        "name": "reconf-msg"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     OPTION_RECONF_ACCEPT      |               0               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code   OPTION_RECONF_ACCEPT (20).
+
+      option-len    0.
+      */
+      // Type: empty
+      {
+        "code": 20,
+        "name": "reconf-accept"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_SIP_SERVER_D      |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                 SIP Server Domain Name List                   |
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      SIP Server Domain Name List: The domain names of the SIP outbound
+      proxy servers for the client to use.  The domain names are encoded
+      as specified in Section 8 ("Representation and use of domain
+      names") of the DHCPv6 specification [1].
+      */
+      // Type: array of {FQDN}
+      {
+        "code": 21,
+        "data": "sip1.server.net, sip2.server.net",
+        "name": "sip-server-dns"
+      },
+
+      /*
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_SIP_SERVER_A      |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                   SIP server (IP address)                     |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                   SIP server (IP address)                     |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code: OPTION_SIP_SERVER_A (22)
+
+      option-length: Length of the 'options' field in octets; must be a
+      multiple of 16.
+
+      SIP server: IPv6 address of a SIP server for the client to use.
+                  The servers are listed in the order of preference for
+                  use by the client.
+      */
+      // Type: array of {IPv6 address}
+      {
+        "code": 22,
+        "data": "2001:db8::3, 2001:db8::4",
+        "name": "sip-server-addr"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_DNS_SERVERS       |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |            DNS-recursive-name-server (IPv6 address)           |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |            DNS-recursive-name-server (IPv6 address)           |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:               OPTION_DNS_SERVERS (23)
+
+      option-len:                Length of the list of DNS recursive name
+                                 servers in octets; must be a multiple of
+                                 16
+
+      DNS-recursive-name-server: IPv6 address of DNS recursive name server
+      */
+      // Type: array of {IPv6 address}
+      {
+        "code": 23,
+        "data": "2001:db8::5, 2001:db8::6",
+        "name": "dns-servers"
+      },
+
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_DOMAIN_LIST       |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                          searchlist                           |
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:  OPTION_DOMAIN_LIST (24)
+
+      option-len:   Length of the 'searchlist' field in octets
+
+      searchlist:   The specification of the list of domain names in the
+                    Domain Search List
+      */
+      // Type: array of {FQDN}
+      {
+        "code": 24,
+        "data": "example.com, example.org",
+        "name": "domain-search"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |         OPTION_IA_PD          |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                         IAID (4 octets)                       |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              T1                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              T2                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                          IA_PD-options                        .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code          OPTION_IA_PD (25).
+
+      option-len           12 + length of IA_PD-options field.
+
+      IAID                 The unique identifier for this IA_PD; the
+                           IAID must be unique among the identifiers for
+                           all of this client's IA_PDs.  The number
+                           space for IA_PD IAIDs is separate from the
+                           number space for other IA option types (i.e.,
+                           IA_NA and IA_TA).  A 4-octet field containing
+                           an unsigned integer.
+
+      T1                   The time interval after which the client
+                           should contact the server from which the
+                           prefixes in the IA_PD were obtained to extend
+                           the lifetimes of the prefixes delegated to
+                           the IA_PD; T1 is a time duration relative to
+                           the message reception time expressed in units
+                           of seconds.  A 4-octet field containing an
+                           unsigned integer.
+
+      T2                   The time interval after which the client
+                           should contact any available server to extend
+                           the lifetimes of the prefixes assigned to the
+                           IA_PD; T2 is a time duration relative to the
+                           message reception time expressed in units of
+                           seconds.  A 4-octet field containing an
+                           unsigned integer.
+
+      IA_PD-options        Options associated with this IA_PD.  A
+                           variable-length field (12 octets less than
+                           the value in the option-len field).
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint32, uint32, uint32
+      {
+        "code": 25,
+        "data": "1A1D, 3600, 7200",
+        "name": "ia-pd"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        OPTION_IAPREFIX        |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                      preferred-lifetime                       |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                        valid-lifetime                         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      | prefix-length |                                               |
+      +-+-+-+-+-+-+-+-+          IPv6-prefix                          |
+      |                           (16 octets)                         |
+      |                                                               |
+      |                                                               |
+      |                                                               |
+      |               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |               |                                               .
+      +-+-+-+-+-+-+-+-+                                               .
+      .                       IAprefix-options                        .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code          OPTION_IAPREFIX (26).
+
+      option-len           25 + length of IAprefix-options field.
+
+      preferred-lifetime   The preferred lifetime for the prefix in the
+                           option, expressed in units of seconds.  A
+                           value of 0xffffffff represents "infinity"
+                           (see Section 7.7).  A 4-octet field
+                           containing an unsigned integer.
+
+      valid-lifetime       The valid lifetime for the prefix in the
+                           option, expressed in units of seconds.  A
+                           value of 0xffffffff represents "infinity".  A
+                           4-octet field containing an unsigned integer.
+
+      prefix-length        Length for this prefix in bits.  A 1-octet
+                           unsigned integer.
+
+      IPv6-prefix          An IPv6 prefix.  A 16-octet field.
+
+      IAprefix-options     Options associated with this prefix.  A
+                           variable-length field (25 octets less than
+                           the value in the option-len field).
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint32, uint32, uint8, IPv6 address
+      {
+        "code": 26,
+        "data": "3600, 7200, 64, 2001:db8::",
+        "name": "iaprefix"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_NIS_SERVERS       |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                   NIS server (IPv6 address)                   |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                   NIS server (IPv6 address)                   |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:  OPTION_NIS_SERVERS (27)
+
+      option-len:   Length of the 'NIS server' fields in octets; It must be
+                    a multiple of 16
+
+      NIS server:   IPv6 address of NIS server
+      */
+      // Type: array of {IPv6 address}
+      {
+        "code": 27,
+        "data": "2001:db8::7, 2001:db8::8",
+        "name": "nis-servers"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_NISP_SERVERS      |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                   NIS+ server (IPv6 address)                  |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                   NIS+ server (IPv6 address)                  |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code: OPTION_NISP_SERVERS (28)
+
+      option-len:  Length of the 'NIS+ server' fields in octets; It must be
+                   a multiple of 16
+
+      NIS+ server: IPv6 address of NIS+ server
+      */
+      // Type: array of {IPv6 address}
+      {
+        "code": 28,
+        "data": "2001:db8::9, 2001:db8::10",
+        "name": "nisp-servers"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    OPTION_NIS_DOMAIN_NAME     |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                       nis-domain-name                         |
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:      OPTION_NIS_DOMAIN_NAME (29)
+
+      option-len:       Length of the 'nis-domain-name' field in octets
+
+      nis-domain-name:  NIS Domain name for client
+      */
+      // Type: array of {FQDN}
+      {
+        "code": 29,
+        "data": "nis1.example.org, nis2.example.org",
+        "name": "nis-domain-name"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    OPTION_NISP_DOMAIN_NAME    |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                       nisp-domain-name                        |
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:      OPTION_NISP_DOMAIN_NAME (30)
+
+      option-len:       Length of the 'nisp-domain-name' field in octets
+
+      nisp-domain-name: NIS+ Domain name for client
+      */
+      // Type: array of {FQDN}
+      {
+        "code": 30,
+        "data": "nisp1.example.org, nisp2.example.org",
+        "name": "nisp-domain-name"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_SNTP_SERVERS       |        option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                  SNTP server (IPv6 address)                   |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                  SNTP server (IPv6 address)                   |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code: OPTION_SNTP_SERVERS (31)
+
+      option-len:  Length of the 'SNTP server' fields, in octets;
+                   it must be a multiple of 16
+
+      SNTP server: IPv6 address of SNTP server
+      */
+      // Type: array of {IPv6 address}
+      {
+        "code": 31,
+        "data": "2001:db8::11, 2001:db8::12",
+        "name": "sntp-servers"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |OPTION_INFORMATION_REFRESH_TIME|         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                   information-refresh-time                    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code                OPTION_INFORMATION_REFRESH_TIME (32).
+
+      option-len                 4.
+
+      information-refresh-time   Time duration relative to the current
+                                 time, expressed in units of seconds.  A
+                                 4-octet field containing an unsigned
+                                 integer.
+      */
+      // Type: uint32
+      {
+        "code": 32,
+        "data": "3600",
+        "name": "information-refresh-time"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_BCMCS_SERVER_D    |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          BCMCS Control Server Domain Name List                |
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code: OPTION_BCMCS_SERVER_D (33).
+
+      option-length: Length of the 'BCMCS Control Server Domain Name List'
+      field in octets; variable.
+
+      BCMCS Control Server Domain Name List: Identical format as in Section
+      4.1 (except the Code and Len fields).
+      */
+      // Type: array of {FQDN}
+      {
+        "code": 33,
+        "data": "bcmcs1.example.org, bcmcs2.example.org",
+        "name": "bcmcs-server-dns"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_BCMCS_SERVER_A    |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |    BCMCS Control server-1 address (IPv6 address)              |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |    BCMCS Control server-2 address (IPv6 address)              |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code: OPTION_BCMCS_SERVER_A (34).
+
+      option-length: Length of the 'BCMCS Control Server IPv6 address'
+      field in octets; variable.
+      */
+      // Type: array of {IPv6 address}
+      {
+        "code": 34,
+        "data": "2001:db8::13, 2001:db8::14",
+        "name": "bcmcs-server-addr"
+      },
+
+      // Option code 35 is unassigned.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_GEOCONF_CIVIC     |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      what     |        country code           |               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+               .
+      .                     civic address elements                    .
+      .                              ...                              .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:  OPTION_GEOCONF_CIVIC (36)
+
+      option-len:  Length of the Countrycode, 'what' and civic address
+         elements in octets.
+
+      what:  The 'what' element describes to which location the DHCP entry
+         refers.  Currently, three options are defined: the location of the
+         DHCP server (a value of 0), the location of the network element
+         believed to be closest to the client (a value of 1), or the
+         location of the client (a value of 2).  Option (2) SHOULD be used,
+         but may not be known.  Options (0) and (1) SHOULD NOT be used
+         unless it is known that the DHCP client is in close physical
+         proximity to the server or network element.
+
+      country code:  The two-letter ISO 3166 country code in capital ASCII
+         letters, e.g., DE or US.  (Civic addresses always contain country
+         designations, suggesting the use of a fixed-format field to save
+         space.)
+
+      civic address elements:  Zero or more elements comprising the civic
+         and/or postal address, with the format described below
+         (Section 3.3).
+      */
+      // Type: uint8, uint16, array of {binary}
+      {
+        "code": 36,
+        // 0x5553 is "US" in UTF-8
+        "data": "0, 0x5553, 15 9D, A3 FF",
+        "name": "geoconf-civic"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       OPTION_REMOTE_ID        |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                       enterprise-number                       |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                           remote-id                           .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code        OPTION_REMOTE_ID (37)
+
+      option-len         4 + the length, in octets, of the remote-id
+                         field.  The minimum option-len is 5 octets.
+
+      enterprise-number  The vendor's registered Enterprise Number as
+                         registered with IANA [5].
+
+      remote-id          The opaque value for the remote-id.
+      */
+      // Type: uint32, binary
+      {
+        "code": 37,
+        "data": "4294967295, 1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "remote-id"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     OPTION_SUBSCRIBER_ID      |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                         subscriber-id                         .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code      OPTION_SUBSCRIBER_ID (38)
+
+      option-len       length, in octets, of the subscriber-id field.
+                       The minimum length is 1 octet.
+
+      subscriber-id    The subscriber's identity.
+      */
+      // Note: not commonly configured in Kea
+      // Type: binary
+      {
+        "code": 38,
+        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "subscriber-id"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          OPTION_FQDN          |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   flags       |                                               |
+      +-+-+-+-+-+-+-+-+                                               |
+      .                                                               .
+      .                          domain-name                          .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code      OPTION_CLIENT_FQDN (39)
+
+      option-len       1 + length of domain name
+
+      flags            flag bits used between client and server to
+                       negotiate who performs which updates
+
+      domain-name      the partial or fully qualified domain name
+                       (with length option-len - 1)
+      */
+      // Type: uint8, FQDN
+      {
+        "code": 39,
+        "data": "224, client.example.org",
+        "name": "client-fqdn"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       option-code             |       option-length           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      +                                                               +
+      |                                                               |
+      +                         PAA IPv6 Address                      +
+      |                                                               |
+      +                                                               +
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                          ....                                 |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:        OPTION_PANA_AGENT (40).
+
+      option-length:      Length of the 'options' field in octets;
+                          MUST be a multiple of sixteen (16).
+
+      PAA IPv6 Address:   IPv6 address of a PAA for the client to use.
+                          The PAAs are listed in the order of preference
+                          for use by the client.
+      */
+      // Type: array of {IPv6 address}
+      {
+        "code": 40,
+        "data": "2001:db8::15, 2001:db8::16",
+        "name": "pana-agent"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  OPTION_NEW_POSIX_TIMEZONE    |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                      TZ POSIX String                          |
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code: OPTION_NEW_POSIX_TIMEZONE(41)
+
+      option-length: the number of octets of the TZ POSIX String Index
+      described below.
+      */
+      // Type: string
+      {
+        "code": 41,
+        // String options that have a comma in their values need to have
+        // it escaped (i.e. each comma is preceded by two backslashes).
+        // That's because commas are reserved for separating fields in
+        // compound options. At the same time, we need to be conformant
+        // with JSON spec, that does not allow "\,". Therefore the
+        // slightly uncommon double backslashes notation is needed.
+        // The value sent over the wire is:
+        // EST5EDT4,M3.2.0/02:00,M11.1.0/02:00
+        "data": "EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00",
+        "name": "new-posix-timezone"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  OPTION_NEW_TZDB_TIMEZONE    |          option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                          TZ Name                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code: OPTION_NEW_TZDB_TIMEZONE(42)
+
+      option-length: the number of octets of the TZ Database String Index
+      described below.
+      */
+      // Type: string
+      {
+        "code": 42,
+        "data": "Europe/Zurich",
+        "name": "new-tzdb-timezone"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |           OPTION_ERO          |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    requested-option-code-1    |    requested-option-code-2    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code              OPTION_ERO (43).
+      option-len               2 * number of requested options.
+      requested-option-code-n  The option code for an option requested by
+                               the relay agent.
+      */
+      // Type: array of {uint16}
+      {
+        "code": 43,
+        "data": "16, 32, 42",
+        "name": "ero"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        OPTION_LQ_QUERY        |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   query-type  |                                               |
+      +-+-+-+-+-+-+-+-+                                               |
+      |                                                               |
+      |                         link-address                          |
+      |                                                               |
+      |               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |               |                                               .
+      +-+-+-+-+-+-+-+-+                                               .
+      .                         query-options                         .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code      OPTION_LQ_QUERY (44)
+
+      option-len       17 + length of query-options field.
+
+      link-address     A global address that will be used by the
+                       server to identify the link to which the
+                       query applies, or 0::0 if unspecified.
+
+      query-type       The query requested (see below).
+
+      query-options    The options related to the query.
+      */
+      // Note: special logic not implemented
+      // Type: uint8, IPv6 address
+      {
+        "code": 44,
+        "data": "1, 2001:db8::17",
+        "name": "lq-query"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       OPTION_CLIENT_DATA      |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                        client-options                         .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code      OPTION_CLIENT_DATA (45)
+
+      option-len       Length, in octets, of the encapsulated client-
+                       options field.
+
+      client-options   The options associated with this client.
+      */
+      // Note: special logic not implemented
+      // Type: empty
+      {
+        "code": 45,
+        "name": "client-data"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        OPTION_CLT_TIME        |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                 client-last-transaction-time                  |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code      OPTION_CLT_TIME (46)
+
+      option-len       4
+
+      client-last-transaction-time
+                       The number of seconds since the server last
+                       communicated with the client (on that link).
+      */
+      // Note: special logic not implemented
+      // Type: uint32
+      {
+        "code": 46,
+        "data": "600",
+        "name": "clt-time"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     OPTION_LQ_RELAY_DATA      |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                  peer-address (IPv6 address)                  |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                       DHCP-relay-message                      |
+      .                                                               .
+      .                                                               .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code      OPTION_LQ_RELAY_DATA (47)
+
+      option-len       16 + length of DHCP-relay-message.
+
+      peer-address     The address of the relay agent from which
+                       the relayed message was received by the
+                       server.
+
+      DHCP-relay-message
+                       The last complete relayed message, excluding
+                       the client's message OPTION_RELAY_MSG,
+                       received by the server.
+      */
+      // Note: special logic not implemented
+      // Type: IPv6 address, binary
+      {
+        "code": 47,
+        "data": "2001:db8::18, 1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "lq-relay-data"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     OPTION_LQ_CLIENT_LINK     |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                  link-address (IPv6 address)                  |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                  link-address (IPv6 address)                  |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code      OPTION_LQ_CLIENT_LINK (48)
+
+      option-len       Length of the list of links in octets;
+                       must be a multiple of 16.
+
+      link-address     A global address used by the server to
+                       identify the link on which the client is
+                       located.
+      */
+      // Note: special logic not implemented
+      // Type: array of {IPv6 address}
+      {
+        "code": 48,
+        "data": "2001:db8::19, 2001:db8::20",
+        "name": "lq-client-link"
+      },
+
+      // Option codes 49-50 are not defined in Kea.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_V6_LOST           |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                LoST Server Domain Name                        |
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code: OPTION_V6_LOST (51)
+
+      option-length: Length of the 'LoST Server Domain Name' field
+           in octets; variable.
+
+      LoST Server Domain Name: The domain name of the LoST
+           server for the client to use.
+      */
+      // Type: FQDN
+      {
+        "code": 51,
+        "data": "lost.example.org",
+        "name": "v6-lost"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       option-code             |       option-length           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      +                                                               +
+      |                                                               |
+      +                          AC IPv6 Address                      +
+      |                                                               |
+      +                                                               +
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                          ....                                 |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:   OPTION_CAPWAP_AC_V6 (52)
+
+      option-length:   Length of the 'options' field in octets; MUST be a
+         multiple of sixteen (16).
+
+      AC IPv6 Address:  IPv6 address of a CAPWAP AC that the WTP may use.
+         The ACs are listed in the order of preference for use by the WTP.
+      */
+      // Type: array of {IPv6 address}
+      {
+        "code": 52,
+        "data": "2001:db8::21, 2001:db8::22",
+        "name": "capwap-ac-v6"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       OPTION_RELAY_ID         |          option-len           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                              DUID                             .
+      .                        (variable length)                      .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code   OPTION_RELAY_ID.
+
+      option-len    Length of DUID in octets.
+
+      DUID          The DUID for the relay agent.
+      */
+      // Type: binary
+      {
+        "code": 53,
+        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "relay-id"
+      },
+
+      // Option codes 54-56 are not defined in Kea.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    OPTION_V6_ACCESS_DOMAIN    |           Length              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                  Access Network Domain Name                   .
+      .                              ...                              .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:  OPTION_V6_ACCESS_DOMAIN (57).
+
+      option-length:  The length of the entire access network domain name
+         option in octets.
+
+      option-value:  The domain name associated with the access network,
+         encoded as described in Section 3.1.
+      */
+      // Type: FQDN
+      {
+        "code": 57,
+        "data": "v6-access.example.org",
+        "name": "v6-access-domain"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     OPTION_SIP_UA_CS_LIST     |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                          searchlist                           |
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code OPTION_SIP_UA_CS_LIST (58)
+
+      option-len  Length of the 'searchlist' field in octets
+
+      searchlist  The specification of the list of domain names in the SIP
+                  User Agent Configuration Service Domains
+      */
+      // Type: array of {FQDN}
+      {
+        "code": 58,
+        "data": "sip-ua1.example.org, sip-ua1.example.org",
+        "name": "sip-ua-cs-list"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       OPT_BOOTFILE_URL        |            option-len         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      .                  boot-file-url (variable length)              .
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code       OPT_BOOTFILE_URL (59).
+
+      option-len        Length of the boot-file-url in octets.
+
+      boot-file-url     This string is the URL for the boot file.  It MUST
+                        comply with STD 66 [RFC3986].  The string is not
+                        NUL-terminated.
+      */
+      // Type: string
+      {
+        "code": 59,
+        "data": "https://how-to-boot.net/pxe/os.img",
+        "name": "bootfile-url"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       OPT_BOOTFILE_PARAM      |            option-len         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      | param-len 1                   |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+           parameter 1         .
+      .                                        (variable length)      |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .                       <multiple Parameters>                   .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      | param-len n                   |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+           parameter n         .
+      .                                        (variable length)      |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code       OPT_BOOTFILE_PARAM (60).
+
+      option-len        Length of the Boot File Parameters option in octets
+                        (not including the size of the option-code and
+                        option-len fields).
+
+      param-len 1...n   This is a 16-bit integer that specifies the length
+                        of the following parameter in octets (not including
+                        the parameter-length field).
+
+      parameter 1...n   These UTF-8 strings are parameters needed for
+                        booting, e.g., kernel parameters.  The strings are
+                        not NUL-terminated.
+      */
+      // Type: array of {tuple}
+      {
+        "code": 60,
+        "data": "root=/dev/sda2, quiet, splash",
+        "name": "bootfile-param"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    OPTION_CLIENT_ARCH_TYPE    |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                                                               .
+      .             architecture-types (variable length)              .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code         OPTION_CLIENT_ARCH_TYPE (61).
+
+      option-len          Length of the "architecture-types" field in
+                          octets.  It MUST be an even number greater than
+                          zero.  See Section 2.1 of [RFC4578] for details.
+
+      architecture-types  A list of one or more architecture types, as
+                          specified in Section 2.1 of [RFC4578].  Each
+                          architecture type identifier in this list is a
+                          16-bit value that describes the pre-boot runtime
+                          environment of the client machine.  A list of
+                          valid values is maintained by the IANA (see
+                          Section 6).
+      */
+      // Type: array of {uint16}
+      {
+        "code": 61,
+        "data": "1, 3, 5, 7",
+        "name": "client-arch-type"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |           OPTION_NII          |          option-len           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     Type      |     Major     |      Minor      |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code       OPTION_NII (62).
+
+      option-len        3
+
+      Type              As specified in Section 2.2 of [RFC4578].
+
+      Major             As specified in Section 2.2 of [RFC4578].
+
+      Minor             As specified in Section 2.2 of [RFC4578].
+      */
+      // Type: uint8, uint8, array of {uint8}
+      {
+        "code": 62,
+        "data": "1, 2, 11, 13",
+        "name": "nii"
+      },
+
+      // Option code 63 is not defined in Kea.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-------------------------------+-------------------------------+
+      |    OPTION_AFTR_NAME: 64       |          option-len           |
+      +-------------------------------+-------------------------------+
+      |                                                               |
+      |                  tunnel-endpoint-name (FQDN)                  |
+      |                                                               |
+      +---------------------------------------------------------------+
+
+      option-len: Length of the tunnel-endpoint-name field in
+                  octets.
+
+      tunnel-endpoint-name: A fully qualified domain name of the AFTR
+                            tunnel endpoint
+      */
+      // Type: FQDN
+      {
+        "code": 64,
+        "data": "aftr.example.org",
+        "name": "aftr-name"
+      },
+
+      /*
+      0                   1                   2                   3
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      | OPTION_ERP_LOCAL_DOMAIN_NAME|         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      | erp-local-domain-name...
+      +-+-+-+-+-+-+-+-+-+-+-+-+-
+
+      option code
+         OPTION_ERP_LOCAL_DOMAIN_NAME (65)
+
+      option-length
+         Length of the erp-local-domain-name field, in octets
+
+      erp-local-domain-name
+         This field contains the name of the local ERP domain and MUST be
+         encoded as specified in Section 8 of RFC 3315 [RFC3315].  Note
+         that this encoding does enable the use of internationalized domain
+         names, but only as a set of A-labels [RFC5890].
+      */
+      // Type: FQDN
+      {
+        "code": 65,
+        "data": "erp-local.example.org",
+        "name": "erp-local-domain-name"
+      },
+
+      /*
+      0                   1                   2                   3
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |         OPTION_RSOO         |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |         options...
+      +-+-+-+-+-+-+-+-+-+-+-+
+
+      OPTION_RSOO
+
+         Relay-Supplied Options code (66).
+
+      option-length
+
+         Length of the RSOO.
+
+      options
+
+         One or more DHCPv6 options.
+      */
+      // Type: empty
+      {
+        "code": 66,
+        "name": "rsoo"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       OPTION_PD_EXCLUDE       |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  prefix-len   | IPv6 subnet ID (1 to 16 octets)               ~
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                              Prefix Exclude Option
+
+      o  option-code: OPTION_PD_EXCLUDE (67).
+
+      o  option-len: 1 + length of IPv6 subnet ID in octets.  A valid
+         option-len is between 2 and 17.
+
+      o  prefix-len: The length of the excluded prefix in bits.  The
+         prefix-len MUST be between 'OPTION_IAPREFIX prefix-length'+1 and
+         128.
+
+      o  IPv6 subnet ID: A variable-length IPv6 subnet ID up to 128 bits.
+      */
+      // Type: binary
+      {
+        "code": 67,
+        "data": "2001:db8:1:1::/64",
+        "name": "pd-exclude"
+      },
+
+      // Option codes 68-73 are not defined in Kea.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    OPTION_RDNSS_SELECTION     |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |            DNS-recursive-name-server (IPv6 address)           |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      | Reserved  |prf|                                               |
+      +-+-+-+-+-+-+-+-+          Domains and networks                 |
+      |                          (variable length)                    |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:  OPTION_RDNSS_SELECTION (74)
+
+      option-len:  Length of the option in octets
+
+      DNS-recursive-name-server:  An IPv6 address of RDNSS
+
+      Reserved:  Field reserved for the future.  MUST be set to zero and
+                 MUST be ignored on receipt.
+
+      prf:  RDNSS preference:
+
+            01 High
+            00 Medium
+            11 Low
+            10 Reserved
+
+            Reserved preference value (10) MUST NOT be sent.  On receipt,
+            the Reserved value MUST be treated as Medium preference (00).
+      */
+      // Type: IPv6 address, uint8, array of {FQDN}
+      {
+        "code": 74,
+        "data": "2001:db8::23, 01, example.com, example.org",
+        "name": "rdnss-selection"
+      },
+
+      // Option codes 75-78 are not defined in Kea.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      | OPTION_CLIENT_LINKLAYER_ADDR  |           option-length       |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   link-layer type (16 bits)   |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               |
+      |               link-layer address (variable length)            |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:        OPTION_CLIENT_LINKLAYER_ADDR (79)
+      option-length:      2 + length of link-layer address
+      link-layer type:    Client link-layer address type.  The link-layer
+                          type MUST be a valid hardware type assigned
+                          by the IANA, as described in [RFC0826]
+      link-layer address: Client link-layer address
+      */
+      // Type: binary
+      {
+        "code": 79,
+        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "client-linklayer-addr"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       OPTION_LINK_ADDRESS     |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                  link-address (IPv6 address)                  |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code: OPTION_LINK_ADDRESS (80)
+
+      option-len: 16 (octets)
+
+      link-address: An IPv6 address used by the server to identify the
+      link on which the client is located.
+      */
+      // Type: IPv6 address
+      {
+        "code": 80,
+        "data": "2001:db8::24",
+        "name": "link-address"
+      },
+
+      // Option code 81 is not defined in Kea.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_SOL_MAX_RT        |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                       SOL_MAX_RT value                        |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code          OPTION_SOL_MAX_RT (82).
+
+      option-len           4.
+
+      SOL_MAX_RT value     Overriding value for SOL_MAX_RT in seconds;
+                           MUST be in this range: 60 <= "value" <= 86400
+                           (1 day).  A 4-octet field containing an
+                           unsigned integer.
+      */
+      // Type: uint32
+      {
+        "code": 82,
+        "data": "420",
+        "name": "solmax-rt"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_INF_MAX_RT        |         option-len            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                       INF_MAX_RT value                        |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                    Figure 39: INF_MAX_RT Option Format
+
+      option-code          OPTION_INF_MAX_RT (83).
+
+      option-len           4.
+
+      INF_MAX_RT value     Overriding value for INF_MAX_RT in seconds;
+                           MUST be in this range: 60 <= "value" <= 86400
+                           (1 day).  A 4-octet field containing an
+                           unsigned integer.
+      */
+      // Type: uint32
+      {
+        "code": 83,
+        "data": "2220",
+        "name": "inf-max-rt"
+      },
+
+      // Option codes 84-86 are not defined in Kea.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          option-code          |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      .                        DHCPv4-message                         .
+      .                                                               .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:  OPTION_DHCPV4_MSG (87).
+
+      option-len:  Length of the DHCPv4 message.
+
+      DHCPv4-message:  The DHCPv4 message sent by the client or the server.
+         In a DHCPv4-query message, it contains a DHCPv4 message sent by a
+         client.  In a DHCPv4-response message, it contains a DHCPv4
+         message sent by a server in response to a client.
+      */
+      // Note: not commonly configured in Kea
+      // Type: binary
+      {
+        "code": 87,
+        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "dhcpv4-message"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |           option-code         |           option-len          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      .                        IPv6 Address(es)                       .
+      .                                                               .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:  OPTION_DHCP4_O_DHCP6_SERVER (88).
+
+      option-len:  Length of the IPv6 address(es) carried by the option,
+         i.e., multiple of 16 octets.  Minimal length of this option is 0.
+
+      IPv6 Address:  Zero or more IPv6 addresses of the DHCP 4o6 server(s).
+      */
+      // Type: array of {IPv6 address}
+      {
+        "code": 88,
+        "data": "2001:db8::25, 2001:db8::26",
+        "name": "dhcp4o6-server-addr"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        OPTION_S46_RULE        |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     flags     |     ea-len    |  prefix4-len  | ipv4-prefix   |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                  (continued)                  |  prefix6-len  |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                           ipv6-prefix                         |
+      |                       (variable length)                       |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      .                        S46_RULE-options                       .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      o  option-code: OPTION_S46_RULE (89)
+
+      o  option-length: length of the option, excluding option-code and
+         option-length fields, including length of all encapsulated
+         options; expressed in octets.
+
+      o  flags: 8 bits long; carries flags applicable to the rule.  The
+         meanings of the specific bits are explained in Figure 2.
+
+      o  ea-len: 8 bits long; specifies the Embedded Address (EA) bit
+         length.  Allowed values range from 0 to 48.
+
+      o  prefix4-len: 8 bits long; expresses the prefix length of the
+         Rule IPv4 prefix specified in the ipv4-prefix field.  Allowed
+         values range from 0 to 32.
+
+      o  ipv4-prefix: a fixed-length 32-bit field that specifies the IPv4
+         prefix for the S46 rule.  The bits in the prefix after prefix4-len
+         number of bits are reserved and MUST be initialized to zero by the
+         sender and ignored by the receiver.
+
+      o  prefix6-len: 8 bits long; expresses the length of the
+         Rule IPv6 prefix specified in the ipv6-prefix field.  Allowed
+         values range from 0 to 128.
+
+      o  ipv6-prefix: a variable-length field that specifies the IPv6
+         domain prefix for the S46 rule.  The field is padded on the right
+         with zero bits up to the nearest octet boundary when prefix6-len
+         is not evenly divisible by 8.
+
+      o  S46_RULE-options: a variable-length field that may contain zero or
+         more options that specify additional parameters for this S46 rule.
+         This document specifies one such option: OPTION_S46_PORTPARAMS.
+      */
+      // Type: uint8, uint8, IPv4 address, IPv6 prefix
+      {
+        "code": 89,
+        "data": "1, 0, 24, 192.0.2.0, 2001:db8:1::/64",
+        "name": "s46-rule",
+        "space": "s46-cont-mape-options"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |         OPTION_S46_BR         |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                      br-ipv6-address                          |
+      |                                                               |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      o  option-code: OPTION_S46_BR (90)
+
+      o  option-length: 16
+
+      o  br-ipv6-address: a fixed-length field of 16 octets that specifies
+         the IPv6 address for the S46 BR.
+      */
+      // Type: IPv6 address
+      {
+        "code": 90,
+        "data": "2001:db8::27",
+        "name": "s46-br",
+        "space": "s46-cont-mape-options"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        OPTION_S46_DMR         |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |dmr-prefix6-len|            dmr-ipv6-prefix                    |
+      +-+-+-+-+-+-+-+-+           (variable length)                   |
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      o  option-code: OPTION_S46_DMR (91)
+
+      o  option-length: 1 + length of dmr-ipv6-prefix specified in octets.
+
+      o  dmr-prefix6-len: 8 bits long; expresses the bitmask length of the
+         IPv6 prefix specified in the dmr-ipv6-prefix field.  Allowed
+         values range from 0 to 128.
+
+      o  dmr-ipv6-prefix: a variable-length field specifying the IPv6
+         prefix or address for the BR.  This field is right-padded with
+         zeros to the nearest octet boundary when dmr-prefix6-len is not
+         divisible by 8.
+      */
+      // Type: IPv6 prefix
+      {
+        "code": 91,
+        "data": "2001:db8:cafe::/64",
+        "name": "s46-dmr",
+        "space": "s46-cont-mapt-options"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_S46_V4V6BIND      |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                         ipv4-address                          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |bindprefix6-len|             bind-ipv6-prefix                  |
+      +-+-+-+-+-+-+-+-+             (variable length)                 |
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      .                      S46_V4V6BIND-options                     .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      o  option-code: OPTION_S46_V4V6BIND (92)
+
+      o  option-length: length of the option, excluding option-code and
+         option-length fields, including length of all encapsulated
+         options; expressed in octets.
+
+      o  ipv4-address: a fixed-length field of 4 octets specifying an IPv4
+         address.
+
+      o  bindprefix6-len: 8 bits long; expresses the bitmask length of the
+         IPv6 prefix specified in the bind-ipv6-prefix field.  Allowed
+         values range from 0 to 128.
+
+      o  bind-ipv6-prefix: a variable-length field specifying the IPv6
+         prefix or address for the S46 CE.  This field is right-padded with
+         zeros to the nearest octet boundary when bindprefix6-len is not
+         divisible by 8.
+
+      o  S46_V4V6BIND-options: a variable-length field that may contain
+         zero or more options that specify additional parameters.  This
+         document specifies one such option: OPTION_S46_PORTPARAMS.
+      */
+      // Type: IPv4 address, IPv6 prefix
+      {
+        "code": 92,
+        "data": "192.0.2.78, 2001:db8:1:cafe::/64",
+        "name": "s46-v4v6bind",
+        "space": "s46-cont-lw-options"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     OPTION_S46_PORTPARAMS     |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   offset      |    PSID-len   |              PSID             |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      o  option-code: OPTION_S46_PORTPARAMS (93)
+
+      o  option-length: 4
+
+      o  offset: Port Set Identifier (PSID) offset.  8 bits long; specifies
+         the numeric value for the S46 algorithm's excluded port range/
+         offset bits (a-bits), as per Section 5.1 of [RFC7597].  Allowed
+         values are between 0 and 15.  Default values for this field are
+         specific to the softwire mechanism being implemented and are
+         defined in the relevant specification document.
+
+      o  PSID-len: 8 bits long; specifies the number of significant bits in
+         the PSID field (also known as 'k').  When set to 0, the PSID field
+         is to be ignored.  After the first 'a' bits, there are k bits in
+         the port number representing the value of the PSID.  Consequently,
+         the address-sharing ratio would be 2^k.
+
+      o  PSID: 16 bits long.  The PSID value algorithmically identifies a
+         set of ports assigned to a CE.  The first k bits on the left of
+         this field contain the PSID binary value.  The remaining (16 - k)
+         bits on the right are padding zeros.
+      */
+      // Type: uint8, PSID
+      {
+        "code": 93,
+        "data": "2, 3/4",
+        "name": "s46-portparams",
+        "space": "s46-rule-options"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |        OPTION_S46_CONT_MAPE   |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      .            encapsulated-options (variable length)             .
+      .                                                               .
+      +---------------------------------------------------------------+
+
+      o  option-code: OPTION_S46_CONT_MAPE (94)
+
+      o  option-length: length of encapsulated options, expressed in
+         octets.
+
+      o  encapsulated-options: options associated with this Softwire46
+         MAP-E domain.
+      */
+      // Type: empty
+      {
+        "code": 94,
+        "name": "s46-cont-mape",
+        "space": "dhcp6"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     OPTION_S46_CONT_MAPT      |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      .            encapsulated-options (variable length)             .
+      .                                                               .
+      +---------------------------------------------------------------+
+
+      o  option-code: OPTION_S46_CONT_MAPT (95)
+
+      o  option-length: length of encapsulated options, expressed in
+         octets.
+
+      o  encapsulated-options: options associated with this Softwire46
+         MAP-T domain.
+      */
+      // Type: empty
+      {
+        "code": 95,
+        "name": "s46-cont-mapt",
+        "space": "dhcp6"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      OPTION_S46_CONT_LW       |         option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      +            encapsulated-options (variable length)             .
+      .                                                               .
+      +---------------------------------------------------------------+
+
+      o  option-code: OPTION_S46_CONT_LW (96)
+
+      o  option-length: length of encapsulated options, expressed in
+         octets.
+
+      o  encapsulated-options: options associated with this Softwire46
+         Lightweight 4over6 domain.
+      */
+      // Type: empty
+      {
+        "code": 96,
+        "name": "s46-cont-lw",
+        "space": "dhcp6"
+      },
+
+      // Option codes 97-102 are not defined in Kea.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          option-code          |          option-len           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .                      URI (variable length)                    .
+      |                              ...                              |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      o  option-code: The Captive-Portal DHCPv6 option (103) (two octets).
+
+      o  option-len: The length, in octets of the URI.
+
+      o  URI: The contact URI for the captive portal that the user should
+         connect to (encoded following the rules in [RFC3986]).
+      */
+      // Type: string
+      {
+        "code": 103,
+        "data": "https://example.org/captive-portal",
+        "name": "v6-captive-portal"
+      },
+
+      // Option codes 104-111 are not defined in Kea.
+      // Option code 112 is unassigned.
+      // Option codes 113-134 are not defined in Kea.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    OPTION_RELAY_PORT    |         Option-Len                  |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    Downstream Source Port     |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      Option-Code:  OPTION_RELAY_PORT. 16-bit value, 135.
+
+      Option-Len:  16-bit value to be set to 2.
+
+      Downstream Source Port:  16-bit value.  To be set by the IPv6 relay
+         either to the downstream relay agent's UDP source port used for
+         the UDP packet, or to zero if only the local relay agent uses the
+         non-DHCP UDP port (not 547).
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint16
+      {
+        "code": 135,
+        "data": "12345",
+        "name": "relay-source-port"
+      },
+
+      // Option codes 136-142 are unassigned.
+
+      /*
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      Option Code              |         Length                |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                         IP Address                            |
+      .                                                               .
+      +---------------------------------------------------------------+
+
+      Option Code
+         OPTION-IPv6_Address-ANDSF (143)
+
+      Length
+         Length (in bytes) of the option excluding the 'Option Code' and
+         the 'Length' fields; 'Length' field is set to 16N, where N is the
+         number of IPv6 addresses carried in the option
+
+      IP Address
+         IPv6 address(es) of ANDSF server(s)
+      */
+      // Type: IPv6 address
+      {
+        "code": 143,
+        "data": "2001:db8::28",
+        "name": "ipv6-address-andsf"
+      },
+
+      // Option codes 144-65535 are unassigned.
+
+      /*                         Custom option data                           */
+      // See "option-def" below for the definitions.
+      {
+        "code": 111,
+        "data": "88, 96, 64",
+        "name": "s46-priority"
+      },
+      {
+        "code": 1,
+        "name": "my-empty-option",
+        "space": "my-fancy-space"
+      },
+      {
+        "code": 222,
+        "data": "2001:db8::29, 2001:db8::/64, 3/4, 1, example.org, string",
+        "name": "my-lengthy-option",
+        "space": "my-fancy-space"
+      },
+      {
+        "code": 65432,
+        "data": "127, 32767, 2147483647, 255, 65535, 4294967295, 192.0.2.79, 2001:db8::30, 2001:db8::/64, 3/4, 1, example.org, string",
+        "name": "my-fancy-option",
+        "space": "my-fancy-space"
+      },
+      {
+        "code": 12321,
+        "name": "my-encapsulating-option",
+        "space": "my-encapsulating-space"
+      }
+    ],
+
+    /*                       Custom option definitions                        */
+    // For kea-dhcp6, custom option definitions are always global. Even when
+    // data for said options is then configured at subnet level.
+    "option-def": [
+      // Inside the default space. Codes need to not overlap with other
+      // standard/custom option definitions.
+      // An option from an actual RFC (8026) not implemented amongst the
+      // standard definitions. The option is structured as an array of 16-bit
+      // integers so "array" is set to true and "type" to "uint16".
+      {
+        "array": true,
+        "code": 111,
+        "encapsulate": "",
+        "name": "s46-priority",
+        "record-types": "",
+        "space": "dhcp6",
+        "type": "uint16"
+      },
+
+      // New option space allows for a new set of option codes.
+      // An empty option requires no "data" in "option-data". It's
+      // presence should be sufficient to trigger custom behavior.
+      {
+        "array": false,
+        "code": 1,
+        "encapsulate": "",
+        "name": "my-empty-option",
+        "record-types": "",
+        "space": "my-fancy-space",
+        "type": "empty"
+      },
+
+      // A custom type has "type" set to "record" and all data types (which need
+      // to be more than 1, otherwise you're better off using the type directly)
+      // are specified in "record-types". If "string" is part of them, it needs
+      // to be last.
+      {
+        "array": false,
+        "code": 222,
+        "encapsulate": "",
+        "name": "my-lengthy-option",
+        "record-types": "ipv6-address, ipv6-prefix, psid, tuple, fqdn, string",
+        "space": "my-fancy-space",
+        "type": "record"
+      },
+
+      // Contains arrays of all types except strings since an array of strings
+      // is not a valid option definition.
+      {
+        "array": true,
+        "code": 65432,
+        "encapsulate": "",
+        "name": "my-fancy-option",
+        "record-types": "int8, int16, int32, uint8, uint16, uint32, ipv4-address, ipv6-address, ipv6-prefix, psid, tuple, fqdn",
+        "space": "my-fancy-space",
+        "type": "record"
+      },
+
+      // A single encapsulating space can be used. An option containing any
+      // option from said space will now be unpacked succesfully by Kea.
+      {
+        "array": false,
+        "code": 12321,
+        "encapsulate": "my-fancy-space",
+        "name": "my-encapsulating-option",
+        "record-types": "",
+        "space": "my-encapsulating-space",
+        "type": "empty"
+      }
+    ],
+
+    "subnet6": [
+      /*                         DOCSIS3 option data                          */
+      // Headers are as defined in CL-SP-CANN-DHCP-Reg-I16-200715.
+      // "space" is required to be explicitly defined as "docsis3-v6"
+      {
+        "option-data": [
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |          option-code          |          option-len           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |    requested-option-code-1    |    requested-option-code-2    |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option-code   CL_OPTION_ORO (1)
+
+          option-len    2 * number of requested options in bytes
+
+          requested-option-code-n The option code for an option requested by the client.
+          */
+          // Note: not commonly configured in Kea
+          // Type: array of {uint16}
+          {
+            "code": 1,
+            "data": "32, 33",
+            "name": "oro",
+            "space": "docsis3-v6"
+          },
+
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |          option-code          |          option-len           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                          device-type                          |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                              ...                              |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option-code   CL_OPTION_DEVICE_TYPE (2)
+
+          option-len    length of device-type field in bytes.
+
+          device-type   The device type as NVT ASCII text MUST NOT be null terminated.
+             "ECM" for embedded Cable Modem (as specified by DOCSIS 1.0, 1.1, 2.0, 3.0
+             or 3.1 Base Specifications)
+             "EPS" for CableHome embedded Portal Services Element
+             "EMTA" for PacketCable embedded Multimedia Terminal Adapter
+             "EDVA" for PacketCable embedded Digital Voice Adapter
+             "ESTB" for an embedded Set-Top Box
+             "EROUTER" for an embedded DOCSIS Router
+             "SROUTER" for a Standalone Router
+          */
+          // Type: string
+          {
+            "code": 2,
+            "data": "ECM",
+            "name": "device-type",
+            "space": "docsis3-v6"
+          },
+
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |          option-code          |          option-len           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                                                               .
+          .                          vendor-name                          .
+          .                                                               |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option code:         CL_OPTION_VENDOR_NAME(10)
+
+          option length:       n (for string of length n)
+
+          vendor-name:         The vendor name string NVT ASCII text MUST NOT be
+                               null terminated.
+          */
+          // Type: string
+          {
+            "code": 10,
+            "data": "CableLabs",
+            "name": "vendor-type",
+            "space": "docsis3-v6"
+          },
+
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |          option-code          |          option-len           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                                                               |
+          |                         TFTP-server-1                         |
+          |                                                               |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                                                               |
+          |                         TFTP-server-2                         |
+          |                                                               |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          .                                                               .
+          .                                                               .
+          .                                                               .
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                                                               |
+          |                         TFTP-server-n                         |
+          |                                                               |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option code:         CL_OPTION_TFTP_SERVERS(32)
+
+          option length:       16*n (for n servers in the option) in bytes
+
+          TFTP-server:         The IPv6 address of a TFTP server
+          */
+          // Type: array of {IPv6 address}
+          {
+            "code": 32,
+            "data": "2001:db8::31",
+            "name": "tftp-servers",
+            "space": "docsis3-v6"
+          },
+
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |          option-code          |          option-len           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                                                               .
+          .                    configuration-file-name                    .
+          .                                                               |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option code:         CL_OPTION_CONFIG_FILE_NAME(33)
+
+          option length:       n (for file name of length n)
+
+          configuration-file-name: The name of the configuration file for the client
+          */
+          // Type: string
+          {
+            "code": 33,
+            "data": "cm/012345678.cfg",
+            "name": "config-file",
+            "space": "docsis3-v6"
+          },
+
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |          option-code          |          option-len           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                                                               .
+          .                          vendor-name                          .
+          .                                                               |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option code:           CL_OPTION_VENDOR_NAME(10)
+
+          option length:         n (for string of length n)
+
+          vendor-name:           The vendor name string NVT ASCII text MUST NOT be
+                                 null terminated.
+          */
+          // Type: array of {IPv6 address}
+          {
+            "code": 34,
+            "data": "2001:db8::32",
+            "name": "syslog-servers",
+            "space": "docsis3-v6"
+          },
+
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |          option-code          |          option-len           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                                                               .
+          .                          vendor-name                          .
+          .                                                               |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option code:           CL_OPTION_VENDOR_NAME(10)
+
+          option length:         n (for string of length n)
+
+          vendor-name:           The vendor name string NVT ASCII text MUST NOT be
+                                 null terminated.
+          */
+          // Type: binary
+          {
+            "code": 36,
+            "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+            "name": "device-id",
+            "space": "docsis3-v6"
+          },
+
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |          option-code          |          option-len           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                                                               .
+          .                          vendor-name                          .
+          .                                                               |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option code:           CL_OPTION_VENDOR_NAME(10)
+
+          option length:         n (for string of length n)
+
+          vendor-name:           The vendor name string NVT ASCII text MUST NOT be
+                                 null terminated.
+          */
+          // Type: int32
+          {
+            "code": 37,
+            "data": "2001:db8::33",
+            "name": "time-servers",
+            "space": "docsis3-v6"
+          },
+
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |          option-code          |          option-len           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                                                               .
+          .                          vendor-name                          .
+          .                                                               |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option code:           CL_OPTION_VENDOR_NAME(10)
+
+          option length:         n (for string of length n)
+
+          vendor-name:           The vendor name string NVT ASCII text MUST NOT be
+                                 null terminated.
+          */
+          // Type: int32
+          {
+            "code": 38,
+            "data": "-25200",
+            "name": "time-offset",
+            "space": "docsis3-v6"
+          },
+
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |          option-code          |          option-len           |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                        CM-MAC-address                         |
+          |                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                               |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option code:           CL_CM_MAC_ADDR (1026)
+
+          option len:            MUST be 6 bytes.
+
+          CM-MAC-address         The MAC address of the CM.
+          */
+          // Note: not commonly configured in Kea
+          // Type: binary
+          {
+            "code": 1026,
+            "data": "1A BB AD AB BA D0",
+            "name": "cmts-cm-mac",
+            "space": "docsis3-v6"
+          }
+        ],
+        "subnet": "2001:db8:D0C5:15::/64"
+      }
+    ]
+  }
+}

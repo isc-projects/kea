@@ -1,0 +1,1954 @@
+// This example configuration file for DHCPv4 server in Kea contains:
+//
+// - data for all the standard options
+// - custom option definitions at global level along with some associated
+// option data
+// - custom option data with standardized option spaces other than "dhcp4"
+// - custom option spaces
+// - option embedding examples
+//
+// The reader is strongly encouraged to take a look at the option formats
+// documented in the Kea ARM:
+// https://kea.readthedocs.io/en/latest/arm/dhcp4-srv.html?highlight=list%20of%20standard%20dhcpv4#id2
+
+{
+  "Dhcp4": {
+    /*                Data for all standard option definitions                */
+    // Option data defined globally
+    "option-data": [
+      /*
+       Code   Len        Subnet Mask
+      +-----+-----+-----+-----+-----+-----+
+      |  1  |  4  |  m1 |  m2 |  m3 |  m4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Note: not commonly configured in Kea
+      // Type: IPv4 address
+      {
+        "code": 1,
+        "data": "192.0.2.1",
+        "name": "subnet-mask"
+      },
+
+      /*
+       Code   Len        Time Offset
+      +-----+-----+-----+-----+-----+-----+
+      |  2  |  4  |  n1 |  n2 |  n3 |  n4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Type: int32
+      {
+        "code": 2,
+        "data": "-25200",
+        "name": "time-offset"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  3  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 3,
+        "data": "192.0.2.2, 192.0.2.3",
+        "name": "routers"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  4  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 4,
+        "data": "192.0.2.4, 192.0.2.5",
+        "name": "time-servers"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  5  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 5,
+        "data": "192.0.2.6, 192.0.2.7",
+        "name": "name-servers"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  6  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 6,
+        "data": "192.0.2.8, 192.0.2.9",
+        "name": "domain-name-servers"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  7  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 7,
+        "data": "192.0.2.10, 192.0.2.11",
+        "name": "log-servers"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  8  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 8,
+        "data": "192.0.2.12, 192.0.2.13",
+        "name": "cookie-servers"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  9  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 9,
+        "data": "192.0.2.14, 192.0.2.15",
+        "name": "lpr-servers"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  10 |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 10,
+        "data": "192.0.2.16, 192.0.2.17",
+        "name": "impress-servers"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  11 |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 11,
+        "data": "192.0.2.18, 192.0.2.19",
+        "name": "resource-location-servers"
+      },
+
+      /*
+       Code   Len                 Host Name
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  12 |  n  |  h1 |  h2 |  h3 |  h4 |  h5 |  h6 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Note: not commonly configured in Kea
+      // Type: string
+      {
+        "code": 12,
+        "data": "my-hostname",
+        "name": "host-name"
+      },
+
+      /*
+       Code   Len   File Size
+      +-----+-----+-----+-----+
+      |  13 |  2  |  l1 |  l2 |
+      +-----+-----+-----+-----+
+      */
+      // Type: uint16
+      {
+        "code": 13,
+        "data": "1024",
+        "name": "boot-size"
+      },
+
+      /*
+       Code   Len      Dump File Pathname
+      +-----+-----+-----+-----+-----+-----+---
+      |  14 |  n  |  n1 |  n2 |  n3 |  n4 | ...
+      +-----+-----+-----+-----+-----+-----+---
+      */
+      // Type: string
+      {
+        "code": 14,
+        "data": "/etc/crash-dump.img",
+        "name": "merit-dump"
+      },
+
+      /*
+       Code   Len        Domain Name
+      +-----+-----+-----+-----+-----+-----+--
+      |  15 |  n  |  d1 |  d2 |  d3 |  d4 |  ...
+      +-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: FQDN
+      {
+        "code": 15,
+        "data": "my.example.org",
+        "name": "domain-name"
+      },
+
+      /*
+       Code   Len    Swap Server Address
+      +-----+-----+-----+-----+-----+-----+
+      |  16 |  n  |  a1 |  a2 |  a3 |  a4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Type: IPv4 address
+      {
+        "code": 16,
+        "data": "192.0.2.20",
+        "name": "swap-server"
+      },
+
+      /*
+       Code   Len      Root Disk Pathname
+      +-----+-----+-----+-----+-----+-----+---
+      |  17 |  n  |  n1 |  n2 |  n3 |  n4 | ...
+      +-----+-----+-----+-----+-----+-----+---
+      */
+      // Type: string
+      {
+        "code": 17,
+        "data": "/path/to/root",
+        "name": "root-path"
+      },
+
+      /*
+       Code   Len      Extensions Pathname
+      +-----+-----+-----+-----+-----+-----+---
+      |  18 |  n  |  n1 |  n2 |  n3 |  n4 | ...
+      +-----+-----+-----+-----+-----+-----+---
+      */
+      // Type: string
+      {
+        "code": 18,
+        "data": "/path/to/extensions",
+        "name": "extensions-path"
+      },
+
+      /*
+       Code   Len  Value
+      +-----+-----+-----+
+      |  19 |  1  | 0/1 |
+      +-----+-----+-----+
+      */
+      // Type: boolean
+      {
+        "code": 19,
+        "data": "true",
+        "name": "ip-forwarding"
+      },
+
+      /*
+       Code   Len  Value
+      +-----+-----+-----+
+      |  20 |  1  | 0/1 |
+      +-----+-----+-----+
+      */
+      // Type: boolean
+      {
+        "code": 20,
+        "data": "true",
+        "name": "non-local-source-routing"
+      },
+
+      /*
+       Code   Len         Address 1                  Mask 1
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+      |  21 |  n  |  a1 |  a2 |  a3 |  a4 |  m1 |  m2 |  m3 |  m4 |
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+              Address 2                  Mask 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+---
+      |  a1 |  a2 |  a3 |  a4 |  m1 |  m2 |  m3 |  m4 | ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+---
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 21,
+        "data": "192.0.2.21, 192.0.2.22",
+        "name": "policy-filter"
+      },
+
+      /*
+       Code   Len      Size
+      +-----+-----+-----+-----+
+      |  22 |  2  |  s1 |  s2 |
+      +-----+-----+-----+-----+
+      */
+      // Type: uint16
+      {
+        "code": 22,
+        "data": "2048",
+        "name": "max-dgram-reassembly"
+      },
+
+      /*
+       Code   Len   TTL
+      +-----+-----+-----+
+      |  23 |  1  | ttl |
+      +-----+-----+-----+
+      */
+      // Type: uint8
+      {
+        "code": 23,
+        "data": "248",
+        "name": "default-ip-ttl"
+      },
+
+      /*
+       Code   Len           Timeout
+      +-----+-----+-----+-----+-----+-----+
+      |  24 |  4  |  t1 |  t2 |  t3 |  t4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Type: uint32
+      {
+        "code": 24,
+        "data": "131072",
+        "name": "path-mtu-aging-timeout"
+      },
+
+      /*
+       Code   Len     Size 1      Size 2
+      +-----+-----+-----+-----+-----+-----+---
+      |  25 |  n  |  s1 |  s2 |  s1 |  s2 | ...
+      +-----+-----+-----+-----+-----+-----+---
+      */
+      // Type: array of {uint16}
+      {
+        "code": 25,
+        "data": "3072, 4096",
+        "name": "path-mtu-plateau-table"
+      },
+
+      /*
+       Code   Len      MTU
+      +-----+-----+-----+-----+
+      |  26 |  2  |  m1 |  m2 |
+      +-----+-----+-----+-----+
+      */
+      // Type: uint16
+      {
+        "code": 26,
+        "data": "5120",
+        "name": "interface-mtu"
+      },
+
+      /*
+       Code   Len  Value
+      +-----+-----+-----+
+      |  27 |  1  | 0/1 |
+      +-----+-----+-----+
+      */
+      // Type: boolean
+      {
+        "code": 27,
+        "data": "true",
+        "name": "all-subnets-local"
+      },
+
+      /*
+       Code   Len     Broadcast Address
+      +-----+-----+-----+-----+-----+-----+
+      |  28 |  4  |  b1 |  b2 |  b3 |  b4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Type: IPv4 address
+      {
+        "code": 28,
+        "data": "192.0.2.255",
+        "name": "broadcast-address"
+      },
+
+      /*
+       Code   Len  Value
+      +-----+-----+-----+
+      |  29 |  1  | 0/1 |
+      +-----+-----+-----+
+      */
+      // Type: boolean
+      {
+        "code": 29,
+        "data": "true",
+        "name": "perform-mask-discovery"
+      },
+
+      /*
+       Code   Len  Value
+      +-----+-----+-----+
+      |  30 |  1  | 0/1 |
+      +-----+-----+-----+
+      */
+      // Type: boolean
+      {
+        "code": 30,
+        "data": "true",
+        "name": "mask-supplier"
+      },
+
+      /*
+       Code   Len  Value
+      +-----+-----+-----+
+      |  31 |  1  | 0/1 |
+      +-----+-----+-----+
+      */
+      // Type: boolean
+      {
+        "code": 31,
+        "data": "true",
+        "name": "router-discovery"
+      },
+
+      /*
+       Code   Len            Address
+      +-----+-----+-----+-----+-----+-----+
+      |  32 |  4  |  a1 |  a2 |  a3 |  a4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Type: IPv4 address
+      {
+        "code": 32,
+        "data": "192.0.2.23",
+        "name": "router-solicitation-address"
+      },
+
+      /*
+       Code   Len         Destination 1           Router 1
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+      |  33 |  n  |  d1 |  d2 |  d3 |  d4 |  r1 |  r2 |  r3 |  r4 |
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+              Destination 2           Router 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+---
+      |  d1 |  d2 |  d3 |  d4 |  r1 |  r2 |  r3 |  r4 | ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+---
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 33,
+        "data": "192.0.2.24, 192.0.2.25",
+        "name": "static-routes"
+      },
+
+      /*
+       Code   Len  Value
+      +-----+-----+-----+
+      |  34 |  1  | 0/1 |
+      +-----+-----+-----+
+      */
+      // Type: boolean
+      {
+        "code": 34,
+        "data": "true",
+        "name": "trailer-encapsulation"
+      },
+
+      /*
+       Code   Len           Time
+      +-----+-----+-----+-----+-----+-----+
+      |  35 |  4  |  t1 |  t2 |  t3 |  t4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Type: uint32
+      {
+        "code": 35,
+        "data": "196608",
+        "name": "arp-cache-timeout"
+      },
+
+      /*
+       Code   Len  Value
+      +-----+-----+-----+
+      |  36 |  1  | 0/1 |
+      +-----+-----+-----+
+      */
+      // Type: boolean
+      {
+        "code": 36,
+        "data": "true",
+        "name": "ieee802-3-encapsulation"
+      },
+
+      /*
+       Code   Len   TTL
+      +-----+-----+-----+
+      |  37 |  1  |  n  |
+      +-----+-----+-----+
+      */
+      // Type: uint8
+      {
+        "code": 37,
+        "data": "124",
+        "name": "default-tcp-ttl"
+      },
+
+      /*
+       Code   Len           Time
+      +-----+-----+-----+-----+-----+-----+
+      |  38 |  4  |  t1 |  t2 |  t3 |  t4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Type: uint32
+      {
+        "code": 38,
+        "data": "262144",
+        "name": "tcp-keepalive-interval"
+      },
+
+      /*
+       Code   Len  Value
+      +-----+-----+-----+
+      |  39 |  1  | 0/1 |
+      +-----+-----+-----+
+      */
+      // Type: boolean
+      {
+        "code": 39,
+        "data": "true",
+        "name": "tcp-keepalive-garbage"
+      },
+
+      /*
+       Code   Len      NIS Domain Name
+      +-----+-----+-----+-----+-----+-----+---
+      |  40 |  n  |  n1 |  n2 |  n3 |  n4 | ...
+      +-----+-----+-----+-----+-----+-----+---
+      */
+      // Type: string
+      {
+        "code": 40,
+        "data": "nis.example.org",
+        "name": "nis-domain"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  41 |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 41,
+        "data": "192.0.2.26, 192.0.2.27",
+        "name": "nis-servers"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  42 |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 42,
+        "data": "192.0.2.28, 192.0.2.29",
+        "name": "ntp-servers"
+      },
+
+      /*
+       Code   Len   Vendor-specific information
+      +-----+-----+-----+-----+---
+      |  43 |  n  |  i1 |  i2 | ...
+      +-----+-----+-----+-----+---
+
+       Code   Len   Data item        Code   Len   Data item       Code
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+      |  T1 |  n  |  d1 |  d2 | ... |  T2 |  n  |  D1 |  D2 | ... | ... |
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+      */
+      // Type: empty
+      {
+        "code": 43,
+        "name": "vendor-encapsulated-options"
+      },
+
+      /*
+       Code   Len           Address 1              Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----
+      |  44 |  n  |  a1 |  a2 |  a3 |  a4 |  b1 |  b2 |  b3 |  b4 | ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 44,
+        "data": "192.0.2.30, 192.0.2.31",
+        "name": "netbios-name-servers"
+      },
+
+      /*
+       Code   Len           Address 1              Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----
+      |  45 |  n  |  a1 |  a2 |  a3 |  a4 |  b1 |  b2 |  b3 |  b4 | ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 45,
+        "data": "192.0.2.32, 192.0.2.33",
+        "name": "netbios-dd-server"
+      },
+
+      /*
+      Value         Node Type
+      -----         ---------
+      0x1           B-node
+      0x2           P-node
+      0x4           M-node
+      0x8           H-node
+
+       Code   Len  Node Type
+      +-----+-----+-----------+
+      |  46 |  1  | see above |
+      +-----+-----+-----------+
+      */
+      // Type: uint8
+      {
+        "code": 46,
+        "data": "0x1",
+        "name": "netbios-node-type"
+      },
+
+      /*
+       Code   Len       NetBIOS Scope
+      +-----+-----+-----+-----+-----+-----+----
+      |  47 |  n  |  s1 |  s2 |  s3 |  s4 | ...
+      +-----+-----+-----+-----+-----+-----+----
+      */
+      // Type: string
+      {
+        "code": 47,
+        "data": "scope42",
+        "name": "netbios-scope"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+---
+      |  48 |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |   ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+---
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 48,
+        "data": "192.0.2.34, 192.0.2.35",
+        "name": "font-servers"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+---
+      |  49 |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |   ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+---
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 49,
+        "data": "192.0.2.36, 192.0.2.37",
+        "name": "x-display-manager"
+      },
+
+      /*
+       Code   Len          Address
+      +-----+-----+-----+-----+-----+-----+
+      |  50 |  4  |  a1 |  a2 |  a3 |  a4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Note: not commonly configured in Kea
+      // Type: IPv4 address
+      {
+        "code": 50,
+        "data": "192.0.2.38",
+        "name": "dhcp-requested-address"
+      },
+
+      /*
+       Code   Len         Lease Time
+      +-----+-----+-----+-----+-----+-----+
+      |  51 |  4  |  t1 |  t2 |  t3 |  t4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint32
+      {
+        "code": 51,
+        "data": "86400",
+        "name": "dhcp-lease-time"
+      },
+
+      /*
+      Value   Meaning
+      -----   --------
+        1     the 'file' field is used to hold options
+        2     the 'sname' field is used to hold options
+        3     both fields are used to hold options
+
+       Code   Len  Value
+      +-----+-----+-----+
+      |  52 |  1  |1/2/3|
+      +-----+-----+-----+
+      */
+      // Type: uint8
+      {
+        "code": 52,
+        "data": "3",
+        "name": "dhcp-option-overload"
+      },
+
+      /*
+      Value   Message Type
+      -----   ------------
+        1     DHCPDISCOVER
+        2     DHCPOFFER
+        3     DHCPREQUEST
+        4     DHCPDECLINE
+        5     DHCPACK
+        6     DHCPNAK
+        7     DHCPRELEASE
+        8     DHCPINFORM
+
+       Code   Len  Type
+      +-----+-----+-----+
+      |  53 |  1  | 1-9 |
+      +-----+-----+-----+
+      */
+      // Note: not commonly configured in Kea
+      // Type: string
+      {
+        "code": 53,
+        "data": "2",
+        "name": "dhcp-message-type"
+      },
+
+      /*
+       Code   Len            Address
+      +-----+-----+-----+-----+-----+-----+
+      |  54 |  4  |  a1 |  a2 |  a3 |  a4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Type: IPv4 address
+      {
+        "code": 54,
+        "data": "192.0.2.39",
+        "name": "dhcp-server-identifier"
+      },
+
+      /*
+       Code   Len   Option Codes
+      +-----+-----+-----+-----+---
+      |  55 |  n  |  c1 |  c2 | ...
+      +-----+-----+-----+-----+---
+      */
+      // Note: not commonly configured in Kea
+      // Type: array of {uint8}
+      {
+        "code": 55,
+        "data": "32, 42",
+        "name": "dhcp-parameter-request-list"
+      },
+
+      /*
+       Code   Len     Text
+      +-----+-----+-----+-----+---
+      |  56 |  n  |  c1 |  c2 | ...
+      +-----+-----+-----+-----+---
+      */
+      // Type: string
+      {
+        "code": 56,
+        "data": "Error: here's a DHCPNAK!",
+        "name": "dhcp-message"
+      },
+
+      /*
+       Code   Len     Length
+      +-----+-----+-----+-----+
+      |  57 |  2  |  l1 |  l2 |
+      +-----+-----+-----+-----+
+      */
+      // Type: uint16
+      {
+        "code": 57,
+        "data": "1536",
+        "name": "dhcp-max-message-size"
+      },
+
+      /*
+       Code   Len         T1 Interval
+      +-----+-----+-----+-----+-----+-----+
+      |  58 |  4  |  t1 |  t2 |  t3 |  t4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint32
+      {
+        "code": 58,
+        "data": "7200",
+        "name": "dhcp-renewal-time"
+      },
+
+      /*
+       Code   Len         T2 Interval
+      +-----+-----+-----+-----+-----+-----+
+      |  59 |  4  |  t1 |  t2 |  t3 |  t4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint32
+      {
+        "code": 59,
+        "data": "14400",
+        "name": "dhcp-rebinding-time"
+      },
+
+      /*
+       Code   Len   Vendor class Identifier
+      +-----+-----+-----+-----+---
+      |  60 |  n  |  i1 |  i2 | ...
+      +-----+-----+-----+-----+---
+      */
+      // Type: string
+      {
+        "code": 60,
+        "data": "ISC",
+        "name": "vendor-class-identifier"
+      },
+
+      /*
+        Code Len  Type  IAID                DUID
+       +----+----+-----+----+----+----+----+----+----+---
+       | 61 | n  | 255 | i1 | i2 | i3 | i4 | d1 | d2 |...
+       +----+----+-----+----+----+----+----+----+----+---
+      */
+      // Note: not commonly configured in Kea
+      // Type: binary
+      {
+        "code": 61,
+        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "dhcp-client-identifier"
+      },
+
+      /*
+       Code  Len    NetWare/IP Domain Name
+      +-----+-----+------+------+------+-----
+      |  62 |  n  |  c1  |  c2  |  c3  |  ...
+      +-----+-----+------+------+------+-----
+      */
+      // Type: string
+      {
+        "code": 62,
+        "data": "nwip.example.org",
+        "name": "nwip-domain-name"
+      },
+
+      /*
+       Code   Len  NetWare/IP General Info
+      +-----+-----+----+----+
+      | 63  | 11  | 2  |  0 |
+      +-----+-----+----+----+
+                   NWIP_EXIST_IN_OPTIONS_AREA (length 0)
+
+                  +----+----+----+
+                  |  5 |  1 |  1 |
+                  +----+----+----+
+                   NSQ_BROADCAST_SERVER (length 1)
+                   value is YES
+
+                  +----+----+------------+
+                  |  7 |  4 | IP address |
+                  +----+----+------------+
+                   NEAREST_NWIP_SERVER (length 4)
+                   value is IP address of server
+      */
+      // Type: binary
+      {
+        "code": 63,
+        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "nwip-suboptions"
+      },
+
+      /*
+       Code   Len      NIS Client Domain Name
+      +-----+-----+-----+-----+-----+-----+---
+      |  64 |  n  |  n1 |  n2 |  n3 |  n4 | ...
+      +-----+-----+-----+-----+-----+-----+---
+      */
+      // Type: string
+      {
+        "code": 64,
+        "data": "nisplus.example.org",
+        "name": "nisplus-domain-name"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  65 |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: IPv4 address
+      {
+        "code": 65,
+        "data": "192.0.2.40",
+        "name": "nisplus-servers"
+      },
+
+      /*
+       Code  Len   TFTP server
+      +-----+-----+-----+-----+-----+---
+      | 66  |  n  |  c1 |  c2 |  c3 | ...
+      +-----+-----+-----+-----+-----+---
+      */
+      // Type: string
+      {
+        "code": 66,
+        "data": "tftp.example.org",
+        "name": "tftp-server-name"
+      },
+
+      /*
+       Code  Len   Bootfile name
+      +-----+-----+-----+-----+-----+---
+      | 67  |  n  |  c1 |  c2 |  c3 | ...
+      +-----+-----+-----+-----+-----+---
+      */
+      // Type: string
+      {
+        "code": 67,
+        "data": "boot-file.img",
+        "name": "boot-file-name"
+      },
+
+      /*
+       Code Len    Home Agent Addresses (zero or more)
+      +-----+-----+-----+-----+-----+-----+--
+      | 68  |  n  | a1  | a2  | a3  | a4  | ...
+      +-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 68,
+        "data": "192.0.2.41, 192.0.2.42",
+        "name": "mobile-ip-home-agent"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      | 69  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 69,
+        "data": "192.0.2.43, 192.0.2.44",
+        "name": "smtp-server"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      | 70  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 70,
+        "data": "192.0.2.45, 192.0.2.46",
+        "name": "pop-server"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      | 71  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 71,
+        "data": "192.0.2.47, 192.0.2.48",
+        "name": "nntp-server"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      | 72  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 72,
+        "data": "192.0.2.49, 192.0.2.50",
+        "name": "www-server"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      | 73  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 73,
+        "data": "192.0.2.51, 192.0.2.52",
+        "name": "finger-server"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      | 74  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 74,
+        "data": "192.0.2.53, 192.0.2.54",
+        "name": "irc-server"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      | 75  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 75,
+        "data": "192.0.2.55, 192.0.2.56",
+        "name": "streettalk-server"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      | 76  |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 76,
+        "data": "192.0.2.57, 192.0.2.58",
+        "name": "streettalk-directory-assistance-server"
+      },
+
+      /*
+       Code   Len   Value
+      +-----+-----+---------------------  . . .  --+
+      | 77  |  N  | User Class Data ('Len' octets) |
+      +-----+-----+---------------------  . . .  --+
+      */
+      // Type: binary
+      {
+        "code": 77,
+        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "user-class"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   Code = 78   |    Length     |   Mandatory   |      a1       |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      a2       |       a3      |       a4      |      ...
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      */
+      // Type: boolean, array of {IPv4 address}
+      {
+        "code": 78,
+        "data": "true, 192.0.2.59, 192.0.2.60",
+        "name": "slp-directory-agent"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   Code = 79   |     Length    |   Mandatory   | <Scope List>...
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      */
+      // Type: boolean, string
+      {
+        "code": 79,
+        "data": "true, slp-scope",
+        "name": "slp-service-scope"
+      },
+
+      // Option code 80 is not defined in Kea.
+
+      /*
+       Code   Len    Flags  RCODE1 RCODE2   Domain Name
+      +------+------+------+------+------+------+--
+      |  81  |   n  |      |      |      |       ...
+      +------+------+------+------+------+------+--
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint8, uint8, uint8, FQDN
+      {
+        "code": 81,
+        "data": "4, 5, 7, my.example.org",
+        "name": "fqdn"
+      },
+
+      /*
+       Code   Len     Agent Information Field
+      +------+------+------+------+------+------+--...-+------+
+      |  82  |   N  |  i1  |  i2  |  i3  |  i4  |      |  iN  |
+      +------+------+------+------+------+------+--...-+------+
+
+       SubOpt  Len     Sub-option Value
+      +------+------+------+------+------+------+--...-+------+
+      |  1   |   N  |  s1  |  s2  |  s3  |  s4  |      |  sN  |
+      +------+------+------+------+------+------+--...-+------+
+       SubOpt  Len     Sub-option Value
+      +------+------+------+------+------+------+--...-+------+
+      |  2   |   N  |  i1  |  i2  |  i3  |  i4  |      |  iN  |
+      +------+------+------+------+------+------+--...-+------+
+      */
+      // Note: not commonly configured in Kea
+      // Type: empty
+      {
+        "code": 82,
+        "name": "dhcp-agent-options"
+      },
+
+      // Option code 83 is not defined in Kea.
+      // Option code 84 is unassigned.
+
+      /*
+       Code   Len        Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+--
+      | 85  |  n  |  a1 |  a2 | a3  |  a4 |  a1 |  a2 |  a3 |  a4 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of IPv4 address
+      {
+        "code": 85,
+        "data": "192.0.2.61, 192.0.2.62",
+        "name": "nds-servers"
+      },
+
+      /*
+       Code Len  NDS Tree Name
+      +----+----+----+----+----+----+--
+      | 86 | n  | c1 | c2 | c3 | c4 |  ...
+      +----+----+----+----+----+----+--
+      */
+      // Type: string
+      {
+        "code": 86,
+        "data": "my-tree",
+        "name": "nds-tree-name"
+      },
+
+      /*
+       Code Len  Initial NDS Context
+      +----+----+----+----+----+----+--
+      | 87 | n  | c1 | c2 | c3 | c4 |  ...
+      +----+----+----+----+----+----+--
+      */
+      // Type: string
+      {
+        "code": 87,
+        "data": "context",
+        "name": "nds-context"
+      },
+
+      /*
+       Code   Len  FQDN(s) of BCMCS Controller
+      +-----+-----+-----+-----+-----+-----+-----+--
+      | 88  |  n  |  s1 |  s2 |  s3 |  s4 | s5  |  ...
+      +-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: FQDN
+      {
+        "code": 88,
+        "data": "bcms-controller.example.org",
+        "name": "bcms-controller-names"
+      },
+
+      /*
+       Code   Len  Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+--
+      | 89  |  n  | a1  | a2  | a3  | a4  | a1  |  ...
+      +-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 89,
+        "data": "192.0.2.63",
+        "name": "bcms-controller-address"
+      },
+
+      /*
+      0                   1                   2                   3
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     Code      |    Length     |  Protocol     |   Algorithm   |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     RDM       | Replay Detection (64 bits)                    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  Replay cont.                                                 |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  Replay cont. |                                               |
+      +-+-+-+-+-+-+-+-+                                               |
+      |                                                               |
+      |           Authentication Information                          |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      */
+      // Note: not commonly configured in Kea
+      // Type: binary
+      {
+        "code": 90,
+        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "authenticate"
+      },
+
+      /*
+       Code   Len      Seconds in the past
+      +-----+-----+-----+-----+-----+-----+
+      |  91 |  4  |  t1 |  t2 |  t3 |  t4 |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Note: not commonly configured in Kea
+      // Type: uint32
+      {
+        "code": 91,
+        "data": "360",
+        "name": "client-last-transaction-time"
+      },
+
+      /*
+       Code   Len         Address 1               Address 2
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      |  92 |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
+      +-----+-----+-----+-----+-----+-----+-----+-----+--
+      */
+      // Note: not commonly configured in Kea
+      // Type: array of {IPv4 address}
+      {
+        "code": 92,
+        "data": "192.0.2.64, 192.0.2.65",
+        "name": "associated-ip"
+      },
+
+      /*
+       Code  Len  16-bit Type
+      +----+-----+-----+-----+
+      | 93 |  n  | n1  | n2  |
+      +----+-----+-----+-----+
+      */
+      // Type: array of uint16
+      {
+        "code": 93,
+        "data": "6144, 7168",
+        "name": "client-system"
+      },
+
+      /*
+       Code  Len  Type Major Minor
+      +----+-----+----+-----+-----+
+      | 94 |  3  |  t |  M  |  m  |
+      +----+-----+----+-----+-----+
+      */
+      // Type: uint8, uint8, uint8
+      {
+        "code": 94,
+        "data": "0, 1, 0",
+        "name": "client-ndi"
+      },
+
+      // Option code 95 is unsupported.
+      // Option code 96 is unassigned.
+
+      /*
+       Code  Len  Type  Machine Identifier
+      +----+-----+----+-----+ . . . +-----+
+      | 97 |  n  |  t |     | . . . |     |
+      +----+-----+----+-----+ . . . +-----+
+      */
+      // Type: uint8, binary
+      {
+        "code": 97,
+        "data": "0, 1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "uuid-guid"
+      },
+
+      /*
+      0                   1                   2                   3
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     Code      |    Length     |   URL list
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+         Code            98
+
+         Length          The length of the data field (i.e., URL list) in
+                         bytes.
+
+         URL list        A list of one or more URLs separated by the ASCII
+                         space character (0x20).
+      */
+      // Type: string
+      {
+        "code": 98,
+        "data": "uap1.example.org uap2.example.org",
+        "name": "uap-servers"
+      },
+
+      /*
+      0                   1                   2                   3
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      | GEOCONF_CIVIC |       N       |      what     |    country    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    code       |        civic address elements                ...
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      Code GEOCONF_CIVIC:  The code for this DHCP option is 99.
+
+      N:  The length of this option is variable.  The minimum length is 3
+         octets.
+
+      what:  The 'what' element describes to which location the DHCP entry
+         refers.  Currently, three options are defined: the location of the
+         DHCP server (a value of 0), the location of the network element
+         believed to be closest to the client (a value of 1), or the
+         location of the client (a value of 2).  Option (2) SHOULD be used,
+         but may not be known.  Options (0) and (1) SHOULD NOT be used
+         unless it is known that the DHCP client is in close physical
+         proximity to the server or network element.
+
+      country code:  The two-letter ISO 3166 country code in capital ASCII
+         letters, e.g., DE or US.  (Civic addresses always contain country
+         designations, suggesting the use of a fixed-format field to save
+         space.)
+
+      civic address elements:  Zero or more elements comprising the civic
+         and/or postal address, with the format described below
+         (Section 3.3).
+      */
+      // Type: binary
+      {
+        "code": 99,
+        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "geoconf-civic"
+      },
+
+      /*
+       PCode  Len   TZ-POSIX String
+      +-----+-----+------------------------------+
+      | 100 |  N  | IEEE 1003.1 String           |
+      +-----+-----+------------------------------+
+      */
+      // Type: string
+      {
+        "code": 100,
+        // String options that have a comma in their values need to have
+        // it escaped (i.e. each comma is preceded by two backslashes).
+        // That's because commas are reserved for separating fields in
+        // compound options. At the same time, we need to be conformant
+        // with JSON spec, that does not allow "\,". Therefore the
+        // slightly uncommon double backslashes notation is needed.
+        // The value sent over the wire is:
+        // EST5EDT4,M3.2.0/02:00,M11.1.0/02:00
+        "data": "EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00",
+        "name": "pcode"
+      },
+
+      /*
+       TCode  Len   TZ-Database String
+      +-----+-----+------------------------------+
+      | 101 |  N  | Reference to the TZ Database |
+      +-----+-----+------------------------------+
+      */
+      // Type: string
+      {
+        "code": 101,
+        "data": "Europe/Zurich",
+        "name": "tcode"
+      },
+
+      // Option codes 102-107 are unassigned.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     Code      |   Length      |           Value               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |         Value (cont.)         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      Code:  8-bit identifier of the IPv6-Only Preferred option code as
+         assigned by IANA: 108.  The client includes the Code in the
+         Parameter Request List in DHCPDISCOVER and DHCPREQUEST messages as
+         described in Section 3.2.
+
+      Length:  8-bit unsigned integer.  The length of the option, excluding
+         the Code and Length Fields.  The server MUST set the length field
+         to 4.  The client MUST ignore the IPv6-Only Preferred option if
+         the length field value is not 4.
+
+      Value:  32-bit unsigned integer.  The number of seconds for which the
+         client should disable DHCPv4 (V6ONLY_WAIT configuration variable).
+         If the server pool is explicitly configured with a V6ONLY_WAIT
+         timer, the server MUST set the field to that configured value.
+         Otherwise, the server MUST set it to zero.  The client MUST
+         process that field as described in Section 3.2.
+      */
+      // Type: uint32
+      {
+        "code": 108,
+        "data": "3600",
+        "name": "v6-only-preferred"
+      },
+
+      // Option codes 109-111 are unassigned.
+
+      // Type: array of {IPv4 address}
+      {
+        "code": 112,
+        "data": "192.0.2.63, 192.0.2.64",
+        "name": "netinfo-server-address"
+      },
+
+      // Type: string
+      {
+        "code": 113,
+        "data": "server1",
+        "name": "netinfo-server-tag"
+      },
+
+      // Type: string
+      {
+        "code": 114,
+        "data": "https://default.example.org",
+        "name": "default-url"
+      },
+
+      // Option code 115 is unassigned.
+
+      /*
+       Code   Len   Value
+      +-----+-----+-----+
+      | 116 |  1  |  a  |
+      +-----+-----+-----+
+      */
+      // Type: uint8
+      {
+        "code": 116,
+        "data": "1",
+        "name": "auto-config"
+      },
+
+      /*
+           Code            Length      Name Service Search Order in Sequence
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     117       |     Len       |             ns1               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |             ns2               |             ...               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      */
+      // Type: array of {uint16}
+      {
+        "code": 117,
+        "data": "6, 41, 44, 65",
+        "name": "name-service-search"
+      },
+
+      /*
+       Code   Len        IPv4 Address
+      +-----+-----+-----+-----+-----+-----+
+      | 118 |  4  | A1  | A2  | A3  | A4  |
+      +-----+-----+-----+-----+-----+-----+
+      */
+      // Type: IPv4 address
+      {
+        "code": 118,
+        "data": "192.0.2.65",
+        "name": "subnet-selection"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     119       |     Len       |         Searchstring...
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                     Searchstring...
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      */
+      // Type: array of {FQDN}
+      {
+        "code": 119,
+        "data": "example.com, example.org",
+        "name": "domain-search"
+      },
+
+      // Option codes 120-123 are not defined in Kea.
+
+      /*
+                           1 1 1 1 1 1
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  option-code  |  option-len   |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      enterprise-number1       |
+      |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   data-len1   |               |
+      +-+-+-+-+-+-+-+-+               |
+      /      vendor-class-data1       /
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ----
+      |      enterprise-number2       |   ^
+      |                               |   |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   |
+      |   data-len2   |               | optional
+      +-+-+-+-+-+-+-+-+               |   |
+      /      vendor-class-data2       /   |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   |
+      ~            ...                ~   V
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ----
+
+      option-code         OPTION_V-I_VENDOR_CLASS (124)
+
+      option-len          total length of all following option data in
+                          octets
+
+      enterprise-numberN  The vendor's 32-bit Enterprise Number as
+                          registered with IANA [3]
+
+      data-lenN           Length of vendor-class-data field
+
+      vendor-class-dataN  Details of the hardware configuration of the
+                          host on which the client is running, or of
+                          industry consortium compliance
+      */
+      // Type: uint32, binary
+      {
+        "code": 124,
+        "data": "4491, 0f BA AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
+        "name": "vivco-suboptions"
+      },
+
+      /*
+                           1 1 1 1 1 1
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  option-code  |  option-len   |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      enterprise-number1       |
+      |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   data-len1   |               |
+      +-+-+-+-+-+-+-+-+ option-data1  |
+      /                               /
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ----
+      |      enterprise-number2       |   ^
+      |                               |   |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   |
+      |   data-len2   |               | optional
+      +-+-+-+-+-+-+-+-+ option-data2  |   |
+      /                               /   |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   |
+      ~            ...                ~   V
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ----
+
+      option-code         OPTION_V-I_VENDOR_OPTS (125)
+
+      option-len          total length of all following option data in
+                          octets
+
+      enterprise-numberN  The vendor's registered 32-bit Enterprise Number
+                          as registered with IANA [3]
+
+      data-lenN           Length of option-data field
+
+      option-dataN        Vendor-specific options, described below
+      */
+      // Type: uint32
+      {
+        "code": 125,
+        "data": "4491",
+        "name": "vivso-suboptions"
+      },
+
+    // Option codes 126-127 are unassigned.
+    // Option codes 128-135 are not defined in Kea.
+
+      /*
+      0                   1
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  option-code  | option-length |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                               |
+      +      PAA IPv4 Address         +
+      |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |             ...               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         Figure 1: PAA DHCPv4 option
+
+      option-code:        OPTION_PANA_AGENT (136).
+
+      option-length:      Length of the 'options' field in octets;
+                          MUST be a multiple of four (4).
+
+      PAA IPv4 Address:   IPv4 address of a PAA for the client to use.
+                          The PAAs are listed in the order of preference
+                          for use by the client.
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 136,
+        "data": "192.0.2.66, 192.0.2.67",
+        "name": "pana-agent"
+      },
+
+      /*
+      Code    Len   LoST Server Domain Name
+      +-----+-----+-----+-----+-----+-----+-----+----
+      | 137 |  n  |  s1 |  s2 |  s3 |  s4 | s5  |  ...
+      +-----+-----+-----+-----+-----+-----+-----+----
+      */
+      // Type: FQDN
+      {
+        "code": 137,
+        "data": "lost.example.org",
+        "name": "v4-lost"
+      },
+
+      /*
+      0                   1
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  option-code  | option-length |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                               |
+      +       AC IPv4 Address         +
+      |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |             ...               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:   OPTION_CAPWAP_AC_V4 (138)
+
+      option-length:   Length of the 'options' field in octets; MUST be a
+         multiple of four (4).
+
+      AC IPv4 Address:  IPv4 address of a CAPWAP AC that the WTP may use.
+         The ACs are listed in the order of preference for use by the WTP
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 138,
+        "data": "192.0.2.68, 192.0.2.69",
+        "name": "capwap-ac-v4"
+      },
+
+      // Option codes 139-140 are not defined in Kea.
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      141      |     Len       |         Searchstring...       |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                     Searchstring...                           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      */
+      // Type: array of {FQDN}
+      {
+        "code": 141,
+        "data": "example.com, example.org",
+        "name": "sip-ua-cs-domains"
+      },
+
+      // Option codes 142-145 are not defined in Kea.
+
+      // Type: uint8, IPv4 address, IPv4 address, array of {FQDN}
+      {
+        "code": 146,
+        "data": "1, 192.0.2.70, 192.0.2.71, example.com, example.org",
+        "name": "rdnss-selection"
+      },
+
+      // Option codes 147-158 are not defined in Kea.
+
+      // Type: uint8, PSID
+      {
+        "code": 159,
+        "data": "2, 3/4",
+        "name": "v4-portparams"
+      },
+
+      // Type: string
+      {
+        "code": 160,
+        "data": "portal",
+        "name": "v4-captive-portal"
+      },
+
+      // Option codes 161-209 are unassigned.
+
+      /*
+      0                   1                   2                   3
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  OPTION_6RD   | option-length |  IPv4MaskLen  |  6rdPrefixLen |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                                                               |
+      |                           6rdPrefix                           |
+      |                          (16 octets)                          |
+      |                                                               |
+      |                                                               |
+      |                                                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                     6rdBRIPv4Address(es)                      |
+      .                                                               .
+      .                                                               .
+      .                                                               .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code         OPTION_6RD (212)
+
+      option-length       The length of the DHCP option in octets (22
+                          octets with one BR IPv4 address).
+
+      IPv4MaskLen         The number of high-order bits that are identical
+                          across all CE IPv4 addresses within a given 6rd
+                          domain.  This may be any value between 0 and 32.
+                          Any value greater than 32 is invalid.
+
+      6rdPrefixLen        The IPv6 prefix length of the SP's 6rd IPv6
+                          prefix in number of bits.  For the purpose of
+                          bounds checking by DHCP option processing, the
+                          sum of (32 - IPv4MaskLen) + 6rdPrefixLen MUST be
+                          less than or equal to 128.
+
+      6rdBRIPv4Address    One or more IPv4 addresses of the 6rd Border
+                          Relay(s) for a given 6rd domain.
+
+      6rdPrefix           The service provider's 6rd IPv6 prefix
+                          represented as a 16-octet IPv6 address.  The bits
+                          in the prefix after the 6rdPrefixlen number of
+                          bits are reserved and MUST be initialized to zero
+                          by the sender and ignored by the receiver.
+      */
+      // Type: uint8, uint8, IPv6 address, array of {IPv4 address}
+      {
+        "code": 212,
+        "data": "24, 96, 2001:db8::f001, 192.0.2.72, 192.0.2.73",
+        "name": "option-6rd"
+      },
+
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     Code      |   Length      |  Access Network Domain Name   .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .            Access Network Domain Name (cont.)                 .
+      .                              ...                              .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code:  OPTION_V4_ACCESS_DOMAIN (213).
+
+      option-length:  The length of the entire access network domain name
+         option in octets.
+
+      option-value:  The domain name associated with the access network,
+         encoded as described in Section 3.1.
+      */
+      // Type: FQDN
+      {
+        "code": 213,
+        "data": "example.org",
+        "name": "v4-access-domain"
+      },
+
+      // Option codes 214-219 are unassigned.
+      // Option codes 220-221 are not defined in Kea.
+      // Option codes 222-254 are unassigned
+
+      /*                         Custom option data                           */
+      // See "option-def" below for the definitions.
+      {
+        "code": 1,
+        "name": "my-empty-option",
+        "space": "my-fancy-space"
+      },
+      {
+        "code": 224,
+        "data": "192.0.2.74, 3/4, 1, example.org, string",
+        "name": "my-lengthy-option",
+        "space": "my-fancy-space"
+      },
+      {
+        "code": 254,
+        "data": "127, 32767, 2147483647, 255, 65535, 4294967295, 192.0.2.75, 3/4, 1, example.org, string",
+        "name": "my-fancy-option",
+        "space": "my-fancy-space"
+      },
+      {
+        "code": 232,
+        "name": "my-encapsulating-option",
+        "space": "my-encapsulating-space"
+      }
+    ],
+
+    /*                       Custom option definitions                        */
+    // For kea-dhcp4, custom option definitions can be global or in a client
+    // class.
+    "option-def": [
+      // New option space allows for a new set of option codes.
+      // An empty option requires no "data" in "option-data". It's
+      // presence should be sufficient to trigger custom behavior.
+      {
+        "array": false,
+        "code": 1,
+        "encapsulate": "",
+        "name": "my-empty-option",
+        "record-types": "",
+        "space": "my-fancy-space",
+        "type": "empty"
+      },
+
+      // A custom type has "type" set to "record" and all data types (which need
+      // to be more than 1, otherwise you're better off using the type directly)
+      // are specified in "record-types". If "string" is part of them, it needs
+      // to be last.
+      {
+        "array": false,
+        "code": 224,
+        "encapsulate": "",
+        "name": "my-lengthy-option",
+        "record-types": "ipv4-address, psid, tuple, fqdn, string",
+        "space": "my-fancy-space",
+        "type": "record"
+      },
+
+      // Contains arrays of all types except strings since an array of strings
+      // is not a valid option definition.
+      {
+        "array": true,
+        "code": 254,
+        "encapsulate": "",
+        "name": "my-fancy-option",
+        "record-types": "int8, int16, int32, uint8, uint16, uint32, ipv4-address, psid, tuple, fqdn",
+        "space": "my-fancy-space",
+        "type": "record"
+      },
+
+      // A single encapsulating space can be used. An option containing any
+      // option from said space will now be unpacked succesfully by Kea.
+      {
+        "array": false,
+        "code": 232,
+        "encapsulate": "my-fancy-space",
+        "name": "my-encapsulating-option",
+        "record-types": "",
+        "space": "my-encapsulating-space",
+        "type": "empty"
+      }
+    ],
+
+    "subnet4": [
+      /*                         DOCSIS3 option data                          */
+      // Headers are as defined in CL-SP-CANN-DHCP-Reg-I16-200715.
+      // "space" is required to be explicitly defined as "docsis3-v4"
+      {
+        "option-data": [
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          | CL_V4OPTION_ORO|  option-len  | req-opt-code-1| req-opt-code-2|
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |                              ...                              |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option-code   CL_V4OPTION_ORO (1).
+
+          option-len    number of requested options.
+
+          req-opt-code-n The option code for an option requested by the client.
+
+          */
+          // Type: array of {uint8}
+          {
+            "code": 1,
+            "data": "32, 42",
+            "name": "oro",
+            "space": "docsis3-v4"
+          },
+
+          /*
+           0                   1                   2                   3
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          | option code |    option-len   | IPv4 address of TFTP server 1 |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |  address of server 1 (cont.)  | IPv4 address of TFTP server 2 |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |  address of server 2 (cont.)  |              ...
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          .               ...             | IPv4 address of TFTP server n |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          |  address of server n (cont.)  |
+          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+          option code      CL_VV4OPTION_TFTP_SERVERS (2)
+
+          option len       number of bytes for TFTP server IPv4 addresses (4*n for
+                           n servers)
+          */
+          // Type: array of {IPv4 address}
+          {
+            "code": 2,
+            "data": "192.0.2.76, 192.0.2.77",
+            "name": "tftp-servers",
+            "space": "docsis3-v4"
+          }
+        ],
+        "subnet": "192.0.2.0/24"
+      }
+    ]
+  }
+}

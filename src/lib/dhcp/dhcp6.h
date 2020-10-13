@@ -18,7 +18,7 @@
 
 /* DHCPv6 Option codes: */
 enum DHCPv6OptionType {
-   D6O_CLIENTID                            = 1, /* RFC 8415 */
+   D6O_CLIENTID                            = 1, /* RFC8415 */
    D6O_SERVERID                            = 2,
    D6O_IA_NA                               = 3,
    D6O_IA_TA                               = 4,
@@ -27,7 +27,7 @@ enum DHCPv6OptionType {
    D6O_PREFERENCE                          = 7,
    D6O_ELAPSED_TIME                        = 8,
    D6O_RELAY_MSG                           = 9,
-   // Option code 10 unassigned.
+   // Option code 10 is unassigned.
    D6O_AUTH                                = 11,
    D6O_UNICAST                             = 12,
    D6O_STATUS_CODE                         = 13,
@@ -52,12 +52,12 @@ enum DHCPv6OptionType {
    D6O_INFORMATION_REFRESH_TIME            = 32, /* RFC8415 */
    D6O_BCMCS_SERVER_D                      = 33, /* RFC4280 */
    D6O_BCMCS_SERVER_A                      = 34, /* RFC4280 */
-   // 35 is unassigned
+   // Option code 35 is unassigned.
    D6O_GEOCONF_CIVIC                       = 36, /* RFC4776 */
    D6O_REMOTE_ID                           = 37, /* RFC4649 */
    D6O_SUBSCRIBER_ID                       = 38, /* RFC4580 */
    D6O_CLIENT_FQDN                         = 39, /* RFC4704 */
-   D6O_PANA_AGENT                          = 40, /* paa-option */
+   D6O_PANA_AGENT                          = 40, /* RFC5192 */
    D6O_NEW_POSIX_TIMEZONE                  = 41, /* RFC4833 */
    D6O_NEW_TZDB_TIMEZONE                   = 42, /* RFC4833 */
    D6O_ERO                                 = 43, /* RFC4994 */
@@ -129,7 +129,7 @@ enum DHCPv6OptionType {
 // D6O_ANI_OPERATOR_ID                    = 109, /* RFC7839 */
 // D6O_ANI_OPERATOR_REALM                 = 110, /* RFC7839 */
 // D6O_S46_PRIORITY                       = 111, /* RFC8026 */
-   // 112 unassigned
+   // Option code 112 is unassigned.
 // D6O_V6_PREFIX64                        = 113, /* RFC8115 */
 // D6O_F_BINDING_STATUS                   = 114, /* RFC8156 */
 // D6O_F_CONNECT_FLAGS                    = 115, /* RFC8156 */
@@ -153,7 +153,7 @@ enum DHCPv6OptionType {
 // D6O_F_START_TIME_OF_STATE              = 133, /* RFC8156 */
 // D6O_F_STATE_EXPIRATION_TIME            = 134, /* RFC8156 */
    D6O_RELAY_SOURCE_PORT                  = 135, /* RFC8357 */
-   // 136-142 unassigned
+   // Option codes 136-142 are unassigned.
    D6O_IPV6_ADDRESS_ANDSF                 = 143 /* RFC6153 */
 };
 
