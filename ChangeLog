@@ -1,5 +1,5 @@
 1815.	[bug]		marcin
-	Fixed libdhcpsrv build faiures when building without database
+	Fixed libdhcpsrv build failures when building without database
 	backends.
 	(Gitlab #1468)
 
