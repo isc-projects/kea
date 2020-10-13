@@ -264,7 +264,7 @@ mysql_upgrade_test() {
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 9.4
+    # Ok, we have a 1.0 database. Let's upgrade it to 9.5
     ${keaadmin} db-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
@@ -766,9 +766,9 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     ERRCODE=$?
     assert_eq 0 $ERRCODE "insert into hosts failed, expected exit code %d, actual %d"
 
-    # Verify upgraded schema reports version 9.4
+    # Verify upgraded schema reports version 9.5
     version=$(${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "9.4" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "9.5" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
