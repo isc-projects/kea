@@ -654,8 +654,10 @@ LeaseCmdsImpl::addOrUpdate4(Lease4Ptr lease, bool force_create) {
         LeaseCmdsImpl::updateStatsOnAdd(lease);
         return (true);
     }
-    lease->old_cltt_ = existing->old_cltt_;
-    lease->old_valid_lft_ = existing->old_valid_lft_;
+    if (existing) {
+        lease->old_cltt_ = existing->old_cltt_;
+        lease->old_valid_lft_ = existing->old_valid_lft_;
+    }
     LeaseMgrFactory::instance().updateLease4(lease);
     LeaseCmdsImpl::updateStatsOnUpdate(existing, lease);
     return (false);
@@ -674,8 +676,10 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
         LeaseCmdsImpl::updateStatsOnAdd(lease);
         return (true);
     }
-    lease->old_cltt_ = existing->old_cltt_;
-    lease->old_valid_lft_ = existing->old_valid_lft_;
+    if (existing) {
+        lease->old_cltt_ = existing->old_cltt_;
+        lease->old_valid_lft_ = existing->old_valid_lft_;
+    }
     LeaseMgrFactory::instance().updateLease6(lease);
     LeaseCmdsImpl::updateStatsOnUpdate(existing, lease);
     return (false);
