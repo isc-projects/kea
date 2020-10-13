@@ -69,16 +69,7 @@
                 "ip-address": "2001:db8::1"
             },
             "renew-timer": 100,
-            // It is deprecated by the "reservation-modes" map.
-            // "reservation-mode": "all",
-
-            // Reservation modes specifying server's mode of operation when it
-            // fetches host reservations.
-            "reservation-modes": {
-                "global": false,
-                "in-subnet": true,
-                "out-of-pool": true
-            },
+            "reservation-mode": "all",
 
             // List of subnets belonging to this particular shared-network
             // start here.
@@ -94,15 +85,7 @@
                         "ip-address": "2001:db8:1::123"
                     },
                     "renew-timer": 10,
-                    // It is deprecated by the "reservation-modes" map.
-                    // "reservation-mode": "all",
-                    // Reservation modes specifying server's mode of operation when it
-                    // fetches host reservations.
-                    "reservation-modes": {
-                        "global": false,
-                        "in-subnet": true,
-                        "out-of-pool": true
-                    },
+                    "reservation-mode": "all",
                     "subnet": "2001:db8:1::/64",
                     "pools": [ { "pool": "2001:db8:1:abcd::/64" } ],
                     "valid-lifetime": 40
@@ -118,15 +101,7 @@
                         "ip-address": "3000::1"
                     },
                     "renew-timer": 10,
-                    // It is deprecated by the "reservation-modes" map.
-                    // "reservation-mode": "all",
-                    // Reservation modes specifying server's mode of operation when it
-                    // fetches host reservations.
-                    "reservation-modes": {
-                        "global": false,
-                        "in-subnet": true,
-                        "out-of-pool": true
-                    },
+                    "reservation-mode": "all",
                     "subnet": "3000::/16",
                     "valid-lifetime": 40
                 }

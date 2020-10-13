@@ -48,16 +48,7 @@
       // out of the dynamic pool and change reservation-mode to "out-of-pool".
       // Kea will then be able to skip querying for host reservations when
       // assigning leases from dynamic pool.
-      // It is deprecated by the "reservation-modes" map.
-      // "reservation-mode": "all",
-
-      // Reservation modes specifying server's mode of operation when it
-      // fetches host reservations.
-      "reservation-modes": {
-          "global": false,
-          "in-subnet": true,
-          "out-of-pool": true
-      },
+      "reservation-mode": "all",
 
       "pools": [ { "pool": "2001:db8:1::/120" } ],
 

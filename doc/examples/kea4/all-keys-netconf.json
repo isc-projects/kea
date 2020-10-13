@@ -563,16 +563,7 @@
 
                 // Enumeration specifying server's mode of operation when it
                 // fetches host reservations.
-                // It is deprecated by the "reservation-modes" map.
-                // "reservation-mode": "all",
-
-                // Reservation modes specifying server's mode of operation when it
-                // fetches host reservations.
-                "reservation-modes": {
-                    "global": false,
-                    "in-subnet": true,
-                    "out-of-pool": true
-                },
+                "reservation-mode": "all",
 
                 // List of client classes which must be evaluated when this shared
                 // network is selected for client assignments.
@@ -694,18 +685,9 @@
 
                         // Enumeration specifying server's mode of operation when it
                         // fetches host reservations.
-                        // It is deprecated by the "reservation-modes" map.
-                        // "reservation-mode": "all",
+                        "reservation-mode": "all",
 
-                        // Reservation modes specifying server's mode of operation when it
-                        // fetches host reservations.
-                        "reservation-modes": {
-                            "global": false,
-                            "in-subnet": true,
-                            "out-of-pool": true
-                        },
-
-                        // Subnet level compute T1 and T2 timers.
+                        // Subnet-level compute T1 and T2 timers.
                         "calculate-tee-times": true,
 
                         // T1 = valid lifetime * .5.
@@ -790,7 +772,8 @@
 
         // Configuration control (currently not used, i.e. this syntax
         // is already defined but corresponding feature is not implemented).
-        "config-control": {
+        "config-control":
+        {
             // Only configuration databases entry is defined.
             "config-databases": [
                 {
@@ -810,7 +793,8 @@
         "server-tag": "my DHCPv4 server",
 
         // DHCP queue control parameters.
-        "dhcp-queue-control": {
+        "dhcp-queue-control":
+        {
             // Enable queue is mandatory.
             "enable-queue": true,
 
@@ -819,16 +803,7 @@
         },
 
         // Fetches host reservations.
-        // It is deprecated by the "reservation-modes" map.
-        // "reservation-mode": "all",
-
-        // Reservation modes specifying server's mode of operation when it
-        // fetches host reservations.
-        "reservation-modes": {
-            "global": false,
-            "in-subnet": true,
-            "out-of-pool": true
-        },
+        "reservation-mode": "all",
 
         // Global compute T1 and T2 timers.
         "calculate-tee-times": true,
