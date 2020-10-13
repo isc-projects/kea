@@ -19,6 +19,7 @@ sqlscripts_DATA += upgrade_8.2_to_9.0.sh
 sqlscripts_DATA += upgrade_9.0_to_9.1.sh
 sqlscripts_DATA += upgrade_9.1_to_9.2.sh
 sqlscripts_DATA += upgrade_9.2_to_9.3.sh
+sqlscripts_DATA += upgrade_9.3_to_9.4.sh
 sqlscripts_DATA += wipe_data.sh
 
 DISTCLEANFILES = upgrade_1.0_to_2.0.sh
@@ -36,6 +37,7 @@ DISTCLEANFILES += upgrade_8.2_to_9.0.sh
 DISTCLEANFILES += upgrade_9.0_to_9.1.sh
 DISTCLEANFILES += upgrade_9.1_to_9.2.sh
 DISTCLEANFILES += upgrade_9.2_to_9.3.sh
+DISTCLEANFILES += upgrade_9.3_to_9.4.sh
 DISTCLEANFILES += wipe_data.sh
 
 EXTRA_DIST = ${sqlscripts_DATA}
