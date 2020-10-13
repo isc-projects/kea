@@ -15,4 +15,5 @@
 /upgrade_9.1_to_9.2.sh
 /upgrade_9.2_to_9.3.sh
 /upgrade_9.3_to_9.4.sh
+/upgrade_9.4_to_9.5.sh
 /wipe_data.sh

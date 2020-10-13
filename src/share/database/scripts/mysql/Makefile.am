@@ -18,6 +18,7 @@ UPGRADESCRIPTS += upgrade_9.0_to_9.1.sh
 UPGRADESCRIPTS += upgrade_9.1_to_9.2.sh
 UPGRADESCRIPTS += upgrade_9.2_to_9.3.sh
 UPGRADESCRIPTS += upgrade_9.3_to_9.4.sh
+UPGRADESCRIPTS += upgrade_9.4_to_9.5.sh
 UPGRADESCRIPTS += wipe_data.sh
 
 sqlscriptsdir = ${datarootdir}/${PACKAGE_NAME}/scripts/mysql
