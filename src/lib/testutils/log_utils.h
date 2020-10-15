@@ -87,6 +87,7 @@ public:
 
     vector<string> exp_strings_;
     static const char* LOG_FILE;
+    static const char* KEA_LOG_CHECK_VERBOSE;
 
     /// @brief controls whether the checkFile() should print more details.
     ///
@@ -94,6 +95,8 @@ public:
     /// logged line and will print out a failure message if those two do
     /// not match. Also, a final verdict is printed. Everything is printed
     /// on stdout.
+    /// The default is false but can be overwritten by setting the
+    /// KEA_LOG_CHECK_VERBOSE environment variable.
     bool verbose_;
 };
 

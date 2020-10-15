@@ -59,6 +59,11 @@ The following environment variable can affect the unit tests:
   stdout, stderr and syslog. Any other value is interpreted as a filename.
   (Also see Kea User's Guide, section 15.3.)
 
+- KEA_LOG_CHECK_VERBOSE - Specifies the log check default verbosity. If not
+  set, unit tests using the log utils to verify that logs are generated as
+  expected are by default silent. If set, these unit tests display real
+  and expected logs.
+
 - KEA_PIDFILE_DIR - Specifies the directory which should be used for PID files
   as used by dhcp::Daemon or its derivatives. If not specified, the
   default is <i>prefix</i>/var/run/kea, where <i>prefix</i> defaults to

@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <testutils/log_utils.h>
+#include <cstdlib>
 #include <iostream>
 
 namespace isc {
@@ -32,6 +33,12 @@ LogContentTest::LogContentTest()
     spec.addOutputOption(option);
     LoggerManager manager;
     manager.process(spec);
+
+    // Overwrite the verbose_ default is the KEA_LOG_CHECK_VERBOSE
+    // environment variable exists.
+    if (getenv(KEA_LOG_CHECK_VERBOSE)) {
+        verbose_ = true;
+    }
 }
 
 LogContentTest:: ~LogContentTest() {
@@ -114,7 +121,10 @@ void LogContentTest::addString(const string& new_string) {
 // Set up the name of the LOG_FILE for use in checking
 // the debug statements.
 // Must not be the same file name used by test shell scripts.
-const char *LogContentTest::LOG_FILE = "logtest.log";
+const char* LogContentTest::LOG_FILE = "logtest.log";
+
+// The environment variable to overwrite the verbose_ default value.
+const char* LogContentTest::KEA_LOG_CHECK_VERBOSE = "KEA_LOG_CHECK_VERBOSE";
 
 } // end of isc::dhcp::test namespace
 } // end of isc::dhcp namespace
