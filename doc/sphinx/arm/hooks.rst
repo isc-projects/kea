@@ -2656,7 +2656,7 @@ An example response could look as follows:
                },
                "renew-timer": 60,
                # It is deprecated by the "reservations-out-of-pool",
-               # reservations-in-subnet and reservations-global parameters.
+               # "reservations-in-subnet" and "reservations-global" parameters.
                # "reservation-mode": "all",
                # Specify if server should lookup global reservations.
                "reservations-global": false,
