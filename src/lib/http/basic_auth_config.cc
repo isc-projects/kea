@@ -226,8 +226,7 @@ BasicHttpAuthConfig::checkAuth(const HttpResponseCreator& creator,
         // Verify the credential is in the list.
         const auto it = credentials.find(value);
         if (it != credentials.end()) {
-            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
-                      HTTP_CLIENT_REQUEST_AUTHORIZED)
+            LOG_INFO(http_logger, HTTP_CLIENT_REQUEST_AUTHORIZED)
                 .arg(it->second);
             authentic = true;
         } else {

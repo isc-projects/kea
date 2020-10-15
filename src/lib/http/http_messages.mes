@@ -34,8 +34,8 @@ second argument provides a response in the textual format. The request is
 truncated by the logger if it is too large to be printed.
 
 % HTTP_CLIENT_REQUEST_AUTHORIZED received HTTP request authorized for '%1'
-This debug message is issued when the server receives with a matching
-authentication header. The argument provides the user name.
+This information message is issued when the server receives with a matching
+authentication header. The argument provides the user id.
 
 % HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER received HTTP request with malformed authentication header: %1
 This information message is issued when the server receives a request with

@@ -1,3 +1,8 @@
+1816.	[func]		fdupont
+	The message logged when basic HTTP authentication succeed is
+	now informative (INFO vs DEBUG level).
+	(Gitlab #1450)
+
 1815.	[bug]		marcin
 	Fixed libdhcpsrv build failures when building without database
 	backends.
