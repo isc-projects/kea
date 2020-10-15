@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -372,6 +372,21 @@ extern void checkRemoveFwdRRsRequest(NameChangeTransaction& tran);
 /// @param tran Transaction containing the request to be verified.
 extern void checkRemoveRevPtrsRequest(NameChangeTransaction& tran);
 
+/// @brief Verifies a simple forward mapping replacement DNS update request
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// replacing a forward DNS mapping when not using conflict resolution.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkSimpleReplaceFwdAddressRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a simple forward RR removal DNS update request
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing forward RR DNS entries when not using conflict resolution.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkSimpleRemoveFwdRRsRequest(NameChangeTransaction& tran);
 
 /// @brief Creates a NameChangeRequest from JSON string.
 ///
@@ -443,6 +458,19 @@ extern void addDomainServer(DdnsDomainPtr& domain, const std::string& name,
 /// @param data pointer to the data to dump
 /// @param len size (in bytes) of data
 extern std::string toHexText(const uint8_t* data, size_t len);
+
+/// @brief Verifies the current state and next event in a transaction
+/// @param trans NameChangeTransaction to check
+/// @param exp_state expected current state of the transaction
+/// @param exp_event  expected next event of the transaction
+/// @param file source file name
+/// @param line souce line number
+extern void checkContext(NameChangeTransactionPtr trans, const int exp_state,
+                         const int exp_evt, const std::string& file, int line);
+
+/// @brief Macro for calling checkContext() that supplies invocation location
+#define CHECK_CONTEXT(a,b,c) checkContext(a,b,c,__FILE__,__LINE__)
+
 
 }; // namespace isc::d2
 }; // namespace isc

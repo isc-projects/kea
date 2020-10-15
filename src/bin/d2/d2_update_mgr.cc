@@ -9,6 +9,8 @@
 #include <d2/d2_update_mgr.h>
 #include <d2/nc_add.h>
 #include <d2/nc_remove.h>
+#include <d2/simple_add.h>
+#include <d2/simple_remove.h>
 
 #include <sstream>
 #include <iostream>
@@ -197,13 +199,25 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
     // the transaction's IO.
     NameChangeTransactionPtr trans;
     if (next_ncr->getChangeType() == dhcp_ddns::CHG_ADD) {
-        trans.reset(new NameAddTransaction(io_service_, next_ncr,
-                                           forward_domain, reverse_domain,
-                                           cfg_mgr_));
+        if (next_ncr->useConflictResolution()) {
+            trans.reset(new NameAddTransaction(io_service_, next_ncr,
+                                               forward_domain, reverse_domain,
+                                               cfg_mgr_));
+        } else {
+            trans.reset(new SimpleAddTransaction(io_service_, next_ncr,
+                                                 forward_domain, reverse_domain,
+                                                 cfg_mgr_));
+        }
     } else {
-        trans.reset(new NameRemoveTransaction(io_service_, next_ncr,
-                                              forward_domain, reverse_domain,
-                                              cfg_mgr_));
+        if (next_ncr->useConflictResolution()) {
+            trans.reset(new NameRemoveTransaction(io_service_, next_ncr,
+                                                  forward_domain, reverse_domain,
+                                                  cfg_mgr_));
+        } else {
+            trans.reset(new SimpleRemoveTransaction(io_service_, next_ncr,
+                                                    forward_domain, reverse_domain,
+                                                    cfg_mgr_));
+        }
     }
 
     // Add the new transaction to the list.

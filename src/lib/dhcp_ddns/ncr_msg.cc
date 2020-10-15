@@ -200,7 +200,8 @@ operator<<(std::ostream& os, const D2Dhcid& dhcid) {
 NameChangeRequest::NameChangeRequest()
     : change_type_(CHG_ADD), forward_change_(false),
     reverse_change_(false), fqdn_(""), ip_io_address_("0.0.0.0"),
-    dhcid_(), lease_expires_on_(), lease_length_(0), status_(ST_NEW) {
+    dhcid_(), lease_expires_on_(), lease_length_(0), conflict_resolution_(true),
+    status_(ST_NEW) {
 }
 
 NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
@@ -208,11 +209,13 @@ NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
             const std::string& fqdn, const std::string& ip_address,
             const D2Dhcid& dhcid,
             const uint64_t lease_expires_on,
-            const uint32_t lease_length)
+            const uint32_t lease_length,
+            const bool conflict_resolution)
     : change_type_(change_type), forward_change_(forward_change),
     reverse_change_(reverse_change), fqdn_(fqdn), ip_io_address_("0.0.0.0"),
     dhcid_(dhcid), lease_expires_on_(lease_expires_on),
-    lease_length_(lease_length), status_(ST_NEW) {
+    lease_length_(lease_length), conflict_resolution_(conflict_resolution),
+    status_(ST_NEW) {
 
     // User setter to validate fqdn.
     setFqdn(fqdn);
@@ -341,6 +344,10 @@ NameChangeRequest::fromJSON(const std::string& json) {
     element = ncr->getElement("lease-length", element_map);
     ncr->setLeaseLength(element);
 
+    /// @todo Should this be optional (i.e. backward compatible)?
+    element = ncr->getElement("use-conflict-resolution", element_map);
+    ncr->setConflictResolution(element);
+
     // All members were in the Element set and were correct lexically. Now
     // validate the overall content semantically.  This will throw an
     // NcrMessageError if anything is amiss.
@@ -366,7 +373,9 @@ NameChangeRequest::toJSON() const  {
         << "\"ip-address\":\"" << getIpAddress() << "\","
         << "\"dhcid\":\"" << getDhcid().toStr() << "\","
         << "\"lease-expires-on\":\""  << getLeaseExpiresOnStr() << "\","
-        << "\"lease-length\":" << getLeaseLength() << "}";
+        << "\"lease-length\":" << getLeaseLength() << ","
+        << "\"use-conflict-resolution\":"
+        << (useConflictResolution() ? "true" : "false") << "}";
 
     return (stream.str());
 }
@@ -577,6 +586,27 @@ NameChangeRequest::setLeaseLength(isc::data::ConstElementPtr element) {
 }
 
 void
+NameChangeRequest::setConflictResolution(const bool value) {
+    conflict_resolution_ = value;
+}
+
+void
+NameChangeRequest::setConflictResolution(isc::data::ConstElementPtr element) {
+    bool value;
+    try {
+        // Get the element's boolean value.
+        value = element->boolValue();
+    } catch (const isc::data::TypeError& ex) {
+        // We expect a boolean Element type, don't have one.
+        isc_throw(NcrMessageError,
+                  "Wrong data type for use-conflict-resolution: " << ex.what());
+    }
+
+    // Good to go, make the assignment.
+    setConflictResolution(value);
+}
+
+void
 NameChangeRequest::setStatus(const NameChangeStatus value) {
     status_ = value;
 }
@@ -606,7 +636,9 @@ NameChangeRequest::toText() const {
            << "IP Address: [" << ip_io_address_ << "]" << std::endl
            << "DHCID: [" << dhcid_.toStr() << "]" << std::endl
            << "Lease Expires On: " << getLeaseExpiresOnStr() << std::endl
-           << "Lease Length: " << lease_length_ << std::endl;
+           << "Lease Length: " << lease_length_ << std::endl
+           << "Conflict Resolution: " << (conflict_resolution_ ? "yes" : "no")
+           << std::endl;
 
     return (stream.str());
 }
@@ -620,7 +652,8 @@ NameChangeRequest::operator == (const NameChangeRequest& other) {
             (ip_io_address_ == other.ip_io_address_) &&
             (dhcid_ == other.dhcid_) &&
             (lease_expires_on_ == other.lease_expires_on_) &&
-            (lease_length_ == other.lease_length_));
+            (lease_length_ == other.lease_length_) &&
+            (conflict_resolution_ == other.conflict_resolution_));
 }
 
 bool

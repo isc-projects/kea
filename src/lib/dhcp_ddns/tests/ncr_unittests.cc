@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcp/hwaddr.h>
 #include <util/time_utilities.h>
 
+#include <testutils/gtest_utils.h>
 #include <gtest/gtest.h>
 #include <algorithm>
 
@@ -34,7 +35,8 @@ const char *valid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
     // Valid Remove.
      "{"
@@ -45,7 +47,8 @@ const char *valid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
      // Valid Add with IPv6 address
      "{"
@@ -56,7 +59,8 @@ const char *valid_msgs[] =
      " \"ip-address\" : \"fe80::2acf:e9ff:fe12:e56f\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}"
 };
 
@@ -73,7 +77,8 @@ const char *invalid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
     // Invalid forward change.
      "{"
@@ -84,7 +89,8 @@ const char *invalid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
     // Invalid reverse change.
      "{"
@@ -95,7 +101,8 @@ const char *invalid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
     // Forward and reverse change both false.
      "{"
@@ -106,7 +113,8 @@ const char *invalid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
     // Blank FQDN
      "{"
@@ -117,7 +125,8 @@ const char *invalid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
     // Malformed FQDN
      "{"
@@ -128,7 +137,8 @@ const char *invalid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
     // Bad IP address
      "{"
@@ -140,6 +150,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300 "
+     " \"use-conflict-resolution\": true"
      "}",
     // Blank DHCID
      "{"
@@ -150,7 +161,8 @@ const char *invalid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
     // Odd number of digits in DHCID
      "{"
@@ -161,7 +173,8 @@ const char *invalid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
     // Text in DHCID
      "{"
@@ -172,7 +185,8 @@ const char *invalid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"THIS IS BOGUS!!!\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
     // Invalid lease expiration string
      "{"
@@ -183,7 +197,8 @@ const char *invalid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"Wed Jun 26 13:46:46 EDT 2013\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": true"
      "}",
     // Non-integer for lease length.
      "{"
@@ -194,9 +209,32 @@ const char *invalid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : \"BOGUS\" "
+     " \"lease-length\" : \"BOGUS\", "
+     " \"use-conflict-resolution\": true"
+     "}",
+    // Missing use-conflict-resolution
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-expires-on\" : \"20130121132405\" , "
+     " \"lease-length\" : 1300 "
+     "}",
+    // Invalid use-conflict-resolution
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-expires-on\" : \"20130121132405\" , "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\": 777"
      "}"
-
 };
 
 /// @brief Tests the NameChangeRequest constructors.
@@ -471,13 +509,14 @@ TEST(NameChangeRequestTest, basicJsonTest) {
                             "\"ip-address\":\"192.168.2.1\","
                             "\"dhcid\":\"010203040A7F8E3D\","
                             "\"lease-expires-on\":\"20130121132405\","
-                            "\"lease-length\":1300"
+                            "\"lease-length\":1300,"
+                            "\"use-conflict-resolution\":true"
                           "}";
 
     // Verify that a NameChangeRequests can be instantiated from the
     // a valid JSON rendition.
     NameChangeRequestPtr ncr;
-    ASSERT_NO_THROW(ncr  = NameChangeRequest::fromJSON(msg_str));
+    ASSERT_NO_THROW_LOG(ncr  = NameChangeRequest::fromJSON(msg_str));
     ASSERT_TRUE(ncr);
 
     // Verify that the JSON string created by the new request equals the
@@ -556,7 +595,8 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
                             "\"ip-address\":\"192.168.2.1\","
                             "\"dhcid\":\"010203040A7F8E3D\","
                             "\"lease-expires-on\":\"20130121132405\","
-                            "\"lease-length\":1300"
+                            "\"lease-length\":1300,"
+                            "\"use-conflict-resolution\":true"
                           "}";
 
     // Create a request from JSON directly.

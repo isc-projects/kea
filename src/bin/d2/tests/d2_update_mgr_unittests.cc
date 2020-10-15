@@ -9,6 +9,11 @@
 #include <asiolink/io_service.h>
 #include <d2/d2_update_mgr.h>
 #include <nc_test_utils.h>
+#include <d2/nc_add.h>
+#include <d2/nc_remove.h>
+#include <d2/nc_remove.h>
+#include <d2/simple_add.h>
+#include <d2/simple_remove.h>
 #include <process/testutils/d_test_stubs.h>
 #include <util/time_utilities.h>
 
@@ -95,7 +100,8 @@ public:
         " \"ip-address\" : \"192.168.1.2\" , "
         " \"dhcid\" : \"0102030405060708\" , "
         " \"lease-expires-on\" : \"20130121132405\" , "
-        " \"lease-length\" : 1300 "
+        " \"lease-length\" : 1300, "
+        " \"use-conflict-resolution\" : true "
         "}";
 
         const char* dhcids[] = { "111111", "222222", "333333", "444444"};
@@ -674,6 +680,9 @@ TEST_F(D2UpdateMgrTest, addTransaction) {
     ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
     NameChangeTransactionPtr trans = (*pos).second;
     ASSERT_TRUE(trans);
+   
+    // Verify the correct type of transcation was created. 
+    ASSERT_NO_THROW(dynamic_cast<NameAddTransaction&>(*trans)); 
 
     // At this point the transaction should have constructed
     // and sent the DNS request.
@@ -727,6 +736,9 @@ TEST_F(D2UpdateMgrTest, removeTransaction) {
     ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
     NameChangeTransactionPtr trans = (*pos).second;
     ASSERT_TRUE(trans);
+
+    // Verify the correct type of transcation was created. 
+    ASSERT_NO_THROW(dynamic_cast<NameRemoveTransaction&>(*trans)); 
 
     // At this point the transaction should have constructed
     // and sent the DNS request.
@@ -856,6 +868,120 @@ TEST_F(D2UpdateMgrTest, multiTransactionTimeout) {
     for (int i = 0; i < test_count; i++) {
         EXPECT_EQ(dhcp_ddns::ST_FAILED, canned_ncrs_[i]->getStatus());
     }
+}
+
+/// @brief Tests integration of SimpleAddTransaction
+/// This test verifies that update manager can create and manage a
+/// SimpleAddTransaction from start to finish.  It utilizes a fake server
+/// which responds to all requests sent with NOERROR, simulating a
+/// successful addition.  The transaction processes both forward and
+/// reverse changes.
+TEST_F(D2UpdateMgrTest, simpleAddTransaction) {
+    // Put each transaction on the queue.
+    canned_ncrs_[0]->setChangeType(dhcp_ddns::CHG_ADD);
+    canned_ncrs_[0]->setReverseChange(true);
+    canned_ncrs_[0]->setConflictResolution(false);
+    ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[0]));
+
+    // Call sweep once, this should:
+    // 1. Dequeue the request
+    // 2. Create the transaction
+    // 3. Start the transaction
+    ASSERT_NO_THROW(update_mgr_->sweep());
+
+    // Get a copy of the transaction.
+    TransactionList::iterator pos = update_mgr_->transactionListBegin();
+    ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
+    NameChangeTransactionPtr trans = (*pos).second;
+    ASSERT_TRUE(trans);
+   
+    // Verify the correct type of transcation was created. 
+    ASSERT_NO_THROW(dynamic_cast<SimpleAddTransaction&>(*trans)); 
+
+    // At this point the transaction should have constructed
+    // and sent the DNS request.
+    ASSERT_TRUE(trans->getCurrentServer());
+    ASSERT_TRUE(trans->isModelRunning());
+    ASSERT_EQ(1, trans->getUpdateAttempts());
+    ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
+
+    // Create a server based on the transaction's current server, and
+    // start it listening.
+    FauxServer server(*io_service_, *(trans->getCurrentServer()));
+    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+
+    // Run sweep and IO until everything is done.
+    processAll();
+
+    // Verify that model succeeded.
+    EXPECT_FALSE(trans->didModelFail());
+
+    // Both completion flags should be true.
+    EXPECT_TRUE(trans->getForwardChangeCompleted());
+    EXPECT_TRUE(trans->getReverseChangeCompleted());
+
+    // Verify that we went through success state.
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST,
+              trans->getPrevState());
+    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT,
+              trans->getLastEvent());
+}
+
+/// @brief Tests integration of SimpleRemoveTransaction
+/// This test verifies that update manager can create and manage a
+/// SimpleRemoveTransaction from start to finish.  It utilizes a fake server
+/// which responds to all requests sent with NOERROR, simulating a
+/// successful addition.  The transaction processes both forward and
+/// reverse changes.
+TEST_F(D2UpdateMgrTest, simpleRemoveTransaction) {
+    // Put each transaction on the queue.
+    canned_ncrs_[0]->setChangeType(dhcp_ddns::CHG_REMOVE);
+    canned_ncrs_[0]->setReverseChange(true);
+    canned_ncrs_[0]->setConflictResolution(false);
+    ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[0]));
+
+    // Call sweep once, this should:
+    // 1. Dequeue the request
+    // 2. Create the transaction
+    // 3. Start the transaction
+    ASSERT_NO_THROW(update_mgr_->sweep());
+
+    // Get a copy of the transaction.
+    TransactionList::iterator pos = update_mgr_->transactionListBegin();
+    ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
+    NameChangeTransactionPtr trans = (*pos).second;
+    ASSERT_TRUE(trans);
+
+    // Verify the correct type of transcation was created. 
+    ASSERT_NO_THROW(dynamic_cast<SimpleRemoveTransaction&>(*trans)); 
+
+    // At this point the transaction should have constructed
+    // and sent the DNS request.
+    ASSERT_TRUE(trans->getCurrentServer());
+    ASSERT_TRUE(trans->isModelRunning());
+    ASSERT_EQ(1, trans->getUpdateAttempts());
+    ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
+
+    // Create a server based on the transaction's current server,
+    // and start it listening.
+    FauxServer server(*io_service_, *(trans->getCurrentServer()));
+    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+
+    // Run sweep and IO until everything is done.
+    processAll();
+
+    // Verify that model succeeded.
+    EXPECT_FALSE(trans->didModelFail());
+
+    // Both completion flags should be true.
+    EXPECT_TRUE(trans->getForwardChangeCompleted());
+    EXPECT_TRUE(trans->getReverseChangeCompleted());
+
+    // Verify that we went through success state.
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST,
+              trans->getPrevState());
+    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT,
+              trans->getLastEvent());
 }
 
 }
