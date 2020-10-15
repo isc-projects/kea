@@ -367,27 +367,40 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // default values and will insert derived values as well.
         mutable_cfg = boost::const_pointer_cast<Element>(config_set);
 
+        bool found = false;
+        ConstElementPtr reservations_out_of_pool = mutable_cfg->get("reservations-out-of-pool");
+        if (reservations_out_of_pool) {
+            found = true;
+        }
+        ConstElementPtr reservations_in_subnet = mutable_cfg->get("reservations-in-subnet");
+        if (reservations_in_subnet) {
+            found = true;
+        }
+        ConstElementPtr reservations_global = mutable_cfg->get("reservations-global");
+        if (reservations_global) {
+            found = true;
+        }
         ConstElementPtr reservation_mode = mutable_cfg->get("reservation-mode");
         if (reservation_mode) {
             // log warning for deprecated option
-            bool found = false;
-            reservation_mode = mutable_cfg->get("reservations-out-of-pool");
-            if (reservation_mode) {
-                found = true;
-            }
-            reservation_mode = mutable_cfg->get("reservations-in-subnet");
-            if (reservation_mode) {
-                found = true;
-            }
-            reservation_mode = mutable_cfg->get("reservations-global");
-            if (reservation_mode) {
-                found = true;
-            }
             if (found) {
                 isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
                                            " and one of 'reservations-out-of-pool'"
                                            " , 'reservations-in-subnet' or"
                                            " 'reservations-global' parameters");
+            }
+        }
+
+        // reset all other reservation flags to overwrite default values.
+        if (found) {
+            if (!reservations_out_of_pool) {
+                mutable_cfg->set("reservations-out-of-pool", Element::create(false));
+            }
+            if (!reservations_in_subnet) {
+                mutable_cfg->set("reservations-in-subnet", Element::create(false));
+            }
+            if (!reservations_global) {
+                mutable_cfg->set("reservations-global", Element::create(false));
             }
         }
 
