@@ -710,7 +710,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"min-valid-lifetime\": 100,\n"
         "    \"max-valid-lifetime\": 300,\n"
         "    \"rapid-commit\": false,\n"
-        "    \"reservation-modes\": {\"in-subnet\": true, \"out-of-pool\": true},\n"
+        "    \"reservations-in-subnet\": true,\n"
+        "    \"reservations-out-of-pool\": true,\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
         "    \"option-data\": [ ],\n"
@@ -1079,7 +1080,8 @@ TEST(CfgSubnets6Test, teeTimePercentValidation) {
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservation-modes\": {\"in-subnet\": true, \"out-of-pool\": true}\n"
+        "            \"reservations-in-subnet\": true,\n"
+        "            \"reservations-out-of-pool\": true\n"
         "        }";
 
 
@@ -1142,7 +1144,8 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservation-modes\": {\"in-subnet\": true, \"out-of-pool\": true}\n"
+        "            \"reservations-in-subnet\": true,\n"
+        "            \"reservations-out-of-pool\": true\n"
         "        }";
 
 
@@ -1377,7 +1380,8 @@ TEST(CfgSubnets6Test, hostnameSanitizierValidation) {
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservation-modes\": {\"in-subnet\": true, \"out-of-pool\": true}\n"
+        "            \"reservations-in-subnet\": true,\n"
+        "            \"reservations-out-of-pool\": true\n"
         "        }";
 
     data::ElementPtr elems;
@@ -1447,7 +1451,8 @@ TEST(CfgSubnets6Test, cacheParamValidation) {
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservation-modes\": {\"in-subnet\": true, \"out-of-pool\": true}\n"
+        "            \"reservations-in-subnet\": true,\n"
+        "            \"reservations-out-of-pool\": true\n"
         "        }";
 
     data::ElementPtr elems;

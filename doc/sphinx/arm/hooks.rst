@@ -2655,15 +2655,15 @@ An example response could look as follows:
                    "ip-address": "0.0.0.0"
                },
                "renew-timer": 60,
-               # It is deprecated by the "reservation-modes" map.
+               # It is deprecated by the "reservations-out-of-pool",
+               # reservations-in-subnet and reservations-global parameters.
                # "reservation-mode": "all",
-               # Reservation modes specifying server's mode of operation when it
-               # fetches host reservations.
-               "reservation-modes": {
-                   "global": false,
-                   "in-subnet": true,
-                   "out-of-pool": true
-               },
+               # Specify if server should lookup global reservations.
+               "reservations-global": false,
+               # Specify if server should lookup in-subnet reservations.
+               "reservations-in-subnet": true,
+               # Specify if server should lookup out-of-pool reservations.
+               "reservations-out-of-pool": true,
                "subnet4": [
                    {
                        "subnet": "192.0.2.0/24",

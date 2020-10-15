@@ -202,9 +202,21 @@ void
 BaseNetworkParser::parseHostReservationMode(const data::ConstElementPtr& network_data,
                                             NetworkPtr& network) {
     if (network_data->contains("reservation-mode")) {
-        if (network_data->contains("reservation-modes")) {
+        bool found = false;
+        if (network_data->contains("reservations-out-of-pool")) {
+            found = true
+        }
+        if (network_data->contains("reservations-in-subnet")) {
+            found = true
+        }
+        if (network_data->contains("reservations-global")) {
+            found = true
+        }
+        if (found)
             isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
-                                       " and 'reservation-modes' parameters");
+                                       " and one of 'reservations-out-of-pool'"
+                                       " , 'reservations-in-subnet' or"
+                                       " 'reservations-global' parameters");
         }
         try {
             std::string hr_mode = getString(network_data, "reservation-mode");
@@ -221,19 +233,28 @@ void
 BaseNetworkParser::parseHostReservationModes(const data::ConstElementPtr& network_data,
                                              NetworkPtr& network) {
     if (network_data->contains("reservation-modes")) {
-        if (network_data->contains("reservation-mode")) {
+        bool found = false;
+        if (network_data->contains("reservations-out-of-pool")) {
+            found = true
+        }
+        if (network_data->contains("reservations-in-subnet")) {
+            found = true
+        }
+        if (network_data->contains("reservations-global")) {
+            found = true
+        }
+        if (found)
             isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
-                                       " and 'reservation-modes' parameters");
+                                       " and one of 'reservations-out-of-pool'"
+                                       " , 'reservations-in-subnet' or"
+                                       " 'reservations-global' parameters");
         }
         try {
-            auto reservation_modes = network_data->get("reservation-modes");
             HostReservationModesParser parser;
-            Network::HRMode flags = parser.parse(reservation_modes);
+            Network::HRMode flags = parser.parse(network_data);
             network->setHostReservationMode(flags);
         } catch (const BadValue& ex) {
-            isc_throw(DhcpConfigError, "invalid reservation-modes parameter: "
-                      << ex.what() << " (" << getPosition("reservation-modes",
-                                                          network_data) << ")");
+            isc_throw(DhcpConfigError, "invalid parameter: " << ex.what());
         }
     }
 }

@@ -375,28 +375,8 @@ SrvConfig::applyDefaultsConfiguredGlobals(const SimpleDefaults& defaults) {
             x.reset(new DoubleElement(dbl_value, pos));
             break;
         }
-        case Element::map: {
-            auto data = Element::fromJSON(def_value.value_);
-            if (data->getType() != Element::map) {
-                isc_throw(BadValue,
-                          "Internal error. Incorrect map value type for "
-                          << def_value.name_ << " : " << def_value.value_);
-            }
-            x = data;
-            break;
-        }
-        case Element::list: {
-            auto data = Element::fromJSON(def_value.value_);
-            if (data->getType() != Element::list) {
-                isc_throw(BadValue,
-                          "Internal error. Incorrect list value type for "
-                          << def_value.name_ << " : " << def_value.value_);
-            }
-            x = data;
-            break;
-        }
         default:
-            // No default values for null
+            // No default values for null, list or map
             isc_throw(BadValue,
                       "Internal error. Incorrect default value type for "
                       << def_value.name_);

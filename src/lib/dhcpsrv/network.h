@@ -155,33 +155,30 @@ public:
 
     /// @brief Specifies allowed host reservation mode.
     ///
-    typedef enum : uint8_t {
+    /// None - host reservation is disabled. No reservation types
+    /// are allowed.
+    const uint8_t HR_DISABLED = 0;
 
-        /// None - host reservation is disabled. No reservation types
-        /// are allowed.
-        HR_DISABLED = 0,
+    /// Only out-of-pool reservations is allowed. This mode
+    /// allows AllocEngine to skip reservation checks when
+    /// dealing with with addresses that are in pool.
+    /// When HR_IN_SUBNET is set, this is always enabled as well.
+    const uint8_t HR_OUT_OF_POOL = 1 << 0;
 
-        /// Only out-of-pool reservations is allowed. This mode
-        /// allows AllocEngine to skip reservation checks when
-        /// dealing with with addresses that are in pool.
-        /// When HR_IN_SUBNET is set, this is always enabled as well.
-        HR_OUT_OF_POOL = 1 << 0,
+    /// The in-pool reservations is allowed. This mode actually
+    /// behaves as if out-of-pool reservations are active as well.
+    const uint8_t HR_IN_SUBNET = 1 << 1;
 
-        /// The in-pool reservations is allowed. This mode actually
-        /// behaves as if out-of-pool reservations are active as well.
-        HR_IN_SUBNET = 1 << 1,
+    /// Only global reservations are allowed. This mode
+    /// instructs AllocEngine to only look at global reservations.
+    const uint8_t HR_GLOBAL = 1 << 2;
 
-        /// Only global reservations are allowed. This mode
-        /// instructs AllocEngine to only look at global reservations.
-        HR_GLOBAL = 1 << 2,
-
-        /// Both out-of-pool and in-pool reservations are allowed. This is the
-        /// most flexible mode, where sysadmin have biggest liberty. However,
-        /// there is a non-trivial performance penalty for it, as the
-        /// AllocEngine code has to check whether there are reservations, even
-        /// when dealing with reservations from within the dynamic pools.
-        HR_ALL = HR_IN_SUBNET | HR_OUT_OF_POOL
-    } HRModeFlag;
+    /// Both out-of-pool and in-pool reservations are allowed. This is the
+    /// most flexible mode, where sysadmin have biggest liberty. However,
+    /// there is a non-trivial performance penalty for it, as the
+    /// AllocEngine code has to check whether there are reservations, even
+    /// when dealing with reservations from within the dynamic pools.
+    const uint8_t HR_ALL = HR_IN_SUBNET | HR_OUT_OF_POOL;
 
     /// @brief Bitset used to store @ref HRModeFlag flags.
     typedef uint8_t HRMode;
@@ -450,7 +447,7 @@ public:
                 uint8_t flags = 0;
                 util::Optional<bool> hr_mode_global;
                 hr_mode_global = getGlobalProperty(hr_mode_global,
-                                                   "reservation-modes.global");
+                                                   "reservations-global");
                 if (!hr_mode_global.unspecified()) {
                     if (hr_mode_global.get()) {
                         flags |= Network::HR_GLOBAL;
@@ -459,7 +456,7 @@ public:
                 }
                 util::Optional<bool> hr_mode_in_subnet;
                 hr_mode_in_subnet = getGlobalProperty(hr_mode_in_subnet,
-                                                      "reservation-modes.in-subnet");
+                                                      "reservations-in-subnet");
                 if (!hr_mode_in_subnet.unspecified()) {
                     if (hr_mode_in_subnet.get()) {
                         flags |= Network::HR_IN_SUBNET;
@@ -468,7 +465,7 @@ public:
                 }
                 util::Optional<bool> hr_mode_out_of_pool;
                 hr_mode_out_of_pool = getGlobalProperty(hr_mode_out_of_pool,
-                                                        "reservation-modes.out-of-pool");
+                                                        "reservations-out-of-pool");
                 if (!hr_mode_out_of_pool.unspecified()) {
                     if (hr_mode_out_of_pool.get()) {
                         flags |= Network::HR_OUT_OF_POOL;
@@ -849,39 +846,14 @@ protected:
     template<typename ReturnType>
     ReturnType getGlobalProperty(ReturnType property,
                                  const std::string& global_name) const {
-        std::string member_name;
-        std::string search_name = global_name;
-        auto found = global_name.find('.');
-        if (found != std::string::npos) {
-            if (std::count(global_name.begin(), global_name.end(), '.') > 1) {
-                isc_throw(BadValue, "more than one level of indirection found in: "
-                          << global_name);
-            }
-            member_name = global_name.substr(found + 1, global_name.length() - found - 1);
-            search_name = global_name.substr(0, found);
-        }
-        if (!search_name.empty() && fetch_globals_fn_) {
+        if (!global_name.empty() && fetch_globals_fn_) {
             data::ConstElementPtr globals = fetch_globals_fn_();
             if (globals && (globals->getType() == data::Element::map)) {
-                data::ConstElementPtr global_param = globals->get(search_name);
+                data::ConstElementPtr global_param = globals->get(global_name);
                 if (global_param) {
-                    if (!member_name.empty()) {
-                        if (global_param->getType() != data::Element::map) {
-                            isc_throw(BadValue, "the parameter: " << global_name
-                                                 << " must be a map");
-                        }
-                        auto member_element = global_param->get(member_name);
-                        if (member_element) {
-                            // If there is a global parameter with the specified
-                            // member, convert the member to the optional value
-                            // of the given type and return.
-                            return (data::ElementValue<typename ReturnType::ValueType>()(member_element));
-                        }
-                    } else {
-                        // If there is a global parameter, convert it to the
-                        // optional value of the given type and return.
-                        return (data::ElementValue<typename ReturnType::ValueType>()(global_param));
-                    }
+                    // If there is a global parameter, convert it to the
+                    // optional value of the given type and return.
+                    return (data::ElementValue<typename ReturnType::ValueType>()(global_param));
                 }
             }
         }

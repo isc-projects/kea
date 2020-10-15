@@ -58,117 +58,117 @@ TEST_F(HostReservationModesParserTest, validContent) {
         {
         "reservation modes disabled",
         "{ \n"
-        "   \"global\": false, \n"
-        "   \"in-subnet\": false, \n"
-        "   \"out-of-pool\": false \n"
+        "   \"reservations-global\": false, \n"
+        "   \"reservations-in-subnet\": false, \n"
+        "   \"reservations-out-of-pool\": false \n"
         "} \n",
         Network::HR_DISABLED
         },
         {
         "reservation modes global enabled",
         "{ \n"
-        "   \"global\": true, \n"
-        "   \"in-subnet\": false, \n"
-        "   \"out-of-pool\": false \n"
+        "   \"reservations-global\": true, \n"
+        "   \"reservations-in-subnet\": false, \n"
+        "   \"reservations-out-of-pool\": false \n"
         "} \n",
         Network::HR_GLOBAL
         },
         {
         "reservation modes in-subnet enabled",
         "{ \n"
-        "   \"global\": false, \n"
-        "   \"in-subnet\": true, \n"
-        "   \"out-of-pool\": false \n"
+        "   \"reservations-global\": false, \n"
+        "   \"reservations-in-subnet\": true, \n"
+        "   \"reservations-out-of-pool\": false \n"
         "} \n",
         Network::HR_IN_SUBNET
         },
         {
         "reservation modes global and in-subnet enabled",
         "{ \n"
-        "   \"global\": true, \n"
-        "   \"in-subnet\": true, \n"
-        "   \"out-of-pool\": false \n"
+        "   \"reservations-global\": true, \n"
+        "   \"reservations-in-subnet\": true, \n"
+        "   \"reservations-out-of-pool\": false \n"
         "} \n",
         Network::HR_GLOBAL|Network::HR_IN_SUBNET
         },
         {
         "reservation modes out-of-pool enabled",
         "{ \n"
-        "   \"global\": false, \n"
-        "   \"in-subnet\": false, \n"
-        "   \"out-of-pool\": true \n"
+        "   \"reservations-global\": false, \n"
+        "   \"reservations-in-subnet\": false, \n"
+        "   \"reservations-out-of-pool\": true \n"
         "} \n",
         Network::HR_OUT_OF_POOL
         },
         {
         "reservation modes global and out-of-pool enabled",
         "{ \n"
-        "   \"global\": true, \n"
-        "   \"in-subnet\": false, \n"
-        "   \"out-of-pool\": true \n"
+        "   \"reservations-global\": true, \n"
+        "   \"reservations-in-subnet\": false, \n"
+        "   \"reservations-out-of-pool\": true \n"
         "} \n",
         Network::HR_GLOBAL|Network::HR_OUT_OF_POOL
         },
         {
         "reservation modes in-subnet and out-of-pool enabled",
         "{ \n"
-        "   \"global\": false, \n"
-        "   \"in-subnet\": true, \n"
-        "   \"out-of-pool\": true \n"
+        "   \"reservations-global\": false, \n"
+        "   \"reservations-in-subnet\": true, \n"
+        "   \"reservations-out-of-pool\": true \n"
         "} \n",
         Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL
         },
         {
         "reservation modes global, in-subnet and out-of-pool enabled",
         "{ \n"
-        "   \"global\": true, \n"
-        "   \"in-subnet\": true, \n"
-        "   \"out-of-pool\": true \n"
+        "   \"reservations-global\": true, \n"
+        "   \"reservations-in-subnet\": true, \n"
+        "   \"reservations-out-of-pool\": true \n"
         "} \n",
         Network::HR_GLOBAL|Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL
         },
         {
         "only global",
         "{ \n"
-        "   \"global\": true \n"
+        "   \"reservations-global\": true \n"
         "} \n",
         Network::HR_GLOBAL
         },
         {
         "only in-subnet",
         "{ \n"
-        "   \"in-subnet\": true \n"
+        "   \"reservations-in-subnet\": true \n"
         "} \n",
         Network::HR_IN_SUBNET
         },
         {
         "only out-of-pool",
         "{ \n"
-        "   \"out-of-pool\": true \n"
+        "   \"reservations-out-of-pool\": true \n"
         "} \n",
         Network::HR_OUT_OF_POOL
         },
         {
         "only global and in-subnet",
         "{ \n"
-        "   \"global\": true, \n"
-        "   \"in-subnet\": true \n"
+        "   \"reservations-global\": true, \n"
+        "   \"reservations-in-subnet\": true \n"
         "} \n",
         Network::HR_GLOBAL|Network::HR_IN_SUBNET
         },
         {
         "only global and out-of-pool",
         "{ \n"
-        "   \"global\": true, \n"
-        "   \"out-of-pool\": true \n"
+        "   \"reservations-global\": true, \n"
+        "   \"reservations-out-of-pool\": true \n"
         "} \n",
         Network::HR_GLOBAL|Network::HR_OUT_OF_POOL
         },
         {
         "only in-subnet and out-of-pool",
         "{ \n"
-        "   \"in-subnet\": true, \n"
-        "   \"out-of-pool\": true \n"
+        "   \"reservations-in-subnet\": true, \n"
+        "   \"reservations-out-of-pool\": true \n"
         "} \n",
         Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL
         },
@@ -210,19 +210,19 @@ TEST_F(HostReservationModesParserTest, invalidContent) {
         {
         "global not boolean",
         "{ \n"
-        "   \"global\": \"always\" \n"
+        "   \"reservations-global\": \"always\" \n"
         "} \n"
         },
         {
         "in-subnet not boolean",
         "{ \n"
-        "   \"in-subnet\": \"always\" \n"
+        "   \"reservations-in-subnet\": \"always\" \n"
         "} \n"
         },
         {
         "out-of-pool not boolean",
         "{ \n"
-        "   \"out-of-pool\": \"always\" \n"
+        "   \"reservations-out-of-pool\": \"always\" \n"
         "} \n"
         }
     };

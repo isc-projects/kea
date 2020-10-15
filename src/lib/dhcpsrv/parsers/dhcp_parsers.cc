@@ -859,7 +859,7 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         }
     }
 
-    // reservation-modes
+    // reservation modes
     parseHostReservationModes(params, network);
 
     // Let's set host reservation mode. If not specified, the default value of
@@ -1334,7 +1334,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
         subnet6->setIface(iface);
     }
 
-    // reservation-modes
+    // reservation modes
     parseHostReservationModes(params, network);
 
     // Let's set host reservation mode. If not specified, the default value of

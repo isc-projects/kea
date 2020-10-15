@@ -471,10 +471,24 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         ConstElementPtr reservation_mode = mutable_cfg->get("reservation-mode");
         if (reservation_mode) {
             // log warning for deprecated option
-            reservation_mode = mutable_cfg->get("reservation-modes");
+            bool found = false;
+            reservation_mode = mutable_cfg->get("reservations-out-of-pool");
             if (reservation_mode) {
+                found = true;
+            }
+            reservation_mode = mutable_cfg->get("reservations-in-subnet");
+            if (reservation_mode) {
+                found = true;
+            }
+            reservation_mode = mutable_cfg->get("reservations-global");
+            if (reservation_mode) {
+                found = true;
+            }
+            if (found) {
                 isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
-                                           " and 'reservation-modes' parameters");
+                                           " and one of 'reservations-out-of-pool'"
+                                           " , 'reservations-in-subnet' or"
+                                           " 'reservations-global' parameters");
             }
         }
 
@@ -771,7 +785,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "dhcp4o6-port") ||
                  (config_pair.first == "server-tag") ||
                  (config_pair.first == "reservation-mode") ||
-                 (config_pair.first == "reservation-modes") ||
+                 (config_pair.first == "reservations-out-of-pool") ||
+                 (config_pair.first == "reservations-in-subnet") ||
+                 (config_pair.first == "reservations-global") ||
                  (config_pair.first == "calculate-tee-times") ||
                  (config_pair.first == "t1-percent") ||
                  (config_pair.first == "t2-percent") ||

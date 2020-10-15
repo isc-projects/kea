@@ -185,11 +185,9 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("cache-max-age", Element::create(20));
     globals_->set("ddns-update-on-renew", Element::create(true));
     globals_->set("ddns-use-conflict-resolution", Element::create(true));
-    auto reservation_modes = Element::createMap();
-    reservation_modes->set("global", Element::create(false));
-    reservation_modes->set("in-subnet", Element::create(false));
-    reservation_modes->set("out-of-pool", Element::create(false));
-    globals_->set("reservation-modes", reservation_modes);
+    globals_->set("reservations-out-of-pool", Element::create(false));
+    globals_->set("reservations-in-subnet", Element::create(false));
+    globals_->set("reservations-global", Element::create(false));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -223,7 +221,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                             Network::HR_DISABLED);
     }
     {
-        SCOPED_TRACE("reservation-modes");
+        SCOPED_TRACE("reservations-global");
         testNetworkInheritance<TestNetwork>(&Network::getHostReservationMode,
                                             &Network::setHostReservationMode,
                                             Network::HR_OUT_OF_POOL,

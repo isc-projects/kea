@@ -216,24 +216,21 @@ Network::toElement() const {
         if (hrmode & Network::HR_OUT_OF_POOL) {
             hr_out_of_pool = true;
         }
-        ElementPtr reservation_modes = Element::createMap();
         if (hrmode == Network::HR_DISABLED) {
-            reservation_modes->set("global", Element::create(false));
-            reservation_modes->set("in-subnet", Element::create(false));
-            reservation_modes->set("out-of-pool", Element::create(false));
+            map->set("reservations-global", Element::create(false));
+            map->set("reservations-in-subnet", Element::create(false));
+            map->set("reservations-out-of-pool", Element::create(false));
         } else {
             if (hr_global) {
-                reservation_modes->set("global", Element::create(true));
+                map->set("reservations-global", Element::create(true));
             }
             if (hr_in_subnet) {
-                reservation_modes->set("in-subnet", Element::create(true));
+                map->set("reservations-in-subnet", Element::create(true));
             }
             if (hr_out_of_pool) {
-                reservation_modes->set("out-of-pool", Element::create(true));
+                map->set("reservations-out-of-pool", Element::create(true));
             }
         }
-
-        map->set("reservation-modes", reservation_modes);
     }
 
     // Set options

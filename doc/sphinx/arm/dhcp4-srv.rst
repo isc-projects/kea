@@ -4623,8 +4623,8 @@ An example configuration using global reservations is shown below:
    }
 
 Since Kea 1.9.1, the ``reservation-mode`` is deprecated by the
-``reservation-modes`` map.
-The map contains ``global``, ``in-subnet`` and ``out-of-pool`` boolean flags.
+``reservations-out-of-pool``, ``reservations-in-subnet`` and
+``reservations-global`` flags.
 The flags can be activated independently and can produce various combinations,
 some of them being unsuported by the deprecated ``reservation-mode``.
 
@@ -4636,11 +4636,10 @@ The correspondence of old values are:
 
    "Dhcp4": {
 
-   "reservation-modes": {
-       "global": false,
-       "in-subnet": false,
-       "out-of-pool": false
-   }
+       "reservations-global": false,
+       "reservations-in-subnet": false,
+       "reservations-out-of-pool": false,
+       ...
    }
 
 ``global``:
@@ -4649,11 +4648,10 @@ The correspondence of old values are:
 
    "Dhcp4": {
 
-   "reservation-modes": {
-       "global": true,
-       "in-subnet": false,
-       "out-of-pool": false
-   }
+       "reservations-global": true,
+       "reservations-in-subnet": false,
+       "reservations-out-of-pool": false,
+       ...
    }
 
 ``out-of-pool``:
@@ -4662,11 +4660,10 @@ The correspondence of old values are:
 
    "Dhcp4": {
 
-   "reservation-modes": {
-       "global": false,
-       "in-subnet": false,
-       "out-of-pool": true
-   }
+       "reservations-global": false,
+       "reservations-in-subnet": false,
+       "reservations-out-of-pool": true,
+       ...
    }
 
 ``all``:
@@ -4675,11 +4672,10 @@ The correspondence of old values are:
 
    "Dhcp4": {
 
-   "reservation-modes": {
-       "global": false,
-       "in-subnet": true,
-       "out-of-pool": true
-   }
+       "reservations-global": false,
+       "reservations-in-subnet": true,
+       "reservations-out-of-pool": true,
+       ...
    }
 
 To activate both ``global`` and ``all``, the following combination can be used:
@@ -4688,11 +4684,10 @@ To activate both ``global`` and ``all``, the following combination can be used:
 
    "Dhcp4": {
 
-   "reservation-modes": {
-       "global": true,
-       "in-subnet": true,
-       "out-of-pool": true
-   }
+       "reservations-global": true,
+       "reservations-in-subnet": true,
+       "reservations-out-of-pool": true,
+       ...
    }
 
 The parameter can be specified at global, subnet, and shared-network
@@ -4706,11 +4701,9 @@ An example configuration that disables reservation looks as follows:
        "subnet4": [
        {
            "subnet": "192.0.2.0/24",
-           "reservation-modes": {
-               "global": false,
-               "in-subnet": false,
-               "out-of-pool": false
-           },
+           "reservations-global": false,
+           "reservations-in-subnet": false,
+           "reservations-out-of-pool": false,
            ...
        }
        ]
@@ -4723,12 +4716,9 @@ An example configuration using global reservations is shown below:
 
    "Dhcp4": {
 
-
-       "reservation-modes": {
-           "global": true,
-           "in-subnet": false,
-           "out-of-pool": false
-       },
+       "reservations-global": true,
+       "reservations-in-subnet": false,
+       "reservations-out-of-pool": false,
        "reservations": [
           {
            "hw-address": "01:bb:cc:dd:ee:ff",
@@ -4853,15 +4843,15 @@ following can be used:
        "valid-lifetime": 600,
        "subnet4": [ {
            "subnet": "10.0.0.0/24",
-           # It is deprecated by the "reservation-modes" map.
+           # It is deprecated by the "reservations-out-of-pool",
+           # reservations-in-subnet and reservations-global parameters.
            # "reservation-mode": "global",
-           # Reservation modes specifying server's mode of operation when it
-           # fetches host reservations.
-           "reservation-modes": {
-               "global": true,
-               "in-subnet": false,
-               "out-of-pool": false
-           },
+           # Specify if server should lookup global reservations.
+           "reservations-global": true,
+           # Specify if server should lookup in-subnet reservations.
+           "reservations-in-subnet": false,
+           # Specify if server should lookup out-of-pool reservations.
+           "reservations-out-of-pool": false,
            "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ]
        } ]
    }
@@ -4964,15 +4954,15 @@ following example:
             "hw-address": "aa:bb:cc:dd:ee:fe",
             "client-classes": [ "reserved_class" ]
         }],
-        # It is deprecated by the "reservation-modes" map.
+        # It is deprecated by the "reservations-out-of-pool",
+        # reservations-in-subnet and reservations-global parameters.
         # "reservation-mode": "global",
-        # Reservation modes specifying server's mode of operation when it
-        # fetches host reservations.
-        "reservation-modes": {
-            "global": true,
-            "in-subnet": false,
-            "out-of-pool": false
-        },
+        # Specify if server should lookup global reservations.
+        "reservations-global": true,
+        # Specify if server should lookup in-subnet reservations.
+        "reservations-in-subnet": false,
+        # Specify if server should lookup out-of-pool reservations.
+        "reservations-out-of-pool": false,
         "shared-networks": [{
             "subnet4": [
                 {
@@ -5005,8 +4995,8 @@ will be assigned an address from the subnet 192.0.3.0/24. Clients having
 a reservation for the ``reserved_class`` will be assigned an address from
 the subnet 192.0.2.0/24. The subnets must belong to the same shared network.
 In addition, the reservation for the client class must be specified at the
-global scope (global reservation) and the ``reservation-modes`` must
-set ``global`` to true.
+global scope (global reservation) and the ``reservations-global`` must be
+set to true.
 
 In the example above the ``client-class`` could also be specified at the
 subnet level rather than pool level yielding the same effect.
@@ -6737,7 +6727,11 @@ used by all servers connecting to the configuration database.
    +-----------------------------+----------------------------+-------------+-------------+-------------+
    | reservation-mode            | yes                        | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+-------------+-------------+-------------+
-   | reservation-modes           | yes                        | yes         | yes         | n/a         |
+   | reservations-out-of-pool    | yes                        | yes         | yes         | n/a         |
+   +-----------------------------+----------------------------+-------------+-------------+-------------+
+   | reservations-in-subnet      | yes                        | yes         | yes         | n/a         |
+   +-----------------------------+----------------------------+-------------+-------------+-------------+
+   | reservations-global         | yes                        | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+-------------+-------------+-------------+
    | t1-percent                  | yes                        | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+-------------+-------------+-------------+

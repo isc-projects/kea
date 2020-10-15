@@ -152,10 +152,11 @@ using namespace std;
   INTERFACE "interface"
   ID "id"
   RESERVATION_MODE "reservation-mode"
-  RESERVATION_MODES "reservation-modes"
+  RESERVATIONS_OUT_OF_POOL "reservations-out-of-pool"
+  RESERVATIONS_IN_SUBNET "reservations-in-subnet"
+  RESERVATIONS_GLOBAL "reservations-global"
   DISABLED "disabled"
   OUT_OF_POOL "out-of-pool"
-  IN_SUBNET "in-subnet"
   GLOBAL "global"
   ALL "all"
 
@@ -255,7 +256,6 @@ using namespace std;
   SUB_OPTION_DATA
   SUB_HOOKS_LIBRARY
   SUB_DHCP_DDNS
-  SUB_RESERVATION_MODES
   SUB_CONFIG_CONTROL
 ;
 
@@ -294,7 +294,6 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
      | SUB_DHCP_DDNS { ctx.ctx_ = ctx.DHCP_DDNS; } sub_dhcp_ddns
-     | SUB_RESERVATION_MODES { ctx.ctx_ = ctx.RESERVATION_MODES; } sub_reservation_modes
      | SUB_CONFIG_CONTROL { ctx.ctx_ = ctx.CONFIG_CONTROL; } sub_config_control
      ;
 
@@ -487,7 +486,9 @@ global_param: valid_lifetime
             | config_control
             | server_tag
             | reservation_mode
-            | reservation_modes
+            | reservations_out_of_pool
+            | reservations_in_subnet
+            | reservations_global
             | calculate_tee_times
             | t1_percent
             | t2_percent
@@ -1082,8 +1083,8 @@ host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
 };
 
 host_reservation_identifiers_list: host_reservation_identifier
-    | host_reservation_identifiers_list COMMA host_reservation_identifier
-    ;
+                                 | host_reservation_identifiers_list COMMA host_reservation_identifier
+                                 ;
 
 host_reservation_identifier: duid_id
                            | hw_address_id
@@ -1092,22 +1093,22 @@ host_reservation_identifier: duid_id
                            | flex_id
                            ;
 
-duid_id : DUID {
+duid_id: DUID {
     ElementPtr duid(new StringElement("duid", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(duid);
 };
 
-hw_address_id : HW_ADDRESS {
+hw_address_id: HW_ADDRESS {
     ElementPtr hwaddr(new StringElement("hw-address", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(hwaddr);
 };
 
-circuit_id : CIRCUIT_ID {
+circuit_id: CIRCUIT_ID {
     ElementPtr circuit(new StringElement("circuit-id", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(circuit);
 };
 
-client_id : CLIENT_ID {
+client_id: CLIENT_ID {
     ElementPtr client(new StringElement("client-id", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(client);
 };
@@ -1178,8 +1179,8 @@ hooks_libraries_list: %empty
                     ;
 
 not_empty_hooks_libraries_list: hooks_library
-    | not_empty_hooks_libraries_list COMMA hooks_library
-    ;
+                              | not_empty_hooks_libraries_list COMMA hooks_library
+                              ;
 
 hooks_library: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
@@ -1373,7 +1374,9 @@ subnet4_param: valid_lifetime
              | require_client_classes
              | reservations
              | reservation_mode
-             | reservation_modes
+             | reservations_out_of_pool
+             | reservations_in_subnet
+             | reservations_global
              | relay
              | match_client_id
              | authoritative
@@ -1469,51 +1472,22 @@ require_client_classes: REQUIRE_CLIENT_CLASSES {
     ctx.leave();
 };
 
-reservation_modes: RESERVATION_MODES {
-    ctx.unique("reservation-modes", ctx.loc2pos(@1));
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("reservation-modes", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.RESERVATION_MODES);
-} COLON LCURLY_BRACKET reservation_modes_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-sub_reservation_modes: LCURLY_BRACKET {
-    // Parse the reservation-modes map
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.push_back(m);
-} reservation_modes_params RCURLY_BRACKET {
-    // No reservation_modes params are required
-    // parsing completed
-};
-
-reservation_modes_params: reservation_modes_param
-                        | reservation_modes_params COMMA reservation_modes_param
-                        ;
-
-reservation_modes_param: hr_global
-                       | hr_in_subnet
-                       | hr_out_of_pool
-                       ;
-
-hr_global: GLOBAL COLON BOOLEAN {
-    ctx.unique("global", ctx.loc2pos(@1));
+reservations_out_of_pool: RESERVATIONS_OUT_OF_POOL COLON BOOLEAN {
+    ctx.unique("reservations-out-of-pool", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("global", b);
+    ctx.stack_.back()->set("reservations-out-of-pool", b);
 };
 
-hr_in_subnet: IN_SUBNET COLON BOOLEAN {
-    ctx.unique("in-subnet", ctx.loc2pos(@1));
+reservations_in_subnet: RESERVATIONS_IN_SUBNET COLON BOOLEAN {
+    ctx.unique("reservations-in-subnet", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("in-subnet", b);
+    ctx.stack_.back()->set("reservations-in-subnet", b);
 };
 
-hr_out_of_pool: OUT_OF_POOL COLON BOOLEAN {
-    ctx.unique("out-of-pool", ctx.loc2pos(@1));
+reservations_global: RESERVATIONS_GLOBAL COLON BOOLEAN {
+    ctx.unique("reservations-global", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("out-of-pool", b);
+    ctx.stack_.back()->set("reservations-global", b);
 };
 
 reservation_mode: RESERVATION_MODE {
@@ -1584,7 +1558,9 @@ shared_network_param: name
                     | boot_file_name
                     | relay
                     | reservation_mode
-                    | reservation_modes
+                    | reservations_out_of_pool
+                    | reservations_in_subnet
+                    | reservations_global
                     | client_class
                     | require_client_classes
                     | valid_lifetime
@@ -1811,8 +1787,8 @@ option_data_params: %empty
 // Those parameters can either be a single parameter or
 // a list of parameters separated by comma.
 not_empty_option_data_params: option_data_param
-    | not_empty_option_data_params COMMA option_data_param
-    ;
+                            | not_empty_option_data_params COMMA option_data_param
+                            ;
 
 // Each single option-data parameter can be one of the following
 // expressions.
@@ -2017,8 +1993,8 @@ reservation_params: %empty
                   ;
 
 not_empty_reservation_params: reservation_param
-    | not_empty_reservation_params COMMA reservation_param
-    ;
+                            | not_empty_reservation_params COMMA reservation_param
+                            ;
 
 /// @todo probably need to add mac-address as well here
 reservation_param: duid
@@ -2201,8 +2177,8 @@ client_class_params: %empty
                    ;
 
 not_empty_client_class_params: client_class_param
-    | not_empty_client_class_params COMMA client_class_param
-    ;
+                             | not_empty_client_class_params COMMA client_class_param
+                             ;
 
 client_class_param: client_class_name
                   | client_class_test

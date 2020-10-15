@@ -653,16 +653,18 @@
 
                 // Enumeration specifying server's mode of operation when it
                 // fetches host reservations.
-                // It is deprecated by the "reservation-modes" map.
+                // It is deprecated by the "reservations-out-of-pool",
+                // reservations-in-subnet and reservations-global parameters.
                 // "reservation-mode": "all",
 
-                // Reservation modes specifying server's mode of operation when it
-                // fetches host reservations.
-                "reservation-modes": {
-                    "global": false,
-                    "in-subnet": true,
-                    "out-of-pool": true
-                },
+                // Specify if server should lookup global reservations.
+                "reservations-global": false,
+
+                // Specify if server should lookup in-subnet reservations.
+                "reservations-in-subnet": true,
+
+                // Specify if server should lookup out-of-pool reservations.
+                "reservations-out-of-pool": true,
 
                 // List of client classes which must be evaluated when this shared
                 // network is selected for client assignments.
@@ -848,16 +850,18 @@
 
                         // Enumeration specifying server's mode of operation when it
                         // fetches host reservations.
-                        // It is deprecated by the "reservation-modes" map.
+                        // It is deprecated by the "reservations-out-of-pool",
+                        // reservations-in-subnet and reservations-global parameters.
                         // "reservation-mode": "all",
 
-                        // Reservation modes specifying server's mode of operation when it
-                        // fetches host reservations.
-                        "reservation-modes": {
-                            "global": false,
-                            "in-subnet": true,
-                            "out-of-pool": true
-                        },
+                        // Specify if server should lookup global reservations.
+                        "reservations-global": false,
+
+                        // Specify if server should lookup in-subnet reservations.
+                        "reservations-in-subnet": true,
+
+                        // Specify if server should lookup out-of-pool reservations.
+                        "reservations-out-of-pool": true,
 
                         // Subnet level compute T1 and T2 timers.
                         "calculate-tee-times": true,
@@ -982,16 +986,18 @@
         },
 
         // Fetches host reservations.
-        // It is deprecated by the "reservation-modes" map.
+        // It is deprecated by the "reservations-out-of-pool",
+        // reservations-in-subnet and reservations-global parameters.
         // "reservation-mode": "all",
 
-        // Reservation modes specifying server's mode of operation when it
-        // fetches host reservations.
-        "reservation-modes": {
-            "global": false,
-            "in-subnet": true,
-            "out-of-pool": true
-        },
+        // Specify if server should lookup global reservations.
+        "reservations-global": false,
+
+        // Specify if server should lookup in-subnet reservations.
+        "reservations-in-subnet": true,
+
+        // Specify if server should lookup out-of-pool reservations.
+        "reservations-out-of-pool": true,
 
         // Data directory.
         "data-directory": "/tmp",

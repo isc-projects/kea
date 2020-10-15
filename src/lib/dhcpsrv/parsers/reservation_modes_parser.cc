@@ -20,16 +20,16 @@ namespace isc {
 namespace dhcp {
 
 Network::HRMode
-HostReservationModesParser::parse(const ConstElementPtr& control_elem) {
-    if (control_elem->getType() != Element::map) {
-        isc_throw(DhcpConfigError, "reservation-modes must be a map");
+HostReservationModesParser::parse(const ConstElementPtr& config_elem) {
+    if (config_elem->getType() != Element::map) {
+        isc_throw(DhcpConfigError, "configuration must be a map");
     }
 
     ConstElementPtr elem;
     uint8_t flags = 0;
 
     try {
-        elem  = control_elem->get("global");
+        elem  = config_elem->get("reservations-global");
         if (elem) {
             bool value = elem->boolValue();
             if (value) {
@@ -37,7 +37,7 @@ HostReservationModesParser::parse(const ConstElementPtr& control_elem) {
             }
         }
 
-        elem  = control_elem->get("in-subnet");
+        elem  = config_elem->get("reservations-in-subnet");
         if (elem) {
             bool value = elem->boolValue();
             if (value) {
@@ -45,7 +45,7 @@ HostReservationModesParser::parse(const ConstElementPtr& control_elem) {
             }
         }
 
-        elem  = control_elem->get("out-of-pool");
+        elem  = config_elem->get("reservations-out-of-pool");
         if (elem) {
             bool value = elem->boolValue();
             if (value) {
