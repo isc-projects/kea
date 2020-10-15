@@ -696,7 +696,7 @@
                 // Enumeration specifying server's mode of operation when it
                 // fetches host reservations.
                 // It is deprecated by the "reservations-out-of-pool",
-                // reservations-in-subnet and reservations-global parameters.
+                // "reservations-in-subnet" and "reservations-global" parameters.
                 // "reservation-mode": "all",
 
                 // Specify if server should lookup global reservations.
@@ -870,7 +870,7 @@
                         // Enumeration specifying server's mode of operation when it
                         // fetches host reservations.
                         // It is deprecated by the "reservations-out-of-pool",
-                        // reservations-in-subnet and reservations-global parameters.
+                        // "reservations-in-subnet" and "reservations-global" parameters.
                         // "reservation-mode": "all",
 
                         // Specify if server should lookup global reservations.
@@ -1009,7 +1009,7 @@
 
         // Fetches host reservations.
         // It is deprecated by the "reservations-out-of-pool",
-        // reservations-in-subnet and reservations-global parameters.
+        // "reservations-in-subnet" and "reservations-global" parameters.
         // "reservation-mode": "all",
 
         // Specify if server should lookup global reservations.

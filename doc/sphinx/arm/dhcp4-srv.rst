@@ -4844,7 +4844,7 @@ following can be used:
        "subnet4": [ {
            "subnet": "10.0.0.0/24",
            # It is deprecated by the "reservations-out-of-pool",
-           # reservations-in-subnet and reservations-global parameters.
+           # "reservations-in-subnet" and "reservations-global" parameters.
            # "reservation-mode": "global",
            # Specify if server should lookup global reservations.
            "reservations-global": true,
@@ -4955,7 +4955,7 @@ following example:
             "client-classes": [ "reserved_class" ]
         }],
         # It is deprecated by the "reservations-out-of-pool",
-        # reservations-in-subnet and reservations-global parameters.
+        # "reservations-in-subnet" and "reservations-global" parameters.
         # "reservation-mode": "global",
         # Specify if server should lookup global reservations.
         "reservations-global": true,
