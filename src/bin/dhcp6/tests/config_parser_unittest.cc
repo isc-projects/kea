@@ -5766,7 +5766,6 @@ TEST_F(Dhcp6ParserTest, hostReservationModesPerSubnet) {
         "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
         "    \"subnet\": \"2001:db8:2::/48\", "
         "    \"reservations-out-of-pool\": true"
-        "     }"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"2001:db8:3::/64\" } ],"
