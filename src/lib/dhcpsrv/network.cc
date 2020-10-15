@@ -19,6 +19,12 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
+const uint8_t Network::HR_DISABLED = 0;
+const uint8_t Network::HR_OUT_OF_POOL = 1 << 0;
+const uint8_t Network::HR_IN_SUBNET = 1 << 1;
+const uint8_t Network::HR_GLOBAL = 1 << 2;
+const uint8_t Network::HR_ALL = Network::HR_IN_SUBNET | Network::HR_OUT_OF_POOL;
+
 void
 Network::RelayInfo::addAddress(const asiolink::IOAddress& addr) {
     if (containsAddress(addr)) {

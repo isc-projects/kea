@@ -157,28 +157,28 @@ public:
     ///
     /// None - host reservation is disabled. No reservation types
     /// are allowed.
-    const uint8_t HR_DISABLED = 0;
+    static const uint8_t HR_DISABLED;
 
     /// Only out-of-pool reservations is allowed. This mode
     /// allows AllocEngine to skip reservation checks when
     /// dealing with with addresses that are in pool.
     /// When HR_IN_SUBNET is set, this is always enabled as well.
-    const uint8_t HR_OUT_OF_POOL = 1 << 0;
+    static const uint8_t HR_OUT_OF_POOL;
 
     /// The in-pool reservations is allowed. This mode actually
     /// behaves as if out-of-pool reservations are active as well.
-    const uint8_t HR_IN_SUBNET = 1 << 1;
+    static const uint8_t HR_IN_SUBNET;
 
     /// Only global reservations are allowed. This mode
     /// instructs AllocEngine to only look at global reservations.
-    const uint8_t HR_GLOBAL = 1 << 2;
+    static const uint8_t HR_GLOBAL;
 
     /// Both out-of-pool and in-pool reservations are allowed. This is the
     /// most flexible mode, where sysadmin have biggest liberty. However,
     /// there is a non-trivial performance penalty for it, as the
     /// AllocEngine code has to check whether there are reservations, even
     /// when dealing with reservations from within the dynamic pools.
-    const uint8_t HR_ALL = HR_IN_SUBNET | HR_OUT_OF_POOL;
+    static const uint8_t HR_ALL;
 
     /// @brief Bitset used to store @ref HRModeFlag flags.
     typedef uint8_t HRMode;
