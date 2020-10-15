@@ -1,6 +1,6 @@
 1816.	[func]		fdupont
 	The message logged when basic HTTP authentication succeed is
-	now informative (INFO vs DEBUG level).
+	now informative (was DEBUG, is INFO now).
 	(Gitlab #1450)
 
 1815.	[bug]		marcin
