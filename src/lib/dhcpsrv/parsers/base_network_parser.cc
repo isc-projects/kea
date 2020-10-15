@@ -232,7 +232,7 @@ BaseNetworkParser::parseHostReservationMode(const data::ConstElementPtr& network
 void
 BaseNetworkParser::parseHostReservationModes(const data::ConstElementPtr& network_data,
                                              NetworkPtr& network) {
-    if (network_data->contains("reservation-modes")) {
+    if (network_data->contains("reservation-mode")) {
         bool found = false;
         if (network_data->contains("reservations-out-of-pool")) {
             found = true;
@@ -249,13 +249,13 @@ BaseNetworkParser::parseHostReservationModes(const data::ConstElementPtr& networ
                                        " , 'reservations-in-subnet' or"
                                        " 'reservations-global' parameters");
         }
-        try {
-            HostReservationModesParser parser;
-            Network::HRMode flags = parser.parse(network_data);
-            network->setHostReservationMode(flags);
-        } catch (const BadValue& ex) {
-            isc_throw(DhcpConfigError, "invalid parameter: " << ex.what());
-        }
+    }
+    try {
+        HostReservationModesParser parser;
+        Network::HRMode flags = parser.parse(network_data);
+        network->setHostReservationMode(flags);
+    } catch (const BadValue& ex) {
+        isc_throw(DhcpConfigError, "invalid parameter: " << ex.what());
     }
 }
 
