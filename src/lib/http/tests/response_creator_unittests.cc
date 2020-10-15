@@ -135,17 +135,7 @@ TEST(HttpResponseCreatorTest, goodRequest) {
 }
 
 /// @brief Test fixture for HTTP response creator authentication.
-class HttpResponseCreatorAuthTest : public LogContentTest {
-public:
-    /// @brief Constructor.
-    ///
-    /// Set the logCheckVerbose flag
-    HttpResponseCreatorAuthTest() {
-#ifdef LOG_CHECK_VERBOSE
-        logCheckVerbose(true);
-#endif
-    }
-};
+class HttpResponseCreatorAuthTest : public LogContentTest { };
 
 // This test verifies that missing required authentication header gives
 // unauthorized error.
