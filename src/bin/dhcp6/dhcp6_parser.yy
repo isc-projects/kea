@@ -1078,12 +1078,12 @@ mac_sources_value: duid_id
                  | string_id
                  ;
 
-duid_id : DUID {
+duid_id: DUID {
     ElementPtr duid(new StringElement("duid", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(duid);
 };
 
-string_id : STRING {
+string_id: STRING {
     ElementPtr duid(new StringElement($1, ctx.loc2pos(@1)));
     ctx.stack_.back()->add(duid);
 };
@@ -1108,12 +1108,12 @@ host_reservation_identifier: duid_id
                            | flex_id
                            ;
 
-hw_address_id : HW_ADDRESS {
+hw_address_id: HW_ADDRESS {
     ElementPtr hwaddr(new StringElement("hw-address", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(hwaddr);
 };
 
-flex_id : FLEX_ID {
+flex_id: FLEX_ID {
     ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(flex_id);
 };
