@@ -1,3 +1,9 @@
+1817.	[func]		fdupont
+	Redact control agent logs to hide basic HTTP authentication
+	passwords from the configuration files. Note that when HTTP
+	headers are logged credentials are present in clear text.
+	(Gitlab #1459)
+
 1816.	[func]		fdupont
 	The message logged when basic HTTP authentication succeed is
 	now informative (was DEBUG, is INFO now).

@@ -47,6 +47,24 @@ CONFIG_BAD_VALUE="{
     }
 }"
 
+# Configuration with a password.
+CONFIG_PWD="{
+    \"Control-agent\":
+    {
+        \"http-host\": \"127.0.0.1\",
+        \"authentication\":
+        {
+            \"clients\": [
+                {
+                    \"password\": \"sensitive\",
+                    \"user\": \"superadmin\"
+                }
+            ],
+            \"type\": \"basic\"
+        }
+    }
+}"
+
 bin="kea-ctrl-agent"
 bin_path=@abs_top_builddir@/src/bin/agent
 
@@ -139,9 +157,49 @@ shutdown_test() {
     test_finish 0
 }
 
+# This test verifies that passwords are redacted in logs.
+# This function takes 2 parameters:
+# testname
+# config - string with a content of the config (will be written to a file)
+# exp_code - expected exit code returned by kea (0 - success, 1 - failure)
+password_redact_test() {
+    local TESTNAME="${1}"
+    local CONFIG="${2}"
+    local EXP_CODE="${3}"
+
+    # Log the start of the test and print test name.
+    test_start $TESTNAME
+    # Remove dangling Kea instances and remove log files.
+    cleanup
+    # Create correct configuration file.
+    create_config "${CONFIG}"
+    # Check it
+    printf "Running command %s.\n" "\"${bin_path}/${bin} -d -t ${CFG_FILE}\""
+    ${bin_path}/${bin} -d -t ${CFG_FILE} > ${LOG_FILE}
+    exit_code=$?
+    if [ ${exit_code} -ne $EXP_CODE ]; then
+        printf "ERROR: expected exit code ${EXP_CODE}, got ${exit_code}\n"
+        clean_exit 1
+    fi
+    grep "sensitive" ${LOG_FILE}
+    exit_code=$?
+    if [ ${exit_code} -ne 1 ]; then
+        printf "ERROR: sensitive is present in logs\n"
+        clean_exit 1
+    fi
+    grep -q "superadmin" ${LOG_FILE}
+    exit_code=$?
+    if [ ${exit_code} -ne 0 ]; then
+        printf "ERROR: superadmin is not present in logs\n"
+        clean_exit 1
+    fi
+    test_finish 0
+}
+
 server_pid_file_test "${CONFIG}" DCTL_ALREADY_RUNNING
 shutdown_test "ctrl-agent.sigterm_test" 15
 shutdown_test "ctrl-agent.sigint_test" 2
 syntax_check_test "ctrl-agent.syntax_check_success" "${CONFIG}" 0
 syntax_check_test "ctrl-agent.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1
 syntax_check_test "ctrl-agent.syntax_check_bad_values" "${CONFIG_BAD_VALUE}" 1
+password_redact_test "ctrl-agent.password_redact_test" "${CONFIG_PWD}" 0

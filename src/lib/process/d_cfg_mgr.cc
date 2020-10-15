@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,6 +57,11 @@ DCfgMgrBase::setContext(ConfigPtr& context) {
 }
 
 isc::data::ConstElementPtr
+DCfgMgrBase::redactConfig(isc::data::ConstElementPtr config_set) const {
+    return (config_set);
+}
+
+isc::data::ConstElementPtr
 DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
                                bool check_only,
                                const std::function<void()>& post_config_cb) {
@@ -64,8 +69,8 @@ DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
         return (isc::config::createAnswer(1,
                                     std::string("Can't parse NULL config")));
     }
-    LOG_DEBUG(dctl_logger, isc::log::DBGLVL_COMMAND,
-                DCTL_CONFIG_START).arg(config_set->str());
+    LOG_DEBUG(dctl_logger, isc::log::DBGLVL_COMMAND, DCTL_CONFIG_START)
+        .arg(redactConfig(config_set)->str());
 
     // The parsers implement data inheritance by directly accessing
     // configuration context. For this reason the data parsers must store
@@ -144,5 +149,5 @@ DCfgMgrBase::parse(isc::data::ConstElementPtr, bool) {
     isc_throw(DCfgMgrBaseError, "This class does not implement simple parser paradigm yet");
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace

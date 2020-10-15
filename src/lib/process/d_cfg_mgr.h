@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -210,6 +210,17 @@ protected:
     virtual isc::data::ConstElementPtr parse(isc::data::ConstElementPtr config,
                                              bool check_only);
 
+    /// @brief Redact the configuration.
+    ///
+    /// This method replaces passwords by asterisks. By default it does
+    /// nothing: derived class must redefine it.
+    ///
+    /// @param config the Element tree structure that describes the configuration.
+    /// @return unmodified config or a copy of the config where passwords were
+    /// replaced by asterisks so can be safely logged to an unprivileged place.
+    virtual isc::data::ConstElementPtr
+    redactConfig(isc::data::ConstElementPtr config) const;
+
 private:
     /// @brief Pointer to the configuration context instance.
     ConfigPtr context_;
@@ -218,8 +229,7 @@ private:
 /// @brief Defines a shared pointer to DCfgMgrBase.
 typedef boost::shared_ptr<DCfgMgrBase> DCfgMgrBasePtr;
 
-
-}; // end of isc::process namespace
-}; // end of isc namespace
+} // end of isc::process namespace
+} // end of isc namespace
 
 #endif // D_CFG_MGR_H
