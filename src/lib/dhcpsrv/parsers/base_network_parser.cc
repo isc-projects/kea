@@ -204,15 +204,15 @@ BaseNetworkParser::parseHostReservationMode(const data::ConstElementPtr& network
     if (network_data->contains("reservation-mode")) {
         bool found = false;
         if (network_data->contains("reservations-out-of-pool")) {
-            found = true
+            found = true;
         }
         if (network_data->contains("reservations-in-subnet")) {
-            found = true
+            found = true;
         }
         if (network_data->contains("reservations-global")) {
-            found = true
+            found = true;
         }
-        if (found)
+        if (found) {
             isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
                                        " and one of 'reservations-out-of-pool'"
                                        " , 'reservations-in-subnet' or"
@@ -235,15 +235,15 @@ BaseNetworkParser::parseHostReservationModes(const data::ConstElementPtr& networ
     if (network_data->contains("reservation-modes")) {
         bool found = false;
         if (network_data->contains("reservations-out-of-pool")) {
-            found = true
+            found = true;
         }
         if (network_data->contains("reservations-in-subnet")) {
-            found = true
+            found = true;
         }
         if (network_data->contains("reservations-global")) {
-            found = true
+            found = true;
         }
-        if (found)
+        if (found) {
             isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
                                        " and one of 'reservations-out-of-pool'"
                                        " , 'reservations-in-subnet' or"
