@@ -604,7 +604,8 @@ DHCPv4 Log Entries
 
 For DHCPv4, the library creates entries based on DHCPREQUEST messages and
 corresponding DHCPv4 leases intercepted by the lease4_select (for new
-leases) and the lease4_renew (for renewed leases) hooks.
+leases), the lease4_renew (for renewed leases), the lease4_release
+(for released leases), and the lease4_decline (for decline leases) hooks.
 
 An entry is a single string with no embedded end-of-line markers and a
 prepended timestamp, and has the following sections:
@@ -623,7 +624,8 @@ Where:
 
 -  duration - the lease lifetime expressed in days (if present), hours,
    minutes, and seconds. A lease lifetime of 0xFFFFFFFF will be denoted
-   with the text "infinite duration".
+   with the text "infinite duration". This information is not given
+   when the lease is released or declined.
 
 -  device-id - the client's hardware address shown as numerical type and
    hex digit string.
@@ -644,6 +646,14 @@ present in the log file):
 ::
 
    2018-01-06 01:02:03 CET Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with hardware address:
+   hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33,
+   identified by circuit-id: 68:6f:77:64:79 (howdy) and remote-id: 87:f6:79:77:ef
+
+or for a release:
+
+::
+
+   2018-01-06 01:02:03 CET Address: 192.2.1.100 has been released from a device with hardware address:
    hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33,
    identified by circuit-id: 68:6f:77:64:79 (howdy) and remote-id: 87:f6:79:77:ef
 
@@ -713,7 +723,8 @@ DHCPv6 Log Entries
 
 For DHCPv6 the library creates entries based on lease management actions
 intercepted by lease6_select (for new leases), lease6_renew (for
-renewed leases), and lease6_rebind (for rebound leases).
+renewed leases), lease6_rebind (for rebound leases), lease6_release
+(for released leases), and the lease6_decline (for decline leases) hooks.
 
 An entry is a single string with no embedded end-of-line markers and a
 prepended timestamp, and has the following sections:
@@ -732,7 +743,8 @@ Where:
 
 -  duration - the lease lifetime expressed in days (if present), hours,
    minutes, and seconds. A lease lifetime of 0xFFFFFFFF will be denoted
-   with the text "infinite duration".
+   with the text "infinite duration". This information is not given
+   when the lease is released or declined.
 
 -  device-id - the client's DUID and hardware address (if present).
 
@@ -756,6 +768,20 @@ present in the log file):
    to a device with DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e
    (from Raw Socket) connected via relay at address: fe80::abcd for client on link address: 3001::1,
    hop count: 1, identified by remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
+
+or for a release:
+
+::
+
+   2018-01-06 01:02:03 PST Address:2001:db8:1:: has been released
+   from a device with DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e
+   (from Raw Socket) connected via relay at address: fe80::abcd for client on link address: 3001::1,
+   hop count: 1, identified by remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
+
+.. note::
+
+   Beginning with Kea 1.9.1 the rebind event is logged as "rebound": before
+   it was logged as "renewed" i.e. the same way as the renew event.
 
 In addition to logging lease activity driven by DHCPv6 client traffic,
 the hooks library also logs entries for the following lease management control channel
