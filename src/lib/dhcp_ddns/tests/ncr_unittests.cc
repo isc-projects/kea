@@ -61,6 +61,17 @@ const char *valid_msgs[] =
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"use-conflict-resolution\": true"
+     "}",
+    // Missing use-conflict-resolution
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-expires-on\" : \"20130121132405\" , "
+     " \"lease-length\" : 1300 "
      "}"
 };
 
@@ -211,17 +222,6 @@ const char *invalid_msgs[] =
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : \"BOGUS\", "
      " \"use-conflict-resolution\": true"
-     "}",
-    // Missing use-conflict-resolution
-     "{"
-     " \"change-type\" : 0 , "
-     " \"forward-change\" : true , "
-     " \"reverse-change\" : false , "
-     " \"fqdn\" : \"walah.walah.com\" , "
-     " \"ip-address\" : \"192.168.2.1\" , "
-     " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
      "}",
     // Invalid use-conflict-resolution
      "{"
@@ -665,6 +665,35 @@ TEST(NameChangeProtocolTest, protocolEnumConversion){
 
     ASSERT_EQ(ncrProtocolToString(dhcp_ddns::NCR_UDP), "UDP");
     ASSERT_EQ(ncrProtocolToString(dhcp_ddns::NCR_TCP), "TCP");
+}
+
+TEST(NameChangeRequestTest, useConflictResolutionParsing) {
+    std::string base_json =
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-expires-on\" : \"20130121132405\" , "
+     " \"lease-length\" : 1300 ";
+
+    std::string its_true(base_json + ",\"use-conflict-resolution\": true}");
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_true));
+    ASSERT_TRUE(ncr);
+    EXPECT_TRUE(ncr->useConflictResolution());
+
+    std::string its_false(base_json + ",\"use-conflict-resolution\": false}");
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_false));
+    ASSERT_TRUE(ncr);
+    EXPECT_FALSE(ncr->useConflictResolution());
+
+    std::string its_missing(base_json + "}");
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_true));
+    ASSERT_TRUE(ncr);
+    EXPECT_TRUE(ncr->useConflictResolution());
 }
 
 } // end of anonymous namespace

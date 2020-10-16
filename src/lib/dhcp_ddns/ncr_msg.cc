@@ -319,7 +319,7 @@ NameChangeRequest::fromJSON(const std::string& json) {
     // NcrMessageError if the given Element is the wrong type or its data
     // content is lexically invalid.   If the element is NOT found in the
     // map, getElement will throw NcrMessageError indicating the missing
-    // member. Currently there are no optional values.
+    // member.
     element = ncr->getElement("change-type", element_map);
     ncr->setChangeType(element);
 
@@ -344,9 +344,14 @@ NameChangeRequest::fromJSON(const std::string& json) {
     element = ncr->getElement("lease-length", element_map);
     ncr->setLeaseLength(element);
 
-    /// @todo Should this be optional (i.e. backward compatible)?
-    element = ncr->getElement("use-conflict-resolution", element_map);
-    ncr->setConflictResolution(element);
+    // For backward compatiblity  use-conflict-resolution is optional
+    // and defaults to true.
+    auto found = element_map.find("use-conflict-resolution"); 
+    if (found != element_map.end()) {
+        ncr->setConflictResolution(found->second);
+    } else {
+        ncr->setConflictResolution(true);
+    }
 
     // All members were in the Element set and were correct lexically. Now
     // validate the overall content semantically.  This will throw an
