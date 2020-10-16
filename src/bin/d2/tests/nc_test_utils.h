@@ -388,6 +388,14 @@ extern void checkSimpleReplaceFwdAddressRequest(NameChangeTransaction& tran);
 /// @param tran Transaction containing the request to be verified.
 extern void checkSimpleRemoveFwdRRsRequest(NameChangeTransaction& tran);
 
+/// @brief Verifies a simple reverse RR removal DNS update request
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing reverse RR DNS entries when not using conflict resolution.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void  checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran);
+
 /// @brief Creates a NameChangeRequest from JSON string.
 ///
 /// @param ncr_str string of JSON text from which to make the request.

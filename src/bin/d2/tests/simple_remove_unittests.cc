@@ -344,14 +344,14 @@ TEST_F(SimpleRemoveTransactionTest, buildRemoveRevPtrsRequest) {
     SimpleRemoveStubPtr name_remove;
     ASSERT_NO_THROW(name_remove = makeTransaction4(REVERSE_CHG));
     ASSERT_NO_THROW(name_remove->buildRemoveRevPtrsRequest());
-    checkRemoveRevPtrsRequest(*name_remove);
+    checkSimpleRemoveRevPtrsRequest(*name_remove);
 
     // Create a IPv6 reverse replace transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
     ASSERT_NO_THROW(name_remove = makeTransaction6(REVERSE_CHG));
     ASSERT_NO_THROW(name_remove->buildRemoveRevPtrsRequest());
-    checkRemoveRevPtrsRequest(*name_remove);
+    checkSimpleRemoveRevPtrsRequest(*name_remove);
 }
 
 // Tests the readyHandler functionality.
@@ -813,7 +813,7 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_RevOnlyOK) {
     EXPECT_NO_THROW(name_remove->removingRevPtrsHandler());
 
     // Verify that an update message was constructed properly.
-    checkRemoveRevPtrsRequest(*name_remove);
+    checkSimpleRemoveRevPtrsRequest(*name_remove);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
@@ -863,7 +863,7 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_FqdnNotInUse) {
     EXPECT_NO_THROW(name_remove->removingRevPtrsHandler());
 
     // Verify that an update message was constructed properly.
-    checkRemoveRevPtrsRequest(*name_remove);
+    checkSimpleRemoveRevPtrsRequest(*name_remove);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.

@@ -479,7 +479,7 @@ SimpleRemoveTransaction::buildRemoveFwdRRsRequest() {
     // Construct dns::Name from NCR fqdn.
     dns::Name fqdn(dns::Name(getNcr()->getFqdn()));
 
-    // Build the Update Section. 
+    // Build the Update Section.
 
     // Create the FQDN/IP 'delete' RR and add it to update section.
     dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::ANY(),
@@ -505,21 +505,19 @@ SimpleRemoveTransaction::buildRemoveRevPtrsRequest() {
     std::string rev_addr = D2CfgMgr::reverseIpAddress(getNcr()->getIpAddress());
     dns::Name rev_ip(rev_addr);
 
-    /// TKM @todo - not sure we need this pre-req
-    // Create an assertion that the PTRDNAME in the PTR record matches the
-    // client's FQDN for the address that was released.
-    // Based on RFC 2136, section 3.2.3
-    dns::RRsetPtr prereq(new dns::RRset(rev_ip, dns::RRClass::IN(),
-                                        dns::RRType::PTR(), dns::RRTTL(0)));
-    addPtrRdata(prereq);
-    request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
+    // There are no pre-requisites.
 
-    // Now, build the Update section.
+    // Build the Update section.
 
-    // Create a delete of any RRs for the FQDN and add it to update section.
-    // Based on RFC 2136, section 3.4.2.3
+    // Create the FQDN/IP PTR 'delete' RR for this IP and add it to
+    // the update section.
     dns::RRsetPtr update(new dns::RRset(rev_ip, dns::RRClass::ANY(),
-                         dns::RRType::ANY(), dns::RRTTL(0)));
+                         dns::RRType::PTR(), dns::RRTTL(0)));
+    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+
+    // Create the DHCID 'delete' RR and add it to the update section.
+    update.reset(new dns::RRset(rev_ip, dns::RRClass::ANY(),
+                                dns::RRType::DHCID(), dns::RRTTL(0)));
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
 
     // Set the transaction's update request to the new request.

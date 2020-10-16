@@ -25,24 +25,22 @@ public:
 /// @brief Embodies the "life-cycle" required to carry out a DDNS Remove update.
 ///
 /// SimpleRemoveTransaction implements a state machine for removing a forward
-/// and/or reverse DNS mappings. This state machine is based upon the processing
-/// logic described in RFC 4703, Section 5.5. That logic may be paraphrased as
-/// follows:
+/// and/or reverse DNS mappings.  This state machine follows a basic
+/// removal scheme, that does not attempt to avoid conflicts between updating
+/// clients.  The logic may be paraphrased as follows:
 ///
 /// @code
 ///
 /// If the request includes a forward change:
 ///     Select a forward server
-///     Send the server a request to remove client's specific forward address RR
-///     If it succeeds or the server responds with name no longer in use
-///         Send a server a request to delete any other RRs for that FQDN, such
-///         as the DHCID RR.
-///     otherwise
+///     Send the server a request to remove client's specific forward address
+///     RR and DHCID RR.
+///     If it does not succeed
 ///         abandon the update
 ///
 /// If the request includes a reverse change:
 ///     Select a reverse server
-///     Send a server a request to delete reverse entry (PTR RR)
+///     Send a server a request to delete the matching PTR and DHCID RRs.
 ///
 /// @endcode
 ///
@@ -313,12 +311,9 @@ protected:
 
     /// @brief Builds a DNS request to remove all forward DNS RRs for a FQDN.
     ///
-    /// Constructs a DNS update request, based upon the NCR, for removing any
-    /// remaining forward DNS RRs, once all A or AAAA entries for the FQDN
-    /// have been removed. Once constructed, the request is stored as the
-    /// transaction's DNS update request.
-    ///
-    /// The request content is adherent to RFC 4703 section 5.5, paragraph 5.
+    /// Constructs a DNS update request, based upon the NCR, to remove the
+    /// forward DNS (A or AAAA) RR and DHCID RR. Once constructed, the request
+    /// is stored as the transaction's DNS update request.
     ///
     /// Prerequisite RRsets:
     /// - None
@@ -336,13 +331,12 @@ protected:
     /// reverse DNS mapping.  Once constructed, the request is stored as
     /// the transaction's DNS update request.
     ///
-    /// The request content is adherent to RFC 4703 section 5.5, paragraph 2:
-    ///
     /// Prerequisite RRsets:
-    /// 1. An assertion that a PTR record matching the client's FQDN exists.
+    /// - None
     ///
     /// Updates RRsets:
-    /// 1. A delete of all RRs for the FQDN
+    /// -# A delete of PTR RR for the IP
+    /// -# A delete of DHCID RR for the IP
     ///
     /// @throw This method does not throw but underlying methods may.
     void buildRemoveRevPtrsRequest();

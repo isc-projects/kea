@@ -917,6 +917,43 @@ void checkSimpleRemoveFwdRRsRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
+void checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran) {
+    const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
+    ASSERT_TRUE(request);
+
+    // Safety check.
+    dhcp_ddns::NameChangeRequestPtr ncr = tran.getNcr();
+    ASSERT_TRUE(ncr);
+
+    std::string exp_zone_name = tran.getReverseDomain()->getName();
+    std::string exp_rev_addr = D2CfgMgr::reverseIpAddress(ncr->getIpAddress());
+    const dns::RRType& exp_ip_rr_type = tran.getAddressRRType();
+
+    // Verify the zone section.
+    checkZone(request, exp_zone_name);
+
+    // Verify there are no RRs in the PREREQUISITE Section.
+    checkRRCount(request, D2UpdateMessage::SECTION_PREREQUISITE, 0);
+
+    // Verify there is 2 RRs in the UPDATE Section.
+    checkRRCount(request, D2UpdateMessage::SECTION_UPDATE, 2);
+
+    // Verify the FQDN delete RR.
+    dns::RRsetPtr rrset;
+    ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
+                                                  SECTION_UPDATE, 0));
+    checkRR(rrset, exp_rev_addr, dns::RRClass::ANY(), dns::RRType::PTR(), 0, ncr);
+
+    // Verify the DHCID delete RR.
+    ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
+                                                  SECTION_UPDATE, 1));
+    checkRR(rrset, exp_rev_addr, dns::RRClass::ANY(), dns::RRType::DHCID(), 0, ncr);
+
+    // Verify that it will render toWire without throwing.
+    dns::MessageRenderer renderer;
+    ASSERT_NO_THROW(request->toWire(renderer));
+}
+
 void checkContext(NameChangeTransactionPtr trans, const int exp_state,
                   const int exp_evt, const std::string& file, int line) {
     ASSERT_TRUE(trans);

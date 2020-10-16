@@ -26,20 +26,15 @@ public:
 /// @brief Embodies the "life-cycle" required to carry out a DDNS Add update.
 ///
 /// SimpleAddTransaction implements a state machine for adding (or replacing) a
-/// forward and/or reverse DNS mapping. This state machine is based upon the
-/// processing logic described in RFC 4703, Sections 5.3 and 5.4.  That logic
-/// may be paraphrased as follows:
+/// forward and/or reverse DNS mapping. This state machine follows a basic
+/// remove and replace scheme, that does not attempt to avoid conflicts
+/// between updating clients.  The logic may be paraphrased as follows:
 ///
 /// @code
 ///
 /// If the request includes a forward change:
 ///     Select a forward server
-///     Send the server a request to add the forward entry
-///     If the server responds with already in use:
-///         Send a server a request to delete and then add forward entry
-///
-///     If the forward update is unsuccessful:
-///         abandon the update
+///     Send the server a request to delete and then add forward entry
 ///
 /// If the request includes a reverse change:
 ///     Select a reverse server
@@ -159,8 +154,8 @@ protected:
     /// handler simply attempts to select the next server.
     ///
     /// Transitions to:
-    /// - REPLACING_FWD_ADDRS_ST with next event of SERVER_SELECTED upon successful
-    /// server selection
+    /// - REPLACING_FWD_ADDRS_ST with next event of SERVER_SELECTED upon
+    /// successful server selection
     ///
     /// - PROCESS_TRANS_FAILED with next event of NO_MORE_SERVERS_EVT upon
     /// failure to select a server
@@ -183,8 +178,8 @@ protected:
     /// handler simply attempts to select the next server.
     ///
     /// Transitions to:
-    /// - REPLACING_REV_PTRS_ST with next event of SERVER_SELECTED upon successful
-    /// server selection
+    /// - REPLACING_REV_PTRS_ST with next event of SERVER_SELECTED upon
+    /// successful server selection
     ///
     /// - PROCESS_TRANS_FAILED with next event of NO_MORE_SERVERS_EVT upon
     /// failure to select a server
@@ -314,7 +309,8 @@ protected:
     /// UPDATE_FAILED_EVT
     void processAddFailedHandler();
 
-    /// @brief Builds a DNS request to add/replace a forward DNS entry for an FQDN
+    /// @brief Builds a DNS request to add/replace a forward DNS entry for an
+    /// FQDN
     ///
     /// Constructs a DNS update request, based upon the NCR, for adding a
     /// forward DNS mapping.  Once constructed, the request is stored as
@@ -324,9 +320,10 @@ protected:
     /// - There are no prerequisites.
     ///
     /// Updates RRsets:
-    /// 1. A delete of all RRs for the given FQDN
-    /// 1. An FQDN/IP RR addition    (type A for IPv4, AAAA for IPv6)
-    /// 2. An FQDN/DHCID RR addition (type DHCID)
+    /// -# A delete of any existing PTR RRs for the lease address
+    /// -# A delete of any existing DHCID RRs for the lease address
+    /// -# An FQDN/IP RR addition    (type A for IPv4, AAAA for IPv6)
+    /// -# An FQDN/DHCID RR addition (type DHCID)
     ///
     /// @throw This method does not throw but underlying methods may.
     void buildReplaceFwdAddressRequest();
@@ -341,10 +338,10 @@ protected:
     /// - There are no prerequisites.
     ///
     /// Updates RRsets:
-    /// 1. A delete of any existing PTR RRs for the lease address
-    /// 2. A delete of any existing DHCID RRs for the lease address
-    /// 3. A PTR RR addition for the lease address and FQDN
-    /// 4. A DHCID RR addition for the lease address and lease client DHCID
+    /// -# A delete of any existing PTR RRs for the lease address
+    /// -# A delete of any existing DHCID RRs for the lease address
+    /// -# A PTR RR addition for the lease address and FQDN
+    /// -# A DHCID RR addition for the lease address and lease client DHCID
     ///
     /// @throw This method does not throw but underlying methods may.
     void buildReplaceRevPtrsRequest();

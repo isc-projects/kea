@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -154,6 +154,10 @@ protected:
     /// updates in that direction, failing to match the request to a list
     /// of servers is an error which will be logged and the request will be
     /// discarded.
+    ///
+    /// Finally, If conflict resolution is enabled, it will instantiate either
+    /// a NameAddTranscation or a NameRemoveTransaction. If disabled it will
+    /// instantiate either a SimpleAddTransaction or a SimpleRemoveTranscation.
     ///
     /// @param ncr the NameChangeRequest for which to create a transaction.
     ///
