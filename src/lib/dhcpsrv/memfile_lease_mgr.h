@@ -403,7 +403,15 @@ public:
     ///
     /// @param lease4 The lease to be updated.
     ///
-    /// If no such lease is present, an exception will be thrown.
+    /// @throw NoSuchLease if there is no such lease to be updated.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease only if persistence is
+    /// disabled. This is the most common setting for all unittests.
+    /// This is useful to test the validity of the code where this is actually
+    /// required, in database code where multiple processes can update
+    /// database entries, and old_cltt_ and old_valid_lft_ are used to force
+    /// atomic action on respective lease.
     virtual void updateLease4(const Lease4Ptr& lease4);
 
     /// @brief Updates IPv6 lease.
@@ -413,7 +421,15 @@ public:
     ///
     /// @param lease6 The lease to be updated.
     ///
-    /// If no such lease is present, an exception will be thrown.
+    /// @throw NoSuchLease if there is no such lease to be updated.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease only if persistence is
+    /// disabled. This is the most common setting for all unittests.
+    /// This is useful to test the validity of the code where this is actually
+    /// required, in database code where multiple processes can update
+    /// database entries, and old_cltt_ and old_valid_lft_ are used to force
+    /// atomic action on respective lease.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
     /// @brief Deletes an IPv4 lease.
@@ -421,6 +437,14 @@ public:
     /// @param lease IPv4 lease being deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease only if persistence is
+    /// disabled. This is the most common setting for all unittests.
+    /// This is useful to test the validity of the code where this is actually
+    /// required, in database code where multiple processes can update
+    /// database entries, and old_cltt_ and old_valid_lft_ are used to force
+    /// atomic action on respective lease.
     virtual bool deleteLease(const Lease4Ptr& lease);
 
     /// @brief Deletes an IPv6 lease.
@@ -428,6 +452,14 @@ public:
     /// @param lease IPv6 lease being deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease only if persistence is
+    /// disabled. This is the most common setting for all unittests.
+    /// This is useful to test the validity of the code where this is actually
+    /// required, in database code where multiple processes can update
+    /// database entries, and old_cltt_ and old_valid_lft_ are used to force
+    /// atomic action on respective lease.
     virtual bool deleteLease(const Lease6Ptr& lease);
 
     /// @brief Deletes all expired-reclaimed DHCPv4 leases.
@@ -660,11 +692,31 @@ private:
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.
+    ///
+    /// @throw NoSuchLease if there is no such lease to be updated.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease only if persistence is
+    /// disabled. This is the most common setting for all unittests.
+    /// This is useful to test the validity of the code where this is actually
+    /// required, in database code where multiple processes can update
+    /// database entries, and old_cltt_ and old_valid_lft_ are used to force
+    /// atomic action on respective lease.
     void updateLease4Internal(const Lease4Ptr& lease4);
 
     /// @brief Updates IPv6 lease.
     ///
     /// @param lease6 The lease to be updated.
+    ///
+    /// @throw NoSuchLease if there is no such lease to be updated.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease only if persistence is
+    /// disabled. This is the most common setting for all unittests.
+    /// This is useful to test the validity of the code where this is actually
+    /// required, in database code where multiple processes can update
+    /// database entries, and old_cltt_ and old_valid_lft_ are used to force
+    /// atomic action on respective lease.
     void updateLease6Internal(const Lease6Ptr& lease6);
 
     /// @brief Deletes an IPv4 lease.
@@ -672,6 +724,14 @@ private:
     /// @param lease IPv4 lease being deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease only if persistence is
+    /// disabled. This is the most common setting for all unittests.
+    /// This is useful to test the validity of the code where this is actually
+    /// required, in database code where multiple processes can update
+    /// database entries, and old_cltt_ and old_valid_lft_ are used to force
+    /// atomic action on respective lease.
     bool deleteLeaseInternal(const Lease4Ptr& addr);
 
     /// @brief Deletes an IPv6 lease.
@@ -679,6 +739,14 @@ private:
     /// @param lease IPv6 lease being deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease only if persistence is
+    /// disabled. This is the most common setting for all unittests.
+    /// This is useful to test the validity of the code where this is actually
+    /// required, in database code where multiple processes can update
+    /// database entries, and old_cltt_ and old_valid_lft_ are used to force
+    /// atomic action on respective lease.
     bool deleteLeaseInternal(const Lease6Ptr& addr);
 
     /// @brief Removes specified IPv4 leases.

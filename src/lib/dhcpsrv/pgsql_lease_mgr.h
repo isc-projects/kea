@@ -428,6 +428,15 @@ public:
     ///        exist.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease.
+    /// The old_cltt_ and old_valid_lft_ are used to ensure automatic action on
+    /// respective lease.
+    /// @note The UPDATE query uses WHERE expire = ? to delete the lease only if
+    /// the value matches the one received on the SELECT query, effectively
+    /// forcing that no other process or thread updates the lease between SELECT
+    /// and UPDATE.
     virtual void updateLease4(const Lease4Ptr& lease4);
 
     /// @brief Updates IPv6 lease.
@@ -441,6 +450,15 @@ public:
     ///        exist.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease.
+    /// The old_cltt_ and old_valid_lft_ are used to ensure automatic action on
+    /// respective lease.
+    /// @note The UPDATE query uses WHERE expire = ? to delete the lease only if
+    /// the value matches the one received on the SELECT query, effectively
+    /// forcing that no other process or thread updates the lease between SELECT
+    /// and UPDATE.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
     /// @brief Deletes an IPv4 lease.
@@ -448,6 +466,15 @@ public:
     /// @param lease IPv4 lease being deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease.
+    /// The old_cltt_ and old_valid_lft_ are used to ensure automatic action on
+    /// respective lease.
+    /// @note The DELETE query uses WHERE expire = ? to delete the lease only if
+    /// the value matches the one received on the SELECT query, effectively
+    /// forcing that no other process or thread updates the lease between SELECT
+    /// and DELETE.
     virtual bool deleteLease(const Lease4Ptr& lease);
 
     /// @brief Deletes an IPv6 lease.
@@ -455,6 +482,15 @@ public:
     /// @param lease IPv6 lease being deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists.
+    ///
+    /// @note This function checks that old_cltt_ and old_valid_lft_ values of
+    /// the stored lease match values of the new lease.
+    /// The old_cltt_ and old_valid_lft_ are used to ensure automatic action on
+    /// respective lease.
+    /// @note The DELETE query uses WHERE expire = ? to delete the lease only if
+    /// the value matches the one received on the SELECT query, effectively
+    /// forcing that no other process or thread updates the lease between SELECT
+    /// and DELETE.
     virtual bool deleteLease(const Lease6Ptr& lease);
 
     /// @brief Deletes all expired-reclaimed DHCPv4 leases.

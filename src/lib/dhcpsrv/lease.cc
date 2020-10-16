@@ -276,6 +276,17 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     }
 }
 
+void
+Lease::updateInternalTimestamp() {
+    Lease::syncInternalTimestamp(*this, *this);
+}
+
+void
+Lease::syncInternalTimestamp(Lease& old_lease, const Lease& new_lease) {
+    old_lease.old_cltt_ = new_lease.cltt_;
+    old_lease.old_valid_lft_ = new_lease.valid_lft_;
+}
+
 Lease4::Lease4(const Lease4& other)
     : Lease(other.addr_, other.valid_lft_,
             other.subnet_id_, other.cltt_, other.fqdn_fwd_,

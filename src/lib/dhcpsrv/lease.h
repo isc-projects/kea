@@ -97,6 +97,13 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @param fqdn_rev If true, reverse DNS update is performed for a lease.
     /// @param hostname FQDN of the client which gets the lease.
     /// @param hwaddr Hardware/MAC address
+    ///
+    /// @note When creating a new Lease object, old_cltt_ matches cltt_ and
+    /// old_valid_lft_ matches valid_lft_. Any update operation that changes
+    /// cltt_ or valid_lft_ in the database must also update the old_cltt_ and
+    /// old_valid_lft_ after the database response so that additional operations
+    /// can be performed on the same object. Failing to do so will result in
+    /// the new actions to be rejected by the database.
     Lease(const isc::asiolink::IOAddress& addr,
           uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
           const bool fqdn_fwd, const bool fqdn_rev,
@@ -119,6 +126,12 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @brief Old valid lifetime
     ///
     /// Expressed as number of seconds since cltt before update.
+    ///
+    /// @note This is used in unittests and in actual database implementations
+    /// to ensure that the operation (update or delete) on the lease is atomic
+    /// relative to the matching select operation.
+    /// @note This value should not be explicitly updated from outside
+    /// @ref Lease or @ref LeaseMgr code.
     uint32_t old_valid_lft_;
 
     /// @brief Client last transmission time
@@ -131,6 +144,12 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     ///
     /// Specifies a timestamp giving the time when the last transmission from a
     /// client was received before update.
+    ///
+    /// @note This is used in unittests and in actual database implementations
+    /// to ensure that the operation (update or delete) on the lease is atomic
+    /// relative to the matching select operation.
+    /// @note This value should not be explicitly updated from outside
+    /// @ref Lease or @ref LeaseMgr code.
     time_t old_cltt_;
 
     /// @brief Subnet identifier
@@ -229,6 +248,20 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
 
     /// Avoid a clang spurious error
     using isc::data::CfgToElement::toElement;
+
+    /// Sync internal timestamp with value of a newer version of the lease, so
+    /// that additional operations can be done without performing extra read
+    /// from the database.
+    ///
+    /// @param [out] old_lease The old version of the lease that needs to be
+    /// updated.
+    /// @param new_lease The new version of the lease used to update old_lease
+    /// internal timestamp.
+    static void syncInternalTimestamp(Lease& old_lease, const Lease& new_lease);
+
+    /// Update internal timestamp with new value, so that additional operations
+    /// can be done without performing extra read from the database.
+    void updateInternalTimestamp();
 
 protected:
 

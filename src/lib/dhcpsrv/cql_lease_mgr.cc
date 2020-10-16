@@ -1596,6 +1596,7 @@ CqlLease6Exchange::retrieve() {
 
         time_t cltt = 0;
         CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+        // Update cltt_ and old_cltt_ explicitly.
         result->cltt_ = cltt;
         result->old_cltt_ = cltt;
 
@@ -2145,8 +2146,10 @@ CqlLeaseMgr::addLease(const Lease4Ptr &lease) {
         return false;
     }
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values (allows update of the
+    // internal state between the creation of the Lease up to the point of
+    // insertion in the database).
+    lease->updateInternalTimestamp();
 
     return true;
 }
@@ -2168,8 +2171,10 @@ CqlLeaseMgr::addLease(const Lease6Ptr &lease) {
         return false;
     }
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values (allows update of the
+    // internal state between the creation of the Lease up to the point of
+    // insertion in the database).
+    lease->updateInternalTimestamp();
 
     return true;
 }
@@ -2618,8 +2623,8 @@ CqlLeaseMgr::updateLease4(const Lease4Ptr &lease) {
         isc_throw(NoSuchLease, exception.what());
     }
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values.
+    lease->updateInternalTimestamp();
 }
 
 void
@@ -2637,8 +2642,8 @@ CqlLeaseMgr::updateLease6(const Lease6Ptr &lease) {
         isc_throw(NoSuchLease, exception.what());
     }
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values.
+    lease->updateInternalTimestamp();
 }
 
 bool

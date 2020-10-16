@@ -655,10 +655,18 @@ LeaseCmdsImpl::addOrUpdate4(Lease4Ptr lease, bool force_create) {
         return (true);
     }
     if (existing) {
-        lease->old_cltt_ = existing->old_cltt_;
-        lease->old_valid_lft_ = existing->old_valid_lft_;
+        // Update lease information with values received from the database.
+        Lease::syncInternalTimestamp(*lease, *existing);
     }
-    LeaseMgrFactory::instance().updateLease4(lease);
+    try {
+        LeaseMgrFactory::instance().updateLease4(lease);
+    } catch (const NoSuchLease&) {
+        isc_throw(InvalidOperation, "failed to update the lease with address "
+                  << lease->addr_ << " either because the lease has been "
+                  "deleted or it has changed in the database, in both cases a "
+                  "retry might succeed");
+    }
+
     LeaseCmdsImpl::updateStatsOnUpdate(existing, lease);
     return (false);
 }
@@ -677,10 +685,18 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
         return (true);
     }
     if (existing) {
-        lease->old_cltt_ = existing->old_cltt_;
-        lease->old_valid_lft_ = existing->old_valid_lft_;
+        // Update lease information with values received from the database.
+        Lease::syncInternalTimestamp(*lease, *existing);
     }
-    LeaseMgrFactory::instance().updateLease6(lease);
+    try {
+        LeaseMgrFactory::instance().updateLease6(lease);
+    } catch (const NoSuchLease&) {
+        isc_throw(InvalidOperation, "failed to update the lease with address "
+                  << lease->addr_ << " either because the lease has been "
+                  "deleted or it has changed in the database, in both cases a "
+                  "retry might succeed");
+    }
+
     LeaseCmdsImpl::updateStatsOnUpdate(existing, lease);
     return (false);
 }

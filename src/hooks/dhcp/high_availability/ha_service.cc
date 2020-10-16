@@ -1699,8 +1699,8 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                 } else if (existing_lease->cltt_ < lease->cltt_) {
                                     // If the existing lease is older than the fetched lease, update
                                     // the lease in our local database.
-                                    lease->old_cltt_ = existing_lease->old_cltt_;
-                                    lease->old_valid_lft_ = existing_lease->old_valid_lft_;
+                                    // Update lease information with values received from the database.
+                                    Lease::syncInternalTimestamp(*lease, *existing_lease);
                                     LeaseMgrFactory::instance().updateLease4(lease);
 
                                 } else {
@@ -1730,8 +1730,8 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                 } else if (existing_lease->cltt_ < lease->cltt_) {
                                     // If the existing lease is older than the fetched lease, update
                                     // the lease in our local database.
-                                    lease->old_cltt_ = existing_lease->old_cltt_;
-                                    lease->old_valid_lft_ = existing_lease->old_valid_lft_;
+                                    // Update lease information with values received from the database.
+                                    Lease::syncInternalTimestamp(*lease, *existing_lease);
                                     LeaseMgrFactory::instance().updateLease6(lease);
 
                                 } else {

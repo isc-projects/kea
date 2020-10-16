@@ -1,3 +1,7 @@
+1820.	[bug]		razvan
+	Fixed atomic lease update when using hooks with database back-end.
+	(Gitlab #1434)
+
 1819.	[func]		fdupont
 	Improved error messages for bad escapes in JSON strings.
 	(Gitlab #151)

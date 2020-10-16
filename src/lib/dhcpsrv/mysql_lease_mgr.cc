@@ -1425,6 +1425,7 @@ public:
             valid_lft = 0;
         }
         MySqlConnection::convertFromDatabaseTime(expire_, valid_lft, cltt);
+        // Update cltt_ and old_cltt_ explicitly.
         result->cltt_ = cltt;
         result->old_cltt_ = cltt;
 
@@ -1871,8 +1872,10 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     // ... and drop to common code.
     auto result = addLeaseCommon(ctx, INSERT_LEASE4, bind);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values (allows update of the
+    // internal state between the creation of the Lease up to the point of
+    // insertion in the database).
+    lease->updateInternalTimestamp();
 
     return (result);
 }
@@ -1893,8 +1896,10 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     // ... and drop to common code.
     auto result = addLeaseCommon(ctx, INSERT_LEASE6, bind);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values (allows update of the
+    // internal state between the creation of the Lease up to the point of
+    // insertion in the database).
+    lease->updateInternalTimestamp();
 
     return (result);
 }
@@ -2769,8 +2774,8 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, &bind[0], lease);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values.
+    lease->updateInternalTimestamp();
 }
 
 void
@@ -2816,8 +2821,8 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, &bind[0], lease);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values.
+    lease->updateInternalTimestamp();
 }
 
 // Delete lease methods.  Similar to other groups of methods, these comprise

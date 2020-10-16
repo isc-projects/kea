@@ -911,6 +911,7 @@ public:
                                                         subnet_id_, fqdn_fwd_,
                                                         fqdn_rev_, hostname_,
                                                         hwaddr, prefix_len_));
+            // Update cltt_ and old_cltt_ explicitly.
             result->cltt_ = cltt_;
             result->old_cltt_ = cltt_;
 
@@ -1306,8 +1307,10 @@ PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     ctx->exchange4_->createBindForSend(lease, bind_array);
     auto result = addLeaseCommon(ctx, INSERT_LEASE4, bind_array);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values (allows update of the
+    // internal state between the creation of the Lease up to the point of
+    // insertion in the database).
+    lease->updateInternalTimestamp();
 
     return (result);
 }
@@ -1327,8 +1330,10 @@ PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
 
     auto result = addLeaseCommon(ctx, INSERT_LEASE6, bind_array);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values (allows update of the
+    // internal state between the creation of the Lease up to the point of
+    // insertion in the database).
+    lease->updateInternalTimestamp();
 
     return (result);
 }
@@ -1989,8 +1994,8 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, bind_array, lease);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values.
+    lease->updateInternalTimestamp();
 }
 
 void
@@ -2020,8 +2025,8 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, bind_array, lease);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease internal information with new values.
+    lease->updateInternalTimestamp();
 }
 
 uint64_t
