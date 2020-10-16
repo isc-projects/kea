@@ -435,8 +435,8 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type,
     // equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    Lease6Ptr lease(new Lease6());
-    lease->addr_ = renew_addr;
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(type,
+                                                            IOAddress(renew_addr));
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
@@ -759,8 +759,7 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     EXPECT_EQ(1, stat->getInteger().first);
 
     // Finally, let's cleanup the database
-    lease.reset(new Lease6());
-    lease->addr_ = addr;
+    lease = LeaseMgrFactory::instance().getLease6(type, addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
