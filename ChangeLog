@@ -1,3 +1,9 @@
+1825.	[doc]		andrei
+	Examples for option definitions, option data, standardized option
+	spaces other than "dhcp[46]", custom option spaces, option
+	embedding under doc/examples/kea[46]/all-options.json.
+	(Gitlab #1298)
+
 1824.	[func]		tmark
 	Added a new parameter, ddns-use-conflict-resolution, to
 	kea-dhcp4 and kea-dhcp6. This parameter is passed per request
