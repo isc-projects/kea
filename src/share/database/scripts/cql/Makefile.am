@@ -1,18 +1,17 @@
 SUBDIRS = .
 
+UPGRADE_SCRIPTS =
+UPGRADE_SCRIPTS += upgrade_1.0_to_2.0.sh
+UPGRADE_SCRIPTS += upgrade_2.0_to_3.0.sh
+UPGRADE_SCRIPTS += upgrade_3.0_to_4.0.sh
+UPGRADE_SCRIPTS += upgrade_4.0_to_5.0.sh
+UPGRADE_SCRIPTS += wipe_data.sh
+
 sqlscriptsdir = ${datarootdir}/${PACKAGE_NAME}/scripts/cql
 sqlscripts_DATA = dhcpdb_create.cql
 sqlscripts_DATA += dhcpdb_drop.cql
-sqlscripts_DATA += upgrade_1.0_to_2.0.sh
-sqlscripts_DATA += upgrade_2.0_to_3.0.sh
-sqlscripts_DATA += upgrade_3.0_to_4.0.sh
-sqlscripts_DATA += upgrade_4.0_to_5.0.sh
-sqlscripts_DATA += wipe_data.sh
+sqlscripts_DATA += ${UPGRADE_SCRIPTS}
 
-DISTCLEANFILES = upgrade_1.0_to_2.0.sh
-DISTCLEANFILES += upgrade_2.0_to_3.0.sh
-DISTCLEANFILES += upgrade_3.0_to_4.0.sh
-DISTCLEANFILES += upgrade_4.0_to_5.0.sh
-DISTCLEANFILES += wipe_data.sh
+DISTCLEANFILES = ${UPGRADE_SCRIPTS}
 
 EXTRA_DIST = ${sqlscripts_DATA}
