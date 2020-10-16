@@ -704,6 +704,11 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
     }
 
     storage4_.insert(lease);
+
+    // Update lease internal information with new values (allows update of the
+    // internal state between the creation of the Lease up to the point of
+    // insertion in the database).
+    lease->updateInternalTimestamp();
     return (true);
 }
 
@@ -735,6 +740,11 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
     }
 
     storage6_.insert(lease);
+
+    // Update lease internal information with new values (allows update of the
+    // internal state between the creation of the Lease up to the point of
+    // insertion in the database).
+    lease->updateInternalTimestamp();
     return (true);
 }
 
@@ -1433,6 +1443,9 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
         lease_file4_->append(*lease);
     }
 
+    // Update lease internal information with new values.
+    lease->updateInternalTimestamp();
+
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease4Ptr(new Lease4(*lease)));
 }
@@ -1478,6 +1491,9 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     if (persist) {
         lease_file6_->append(*lease);
     }
+
+    // Update lease internal information with new values.
+    lease->updateInternalTimestamp();
 
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease6Ptr(new Lease6(*lease)));
