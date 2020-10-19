@@ -423,7 +423,7 @@ private:
 
 /// Initialize the 10 packet rounding to exp(-.1)
 template <typename W, typename C>
-    const double ThreadPool<W, C>::CEXP10 = std::exp(-.1);
+const double ThreadPool<W, C>::CEXP10 = std::exp(-.1);
 
 /// Initialize the 100 packet rounding to exp(-.01)
 template <typename W, typename C>
