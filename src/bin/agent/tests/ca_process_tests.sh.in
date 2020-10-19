@@ -173,9 +173,11 @@ password_redact_test() {
     cleanup
     # Create correct configuration file.
     create_config "${CONFIG}"
+    # Instruct Control Agent to log to the specific file.
+    set_logger
     # Check it
     printf "Running command %s.\n" "\"${bin_path}/${bin} -d -t ${CFG_FILE}\""
-    ${bin_path}/${bin} -d -t ${CFG_FILE} > ${LOG_FILE}
+    ${bin_path}/${bin} -d -t ${CFG_FILE}
     exit_code=$?
     if [ ${exit_code} -ne $EXP_CODE ]; then
         printf "ERROR: expected exit code ${EXP_CODE}, got ${exit_code}\n"
