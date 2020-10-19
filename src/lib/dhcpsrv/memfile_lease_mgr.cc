@@ -1428,6 +1428,8 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
         valid = false;
     } else if ((!persist) && (((*lease_it)->cltt_ != lease->old_cltt_) ||
         ((*lease_it)->valid_lft_ != lease->old_valid_lft_))) {
+        // For test purpose only: check that an actual database
+        // implementation action is atomic
         valid = false;
     }
 
@@ -1477,6 +1479,8 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
         valid = false;
     } else if ((!persist) && (((*lease_it)->cltt_ != lease->old_cltt_) ||
         ((*lease_it)->valid_lft_ != lease->old_valid_lft_))) {
+        // For test purpose only: check that an actual database
+        // implementation action is atomic
         valid = false;
     }
 
