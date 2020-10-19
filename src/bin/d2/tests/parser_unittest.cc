@@ -699,7 +699,7 @@ TEST(ParserTest, mapEntries) {
 
 /// @brief Tests a duplicate entry.
 ///
-/// The entry was duplicated by adding a a new <name>DDDD entry.
+/// The entry was duplicated by adding a new <name>DDDD entry.
 /// An error is expected, usually it is a duplicate but there are
 /// a few syntax errors when the syntax allows only one parameter.
 ///

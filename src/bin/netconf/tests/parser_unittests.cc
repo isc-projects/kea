@@ -787,9 +787,9 @@ TEST(ParserTest, mapEntries) {
         ctx.parseFile(sample_fname, ParserContext::PARSER_NETCONF));
     ASSERT_TRUE(sample_json);
     KeywordSet sample_keys = {
-      "ca", "d2", "dhcp6",
-      "hooks-libraries", "library", "parameters",
-      "socket-url"
+        "ca", "d2", "dhcp6",
+        "hooks-libraries", "library", "parameters",
+        "socket-url"
     };
     // Recursively extract keywords.
     static void (*extract)(ConstElementPtr, KeywordSet&) =
@@ -817,7 +817,7 @@ TEST(ParserTest, mapEntries) {
 
 /// @brief Tests a duplicate entry.
 ///
-/// The entry was duplicated by adding a a new <name>DDDD entry.
+/// The entry was duplicated by adding a new <name>DDDD entry.
 /// An error is expected, usually it is a duplicate but there are
 /// a few syntax errors when the syntax allows only one parameter.
 ///
