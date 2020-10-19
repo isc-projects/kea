@@ -131,6 +131,15 @@ public:
     /// @return True if updates should always be performed.
     bool getUpdateOnRenew() const;
 
+    /// @brief Returns whether or not keah-dhcp-ddns should use conflict resolution
+    ///
+    /// This value is communicated to D2 via the NCR.  When true, D2 should follow
+    /// follow conflict resolution steps described in RFC 4703.  If not, it should
+    /// simple add or remove entries.
+    ///
+    /// @return True if conflict resolution should be used.
+    bool getUseConflictResolution() const;
+
     /// @brief Returns the subnet-id of the subnet associated with these parameters
     /// @return value of subnet-id (or 0 if no subnet is associated)
     SubnetID getSubnetId() const {

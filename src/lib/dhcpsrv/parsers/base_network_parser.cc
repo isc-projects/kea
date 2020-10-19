@@ -271,6 +271,10 @@ BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
     if (network_data->contains("ddns-update-on-renew")) {
         network->setDdnsUpdateOnRenew(getBoolean(network_data, "ddns-update-on-renew"));
     }
+
+    if (network_data->contains("ddns-use-conflict-resolution")) {
+        network->setDdnsUpdateOnRenew(getBoolean(network_data, "ddns-use-conflict-resolution"));
+    }
 }
 
 } // end of namespace isc::dhcp

@@ -790,5 +790,14 @@ DdnsParams::getUpdateOnRenew() const {
     return (subnet_->getDdnsUpdateOnRenew().get());
 }
 
+bool
+DdnsParams::getUseConflictResolution() const {
+    if (!subnet_) {
+        return (true);
+    }
+
+    return (subnet_->getDdnsUseConflictResolution().get());
+}
+
 } // namespace dhcp
 } // namespace isc

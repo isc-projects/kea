@@ -327,6 +327,7 @@ public:
                           const SimpleDefaults& option_def_defaults) {
         size_t cnt = 0;
         // Set global defaults first.
+std::cout << "Calling setAllDefaults" << std::endl;
         cnt = SimpleParser::setDefaults(global, global_defaults);
 
         // Now set option definition defaults for each specified option definition
@@ -405,6 +406,7 @@ public:
     /// non-zero otherwise failure.
     int parseConfiguration(const std::string& config, bool v6 = false,
                            bool set_defaults = true) {
+std::cout << "Calling parseConfiguration" << std::endl;
         int rcode_ = 1;
         // Turn config into elements.
         // Test json just to make sure its valid.
@@ -412,6 +414,7 @@ public:
         EXPECT_TRUE(json);
         if (json) {
             if (set_defaults) {
+std::cout << "Calling setAllDefaults" << std::endl;
                 setAllDefaults(json, v6);
             }
 
@@ -2793,6 +2796,9 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
 
     EXPECT_TRUE(subnet->getDdnsUpdateOnRenew().unspecified());
     EXPECT_FALSE(subnet->getDdnsUpdateOnRenew().get());
+
+    EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
+    EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
 }
 
 // This test verifies that it is possible to parse an IPv6 subnet for which
@@ -2876,6 +2882,9 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
 
     EXPECT_TRUE(subnet->getDdnsUpdateOnRenew().unspecified());
     EXPECT_FALSE(subnet->getDdnsUpdateOnRenew().get());
+
+    EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
+    EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
 }
 
 // This test verifies that it is possible to parse an IPv4 shared network
@@ -2897,8 +2906,7 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
     ASSERT_TRUE(network);
 
     EXPECT_TRUE(network->hasFetchGlobalsFn());
-
-    EXPECT_TRUE(network->getIface().unspecified());
+EXPECT_TRUE(network->getIface().unspecified());
     EXPECT_TRUE(network->getIface().empty());
 
     EXPECT_TRUE(network->getClientClass().unspecified());
@@ -2954,6 +2962,9 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
 
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().unspecified());
     EXPECT_FALSE(network->getDdnsUpdateOnRenew().get());
+
+    EXPECT_TRUE(network->getDdnsUseConflictResolution().unspecified());
+    EXPECT_FALSE(network->getDdnsUseConflictResolution().get());
 }
 
 // This test verifies that it is possible to parse an IPv6 shared network
@@ -3032,6 +3043,9 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
 
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().unspecified());
     EXPECT_FALSE(network->getDdnsUpdateOnRenew().get());
+
+    EXPECT_TRUE(network->getDdnsUseConflictResolution().unspecified());
+    EXPECT_FALSE(network->getDdnsUseConflictResolution().get());
 }
 
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code

@@ -90,7 +90,8 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ip-reservations-unique",         Element::boolean },
-    { "ddns-update-on-renew",           Element::boolean }
+    { "ddns-update-on-renew",           Element::boolean },
+    { "ddns-use-conflict-resolution",   Element::boolean }
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -125,7 +126,8 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "statistic-default-sample-count", Element::integer, "20" },
     { "statistic-default-sample-age",   Element::integer, "0" },
     { "ip-reservations-unique",         Element::boolean, "true" },
-    { "ddns-update-on-renew",           Element::boolean, "false" }
+    { "ddns-update-on-renew",           Element::boolean, "false" },
+    { "ddns-use-conflict-resolution",   Element::boolean, "true" }
 };
 
 /// @brief This table defines all option definition parameters.
@@ -231,7 +233,8 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "metadata",                       Element::map },
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
-    { "ddns-update-on-renew",           Element::boolean }
+    { "ddns-update-on-renew",           Element::boolean },
+    { "ddns-use-conflict-resolution",   Element::boolean }
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -284,7 +287,8 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "t2-percent",
     "store-extended-info",
     "cache-threshold",
-    "cache-max-age"
+    "cache-max-age",
+    "ddns-use-conflict-resolution"
 };
 
 /// @brief This table defines all pool parameters.
@@ -343,7 +347,8 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "metadata",                       Element::map },
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
-    { "ddns-update-on-renew",           Element::boolean }
+    { "ddns-update-on-renew",           Element::boolean },
+    { "ddns-use-conflict-resolution",   Element::boolean }
 };
 
 /// @brief This table defines default values for each IPv4 shared network.

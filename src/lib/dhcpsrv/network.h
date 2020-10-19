@@ -208,7 +208,8 @@ public:
           ddns_send_updates_(), ddns_override_no_update_(), ddns_override_client_update_(),
           ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
           hostname_char_set_(), hostname_char_replacement_(), store_extended_info_(),
-          cache_threshold_(), cache_max_age_(), ddns_update_on_renew_() {
+          cache_threshold_(), cache_max_age_(), ddns_update_on_renew_(),
+          ddns_use_conflict_resolution_() {
     }
 
     /// @brief Virtual destructor.
@@ -749,6 +750,23 @@ public:
         ddns_update_on_renew_ = ddns_update_on_renew;
     }
 
+    /// @brief Returns ddns-use-conflict-resolution
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<bool>
+    getDdnsUseConflictResolution(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsUseConflictResolution,
+                                     ddns_use_conflict_resolution_,
+                                     inheritance, "ddns-use-conflict-resolution"));
+    }
+
+    /// @brief Sets new ddns-use-conflict-resolution
+    ///
+    /// @param ddns_use_conflict_resolution New value to use.
+    void setDdnsUseConflictResolution(const util::Optional<bool>& ddns_use_conflict_resolution) {
+        ddns_use_conflict_resolution_ = ddns_use_conflict_resolution;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -1051,6 +1069,9 @@ protected:
 
     /// @brief Should Kea perform updates when leases are extended 
     util::Optional<bool> ddns_update_on_renew_;
+
+    /// @brief Used to to tell kea-dhcp-ddns whehter or not to use conflict resolution.
+    util::Optional<bool> ddns_use_conflict_resolution_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///

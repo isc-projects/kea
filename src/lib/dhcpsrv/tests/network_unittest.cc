@@ -184,6 +184,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("cache-threshold", Element::create(.25));
     globals_->set("cache-max-age", Element::create(20));
     globals_->set("ddns-update-on-renew", Element::create(true));
+    globals_->set("ddns-use-conflict-resolution", Element::create(true));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -339,6 +340,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              &Network4::setDdnsUpdateOnRenew,
                                              false, true);
     }
+    {
+        SCOPED_TRACE("ddns-use-conflict-resolution");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsUseConflictResolution,
+                                             &Network4::setDdnsUseConflictResolution,
+                                             false, true);
+    }
 }
 
 // This test verifies that the inheritance is supported for DHCPv6
@@ -357,6 +364,7 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("hostname-char-replacement", Element::create("gr"));
     globals_->set("store-extended-info", Element::create(true));
     globals_->set("ddns-update-on-renew", Element::create(true));
+    globals_->set("ddns-use-conflict-resolution", Element::create(true));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -375,40 +383,40 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     }
     {
         SCOPED_TRACE("ddns-send-updates");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsSendUpdates,
-                                             &Network4::setDdnsSendUpdates,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsSendUpdates,
+                                             &Network6::setDdnsSendUpdates,
                                              false, true);
     }
     {
         SCOPED_TRACE("ddns-override-no-update");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsOverrideNoUpdate,
-                                             &Network4::setDdnsOverrideNoUpdate,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsOverrideNoUpdate,
+                                             &Network6::setDdnsOverrideNoUpdate,
                                              false, true);
     }
     {
         SCOPED_TRACE("ddns-override-client-update");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsOverrideClientUpdate,
-                                             &Network4::setDdnsOverrideClientUpdate,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsOverrideClientUpdate,
+                                             &Network6::setDdnsOverrideClientUpdate,
                                              false, true);
     }
 
     {
         SCOPED_TRACE("ddns-replace-client-name");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsReplaceClientNameMode,
-                                             &Network4::setDdnsReplaceClientNameMode,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsReplaceClientNameMode,
+                                             &Network6::setDdnsReplaceClientNameMode,
                                              D2ClientConfig::RCM_WHEN_PRESENT,
                                              D2ClientConfig::RCM_ALWAYS);
     }
     {
         SCOPED_TRACE("ddns-generated-prefix");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsGeneratedPrefix,
-                                             &Network4::setDdnsGeneratedPrefix,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsGeneratedPrefix,
+                                             &Network6::setDdnsGeneratedPrefix,
                                              "np", "gp");
     }
     {
         SCOPED_TRACE("ddns-qualifying-suffix");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsQualifyingSuffix,
-                                             &Network4::setDdnsQualifyingSuffix,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsQualifyingSuffix,
+                                             &Network6::setDdnsQualifyingSuffix,
                                              "ns", "gs");
     }
     {
@@ -425,14 +433,20 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     }
     {
         SCOPED_TRACE("store-extended-info");
-        testNetworkInheritance<TestNetwork4>(&Network6::getStoreExtendedInfo,
+        testNetworkInheritance<TestNetwork6>(&Network6::getStoreExtendedInfo,
                                              &Network6::setStoreExtendedInfo,
                                              false, true);
     }
     {
         SCOPED_TRACE("ddns-update-on-renew");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsUpdateOnRenew,
-                                             &Network4::setDdnsUpdateOnRenew,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsUpdateOnRenew,
+                                             &Network6::setDdnsUpdateOnRenew,
+                                             false, true);
+    }
+    {
+        SCOPED_TRACE("ddns-use-conflict-resolution");
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsUseConflictResolution,
+                                             &Network6::setDdnsUseConflictResolution,
                                              false, true);
     }
 
