@@ -184,8 +184,6 @@ Parser4Context::contextName()
         return ("subnet4");
     case RESERVATION_MODE:
         return ("reservation-mode");
-    case RESERVATION_MODES:
-        return ("reservation-modes");
     case OPTION_DEF:
         return ("option-def");
     case OPTION_DATA:

@@ -4025,7 +4025,7 @@ following decision diagram:
             |                |                  |     V
             +----------------+                  +--> "all"
 
-An example configuration that disables reservation looks as follows:
+An example configuration that disables reservations looks as follows:
 
 ::
 
@@ -4071,7 +4071,7 @@ Since Kea 1.9.1, the ``reservation-mode`` is deprecated by the
 ``reservations-out-of-pool``, ``reservations-in-subnet`` and
 ``reservations-global`` flags.
 The flags can be activated independently and can produce various combinations,
-some of them being unsuported by the deprecated ``reservation-mode``.
+some of them being unsupported by the deprecated ``reservation-mode``.
 
 The correspondence of old values are:
 
@@ -4138,7 +4138,7 @@ To activate both ``global`` and ``all``, the following combination can be used:
 The parameter can be specified at global, subnet, and shared-network
 levels.
 
-An example configuration that disables reservation looks as follows:
+An example configuration that disables reservations looks as follows:
 
 ::
 
@@ -6729,11 +6729,11 @@ the global DHCPv6 options (``option-data``) are modified using
    +-----------------------------+----------------------------+-----------+-----------+-----------+------------+
    | reservation-mode            | yes                        | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+------------+
-   | reservations-out-of-pool    | yes                        | yes       | yes       | n/a       | n/a        |
+   | reservations-global         | yes                        | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+------------+
    | reservations-in-subnet      | yes                        | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+------------+
-   | reservations-global         | yes                        | yes       | yes       | n/a       | n/a        |
+   | reservations-out-of-pool    | yes                        | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+------------+
    | t1-percent                  | yes                        | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+------------+

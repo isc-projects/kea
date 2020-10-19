@@ -80,8 +80,9 @@ protected:
 
     /// @brief Parses host reservation mode.
     ///
-    /// @note Configuring 'reservation-mode' is deprecated. The new map
-    /// 'reservation-modes' should be used.
+    /// @note Configuring 'reservation-mode' is deprecated. The new
+    /// 'reservations-out-of-pool', 'reservations-in-subnet' and
+    /// 'reservations-global' parameters should be used.
     ///
     /// @param network_data Data element holding shared network
     /// configuration to be parsed.

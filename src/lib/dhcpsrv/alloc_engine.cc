@@ -2978,7 +2978,7 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
         for (auto host : hosts) {
             for (auto id : ctx.host_identifiers_) {
                 // If we find the matching host we know that this address is reserved
-                // for us and we can return immediatelly.
+                // for us and we can return immediately.
                 if (id.first == host->getIdentifierType() &&
                     id.second == host->getIdentifier()) {
                     return (false);
