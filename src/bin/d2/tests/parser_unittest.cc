@@ -12,6 +12,7 @@
 #include <testutils/user_context_utils.h>
 #include <gtest/gtest.h>
 #include <fstream>
+#include <set>
 
 #include "test_data_files_config.h"
 

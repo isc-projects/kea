@@ -10,7 +10,6 @@
 #include <gtest/gtest.h>
 #include <cc/data.h>
 #include <d2/parser_context.h>
-#include <set>
 
 using namespace isc::data;
 using namespace std;

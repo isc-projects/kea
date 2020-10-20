@@ -695,7 +695,7 @@ void loadFile(const string& fname, ElementPtr list) {
     list->add(json);
 }
 
-// This test checks that all map entries are in the all-keys file.
+// This test checks that all map entries are in the example files.
 TEST(ParserTest, mapEntries) {
     // Type of keyword set.
     typedef set<string> KeywordSet;
@@ -731,7 +731,7 @@ TEST(ParserTest, mapEntries) {
     }
     syntax_file.close();
 
-    // Get keywords from the all-keys and reservations file
+    // Get keywords from the example files.
     string sample_dir(CFG_EXAMPLES);
     sample_dir += "/";
     ElementPtr sample_json = Element::createList();

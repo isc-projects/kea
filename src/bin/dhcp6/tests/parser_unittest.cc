@@ -684,7 +684,7 @@ void loadFile(const string& fname, ElementPtr list) {
     list->add(json);
 }
 
-// This test checks that all map entries are in the all-keys file.
+// This test checks that all map entries are in the example files.
 TEST(ParserTest, mapEntries) {
     // Type of keyword set.
     typedef set<string> KeywordSet;
@@ -729,7 +729,7 @@ TEST(ParserTest, mapEntries) {
     loadFile(sample_dir + "duid.json", sample_json);
     loadFile(sample_dir + "reservations.json", sample_json);
     KeywordSet sample_keys = {
-        "hosts-database",
+        "hosts-database"
     };
     // Recursively extract keywords.
     static void (*extract)(ConstElementPtr, KeywordSet&) =
