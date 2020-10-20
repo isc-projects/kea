@@ -733,7 +733,9 @@ TEST(ParserTest, mapEntries) {
                 // Handle maps.
                 for (auto elem : json->mapValue()) {
                     static_cast<void>(set.insert(elem.first));
-                    if (elem.first != "user-context") {
+                    // Skip entries with free content.
+                    if ((elem.first != "user-context") &&
+                        (elem.first != "parameters")) {
                         extract(elem.second, set);
                     }
                 }
@@ -802,6 +804,12 @@ TEST(ParserTest, duplicateMapEntries) {
             } else if (json->getType() == Element::map) {
                 // Handle maps.
                 for (auto elem : json->mapValue()) {
+                    // Skip entries with free content.
+                    if ((elem.first != "user-context") &&
+                        (elem.first != "parameters")) {
+                        continue;
+                    }
+
                     // Perform tests.
                     string dup = elem.first + "DDDD";
                     json->set(dup, elem.second);
