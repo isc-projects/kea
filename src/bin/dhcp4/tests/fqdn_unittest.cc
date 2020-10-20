@@ -2533,7 +2533,9 @@ TEST_F(NameDhcpv4SrvTest, processReuseExpired) {
                                 time(NULL), subnet_->getValid(), true);
             }
 
-            ASSERT_NO_THROW(LeaseMgrFactory::instance().deleteLease(lease));
+            bool deleted = false;
+            ASSERT_NO_THROW(deleted = LeaseMgrFactory::instance().deleteLease(lease));
+            ASSERT_TRUE(deleted);
         }
     }
 }

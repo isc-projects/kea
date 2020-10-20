@@ -1062,7 +1062,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     EXPECT_TRUE(l);
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                             addr->getAddress());
-    LeaseMgrFactory::instance().deleteLease(lease);
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
 // This test verifies that incoming REQUEST can be handled properly, that a

@@ -474,7 +474,7 @@ TEST_F(RebindTest, directClientLostLease) {
     // lease database.
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                             lease_client.addr_);
-    LeaseMgrFactory::instance().deleteLease(lease);
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Send Rebind.
     ASSERT_NO_THROW(client.doRebind());
@@ -609,7 +609,7 @@ TEST_F(RebindTest, relayedClientLostLease) {
     // lease database.
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                             lease_client.addr_);
-    LeaseMgrFactory::instance().deleteLease(lease);
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Send Rebind.
     ASSERT_NO_THROW(client.doRebind());

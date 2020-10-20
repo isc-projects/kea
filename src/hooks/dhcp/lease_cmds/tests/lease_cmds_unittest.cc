@@ -416,9 +416,8 @@ public:
         // Purposely using high cltt and valid lifetime to test that
         // expiration time is cast properly.
         lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
-        lease->old_valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
         lease->cltt_ = DEC_2030_TIME; // December 11th 2030
-        lease->old_cltt_ = DEC_2030_TIME; // December 11th 2030
+        lease->updateExistingLifetime();
         if (declined) {
             lease->state_ = Lease::STATE_DECLINED;
         }
@@ -458,9 +457,8 @@ public:
         // Purposely using high cltt and valid lifetime to test that
         // expiration time is cast properly.
         lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
-        lease->old_valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
         lease->cltt_ = DEC_2030_TIME; // December 11th 2030
-        lease->old_cltt_ = DEC_2030_TIME; // December 11th 2030
+        lease->updateExistingLifetime();
         if (declined) {
             lease->state_ = Lease::STATE_DECLINED;
         }

@@ -1872,10 +1872,9 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     // ... and drop to common code.
     auto result = addLeaseCommon(ctx, INSERT_LEASE4, bind);
 
-    // Update lease internal information with new values (allows update of the
-    // internal state between the creation of the Lease up to the point of
-    // insertion in the database).
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateExistingLifetime();
 
     return (result);
 }
@@ -1896,10 +1895,9 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     // ... and drop to common code.
     auto result = addLeaseCommon(ctx, INSERT_LEASE6, bind);
 
-    // Update lease internal information with new values (allows update of the
-    // internal state between the creation of the Lease up to the point of
-    // insertion in the database).
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateExistingLifetime();
 
     return (result);
 }
@@ -2774,8 +2772,8 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, &bind[0], lease);
 
-    // Update lease internal information with new values.
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values.
+    lease->updateExistingLifetime();
 }
 
 void
@@ -2821,8 +2819,8 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, &bind[0], lease);
 
-    // Update lease internal information with new values.
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values.
+    lease->updateExistingLifetime();
 }
 
 // Delete lease methods.  Similar to other groups of methods, these comprise

@@ -274,17 +274,19 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
         }
         lease->setContext(ctx);
     }
+
+    lease->updateExistingLifetime();
 }
 
 void
-Lease::updateInternalTimestamp() {
-    Lease::syncInternalTimestamp(*this, *this);
+Lease::updateExistingLifetime() {
+    Lease::syncExistingLifetime(*this, *this);
 }
 
 void
-Lease::syncInternalTimestamp(Lease& old_lease, const Lease& new_lease) {
-    old_lease.old_cltt_ = new_lease.cltt_;
-    old_lease.old_valid_lft_ = new_lease.valid_lft_;
+Lease::syncExistingLifetime(const Lease& from, Lease& to) {
+    to.old_cltt_ = from.cltt_;
+    to.old_valid_lft_ = from.valid_lft_;
 }
 
 Lease4::Lease4(const Lease4& other)

@@ -126,12 +126,6 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @brief Old valid lifetime
     ///
     /// Expressed as number of seconds since cltt before update.
-    ///
-    /// @note This is used in unittests and in actual database implementations
-    /// to ensure that the operation (update or delete) on the lease is atomic
-    /// relative to the matching select operation.
-    /// @note This value should not be explicitly updated from outside
-    /// @ref Lease or @ref LeaseMgr code.
     uint32_t old_valid_lft_;
 
     /// @brief Client last transmission time
@@ -144,12 +138,6 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     ///
     /// Specifies a timestamp giving the time when the last transmission from a
     /// client was received before update.
-    ///
-    /// @note This is used in unittests and in actual database implementations
-    /// to ensure that the operation (update or delete) on the lease is atomic
-    /// relative to the matching select operation.
-    /// @note This value should not be explicitly updated from outside
-    /// @ref Lease or @ref LeaseMgr code.
     time_t old_cltt_;
 
     /// @brief Subnet identifier
@@ -249,19 +237,25 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// Avoid a clang spurious error
     using isc::data::CfgToElement::toElement;
 
-    /// Sync internal timestamp with value of a newer version of the lease, so
-    /// that additional operations can be done without performing extra read
-    /// from the database.
+    /// Sync lease lifetime with value of a newer version of the lease, so that
+    /// additional operations can be done without performing extra read from the
+    /// database.
     ///
-    /// @param [out] old_lease The old version of the lease that needs to be
-    /// updated.
-    /// @param new_lease The new version of the lease used to update old_lease
-    /// internal timestamp.
-    static void syncInternalTimestamp(Lease& old_lease, const Lease& new_lease);
+    /// @note The old lease lifetime is represented by the @ref old_cltt_ and
+    /// @ref old_valid_lft_ and the new lifetime by @ref cltt_ and
+    /// @ref valid_lft_
+    ///
+    /// @param from The lease with latest value of lifetime.
+    /// @param [out] to The lease that needs to be updated.
+    static void syncExistingLifetime(const Lease& from, Lease& to);
 
-    /// Update internal timestamp with new value, so that additional operations
-    /// can be done without performing extra read from the database.
-    void updateInternalTimestamp();
+    /// Update lifetime with new value, so that additional operations can be
+    /// done without performing extra read from the database.
+    ///
+    /// @note The old lease lifetime is represented by the @ref old_cltt_ and
+    /// @ref old_valid_lft_ and the new lifetime by @ref cltt_ and
+    /// @ref valid_lft_
+    void updateExistingLifetime();
 
 protected:
 

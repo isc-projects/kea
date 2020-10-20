@@ -1957,7 +1957,9 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
             }
 
             // Now delete the lease.
-            ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(new_lease));
+            bool deleted = false;
+            ASSERT_NO_THROW(deleted = LeaseMgrFactory::instance().deleteLease(new_lease));
+            ASSERT_TRUE(deleted);
         }
     }
 }

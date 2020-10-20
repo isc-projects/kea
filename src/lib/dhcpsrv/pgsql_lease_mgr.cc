@@ -1307,10 +1307,9 @@ PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     ctx->exchange4_->createBindForSend(lease, bind_array);
     auto result = addLeaseCommon(ctx, INSERT_LEASE4, bind_array);
 
-    // Update lease internal information with new values (allows update of the
-    // internal state between the creation of the Lease up to the point of
-    // insertion in the database).
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateExistingLifetime();
 
     return (result);
 }
@@ -1330,10 +1329,9 @@ PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
 
     auto result = addLeaseCommon(ctx, INSERT_LEASE6, bind_array);
 
-    // Update lease internal information with new values (allows update of the
-    // internal state between the creation of the Lease up to the point of
-    // insertion in the database).
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateExistingLifetime();
 
     return (result);
 }
@@ -1994,8 +1992,8 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, bind_array, lease);
 
-    // Update lease internal information with new values.
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values.
+    lease->updateExistingLifetime();
 }
 
 void
@@ -2025,8 +2023,8 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, bind_array, lease);
 
-    // Update lease internal information with new values.
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values.
+    lease->updateExistingLifetime();
 }
 
 uint64_t

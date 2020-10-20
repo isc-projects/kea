@@ -655,8 +655,10 @@ LeaseCmdsImpl::addOrUpdate4(Lease4Ptr lease, bool force_create) {
         return (true);
     }
     if (existing) {
-        // Update lease information with values received from the database.
-        Lease::syncInternalTimestamp(*lease, *existing);
+        // Update lease old expire with value received from the database.
+        // Some database backends reject operations on the lease if the
+        // old expire value does not match what is stored.
+        Lease::syncExistingLifetime(*existing, *lease);
     }
     try {
         LeaseMgrFactory::instance().updateLease4(lease);
@@ -685,8 +687,10 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
         return (true);
     }
     if (existing) {
-        // Update lease information with values received from the database.
-        Lease::syncInternalTimestamp(*lease, *existing);
+        // Update lease old expire with value received from the database.
+        // Some database backends reject operations on the lease if the
+        // old expire value does not match what is stored.
+        Lease::syncExistingLifetime(*existing, *lease);
     }
     try {
         LeaseMgrFactory::instance().updateLease6(lease);

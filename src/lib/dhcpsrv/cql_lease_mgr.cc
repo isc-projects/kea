@@ -2146,10 +2146,9 @@ CqlLeaseMgr::addLease(const Lease4Ptr &lease) {
         return false;
     }
 
-    // Update lease internal information with new values (allows update of the
-    // internal state between the creation of the Lease up to the point of
-    // insertion in the database).
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateExistingLifetime();
 
     return true;
 }
@@ -2171,10 +2170,9 @@ CqlLeaseMgr::addLease(const Lease6Ptr &lease) {
         return false;
     }
 
-    // Update lease internal information with new values (allows update of the
-    // internal state between the creation of the Lease up to the point of
-    // insertion in the database).
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateExistingLifetime();
 
     return true;
 }
@@ -2623,8 +2621,8 @@ CqlLeaseMgr::updateLease4(const Lease4Ptr &lease) {
         isc_throw(NoSuchLease, exception.what());
     }
 
-    // Update lease internal information with new values.
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values.
+    lease->updateExistingLifetime();
 }
 
 void
@@ -2642,8 +2640,8 @@ CqlLeaseMgr::updateLease6(const Lease6Ptr &lease) {
         isc_throw(NoSuchLease, exception.what());
     }
 
-    // Update lease internal information with new values.
-    lease->updateInternalTimestamp();
+    // Update lease lifetime with new values.
+    lease->updateExistingLifetime();
 }
 
 bool

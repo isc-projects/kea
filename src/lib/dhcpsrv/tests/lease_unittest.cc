@@ -577,7 +577,9 @@ TEST_F(Lease4Test, fromElement) {
     ASSERT_TRUE(lease->client_id_);
     EXPECT_EQ("17:34:e2:ff:09:92:54", lease->client_id_->toText());
     EXPECT_EQ(12345678, lease->cltt_);
+    EXPECT_EQ(lease->cltt_, lease->old_cltt_);
     EXPECT_EQ(3600, lease->valid_lft_);
+    EXPECT_EQ(lease->valid_lft_, lease->old_valid_lft_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("urania.example.org", lease->hostname_);
@@ -1249,7 +1251,9 @@ TEST(Lease6Test, fromElementNA) {
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
     EXPECT_EQ(12345678, lease->cltt_);
+    EXPECT_EQ(lease->cltt_, lease->old_cltt_);
     EXPECT_EQ(800, lease->valid_lft_);
+    EXPECT_EQ(lease->valid_lft_, lease->old_valid_lft_);
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_EQ("urania.example.org", lease->hostname_);
@@ -1295,7 +1299,9 @@ TEST(Lease6Test, fromElementPD) {
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
     EXPECT_EQ(12345678, lease->cltt_);
+    EXPECT_EQ(lease->cltt_, lease->old_cltt_);
     EXPECT_EQ(600, lease->valid_lft_);
+    EXPECT_EQ(lease->valid_lft_, lease->old_valid_lft_);
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_EQ("urania.example.org", lease->hostname_);
