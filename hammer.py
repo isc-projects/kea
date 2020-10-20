@@ -23,6 +23,8 @@ import textwrap
 import functools
 import subprocess
 import multiprocessing
+import grp
+import pwd
 try:
     import urllib.request
 except:
@@ -1400,8 +1402,6 @@ def prepare_system_local(features, check_times):
     # prepare alpine
     elif system == 'alpine':
 
-        execute('sudo adduser vagrant abuild')
-
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'openssl-dev',
                     'boost-libs', 'boost-dev']
 
@@ -1433,6 +1433,15 @@ def prepare_system_local(features, check_times):
         # log4cplus needs to be taken from extra repository, edge testing
         execute('sudo apk add log4cplus log4cplus-dev --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted',
                 env=env, timeout=60, check_times=check_times)
+
+        # check for existence of 'vagrant' user and 'abuild' group before adding him to the group
+        try:
+            pwd.getpwnam('vagrant')
+            grp.getgrnam('abuild')
+        except KeyError:
+            log.info("Can't add 'vagrant' user to 'abuild' group. Vagrant or abuild does not exist.")
+        else:
+            execute('sudo adduser vagrant abuild')
 
     else:
         raise NotImplementedError('no implementation for %s' % system)
