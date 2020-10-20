@@ -169,7 +169,7 @@ enum DHCPOptionType {
     DHO_PCODE                        = 100, /* RFC4833 */
     DHO_TCODE                        = 101, /* RFC4833 */
     // 102-107 are removed/unassigned
-    DHO_V6_ONLY_PREFERRED            = 108, /* RFC8925 */
+    DHO_V6_ONLY_PREFERRED            = 108, /* RFC8925  */
     // 109-111 are removed/unassigned
     DHO_NETINFO_ADDR                 = 112, /* RFC3679 */
     DHO_NETINFO_TAG                  = 113, /* RFC3679 */
