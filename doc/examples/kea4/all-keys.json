@@ -155,6 +155,13 @@
         // may be specified at the global, shared-network and subnet levels.
         "ddns-update-on-renew": true,
 
+        // Boolean flag, which is passed to kea-dhcp-ddns with each DDNS
+        // udpate request to indicate whether or not DNS update conflict 
+        // resolution as described in RFC 4703 should be employed for the
+        // given update request.  The default value for this flag is true.  
+        // It may be specified at the global, shared-network and subnet levels.
+        "ddns-use-conflict-resolution": true,
+
         // Time in seconds specifying how long a declined lease should be
         // excluded from DHCP assignments. The default value is 24 hours.
         "decline-probation-period": 86400,
@@ -628,6 +635,9 @@
                 "ddns-update-on-renew": true,
 
                 // Shared network level value. See description at the global level.
+                "ddns-use-conflict-resolution": true,
+
+                // Shared network level value. See description at the global level.
                 "hostname-char-replacement": "x",
 
                 // Shared network level value. See description at the global level.
@@ -739,6 +749,9 @@
 
                         // Subnet level value. See description at the global level.
                         "ddns-update-on-renew": true,
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-use-conflict-resolution": true,
 
                         // Subnet level value. See description at the global level.
                         "hostname-char-replacement": "x",

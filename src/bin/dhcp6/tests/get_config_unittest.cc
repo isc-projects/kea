@@ -20,6 +20,7 @@
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/get_config_unittest.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
@@ -1997,6 +1998,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2078,6 +2080,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2193,6 +2196,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2375,6 +2379,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2557,6 +2562,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2739,6 +2745,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2854,6 +2861,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2962,6 +2970,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3070,6 +3079,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3210,6 +3220,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3317,6 +3328,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3426,6 +3438,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3537,6 +3550,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3663,6 +3677,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3772,6 +3787,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3861,6 +3877,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3950,6 +3967,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4048,6 +4066,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4137,6 +4156,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4226,6 +4246,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4350,6 +4371,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4474,6 +4496,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4608,6 +4631,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4725,6 +4749,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4885,6 +4910,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5035,6 +5061,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5195,6 +5222,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5317,6 +5345,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5443,6 +5472,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5524,6 +5554,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5605,6 +5636,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5712,6 +5744,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5819,6 +5852,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6004,6 +6038,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6126,6 +6161,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6256,6 +6292,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": true,\n"
@@ -6363,6 +6400,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"when-present\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": true,\n"
@@ -6470,6 +6508,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"always\",\n"
 "        \"ddns-send-updates\": false,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": true,\n"
@@ -6577,6 +6616,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6809,6 +6849,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6939,6 +6980,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7020,6 +7062,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7101,6 +7144,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7312,6 +7356,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7445,6 +7490,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7526,6 +7572,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7605,6 +7652,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7684,6 +7732,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 12345,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7763,6 +7812,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7856,6 +7906,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7963,6 +8014,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -8070,6 +8122,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -8178,6 +8231,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -8291,6 +8345,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -8404,6 +8459,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -8513,6 +8569,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -8623,6 +8680,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -8738,6 +8796,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -8862,6 +8921,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -9060,6 +9120,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -9259,6 +9320,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -9340,6 +9402,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -9419,6 +9482,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -9719,9 +9783,9 @@ TEST_P(Dhcp6GetConfigTest, run) {
     // unparse it
     ConstSrvConfigPtr extracted = CfgMgr::instance().getStagingCfg();
     ConstElementPtr unparsed;
-    ASSERT_NO_THROW(unparsed = extracted->toElement());
+    ASSERT_NO_THROW_LOG(unparsed = extracted->toElement());
     ConstElementPtr dhcp;
-    ASSERT_NO_THROW(dhcp = unparsed->get("Dhcp6"));
+    ASSERT_NO_THROW_LOG(dhcp = unparsed->get("Dhcp6"));
     ASSERT_TRUE(dhcp);
 
     // dump if wanted else check
@@ -9731,16 +9795,16 @@ TEST_P(Dhcp6GetConfigTest, run) {
             std::cerr << ",\n";
         }
         std::cerr << "    // CONFIGURATION " << config_counter;
-        ASSERT_NO_THROW(expected = prettyPrint(dhcp));
-        ASSERT_NO_THROW(outputFormatted(dhcp->str()));
+        ASSERT_NO_THROW_LOG(expected = prettyPrint(dhcp));
+        ASSERT_NO_THROW_LOG(outputFormatted(dhcp->str()));
     } else {
         expected = UNPARSED_CONFIGS[config_counter];
         // get the expected config using the dhcpv6 syntax parser
         ElementPtr jsond;
-        ASSERT_NO_THROW(jsond = parseDHCP6(expected, true));
+        ASSERT_NO_THROW_LOG(jsond = parseDHCP6(expected, true));
         // get the expected config using the generic JSON syntax parser
         ElementPtr jsonj;
-        ASSERT_NO_THROW(jsonj = parseJSON(expected));
+        ASSERT_NO_THROW_LOG(jsonj = parseJSON(expected));
         // the generic JSON parser does not handle comments
         EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
         // check that unparsed and expected values match
@@ -9761,7 +9825,7 @@ TEST_P(Dhcp6GetConfigTest, run) {
     // is it a fixed point?
     ConstSrvConfigPtr extracted2 = CfgMgr::instance().getStagingCfg();
     ConstElementPtr unparsed2;
-    ASSERT_NO_THROW(unparsed2 = extracted2->toElement());
+    ASSERT_NO_THROW_LOG(unparsed2 = extracted2->toElement());
     ASSERT_TRUE(unparsed2);
     EXPECT_TRUE(isEquivalent(unparsed, unparsed2));
 }

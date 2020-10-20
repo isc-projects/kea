@@ -287,8 +287,7 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "t2-percent",
     "store-extended-info",
     "cache-threshold",
-    "cache-max-age",
-    "ddns-use-conflict-resolution"
+    "cache-max-age"
 };
 
 /// @brief This table defines all pool parameters.

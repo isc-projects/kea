@@ -62,6 +62,8 @@
   "ddns-replace-client-name" : "when-present",
   "ddns-generated-prefix" : "test.prefix",
   "ddns-qualifying-suffix" : "test.suffix.",
+  "ddns-update-on-renew" : false,
+  "ddns-use-conflict-resolution" : true,
   "hostname-char-set": "[^A-Za-z0-9.-]",
   "hostname-char-replacement": "x",
 

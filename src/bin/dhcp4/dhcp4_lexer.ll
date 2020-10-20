@@ -758,6 +758,17 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"ddns-use-conflict-resolution\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_USE_CONFLICT_RESOLUTION(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-use-conflict-resolution", driver.loc_);
+    }
+}
+
 \"subnet4\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

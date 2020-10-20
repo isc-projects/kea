@@ -273,7 +273,7 @@ BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
     }
 
     if (network_data->contains("ddns-use-conflict-resolution")) {
-        network->setDdnsUpdateOnRenew(getBoolean(network_data, "ddns-use-conflict-resolution"));
+        network->setDdnsUseConflictResolution(getBoolean(network_data, "ddns-use-conflict-resolution"));
     }
 }
 
