@@ -2605,6 +2605,7 @@ DDNS related parameters were split into two groups:
     -  ``ddns-generated-prefix``
     -  ``ddns-qualifying-suffix``
     -  ``ddns-update-on-renew``
+    -  ``ddns-use-conflict-resolution``
     -  ``hostname-char-set``
     -  ``hostname-char-replacement``
 
@@ -2642,6 +2643,8 @@ The default configuration and values would appear as follows:
         "ddns-replace-client-name": "never",
         "ddns-generated-prefix": "myhost",
         "ddns-qualifying-suffix": "",
+        "ddns-update-on-renew": false,
+        "ddns-use-conflict-resolution": true,
         "hostname-char-set": "",
         "hostname-char-replacement": ""
         ...
@@ -2674,18 +2677,59 @@ together:
    |                 |                    | false for ddns-enable-updates |
    +-----------------+--------------------+-------------------------------+
 
-Kea 1.9.1 added a new parameter, ``ddns-update-on-renew``. Normally, when
-leases are renewed the server will only update DNS if the DNS information
-for the lease (e.g. FQDN, DNS update direction flags) have changed. Setting
-``ddns-update-on-renew`` to true instructs the server to always update the
-DNS information when a lease is renewed even if its DNS information has not
-changed.  This always Kea to "self-heal" in the event it was previously unable
+
+Kea 1.9.1 adds two new parameters.  The first new parameter is ``ddns-update-on-renew``.
+Normally, when leases are renewed the server will only update DNS if the DNS
+information for the lease (e.g. FQDN, DNS update direction flags) has changed.
+Setting ``ddns-update-on-renew`` to true instructs the server to always update
+the DNS information when a lease is renewed even if its DNS information has not
+changed.  This allows Kea to "self-heal" in the event it was previously unable
 to add DNS entries or they were somehow lost by the DNS server.
 
 .. note::
 
     Setting ``ddns-update-on-renew`` to true may impact performance, especially
     for servers with numerous clients who renew often.
+
+The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.
+The value of this parameter is passed by kea-dhcp6 to D2 with each DNS update
+request.  When true, (the default value), D2 will employ conflict resolution
+,as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
+attempting to fulfill the update request.  When false, D2 will simply attempt
+to update the DNS entries per the request, regardless of whether or not they
+conflict with existing entries owned by other DHCP6 clients.
+
+.. note::
+
+    Setting ``ddns-use-conflict-resolution`` to false disables the overwrite
+    safeguards that the rules of conflict resolution (
+    `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__) are intended to
+    prevent.  This means that existing entries for a FQDN or an
+    IP address made for Client-A can be deleted or replaced by entries
+    for Client-B.  Furthermore, there are two scenarios by which entries
+    for multiple clients for the same key (e.g. FQDN or IP) can be created.
+
+    1. Client-B uses the same FQDN as Client-A but a different IP address.
+    In this case the forward DNS entries (AAAA, and DHCID RRs) for
+    Client-A will be deleted as they match the FQDN and new entries for
+    Client-B will be added.  The reverse DNS entries (PTR and DHCID RRs)
+    for Client-A, however, will not be deleted as they belong to a different
+    IP address while new entries for Client-B will still be added.
+
+    2. Client-B uses the same IP address as Client-A but a different FQDN.
+    In this case the reverse DNS entries (PTR and DHCID RRs) for Client-A
+    will be deleted as they match the IP address and new entries for
+    Client-B will be added.  The forward DNS entries (AAAA and DHCID RRs)
+    for Client-A, however, will not be deleted as they belong to a different
+    FQDN while new entries for Client-B will still be added.
+
+    Disabling conflict resolution should be done only after careful review of
+    your specific use cases.  The best way to avoid unwanted DNS entries is to
+    always ensure leases changes are processed through Kea, whether they are
+    released, expire, or are deleted via the lease-del6 command, prior to
+    reassigning either FQDNs or IP addresses.  Doing so will cause kea-dhcp6
+    to generate DNS removal requests to D2.
+
 
 .. _dhcpv6-d2-io-config:
 
