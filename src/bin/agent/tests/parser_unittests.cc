@@ -686,6 +686,18 @@ TEST(ParserTest, unicodeSlash) {
     EXPECT_EQ("////", result->stringValue());
 }
 
+/// @brief Load a file into a JSON element.
+///
+/// @param fname The name of the file to load.
+/// @param list The JSON element list to add the parsing result to.
+void loadFile(const string& fname, ElementPtr list) {
+    ParserContext ctx;
+    ElementPtr json;
+    EXPECT_NO_THROW(json = ctx.parseFile(fname, ParserContext::PARSER_AGENT));
+    ASSERT_TRUE(json);
+    list->add(json);
+}
+
 // This test checks that all map entries are in the sample file.
 TEST(ParserTest, mapEntries) {
     // Type of keyword set.
@@ -722,14 +734,11 @@ TEST(ParserTest, mapEntries) {
     }
     syntax_file.close();
 
-    // Get keywords from the sample file
-    string sample_fname(CFG_EXAMPLES);
-    sample_fname += "/simple.json";
-    ParserContext ctx;
-    ElementPtr sample_json;
-    EXPECT_NO_THROW(sample_json =
-        ctx.parseFile(sample_fname, ParserContext::PARSER_AGENT));
-    ASSERT_TRUE(sample_json);
+    // Get keywords from the sample files
+    string sample_dir(CFG_EXAMPLES);
+    sample_dir += "/";
+    ElementPtr sample_json = Element::createList();
+    loadFile(sample_dir + "simple.json", sample_json);
     KeywordSet sample_keys;
     // Recursively extract keywords.
     static void (*extract)(ConstElementPtr, KeywordSet&) =
@@ -799,8 +808,8 @@ TEST(ParserTest, duplicateMapEntries) {
                 // Handle maps.
                 for (auto elem : json->mapValue()) {
                     // Skip entries with free content.
-                    if ((elem.first != "user-context") &&
-                        (elem.first != "parameters")) {
+                    if ((elem.first == "user-context") ||
+                        (elem.first == "parameters")) {
                         continue;
                     }
 

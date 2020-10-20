@@ -683,6 +683,18 @@ TEST(ParserTest, unicodeSlash) {
     EXPECT_EQ("////", result->stringValue());
 }
 
+/// @brief Load a file into a JSON element.
+///
+/// @param fname The name of the file to load.
+/// @param list The JSON element list to add the parsing result to.
+void loadFile(const string& fname, ElementPtr list) {
+    Parser4Context ctx;
+    ElementPtr json;
+    EXPECT_NO_THROW(json = ctx.parseFile(fname, Parser4Context::PARSER_DHCP4));
+    ASSERT_TRUE(json);
+    list->add(json);
+}
+
 // This test checks that all map entries are in the all-keys file.
 TEST(ParserTest, mapEntries) {
     // Type of keyword set.
@@ -719,16 +731,13 @@ TEST(ParserTest, mapEntries) {
     }
     syntax_file.close();
 
-    // Get keywords from the all keys file
-    string sample_fname(CFG_EXAMPLES);
-    sample_fname += "/all-keys.json";
-    Parser4Context ctx;
-    ElementPtr sample_json;
-    EXPECT_NO_THROW(sample_json =
-        ctx.parseFile(sample_fname, Parser4Context::PARSER_DHCP4));
-    ASSERT_TRUE(sample_json);
+    // Get keywords from the all-keys and reservations file
+    string sample_dir(CFG_EXAMPLES);
+    sample_dir += "/";
+    ElementPtr sample_json = Element::createList();
+    loadFile(sample_dir + "all-keys.json", sample_json);
+    loadFile(sample_dir + "reservations.json", sample_json);
     KeywordSet sample_keys = {
-        "hw-address", "duid", "client-id", "flex-id",
         "hosts-database"
     };
     // Recursively extract keywords.
@@ -815,8 +824,8 @@ TEST(ParserTest, duplicateMapEntries) {
                 // Handle maps.
                 for (auto elem : json->mapValue()) {
                     // Skip entries with free content.
-                    if ((elem.first != "user-context") &&
-                        (elem.first != "parameters")) {
+                    if ((elem.first == "user-context") ||
+                        (elem.first == "parameters")) {
                         continue;
                     }
 

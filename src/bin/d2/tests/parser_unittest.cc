@@ -631,8 +631,23 @@ TEST(ParserTest, unicodeSlash) {
     EXPECT_EQ("////", result->stringValue());
 }
 
+/// @brief Load a file into a JSON element.
+///
+/// @param fname The name of the file to load.
+/// @param list The JSON element list to add the parsing result to.
+void loadFile(const string& fname, ElementPtr list) {
+    D2ParserContext ctx;
+    ElementPtr json;
+    EXPECT_NO_THROW(json = ctx.parseFile(fname, D2ParserContext::PARSER_DHCPDDNS));
+    ASSERT_TRUE(json);
+    list->add(json);
+}
+
 // This test checks that all map entries are in the sample file.
 TEST(ParserTest, mapEntries) {
+    // Type of keyword set.
+    typedef set<string> KeywordSet;
+
     // Get keywords from the syntax file (d2_parser.yy).
     ifstream syntax_file(SYNTAX_FILE);
     EXPECT_TRUE(syntax_file.is_open());
@@ -665,13 +680,10 @@ TEST(ParserTest, mapEntries) {
     syntax_file.close();
 
     // Get keywords from the sample file
-    string sample_fname(D2_TEST_DATA_DIR);
-    sample_fname += "/get_config.json";
-    D2ParserContext ctx;
-    ElementPtr sample_json;
-    EXPECT_NO_THROW(sample_json =
-        ctx.parseFile(sample_fname, D2ParserContext::PARSER_DHCPDDNS));
-    ASSERT_TRUE(sample_json);
+    string sample_dir(D2_TEST_DATA_DIR);
+    sample_dir += "/";
+    ElementPtr sample_json = Element::createList();
+    loadFile(sample_dir + "get_config.json", sample_json);
     KeywordSet sample_keys;
     // Recursively extract keywords.
     static void (*extract)(ConstElementPtr, KeywordSet&) =
@@ -741,8 +753,8 @@ TEST(ParserTest, duplicateMapEntries) {
                 // Handle maps.
                 for (auto elem : json->mapValue()) {
                     // Skip entries with free content.
-                    if ((elem.first != "user-context") &&
-                        (elem.first != "parameters")) {
+                    if ((elem.first == "user-context") ||
+                        (elem.first == "parameters")) {
                         continue;
                     }
 

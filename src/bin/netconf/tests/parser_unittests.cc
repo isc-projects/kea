@@ -742,6 +742,18 @@ TEST(ParserTest, unicodeSlash) {
     EXPECT_EQ("////", result->stringValue());
 }
 
+/// @brief Load a file into a JSON element.
+///
+/// @param fname The name of the file to load.
+/// @param list The JSON element list to add the parsing result to.
+void loadFile(const string& fname, ElementPtr list) {
+    ParserContext ctx;
+    ElementPtr json;
+    EXPECT_NO_THROW(json = ctx.parseFile(fname, ParserContext::PARSER_NETCONF));
+    ASSERT_TRUE(json);
+    list->add(json);
+}
+
 // This test checks that all map entries are in the sample file.
 TEST(ParserTest, mapEntries) {
     // Type of keyword set.
@@ -779,15 +791,13 @@ TEST(ParserTest, mapEntries) {
     syntax_file.close();
 
     // Get keywords from the sample file
-    string sample_fname(CFG_EXAMPLES);
-    sample_fname += "/simple-dhcp4.json";
-    ParserContext ctx;
-    ElementPtr sample_json;
-    EXPECT_NO_THROW(sample_json =
-        ctx.parseFile(sample_fname, ParserContext::PARSER_NETCONF));
-    ASSERT_TRUE(sample_json);
+    string sample_dir(CFG_EXAMPLES);
+    sample_dir += "/";
+    ElementPtr sample_json = Element::createList();
+    loadFile(sample_dir + "simple-dhcp4.json", sample_json);
+    loadFile(sample_dir + "simple-dhcp6.json", sample_json);
     KeywordSet sample_keys = {
-        "ca", "d2", "dhcp6",
+        "ca", "d2",
         "hooks-libraries", "library", "parameters",
         "socket-url"
     };
@@ -859,8 +869,8 @@ TEST(ParserTest, duplicateMapEntries) {
                 // Handle maps.
                 for (auto elem : json->mapValue()) {
                     // Skip entries with free content.
-                    if ((elem.first != "user-context") &&
-                        (elem.first != "parameters")) {
+                    if ((elem.first == "user-context") ||
+                        (elem.first == "parameters")) {
                         continue;
                     }
 

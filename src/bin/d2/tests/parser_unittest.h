@@ -30,9 +30,6 @@ parseJSON(const std::string& in)
     return (ctx.parseString(in, isc::d2::D2ParserContext::PARSER_JSON));
 }
 
-/// @brief Type of keyword set
-typedef std::set<std::string> KeywordSet;
-
 }
 }
 }
