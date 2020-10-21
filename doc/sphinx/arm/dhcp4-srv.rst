@@ -3919,9 +3919,8 @@ Our tests reported best results when:
 IPv6-only Preferred Networks
 ----------------------------
 
-A recent Internet-Draft `draft-ietf-dhc-v6only
-<https://datatracker.ietf.org/doc/html/draft-ietf-dhc-v6only-08>`_ soon to be published by IETF as
-RFC specifies a DHCPv4 option to indicate that a host supports an IPv6-only mode and is willing to
+A `RFC8925 <https://tools.ietf.org/html/rfc8925>`_ recently published by IETF
+specifies a DHCPv4 option to indicate that a host supports an IPv6-only mode and is willing to
 forgo obtaining an IPv4 address if the network provides IPv6 connectivity. The general idea is that
 a network administrator can enable this option to signal to compatible dual-stack devices that the
 IPv6 connectivity is available and they can shut down their IPv4 stack. The new option
@@ -6391,8 +6390,8 @@ The following standards are currently supported:
    message, remembers the UDP port  and sends back reply to the same relay
    agent using this UDP port.
 
--  *IPv6-Only-Preferred Option for DHCPv4*, `draft-ietf-dhc-v6only-08
-   <https://datatracker.ietf.org/doc/html/draft-ietf-dhc-v6only-08>`__: The Kea
+-  *IPv6-Only Preferred Option for DHCPv4*, `RFC 8925
+   <https://tools.ietf.org/html/rfc8925>`__: The Kea
    server is able to designate its pools and subnets as v6only-preferred and send
    back the `v6-only-preferred` option to clients that requested it.
 
