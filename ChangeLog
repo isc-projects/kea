@@ -1,8 +1,6 @@
-1821.	[func]		fdupont
+1821.	[func]		anonymous, fdupont
 	The forensic log hook library now logs release and decline
-	events. The event logged for DHCPv6 rebind is now named
-	"rebound" (it was named "renewed" i.e. with the same name as
-	renew events).
+	events.
 	(Gitlab #1445)
 
 1820.	[bug]		razvan

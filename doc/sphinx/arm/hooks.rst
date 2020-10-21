@@ -604,8 +604,8 @@ DHCPv4 Log Entries
 
 For DHCPv4, the library creates entries based on DHCPREQUEST messages and
 corresponding DHCPv4 leases intercepted by the lease4_select (for new
-leases), the lease4_renew (for renewed leases), the lease4_release
-(for released leases), and the lease4_decline (for decline leases) hooks.
+leases), the lease4_renew (for renewed leases), and beginning with Kea 1.9.1
+the lease4_release and the lease4_decline (for released leases) hooks.
 
 An entry is a single string with no embedded end-of-line markers and a
 prepended timestamp, and has the following sections:
@@ -620,12 +620,12 @@ Where:
    "%Y-%m-%d %H:%M:%S %Z" strftime format ("%Z" is the time zone name).
 
 -  address - the leased IPv4 address given out and whether it was
-   assigned or renewed.
+   assigned, renewed or released.
 
 -  duration - the lease lifetime expressed in days (if present), hours,
    minutes, and seconds. A lease lifetime of 0xFFFFFFFF will be denoted
    with the text "infinite duration". This information is not given
-   when the lease is released or declined.
+   when the lease is released.
 
 -  device-id - the client's hardware address shown as numerical type and
    hex digit string.
@@ -722,9 +722,9 @@ DHCPv6 Log Entries
 ~~~~~~~~~~~~~~~~~~
 
 For DHCPv6 the library creates entries based on lease management actions
-intercepted by lease6_select (for new leases), lease6_renew (for
-renewed leases), lease6_rebind (for rebound leases), lease6_release
-(for released leases), and the lease6_decline (for decline leases) hooks.
+intercepted by lease6_select (for new leases), lease6_renew and
+lease6_rebind (for renewed leases), and beginning with Kea 1.9.1
+lease6_release and lease6_decline (for released leases) hooks.
 
 An entry is a single string with no embedded end-of-line markers and a
 prepended timestamp, and has the following sections:
@@ -739,12 +739,12 @@ Where:
    "%Y-%m-%d %H:%M:%S %Z" strftime format ("%Z" is the time zone name).
 
 -  address - the leased IPv6 address or prefix given out and whether it
-   was assigned or renewed.
+   was assigned, renewed or released.
 
 -  duration - the lease lifetime expressed in days (if present), hours,
    minutes, and seconds. A lease lifetime of 0xFFFFFFFF will be denoted
    with the text "infinite duration". This information is not given
-   when the lease is released or declined.
+   when the lease is released.
 
 -  device-id - the client's DUID and hardware address (if present).
 
@@ -777,11 +777,6 @@ or for a release:
    from a device with DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e
    (from Raw Socket) connected via relay at address: fe80::abcd for client on link address: 3001::1,
    hop count: 1, identified by remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
-
-.. note::
-
-   Beginning with Kea 1.9.1 the rebind event is logged as "rebound": before
-   it was logged as "renewed" i.e. the same way as the renew event.
 
 In addition to logging lease activity driven by DHCPv6 client traffic,
 the hooks library also logs entries for the following lease management control channel
