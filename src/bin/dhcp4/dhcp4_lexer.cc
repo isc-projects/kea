@@ -1,6 +1,6 @@
-#line 1 "dhcp4_lexer.cc"
+#line 2 "dhcp4_lexer.cc"
 
-#line 3 "dhcp4_lexer.cc"
+#line 4 "dhcp4_lexer.cc"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1994,7 +1994,7 @@ using namespace isc::dhcp;
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::dhcp::Parser4Context::fatal(msg)
-#line 1997 "dhcp4_lexer.cc"
+#line 1998 "dhcp4_lexer.cc"
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -2020,8 +2020,8 @@ using namespace isc::dhcp;
    by moving it ahead by yyleng bytes. yyleng specifies the length of the
    currently matched token. */
 #define YY_USER_ACTION  driver.loc_.columns(yyleng);
-#line 2023 "dhcp4_lexer.cc"
 #line 2024 "dhcp4_lexer.cc"
+#line 2025 "dhcp4_lexer.cc"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -2349,7 +2349,7 @@ YY_DECL
     }
 
 
-#line 2352 "dhcp4_lexer.cc"
+#line 2353 "dhcp4_lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -5001,7 +5001,7 @@ YY_RULE_SETUP
 #line 2095 "dhcp4_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 5004 "dhcp4_lexer.cc"
+#line 5005 "dhcp4_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
