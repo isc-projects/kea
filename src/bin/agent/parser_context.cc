@@ -68,7 +68,6 @@ ParserContext::parseCommon() {
     }
 }
 
-
 void
 ParserContext::error(const isc::agent::location& loc,
                      const std::string& what,

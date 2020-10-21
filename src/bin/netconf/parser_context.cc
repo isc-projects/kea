@@ -68,7 +68,6 @@ ParserContext::parseCommon() {
     }
 }
 
-
 void
 ParserContext::error(const isc::netconf::location& loc,
                      const std::string& what,

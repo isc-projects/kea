@@ -31,7 +31,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-
 /// @brief Evaluation context, an interface to the expression evaluation.
 class D2ParserContext
 {

@@ -68,7 +68,6 @@ Parser4Context::parseCommon() {
     }
 }
 
-
 void
 Parser4Context::error(const isc::dhcp::location& loc,
                       const std::string& what,

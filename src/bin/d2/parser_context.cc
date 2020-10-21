@@ -64,7 +64,6 @@ D2ParserContext::parseCommon() {
     }
 }
 
-
 void
 D2ParserContext::error(const isc::d2::location& loc,
                        const std::string& what,

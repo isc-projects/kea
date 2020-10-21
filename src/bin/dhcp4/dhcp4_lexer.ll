@@ -2078,7 +2078,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     /* Bad string with an open unicode escape at the end */
     std::string raw(yytext+1);
     size_t pos = raw.size() - 1;
-    for (; pos >= 0; --pos) {
+    for (; pos > 0; --pos) {
         char c = raw[pos];
         if (c == 'u') {
             break;
