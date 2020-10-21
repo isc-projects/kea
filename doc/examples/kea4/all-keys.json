@@ -156,7 +156,7 @@
         "ddns-update-on-renew": true,
 
         // Boolean flag, which is passed to kea-dhcp-ddns with each DDNS
-        // udpate request to indicate whether or not DNS update conflict 
+        // update request to indicate whether or not DNS update conflict 
         // resolution as described in RFC 4703 should be employed for the
         // given update request.  The default value for this flag is true.  
         // It may be specified at the global, shared-network and subnet levels.

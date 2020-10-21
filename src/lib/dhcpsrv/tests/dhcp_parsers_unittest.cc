@@ -327,7 +327,6 @@ public:
                           const SimpleDefaults& option_def_defaults) {
         size_t cnt = 0;
         // Set global defaults first.
-std::cout << "Calling setAllDefaults" << std::endl;
         cnt = SimpleParser::setDefaults(global, global_defaults);
 
         // Now set option definition defaults for each specified option definition
@@ -406,7 +405,6 @@ std::cout << "Calling setAllDefaults" << std::endl;
     /// non-zero otherwise failure.
     int parseConfiguration(const std::string& config, bool v6 = false,
                            bool set_defaults = true) {
-std::cout << "Calling parseConfiguration" << std::endl;
         int rcode_ = 1;
         // Turn config into elements.
         // Test json just to make sure its valid.
@@ -414,7 +412,6 @@ std::cout << "Calling parseConfiguration" << std::endl;
         EXPECT_TRUE(json);
         if (json) {
             if (set_defaults) {
-std::cout << "Calling setAllDefaults" << std::endl;
                 setAllDefaults(json, v6);
             }
 
@@ -2906,7 +2903,7 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
     ASSERT_TRUE(network);
 
     EXPECT_TRUE(network->hasFetchGlobalsFn());
-EXPECT_TRUE(network->getIface().unspecified());
+    EXPECT_TRUE(network->getIface().unspecified());
     EXPECT_TRUE(network->getIface().empty());
 
     EXPECT_TRUE(network->getClientClass().unspecified());

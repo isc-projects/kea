@@ -2693,8 +2693,8 @@ to add DNS entries or they were somehow lost by the DNS server.
 
 The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.
 The value of this parameter is passed by kea-dhcp6 to D2 with each DNS update
-request.  When true, (the default value), D2 will employ conflict resolution
-,as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
+request.  When true, (the default value), D2 will employ conflict resolution,
+as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
 attempting to fulfill the update request.  When false, D2 will simply attempt
 to update the DNS entries per the request, regardless of whether or not they
 conflict with existing entries owned by other DHCP6 clients.

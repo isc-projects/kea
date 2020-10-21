@@ -1070,7 +1070,7 @@ protected:
     /// @brief Should Kea perform updates when leases are extended 
     util::Optional<bool> ddns_update_on_renew_;
 
-    /// @brief Used to to tell kea-dhcp-ddns whehter or not to use conflict resolution.
+    /// @brief Used to to tell kea-dhcp-ddns whether or not to use conflict resolution.
     util::Optional<bool> ddns_use_conflict_resolution_;
 
     /// @brief Pointer to another network that this network belongs to.
