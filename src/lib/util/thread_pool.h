@@ -429,7 +429,7 @@ const double ThreadPool<W, C>::CEXP10 = std::exp(-.1);
 template <typename W, typename C>
 const double ThreadPool<W, C>::CEXP100 = std::exp(-.01);
 
-/// Initialize the 1000 packet rounding to exp(-.1)
+/// Initialize the 1000 packet rounding to exp(-.001)
 template <typename W, typename C>
 const double ThreadPool<W, C>::CEXP1000 = std::exp(-.001);
 
