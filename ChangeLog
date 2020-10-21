@@ -1,3 +1,7 @@
+1823.	[doc]		tomek
+    Updated options documentation for DHCPv4 and DHCPv6.
+	(Gitlab #1436, #1460)
+
 1822.	[func]		fdupont
 	When multi-threading is enabled the status-get command displays
 	the average lenght of the multi-threading packet queue for last
