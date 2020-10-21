@@ -911,9 +911,9 @@ public:
                                                         subnet_id_, fqdn_fwd_,
                                                         fqdn_rev_, hostname_,
                                                         hwaddr, prefix_len_));
-            // Update cltt_ and old_cltt_ explicitly.
+            // Update cltt_ and current_cltt_ explicitly.
             result->cltt_ = cltt_;
-            result->old_cltt_ = cltt_;
+            result->current_cltt_ = cltt_;
 
             result->state_ = state;
 
@@ -1307,9 +1307,9 @@ PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     ctx->exchange4_->createBindForSend(lease, bind_array);
     auto result = addLeaseCommon(ctx, INSERT_LEASE4, bind_array);
 
-    // Update lease lifetime with new values (allows update between the creation
+    // Update lease current expiration time (allows update between the creation
     // of the Lease up to the point of insertion in the database).
-    lease->updateExistingLifetime();
+    lease->updateCurrentExpirationTime();
 
     return (result);
 }
@@ -1329,9 +1329,9 @@ PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
 
     auto result = addLeaseCommon(ctx, INSERT_LEASE6, bind_array);
 
-    // Update lease lifetime with new values (allows update between the creation
+    // Update lease current expiration time (allows update between the creation
     // of the Lease up to the point of insertion in the database).
-    lease->updateExistingLifetime();
+    lease->updateCurrentExpirationTime();
 
     return (result);
 }
@@ -1985,15 +1985,15 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     std::string addr4_str = boost::lexical_cast<std::string>(lease->addr_.toUint32());
     bind_array.add(addr4_str);
 
-    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->old_cltt_,
-                                                                       lease->old_valid_lft_);
+    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
+                                                                       lease->current_valid_lft_);
     bind_array.add(expire_str);
 
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, bind_array, lease);
 
-    // Update lease lifetime with new values.
-    lease->updateExistingLifetime();
+    // Update lease current expiration time.
+    lease->updateCurrentExpirationTime();
 }
 
 void
@@ -2016,15 +2016,15 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     std::string addr_str = lease->addr_.toText();
     bind_array.add(addr_str);
 
-    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->old_cltt_,
-                                                                       lease->old_valid_lft_);
+    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
+                                                                       lease->current_valid_lft_);
     bind_array.add(expire_str);
 
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, bind_array, lease);
 
-    // Update lease lifetime with new values.
-    lease->updateExistingLifetime();
+    // Update lease current expiration time.
+    lease->updateCurrentExpirationTime();
 }
 
 uint64_t
@@ -2058,8 +2058,8 @@ PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
     std::string addr4_str = boost::lexical_cast<std::string>(addr.toUint32());
     bind_array.add(addr4_str);
 
-    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->old_cltt_,
-                                                                       lease->old_valid_lft_);
+    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
+                                                                       lease->current_valid_lft_);
     bind_array.add(expire_str);
 
     auto affected_rows = deleteLeaseCommon(DELETE_LEASE4, bind_array);
@@ -2093,8 +2093,8 @@ PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
     std::string addr6_str = addr.toText();
     bind_array.add(addr6_str);
 
-    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->old_cltt_,
-                                                                       lease->old_valid_lft_);
+    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
+                                                                       lease->current_valid_lft_);
     bind_array.add(expire_str);
 
     auto affected_rows = deleteLeaseCommon(DELETE_LEASE6, bind_array);

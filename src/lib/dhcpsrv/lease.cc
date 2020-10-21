@@ -40,8 +40,8 @@ Lease::Lease(const isc::asiolink::IOAddress& addr,
              uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
              const bool fqdn_fwd, const bool fqdn_rev,
              const std::string& hostname, const HWAddrPtr& hwaddr)
-    : addr_(addr), valid_lft_(valid_lft), old_valid_lft_(valid_lft),
-      cltt_(cltt), old_cltt_(cltt), subnet_id_(subnet_id),
+    : addr_(addr), valid_lft_(valid_lft), current_valid_lft_(valid_lft),
+      cltt_(cltt), current_cltt_(cltt), subnet_id_(subnet_id),
       hostname_(boost::algorithm::to_lower_copy(hostname)), fqdn_fwd_(fqdn_fwd),
       fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
 }
@@ -275,18 +275,18 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
         lease->setContext(ctx);
     }
 
-    lease->updateExistingLifetime();
+    lease->updateCurrentExpirationTime();
 }
 
 void
-Lease::updateExistingLifetime() {
-    Lease::syncExistingLifetime(*this, *this);
+Lease::updateCurrentExpirationTime() {
+    Lease::syncCurrentExpirationTime(*this, *this);
 }
 
 void
-Lease::syncExistingLifetime(const Lease& from, Lease& to) {
-    to.old_cltt_ = from.cltt_;
-    to.old_valid_lft_ = from.valid_lft_;
+Lease::syncCurrentExpirationTime(const Lease& from, Lease& to) {
+    to.current_cltt_ = from.cltt_;
+    to.current_valid_lft_ = from.valid_lft_;
 }
 
 Lease4::Lease4(const Lease4& other)
@@ -390,9 +390,9 @@ Lease4::operator=(const Lease4& other) {
     if (this != &other) {
         addr_ = other.addr_;
         valid_lft_ = other.valid_lft_;
-        old_valid_lft_ = other.old_valid_lft_;
+        current_valid_lft_ = other.current_valid_lft_;
         cltt_ = other.cltt_;
-        old_cltt_ = other.old_cltt_;
+        current_cltt_ = other.current_cltt_;
         subnet_id_ = other.subnet_id_;
         hostname_ = other.hostname_;
         fqdn_fwd_ = other.fqdn_fwd_;
@@ -493,7 +493,7 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
     }
 
     cltt_ = time(NULL);
-    old_cltt_ = cltt_;
+    current_cltt_ = cltt_;
 }
 
 Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
@@ -510,7 +510,7 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
     }
 
     cltt_ = time(NULL);
-    old_cltt_ = cltt_;
+    current_cltt_ = cltt_;
 }
 
 Lease6::Lease6()
@@ -599,9 +599,9 @@ Lease4::operator==(const Lease4& other) const {
             addr_ == other.addr_ &&
             subnet_id_ == other.subnet_id_ &&
             valid_lft_ == other.valid_lft_ &&
-            old_valid_lft_ == other.old_valid_lft_ &&
+            current_valid_lft_ == other.current_valid_lft_ &&
             cltt_ == other.cltt_ &&
-            old_cltt_ == other.old_cltt_ &&
+            current_cltt_ == other.current_cltt_ &&
             hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_ &&
@@ -619,9 +619,9 @@ Lease6::operator==(const Lease6& other) const {
             iaid_ == other.iaid_ &&
             preferred_lft_ == other.preferred_lft_ &&
             valid_lft_ == other.valid_lft_ &&
-            old_valid_lft_ == other.old_valid_lft_ &&
+            current_valid_lft_ == other.current_valid_lft_ &&
             cltt_ == other.cltt_ &&
-            old_cltt_ == other.old_cltt_ &&
+            current_cltt_ == other.current_cltt_ &&
             subnet_id_ == other.subnet_id_ &&
             hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&

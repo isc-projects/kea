@@ -93,7 +93,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x42)));
         lease->valid_lft_ = 8677;
         lease->cltt_ = 168256;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 23;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = false;
@@ -105,7 +105,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
             new ClientId(vector<uint8_t>(8, 0x53)));
         lease->valid_lft_ = 3677;
         lease->cltt_ = 123456;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 73;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -116,7 +116,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x64)));
         lease->valid_lft_ = 5412;
         lease->cltt_ = 234567;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 73;                         // Same as lease 1
         lease->fqdn_rev_ = false;
         lease->fqdn_fwd_ = false;
@@ -134,7 +134,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         // @TODO: test overflow conditions when code has been fixed.
         lease->valid_lft_ = 7000;
         lease->cltt_ = 234567;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 37;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -147,7 +147,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 7736;
         lease->cltt_ = 222456;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 85;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -161,7 +161,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 7832;
         lease->cltt_ = 227476;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 175;
         lease->fqdn_rev_ = false;
         lease->fqdn_fwd_ = false;
@@ -175,7 +175,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 1832;
         lease->cltt_ = 627476;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 112;
         lease->fqdn_rev_ = false;
         lease->fqdn_fwd_ = true;
@@ -187,7 +187,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
             new ClientId(vector<uint8_t>(8, 0x77)));
         lease->valid_lft_ = 7975;
         lease->cltt_ = 213876;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 19;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -219,7 +219,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 900;
         lease->valid_lft_ = 8677;
         lease->cltt_ = 168256;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 23;
         lease->fqdn_fwd_ = true;
         lease->fqdn_rev_ = true;
@@ -233,7 +233,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 3600;
         lease->valid_lft_ = 3677;
         lease->cltt_ = 123456;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 73;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -247,7 +247,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 1800;
         lease->valid_lft_ = 5412;
         lease->cltt_ = 234567;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 73;                     // Same as lease 1
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = false;
@@ -270,7 +270,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 7200;
         lease->valid_lft_ = 7000;
         lease->cltt_ = 234567;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 37;
         lease->fqdn_fwd_ = true;
         lease->fqdn_rev_ = false;
@@ -285,7 +285,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 4800;
         lease->valid_lft_ = 7736;
         lease->cltt_ = 222456;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 671;
         lease->fqdn_fwd_ = true;
         lease->fqdn_rev_ = true;
@@ -301,7 +301,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 5400;
         lease->valid_lft_ = 7832;
         lease->cltt_ = 227476;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 175;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -318,7 +318,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 5400;
         lease->valid_lft_ = 1832;
         lease->cltt_ = 627476;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 112;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -333,7 +333,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->preferred_lft_ = 5600;
         lease->valid_lft_ = 7975;
         lease->cltt_ = 213876;
-        lease->updateExistingLifetime();
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 19;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;

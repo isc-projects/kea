@@ -705,9 +705,9 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
 
     storage4_.insert(lease);
 
-    // Update lease lifetime with new values (allows update between the creation
+    // Update lease current expiration time (allows update between the creation
     // of the Lease up to the point of insertion in the database).
-    lease->updateExistingLifetime();
+    lease->updateCurrentExpirationTime();
 
     return (true);
 }
@@ -741,9 +741,9 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
 
     storage6_.insert(lease);
 
-    // Update lease lifetime with new values (allows update between the creation
+    // Update lease current expiration time (allows update between the creation
     // of the Lease up to the point of insertion in the database).
-    lease->updateExistingLifetime();
+    lease->updateCurrentExpirationTime();
 
     return (true);
 }
@@ -1426,8 +1426,8 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
     if (lease_it == index.end()) {
         isc_throw(NoSuchLease, "failed to update the lease with address "
                   << lease->addr_ << " - no such lease");
-    } else if ((!persist) && (((*lease_it)->cltt_ != lease->old_cltt_) ||
-        ((*lease_it)->valid_lft_ != lease->old_valid_lft_))) {
+    } else if ((!persist) && (((*lease_it)->cltt_ != lease->current_cltt_) ||
+        ((*lease_it)->valid_lft_ != lease->current_valid_lft_))) {
         // For test purpose only: check that the lease has not changed in
         // the database.
         isc_throw(NoSuchLease, "failed to update the lease with address "
@@ -1441,8 +1441,8 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
         lease_file4_->append(*lease);
     }
 
-    // Update lease lifetime with new values.
-    lease->updateExistingLifetime();
+    // Update lease current expiration time.
+    lease->updateCurrentExpirationTime();
 
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease4Ptr(new Lease4(*lease)));
@@ -1473,8 +1473,8 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     if (lease_it == index.end()) {
         isc_throw(NoSuchLease, "failed to update the lease with address "
                   << lease->addr_ << " - no such lease");
-    } else if ((!persist) && (((*lease_it)->cltt_ != lease->old_cltt_) ||
-        ((*lease_it)->valid_lft_ != lease->old_valid_lft_))) {
+    } else if ((!persist) && (((*lease_it)->cltt_ != lease->current_cltt_) ||
+        ((*lease_it)->valid_lft_ != lease->current_valid_lft_))) {
         // For test purpose only: check that the lease has not changed in
         // the database.
         isc_throw(NoSuchLease, "failed to update the lease with address "
@@ -1488,8 +1488,8 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
         lease_file6_->append(*lease);
     }
 
-    // Update lease lifetime with new values.
-    lease->updateExistingLifetime();
+    // Update lease current expiration time.
+    lease->updateCurrentExpirationTime();
 
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease6Ptr(new Lease6(*lease)));
@@ -1527,8 +1527,8 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
         } else {
             // For test purpose only: check that the lease has not changed in
             // the database.
-            if (((*l)->cltt_ != lease->old_cltt_) ||
-                ((*l)->valid_lft_ != lease->old_valid_lft_)) {
+            if (((*l)->cltt_ != lease->current_cltt_) ||
+                ((*l)->valid_lft_ != lease->current_valid_lft_)) {
                 return false;
             }
         }
@@ -1569,8 +1569,8 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
         } else {
             // For test purpose only: check that the lease has not changed in
             // the database.
-            if (((*l)->cltt_ != lease->old_cltt_) ||
-                ((*l)->valid_lft_ != lease->old_valid_lft_)) {
+            if (((*l)->cltt_ != lease->current_cltt_) ||
+                ((*l)->valid_lft_ != lease->current_valid_lft_)) {
                 return false;
             }
         }

@@ -405,13 +405,14 @@ public:
     ///
     /// @throw NoSuchLease if there is no such lease to be updated.
     ///
-    /// @note The old_cltt_ and old_valid_lft_ are used to ensure that only one
-    /// thread or process performs an update or delete operation on the lease by
-    /// matching these values with the expired data in the database.
+    /// @note The current_cltt_ and current_valid_lft_ are used to maximize the
+    /// chance that only one thread or process performs an update or delete
+    /// operation on the lease by matching these values with the expiration time
+    /// data in the database.
     /// @note For test purposes only, when persistence is disabled, the update
     /// of the lease is performed only if the value matches the one received on
     /// the SELECT query, effectively enforcing no update on the lease between
-    /// SELECT and UPDATE.
+    /// SELECT and UPDATE with different expiration time.
     virtual void updateLease4(const Lease4Ptr& lease4);
 
     /// @brief Updates IPv6 lease.
@@ -423,13 +424,14 @@ public:
     ///
     /// @throw NoSuchLease if there is no such lease to be updated.
     ///
-    /// @note The old_cltt_ and old_valid_lft_ are used to ensure that only one
-    /// thread or process performs an update or delete operation on the lease by
-    /// matching these values with the expired data in the database.
+    /// @note The current_cltt_ and current_valid_lft_ are used to maximize the
+    /// chance that only one thread or process performs an update or delete
+    /// operation on the lease by matching these values with the expiration time
+    /// data in the database.
     /// @note For test purposes only, when persistence is disabled, the update
     /// of the lease is performed only if the value matches the one received on
     /// the SELECT query, effectively enforcing no update on the lease between
-    /// SELECT and UPDATE.
+    /// SELECT and UPDATE with different expiration time.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
     /// @brief Deletes an IPv4 lease.
@@ -438,13 +440,14 @@ public:
     ///
     /// @return true if deletion was successful, false if no such lease exists.
     ///
-    /// @note The old_cltt_ and old_valid_lft_ are used to ensure that only one
-    /// thread or process performs an update or delete operation on the lease by
-    /// matching these values with the expired data in the database.
+    /// @note The current_cltt_ and current_valid_lft_ are used to maximize the
+    /// chance that only one thread or process performs an update or delete
+    /// operation on the lease by matching these values with the expiration time
+    /// data in the database.
     /// @note For test purposes only, when persistence is disabled, the deletion
     /// of the lease is performed only if the value matches the one received on
     /// the SELECT query, effectively enforcing no update on the lease between
-    /// SELECT and DELETE.
+    /// SELECT and DELETE with different expiration time.
     virtual bool deleteLease(const Lease4Ptr& lease);
 
     /// @brief Deletes an IPv6 lease.
@@ -453,13 +456,14 @@ public:
     ///
     /// @return true if deletion was successful, false if no such lease exists.
     ///
-    /// @note The old_cltt_ and old_valid_lft_ are used to ensure that only one
-    /// thread or process performs an update or delete operation on the lease by
-    /// matching these values with the expired data in the database.
+    /// @note The current_cltt_ and current_valid_lft_ are used to maximize the
+    /// chance that only one thread or process performs an update or delete
+    /// operation on the lease by matching these values with the expiration time
+    /// data in the database.
     /// @note For test purposes only, when persistence is disabled, the deletion
     /// of the lease is performed only if the value matches the one received on
     /// the SELECT query, effectively enforcing no update on the lease between
-    /// SELECT and DELETE.
+    /// SELECT and DELETE with different expiration time.
     virtual bool deleteLease(const Lease6Ptr& lease);
 
     /// @brief Deletes all expired-reclaimed DHCPv4 leases.
@@ -695,13 +699,14 @@ private:
     ///
     /// @throw NoSuchLease if there is no such lease to be updated.
     ///
-    /// @note The old_cltt_ and old_valid_lft_ are used to ensure that only one
-    /// thread or process performs an update or delete operation on the lease by
-    /// matching these values with the expired data in the database.
+    /// @note The current_cltt_ and current_valid_lft_ are used to maximize the
+    /// chance that only one thread or process performs an update or delete
+    /// operation on the lease by matching these values with the expiration time
+    /// data in the database.
     /// @note For test purposes only, when persistence is disabled, the update
     /// of the lease is performed only if the value matches the one received on
     /// the SELECT query, effectively enforcing no update on the lease between
-    /// SELECT and UPDATE.
+    /// SELECT and UPDATE with different expiration time.
     void updateLease4Internal(const Lease4Ptr& lease4);
 
     /// @brief Updates IPv6 lease.
@@ -710,13 +715,14 @@ private:
     ///
     /// @throw NoSuchLease if there is no such lease to be updated.
     ///
-    /// @note The old_cltt_ and old_valid_lft_ are used to ensure that only one
-    /// thread or process performs an update or delete operation on the lease by
-    /// matching these values with the expired data in the database.
+    /// @note The current_cltt_ and current_valid_lft_ are used to maximize the
+    /// chance that only one thread or process performs an update or delete
+    /// operation on the lease by matching these values with the expiration time
+    /// data in the database.
     /// @note For test purposes only, when persistence is disabled, the update
     /// of the lease is performed only if the value matches the one received on
     /// the SELECT query, effectively enforcing no update on the lease between
-    /// SELECT and UPDATE.
+    /// SELECT and UPDATE with different expiration time.
     void updateLease6Internal(const Lease6Ptr& lease6);
 
     /// @brief Deletes an IPv4 lease.
@@ -725,13 +731,14 @@ private:
     ///
     /// @return true if deletion was successful, false if no such lease exists.
     ///
-    /// @note The old_cltt_ and old_valid_lft_ are used to ensure that only one
-    /// thread or process performs an update or delete operation on the lease by
-    /// matching these values with the expired data in the database.
+    /// @note The current_cltt_ and current_valid_lft_ are used to maximize the
+    /// chance that only one thread or process performs an update or delete
+    /// operation on the lease by matching these values with the expiration time
+    /// data in the database.
     /// @note For test purposes only, when persistence is disabled, the deletion
     /// of the lease is performed only if the value matches the one received on
     /// the SELECT query, effectively enforcing no update on the lease between
-    /// SELECT and DELETE.
+    /// SELECT and DELETE with different expiration time.
     bool deleteLeaseInternal(const Lease4Ptr& addr);
 
     /// @brief Deletes an IPv6 lease.
@@ -740,13 +747,14 @@ private:
     ///
     /// @return true if deletion was successful, false if no such lease exists.
     ///
-    /// @note The old_cltt_ and old_valid_lft_ are used to ensure that only one
-    /// thread or process performs an update or delete operation on the lease by
-    /// matching these values with the expired data in the database.
+    /// @note The current_cltt_ and current_valid_lft_ are used to maximize the
+    /// chance that only one thread or process performs an update or delete
+    /// operation on the lease by matching these values with the expiration time
+    /// data in the database.
     /// @note For test purposes only, when persistence is disabled, the deletion
     /// of the lease is performed only if the value matches the one received on
     /// the SELECT query, effectively enforcing no update on the lease between
-    /// SELECT and DELETE.
+    /// SELECT and DELETE with different expiration time.
     bool deleteLeaseInternal(const Lease6Ptr& addr);
 
     /// @brief Removes specified IPv4 leases.

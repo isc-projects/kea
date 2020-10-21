@@ -1699,10 +1699,10 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                 } else if (existing_lease->cltt_ < lease->cltt_) {
                                     // If the existing lease is older than the fetched lease, update
                                     // the lease in our local database.
-                                    // Update lease old expire with value received from the database.
-                                    // Some database backends reject operations on the lease if the
-                                    // old expire value does not match what is stored.
-                                    Lease::syncExistingLifetime(*existing_lease, *lease);
+                                    // Update lease current expiration time with value received from the
+                                    // database. Some database backends reject operations on the lease if
+                                    // the current expiration time value does not match what is stored.
+                                    Lease::syncCurrentExpirationTime(*existing_lease, *lease);
                                     LeaseMgrFactory::instance().updateLease4(lease);
 
                                 } else {
@@ -1732,10 +1732,10 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                 } else if (existing_lease->cltt_ < lease->cltt_) {
                                     // If the existing lease is older than the fetched lease, update
                                     // the lease in our local database.
-                                    // Update lease old expire with value received from the database.
-                                    // Some database backends reject operations on the lease if the
-                                    // old expire value does not match what is stored.
-                                    Lease::syncExistingLifetime(*existing_lease, *lease);
+                                    // Update lease current expiration time with value received from the
+                                    // database. Some database backends reject operations on the lease if
+                                    // the current expiration time value does not match what is stored.
+                                    Lease::syncCurrentExpirationTime(*existing_lease, *lease);
                                     LeaseMgrFactory::instance().updateLease6(lease);
 
                                 } else {
