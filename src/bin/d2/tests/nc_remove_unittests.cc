@@ -583,7 +583,7 @@ TEST_F(NameRemoveTransactionTest, removingFwdAddrsHandler_FwdOnlyOK) {
               name_remove->getNextEvent());
 }
 
-// Tests addingFwdAddrsHandler with the following scenario:
+// Tests removingFwdAddrsHandler with the following scenario:
 //
 //  The request includes only a forward change.
 //  Initial posted event is SERVER_SELECTED_EVT.

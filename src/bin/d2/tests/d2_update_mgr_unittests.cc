@@ -681,8 +681,9 @@ TEST_F(D2UpdateMgrTest, addTransaction) {
     NameChangeTransactionPtr trans = (*pos).second;
     ASSERT_TRUE(trans);
    
-    // Verify the correct type of transcation was created. 
-    ASSERT_NO_THROW(dynamic_cast<NameAddTransaction&>(*trans)); 
+    // Verify the correct type of transaction was created. 
+    NameAddTransaction* t = dynamic_cast<NameAddTransaction*>(trans.get());
+    ASSERT_TRUE(t);
 
     // At this point the transaction should have constructed
     // and sent the DNS request.
@@ -737,8 +738,9 @@ TEST_F(D2UpdateMgrTest, removeTransaction) {
     NameChangeTransactionPtr trans = (*pos).second;
     ASSERT_TRUE(trans);
 
-    // Verify the correct type of transcation was created. 
-    ASSERT_NO_THROW(dynamic_cast<NameRemoveTransaction&>(*trans)); 
+    // Verify the correct type of transaction was created. 
+    NameRemoveTransaction* t = dynamic_cast<NameRemoveTransaction*>(trans.get());
+    ASSERT_TRUE(t);
 
     // At this point the transaction should have constructed
     // and sent the DNS request.
@@ -895,8 +897,9 @@ TEST_F(D2UpdateMgrTest, simpleAddTransaction) {
     NameChangeTransactionPtr trans = (*pos).second;
     ASSERT_TRUE(trans);
    
-    // Verify the correct type of transcation was created. 
-    ASSERT_NO_THROW(dynamic_cast<SimpleAddTransaction&>(*trans)); 
+    // Verify the correct type of transaction was created. 
+    SimpleAddTransaction* t = dynamic_cast<SimpleAddTransaction*>(trans.get());
+    ASSERT_TRUE(t);
 
     // At this point the transaction should have constructed
     // and sent the DNS request.
@@ -952,8 +955,9 @@ TEST_F(D2UpdateMgrTest, simpleRemoveTransaction) {
     NameChangeTransactionPtr trans = (*pos).second;
     ASSERT_TRUE(trans);
 
-    // Verify the correct type of transcation was created. 
-    ASSERT_NO_THROW(dynamic_cast<SimpleRemoveTransaction&>(*trans)); 
+    // Verify the correct type of transaction was created. 
+    SimpleRemoveTransaction* t = dynamic_cast<SimpleRemoveTransaction*>(trans.get());
+    ASSERT_TRUE(t);
 
     // At this point the transaction should have constructed
     // and sent the DNS request.

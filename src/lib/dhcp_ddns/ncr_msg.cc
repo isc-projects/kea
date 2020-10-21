@@ -344,7 +344,7 @@ NameChangeRequest::fromJSON(const std::string& json) {
     element = ncr->getElement("lease-length", element_map);
     ncr->setLeaseLength(element);
 
-    // For backward compatiblity  use-conflict-resolution is optional
+    // For backward compatibility  use-conflict-resolution is optional
     // and defaults to true.
     auto found = element_map.find("use-conflict-resolution"); 
     if (found != element_map.end()) {

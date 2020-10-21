@@ -747,7 +747,7 @@ private:
     /// @brief The amount of time in seconds for which the lease is valid (TTL).
     uint32_t lease_length_;
 
-    /// @brief Indicates if conflict resoltuion is enabled.
+    /// @brief Indicates if conflict resolution is enabled.
     bool conflict_resolution_;
 
     /// @brief The processing status of the request.  Used internally.

@@ -489,7 +489,7 @@ SimpleAddTransaction::buildReplaceFwdAddressRequest() {
                                 dns::RRType::DHCID(), lease_ttl));
 
     // We add the DHCID for auditing purposes and in the event
-    // conflict resoloution is later enabled.
+    // conflict resolution is later enabled.
     addDhcidRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
 

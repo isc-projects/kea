@@ -156,8 +156,8 @@ protected:
     /// discarded.
     ///
     /// Finally, If conflict resolution is enabled, it will instantiate either
-    /// a NameAddTranscation or a NameRemoveTransaction. If disabled it will
-    /// instantiate either a SimpleAddTransaction or a SimpleRemoveTranscation.
+    /// a NameAddTransaction or a NameRemoveTransaction. If disabled it will
+    /// instantiate either a SimpleAddTransaction or a SimpleRemoveTransaction.
     ///
     /// @param ncr the NameChangeRequest for which to create a transaction.
     ///

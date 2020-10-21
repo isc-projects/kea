@@ -472,7 +472,7 @@ extern std::string toHexText(const uint8_t* data, size_t len);
 /// @param exp_state expected current state of the transaction
 /// @param exp_event  expected next event of the transaction
 /// @param file source file name
-/// @param line souce line number
+/// @param line source line number
 extern void checkContext(NameChangeTransactionPtr trans, const int exp_state,
                          const int exp_evt, const std::string& file, int line);
 
@@ -480,7 +480,7 @@ extern void checkContext(NameChangeTransactionPtr trans, const int exp_state,
 #define CHECK_CONTEXT(a,b,c) checkContext(a,b,c,__FILE__,__LINE__)
 
 
-}; // namespace isc::d2
-}; // namespace isc
+} // namespace isc::d2
+} // namespace isc
 
 #endif

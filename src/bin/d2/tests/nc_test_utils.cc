@@ -834,16 +834,16 @@ void checkSimpleReplaceFwdAddressRequest(NameChangeTransaction& tran) {
     checkZone(request, exp_zone_name);
 
     // Verify the PREREQUISITE SECTION
-    // There should be no prerequisites. 
+    // There should be no prerequisites.
     dns::RRsetPtr rrset;
     checkRRCount(request, D2UpdateMessage::SECTION_PREREQUISITE, 0);
 
     // Verify the UPDATE SECTION
     // Should be 4
     // 1. delete of the FQDN/IP RR
-    // 2. delete of the DHCID RR 
+    // 2. delete of the DHCID RR
     // 3. add of the FQDN/IP RR
-    // 4. add of the DHCID RR 
+    // 4. add of the DHCID RR
     checkRRCount(request, D2UpdateMessage::SECTION_UPDATE, 4);
 
     // Fetch ttl.
@@ -917,6 +917,9 @@ void checkSimpleRemoveFwdRRsRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
+// Verifies that the contents of the given transaction's  DNS update request
+// is correct for removing a reverse DNS entry when not using conflict
+// resolution.
 void checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
@@ -927,7 +930,6 @@ void checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran) {
 
     std::string exp_zone_name = tran.getReverseDomain()->getName();
     std::string exp_rev_addr = D2CfgMgr::reverseIpAddress(ncr->getIpAddress());
-    const dns::RRType& exp_ip_rr_type = tran.getAddressRRType();
 
     // Verify the zone section.
     checkZone(request, exp_zone_name);
@@ -954,6 +956,7 @@ void checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
+// Verifies the current state and next event in a transaction
 void checkContext(NameChangeTransactionPtr trans, const int exp_state,
                   const int exp_evt, const std::string& file, int line) {
     ASSERT_TRUE(trans);
@@ -964,5 +967,5 @@ void checkContext(NameChangeTransactionPtr trans, const int exp_state,
             << " at " << file << ":" << line;
 }
 
-}; // namespace isc::d2
-}; // namespace isc
+} // namespace isc::d2
+} // namespace isc
