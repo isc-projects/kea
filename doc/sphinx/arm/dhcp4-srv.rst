@@ -1751,8 +1751,6 @@ currently has no means to validate it.
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | name-service-search                    | 117  | uint16                    | true        | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
-   | subnet-selection                       | 118  | ipv4-address              | false       | false       |
-   +----------------------------------------+------+---------------------------+-------------+-------------+
    | domain-search                          | 119  | fqdn                      | true        | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | vivco-suboptions                       | 124  | binary                    | false       | false       |
@@ -1793,7 +1791,8 @@ configured explicitly by sysadmin. The `dhcp-parameter-request-list` is sent by 
 never be sent by the server. The `dhcp-renewal-time` and `dhcp-rebinding-time` are governed by
 `renew-timer` and `rebind-timer` parameters. The `dhcp-client-identifier` is echoed back with the
 value sent by the client. The `fqdn` option is part of the DDNS and D2 configuration. The `dhcp-agent-options`
-is being sent by the relay agent.
+is being sent by the relay agent. The `subnet-selection` option, if present in client's messages, will
+be used in the subnet selection process.
 
 .. table:: List of standard DHCPv4 options managed by Kea on its own and not directly configurable by an administrator
 
@@ -1823,6 +1822,8 @@ is being sent by the relay agent.
    | fqdn                                   | 81   | fqdn                      | false       | true        |
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | dhcp-agent-options                     | 82   | empty                     | false       | true        |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
+   | subnet-selection                       | 118  | ipv4-address              | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
 
 The following table lists all option types used in the previous two tables with a description of
@@ -1916,6 +1917,31 @@ what values are accepted for them.
    |                 | allowed values -2147483648 to                         |
    |                 | 2147483647.                                           |
    +-----------------+-------------------------------------------------------+
+
+Kea also supports Relay Agent Information (RAI) option, sometimes referred to as relay option, agent
+option or simply option 82. The option itself is just a container and doesn't convey any information
+on its own. The following table contains a list of RAI sub-options that Kea can understand. The RAI
+and its sub-options are inserted by the relay agent and received by Kea. There is no need for Kea
+to be configured with those options as Kea only receives them.
+
+.. table:: List of RAI sub-options that Kea can understand.
+
+   +--------------------+------+----------------------------------------------------------------------+
+   | Name               | Code | Comment                                                              |
+   +====================+======+======================================================================+
+   | circuit-id         | 1    | Used when host-reservation-identifiers is set to `circuit-id`.       |
+   +--------------------+------+----------------------------------------------------------------------+
+   | remote-id          | 2    | Can be used with flex-id to identify hosts.                          |
+   +--------------------+------+----------------------------------------------------------------------+
+   | link selection     | 5    | If present, is used to select appropriate subnet.                    |
+   +--------------------+------+----------------------------------------------------------------------+
+   | subscriber-id      | 6    | Can be used with flex-id to identify hosts.                          |
+   +--------------------+------+----------------------------------------------------------------------+
+   | relay-source-port  | 19   | If sent by the relay, Kea will send back its responses to this port. |
+   +--------------------+------+----------------------------------------------------------------------+
+
+All other RAI sub-options can be used in client classification to classify incoming packets to specific classes
+and/or by flex-id to construct unique device identifier.
 
 .. _dhcp4-custom-options:
 
@@ -6345,7 +6371,7 @@ The following standards are currently supported:
 
 -  *BOOTP Vendor Information Extensions*, `RFC
    1497 <https://tools.ietf.org/html/rfc1497>`__: This requires the open
-   source BOOTP hook to be loaded.
+   source BOOTP hook to be loaded. See :ref:`hooks-bootp` for details.
 
 -  *Dynamic Host Configuration Protocol*, `RFC
    2131 <https://tools.ietf.org/html/rfc2131>`__: Supported messages are
@@ -6358,15 +6384,28 @@ The following standards are currently supported:
    Domain Name (15), DNS Servers (6), IP Address Lease Time (51), Subnet
    mask (1), and Routers (3).
 
+-  *The IPv4 Subnet Selection Option for DHCP*, `RFC
+   3011 <https://tools.ietf.org/html/rfc3011>`__: The subnet selection option
+   is supported. If received in a packet, it will be used in the subnet selection
+   process.
+
 -  *DHCP Relay Agent Information Option*, `RFC
-   3046 <https://tools.ietf.org/html/rfc3046>`__: Relay Agent Information
-   option is supported.
+   3046 <https://tools.ietf.org/html/rfc3046>`__: Relay Agent Information,
+   Circuit-id, and Remote-id options are supported.
+
+-  *Link Selection sub-option for the Relay Agent Option*, `RFC 3527
+   <https://tools.ietf.org/html/rfc3527>`__: The link selection sub-option
+   is supported.
 
 -  *Vendor-Identifying Vendor Options for Dynamic Host Configuration
    Protocol version 4*, `RFC
    3925 <https://tools.ietf.org/html/rfc3925>`__: Vendor-Identifying
    Vendor Class and Vendor-Identifying Vendor-Specific Information
    options are supported.
+
+-  *Subscriber-ID Suboption for the DHCP Relay Agent Option*, `RFC
+   3993 <//https://tools.ietf.org/html/rfc3993>`__: The subscriber-id
+   option is supported.
 
 -  *The Dynamic Host Configuration Protocol (DHCP) Client Fully
    Qualified Domain Name (FQDN) Option*, `RFC 4702
@@ -6408,10 +6447,6 @@ are clearly marked as such.
 
 -  BOOTP (`RFC 951 <https://tools.ietf.org/html/rfc951>`__) is not
    supported. This is a design choice; historic BOOTP support is not planned.
-
--  BOOTP with vendor information extensions
-   (`RFC 1497 <https://tools.ietf.org/html/rfc1497>`__) is supported
-   by the BOOTP hooks library; see :ref:`hooks-bootp` for details.
 
 -  On Linux and BSD system families the DHCP messages are sent and
    received over the raw sockets (using LPF and BPF) and all packet
