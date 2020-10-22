@@ -1931,8 +1931,8 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                                         do_fwd, do_rev,
                                         opt_fqdn->getDomainName(),
                                         iaaddr->getAddress().toText(),
-                                        dhcid, 0, iaaddr->getValid()));
-
+                                        dhcid, 0, iaaddr->getValid(),
+                                        ctx.getDdnsParams()->getUseConflictResolution()));
         LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL,
                   DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST).arg(ncr->toText());
 

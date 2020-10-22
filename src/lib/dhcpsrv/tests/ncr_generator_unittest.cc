@@ -41,6 +41,9 @@ public:
     /// @brief Pointer to the lease object used by the tests.
     LeasePtrType lease_;
 
+    /// @brief Pointer to the lease's subnet
+    SubnetPtr subnet_;
+
     /// @brief Constructor.
     NCRGeneratorTest()
         : d2_mgr_(CfgMgr::instance().getD2ClientMgr()), lease_() {
@@ -70,6 +73,8 @@ public:
         disableD2();
         // Base class TearDown.
         ::testing::Test::TearDown();
+
+        CfgMgr::instance().clear();
     }
 
     /// @brief Enables DHCP-DDNS updates.
@@ -133,7 +138,8 @@ public:
                                  const std::string& dhcid,
                                  const uint64_t expires,
                                  const uint16_t len,
-                                 const std::string& fqdn="") {
+                                 const std::string& fqdn="",
+                                 const bool use_conflict_resolution = true) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = CfgMgr::instance().getD2ClientMgr().peekAt(0));
         ASSERT_TRUE(ncr);
@@ -146,6 +152,7 @@ public:
         EXPECT_EQ(expires, ncr->getLeaseExpiresOn());
         EXPECT_EQ(len, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
+        EXPECT_EQ(use_conflict_resolution, ncr->useConflictResolution());
 
         if (!fqdn.empty()) {
            EXPECT_EQ(fqdn, ncr->getFqdn());
@@ -214,7 +221,8 @@ public:
     /// @param fqdn Hostname.
     /// @param exp_dhcid Expected DHCID.
     void testNCR(const NameChangeType chg_type, const bool fwd, const bool rev,
-                 const std::string& fqdn, const std::string exp_dhcid) {
+                 const std::string& fqdn, const std::string exp_dhcid,
+                 const bool conflict_resolution = true) {
         // Queue NCR.
         ASSERT_NO_FATAL_FAILURE(sendNCR(chg_type, fwd, rev, fqdn));
         // Expecting one NCR be generated.
@@ -222,7 +230,7 @@ public:
         // Check the details of the NCR.
         verifyNameChangeRequest(chg_type, rev, fwd, lease_->addr_.toText(), exp_dhcid,
                                 lease_->cltt_ + lease_->valid_lft_,
-                                lease_->valid_lft_);
+                                lease_->valid_lft_, fqdn, conflict_resolution);
     }
 
     /// @brief Test that calling queueNCR for NULL lease doesn't cause
@@ -234,6 +242,7 @@ public:
         ASSERT_NO_FATAL_FAILURE(queueNCR(chg_type, lease_));
         EXPECT_EQ(0, d2_mgr_.getQueueSize());
     }
+
 };
 
 /// @brief Test fixture class implementation for DHCPv6.
@@ -253,8 +262,21 @@ public:
 
     /// @brief Implementation of the method creating DHCPv6 lease instance.
     virtual void initLease() {
+        Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 64, 100, 200, 300, 400));
+        // Normally, this would be set via defaults
+        subnet->setDdnsUseConflictResolution(true);
+
+        Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
+                                IOAddress("2001:db8:1::200")));
+        subnet->addPool(pool);
+        subnet_ = subnet;
+
+        CfgMgr& cfg_mgr = CfgMgr::instance();
+        cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet);
+        cfg_mgr.commit();
+
         lease_.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
-                                duid_, 1234, 501, 502, 1, HWAddrPtr(), 0));
+                                duid_, 1234, 501, 502, subnet_->getID(), HWAddrPtr()));
     }
 };
 
@@ -415,6 +437,24 @@ TEST_F(NCRGenerator6Test, nullLease) {
     }
 }
 
+// Verify that conflict resolution is set correctly by v6 queueNCR()
+TEST_F(NCRGenerator6Test, useConflictResolution) {
+    {
+        SCOPED_TRACE("Subnet flag is false");
+        subnet_->setDdnsUseConflictResolution(false);
+        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
+                "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3D0ECCEA5E0DD71730F392119A",
+                false);
+    }
+    {
+        SCOPED_TRACE("Subnet flag is true");
+        subnet_->setDdnsUseConflictResolution(true);
+        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
+                "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3D0ECCEA5E0DD71730F392119A",
+                true);
+    }
+}
+
 /// @brief Test fixture class implementation for DHCPv4.
 class NCRGenerator4Test : public NCRGeneratorTest<Lease4Ptr> {
 public:
@@ -431,9 +471,24 @@ public:
 
     /// @brief Implementation of the method creating DHCPv4 lease instance.
     virtual void initLease() {
+
+        Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+        // Normally, this would be set via defaults
+        subnet->setDdnsUseConflictResolution(true);
+
+        Pool4Ptr pool(new Pool4(IOAddress("192.0.2.100"),
+                                IOAddress("192.0.2.200")));
+        subnet->addPool(pool);
+
+        CfgMgr& cfg_mgr = CfgMgr::instance();
+        cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet);
+        cfg_mgr.commit();
+
+        subnet_ = subnet;
         lease_.reset(new Lease4(IOAddress("192.0.2.1"), hwaddr_, ClientIdPtr(),
-                                100, time(NULL), 1));
+                                100, time(NULL), subnet_->getID()));
     }
+
 };
 
 // Test creation of the NameChangeRequest for both forward and reverse
@@ -596,6 +651,24 @@ TEST_F(NCRGenerator4Test, nullLease) {
     {
         SCOPED_TRACE("case CHG_ADD");
         testNullLease(CHG_ADD);
+    }
+}
+
+// Verify that conflict resolution is set correctly by v4 queueNCR()
+TEST_F(NCRGenerator4Test, useConflictResolution) {
+    {
+        SCOPED_TRACE("Subnet flag is false");
+        subnet_->setDdnsUseConflictResolution(false);
+        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
+                "000001E356D43E5F0A496D65BCA24D982D646140813E3"
+                "B03AB370BFF46BFA309AE7BFD", false);
+    }
+    {
+        SCOPED_TRACE("Subnet flag is true");
+        subnet_->setDdnsUseConflictResolution(true);
+        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
+                "000001E356D43E5F0A496D65BCA24D982D646140813E3"
+                "B03AB370BFF46BFA309AE7BFD", true);
     }
 }
 

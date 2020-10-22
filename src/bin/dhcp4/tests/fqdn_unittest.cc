@@ -384,6 +384,7 @@ public:
                                               : D2ClientConfig::RCM_NEVER);
         subnet_->setDdnsGeneratedPrefix("myhost");
         subnet_->setDdnsQualifyingSuffix("example.com");
+        subnet_->setDdnsUseConflictResolution(true);
 
         ASSERT_NO_THROW(srv_->startD2());
     }
@@ -756,7 +757,8 @@ public:
                                  const std::string& dhcid,
                                  const time_t cltt,
                                  const uint16_t len,
-                                 const bool not_strict_expire_check = false) {
+                                 const bool not_strict_expire_check = false,
+                                 const bool exp_use_cr = true) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -783,6 +785,7 @@ public:
         }
         EXPECT_EQ(len, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
+        EXPECT_EQ(exp_use_cr, ncr->useConflictResolution());
 
         // Process the message off the queue
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
@@ -1071,6 +1074,27 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNewLease) {
                             "B68B6D438D98E680BF10B09F3BCF",
                             lease->cltt_, 100);
 }
+
+// Verify that conflict resolution is disabled in the NCR when it is
+// disabled for the lease's subnet.
+TEST_F(NameDhcpv4SrvTest, noConflictResolution) {
+    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
+                                  true, true);
+    Lease4Ptr old_lease;
+
+    ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
+    subnet_->setDdnsUseConflictResolution(false);
+
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "192.0.2.3", "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436965"
+                            "B68B6D438D98E680BF10B09F3BCF",
+                            lease->cltt_, 100, false, false);
+}
+
 
 // Verifies that createNameChange request only generates requests
 // if the situation dictates that it should. It checks:

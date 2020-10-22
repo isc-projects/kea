@@ -30,12 +30,15 @@ namespace {
 /// identifier. For DHCPv6 it will be a DUID.
 /// @param label Client identification information in the textual format.
 /// This is used for logging purposes.
+/// @param use_conflict_resolution flag that tells D2 whether or not to
+/// use conflict resolution.
 ///
 /// @tparam LeasePtrType Pointer to a lease.
 /// @tparam IdentifierType HW Address, Client Identifier or DUID.
 template<typename LeasePtrType, typename IdentifierType>
 void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
-                    const IdentifierType& identifier, const std::string& label) {
+                    const IdentifierType& identifier, const std::string& label,
+                    const bool use_conflict_resolution = true) {
 
     // Check if there is a need for update.
     if (lease->hostname_.empty() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)
@@ -44,7 +47,7 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
                   DHCPSRV_QUEUE_NCR_SKIP)
             .arg(label)
             .arg(lease->addr_.toText());
-            
+
         return;
     }
 
@@ -53,13 +56,12 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
         std::vector<uint8_t> hostname_wire;
         OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
         D2Dhcid dhcid = D2Dhcid(identifier, hostname_wire);
-
         // Create name change request.
         NameChangeRequestPtr ncr
             (new NameChangeRequest(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
                                    lease->hostname_, lease->addr_.toText(),
                                    dhcid, lease->cltt_ + lease->valid_lft_,
-                                   lease->valid_lft_));
+                                   lease->valid_lft_, use_conflict_resolution));
 
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA, DHCPSRV_QUEUE_NCR)
             .arg(label)
@@ -85,16 +87,26 @@ namespace dhcp {
 
 void queueNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
     if (lease) {
+        // Figure out from the lease's subnet if we should use conflict resolution.
+        // If there's no subnet, something hinky is going on so we'll set it true.
+        bool use_cr = true;
+        Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()
+                            ->getCfgSubnets4()->getSubnet(lease->subnet_id_);
+        if (subnet) {
+            // We should always have subnet.
+            use_cr = subnet->getDdnsUseConflictResolution();
+        }
+
         // Client id takes precedence over HW address.
         if (lease->client_id_) {
             queueNCRCommon(chg_type, lease, lease->client_id_->getClientId(),
-                           Pkt4::makeLabel(lease->hwaddr_, lease->client_id_));
+                           Pkt4::makeLabel(lease->hwaddr_, lease->client_id_), use_cr);
 
         } else {
             // Client id is not specified for the lease. Use HW address
             // instead.
             queueNCRCommon(chg_type, lease, lease->hwaddr_,
-                           Pkt4::makeLabel(lease->hwaddr_, lease->client_id_));
+                           Pkt4::makeLabel(lease->hwaddr_, lease->client_id_), use_cr);
         }
     }
 }
@@ -102,8 +114,18 @@ void queueNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
 void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
     // DUID is required to generate NCR.
     if (lease && (lease->type_ != Lease::TYPE_PD) && lease->duid_) {
+        // Figure out from the lease's subnet if we should use conflict resolution.
+        // If there's no subnet, something hinky is going on so we'll set it true.
+        bool use_cr = true;
+        Subnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()
+                            ->getCfgSubnets6()->getSubnet(lease->subnet_id_);
+        if (subnet) {
+            // We should always have subnet.
+            use_cr = subnet->getDdnsUseConflictResolution();
+        }
+
         queueNCRCommon(chg_type, lease, *(lease->duid_),
-                       Pkt6::makeLabel(lease->duid_, lease->hwaddr_));
+                       Pkt6::makeLabel(lease->duid_, lease->hwaddr_), use_cr);
     }
 }
 

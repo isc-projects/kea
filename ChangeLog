@@ -1,3 +1,12 @@
+1824.	[func]		tmark
+	Added a new parameter, ddns-use-conflict-resolution, to
+	kea-dhcp4 and kea-dhcp6. This parameter is passed per request
+	to kea-dhcp-ddns which uses it to determine whether or not
+	conflict resolution rules (see RFC 4703) are followed for that
+	request.  The default value is true. Disabling conflict
+	resolution should only be used after careful consideration.
+	(Gitlab #1386)
+
 1823.	[doc]		tomek
 	Updated options documentation for DHCPv4 and DHCPv6.
 	(Gitlab #1436, #1460)

@@ -132,6 +132,7 @@ public:
         subnet_->setDdnsQualifyingSuffix("example.com");
         subnet_->setHostnameCharSet("[^A-Za-z0-9-]");
         subnet_->setHostnameCharReplacement("x");
+        subnet_->setDdnsUseConflictResolution(true);
 
         ASSERT_NO_THROW(srv_->startD2());
     }
@@ -595,13 +596,15 @@ public:
     /// NameChangeRequest.
     /// @param fqdn The expected string value of the FQDN, if blank the
     /// check is skipped
+    /// @param exp_use_cr expected value of NCR::conflict_resolution_
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
                                  const std::string& dhcid,
                                  const uint64_t expires,
                                  const uint16_t len,
-                                 const std::string& fqdn="") {
+                                 const std::string& fqdn = "",
+                                 const bool exp_use_cr = true) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -625,6 +628,7 @@ public:
            EXPECT_EQ(fqdn, ncr->getFqdn());
         }
 
+        EXPECT_EQ(exp_use_cr, ncr->useConflictResolution());
 
         // Process the message off the queue
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
@@ -833,6 +837,39 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 500);
+}
+
+// Verify that conflict resolution is turned off when the
+// subnet has it disabled.
+TEST_F(FqdnDhcpv6SrvTest, noConflictResolution) {
+    // Create Reply message with Client Id and Server id.
+    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
+
+    // Create three IAs, each having different address.
+    addIA(1234, IOAddress("2001:db8:1::1"), answer);
+
+    // Use domain name in upper case. It should be converted to lower-case
+    // before DHCID is calculated. So, we should get the same result as if
+    // we typed domain name in lower-case.
+    Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
+                                                 "MYHOST.EXAMPLE.COM",
+                                                 Option6ClientFqdn::FULL);
+    answer->addOption(fqdn);
+
+    // Create NameChangeRequest for the first allocated address.
+    AllocEngine::ClientContext6 ctx;
+    subnet_->setDdnsUseConflictResolution(false);
+    ctx.subnet_ = subnet_;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    // Verify that NameChangeRequest is correct.
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1::1",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 500, "", false);
 }
 
 // Checks that NameChangeRequests to add entries are not
