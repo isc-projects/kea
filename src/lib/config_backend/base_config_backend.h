@@ -25,7 +25,7 @@ namespace cb {
 /// be implemented (and extended) by respective Kea servers to provide
 /// API to store and fetch configuration information from a database.
 /// Such implementation is called configuration backend. Each
-/// configuration backend faciliates a single database type, e.g. MySQL
+/// configuration backend facilitates a single database type, e.g. MySQL
 /// database. In order to support multiple database types, i.e. MySQL,
 /// Postgres, Cassandra, each Kea server will have to implement
 /// 3 separate configuration backends, one for each database type.

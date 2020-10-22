@@ -55,7 +55,7 @@ namespace process {
 /// and then committed, and in the second case it has to be directly merged
 /// into the running configuration.
 ///
-/// This class contains some common logic to faciliate both scenarios which
+/// This class contains some common logic to facilitate both scenarios which
 /// will be used by all server types. It also contains some pure virtual
 /// methods to be implemented by specific servers. The common logic includes
 /// the following operations:
