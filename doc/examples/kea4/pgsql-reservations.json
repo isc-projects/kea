@@ -59,6 +59,8 @@
   "hosts-databases": [
     {
        "type": "postgresql",
+       "reconnect-wait-time": 100,
+       "max-reconnect-tries": 3,
        "name": "kea",
        "user": "kea",
        "password": "kea",

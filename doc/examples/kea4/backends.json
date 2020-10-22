@@ -40,6 +40,8 @@
 //      "port": 3306,
 //      "user": "keatest",
 //      "password": "secret1",
+//      "reconnect-wait-time": 100,
+//      "max-reconnect-tries": 3,
 //      "connect-timeout": 3
 //  },
 
@@ -57,6 +59,8 @@
 //      "port": 5432,
 //      "user": "keatest",
 //      "password": "secret1",
+//      "reconnect-wait-time": 100,
+//      "max-reconnect-tries": 3,
 //      "connect-timeout": 3
 //  },
 
