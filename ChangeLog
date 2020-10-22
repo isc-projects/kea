@@ -1,3 +1,7 @@
+1819.	[func]		fdupont
+	Improved error messages for bad escapes in JSON strings.
+	(Gitlab #151)
+
 1818.	[doc]		andrei
 	Add to the reservation documentation:
 	* instructions on how to choose "reservation-mode"
