@@ -1,5 +1,6 @@
 1821.	[func]		anonymous, fdupont
-	The forensic log hook library now logs release and decline events.
+	The forensic log hook library now logs release and decline
+	events.
 	(Gitlab #1445)
 
 1820.	[bug]		razvan
