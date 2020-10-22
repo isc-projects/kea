@@ -230,7 +230,7 @@ To create the database:
     using the kea-admin tool as it performs some necessary validations to ensure Kea can
     access the database at runtime.  Among those checks is that the schema does not contain
     any pre-existing tables.  If there are any pre-existing tables they must be removed
-    manually. An additional check examines the user's ability to create functions and
+    manually.  An additional check examines the user's ability to create functions and
     triggers. The following error indicates that the user does not have the necessary
     permissions to create functions or triggers:
 
