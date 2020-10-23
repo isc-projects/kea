@@ -1,5 +1,5 @@
 1823.	[doc]		tomek
-    Updated options documentation for DHCPv4 and DHCPv6.
+	Updated options documentation for DHCPv4 and DHCPv6.
 	(Gitlab #1436, #1460)
 
 1822.	[func]		fdupont
