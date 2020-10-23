@@ -93,6 +93,15 @@
                            clients and servers
       */
       // Type: uint32
+      // The vendor options are not standardized and are specific to each
+      // vendor. The vendors are identified with the enterprise number,
+      // sometimes also called vendor-id or enterprise-id. For example,
+      // CableLabs that specified DOCSIS options, use 4491. Some vendors
+      // have their own mechanisms. For example, DOCSIS vendor sub-option 1
+      // is an equivalent of ORO for normal DHCPv6 options. Usually there
+      // are several vendor sub-options defined within. See the ARM section:
+      // https://kea.readthedocs.io/en/latest/arm/dhcp6-srv.html#dhcpv6-vendor-specific-options
+
       {
         "code": 17,
         "data": "4294967295",
