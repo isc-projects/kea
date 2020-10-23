@@ -1,3 +1,8 @@
+1826.	[build]		razvan
+	Library version numbers bumped for Kea 1.9.1 development
+	version.
+	(Gitlab #1481)
+
 1825.	[doc]		andrei
 	Examples for option definitions, option data, standardized option
 	spaces other than "dhcp[46]", custom option spaces, option
