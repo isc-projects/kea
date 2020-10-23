@@ -37,7 +37,7 @@ do so quickly due to lack of hardware, less familiarity on the part of
 engineering staff, and other constraints.
 
 * FreeBSD — 11.3, 12.0
-* Alpine Linux — 3.10, 3.11
+* Alpine Linux — 3.10, 3.11, 3.12
 * macOS — 10.13, 10.14
 
 Community maintained
