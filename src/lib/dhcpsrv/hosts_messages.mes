@@ -146,25 +146,6 @@ description of the host found.
 This debug message is issued when starting to retrieve all hosts connected to
 the specific DHCPv4 subnet. The argument specifies subnet id.
 
-% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4 get all hosts with reservations for subnet id %1 and IPv4 address %2
-This debug message is issued when starting to retrieve all hosts having
-the reservation for the given IPv4 address within the given subnet. The
-first argument specifies subnet identifier. The second argument specifies
-the IPv4 address for which the reservation is to be returned.
-
-% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT using IPv4 subnet %1 and IPv4 address %2, found %3 host(s)
-This debug message logs the number of hosts found having the reservation
-for the specified IPv4 address within the specified subnet. The first
-argument specifies the subnet identifier. The second argument specifies
-the reserved IPv4 address. The third argument specifies the number of
-hosts found.
-
-% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST using IPv4 subnet %1 and IPv4 address %2, found host: %3
-This debug message is issued when found host having the reservation for
-the specified IPv4 address in the specified subnet.  The first argument
-specifies the subnet identifier. The second argument specifies the reserved
-IPv4 address. The third argument specifies host details.
-
 % HOSTS_CFG_GET_ALL_SUBNET_ID4_COUNT using IPv4 subnet %1, found %2 host(s)
 This debug message include the details of the host found using the DHCPv4
 subnet id. The arguments specify subnet id and the number of hosts found
@@ -186,6 +167,25 @@ respectively.
 % HOSTS_CFG_GET_ALL_SUBNET_ID6_HOST using IPv6 subnet %1, found host: %2
 This debug message includes the details of the host found using the DHCPv6
 subnet id. The arguments specify subnet id and found host details respectively.
+
+% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4 get all hosts with reservations for subnet id %1 and IPv4 address %2
+This debug message is issued when starting to retrieve all hosts having
+the reservation for the given IPv4 address within the given subnet. The
+first argument specifies subnet identifier. The second argument specifies
+the IPv4 address for which the reservation is to be returned.
+
+% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT using IPv4 subnet %1 and IPv4 address %2, found %3 host(s)
+This debug message logs the number of hosts found having the reservation
+for the specified IPv4 address within the specified subnet. The first
+argument specifies the subnet identifier. The second argument specifies
+the reserved IPv4 address. The third argument specifies the number of
+hosts found.
+
+% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST using IPv4 subnet %1 and IPv4 address %2, found host: %3
+This debug message is issued when found host having the reservation for
+the specified IPv4 address in the specified subnet.  The first argument
+specifies the subnet identifier. The second argument specifies the reserved
+IPv4 address. The third argument specifies host details.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6 get all hosts with reservations for subnet id %1 and IPv6 address %2
 This debug message is issued when starting to retrieve all hosts connected to
