@@ -59,7 +59,7 @@
   "hosts-databases": [
     {
        "type": "postgresql",
-       "reconnect-wait-time": 2000,
+       "reconnect-wait-time": 3000, // expressed in ms
        "max-reconnect-tries": 3,
        "name": "kea",
        "user": "kea",

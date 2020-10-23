@@ -350,7 +350,10 @@
                 "serial-consistency": "serial",
 
                 // Connection reconnect wait time.
-                "reconnect-wait-time": 2000,
+                // This parameter governs how long Kea waits before attempting
+                // to reconnect. Expressed in milliseconds. The default is 2000 [ms]
+                // for Casandra and 0 (disabled) for MySQL and PostgreSQL.
+                "reconnect-wait-time": 3000,
 
                 // Connection maximum reconnect tries.
                 "max-reconnect-tries": 3,
