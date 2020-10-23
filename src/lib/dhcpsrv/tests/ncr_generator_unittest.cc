@@ -220,9 +220,10 @@ public:
     /// @param rev Perform reverse update.
     /// @param fqdn Hostname.
     /// @param exp_dhcid Expected DHCID.
+    /// @param exp_use_cr expected value of conflict resolution flag
     void testNCR(const NameChangeType chg_type, const bool fwd, const bool rev,
                  const std::string& fqdn, const std::string exp_dhcid,
-                 const bool conflict_resolution = true) {
+                 const bool exp_use_cr = true) {
         // Queue NCR.
         ASSERT_NO_FATAL_FAILURE(sendNCR(chg_type, fwd, rev, fqdn));
         // Expecting one NCR be generated.
@@ -230,7 +231,7 @@ public:
         // Check the details of the NCR.
         verifyNameChangeRequest(chg_type, rev, fwd, lease_->addr_.toText(), exp_dhcid,
                                 lease_->cltt_ + lease_->valid_lft_,
-                                lease_->valid_lft_, fqdn, conflict_resolution);
+                                lease_->valid_lft_, fqdn, exp_use_cr);
     }
 
     /// @brief Test that calling queueNCR for NULL lease doesn't cause
@@ -242,7 +243,6 @@ public:
         ASSERT_NO_FATAL_FAILURE(queueNCR(chg_type, lease_));
         EXPECT_EQ(0, d2_mgr_.getQueueSize());
     }
-
 };
 
 /// @brief Test fixture class implementation for DHCPv6.
