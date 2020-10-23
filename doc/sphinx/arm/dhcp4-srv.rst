@@ -6395,7 +6395,7 @@ The following standards are currently supported:
    options are supported.
 
 -  *Subscriber-ID Suboption for the DHCP Relay Agent Option*, `RFC
-   3993 <//https://tools.ietf.org/html/rfc3993>`__: The subscriber-id
+   3993 <https://tools.ietf.org/html/rfc3993>`__: The subscriber-id
    option is supported.
 
 -  *The Dynamic Host Configuration Protocol (DHCP) Client Fully
