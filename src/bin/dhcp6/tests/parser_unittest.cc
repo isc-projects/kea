@@ -273,6 +273,7 @@ TEST(ParserTest, file) {
     vector<string> configs;
     configs.push_back("advanced.json");
     configs.push_back("all-keys.json");
+    configs.push_back("all-options.json");
     configs.push_back("backends.json");
     configs.push_back("cassandra.json");
     configs.push_back("classify.json");

@@ -268,6 +268,7 @@ void testFile(const std::string& fname) {
 TEST(ParserTest, file) {
     vector<string> configs = { "advanced.json" ,
                                "all-keys.json",
+                               "all-options.json",
                                "backends.json",
                                "cassandra.json",
                                "classify.json",
