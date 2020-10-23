@@ -44,7 +44,7 @@
 // from this database.
   "hosts-database": {
     "type": "mysql",
-    "reconnect-wait-time": 100,
+    "reconnect-wait-time": 2000,
     "max-reconnect-tries": 3,
     "name": "kea",
     "user": "kea",

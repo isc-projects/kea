@@ -350,7 +350,7 @@
                 "serial-consistency": "serial",
 
                 // Connection reconnect wait time.
-                "reconnect-wait-time": 100,
+                "reconnect-wait-time": 2000,
 
                 // Connection maximum reconnect tries.
                 "max-reconnect-tries": 3,
