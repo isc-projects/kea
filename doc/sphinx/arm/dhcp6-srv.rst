@@ -1560,12 +1560,12 @@ returned by the Kea engine itself and in general should not be configured manual
    | server-id    | 2    | sent by clients to request action from specific server and by the      |
    |              |      | server to identify itself. See :ref:`dhcp6-serverid` for details.      |
    +--------------+------+------------------------------------------------------------------------+
-   | ia-na        | 3    | a container option that conveys IPv6 addresses (`iaddr` options). Kea  |
+   | ia-na        | 3    | a container option that conveys IPv6 addresses (``iaddr`` options). Kea|
    |              |      | receives and sends those options using its allocation engine.          |
    +--------------+------+------------------------------------------------------------------------+
    | ia-ta        | 4    | conveys temporary addresses. Deprecated feature, not supported.        |
    +--------------+------+------------------------------------------------------------------------+
-   | iaaddr       | 5    | conveys addresses with lifetimes in ia-na and ia-ta options.           |
+   | iaaddr       | 5    | conveys addresses with lifetimes in ``ia-na`` and ``ia-ta`` options.   |
    +--------------+------+------------------------------------------------------------------------+
    | oro          | 6    | ORO (or Option Request Option) is used by the clients to request a list|
    |              |      | of options they are interested in. Kea supports it and will send the   |
@@ -1585,14 +1585,14 @@ returned by the Kea engine itself and in general should not be configured manual
    | status-code  | 13   | an option that the server can attach in case of various failures, such |
    |              |      | as running out of addresses or not being configured to assign prefixes.|
    +--------------+------+------------------------------------------------------------------------+
-   | rapid-commit | 14   | used to signal client's willingness to support rapid-commit and        |
+   | rapid-commit | 14   | used to signal client's willingness to support ``rapid-commit`` and    |
    |              |      | server's acceptance for this configuration. See                        |
    |              |      | :ref:`dhcp6-rapid-commit` for details.                                 |
    +--------------+------+------------------------------------------------------------------------+
    | user-class   | 15   | sent by the client to self-identify what kind of device type it is. Kea|
    |              |      | can use this for client classification.                                |
    +--------------+------+------------------------------------------------------------------------+
-   | vendor-class | 16   | similar to user-class, but it is vendor specific.                      |
+   | vendor-class | 16   | similar to ``user-class``, but it is vendor specific.                  |
    +--------------+------+------------------------------------------------------------------------+
    | vendor-opts  | 17   | a vendor specific container that is used by both the client and the    |
    |              |      | server to exchange vendor specific options. The logic behind those     |
@@ -1608,7 +1608,7 @@ returned by the Kea engine itself and in general should not be configured manual
    | ia-pd        | 25   | a container for conveying PD (Prefix Delegation) that are being        |
    |              |      | delegated to clients. See :ref:`dhcp6-prefix-config` for details.      |
    +--------------+------+------------------------------------------------------------------------+
-   | iaprefix     | 26   | conveys IPv6 prefix in `ia-pd` option. See :ref:`dhcp6-prefix-config`  |
+   | iaprefix     | 26   | conveys IPv6 prefix in ``ia-pd`` option. See :ref:`dhcp6-prefix-config`|
    |              |      | for details.                                                           |
    +--------------+------+------------------------------------------------------------------------+
 
