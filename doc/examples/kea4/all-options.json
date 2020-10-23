@@ -17,20 +17,6 @@
     // Option data defined globally
     "option-data": [
       /*
-       Code   Len        Subnet Mask
-      +-----+-----+-----+-----+-----+-----+
-      |  1  |  4  |  m1 |  m2 |  m3 |  m4 |
-      +-----+-----+-----+-----+-----+-----+
-      */
-      // Note: not commonly configured in Kea
-      // Type: IPv4 address
-      {
-        "code": 1,
-        "data": "192.0.2.1",
-        "name": "subnet-mask"
-      },
-
-      /*
        Code   Len        Time Offset
       +-----+-----+-----+-----+-----+-----+
       |  2  |  4  |  n1 |  n2 |  n3 |  n4 |
@@ -158,20 +144,6 @@
         "code": 11,
         "data": "192.0.2.18, 192.0.2.19",
         "name": "resource-location-servers"
-      },
-
-      /*
-       Code   Len                 Host Name
-      +-----+-----+-----+-----+-----+-----+-----+-----+--
-      |  12 |  n  |  h1 |  h2 |  h3 |  h4 |  h5 |  h6 |  ...
-      +-----+-----+-----+-----+-----+-----+-----+-----+--
-      */
-      // Note: not commonly configured in Kea
-      // Type: string
-      {
-        "code": 12,
-        "data": "my-hostname",
-        "name": "host-name"
       },
 
       /*
@@ -675,34 +647,6 @@
       },
 
       /*
-       Code   Len          Address
-      +-----+-----+-----+-----+-----+-----+
-      |  50 |  4  |  a1 |  a2 |  a3 |  a4 |
-      +-----+-----+-----+-----+-----+-----+
-      */
-      // Note: not commonly configured in Kea
-      // Type: IPv4 address
-      {
-        "code": 50,
-        "data": "192.0.2.38",
-        "name": "dhcp-requested-address"
-      },
-
-      /*
-       Code   Len         Lease Time
-      +-----+-----+-----+-----+-----+-----+
-      |  51 |  4  |  t1 |  t2 |  t3 |  t4 |
-      +-----+-----+-----+-----+-----+-----+
-      */
-      // Note: not commonly configured in Kea
-      // Type: uint32
-      {
-        "code": 51,
-        "data": "86400",
-        "name": "dhcp-lease-time"
-      },
-
-      /*
       Value   Meaning
       -----   --------
         1     the 'file' field is used to hold options
@@ -722,31 +666,6 @@
       },
 
       /*
-      Value   Message Type
-      -----   ------------
-        1     DHCPDISCOVER
-        2     DHCPOFFER
-        3     DHCPREQUEST
-        4     DHCPDECLINE
-        5     DHCPACK
-        6     DHCPNAK
-        7     DHCPRELEASE
-        8     DHCPINFORM
-
-       Code   Len  Type
-      +-----+-----+-----+
-      |  53 |  1  | 1-9 |
-      +-----+-----+-----+
-      */
-      // Note: not commonly configured in Kea
-      // Type: string
-      {
-        "code": 53,
-        "data": "2",
-        "name": "dhcp-message-type"
-      },
-
-      /*
        Code   Len            Address
       +-----+-----+-----+-----+-----+-----+
       |  54 |  4  |  a1 |  a2 |  a3 |  a4 |
@@ -757,20 +676,6 @@
         "code": 54,
         "data": "192.0.2.39",
         "name": "dhcp-server-identifier"
-      },
-
-      /*
-       Code   Len   Option Codes
-      +-----+-----+-----+-----+---
-      |  55 |  n  |  c1 |  c2 | ...
-      +-----+-----+-----+-----+---
-      */
-      // Note: not commonly configured in Kea
-      // Type: array of {uint8}
-      {
-        "code": 55,
-        "data": "32, 42",
-        "name": "dhcp-parameter-request-list"
       },
 
       /*
@@ -800,34 +705,6 @@
       },
 
       /*
-       Code   Len         T1 Interval
-      +-----+-----+-----+-----+-----+-----+
-      |  58 |  4  |  t1 |  t2 |  t3 |  t4 |
-      +-----+-----+-----+-----+-----+-----+
-      */
-      // Note: not commonly configured in Kea
-      // Type: uint32
-      {
-        "code": 58,
-        "data": "7200",
-        "name": "dhcp-renewal-time"
-      },
-
-      /*
-       Code   Len         T2 Interval
-      +-----+-----+-----+-----+-----+-----+
-      |  59 |  4  |  t1 |  t2 |  t3 |  t4 |
-      +-----+-----+-----+-----+-----+-----+
-      */
-      // Note: not commonly configured in Kea
-      // Type: uint32
-      {
-        "code": 59,
-        "data": "14400",
-        "name": "dhcp-rebinding-time"
-      },
-
-      /*
        Code   Len   Vendor class Identifier
       +-----+-----+-----+-----+---
       |  60 |  n  |  i1 |  i2 | ...
@@ -838,20 +715,6 @@
         "code": 60,
         "data": "ISC",
         "name": "vendor-class-identifier"
-      },
-
-      /*
-        Code Len  Type  IAID                DUID
-       +----+----+-----+----+----+----+----+----+----+---
-       | 61 | n  | 255 | i1 | i2 | i3 | i4 | d1 | d2 |...
-       +----+----+-----+----+----+----+----+----+----+---
-      */
-      // Note: not commonly configured in Kea
-      // Type: binary
-      {
-        "code": 61,
-        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
-        "name": "dhcp-client-identifier"
       },
 
       /*
@@ -1106,43 +969,6 @@
       },
 
       // Option code 80 is not defined in Kea.
-
-      /*
-       Code   Len    Flags  RCODE1 RCODE2   Domain Name
-      +------+------+------+------+------+------+--
-      |  81  |   n  |      |      |      |       ...
-      +------+------+------+------+------+------+--
-      */
-      // Note: not commonly configured in Kea
-      // Type: uint8, uint8, uint8, FQDN
-      {
-        "code": 81,
-        "data": "4, 5, 7, my.example.org",
-        "name": "fqdn"
-      },
-
-      /*
-       Code   Len     Agent Information Field
-      +------+------+------+------+------+------+--...-+------+
-      |  82  |   N  |  i1  |  i2  |  i3  |  i4  |      |  iN  |
-      +------+------+------+------+------+------+--...-+------+
-
-       SubOpt  Len     Sub-option Value
-      +------+------+------+------+------+------+--...-+------+
-      |  1   |   N  |  s1  |  s2  |  s3  |  s4  |      |  sN  |
-      +------+------+------+------+------+------+--...-+------+
-       SubOpt  Len     Sub-option Value
-      +------+------+------+------+------+------+--...-+------+
-      |  2   |   N  |  i1  |  i2  |  i3  |  i4  |      |  iN  |
-      +------+------+------+------+------+------+--...-+------+
-      */
-      // Note: not commonly configured in Kea
-      // Type: empty
-      {
-        "code": 82,
-        "name": "dhcp-agent-options"
-      },
-
       // Option code 83 is not defined in Kea.
       // Option code 84 is unassigned.
 
@@ -1209,59 +1035,6 @@
         "code": 89,
         "data": "192.0.2.63",
         "name": "bcms-controller-address"
-      },
-
-      /*
-      0                   1                   2                   3
-      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |     Code      |    Length     |  Protocol     |   Algorithm   |
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |     RDM       | Replay Detection (64 bits)                    |
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |  Replay cont.                                                 |
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |  Replay cont. |                                               |
-      +-+-+-+-+-+-+-+-+                                               |
-      |                                                               |
-      |           Authentication Information                          |
-      |                                                               |
-      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      */
-      // Note: not commonly configured in Kea
-      // Type: binary
-      {
-        "code": 90,
-        "data": "1A BB AD AB BA D0 00 00 00 00 00 00 00 00 CA FE",
-        "name": "authenticate"
-      },
-
-      /*
-       Code   Len      Seconds in the past
-      +-----+-----+-----+-----+-----+-----+
-      |  91 |  4  |  t1 |  t2 |  t3 |  t4 |
-      +-----+-----+-----+-----+-----+-----+
-      */
-      // Note: not commonly configured in Kea
-      // Type: uint32
-      {
-        "code": 91,
-        "data": "360",
-        "name": "client-last-transaction-time"
-      },
-
-      /*
-       Code   Len         Address 1               Address 2
-      +-----+-----+-----+-----+-----+-----+-----+-----+--
-      |  92 |  n  |  a1 |  a2 |  a3 |  a4 |  a1 |  a2 |  ...
-      +-----+-----+-----+-----+-----+-----+-----+-----+--
-      */
-      // Note: not commonly configured in Kea
-      // Type: array of {IPv4 address}
-      {
-        "code": 92,
-        "data": "192.0.2.64, 192.0.2.65",
-        "name": "associated-ip"
       },
 
       /*
