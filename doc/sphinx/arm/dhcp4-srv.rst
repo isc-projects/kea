@@ -1813,8 +1813,7 @@ returned by the Kea engine itself and in general should not be configured manual
    | dhcp-agent-options             | 82    | empty                                 | sent by the relay agent. It's an empty container option, see      |
    |                                |       |                                       | RAI option detail in later part of this section.                  |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | authenticate                   | 90    | binary                                | sent by client, validated by server, sent encoded back to client  |
-   |                                |       |                                       | with the same secret for validation                               |
+   | authenticate                   | 90    | binary                                | sent by client, kea does not validate it yet.                     |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | client-last-transaction-time   | 91    | uint32                                | sent by client, server does not set it                            |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
