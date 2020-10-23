@@ -1552,70 +1552,65 @@ returned by the Kea engine itself and in general should not be configured manual
 
 .. table:: List of standard DHCPv6 options managed by Kea on its own and not directly configurable by an administrator
 
-   +--------------------------+-----------------+-----------------+
-   | Name                     | Code            | Type            |
-   +==========================+=================+=================+
-   | clientid                 | 1               | binary          |
-   +--------------------------+-----------------+-----------------+
-   | serverid                 | 2               | binary          |
-   +--------------------------+-----------------+-----------------+
-   | ia-na                    | 3               | record          |
-   +--------------------------+-----------------+-----------------+
-   | ia-ta                    | 4               | record          |
-   +--------------------------+-----------------+-----------------+
-   | iaaddr                   | 5               | record          |
-   +--------------------------+-----------------+-----------------+
-   | oro                      | 6               | uint16 array    |
-   +--------------------------+-----------------+-----------------+
-   | elapsed-time             | 8               | uint16          |
-   +--------------------------+-----------------+-----------------+
-   | relay-msg                | 9               | record          |
-   +--------------------------+-----------------+-----------------+
-   | auth                     | 10              | record          |
-   +--------------------------+-----------------+-----------------+
-   | status-code              | 13              | record          |
-   +--------------------------+-----------------+-----------------+
-   | rapid-commit             | 14              | empty           |
-   +--------------------------+-----------------+-----------------+
-   | user-class               | 15              | string          |
-   +--------------------------+-----------------+-----------------+
-   | vendor-class             | 16              | record          |
-   +--------------------------+-----------------+-----------------+
-   | vendor-opts              | 17              | uint32          |
-   +--------------------------+-----------------+-----------------+
-   | interface-id             | 18              | binary          |
-   +--------------------------+-----------------+-----------------+
-   | ia-pd                    | 25              | record          |
-   +--------------------------+-----------------+-----------------+
-   | iaaddr                   | 26              | record          |
-   +--------------------------+-----------------+-----------------+
-   
-`client-id` option is being sent by the client and Kea uses it to distinguish between clients.
-`server-id` option is sent by clients to request action from specific server and by the server
-to identify itself. See :ref:`dhcp6-serverid` for details. `IA_NA` is a container option
-that conveys IPv6 addresses (`iaddr` options). Kea receives and sends those options
-automatically using its allocation engine. The `IA_TA` option is for conveying temporary
-addresses. This is a deprecated feature and Kea does not support it. `ORO` (or Option Request 
-Option) is used by the clients to request a list of options they are interested in. Kea supports
-it and will send the requested options back if configured with required options. `Elapsed-time`
-option is sent by the clients to identify how long they're trying to obtain a configuration.
-Kea uses high values sent by clients as an indicator that something is wrong and this is
-one of the aspects used in HA to determine if the partner is healthy or not. `Relay-msg` option
-is used by relays to encapsulate the original message. Kea uses it when sending back relayed responses.
-`Auth` is an option used to pass authentication information between clients and server. The
-support for this option is very limited. `Status-code` is an option that the server can attach
-in case of various failures, such as running out of addresses or not being configured to assign
-prefixes. `rapid-commit` option is used to signal client's willingness to support rapid-commit
-and server's acceptance for this configuration. See :ref:`dhcp6-rapid-commit` for details.
-`User-class` and `vendor-class` options are sent by the client to self-identify what kind of device type it is. Kea
-can use this for client classification. `Vendor-opts` is a vendor specific container that is
-used by both the client and the server to exchange vendor specific options. The logic behind
-those options vary between vendors. The vendor options are explained in :ref:`dhcp6-vendor-opts`.
-`Interface-id` option may be inserted by the relay agent to identify the interface that the original
-client message was received on. Kea may be told to use this information to select specific
-subnets. Also, if specified, Kea will echo this option back, so the relay will know which
-interface to use to reach the client. `ia-pd` is a container for conveying PD (Prefix Delegation)
-that are being delegated to clients. See :ref:`dhcp6-prefix-config` for details.
+   +--------------+------+------------------------------------------------------------------------+
+   | Name         | Code | Description                                                            |
+   +==============+======+========================================================================+
+   | client-id    | 1    | sent by the client and Kea uses it to distinguish between clients.     |
+   +--------------+------+------------------------------------------------------------------------+
+   | server-id    | 2    | sent by clients to request action from specific server and by the      |
+   |              |      | server to identify itself. See :ref:`dhcp6-serverid` for details.      |
+   +--------------+------+------------------------------------------------------------------------+
+   | ia-na        | 3    | a container option that conveys IPv6 addresses (`iaddr` options). Kea  |
+   |              |      | receives and sends those options using its allocation engine.          |
+   +--------------+------+------------------------------------------------------------------------+
+   | ia-ta        | 4    | conveys temporary addresses. Deprecated feature, not supported.        |
+   +--------------+------+------------------------------------------------------------------------+
+   | iaaddr       | 5    | conveys addresses with lifetimes in ia-na and ia-ta options.           |
+   +--------------+------+------------------------------------------------------------------------+
+   | oro          | 6    | ORO (or Option Request Option) is used by the clients to request a list|
+   |              |      | of options they are interested in. Kea supports it and will send the   |
+   |              |      | requested options back if configured with required options.            |
+   +--------------+------+------------------------------------------------------------------------+
+   | elapsed-time | 8    | sent by the clients to identify how long they're trying to obtain a    |
+   |              |      | configuration. Kea uses high values sent by clients as an indicator    |
+   |              |      | that something is wrong and this is one of the aspects used in HA to   |
+   |              |      | determine if the partner is healthy or not.                            |
+   +--------------+------+------------------------------------------------------------------------+
+   | relay-msg    | 9    | used by relays to encapsulate the original client message. Kea uses it |
+   |              |      | when sending back relayed responses to the relay agent.                |
+   +--------------+------+------------------------------------------------------------------------+
+   | auth         | 10   | used to pass authentication information between clients and server. The|
+   |              |      | support for this option is very limited.                               |
+   +--------------+------+------------------------------------------------------------------------+
+   | status-code  | 13   | an option that the server can attach in case of various failures, such |
+   |              |      | as running out of addresses or not being configured to assign prefixes.|
+   +--------------+------+------------------------------------------------------------------------+
+   | rapid-commit | 14   | used to signal client's willingness to support rapid-commit and        |
+   |              |      | server's acceptance for this configuration. See                        |
+   |              |      | :ref:`dhcp6-rapid-commit` for details.                                 |
+   +--------------+------+------------------------------------------------------------------------+
+   | user-class   | 15   | sent by the client to self-identify what kind of device type it is. Kea|
+   |              |      | can use this for client classification.                                |
+   +--------------+------+------------------------------------------------------------------------+
+   | vendor-class | 16   | similar to user-class, but it is vendor specific.                      |
+   +--------------+------+------------------------------------------------------------------------+
+   | vendor-opts  | 17   | a vendor specific container that is used by both the client and the    |
+   |              |      | server to exchange vendor specific options. The logic behind those     |
+   |              |      | options vary between vendors. The vendor options are explained in      |
+   |              |      | :ref:`dhcp6-vendor-opts`.                                              |
+   +--------------+------+------------------------------------------------------------------------+
+   | interface-id | 18   | may be inserted by the relay agent to identify the interface that the  |
+   |              |      | original client message was received on. Kea may be told to use this   |
+   |              |      | information to select specific subnets. Also, if specified, Kea will   |
+   |              |      | echo this option back, so the relay will know which interface to use to|
+   |              |      | reach the client.                                                      |
+   +--------------+------+------------------------------------------------------------------------+
+   | ia-pd        | 25   | a container for conveying PD (Prefix Delegation) that are being        |
+   |              |      | delegated to clients. See :ref:`dhcp6-prefix-config` for details.      |
+   +--------------+------+------------------------------------------------------------------------+
+   | iaprefix     | 26   | conveys IPv6 prefix in `ia-pd` option. See :ref:`dhcp6-prefix-config`  |
+   |              |      | for details.                                                           |
+   +--------------+------+------------------------------------------------------------------------+
 
 .. _s46-options:
 
