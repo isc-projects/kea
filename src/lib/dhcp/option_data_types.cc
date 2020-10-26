@@ -236,7 +236,7 @@ OptionDataTypeUtil::writeTuple(const std::string& value,
         if (value.size() > std::numeric_limits<uint8_t>::max()) {
             isc_throw(BadDataTypeCast, "invalid tuple value (size "
                       << value.size() << " larger than "
-                      << std::numeric_limits<uint8_t>::max() << ")");
+                      << +std::numeric_limits<uint8_t>::max() << ")");
         }
         buf.push_back(static_cast<uint8_t>(value.size()));
 
@@ -267,7 +267,7 @@ OptionDataTypeUtil::writeTuple(const OpaqueDataTuple& tuple,
         if (tuple.getLength() > std::numeric_limits<uint8_t>::max()) {
             isc_throw(BadDataTypeCast, "invalid tuple value (size "
                       << tuple.getLength() << " larger than "
-                      << std::numeric_limits<uint8_t>::max() << ")");
+                      << +std::numeric_limits<uint8_t>::max() << ")");
         }
         buf.push_back(static_cast<uint8_t>(tuple.getLength()));
 

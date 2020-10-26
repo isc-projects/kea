@@ -603,9 +603,9 @@ OptionDefinition::lexicalCastWithRangeCheck(const std::string& value_str)
             result < numeric_limits<T>::min()) {
             isc_throw(BadDataTypeCast, "unable to convert '"
                       << value_str << "' to numeric type. This value is "
-                      " expected to be in the range of "
-                      << numeric_limits<T>::min()
-                      << ".." << numeric_limits<T>::max());
+                         "expected to be in the range of "
+                      << +numeric_limits<T>::min() << ".."
+                      << +numeric_limits<T>::max());
         }
     }
     return (static_cast<T>(result));
