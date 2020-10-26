@@ -221,9 +221,9 @@ HttpMessageParserBase::getNextFromBuffer(std::string& bytes, const size_t limit)
 
 void
 HttpMessageParserBase::invalidEventError(const std::string& handler_name,
-                                     const unsigned int event) {
-    isc_throw(HttpParseError, handler_name << ": "
-              << " invalid event " << getEventLabel(static_cast<int>(event)));
+                                         const unsigned int event) {
+    isc_throw(HttpParseError, handler_name << ": invalid event "
+              << getEventLabel(static_cast<int>(event)));
 }
 
 void

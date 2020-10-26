@@ -193,8 +193,9 @@ DbAccessParser::parse(std::string& access_string,
     // Check that the max-reconnect-tries is reasonable.
     if (max_reconnect_tries < 0) {
         ConstElementPtr value = database_config->get("max-reconnect-tries");
-        isc_throw(DbConfigError, "max-reconnect-tries cannot be less than zero: "
-                  << " (" << value->getPosition() << ")");
+        isc_throw(DbConfigError,
+                  "max-reconnect-tries cannot be less than zero: ("
+                      << value->getPosition() << ")");
     }
 
     // Check that the reconnect-wait-time is reasonable.
@@ -203,7 +204,7 @@ DbAccessParser::parse(std::string& access_string,
         ConstElementPtr value = database_config->get("reconnect-wait-time");
         isc_throw(DbConfigError, "reconnect-wait-time " << reconnect_wait_time
                   << " must be in range 0...MAX_UINT32 (4294967295) "
-                  << " (" << value->getPosition() << ")");
+                  << "(" << value->getPosition() << ")");
     }
 
     // Check that request_timeout value makes sense.
@@ -212,7 +213,7 @@ DbAccessParser::parse(std::string& access_string,
         ConstElementPtr value = database_config->get("request-timeout");
         isc_throw(DbConfigError, "request-timeout " << request_timeout
                   << " must be in range 0...MAX_UINT32 (4294967295) "
-                  << " (" << value->getPosition() << ")");
+                  << "(" << value->getPosition() << ")");
     }
 
     if ((reconnect_wait_time < 0) ||
@@ -220,7 +221,7 @@ DbAccessParser::parse(std::string& access_string,
         ConstElementPtr value = database_config->get("reconnect-wait-time");
         isc_throw(DbConfigError, "reconnect-wait-time " << reconnect_wait_time
                   << " must be in range 0...MAX_UINT32 (4294967295) "
-                  << " (" << value->getPosition() << ")");
+                  << "(" << value->getPosition() << ")");
     }
 
     // Check that tcp_keepalive value makes sense.
@@ -229,7 +230,7 @@ DbAccessParser::parse(std::string& access_string,
         ConstElementPtr value = database_config->get("tcp-keepalive");
         isc_throw(DbConfigError, "tcp-keepalive " << tcp_keepalive
                   << " must be in range 0...MAX_UINT32 (4294967295) "
-                  << " (" << value->getPosition() << ")");
+                  << "(" << value->getPosition() << ")");
     }
 
     // 4. If all is OK, update the stored keyword/value pairs.  We do this by

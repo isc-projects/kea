@@ -240,7 +240,7 @@
 #-----
 ,{
 "description" : "D2Params.ncr-protocol, unsupported TCP",
-"logic-error" : "ncr-protocol : TCP is not yet supported  (<string>:1:41)",
+"logic-error" : "ncr-protocol : TCP is not yet supported (<string>:1:41)",
 "data" :
     {
     "ncr-protocol" : "TCP",
@@ -545,7 +545,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-MD5",
-"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:104)",
+"logic-error" : "tsig-key: digest-bits too small : (<string>:1:104)",
 "data" :
     {
     "forward-ddns" : {},
@@ -565,7 +565,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-SHA1",
-"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:105)",
+"logic-error" : "tsig-key: digest-bits too small : (<string>:1:105)",
 "data" :
     {
     "forward-ddns" : {},
@@ -585,7 +585,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-SHA224",
-"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:107)",
+"logic-error" : "tsig-key: digest-bits too small : (<string>:1:107)",
 "data" :
     {
     "forward-ddns" : {},
@@ -605,7 +605,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-SHA256",
-"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:107)",
+"logic-error" : "tsig-key: digest-bits too small : (<string>:1:107)",
 "data" :
     {
     "forward-ddns" : {},
@@ -625,7 +625,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-SHA384",
-"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:107)",
+"logic-error" : "tsig-key: digest-bits too small : (<string>:1:107)",
 "data" :
     {
     "forward-ddns" : {},
@@ -645,7 +645,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-SHA512",
-"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:107)",
+"logic-error" : "tsig-key: digest-bits too small : (<string>:1:107)",
 "data" :
     {
     "forward-ddns" : {},

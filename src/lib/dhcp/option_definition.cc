@@ -153,14 +153,18 @@ OptionDefinition::addRecordField(const std::string& data_type_name) {
 void
 OptionDefinition::addRecordField(const OptionDataType data_type) {
     if (type_ != OPT_RECORD_TYPE) {
-        isc_throw(isc::InvalidOperation, "'record' option type must be used"
-                  " to add data fields to the record");
+        isc_throw(isc::InvalidOperation,
+                  "'record' option type must be used instead of '"
+                      << OptionDataTypeUtil::getDataTypeName(type_)
+                      << "' to add data fields to the record");
     }
     if (data_type >= OPT_RECORD_TYPE ||
         data_type == OPT_ANY_ADDRESS_TYPE ||
         data_type == OPT_EMPTY_TYPE) {
         isc_throw(isc::BadValue,
-                  "attempted to add invalid data type to the record.");
+                  "attempted to add invalid data type '"
+                      << OptionDataTypeUtil::getDataTypeName(data_type)
+                      << "' to the record.");
     }
     record_fields_.push_back(data_type);
 }
@@ -376,7 +380,7 @@ OptionDefinition::validate() const {
                             << " fields of other types.";
                     break;
                 }
-                /// Empty type is not allowed within a record.
+                // Empty type is not allowed within a record.
                 if (*it == OPT_EMPTY_TYPE) {
                     err_str << "empty data type can't be stored as a field in"
                             << " an option record.";
@@ -387,11 +391,11 @@ OptionDefinition::validate() const {
             if (err_str.str().empty() && array_type_) {
                 const OptionDataType& last_type = fields.back();
                 if (last_type == OPT_STRING_TYPE) {
-                    err_str << "array of strings is not"
-                            << "a valid option definition.";
+                    err_str
+                        << "array of strings is not a valid option definition.";
                 } else if (last_type == OPT_BINARY_TYPE) {
-                    err_str << "array of binary values is not"
-                            << " a valid option definition.";
+                    err_str << "array of binary values is not a valid option "
+                               "definition.";
                 }
                 // Empty type was already checked.
             }

@@ -82,8 +82,8 @@ void runMySQLScript(const std::string& path, const std::string& script_name,
 
     int retval = ::system(cmd.str().c_str());
     if (retval) {
-        std::cerr << "runMySQLSchema failed:" << cmd.str() << std::endl;
-        isc_throw(Unexpected, "runMySQLSchema failed:" << cmd.str());
+        std::cerr << "runMySQLSchema failed: " << cmd.str() << std::endl;
+        isc_throw(Unexpected, "runMySQLSchema failed: " << cmd.str());
     }
 }
 

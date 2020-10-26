@@ -328,7 +328,7 @@ RelayInfoParser::parse(const isc::dhcp::Network::RelayInfoPtr& relay_info,
 
     if (addresses->getType() != Element::list) {
         isc_throw(DhcpConfigError, "ip-addresses must be a list "
-                  << " (" << getPosition("ip-addresses", relay_elem) << ")");
+                  "(" << getPosition("ip-addresses", relay_elem) << ")");
     }
 
     BOOST_FOREACH(ConstElementPtr address_element, addresses->listValue()) {

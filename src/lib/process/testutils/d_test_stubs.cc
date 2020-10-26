@@ -47,7 +47,7 @@ DStubProcess::run() {
             io_service->run_one();
         } catch (const std::exception& ex) {
             isc_throw (DProcessBaseError,
-                std::string("Process run method failed:") + ex.what());
+                std::string("Process run method failed: ") + ex.what());
         }
     }
 };

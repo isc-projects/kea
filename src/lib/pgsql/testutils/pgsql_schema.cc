@@ -93,8 +93,8 @@ void runPgSQLScript(const std::string& path, const std::string& script_name,
 
     int retval = ::system(cmd.str().c_str());
     if (retval) {
-        std::cerr << "runPgSQLSchema failed:" << cmd.str() << std::endl;
-        isc_throw(Unexpected, "runPgSQLSchema failed:" << cmd.str());
+        std::cerr << "runPgSQLSchema failed: " << cmd.str() << std::endl;
+        isc_throw(Unexpected, "runPgSQLSchema failed: " << cmd.str());
     }
 }
 

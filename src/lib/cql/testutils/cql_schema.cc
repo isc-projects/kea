@@ -68,8 +68,8 @@ runCqlScript(const std::string& path,
 
     int32_t retval = ::system(cmd.str().c_str());
     if (retval) {
-        std::cerr << "runCqlSchema failed:" << cmd.str() << std::endl;
-        isc_throw(Unexpected, "runCqlSchema failed:" << cmd.str());
+        std::cerr << "runCqlSchema failed: " << cmd.str() << std::endl;
+        isc_throw(Unexpected, "runCqlSchema failed: " << cmd.str());
     }
 }
 

@@ -110,9 +110,9 @@ WatchSocket::clearReady() {
             // or testing the fd with select_fd will fail.
             const char* errstr = strerror(errno);
             closeSocket();
-            isc_throw(WatchSocketError, "WatchSocket clearReady failed:"
-                      << " bytes read: " << nbytes << " : "
-                      << " value read: " << buf << " error :" <<errstr);
+            isc_throw(WatchSocketError, "WatchSocket clearReady failed: "
+                      "bytes read: " << nbytes << " : "
+                      "value read: " << buf << " error :" << errstr);
         }
     }
 }

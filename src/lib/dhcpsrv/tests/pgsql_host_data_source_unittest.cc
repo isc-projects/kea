@@ -128,7 +128,7 @@ public:
 
         PgSqlResult r(PQexec(conn, query.c_str()));
         if (PQresultStatus(r) != PGRES_TUPLES_OK) {
-            isc_throw(DbOperationError, "Query failed:" << PQerrorMessage(conn));
+            isc_throw(DbOperationError, "Query failed: " << PQerrorMessage(conn));
         }
 
         int numrows = PQntuples(r);

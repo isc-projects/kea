@@ -101,7 +101,7 @@ public:
 
         if (rcode) {
             return (::testing::AssertionFailure(::testing::Message() <<
-                                                "configure() failed:"
+                                                "configure() failed: "
                                                 << comment));
         }
 

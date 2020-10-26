@@ -580,7 +580,7 @@ OptionDataTypeUtil::readString(const std::vector<uint8_t>& buf) {
         auto end = util::str::seekTrimmed(begin, buf.end(), 0x0);
         if (std::distance(begin, end) == 0) {
             isc_throw(isc::OutOfRange, "string value carried by the option "
-                      << " contained only NULLs");
+                                       "contained only NULLs");
         }
 
         value.insert(value.end(), begin, end);

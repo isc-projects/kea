@@ -427,8 +427,9 @@ TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
           && (digestbits < 192)) ||
          (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA512_STR)
           && (digestbits < 256)))) {
-        isc_throw(D2CfgError, "tsig-key: digest-bits too small : "
-                  << " (" << getPosition("digest-bits", key_config) << ")");
+        isc_throw(D2CfgError, "tsig-key: digest-bits too small : ("
+                                  << getPosition("digest-bits", key_config)
+                                  << ")");
         }
 
     // Everything should be valid, so create the key instance.

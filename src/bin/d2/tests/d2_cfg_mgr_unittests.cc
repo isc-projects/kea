@@ -418,7 +418,7 @@ TEST_F(D2CfgMgrTest, invalidEntry) {
     // Unsupported protocol
     config = makeParamsConfigString ("127.0.0.1", 777, 333, "TCP", "JSON");
     LOGIC_ERROR(config, "ncr-protocol : TCP is not yet supported"
-                        "  (<string>:1:92)");
+                        " (<string>:1:92)");
 
     // Invalid format
     config = makeParamsConfigString ("127.0.0.1", 777, 333, "UDP", "BOGUS");
@@ -939,8 +939,7 @@ TEST_F(D2CfgMgrTest, configPermutations) {
 
         // Grab the test's configuration data.
         isc::data::ConstElementPtr data = test->get("data");
-        ASSERT_TRUE(data) << "No data for test: "
-                          << " : " << test->getPosition();
+        ASSERT_TRUE(data) << "No data for test: " << test->getPosition();
 
         // Convert the test data back to JSON text, then submit it for parsing.
         stringstream os;
