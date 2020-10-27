@@ -4690,8 +4690,8 @@ To activate both ``global`` and ``all``, the following combination can be used:
        ...
    }
 
-   To activate both ``global`` and ``out-of-pool``, the following combination
-can be used:
+To activate both ``global`` and ``out-of-pool``, the following combination can
+be used:
 
 ::
 
