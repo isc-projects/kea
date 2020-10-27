@@ -5720,7 +5720,7 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("2001:db8:2::1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET, subnet->getHostReservationMode());
 
     // Subnet 3
     subnet = subnets->selectSubnet(IOAddress("2001:db8:3::1"));
@@ -5827,7 +5827,7 @@ TEST_F(Dhcp6ParserTest, hostReservationModesPerSubnet) {
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("2001:db8:2::1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET, subnet->getHostReservationMode());
 
     // Subnet 3
     subnet = subnets->selectSubnet(IOAddress("2001:db8:3::1"));
@@ -5910,7 +5910,7 @@ TEST_F(Dhcp6ParserTest, hostReservationGlobal) {
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("2001:db8:2::1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET, subnet->getHostReservationMode());
 }
 
 /// The goal of this test is to verify that Host Reservation modes can be
@@ -5967,7 +5967,7 @@ TEST_F(Dhcp6ParserTest, hostReservationModesGlobal) {
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("2001:db8:2::1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET, subnet->getHostReservationMode());
 }
 
 /// The goal of this test is to verify that configuration can include
@@ -6970,7 +6970,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     EXPECT_TRUE(iface_id2.equals(s->getInterfaceId()));
     EXPECT_TRUE(s->hasRelayAddress(IOAddress("2222::2")));
     EXPECT_TRUE(s->getRapidCommit());
-    EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET, s->getHostReservationMode());
     EXPECT_TRUE(s->getStoreExtendedInfo());
 
     // Ok, now check the second shared subnet.
