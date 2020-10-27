@@ -109,7 +109,7 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "decline-probation-period",       Element::integer, "86400" }, // 24h
     { "dhcp4o6-port",                   Element::integer, "0" },
     { "server-tag",                     Element::string,  "" },
-    { "reservations-out-of-pool",       Element::boolean, "true" },
+    { "reservations-out-of-pool",       Element::boolean, "false" },
     { "reservations-in-subnet",         Element::boolean, "true" },
     { "reservations-global",            Element::boolean, "false" },
     { "calculate-tee-times",            Element::boolean, "true" },

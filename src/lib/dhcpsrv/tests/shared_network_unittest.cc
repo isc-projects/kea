@@ -18,7 +18,6 @@
 #include <gtest/gtest.h>
 #include <cstdint>
 #include <vector>
-
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -641,7 +640,6 @@ TEST(SharedNetwork4Test, unparse) {
         "    \"renew-timer\": 100,\n"
         "    \"require-client-classes\": [ \"foo\" ],\n"
         "    \"reservations-in-subnet\": true,\n"
-        "    \"reservations-out-of-pool\": true,\n"
         "    \"subnet4\": [\n"
         "      {\n"
         "        \"4o6-interface\": \"\",\n"
@@ -1333,7 +1331,6 @@ TEST(SharedNetwork6Test, unparse) {
         "    \"renew-timer\": 100,\n"
         "    \"require-client-classes\": [ \"foo\" ],\n"
         "    \"reservations-in-subnet\": true,\n"
-        "    \"reservations-out-of-pool\": true,\n"
         "    \"subnet6\": [\n"
         "      {\n"
         "        \"id\": 1,\n"

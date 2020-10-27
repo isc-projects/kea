@@ -470,15 +470,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
         bool found = false;
         ConstElementPtr reservations_out_of_pool = mutable_cfg->get("reservations-out-of-pool");
-        if (reservations_out_of_pool) {
-            found = true;
-        }
         ConstElementPtr reservations_in_subnet = mutable_cfg->get("reservations-in-subnet");
-        if (reservations_in_subnet) {
-            found = true;
-        }
         ConstElementPtr reservations_global = mutable_cfg->get("reservations-global");
-        if (reservations_global) {
+        if (reservations_out_of_pool || reservations_in_subnet || reservations_global) {
             found = true;
         }
         ConstElementPtr reservation_mode = mutable_cfg->get("reservation-mode");
@@ -494,11 +488,21 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
         // reset all other reservation flags to overwrite default values.
         if (found) {
+            bool force_true = false;
             if (!reservations_out_of_pool) {
                 mutable_cfg->set("reservations-out-of-pool", Element::create(false));
+            } else {
+                force_true = reservations_out_of_pool->boolValue();
             }
             if (!reservations_in_subnet) {
-                mutable_cfg->set("reservations-in-subnet", Element::create(false));
+                if (force_true) {
+                    mutable_cfg->set("reservations-in-subnet", Element::create(true));
+                } else {
+                    mutable_cfg->set("reservations-in-subnet", Element::create(false));
+                }
+            } else if (force_true && !reservations_in_subnet->boolValue()) {
+                isc_throw(DhcpConfigError, "invalid use of disabled 'reservations-in-subnet'"
+                                           " when enabled 'reservations-out-of-pool'");
             }
             if (!reservations_global) {
                 mutable_cfg->set("reservations-global", Element::create(false));

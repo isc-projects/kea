@@ -203,13 +203,9 @@ BaseNetworkParser::parseHostReservationMode(const data::ConstElementPtr& network
                                             NetworkPtr& network) {
     if (network_data->contains("reservation-mode")) {
         bool found = false;
-        if (network_data->contains("reservations-out-of-pool")) {
-            found = true;
-        }
-        if (network_data->contains("reservations-in-subnet")) {
-            found = true;
-        }
-        if (network_data->contains("reservations-global")) {
+        if (network_data->contains("reservations-out-of-pool") ||
+            network_data->contains("reservations-in-subnet") ||
+            network_data->contains("reservations-global")) {
             found = true;
         }
         if (found) {
@@ -233,13 +229,9 @@ void
 BaseNetworkParser::parseHostReservationModes(const data::ConstElementPtr& network_data,
                                              NetworkPtr& network) {
     bool found = false;
-    if (network_data->contains("reservations-out-of-pool")) {
-        found = true;
-    }
-    if (network_data->contains("reservations-in-subnet")) {
-        found = true;
-    }
-    if (network_data->contains("reservations-global")) {
+    if (network_data->contains("reservations-out-of-pool") ||
+        network_data->contains("reservations-in-subnet") ||
+        network_data->contains("reservations-global")) {
         found = true;
     }
     if (network_data->contains("reservation-mode")) {

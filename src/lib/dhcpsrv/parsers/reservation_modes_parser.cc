@@ -49,7 +49,7 @@ HostReservationModesParser::parse(const ConstElementPtr& config_elem) {
         if (elem) {
             bool value = elem->boolValue();
             if (value) {
-                flags |= Network::HR_OUT_OF_POOL;
+                flags |= Network::HR_IN_SUBNET | Network::HR_OUT_OF_POOL;
             }
         }
     } catch (const Exception& ex) {

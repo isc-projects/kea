@@ -2663,7 +2663,7 @@ An example response could look as follows:
                # Specify if server should lookup in-subnet reservations.
                "reservations-in-subnet": true,
                # Specify if server should lookup out-of-pool reservations.
-               "reservations-out-of-pool": true,
+               "reservations-out-of-pool": false,
                "subnet4": [
                    {
                        "subnet": "192.0.2.0/24",

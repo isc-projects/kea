@@ -157,7 +157,6 @@ const char* CONFIGS[] = {
         "        \"id\": 10,"
         "        \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],\n"
         "        \"interface\": \"eth0\",\n"
-        "        \"reservations-out-of-pool\": true,\n"
         "        \"reservations-in-subnet\": true,\n"
         "        \"reservations\": [ \n"
         "        {\n"

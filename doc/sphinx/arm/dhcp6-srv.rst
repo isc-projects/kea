@@ -4106,7 +4106,7 @@ The correspondence of old values are:
    "Dhcp6": {
 
        "reservations-global": false,
-       "reservations-in-subnet": false,
+       "reservations-in-subnet": true,
        "reservations-out-of-pool": true,
        ...
    }
@@ -4119,7 +4119,7 @@ The correspondence of old values are:
 
        "reservations-global": false,
        "reservations-in-subnet": true,
-       "reservations-out-of-pool": true,
+       "reservations-out-of-pool": false,
        ...
    }
 
@@ -4131,7 +4131,7 @@ To activate both ``global`` and ``all``, the following combination can be used:
 
        "reservations-global": true,
        "reservations-in-subnet": true,
-       "reservations-out-of-pool": true,
+       "reservations-out-of-pool": false,
        ...
    }
 

@@ -113,7 +113,7 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "server-hostname",                Element::string,  "" },
     { "boot-file-name",                 Element::string,  "" },
     { "server-tag",                     Element::string,  "" },
-    { "reservations-out-of-pool",       Element::boolean, "true" },
+    { "reservations-out-of-pool",       Element::boolean, "false" },
     { "reservations-in-subnet",         Element::boolean, "true" },
     { "reservations-global",            Element::boolean, "false" },
     { "calculate-tee-times",            Element::boolean, "false" },

@@ -706,7 +706,7 @@
                 "reservations-in-subnet": true,
 
                 // Specify if server should lookup out-of-pool reservations.
-                "reservations-out-of-pool": true,
+                "reservations-out-of-pool": false,
 
                 // List of client classes which must be evaluated when this shared
                 // network is selected for client assignments.
@@ -880,7 +880,7 @@
                         "reservations-in-subnet": true,
 
                         // Specify if server should lookup out-of-pool reservations.
-                        "reservations-out-of-pool": true,
+                        "reservations-out-of-pool": false,
 
                         // Subnet level compute T1 and T2 timers.
                         "calculate-tee-times": true,
@@ -1019,7 +1019,7 @@
         "reservations-in-subnet": true,
 
         // Specify if server should lookup out-of-pool reservations.
-        "reservations-out-of-pool": true,
+        "reservations-out-of-pool": false,
 
         // Global compute T1 and T2 timers.
         "calculate-tee-times": true,

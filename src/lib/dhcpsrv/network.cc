@@ -23,7 +23,7 @@ const uint8_t Network::HR_DISABLED = 0;
 const uint8_t Network::HR_OUT_OF_POOL = 1 << 0;
 const uint8_t Network::HR_IN_SUBNET = 1 << 1;
 const uint8_t Network::HR_GLOBAL = 1 << 2;
-const uint8_t Network::HR_ALL = Network::HR_IN_SUBNET | Network::HR_OUT_OF_POOL;
+const uint8_t Network::HR_ALL = Network::HR_IN_SUBNET;
 
 void
 Network::RelayInfo::addAddress(const asiolink::IOAddress& addr) {
@@ -235,6 +235,7 @@ Network::toElement() const {
             }
             if (hr_out_of_pool) {
                 map->set("reservations-out-of-pool", Element::create(true));
+                map->set("reservations-in-subnet", Element::create(true));
             }
         }
     }

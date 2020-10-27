@@ -5750,7 +5750,7 @@ TEST_F(Dhcp6ParserTest, hostReservationModesPerSubnet) {
     ///       - 2001:db8:3::/64 (reservations disabled)
     ///       - 2001:db8:4::/64 (global reservations)
     ///       - 2001:db8:5::/64 (reservations not specified)
-    ///       - 2001:db8:5::/64 (global + all enabled)
+    ///       - 2001:db8:6::/64 (global + all enabled)
     const char* hr_config =
         "{"
         "\"preferred-lifetime\": 3000,"
@@ -5759,7 +5759,6 @@ TEST_F(Dhcp6ParserTest, hostReservationModesPerSubnet) {
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"reservations-out-of-pool\": true,"
         "    \"reservations-in-subnet\": true"
         " },"
         " {"
@@ -5786,7 +5785,7 @@ TEST_F(Dhcp6ParserTest, hostReservationModesPerSubnet) {
         " {"
         "    \"pools\": [ { \"pool\": \"2001:db8:6::/64\" } ],"
         "    \"subnet\": \"2001:db8:6::/48\", "
-        "    \"reservations-out-of-pool\": true,"
+        "    \"reservations-out-of-pool\": false,"
         "    \"reservations-in-subnet\": true,"
         "    \"reservations-global\": true"
         " } ],"
@@ -5918,7 +5917,6 @@ TEST_F(Dhcp6ParserTest, hostReservationModesGlobal) {
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"reservations-out-of-pool\": true,"
         "    \"reservations-in-subnet\": true"
         " },"
         " {"
