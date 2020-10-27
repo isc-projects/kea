@@ -56,7 +56,7 @@ TEST_F(HostReservationModesParserTest, validContent) {
 
     std::vector<Scenario> scenarios = {
         {
-        "reservation modes disabled",
+        "reservation modes disabled specifying all parameters",
         "{ \n"
         "   \"reservations-global\": false, \n"
         "   \"reservations-in-subnet\": false, \n"
@@ -65,7 +65,28 @@ TEST_F(HostReservationModesParserTest, validContent) {
         static_cast<uint8_t>(Network::HR_DISABLED)
         },
         {
-        "reservation modes global enabled",
+        "reservation modes disabled specifying only global",
+        "{ \n"
+        "   \"reservations-global\": false \n"
+        "} \n",
+        static_cast<uint8_t>(Network::HR_DISABLED)
+        },
+        {
+        "reservation modes disabled specifying only in-subnet",
+        "{ \n"
+        "   \"reservations-in-subnet\": false \n"
+        "} \n",
+        static_cast<uint8_t>(Network::HR_DISABLED)
+        },
+        {
+        "reservation modes disabled specifying only out-of-pool",
+        "{ \n"
+        "   \"reservations-out-of-pool\": false \n"
+        "} \n",
+        static_cast<uint8_t>(Network::HR_DISABLED)
+        },
+        {
+        "reservation modes global enabled specifying all parameters",
         "{ \n"
         "   \"reservations-global\": true, \n"
         "   \"reservations-in-subnet\": false, \n"
@@ -74,7 +95,14 @@ TEST_F(HostReservationModesParserTest, validContent) {
         static_cast<uint8_t>(Network::HR_GLOBAL)
         },
         {
-        "reservation modes in-subnet enabled",
+        "reservation modes global enabled specifying only global",
+        "{ \n"
+        "   \"reservations-global\": true \n"
+        "} \n",
+        static_cast<uint8_t>(Network::HR_GLOBAL)
+        },
+        {
+        "reservation modes in-subnet enabled specifying all parameters",
         "{ \n"
         "   \"reservations-global\": false, \n"
         "   \"reservations-in-subnet\": true, \n"
@@ -83,7 +111,14 @@ TEST_F(HostReservationModesParserTest, validContent) {
         static_cast<uint8_t>(Network::HR_IN_SUBNET)
         },
         {
-        "reservation modes global and in-subnet enabled",
+        "reservation modes in-subnet enabled specifying only in-subnet",
+        "{ \n"
+        "   \"reservations-in-subnet\": true \n"
+        "} \n",
+        static_cast<uint8_t>(Network::HR_IN_SUBNET)
+        },
+        {
+        "reservation modes global and in-subnet enabled specifying all parameters",
         "{ \n"
         "   \"reservations-global\": true, \n"
         "   \"reservations-in-subnet\": true, \n"
@@ -92,34 +127,39 @@ TEST_F(HostReservationModesParserTest, validContent) {
         static_cast<uint8_t>(Network::HR_GLOBAL|Network::HR_IN_SUBNET)
         },
         {
-        "reservation modes out-of-pool enabled",
-        "{ \n"
-        "   \"reservations-global\": false, \n"
-        "   \"reservations-in-subnet\": false, \n"
-        "   \"reservations-out-of-pool\": true \n"
-        "} \n",
-        static_cast<uint8_t>(Network::HR_OUT_OF_POOL)
-        },
-        {
-        "reservation modes global and out-of-pool enabled",
+        "reservation modes global and in-subnet enabled specifying global and in-subnet",
         "{ \n"
         "   \"reservations-global\": true, \n"
-        "   \"reservations-in-subnet\": false, \n"
-        "   \"reservations-out-of-pool\": true \n"
+        "   \"reservations-in-subnet\": true \n"
         "} \n",
-        static_cast<uint8_t>(Network::HR_GLOBAL|Network::HR_OUT_OF_POOL)
+        static_cast<uint8_t>(Network::HR_GLOBAL|Network::HR_IN_SUBNET)
         },
         {
-        "reservation modes in-subnet and out-of-pool enabled",
+        "reservation modes out-of-pool enabled specifying all parameters",
         "{ \n"
         "   \"reservations-global\": false, \n"
         "   \"reservations-in-subnet\": true, \n"
         "   \"reservations-out-of-pool\": true \n"
         "} \n",
-        static_cast<uint8_t>(Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL)
+        static_cast<uint8_t>(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET)
         },
         {
-        "reservation modes global, in-subnet and out-of-pool enabled",
+        "reservation modes out-of-pool enabled specifying in-subnet and out-of-pool",
+        "{ \n"
+        "   \"reservations-in-subnet\": true, \n"
+        "   \"reservations-out-of-pool\": true \n"
+        "} \n",
+        static_cast<uint8_t>(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET)
+        },
+        {
+        "reservation modes out-of-pool enabled specifying only out-of-pool",
+        "{ \n"
+        "   \"reservations-out-of-pool\": true \n"
+        "} \n",
+        static_cast<uint8_t>(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET)
+        },
+        {
+        "reservation modes global and out-of-pool enabled specifying all parameters",
         "{ \n"
         "   \"reservations-global\": true, \n"
         "   \"reservations-in-subnet\": true, \n"
@@ -128,50 +168,13 @@ TEST_F(HostReservationModesParserTest, validContent) {
         static_cast<uint8_t>(Network::HR_GLOBAL|Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL)
         },
         {
-        "only global",
-        "{ \n"
-        "   \"reservations-global\": true \n"
-        "} \n",
-        static_cast<uint8_t>(Network::HR_GLOBAL)
-        },
-        {
-        "only in-subnet",
-        "{ \n"
-        "   \"reservations-in-subnet\": true \n"
-        "} \n",
-        static_cast<uint8_t>(Network::HR_IN_SUBNET)
-        },
-        {
-        "only out-of-pool",
-        "{ \n"
-        "   \"reservations-out-of-pool\": true \n"
-        "} \n",
-        static_cast<uint8_t>(Network::HR_OUT_OF_POOL)
-        },
-        {
-        "only global and in-subnet",
-        "{ \n"
-        "   \"reservations-global\": true, \n"
-        "   \"reservations-in-subnet\": true \n"
-        "} \n",
-        static_cast<uint8_t>(Network::HR_GLOBAL|Network::HR_IN_SUBNET)
-        },
-        {
-        "only global and out-of-pool",
+        "reservation modes global and out-of-pool enabled specifying global and out-of-pool",
         "{ \n"
         "   \"reservations-global\": true, \n"
         "   \"reservations-out-of-pool\": true \n"
         "} \n",
-        static_cast<uint8_t>(Network::HR_GLOBAL|Network::HR_OUT_OF_POOL)
-        },
-        {
-        "only in-subnet and out-of-pool",
-        "{ \n"
-        "   \"reservations-in-subnet\": true, \n"
-        "   \"reservations-out-of-pool\": true \n"
-        "} \n",
-        static_cast<uint8_t>(Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL)
-        },
+        static_cast<uint8_t>(Network::HR_GLOBAL|Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL)
+        }
     };
 
     // Iterate over the valid scenarios and verify they succeed.
@@ -224,7 +227,30 @@ TEST_F(HostReservationModesParserTest, invalidContent) {
         "{ \n"
         "   \"reservations-out-of-pool\": \"always\" \n"
         "} \n"
-        }
+        },
+        {
+        "reservation modes out-of-pool enabled specifying all parameters",
+        "{ \n"
+        "   \"reservations-global\": false, \n"
+        "   \"reservations-in-subnet\": false, \n"
+        "   \"reservations-out-of-pool\": true \n"
+        "} \n"
+        },
+        {
+        "reservation modes out-of-pool enabled specifying all parameters",
+        "{ \n"
+        "   \"reservations-global\": true, \n"
+        "   \"reservations-in-subnet\": false, \n"
+        "   \"reservations-out-of-pool\": true \n"
+        "} \n"
+        },
+        {
+        "reservation modes out-of-pool enabled specifying in-subnet and out-of-pool",
+        "{ \n"
+        "   \"reservations-in-subnet\": false, \n"
+        "   \"reservations-out-of-pool\": true \n"
+        "} \n"
+        },
     };
 
     // Iterate over the invalid scenarios and verify they throw exception.

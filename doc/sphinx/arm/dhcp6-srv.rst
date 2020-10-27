@@ -4135,6 +4135,44 @@ To activate both ``global`` and ``all``, the following combination can be used:
        ...
    }
 
+   To activate both ``global`` and ``out-of-pool``, the following combination
+can be used:
+
+::
+
+   "Dhcp6": {
+
+       "reservations-global": true,
+       "reservations-in-subnet": true,
+       "reservations-out-of-pool": true,
+       ...
+   }
+
+Note that enabling ``out-of-pool`` and disabling ``in-subnet`` in not a valid
+configuration, as ``out-of-pool`` are also ``in-subnet``.
+
+::
+
+   "Dhcp6": {
+
+       "reservations-global": true,
+       // "reservations-in-subnet": false, <-config error
+       "reservations-out-of-pool": true,
+       ...
+   }
+
+
+For this reason, the ``in-subnet`` can be omitted when ``out-of-pool`` is set.
+
+::
+
+   "Dhcp4": {
+
+       "reservations-global": true,
+       "reservations-out-of-pool": true,
+       ...
+   }
+
 The parameter can be specified at global, subnet, and shared-network
 levels.
 

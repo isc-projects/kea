@@ -5744,13 +5744,14 @@ TEST_F(Dhcp6ParserTest, hostReservationModesPerSubnet) {
 
     /// - Configuration:
     ///   - only addresses (no prefixes)
-    ///   - 6 subnets with:
+    ///   - 7 subnets with:
     ///       - 2001:db8:1::/64 (all reservations enabled)
     ///       - 2001:db8:2::/64 (out-of-pool reservations)
     ///       - 2001:db8:3::/64 (reservations disabled)
     ///       - 2001:db8:4::/64 (global reservations)
     ///       - 2001:db8:5::/64 (reservations not specified)
     ///       - 2001:db8:6::/64 (global + all enabled)
+    ///       - 2001:db8:7::/64 (global + out-of-pool enabled)
     const char* hr_config =
         "{"
         "\"preferred-lifetime\": 3000,"
@@ -5788,6 +5789,13 @@ TEST_F(Dhcp6ParserTest, hostReservationModesPerSubnet) {
         "    \"reservations-out-of-pool\": false,"
         "    \"reservations-in-subnet\": true,"
         "    \"reservations-global\": true"
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:7::/64\" } ],"
+        "    \"subnet\": \"2001:db8:7::/48\", "
+        "    \"reservations-out-of-pool\": true,"
+        "    \"reservations-in-subnet\": true,"
+        "    \"reservations-global\": true"
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -5802,11 +5810,11 @@ TEST_F(Dhcp6ParserTest, hostReservationModesPerSubnet) {
     checkResult(status, 0);
     CfgMgr::instance().commit();
 
-    // Let's get all subnets and check that there are 6 of them.
+    // Let's get all subnets and check that there are 7 of them.
     ConstCfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
     ASSERT_TRUE(subnets);
     const Subnet6Collection* subnet_col = subnets->getAll();
-    ASSERT_EQ(6, subnet_col->size()); // We expect 6 subnets
+    ASSERT_EQ(7, subnet_col->size()); // We expect 7 subnets
 
     // Let's check if the parsed subnets have correct HR modes.
 
@@ -5840,6 +5848,12 @@ TEST_F(Dhcp6ParserTest, hostReservationModesPerSubnet) {
     subnet = subnets->selectSubnet(IOAddress("2001:db8:6::1"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ(Network::HR_ALL|Network::HR_GLOBAL, subnet->getHostReservationMode());
+
+    // Subnet 7
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:7::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET|Network::HR_GLOBAL,
+              subnet->getHostReservationMode());
 }
 
 /// The goal of this test is to verify that Host Reservation modes can be
