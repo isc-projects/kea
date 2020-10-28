@@ -25,10 +25,6 @@ namespace dhcp {
 class HostReservationModesParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief Constructor
-    ///
-    HostReservationModesParser(){};
-
     /// @brief Parses content of the "reservation-modes".
     ///
     /// @param control_elem MapElement containing the host reservation modes

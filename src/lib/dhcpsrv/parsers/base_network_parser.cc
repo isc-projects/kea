@@ -234,15 +234,14 @@ BaseNetworkParser::parseHostReservationModes(const data::ConstElementPtr& networ
         network_data->contains("reservations-global")) {
         found = true;
     }
-    if (network_data->contains("reservation-mode")) {
-        if (found) {
+    if (found) {
+        if (network_data->contains("reservation-mode")) {
             isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
                                        " and one of 'reservations-out-of-pool'"
                                        " , 'reservations-in-subnet' or"
                                        " 'reservations-global' parameters");
         }
-    }
-    if (!found) {
+    } else {
         return;
     }
     try {
