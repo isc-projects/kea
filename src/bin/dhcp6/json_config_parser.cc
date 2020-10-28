@@ -477,7 +477,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         }
         ConstElementPtr reservation_mode = mutable_cfg->get("reservation-mode");
         if (reservation_mode) {
-            // log warning for deprecated option
+            LOG_WARN(dhcp6_logger, DHCP6_DEPRECATED_RESERVATION_MODE);
             if (found) {
                 isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
                                            " and one of 'reservations-out-of-pool'"

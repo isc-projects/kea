@@ -27,13 +27,15 @@ HostReservationModesParser::parse(const ConstElementPtr& config_elem) {
 
     ConstElementPtr elem;
     uint8_t flags = 0;
+    bool force_true = false;
 
     try {
-        elem  = config_elem->get("reservations-global");
+        elem  = config_elem->get("reservations-out-of-pool");
         if (elem) {
             bool value = elem->boolValue();
             if (value) {
-                flags |= Network::HR_GLOBAL;
+                flags |= Network::HR_IN_SUBNET | Network::HR_OUT_OF_POOL;
+                force_true = true;
             }
         }
 
@@ -42,14 +44,17 @@ HostReservationModesParser::parse(const ConstElementPtr& config_elem) {
             bool value = elem->boolValue();
             if (value) {
                 flags |= Network::HR_IN_SUBNET;
+            } else if (force_true) {
+                isc_throw(DhcpConfigError, "invalid use of disabled 'reservations-in-subnet'"
+                                           " when enabled 'reservations-out-of-pool'");
             }
         }
 
-        elem  = config_elem->get("reservations-out-of-pool");
+        elem  = config_elem->get("reservations-global");
         if (elem) {
             bool value = elem->boolValue();
             if (value) {
-                flags |= Network::HR_IN_SUBNET | Network::HR_OUT_OF_POOL;
+                flags |= Network::HR_GLOBAL;
             }
         }
     } catch (const Exception& ex) {

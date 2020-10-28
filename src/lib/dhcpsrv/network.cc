@@ -111,7 +111,7 @@ Network::hrModeFromString(const std::string& hr_mode_name) {
          (hr_mode_name.compare("off") == 0) )  {
         return (Network::HR_DISABLED);
     } else if (hr_mode_name.compare("out-of-pool") == 0) {
-        return (Network::HR_OUT_OF_POOL);
+        return (Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET);
     } else if (hr_mode_name.compare("global") == 0) {
         return (Network::HR_GLOBAL);
     } else if (hr_mode_name.compare("all") == 0) {

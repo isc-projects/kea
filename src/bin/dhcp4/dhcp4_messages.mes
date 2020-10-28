@@ -274,6 +274,9 @@ A debug message issued when deferred unpacking of an option failed, making it
 to be left unpacked in the packet. The first argument is the option code,
 the second the error.
 
+% DHCP4_DEPRECATED_RESERVATION_MODE deprecated reservation-mode parameter; use reservations-global, reservations-in-subnet and reservations-out-of-pool instead.
+A warning message indicating that reservation-mode parameter is deprecated.
+
 % DHCP4_DEVELOPMENT_VERSION This software is a development branch of Kea. It is not recommended for production use.
 This warning message is displayed when the version is a development
 (vs stable) one: the second number of the version is odd.

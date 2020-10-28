@@ -1074,7 +1074,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             }
 
             // First check for reservation when it is the choice.
-            if (check_reservation_first && (hr_mode & Network::HR_IN_SUBNET)) {
+            if (check_reservation_first && ((hr_mode & Network::HR_IN_SUBNET) &&
+                !(hr_mode & Network::HR_OUT_OF_POOL))) {
                 auto hosts = getIPv6Resrv(subnet->getID(), candidate);
                 if (!hosts.empty()) {
                     // Don't allocate.
@@ -1099,7 +1100,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 /// In-pool reservations: Check if this address is reserved for someone
                 /// else. There is no need to check for whom it is reserved, because if
                 /// it has been reserved for us we would have already allocated a lease.
-                if (!check_reservation_first && (hr_mode & Network::HR_IN_SUBNET)) {
+                if (!check_reservation_first && (hr_mode & Network::HR_IN_SUBNET) &&
+                    !(hr_mode & Network::HR_OUT_OF_POOL)) {
                     auto hosts = getIPv6Resrv(subnet->getID(), candidate);
                     if (!hosts.empty()) {
                         // Don't allocate.
@@ -1131,7 +1133,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 // allocation attempts.
             } else if (existing->expired()) {
                 // Make sure it's not reserved.
-                if (!check_reservation_first && (hr_mode & Network::HR_IN_SUBNET)) {
+                if (!check_reservation_first && (hr_mode & Network::HR_IN_SUBNET) &&
+                    !(hr_mode & Network::HR_OUT_OF_POOL)) {
                     auto hosts = getIPv6Resrv(subnet->getID(), candidate);
                     if (!hosts.empty()) {
                         // Don't allocate.
@@ -2951,10 +2954,10 @@ namespace {
 /// @return true if the address is reserved for another client.
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
-    if (ctx.subnet_ &&
-        ((ctx.subnet_->getHostReservationMode() & Network::HR_IN_SUBNET) ||
-         ((ctx.subnet_->getHostReservationMode() & Network::HR_OUT_OF_POOL) &&
-          (!ctx.subnet_->inPool(Lease::TYPE_V4, address))))) {
+    bool in_subnet = (ctx.subnet_->getHostReservationMode() & Network::HR_IN_SUBNET);
+    bool out_of_pool = (ctx.subnet_->getHostReservationMode() & Network::HR_OUT_OF_POOL);
+    if (ctx.subnet_ && ((in_subnet && !out_of_pool) ||
+        (out_of_pool && (!ctx.subnet_->inPool(Lease::TYPE_V4, address))))) {
         // The global parameter ip-reservations-unique controls whether it is allowed
         // to specify multiple reservations for the same IP address or delegated prefix
         // or IP reservations must be unique. Some host backends do not support the
@@ -3032,11 +3035,12 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         }
 
         auto host = ctx.hosts_.find(subnet->getID());
-        if ((host != ctx.hosts_.end()) &&
-            !(host->second->getIPv4Reservation().isV4Zero()) &&
-            ((subnet->getHostReservationMode() & Network::HR_IN_SUBNET) ||
-             ((subnet->getHostReservationMode() & Network::HR_OUT_OF_POOL) &&
-              (!subnet->inPool(Lease::TYPE_V4, host->second->getIPv4Reservation()))))) {
+        bool in_subnet = (subnet->getHostReservationMode() & Network::HR_IN_SUBNET);
+        bool out_of_pool = (subnet->getHostReservationMode() & Network::HR_OUT_OF_POOL);
+        auto reservation = host->second->getIPv4Reservation();
+        if ((host != ctx.hosts_.end()) && !reservation.isV4Zero() &&
+            ((in_subnet && !out_of_pool) ||
+             (out_of_pool && !subnet->inPool(Lease::TYPE_V4, reservation)))) {
             ctx.subnet_ = subnet;
             return (true);
         }
