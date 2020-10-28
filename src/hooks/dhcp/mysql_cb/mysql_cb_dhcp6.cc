@@ -479,7 +479,7 @@ public:
 
                 // reservation_mode (11)
                 if (!out_bindings[11]->amNull()) {
-                    last_subnet->setHostReservationMode(static_cast<Subnet4::HRMode>
+                    last_subnet->setHostReservationMode(static_cast<Network::HRMode>
                         (out_bindings[11]->getInteger<uint8_t>()));
                 }
 
@@ -1686,8 +1686,8 @@ public:
 
                 // reservation_mode
                 if (!out_bindings[11]->amNull()) {
-                    last_network->setHostReservationMode(static_cast<Subnet4::HRMode>
-                        (out_bindings[11]->getIntegerOrDefault<uint8_t>(Subnet4::HR_ALL)));
+                    last_network->setHostReservationMode(static_cast<Network::HRMode>
+                        (out_bindings[11]->getIntegerOrDefault<uint8_t>(Network::HR_ALL)));
                 }
 
                 // user_context
