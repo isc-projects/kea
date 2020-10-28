@@ -19,17 +19,6 @@ fi
 mysql "$@" <<EOF
 
 # Update reservation_mode value after separating flags.
-CREATE TABLE reservation_mode_type (
-    reservation_mode TINYINT PRIMARY KEY NOT NULL,    # Reservation mode code.
-    name VARCHAR(32)                                  # Reservation mode name.
-    ) ENGINE = INNODB;
-
-START TRANSACTION;
-INSERT INTO reservation_mode_type VALUES (0, 'disabled');      # disabled
-INSERT INTO reservation_mode_type VALUES (1, 'out-of-pool');   # out-of-pool
-INSERT INTO reservation_mode_type VALUES (2, 'all');           # in-subnet
-INSERT INTO reservation_mode_type VALUES (4, 'global');        # global
-COMMIT;
 
 # update old global to new value
 UPDATE dhcp4_subnet SET reservation_mode = 4 WHERE reservation_mode = 2;
@@ -39,6 +28,10 @@ UPDATE dhcp4_shared_network SET reservation_mode = 4 WHERE reservation_mode = 2;
 UPDATE dhcp4_subnet SET reservation_mode = 2 WHERE reservation_mode = 3;
 UPDATE dhcp4_shared_network SET reservation_mode = 2 WHERE reservation_mode = 3;
 
+# update out-of-pool all to new value
+UPDATE dhcp4_subnet SET reservation_mode = 3 WHERE reservation_mode = 1;
+UPDATE dhcp4_shared_network SET reservation_mode = 3 WHERE reservation_mode = 1;
+
 # update old global to new value
 UPDATE dhcp6_subnet SET reservation_mode = 4 WHERE reservation_mode = 2;
 UPDATE dhcp6_shared_network SET reservation_mode = 4 WHERE reservation_mode = 2;
@@ -46,6 +39,10 @@ UPDATE dhcp6_shared_network SET reservation_mode = 4 WHERE reservation_mode = 2;
 # update old all to new value
 UPDATE dhcp6_subnet SET reservation_mode = 2 WHERE reservation_mode = 3;
 UPDATE dhcp6_shared_network SET reservation_mode = 2 WHERE reservation_mode = 3;
+
+# update out-of-pool all to new value
+UPDATE dhcp6_subnet SET reservation_mode = 3 WHERE reservation_mode = 1;
+UPDATE dhcp6_shared_network SET reservation_mode = 3 WHERE reservation_mode = 1;
 
 # Update the schema version number
 UPDATE schema_version
