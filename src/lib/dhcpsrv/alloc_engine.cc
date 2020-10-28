@@ -3037,12 +3037,14 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         auto host = ctx.hosts_.find(subnet->getID());
         bool in_subnet = (subnet->getHostReservationMode() & Network::HR_IN_SUBNET);
         bool out_of_pool = (subnet->getHostReservationMode() & Network::HR_OUT_OF_POOL);
-        auto reservation = host->second->getIPv4Reservation();
-        if ((host != ctx.hosts_.end()) && !reservation.isV4Zero() &&
-            ((in_subnet && !out_of_pool) ||
-             (out_of_pool && !subnet->inPool(Lease::TYPE_V4, reservation)))) {
-            ctx.subnet_ = subnet;
-            return (true);
+        if (host != ctx.hosts_.end()) {
+            auto reservation = host->second->getIPv4Reservation();
+            if (!reservation.isV4Zero() &&
+                ((in_subnet && !out_of_pool) ||
+                 (out_of_pool && !subnet->inPool(Lease::TYPE_V4, reservation)))) {
+                ctx.subnet_ = subnet;
+                return (true);
+            }
         }
 
         // No address reservation found here, so let's try another subnet
