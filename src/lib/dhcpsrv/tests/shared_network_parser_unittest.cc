@@ -259,7 +259,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("/dev/null", network->getFilename().get());
     EXPECT_EQ("10.0.0.1", network->getSiaddr().get().toText());
     EXPECT_EQ("example.org", network->getSname().get());
-    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET, network->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, network->getHostReservationMode());
     EXPECT_TRUE(network->getDdnsSendUpdates().get());
     EXPECT_TRUE(network->getDdnsOverrideNoUpdate().get());
     EXPECT_TRUE(network->getDdnsOverrideClientUpdate().get());

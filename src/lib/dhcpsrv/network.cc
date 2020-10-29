@@ -20,9 +20,12 @@ namespace isc {
 namespace dhcp {
 
 const uint8_t Network::HR_DISABLED = 0;
-const uint8_t Network::HR_OUT_OF_POOL = 1 << 0;
-const uint8_t Network::HR_IN_SUBNET = 1 << 1;
-const uint8_t Network::HR_GLOBAL = 1 << 2;
+const uint8_t Network::HR_OUT_OF_POOL_FLAG = 1 << 0;
+const uint8_t Network::HR_IN_SUBNET_FLAG = 1 << 1;
+const uint8_t Network::HR_GLOBAL_FLAG = 1 << 2;
+const uint8_t Network::HR_OUT_OF_POOL = HR_OUT_OF_POOL_FLAG | HR_IN_SUBNET_FLAG;
+const uint8_t Network::HR_IN_SUBNET = HR_IN_SUBNET_FLAG;
+const uint8_t Network::HR_GLOBAL = HR_GLOBAL_FLAG;
 const uint8_t Network::HR_ALL = Network::HR_IN_SUBNET;
 
 void
@@ -111,7 +114,7 @@ Network::hrModeFromString(const std::string& hr_mode_name) {
          (hr_mode_name.compare("off") == 0) )  {
         return (Network::HR_DISABLED);
     } else if (hr_mode_name.compare("out-of-pool") == 0) {
-        return (Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET);
+        return (Network::HR_OUT_OF_POOL);
     } else if (hr_mode_name.compare("global") == 0) {
         return (Network::HR_GLOBAL);
     } else if (hr_mode_name.compare("all") == 0) {
@@ -216,10 +219,10 @@ Network::toElement() const {
         if (hrmode & Network::HR_GLOBAL) {
             hr_global = true;
         }
-        if (hrmode & Network::HR_IN_SUBNET) {
+        if (hrmode & Network::HR_IN_SUBNET_FLAG) {
             hr_in_subnet = true;
         }
-        if (hrmode & Network::HR_OUT_OF_POOL) {
+        if (hrmode & Network::HR_OUT_OF_POOL_FLAG) {
             hr_out_of_pool = true;
         }
         if (hrmode == Network::HR_DISABLED) {
@@ -235,7 +238,6 @@ Network::toElement() const {
             }
             if (hr_out_of_pool) {
                 map->set("reservations-out-of-pool", Element::create(true));
-                map->set("reservations-in-subnet", Element::create(true));
             }
         }
     }

@@ -141,7 +141,7 @@ TEST_F(HostReservationModesParserTest, validContent) {
         "   \"reservations-in-subnet\": true, \n"
         "   \"reservations-out-of-pool\": true \n"
         "} \n",
-        static_cast<uint8_t>(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET)
+        static_cast<uint8_t>(Network::HR_OUT_OF_POOL)
         },
         {
         "reservation modes out-of-pool enabled specifying in-subnet and out-of-pool",
@@ -149,14 +149,14 @@ TEST_F(HostReservationModesParserTest, validContent) {
         "   \"reservations-in-subnet\": true, \n"
         "   \"reservations-out-of-pool\": true \n"
         "} \n",
-        static_cast<uint8_t>(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET)
+        static_cast<uint8_t>(Network::HR_OUT_OF_POOL)
         },
         {
         "reservation modes out-of-pool enabled specifying only out-of-pool",
         "{ \n"
         "   \"reservations-out-of-pool\": true \n"
         "} \n",
-        static_cast<uint8_t>(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET)
+        static_cast<uint8_t>(Network::HR_OUT_OF_POOL)
         },
         {
         "reservation modes global and out-of-pool enabled specifying all parameters",
@@ -165,7 +165,7 @@ TEST_F(HostReservationModesParserTest, validContent) {
         "   \"reservations-in-subnet\": true, \n"
         "   \"reservations-out-of-pool\": true \n"
         "} \n",
-        static_cast<uint8_t>(Network::HR_GLOBAL|Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL)
+        static_cast<uint8_t>(Network::HR_OUT_OF_POOL|Network::HR_GLOBAL)
         },
         {
         "reservation modes global and out-of-pool enabled specifying global and out-of-pool",
@@ -173,7 +173,7 @@ TEST_F(HostReservationModesParserTest, validContent) {
         "   \"reservations-global\": true, \n"
         "   \"reservations-out-of-pool\": true \n"
         "} \n",
-        static_cast<uint8_t>(Network::HR_GLOBAL|Network::HR_IN_SUBNET|Network::HR_OUT_OF_POOL)
+        static_cast<uint8_t>(Network::HR_OUT_OF_POOL|Network::HR_GLOBAL)
         }
     };
 

@@ -5348,7 +5348,7 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 
     // Subnet 3
     subnet = subnets->selectSubnet(IOAddress("192.0.3.1"));
@@ -5452,7 +5452,7 @@ TEST_F(Dhcp4ParserTest, hostReservationModesPerSubnet) {
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 
     // Subnet 3
     subnet = subnets->selectSubnet(IOAddress("192.0.3.1"));
@@ -5477,7 +5477,7 @@ TEST_F(Dhcp4ParserTest, hostReservationModesPerSubnet) {
     // Subnet 7
     subnet = subnets->selectSubnet(IOAddress("192.0.7.1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET|Network::HR_GLOBAL,
+    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_GLOBAL,
               subnet->getHostReservationMode());
 }
 
@@ -5540,7 +5540,7 @@ TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
     subnet->setFetchGlobalsFn([]() -> ConstElementPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
-    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 }
 
 /// The goal of this test is to verify that Host Reservation modes can be
@@ -5602,7 +5602,7 @@ TEST_F(Dhcp4ParserTest, hostReservationModesGlobal) {
     subnet->setFetchGlobalsFn([]() -> ConstElementPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
-    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 }
 
 /// Check that the decline-probation-period has a default value when not
@@ -6536,7 +6536,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ("foo", s->getSname().get());
     EXPECT_EQ("bar", s->getFilename().get());
     EXPECT_TRUE(s->hasRelayAddress(IOAddress("5.6.7.8")));
-    EXPECT_EQ(Network::HR_OUT_OF_POOL|Network::HR_IN_SUBNET, s->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
     // For the second subnet, the renew-timer should be 100, because it
     // was specified explicitly. Other parameters a derived

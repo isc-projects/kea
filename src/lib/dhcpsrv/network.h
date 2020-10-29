@@ -158,19 +158,29 @@ public:
     /// are allowed.
     static const uint8_t HR_DISABLED; // value: 0
 
+    /// The out-of-pool reservations flag.
+    static const uint8_t HR_OUT_OF_POOL_FLAG; // value: 1 << 0
+
+    /// The in-subnet flag.
+    static const uint8_t HR_IN_SUBNET_FLAG; // value: 1 << 1
+
+    /// The global flag.
+    static const uint8_t HR_GLOBAL_FLAG; // value: 1 << 2
+
     /// Only out-of-pool reservations is allowed. This mode allows AllocEngine
     /// to skip reservation checks for dynamically allocated addressed.
-    /// When this is set, HR_IN_SUBNET is always enabled as well as there can
-    /// can be no reservations that are out-of-pool but not in-subnet.
-    static const uint8_t HR_OUT_OF_POOL; // value: 1 << 0
+    /// When this is set, both HR_OUT_OF_POOL_FLAG and HR_IN_SUBNET_FLAG are
+    /// enabled as there can can be no reservations that are out-of-pool but not
+    /// in-subnet.
+    static const uint8_t HR_OUT_OF_POOL; // value: HR_OUT_OF_POOL_FLAG | HR_IN_SUBNET_FLAG
 
     /// The in-subnet mode which also allows in-pool reservations.
     /// This is equivalent to HR_ALL flag.
-    static const uint8_t HR_IN_SUBNET; // value: 1 << 1
+    static const uint8_t HR_IN_SUBNET; // value: HR_IN_SUBNET_FLAG
 
     /// Only global reservations are allowed. This mode instructs AllocEngine
     /// to only look at global reservations.
-    static const uint8_t HR_GLOBAL; // value: 1 << 2
+    static const uint8_t HR_GLOBAL; // value: HR_GLOBAL_FLAG
 
     /// Both out-of-pool and in-pool reservations are allowed. This is the most
     /// flexible mode, where sysadmin have biggest liberty. However, there is a
@@ -469,7 +479,7 @@ public:
                                                         "reservations-out-of-pool");
                 if (!hr_mode_out_of_pool.unspecified()) {
                     if (hr_mode_out_of_pool.get()) {
-                        flags |= Network::HR_IN_SUBNET | Network::HR_OUT_OF_POOL;
+                        flags |= Network::HR_OUT_OF_POOL;
                     }
                     found = true;
                 }
