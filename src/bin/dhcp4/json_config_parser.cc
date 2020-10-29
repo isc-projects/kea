@@ -432,6 +432,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // Apply global options in the staging config, e.g. ip-reservations-unique
         global_parser.parseEarly(srv_cfg, mutable_cfg);
 
+        // If using deprecated reservation-mode, remove defaults for new parameters
+        // reservations-out-of-pool, reservations-in-subnet and reservations-global.
+        if (reservation_mode) {
+            mutable_cfg->remove("reservations-out-of-pool");
+            mutable_cfg->remove("reservations-in-subnet");
+            mutable_cfg->remove("reservations-global");
+        }
+
         // We need definitions first
         ConstElementPtr option_defs = mutable_cfg->get("option-def");
         if (option_defs) {

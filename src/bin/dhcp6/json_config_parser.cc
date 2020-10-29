@@ -533,6 +533,14 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // Apply global options in the staging config, e.g. ip-reservations-unique
         global_parser.parseEarly(srv_config, mutable_cfg);
 
+        // If using deprecated reservation-mode, remove defaults for new parameters
+        // reservations-out-of-pool, reservations-in-subnet and reservations-global.
+        if (reservation_mode) {
+            mutable_cfg->remove("reservations-out-of-pool");
+            mutable_cfg->remove("reservations-in-subnet");
+            mutable_cfg->remove("reservations-global");
+        }
+
         // Specific check for this global parameter.
         ConstElementPtr data_directory = mutable_cfg->get("data-directory");
         if (data_directory) {
