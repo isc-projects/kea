@@ -536,12 +536,20 @@ ConstHostPtr
 AllocEngine::ClientContext6::currentHost() const {
     Subnet6Ptr subnet = host_subnet_ ? host_subnet_ : subnet_;
     if (subnet) {
-        SubnetID id = (subnet_->getHostReservationMode() & Network::HR_GLOBAL ?
-                       SUBNET_ID_GLOBAL : subnet->getID());
+        SubnetID id = subnet->getID();
+        // if reservation mode is explicitly set to global search only by
+        // SUBNET_ID_GLOBAL.
+        if (subnet_->getHostReservationMode() == Network::HR_GLOBAL) {
+            id = SUBNET_ID_GLOBAL;
+        }
 
         auto host = hosts_.find(id);
         if (host != hosts_.cend()) {
             return (host->second);
+        } else if (id != SUBNET_ID_GLOBAL) {
+            // nothing found for specific subnet ID leads to search for
+            // SUBNET_ID_GLOBAL if HR_GLOBAL_FLAG is set.
+            return (globalHost());
         }
     }
 
@@ -551,7 +559,7 @@ AllocEngine::ClientContext6::currentHost() const {
 ConstHostPtr
 AllocEngine::ClientContext6::globalHost() const {
     Subnet6Ptr subnet = host_subnet_ ? host_subnet_ : subnet_;
-    if (subnet && (subnet_->getHostReservationMode() & Network::HR_GLOBAL)) {
+    if (subnet && (subnet_->getHostReservationMode() & Network::HR_GLOBAL_FLAG)) {
         auto host = hosts_.find(SUBNET_ID_GLOBAL);
         if (host != hosts_.cend()) {
             return (host->second);
@@ -599,7 +607,7 @@ void AllocEngine::findReservation(ClientContext6& ctx) {
     SharedNetwork6Ptr network;
     subnet->getSharedNetwork(network);
 
-    if (subnet->getHostReservationMode() & Network::HR_GLOBAL) {
+    if (subnet->getHostReservationMode() & Network::HR_GLOBAL_FLAG) {
         ConstHostPtr ghost = findGlobalReservation(ctx);
         if (ghost) {
             ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
@@ -931,7 +939,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // it has been reserved for us we would have already allocated a lease.
 
             ConstHostCollection hosts;
-            if (hr_mode != Network::HR_DISABLED) {
+            bool in_subnet = (hr_mode & Network::HR_IN_SUBNET_FLAG);
+            bool out_of_pool = (hr_mode & Network::HR_OUT_OF_POOL_FLAG);
+            // The HR_OUT_OF_POOL_FLAG indicates that no client should be assigned reservations
+            // from within the dynamic pool, and for that reason we only look at reservations that
+            // are outside the pools, hence the inPool check.
+            if ((in_subnet && !out_of_pool) ||
+                (out_of_pool && (!ctx.subnet_->inPool(ctx.currentIA().type_, hint)))) {
                 hosts = getIPv6Resrv(subnet->getID(), hint);
             }
 
@@ -965,7 +979,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
             // If the lease is expired, we may likely reuse it, but...
             ConstHostCollection hosts;
-            if (hr_mode != Network::HR_DISABLED) {
+            bool in_subnet = (hr_mode & Network::HR_IN_SUBNET_FLAG);
+            bool out_of_pool = (hr_mode & Network::HR_OUT_OF_POOL_FLAG);
+            // The HR_OUT_OF_POOL_FLAG indicates that no client should be assigned reservations
+            // from within the dynamic pool, and for that reason we only look at reservations that
+            // are outside the pools, hence the inPool check.
+            if ((in_subnet && !out_of_pool) ||
+                (out_of_pool && (!ctx.subnet_->inPool(ctx.currentIA().type_, hint)))) {
                 hosts = getIPv6Resrv(subnet->getID(), hint);
             }
 
@@ -1260,6 +1280,12 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
 
         ConstHostPtr host = ctx.hosts_[subnet_id];
 
+        // Check which host reservation mode is supported in this subnet.
+        Network::HRMode hr_mode = subnet->getHostReservationMode();
+
+        bool in_subnet = (hr_mode & Network::HR_IN_SUBNET_FLAG);
+        bool out_of_pool = (hr_mode & Network::HR_OUT_OF_POOL_FLAG);
+
         // Get the IPv6 reservations of specified type.
         const IPv6ResrvRange& reservs = host->getIPv6Reservations(type);
         BOOST_FOREACH(IPv6ResrvTuple type_lease_tuple, reservs) {
@@ -1270,6 +1296,15 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
             // We have allocated this address/prefix while processing one of the
             // previous IAs, so let's try another reservation.
             if (ctx.isAllocated(addr, prefix_len)) {
+                continue;
+            }
+
+            // The HR_OUT_OF_POOL_FLAG indicates that no client should be assigned reservations
+            // from within the dynamic pool, and for that reason we only look at reservations that
+            // are outside the pools, hence the inPool check.
+            if ((in_subnet && !out_of_pool) ||
+                (out_of_pool && (!subnet->inPool(ctx.currentIA().type_, addr)))) {
+            } else {
                 continue;
             }
 
@@ -2954,10 +2989,16 @@ namespace {
 /// @return true if the address is reserved for another client.
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
+    if (!ctx.subnet_) {
+        return false;
+    }
     bool in_subnet = (ctx.subnet_->getHostReservationMode() & Network::HR_IN_SUBNET_FLAG);
     bool out_of_pool = (ctx.subnet_->getHostReservationMode() & Network::HR_OUT_OF_POOL_FLAG);
-    if (ctx.subnet_ && ((in_subnet && !out_of_pool) ||
-        (out_of_pool && (!ctx.subnet_->inPool(Lease::TYPE_V4, address))))) {
+    // The HR_OUT_OF_POOL_FLAG indicates that no client should be assigned reservations
+    // from within the dynamic pool, and for that reason we only look at reservations that
+    // are outside the pools, hence the inPool check.
+    if ((in_subnet && !out_of_pool) ||
+        (out_of_pool && (!ctx.subnet_->inPool(Lease::TYPE_V4, address)))) {
         // The global parameter ip-reservations-unique controls whether it is allowed
         // to specify multiple reservations for the same IP address or delegated prefix
         // or IP reservations must be unique. Some host backends do not support the
@@ -3019,7 +3060,7 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
 
     Subnet4Ptr subnet = ctx.subnet_;
     while (subnet) {
-        if (subnet->getHostReservationMode() & Network::HR_GLOBAL) {
+        if (subnet->getHostReservationMode() & Network::HR_GLOBAL_FLAG) {
             auto host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
             bool found = (host != ctx.hosts_.end() &&
                     !(host->second->getIPv4Reservation().isV4Zero()));
@@ -3037,6 +3078,9 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         auto host = ctx.hosts_.find(subnet->getID());
         bool in_subnet = (subnet->getHostReservationMode() & Network::HR_IN_SUBNET_FLAG);
         bool out_of_pool = (subnet->getHostReservationMode() & Network::HR_OUT_OF_POOL_FLAG);
+        // The HR_OUT_OF_POOL_FLAG indicates that no client should be assigned reservations
+        // from within the dynamic pool, and for that reason we only look at reservations that
+        // are outside the pools, hence the inPool check.
         if (host != ctx.hosts_.end()) {
             auto reservation = host->second->getIPv4Reservation();
             if (!reservation.isV4Zero() &&
@@ -3219,12 +3263,20 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
 ConstHostPtr
 AllocEngine::ClientContext4::currentHost() const {
     if (subnet_) {
-        SubnetID id = (subnet_->getHostReservationMode() & Network::HR_GLOBAL ?
-                       SUBNET_ID_GLOBAL : subnet_->getID());
+        SubnetID id = subnet_->getID();
+        // if reservation mode is explicitly set to global search only by
+        // SUBNET_ID_GLOBAL.
+        if (subnet_->getHostReservationMode() == Network::HR_GLOBAL) {
+            id = SUBNET_ID_GLOBAL;
+        }
 
         auto host = hosts_.find(id);
         if (host != hosts_.cend()) {
             return (host->second);
+        } else if (id != SUBNET_ID_GLOBAL) {
+            // nothing found for specific subnet ID leads to search for
+            // SUBNET_ID_GLOBAL if HR_GLOBAL_FLAG is set.
+            return (globalHost());
         }
     }
     return (ConstHostPtr());
@@ -3232,7 +3284,7 @@ AllocEngine::ClientContext4::currentHost() const {
 
 ConstHostPtr
 AllocEngine::ClientContext4::globalHost() const {
-    if (subnet_ && (subnet_->getHostReservationMode() & Network::HR_GLOBAL)) {
+    if (subnet_ && (subnet_->getHostReservationMode() & Network::HR_GLOBAL_FLAG)) {
         auto host = hosts_.find(SUBNET_ID_GLOBAL);
         if (host != hosts_.cend()) {
             return (host->second);
@@ -3319,7 +3371,7 @@ AllocEngine::findReservation(ClientContext4& ctx) {
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
 
-    if (subnet->getHostReservationMode() & Network::HR_GLOBAL) {
+    if (subnet->getHostReservationMode() & Network::HR_GLOBAL_FLAG) {
         ConstHostPtr ghost = findGlobalReservation(ctx);
         if (ghost) {
             ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;

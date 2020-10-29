@@ -74,7 +74,7 @@ const char* CONFIGS[] = {
         " } ],"
         "\"valid-lifetime\": 4000 }",
 
-// Configuration 1
+    // Configuration 1
     "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
@@ -99,7 +99,7 @@ const char* CONFIGS[] = {
         "     \"qualifying-suffix\" : \"example.com\" }"
     "}",
 
-// Configuration 2
+    // Configuration 2
     "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
@@ -180,7 +180,33 @@ const char* CONFIGS[] = {
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " } ],"
-        "\"valid-lifetime\": 4000 }"
+        "\"valid-lifetime\": 4000"
+    "}",
+
+    // Configuration 4
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth0\", "
+        "    \"reservation-mode\": \"out-of-pool\","
+        "    \"reservations\": [ "
+        "       {"
+        "         \"duid\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"ip-addresses\": [\"2001:db8:1::20\"]"
+        "       },"
+        "       {"
+        "         \"duid\": \"11:22:33:44:55:66\","
+        "         \"ip-addresses\": [\"2001:db8:1::5\"]"
+        "       }"
+        "    ]"
+        "} ]"
+    "}"
 };
 
 /// @brief Test fixture class for testing 4-way exchange: Solicit-Advertise,
@@ -624,5 +650,62 @@ TEST_F(SARRTest, pkt6ReceiveDropStat3) {
     EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
 }
 
+// This test verifies that in pool reservations are ignored when the
+// reservation mode is set to "out-of-pool".
+TEST_F(SARRTest, reservationModeOutOfPool) {
+    // Create the first client for which we have a reservation out of the
+    // dynamic pool.
+    Dhcp6Client client;
+    configure(CONFIGS[4], *client.getServer());
+    client.setDUID("aa:bb:cc:dd:ee:ff");
+    client.setInterface("eth0");
+    client.requestAddress(1234, IOAddress("2001:db8:1::3"));
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+
+    Lease6 lease = client.getLease(0);
+    // Check that the server allocated the reserved address.
+    ASSERT_EQ("2001:db8:1::20", lease.addr_.toText());
+
+    client.clearConfig();
+    // Create another client which has a reservation within the pool.
+    // The server should ignore this reservation in the current mode.
+    client.setDUID("11:22:33:44:55:66");
+    // This client is requesting a different address than reserved. The
+    // server should allocate this address to the client.
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+
+    lease = client.getLease(0);
+    // Check that the requested address was assigned.
+    ASSERT_EQ("2001:db8:1::3", lease.addr_.toText());
+}
+
+// This test verifies that the in-pool reservation can be assigned to
+// the client not owning this reservation when the reservation mode is
+// set to "out-of-pool".
+TEST_F(SARRTest, reservationIgnoredInOutOfPoolMode) {
+    // Create the first client for which we have a reservation out of the
+    // dynamic pool.
+    Dhcp6Client client;
+    configure(CONFIGS[4], *client.getServer());
+    client.setDUID("12:34:56:78:9A:BC");
+    client.setInterface("eth0");
+    client.requestAddress(1234, IOAddress("2001:db8:1::5"));
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+
+    Lease6 lease = client.getLease(0);
+    // Check that the server allocated the reserved address.
+    ASSERT_EQ("2001:db8:1::5", lease.addr_.toText());
+}
 
 } // end of anonymous namespace
