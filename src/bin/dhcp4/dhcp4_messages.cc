@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Oct 28 2020 14:29
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -52,6 +52,7 @@ extern const isc::log::MessageID DHCP4_DECLINE_LEASE_MISMATCH = "DHCP4_DECLINE_L
 extern const isc::log::MessageID DHCP4_DECLINE_LEASE_NOT_FOUND = "DHCP4_DECLINE_LEASE_NOT_FOUND";
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_MISSING = "DHCP4_DEFERRED_OPTION_MISSING";
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_UNPACK_FAIL = "DHCP4_DEFERRED_OPTION_UNPACK_FAIL";
+extern const isc::log::MessageID DHCP4_DEPRECATED_RESERVATION_MODE = "DHCP4_DEPRECATED_RESERVATION_MODE";
 extern const isc::log::MessageID DHCP4_DEVELOPMENT_VERSION = "DHCP4_DEVELOPMENT_VERSION";
 extern const isc::log::MessageID DHCP4_DHCP4O6_BAD_PACKET = "DHCP4_DHCP4O6_BAD_PACKET";
 extern const isc::log::MessageID DHCP4_DHCP4O6_PACKET_RECEIVED = "DHCP4_DHCP4O6_PACKET_RECEIVED";
@@ -204,6 +205,7 @@ const char* values[] = {
     "DHCP4_DECLINE_LEASE_NOT_FOUND", "Received DHCPDECLINE for addr %1 from client %2, but no such lease found.",
     "DHCP4_DEFERRED_OPTION_MISSING", "can find deferred option code %1 in the query",
     "DHCP4_DEFERRED_OPTION_UNPACK_FAIL", "An error unpacking the deferred option %1: %2",
+    "DHCP4_DEPRECATED_RESERVATION_MODE", "deprecated reservation-mode parameter; use reservations-global, reservations-in-subnet and reservations-out-of-pool instead.",
     "DHCP4_DEVELOPMENT_VERSION", "This software is a development branch of Kea. It is not recommended for production use.",
     "DHCP4_DHCP4O6_BAD_PACKET", "received malformed DHCPv4o6 packet: %1",
     "DHCP4_DHCP4O6_PACKET_RECEIVED", "received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3",

@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Oct 28 2020 14:29
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -53,6 +53,7 @@ extern const isc::log::MessageID DHCP4_DECLINE_LEASE_MISMATCH;
 extern const isc::log::MessageID DHCP4_DECLINE_LEASE_NOT_FOUND;
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_MISSING;
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_UNPACK_FAIL;
+extern const isc::log::MessageID DHCP4_DEPRECATED_RESERVATION_MODE;
 extern const isc::log::MessageID DHCP4_DEVELOPMENT_VERSION;
 extern const isc::log::MessageID DHCP4_DHCP4O6_BAD_PACKET;
 extern const isc::log::MessageID DHCP4_DHCP4O6_PACKET_RECEIVED;
