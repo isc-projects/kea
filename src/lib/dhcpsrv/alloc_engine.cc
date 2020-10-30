@@ -535,25 +535,14 @@ isAllocated(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const {
 ConstHostPtr
 AllocEngine::ClientContext6::currentHost() const {
     Subnet6Ptr subnet = host_subnet_ ? host_subnet_ : subnet_;
-    if (subnet) {
-        SubnetID id = subnet->getID();
-        // if reservation mode is explicitly set to global search only by
-        // SUBNET_ID_GLOBAL.
-        if (subnet_->getHostReservationMode() == Network::HR_GLOBAL) {
-            id = SUBNET_ID_GLOBAL;
-        }
-
-        auto host = hosts_.find(id);
+    if (subnet && (subnet_->getHostReservationMode() & Network::HR_IN_SUBNET_FLAG)) {
+        auto host = hosts_.find(subnet->getID());
         if (host != hosts_.cend()) {
             return (host->second);
-        } else if (id != SUBNET_ID_GLOBAL) {
-            // nothing found for specific subnet ID leads to search for
-            // SUBNET_ID_GLOBAL if HR_GLOBAL_FLAG is set.
-            return (globalHost());
         }
     }
 
-    return (ConstHostPtr());
+    return (globalHost());
 }
 
 ConstHostPtr
@@ -593,7 +582,8 @@ AllocEngine::ClientContext6::getDdnsParams() {
     return (DdnsParamsPtr(new DdnsParams()));
 }
 
-void AllocEngine::findReservation(ClientContext6& ctx) {
+void
+AllocEngine::findReservation(ClientContext6& ctx) {
     ctx.hosts_.clear();
 
     // If there is no subnet, there is nothing to do.
@@ -2992,8 +2982,10 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
     if (!ctx.subnet_) {
         return false;
     }
-    bool in_subnet = (ctx.subnet_->getHostReservationMode() & Network::HR_IN_SUBNET_FLAG);
-    bool out_of_pool = (ctx.subnet_->getHostReservationMode() & Network::HR_OUT_OF_POOL_FLAG);
+    // Check which host reservation mode is supported in this subnet.
+    Network::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+    bool in_subnet = (hr_mode & Network::HR_IN_SUBNET_FLAG);
+    bool out_of_pool = (hr_mode & Network::HR_OUT_OF_POOL_FLAG);
     // The HR_OUT_OF_POOL_FLAG indicates that no client should be assigned reservations
     // from within the dynamic pool, and for that reason we only look at reservations that
     // are outside the pools, hence the inPool check.
@@ -3076,8 +3068,10 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         }
 
         auto host = ctx.hosts_.find(subnet->getID());
-        bool in_subnet = (subnet->getHostReservationMode() & Network::HR_IN_SUBNET_FLAG);
-        bool out_of_pool = (subnet->getHostReservationMode() & Network::HR_OUT_OF_POOL_FLAG);
+        // Check which host reservation mode is supported in this subnet.
+        Network::HRMode hr_mode = subnet->getHostReservationMode();
+        bool in_subnet = (hr_mode & Network::HR_IN_SUBNET_FLAG);
+        bool out_of_pool = (hr_mode & Network::HR_OUT_OF_POOL_FLAG);
         // The HR_OUT_OF_POOL_FLAG indicates that no client should be assigned reservations
         // from within the dynamic pool, and for that reason we only look at reservations that
         // are outside the pools, hence the inPool check.
@@ -3262,24 +3256,14 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
 
 ConstHostPtr
 AllocEngine::ClientContext4::currentHost() const {
-    if (subnet_) {
-        SubnetID id = subnet_->getID();
-        // if reservation mode is explicitly set to global search only by
-        // SUBNET_ID_GLOBAL.
-        if (subnet_->getHostReservationMode() == Network::HR_GLOBAL) {
-            id = SUBNET_ID_GLOBAL;
-        }
-
-        auto host = hosts_.find(id);
+    if (subnet_ && (subnet_->getHostReservationMode() & Network::HR_IN_SUBNET_FLAG)) {
+        auto host = hosts_.find(subnet_->getID());
         if (host != hosts_.cend()) {
             return (host->second);
-        } else if (id != SUBNET_ID_GLOBAL) {
-            // nothing found for specific subnet ID leads to search for
-            // SUBNET_ID_GLOBAL if HR_GLOBAL_FLAG is set.
-            return (globalHost());
         }
     }
-    return (ConstHostPtr());
+
+    return (globalHost());
 }
 
 ConstHostPtr
