@@ -28,6 +28,7 @@ shellcheck:
     - SCRIPTS+="src/bin/admin/admin-utils.sh "
     - SCRIPTS+="tools/cql_config "
     - SCRIPTS+="tools/sysrepo_config "
+    - SCRIPTS+="tools/add-config.h"
     - shellcheck ${SCRIPTS} ${SHELLCHECK_OPTS}
 
 danger:
