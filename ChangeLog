@@ -1,3 +1,9 @@
+1827.	[build]		andrei
+	Add `tools/add-config.h` script that can add
+	`#include <config.h>` lines to non-generated source files that
+	are missing it.
+	(Gitlab #1453)
+
 Kea 1.9.1 (development) released on Oct 28, 2020
 
 1826.	[build]		razvan
