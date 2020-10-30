@@ -1051,7 +1051,7 @@ private:
     ///
     /// @param ctx client context that contains all details (subnet, client-id, etc.)
     /// @param existing_leases leases that are already associated with the client
-    bool
+    void
     allocateGlobalReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases);
 
     /// @brief Removes leases that are reserved for someone else.

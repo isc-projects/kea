@@ -3109,7 +3109,7 @@ TEST_F(AllocEngine4Test, globalReservationReservedAddressDiscover) {
     EXPECT_EQ(ctx.currentHost()->getHostname(), host->getHostname());
     EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
 
-    // We should allocate the reserverd address.
+    // We should allocate the reserved address.
     Lease4Ptr lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(lease);
     EXPECT_EQ("192.0.77.123", lease->addr_.toText());
@@ -3157,7 +3157,7 @@ TEST_F(AllocEngine4Test, globalReservationReservedAddressRequest) {
     EXPECT_EQ(ctx.currentHost()->getHostname(), host->getHostname());
     EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
 
-    // We should allocate the reserverd address.
+    // We should allocate the reserved address.
     Lease4Ptr lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(lease);
     EXPECT_EQ("192.0.77.123", lease->addr_.toText());
@@ -3262,6 +3262,216 @@ TEST_F(AllocEngine4Test, globalReservationDynamicRequest) {
     Lease4Ptr lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(lease);
     EXPECT_EQ("192.0.2.100", lease->addr_.toText());
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+
+    // Client had no lease in the database, so the old lease returned should
+    // be NULL.
+    EXPECT_FALSE(ctx.old_lease_);
+}
+
+// This test checks the behavior of the allocation engine in the following
+// scenario:
+// - Client has no lease in the database.
+// - Client has a subnet reservation.
+// - Client sends DISCOVER
+// - Client is allocated the reserved address.
+// - Lease is not added to the lease database
+TEST_F(AllocEngine4Test, mixedReservationReservedAddressDiscover) {
+    // Create reservation for the client.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123"),
+                          "foo.example.org"));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+    subnet_->setHostReservationMode(Network::HR_GLOBAL|Network::HR_IN_SUBNET);
+
+    // Query allocation engine for the lease to be assigned to this
+    // client without specifying the address to be assigned.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"), false, false,
+                                    "", true);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Look up the host.
+    AllocEngine::findReservation(ctx);
+
+    // We should have the correct current host
+    EXPECT_TRUE(ctx.currentHost());
+    EXPECT_EQ(ctx.currentHost()->getHostname(), host->getHostname());
+    EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
+
+    // We should allocate the reserved address.
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("192.0.2.123", lease->addr_.toText());
+
+    // This is a "fake" allocation so the returned lease should not be committed
+    // to the lease database.
+    EXPECT_FALSE(LeaseMgrFactory::instance().getLease4(lease->addr_));
+
+    // Client had no lease in the database, so the old lease returned should
+    // be NULL.
+    EXPECT_FALSE(ctx.old_lease_);
+}
+
+// This test checks the behavior of the allocation engine in the following
+// scenario:
+// - Client has no lease in the database.
+// - Client has a subnet reservation.
+// - Client sends REQUEST
+// - Client is allocated the reserved address.
+// - Lease is added to the lease database
+TEST_F(AllocEngine4Test, mixedReservationReservedAddressRequest) {
+    // Create reservation for the client.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123"),
+                          "foo.example.org"));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+    subnet_->setHostReservationMode(Network::HR_GLOBAL|Network::HR_IN_SUBNET);
+
+    // Query allocation engine for the lease to be assigned to this
+    // client without specifying the address to be assigned.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"), false, false,
+                                    "", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Look up the host.
+    AllocEngine::findReservation(ctx);
+
+    // We should have the correct current host
+    EXPECT_TRUE(ctx.currentHost());
+    EXPECT_EQ(ctx.currentHost()->getHostname(), host->getHostname());
+    EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
+
+    // We should allocate the reserved address.
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("192.0.2.123", lease->addr_.toText());
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+
+    // Client had no lease in the database, so the old lease returned should
+    // be NULL.
+    EXPECT_FALSE(ctx.old_lease_);
+}
+
+// This test checks the behavior of the allocation engine in the following
+// scenario:
+// - Client has no lease in the database.
+// - Client has a global and a subnet reservation.
+// - Client sends DISCOVER
+// - Client is allocated the reserved address.
+// - Lease is not added to the lease database
+TEST_F(AllocEngine4Test, bothReservationReservedAddressDiscover) {
+    // Create reservations for the client.
+    HostPtr ghost(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                           Host::IDENT_HWADDR, SUBNET_ID_GLOBAL,
+                           SUBNET_ID_UNUSED, IOAddress("192.0.77.123")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(ghost);
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123"),
+                          "foo.example.org"));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+    subnet_->setHostReservationMode(Network::HR_GLOBAL|Network::HR_IN_SUBNET);
+
+    // Query allocation engine for the lease to be assigned to this
+    // client without specifying the address to be assigned.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"), false, false,
+                                    "", true);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Look up the host.
+    AllocEngine::findReservation(ctx);
+
+    // We should have the correct current host
+    EXPECT_TRUE(ctx.currentHost());
+    EXPECT_EQ(ctx.currentHost()->getHostname(), host->getHostname());
+    EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
+
+    // We should allocate the reserved address.
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("192.0.2.123", lease->addr_.toText());
+
+    // This is a "fake" allocation so the returned lease should not be committed
+    // to the lease database.
+    EXPECT_FALSE(LeaseMgrFactory::instance().getLease4(lease->addr_));
+
+    // Client had no lease in the database, so the old lease returned should
+    // be NULL.
+    EXPECT_FALSE(ctx.old_lease_);
+}
+
+// This test checks the behavior of the allocation engine in the following
+// scenario:
+// - Client has no lease in the database.
+// - Client has a global and a subnet reservation.
+// - Client sends REQUEST
+// - Client is allocated the reserved address.
+// - Lease is added to the lease database
+TEST_F(AllocEngine4Test, bothReservationReservedAddressRequest) {
+    // Create reservations for the client.
+    HostPtr ghost(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                           Host::IDENT_HWADDR, SUBNET_ID_GLOBAL,
+                           SUBNET_ID_UNUSED, IOAddress("192.0.77.123")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(ghost);
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123"),
+                          "foo.example.org"));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+    subnet_->setHostReservationMode(Network::HR_GLOBAL|Network::HR_IN_SUBNET);
+
+    // Query allocation engine for the lease to be assigned to this
+    // client without specifying the address to be assigned.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"), false, false,
+                                    "", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Look up the host.
+    AllocEngine::findReservation(ctx);
+
+    // We should have the correct current host
+    EXPECT_TRUE(ctx.currentHost());
+    EXPECT_EQ(ctx.currentHost()->getHostname(), host->getHostname());
+    EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
+
+    // We should allocate the reserved address.
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("192.0.2.123", lease->addr_.toText());
 
     // Check that the lease is indeed in LeaseMgr
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);

@@ -1188,11 +1188,6 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
         return;
     }
 
-    if (allocateGlobalReservedLeases6(ctx, existing_leases)) {
-        // global reservation provided the lease, we're done
-        return;
-    }
-
     // Let's convert this from Lease::Type to IPv6Reserv::Type
     IPv6Resrv::Type type = ctx.currentIA().type_ == Lease::TYPE_NA ?
         IPv6Resrv::TYPE_NA : IPv6Resrv::TYPE_PD;
@@ -1360,15 +1355,18 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
             }
         }
     }
+
+    // Found no subnet reservations so now try the global reservation.
+    allocateGlobalReservedLeases6(ctx, existing_leases);
 }
 
-bool
+void
 AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
                                            Lease6Collection& existing_leases) {
     // Get the global host
     ConstHostPtr ghost = ctx.globalHost();
     if (!ghost) {
-        return (false);
+        return;
     }
 
     // We want to avoid allocating a new lease for an IA if there is already
@@ -1406,7 +1404,7 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
                 LeaseMgrFactory::instance().updateLease6(lease);
             }
 
-            return(true);
+            return;
         }
     }
 
@@ -1478,11 +1476,9 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
             // a lease corresponding to it and will skip it and then pick
             // the second reservation and turn it into the lease. This approach
             // would work for any number of reservations.
-            return (true);
+            return;
         }
     }
-
-    return(false);
 }
 
 void

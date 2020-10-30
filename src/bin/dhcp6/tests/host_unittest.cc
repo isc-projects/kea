@@ -495,7 +495,7 @@ const char* CONFIGS[] = {
         "   \"client-classes\": [ \"reserved_class\" ]\n"
         "}\n"
         "],\n"
-    "\"shared-networks\": [{"
+        "\"shared-networks\": [{"
         "    \"name\": \"frog\",\n"
         "    \"subnet6\": [\n"
         "        {\n"
@@ -2401,6 +2401,21 @@ TEST_F(HostTest, globalReservationsNA) {
         // Should get dynamic address and host name
         ASSERT_NO_FATAL_FAILURE(sarrTest(client, "2001:db8:2::1", "subnet-duid-host"));
     }
+
+    {
+        SCOPED_TRACE("Subnet reservation preferred over global");
+        // Patch the second subnet to both global and in-subnet.
+        Subnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+            getCfgSubnets6()->getSubnet(2);
+        ASSERT_TRUE(subnet);
+        subnet->setHostReservationMode(Network::HR_IN_SUBNET|Network::HR_GLOBAL);
+        client.clearConfig();
+        client.setInterface("eth1");
+        client.setDUID("01:02:03:05");
+        client.requestAddress(1234, IOAddress("::"));
+        // Should get dynamic address and host name because it has preference
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "2001:db8:2::1", "subnet-duid-host"));
+    }
 }
 
 // Verifies fundamental Global vs Subnet host reservations for PD leases
@@ -2446,6 +2461,22 @@ TEST_F(HostTest, globalReservationsPD) {
         client.setDUID("01:02:03:05");
         client.requestPrefix(1);
         // Should get dynamic prefix and subnet reserved host name
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "3001::100", "subnet-duid-host"));
+    }
+
+    {
+        SCOPED_TRACE("Subnet reservation preferred over global");
+        // Patch the second subnet to both global and in-subnet.
+        Subnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+            getCfgSubnets6()->getSubnet(2);
+        ASSERT_TRUE(subnet);
+        subnet->setHostReservationMode(Network::HR_IN_SUBNET|Network::HR_GLOBAL);
+        client.clearConfig();
+        client.setInterface("eth1");
+        client.setDUID("01:02:03:05");
+        client.requestPrefix(1);
+        // Should get dynamic prefix and subnet reserved host name
+        // because it has preference over the global reservation.
         ASSERT_NO_FATAL_FAILURE(sarrTest(client, "3001::100", "subnet-duid-host"));
     }
 }
