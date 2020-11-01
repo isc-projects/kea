@@ -54,6 +54,7 @@ struct PrefixRange {
     ///
     /// @param start beginning of the prefix range.
     /// @param end end of the prefix range.
+    /// @param delegated delegated prefix length.
     /// @throw BadValue if the values provided to the constructor are invalid,
     /// e.g. it is not IPv6 prefix.
     PrefixRange(const asiolink::IOAddress& start, const asiolink::IOAddress& end,

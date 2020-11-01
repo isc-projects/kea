@@ -153,6 +153,7 @@ public:
     /// appropriate prefix range for that prefix.
     ///
     /// @param prefix delegated prefix to be appended to the range queue.
+    /// @param delegated_length delegated prefix length.
     /// @return true if the range was found and the prefix was appended,
     /// false otherwise.
     bool append(const asiolink::IOAddress& prefix, const uint8_t delegated_length);
@@ -206,6 +207,7 @@ public:
     /// that address.
     ///
     /// @param range range from which the free address should be removed.
+    /// @param address address to remove.
     /// @return true if the address was found and successfully removed,
     /// false otherwise.
     /// @throw BadValue if the range does not exist.
@@ -217,6 +219,7 @@ public:
     /// that delegated prefix.
     ///
     /// @param range range from which the free prefix should be removed.
+    /// @param prefix prefix to remove.
     /// @return true if the prefix was found and successfully removed,
     /// false otherwise.
     /// @throw BadValue if the range does not exist.
