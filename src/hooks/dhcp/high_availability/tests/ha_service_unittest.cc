@@ -226,7 +226,7 @@ public:
     }
 
     /// @brief Returns a vector of received requests.
-    std::vector<ConstPostHttpRequestJsonPtr> getReceivedRequests() {
+    std::vector<PostHttpRequestJsonPtr> getReceivedRequests() {
         return (requests_);
     }
 
@@ -240,7 +240,7 @@ public:
     ///
     /// @return Pointer to the request found, or null pointer if there is
     /// no such request.
-    ConstPostHttpRequestJsonPtr
+    PostHttpRequestJsonPtr
     findRequest(const std::string& str1, const std::string& str2,
                 const std::string& str3 = "") {
         for (auto r = requests_.begin(); r < requests_.end(); ++r) {
@@ -255,7 +255,7 @@ public:
         }
 
         // Request not found.
-        return (ConstPostHttpRequestJsonPtr());
+        return (PostHttpRequestJsonPtr());
     }
 
     /// @brief Sets control result  to be included in the responses.
@@ -333,7 +333,7 @@ private:
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to the generated HTTP response.
     virtual HttpResponsePtr
-    createStockHttpResponse(const ConstHttpRequestPtr& request,
+    createStockHttpResponse(const HttpRequestPtr& request,
                             const HttpStatusCode& status_code) const {
         // The request hasn't been finalized so the request object
         // doesn't contain any information about the HTTP version number
@@ -357,7 +357,7 @@ private:
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to the generated HTTP OK response.
     virtual HttpResponsePtr
-    createDynamicHttpResponse(const ConstHttpRequestPtr& request) {
+    createDynamicHttpResponse(HttpRequestPtr request) {
         // Check authentication.
         const BasicHttpAuthMap& credentials = getCredentials();
         if (!credentials.empty()) {
@@ -384,8 +384,8 @@ private:
         }
 
         // Request must always be JSON.
-        ConstPostHttpRequestJsonPtr request_json =
-            boost::dynamic_pointer_cast<const PostHttpRequestJson>(request);
+        PostHttpRequestJsonPtr request_json =
+            boost::dynamic_pointer_cast<PostHttpRequestJson>(request);
 
         // Remember the request received.
         requests_.push_back(request_json);
@@ -474,7 +474,7 @@ private:
     }
 
     /// @brief Holds received HTTP requests.
-    std::vector<ConstPostHttpRequestJsonPtr> requests_;
+    std::vector<PostHttpRequestJsonPtr> requests_;
 
     /// @brief Control result to be returned in the server responses.
     int control_result_;

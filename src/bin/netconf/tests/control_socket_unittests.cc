@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -430,7 +430,7 @@ protected:
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to the generated HTTP response.
     virtual HttpResponsePtr
-    createStockHttpResponse(const ConstHttpRequestPtr& request,
+    createStockHttpResponse(const HttpRequestPtr& request,
                             const HttpStatusCode& status_code) const {
         // Data is in the request context.
         HttpVersion http_version(request->context()->http_version_major_,
@@ -448,10 +448,10 @@ protected:
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to an object representing HTTP response.
     virtual HttpResponsePtr
-    createDynamicHttpResponse(const ConstHttpRequestPtr& request) {
+    createDynamicHttpResponse(HttpRequestPtr request) {
         // Request must always be JSON.
-        ConstPostHttpRequestJsonPtr request_json =
-            boost::dynamic_pointer_cast<const PostHttpRequestJson>(request);
+        PostHttpRequestJsonPtr request_json =
+            boost::dynamic_pointer_cast<PostHttpRequestJson>(request);
         if (!request_json) {
             isc_throw(Unexpected, "request is not JSON");
         }

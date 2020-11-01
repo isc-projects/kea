@@ -470,7 +470,7 @@ TEST_F(AgentParserTest, configParse3Sockets) {
 // can't use AGENT_CONFIGS[4] as is, but need to run it through path replacer.
 TEST_F(AgentParserTest, configParseHooks) {
     // Create the configuration with proper lib path.
-    std::string cfg = pathReplacer(AGENT_CONFIGS[4], BASIC_CALLOUT_LIBRARY);
+    std::string cfg = pathReplacer(AGENT_CONFIGS[4], CALLOUT_LIBRARY);
     // The configuration should be successful.
     configParse(cfg.c_str(), 0);
 
@@ -478,7 +478,7 @@ TEST_F(AgentParserTest, configParseHooks) {
     CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
     const HookLibsCollection libs = ctx->getHooksConfig().get();
     ASSERT_EQ(1, libs.size());
-    EXPECT_EQ(string(BASIC_CALLOUT_LIBRARY), libs[0].first);
+    EXPECT_EQ(string(CALLOUT_LIBRARY), libs[0].first);
     ASSERT_TRUE(libs[0].second);
     EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].second->str());
 }

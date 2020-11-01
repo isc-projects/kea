@@ -10,11 +10,13 @@
 #include <agent/ca_command_mgr.h>
 #include <agent/ca_response_creator.h>
 #include <cc/command_interpreter.h>
+#include <hooks/hooks_manager.h>
 #include <http/basic_auth_config.h>
 #include <http/post_request.h>
 #include <http/post_request_json.h>
 #include <http/response_json.h>
 #include <process/testutils/d_test_stubs.h>
+#include <agent/tests/test_libraries.h>
 #include <gtest/gtest.h>
 #include <boost/pointer_cast.hpp>
 #include <functional>
@@ -23,6 +25,7 @@ using namespace isc;
 using namespace isc::agent;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::hooks;
 using namespace isc::http;
 using namespace isc::process;
 namespace ph = std::placeholders;
@@ -68,6 +71,8 @@ public:
     /// Removes registered commands from the command manager.
     virtual ~CtrlAgentResponseCreatorTest() {
         CtrlAgentCommandMgr::instance().deregisterAll();
+        HooksManager::prepareUnloadLibraries();
+        static_cast<void>(HooksManager::unloadLibraries());
     }
 
     /// @brief Fills request context with required data to create new request.
@@ -312,6 +317,107 @@ TEST_F(CtrlAgentResponseCreatorTest, basicAuth) {
                 std::string::npos);
     // Response must contain JSON body with "result" of 0.
     EXPECT_TRUE(response_json->toString().find("\"result\": 0") !=
+                std::string::npos);
+}
+
+// This test verifies that Unauthorized is returned when authentication is
+// required but not provided by request using the hook.
+TEST_F(CtrlAgentResponseCreatorTest, hookNoAuth) {
+    setBasicContext(request_);
+
+    // Body: "list-commands" is natively supported by the command manager.
+    request_->context()->body_ = "{ \"command\": \"list-commands\","
+        " \"service\": [ ] }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Setup hook.
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+    HooksConfig& hooks_cfg = ctx->getHooksConfig();
+    std::string auth_cfg = "{ \"config\": {\n"
+        "\"type\": \"basic\",\n"
+        "\"realm\": \"ISC.ORG\",\n"
+        "\"clients\": [{\n"
+        " \"user\": \"foo\",\n"
+        " \"password\": \"bar\"\n"
+        " }]}}";
+    ConstElementPtr auth_json;
+    ASSERT_NO_THROW(auth_json = Element::fromJSON(auth_cfg));
+    hooks_cfg.add(std::string(BASIC_AUTH_LIBRARY), auth_json);
+    ASSERT_NO_THROW(hooks_cfg.loadLibraries());
+
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Request should have no service.
+    EXPECT_EQ("{ \"command\": \"list-commands\" }",
+              request_->context()->body_);
+
+    // Response must be convertible to HttpResponseJsonPtr.
+    HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
+        HttpResponseJson>(response);
+    ASSERT_TRUE(response_json);
+
+    // Response must contain Unauthorized status code.
+    std::string expected = "HTTP/1.1 401 Unauthorized";
+    EXPECT_TRUE(response_json->toString().find(expected) != std::string::npos);
+    // Reponse should contain WWW-Authenticate header with configured realm.
+    expected = "WWW-Authenticate: Basic realm=\"ISC.ORG\"";
+    EXPECT_TRUE(response_json->toString().find(expected) != std::string::npos);
+}
+
+// Test successful server response when the client is authenticated.
+TEST_F(CtrlAgentResponseCreatorTest, hookBasicAuth) {
+    setBasicContext(request_);
+
+    // Body: "list-commands" is natively supported by the command manager.
+    request_->context()->body_ = "{ \"command\": \"list-commands\" }";
+
+    // Add basic HTTP authentication header.
+    const BasicHttpAuth& basic_auth = BasicHttpAuth("foo", "bar");
+    const BasicAuthHttpHeaderContext& basic_auth_header =
+        BasicAuthHttpHeaderContext(basic_auth);
+    request_->context()->headers_.push_back(basic_auth_header);
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Setup hook.
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+    HooksConfig& hooks_cfg = ctx->getHooksConfig();
+    std::string auth_cfg = "{ \"config\": {\n"
+        "\"type\": \"basic\",\n"
+        "\"realm\": \"ISC.ORG\",\n"
+        "\"clients\": [{\n"
+        " \"user\": \"foo\",\n"
+        " \"password\": \"bar\"\n"
+        " }]}}";
+    ConstElementPtr auth_json;
+    ASSERT_NO_THROW(auth_json = Element::fromJSON(auth_cfg));
+    hooks_cfg.add(std::string(BASIC_AUTH_LIBRARY), auth_json);
+    ASSERT_NO_THROW(hooks_cfg.loadLibraries());
+
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Response must be convertible to HttpResponseJsonPtr.
+    HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
+        HttpResponseJson>(response);
+    ASSERT_TRUE(response_json);
+
+    // Response must be successful.
+    EXPECT_TRUE(response_json->toString().find("HTTP/1.1 200 OK") !=
+                std::string::npos);
+    // Response must contain JSON body with "result" of 0.
+    EXPECT_TRUE(response_json->toString().find("\"result\": 0") !=
+                std::string::npos);
+    // Response must contain JSON body with "comment": "got".
+    EXPECT_TRUE(response_json->toString().find("\"comment\": \"got\"") !=
                 std::string::npos);
 }
 

@@ -121,7 +121,7 @@ public:
     /// @return Error HTTP response if validation failed, null otherwise.
     virtual isc::http::HttpResponseJsonPtr
     checkAuth(const isc::http::HttpResponseCreator& creator,
-              const isc::http::ConstHttpRequestPtr& request) const;
+              const isc::http::HttpRequestPtr& request) const;
 
 private:
 

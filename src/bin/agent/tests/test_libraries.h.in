@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,8 +16,11 @@ namespace {
 // .so file.  Note that we access the .so file - libtool creates this as a
 // like to the real shared library.
 
-// Basic library with context_create and three "standard" callouts.
-static const char* BASIC_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libbasic.so";
+// Basic callout library with context_create and three "standard" callouts.
+static const char* CALLOUT_LIBRARY = "@abs_builddir@/.libs/libcallout.so";
+
+// Basic HTTP authentication as a callout library.
+static const char* BASIC_AUTH_LIBRARY = "@abs_builddir@/.libs/libbasicauth.so";
 
 } // anonymous namespace
 

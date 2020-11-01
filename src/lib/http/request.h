@@ -7,6 +7,7 @@
 #ifndef HTTP_REQUEST_H
 #define HTTP_REQUEST_H
 
+#include <hooks/callout_handle_associate.h>
 #include <http/basic_auth.h>
 #include <http/http_message.h>
 #include <http/request_context.h>
@@ -28,9 +29,6 @@ class HttpRequest;
 /// @brief Pointer to the @ref HttpRequest object.
 typedef boost::shared_ptr<HttpRequest> HttpRequestPtr;
 
-/// @brief Pointer to the const @ref HttpRequest object.
-typedef boost::shared_ptr<const HttpRequest> ConstHttpRequestPtr;
-
 /// @brief Represents HTTP request message.
 ///
 /// This derivation of the @c HttpMessage class is specialized to represent
@@ -46,7 +44,9 @@ typedef boost::shared_ptr<const HttpRequest> ConstHttpRequestPtr;
 /// which derives from @c PostHttpRequest requires that the POST message
 /// includes body holding a JSON structure and provides methods to parse the
 /// JSON body.
-class HttpRequest : public HttpMessage {
+///
+/// Callouts are associated to the request.
+class HttpRequest : public HttpMessage, public hooks::CalloutHandleAssociate {
 public:
 
     /// @brief HTTP methods.

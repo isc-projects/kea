@@ -49,7 +49,7 @@ private:
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to the generated HTTP response.
     virtual HttpResponsePtr
-    createStockHttpResponse(const ConstHttpRequestPtr& request,
+    createStockHttpResponse(const HttpRequestPtr& request,
                             const HttpStatusCode& status_code) const {
         // The request hasn't been finalized so the request object
         // doesn't contain any information about the HTTP version number
@@ -68,7 +68,7 @@ private:
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to the generated HTTP OK response with no content.
     virtual HttpResponsePtr
-    createDynamicHttpResponse(const ConstHttpRequestPtr& request) {
+    createDynamicHttpResponse(HttpRequestPtr request) {
         // The simplest thing is to create a response with no content.
         // We don't need content to test our class.
         ResponsePtr response(new Response(request->getHttpVersion(),

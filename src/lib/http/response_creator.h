@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,7 +74,7 @@ public:
     /// @return Pointer to the object encapsulating generated HTTP response.
     /// @throw HttpResponseError if request is a NULL pointer.
     virtual HttpResponsePtr
-    createHttpResponse(const ConstHttpRequestPtr& request) final;
+    createHttpResponse(HttpRequestPtr request) final;
 
     /// @brief Create a new request.
     ///
@@ -93,7 +93,7 @@ public:
     /// @param status_code Status code of the response.
     /// @return Pointer to an object representing HTTP response.
     virtual HttpResponsePtr
-    createStockHttpResponse(const ConstHttpRequestPtr& request,
+    createStockHttpResponse(const HttpRequestPtr& request,
                             const HttpStatusCode& status_code) const = 0;
 
 protected:
@@ -103,7 +103,7 @@ protected:
     /// @param request Pointer to an object representing HTTP request.
     /// @return Pointer to an object representing HTTP response.
     virtual HttpResponsePtr
-    createDynamicHttpResponse(const ConstHttpRequestPtr& request) = 0;
+    createDynamicHttpResponse(HttpRequestPtr request) = 0;
 
 };
 

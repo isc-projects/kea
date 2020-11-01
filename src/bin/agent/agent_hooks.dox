@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,36 +23,34 @@ command.
 
 @section agentHooksHookPoints Hooks in the Control Agent
 
- @subsection agentHooksControlCommandReceive control_command_receive
+ @subsection agentHooksAuth auth
 
  - @b Arguments:
-   - name: @b command, type: isc::data::ConstElementPtr, direction: <b>in/out</b>
-   - name: @b response, type: isc::data::ConstElementPtr, direction: <b>in/out</b>
+   - name: @b request, type: isc::http::HttpRequestPtr, direction: <b>in/out</b>
+   - name: @b response, type: isc::http::HttpResponseJsonPtr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed when Control Agent receives a
    control command over the RESTful interface (HTTP).
-   The "command" argument is a pointer to the parsed JSON structure
-   including command name and command arguments. If the callout implements
-   the specified command, it handles the command and creates appropriate
-   response. The response should be returned in the "response" argument.
-   In most cases, the callout which handles the command will set the next
-   step action to SKIP, to prevent the server from trying to handle the
-   command on its own and overriding the response created by the callouts.
-   A notable exception is the 'list-commands' command for which the callouts
-   should not set the next step action to SKIP. The server has a special
-   code path for this command which combines the list of commands returned
-   by the callouts with the list of commands supported by the server. If
-   the callout sets the next step action to SKIP in this case, the server
-   will only return the list of commands supported by the hook library.
-   The callout can modify the command arguments to influence the command
-   processing by the Command Manager. For example, it may freely modify
-   the configuration received in 'config-set' before it is processed by
-   the server. The SKIP action is not set in this case.
+   The "request" argument is a pointer to the request, in fact a
+   PostHttpRequestJsonPtr. The "response" argument is the response in
+   case of errors. The purpose of this callout is to implement authentication
+   and authorization. It is called after basic HTTP authentication.
+   The next step status is ignored: if the response is set the processing
+   will stop and the response is returned. In particular the command is not
+   forwarded.
 
- - <b>Next step status</b>: if any callout sets the next step action to SKIP,
-   the server will assume that the command has been handled by the callouts
-   and will expect that the response is provided in the "response" argument.
-   The Control Agent will not handle the command in this case but simply
-   return the response returned by the callout to the caller.
+ @subsection agentHooksResponse response
+
+ - @b Arguments:
+   - name: @b request, type: isc::http::HttpRequestPtr, direction: <b>in</b>
+   - name: @b response, type: isc::http::HttpResponseJsonPtr, direction: <b>in/out</b>
+
+ - @b Description: this callout is executed when Control Agent executed
+   a control command over the RESTful interface (HTTP).
+   The "request" argument is a pointer to the request. It is used as a
+   reference and for callout contexts. The "response" argument is the
+   response which will be sent back to the resquesting client.  It is
+   called after command processing.  The next step status is ignored:
+   the response eventually modified will be sent back.
 
 */

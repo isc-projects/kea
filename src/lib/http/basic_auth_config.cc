@@ -202,7 +202,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
 
 HttpResponseJsonPtr
 BasicHttpAuthConfig::checkAuth(const HttpResponseCreator& creator,
-                               const ConstHttpRequestPtr& request) const {
+                               const HttpRequestPtr& request) const {
     const BasicHttpAuthMap& credentials = getCredentialMap();
     bool authentic = false;
     if (credentials.empty()) {

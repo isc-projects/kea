@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,7 @@ namespace isc {
 namespace http {
 
 HttpResponsePtr
-HttpResponseCreator::createHttpResponse(const ConstHttpRequestPtr& request) {
+HttpResponseCreator::createHttpResponse(HttpRequestPtr request) {
     // This should never happen. This method must only be called with a
     // non null request, so we consider it unlikely internal server error.
     if (!request) {

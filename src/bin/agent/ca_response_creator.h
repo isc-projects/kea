@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,7 +52,7 @@ public:
     /// @return Pointer to an @ref isc::http::HttpResponseJson object
     /// representing stock HTTP response.
     virtual http::HttpResponsePtr
-    createStockHttpResponse(const http::ConstHttpRequestPtr& request,
+    createStockHttpResponse(const http::HttpRequestPtr& request,
                             const http::HttpStatusCode& status_code) const;
 
 private:
@@ -68,7 +68,7 @@ private:
     /// @return Pointer to an @ref isc::http::HttpResponseJson object
     /// representing stock HTTP response.
    http::HttpResponsePtr
-   createStockHttpResponseInternal(const http::ConstHttpRequestPtr& request,
+   createStockHttpResponseInternal(const http::HttpRequestPtr& request,
                                    const http::HttpStatusCode& status_code) const;
 
     /// @brief Creates implementation specific HTTP response.
@@ -76,7 +76,7 @@ private:
     /// @param request Pointer to an object representing HTTP request.
     /// @return Pointer to an object representing HTTP response.
     virtual http::HttpResponsePtr
-    createDynamicHttpResponse(const http::ConstHttpRequestPtr& request);
+    createDynamicHttpResponse(http::HttpRequestPtr request);
 };
 
 } // end of namespace isc::agent

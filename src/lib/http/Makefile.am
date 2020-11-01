@@ -48,6 +48,7 @@ libkea_http_la_LDFLAGS  = $(AM_LDFLAGS)
 libkea_http_la_LDFLAGS += -no-undefined -version-info 20:0:0
 
 libkea_http_la_LIBADD  =
+libkea_http_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la

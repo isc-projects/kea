@@ -41,7 +41,7 @@ TESTS_ENVIRONMENT = \
 TESTS =
 if HAVE_GTEST
 
-noinst_LTLIBRARIES = libbasic.la
+noinst_LTLIBRARIES = libcallout.la libbasicauth.la
 
 TESTS += ca_unittests
 
@@ -82,13 +82,27 @@ ca_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 ca_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 
 # The basic callout library - contains standard callouts
-libbasic_la_SOURCES  = basic_library.cc
-libbasic_la_CXXFLAGS = $(AM_CXXFLAGS)
-libbasic_la_CPPFLAGS = $(AM_CPPFLAGS)
-libbasic_la_LIBADD   = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libbasic_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-libbasic_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
-libbasic_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
+libcallout_la_SOURCES  = callout_library.cc
+libcallout_la_CXXFLAGS = $(AM_CXXFLAGS)
+libcallout_la_CPPFLAGS = $(AM_CPPFLAGS)
+libcallout_la_LIBADD   = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libcallout_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libcallout_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libcallout_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
+
+# The basic HTTP auth as a callout library
+libbasicauth_la_SOURCES  = basic_auth_library.cc
+libbasicauth_la_CXXFLAGS = $(AM_CXXFLAGS)
+libbasicauth_la_CPPFLAGS = $(AM_CPPFLAGS)
+libbasicauth_la_LIBADD   = $(top_builddir)/src/lib/http/libkea-http.la
+libbasicauth_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libbasicauth_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libbasicauth_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
+libbasicauth_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libbasicauth_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
+libbasicauth_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libbasicauth_la_LIBADD  += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
+libbasicauth_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
 nodist_ca_unittests_SOURCES = test_data_files_config.h test_libraries.h
 

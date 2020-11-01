@@ -105,7 +105,7 @@ pathReplacer(ConstElementPtr ca_cfg) {
         return;
     }
     ElementPtr first_lib = hooks_libs->getNonConst(0);
-    std::string lib_path(BASIC_CALLOUT_LIBRARY);
+    std::string lib_path(CALLOUT_LIBRARY);
     first_lib->set("library", Element::create(lib_path));
 }
 

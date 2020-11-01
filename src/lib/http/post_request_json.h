@@ -27,8 +27,6 @@ class PostHttpRequestJson;
 
 /// @brief Pointer to @ref PostHttpRequestJson.
 typedef boost::shared_ptr<PostHttpRequestJson> PostHttpRequestJsonPtr;
-/// @brief Pointer to const @ref PostHttpRequestJson.
-typedef boost::shared_ptr<const PostHttpRequestJson> ConstPostHttpRequestJsonPtr;
 
 /// @brief Represents HTTP POST request with JSON body.
 ///
