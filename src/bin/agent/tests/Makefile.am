@@ -23,7 +23,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/agent/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/agent\"
-AM_CPPFLAGS += -DSYNTAX_FILE=\"$(srcdir)/../agent_parser.yy\"
+AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../agent_parser.yy\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 

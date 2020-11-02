@@ -24,7 +24,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp6/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/kea6\"
-AM_CPPFLAGS += -DSYNTAX_FILE=\"$(srcdir)/../dhcp6_parser.yy\"
+AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../dhcp6_parser.yy\"
 
 CLEANFILES  = $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
