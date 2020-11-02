@@ -18,6 +18,9 @@ fi
 
 mysql "$@" <<EOF
 
+# Disable audit
+SET @disable_audit = 1;
+
 # Update reservation_mode value after separating flags.
 
 # update old global to new value
@@ -43,6 +46,9 @@ UPDATE dhcp6_shared_network SET reservation_mode = 2 WHERE reservation_mode = 3;
 # update out-of-pool all to new value
 UPDATE dhcp6_subnet SET reservation_mode = 3 WHERE reservation_mode = 1;
 UPDATE dhcp6_shared_network SET reservation_mode = 3 WHERE reservation_mode = 1;
+
+# Enable audit
+SET @disable_audit = 0;
 
 # Update the schema version number
 UPDATE schema_version

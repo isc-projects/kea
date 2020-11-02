@@ -1350,6 +1350,160 @@ mysql_unused_subnet_id_test() {
     test_finish 0
 }
 
+# Verifies that you can upgrade from an earlier version and
+# that reservation_mode values in subnet and shared network tables are
+# converted to new values.
+mysql_reservation_mode_upgrade_test() {
+    test_start "mysql_reservation_mode_upgrade_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which convert subnet id values
+    #
+    # Initialize database to scheme 1.0.
+    mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
+
+    # Now upgrade to schema 9.4, the last version with reservation_mode
+    mysql_upgrade_schema_to_version 9.4
+
+    # Now we need insert some subnets and shared networks.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_shared_network (name, modification_ts, reservation_mode)\
+    values ('test0', current_timestamp, 0);\
+ insert into dhcp4_shared_network (name, modification_ts, reservation_mode)\
+    values ('test1', current_timestamp, 1);\
+ insert into dhcp4_shared_network (name, modification_ts, reservation_mode)\
+    values ('test2', current_timestamp, 2);\
+ insert into dhcp4_shared_network (name, modification_ts, reservation_mode)\
+    values ('test3', current_timestamp, 3);\
+ insert into dhcp4_subnet (subnet_id, subnet_prefix, modification_ts, reservation_mode)\
+    values (1234, '192.0.0.0/24', current_timestamp, 0);\
+ insert into dhcp4_subnet (subnet_id, subnet_prefix, modification_ts, reservation_mode)\
+    values (2345, '192.0.1.0/24', current_timestamp, 1);\
+ insert into dhcp4_subnet (subnet_id, subnet_prefix, modification_ts, reservation_mode)\
+    values (3456, '192.0.2.0/24', current_timestamp, 2);\
+ insert into dhcp4_subnet (subnet_id, subnet_prefix, modification_ts, reservation_mode)\
+    values (4567, '192.0.3.0/24', current_timestamp, 3);\
+ insert into dhcp6_shared_network (name, modification_ts, reservation_mode)\
+    values ('test0', current_timestamp, 0);\
+ insert into dhcp6_shared_network (name, modification_ts, reservation_mode)\
+    values ('test1', current_timestamp, 1);\
+ insert into dhcp6_shared_network (name, modification_ts, reservation_mode)\
+    values ('test2', current_timestamp, 2);\
+ insert into dhcp6_shared_network (name, modification_ts, reservation_mode)\
+    values ('test3', current_timestamp, 3);\
+ insert into dhcp6_subnet (subnet_id, subnet_prefix, modification_ts, reservation_mode)\
+    values (1234, '2001:db8::/64', current_timestamp, 0);\
+ insert into dhcp6_subnet (subnet_id, subnet_prefix, modification_ts, reservation_mode)\
+    values (2345, '2001:db8:1::/64', current_timestamp, 1);\
+ insert into dhcp6_subnet (subnet_id, subnet_prefix, modification_ts, reservation_mode)\
+    values (3456, '2001:db8:2::/64', current_timestamp, 2);\
+ insert into dhcp6_subnet (subnet_id, subnet_prefix, modification_ts, reservation_mode)\
+    values (4567, '2001:db8:3::/64', current_timestamp, 3);\
+ set @disable_audit = 0;"
+
+    run_statement "insert reservation_mode" "$sql"
+
+    qry="select count(*) from dhcp4_shared_network;"
+    run_statement "#get 4_shared count before update" "$qry" 4
+
+    qry="select count(*) from dhcp4_subnet;"
+    run_statement "#get 4_subnet count before update" "$qry" 4
+
+    qry="select count(*) from dhcp6_shared_network;"
+    run_statement "#get 6_shared count before update" "$qry" 4
+
+    qry="select count(*) from dhcp6_subnet;"
+    run_statement "#get 6_subnet count before update" "$qry" 4
+
+    # Upgrade to schema 9.5.
+    mysql_upgrade_schema_to_version 9.5
+
+    # Test DISABLED (0) -> 0
+    qry="select count(id) from dhcp4_shared_network where reservation_mode = 0 and name = 'test0';"
+    run_statement "#4_shared_disabled" "$qry" 1
+
+    # Test OUT_OF_POOL (1) -> 3
+    qry="select count(id) from dhcp4_shared_network where reservation_mode = 3 and name = 'test1';"
+    run_statement "#4_shared_out_of_pool" "$qry" 1
+
+    # Test GLOBAL (2) -> 4
+    qry="select count(id) from dhcp4_shared_network where reservation_mode = 4 and name = 'test2';"
+    run_statement "#4_shared_global" "$qry" 1
+
+    # Test ALL (3) -> 2
+    qry="select count(id) from dhcp4_shared_network where reservation_mode = 2 and name = 'test3';"
+    run_statement "#4_shared_all" "$qry" 1
+
+    # Test DISABLED (0) -> 0
+    qry="select count(subnet_id) from dhcp4_subnet where reservation_mode = 0 and subnet_prefix = '192.0.0.0/24'"
+    run_statement "#4_subnet_disabled" "$qry" 1
+
+    # Test OUT_OF_POOL (1) -> 3
+    qry="select count(subnet_id) from dhcp4_subnet where reservation_mode = 3 and subnet_prefix = '192.0.1.0/24'"
+    run_statement "#4_subnet_out_of_pool" "$qry" 1
+
+    # Test GLOBAL (2) -> 4
+    qry="select count(subnet_id) from dhcp4_subnet where reservation_mode = 4 and subnet_prefix = '192.0.2.0/24'"
+    run_statement "#4_subnet_global" "$qry" 1
+
+    # Test ALL (3) -> 2
+    qry="select count(subnet_id) from dhcp4_subnet where reservation_mode = 2 and subnet_prefix = '192.0.3.0/24'"
+    run_statement "#4_subnet_all" "$qry" 1
+
+    # Test DISABLED (0) -> 0
+    qry="select count(id) from dhcp6_shared_network where reservation_mode = 0 and name = 'test0';"
+    run_statement "#6_shared_disabled" "$qry" 1
+
+    # Test OUT_OF_POOL (1) -> 3
+    qry="select count(id) from dhcp6_shared_network where reservation_mode = 3 and name = 'test1';"
+    run_statement "#6_shared_out_of_pool" "$qry" 1
+
+    # Test GLOBAL (2) -> 4
+    qry="select count(id) from dhcp6_shared_network where reservation_mode = 4 and name = 'test2';"
+    run_statement "#6_shared_global" "$qry" 1
+
+    # Test ALL (3) -> 2
+    qry="select count(id) from dhcp6_shared_network where reservation_mode = 2 and name = 'test3';"
+    run_statement "#6_shared_all" "$qry" 1
+
+    # Test DISABLED (0) -> 0
+    qry="select count(subnet_id) from dhcp6_subnet where reservation_mode = 0 and subnet_prefix = '2001:db8::/64'"
+    run_statement "#6_subnet_disabled" "$qry" 1
+
+    # Test OUT_OF_POOL (1) -> 3
+    qry="select count(subnet_id) from dhcp6_subnet where reservation_mode = 3 and subnet_prefix = '2001:db8:1::/64'"
+    run_statement "#6_subnet_out_of_pool" "$qry" 1
+
+    # Test GLOBAL (2) -> 4
+    qry="select count(subnet_id) from dhcp6_subnet where reservation_mode = 4 and subnet_prefix = '2001:db8:2::/64'"
+    run_statement "#6_subnet_global" "$qry" 1
+
+    # Test ALL (3) -> 2
+    qry="select count(subnet_id) from dhcp6_subnet where reservation_mode = 2 and subnet_prefix = '2001:db8:3::/64'"
+    run_statement "#6_subnet_all" "$qry" 1
+
+    qry="select count(*) from dhcp4_shared_network;"
+    run_statement "#get 4_shared count before update" "$qry" 4
+
+    qry="select count(*) from dhcp4_subnet;"
+    run_statement "#get 4_subnet count before update" "$qry" 4
+
+    qry="select count(*) from dhcp6_shared_network;"
+    run_statement "#get 6_shared count before update" "$qry" 4
+
+    qry="select count(*) from dhcp6_subnet;"
+    run_statement "#get 6_subnet count before update" "$qry" 4
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
 mysql_db_init_test
 mysql_host_reservation_init_test
 mysql_db_version_test
@@ -1361,3 +1515,4 @@ mysql_lease6_stat_test
 mysql_lease_stat_upgrade_test
 mysql_lease_stat_recount_test
 mysql_unused_subnet_id_test
+mysql_reservation_mode_upgrade_test
