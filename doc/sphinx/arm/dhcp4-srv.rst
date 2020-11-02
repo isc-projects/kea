@@ -3943,9 +3943,8 @@ IPv6-only Preferred Networks
 ----------------------------
 
 A `RFC8925 <https://tools.ietf.org/html/rfc8925>`_ recently published by IETF
-specifies a DHCPv4 option to indicate that a host supports an
-IPv6-only mode and is willing to forgot obtaining an IPv4 address if
-the network provides IPv6 connectivity. The general idea is that
+specifies a DHCPv4 option to indicate that a host supports an IPv6-only mode and is willing to
+forgo obtaining an IPv4 address if the network provides IPv6 connectivity. The general idea is that
 a network administrator can enable this option to signal to compatible dual-stack devices that the
 IPv6 connectivity is available and they can shut down their IPv4 stack. The new option
 `v6-only-preferred` content is a 32 bit unsigned integer and specifies for how long the device
