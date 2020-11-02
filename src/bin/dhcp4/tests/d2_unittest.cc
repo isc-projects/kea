@@ -274,6 +274,8 @@ TEST_F(Dhcp4SrvD2Test, simpleUDPSend) {
     // Configure it enabled and start it.
     ASSERT_NO_FATAL_FAILURE(configureD2(true));
     ASSERT_TRUE(mgr.ddnsEnabled());
+    ASSERT_NO_THROW(mgr.clearQueue());
+    EXPECT_EQ(0, mgr.getQueueSize());
     ASSERT_NO_THROW(srv_.startD2());
     ASSERT_TRUE(mgr.amSending());
 
@@ -313,6 +315,8 @@ TEST_F(Dhcp4SrvD2Test, DISABLED_forceUDPSendFailure) {
     ASSERT_NO_FATAL_FAILURE(configureD2(true, SHOULD_PASS, "0.0.0.0", 0,
                                         "0.0.0.0", 53001));
     ASSERT_TRUE(mgr.ddnsEnabled());
+    ASSERT_NO_THROW(mgr.clearQueue());
+    EXPECT_EQ(0, mgr.getQueueSize());
     try {
         srv_.startD2();
     } catch (const std::exception& ex) {
@@ -374,6 +378,8 @@ TEST_F(Dhcp4SrvD2Test, queueMaxError) {
     dhcp::D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
     ASSERT_NO_FATAL_FAILURE(configureD2(true));
     ASSERT_TRUE(mgr.ddnsEnabled());
+    ASSERT_NO_THROW(mgr.clearQueue());
+    EXPECT_EQ(0, mgr.getQueueSize());
     ASSERT_NO_THROW(srv_.startD2());
     ASSERT_TRUE(mgr.amSending());
 
