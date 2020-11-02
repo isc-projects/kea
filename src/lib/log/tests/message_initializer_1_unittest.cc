@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,7 +61,18 @@ const MessageInitializer init_message_initializer_unittest_2(values2);
 // Check that the global dictionary is initialized with the specified
 // messages.
 
-TEST(MessageInitializerTest1, messageTest) {
+namespace {
+void
+messageTest() {
+    static bool done = false;
+
+    // Execute once.
+    if (done) {
+        return;
+    } else {
+        done = true;
+    }
+
     const MessageDictionaryPtr& global = MessageDictionary::globalDictionary();
 
     // Pointers to the message arrays should have been stored, but none of the
@@ -87,11 +98,15 @@ TEST(MessageInitializerTest1, messageTest) {
     EXPECT_EQ(string("global message five"), global->getText("GLOBAL5"));
     EXPECT_EQ(string("global message six"), global->getText("GLOBAL6"));
 }
+}
 
 // Check that destroying the MessageInitializer causes the relevant
 // messages to be removed from the dictionary.
 
 TEST(MessageInitializerTest1, dynamicLoadUnload) {
+    // Try first messageTest.
+    messageTest();
+
     // Obtain the instance of the global dictionary.
     const MessageDictionaryPtr& global = MessageDictionary::globalDictionary();
 
@@ -132,6 +147,9 @@ TEST(MessageInitializerTest1, dynamicLoadUnload) {
 // Check that destroying the MessageInitializer removes pending messages.
 
 TEST(MessageInitializerTest1, dynamicUnloadPending) {
+    // Try first messageTest.
+    messageTest();
+
     // Obtain the instance of the global dictionary.
     const MessageDictionaryPtr& global = MessageDictionary::globalDictionary();
 
@@ -196,6 +214,9 @@ TEST(MessageInitializerTest1, dynamicUnloadPending) {
 }
 
 TEST(MessageInitializerTest1, duplicates) {
+    // Try first messageTest.
+    messageTest();
+
     // Original set should not have dupes
     ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
 
