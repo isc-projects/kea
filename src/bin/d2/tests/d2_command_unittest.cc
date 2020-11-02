@@ -46,12 +46,12 @@ class NakedD2Controller : public D2Controller {
     // "Naked" D2 controller, exposes internal methods.
 public:
     static DControllerBasePtr& instance() {
-        if (!getController()) {
-            DControllerBasePtr controller_ptr(new NakedD2Controller());
-            setController(controller_ptr);
+        static DControllerBasePtr controller_ptr;
+        if (!controller_ptr) {
+            controller_ptr.reset(new NakedD2Controller());
         }
 
-        return (getController());
+        return (controller_ptr);
     }
 
     virtual ~NakedD2Controller() { deregisterCommands(); }
