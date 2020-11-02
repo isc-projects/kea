@@ -64,6 +64,7 @@ public:
     ///
     /// Various cleanups.
     virtual ~Dhcp6to4IpcTest() {
+        Dhcp6to4Ipc::client_port = 0;
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("buffer6_send");
         callback_pkt_.reset();
         bool status = HooksManager::unloadLibraries();
@@ -312,9 +313,6 @@ TEST_F(Dhcp6to4IpcTest, clientPort) {
 
     // Verify the packet received.
     EXPECT_EQ(ipc.client_port, forwarded->getRemotePort());
-
-    // Reset the value in case tests are not in order.
-    ipc.client_port = 0;
 }
 
 } // end of anonymous namespace
