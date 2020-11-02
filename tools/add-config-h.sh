@@ -8,7 +8,7 @@
 
 # Usage:
 #
-# ./tools/add-config-h [-d|--debug] [-h|--help] [-n|--name-only]
+# ./tools/add-config-h.sh [-d|--debug] [-h|--help] [-n|--name-only]
 #
 # Run from the root of the repository to add `#include <config.h>` lines to
 # non-generated .cc files.
