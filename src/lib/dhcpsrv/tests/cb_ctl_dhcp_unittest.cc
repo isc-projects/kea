@@ -250,6 +250,11 @@ AuditEntryCollectionPtr CBControlDHCPTest::callback_audit_entries_;
 /// @brief Naked @c CBControlDHCPv4 class exposing protected methods.
 class TestCBControlDHCPv4 : public CBControlDHCPv4 {
 public:
+    /// @brief Constructor.
+    TestCBControlDHCPv4() {
+        CfgMgr::instance().setFamily(AF_INET);
+    }
+
     using CBControlDHCPv4::getInitialAuditRevisionTime;
     using CBControlDHCPv4::databaseConfigApply;
 };
