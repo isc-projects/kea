@@ -3287,6 +3287,13 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
     DatabaseConnection::db_lost_callback =
         std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
 
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
     // Connect to the lease backend.
     ASSERT_NO_THROW(LeaseMgrFactory::create(validConnectString()));
 
