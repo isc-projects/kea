@@ -42,7 +42,7 @@
   ],
 
 // Enable connectivity with kea-dhcp-ddns
-// (Required for dynamic DNS updates)    
+// (Required for dynamic DNS updates)
   "dhcp-ddns" : {
         "enable-updates" : true,
         "server-ip" : "3001::1",
@@ -85,4 +85,3 @@
 }
 
 }
-

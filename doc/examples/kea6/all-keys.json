@@ -756,7 +756,7 @@
                                 "delegated-len": 64,
 
                                 // Excluded prefix (address) from client assignments.
-                                "excluded-prefix": "2001:db8::",
+                                "excluded-prefix": "2001:db8:1::",
 
                                 // Excluded prefix (length) from client assignments.
                                 "excluded-prefix-len": 72,
@@ -765,10 +765,10 @@
                                 "option-data": [],
 
                                 // Prefix range (address) used for client assignments.
-                                "prefix": "2001:db8::",
+                                "prefix": "2001:db8:1::",
 
                                 // Prefix range (length) used for client assignments.
-                                "prefix-len": 40,
+                                "prefix-len": 48,
 
                                 // List of client classes which must be evaluated
                                 // when this prefix pool is selected for client assignments.
