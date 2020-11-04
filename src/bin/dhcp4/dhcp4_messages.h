@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Aug 14 2020 21:33
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Nov 04 2020 14:29
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -86,7 +86,6 @@ extern const isc::log::MessageID DHCP4_INIT_REBOOT;
 extern const isc::log::MessageID DHCP4_LEASE_ADVERT;
 extern const isc::log::MessageID DHCP4_LEASE_ALLOC;
 extern const isc::log::MessageID DHCP4_MULTI_THREADING_INFO;
-extern const isc::log::MessageID DHCP4_MULTI_THREADING_WARNING;
 extern const isc::log::MessageID DHCP4_NCR_CREATE;
 extern const isc::log::MessageID DHCP4_NCR_CREATION_FAILED;
 extern const isc::log::MessageID DHCP4_NOT_RUNNING;

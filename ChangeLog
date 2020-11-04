@@ -1,3 +1,8 @@
+1798.	[func]	razvan,tmark
+	Removed "Multithreading is experimental" warning log message
+	from kea-dhcp4 and kea-dhcp6 servers.
+	(Gitlab #1435,#1431)
+
 Kea 1.8.0 (stable) released on Aug 26, 2020
 
 1797.	[build]		razvan

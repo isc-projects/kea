@@ -932,9 +932,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // @todo This should be fixed.
     try {
         CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
-        if (MultiThreadingMgr::instance().getMode()) {
-            LOG_FATAL(dhcp4_logger, DHCP4_MULTI_THREADING_WARNING);
-        }
     } catch (const std::exception& ex) {
         err << "Error applying multi threading settings: "
             << ex.what();
