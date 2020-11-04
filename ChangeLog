@@ -1,3 +1,12 @@
+1799.	[bug]		tmark
+	kea-dhcp4 now correctly updates DNS when a client
+	returns for lease after the lease has expired.  Prior
+	to this, the server would remove the entries but then
+	fail to add them unless the hostname (or FQDN) changed.
+	This change also eliminates redundant DNS removes when
+	expired leases are reclaimed and given to different clients.
+	(Gitlab #1419,#1409)
+
 1798.	[func]	razvan,tmark
 	Removed "Multithreading is experimental" warning log message
 	from kea-dhcp4 and kea-dhcp6 servers.
