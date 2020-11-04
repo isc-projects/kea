@@ -7,6 +7,7 @@
 #ifndef CFG_DBACCESS_H
 #define CFG_DBACCESS_H
 
+#include <asiolink/io_service.h>
 #include <cc/cfg_to_element.h>
 #include <database/database_connection.h>
 
@@ -102,7 +103,9 @@ public:
 
     /// @brief Creates instance of lease manager and host data sources
     /// according to the configuration specified.
-    void createManagers() const;
+    ///
+    /// @param IOService object, used for all ASIO operations.
+    void createManagers(const isc::asiolink::IOServicePtr& io_service = isc::asiolink::IOServicePtr()) const;
 
 protected:
 

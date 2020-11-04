@@ -110,14 +110,13 @@ DatabaseConnection::configuredReadOnly() const {
     return (readonly_value == "true");
 }
 
-ReconnectCtlPtr
-DatabaseConnection::makeReconnectCtl() const {
-    ReconnectCtlPtr retry;
+void
+DatabaseConnection::makeReconnectCtl(const std::string& timer_name) {
     string type = "unknown";
     unsigned int retries = 0;
     unsigned int interval = 0;
 
-    // Assumes that parsing ensurse only valid values are present
+    // Assumes that parsing ensures only valid values are present
     try {
         type = getParameter("type");
     } catch (...) {
@@ -139,15 +138,32 @@ DatabaseConnection::makeReconnectCtl() const {
         // Wasn't specified so we'll use default of 0;
     }
 
-    retry.reset(new ReconnectCtl(type, retries, interval));
-    return (retry);
+    reconnect_ctl_ = boost::make_shared<ReconnectCtl>(timer_name, type, retries,
+                                                      interval);
 }
 
 bool
-DatabaseConnection::invokeDbLostCallback() const {
-    if (DatabaseConnection::db_lost_callback) {
-        // Invoke the callback, passing in a new instance of ReconnectCtl
-        return (DatabaseConnection::db_lost_callback)(makeReconnectCtl());
+DatabaseConnection::invokeDbLostCallback(const ReconnectCtlPtr& db_reconnect_ctl) {
+    if (DatabaseConnection::db_lost_callback_) {
+        return (DatabaseConnection::db_lost_callback_(db_reconnect_ctl));
+    }
+
+    return (false);
+}
+
+bool
+DatabaseConnection::invokeDbRecoveredCallback(const ReconnectCtlPtr& db_reconnect_ctl) {
+    if (DatabaseConnection::db_recovered_callback_) {
+        return (DatabaseConnection::db_recovered_callback_(db_reconnect_ctl));
+    }
+
+    return (false);
+}
+
+bool
+DatabaseConnection::invokeDbFailedCallback(const ReconnectCtlPtr& db_reconnect_ctl) {
+    if (DatabaseConnection::db_failed_callback_) {
+        return (DatabaseConnection::db_failed_callback_(db_reconnect_ctl));
     }
 
     return (false);
@@ -214,8 +230,9 @@ DatabaseConnection::toElementDbAccessString(const std::string& dbaccess) {
     return (toElement(params));
 }
 
-DatabaseConnection::DbLostCallback
-DatabaseConnection::db_lost_callback = 0;
+DbCallback DatabaseConnection::db_lost_callback_ = 0;
+DbCallback DatabaseConnection::db_recovered_callback_ = 0;
+DbCallback DatabaseConnection::db_failed_callback_ = 0;
 
-};
-};
+}  // namespace db
+}  // namespace isc

@@ -9,9 +9,13 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/cfg_db_access.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <util/multi_threading_mgr.h>
 
 #include <boost/make_shared.hpp>
@@ -1166,8 +1170,10 @@ bool PgSqlLeaseStatsQuery::negative_count_ = false;
 
 // PgSqlLeaseContext Constructor
 
-PgSqlLeaseContext::PgSqlLeaseContext(const DatabaseConnection::ParameterMap& parameters)
-    : conn_(parameters) {
+PgSqlLeaseContext::PgSqlLeaseContext(const PgSqlConnection::ParameterMap& parameters,
+                                     const isc::asiolink::IOServicePtr& io_service,
+                                     DbCallback callback)
+    : conn_(parameters, io_service, callback) {
 }
 
 // PgSqlLeaseContextAlloc Constructor and Destructor
@@ -1208,8 +1214,9 @@ PgSqlLeaseMgr::PgSqlLeaseContextAlloc::~PgSqlLeaseContextAlloc() {
 
 // PgSqlLeaseMgr Constructor and Destructor
 
-PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : parameters_(parameters) {
+PgSqlLeaseMgr::PgSqlLeaseMgr(const PgSqlConnection::ParameterMap& parameters,
+                             const IOServicePtr& io_service)
+    : parameters_(parameters), io_service_(io_service) {
 
     // Validate schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
@@ -1226,16 +1233,81 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     // Create an initial context.
     pool_.reset(new PgSqlLeaseContextPool());
     pool_->pool_.push_back(createContext());
+
+    auto db_reconnect_ctl = pool_->pool_[0]->conn_.reconnectCtl();
+
+    std::string manager = "PgSqlLeaseMgr[";
+    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    std::string timer_name = manager + "]DbReconnectTimer";
+
+    TimerMgr::instance()->registerTimer(timer_name,
+        std::bind(&PgSqlLeaseMgr::dbReconnect, db_reconnect_ctl),
+                  db_reconnect_ctl->retryInterval(),
+                  asiolink::IntervalTimer::ONE_SHOT);
 }
 
 PgSqlLeaseMgr::~PgSqlLeaseMgr() {
+    std::string manager = "PgSqlLeaseMgr[";
+    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    std::string timer_name = manager + "]DbReconnectTimer";
+
+    TimerMgr::instance()->unregisterTimer(timer_name);
+}
+
+bool
+PgSqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
+    MultiThreadingCriticalSection cs;
+
+    DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl);
+
+    bool reopened = false;
+
+    // At least one connection was lost.
+    try {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
+        LeaseMgrFactory::destroy();
+        LeaseMgrFactory::create(cfg_db->getLeaseDbAccessString()/*, io_service_ */);
+
+        reopened = true;
+    } catch (const std::exception& ex) {
+        //LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_DB_RECONNECT_ATTEMPT_FAILED)
+        //        .arg(ex.what());
+    }
+
+    if (reopened) {
+        // Cancel the timer.
+        const std::string& timer_name = db_reconnect_ctl->timerName();
+        TimerMgr::instance()->cancel(timer_name);
+
+        DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl);
+    } else {
+        if (!db_reconnect_ctl->checkRetries()) {
+            // We're out of retries, log it and initiate shutdown.
+            //LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_DB_RECONNECT_RETRIES_EXHAUSTED)
+            //        .arg(db_reconnect_ctl->maxRetries());
+
+            DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
+
+            return (false);
+        }
+
+        //LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB_RECONNECT_ATTEMPT_SCHEDULE)
+        //        .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
+        //        .arg(db_reconnect_ctl->maxRetries())
+        //        .arg(db_reconnect_ctl->retryInterval());
+
+        TimerMgr::instance()->setup(db_reconnect_ctl->timerName());
+    }
+
+    return (true);
 }
 
 // Create context.
 
 PgSqlLeaseContextPtr
 PgSqlLeaseMgr::createContext() const {
-    PgSqlLeaseContextPtr ctx(new PgSqlLeaseContext(parameters_));
+    PgSqlLeaseContextPtr ctx(new PgSqlLeaseContext(parameters_, io_service_,
+                                                   &PgSqlLeaseMgr::dbReconnect));
 
     // Open the database.
     ctx->conn_.openDatabase();
@@ -1256,6 +1328,12 @@ PgSqlLeaseMgr::createContext() const {
     // program and the database.
     ctx->exchange4_.reset(new PgSqlLease4Exchange());
     ctx->exchange6_.reset(new PgSqlLease6Exchange());
+
+    std::string manager = "PgSqlLeaseMgr[";
+    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    std::string timer_name = manager + "]DbReconnectTimer";
+
+    ctx->conn_.makeReconnectCtl(timer_name);
 
     return (ctx);
 }

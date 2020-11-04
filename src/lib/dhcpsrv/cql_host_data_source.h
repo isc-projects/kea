@@ -18,6 +18,7 @@
 #ifndef CQL_HOST_DATA_SOURCE_H
 #define CQL_HOST_DATA_SOURCE_H
 
+#include <asiolink/io_service.h>
 #include <cql/cql_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
 
@@ -86,7 +87,8 @@ public:
     /// schema version is invalid.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    explicit CqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters);
+    explicit CqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters,
+                               const isc::asiolink::IOServicePtr& io_service);
 
     /// @brief Virtual destructor.
     ///

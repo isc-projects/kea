@@ -7,6 +7,7 @@
 #ifndef MYSQL_CONNECTION_H
 #define MYSQL_CONNECTION_H
 
+#include <asiolink/io_service.h>
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
@@ -239,8 +240,11 @@ public:
     /// @brief Constructor
     ///
     /// Initialize MySqlConnection object with parameters needed for connection.
-    MySqlConnection(const ParameterMap& parameters)
-        : DatabaseConnection(parameters) {
+    MySqlConnection(const ParameterMap& parameters,
+                    const isc::asiolink::IOServicePtr& io_service = isc::asiolink::IOServicePtr(),
+                    DbCallback callback = DbCallback())
+        : DatabaseConnection(parameters), io_service_(io_service),
+          callback_(callback) {
     }
 
     /// @brief Destructor
@@ -514,7 +518,7 @@ public:
     /// @tparam StatementIndex Type of the statement index enum.
     ///
     /// @param index Index of the query to be executed.
-    /// @param in_bindings Input bindings holding values to substitue placeholders
+    /// @param in_bindings Input bindings holding values to substitute placeholders
     /// in the query.
     ///
     /// @return Number of affected rows.
@@ -586,10 +590,8 @@ public:
     ///
     /// If the error is recoverable, the function will throw a DbOperationError.
     /// If the error is deemed unrecoverable, such as a loss of connectivity
-    /// with the server, the function will call invokeDbLostCallback(). If the
-    /// invocation returns false then either there is no callback registered
-    /// or the callback has elected not to attempt to reconnect, and a
-    /// DbUnrecoverableError is thrown.
+    /// with the server, the function will call startRecoverDbConnection() which
+    /// will start the connection recovery.
     ///
     /// If the invocation returns true, this indicates the calling layer will
     /// attempt recovery, and the function throws a DbOperationError to allow
@@ -625,20 +627,16 @@ public:
                     .arg(mysql_error(mysql_))
                     .arg(mysql_errno(mysql_));
 
-                // Mark the connection as no longer usuable.
+                // Mark this connection as no longer usable.
                 markUnusable();
 
-                // If there's no lost db callback or it returns false,
-                // then we're not attempting to recover so we're done.
-                if (!invokeDbLostCallback()) {
-                    isc_throw(db::DbUnrecoverableError,
-                              "database connectivity cannot be recovered");
-                }
+                // Start the connection recovery.
+                startRecoverDbConnection();
 
                 // We still need to throw so caller can error out of the current
                 // processing.
                 isc_throw(db::DbConnectionUnusable,
-                          "fatal database errror or connectivity lost");
+                          "fatal database error or connectivity lost");
             default:
                 // Connection is ok, so it must be an SQL error
                 isc_throw(db::DbOperationError, what << " for <"
@@ -647,6 +645,17 @@ public:
                           << mysql_error(mysql_) << " (error code "
                           << mysql_errno(mysql_) << ")");
             }
+        }
+    }
+
+    /// @brief The recover connection
+    ///
+    /// This function starts the recover process of the connection.
+    ///
+    /// @note The recover function must be run on the IO Service thread.
+    void startRecoverDbConnection() {
+        if (callback_) {
+            io_service_->post(std::bind(callback_, reconnectCtl()));
         }
     }
 
@@ -667,9 +676,15 @@ public:
     /// This field is public, because it is used heavily from MySqlConnection
     /// and will be from MySqlHostDataSource.
     MySqlHolder mysql_;
+
+    /// @brief IOService object, used for all ASIO operations.
+    isc::asiolink::IOServicePtr io_service_;
+
+    /// @brief The callback used to recover the connection.
+    DbCallback callback_;
 };
 
-}; // end of isc::db namespace
-}; // end of isc namespace
+} // end of isc::db namespace
+} // end of isc namespace
 
 #endif // MYSQL_CONNECTION_H

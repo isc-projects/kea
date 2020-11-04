@@ -34,6 +34,7 @@
 #include <sstream>
 #include <utility>
 
+using namespace isc::asiolink;
 using namespace isc::db;
 using namespace std;
 
@@ -44,7 +45,8 @@ map<string, HostDataSourceFactory::Factory> HostDataSourceFactory::map_;
 
 void
 HostDataSourceFactory::add(HostDataSourceList& sources,
-                           const string& dbaccess) {
+                           const string& dbaccess,
+                           const IOServicePtr& io_service) {
     // Parse the access string and create a redacted string for logging.
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
@@ -74,7 +76,7 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
     }
 
     // Call the factory and push the pointer on sources.
-    sources.push_back(boost::shared_ptr<BaseHostDataSource>(index->second(parameters)));
+    sources.push_back(index->second(parameters, io_service));
 
     // Check the factory did not return NULL.
     if (!sources.back()) {
@@ -177,10 +179,11 @@ struct MySqlHostDataSourceInit {
 
     // Factory class method
     static HostDataSourcePtr
-    factory(const DatabaseConnection::ParameterMap& parameters) {
+    factory(const DatabaseConnection::ParameterMap& parameters,
+            const isc::asiolink::IOServicePtr& io_service) {
         LOG_INFO(hosts_logger, DHCPSRV_MYSQL_HOST_DB)
             .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (HostDataSourcePtr(new MySqlHostDataSource(parameters)));
+        return (HostDataSourcePtr(new MySqlHostDataSource(parameters, io_service)));
     }
 };
 
@@ -202,10 +205,11 @@ struct PgSqlHostDataSourceInit {
 
     // Factory class method
     static HostDataSourcePtr
-    factory(const DatabaseConnection::ParameterMap& parameters) {
+    factory(const DatabaseConnection::ParameterMap& parameters,
+            const isc::asiolink::IOServicePtr& io_service) {
         LOG_INFO(hosts_logger, DHCPSRV_PGSQL_HOST_DB)
             .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (HostDataSourcePtr(new PgSqlHostDataSource(parameters)));
+        return (HostDataSourcePtr(new PgSqlHostDataSource(parameters, io_service)));
     }
 };
 
@@ -227,10 +231,11 @@ struct CqlHostDataSourceInit {
 
     // Factory class method
     static HostDataSourcePtr
-    factory(const DatabaseConnection::ParameterMap& parameters) {
+    factory(const DatabaseConnection::ParameterMap& parameters,
+            const isc::asiolink::IOServicePtr& io_service) {
         LOG_INFO(hosts_logger, DHCPSRV_CQL_HOST_DB)
             .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (HostDataSourcePtr(new CqlHostDataSource(parameters)));
+        return (HostDataSourcePtr(new CqlHostDataSource(parameters, io_service)));
     }
 };
 

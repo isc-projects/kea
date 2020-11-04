@@ -522,11 +522,11 @@ public:
 class LeaseMgrDbLostCallbackTest : public ::testing::Test {
 public:
     LeaseMgrDbLostCallbackTest() {
-        db::DatabaseConnection::db_lost_callback = 0;
+        db::DatabaseConnection::db_lost_callback_ = 0;
     }
 
     virtual ~LeaseMgrDbLostCallbackTest() {
-        db::DatabaseConnection::db_lost_callback = 0;
+        db::DatabaseConnection::db_lost_callback_ = 0;
     }
 
     /// @brief Prepares the class for a test.

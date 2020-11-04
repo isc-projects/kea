@@ -387,27 +387,7 @@ private:
     /// deleted.
     void deleteExpiredReclaimedLeases(const uint32_t secs);
 
-    /// @brief Attempts to reconnect the server to the DB backend managers
-    ///
-    /// This is a self-rescheduling function that attempts to reconnect to the
-    /// server's DB backends after connectivity to one or more have been
-    /// lost.  Upon entry it will attempt to reconnect via @ref CfgDdbAccess::
-    /// createManagers.  If this is succesful, DHCP servicing is re-enabled and
-    /// server returns to normal operation.
-    ///
-    /// If reconnection fails and the maximum number of retries has not been
-    /// exhausted, it will schedule a call to itself to occur at the
-    /// configured retry interval. DHCP service remains disabled.
-    ///
-    /// If the maximum number of retries has been exhausted an error is logged
-    /// and the server shuts down.
-    ///
-    /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
-    /// configured reconnect parameters
-    ///
-    void dbReconnect(db::ReconnectCtlPtr db_reconnect_ctl);
-
-    /// @brief Callback DB backends should invoke upon loss of connectivity
+    /// @brief Callback DB backends should invoke upon loss of the connectivity
     ///
     /// This function is invoked by DB backends when they detect a loss of
     /// connectivity.  The parameter, db_reconnect_ctl, conveys the configured
@@ -416,16 +396,33 @@ private:
     ///
     /// If either value is zero, reconnect is presumed to be disabled and
     /// the function will schedule a shutdown and return false.  This instructs
-    /// the DB backend layer (the caller) to treat the connectivity loss as fatal.
-    ///
-    /// Otherwise, the function saves db_reconnect_ctl and invokes
-    /// dbReconnect to initiate the reconnect process.
+    /// the DB backend layer (the caller) to treat the connectivity loss as
+    /// fatal. It stops the DHCP service until the connection is recovered.
     ///
     /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
     /// configured reconnect parameters
     ///
     /// @return false if reconnect is not configured, true otherwise
     bool dbLostCallback(db::ReconnectCtlPtr db_reconnect_ctl);
+
+    /// @brief Callback DB backends should invoke upon restoration of the
+    /// connectivity
+    ///
+    /// This function is invoked by DB backends when they recover the
+    /// connectivity. It starts the DHCP service after the connection is
+    /// recovered.
+    ///
+    /// @return false if reconnect is not configured, true otherwise
+    bool dbRecoveredCallback(db::ReconnectCtlPtr db_reconnect_ctl);
+
+    /// @brief Callback DB backends should invoke upon failing to restore of the
+    /// connectivity
+    ///
+    /// This function is invoked by DB backends when they fail to recover the
+    /// connectivity. It stops the server.
+    ///
+    /// @return false if reconnect is not configured, true otherwise
+    bool dbFailedCallback(db::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Callback invoked periodically to fetch configuration updates
     /// from the Config Backends.
@@ -448,7 +445,7 @@ private:
     static ControlledDhcpv4Srv* server_;
 
     /// @brief IOService object, used for all ASIO operations.
-    isc::asiolink::IOService io_service_;
+    isc::asiolink::IOServicePtr io_service_;
 
     /// @brief Instance of the @c TimerMgr.
     ///

@@ -122,7 +122,8 @@ public:
 
         // Host cache.
         hcptr_.reset(new TestHostCache());
-        auto cacheFactory = [this](const DatabaseConnection::ParameterMap&) {
+        auto cacheFactory = [this](const DatabaseConnection::ParameterMap&,
+                                   const isc::asiolink::IOServicePtr&) {
             return (hcptr_);
         };
         HostDataSourceFactory::registerFactory("cache", cacheFactory);
@@ -130,7 +131,8 @@ public:
 
         // Host data source.
         memptr_.reset(new TestHostDataSource());
-        auto testFactory = [this](const DatabaseConnection::ParameterMap&) {
+        auto testFactory = [this](const DatabaseConnection::ParameterMap&,
+                                  const isc::asiolink::IOServicePtr&) {
             return (memptr_);
         };
         HostDataSourceFactory::registerFactory("test", testFactory);
@@ -795,7 +797,8 @@ public:
 
         // No cache.
         ncptr_.reset(new TestNoCache());
-        auto nocacheFactory = [this](const DatabaseConnection::ParameterMap&) {
+        auto nocacheFactory = [this](const DatabaseConnection::ParameterMap&,
+                                     const isc::asiolink::IOServicePtr&) {
             return (ncptr_);
         };
         HostDataSourceFactory::registerFactory("nocache", nocacheFactory);
@@ -803,7 +806,8 @@ public:
 
         // One backend.
         obptr_.reset(new TestOneBackend());
-        auto oneFactory = [this](const DatabaseConnection::ParameterMap&) {
+        auto oneFactory = [this](const DatabaseConnection::ParameterMap&,
+                                 const isc::asiolink::IOServicePtr&) {
             return (obptr_);
         };
         HostDataSourceFactory::registerFactory("one", oneFactory);

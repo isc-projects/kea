@@ -1416,7 +1416,8 @@ public:
     ///
     /// This constructor opens database connection and initializes prepared
     /// statements used in the queries.
-    PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters);
+    PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters,
+                            const isc::asiolink::IOServicePtr& io_service);
 
     /// @brief Destructor.
     ~PgSqlHostDataSourceImpl();
@@ -2171,7 +2172,8 @@ PgSqlHostDataSource::PgSqlHostContextAlloc::~PgSqlHostContextAlloc() {
     // If running in single-threaded mode, there's nothing to do here.
 }
 
-PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
+PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters,
+                                                 const isc::asiolink::IOServicePtr& io_service)
     : parameters_(parameters), ip_reservations_unique_(true) {
 
     // Validate the schema version first.
@@ -2432,8 +2434,9 @@ PgSqlHostDataSourceImpl::checkReadOnly(PgSqlHostContextPtr& ctx) const {
 
 /*********** PgSqlHostDataSource *********************/
 
-PgSqlHostDataSource::PgSqlHostDataSource(const PgSqlConnection::ParameterMap& parameters)
-    : impl_(new PgSqlHostDataSourceImpl(parameters)) {
+PgSqlHostDataSource::PgSqlHostDataSource(const PgSqlConnection::ParameterMap& parameters,
+                                         const isc::asiolink::IOServicePtr& io_service)
+    : impl_(new PgSqlHostDataSourceImpl(parameters, io_service)) {
 }
 
 PgSqlHostDataSource::~PgSqlHostDataSource() {

@@ -7,6 +7,7 @@
 #ifndef HOST_MGR_H
 #define HOST_MGR_H
 
+#include <asiolink/io_service.h>
 #include <database/database_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/cache_host_data_source.h>
@@ -66,11 +67,14 @@ public:
     ///
     /// @param access Host backend access parameters for the alternate
     /// host backend. It holds "keyword=value" pairs, separated by spaces.
+    /// @param io_service The IOService object, used for all ASIO operations.
+    ///
     /// The supported values are specific to the alternate backend in use.
     /// However, the "type" parameter will be common and it will specify which
     /// backend is to be used. Currently, no parameters are supported
     /// and the parameter is ignored.
-    static void addBackend(const std::string& access);
+    static void addBackend(const std::string& access,
+                           const isc::asiolink::IOServicePtr& io_service = isc::asiolink::IOServicePtr());
 
     /// @brief Delete an alternate host backend (aka host data source).
     ///

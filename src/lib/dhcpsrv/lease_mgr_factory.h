@@ -7,6 +7,7 @@
 #ifndef LEASE_MGR_FACTORY_H
 #define LEASE_MGR_FACTORY_H
 
+#include <asiolink/io_service.h>
 #include <database/database_connection.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <exceptions/exceptions.h>
@@ -62,12 +63,14 @@ public:
     ///        "keyword=value" pairs, separated by spaces. They are backend-
     ///        -end specific, although must include the "type" keyword which
     ///        gives the backend in use.
+    /// @param io_service The IOService object, used for all ASIO operations.
     ///
     /// @throw isc::InvalidParameter dbaccess string does not contain the "type"
     ///        keyword.
     /// @throw isc::dhcp::InvalidType The "type" keyword in dbaccess does not
     ///        identify a supported backend.
-    static void create(const std::string& dbaccess);
+    static void create(const std::string& dbaccess,
+                       const isc::asiolink::IOServicePtr& io_service = isc::asiolink::IOServicePtr());
 
     /// @brief Destroy lease manager
     ///
@@ -97,10 +100,9 @@ private:
     /// is encapsulated in this method to avoid a "static initialization
     /// fiasco" if defined in an external static variable.
     static boost::scoped_ptr<LeaseMgr>& getLeaseMgrPtr();
-
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
 
 #endif // LEASE_MGR_FACTORY_H

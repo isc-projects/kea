@@ -29,6 +29,7 @@
 
 #include <sstream>
 
+using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::db;
@@ -805,11 +806,18 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Re-open lease and host database with new parameters.
     try {
-        DatabaseConnection::db_lost_callback =
+        DatabaseConnection::db_lost_callback_ =
             std::bind(&ControlledDhcpv6Srv::dbLostCallback, srv, ph::_1);
+
+        DatabaseConnection::db_recovered_callback_ =
+            std::bind(&ControlledDhcpv6Srv::dbRecoveredCallback, srv, ph::_1);
+
+        DatabaseConnection::db_failed_callback_ =
+            std::bind(&ControlledDhcpv6Srv::dbFailedCallback, srv, ph::_1);
+
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=6");
-        cfg_db->createManagers();
+        cfg_db->createManagers(server_->io_service_);
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
@@ -853,10 +861,10 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
-    // Configure DHCP packet queueing
+    // Configure DHCP packet queuing.
     try {
         data::ConstElementPtr qc;
-        qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+        qc = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
         if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, qc)) {
             LOG_INFO(dhcp6_logger, DHCP6_CONFIG_PACKET_QUEUE)
                      .arg(IfaceMgr::instance().getPacketQueue6()->getInfoStr());
@@ -978,7 +986,7 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
 
 ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
                                          uint16_t client_port)
-    : Dhcpv6Srv(server_port, client_port), io_service_(),
+    : Dhcpv6Srv(server_port, client_port), io_service_(boost::make_shared<IOService>()),
       timer_mgr_(TimerMgr::instance()) {
     if (getInstance()) {
         isc_throw(InvalidOperation,
@@ -1073,7 +1081,7 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
 
 void ControlledDhcpv6Srv::shutdownServer(int exit_value) {
     setExitValue(exit_value);
-    io_service_.stop();    // Stop ASIO transmissions
+    io_service_->stop();    // Stop ASIO transmissions
     shutdown();            // Initiate DHCPv6 shutdown procedure.
 }
 
@@ -1083,7 +1091,8 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
 
         // The closure captures either a shared pointer (memory leak)
         // or a raw pointer (pointing to a deleted object).
-        DatabaseConnection::db_lost_callback = 0;
+        DatabaseConnection::db_lost_callback_ = 0;
+        DatabaseConnection::db_recovered_callback_ = 0;
 
         timer_mgr_->unregisterTimers();
 
@@ -1131,7 +1140,7 @@ void ControlledDhcpv6Srv::sessionReader(void) {
     // Process one asio event. If there are more events, iface_mgr will call
     // this callback more than once.
     if (getInstance()) {
-        getInstance()->io_service_.run_one();
+        getInstance()->io_service_->run_one();
     }
 }
 
@@ -1159,66 +1168,9 @@ ControlledDhcpv6Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
     TimerMgr::instance()->setup(CfgExpiration::FLUSH_RECLAIMED_TIMER_NAME);
 }
 
-void
-ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
-    bool reopened = false;
-
-    // We lost at least one of them. Reopen all of them (lease, host, and CB databases).
-    try {
-        CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
-        cfg_db->createManagers();
-
-        auto ctl_info = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo();
-        if (ctl_info) {
-            auto srv_cfg = CfgMgr::instance().getCurrentCfg();
-            server_->getCBControl()->databaseConfigConnect(srv_cfg);
-        }
-
-        reopened = true;
-    } catch (const std::exception& ex) {
-        LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_ATTEMPT_FAILED).arg(ex.what());
-    }
-
-    if (reopened) {
-        // Cancel the timer.
-        if (TimerMgr::instance()->isTimerRegistered("Dhcp6DbReconnectTimer")) {
-            TimerMgr::instance()->cancel("Dhcp6DbReconnectTimer");
-        }
-
-        // Set network state to service enabled
-        network_state_->enableService();
-
-        // Toss the reconnect control, we're done with it
-        db_reconnect_ctl.reset();
-    } else {
-        if (!db_reconnect_ctl->checkRetries()) {
-            // We're out of retries, log it and initiate shutdown.
-            LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_RETRIES_EXHAUSTED)
-            .arg(db_reconnect_ctl->maxRetries());
-            shutdownServer(EXIT_FAILURE);
-            return;
-        }
-
-        LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE)
-                .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
-                .arg(db_reconnect_ctl->maxRetries())
-                .arg(db_reconnect_ctl->retryInterval());
-
-        if (!TimerMgr::instance()->isTimerRegistered("Dhcp6DbReconnectTimer")) {
-            TimerMgr::instance()->registerTimer("Dhcp6DbReconnectTimer",
-                            std::bind(&ControlledDhcpv6Srv::dbReconnect, this,
-                                      db_reconnect_ctl),
-                            db_reconnect_ctl->retryInterval(),
-                            asiolink::IntervalTimer::ONE_SHOT);
-        }
-
-        TimerMgr::instance()->setup("Dhcp6DbReconnectTimer");
-    }
-}
-
 bool
 ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
-    // Disable service until we recover
+    // Disable service until the connection is recovered.
     network_state_->disableService();
 
     if (!db_reconnect_ctl) {
@@ -1227,20 +1179,51 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         return (false);
     }
 
-    // If reconnect isn't enabled log it and initiate a shutdown.
+    // If reconnect isn't enabled log it, initiate a shutdown and return false.
     if (!db_reconnect_ctl->retriesLeft() ||
         !db_reconnect_ctl->retryInterval()) {
         LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_DISABLED)
             .arg(db_reconnect_ctl->retriesLeft())
             .arg(db_reconnect_ctl->retryInterval());
         shutdownServer(EXIT_FAILURE);
-        return(false);
+        return (false);
     }
 
-    // Invoke reconnect method
-    dbReconnect(db_reconnect_ctl);
+    return (true);
+}
 
-    return(true);
+bool
+ControlledDhcpv6Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
+    // Enable service after the connection is recovered.
+    network_state_->enableService();
+
+    if (!db_reconnect_ctl) {
+        // This shouldn't never happen
+        LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_NO_DB_CTL);
+        return (false);
+    }
+
+    db_reconnect_ctl->resetRetries();
+
+    return (true);
+}
+
+bool
+ControlledDhcpv6Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
+    if (!db_reconnect_ctl) {
+        // This shouldn't never happen
+        LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_NO_DB_CTL);
+        return (false);
+    }
+
+    //LOG_INFO(dhcp6_logger, DHCP6_DB_FAILED_RECONNECT)
+    //        .arg(db_reconnect_ctl->maxRetries());
+
+    db_reconnect_ctl->resetRetries();
+
+    shutdownServer(EXIT_FAILURE);
+
+    return (true);
 }
 
 void

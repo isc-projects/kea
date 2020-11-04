@@ -24,7 +24,16 @@ public:
     /// Constructor
     DatabaseConnectionCallbackTest()
         : db_reconnect_ctl_(0) {
-        DatabaseConnection::db_lost_callback = 0;
+        DatabaseConnection::db_lost_callback_ = 0;
+        DatabaseConnection::db_recovered_callback_ = 0;
+        DatabaseConnection::db_failed_callback_ = 0;
+    }
+
+    /// Destructor
+    ~DatabaseConnectionCallbackTest() {
+        DatabaseConnection::db_lost_callback_ = 0;
+        DatabaseConnection::db_recovered_callback_ = 0;
+        DatabaseConnection::db_failed_callback_ = 0;
     }
 
     /// @brief Callback to register with a DatabaseConnection
@@ -38,6 +47,34 @@ public:
 
         db_reconnect_ctl_ = db_reconnect_ctl;
         return (true);
+    }
+
+    /// @brief Callback to register with a DatabaseConnection
+    ///
+    /// @param db_reconnect_ctl ReconnectCtl containing reconnect
+    /// parameters
+    bool dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
+        if (!db_reconnect_ctl) {
+            isc_throw(isc::BadValue, "db_reconnect_ctl should not be null");
+        }
+
+        db_reconnect_ctl_ = db_reconnect_ctl;
+        db_reconnect_ctl_->resetRetries();
+        return (true);
+    }
+
+    /// @brief Callback to register with a DatabaseConnection
+    ///
+    /// @param db_reconnect_ctl ReconnectCtl containing reconnect
+    /// parameters
+    bool dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
+        if (!db_reconnect_ctl) {
+            isc_throw(isc::BadValue, "db_reconnect_ctl should not be null");
+        }
+
+        db_reconnect_ctl_ = db_reconnect_ctl;
+        db_reconnect_ctl_->resetRetries();
+        return (false);
     }
 
     /// @brief Retainer for the control passed into the callback
@@ -63,17 +100,53 @@ TEST(DatabaseConnectionTest, getParameter) {
 /// @brief NoDbLostCallback
 ///
 /// This test verifies that DatabaseConnection::invokeDbLostCallback
-/// returns a false if there is connection has no registered
-/// DbLostCallback.
+/// returns false if the connection has no registered DbCallback.
 TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
     DatabaseConnection::ParameterMap pmap;
     pmap[std::string("type")] = std::string("test");
     pmap[std::string("max-reconnect-tries")] = std::string("3");
     pmap[std::string("reconnect-wait-time")] = std::string("60000");
     DatabaseConnection datasrc(pmap);
+    datasrc.makeReconnectCtl("timer");
 
     bool ret = false;
-    ASSERT_NO_THROW(ret = datasrc.invokeDbLostCallback());
+    ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbLostCallback(datasrc.reconnectCtl()));
+    EXPECT_FALSE(ret);
+    EXPECT_FALSE(db_reconnect_ctl_);
+}
+
+/// @brief NoDbRecoveredCallback
+///
+/// This test verifies that DatabaseConnection::invokeDbRecoveredCallback
+/// returns false if the connection has no registered DbCallback.
+TEST_F(DatabaseConnectionCallbackTest, NoDbRecoveredCallback) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap[std::string("type")] = std::string("test");
+    pmap[std::string("max-reconnect-tries")] = std::string("3");
+    pmap[std::string("reconnect-wait-time")] = std::string("60000");
+    DatabaseConnection datasrc(pmap);
+    datasrc.makeReconnectCtl("timer");
+
+    bool ret = false;
+    ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbRecoveredCallback(datasrc.reconnectCtl()));
+    EXPECT_FALSE(ret);
+    EXPECT_FALSE(db_reconnect_ctl_);
+}
+
+/// @brief NoDbFailedCallback
+///
+/// This test verifies that DatabaseConnection::invokeDbFailedCallback
+/// returns false if the connection has no registered DbCallback.
+TEST_F(DatabaseConnectionCallbackTest, NoDbFailedCallback) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap[std::string("type")] = std::string("test");
+    pmap[std::string("max-reconnect-tries")] = std::string("3");
+    pmap[std::string("reconnect-wait-time")] = std::string("60000");
+    DatabaseConnection datasrc(pmap);
+    datasrc.makeReconnectCtl("timer");
+
+    bool ret = false;
+    ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbFailedCallback(datasrc.reconnectCtl()));
     EXPECT_FALSE(ret);
     EXPECT_FALSE(db_reconnect_ctl_);
 }
@@ -81,7 +154,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
 /// @brief dbLostCallback
 ///
 /// This test verifies that DatabaseConnection::invokeDbLostCallback
-/// safely invokes the registered DbLostCallback.  It also tests
+/// safely invokes the registered DbCallback.  It also tests
 /// operation of DbReconnectCtl retry accounting methods.
 TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     /// Create a Database configuration that includes the reconnect
@@ -92,18 +165,20 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     pmap[std::string("reconnect-wait-time")] = std::string("60000");
 
     /// Install the callback.
-    DatabaseConnection::db_lost_callback =
+    DatabaseConnection::db_lost_callback_ =
         std::bind(&DatabaseConnectionCallbackTest::dbLostCallback, this, ph::_1);
     /// Create the connection..
     DatabaseConnection datasrc(pmap);
+    datasrc.makeReconnectCtl("timer");
+    bool ret = false;
 
     /// We should be able to invoke the callback and get
     /// the correct reconnect control parameters from it.
-    bool ret = false;
-    ASSERT_NO_THROW(ret = datasrc.invokeDbLostCallback());
+    ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbLostCallback(datasrc.reconnectCtl()));
     EXPECT_TRUE(ret);
     ASSERT_TRUE(db_reconnect_ctl_);
     ASSERT_EQ("test", db_reconnect_ctl_->backendType());
+    ASSERT_EQ("timer", db_reconnect_ctl_->timerName());
     ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
     ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
     EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
@@ -119,6 +194,135 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     /// Retries are exhausted, verify that's reflected.
     EXPECT_FALSE(db_reconnect_ctl_->checkRetries());
     EXPECT_EQ(0, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
+}
+
+/// @brief dbRecoveredCallback
+///
+/// This test verifies that DatabaseConnection::invokeDbRecoveredCallback
+/// safely invokes the registered DbRecoveredCallback.  It also tests
+/// operation of DbReconnectCtl retry reset method.
+TEST_F(DatabaseConnectionCallbackTest, dbRecoveredCallback) {
+    /// Create a Database configuration that includes the reconnect
+    /// control parameters.
+    DatabaseConnection::ParameterMap pmap;
+    pmap[std::string("type")] = std::string("test");
+    pmap[std::string("max-reconnect-tries")] = std::string("3");
+    pmap[std::string("reconnect-wait-time")] = std::string("60000");
+
+    /// Install the callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&DatabaseConnectionCallbackTest::dbLostCallback, this, ph::_1);
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&DatabaseConnectionCallbackTest::dbRecoveredCallback, this, ph::_1);
+    /// Create the connection..
+    DatabaseConnection datasrc(pmap);
+    datasrc.makeReconnectCtl("timer");
+    bool ret = false;
+
+    /// We should be able to invoke the callback and get
+    /// the correct reconnect control parameters from it.
+    ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbLostCallback(datasrc.reconnectCtl()));
+    EXPECT_TRUE(ret);
+    ASSERT_TRUE(db_reconnect_ctl_);
+    ASSERT_EQ("test", db_reconnect_ctl_->backendType());
+    ASSERT_EQ("timer", db_reconnect_ctl_->timerName());
+    ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
+    ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
+    ASSERT_TRUE(db_reconnect_ctl_->checkRetries());
+
+    /// Verify that checkRetries() correctly decrements
+    /// down to zero, and that retriesLeft() returns
+    /// the correct value.
+    for (int i = 3; i > 1 ; --i) {
+        ASSERT_EQ(i, db_reconnect_ctl_->retriesLeft());
+        ASSERT_TRUE(db_reconnect_ctl_->checkRetries());
+    }
+
+    /// Retries are exhausted, verify that's reflected.
+    EXPECT_FALSE(db_reconnect_ctl_->checkRetries());
+    EXPECT_EQ(0, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
+
+    /// Reset the reconnect ctl object to verify that it is set again.
+    db_reconnect_ctl_.reset();
+
+    /// We should be able to invoke the callback and get
+    /// the correct reconnect control parameters from it.
+    ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbRecoveredCallback(datasrc.reconnectCtl()));
+    EXPECT_TRUE(ret);
+    ASSERT_TRUE(db_reconnect_ctl_);
+    ASSERT_EQ("test", db_reconnect_ctl_->backendType());
+    ASSERT_EQ("timer", db_reconnect_ctl_->timerName());
+    EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
+
+    /// Retries are reset, verify that's reflected.
+    EXPECT_EQ(3, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
+}
+
+/// @brief dbFailedCallback
+///
+/// This test verifies that DatabaseConnection::invokeDbFailedCallback
+/// safely invokes the registered DbFailedCallback.
+TEST_F(DatabaseConnectionCallbackTest, dbFailedCallback) {
+    /// Create a Database configuration that includes the reconnect
+    /// control parameters.
+    DatabaseConnection::ParameterMap pmap;
+    pmap[std::string("type")] = std::string("test");
+    pmap[std::string("max-reconnect-tries")] = std::string("3");
+    pmap[std::string("reconnect-wait-time")] = std::string("60000");
+
+    /// Install the callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&DatabaseConnectionCallbackTest::dbLostCallback, this, ph::_1);
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&DatabaseConnectionCallbackTest::dbFailedCallback, this, ph::_1);
+    /// Create the connection..
+    DatabaseConnection datasrc(pmap);
+    datasrc.makeReconnectCtl("timer");
+    bool ret = false;
+
+    /// We should be able to invoke the callback and get
+    /// the correct reconnect control parameters from it.
+    ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbLostCallback(datasrc.reconnectCtl()));
+    EXPECT_TRUE(ret);
+    ASSERT_TRUE(db_reconnect_ctl_);
+    ASSERT_EQ("test", db_reconnect_ctl_->backendType());
+    ASSERT_EQ("timer", db_reconnect_ctl_->timerName());
+    ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
+    ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
+    ASSERT_TRUE(db_reconnect_ctl_->checkRetries());
+
+    /// Verify that checkRetries() correctly decrements
+    /// down to zero, and that retriesLeft() returns
+    /// the correct value.
+    for (int i = 3; i > 1 ; --i) {
+        ASSERT_EQ(i, db_reconnect_ctl_->retriesLeft());
+        ASSERT_TRUE(db_reconnect_ctl_->checkRetries());
+    }
+
+    /// Retries are exhausted, verify that's reflected.
+    EXPECT_FALSE(db_reconnect_ctl_->checkRetries());
+    EXPECT_EQ(0, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
+
+    /// Reset the reconnect ctl object to verify that it is set again.
+    db_reconnect_ctl_.reset();
+
+    /// We should be able to invoke the callback and get
+    /// the correct reconnect control parameters from it.
+    ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbFailedCallback(datasrc.reconnectCtl()));
+    EXPECT_FALSE(ret);
+    ASSERT_TRUE(db_reconnect_ctl_);
+    ASSERT_EQ("test", db_reconnect_ctl_->backendType());
+    ASSERT_EQ("timer", db_reconnect_ctl_->timerName());
+    EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
+
+    /// Retries are reset, verify that's reflected.
+    EXPECT_EQ(3, db_reconnect_ctl_->retriesLeft());
     EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
 }
 

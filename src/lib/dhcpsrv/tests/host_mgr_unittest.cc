@@ -1383,7 +1383,7 @@ public:
     /// appropriate schema and create a basic host manager to
     /// wipe out any prior instance
     virtual void SetUp() {
-        DatabaseConnection::db_lost_callback = 0;
+        DatabaseConnection::db_lost_callback_ = 0;
         // Ensure we have the proper schema with no transient data.
         createSchema();
         // Wipe out any pre-existing mgr
@@ -1395,7 +1395,7 @@ public:
     /// Invoked by gtest upon test exit, we destroy the schema
     /// we created.
     virtual void TearDown() {
-        DatabaseConnection::db_lost_callback = 0;
+        DatabaseConnection::db_lost_callback_ = 0;
         // If data wipe enabled, delete transient data otherwise destroy the schema
         destroySchema();
     }
@@ -1440,7 +1440,7 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
     HostMgr::create();
 
     // Set the connectivity lost callback.
-    DatabaseConnection::db_lost_callback =
+    DatabaseConnection::db_lost_callback_ =
         std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
 
     // Find the most recently opened socket. Our SQL client's socket should

@@ -9,8 +9,12 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/cfg_db_access.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <mysql/mysql_connection.h>
 #include <util/multi_threading_mgr.h>
 
@@ -1732,8 +1736,10 @@ bool MySqlLeaseStatsQuery::negative_count_ = false;
 
 // MySqlLeaseContext Constructor
 
-MySqlLeaseContext::MySqlLeaseContext(const DatabaseConnection::ParameterMap& parameters)
-    : conn_(parameters) {
+MySqlLeaseContext::MySqlLeaseContext(const MySqlConnection::ParameterMap& parameters,
+                                     const isc::asiolink::IOServicePtr& io_service,
+                                     DbCallback callback)
+    : conn_(parameters, io_service, callback) {
 }
 
 // MySqlLeaseContextAlloc Constructor and Destructor
@@ -1774,8 +1780,9 @@ MySqlLeaseMgr::MySqlLeaseContextAlloc::~MySqlLeaseContextAlloc() {
 
 // MySqlLeaseMgr Constructor and Destructor
 
-MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
-    : parameters_(parameters) {
+MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters,
+                             const IOServicePtr& io_service)
+    : parameters_(parameters), io_service_(io_service) {
 
     // Validate schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
@@ -1792,16 +1799,81 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
     // Create an initial context.
     pool_.reset(new MySqlLeaseContextPool());
     pool_->pool_.push_back(createContext());
+
+    auto db_reconnect_ctl = pool_->pool_[0]->conn_.reconnectCtl();
+
+    std::string manager = "MySqlLeaseMgr[";
+    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    std::string timer_name = manager + "]DbReconnectTimer";
+
+    TimerMgr::instance()->registerTimer(timer_name,
+        std::bind(&MySqlLeaseMgr::dbReconnect, db_reconnect_ctl),
+                  db_reconnect_ctl->retryInterval(),
+                  asiolink::IntervalTimer::ONE_SHOT);
 }
 
 MySqlLeaseMgr::~MySqlLeaseMgr() {
+    std::string manager = "MySqlLeaseMgr[";
+    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    std::string timer_name = manager + "]DbReconnectTimer";
+
+    TimerMgr::instance()->unregisterTimer(timer_name);
+}
+
+bool
+MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
+    MultiThreadingCriticalSection cs;
+
+    DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl);
+
+    bool reopened = false;
+
+    // At least one connection was lost.
+    try {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
+        LeaseMgrFactory::destroy();
+        LeaseMgrFactory::create(cfg_db->getLeaseDbAccessString()/*, io_service_ */);
+
+        reopened = true;
+    } catch (const std::exception& ex) {
+        //LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_ATTEMPT_FAILED)
+        //        .arg(ex.what());
+    }
+
+    if (reopened) {
+        // Cancel the timer.
+        const std::string& timer_name = db_reconnect_ctl->timerName();
+        TimerMgr::instance()->cancel(timer_name);
+
+        DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl);
+    } else {
+        if (!db_reconnect_ctl->checkRetries()) {
+            // We're out of retries, log it and initiate shutdown.
+            //LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_RETRIES_EXHAUSTED)
+            //        .arg(db_reconnect_ctl->maxRetries());
+
+            DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
+
+            return (false);
+        }
+
+        //LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_ATTEMPT_SCHEDULE)
+        //        .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
+        //        .arg(db_reconnect_ctl->maxRetries())
+        //        .arg(db_reconnect_ctl->retryInterval());
+
+        TimerMgr::instance()->setup(db_reconnect_ctl->timerName());
+    }
+
+    return (true);
 }
 
 // Create context.
 
 MySqlLeaseContextPtr
 MySqlLeaseMgr::createContext() const {
-    MySqlLeaseContextPtr ctx(new MySqlLeaseContext(parameters_));
+    MySqlLeaseContextPtr ctx(new MySqlLeaseContext(parameters_, io_service_,
+                                                   &MySqlLeaseMgr::dbReconnect));
 
     // Open the database.
     ctx->conn_.openDatabase();
@@ -1814,6 +1886,12 @@ MySqlLeaseMgr::createContext() const {
     // program and the database.
     ctx->exchange4_.reset(new MySqlLease4Exchange());
     ctx->exchange6_.reset(new MySqlLease6Exchange());
+
+    std::string manager = "MySqlLeaseMgr[";
+    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    std::string timer_name = manager + "]DbReconnectTimer";
+
+    ctx->conn_.makeReconnectCtl(timer_name);
 
     return (ctx);
 }

@@ -121,7 +121,7 @@ PgSqlConnection::~PgSqlConnection() {
         // Deallocate the prepared queries.
         if (PQstatus(conn_) == CONNECTION_OK) {
             PgSqlResult r(PQexec(conn_, "DEALLOCATE all"));
-            if(PQresultStatus(r) != PGRES_COMMAND_OK) {
+            if (PQresultStatus(r) != PGRES_COMMAND_OK) {
                 // Highly unlikely but we'll log it and go on.
                 DB_LOG_ERROR(PGSQL_DEALLOC_ERROR)
                     .arg(PQerrorMessage(conn_));
@@ -159,7 +159,7 @@ PgSqlConnection::prepareStatement(const PgSqlTaggedStatement& statement) {
     // Prepare all statements queries with all known fields datatype
     PgSqlResult r(PQprepare(conn_, statement.name, statement.text,
                             statement.nbparams, statement.types));
-    if(PQresultStatus(r) != PGRES_COMMAND_OK) {
+    if (PQresultStatus(r) != PGRES_COMMAND_OK) {
         isc_throw(DbOperationError, "unable to prepare PostgreSQL statement: "
                   << statement.text << ", reason: " << PQerrorMessage(conn_));
     }
@@ -324,7 +324,7 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
         // misleadingly returned as fatal. However, a loss of connectivity
         // can lead to a NULL sqlstate with a status of PGRES_FATAL_ERROR.
         const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
-        if  ((sqlstate == NULL) ||
+        if ((sqlstate == NULL) ||
             ((memcmp(sqlstate, "08", 2) == 0) ||  // Connection Exception
              (memcmp(sqlstate, "53", 2) == 0) ||  // Insufficient resources
              (memcmp(sqlstate, "54", 2) == 0) ||  // Program Limit exceeded
@@ -338,12 +338,8 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
             // Mark this connection as no longer usable.
             markUnusable();
 
-            // If there's no lost db callback or it returns false,
-            // then we're not attempting to recover so we're done.
-            if (!invokeDbLostCallback()) {
-                isc_throw(db::DbUnrecoverableError,
-                          "database connectivity cannot be recovered");
-            }
+            // Start the connection recovery.
+            startRecoverDbConnection();
 
             // We still need to throw so caller can error out of the current
             // processing.
@@ -354,9 +350,9 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
         // Apparently it wasn't fatal, so we throw with a helpful message.
         const char* error_message = PQerrorMessage(conn_);
         isc_throw(DbOperationError, "Statement exec failed:" << " for: "
-                << statement.name << ", status: " << s
-                << "sqlstate:[ " << (sqlstate ? sqlstate : "<null>")
-                <<  "], reason: " << error_message);
+                  << statement.name << ", status: " << s
+                  << "sqlstate:[ " << (sqlstate ? sqlstate : "<null>")
+                  << " ], reason: " << error_message);
     }
 }
 
@@ -394,5 +390,5 @@ PgSqlConnection::rollback() {
     }
 }
 
-}; // end of isc::db namespace
-}; // end of isc namespace
+} // end of isc::db namespace
+} // end of isc namespace

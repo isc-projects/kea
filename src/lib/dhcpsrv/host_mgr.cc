@@ -42,8 +42,8 @@ HostMgr::create() {
 }
 
 void
-HostMgr::addBackend(const std::string& access) {
-    HostDataSourceFactory::add(getHostMgrPtr()->alternate_sources_, access);
+HostMgr::addBackend(const std::string& access, const IOServicePtr& io_service) {
+    HostDataSourceFactory::add(getHostMgrPtr()->alternate_sources_, access, io_service);
 }
 
 bool

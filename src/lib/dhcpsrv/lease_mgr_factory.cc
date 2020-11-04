@@ -42,7 +42,8 @@ LeaseMgrFactory::getLeaseMgrPtr() {
 }
 
 void
-LeaseMgrFactory::create(const std::string& dbaccess) {
+LeaseMgrFactory::create(const std::string& dbaccess,
+                        const isc::asiolink::IOServicePtr& io_service) {
     const std::string type = "type";
 
     // Parse the access string and create a redacted string for logging.
@@ -61,7 +62,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     if (parameters[type] == string("mysql")) {
 #ifdef HAVE_MYSQL
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB).arg(redacted);
-        getLeaseMgrPtr().reset(new MySqlLeaseMgr(parameters));
+        getLeaseMgrPtr().reset(new MySqlLeaseMgr(parameters, io_service));
         return;
 #else
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg("mysql");
@@ -73,7 +74,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     if (parameters[type] == string("postgresql")) {
 #ifdef HAVE_PGSQL
         LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB).arg(redacted);
-        getLeaseMgrPtr().reset(new PgSqlLeaseMgr(parameters));
+        getLeaseMgrPtr().reset(new PgSqlLeaseMgr(parameters, io_service));
         return;
 #else
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg("postgresql");

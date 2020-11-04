@@ -3271,7 +3271,7 @@ LeaseMgrDbLostCallbackTest::TearDown() {
 
 void
 LeaseMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
-    DatabaseConnection::db_lost_callback =
+    DatabaseConnection::db_lost_callback_ =
         std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
 
     callback_called_ = false;
@@ -3284,7 +3284,7 @@ LeaseMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
 void
 LeaseMgrDbLostCallbackTest::testDbLostCallback() {
     // Set the connectivity lost callback.
-    DatabaseConnection::db_lost_callback =
+    DatabaseConnection::db_lost_callback_ =
         std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
 
     // Find the most recently opened socket. Our SQL client's socket should

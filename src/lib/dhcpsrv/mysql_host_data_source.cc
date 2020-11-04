@@ -2054,7 +2054,8 @@ public:
     ///
     /// This constructor opens database connection and initializes prepared
     /// statements used in the queries.
-    MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters);
+    MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters,
+                            const isc::asiolink::IOServicePtr& io_service);
 
     /// @brief Destructor.
     ~MySqlHostDataSourceImpl();
@@ -2730,7 +2731,8 @@ MySqlHostDataSource::MySqlHostContextAlloc::~MySqlHostContextAlloc() {
     // If running in single-threaded mode, there's nothing to do here.
 }
 
-MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
+MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters,
+                                                 const isc::asiolink::IOServicePtr& io_service)
     : parameters_(parameters), ip_reservations_unique_(true) {
 
     // Validate the schema version first.
@@ -3023,8 +3025,9 @@ MySqlHostDataSourceImpl::checkReadOnly(MySqlHostContextPtr& ctx) const {
     }
 }
 
-MySqlHostDataSource::MySqlHostDataSource(const MySqlConnection::ParameterMap& parameters)
-    : impl_(new MySqlHostDataSourceImpl(parameters)) {
+MySqlHostDataSource::MySqlHostDataSource(const MySqlConnection::ParameterMap& parameters,
+                                         const isc::asiolink::IOServicePtr& io_service)
+    : impl_(new MySqlHostDataSourceImpl(parameters, io_service)) {
 }
 
 MySqlHostDataSource::~MySqlHostDataSource() {

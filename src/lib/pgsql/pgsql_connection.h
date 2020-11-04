@@ -6,6 +6,7 @@
 #ifndef PGSQL_CONNECTION_H
 #define PGSQL_CONNECTION_H
 
+#include <asiolink/io_service.h>
 #include <database/database_connection.h>
 
 #include <libpq-fe.h>
@@ -304,8 +305,11 @@ public:
     /// @brief Constructor
     ///
     /// Initialize PgSqlConnection object with parameters needed for connection.
-    PgSqlConnection(const ParameterMap& parameters)
-        : DatabaseConnection(parameters) {
+    PgSqlConnection(const ParameterMap& parameters,
+                    const isc::asiolink::IOServicePtr& io_service = isc::asiolink::IOServicePtr(),
+                    DbCallback callback = DbCallback())
+        : DatabaseConnection(parameters), io_service_(io_service),
+          callback_(callback) {
     }
 
     /// @brief Destructor
@@ -397,10 +401,8 @@ public:
     ///
     /// If the error is recoverable, the function will throw a DbOperationError.
     /// If the error is deemed unrecoverable, such as a loss of connectivity
-    /// with the server, the function will call invokeDbLostCallback(). If the
-    /// invocation returns false then either there is no callback registered
-    /// or the callback has elected not to attempt to reconnect, and a
-    /// DbUnrecoverableError is thrown.
+    /// with the server, the function will call startRecoverDbConnection() which
+    /// will start the connection recovery.
     ///
     /// If the invocation returns true, this indicates the calling layer will
     /// attempt recovery, and the function throws a DbOperationError to allow
@@ -412,6 +414,17 @@ public:
     /// @throw isc::db::DbOperationError Detailed PostgreSQL failure
     void checkStatementError(const PgSqlResult& r,
                              PgSqlTaggedStatement& statement);
+
+    /// @brief The recover connection
+    ///
+    /// This function starts the recover process of the connection.
+    ///
+    /// @note The recover function must be run on the IO Service thread.
+    void startRecoverDbConnection() {
+        if (callback_) {
+            io_service_->post(std::bind(callback_, reconnectCtl()));
+        }
+    }
 
     /// @brief PgSql connection handle
     ///
@@ -434,9 +447,14 @@ public:
         return (conn_);
     }
 
+    /// @brief IOService object, used for all ASIO operations.
+    isc::asiolink::IOServicePtr io_service_;
+
+    /// @brief The callback used to recover the connection.
+    DbCallback callback_;
 };
 
-}; // end of isc::db namespace
-}; // end of isc namespace
+} // end of isc::db namespace
+} // end of isc namespace
 
 #endif // PGSQL_CONNECTION_H

@@ -6,8 +6,10 @@
 
 #include <config.h>
 
+#include <asiolink/io_service.h>
 #include <dhcpsrv/testutils/memory_host_data_source.h>
 
+using namespace isc::asiolink;
 using namespace isc::db;
 using namespace std;
 
@@ -381,7 +383,8 @@ MemHostDataSource::size() const {
 }
 
 HostDataSourcePtr
-memFactory(const DatabaseConnection::ParameterMap& /*parameters*/) {
+memFactory(const DatabaseConnection::ParameterMap& /*parameters*/,
+           const IOServicePtr& /*io_service*/) {
     return (HostDataSourcePtr(new MemHostDataSource()));
 }
 

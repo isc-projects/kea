@@ -7,6 +7,7 @@
 #ifndef MYSQL_LEASE_MGR_H
 #define MYSQL_LEASE_MGR_H
 
+#include <asiolink/io_service.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -43,7 +44,10 @@ public:
     /// @brief Constructor
     ///
     /// @param parameters See MySqlLeaseMgr constructor.
-    MySqlLeaseContext(const db::DatabaseConnection::ParameterMap& parameters);
+    /// @param io_service The IOService object, used for all ASIO operations.
+    MySqlLeaseContext(const db::DatabaseConnection::ParameterMap& parameters,
+                      const isc::asiolink::IOServicePtr& io_service,
+                      db::DbCallback callback);
 
     /// The exchange objects are used for transfer of data to/from the database.
     /// They are pointed-to objects as the contents may change in "const" calls,
@@ -100,13 +104,15 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
+    /// @param io_service The IOService object, used for all ASIO operations.
     ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
     /// @throw isc::db::DbOpenError Error opening the database or the schema
     /// version is incorrect.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    MySqlLeaseMgr(const db::DatabaseConnection::ParameterMap& parameters);
+    MySqlLeaseMgr(const db::DatabaseConnection::ParameterMap& parameters,
+                  const isc::asiolink::IOServicePtr& io_service = isc::asiolink::IOServicePtr());
 
     /// @brief Destructor (closes database)
     virtual ~MySqlLeaseMgr();
@@ -120,6 +126,27 @@ public:
     /// @throw isc::db::DbOperationError An operation on the open database has
     /// failed.
     MySqlLeaseContextPtr createContext() const;
+
+    /// @brief Attempts to reconnect the server to the lease DB backend manager.
+    ///
+    /// This is a self-rescheduling function that attempts to reconnect to the
+    /// server's lease DB backends after connectivity to one or more have been
+    /// lost. Upon entry it will attempt to reconnect via
+    /// @ref LeaseMgrFactory::create.
+    /// If this is successful, DHCP servicing is re-enabled and server returns
+    /// to normal operation.
+    ///
+    /// If reconnection fails and the maximum number of retries has not been
+    /// exhausted, it will schedule a call to itself to occur at the
+    /// configured retry interval. DHCP service remains disabled.
+    ///
+    /// If the maximum number of retries has been exhausted an error is logged
+    /// and the server shuts down.
+    ///
+    /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
+    /// configured reconnect parameters.
+    /// @return true if connection has been recovered, false otherwise.
+    static bool dbReconnect(db::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Local version of getDBVersion() class method
     static std::string getDBVersion();
@@ -959,6 +986,9 @@ private:
 
     /// @brief The pool of contexts
     MySqlLeaseContextPoolPtr pool_;
+
+    /// @brief IOService object, used for all ASIO operations.
+    isc::asiolink::IOServicePtr io_service_;
 };
 
 }  // namespace dhcp

@@ -22,13 +22,19 @@ namespace {
 // io_service::post().
 class CallbackWrapper {
 public:
+
+    /// \brief Constructor
     CallbackWrapper(const std::function<void()>& callback) :
-        callback_(callback)
-    {}
+        callback_(callback) {}
+
+    /// \brief Function operator
     void operator()() {
         callback_();
     }
+
 private:
+
+    /// \brief The callback function
     std::function<void()> callback_;
 };
 }
@@ -90,6 +96,10 @@ public:
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
     boost::asio::io_service& get_io_service() { return io_service_; };
+
+    /// \brief Post a callback on the IO service
+    ///
+    /// \param callback The callback to be run on the IO service.
     void post(const std::function<void ()>& callback) {
         const CallbackWrapper wrapper(callback);
         io_service_.post(wrapper);
