@@ -31,6 +31,15 @@ Options:
     "$(basename "${0}")"
 }
 
+# Define some ANSI color codes.
+if test -t 1; then
+  red='\033[91m'
+  reset='\033[0m'
+else
+  red=
+  reset=
+fi
+
 # Parse parameters.
 while test ${#} -gt 0; do
   case "${1}" in
@@ -54,10 +63,6 @@ test -z "${name_only+x}" && name_only=false
 
 # Get root path.
 root_path=$(cd "$(dirname "${0}")/.." && pwd)
-
-# Define some ANSI color codes.
-red='\e[1m\e[31m'
-reset='\e[1m\e[0m'
 
 # Get source files that are missing an '#include <config.h>' line.
 get_source_files() {
