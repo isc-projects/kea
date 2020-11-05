@@ -1060,9 +1060,9 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     // check that the lease is really in the database
     Lease6Ptr l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr);
     EXPECT_TRUE(l);
-    Lease6Ptr lease(new Lease6());
-    lease->addr_ = addr->getAddress();
-    LeaseMgrFactory::instance().deleteLease(lease);
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                            addr->getAddress());
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
 // This test verifies that incoming REQUEST can be handled properly, that a
@@ -1129,8 +1129,8 @@ TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
     // check that the lease is really in the database
     Lease6Ptr l = checkPdLease(duid_, reply->getOption(D6O_IA_PD), prf);
     EXPECT_TRUE(l);
-    Lease6Ptr lease(new Lease6());
-    lease->addr_ = prf->getAddress();
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD,
+                                                            prf->getAddress());
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 

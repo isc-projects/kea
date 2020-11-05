@@ -1425,8 +1425,9 @@ public:
             valid_lft = 0;
         }
         MySqlConnection::convertFromDatabaseTime(expire_, valid_lft, cltt);
+        // Update cltt_ and current_cltt_ explicitly.
         result->cltt_ = cltt;
-        result->old_cltt_ = cltt;
+        result->current_cltt_ = cltt;
 
         // Set state.
         result->state_ = state_;
@@ -1871,8 +1872,9 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     // ... and drop to common code.
     auto result = addLeaseCommon(ctx, INSERT_LEASE4, bind);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease current expiration time (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateCurrentExpirationTime();
 
     return (result);
 }
@@ -1893,8 +1895,9 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     // ... and drop to common code.
     auto result = addLeaseCommon(ctx, INSERT_LEASE6, bind);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease current expiration time (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateCurrentExpirationTime();
 
     return (result);
 }
@@ -2758,7 +2761,8 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     bind.push_back(inbind[0]);
 
     MYSQL_TIME expire;
-    MySqlConnection::convertToDatabaseTime(lease->old_cltt_, lease->old_valid_lft_,
+    MySqlConnection::convertToDatabaseTime(lease->current_cltt_,
+                                           lease->current_valid_lft_,
                                            expire);
     inbind[1].buffer_type = MYSQL_TYPE_TIMESTAMP;
     inbind[1].buffer = reinterpret_cast<char*>(&expire);
@@ -2769,8 +2773,8 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, &bind[0], lease);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease current expiration time.
+    lease->updateCurrentExpirationTime();
 }
 
 void
@@ -2805,7 +2809,8 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     bind.push_back(inbind[0]);
 
     MYSQL_TIME expire;
-    MySqlConnection::convertToDatabaseTime(lease->old_cltt_, lease->old_valid_lft_,
+    MySqlConnection::convertToDatabaseTime(lease->current_cltt_,
+                                           lease->current_valid_lft_,
                                            expire);
     inbind[1].buffer_type = MYSQL_TYPE_TIMESTAMP;
     inbind[1].buffer = reinterpret_cast<char*>(&expire);
@@ -2816,8 +2821,8 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, &bind[0], lease);
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease current expiration time.
+    lease->updateCurrentExpirationTime();
 }
 
 // Delete lease methods.  Similar to other groups of methods, these comprise
@@ -2863,7 +2868,8 @@ MySqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
     inbind[0].is_unsigned = MLM_TRUE;
 
     MYSQL_TIME expire;
-    MySqlConnection::convertToDatabaseTime(lease->old_cltt_, lease->old_valid_lft_,
+    MySqlConnection::convertToDatabaseTime(lease->current_cltt_,
+                                           lease->current_valid_lft_,
                                            expire);
     inbind[1].buffer_type = MYSQL_TYPE_TIMESTAMP;
     inbind[1].buffer = reinterpret_cast<char*>(&expire);
@@ -2909,7 +2915,8 @@ MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
     inbind[0].length = &addr6_length;
 
     MYSQL_TIME expire;
-    MySqlConnection::convertToDatabaseTime(lease->old_cltt_, lease->old_valid_lft_,
+    MySqlConnection::convertToDatabaseTime(lease->current_cltt_,
+                                           lease->current_valid_lft_,
                                            expire);
     inbind[1].buffer_type = MYSQL_TYPE_TIMESTAMP;
     inbind[1].buffer = reinterpret_cast<char*>(&expire);

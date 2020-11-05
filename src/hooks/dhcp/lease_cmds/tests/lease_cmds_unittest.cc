@@ -417,6 +417,7 @@ public:
         // expiration time is cast properly.
         lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
         lease->cltt_ = DEC_2030_TIME; // December 11th 2030
+        lease->updateCurrentExpirationTime();
         if (declined) {
             lease->state_ = Lease::STATE_DECLINED;
         }
@@ -457,6 +458,7 @@ public:
         // expiration time is cast properly.
         lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
         lease->cltt_ = DEC_2030_TIME; // December 11th 2030
+        lease->updateCurrentExpirationTime();
         if (declined) {
             lease->state_ = Lease::STATE_DECLINED;
         }
@@ -3646,7 +3648,9 @@ TEST_F(LeaseCmdsTest, Lease4UpdateNoLease) {
         "        \"hostname\": \"newhostname.example.org\""
         "    }\n"
         "}";
-    string exp_rsp = "failed to update the lease with address 192.0.2.1 - no such lease";
+    string exp_rsp = "failed to update the lease with address 192.0.2.1 "
+        "either because the lease has been deleted or it has changed in the "
+        "database, in both cases a retry might succeed";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -3918,7 +3922,9 @@ TEST_F(LeaseCmdsTest, Lease4UpdateDoNotForceCreate) {
         "        \"force-create\": false"
         "    }\n"
         "}";
-    string exp_rsp = "failed to update the lease with address 192.0.2.1 - no such lease";
+    string exp_rsp = "failed to update the lease with address 192.0.2.1 "
+        "either because the lease has been deleted or it has changed in the "
+        "database, in both cases a retry might succeed";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
@@ -4367,7 +4373,9 @@ TEST_F(LeaseCmdsTest, Lease6UpdateNoLease) {
         "        \"hostname\": \"newhostname.example.org\""
         "    }\n"
         "}";
-    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 - no such lease";
+    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
+        "either because the lease has been deleted or it has changed in the "
+        "database, in both cases a retry might succeed";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     checkLease6Stats(66, 0, 0, 0);
@@ -4490,7 +4498,9 @@ TEST_F(LeaseCmdsTest, Lease6UpdateDoNotForceCreate) {
         "        \"force-create\": false"
         "    }\n"
         "}";
-    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 - no such lease";
+    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
+        "either because the lease has been deleted or it has changed in the "
+        "database, in both cases a retry might succeed";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     checkLease6Stats(66, 0, 0, 0);

@@ -1844,8 +1844,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
 
-    Lease4Ptr lease(new Lease4());
-    lease->addr_ = addr;
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Pkt passed to a callout must be configured to copy retrieved options.
@@ -1916,8 +1915,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     EXPECT_EQ(temp_valid, l->valid_lft_);
     EXPECT_EQ(temp_timestamp, l->cltt_);
 
-    Lease4Ptr lease(new Lease4());
-    lease->addr_ = addr;
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Check if the callout handle state was reset after the callout.

@@ -654,7 +654,21 @@ LeaseCmdsImpl::addOrUpdate4(Lease4Ptr lease, bool force_create) {
         LeaseCmdsImpl::updateStatsOnAdd(lease);
         return (true);
     }
-    LeaseMgrFactory::instance().updateLease4(lease);
+    if (existing) {
+        // Update lease current expiration time with value received from the
+        // database. Some database backends reject operations on the lease if
+        // the current expiration time value does not match what is stored.
+        Lease::syncCurrentExpirationTime(*existing, *lease);
+    }
+    try {
+        LeaseMgrFactory::instance().updateLease4(lease);
+    } catch (const NoSuchLease&) {
+        isc_throw(InvalidOperation, "failed to update the lease with address "
+                  << lease->addr_ << " either because the lease has been "
+                  "deleted or it has changed in the database, in both cases a "
+                  "retry might succeed");
+    }
+
     LeaseCmdsImpl::updateStatsOnUpdate(existing, lease);
     return (false);
 }
@@ -672,7 +686,21 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
         LeaseCmdsImpl::updateStatsOnAdd(lease);
         return (true);
     }
-    LeaseMgrFactory::instance().updateLease6(lease);
+    if (existing) {
+        // Update lease current expiration time with value received from the
+        // database. Some database backends reject operations on the lease if
+        // the current expiration time value does not match what is stored.
+        Lease::syncCurrentExpirationTime(*existing, *lease);
+    }
+    try {
+        LeaseMgrFactory::instance().updateLease6(lease);
+    } catch (const NoSuchLease&) {
+        isc_throw(InvalidOperation, "failed to update the lease with address "
+                  << lease->addr_ << " either because the lease has been "
+                  "deleted or it has changed in the database, in both cases a "
+                  "retry might succeed");
+    }
+
     LeaseCmdsImpl::updateStatsOnUpdate(existing, lease);
     return (false);
 }

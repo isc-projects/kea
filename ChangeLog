@@ -1,3 +1,11 @@
+1800.	[bug]		razvan
+	Fixed lease update when using HA and lease_cmds hooks with
+	database backend. Previously, HA updates were rejected because
+	the database backend rejects operations on the lease if the old
+	expiration time is different than what it is already stored, to
+	act as a protection mechanism for parallel updates from several
+	threads or processes.
+
 1799.	[bug]		tmark
 	kea-dhcp4 now correctly updates DNS when a client
 	returns for lease after the lease has expired.  Prior
@@ -11,6 +19,7 @@
 	Removed "Multithreading is experimental" warning log message
 	from kea-dhcp4 and kea-dhcp6 servers.
 	(Gitlab #1435,#1431)
+	(Gitlab #1434,#1488)
 
 Kea 1.8.0 (stable) released on Aug 26, 2020
 

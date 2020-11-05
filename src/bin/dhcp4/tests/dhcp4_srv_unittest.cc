@@ -1892,8 +1892,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    Lease4Ptr lease(new Lease4());
-    lease->addr_ = addr;
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
@@ -2016,8 +2015,7 @@ TEST_F(Dhcpv4SrvTest, RenewDefaultLifetime) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    Lease4Ptr lease(new Lease4());
-    lease->addr_ = c.addr;
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
@@ -2063,8 +2061,7 @@ TEST_F(Dhcpv4SrvTest, RenewHintLifetime) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    Lease4Ptr lease(new Lease4());
-    lease->addr_ = c.addr;
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
@@ -2110,8 +2107,7 @@ TEST_F(Dhcpv4SrvTest, RenewMinLifetime) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    Lease4Ptr lease(new Lease4());
-    lease->addr_ = c.addr;
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
@@ -2156,8 +2152,7 @@ TEST_F(Dhcpv4SrvTest, RenewMaxLifetime) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    Lease4Ptr lease(new Lease4());
-    lease->addr_ = c.addr;
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 

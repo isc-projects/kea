@@ -704,6 +704,11 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
     }
 
     storage4_.insert(lease);
+
+    // Update lease current expiration time (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateCurrentExpirationTime();
+
     return (true);
 }
 
@@ -735,6 +740,11 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
     }
 
     storage6_.insert(lease);
+
+    // Update lease current expiration time (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateCurrentExpirationTime();
+
     return (true);
 }
 
@@ -1409,19 +1419,30 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
     // Obtain 'by address' index.
     Lease4StorageAddressIndex& index = storage4_.get<AddressIndexTag>();
 
+    bool persist = persistLeases(V4);
+
     // Lease must exist if it is to be updated.
     Lease4StorageAddressIndex::const_iterator lease_it = index.find(lease->addr_);
     if (lease_it == index.end()) {
         isc_throw(NoSuchLease, "failed to update the lease with address "
                   << lease->addr_ << " - no such lease");
+    } else if ((!persist) && (((*lease_it)->cltt_ != lease->current_cltt_) ||
+        ((*lease_it)->valid_lft_ != lease->current_valid_lft_))) {
+        // For test purpose only: check that the lease has not changed in
+        // the database.
+        isc_throw(NoSuchLease, "failed to update the lease with address "
+                  << lease->addr_ << " - lease has changed in database");
     }
 
     // Try to write a lease to disk first. If this fails, the lease will
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
-    if (persistLeases(V4)) {
+    if (persist) {
         lease_file4_->append(*lease);
     }
+
+    // Update lease current expiration time.
+    lease->updateCurrentExpirationTime();
 
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease4Ptr(new Lease4(*lease)));
@@ -1445,19 +1466,30 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     // Obtain 'by address' index.
     Lease6StorageAddressIndex& index = storage6_.get<AddressIndexTag>();
 
+    bool persist = persistLeases(V6);
+
     // Lease must exist if it is to be updated.
     Lease6StorageAddressIndex::const_iterator lease_it = index.find(lease->addr_);
     if (lease_it == index.end()) {
         isc_throw(NoSuchLease, "failed to update the lease with address "
                   << lease->addr_ << " - no such lease");
+    } else if ((!persist) && (((*lease_it)->cltt_ != lease->current_cltt_) ||
+        ((*lease_it)->valid_lft_ != lease->current_valid_lft_))) {
+        // For test purpose only: check that the lease has not changed in
+        // the database.
+        isc_throw(NoSuchLease, "failed to update the lease with address "
+                  << lease->addr_ << " - lease has changed in database");
     }
 
     // Try to write a lease to disk first. If this fails, the lease will
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
-    if (persistLeases(V6)) {
+    if (persist) {
         lease_file6_->append(*lease);
     }
+
+    // Update lease current expiration time.
+    lease->updateCurrentExpirationTime();
 
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease6Ptr(new Lease6(*lease)));
@@ -1492,6 +1524,13 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
             // removed.
             lease_copy.valid_lft_ = 0;
             lease_file4_->append(lease_copy);
+        } else {
+            // For test purpose only: check that the lease has not changed in
+            // the database.
+            if (((*l)->cltt_ != lease->current_cltt_) ||
+                ((*l)->valid_lft_ != lease->current_valid_lft_)) {
+                return false;
+            }
         }
         storage4_.erase(l);
         return (true);
@@ -1527,6 +1566,13 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
             lease_copy.valid_lft_ = 0;
             lease_copy.preferred_lft_ = 0;
             lease_file6_->append(lease_copy);
+        } else {
+            // For test purpose only: check that the lease has not changed in
+            // the database.
+            if (((*l)->cltt_ != lease->current_cltt_) ||
+                ((*l)->valid_lft_ != lease->current_valid_lft_)) {
+                return false;
+            }
         }
         storage6_.erase(l);
         return (true);

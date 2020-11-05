@@ -52,9 +52,9 @@ public:
     ///
     /// @param connection already open Cassandra connection.
     CqlLeaseExchange(const CqlConnection &connection)
-        : connection_(connection), valid_lifetime_(0), expire_(0), old_expire_(0),
-          subnet_id_(0), fqdn_fwd_(cass_false), fqdn_rev_(cass_false),
-          state_(0), user_context_(NULL_USER_CONTEXT) {
+        : connection_(connection), valid_lifetime_(0), expire_(0),
+          current_expire_(0), subnet_id_(0), fqdn_fwd_(cass_false),
+          fqdn_rev_(cass_false), state_(0), user_context_(NULL_USER_CONTEXT) {
     }
 
     /// @brief Create BIND array to receive C++ data.
@@ -91,7 +91,7 @@ protected:
     cass_int64_t expire_;
 
     /// @brief Expiration time of lease before update
-    cass_int64_t old_expire_;
+    cass_int64_t current_expire_;
 
     /// @brief Subnet identifier
     cass_int32_t subnet_id_;
@@ -633,9 +633,10 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         data.add(&user_context_);
         data.add(&address_);
 
-        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_,
-                                           old_expire_);
-        data.add(&old_expire_);
+        CqlExchange::convertToDatabaseTime(lease_->current_cltt_,
+                                           lease_->current_valid_lft_,
+                                           current_expire_);
+        data.add(&current_expire_);
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
                   "CqlLease4Exchange::createBindUpdate(): "
@@ -664,9 +665,10 @@ CqlLease4Exchange::createBindForDelete(const Lease4Ptr &lease, AnyArray &data,
         data.clear();
         data.add(&address_);
 
-        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_,
-                                           old_expire_);
-        data.add(&old_expire_);
+        CqlExchange::convertToDatabaseTime(lease_->current_cltt_,
+                                           lease_->current_valid_lft_,
+                                           current_expire_);
+        data.add(&current_expire_);
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
                   "CqlLease4Exchange::createBindForDelete(): "
@@ -1424,9 +1426,10 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
         data.add(&user_context_);
         data.add(&address_);
 
-        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_,
-                                           old_expire_);
-        data.add(&old_expire_);
+        CqlExchange::convertToDatabaseTime(lease_->current_cltt_,
+                                           lease_->current_valid_lft_,
+                                           current_expire_);
+        data.add(&current_expire_);
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
                   "CqlLease6Exchange::createBindForUpdate(): "
@@ -1461,9 +1464,10 @@ CqlLease6Exchange::createBindForDelete(const Lease6Ptr &lease, AnyArray &data,
         data.clear();
         data.add(&address_);
 
-        CqlExchange::convertToDatabaseTime(lease_->old_cltt_, lease_->old_valid_lft_,
-                                           old_expire_);
-        data.add(&old_expire_);
+        CqlExchange::convertToDatabaseTime(lease_->current_cltt_,
+                                           lease_->current_valid_lft_,
+                                           current_expire_);
+        data.add(&current_expire_);
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
                   "CqlLease6Exchange::createBindForDelete(): "
@@ -1596,8 +1600,9 @@ CqlLease6Exchange::retrieve() {
 
         time_t cltt = 0;
         CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+        // Update cltt_ and current_cltt_ explicitly.
         result->cltt_ = cltt;
-        result->old_cltt_ = cltt;
+        result->current_cltt_ = cltt;
 
         result->state_ = state_;
 
@@ -2145,8 +2150,9 @@ CqlLeaseMgr::addLease(const Lease4Ptr &lease) {
         return false;
     }
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease current expiration time (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateCurrentExpirationTime();
 
     return true;
 }
@@ -2168,8 +2174,9 @@ CqlLeaseMgr::addLease(const Lease6Ptr &lease) {
         return false;
     }
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease current expiration time (allows update between the creation
+    // of the Lease up to the point of insertion in the database).
+    lease->updateCurrentExpirationTime();
 
     return true;
 }
@@ -2618,8 +2625,8 @@ CqlLeaseMgr::updateLease4(const Lease4Ptr &lease) {
         isc_throw(NoSuchLease, exception.what());
     }
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease current expiration time.
+    lease->updateCurrentExpirationTime();
 }
 
 void
@@ -2637,8 +2644,8 @@ CqlLeaseMgr::updateLease6(const Lease6Ptr &lease) {
         isc_throw(NoSuchLease, exception.what());
     }
 
-    lease->old_cltt_ = lease->cltt_;
-    lease->old_valid_lft_ = lease->valid_lft_;
+    // Update lease current expiration time.
+    lease->updateCurrentExpirationTime();
 }
 
 bool

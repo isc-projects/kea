@@ -92,9 +92,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x08), HTYPE_ETHER));
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x42)));
         lease->valid_lft_ = 8677;
-        lease->old_valid_lft_ = 8677;
         lease->cltt_ = 168256;
-        lease->old_cltt_ = 168256;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 23;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = false;
@@ -105,9 +104,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));
         lease->valid_lft_ = 3677;
-        lease->old_valid_lft_ = 3677;
         lease->cltt_ = 123456;
-        lease->old_cltt_ = 123456;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 73;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -117,9 +115,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x2a), HTYPE_ETHER));
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x64)));
         lease->valid_lft_ = 5412;
-        lease->old_valid_lft_ = 5412;
         lease->cltt_ = 234567;
-        lease->old_cltt_ = 234567;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 73;                         // Same as lease 1
         lease->fqdn_rev_ = false;
         lease->fqdn_fwd_ = false;
@@ -136,9 +133,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         //  However, this will lead to overflows.
         // @TODO: test overflow conditions when code has been fixed.
         lease->valid_lft_ = 7000;
-        lease->old_valid_lft_ = 7000;
         lease->cltt_ = 234567;
-        lease->old_cltt_ = 234567;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 37;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -150,9 +146,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 7736;
-        lease->old_valid_lft_ = 7736;
         lease->cltt_ = 222456;
-        lease->old_cltt_ = 222456;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 85;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -165,9 +160,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 7832;
-        lease->old_valid_lft_ = 7832;
         lease->cltt_ = 227476;
-        lease->old_cltt_ = 227476;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 175;
         lease->fqdn_rev_ = false;
         lease->fqdn_fwd_ = false;
@@ -180,9 +174,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
         lease->valid_lft_ = 1832;
-        lease->old_valid_lft_ = 1832;
         lease->cltt_ = 627476;
-        lease->old_cltt_ = 627476;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 112;
         lease->fqdn_rev_ = false;
         lease->fqdn_fwd_ = true;
@@ -193,9 +186,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x77)));
         lease->valid_lft_ = 7975;
-        lease->old_valid_lft_ = 7975;
         lease->cltt_ = 213876;
-        lease->old_cltt_ = 213876;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 19;
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
@@ -226,9 +218,8 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x77)));
         lease->preferred_lft_ = 900;
         lease->valid_lft_ = 8677;
-        lease->old_valid_lft_ = 8677;
         lease->cltt_ = 168256;
-        lease->old_cltt_ = 168256;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 23;
         lease->fqdn_fwd_ = true;
         lease->fqdn_rev_ = true;
@@ -241,9 +232,8 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         lease->preferred_lft_ = 3600;
         lease->valid_lft_ = 3677;
-        lease->old_valid_lft_ = 3677;
         lease->cltt_ = 123456;
-        lease->old_cltt_ = 123456;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 73;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -256,9 +246,8 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x3a)));
         lease->preferred_lft_ = 1800;
         lease->valid_lft_ = 5412;
-        lease->old_valid_lft_ = 5412;
         lease->cltt_ = 234567;
-        lease->old_cltt_ = 234567;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 73;                     // Same as lease 1
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = false;
@@ -280,9 +269,8 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         // @TODO: test overflow conditions when code has been fixed.
         lease->preferred_lft_ = 7200;
         lease->valid_lft_ = 7000;
-        lease->old_valid_lft_ = 7000;
         lease->cltt_ = 234567;
-        lease->old_cltt_ = 234567;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 37;
         lease->fqdn_fwd_ = true;
         lease->fqdn_rev_ = false;
@@ -296,9 +284,8 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         lease->preferred_lft_ = 4800;
         lease->valid_lft_ = 7736;
-        lease->old_valid_lft_ = 7736;
         lease->cltt_ = 222456;
-        lease->old_cltt_ = 222456;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 671;
         lease->fqdn_fwd_ = true;
         lease->fqdn_rev_ = true;
@@ -313,9 +300,8 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         // Same as lease 4
         lease->preferred_lft_ = 5400;
         lease->valid_lft_ = 7832;
-        lease->old_valid_lft_ = 7832;
         lease->cltt_ = 227476;
-        lease->old_cltt_ = 227476;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 175;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -331,9 +317,8 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         // Same as lease 4
         lease->preferred_lft_ = 5400;
         lease->valid_lft_ = 1832;
-        lease->old_valid_lft_ = 1832;
         lease->cltt_ = 627476;
-        lease->old_cltt_ = 627476;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 112;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -347,9 +332,8 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0xe5)));
         lease->preferred_lft_ = 5600;
         lease->valid_lft_ = 7975;
-        lease->old_valid_lft_ = 7975;
         lease->cltt_ = 213876;
-        lease->old_cltt_ = 213876;
+        lease->updateCurrentExpirationTime();
         lease->subnet_id_ = 19;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -1103,7 +1087,7 @@ GenericLeaseMgrTest::testGetLease4HWAddrSize() {
 
         ASSERT_EQ(1, returned.size());
         detailCompareLease(leases[1], *returned.begin());
-        (void) lmptr_->deleteLease(leases[1]);
+        ASSERT_TRUE(lmptr_->deleteLease(leases[1]));
     }
 
     // Database should not let us add one that is too big
@@ -1180,7 +1164,7 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetIdSize() {
                                                leases[1]->subnet_id_);
         ASSERT_TRUE(returned);
         detailCompareLease(leases[1], returned);
-        (void) lmptr_->deleteLease(leases[1]);
+        ASSERT_TRUE(lmptr_->deleteLease(leases[1]));
     }
 
     // Database should not let us add one that is too big
@@ -1260,7 +1244,7 @@ GenericLeaseMgrTest::testGetLease4ClientIdSize() {
         Lease4Collection returned = lmptr_->getLease4(*leases[1]->client_id_);
         ASSERT_EQ(returned.size(), 1u);
         detailCompareLease(leases[1], *returned.begin());
-        (void) lmptr_->deleteLease(leases[1]);
+        ASSERT_TRUE(lmptr_->deleteLease(leases[1]));
     }
 
     // Don't bother to check client IDs longer than the maximum -
@@ -1587,7 +1571,7 @@ GenericLeaseMgrTest::testGetLeases6DuidSize() {
                                                        leases[1]->iaid_);
         ASSERT_EQ(1, returned.size());
         detailCompareLease(leases[1], *returned.begin());
-        (void) lmptr_->deleteLease(leases[1]);
+        ASSERT_TRUE(lmptr_->deleteLease(leases[1]));
     }
 
     // Don't bother to check DUIDs longer than the maximum - these cannot be
@@ -1797,9 +1781,9 @@ GenericLeaseMgrTest::testGetLeases6Duid() {
     EXPECT_TRUE(returned3.empty());
 
     //clean up
-    (void) lmptr_->deleteLease(lease1);
-    (void) lmptr_->deleteLease(lease2);
-    (void) lmptr_->deleteLease(lease3);
+    ASSERT_TRUE(lmptr_->deleteLease(lease1));
+    ASSERT_TRUE(lmptr_->deleteLease(lease2));
+    ASSERT_TRUE(lmptr_->deleteLease(lease3));
 
     //now verify we return empty for a lease that has not been stored
     returned3 = lmptr_->getLeases6(*duid4);
@@ -1830,7 +1814,7 @@ GenericLeaseMgrTest::testGetLease6DuidIaidSubnetIdSize() {
                                                leases[1]->subnet_id_);
         ASSERT_TRUE(returned);
         detailCompareLease(leases[1], returned);
-        (void) lmptr_->deleteLease(leases[1]);
+        ASSERT_TRUE(lmptr_->deleteLease(leases[1]));
     }
 
     // Don't bother to check DUIDs longer than the maximum - these cannot be
@@ -1890,7 +1874,7 @@ GenericLeaseMgrTest::testUpdateLease4() {
     EXPECT_THROW(lmptr_->updateLease4(leases[1]), isc::db::DbOperationError);
 
     // Try updating a lease not in the database.
-    lmptr_->deleteLease(leases[2]);
+    ASSERT_TRUE(lmptr_->deleteLease(leases[2]));
     EXPECT_THROW(lmptr_->updateLease4(leases[2]), isc::dhcp::NoSuchLease);
 }
 

@@ -2888,8 +2888,9 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Renew) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    Lease6Ptr deleted_lease(new Lease6());
-    deleted_lease->addr_ = addr_opt->getAddress();
+    Lease6Ptr deleted_lease =
+        LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                              addr_opt->getAddress());
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(deleted_lease));
 
     // Check if the callout handle state was reset after the callout.
@@ -4012,9 +4013,10 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Rebind) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    lease.reset(new Lease6());
-    lease->addr_ = addr_opt->getAddress();
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
+    Lease6Ptr deleted_lease =
+        LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                              addr_opt->getAddress());
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(deleted_lease));
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(req);

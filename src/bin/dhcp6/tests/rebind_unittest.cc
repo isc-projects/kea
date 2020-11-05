@@ -472,9 +472,9 @@ TEST_F(RebindTest, directClientLostLease) {
     Lease6 lease_client = client.getLease(0);
     // The lease has been acquired. Now, let's explicitly remove it from the
     // lease database.
-    Lease6Ptr lease(new Lease6());
-    lease->addr_ = lease_client.addr_;
-    LeaseMgrFactory::instance().deleteLease(lease);
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                            lease_client.addr_);
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Send Rebind.
     ASSERT_NO_THROW(client.doRebind());
@@ -607,9 +607,9 @@ TEST_F(RebindTest, relayedClientLostLease) {
     Lease6 lease_client = client.getLease(0);
     // The lease has been acquired. Now, let's explicitly remove it from the
     // lease database.
-    Lease6Ptr lease(new Lease6());
-    lease->addr_ = lease_client.addr_;
-    LeaseMgrFactory::instance().deleteLease(lease);
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                            lease_client.addr_);
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Send Rebind.
     ASSERT_NO_THROW(client.doRebind());

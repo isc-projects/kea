@@ -97,6 +97,13 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @param fqdn_rev If true, reverse DNS update is performed for a lease.
     /// @param hostname FQDN of the client which gets the lease.
     /// @param hwaddr Hardware/MAC address
+    ///
+    /// @note When creating a new Lease object, current_cltt_ matches cltt_ and
+    /// current_valid_lft_ matches valid_lft_. Any update operation that changes
+    /// cltt_ or valid_lft_ in the database must also update the current_cltt_
+    /// and current_valid_lft_ after the database response so that additional
+    /// operations can be performed on the same object. Failing to do so will
+    /// result in the new actions to be rejected by the database.
     Lease(const isc::asiolink::IOAddress& addr,
           uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
           const bool fqdn_fwd, const bool fqdn_rev,
@@ -116,10 +123,10 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// Expressed as number of seconds since cltt.
     uint32_t valid_lft_;
 
-    /// @brief Old valid lifetime
+    /// @brief Current valid lifetime
     ///
     /// Expressed as number of seconds since cltt before update.
-    uint32_t old_valid_lft_;
+    uint32_t current_valid_lft_;
 
     /// @brief Client last transmission time
     ///
@@ -127,11 +134,11 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// client was received.
     time_t cltt_;
 
-    /// @brief Old client last transmission time
+    /// @brief Current client last transmission time
     ///
     /// Specifies a timestamp giving the time when the last transmission from a
     /// client was received before update.
-    time_t old_cltt_;
+    time_t current_cltt_;
 
     /// @brief Subnet identifier
     ///
@@ -229,6 +236,27 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
 
     /// Avoid a clang spurious error
     using isc::data::CfgToElement::toElement;
+
+    /// Sync lease current expiration time with new value from another lease,
+    /// so that additional operations can be done without performing extra read
+    /// from the database.
+    ///
+    /// @note The lease current expiration time is represented by the
+    /// @ref current_cltt_ and  @ref current_valid_lft_ and the new value by
+    /// @ref cltt_ and @ref valid_lft_
+    ///
+    /// @param from The lease with latest value of expiration time.
+    /// @param [out] to The lease that needs to be updated.
+    static void syncCurrentExpirationTime(const Lease& from, Lease& to);
+
+    /// Update lease current expiration time with new value,
+    /// so that additional operations can be done without performing extra read
+    /// from the database.
+    ///
+    /// @note The lease current expiration time is represented by the
+    /// @ref current_cltt_ and  @ref current_valid_lft_ and the new value by
+    /// @ref cltt_ and @ref valid_lft_
+    void updateCurrentExpirationTime();
 
 protected:
 
