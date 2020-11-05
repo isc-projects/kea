@@ -5,6 +5,7 @@
 	expiration time is different than what it is already stored, to
 	act as a protection mechanism for parallel updates from several
 	threads or processes.
+	(Gitlab #1434,#1488)
 
 1799.	[bug]		tmark
 	kea-dhcp4 now correctly updates DNS when a client
@@ -19,7 +20,6 @@
 	Removed "Multithreading is experimental" warning log message
 	from kea-dhcp4 and kea-dhcp6 servers.
 	(Gitlab #1435,#1431)
-	(Gitlab #1434,#1488)
 
 Kea 1.8.0 (stable) released on Aug 26, 2020
 
