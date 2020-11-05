@@ -10,11 +10,11 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #1395)
 
 1796.	[bug]		marcin
-	Kea HTTP client re-establishes connection with the HTTP server when
-	timeout occurs. Prior to this change the client tried to reuse
-	the connection after timeout often getting subsequent timeouts.
-	Re-establishing the connection may help avoid further timeouts
-	during the High Availability operation.
+	Kea HTTP client re-establishes connection with the HTTP server
+	when timeout occurs. Prior to this change the client tried to
+	reuse the connection after timeout often getting subsequent
+	timeouts.  Re-establishing the connection may help avoid further
+	timeouts during the High Availability operation.
 	(Gitlab #1390)
 
 1795.	[bug]		razvan
@@ -23,10 +23,10 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #505)
 
 1794.	[func]		razvan
-	The 'status-get' command send to DHCPv4 or DHCPv6 servers will return
-	information about multi threading settings ('multi-threading-enabled',
-	and only if this setting is active, 'thread-pool-size' and
-	'packet-queue-size').
+	The 'status-get' command send to DHCPv4 or DHCPv6 servers will
+	return information about multi threading settings
+	('multi-threading-enabled', and only if this setting is active,
+	'thread-pool-size' and 'packet-queue-size').
 	(Gitlab #1305)
 
 1793.	[doc]		tmark
@@ -47,18 +47,19 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #1384)
 
 1790.	[bug]		marcin
-	Fixed a bug in Kea Configuration Backend observed when using certain
-	MariaDB	database versions. As a result of this bug the Kea servers were
-	unable to fetch configurations stored in the database upon startup. The
-	bug was related to the usage of timestamps which in MariaDB must be
-	set to 1970-01-01 00:00:01 UTC or later. In some cases the Kea CB used
-	out of bounds timestamp values. This bug was observed when using MariaDB
+	Fixed a bug in Kea Configuration Backend observed when using
+	certain MariaDB database versions. As a result of this bug the
+	Kea servers were unable to fetch configurations stored in the
+	database upon startup. The bug was related to the usage of
+	timestamps which in MariaDB must be set to 1970-01-01 00:00:01
+	UTC or later. In some cases the Kea CB used out of bounds
+	timestamp values. This bug was observed when using MariaDB
 	10.4.13.
 	(Gitlab #1382)
 
 1789.	[bug]		razvan
-	Fixed a bug in the lease reclaim process which would not reschedule the
-	timer if the operation failed.
+	Fixed a bug in the lease reclaim process which would not
+	reschedule the timer if the operation failed.
 	(Gitlab #1335)
 
 1788.	[bug]*		fdupont
@@ -69,12 +70,13 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #1254)
 
 1787.	[bug]		razvan
-	The recount leases functions consider leases in 'declined' state as
-	'assigned' so that when the lease is reclaimed or reused, no negative
-	counters are generated. The 'subnet[X].reclaimed-leases' and
-	'reclaimed-leases' are now cumulative counters and are never
-	decremented or reset until server restart. Removed references to non
-	existent 'declined-reclaimed-addresses' counters.
+	The recount leases functions consider leases in 'declined'
+	state as 'assigned' so that when the lease is reclaimed or
+	reused, no negative counters are generated. The
+	'subnet[X].reclaimed-leases' and 'reclaimed-leases' are now
+	cumulative counters and are never decremented or reset until
+	server restart. Removed references to non existent
+	'declined-reclaimed-addresses' counters.
 	(Gitlab #1336)
 
 1786.	[bug]		razvan
@@ -82,9 +84,9 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #1065)
 
 1785.	[func]		fdupont
-	If enabled, the default value for queue capacity in congestion control
-	has been trimmed down from 500 to 64. The feature continues to be disabled
-	by default.
+	If enabled, the default value for queue capacity in congestion
+	control has been trimmed down from 500 to 64. The feature
+	continues to be disabled by default.
 	(Gitlab #285)
 
 1784.	[build]		wlodek
@@ -97,9 +99,10 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #1310)
 
 1782.	[bug]		tmark
-	Corrected a bug that causes kea-dhcp4/kea-dhcp6 servers to crash after
-	losing connectivity to a configuration backend database. The servers
-	now correctly honor the max-reconnect-tries parameter.
+	Corrected a bug that causes kea-dhcp4/kea-dhcp6 servers to
+	crash after losing connectivity to a configuration backend
+	database. The servers now correctly honor the
+	max-reconnect-tries parameter.
 	(Gitlab #1369)
 
 1781.	[bug]		razvan
