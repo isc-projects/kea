@@ -862,7 +862,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
-    // Configure DHCP packet queuing.
+    // Configure DHCP packet queueing
     try {
         data::ConstElementPtr qc;
         qc = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
