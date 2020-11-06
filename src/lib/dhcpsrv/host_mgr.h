@@ -619,6 +619,18 @@ public:
         return (ip_reservations_unique_);
     }
 
+    /// @brief Sets IO service to be used by the Host Manager.
+    ///
+    /// @param IOService object, used for all ASIO operations.
+    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
+        io_service_ = io_service;
+    }
+
+    /// @brief Returns pointer to the IO service.
+    static isc::asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
 protected:
     /// @brief The negative caching flag.
     ///
@@ -651,18 +663,6 @@ protected:
                                const Host::IdentifierType& identifier_type,
                                const uint8_t* identifier_begin,
                                const size_t identifier_len) const;
-
-    /// @brief Sets IO service to be used by the Host Manager.
-    ///
-    /// @param IOService object, used for all ASIO operations.
-    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
-        io_service_ = io_service;
-    }
-
-    /// @brief Returns pointer to the IO service.
-    static isc::asiolink::IOServicePtr& getIOService() {
-        return (io_service_);
-    }
 
 private:
 
