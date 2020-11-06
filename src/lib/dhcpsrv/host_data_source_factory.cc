@@ -106,7 +106,6 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
                            bool if_unusable) {
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
-    bool result = false;
     for (auto it = sources.begin(); it != sources.end(); ++it) {
         if ((*it)->getType() != db_type || (*it)->getParameters() != parameters) {
             continue;
