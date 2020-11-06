@@ -1092,6 +1092,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         // or a raw pointer (pointing to a deleted object).
         DatabaseConnection::db_lost_callback_ = 0;
         DatabaseConnection::db_recovered_callback_ = 0;
+        DatabaseConnection::db_failed_callback_ = 0;
 
         timer_mgr_->unregisterTimers();
 
