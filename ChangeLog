@@ -1,3 +1,8 @@
+1801.   [build]         razvan
+	Library version numbers bumped for Kea 1.8.1 stable release
+	version.
+	(Gitlab #1530)
+
 1800.	[bug]		razvan
 	Fixed lease update when using HA and lease_cmds hooks with
 	database backend. Previously, HA updates were rejected because
