@@ -817,7 +817,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=6");
-        cfg_db->createManagers(server_->getIOService());
+        cfg_db->createManagers();
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
