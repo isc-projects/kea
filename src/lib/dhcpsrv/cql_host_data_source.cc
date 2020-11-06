@@ -3447,8 +3447,7 @@ CqlHostDataSourceImpl::mergeHosts(const ConstHostPtr& source_host,
     source_host->getCfgOption6()->mergeTo(*target_host->getCfgOption6());
 }
 
-CqlHostDataSource::CqlHostDataSource(const CqlConnection::ParameterMap& parameters,
-                                     const isc::asiolink::IOServicePtr& /*io_service*/)
+CqlHostDataSource::CqlHostDataSource(const CqlConnection::ParameterMap& parameters)
     : impl_(new CqlHostDataSourceImpl(parameters)) {
 }
 

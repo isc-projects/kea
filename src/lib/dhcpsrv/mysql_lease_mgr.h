@@ -104,15 +104,13 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    /// @param io_service The IOService object, used for all ASIO operations.
     ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
     /// @throw isc::db::DbOpenError Error opening the database or the schema
     /// version is incorrect.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    MySqlLeaseMgr(const db::DatabaseConnection::ParameterMap& parameters,
-                  const isc::asiolink::IOServicePtr& io_service = isc::asiolink::IOServicePtr());
+    MySqlLeaseMgr(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
     virtual ~MySqlLeaseMgr();
@@ -986,9 +984,6 @@ private:
 
     /// @brief The pool of contexts
     MySqlLeaseContextPoolPtr pool_;
-
-    /// @brief IOService object, used for all ASIO operations.
-    isc::asiolink::IOServicePtr io_service_;
 };
 
 }  // namespace dhcp

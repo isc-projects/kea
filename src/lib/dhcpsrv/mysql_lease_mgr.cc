@@ -1780,9 +1780,8 @@ MySqlLeaseMgr::MySqlLeaseContextAlloc::~MySqlLeaseContextAlloc() {
 
 // MySqlLeaseMgr Constructor and Destructor
 
-MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters,
-                             const IOServicePtr& io_service)
-    : parameters_(parameters), io_service_(io_service) {
+MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
+    : parameters_(parameters) {
 
     // Validate schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
@@ -1832,7 +1831,7 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
         LeaseMgrFactory::destroy();
-        LeaseMgrFactory::create(cfg_db->getLeaseDbAccessString()/*, io_service_ */);
+        LeaseMgrFactory::create(cfg_db->getLeaseDbAccessString());
 
         reopened = true;
     } catch (const std::exception& ex) {
@@ -1872,7 +1871,8 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
 MySqlLeaseContextPtr
 MySqlLeaseMgr::createContext() const {
-    MySqlLeaseContextPtr ctx(new MySqlLeaseContext(parameters_, io_service_,
+    MySqlLeaseContextPtr ctx(new MySqlLeaseContext(parameters_,
+                                                   LeaseMgr::getIOService(),
                                                    &MySqlLeaseMgr::dbReconnect));
 
     // Open the database.

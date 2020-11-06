@@ -7,7 +7,6 @@
 #ifndef HOST_DATA_SOURCE_FACTORY_H
 #define HOST_DATA_SOURCE_FACTORY_H
 
-#include <asiolink/io_service.h>
 #include <database/database_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <exceptions/exceptions.h>
@@ -59,14 +58,12 @@ public:
     ///        "keyword=value" pairs, separated by spaces. They are backend-
     ///        -end specific, although must include the "type" keyword which
     ///        gives the backend in use.
-    /// @param io_service The IOService object, used for all ASIO operations.
     ///
     /// @throw isc::InvalidParameter dbaccess string does not contain the "type"
     ///        keyword.
     /// @throw isc::dhcp::InvalidType The "type" keyword in dbaccess does not
     ///        identify a supported backend.
-    static void add(HostDataSourceList& sources, const std::string& dbaccess,
-                    const isc::asiolink::IOServicePtr& io_service = isc::asiolink::IOServicePtr());
+    static void add(HostDataSourceList& sources, const std::string& dbaccess);
 
     /// @brief Delete a host data source.
     ///
@@ -82,8 +79,7 @@ public:
     ///
     /// A factory takes a parameter map and returns a pointer to a host
     /// data source. In case of failure it must throw and not return NULL.
-    typedef std::function<HostDataSourcePtr (const db::DatabaseConnection::ParameterMap&,
-                                             const isc::asiolink::IOServicePtr&)> Factory;
+    typedef std::function<HostDataSourcePtr (const db::DatabaseConnection::ParameterMap&)> Factory;
 
     /// @brief Register a host data source factory
     ///
@@ -129,8 +125,7 @@ private:
     static std::map<std::string, Factory> map_;
 };
 
-
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
 
 #endif

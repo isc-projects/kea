@@ -1214,9 +1214,8 @@ PgSqlLeaseMgr::PgSqlLeaseContextAlloc::~PgSqlLeaseContextAlloc() {
 
 // PgSqlLeaseMgr Constructor and Destructor
 
-PgSqlLeaseMgr::PgSqlLeaseMgr(const PgSqlConnection::ParameterMap& parameters,
-                             const IOServicePtr& io_service)
-    : parameters_(parameters), io_service_(io_service) {
+PgSqlLeaseMgr::PgSqlLeaseMgr(const PgSqlConnection::ParameterMap& parameters)
+    : parameters_(parameters) {
 
     // Validate schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
@@ -1306,7 +1305,8 @@ PgSqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
 PgSqlLeaseContextPtr
 PgSqlLeaseMgr::createContext() const {
-    PgSqlLeaseContextPtr ctx(new PgSqlLeaseContext(parameters_, io_service_,
+    PgSqlLeaseContextPtr ctx(new PgSqlLeaseContext(parameters_,
+                                                   LeaseMgr::getIOService(),
                                                    &PgSqlLeaseMgr::dbReconnect));
 
     // Open the database.

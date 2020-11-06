@@ -761,6 +761,16 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback() = 0;
 
+    /// @brief Sets IO service to be used by the Lease Manager.
+    ///
+    /// @param IOService object, used for all ASIO operations.
+    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
+        io_service_ = io_service;
+    }
+
+private:
+    /// The IOService object, used for all ASIO operations.
+    static isc::asiolink::IOServicePtr io_service_;
 };
 
 }  // namespace dhcp

@@ -900,8 +900,7 @@ TEST_F(CBControlDHCPv4Test, ipReservationsNonUniqueAccepted) {
     // Create host data source which accepts setting non-unique IP
     // reservations.
     MemHostDataSourcePtr hds(new MemHostDataSource());
-    auto testFactory = [hds](const DatabaseConnection::ParameterMap&,
-                             const IOServicePtr&) {
+    auto testFactory = [hds](const DatabaseConnection::ParameterMap&) {
         return (hds);
     };
     HostDataSourceFactory::registerFactory("test", testFactory);
@@ -935,8 +934,7 @@ TEST_F(CBControlDHCPv4Test, ipReservationsNonUniqueRefused) {
     // Create host data source which does not accept setting IP reservations
     // non-unique setting.
     NonUniqueHostDataSourcePtr hds(new NonUniqueHostDataSource());
-    auto testFactory = [hds](const DatabaseConnection::ParameterMap&,
-                             const IOServicePtr&) {
+    auto testFactory = [hds](const DatabaseConnection::ParameterMap&) {
         return (hds);
     };
     HostDataSourceFactory::registerFactory("test", testFactory);
@@ -1619,8 +1617,7 @@ TEST_F(CBControlDHCPv6Test, ipReservationsNonUniqueAccepted) {
     // Create host data source which accepts setting non-unique IP
     // reservations.
     MemHostDataSourcePtr hds(new MemHostDataSource());
-    auto testFactory = [hds](const DatabaseConnection::ParameterMap&,
-                             const IOServicePtr&) {
+    auto testFactory = [hds](const DatabaseConnection::ParameterMap&) {
         return (hds);
     };
     HostDataSourceFactory::registerFactory("test", testFactory);
@@ -1654,8 +1651,7 @@ TEST_F(CBControlDHCPv6Test, ipReservationsNonUniqueRefused) {
     // Create host data source which does not accept setting IP reservations
     // non-unique setting.
     NonUniqueHostDataSourcePtr hds(new NonUniqueHostDataSource());
-    auto testFactory = [hds](const DatabaseConnection::ParameterMap&,
-                             const IOServicePtr&) {
+    auto testFactory = [hds](const DatabaseConnection::ParameterMap&) {
         return (hds);
     };
     HostDataSourceFactory::registerFactory("test", testFactory);

@@ -53,23 +53,23 @@ CfgDbAccess::getHostDbAccessStringList() const {
 }
 
 void
-CfgDbAccess::createManagers(const isc::asiolink::IOServicePtr& io_service) const {
+CfgDbAccess::createManagers() const {
     // Recreate lease manager.
     LeaseMgrFactory::destroy();
-    LeaseMgrFactory::create(getLeaseDbAccessString(), io_service);
+    LeaseMgrFactory::create(getLeaseDbAccessString());
 
     // Recreate host data source.
     HostMgr::create();
 
     // Restore the host cache.
     if (HostDataSourceFactory::registeredFactory("cache")) {
-        HostMgr::addBackend("type=cache", io_service);
+        HostMgr::addBackend("type=cache");
     }
 
     // Add database backends.
     std::list<std::string> host_db_access_list = getHostDbAccessStringList();
     for (std::string& hds : host_db_access_list) {
-        HostMgr::addBackend(hds, io_service);
+        HostMgr::addBackend(hds);
     }
 
     // Check for a host cache.

@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <asiolink/io_service.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/testutils/memory_host_data_source.h>
 #include <exceptions/exceptions.h>
@@ -18,7 +17,6 @@
 
 using namespace std;
 using namespace isc;
-using namespace isc::asiolink;
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
@@ -40,7 +38,7 @@ public:
 
 // @brief Factory of mem1
 HostDataSourcePtr
-mem1Factory(const DatabaseConnection::ParameterMap&, const IOServicePtr&) {
+mem1Factory(const DatabaseConnection::ParameterMap&) {
     return (HostDataSourcePtr(new Mem1HostDataSource()));
 }
 
@@ -59,7 +57,7 @@ public:
 
 // @brief Factory of mem2
 HostDataSourcePtr
-mem2Factory(const DatabaseConnection::ParameterMap&, const IOServicePtr&) {
+mem2Factory(const DatabaseConnection::ParameterMap&) {
     return (HostDataSourcePtr(new Mem2HostDataSource()));
 }
 
@@ -70,7 +68,7 @@ bool registerFactory2() {
 
 // @brief Factory function returning 0
 HostDataSourcePtr
-factory0(const DatabaseConnection::ParameterMap&, const IOServicePtr&) {
+factory0(const DatabaseConnection::ParameterMap&) {
     return (HostDataSourcePtr());
 }
 

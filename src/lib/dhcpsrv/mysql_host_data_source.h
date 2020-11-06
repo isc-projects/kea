@@ -62,8 +62,7 @@ public:
     /// schema version is invalid.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    MySqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters,
-                        const isc::asiolink::IOServicePtr& io_service);
+    MySqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Virtual destructor.
     ///

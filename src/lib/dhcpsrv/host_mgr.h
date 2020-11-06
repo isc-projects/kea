@@ -67,14 +67,12 @@ public:
     ///
     /// @param access Host backend access parameters for the alternate
     /// host backend. It holds "keyword=value" pairs, separated by spaces.
-    /// @param io_service The IOService object, used for all ASIO operations.
     ///
     /// The supported values are specific to the alternate backend in use.
     /// However, the "type" parameter will be common and it will specify which
     /// backend is to be used. Currently, no parameters are supported
     /// and the parameter is ignored.
-    static void addBackend(const std::string& access,
-                           const isc::asiolink::IOServicePtr& io_service = isc::asiolink::IOServicePtr());
+    static void addBackend(const std::string& access);
 
     /// @brief Delete an alternate host backend (aka host data source).
     ///
@@ -654,6 +652,13 @@ protected:
                                const uint8_t* identifier_begin,
                                const size_t identifier_len) const;
 
+    /// @brief Sets IO service to be used by the Host Manager.
+    ///
+    /// @param IOService object, used for all ASIO operations.
+    void setIOService(const isc::asiolink::IOServicePtr& io_service) {
+        io_service_ = io_service;
+    }
+
 private:
 
     /// @brief Indicates if backends are running in the mode in which IP
@@ -678,8 +683,11 @@ private:
     /// @c HostMgr.
     static boost::scoped_ptr<HostMgr>& getHostMgrPtr();
 
+    /// The IOService object, used for all ASIO operations.
+    static isc::asiolink::IOServicePtr io_service_;
 };
-}
-}
+
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // HOST_MGR_H

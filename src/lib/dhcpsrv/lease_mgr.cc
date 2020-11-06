@@ -24,12 +24,14 @@
 
 #include <time.h>
 
-
+using namespace isc::asiolink;
 using namespace isc::db;
 using namespace std;
 
 namespace isc {
 namespace dhcp {
+
+IOServicePtr LeaseMgr::io_service_ = IOServicePtr();
 
 LeasePageSize::LeasePageSize(const size_t page_size)
     : page_size_(page_size) {
