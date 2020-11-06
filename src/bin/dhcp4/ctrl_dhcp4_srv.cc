@@ -980,6 +980,12 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     // CommandMgr uses IO service to run asynchronous socket operations.
     CommandMgr::instance().setIOService(getIOService());
 
+    // LeaseMgr uses IO service to run asynchronous timers.
+    LeaseMgr::setIOService(getIOService());
+
+    // HosrMgr uses IO service to run asynchronous timers.
+    HostMgr::setIOService(getIOService());
+
     // These are the commands always supported by the DHCPv4 server.
     // Please keep the list in alphabetic order.
     CommandMgr::instance().registerCommand("build-report",
@@ -1107,6 +1113,17 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("status-get");
         CommandMgr::instance().deregisterCommand("version-get");
 
+        // TimerMgr uses IO service to run asynchronous timers.
+        TimerMgr::instance()->setIOService(IOServicePtr());
+
+        // CommandMgr uses IO service to run asynchronous socket operations.
+        CommandMgr::instance().setIOService(IOServicePtr());
+
+        // LeaseMgr uses IO service to run asynchronous timers.
+        LeaseMgr::setIOService(IOServicePtr());
+
+        // HosrMgr uses IO service to run asynchronous timers.
+        HostMgr::setIOService(IOServicePtr());
     } catch (...) {
         // Don't want to throw exceptions from the destructor. The server
         // is shutting down anyway.

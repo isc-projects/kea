@@ -659,6 +659,11 @@ protected:
         io_service_ = io_service;
     }
 
+    /// @brief Returns pointer to the IO service.
+    isc::asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
 private:
 
     /// @brief Indicates if backends are running in the mode in which IP
