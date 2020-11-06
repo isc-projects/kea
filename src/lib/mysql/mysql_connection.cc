@@ -52,7 +52,6 @@ MySqlTransaction::commit() {
 
 void
 MySqlConnection::openDatabase() {
-
     // Set up the values of the parameters
     const char* host = "localhost";
     string shost;
@@ -437,7 +436,6 @@ MySqlConnection::rollback() {
                   << mysql_error(mysql_));
     }
 }
-
 
 } // namespace isc::db
 } // namespace isc

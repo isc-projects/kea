@@ -463,6 +463,13 @@ public:
     /// the addresses must be unique and when they may be non-unique.
     virtual bool setIPReservationsUnique(const bool unique);
 
+    /// @brief Flag which indicates if the host manager has at least one
+    /// unusable connection.
+    ///
+    /// @return true if there is at least one unusable connection, false
+    /// otherwise
+    virtual bool isUnusable();
+
     /// @brief Context RAII Allocator.
     class MySqlHostContextAlloc {
     public:
@@ -473,7 +480,7 @@ public:
         /// or creates a new one.
         ///
         /// @param mgr A parent instance
-        MySqlHostContextAlloc(const MySqlHostDataSourceImpl& mgr);
+        MySqlHostContextAlloc(MySqlHostDataSourceImpl& mgr);
 
         /// @brief Destructor
         ///
@@ -485,7 +492,7 @@ public:
 
     private:
         /// @brief The manager
-        const MySqlHostDataSourceImpl& mgr_;
+        MySqlHostDataSourceImpl& mgr_;
     };
 
 private:

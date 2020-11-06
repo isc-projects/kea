@@ -1610,6 +1610,10 @@ public:
 
     /// @brief The pool of contexts
     PgSqlHostContextPoolPtr pool_;
+
+    /// @brief Indicates if there is at least one connection that can no longer
+    /// be used for normal operations.
+    bool unusable_;
 };
 
 namespace {
@@ -2168,7 +2172,7 @@ PgSqlHostContext::PgSqlHostContext(const DatabaseConnection::ParameterMap& param
 // PgSqlHostContextAlloc Constructor and Destructor
 
 PgSqlHostDataSource::PgSqlHostContextAlloc::PgSqlHostContextAlloc(
-    const PgSqlHostDataSourceImpl& mgr) : ctx_(), mgr_(mgr) {
+    PgSqlHostDataSourceImpl& mgr) : ctx_(), mgr_(mgr) {
 
     if (MultiThreadingMgr::instance().getMode()) {
         // multi-threaded
@@ -2197,12 +2201,16 @@ PgSqlHostDataSource::PgSqlHostContextAlloc::~PgSqlHostContextAlloc() {
         // multi-threaded
         lock_guard<mutex> lock(mgr_.pool_->mutex_);
         mgr_.pool_->pool_.push_back(ctx_);
+        if (ctx_->conn_.isUnusable()) {
+            mgr_.unusable_ = true;
+        }
+    } else if (ctx_->conn_.isUnusable()) {
+        mgr_.unusable_ = true;
     }
-    // If running in single-threaded mode, there's nothing to do here.
 }
 
 PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::ParameterMap& parameters)
-    : parameters_(parameters), ip_reservations_unique_(true) {
+    : parameters_(parameters), ip_reservations_unique_(true), unusable_(false) {
 
     // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
@@ -2297,7 +2305,7 @@ PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         std::list<std::string> host_db_access_list = cfg_db->getHostDbAccessStringList();
         for (std::string& hds : host_db_access_list) {
             auto parameters = DatabaseConnection::parse(hds);
-            if (HostMgr::delBackend("postgresql", hds)) {
+            if (HostMgr::delBackend("postgresql", hds, true)) {
                 HostMgr::addBackend(hds);
             }
         }
@@ -3187,6 +3195,11 @@ bool
 PgSqlHostDataSource::setIPReservationsUnique(const bool unique) {
     impl_->ip_reservations_unique_ = unique;
     return (true);
+}
+
+bool
+PgSqlHostDataSource::isUnusable() {
+    return (impl_->unusable_);
 }
 
 }  // namespace dhcp

@@ -499,6 +499,15 @@ public:
     /// @return true if the new setting was accepted by the backend or false
     /// otherwise.
     virtual bool setIPReservationsUnique(const bool unique) = 0;
+
+    /// @brief Flag which indicates if the host manager has at least one
+    /// unusable connection.
+    ///
+    /// @return true if there is at least one unusable connection, false
+    /// otherwise
+    virtual bool isUnusable() {
+        return (false);
+    }
 };
 
 /// @brief HostDataSource pointer

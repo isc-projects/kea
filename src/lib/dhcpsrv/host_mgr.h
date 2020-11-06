@@ -85,8 +85,12 @@ public:
     /// @param db_type database backend type.
     /// @param access Host backend access parameters for the alternate
     /// host backend. It holds "keyword=value" pairs, separated by spaces.
+    /// @param if_unusable flag which indicates if the host data source should
+    /// be deleted only if it is unusable.
     /// @return true when found and removed, false when not found.
-    static bool delBackend(const std::string& db_type, const std::string& access);
+    static bool delBackend(const std::string& db_type,
+                           const std::string& access,
+                           bool if_unusable = false);
 
     /// @brief Delete all alternate backends.
     static void delAllBackends();
@@ -640,6 +644,7 @@ public:
     }
 
 protected:
+
     /// @brief The negative caching flag.
     ///
     /// When true and the first backend is a cache

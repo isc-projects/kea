@@ -86,9 +86,11 @@ public:
     ///        "keyword=value" pairs, separated by spaces. They are backend-
     ///        -end specific, although must include the "type" keyword which
     ///        gives the backend in use.
+    /// @param if_unusable flag which indicates if the host data source should
+    ///        be deleted only if it is unusable.
     /// @return true when found and removed, false when not found.
     static bool del(HostDataSourceList& sources, const std::string& db_type,
-                    const std::string& dbaccess);
+                    const std::string& dbaccess, bool if_unusable = true);
 
     /// @brief Type of host data source factory
     ///

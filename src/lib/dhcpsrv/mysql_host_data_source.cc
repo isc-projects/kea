@@ -2258,6 +2258,10 @@ public:
 
     /// @brief The pool of contexts
     MySqlHostContextPoolPtr pool_;
+
+    /// @brief Indicates if there is at least one connection that can no longer
+    /// be used for normal operations.
+    bool unusable_;
 };
 
 namespace {
@@ -2727,7 +2731,7 @@ MySqlHostContext::MySqlHostContext(const DatabaseConnection::ParameterMap& param
 // MySqlHostContextAlloc Constructor and Destructor
 
 MySqlHostDataSource::MySqlHostContextAlloc::MySqlHostContextAlloc(
-    const MySqlHostDataSourceImpl& mgr) : ctx_(), mgr_(mgr) {
+    MySqlHostDataSourceImpl& mgr) : ctx_(), mgr_(mgr) {
 
     if (MultiThreadingMgr::instance().getMode()) {
         // multi-threaded
@@ -2756,12 +2760,16 @@ MySqlHostDataSource::MySqlHostContextAlloc::~MySqlHostContextAlloc() {
         // multi-threaded
         lock_guard<mutex> lock(mgr_.pool_->mutex_);
         mgr_.pool_->pool_.push_back(ctx_);
+        if (ctx_->conn_.isUnusable()) {
+            mgr_.unusable_ = true;
+        }
+    } else if (ctx_->conn_.isUnusable()) {
+        mgr_.unusable_ = true;
     }
-    // If running in single-threaded mode, there's nothing to do here.
 }
 
 MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const DatabaseConnection::ParameterMap& parameters)
-    : parameters_(parameters), ip_reservations_unique_(true) {
+    : parameters_(parameters), ip_reservations_unique_(true), unusable_(false) {
 
     // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
@@ -2861,7 +2869,7 @@ MySqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         std::list<std::string> host_db_access_list = cfg_db->getHostDbAccessStringList();
         for (std::string& hds : host_db_access_list) {
             auto parameters = DatabaseConnection::parse(hds);
-            if (HostMgr::delBackend("mysql", hds)) {
+            if (HostMgr::delBackend("mysql", hds, true)) {
                 HostMgr::addBackend(hds);
             }
         }
@@ -3927,6 +3935,10 @@ MySqlHostDataSource::setIPReservationsUnique(const bool unique) {
     return (true);
 }
 
+bool
+MySqlHostDataSource::isUnusable() {
+    return (impl_->unusable_);
+}
 
 }  // namespace dhcp
 }  // namespace isc

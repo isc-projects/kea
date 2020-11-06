@@ -514,6 +514,13 @@ public:
     /// the addresses must be unique and when they may be non-unique.
     virtual bool setIPReservationsUnique(const bool unique);
 
+    /// @brief Flag which indicates if the host manager has at least one
+    /// unusable connection.
+    ///
+    /// @return true if there is at least one unusable connection, false
+    /// otherwise
+    virtual bool isUnusable();
+
     /// @brief Context RAII Allocator.
     class PgSqlHostContextAlloc {
     public:
@@ -524,7 +531,7 @@ public:
         /// or creates a new one.
         ///
         /// @param mgr A parent instance
-        PgSqlHostContextAlloc(const PgSqlHostDataSourceImpl& mgr);
+        PgSqlHostContextAlloc(PgSqlHostDataSourceImpl& mgr);
 
         /// @brief Destructor
         ///
@@ -536,7 +543,7 @@ public:
 
     private:
         /// @brief The manager
-        const PgSqlHostDataSourceImpl& mgr_;
+        PgSqlHostDataSourceImpl& mgr_;
     };
 
 private:

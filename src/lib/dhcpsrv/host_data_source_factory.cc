@@ -103,12 +103,16 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
 bool
 HostDataSourceFactory::del(HostDataSourceList& sources,
                            const string& db_type,
-                           const string& dbaccess) {
+                           const string& dbaccess,
+                           bool if_unusable) {
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
     bool result = false;
     for (auto it = sources.begin(); it != sources.end(); ++it) {
         if ((*it)->getType() != db_type || (*it)->getParameters() != parameters) {
+            continue;
+        }
+        if (if_unusable && (!(*it)->isUnusable())) {
             continue;
         }
         LOG_DEBUG(hosts_logger, DHCPSRV_DBG_TRACE, HOSTS_CFG_CLOSE_HOST_DATA_SOURCE)

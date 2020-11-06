@@ -291,6 +291,13 @@ public:
         }
     }
 
+    /// @brief Flag which indicates if connection is unusable.
+    ///
+    /// @return true if the connection is unusable, false otherwise
+    bool isUnusable() {
+        return (unusable_);
+    }
+
 protected:
     /// @brief Sets the unusable flag to true.
     void markUnusable() { unusable_ = true; }
