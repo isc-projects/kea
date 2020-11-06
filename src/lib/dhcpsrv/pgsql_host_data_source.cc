@@ -2230,7 +2230,7 @@ PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::Param
 
     auto db_reconnect_ctl = pool_->pool_[0]->conn_.reconnectCtl();
 
-    std::string manager = "PgSqlLeaseMgr[";
+    std::string manager = "PgSqlHostMgr[";
     manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
     std::string timer_name = manager + "]DbReconnectTimer";
 

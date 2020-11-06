@@ -17,8 +17,8 @@
 #include <dhcpsrv/host_data_source_factory.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/testutils/pgsql_schema.h>
-#include <util/multi_threading_mgr.h>
 #include <testutils/multi_threading_utils.h>
+#include <util/multi_threading_mgr.h>
 
 #include <gtest/gtest.h>
 
@@ -225,6 +225,9 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
 
     // Check for missing parameters
     EXPECT_THROW(HostMgr::addBackend(connectionString(
@@ -310,6 +313,9 @@ TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
 
     // Check for missing parameters
     EXPECT_THROW(HostMgr::addBackend(connectionString(

@@ -1375,7 +1375,10 @@ TEST_F(HostMgrTest, addNoDataSource) {
 
 class HostMgrDbLostCallbackTest : public ::testing::Test {
 public:
-    HostMgrDbLostCallbackTest() : callback_called_(false) {};
+    HostMgrDbLostCallbackTest()
+        : callback_called_(false),
+          io_service_(boost::make_shared<isc::asiolink::IOService>()) {
+    }
 
     /// @brief Prepares the class for a test.
     ///
@@ -1383,6 +1386,7 @@ public:
     /// appropriate schema and create a basic host manager to
     /// wipe out any prior instance
     virtual void SetUp() {
+        HostMgr::setIOService(io_service_);
         DatabaseConnection::db_lost_callback_ = 0;
         // Ensure we have the proper schema with no transient data.
         createSchema();
@@ -1395,6 +1399,7 @@ public:
     /// Invoked by gtest upon test exit, we destroy the schema
     /// we created.
     virtual void TearDown() {
+        HostMgr::setIOService(isc::asiolink::IOServicePtr());
         DatabaseConnection::db_lost_callback_ = 0;
         // If data wipe enabled, delete transient data otherwise destroy the schema
         destroySchema();
@@ -1431,6 +1436,9 @@ public:
 
     /// @brief Flag used to detect calls to db_lost_callback function
     bool callback_called_;
+
+    /// The IOService object, used for all ASIO operations.
+    isc::asiolink::IOServicePtr io_service_;
 };
 
 #if defined(HAVE_MYSQL) || defined(HAVE_PGSQL)
@@ -1470,6 +1478,8 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
     // A query should fail with DbConnectionUnusable.
     ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
                  DbConnectionUnusable);
+
+    io_service_->run_one();
 
     // Our lost connectivity callback should have been invoked.
     EXPECT_TRUE(callback_called_);

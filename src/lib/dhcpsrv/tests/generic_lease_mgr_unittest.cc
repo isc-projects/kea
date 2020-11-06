@@ -3278,6 +3278,8 @@ LeaseMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     ASSERT_THROW(LeaseMgrFactory::create(invalidConnectString()),
                  DbOpenError);
 
+    io_service_->run_one();
+
     EXPECT_FALSE(callback_called_);
 }
 
@@ -3317,6 +3319,8 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
     // A query should fail with DbConnectionUnusable.
     ASSERT_THROW(lease = lm.getLease4(IOAddress("192.0.1.0")),
                  DbConnectionUnusable);
+
+    io_service_->run_one();
 
     // Our lost connectivity callback should have been invoked.
     EXPECT_TRUE(callback_called_);

@@ -7,8 +7,12 @@
 #ifndef GENERIC_LEASE_MGR_UNITTEST_H
 #define GENERIC_LEASE_MGR_UNITTEST_H
 
+#include <asiolink/io_service.h>
 #include <dhcpsrv/lease_mgr.h>
+
 #include <gtest/gtest.h>
+
+#include <boost/make_shared.hpp>
 #include <vector>
 #include <set>
 
@@ -521,12 +525,16 @@ public:
 
 class LeaseMgrDbLostCallbackTest : public ::testing::Test {
 public:
-    LeaseMgrDbLostCallbackTest() {
+    LeaseMgrDbLostCallbackTest()
+        : callback_called_(false),
+          io_service_(boost::make_shared<isc::asiolink::IOService>()) {
         db::DatabaseConnection::db_lost_callback_ = 0;
+        LeaseMgr::setIOService(io_service_);
     }
 
     virtual ~LeaseMgrDbLostCallbackTest() {
         db::DatabaseConnection::db_lost_callback_ = 0;
+        LeaseMgr::setIOService(isc::asiolink::IOServicePtr());
     }
 
     /// @brief Prepares the class for a test.
@@ -582,6 +590,8 @@ public:
     /// @brief Flag used to detect calls to db_lost_callback function
     bool callback_called_;
 
+    /// The IOService object, used for all ASIO operations.
+    isc::asiolink::IOServicePtr io_service_;
 };
 
 }  // namespace test
