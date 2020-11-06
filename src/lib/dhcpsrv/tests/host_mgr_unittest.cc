@@ -1479,7 +1479,7 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
     ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
                  DbConnectionUnusable);
 
-    io_service_->run_one();
+    io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
     EXPECT_TRUE(callback_called_);
