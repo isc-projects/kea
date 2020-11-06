@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef ASIOLINK_IO_SERVICE_H
-#define ASIOLINK_IO_SERVICE_H 1
+#define ASIOLINK_IO_SERVICE_H
 
 #include <boost/version.hpp>
 #include <boost/shared_ptr.hpp>

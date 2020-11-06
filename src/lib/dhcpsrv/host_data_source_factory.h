@@ -67,13 +67,28 @@ public:
 
     /// @brief Delete a host data source.
     ///
-    /// Delete the first instance of a host data source of the given type.
+    /// Delete all instances of a host data source of the given type.
     /// This should have the effect of closing the database connection.
     ///
     /// @param sources host data source list.
     /// @param db_type database backend type.
     /// @return true when found and removed, false when not found.
     static bool del(HostDataSourceList& sources, const std::string& db_type);
+
+    /// @brief Delete a host data source.
+    ///
+    /// Delete instance of a host data source which matches specific parameters.
+    /// This should have the effect of closing the database connection.
+    ///
+    /// @param sources host data source list.
+    /// @param db_type database backend type.
+    /// @param dbaccess Database access parameters.  These are in the form of
+    ///        "keyword=value" pairs, separated by spaces. They are backend-
+    ///        -end specific, although must include the "type" keyword which
+    ///        gives the backend in use.
+    /// @return true when found and removed, false when not found.
+    static bool del(HostDataSourceList& sources, const std::string& db_type,
+                    const std::string& dbaccess);
 
     /// @brief Type of host data source factory
     ///

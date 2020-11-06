@@ -29,6 +29,7 @@ namespace isc {
 namespace dhcp {
 
 using namespace isc::asiolink;
+using namespace isc::db;
 
 IOServicePtr HostMgr::io_service_ = IOServicePtr();
 
@@ -55,6 +56,11 @@ HostMgr::delBackend(const std::string& db_type) {
         getHostMgrPtr()->cache_ptr_.reset();
     }
     return (HostDataSourceFactory::del(getHostMgrPtr()->alternate_sources_, db_type));
+}
+
+bool
+HostMgr::delBackend(const std::string& db_type, const std::string& access) {
+    return (HostDataSourceFactory::del(getHostMgrPtr()->alternate_sources_, db_type, access));
 }
 
 void

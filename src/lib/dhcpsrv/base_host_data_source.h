@@ -8,6 +8,7 @@
 #define BASE_HOST_DATA_SOURCE_H
 
 #include <asiolink/io_address.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/host.h>
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
@@ -457,6 +458,15 @@ public:
     ///
     /// @return Type of the backend.
     virtual std::string getType() const = 0;
+
+    /// @brief Return backend parameters
+    ///
+    /// Returns the backend parameters
+    ///
+    /// @return Parameters of the backend.
+    virtual isc::db::DatabaseConnection::ParameterMap getParameters() const {
+        return (isc::db::DatabaseConnection::ParameterMap());
+    };
 
     /// @brief Commit Transactions
     ///

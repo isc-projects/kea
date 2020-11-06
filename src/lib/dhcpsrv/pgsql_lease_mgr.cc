@@ -1170,7 +1170,7 @@ bool PgSqlLeaseStatsQuery::negative_count_ = false;
 
 // PgSqlLeaseContext Constructor
 
-PgSqlLeaseContext::PgSqlLeaseContext(const PgSqlConnection::ParameterMap& parameters,
+PgSqlLeaseContext::PgSqlLeaseContext(const DatabaseConnection::ParameterMap& parameters,
                                      const isc::asiolink::IOServicePtr& io_service,
                                      DbCallback callback)
     : conn_(parameters, io_service, callback) {
@@ -1214,7 +1214,7 @@ PgSqlLeaseMgr::PgSqlLeaseContextAlloc::~PgSqlLeaseContextAlloc() {
 
 // PgSqlLeaseMgr Constructor and Destructor
 
-PgSqlLeaseMgr::PgSqlLeaseMgr(const PgSqlConnection::ParameterMap& parameters)
+PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : parameters_(parameters) {
 
     // Validate schema version first.

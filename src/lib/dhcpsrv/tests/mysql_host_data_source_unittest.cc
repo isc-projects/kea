@@ -118,7 +118,7 @@ public:
     int countRowsInTable(const std::string& table) {
         string query = "SELECT * FROM " + table;
 
-        MySqlConnection::ParameterMap params;
+        DatabaseConnection::ParameterMap params;
         params["name"] = "keatest";
         params["user"] = "keatest";
         params["password"] = "keatest";
@@ -1227,7 +1227,7 @@ TEST_F(MySqlHostDataSourceTest, testAddRollback) {
     // when inserting reservations or options. The simplest way to
     // achieve that is to simply drop one of the tables. To do so, we
     // connect to the database and issue a DROP query.
-    MySqlConnection::ParameterMap params;
+    DatabaseConnection::ParameterMap params;
     params["name"] = "keatest";
     params["user"] = "keatest";
     params["password"] = "keatest";
@@ -1277,7 +1277,7 @@ TEST_F(MySqlHostDataSourceTest, testAddRollbackMultiThreading) {
     // when inserting reservations or options. The simplest way to
     // achieve that is to simply drop one of the tables. To do so, we
     // connect to the database and issue a DROP query.
-    MySqlConnection::ParameterMap params;
+    DatabaseConnection::ParameterMap params;
     params["name"] = "keatest";
     params["user"] = "keatest";
     params["password"] = "keatest";

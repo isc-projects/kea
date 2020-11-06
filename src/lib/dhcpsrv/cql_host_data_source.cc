@@ -2052,7 +2052,7 @@ public:
     /// This constructor opens database connection and initializes
     /// prepared statements used in the queries.
     /// @param parameters parameters passed to the CQL connection.
-    explicit CqlHostDataSourceImpl(const CqlConnection::ParameterMap& parameters);
+    explicit CqlHostDataSourceImpl(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor.
     virtual ~CqlHostDataSourceImpl();
@@ -2509,7 +2509,7 @@ operator==(const HostKey& key1, const HostKey& key2) {
             std::get<IPv4_RESERVATION>(key1) == std::get<IPv4_RESERVATION>(key2));
 }
 
-CqlHostDataSourceImpl::CqlHostDataSourceImpl(const CqlConnection::ParameterMap& parameters)
+CqlHostDataSourceImpl::CqlHostDataSourceImpl(const DatabaseConnection::ParameterMap& parameters)
     : parameters_(parameters), dbconn_(parameters) {
     // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(CQL_SCHEMA_VERSION_MAJOR,
@@ -3447,7 +3447,7 @@ CqlHostDataSourceImpl::mergeHosts(const ConstHostPtr& source_host,
     source_host->getCfgOption6()->mergeTo(*target_host->getCfgOption6());
 }
 
-CqlHostDataSource::CqlHostDataSource(const CqlConnection::ParameterMap& parameters)
+CqlHostDataSource::CqlHostDataSource(const DatabaseConnection::ParameterMap& parameters)
     : impl_(new CqlHostDataSourceImpl(parameters)) {
 }
 

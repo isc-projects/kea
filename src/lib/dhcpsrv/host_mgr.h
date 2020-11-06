@@ -80,6 +80,14 @@ public:
     /// @return true when found and removed, false when not found.
     static bool delBackend(const std::string& db_type);
 
+    /// @brief Delete an alternate host backend (aka host data source).
+    ///
+    /// @param db_type database backend type.
+    /// @param access Host backend access parameters for the alternate
+    /// host backend. It holds "keyword=value" pairs, separated by spaces.
+    /// @return true when found and removed, false when not found.
+    static bool delBackend(const std::string& db_type, const std::string& access);
+
     /// @brief Delete all alternate backends.
     static void delAllBackends();
 

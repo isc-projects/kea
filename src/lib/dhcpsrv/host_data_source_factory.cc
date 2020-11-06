@@ -87,6 +87,7 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
 bool
 HostDataSourceFactory::del(HostDataSourceList& sources,
                            const string& db_type) {
+    bool result = false;
     for (auto it = sources.begin(); it != sources.end(); ++it) {
         if ((*it)->getType() != db_type) {
             continue;
@@ -94,9 +95,28 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
         LOG_DEBUG(hosts_logger, DHCPSRV_DBG_TRACE, HOSTS_CFG_CLOSE_HOST_DATA_SOURCE)
             .arg(db_type);
         sources.erase(it);
-        return (true);
+        result = true;
     }
-    return (false);
+    return (result);
+}
+
+bool
+HostDataSourceFactory::del(HostDataSourceList& sources,
+                           const string& db_type,
+                           const string& dbaccess) {
+    DatabaseConnection::ParameterMap parameters =
+            DatabaseConnection::parse(dbaccess);
+    bool result = false;
+    for (auto it = sources.begin(); it != sources.end(); ++it) {
+        if ((*it)->getType() != db_type || (*it)->getParameters() != parameters) {
+            continue;
+        }
+        LOG_DEBUG(hosts_logger, DHCPSRV_DBG_TRACE, HOSTS_CFG_CLOSE_HOST_DATA_SOURCE)
+            .arg((*it)->getType());
+        sources.erase(it);
+        result = true;
+    }
+    return (result);
 }
 
 bool

@@ -130,7 +130,7 @@ public:
     /// the table (if present) and then recreates it.
     PgSqlBasicsTest() : expectedColNames_(NUM_BASIC_COLS) {
         // Create database connection parameter list
-        PgSqlConnection::ParameterMap params;
+        DatabaseConnection::ParameterMap params;
         params["name"] = "keatest";
         params["user"] = "keatest";
         params["password"] = "keatest";

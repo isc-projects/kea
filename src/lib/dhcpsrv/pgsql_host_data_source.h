@@ -7,6 +7,7 @@
 #ifndef PGSQL_HOST_DATA_SOURCE_H
 #define PGSQL_HOST_DATA_SOURCE_H
 
+#include <database/database_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
@@ -72,6 +73,13 @@ public:
     /// Frees database resources and closes the database connection through
     /// the destruction of member impl_.
     virtual ~PgSqlHostDataSource();
+
+    /// @brief Return backend parameters
+    ///
+    /// Returns the backend parameters
+    ///
+    /// @return Parameters of the backend.
+    virtual isc::db::DatabaseConnection::ParameterMap getParameters() const;
 
     /// @brief Adds a new host to the collection.
     ///

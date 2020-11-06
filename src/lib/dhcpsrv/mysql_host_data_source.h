@@ -7,6 +7,7 @@
 #ifndef MYSQL_HOST_DATA_SOURCE_H
 #define MYSQL_HOST_DATA_SOURCE_H
 
+#include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <mysql/mysql_connection.h>
@@ -68,6 +69,13 @@ public:
     ///
     /// Releases prepared MySQL statements used by the backend.
     virtual ~MySqlHostDataSource();
+
+    /// @brief Return backend parameters
+    ///
+    /// Returns the backend parameters
+    ///
+    /// @return Parameters of the backend.
+    virtual isc::db::DatabaseConnection::ParameterMap getParameters() const;
 
     /// @brief Adds a new host to the collection.
     ///

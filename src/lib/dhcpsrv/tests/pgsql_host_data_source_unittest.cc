@@ -118,7 +118,7 @@ public:
     int countRowsInTable(const std::string& table) {
         string query = "SELECT * FROM " + table;
 
-        PgSqlConnection::ParameterMap params;
+        DatabaseConnection::ParameterMap params;
         params["name"] = "keatest";
         params["user"] = "keatest";
         params["password"] = "keatest";
@@ -342,7 +342,7 @@ TEST(PgSqlHostDataSource, NoCallbackOnOpenFail) {
     createPgSQLSchema();
 
     callback_called = false;
-    DatabaseConnection::db_lost_callback = db_lost_callback;
+    DatabaseConnection::db_lost_callback_ = db_lost_callback;
     HostMgr::create();
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
@@ -369,7 +369,7 @@ TEST(PgSqlHostDataSource, NoCallbackOnOpenFailMultiThreading) {
     createPgSQLSchema();
 
     callback_called = false;
-    DatabaseConnection::db_lost_callback = db_lost_callback;
+    DatabaseConnection::db_lost_callback_ = db_lost_callback;
     HostMgr::create();
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
@@ -1236,7 +1236,7 @@ TEST_F(PgSqlHostDataSourceTest, testAddRollback) {
     // when inserting reservations or options. The simplest way to
     // achieve that is to simply drop one of the tables. To do so, we
     // connect to the database and issue a DROP query.
-    PgSqlConnection::ParameterMap params;
+    DatabaseConnection::ParameterMap params;
     params["name"] = "keatest";
     params["user"] = "keatest";
     params["password"] = "keatest";
@@ -1286,7 +1286,7 @@ TEST_F(PgSqlHostDataSourceTest, testAddRollbackMultiThreading) {
     // when inserting reservations or options. The simplest way to
     // achieve that is to simply drop one of the tables. To do so, we
     // connect to the database and issue a DROP query.
-    PgSqlConnection::ParameterMap params;
+    DatabaseConnection::ParameterMap params;
     params["name"] = "keatest";
     params["user"] = "keatest";
     params["password"] = "keatest";

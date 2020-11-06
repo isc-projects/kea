@@ -6,14 +6,19 @@
 
 #include <config.h>
 
+#include <asiolink/io_service.h>
 #include <database/db_exceptions.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/mysql_host_data_source.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <util/buffer.h>
 #include <util/multi_threading_mgr.h>
 #include <util/optional.h>
@@ -1946,7 +1951,9 @@ public:
     /// @brief Constructor
     ///
     /// @param parameters See MySqlHostMgr constructor.
-    MySqlHostContext(const DatabaseConnection::ParameterMap& parameters);
+    MySqlHostContext(const DatabaseConnection::ParameterMap& parameters,
+                     const isc::asiolink::IOServicePtr& io_service,
+                     db::DbCallback callback);
 
     /// The exchange objects are used for transfer of data to/from the database.
     /// They are pointed-to objects as the contents may change in "const" calls,
@@ -2054,10 +2061,31 @@ public:
     ///
     /// This constructor opens database connection and initializes prepared
     /// statements used in the queries.
-    MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters);
+    MySqlHostDataSourceImpl(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor.
     ~MySqlHostDataSourceImpl();
+
+    /// @brief Attempts to reconnect the server to the host DB backend manager.
+    ///
+    /// This is a self-rescheduling function that attempts to reconnect to the
+    /// server's host DB backends after connectivity to one or more have been
+    /// lost. Upon entry it will attempt to reconnect via
+    /// @ref HostDataSourceFactory::add.
+    /// If this is successful, DHCP servicing is re-enabled and server returns
+    /// to normal operation.
+    ///
+    /// If reconnection fails and the maximum number of retries has not been
+    /// exhausted, it will schedule a call to itself to occur at the
+    /// configured retry interval. DHCP service remains disabled.
+    ///
+    /// If the maximum number of retries has been exhausted an error is logged
+    /// and the server shuts down.
+    ///
+    /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
+    /// configured reconnect parameters.
+    /// @return true if connection has been recovered, false otherwise.
+    static bool dbReconnect(ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Create a new context.
     ///
@@ -2690,8 +2718,10 @@ TaggedStatementArray tagged_statements = { {
 
 // MySqlHostContext Constructor
 
-MySqlHostContext::MySqlHostContext(const DatabaseConnection::ParameterMap& parameters)
-    : conn_(parameters), is_readonly_(true) {
+MySqlHostContext::MySqlHostContext(const DatabaseConnection::ParameterMap& parameters,
+                                   const isc::asiolink::IOServicePtr& io_service,
+                                   db::DbCallback callback)
+    : conn_(parameters, io_service, callback), is_readonly_(true) {
 }
 
 // MySqlHostContextAlloc Constructor and Destructor
@@ -2730,7 +2760,7 @@ MySqlHostDataSource::MySqlHostContextAlloc::~MySqlHostContextAlloc() {
     // If running in single-threaded mode, there's nothing to do here.
 }
 
-MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
+MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const DatabaseConnection::ParameterMap& parameters)
     : parameters_(parameters), ip_reservations_unique_(true) {
 
     // Validate the schema version first.
@@ -2748,13 +2778,26 @@ MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const MySqlConnection::Paramete
     // Create an initial context.
     pool_.reset(new MySqlHostContextPool());
     pool_->pool_.push_back(createContext());
+
+    auto db_reconnect_ctl = pool_->pool_[0]->conn_.reconnectCtl();
+
+    std::string manager = "MySqlLeaseMgr[";
+    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    std::string timer_name = manager + "]DbReconnectTimer";
+
+    TimerMgr::instance()->registerTimer(timer_name,
+        std::bind(&MySqlHostDataSourceImpl::dbReconnect, db_reconnect_ctl),
+                  db_reconnect_ctl->retryInterval(),
+                  asiolink::IntervalTimer::ONE_SHOT);
 }
 
 // Create context.
 
 MySqlHostContextPtr
 MySqlHostDataSourceImpl::createContext() const {
-    MySqlHostContextPtr ctx(new MySqlHostContext(parameters_));
+    MySqlHostContextPtr ctx(new MySqlHostContext(parameters_,
+                            HostMgr::getIOService(),
+                            &MySqlHostDataSourceImpl::dbReconnect));
 
     // Open the database.
     ctx->conn_.openDatabase();
@@ -2787,10 +2830,74 @@ MySqlHostDataSourceImpl::createContext() const {
     ctx->host_ipv6_reservation_exchange_.reset(new MySqlIPv6ReservationExchange());
     ctx->host_option_exchange_.reset(new MySqlOptionExchange());
 
+    std::string manager = "MySqlHostMgr[";
+    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    std::string timer_name = manager + "]DbReconnectTimer";
+
+    ctx->conn_.makeReconnectCtl(timer_name);
+
     return (ctx);
 }
 
 MySqlHostDataSourceImpl::~MySqlHostDataSourceImpl() {
+    std::string manager = "MySqlHostMgr[";
+    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    std::string timer_name = manager + "]DbReconnectTimer";
+
+    TimerMgr::instance()->unregisterTimer(timer_name);
+}
+
+bool
+MySqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
+    MultiThreadingCriticalSection cs;
+
+    DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl);
+
+    bool reopened = false;
+
+    // At least one connection was lost.
+    try {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
+        std::list<std::string> host_db_access_list = cfg_db->getHostDbAccessStringList();
+        for (std::string& hds : host_db_access_list) {
+            auto parameters = DatabaseConnection::parse(hds);
+            if (HostMgr::delBackend("mysql", hds)) {
+                HostMgr::addBackend(hds);
+            }
+        }
+
+        reopened = true;
+    } catch (const std::exception& ex) {
+        //LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_ATTEMPT_FAILED)
+        //        .arg(ex.what());
+    }
+
+    if (reopened) {
+        // Cancel the timer.
+        const std::string& timer_name = db_reconnect_ctl->timerName();
+        TimerMgr::instance()->cancel(timer_name);
+
+        DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl);
+    } else {
+        if (!db_reconnect_ctl->checkRetries()) {
+            // We're out of retries, log it and initiate shutdown.
+            //LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_RETRIES_EXHAUSTED)
+            //        .arg(db_reconnect_ctl->maxRetries());
+
+            DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
+
+            return (false);
+        }
+
+        //LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_ATTEMPT_SCHEDULE)
+        //        .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
+        //        .arg(db_reconnect_ctl->maxRetries())
+        //        .arg(db_reconnect_ctl->retryInterval());
+
+        TimerMgr::instance()->setup(db_reconnect_ctl->timerName());
+    }
+
+    return (true);
 }
 
 std::pair<uint32_t, uint32_t>
@@ -3023,11 +3130,16 @@ MySqlHostDataSourceImpl::checkReadOnly(MySqlHostContextPtr& ctx) const {
     }
 }
 
-MySqlHostDataSource::MySqlHostDataSource(const MySqlConnection::ParameterMap& parameters)
+MySqlHostDataSource::MySqlHostDataSource(const DatabaseConnection::ParameterMap& parameters)
     : impl_(new MySqlHostDataSourceImpl(parameters)) {
 }
 
 MySqlHostDataSource::~MySqlHostDataSource() {
+}
+
+DatabaseConnection::ParameterMap
+MySqlHostDataSource::getParameters() const {
+    return impl_->parameters_;
 }
 
 void

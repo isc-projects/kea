@@ -1736,7 +1736,7 @@ bool MySqlLeaseStatsQuery::negative_count_ = false;
 
 // MySqlLeaseContext Constructor
 
-MySqlLeaseContext::MySqlLeaseContext(const MySqlConnection::ParameterMap& parameters,
+MySqlLeaseContext::MySqlLeaseContext(const DatabaseConnection::ParameterMap& parameters,
                                      const isc::asiolink::IOServicePtr& io_service,
                                      DbCallback callback)
     : conn_(parameters, io_service, callback) {
@@ -1780,7 +1780,7 @@ MySqlLeaseMgr::MySqlLeaseContextAlloc::~MySqlLeaseContextAlloc() {
 
 // MySqlLeaseMgr Constructor and Destructor
 
-MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
+MySqlLeaseMgr::MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : parameters_(parameters) {
 
     // Validate schema version first.
