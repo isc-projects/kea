@@ -660,7 +660,7 @@ protected:
     }
 
     /// @brief Returns pointer to the IO service.
-    isc::asiolink::IOServicePtr& getIOService() {
+    static isc::asiolink::IOServicePtr& getIOService() {
         return (io_service_);
     }
 
