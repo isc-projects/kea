@@ -814,7 +814,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=4");
-        cfg_db->createManagers(server_->io_service_);
+        cfg_db->createManagers(server_->getIOService());
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
@@ -967,8 +967,7 @@ ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
 
 ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_PORT*/,
                                          uint16_t client_port /*= 0*/)
-    : Dhcpv4Srv(server_port, client_port), io_service_(boost::make_shared<IOService>()),
-      timer_mgr_(TimerMgr::instance()) {
+    : Dhcpv4Srv(server_port, client_port), timer_mgr_(TimerMgr::instance()) {
     if (getInstance()) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv4Srv instance already.");
@@ -1062,7 +1061,7 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
 
 void ControlledDhcpv4Srv::shutdownServer(int exit_value) {
     setExitValue(exit_value);
-    io_service_->stop();       // Stop ASIO transmissions
+    getIOService()->stop();   // Stop ASIO transmissions
     shutdown();               // Initiate DHCPv4 shutdown procedure.
 }
 
@@ -1115,14 +1114,6 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
 
     server_ = NULL; // forget this instance. There should be no callback anymore
                     // at this stage anyway.
-}
-
-void ControlledDhcpv4Srv::sessionReader(void) {
-    // Process one asio event. If there are more events, iface_mgr will call
-    // this callback more than once.
-    if (getInstance()) {
-        getInstance()->io_service_->run_one();
-    }
 }
 
 void

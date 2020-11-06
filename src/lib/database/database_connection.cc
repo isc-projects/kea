@@ -138,7 +138,7 @@ DatabaseConnection::makeReconnectCtl(const std::string& timer_name) {
         // Wasn't specified so we'll use default of 0;
     }
 
-    reconnect_ctl_ = boost::make_shared<ReconnectCtl>(timer_name, type, retries,
+    reconnect_ctl_ = boost::make_shared<ReconnectCtl>(type, timer_name, retries,
                                                       interval);
 }
 

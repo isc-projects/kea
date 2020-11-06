@@ -421,7 +421,7 @@ public:
     ///
     /// @note The recover function must be run on the IO Service thread.
     void startRecoverDbConnection() {
-        if (callback_) {
+        if (callback_ && io_service_) {
             io_service_->post(std::bind(callback_, reconnectCtl()));
         }
     }

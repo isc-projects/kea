@@ -444,9 +444,6 @@ private:
     /// the server. Some of them need to be static methods.
     static ControlledDhcpv4Srv* server_;
 
-    /// @brief IOService object, used for all ASIO operations.
-    isc::asiolink::IOServicePtr io_service_;
-
     /// @brief Instance of the @c TimerMgr.
     ///
     /// Shared pointer to the instance of timer @c TimerMgr is held here to

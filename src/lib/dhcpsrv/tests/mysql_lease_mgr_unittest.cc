@@ -964,7 +964,7 @@ public:
 
     virtual std::string invalidConnectString() {
        return (connectionString(MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
-                        VALID_USER, VALID_PASSWORD));
+                                VALID_USER, VALID_PASSWORD));
     }
 };
 

@@ -230,7 +230,6 @@ TEST_F(DatabaseConnectionCallbackTest, dbRecoveredCallback) {
     ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
     ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
     EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
-    ASSERT_TRUE(db_reconnect_ctl_->checkRetries());
 
     /// Verify that checkRetries() correctly decrements
     /// down to zero, and that retriesLeft() returns
@@ -294,7 +293,6 @@ TEST_F(DatabaseConnectionCallbackTest, dbFailedCallback) {
     ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
     ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
     EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
-    ASSERT_TRUE(db_reconnect_ctl_->checkRetries());
 
     /// Verify that checkRetries() correctly decrements
     /// down to zero, and that retriesLeft() returns

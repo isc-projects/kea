@@ -817,7 +817,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=6");
-        cfg_db->createManagers(server_->io_service_);
+        cfg_db->createManagers(server_->getIOService());
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
@@ -986,8 +986,7 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
 
 ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
                                          uint16_t client_port)
-    : Dhcpv6Srv(server_port, client_port), io_service_(boost::make_shared<IOService>()),
-      timer_mgr_(TimerMgr::instance()) {
+    : Dhcpv6Srv(server_port, client_port), timer_mgr_(TimerMgr::instance()) {
     if (getInstance()) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv6Srv instance already.");
@@ -1081,8 +1080,8 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
 
 void ControlledDhcpv6Srv::shutdownServer(int exit_value) {
     setExitValue(exit_value);
-    io_service_->stop();    // Stop ASIO transmissions
-    shutdown();            // Initiate DHCPv6 shutdown procedure.
+    getIOService()->stop();   // Stop ASIO transmissions
+    shutdown();               // Initiate DHCPv6 shutdown procedure.
 }
 
 ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
@@ -1134,14 +1133,6 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
 
     server_ = NULL; // forget this instance. There should be no callback anymore
                     // at this stage anyway.
-}
-
-void ControlledDhcpv6Srv::sessionReader(void) {
-    // Process one asio event. If there are more events, iface_mgr will call
-    // this callback more than once.
-    if (getInstance()) {
-        getInstance()->io_service_->run_one();
-    }
 }
 
 void
