@@ -87,7 +87,6 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
 bool
 HostDataSourceFactory::del(HostDataSourceList& sources,
                            const string& db_type) {
-    bool result = false;
     for (auto it = sources.begin(); it != sources.end(); ++it) {
         if ((*it)->getType() != db_type) {
             continue;
@@ -95,9 +94,9 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
         LOG_DEBUG(hosts_logger, DHCPSRV_DBG_TRACE, HOSTS_CFG_CLOSE_HOST_DATA_SOURCE)
             .arg(db_type);
         sources.erase(it);
-        result = true;
+        return (true);
     }
-    return (result);
+    return (false);
 }
 
 bool
@@ -118,9 +117,9 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
         LOG_DEBUG(hosts_logger, DHCPSRV_DBG_TRACE, HOSTS_CFG_CLOSE_HOST_DATA_SOURCE)
             .arg((*it)->getType());
         sources.erase(it);
-        result = true;
+        return (true);
     }
-    return (result);
+    return (false);
 }
 
 bool

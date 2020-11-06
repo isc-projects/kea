@@ -67,7 +67,7 @@ public:
 
     /// @brief Delete a host data source.
     ///
-    /// Delete all instances of a host data source of the given type.
+    /// Delete the first instance of a host data source of the given type.
     /// This should have the effect of closing the database connection.
     ///
     /// @param sources host data source list.
@@ -77,7 +77,8 @@ public:
 
     /// @brief Delete a host data source.
     ///
-    /// Delete instance of a host data source which matches specific parameters.
+    /// Delete the first instance of a host data source which matches specific
+    /// parameters.
     /// This should have the effect of closing the database connection.
     ///
     /// @param sources host data source list.
