@@ -10,6 +10,7 @@
 #include <agent/ca_command_mgr.h>
 #include <agent/ca_response_creator.h>
 #include <cc/command_interpreter.h>
+#include <cryptolink/crypto_rng.h>
 #include <hooks/hooks_manager.h>
 #include <http/basic_auth_config.h>
 #include <http/post_request.h>
@@ -326,8 +327,14 @@ TEST_F(CtrlAgentResponseCreatorTest, hookNoAuth) {
     setBasicContext(request_);
 
     // Body: "list-commands" is natively supported by the command manager.
-    request_->context()->body_ = "{ \"command\": \"list-commands\","
-        " \"service\": [ ] }";
+    auto r32 = isc::cryptolink::random(4);
+    ASSERT_EQ(4, r32.size());
+    int extra = r32[0];
+    extra = (extra << 8) | r32[1];
+    extra = (extra << 8) | r32[2];
+    extra = (extra << 8) | r32[3];
+    request_->context()->body_ = "{ \"command\": \"list-commands\", ";
+    request_->context()->body_ += "\"extra\": " + std::to_string(extra) + " }";
 
     // All requests must be finalized before they can be processed.
     ASSERT_NO_THROW(request_->finalize());
@@ -352,7 +359,7 @@ TEST_F(CtrlAgentResponseCreatorTest, hookNoAuth) {
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
     ASSERT_TRUE(response);
 
-    // Request should have no service.
+    // Request should have no extra.
     EXPECT_EQ("{ \"command\": \"list-commands\" }",
               request_->context()->body_);
 
@@ -374,7 +381,18 @@ TEST_F(CtrlAgentResponseCreatorTest, hookBasicAuth) {
     setBasicContext(request_);
 
     // Body: "list-commands" is natively supported by the command manager.
-    request_->context()->body_ = "{ \"command\": \"list-commands\" }";
+    auto r32 = isc::cryptolink::random(4);
+    ASSERT_EQ(4, r32.size());
+    int extra = r32[0];
+    extra = (extra << 8) | r32[1];
+    extra = (extra << 8) | r32[2];
+    extra = (extra << 8) | r32[3];
+    if (extra == 0) {
+        extra = 1;
+    }
+    std::string extra_str = std::to_string(extra);
+    request_->context()->body_ = "{ \"command\": \"list-commands\", ";
+    request_->context()->body_ += "\"extra\": " + extra_str + " }";
 
     // Add basic HTTP authentication header.
     const BasicHttpAuth& basic_auth = BasicHttpAuth("foo", "bar");
@@ -405,6 +423,10 @@ TEST_F(CtrlAgentResponseCreatorTest, hookBasicAuth) {
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
     ASSERT_TRUE(response);
 
+    // Request should have no extra.
+    EXPECT_EQ("{ \"command\": \"list-commands\" }",
+              request_->context()->body_);
+
     // Response must be convertible to HttpResponseJsonPtr.
     HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
         HttpResponseJson>(response);
@@ -417,7 +439,8 @@ TEST_F(CtrlAgentResponseCreatorTest, hookBasicAuth) {
     EXPECT_TRUE(response_json->toString().find("\"result\": 0") !=
                 std::string::npos);
     // Response must contain JSON body with "comment": "got".
-    EXPECT_TRUE(response_json->toString().find("\"comment\": \"got\"") !=
+    std::string expected = "\"got\": " + extra_str + ", ";
+    EXPECT_TRUE(response_json->toString().find(expected) !=
                 std::string::npos);
 }
 

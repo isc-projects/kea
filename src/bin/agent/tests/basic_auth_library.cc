@@ -201,11 +201,17 @@ auth(CalloutHandle& handle) {
     }
 
     // Modify request.
+    int extra = 0;
+    ConstElementPtr extra_elem = command->get("extra");
     ElementPtr mutable_command = boost::const_pointer_cast<Element>(command);
-    if (command->contains("service")) {
-        mutable_command->remove("service");
+    if (extra_elem) {
+        if (extra_elem->getType() == Element::integer) {
+            extra = extra_elem->intValue();
+        }
+        mutable_command->remove("extra");
         request_json->setBodyAsJson(command);
     }
+    handle.setContext("extra", extra);
 
     // Perform authentication.
     response = impl->config_->checkAuth(*impl->creator_, request);
@@ -263,7 +269,15 @@ response(CalloutHandle& handle) {
         return (0);
     }
     ElementPtr mutable_answer = boost::const_pointer_cast<Element>(answer);
-    mutable_answer->set("comment", Element::create(string("got")));
+    try {
+        int extra = 0;
+        handle.getContext("extra", extra);
+        mutable_answer->set("got", Element::create(extra));
+    } catch (const NoSuchCalloutContext&) {
+        std::cerr << "can't find 'extra' context\n";
+    } catch (...) {
+        std::cerr << "getContext('extra') failed\n";
+    }
     response->setBodyAsJson(body);
 
     // Set parameters.
