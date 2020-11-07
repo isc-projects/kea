@@ -20,6 +20,7 @@
 #include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
@@ -1093,6 +1094,8 @@ void ControlledDhcpv6Srv::shutdownServer(int exit_value) {
 
 ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
     try {
+        LeaseMgrFactory::destroy();
+        HostMgr::create();
         cleanup();
 
         // The closure captures either a shared pointer (memory leak)

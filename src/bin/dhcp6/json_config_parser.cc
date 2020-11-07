@@ -20,6 +20,8 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/timer_mgr.h>
@@ -63,6 +65,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::hooks;
@@ -439,6 +442,18 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
     // Close DHCP sockets and remove any existing timers.
     if (!check_only) {
+        // If mysql or postgresql lease and host managers were configured, they
+        // need to be destroy before calling unregisterTimers as they are
+        // responsible for unregistering own connection timers. A memfile lease
+        // manager and an empty host manager will be created instead.
+        auto running_cfg = CfgMgr::instance().getCurrentCfg();
+        auto parameters = DatabaseConnection::parse(running_cfg->getCfgDbAccess()->getLeaseDbAccessString());
+        if (parameters["type"] == "mysql" || parameters["type"] == "postgresql") {
+            CfgDbAccess cfg_db;
+            cfg_db.setAppendedParameters("universe=6");
+            LeaseMgrFactory::create(cfg_db.getLeaseDbAccessString());
+        }
+        HostMgr::create();
         IfaceMgr::instance().closeSockets();
         TimerMgr::instance()->unregisterTimers();
         server.discardPackets();

@@ -21,6 +21,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
 #include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
@@ -1074,6 +1075,8 @@ void ControlledDhcpv4Srv::shutdownServer(int exit_value) {
 
 ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
     try {
+        LeaseMgrFactory::destroy();
+        HostMgr::create();
         cleanup();
 
         // The closure captures either a shared pointer (memory leak)

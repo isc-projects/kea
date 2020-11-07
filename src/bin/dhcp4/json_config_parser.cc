@@ -20,6 +20,8 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
@@ -337,6 +339,18 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
     // Close DHCP sockets and remove any existing timers.
     if (!check_only) {
+        // If mysql or postgresql lease and host managers were configured, they
+        // need to be destroy before calling unregisterTimers as they are
+        // responsible for unregistering own connection timers. A memfile lease
+        // manager and an empty host manager will be created instead.
+        auto running_cfg = CfgMgr::instance().getCurrentCfg();
+        auto parameters = DatabaseConnection::parse(running_cfg->getCfgDbAccess()->getLeaseDbAccessString());
+        if (parameters["type"] == "mysql" || parameters["type"] == "postgresql") {
+            CfgDbAccess cfg_db;
+            cfg_db.setAppendedParameters("universe=4");
+            LeaseMgrFactory::create(cfg_db.getLeaseDbAccessString());
+        }
+        HostMgr::create();
         IfaceMgr::instance().closeSockets();
         TimerMgr::instance()->unregisterTimers();
         server.discardPackets();
