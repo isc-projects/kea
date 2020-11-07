@@ -345,7 +345,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // manager and an empty host manager will be created instead.
         auto running_cfg = CfgMgr::instance().getCurrentCfg();
         auto parameters = DatabaseConnection::parse(running_cfg->getCfgDbAccess()->getLeaseDbAccessString());
-        if (parameters["type"] == "mysql" || parameters["type"] == "postgresql") {
+        if (parameters["type"] != "memfile") {
             CfgDbAccess cfg_db;
             cfg_db.setAppendedParameters("universe=4");
             LeaseMgrFactory::create(cfg_db.getLeaseDbAccessString());
