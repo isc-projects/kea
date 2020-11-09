@@ -75,11 +75,9 @@ public:
         // Wait for work.
         {
             unique_lock<mutex> work_lock(syncr.work_mtx);
-            // When this thread starts waiting, the main thread in resumed.
+            // When this thread starts waiting, the main thread is resumed.
             syncr.started_cv.notify_one();
-            while (!syncr.work) {
-                syncr.work_cv.wait(work_lock);
-            }
+            syncr.work_cv.wait(work_lock, [&](){ return syncr.work; });
         }
 
         {
@@ -95,9 +93,7 @@ public:
         }
 
         // Wait to terminate.
-        while (!syncr.terminate) {
-            syncr.terminate_cv.wait(terminate_lock);
-        }
+        syncr.terminate_cv.wait(terminate_lock, [&](){ return syncr.terminate; });
     }
 
     /// @brief Body of the writer.
@@ -117,11 +113,9 @@ public:
         // Wait for work.
         {
             unique_lock<mutex> work_lock(syncw.work_mtx);
-            // When this thread starts waiting, the main thread in resumed.
+            // When this thread starts waiting, the main thread is resumed.
             syncw.started_cv.notify_one();
-            while (!syncw.work) {
-                syncw.work_cv.wait(work_lock);
-            }
+            syncw.work_cv.wait(work_lock, [&](){ return syncw.work; });
         }
 
         {
@@ -137,9 +131,7 @@ public:
         }
 
         // Wait to terminate.
-        while (!syncw.terminate) {
-            syncw.terminate_cv.wait(terminate_lock);
-        }
+        syncw.terminate_cv.wait(terminate_lock, [&](){ return syncw.terminate; });
     }
 };
 
@@ -161,12 +153,10 @@ TEST_F(ReadWriteMutexTest, read) {
         unique_lock<mutex> started_lock(syncr_.started_mtx);
 
         // Create a work thread.
-        thread = boost::make_shared<std::thread>([this] () { reader(rw_mutex_, syncr_); });
+        thread = boost::make_shared<std::thread>([this](){ reader(rw_mutex_, syncr_); });
 
         // Wait work thread to start.
-        while (!syncr_.started) {
-            syncr_.started_cv.wait(started_lock);
-        }
+        syncr_.started_cv.wait(started_lock, [this](){ return syncr_.started; });
 
         unique_lock<mutex> done_lock(syncr_.done_mtx);
 
@@ -178,9 +168,7 @@ TEST_F(ReadWriteMutexTest, read) {
         syncr_.work_cv.notify_one();
 
         // Wait thread to hold the read lock.
-        while (!syncr_.done) {
-            syncr_.done_cv.wait(done_lock);
-        }
+        syncr_.done_cv.wait(done_lock, [this](){ return syncr_.done; });
     }
 
     // Signal the thread to terminate.
@@ -202,12 +190,10 @@ TEST_F(ReadWriteMutexTest, write) {
         unique_lock<mutex> started_lock(syncw_.started_mtx);
 
         // Create a work thread.
-        thread = boost::make_shared<std::thread>([this] () { writer(rw_mutex_, syncw_); });
+        thread = boost::make_shared<std::thread>([this](){ writer(rw_mutex_, syncw_); });
 
         // Wait work thread to start.
-        while (!syncw_.started) {
-            syncw_.started_cv.wait(started_lock);
-        }
+        syncw_.started_cv.wait(started_lock, [this](){ return syncw_.started; });
 
         unique_lock<mutex> done_lock(syncw_.done_mtx);
 
@@ -219,9 +205,7 @@ TEST_F(ReadWriteMutexTest, write) {
         syncw_.work_cv.notify_one();
 
         // Wait thread to hold the write lock.
-        while (!syncw_.done) {
-            syncw_.done_cv.wait(done_lock);
-        }
+        syncw_.done_cv.wait(done_lock, [this](){ return syncw_.done; });
     }
 
     // Signal the thread to terminate.
@@ -243,15 +227,13 @@ TEST_F(ReadWriteMutexTest, readRead) {
         unique_lock<mutex> started_lock(syncr_.started_mtx);
 
         // Create a work thread.
-        thread = boost::make_shared<std::thread>([this] () { reader(rw_mutex_, syncr_); });
+        thread = boost::make_shared<std::thread>([this](){ reader(rw_mutex_, syncr_); });
 
         // Enter a read lock guard.
         ReadLockGuard rwlock(rw_mutex_);
 
         // Wait work thread to start.
-        while (!syncr_.started) {
-            syncr_.started_cv.wait(started_lock);
-        }
+        syncr_.started_cv.wait(started_lock, [this](){ return syncr_.started; });
 
         unique_lock<mutex> done_lock(syncr_.done_mtx);
 
@@ -263,9 +245,7 @@ TEST_F(ReadWriteMutexTest, readRead) {
         syncr_.work_cv.notify_one();
 
         // Wait thread to hold the read lock.
-        while (!syncr_.done) {
-            syncr_.done_cv.wait(done_lock);
-        }
+        syncr_.done_cv.wait(done_lock, [this](){ return syncr_.done; });
     }
 
     // Signal the thread to terminate.
@@ -287,12 +267,10 @@ TEST_F(ReadWriteMutexTest, readWrite) {
         unique_lock<mutex> started_lock(syncw_.started_mtx);
 
         // Create a work thread.
-        thread = boost::make_shared<std::thread>([this] () { writer(rw_mutex_, syncw_); });
+        thread = boost::make_shared<std::thread>([this](){ writer(rw_mutex_, syncw_); });
 
         // Wait work thread to start.
-        while (!syncw_.started) {
-            syncw_.started_cv.wait(started_lock);
-        }
+        syncw_.started_cv.wait(started_lock, [this](){ return syncw_.started; });
 
         unique_lock<mutex> done_lock(syncw_.done_mtx);
 
@@ -309,25 +287,16 @@ TEST_F(ReadWriteMutexTest, readWrite) {
 
             // Verify the work thread is waiting for the write lock.
             cout << "pausing for one second" << std::endl;
-            bool timeout = false;
-            while (!timeout && !syncw_.done) {
-                auto one_sec = chrono::seconds(1);
-                auto status = syncw_.done_cv.wait_for(done_lock, one_sec);
-                if (status == cv_status::timeout) {
-                    timeout = true;
-                }
-            }
+            auto status = syncw_.done_cv.wait_for(done_lock, chrono::seconds(1), [this](){ return syncw_.done; });
 
             EXPECT_FALSE(syncw_.done);
-            EXPECT_TRUE(timeout);
+            EXPECT_FALSE(status);
 
             // Exiting the read lock guard.
         }
 
         // Wait thread to hold the write lock.
-        while (!syncw_.done) {
-            syncw_.done_cv.wait(done_lock);
-        }
+        syncw_.done_cv.wait(done_lock, [this](){ return syncw_.done; });
     }
 
     // Signal the thread to terminate.
@@ -349,12 +318,10 @@ TEST_F(ReadWriteMutexTest, writeWrite) {
         unique_lock<mutex> started_lock(syncw_.started_mtx);
 
         // Create a work thread.
-        thread = boost::make_shared<std::thread>([this] () { writer(rw_mutex_, syncw_); });
+        thread = boost::make_shared<std::thread>([this](){ writer(rw_mutex_, syncw_); });
 
         // Wait work thread to start.
-        while (!syncw_.started) {
-            syncw_.started_cv.wait(started_lock);
-        }
+        syncw_.started_cv.wait(started_lock, [this](){ return syncw_.started; });
 
         unique_lock<mutex> done_lock(syncw_.done_mtx);
 
@@ -371,25 +338,16 @@ TEST_F(ReadWriteMutexTest, writeWrite) {
 
             // Verify the work thread is waiting for the write lock.
             cout << "pausing for one second" << std::endl;
-            bool timeout = false;
-            while (!timeout && !syncw_.done) {
-                auto one_sec = chrono::seconds(1);
-                auto status = syncw_.done_cv.wait_for(done_lock, one_sec);
-                if (status == cv_status::timeout) {
-                    timeout = true;
-                }
-            }
+            auto status = syncw_.done_cv.wait_for(done_lock, chrono::seconds(1), [this](){ return syncw_.done; });
 
             EXPECT_FALSE(syncw_.done);
-            EXPECT_TRUE(timeout);
+            EXPECT_FALSE(status);
 
             // Exiting the write lock guard.
         }
 
         // Wait thread to hold the write lock.
-        while (!syncw_.done) {
-            syncw_.done_cv.wait(done_lock);
-        }
+        syncw_.done_cv.wait(done_lock, [this](){ return syncw_.done; });
     }
 
     // Signal the thread to terminate.
@@ -411,12 +369,10 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
         unique_lock<mutex> startedw_lock(syncw_.started_mtx);
 
         // First thread is a writer.
-        threadw = boost::make_shared<std::thread>([this] () { writer(rw_mutex_, syncw_); });
+        threadw = boost::make_shared<std::thread>([this](){ writer(rw_mutex_, syncw_); });
 
         // Wait work thread to start.
-        while (!syncw_.started) {
-            syncw_.started_cv.wait(startedw_lock);
-        }
+        syncw_.started_cv.wait(startedw_lock, [this](){ return syncw_.started; });
     }
 
     boost::shared_ptr<std::thread> threadr;
@@ -424,12 +380,10 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
         unique_lock<mutex> startedr_lock(syncr_.started_mtx);
 
         // Second thread is a reader.
-        threadr = boost::make_shared<std::thread>([this] () { reader(rw_mutex_, syncr_); });
+        threadr = boost::make_shared<std::thread>([this](){ reader(rw_mutex_, syncr_); });
 
         // Wait work thread to start.
-        while (!syncr_.started) {
-            syncr_.started_cv.wait(startedr_lock);
-        }
+        syncr_.started_cv.wait(startedr_lock, [this](){ return syncr_.started; });
     }
 
     {
@@ -447,17 +401,10 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
 
             // Verify the writer thread is waiting for the write lock.
             cout << "pausing for one second" << std::endl;
-            bool timeout = false;
-            while (!timeout && !syncw_.done) {
-                auto one_sec = chrono::seconds(1);
-                auto status = syncw_.done_cv.wait_for(donew_lock, one_sec);
-                if (status == cv_status::timeout) {
-                    timeout = true;
-                }
-            }
+            auto status = syncw_.done_cv.wait_for(donew_lock, chrono::seconds(1), [this](){ return syncw_.done; });
 
             EXPECT_FALSE(syncw_.done);
-            EXPECT_TRUE(timeout);
+            EXPECT_FALSE(status);
 
             {
                 unique_lock<mutex> doner_lock(syncr_.done_mtx);
@@ -471,17 +418,10 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
 
                 // Verify the reader thread is waiting for the read lock.
                 cout << "pausing for one second" << std::endl;
-                timeout = false;
-                while (!timeout && !syncr_.done) {
-                    auto one_sec = chrono::seconds(1);
-                    auto status = syncr_.done_cv.wait_for(doner_lock, one_sec);
-                    if (status == cv_status::timeout) {
-                        timeout = true;
-                    }
-                }
+                auto status = syncr_.done_cv.wait_for(doner_lock, chrono::seconds(1), [this](){ return syncr_.done; });
 
                 EXPECT_FALSE(syncr_.done);
-                EXPECT_TRUE(timeout);
+                EXPECT_FALSE(status);
             }
             // Exiting the read lock guard.
         }
@@ -490,31 +430,20 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
             unique_lock<mutex> doner_lock(syncr_.done_mtx);
             // Verify the reader thread is still waiting for the read lock.
             cout << "pausing for one second" << std::endl;
-            bool timeout = false;
-            while (!timeout && !syncr_.done) {
-                auto one_sec = chrono::seconds(1);
-                auto status = syncr_.done_cv.wait_for(doner_lock, one_sec);
-                if (status == cv_status::timeout) {
-                    timeout = true;
-                }
-            }
+            auto status = syncr_.done_cv.wait_for(doner_lock, chrono::seconds(1), [this](){ return syncr_.done; });
 
             EXPECT_FALSE(syncr_.done);
-            EXPECT_TRUE(timeout);
+            EXPECT_FALSE(status);
         }
 
         // Wait writer thread to hold the write lock.
-        while (!syncw_.done) {
-            syncw_.done_cv.wait(donew_lock);
-        }
+        syncw_.done_cv.wait(donew_lock, [this](){ return syncw_.done; });
     }
 
     {
         unique_lock<mutex> doner_lock(syncr_.done_mtx);
         // Wait reader thread to hold the read lock.
-        while (!syncr_.done) {
-            syncr_.done_cv.wait(doner_lock);
-        }
+        syncr_.done_cv.wait(doner_lock, [this](){ return syncr_.done; });
     }
 
     // Signal the writer thread to terminate.
