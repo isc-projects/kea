@@ -3719,6 +3719,7 @@ TEST_F(AllocEngine6Test, mixedHostReservedAddress) {
 
     subnet_->setReservationsGlobal(true);
     subnet_->setReservationsInSubnet(true);
+    subnet_->setReservationsOutOfPool(false);
 
     // Create context which will be used to try to allocate leases
     Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
@@ -3862,6 +3863,7 @@ TEST_F(AllocEngine6Test, bothHostReservedAddress) {
 
     subnet_->setReservationsGlobal(true);
     subnet_->setReservationsInSubnet(true);
+    subnet_->setReservationsOutOfPool(false);
 
     // Create context which will be used to try to allocate leases
     Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));

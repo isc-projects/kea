@@ -267,7 +267,7 @@ public:
             MySqlBinding::createString(RELAY_BUF_LENGTH), // relay
             MySqlBinding::createInteger<uint32_t>(), // renew_timer
             MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // require_client_classes
-            MySqlBinding::createInteger<uint8_t>(), // reservation_mode
+            MySqlBinding::createInteger<uint8_t>(), // reservations_global
             MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH), // server_hostname
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // shared_network_name
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
@@ -316,6 +316,8 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // ddns_replace_client_name
             MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_generated_prefix
             MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_qualifying_suffix
+            MySqlBinding::createInteger<uint8_t>(), // reservations_in_subnet
+            MySqlBinding::createInteger<uint8_t>(), // reservations_out_of_pool
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -353,13 +355,17 @@ public:
 
                 // subnet_id
                 SubnetID subnet_id(out_bindings[0]->getInteger<uint32_t>());
+
                 // subnet_prefix
                 std::string subnet_prefix = out_bindings[1]->getString();
                 auto prefix_pair = Subnet4::parsePrefix(subnet_prefix);
+
                 // renew_timer
                 auto renew_timer = createTriplet(out_bindings[13]);
+
                 // rebind_timer
                 auto rebind_timer = createTriplet(out_bindings[11]);
+
                 // valid_lifetime (and {min,max)_valid_lifetime)
                 auto valid_lifetime = createTriplet(out_bindings[19],
                                                     out_bindings[53],
@@ -374,6 +380,7 @@ public:
                 if (!out_bindings[2]->amNull()) {
                     last_subnet->get4o6().setIface4o6(out_bindings[2]->getString());
                 }
+
                 // 4o6_interface_id
                 if (!out_bindings[3]->amNull()) {
                     std::string dhcp4o6_interface_id = out_bindings[3]->getString();
@@ -383,6 +390,7 @@ public:
                         Option::create(Option::V6, D6O_INTERFACE_ID, dhcp4o6_interface_id_buf);
                     last_subnet->get4o6().setInterfaceId(option_dhcp4o6_interface_id);
                 }
+
                 // 4o6_subnet
                 if (!out_bindings[4]->amNull()) {
                     std::pair<IOAddress, uint8_t> dhcp4o6_subnet_prefix_pair =
@@ -390,6 +398,7 @@ public:
                     last_subnet->get4o6().setSubnet4o6(dhcp4o6_subnet_prefix_pair.first,
                                                        dhcp4o6_subnet_prefix_pair.second);
                 }
+
                 // boot_file_name
                 if (!out_bindings[5]->amNull()) {
                     last_subnet->setFilename(out_bindings[5]->getString());
@@ -399,6 +408,7 @@ public:
                 if (!out_bindings[6]->amNull()) {
                     last_subnet->allowClientClass(out_bindings[6]->getString());
                 }
+
                 // interface
                 if (!out_bindings[7]->amNull()) {
                     last_subnet->setIface(out_bindings[7]->getString());
@@ -450,10 +460,9 @@ public:
                     }
                 }
 
-                // reservation_mode
+                // reservations_global
                 if (!out_bindings[15]->amNull()) {
-                    last_subnet->setHostReservationMode(static_cast<Network::HRMode>
-                        (out_bindings[15]->getInteger<uint8_t>()));
+                    last_subnet->setReservationsGlobal(out_bindings[15]->getBool());
                 }
 
                 // server_hostname
@@ -492,42 +501,46 @@ public:
                     last_subnet->setAuthoritative(out_bindings[52]->getBool());
                 }
 
-                // {min,max}_valid_lifetime
-
-                // pool client_class, require_client_classes and user_context
-
-                // ddns_send_updates at 58
+                // ddns_send_updates
                 if (!out_bindings[58]->amNull()) {
                     last_subnet->setDdnsSendUpdates(out_bindings[58]->getBool());
                 }
 
-                // ddns_override_no_update at 59
+                // ddns_override_no_update
                 if (!out_bindings[59]->amNull()) {
                     last_subnet->setDdnsOverrideNoUpdate(out_bindings[59]->getBool());
                 }
 
-                // ddns_override_client_update at 60
+                // ddns_override_client_update
                 if (!out_bindings[60]->amNull()) {
                     last_subnet->setDdnsOverrideClientUpdate(out_bindings[60]->getBool());
                 }
 
-                // ddns_replace_client_name at 61
+                // ddns_replace_client_name
                 if (!out_bindings[61]->amNull()) {
                     last_subnet->setDdnsReplaceClientNameMode(static_cast<D2ClientConfig::ReplaceClientNameMode>
                         (out_bindings[61]->getInteger<uint8_t>()));
                 }
 
-                // ddns_generated_prefix at 62
+                // ddns_generated_prefix
                 if (!out_bindings[62]->amNull()) {
                     last_subnet->setDdnsGeneratedPrefix(out_bindings[62]->getString());
                 }
 
-                // ddns_qualifying_suffix at 63
+                // ddns_qualifying_suffix
                 if (!out_bindings[63]->amNull()) {
                     last_subnet->setDdnsQualifyingSuffix(out_bindings[63]->getString());
                 }
 
-                // server_tag at 64
+                // reservations_in_subnet
+                if (!out_bindings[64]->amNull()) {
+                    last_subnet->setReservationsInSubnet(out_bindings[64]->getBool());
+                }
+
+                // reservations_out_of_pool
+                if (!out_bindings[65]->amNull()) {
+                    last_subnet->setReservationsOutOfPool(out_bindings[65]->getBool());
+                }
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -541,13 +554,15 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[64]->amNull() &&
-                (last_tag != out_bindings[64]->getString())) {
-                last_tag = out_bindings[64]->getString();
+            if (!out_bindings[66]->amNull() &&
+                (last_tag != out_bindings[66]->getString())) {
+                last_tag = out_bindings[66]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
             }
+
+            // Pool is between 20 and 25 with extra between 55 and 57
 
             // If the row contains information about the pool and it appears to be
             // new pool entry (checked by comparing pool id), let's create the new
@@ -591,7 +606,7 @@ public:
                 last_subnet->addPool(last_pool);
             }
 
-            // Parse pool specific option.
+            // Parse pool specific option between 25 and 36
             if (last_pool && !out_bindings[25]->amNull() &&
                 (last_pool_option_id < out_bindings[25]->getInteger<uint64_t>())) {
                 last_pool_option_id = out_bindings[25]->getInteger<uint64_t>();
@@ -602,7 +617,7 @@ public:
                 }
             }
 
-            // Parse subnet specific option.
+            // Parse subnet specific option between 37 and 48
             if (!out_bindings[37]->amNull() &&
                 (last_option_id < out_bindings[37]->getInteger<uint64_t>())) {
                 last_option_id = out_bindings[37]->getInteger<uint64_t>();
@@ -797,12 +812,12 @@ public:
 
                 last_pool = Pool4::create(IOAddress(out_bindings[1]->getInteger<uint32_t>()),
                                           IOAddress(out_bindings[2]->getInteger<uint32_t>()));
-                // pool client_class (4)
+                // pool client_class
                 if (!out_bindings[4]->amNull()) {
                     last_pool->allowClientClass(out_bindings[4]->getString());
                 }
 
-                // pool require_client_classes (5)
+                // pool require_client_classes
                 ElementPtr require_element = out_bindings[5]->getJSON();
                 if (require_element) {
                     if (require_element->getType() != Element::list) {
@@ -819,19 +834,17 @@ public:
                     }
                 }
 
-                // pool user_context (6)
+                // pool user_context
                 ElementPtr user_context = out_bindings[6]->getJSON();
                 if (user_context) {
                     last_pool->setContext(user_context);
                 }
 
-                // pool: modification_ts (7)
-
                 pools.push_back(last_pool);
                 pool_ids.push_back(last_pool_id);
             }
 
-            // Parse pool specific option (8).
+            // Parse pool specific option between 8 and 19
             if (last_pool && !out_bindings[8]->amNull() &&
                 (last_pool_option_id < out_bindings[8]->getInteger<uint64_t>())) {
                 last_pool_option_id = out_bindings[8]->getInteger<uint64_t>();
@@ -937,16 +950,6 @@ public:
             required_classes_element->add(Element::create(*required_class));
         }
 
-        // Create binding for host reservation mode.
-        MySqlBindingPtr hr_mode_binding;
-        auto hr_mode = subnet->getHostReservationMode(Network::Inheritance::NONE);
-        if (!hr_mode.unspecified()) {
-            hr_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
-                                                                   (hr_mode.get()));
-        } else {
-            hr_mode_binding = MySqlBinding::createNull();
-        }
-
         // Create binding for DDNS replace client name mode.
         MySqlBindingPtr ddns_rcn_mode_binding;
         auto ddns_rcn_mode = subnet->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
@@ -1001,7 +1004,7 @@ public:
             createInputRelayBinding(subnet),
             createBinding(subnet->getT1(Network::Inheritance::NONE)),
             createInputRequiredClassesBinding(subnet),
-            hr_mode_binding,
+            MySqlBinding::condCreateBool(subnet->getReservationsGlobal(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(subnet->getSname(Network::Inheritance::NONE)),
             shared_network_binding,
             createInputContextBinding(subnet),
@@ -1017,7 +1020,9 @@ public:
             MySqlBinding::condCreateBool(subnet->getDdnsOverrideClientUpdate(Network::Inheritance::NONE)),
             ddns_rcn_mode_binding,
             MySqlBinding::condCreateString(subnet->getDdnsGeneratedPrefix(Network::Inheritance::NONE)),
-            MySqlBinding::condCreateString(subnet->getDdnsQualifyingSuffix(Network::Inheritance::NONE))
+            MySqlBinding::condCreateString(subnet->getDdnsQualifyingSuffix(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getReservationsInSubnet(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getReservationsOutOfPool(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -1231,7 +1236,7 @@ public:
             MySqlBinding::createString(RELAY_BUF_LENGTH), // relay
             MySqlBinding::createInteger<uint32_t>(), // renew_timer
             MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // require_client_classes
-            MySqlBinding::createInteger<uint8_t>(), // reservation_mode
+            MySqlBinding::createInteger<uint8_t>(), // reservations_global
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
             MySqlBinding::createInteger<uint32_t>(), // valid_lifetime
             MySqlBinding::createInteger<uint64_t>(), // option: option_id
@@ -1261,6 +1266,8 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // ddns_replace_client_name
             MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_generated_prefix
             MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_qualifying_suffix
+            MySqlBinding::createInteger<uint8_t>(), // reservations_in_subnet
+            MySqlBinding::createInteger<uint8_t>(), // reservations_out_of_pool
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -1352,10 +1359,9 @@ public:
                     }
                 }
 
-                // reservation_mode
+                // reservations_global
                 if (!out_bindings[10]->amNull()) {
-                    last_network->setHostReservationMode(static_cast<Network::HRMode>
-                        (out_bindings[10]->getIntegerOrDefault<uint8_t>(Network::HR_ALL)));
+                    last_network->setReservationsGlobal(out_bindings[10]->getBool());
                 }
 
                 // user_context
@@ -1408,35 +1414,45 @@ public:
 
                 // {min,max}_valid_lifetime
 
-                // ddns_send_updates at 34
+                // ddns_send_updates
                 if (!out_bindings[34]->amNull()) {
                     last_network->setDdnsSendUpdates(out_bindings[34]->getBool());
                 }
 
-                // ddns_override_no_update at 35
+                // ddns_override_no_update
                 if (!out_bindings[35]->amNull()) {
                     last_network->setDdnsOverrideNoUpdate(out_bindings[35]->getBool());
                 }
 
-                // ddns_override_client_update at 36
+                // ddns_override_client_update
                 if (!out_bindings[36]->amNull()) {
                     last_network->setDdnsOverrideClientUpdate(out_bindings[36]->getBool());
                 }
 
-                // ddns_replace_client_name at 37
+                // ddns_replace_client_name
                 if (!out_bindings[37]->amNull()) {
                     last_network->setDdnsReplaceClientNameMode(static_cast<D2ClientConfig::ReplaceClientNameMode>
                         (out_bindings[37]->getInteger<uint8_t>()));
                 }
 
-                // ddns_generated_prefix at 38
+                // ddns_generated_prefix
                 if (!out_bindings[38]->amNull()) {
                     last_network->setDdnsGeneratedPrefix(out_bindings[38]->getString());
                 }
 
-                // ddns_qualifying_suffix at 39
+                // ddns_qualifying_suffix
                 if (!out_bindings[39]->amNull()) {
                     last_network->setDdnsQualifyingSuffix(out_bindings[39]->getString());
+                }
+
+                // reservations_in_subnet
+                if (!out_bindings[40]->amNull()) {
+                    last_network->setReservationsInSubnet(out_bindings[40]->getBool());
+                }
+
+                // reservations_out_of_pool
+                if (!out_bindings[41]->amNull()) {
+                    last_network->setReservationsOutOfPool(out_bindings[41]->getBool());
                 }
 
                 // Add the shared network.
@@ -1451,15 +1467,15 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[40]->amNull() &&
-                (last_tag != out_bindings[40]->getString())) {
-                last_tag = out_bindings[40]->getString();
+            if (!out_bindings[42]->amNull() &&
+                (last_tag != out_bindings[42]->getString())) {
+                last_tag = out_bindings[42]->getString();
                 if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
                     last_network->setServerTag(last_tag);
                 }
             }
 
-            // Parse option.
+            // Parse option from 13 to 24
             if (!out_bindings[13]->amNull() &&
                 (last_option_id < out_bindings[13]->getInteger<uint64_t>())) {
                 last_option_id = out_bindings[13]->getInteger<uint64_t>();
@@ -1569,16 +1585,6 @@ public:
                       " assigning it to a server or all servers is not supported");
         }
 
-        // Create binding for host reservation mode.
-        MySqlBindingPtr hr_mode_binding;
-        auto hr_mode = shared_network->getHostReservationMode(Network::Inheritance::NONE);
-        if (!hr_mode.unspecified()) {
-            hr_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
-                                                                   (hr_mode.get()));
-        } else {
-            hr_mode_binding = MySqlBinding::createNull();
-        }
-
         // Create binding for DDNS replace client name mode.
         MySqlBindingPtr ddns_rcn_mode_binding;
         auto ddns_rcn_mode = shared_network->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
@@ -1599,7 +1605,7 @@ public:
             createInputRelayBinding(shared_network),
             createBinding(shared_network->getT1(Network::Inheritance::NONE)),
             createInputRequiredClassesBinding(shared_network),
-            hr_mode_binding,
+            MySqlBinding::condCreateBool(shared_network->getReservationsGlobal(Network::Inheritance::NONE)),
             createInputContextBinding(shared_network),
             createBinding(shared_network->getValid(Network::Inheritance::NONE)),
             createMinBinding(shared_network->getValid(Network::Inheritance::NONE)),
@@ -1616,7 +1622,9 @@ public:
             MySqlBinding::condCreateBool(shared_network->getDdnsOverrideClientUpdate(Network::Inheritance::NONE)),
             ddns_rcn_mode_binding,
             MySqlBinding::condCreateString(shared_network->getDdnsGeneratedPrefix(Network::Inheritance::NONE)),
-            MySqlBinding::condCreateString(shared_network->getDdnsQualifyingSuffix(Network::Inheritance::NONE))
+            MySqlBinding::condCreateString(shared_network->getDdnsQualifyingSuffix(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getReservationsInSubnet(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getReservationsOutOfPool(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -2448,7 +2456,7 @@ TaggedStatementArray tagged_statements = { {
       "  relay,"
       "  renew_timer,"
       "  require_client_classes,"
-      "  reservation_mode,"
+      "  reservations_global,"
       "  server_hostname,"
       "  shared_network_name,"
       "  user_context,"
@@ -2464,9 +2472,11 @@ TaggedStatementArray tagged_statements = { {
       "  ddns_override_client_update,"
       "  ddns_replace_client_name,"
       "  ddns_generated_prefix,"
-      "  ddns_qualifying_suffix"
+      "  ddns_qualifying_suffix,"
+      "  reservations_in_subnet,"
+      "  reservations_out_of_pool"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
@@ -2490,7 +2500,7 @@ TaggedStatementArray tagged_statements = { {
       "  relay,"
       "  renew_timer,"
       "  require_client_classes,"
-      "  reservation_mode,"
+      "  reservations_global,"
       "  user_context,"
       "  valid_lifetime,"
       "  min_valid_lifetime,"
@@ -2507,9 +2517,11 @@ TaggedStatementArray tagged_statements = { {
       "  ddns_override_client_update,"
       "  ddns_replace_client_name,"
       "  ddns_generated_prefix,"
-      "  ddns_qualifying_suffix"
+      "  ddns_qualifying_suffix,"
+      "  reservations_in_subnet,"
+      "  reservations_out_of_pool"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
@@ -2564,7 +2576,7 @@ TaggedStatementArray tagged_statements = { {
       "  relay = ?,"
       "  renew_timer = ?,"
       "  require_client_classes = ?,"
-      "  reservation_mode = ?,"
+      "  reservations_global = ?,"
       "  server_hostname = ?,"
       "  shared_network_name = ?,"
       "  user_context = ?,"
@@ -2580,7 +2592,9 @@ TaggedStatementArray tagged_statements = { {
       "  ddns_override_client_update = ?,"
       "  ddns_replace_client_name = ?,"
       "  ddns_generated_prefix = ?,"
-      "  ddns_qualifying_suffix = ? "
+      "  ddns_qualifying_suffix = ?,"
+      "  reservations_in_subnet = ?,"
+      "  reservations_out_of_pool = ? "
       "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
@@ -2595,7 +2609,7 @@ TaggedStatementArray tagged_statements = { {
       "  relay = ?,"
       "  renew_timer = ?,"
       "  require_client_classes = ?,"
-      "  reservation_mode = ?,"
+      "  reservations_global = ?,"
       "  user_context = ?,"
       "  valid_lifetime = ?,"
       "  min_valid_lifetime = ?,"
@@ -2612,7 +2626,9 @@ TaggedStatementArray tagged_statements = { {
       "  ddns_override_client_update = ?,"
       "  ddns_replace_client_name = ?,"
       "  ddns_generated_prefix = ?,"
-      "  ddns_qualifying_suffix = ? "
+      "  ddns_qualifying_suffix = ?,"
+      "  reservations_in_subnet = ?,"
+      "  reservations_out_of_pool = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.

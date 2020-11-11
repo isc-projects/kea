@@ -6,9 +6,12 @@
 
 #include <config.h>
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcpsrv/network.h>
+#include <dhcpsrv/parsers/base_network_parser.h>
+#include <testutils/gtest_utils.h>
 #include <boost/shared_ptr.hpp>
 #include <functional>
 #include <gtest/gtest.h>
@@ -17,6 +20,7 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::test;
 
 namespace {
 
@@ -584,6 +588,157 @@ TEST_F(NetworkTest, getSiaddrNeverFail) {
     // Get an IPv4 view of the test network.
     auto net4_child = boost::dynamic_pointer_cast<Network4>(net_child);
     EXPECT_NO_THROW(net4_child->getSiaddr());
+}
+
+/// @brief Test fixture class for testing @c moveReservationMode.
+class NetworkReservationTest : public ::testing::Test {
+public:
+
+    /// @brief Move test error case.
+    ///
+    /// Error cases of @ref BaseNetworkParser::moveReservationMode.
+    ///
+    /// @param config String with the config to test.
+    /// @param expected String with the expected error message.
+    void TestError(const std::string& config, const std::string& expected) {
+        ElementPtr cfg;
+        ASSERT_NO_THROW(cfg = Element::fromJSON(config))
+            << "bad config, test broken";
+
+        ElementPtr copy = isc::data::copy(cfg);
+
+        EXPECT_THROW_MSG(BaseNetworkParser::moveReservationMode(cfg),
+                         DhcpConfigError, expected);
+
+        ASSERT_TRUE(copy->equals(*cfg));
+    }
+
+    /// @brief Move test case.
+    ///
+    /// Test cases of @ref BaseNetworkParser::moveReservationMode.
+    ///
+    /// @param config String with the config to test.
+    /// @param expected String with the config after move.
+    void TestMove(const std::string& config, const std::string& expected) {
+        ElementPtr cfg;
+        ASSERT_NO_THROW(cfg = Element::fromJSON(config))
+            << "bad config, test broken";
+
+        EXPECT_NO_THROW(BaseNetworkParser::moveReservationMode(cfg));
+
+        EXPECT_EQ(expected, cfg->str());
+    }
+};
+
+/// @brief Test @ref BaseNetworkParser::moveReservationMode error cases.
+TEST_F(NetworkReservationTest, errors) {
+    // Conflicts.
+    std::string config = "{\n"
+        "\"reservation-mode\": \"all\",\n"
+        "\"reservations-global\": true\n"
+        "}";
+    std::string expected = "invalid use of both 'reservation-mode'"
+        " one of 'reservations-global', 'reservations-in-subnet'"
+        " or 'reservations-out-of-pool' parameters";
+    TestError(config, expected);
+
+    config = "{\n"
+        "\"reservation-mode\": \"all\",\n"
+        "\"reservations-in-subnet\": true\n"
+        "}";
+    TestError(config, expected);
+
+    config = "{\n"
+        "\"reservation-mode\": \"all\",\n"
+        "\"reservations-out-of-pool\": false\n"
+        "}";
+    TestError(config, expected);
+
+    // Unknown mode.
+    config = "{\n"
+        "\"reservation-mode\": \"foo\"\n"
+        "}";
+    expected = "invalid reservation-mode parameter: 'foo' (<string>:2:21)";
+    TestError(config, expected);
+}
+
+/// @brief Test @ref BaseNetworkParser::moveReservationMode.
+TEST_F(NetworkReservationTest, move) {
+    // No-ops.
+    std::string config = "{\n"
+        "}";
+    std::string expected = "{ "
+        " }";
+    TestMove(config, expected);
+
+    config = "{\n"
+        "\"reservations-global\": true\n"
+        "}";
+    expected = "{"
+        " \"reservations-global\": true"
+        " }";
+    TestMove(config, expected);
+
+    // Disabled.
+    config = "{\n"
+        "\"reservation-mode\": \"disabled\"\n"
+        "}";
+    expected = "{"
+        " \"reservations-global\": false,"
+        " \"reservations-in-subnet\": false,"
+        " \"reservations-out-of-pool\": false"
+        " }";
+    TestMove(config, expected);
+
+    config = "{\n"
+        "\"reservation-mode\": \"off\"\n"
+        "}";
+    TestMove(config, expected);
+
+    // Out-of-pool.
+    config = "{\n"
+        "\"reservation-mode\": \"out-of-pool\"\n"
+        "}";
+    expected = "{"
+        " \"reservations-global\": false,"
+        " \"reservations-in-subnet\": true,"
+        " \"reservations-out-of-pool\": true"
+        " }";
+    TestMove(config, expected);
+
+    // Global.
+    config = "{\n"
+        "\"reservation-mode\": \"global\"\n"
+        "}";
+    expected = "{"
+        " \"reservations-global\": true,"
+        " \"reservations-in-subnet\": false,"
+        " \"reservations-out-of-pool\": false"
+        " }";
+    TestMove(config, expected);
+
+    // All.
+    config = "{\n"
+        "\"reservation-mode\": \"all\"\n"
+        "}";
+    expected = "{"
+        " \"reservations-global\": false,"
+        " \"reservations-in-subnet\": true,"
+        " \"reservations-out-of-pool\": false"
+        " }";
+    TestMove(config, expected);
+
+    config = "{\n"
+        "\"foobar\": 1234,\n"
+        "\"reservation-mode\": \"all\"\n"
+        "}";
+    expected = "{"
+        " \"foobar\": 1234,"
+        " \"reservations-global\": false,"
+        " \"reservations-in-subnet\": true,"
+        " \"reservations-out-of-pool\": false"
+        " }";
+    TestMove(config, expected);
 }
 
 }

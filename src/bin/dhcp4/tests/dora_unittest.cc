@@ -1809,7 +1809,7 @@ TEST_F(DORATest, reservationModeDisabled) {
     // Set explicit HW address so as it matches the reservation in the
     // configuration used below.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
-    // Configure DHCP server. In this configuration the reservation flags are
+    // Configure DHCP server. In this configuration the reservations flags are
     // set to false. Thus, the server should ignore the reservation for
     // this client.
     configure(DORA_CONFIGS[13], *client.getServer());

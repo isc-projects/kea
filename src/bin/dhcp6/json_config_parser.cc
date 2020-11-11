@@ -450,7 +450,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // Print the list of known backends.
     HostDataSourceFactory::printRegistered();
 
-    // Answer will hold the result.
+    // This is a way to convert ConstElementPtr to ElementPtr.
+    // We need a config that can be edited, because we will insert
+    // default values and will insert derived values as well.
+    ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+
+    // answer will hold the result.
     ConstElementPtr answer;
     // Rollback informs whether error occurred and original data
     // have to be restored to global storages.
@@ -468,52 +473,16 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // default values and will insert derived values as well.
         mutable_cfg = boost::const_pointer_cast<Element>(config_set);
 
-        bool found = false;
-        ConstElementPtr reservations_out_of_pool = mutable_cfg->get("reservations-out-of-pool");
-        ConstElementPtr reservations_in_subnet = mutable_cfg->get("reservations-in-subnet");
-        ConstElementPtr reservations_global = mutable_cfg->get("reservations-global");
-        if (reservations_out_of_pool || reservations_in_subnet || reservations_global) {
-            found = true;
-        }
-        ConstElementPtr reservation_mode = mutable_cfg->get("reservation-mode");
-        if (reservation_mode) {
-            LOG_WARN(dhcp6_logger, DHCP6_DEPRECATED_RESERVATION_MODE);
-            if (found) {
-                isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
-                                           " and one of 'reservations-out-of-pool'"
-                                           " , 'reservations-in-subnet' or"
-                                           " 'reservations-global' parameters");
-            }
-        }
-
-        // reset all other reservation flags to overwrite default values.
-        if (found) {
-            bool force_true = false;
-            if (!reservations_out_of_pool) {
-                mutable_cfg->set("reservations-out-of-pool", Element::create(false));
-            } else {
-                force_true = reservations_out_of_pool->boolValue();
-            }
-            if (!reservations_in_subnet) {
-                if (force_true) {
-                    mutable_cfg->set("reservations-in-subnet", Element::create(true));
-                } else {
-                    mutable_cfg->set("reservations-in-subnet", Element::create(false));
-                }
-            } else if (force_true && !reservations_in_subnet->boolValue()) {
-                isc_throw(DhcpConfigError, "invalid use of disabled 'reservations-in-subnet'"
-                                           " when enabled 'reservations-out-of-pool'");
-            }
-            if (!reservations_global) {
-                mutable_cfg->set("reservations-global", Element::create(false));
-            }
-        }
-
         // Relocate dhcp-ddns parameters that have moved to global scope.
         // Rule is that a global value overrides the dhcp-ddns value, so
         // we need to do this before we apply global defaults.
         // Note this is done for backward compatibility.
         srv_config->moveDdnsParams(mutable_cfg);
+
+        // Move from reservation mode to new reservations flags.
+        if (BaseNetworkParser::moveReservationMode(mutable_cfg)) {
+            LOG_WARN(dhcp6_logger, DHCP6_DEPRECATED_RESERVATION_MODE);
+        }
 
         // Set all default values if not specified by the user.
         SimpleParser6::setAllDefaults(mutable_cfg);
@@ -532,14 +501,6 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
         // Apply global options in the staging config, e.g. ip-reservations-unique
         global_parser.parseEarly(srv_config, mutable_cfg);
-
-        // If using deprecated reservation-mode, remove defaults for new parameters
-        // reservations-out-of-pool, reservations-in-subnet and reservations-global.
-        if (reservation_mode) {
-            mutable_cfg->remove("reservations-out-of-pool");
-            mutable_cfg->remove("reservations-in-subnet");
-            mutable_cfg->remove("reservations-global");
-        }
 
         // Specific check for this global parameter.
         ConstElementPtr data_directory = mutable_cfg->get("data-directory");
@@ -810,9 +771,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "dhcp4o6-port") ||
                  (config_pair.first == "server-tag") ||
                  (config_pair.first == "reservation-mode") ||
-                 (config_pair.first == "reservations-out-of-pool") ||
-                 (config_pair.first == "reservations-in-subnet") ||
                  (config_pair.first == "reservations-global") ||
+                 (config_pair.first == "reservations-in-subnet") ||
+                 (config_pair.first == "reservations-out-of-pool") ||
                  (config_pair.first == "calculate-tee-times") ||
                  (config_pair.first == "t1-percent") ||
                  (config_pair.first == "t2-percent") ||

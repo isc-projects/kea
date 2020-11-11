@@ -44,9 +44,14 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
         std::string name = getString(shared_network_data, "name");
         shared_network.reset(new SharedNetwork4(name));
 
+        // Move from reservation mode to new reservations flags.
+        ElementPtr mutable_params;
+        mutable_params = boost::const_pointer_cast<Element>(shared_network_data);
+        BaseNetworkParser::moveReservationMode(mutable_params);
+
         // Parse parameters common to all Network derivations.
         NetworkPtr network = boost::dynamic_pointer_cast<Network>(shared_network);
-        parseCommon(shared_network_data, network);
+        parseCommon(mutable_params, network);
 
         // interface is an optional parameter
         if (shared_network_data->contains("interface")) {
@@ -185,12 +190,6 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
-        // reservation modes
-        parseHostReservationModes(shared_network_data, network);
-
-        // reservation-mode
-        parseHostReservationMode(shared_network_data, network);
-
         parseTeePercents(shared_network_data, network);
 
         // Parse DDNS parameters
@@ -234,9 +233,14 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
         std::string name = getString(shared_network_data, "name");
         shared_network.reset(new SharedNetwork6(name));
 
+        // Move from reservation mode to new reservations flags.
+        ElementPtr mutable_params;
+        mutable_params = boost::const_pointer_cast<Element>(shared_network_data);
+        BaseNetworkParser::moveReservationMode(mutable_params);
+
         // Parse parameters common to all Network derivations.
         NetworkPtr network = boost::dynamic_pointer_cast<Network>(shared_network);
-        parseCommon(shared_network_data, network);
+        parseCommon(mutable_params, network);
 
         // preferred-lifetime
         shared_network->setPreferred(parseLifetime(shared_network_data,
@@ -353,12 +357,6 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
                 shared_network->setRelayInfo(*relay_info);
             }
         }
-
-        // reservation modes
-        parseHostReservationModes(shared_network_data, network);
-
-        // reservation-mode
-        parseHostReservationMode(shared_network_data, network);
 
         parseTeePercents(shared_network_data, network);
 

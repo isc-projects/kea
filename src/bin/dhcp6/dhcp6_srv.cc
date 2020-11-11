@@ -3774,8 +3774,11 @@ Dhcpv6Srv::conditionallySetReservedClientClasses(const Pkt6Ptr& pkt,
     if (ctx.subnet_) {
         SharedNetwork6Ptr shared_network;
         ctx.subnet_->getSharedNetwork(shared_network);
-        if (shared_network && !ctx.globalHost()) {
-            setReservedClientClasses(pkt, ctx);
+        if (shared_network) {
+            ConstHostPtr host = ctx.currentHost();
+            if (host && (host->getIPv6SubnetID() != SUBNET_ID_GLOBAL)) {
+                setReservedClientClasses(pkt, ctx);
+            }
         }
     }
 }

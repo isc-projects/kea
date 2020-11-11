@@ -17,6 +17,19 @@ namespace dhcp {
 /// @brief Common configuration parser for shared networks
 /// and subnets.
 class BaseNetworkParser : public data::SimpleParser {
+public:
+
+    /// @brief Moves deprecated reservation-mode parameter to
+    /// new reservations flags.
+    ///
+    /// @param config [in/out] configuration to alter.
+    /// @throw DhcpConfigError on error e.g. when both reservation-mode
+    /// and a flag are specified.
+    /// @return true if reservation-mode parameter has been replaces with
+    /// new reservations-global, reservations-in-subnet and
+    /// reservations-out-of-pool parameters, false otherwise.
+    static bool moveReservationMode(isc::data::ElementPtr config);
+
 protected:
 
     /// @brief Parses DHCP lifetime.
@@ -37,6 +50,9 @@ protected:
     /// - rebind-timer,
     /// - valid-lifetime,
     /// - store-extended-info
+    /// - reservations-global
+    /// - reservations-in-subnet
+    /// - reservations-out-of-pool
     ///
     /// @param network_data Data element holding shared network
     /// configuration to be parsed.
@@ -77,28 +93,6 @@ protected:
     /// invalid.
     void parseCacheParams(const data::ConstElementPtr& network_data,
                      NetworkPtr& network);
-
-    /// @brief Parses host reservation mode.
-    ///
-    /// @note Configuring 'reservation-mode' is deprecated. The new
-    /// 'reservations-out-of-pool', 'reservations-in-subnet' and
-    /// 'reservations-global' parameters should be used.
-    ///
-    /// @param network_data Data element holding shared network
-    /// configuration to be parsed.
-    /// @param [out] network Pointer to a network in which parsed data is
-    /// to be stored.
-    void parseHostReservationMode(const data::ConstElementPtr& network_data,
-                                  NetworkPtr& network);
-
-    /// @brief Parses host reservation modes.
-    ///
-    /// @param network_data Data element holding shared network
-    /// configuration to be parsed.
-    /// @param [out] network Pointer to a network in which parsed data is
-    /// to be stored.
-    void parseHostReservationModes(const data::ConstElementPtr& network_data,
-                                   NetworkPtr& network);
 
     /// @brief Parses parameters pertaining to DDNS behavior.
     ///

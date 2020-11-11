@@ -180,7 +180,9 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
         }
 
         // Find static reservations if not disabled for our subnet.
-        if (subnet->getHostReservationMode() != Network::HR_DISABLED) {
+        if (subnet->getReservationsGlobal() ||
+            subnet->getReservationsInSubnet() ||
+            subnet->getReservationsOutOfPool()) {
             // Before we can check for static reservations, we need to prepare a set
             // of identifiers to be used for this.
             setHostIdentifiers();
@@ -493,8 +495,11 @@ Dhcpv4Exchange::conditionallySetReservedClientClasses() {
     if (context_->subnet_) {
         SharedNetwork4Ptr shared_network;
         context_->subnet_->getSharedNetwork(shared_network);
-        if (shared_network && !context_->globalHost()) {
-            setReservedClientClasses(context_);
+        if (shared_network) {
+            ConstHostPtr host = context_->currentHost();
+            if (host && (host->getIPv4SubnetID() != SUBNET_ID_GLOBAL)) {
+                setReservedClientClasses(context_);
+            }
         }
     }
 }

@@ -743,9 +743,14 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
                                    subnet_id));
     subnet_ = subnet4;
 
+    // Move from reservation mode to new reservations flags.
+    ElementPtr mutable_params;
+    mutable_params = boost::const_pointer_cast<Element>(params);
+    BaseNetworkParser::moveReservationMode(mutable_params);
+
     // Parse parameters common to all Network derivations.
     NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet4);
-    parseCommon(params, network);
+    parseCommon(mutable_params, network);
 
     std::ostringstream output;
     output << addr << "/" << static_cast<int>(len) << " with params: ";
@@ -858,13 +863,6 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
             subnet4->setIface(iface);
         }
     }
-
-    // reservation modes
-    parseHostReservationModes(params, network);
-
-    // Let's set host reservation mode. If not specified, the default value of
-    // all will be used.
-    parseHostReservationMode(params, network);
 
     // Try setting up client class.
     if (params->contains("client-class")) {
@@ -1241,9 +1239,14 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
                                    subnet_id);
     subnet_.reset(subnet6);
 
+    // Move from reservation mode to new reservations flags.
+    ElementPtr mutable_params;
+    mutable_params = boost::const_pointer_cast<Element>(params);
+    BaseNetworkParser::moveReservationMode(mutable_params);
+
     // Parse parameters common to all Network derivations.
     NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet_);
-    parseCommon(params, network);
+    parseCommon(mutable_params, network);
 
     // Enable or disable Rapid Commit option support for the subnet.
     if (!rapid_commit.unspecified()) {
@@ -1333,13 +1336,6 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
         subnet6->setIface(iface);
     }
-
-    // reservation modes
-    parseHostReservationModes(params, network);
-
-    // Let's set host reservation mode. If not specified, the default value of
-    // all will be used.
-    parseHostReservationMode(params, network);
 
     // Try setting up client class.
     if (params->contains("client-class")) {

@@ -66,7 +66,7 @@ namespace {
     "  s.relay," \
     "  s.renew_timer," \
     "  s.require_client_classes," \
-    "  s.reservation_mode," \
+    "  s.reservations_global," \
     "  s.server_hostname," \
     "  s.shared_network_name," \
     "  s.user_context," \
@@ -115,6 +115,8 @@ namespace {
     "  s.ddns_replace_client_name," \
     "  s.ddns_generated_prefix," \
     "  s.ddns_qualifying_suffix," \
+    "  s.reservations_in_subnet," \
+    "  s.reservations_out_of_pool," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -164,7 +166,7 @@ namespace {
     "  s.relay," \
     "  s.renew_timer," \
     "  s.require_client_classes," \
-    "  s.reservation_mode," \
+    "  s.reservations_global," \
     "  s.shared_network_name," \
     "  s.user_context," \
     "  s.valid_lifetime," \
@@ -240,6 +242,8 @@ namespace {
     "  s.ddns_replace_client_name," \
     "  s.ddns_generated_prefix," \
     "  s.ddns_qualifying_suffix," \
+    "  s.reservations_in_subnet," \
+    "  s.reservations_out_of_pool," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     server_join \
@@ -415,7 +419,7 @@ namespace {
     "  n.relay," \
     "  n.renew_timer," \
     "  n.require_client_classes," \
-    "  n.reservation_mode," \
+    "  n.reservations_global," \
     "  n.user_context," \
     "  n.valid_lifetime," \
     "  o.option_id," \
@@ -445,6 +449,8 @@ namespace {
     "  n.ddns_replace_client_name," \
     "  n.ddns_generated_prefix," \
     "  n.ddns_qualifying_suffix," \
+    "  n.reservations_in_subnet," \
+    "  n.reservations_out_of_pool," \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     server_join \
@@ -492,7 +498,7 @@ namespace {
     "  n.relay," \
     "  n.renew_timer," \
     "  n.require_client_classes," \
-    "  n.reservation_mode," \
+    "  n.reservations_global," \
     "  n.user_context," \
     "  n.valid_lifetime," \
     "  o.option_id," \
@@ -522,6 +528,8 @@ namespace {
     "  n.ddns_replace_client_name," \
     "  n.ddns_generated_prefix," \
     "  n.ddns_qualifying_suffix," \
+    "  n.reservations_in_subnet," \
+    "  n.reservations_out_of_pool," \
     "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
     server_join \

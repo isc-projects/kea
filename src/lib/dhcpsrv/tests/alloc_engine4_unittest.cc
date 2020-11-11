@@ -2905,6 +2905,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     EXPECT_FALSE(ctx.currentHost());
 
     // Check the out of the pool reservation mode.
+    subnet_->setReservationsInSubnet(true);
     subnet_->setReservationsOutOfPool(true);
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_TRUE(ctx.currentHost());

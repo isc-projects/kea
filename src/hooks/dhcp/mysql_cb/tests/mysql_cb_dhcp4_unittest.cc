@@ -161,7 +161,9 @@ public:
         subnet->setT1(1234);
         subnet->requireClientClass("required-class1");
         subnet->requireClientClass("required-class2");
-        subnet->setHostReservationMode(Subnet4::HR_DISABLED);
+        subnet->setReservationsGlobal(false);
+        subnet->setReservationsInSubnet(false);
+        subnet->setReservationsOutOfPool(false);
         subnet->setSname("server-hostname");
         subnet->setContext(user_context);
         subnet->setValid(555555);
@@ -260,7 +262,9 @@ public:
         shared_network->setT1(1234);
         shared_network->requireClientClass("required-class1");
         shared_network->requireClientClass("required-class2");
-        shared_network->setHostReservationMode(Subnet4::HR_DISABLED);
+        shared_network->setReservationsGlobal(false);
+        shared_network->setReservationsInSubnet(false);
+        shared_network->setReservationsOutOfPool(false);
         shared_network->setContext(user_context);
         shared_network->setValid(5555);
         shared_network->setCalculateTeeTimes(true);
@@ -1319,8 +1323,14 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4WithOptionalUnspecified) {
     EXPECT_TRUE(returned_subnet->getT2().unspecified());
     EXPECT_EQ(0, returned_subnet->getT2().get());
 
-    EXPECT_TRUE(returned_subnet->getHostReservationMode().unspecified());
-    EXPECT_EQ(Network::HR_ALL, returned_subnet->getHostReservationMode().get());
+    EXPECT_TRUE(returned_subnet->getReservationsGlobal().unspecified());
+    EXPECT_FALSE(returned_subnet->getReservationsGlobal().get());
+
+    EXPECT_TRUE(returned_subnet->getReservationsInSubnet().unspecified());
+    EXPECT_TRUE(returned_subnet->getReservationsInSubnet().get());
+
+    EXPECT_TRUE(returned_subnet->getReservationsOutOfPool().unspecified());
+    EXPECT_FALSE(returned_subnet->getReservationsOutOfPool().get());
 
     EXPECT_TRUE(returned_subnet->getCalculateTeeTimes().unspecified());
     EXPECT_FALSE(returned_subnet->getCalculateTeeTimes().get());
@@ -2338,8 +2348,14 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4WithOptionalUnspecified) {
     EXPECT_TRUE(returned_network->getT2().unspecified());
     EXPECT_EQ(0, returned_network->getT2().get());
 
-    EXPECT_TRUE(returned_network->getHostReservationMode().unspecified());
-    EXPECT_EQ(Network::HR_ALL, returned_network->getHostReservationMode().get());
+    EXPECT_TRUE(returned_network->getReservationsGlobal().unspecified());
+    EXPECT_FALSE(returned_network->getReservationsGlobal().get());
+
+    EXPECT_TRUE(returned_network->getReservationsInSubnet().unspecified());
+    EXPECT_TRUE(returned_network->getReservationsInSubnet().get());
+
+    EXPECT_TRUE(returned_network->getReservationsOutOfPool().unspecified());
+    EXPECT_FALSE(returned_network->getReservationsOutOfPool().get());
 
     EXPECT_TRUE(returned_network->getCalculateTeeTimes().unspecified());
     EXPECT_FALSE(returned_network->getCalculateTeeTimes().get());

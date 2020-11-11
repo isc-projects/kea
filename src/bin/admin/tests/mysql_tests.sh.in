@@ -766,6 +766,52 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     ERRCODE=$?
     assert_eq 0 $ERRCODE "insert into hosts failed, expected exit code %d, actual %d"
 
+    # Schema upgrade from 9.4 to 9.5.
+
+    # table: dhcp4_shared_network (reservation_mode replaced by reservations flags)
+    qry="select reservations_global, reservations_in_subnet, reservations_out_of_pool from dhcp4_shared_network"
+    run_statement "dhcp4_shared_network" "$qry"
+
+    qry="show columns from dhcp4_shared_network like 'reservation_mode'";
+    text=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "show columns from dhcp4_shared_network like 'reservation_mode' failed. (expected status code %d, returned %d)"
+    count=`echo $text | grep -ic reservation`
+    assert_eq $count 0 "dhcp4_shared_network has still reservation_mode column. (returned count %d, expected %d)"
+
+    # table: dhcp4_subnet (reservation_mode replaced by reservations flags)
+    qry="select reservations_global, reservations_in_subnet, reservations_out_of_pool from dhcp4_subnet"
+    run_statement "dhcp4_subnet" "$qry"
+
+    qry="show columns from dhcp4_subnet like 'reservation_mode'";
+    text=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "show columns from dhcp4_subnet like 'reservation_mode' failed. (expected status code %d, returned %d)"
+    count=`echo $text | grep -ic reservation`
+    assert_eq $count 0 "dhcp4_subnet has still reservation_mode column. (returned count %d, expected %d)"
+
+    # table: dhcp6_shared_network (reservation_mode replaced by reservations flags)
+    qry="select reservations_global, reservations_in_subnet, reservations_out_of_pool from dhcp6_shared_network"
+    run_statement "dhcp6_shared_network" "$qry"
+
+    qry="show columns from dhcp6_shared_network like 'reservation_mode'";
+    text=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "show columns from dhcp6_shared_network like 'reservation_mode' failed. (expected status code %d, returned %d)"
+    count=`echo $text | grep -ic reservation`
+    assert_eq $count 0 "dhcp6_shared_network has still reservation_mode column. (returned count %d, expected %d)"
+
+    # table: dhcp6_subnet (reservation_mode replaced by reservations flags)
+    qry="select reservations_global, reservations_in_subnet, reservations_out_of_pool from dhcp6_subnet"
+    run_statement "dhcp6_subnet" "$qry"
+
+    qry="show columns from dhcp6_subnet like 'reservation_mode'";
+    text=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "show columns from dhcp6_subnet like 'reservation_mode' failed. (expected status code %d, returned %d)"
+    count=`echo $text | grep -ic reservation`
+    assert_eq $count 0 "dhcp6_subnet has still reservation_mode column. (returned count %d, expected %d)"
+
     # Verify upgraded schema reports version 9.5
     version=$(${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
     assert_str_eq "9.5" ${version} "Expected kea-admin to return %s, returned value was %s"
@@ -1352,7 +1398,7 @@ mysql_unused_subnet_id_test() {
 
 # Verifies that you can upgrade from an earlier version and
 # that reservation_mode values in subnet and shared network tables are
-# converted to new values.
+# converted to new reservations flags.
 mysql_reservation_mode_upgrade_test() {
     test_start "mysql_reservation_mode_upgrade_test"
 
@@ -1422,68 +1468,68 @@ mysql_reservation_mode_upgrade_test() {
     # Upgrade to schema 9.5.
     mysql_upgrade_schema_to_version 9.5
 
-    # Test DISABLED (0) -> 0
-    qry="select count(id) from dhcp4_shared_network where reservation_mode = 0 and name = 'test0';"
+    # Test DISABLED (0) -> false, false, false
+    qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool = false and name = 'test0';"
     run_statement "#4_shared_disabled" "$qry" 1
 
-    # Test OUT_OF_POOL (1) -> 3
-    qry="select count(id) from dhcp4_shared_network where reservation_mode = 3 and name = 'test1';"
+    # Test OUT_OF_POOL (1) -> false, true, true
+    qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and name = 'test1';"
     run_statement "#4_shared_out_of_pool" "$qry" 1
 
-    # Test GLOBAL (2) -> 4
-    qry="select count(id) from dhcp4_shared_network where reservation_mode = 4 and name = 'test2';"
+    # Test GLOBAL (2) -> true, false, false
+    qry="select count(id) from dhcp4_shared_network where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool = false and name = 'test2';"
     run_statement "#4_shared_global" "$qry" 1
 
-    # Test ALL (3) -> 2
-    qry="select count(id) from dhcp4_shared_network where reservation_mode = 2 and name = 'test3';"
+    # Test ALL (3) -> false, true, false
+    qry="select count(id) from dhcp4_shared_network where reservation_global = false and reservations_in_subnet = true and reservations_out_of_pool = false name = 'test3';"
     run_statement "#4_shared_all" "$qry" 1
 
-    # Test DISABLED (0) -> 0
-    qry="select count(subnet_id) from dhcp4_subnet where reservation_mode = 0 and subnet_prefix = '192.0.0.0/24'"
+    # Test DISABLED (0) -> false, false, false
+    qry="select count(subnet_id) from dhcp4_subnet where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool = false and subnet_prefix = '192.0.0.0/24'"
     run_statement "#4_subnet_disabled" "$qry" 1
 
-    # Test OUT_OF_POOL (1) -> 3
-    qry="select count(subnet_id) from dhcp4_subnet where reservation_mode = 3 and subnet_prefix = '192.0.1.0/24'"
+    # Test OUT_OF_POOL (1) -> false, true, true
+    qry="select count(subnet_id) from dhcp4_subnet where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and subnet_prefix = '192.0.1.0/24'"
     run_statement "#4_subnet_out_of_pool" "$qry" 1
 
-    # Test GLOBAL (2) -> 4
-    qry="select count(subnet_id) from dhcp4_subnet where reservation_mode = 4 and subnet_prefix = '192.0.2.0/24'"
+    # Test GLOBAL (2) -> true, false, false
+    qry="select count(subnet_id) from dhcp4_subnet where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool = false and subnet_prefix = '192.0.2.0/24'"
     run_statement "#4_subnet_global" "$qry" 1
 
-    # Test ALL (3) -> 2
-    qry="select count(subnet_id) from dhcp4_subnet where reservation_mode = 2 and subnet_prefix = '192.0.3.0/24'"
+    # Test ALL (3) -> false, true, false
+    qry="select count(subnet_id) from dhcp4_subnet where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and subnet_prefix = '192.0.3.0/24'"
     run_statement "#4_subnet_all" "$qry" 1
 
-    # Test DISABLED (0) -> 0
-    qry="select count(id) from dhcp6_shared_network where reservation_mode = 0 and name = 'test0';"
+    # Test DISABLED (0) -> false, false, false
+    qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool = false and name = 'test0';"
     run_statement "#6_shared_disabled" "$qry" 1
 
-    # Test OUT_OF_POOL (1) -> 3
-    qry="select count(id) from dhcp6_shared_network where reservation_mode = 3 and name = 'test1';"
+    # Test OUT_OF_POOL (1) -> false, true, true
+    qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and name = 'test1';"
     run_statement "#6_shared_out_of_pool" "$qry" 1
 
-    # Test GLOBAL (2) -> 4
-    qry="select count(id) from dhcp6_shared_network where reservation_mode = 4 and name = 'test2';"
+    # Test GLOBAL (2) -> true, false, false
+    qry="select count(id) from dhcp6_shared_network where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool = false and name = 'test2';"
     run_statement "#6_shared_global" "$qry" 1
 
-    # Test ALL (3) -> 2
-    qry="select count(id) from dhcp6_shared_network where reservation_mode = 2 and name = 'test3';"
+    # Test ALL (3) -> false, true, false
+    qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and name = 'test3';"
     run_statement "#6_shared_all" "$qry" 1
 
-    # Test DISABLED (0) -> 0
-    qry="select count(subnet_id) from dhcp6_subnet where reservation_mode = 0 and subnet_prefix = '2001:db8::/64'"
+    # Test DISABLED (0) -> false, false, false
+    qry="select count(subnet_id) from dhcp6_subnet where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool = false and subnet_prefix = '2001:db8::/64'"
     run_statement "#6_subnet_disabled" "$qry" 1
 
-    # Test OUT_OF_POOL (1) -> 3
-    qry="select count(subnet_id) from dhcp6_subnet where reservation_mode = 3 and subnet_prefix = '2001:db8:1::/64'"
+    # Test OUT_OF_POOL (1) -> false, true, true
+    qry="select count(subnet_id) from dhcp6_subnet where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and subnet_prefix = '2001:db8:1::/64'"
     run_statement "#6_subnet_out_of_pool" "$qry" 1
 
-    # Test GLOBAL (2) -> 4
-    qry="select count(subnet_id) from dhcp6_subnet where reservation_mode = 4 and subnet_prefix = '2001:db8:2::/64'"
+    # Test GLOBAL (2) -> true, false, false
+    qry="select count(subnet_id) from dhcp6_subnet where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool = false and subnet_prefix = '2001:db8:2::/64'"
     run_statement "#6_subnet_global" "$qry" 1
 
-    # Test ALL (3) -> 2
-    qry="select count(subnet_id) from dhcp6_subnet where reservation_mode = 2 and subnet_prefix = '2001:db8:3::/64'"
+    # Test ALL (3) -> false, true, false
+    qry="select count(subnet_id) from dhcp6_subnet where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and subnet_prefix = '2001:db8:3::/64'"
     run_statement "#6_subnet_all" "$qry" 1
 
     qry="select count(*) from dhcp4_shared_network;"
