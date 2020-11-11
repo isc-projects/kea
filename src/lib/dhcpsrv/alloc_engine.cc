@@ -916,6 +916,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             continue;
         }
 
+        bool in_subnet = subnet->getReservationsInSubnet();
+        bool out_of_pool = subnet->getReservationsOutOfPool();
+
         /// @todo: We support only one hint for now
         Lease6Ptr lease =
             LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, hint);
@@ -926,8 +929,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // it has been reserved for us we would have already allocated a lease.
 
             ConstHostCollection hosts;
-            bool in_subnet = subnet->getReservationsInSubnet();
-            bool out_of_pool = subnet->getReservationsOutOfPool();
             // The out-of-pool flag indicates that no client should be assigned reservations
             // from within the dynamic pool, and for that reason we only look at reservations that
             // are outside the pools, hence the inPool check.
@@ -966,8 +967,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
             // If the lease is expired, we may likely reuse it, but...
             ConstHostCollection hosts;
-            bool in_subnet = subnet->getReservationsInSubnet();
-            bool out_of_pool = subnet->getReservationsOutOfPool();
             // The out-of-pool flag indicates that no client should be assigned reservations
             // from within the dynamic pool, and for that reason we only look at reservations that
             // are outside the pools, hence the inPool check.

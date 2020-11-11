@@ -416,6 +416,9 @@ lease from the Cassandra database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the Cassandra database for the specified address.
 
+% DHCPSRV_DEPRECATED_RESERVATION_MODE deprecated reservation-mode parameter; use reservations-global, reservations-in-subnet and reservations-out-of-pool instead.
+A warning message indicating that reservation-mode parameter is deprecated.
+
 % DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET received bad DHCPv4o6 packet: %1
 A bad DHCPv4o6 packet was received.
 

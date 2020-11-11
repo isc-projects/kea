@@ -746,7 +746,9 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     // Move from reservation mode to new reservations flags.
     ElementPtr mutable_params;
     mutable_params = boost::const_pointer_cast<Element>(params);
-    BaseNetworkParser::moveReservationMode(mutable_params);
+    if (BaseNetworkParser::moveReservationMode(mutable_params)) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_DEPRECATED_RESERVATION_MODE);
+    }
 
     // Parse parameters common to all Network derivations.
     NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet4);
@@ -1242,7 +1244,9 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     // Move from reservation mode to new reservations flags.
     ElementPtr mutable_params;
     mutable_params = boost::const_pointer_cast<Element>(params);
-    BaseNetworkParser::moveReservationMode(mutable_params);
+    if (BaseNetworkParser::moveReservationMode(mutable_params)) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_DEPRECATED_RESERVATION_MODE);
+    }
 
     // Parse parameters common to all Network derivations.
     NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet_);
