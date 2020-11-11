@@ -1823,6 +1823,7 @@ protected:
     ///
     /// @param [out] lease A pointer to the lease to be updated.
     /// @param ctx A context containing information from the server about the
+    /// client and its message.
     void updateLease4ExtendedInfo(const Lease4Ptr& lease,
                                   const ClientContext4& ctx) const;
 
@@ -1840,8 +1841,26 @@ protected:
     ///
     /// @param [out] lease A pointer to the lease to be updated.
     /// @param ctx A context containing information from the server about the
+    /// client and its message.
     void updateLease6ExtendedInfo(const Lease6Ptr& lease,
                                   const ClientContext6& ctx) const;
+
+private:
+
+    /// @brief Try to reuse an already allocated lease.
+    ///
+    /// This function computes and sets when acceptable the remaining
+    /// valid lifetime of an already allocated lease.
+    /// This uses the cache-threshold and cache-max-age parameters.
+    ///
+    /// A not zero value for the remaining valid lifetime means the
+    /// lease can reuse i.e.:
+    ///  - the lease is not updated in the lease database.
+    ///  - the previous value of the lease can be returned to the client.
+    ///
+    /// @param [in,out] lease The lease to be updated.
+    /// @param subnet A pointer to the lease subnet.
+    void setLeaseRemainingLife(Lease& lease, const SubnetPtr& subnet) const;
 
 private:
 

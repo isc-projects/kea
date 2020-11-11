@@ -503,6 +503,14 @@ The first argument includes the client and transaction identification
 information. The remaining arguments hold the allocated address and
 IAID.
 
+% DHCP6_LEASE_REUSE %1: lease for address %2 and iaid=%3 has been reused for %4 seconds
+This informational message indicates that in response to a client's
+message, the server successfully reused a non-temporary address
+lease. This is a normal behavior and indicates successful operation.
+The first argument includes the client and transaction identification
+information. The remaining arguments hold the allocated address,
+IAID and validity lifetime.
+
 % DHCP6_MULTI_THREADING_INFO enabled: %1, number of threads: %2, queue size: %3
 This is a message listing some information about the multi-threading parameters
 with which the server is running.
@@ -683,6 +691,14 @@ This is a normal behavior and indicates successful operation.
 The first argument includes the client and transaction identification
 information. The remaining arguments hold the allocated prefix,
 prefix length and IAID.
+
+% DHCP6_PD_LEASE_REUSE %1: lease for prefix %2/%3 and iaid=%4 has been reused for %5 seconds
+This informational message indicates that in response to a client's
+message, the server successfully reused a prefix lease.
+This is a normal behavior and indicates successful operation.
+The first argument includes the client and transaction identification
+information. The remaining arguments hold the allocated prefix,
+prefix length, IAID and validity lifetime.
 
 % DHCP6_PROCESS_IA_NA_EXTEND %1: extending lease lifetime for IA_NA option with iaid=%2
 This message is logged when the server is starting to extend the lifetime

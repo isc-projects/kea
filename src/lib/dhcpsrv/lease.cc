@@ -41,6 +41,7 @@ Lease::Lease(const isc::asiolink::IOAddress& addr,
              const bool fqdn_fwd, const bool fqdn_rev,
              const std::string& hostname, const HWAddrPtr& hwaddr)
     : addr_(addr), valid_lft_(valid_lft), current_valid_lft_(valid_lft),
+      remaining_valid_lft_(0),
       cltt_(cltt), current_cltt_(cltt), subnet_id_(subnet_id),
       hostname_(boost::algorithm::to_lower_copy(hostname)), fqdn_fwd_(fqdn_fwd),
       fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
@@ -391,6 +392,7 @@ Lease4::operator=(const Lease4& other) {
         addr_ = other.addr_;
         valid_lft_ = other.valid_lft_;
         current_valid_lft_ = other.current_valid_lft_;
+        remaining_valid_lft_ = other.remaining_valid_lft_;
         cltt_ = other.cltt_;
         current_cltt_ = other.current_cltt_;
         subnet_id_ = other.subnet_id_;
@@ -600,6 +602,7 @@ Lease4::operator==(const Lease4& other) const {
             subnet_id_ == other.subnet_id_ &&
             valid_lft_ == other.valid_lft_ &&
             current_valid_lft_ == other.current_valid_lft_ &&
+            remaining_valid_lft_ == other.remaining_valid_lft_ &&
             cltt_ == other.cltt_ &&
             current_cltt_ == other.current_cltt_ &&
             hostname_ == other.hostname_ &&
@@ -620,6 +623,7 @@ Lease6::operator==(const Lease6& other) const {
             preferred_lft_ == other.preferred_lft_ &&
             valid_lft_ == other.valid_lft_ &&
             current_valid_lft_ == other.current_valid_lft_ &&
+            remaining_valid_lft_ == other.remaining_valid_lft_ &&
             cltt_ == other.cltt_ &&
             current_cltt_ == other.current_cltt_ &&
             subnet_id_ == other.subnet_id_ &&

@@ -456,6 +456,14 @@ client and the transaction identification information. The second argument
 contains the allocated IPv4 address. The third argument is the validity
 lifetime.
 
+% DHCP4_LEASE_REUSE %1: lease %2 has been reused for %3 seconds
+This informational message indicates that the server successfully reused a
+lease in response to client's message. The lease information will
+be sent to the client in the DHCPACK message. The first argument contains the
+client and the transaction identification information. The second argument
+contains the allocated IPv4 address. The third argument is the validity
+lifetime.
+
 % DHCP4_MULTI_THREADING_INFO enabled: %1, number of threads: %2, queue size: %3
 This is a message listing some information about the multi-threading parameters
 with which the server is running.

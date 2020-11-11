@@ -4361,5 +4361,53 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
     lease->setContext(user_context);
 }
 
+void
+AllocEngine::setLeaseRemainingLife(Lease& lease, const SubnetPtr& subnet) const {
+    // Sanity.
+    lease.remaining_valid_lft_ = 0;
+    if (!subnet) {
+        return;
+    }
+
+    // Always reuse infinite lifetime leases.
+    if (lease.valid_lft_ == Lease::INFINITY_LFT) {
+        lease.remaining_valid_lft_ = Lease::INFINITY_LFT;
+    }
+
+    // Refuse time going backward.
+    if (lease.cltt_ > lease.current_cltt_) {
+        return;
+    }
+    uint32_t age = lease.current_cltt_ - lease.cltt_;
+    // Already expired.
+    if (age > lease.current_valid_lft_) {
+        return;
+    }
+
+    // Try cache max age.
+    uint32_t max_age = 0;
+    if (!subnet->getCacheMaxAge().unspecified()) {
+        max_age = subnet->getCacheMaxAge().get();
+        if ((max_age == 0) || (age > max_age)) {
+            return;
+        }
+    }
+
+    // Try cache threshold.
+    if (!subnet->getCacheThreshold().unspecified()) {
+        double threshold = subnet->getCacheThreshold().get();
+        if ((threshold <= 0.) || (threshold > 1.)) {
+            return;
+        }
+        max_age = lease.valid_lft_ * threshold;
+        if (age > max_age) {
+            return;
+        }
+    }
+
+    // Seems to be reusable.
+    lease.remaining_valid_lft_ = lease.current_cltt_ - age;
+}
+
 }  // namespace dhcp
 }  // namespace isc

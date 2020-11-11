@@ -1004,8 +1004,11 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
         Lease6CollectionPtr new_leases(new Lease6Collection());
         if (!ctx.new_leases_.empty()) {
-            new_leases->assign(ctx.new_leases_.cbegin(),
-                               ctx.new_leases_.cend());
+            for (auto new_lease : ctx.new_leases_) {
+                if (new_lease->remaining_valid_lft_ == 0) {
+                    new_leases->push_back(new_lease);
+                }
+            }
         }
         callout_handle->setArgument("leases6", new_leases);
 
@@ -2062,8 +2065,17 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
                 .arg(ia->getIAID());
-        } else {
+        } else if (lease->remaining_valid_lft_ == 0) {
             LOG_INFO(lease6_logger, DHCP6_LEASE_ALLOC)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(ia->getIAID())
+                .arg(Lease::lifetimeToText(lease->valid_lft_));
+        } else {
+            auto age = lease->valid_lft_ - lease->remaining_valid_lft_;
+            lease->valid_lft_ = lease->remaining_valid_lft_;
+            lease->preferred_lft_ -= age;
+            LOG_INFO(lease6_logger, DHCP6_LEASE_REUSE)
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
                 .arg(ia->getIAID())
@@ -2170,11 +2182,6 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
         for (Lease6Collection::iterator l = leases.begin();
              l != leases.end(); ++l) {
 
-            // Check for new minimum lease time
-            if (((*l)->preferred_lft_ > 0) && (min_preferred_lft > (*l)->preferred_lft_)) {
-                min_preferred_lft = (*l)->preferred_lft_;
-            }
-
             // We have a lease! Let's wrap its content into IA_PD option
             // with IAADDR suboption.
             if (ctx.fake_allocation_) {
@@ -2183,13 +2190,28 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
                     .arg((*l)->addr_.toText())
                     .arg(static_cast<int>((*l)->prefixlen_))
                     .arg(ia->getIAID());
-            } else {
+            } else if ((*l)->remaining_valid_lft_ == 0) {
                 LOG_INFO(lease6_logger, DHCP6_PD_LEASE_ALLOC)
                     .arg(query->getLabel())
                     .arg((*l)->addr_.toText())
                     .arg(static_cast<int>((*l)->prefixlen_))
                     .arg(ia->getIAID())
                     .arg(Lease::lifetimeToText((*l)->valid_lft_));
+            } else {
+                auto age = (*l)->valid_lft_ - (*l)->remaining_valid_lft_;
+                (*l)->valid_lft_ = (*l)->remaining_valid_lft_;
+                (*l)->preferred_lft_ -= age;
+                LOG_INFO(lease6_logger, DHCP6_PD_LEASE_REUSE)
+                    .arg(query->getLabel())
+                    .arg((*l)->addr_.toText())
+                    .arg(static_cast<int>((*l)->prefixlen_))
+                    .arg(ia->getIAID())
+                    .arg(Lease::lifetimeToText((*l)->valid_lft_));
+            }
+
+            // Check for new minimum lease time
+            if (((*l)->preferred_lft_ > 0) && (min_preferred_lft > (*l)->preferred_lft_)) {
+                min_preferred_lft = (*l)->preferred_lft_;
             }
 
             boost::shared_ptr<Option6IAPrefix>
@@ -2329,15 +2351,26 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                 (*l)->addr_, (*l)->preferred_lft_, (*l)->valid_lft_));
         ia_rsp->addOption(iaaddr);
 
+        if ((*l)->remaining_valid_lft_ == 0) {
+            LOG_INFO(lease6_logger, DHCP6_LEASE_RENEW)
+                .arg(query->getLabel())
+                .arg((*l)->addr_.toText())
+                .arg(ia->getIAID());
+        } else {
+            auto age = (*l)->valid_lft_ - (*l)->remaining_valid_lft_;
+            (*l)->valid_lft_ = (*l)->remaining_valid_lft_;
+            (*l)->preferred_lft_ -= age;
+            LOG_INFO(lease6_logger, DHCP6_LEASE_REUSE)
+                .arg(query->getLabel())
+                .arg((*l)->addr_.toText())
+                .arg(ia->getIAID())
+                .arg(Lease::lifetimeToText((*l)->valid_lft_));
+        }
+
         // Check for new minimum lease time
         if (((*l)->preferred_lft_ > 0) && (min_preferred_lft > (*l)->preferred_lft_)) {
             min_preferred_lft = (*l)->preferred_lft_;
         }
-
-        LOG_INFO(lease6_logger, DHCP6_LEASE_RENEW)
-            .arg(query->getLabel())
-            .arg((*l)->addr_.toText())
-            .arg(ia->getIAID());
 
         // Now remove this prefix from the hints list.
         AllocEngine::Resource hint_type((*l)->addr_, (*l)->prefixlen_);
@@ -2523,16 +2556,28 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
             }
         }
 
+        if ((*l)->remaining_valid_lft_ == 0) {
+            LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
+                .arg(query->getLabel())
+                .arg((*l)->addr_.toText())
+                .arg(static_cast<int>((*l)->prefixlen_))
+                .arg(ia->getIAID());
+        } else {
+            auto age = (*l)->valid_lft_ - (*l)->remaining_valid_lft_;
+            (*l)->valid_lft_ = (*l)->remaining_valid_lft_;
+            (*l)->preferred_lft_ -= age;
+            LOG_INFO(lease6_logger, DHCP6_PD_LEASE_REUSE)
+                .arg(query->getLabel())
+                .arg((*l)->addr_.toText())
+                .arg(static_cast<int>((*l)->prefixlen_))
+                .arg(ia->getIAID())
+                .arg(Lease::lifetimeToText((*l)->valid_lft_));
+        }
+
         // Check for new minimum lease time
         if (((*l)->preferred_lft_ > 0) && ((*l)->preferred_lft_ < min_preferred_lft)) {
             min_preferred_lft = (*l)->preferred_lft_;
         }
-
-        LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
-            .arg(query->getLabel())
-            .arg((*l)->addr_.toText())
-            .arg(static_cast<int>((*l)->prefixlen_))
-            .arg(ia->getIAID());
 
         // Now remove this prefix from the hints list.
         AllocEngine::Resource hint_type((*l)->addr_, (*l)->prefixlen_);
@@ -4290,6 +4335,7 @@ Dhcpv6Srv::checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
             (*l)->hostname_ = ctx.hostname_;
             (*l)->fqdn_fwd_ = ctx.fwd_dns_update_;
             (*l)->fqdn_rev_ = ctx.rev_dns_update_;
+            (*l)->remaining_valid_lft_ = 0;
             LeaseMgrFactory::instance().updateLease6(*l);
         }
     }

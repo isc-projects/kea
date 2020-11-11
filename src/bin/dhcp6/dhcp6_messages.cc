@@ -86,6 +86,7 @@ extern const isc::log::MessageID DHCP6_LEASE_DATA = "DHCP6_LEASE_DATA";
 extern const isc::log::MessageID DHCP6_LEASE_NA_WITHOUT_DUID = "DHCP6_LEASE_NA_WITHOUT_DUID";
 extern const isc::log::MessageID DHCP6_LEASE_PD_WITHOUT_DUID = "DHCP6_LEASE_PD_WITHOUT_DUID";
 extern const isc::log::MessageID DHCP6_LEASE_RENEW = "DHCP6_LEASE_RENEW";
+extern const isc::log::MessageID DHCP6_LEASE_REUSE = "DHCP6_LEASE_REUSE";
 extern const isc::log::MessageID DHCP6_MULTI_THREADING_INFO = "DHCP6_MULTI_THREADING_INFO";
 extern const isc::log::MessageID DHCP6_NOT_RUNNING = "DHCP6_NOT_RUNNING";
 extern const isc::log::MessageID DHCP6_NO_INTERFACES = "DHCP6_NO_INTERFACES";
@@ -117,6 +118,7 @@ extern const isc::log::MessageID DHCP6_PD_LEASE_ADVERT_FAIL = "DHCP6_PD_LEASE_AD
 extern const isc::log::MessageID DHCP6_PD_LEASE_ALLOC = "DHCP6_PD_LEASE_ALLOC";
 extern const isc::log::MessageID DHCP6_PD_LEASE_ALLOC_FAIL = "DHCP6_PD_LEASE_ALLOC_FAIL";
 extern const isc::log::MessageID DHCP6_PD_LEASE_RENEW = "DHCP6_PD_LEASE_RENEW";
+extern const isc::log::MessageID DHCP6_PD_LEASE_REUSE = "DHCP6_PD_LEASE_REUSE";
 extern const isc::log::MessageID DHCP6_PROCESS_IA_NA_EXTEND = "DHCP6_PROCESS_IA_NA_EXTEND";
 extern const isc::log::MessageID DHCP6_PROCESS_IA_NA_RELEASE = "DHCP6_PROCESS_IA_NA_RELEASE";
 extern const isc::log::MessageID DHCP6_PROCESS_IA_NA_REQUEST = "DHCP6_PROCESS_IA_NA_REQUEST";
@@ -238,6 +240,7 @@ const char* values[] = {
     "DHCP6_LEASE_NA_WITHOUT_DUID", "%1: address lease for address %2 does not have a DUID",
     "DHCP6_LEASE_PD_WITHOUT_DUID", "%1: lease for prefix %2/%3 does not have a DUID",
     "DHCP6_LEASE_RENEW", "%1: lease for address %2 and iaid=%3 has been allocated",
+    "DHCP6_LEASE_REUSE", "%1: lease for address %2 and iaid=%3 has been reused for %4 seconds",
     "DHCP6_MULTI_THREADING_INFO", "enabled: %1, number of threads: %2, queue size: %3",
     "DHCP6_NOT_RUNNING", "IPv6 DHCP server is not running",
     "DHCP6_NO_INTERFACES", "failed to detect any network interfaces",
@@ -269,6 +272,7 @@ const char* values[] = {
     "DHCP6_PD_LEASE_ALLOC", "%1: lease for prefix %2/%3 and iaid=%4 has been allocated for %5 seconds",
     "DHCP6_PD_LEASE_ALLOC_FAIL", "%1: failed to grant a prefix lease for iaid=%2",
     "DHCP6_PD_LEASE_RENEW", "%1: lease for prefix %2/%3 and iaid=%4 has been allocated",
+    "DHCP6_PD_LEASE_REUSE", "%1: lease for prefix %2/%3 and iaid=%4 has been reused for %5 seconds",
     "DHCP6_PROCESS_IA_NA_EXTEND", "%1: extending lease lifetime for IA_NA option with iaid=%2",
     "DHCP6_PROCESS_IA_NA_RELEASE", "%1: releasing lease for IA_NA option with iaid=%2",
     "DHCP6_PROCESS_IA_NA_REQUEST", "%1: server is processing IA_NA option with iaid=%2 and hint=%3",

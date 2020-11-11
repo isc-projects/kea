@@ -85,6 +85,7 @@ extern const isc::log::MessageID DHCP4_INIT_FAIL;
 extern const isc::log::MessageID DHCP4_INIT_REBOOT;
 extern const isc::log::MessageID DHCP4_LEASE_ADVERT;
 extern const isc::log::MessageID DHCP4_LEASE_ALLOC;
+extern const isc::log::MessageID DHCP4_LEASE_REUSE;
 extern const isc::log::MessageID DHCP4_MULTI_THREADING_INFO;
 extern const isc::log::MessageID DHCP4_NCR_CREATE;
 extern const isc::log::MessageID DHCP4_NCR_CREATION_FAILED;
