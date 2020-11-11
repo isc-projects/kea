@@ -1235,7 +1235,8 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
 
                 // If this is a real allocation, we may need to extend the lease
                 // lifetime.
-                if (!ctx.fake_allocation_ && conditionalExtendLifetime(*lease)) {
+                if (!ctx.fake_allocation_) {
+                    lease->cltt_ = time(NULL);
                     LeaseMgrFactory::instance().updateLease6(lease);
                 }
                 return;
@@ -1391,7 +1392,8 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
 
             // If this is a real allocation, we may need to extend the lease
             // lifetime.
-            if (!ctx.fake_allocation_ && conditionalExtendLifetime(*lease)) {
+            if (!ctx.fake_allocation_) {
+                lease->cltt_ = time(NULL);
                 LeaseMgrFactory::instance().updateLease6(lease);
             }
 
@@ -2135,14 +2137,12 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     } else {
         lease->valid_lft_ = ctx.subnet_->getValid();
     }
+    lease->cltt_ = time(NULL);
     lease->hostname_ = ctx.hostname_;
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hwaddr_ = ctx.hwaddr_;
     lease->state_ = Lease::STATE_DEFAULT;
-
-    // Extend lease lifetime if it is time to extend it.
-    conditionalExtendLifetime(*lease);
 
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
               ALLOC_ENGINE_V6_EXTEND_NEW_LEASE_DATA)
@@ -2271,13 +2271,9 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
                 }
             }
 
-            bool fqdn_changed = ((lease->type_ != Lease::TYPE_PD) &&
-                                 !(lease->hasIdenticalFqdn(**lease_it)));
-
-            if (conditionalExtendLifetime(*lease) || fqdn_changed) {
-                ctx.currentIA().changed_leases_.push_back(*lease_it);
-                LeaseMgrFactory::instance().updateLease6(lease);
-            }
+            lease->cltt_ = time(NULL);
+            ctx.currentIA().changed_leases_.push_back(*lease_it);
+            LeaseMgrFactory::instance().updateLease6(lease);
 
             if (update_stats) {
                 StatsMgr::instance().addValue(
@@ -4363,12 +4359,6 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
 
     // Update the lease's user_context.
     lease->setContext(user_context);
-}
-
-bool
-AllocEngine::conditionalExtendLifetime(Lease& lease) const {
-    lease.cltt_ = time(NULL);
-    return (true);
 }
 
 }  // namespace dhcp
