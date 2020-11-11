@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Wed Nov 11 2020 19:52
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -87,6 +87,7 @@ extern const isc::log::MessageID DHCPSRV_CQL_LEASE_EXCEPTION_THROWN = "DHCPSRV_C
 extern const isc::log::MessageID DHCPSRV_CQL_ROLLBACK = "DHCPSRV_CQL_ROLLBACK";
 extern const isc::log::MessageID DHCPSRV_CQL_UPDATE_ADDR4 = "DHCPSRV_CQL_UPDATE_ADDR4";
 extern const isc::log::MessageID DHCPSRV_CQL_UPDATE_ADDR6 = "DHCPSRV_CQL_UPDATE_ADDR6";
+extern const isc::log::MessageID DHCPSRV_DEPRECATED_RESERVATION_MODE = "DHCPSRV_DEPRECATED_RESERVATION_MODE";
 extern const isc::log::MessageID DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET = "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET";
 extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION = "DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION";
 extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_HANDLER_NULL = "DHCPSRV_DHCP_DDNS_HANDLER_NULL";
@@ -336,6 +337,7 @@ const char* values[] = {
     "DHCPSRV_CQL_ROLLBACK", "rolling back Cassandra database.",
     "DHCPSRV_CQL_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "DHCPSRV_CQL_UPDATE_ADDR6", "updating IPv6 lease for address %1",
+    "DHCPSRV_DEPRECATED_RESERVATION_MODE", "deprecated reservation-mode parameter; use reservations-global, reservations-in-subnet and reservations-out-of-pool instead.",
     "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET", "received bad DHCPv4o6 packet: %1",
     "DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION", "error handler for DHCP_DDNS IO generated an expected exception: %1",
     "DHCPSRV_DHCP_DDNS_HANDLER_NULL", "error handler for DHCP_DDNS IO is not set.",

@@ -535,7 +535,8 @@ isAllocated(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const {
 ConstHostPtr
 AllocEngine::ClientContext6::currentHost() const {
     Subnet6Ptr subnet = host_subnet_ ? host_subnet_ : subnet_;
-    if (subnet && subnet->getReservationsInSubnet()) {
+    if (subnet && (subnet->getReservationsInSubnet() ||
+        subnet->getReservationsOutOfPool())) {
         auto host = hosts_.find(subnet->getID());
         if (host != hosts_.cend()) {
             return (host->second);
@@ -3242,7 +3243,8 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
 
 ConstHostPtr
 AllocEngine::ClientContext4::currentHost() const {
-    if (subnet_ && subnet_->getReservationsInSubnet()) {
+    if (subnet_ && (subnet_->getReservationsInSubnet() ||
+        subnet_->getReservationsOutOfPool())) {
         auto host = hosts_.find(subnet_->getID());
         if (host != hosts_.cend()) {
             return (host->second);

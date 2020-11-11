@@ -1481,7 +1481,7 @@ mysql_reservation_mode_upgrade_test() {
     run_statement "#4_shared_global" "$qry" 1
 
     # Test ALL (3) -> false, true, false
-    qry="select count(id) from dhcp4_shared_network where reservation_global = false and reservations_in_subnet = true and reservations_out_of_pool = false name = 'test3';"
+    qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and name = 'test3';"
     run_statement "#4_shared_all" "$qry" 1
 
     # Test DISABLED (0) -> false, false, false
