@@ -511,13 +511,13 @@ static yyconst flex_int16_t yy_accept[1953] =
 
         0,    0,    0,    0,    0,    0,    0,  211,  209,    0,
       208,  207,    0,    0,    0,    0,    0,  166,    0,   28,
-        0,   27,    0,    0,  124,    0,    0,    0,    0,    0,
+        0,   27,    0,    0,  121,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,   55,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,  121,    0,    0,    0,    0,    0,    0,    0,    0,
+        0,  118,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
 
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
@@ -555,7 +555,7 @@ static yyconst flex_int16_t yy_accept[1953] =
 
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,    0,    0,  123,
+        0,    0,    0,    0,    0,    0,    0,    0,    0,  120,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,  139,    0,    0,    0,    0,    0,    0,
@@ -581,7 +581,7 @@ static yyconst flex_int16_t yy_accept[1953] =
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,  191,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,  120,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,  117,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,  153,    0,
         0,    0,    0,    0,    0,    0,   63,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
@@ -622,7 +622,7 @@ static yyconst flex_int16_t yy_accept[1953] =
         0,    0,  158,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
       126,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,   97,  122,    0,    0,    0,    0,    0,    0,
+        0,    0,   97,  119,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,   79,    0,    0,    0,
         0,    0,    0,   17,    0,   15,    0,  187,  186,    0,
         0,    0,   69,    0,    0,    0,    0,    0,   30,    0,
@@ -661,7 +661,7 @@ static yyconst flex_int16_t yy_accept[1953] =
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,   24,    0,    0,    0,    0,    0,
         0,    0,    0,  178,    0,    0,    0,    0,  147,    0,
-        0,    0,    0,    0,    0,    0,    0,    0,    0,  119,
+        0,    0,    0,    0,    0,    0,    0,    0,    0,  116,
 
         0,    0,    0,    0,    0,    0,  183,    0,    0,    0,
         0,    0,    0,    0,    0,   85,    0,    0,    0,    0,
@@ -676,17 +676,17 @@ static yyconst flex_int16_t yy_accept[1953] =
 
         0,    0,    0,    0,  106,    0,    0,  176,    0,    0,
         0,    0,   71,    0,    0,    0,   66,    0,   23,    0,
-      118,    0,    0,    0,   94,    0,    0,    0,    0,    0,
+      122,    0,    0,    0,   94,    0,    0,    0,    0,    0,
         0,    0,   91,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,   89,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,   49,    0,    0,   90,    0,
         0,    0,  182,    0,    0,    0,    0,  193,   75,   74,
-       22,    0,  127,  144,  117,    0,    0,    0,    0,   86,
+       22,    0,  127,  144,  123,    0,    0,    0,    0,   86,
 
         0,    0,    0,    0,    0,    0,    0,  174,    0,    0,
-      179,    0,   88,    0,   81,    0,    0,    0,    0,  116,
+      179,    0,   88,    0,   81,    0,    0,    0,    0,  124,
         0,    0,    0,  173,    0,    0,   26,    0,    0,    0,
         0,    0,    0,    0,    0,   87,    0,    0,    0,    0,
         0,   92,    0,  128,   84,    0,    0,    0,    0,   83,
@@ -1735,8 +1735,8 @@ static yyconst flex_int16_t yy_rule_linenum[213] =
       982,  993, 1005, 1015, 1026, 1035, 1044, 1059, 1075, 1084,
 
      1093, 1102, 1111, 1120, 1129, 1138, 1147, 1156, 1165, 1189,
-     1213, 1222, 1232, 1242, 1251, 1261, 1272, 1283, 1294, 1305,
-     1314, 1323, 1332, 1341, 1350, 1360, 1369, 1378, 1387, 1398,
+     1213, 1222, 1232, 1242, 1251, 1261, 1272, 1281, 1290, 1299,
+     1308, 1317, 1328, 1339, 1350, 1360, 1369, 1378, 1387, 1398,
      1409, 1420, 1431, 1442, 1451, 1460, 1469, 1478, 1487, 1496,
      1505, 1514, 1523, 1533, 1545, 1558, 1567, 1576, 1586, 1596,
      1605, 1616, 1626, 1635, 1645, 1655, 1664, 1673, 1682, 1691,
@@ -3704,9 +3704,9 @@ YY_RULE_SETUP
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
-        return isc::dhcp::Dhcp6Parser::make_RESERVATIONS_OUT_OF_POOL(driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_RESERVATION_MODE(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("reservations-out-of-pool", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("reservation-mode", driver.loc_);
     }
 }
 	YY_BREAK
@@ -3715,18 +3715,64 @@ YY_RULE_SETUP
 #line 1272 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DHCP6:
-    case isc::dhcp::Parser6Context::SUBNET6:
-    case isc::dhcp::Parser6Context::SHARED_NETWORK:
-        return isc::dhcp::Dhcp6Parser::make_RESERVATIONS_IN_SUBNET(driver.loc_);
+    case isc::dhcp::Parser6Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp6Parser::make_DISABLED(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("reservations-in-subnet", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("disabled", driver.loc_);
     }
 }
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 1283 "dhcp6_lexer.ll"
+#line 1281 "dhcp6_lexer.ll"
+{
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp6Parser::make_DISABLED(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("off", driver.loc_);
+    }
+}
+	YY_BREAK
+case 119:
+YY_RULE_SETUP
+#line 1290 "dhcp6_lexer.ll"
+{
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp6Parser::make_OUT_OF_POOL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("out-of-pool", driver.loc_);
+    }
+}
+	YY_BREAK
+case 120:
+YY_RULE_SETUP
+#line 1299 "dhcp6_lexer.ll"
+{
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp6Parser::make_GLOBAL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("global", driver.loc_);
+    }
+}
+	YY_BREAK
+case 121:
+YY_RULE_SETUP
+#line 1308 "dhcp6_lexer.ll"
+{
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp6Parser::make_ALL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("all", driver.loc_);
+    }
+}
+	YY_BREAK
+case 122:
+YY_RULE_SETUP
+#line 1317 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3738,77 +3784,31 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 119:
+case 123:
 YY_RULE_SETUP
-#line 1294 "dhcp6_lexer.ll"
+#line 1328 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
-        return isc::dhcp::Dhcp6Parser::make_RESERVATION_MODE(driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_RESERVATIONS_IN_SUBNET(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("reservation-mode", driver.loc_);
-    }
-}
-	YY_BREAK
-case 120:
-YY_RULE_SETUP
-#line 1305 "dhcp6_lexer.ll"
-{
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::RESERVATION_MODE:
-        return isc::dhcp::Dhcp6Parser::make_DISABLED(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("disabled", driver.loc_);
-    }
-}
-	YY_BREAK
-case 121:
-YY_RULE_SETUP
-#line 1314 "dhcp6_lexer.ll"
-{
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::RESERVATION_MODE:
-        return isc::dhcp::Dhcp6Parser::make_DISABLED(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("off", driver.loc_);
-    }
-}
-	YY_BREAK
-case 122:
-YY_RULE_SETUP
-#line 1323 "dhcp6_lexer.ll"
-{
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::RESERVATION_MODE:
-        return isc::dhcp::Dhcp6Parser::make_OUT_OF_POOL(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("out-of-pool", driver.loc_);
-    }
-}
-	YY_BREAK
-case 123:
-YY_RULE_SETUP
-#line 1332 "dhcp6_lexer.ll"
-{
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::RESERVATION_MODE:
-        return isc::dhcp::Dhcp6Parser::make_GLOBAL(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("global", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("reservations-in-subnet", driver.loc_);
     }
 }
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 1341 "dhcp6_lexer.ll"
+#line 1339 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::RESERVATION_MODE:
-        return isc::dhcp::Dhcp6Parser::make_ALL(driver.loc_);
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_RESERVATIONS_OUT_OF_POOL(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("all", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("reservations-out-of-pool", driver.loc_);
     }
 }
 	YY_BREAK
