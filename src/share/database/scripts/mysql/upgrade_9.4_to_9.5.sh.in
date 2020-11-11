@@ -18,34 +18,136 @@ fi
 
 mysql "$@" <<EOF
 
+# Add new reservations flags.
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN reservations_global BOOL DEFAULT NULL,
+    ADD COLUMN reservations_in_subnet BOOL DEFAULT NULL,
+    ADD COLUMN reservations_out_of_pool BOOL DEFAULT NULL;
+
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN reservations_global BOOL DEFAULT NULL,
+    ADD COLUMN reservations_in_subnet BOOL DEFAULT NULL,
+    ADD COLUMN reservations_out_of_pool BOOL DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    ADD COLUMN reservations_global BOOL DEFAULT NULL,
+    ADD COLUMN reservations_in_subnet BOOL DEFAULT NULL,
+    ADD COLUMN reservations_out_of_pool BOOL DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN reservations_global BOOL DEFAULT NULL,
+    ADD COLUMN reservations_in_subnet BOOL DEFAULT NULL,
+    ADD COLUMN reservations_out_of_pool BOOL DEFAULT NULL;
+
 # Disable audit
 SET @disable_audit = 1;
 
-# Update reservation_mode value after separating flags.
+# Translate reservation_mode to new flags.
+# 0 is DISABLED
+# 1 is OUT_OF_POOL
+# 2 is GLOBAL
+# 3 is ALL
+UPDATE dhcp4_subnet
+    SET reservations_global = FALSE,
+        reservations_in_subnet = FALSE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 0;
 
-# update old global to new value
-UPDATE dhcp4_subnet SET reservation_mode = 4 WHERE reservation_mode = 2;
-UPDATE dhcp4_shared_network SET reservation_mode = 4 WHERE reservation_mode = 2;
+UPDATE dhcp4_subnet
+    SET reservations_global = FALSE,
+        reservations_in_subnet = TRUE,
+        reservations_out_of_pool = TRUE
+    WHERE reservation_mode = 1;
 
-# update old all to new value
-UPDATE dhcp4_subnet SET reservation_mode = 2 WHERE reservation_mode = 3;
-UPDATE dhcp4_shared_network SET reservation_mode = 2 WHERE reservation_mode = 3;
+UPDATE dhcp4_subnet
+    SET reservations_global = TRUE,
+        reservations_in_subnet = FALSE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 2;
 
-# update out-of-pool all to new value
-UPDATE dhcp4_subnet SET reservation_mode = 3 WHERE reservation_mode = 1;
-UPDATE dhcp4_shared_network SET reservation_mode = 3 WHERE reservation_mode = 1;
+UPDATE dhcp4_subnet
+    SET reservations_global = FALSE,
+        reservations_in_subnet = TRUE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 3;
 
-# update old global to new value
-UPDATE dhcp6_subnet SET reservation_mode = 4 WHERE reservation_mode = 2;
-UPDATE dhcp6_shared_network SET reservation_mode = 4 WHERE reservation_mode = 2;
+UPDATE dhcp4_shared_network
+    SET reservations_global = FALSE,
+        reservations_in_subnet = FALSE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 0;
 
-# update old all to new value
-UPDATE dhcp6_subnet SET reservation_mode = 2 WHERE reservation_mode = 3;
-UPDATE dhcp6_shared_network SET reservation_mode = 2 WHERE reservation_mode = 3;
+UPDATE dhcp4_shared_network
+    SET reservations_global = FALSE,
+        reservations_in_subnet = TRUE,
+        reservations_out_of_pool = TRUE
+    WHERE reservation_mode = 1;
 
-# update out-of-pool all to new value
-UPDATE dhcp6_subnet SET reservation_mode = 3 WHERE reservation_mode = 1;
-UPDATE dhcp6_shared_network SET reservation_mode = 3 WHERE reservation_mode = 1;
+UPDATE dhcp4_shared_network
+    SET reservations_global = TRUE,
+        reservations_in_subnet = FALSE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 2;
+
+UPDATE dhcp4_shared_network
+    SET reservations_global = FALSE,
+        reservations_in_subnet = TRUE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 3;
+
+UPDATE dhcp6_subnet
+    SET reservations_global = FALSE,
+        reservations_in_subnet = FALSE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 0;
+
+UPDATE dhcp6_subnet
+    SET reservations_global = FALSE,
+        reservations_in_subnet = TRUE,
+        reservations_out_of_pool = TRUE
+    WHERE reservation_mode = 1;
+
+UPDATE dhcp6_subnet
+    SET reservations_global = TRUE,
+        reservations_in_subnet = FALSE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 2;
+
+UPDATE dhcp6_subnet
+    SET reservations_global = FALSE,
+        reservations_in_subnet = TRUE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 3;
+
+UPDATE dhcp6_shared_network
+    SET reservations_global = FALSE,
+        reservations_in_subnet = FALSE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 0;
+
+UPDATE dhcp6_shared_network
+    SET reservations_global = FALSE,
+        reservations_in_subnet = TRUE,
+        reservations_out_of_pool = TRUE
+    WHERE reservation_mode = 1;
+
+UPDATE dhcp6_shared_network
+    SET reservations_global = TRUE,
+        reservations_in_subnet = FALSE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 2;
+
+UPDATE dhcp6_shared_network
+    SET reservations_global = FALSE,
+        reservations_in_subnet = TRUE,
+        reservations_out_of_pool = FALSE
+    WHERE reservation_mode = 3;
+
+# DROP reservation_mode
+ALTER TABLE dhcp4_subnet DROP COLUMN reservation_mode;
+ALTER TABLE dhcp4_shared_network DROP COLUMN reservation_mode;
+ALTER TABLE dhcp6_subnet DROP COLUMN reservation_mode;
+ALTER TABLE dhcp6_shared_network DROP COLUMN reservation_mode;
 
 # Enable audit
 SET @disable_audit = 0;

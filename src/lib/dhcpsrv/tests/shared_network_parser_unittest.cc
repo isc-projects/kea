@@ -128,6 +128,8 @@ public:
                 "    \"rebind-timer\": 199,"
                 "    \"relay\": { \"ip-addresses\": [ \"10.1.1.1\" ] },"
                 "    \"renew-timer\": 99,"
+                "    \"reservations-global\": false,"
+                "    \"reservations-in-subnet\": true,"
                 "    \"reservations-out-of-pool\": true,"
                 "    \"server-hostname\": \"example.org\","
                 "    \"require-client-classes\": [ \"runner\" ],"
@@ -173,7 +175,9 @@ public:
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
                 "            \"require-client-classes\": []\n,"
+                "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
+                "            \"reservations-out-of-pool\": false,"
                 "            \"4o6-interface\": \"\","
                 "            \"4o6-interface-id\": \"\","
                 "            \"4o6-subnet\": \"\","
@@ -198,7 +202,9 @@ public:
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
                 "            \"require-client-classes\": []\n,"
+                "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
+                "            \"reservations-out-of-pool\": false,"
                 "            \"4o6-interface\": \"\","
                 "            \"4o6-interface-id\": \"\","
                 "            \"4o6-subnet\": \"\","
@@ -259,7 +265,9 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("/dev/null", network->getFilename().get());
     EXPECT_EQ("10.0.0.1", network->getSiaddr().get().toText());
     EXPECT_EQ("example.org", network->getSname().get());
-    EXPECT_EQ(Network::HR_OUT_OF_POOL, network->getHostReservationMode());
+    EXPECT_FALSE(network->getReservationsGlobal());
+    EXPECT_TRUE(network->getReservationsInSubnet());
+    EXPECT_TRUE(network->getReservationsOutOfPool());
     EXPECT_TRUE(network->getDdnsSendUpdates().get());
     EXPECT_TRUE(network->getDdnsOverrideNoUpdate().get());
     EXPECT_TRUE(network->getDdnsOverrideClientUpdate().get());
@@ -547,6 +555,8 @@ public:
                 "    \"relay\": { \"ip-addresses\": [ \"2001:db8:1::1\" ] },"
                 "    \"renew-timer\": 99,"
                 "    \"require-client-classes\": [ \"runner\" ],"
+                "    \"reservations-global\": false,"
+                "    \"reservations-in-subnet\": true,"
                 "    \"reservations-out-of-pool\": true,"
                 "    \"user-context\": { },"
                 "    \"valid-lifetime\": 399,"
@@ -589,7 +599,9 @@ public:
                 "            \"max-valid-lifetime\": 500,"
                 "            \"client-class\": \"\","
                 "            \"require-client-classes\": []\n,"
+                "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
+                "            \"reservations-out-of-pool\": false,"
                 "            \"rapid-commit\": false,"
                 "            \"hostname-char-set\": \"\""
                 "        },"
@@ -604,7 +616,9 @@ public:
                 "            \"valid-lifetime\": 40,"
                 "            \"client-class\": \"\","
                 "            \"require-client-classes\": []\n,"
+                "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
+                "            \"reservations-out-of-pool\": false,"
                 "            \"rapid-commit\": false"
                 "        }"
                 "    ]"

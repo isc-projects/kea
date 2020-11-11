@@ -2899,13 +2899,13 @@ TEST_F(AllocEngine4Test, findReservation) {
     EXPECT_TRUE(ctx.currentHost());
     EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
 
-    // It shouldn't be returned when HR_DISABLED mode is enabled.
-    subnet_->setHostReservationMode(Network::HR_DISABLED);
+    // It shouldn't be returned when reservations-in-subnet is disabled.
+    subnet_->setReservationsInSubnet(false);
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_FALSE(ctx.currentHost());
 
     // Check the out of the pool reservation mode.
-    subnet_->setHostReservationMode(Network::HR_OUT_OF_POOL);
+    subnet_->setReservationsOutOfPool(true);
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_TRUE(ctx.currentHost());
     EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
@@ -3092,7 +3092,7 @@ TEST_F(AllocEngine4Test, globalReservationReservedAddressDiscover) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
-    subnet_->setHostReservationMode(Network::HR_GLOBAL);
+    subnet_->setReservationsGlobal(true);
 
     // Query allocation engine for the lease to be assigned to this
     // client without specifying the address to be assigned.
@@ -3140,7 +3140,7 @@ TEST_F(AllocEngine4Test, globalReservationReservedAddressRequest) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
-    subnet_->setHostReservationMode(Network::HR_GLOBAL);
+    subnet_->setReservationsGlobal(true);
 
     // Query allocation engine for the lease to be assigned to this
     // client without specifying the address to be assigned.
@@ -3192,7 +3192,7 @@ TEST_F(AllocEngine4Test, globalReservationDynamicDiscover) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
-    subnet_->setHostReservationMode(Network::HR_GLOBAL);
+    subnet_->setReservationsGlobal(true);
 
     // Query allocation engine for the lease to be assigned to this
     // client without specifying the address to be assigned.
@@ -3241,7 +3241,7 @@ TEST_F(AllocEngine4Test, globalReservationDynamicRequest) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
-    subnet_->setHostReservationMode(Network::HR_GLOBAL);
+    subnet_->setReservationsGlobal(true);
 
     // Query allocation engine for the lease to be assigned to this
     // client without specifying the address to be assigned.
@@ -3293,7 +3293,8 @@ TEST_F(AllocEngine4Test, mixedReservationReservedAddressDiscover) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
-    subnet_->setHostReservationMode(Network::HR_GLOBAL|Network::HR_IN_SUBNET);
+    subnet_->setReservationsGlobal(true);
+    subnet_->setReservationsInSubnet(true);
 
     // Query allocation engine for the lease to be assigned to this
     // client without specifying the address to be assigned.
@@ -3342,7 +3343,8 @@ TEST_F(AllocEngine4Test, mixedReservationReservedAddressRequest) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
-    subnet_->setHostReservationMode(Network::HR_GLOBAL|Network::HR_IN_SUBNET);
+    subnet_->setReservationsGlobal(true);
+    subnet_->setReservationsInSubnet(true);
 
     // Query allocation engine for the lease to be assigned to this
     // client without specifying the address to be assigned.
@@ -3398,7 +3400,8 @@ TEST_F(AllocEngine4Test, bothReservationReservedAddressDiscover) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
-    subnet_->setHostReservationMode(Network::HR_GLOBAL|Network::HR_IN_SUBNET);
+    subnet_->setReservationsGlobal(true);
+    subnet_->setReservationsInSubnet(true);
 
     // Query allocation engine for the lease to be assigned to this
     // client without specifying the address to be assigned.
@@ -3451,7 +3454,8 @@ TEST_F(AllocEngine4Test, bothReservationReservedAddressRequest) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
-    subnet_->setHostReservationMode(Network::HR_GLOBAL|Network::HR_IN_SUBNET);
+    subnet_->setReservationsGlobal(true);
+    subnet_->setReservationsInSubnet(true);
 
     // Query allocation engine for the lease to be assigned to this
     // client without specifying the address to be assigned.

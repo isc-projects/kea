@@ -3027,31 +3027,32 @@ SET version = '9', minor = '4';
 
 # This line concludes database upgrade to version 9.4.
 
-# Update reservation_mode value after separating flags.
+# Add new reservations flags.
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN reservations_global BOOL DEFAULT NULL,
+    ADD COLUMN reservations_in_subnet BOOL DEFAULT NULL,
+    ADD COLUMN reservations_out_of_pool BOOL DEFAULT NULL;
 
-# update old global to new value
-UPDATE dhcp4_subnet SET reservation_mode = 4 WHERE reservation_mode = 2;
-UPDATE dhcp4_shared_network SET reservation_mode = 4 WHERE reservation_mode = 2;
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN reservations_global BOOL DEFAULT NULL,
+    ADD COLUMN reservations_in_subnet BOOL DEFAULT NULL,
+    ADD COLUMN reservations_out_of_pool BOOL DEFAULT NULL;
 
-# update old all to new value
-UPDATE dhcp4_subnet SET reservation_mode = 2 WHERE reservation_mode = 3;
-UPDATE dhcp4_shared_network SET reservation_mode = 2 WHERE reservation_mode = 3;
+ALTER TABLE dhcp6_subnet
+    ADD COLUMN reservations_global BOOL DEFAULT NULL,
+    ADD COLUMN reservations_in_subnet BOOL DEFAULT NULL,
+    ADD COLUMN reservations_out_of_pool BOOL DEFAULT NULL;
 
-# update out-of-pool all to new value
-UPDATE dhcp4_subnet SET reservation_mode = 3 WHERE reservation_mode = 1;
-UPDATE dhcp4_shared_network SET reservation_mode = 3 WHERE reservation_mode = 1;
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN reservations_global BOOL DEFAULT NULL,
+    ADD COLUMN reservations_in_subnet BOOL DEFAULT NULL,
+    ADD COLUMN reservations_out_of_pool BOOL DEFAULT NULL;
 
-# update old global to new value
-UPDATE dhcp6_subnet SET reservation_mode = 4 WHERE reservation_mode = 2;
-UPDATE dhcp6_shared_network SET reservation_mode = 4 WHERE reservation_mode = 2;
-
-# update old all to new value
-UPDATE dhcp6_subnet SET reservation_mode = 2 WHERE reservation_mode = 3;
-UPDATE dhcp6_shared_network SET reservation_mode = 2 WHERE reservation_mode = 3;
-
-# update out-of-pool all to new value
-UPDATE dhcp6_subnet SET reservation_mode = 3 WHERE reservation_mode = 1;
-UPDATE dhcp6_shared_network SET reservation_mode = 3 WHERE reservation_mode = 1;
+# DROP reservation_mode
+ALTER TABLE dhcp4_subnet DROP COLUMN reservation_mode;
+ALTER TABLE dhcp4_shared_network DROP COLUMN reservation_mode;
+ALTER TABLE dhcp6_subnet DROP COLUMN reservation_mode;
+ALTER TABLE dhcp6_shared_network DROP COLUMN reservation_mode;
 
 # Update the schema version number
 UPDATE schema_version

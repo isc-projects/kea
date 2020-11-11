@@ -83,8 +83,14 @@ TEST(Subnet4Test, defaults) {
     EXPECT_TRUE(subnet.getT2().unspecified());
     EXPECT_EQ(0, subnet.getT2().get());
 
-    EXPECT_TRUE(subnet.getHostReservationMode().unspecified());
-    EXPECT_EQ(Network::HR_ALL, subnet.getHostReservationMode().get());
+    EXPECT_TRUE(subnet.getReservationsGlobal().unspecified());
+    EXPECT_FALSE(subnet.getReservationsGlobal().get());
+
+    EXPECT_TRUE(subnet.getReservationsInSubnet().unspecified());
+    EXPECT_TRUE(subnet.getReservationsInSubnet().get());
+
+    EXPECT_TRUE(subnet.getReservationsOutOfPool().unspecified());
+    EXPECT_FALSE(subnet.getReservationsOutOfPool().get());
 
     EXPECT_TRUE(subnet.getCalculateTeeTimes().unspecified());
     EXPECT_FALSE(subnet.getCalculateTeeTimes().get());
@@ -853,8 +859,14 @@ TEST(SharedNetwork6Test, defaults) {
     EXPECT_TRUE(subnet.getT2().unspecified());
     EXPECT_EQ(0, subnet.getT2().get());
 
-    EXPECT_TRUE(subnet.getHostReservationMode().unspecified());
-    EXPECT_EQ(Network::HR_ALL, subnet.getHostReservationMode().get());
+    EXPECT_TRUE(subnet.getReservationsGlobal().unspecified());
+    EXPECT_FALSE(subnet.getReservationsGlobal().get());
+
+    EXPECT_TRUE(subnet.getReservationsInSubnet().unspecified());
+    EXPECT_TRUE(subnet.getReservationsInSubnet().get());
+
+    EXPECT_TRUE(subnet.getReservationsOutOfPool().unspecified());
+    EXPECT_FALSE(subnet.getReservationsOutOfPool().get());
 
     EXPECT_TRUE(subnet.getCalculateTeeTimes().unspecified());
     EXPECT_FALSE(subnet.getCalculateTeeTimes().get());

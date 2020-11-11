@@ -360,9 +360,9 @@
                 // specific options.
                 //
                 // When using reservations, it is useful to configure
-                // reservations-out-of-pool, reservations-in-subnet,
-                // reservations-global (subnet specific parameters) and
-                // host-reservation-identifiers (global parameter).
+                // reservations-global, reservations-in-subnet,
+                // reservations-out-of-pool (subnet specific parameters)
+                // and host-reservation-identifiers (global parameter).
                 {
                     "client-id": "01:12:23:34:45:56:67",
                     "ip-address": "192.0.2.204",

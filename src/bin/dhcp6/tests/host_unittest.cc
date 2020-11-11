@@ -57,6 +57,7 @@ namespace {
 ///   - Similar to Configuration 6, but one of the addresses reserved to client
 ///     with the DUID 04:03:02:01.
 ///
+/// Descriptions of next configurations are in the comment with the number.
 const char* CONFIGS[] = {
     // Configuration 0:
     "{ "
@@ -350,12 +351,16 @@ const char* CONFIGS[] = {
         "\"mac-sources\": [ \"ipv6-link-local\" ],  \n"
         "\"subnet6\": [  \n"
         " {  \n"
+        "    \"id\": 1, \n"
         "    \"subnet\": \"2001:db8:1::/48\",  \n"
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], \n"
         "    \"interface\" : \"eth0\", \n"
-        "    \"reservations-global\": true\n"
+        "    \"reservations-global\": true, \n"
+        "    \"reservations-in-subnet\": false, \n"
+        "    \"reservations-out-of-pool\": false \n"
         " },"
         " {  \n"
+        "    \"id\": 2, \n"
         "    \"subnet\": \"2001:db8:2::/48\",  \n"
         "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ], \n"
         "    \"interface\" : \"eth1\", \n"
@@ -392,9 +397,12 @@ const char* CONFIGS[] = {
         "\"mac-sources\": [ \"ipv6-link-local\" ],  \n"
         "\"subnet6\": [  \n"
         " {  \n"
+        "    \"id\": 1, \n"
         "    \"subnet\": \"2001:db8:1::/48\",  \n"
         "    \"interface\" : \"eth0\", \n"
-        "    \"reservations-global\": true,\n"
+        "    \"reservations-global\": true, \n"
+        "    \"reservations-in-subnet\": false, \n"
+        "    \"reservations-out-of-pool\": false, \n"
         "    \"pd-pools\": [ \n"
         "    { \n"
         "       \"prefix\": \"3000::\", \n"
@@ -403,6 +411,7 @@ const char* CONFIGS[] = {
         "    }] \n"
         " },"
         " {  \n"
+        "    \"id\": 2, \n"
         "    \"subnet\": \"2001:db8:2::/48\",  \n"
         "    \"interface\" : \"eth1\", \n"
         "    \"pd-pools\": [ \n"
@@ -436,6 +445,8 @@ const char* CONFIGS[] = {
         "}"
         "],\n"
         "\"reservations-global\": true,\n"
+        "\"reservations-in-subnet\": false,\n"
+        "\"reservations-out-of-pool\": false,\n"
         "\"valid-lifetime\": 4000,\n"
         "\"reservations\": [ \n"
         "{\n"
@@ -488,6 +499,8 @@ const char* CONFIGS[] = {
         "}"
         "],\n"
         "\"reservations-global\": true,\n"
+        "\"reservations-in-subnet\": false,\n"
+        "\"reservations-out-of-pool\": false,\n"
         "\"valid-lifetime\": 4000,\n"
         "\"reservations\": [ \n"
         "{\n"
@@ -2383,7 +2396,7 @@ TEST_F(HostTest, globalReservationsNA) {
     }
 
     {
-        SCOPED_TRACE("Default subnet mode excludes Global HR");
+        SCOPED_TRACE("Default subnet reservations flags excludes global reservations");
         client.clearConfig();
         client.setInterface("eth1");
         client.setDUID("01:02:03:04");
@@ -2408,7 +2421,8 @@ TEST_F(HostTest, globalReservationsNA) {
         Subnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
             getCfgSubnets6()->getSubnet(2);
         ASSERT_TRUE(subnet);
-        subnet->setHostReservationMode(Network::HR_IN_SUBNET|Network::HR_GLOBAL);
+        subnet->setReservationsGlobal(true);
+        subnet->setReservationsInSubnet(true);
         client.clearConfig();
         client.setInterface("eth1");
         client.setDUID("01:02:03:05");
@@ -2445,7 +2459,7 @@ TEST_F(HostTest, globalReservationsPD) {
     }
 
     {
-        SCOPED_TRACE("Default subnet mode excludes Global HR");
+        SCOPED_TRACE("Default subnet reservations flags excludes global reservations");
         client.clearConfig();
         client.setInterface("eth1");
         client.setDUID("01:02:03:04");
@@ -2470,7 +2484,8 @@ TEST_F(HostTest, globalReservationsPD) {
         Subnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
             getCfgSubnets6()->getSubnet(2);
         ASSERT_TRUE(subnet);
-        subnet->setHostReservationMode(Network::HR_IN_SUBNET|Network::HR_GLOBAL);
+        subnet->setReservationsGlobal(true);
+        subnet->setReservationsInSubnet(true);
         client.clearConfig();
         client.setInterface("eth1");
         client.setDUID("01:02:03:05");

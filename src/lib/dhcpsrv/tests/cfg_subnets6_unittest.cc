@@ -637,7 +637,9 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
     subnet3->requireClientClass("bar");
-    subnet3->setHostReservationMode(Network::HR_ALL);
+    subnet3->setReservationsGlobal(false);
+    subnet3->setReservationsInSubnet(true);
+    subnet3->setReservationsOutOfPool(false);
     subnet3->setRapidCommit(false);
     subnet3->setCalculateTeeTimes(true);
     subnet3->setT1Percent(0.50);
@@ -710,7 +712,9 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"min-valid-lifetime\": 100,\n"
         "    \"max-valid-lifetime\": 300,\n"
         "    \"rapid-commit\": false,\n"
+        "    \"reservations-global\": false,\n"
         "    \"reservations-in-subnet\": true,\n"
+        "    \"reservations-out-of-pool\": false,\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
         "    \"option-data\": [ ],\n"
@@ -1079,7 +1083,9 @@ TEST(CfgSubnets6Test, teeTimePercentValidation) {
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservations-in-subnet\": true\n"
+        "            \"reservations-global\": false, \n"
+        "            \"reservations-in-subnet\": true, \n"
+        "            \"reservations-out-of-pool\": false \n"
         "        }";
 
 
@@ -1142,7 +1148,9 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservations-in-subnet\": true\n"
+        "            \"reservations-global\": false, \n"
+        "            \"reservations-in-subnet\": true, \n"
+        "            \"reservations-out-of-pool\": false \n"
         "        }";
 
 
@@ -1377,7 +1385,9 @@ TEST(CfgSubnets6Test, hostnameSanitizierValidation) {
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservations-in-subnet\": true\n"
+        "            \"reservations-global\": false, \n"
+        "            \"reservations-in-subnet\": true, \n"
+        "            \"reservations-out-of-pool\": false \n"
         "        }";
 
     data::ElementPtr elems;
@@ -1447,7 +1457,9 @@ TEST(CfgSubnets6Test, cacheParamValidation) {
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservations-in-subnet\": true\n"
+        "            \"reservations-global\": false, \n"
+        "            \"reservations-in-subnet\": true, \n"
+        "            \"reservations-out-of-pool\": false \n"
         "        }";
 
     data::ElementPtr elems;

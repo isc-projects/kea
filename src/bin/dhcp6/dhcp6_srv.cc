@@ -4289,4 +4289,3 @@ Dhcpv6Srv::checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
 
 }  // namespace dhcp
 }  // namespace isc
-

@@ -459,7 +459,9 @@ const char* DORA_CONFIGS[] = {
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\","
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
-        "    \"reservation-mode\": \"all\","
+        "    \"reservations-global\": false,"
+        "    \"reservations-in-subnet\": true,"
+        "    \"reservations-out-of-pool\": false,"
         "    \"reservations\": [ "
         "       {"
         "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
@@ -477,7 +479,9 @@ const char* DORA_CONFIGS[] = {
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\","
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
-        "    \"reservation-mode\": \"disabled\","
+        "    \"reservations-global\": false,"
+        "    \"reservations-in-subnet\": false,"
+        "    \"reservations-out-of-pool\": false,"
         "    \"reservations\": [ "
         "       {"
         "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
@@ -495,7 +499,9 @@ const char* DORA_CONFIGS[] = {
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\","
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
-        "    \"reservation-mode\": \"out-of-pool\","
+        "    \"reservations-global\": false,"
+        "    \"reservations-in-subnet\": true,"
+        "    \"reservations-out-of-pool\": true,"
         "    \"reservations\": [ "
         "       {"
         "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
@@ -1803,8 +1809,8 @@ TEST_F(DORATest, reservationModeDisabled) {
     // Set explicit HW address so as it matches the reservation in the
     // configuration used below.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
-    // Configure DHCP server. In this configuration the reservation mode is
-    // set to disabled. Thus, the server should ignore the reservation for
+    // Configure DHCP server. In this configuration the reservation flags are
+    // set to false. Thus, the server should ignore the reservation for
     // this client.
     configure(DORA_CONFIGS[13], *client.getServer());
     // Client requests the 10.0.0.50 address and the server should assign it

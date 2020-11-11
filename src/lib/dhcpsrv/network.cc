@@ -19,15 +19,6 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-const uint8_t Network::HR_DISABLED = 0;
-const uint8_t Network::HR_OUT_OF_POOL_FLAG = 1 << 0;
-const uint8_t Network::HR_IN_SUBNET_FLAG = 1 << 1;
-const uint8_t Network::HR_GLOBAL_FLAG = 1 << 2;
-const uint8_t Network::HR_OUT_OF_POOL = HR_OUT_OF_POOL_FLAG | HR_IN_SUBNET_FLAG;
-const uint8_t Network::HR_IN_SUBNET = HR_IN_SUBNET_FLAG;
-const uint8_t Network::HR_GLOBAL = HR_GLOBAL_FLAG;
-const uint8_t Network::HR_ALL = Network::HR_IN_SUBNET;
-
 void
 Network::RelayInfo::addAddress(const asiolink::IOAddress& addr) {
     if (containsAddress(addr)) {
@@ -106,24 +97,6 @@ Network::requireClientClass(const isc::dhcp::ClientClass& class_name) {
 const ClientClasses&
 Network::getRequiredClasses() const {
     return (required_classes_);
-}
-
-Network::HRMode
-Network::hrModeFromString(const std::string& hr_mode_name) {
-    if ( (hr_mode_name.compare("disabled") == 0) ||
-         (hr_mode_name.compare("off") == 0) )  {
-        return (Network::HR_DISABLED);
-    } else if (hr_mode_name.compare("out-of-pool") == 0) {
-        return (Network::HR_OUT_OF_POOL);
-    } else if (hr_mode_name.compare("global") == 0) {
-        return (Network::HR_GLOBAL);
-    } else if (hr_mode_name.compare("all") == 0) {
-        return (Network::HR_ALL);
-    } else {
-        // Should never happen...
-        isc_throw(BadValue, "Can't convert '" << hr_mode_name
-                  << "' into any valid reservation-mode values");
-    }
 }
 
 Optional<IOAddress>
@@ -210,36 +183,22 @@ Network::toElement() const {
         }
     }
 
-    // Set reservation mode
-    Optional<Network::HRMode> hrmode = host_reservation_mode_;
-    if (!hrmode.unspecified()) {
-        bool hr_global = false;
-        bool hr_in_subnet = false;
-        bool hr_out_of_pool = false;
-        if (hrmode & Network::HR_GLOBAL) {
-            hr_global = true;
-        }
-        if (hrmode & Network::HR_IN_SUBNET_FLAG) {
-            hr_in_subnet = true;
-        }
-        if (hrmode & Network::HR_OUT_OF_POOL_FLAG) {
-            hr_out_of_pool = true;
-        }
-        if (hrmode == Network::HR_DISABLED) {
-            map->set("reservations-global", Element::create(false));
-            map->set("reservations-in-subnet", Element::create(false));
-            map->set("reservations-out-of-pool", Element::create(false));
-        } else {
-            if (hr_global) {
-                map->set("reservations-global", Element::create(true));
-            }
-            if (hr_in_subnet) {
-                map->set("reservations-in-subnet", Element::create(true));
-            }
-            if (hr_out_of_pool) {
-                map->set("reservations-out-of-pool", Element::create(true));
-            }
-        }
+    // Set reservations-global
+    if (!reservations_global_.unspecified()) {
+        map->set("reservations-global",
+                 Element::create(reservations_global_.get()));
+    }
+
+    // Set reservations-in-subnet
+    if (!reservations_in_subnet_.unspecified()) {
+        map->set("reservations-in-subnet",
+                 Element::create(reservations_in_subnet_.get()));
+    }
+
+    // Set reservations-out-of-pool
+    if (!reservations_out_of_pool_.unspecified()) {
+        map->set("reservations-out-of-pool",
+                 Element::create(reservations_out_of_pool_.get()));
     }
 
     // Set options

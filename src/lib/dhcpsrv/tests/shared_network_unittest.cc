@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 #include <cstdint>
 #include <vector>
+
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -52,8 +53,14 @@ TEST(SharedNetwork4Test, defaults) {
     EXPECT_TRUE(network->getT2().unspecified());
     EXPECT_EQ(0, network->getT2().get());
 
-    EXPECT_TRUE(network->getHostReservationMode().unspecified());
-    EXPECT_EQ(Network::HR_ALL, network->getHostReservationMode().get());
+    EXPECT_TRUE(network->getReservationsGlobal().unspecified());
+    EXPECT_FALSE(network->getReservationsGlobal().get());
+
+    EXPECT_TRUE(network->getReservationsInSubnet().unspecified());
+    EXPECT_TRUE(network->getReservationsInSubnet().get());
+
+    EXPECT_TRUE(network->getReservationsOutOfPool().unspecified());
+    EXPECT_FALSE(network->getReservationsOutOfPool().get());
 
     EXPECT_TRUE(network->getCalculateTeeTimes().unspecified());
     EXPECT_FALSE(network->getCalculateTeeTimes().get());
@@ -614,7 +621,9 @@ TEST(SharedNetwork4Test, unparse) {
     network->addRelayAddress(IOAddress("192.168.2.1"));
     network->setAuthoritative(false);
     network->setMatchClientId(false);
-    network->setHostReservationMode(Network::HR_ALL);
+    network->setReservationsGlobal(false);
+    network->setReservationsInSubnet(true);
+    network->setReservationsOutOfPool(false);
 
     // Add several subnets.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
@@ -639,7 +648,9 @@ TEST(SharedNetwork4Test, unparse) {
         "    },\n"
         "    \"renew-timer\": 100,\n"
         "    \"require-client-classes\": [ \"foo\" ],\n"
+        "    \"reservations-global\": false,\n"
         "    \"reservations-in-subnet\": true,\n"
+        "    \"reservations-out-of-pool\": false,\n"
         "    \"subnet4\": [\n"
         "      {\n"
         "        \"4o6-interface\": \"\",\n"
@@ -753,8 +764,14 @@ TEST(SharedNetwork6Test, defaults) {
     EXPECT_TRUE(network->getT2().unspecified());
     EXPECT_EQ(0, network->getT2().get());
 
-    EXPECT_TRUE(network->getHostReservationMode().unspecified());
-    EXPECT_EQ(Network::HR_ALL, network->getHostReservationMode().get());
+    EXPECT_TRUE(network->getReservationsGlobal().unspecified());
+    EXPECT_FALSE(network->getReservationsGlobal().get());
+
+    EXPECT_TRUE(network->getReservationsInSubnet().unspecified());
+    EXPECT_TRUE(network->getReservationsInSubnet().get());
+
+    EXPECT_TRUE(network->getReservationsOutOfPool().unspecified());
+    EXPECT_FALSE(network->getReservationsOutOfPool().get());
 
     EXPECT_TRUE(network->getCalculateTeeTimes().unspecified());
     EXPECT_FALSE(network->getCalculateTeeTimes().get());
@@ -1306,7 +1323,9 @@ TEST(SharedNetwork6Test, unparse) {
     network->addRelayAddress(IOAddress("2001:db8:1::8"));
 
     network->setRapidCommit(true);
-    network->setHostReservationMode(Network::HR_ALL);
+    network->setReservationsGlobal(false);
+    network->setReservationsInSubnet(true);
+    network->setReservationsOutOfPool(false);
 
     // Add several subnets.
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
@@ -1330,7 +1349,9 @@ TEST(SharedNetwork6Test, unparse) {
         "    },\n"
         "    \"renew-timer\": 100,\n"
         "    \"require-client-classes\": [ \"foo\" ],\n"
+        "    \"reservations-global\": false,\n"
         "    \"reservations-in-subnet\": true,\n"
+        "    \"reservations-out-of-pool\": false,\n"
         "    \"subnet6\": [\n"
         "      {\n"
         "        \"id\": 1,\n"

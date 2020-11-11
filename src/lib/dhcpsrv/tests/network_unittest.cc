@@ -145,17 +145,6 @@ public:
     ElementPtr globals_;
 };
 
-// This test verifies conversions of host reservation mode names to
-// appropriate enum values.
-TEST_F(NetworkTest, hrModeFromString) {
-    EXPECT_EQ(Network::HR_DISABLED, Network::hrModeFromString("off"));
-    EXPECT_EQ(Network::HR_DISABLED, Network::hrModeFromString("disabled"));
-    EXPECT_EQ(Network::HR_OUT_OF_POOL, Network::hrModeFromString("out-of-pool"));
-    EXPECT_EQ(Network::HR_GLOBAL, Network::hrModeFromString("global"));
-    EXPECT_EQ(Network::HR_ALL, Network::hrModeFromString("all"));
-    EXPECT_THROW(Network::hrModeFromString("bogus"), isc::BadValue);
-}
-
 // This test verifies that the inheritance is supported for certain
 // network parameters.
 TEST_F(NetworkTest, inheritanceSupport4) {
@@ -163,7 +152,9 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("valid-lifetime", Element::create(80));
     globals_->set("renew-timer", Element::create(80));
     globals_->set("rebind-timer", Element::create(80));
-    globals_->set("reservation-mode", Element::create("disabled"));
+    globals_->set("reservations-global", Element::create(false));
+    globals_->set("reservations-in-subnet", Element::create(false));
+    globals_->set("reservations-out-of-pool", Element::create(false));
     globals_->set("calculate-tee-times", Element::create(false));
     globals_->set("t1-percent", Element::create(0.75));
     globals_->set("t2-percent", Element::create(0.6));
@@ -185,9 +176,6 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("cache-max-age", Element::create(20));
     globals_->set("ddns-update-on-renew", Element::create(true));
     globals_->set("ddns-use-conflict-resolution", Element::create(true));
-    globals_->set("reservations-out-of-pool", Element::create(false));
-    globals_->set("reservations-in-subnet", Element::create(false));
-    globals_->set("reservations-global", Element::create(false));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -214,18 +202,22 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                             60, 80);
     }
     {
-        SCOPED_TRACE("reservation-mode");
-        testNetworkInheritance<TestNetwork>(&Network::getHostReservationMode,
-                                            &Network::setHostReservationMode,
-                                            Network::HR_OUT_OF_POOL,
-                                            Network::HR_DISABLED);
+        SCOPED_TRACE("reservation-global");
+        testNetworkInheritance<TestNetwork>(&Network::getReservationsGlobal,
+                                            &Network::setReservationsGlobal,
+                                            true, false);
     }
     {
-        SCOPED_TRACE("reservations-global");
-        testNetworkInheritance<TestNetwork>(&Network::getHostReservationMode,
-                                            &Network::setHostReservationMode,
-                                            Network::HR_OUT_OF_POOL,
-                                            Network::HR_DISABLED);
+        SCOPED_TRACE("reservation-in-subnet");
+        testNetworkInheritance<TestNetwork>(&Network::getReservationsInSubnet,
+                                            &Network::setReservationsInSubnet,
+                                            true, false);
+    }
+    {
+        SCOPED_TRACE("reservation-out-of-pool");
+        testNetworkInheritance<TestNetwork>(&Network::getReservationsOutOfPool,
+                                            &Network::setReservationsOutOfPool,
+                                            true, false);
     }
     {
         SCOPED_TRACE("calculate-tee-times");

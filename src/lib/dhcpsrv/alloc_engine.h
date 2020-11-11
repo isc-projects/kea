@@ -651,12 +651,15 @@ public:
 
         /// @brief Returns host from the most preferred subnet.
         ///
+        /// If there is no such host and global reservations are enabled
+        /// returns the global host.
+        ///
         /// @return Pointer to the host object.
         ConstHostPtr currentHost() const;
 
         /// @brief Returns global host reservation if there is one
         ///
-        /// If the current subnet's reservation mode is global and
+        /// If the current subnet's reservations-global is true and
         /// there is a global host (i.e. reservation belonging to
         /// the global subnet), return it.  Otherwise return an
         /// empty pointer.
@@ -666,8 +669,8 @@ public:
 
         /// @brief Determines if a global reservation exists
         ///
-        /// @return true if there current subnet's reservation mode is
-        /// global and there is global host containing the given
+        /// @return true if there current subnet's reservations-global
+        /// is true and there is global host containing the given
         /// lease reservation, false otherwise
         bool hasGlobalReservation(const IPv6Resrv& resv) const;
 
@@ -1024,14 +1027,13 @@ private:
 
     /// @brief Creates new leases based on reservations.
     ///
-    /// This method allcoates new leases,  based on host reservations.
-    /// Existing leases are specified in the existing_leases parameter.
-    /// It first calls @c allocateGlobalReservedLeases6 to accomodate
-    /// subnets using global reservations.  If that method allocates
-    /// addresses, we return, otherwise we continue and check for non-global
-    /// reservations.  A new lease is not created, if there is a lease for
-    /// specified address on existing_leases list or there is a lease used by
-    /// someone else.
+    /// This method allocates new leases, based on host reservations.
+    /// Existing leases are specified in the existing_leases
+    /// parameter.  It first checks for non-global reservations.  A
+    /// new lease is not created, if there is a lease for specified
+    /// address on existing_leases list or there is a lease used by
+    /// someone else. It last calls @c allocateGlobalReservedLeases6
+    /// to accomodate subnets using global reservations.
     ///
     /// @param ctx client context that contains all details (subnet, client-id, etc.)
     /// @param existing_leases leases that are already associated with the client
@@ -1407,12 +1409,15 @@ public:
 
         /// @brief Returns host for currently selected subnet.
         ///
+        /// If there is no such host and global reservations are enabled
+        /// returns the global host.
+        ///
         /// @return Pointer to the host object.
         ConstHostPtr currentHost() const;
 
         /// @brief Returns global host reservation if there is one
         ///
-        /// If the current subnet's reservation mode is global and
+        /// If the current subnet's reservations-global is true and
         /// there is a global host (i.e. reservation belonging to
         /// the global subnet), return it.  Otherwise return an
         /// empty pointer.

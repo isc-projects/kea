@@ -1037,7 +1037,9 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet3->setCalculateTeeTimes(true);
     subnet3->setT1Percent(0.50);
     subnet3->setT2Percent(0.65);
-    subnet3->setHostReservationMode(Network::HR_ALL);
+    subnet3->setReservationsGlobal(false);
+    subnet3->setReservationsInSubnet(true);
+    subnet3->setReservationsOutOfPool(false);
     subnet3->setAuthoritative(false);
     subnet3->setMatchClientId(true);
     subnet3->setSiaddr(IOAddress("192.0.2.2"));
@@ -1115,7 +1117,9 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
         "    \"authoritative\": false,\n"
+        "    \"reservations-global\": false,\n"
         "    \"reservations-in-subnet\": true,\n"
+        "    \"reservations-out-of-pool\": false,\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ]\n,"
         "    \"require-client-classes\": [ \"foo\", \"bar\" ],\n"
@@ -1282,7 +1286,9 @@ TEST(CfgSubnets4Test, teeTimePercentValidation) {
         "            \"boot-file-name\": \"\", \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservations-in-subnet\": true,\n"
+        "            \"reservations-global\": false, \n"
+        "            \"reservations-in-subnet\": true, \n"
+        "            \"reservations-out-of-pool\": false, \n"
         "            \"4o6-interface\": \"\", \n"
         "            \"4o6-interface-id\": \"\", \n"
         "            \"4o6-subnet\": \"\" \n"
@@ -1349,7 +1355,9 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         "            \"boot-file-name\": \"\", \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservations-in-subnet\": true,\n"
+        "            \"reservations-global\": false, \n"
+        "            \"reservations-in-subnet\": true, \n"
+        "            \"reservations-out-of-pool\": false, \n"
         "            \"4o6-interface\": \"\", \n"
         "            \"4o6-interface-id\": \"\", \n"
         "            \"4o6-subnet\": \"\" \n"
@@ -1591,7 +1599,9 @@ TEST(CfgSubnets4Test, hostnameSanitizierValidation) {
         "            \"boot-file-name\": \"\", \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservations-in-subnet\": true,\n"
+        "            \"reservations-global\": false, \n"
+        "            \"reservations-in-subnet\": true, \n"
+        "            \"reservations-out-of-pool\": false, \n"
         "            \"4o6-interface\": \"\", \n"
         "            \"4o6-interface-id\": \"\", \n"
         "            \"4o6-subnet\": \"\" \n"
@@ -1669,7 +1679,9 @@ TEST(CfgSubnets4Test, cacheParamValidation) {
         "            \"boot-file-name\": \"\", \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservations-in-subnet\": true,\n"
+        "            \"reservations-global\": false, \n"
+        "            \"reservations-in-subnet\": true, \n"
+        "            \"reservations-out-of-pool\": false, \n"
         "            \"4o6-interface\": \"\", \n"
         "            \"4o6-interface-id\": \"\", \n"
         "            \"4o6-subnet\": \"\" \n"

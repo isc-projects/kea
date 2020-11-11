@@ -4106,6 +4106,15 @@ another.
    that must be given due consideration when using them, please see
    :ref:`reservation4-conflict` for more details.
 
+.. note::
+
+   Beginning with Kea 1.9.1 reservation mode was replaced by three
+   boolean flags ``"reservations-global"``, ``"reservations-in-subnet"``
+   and ``"reservations-out-of-pool"`` which allow to configure host
+   reservations both global and in a subnet. In such case a subnet
+   host reservation has the preference on a global reservation
+   when both exist for the same client.
+
 .. _reservation4-conflict:
 
 Conflicts in DHCPv4 Reservations
@@ -4622,11 +4631,26 @@ An example configuration using global reservations is shown below:
        ]
    }
 
-Since Kea 1.9.1, the ``reservation-mode`` is deprecated by the
-``reservations-out-of-pool``, ``reservations-in-subnet`` and
-``reservations-global`` flags.
+Since Kea 1.9.1, the ``reservation-mode`` is replaced by the
+``reservations-global``, ``reservations-in-subnet`` and
+``reservations-out-of-pool`` flags.
 The flags can be activated independently and can produce various combinations,
-some of them being unsupported by the deprecated ``reservation-mode``.
+some of them being unsuported by the deprecated ``reservation-mode``.
+
+The meaning of these flags are:
+
+- ``reservations-global``: fetch global reservations.
+
+- ``reservations-in-subnet``: fetch subnet reservations. For a shared network
+  this includes all subnets member of the shared network.
+
+- ``reservations-out-of-pool``: the makes sense only when the
+  ``reservations-in-subnet`` flag is true. When ``reservations-out-of-pool``
+  is true the server may assume that all host reservations of the subnet are
+  for addresses that do not belong to the dynamic pool as described in the
+  ``out-of-pool`` reservation mode.
+
+The ``reservation-mode`` will be deprecated in a future Kea version.
 
 The correspondence of old values are:
 
@@ -4881,14 +4905,16 @@ following can be used:
        "valid-lifetime": 600,
        "subnet4": [ {
            "subnet": "10.0.0.0/24",
-           # It is deprecated by the "reservations-out-of-pool",
-           # "reservations-in-subnet" and "reservations-global" parameters.
+           # It is replaced by the "reservations-global"
+           # "reservations-in-subnet" and "reservations-out-of-pool"
+           # parameters.
            # "reservation-mode": "global",
            # Specify if server should lookup global reservations.
            "reservations-global": true,
            # Specify if server should lookup in-subnet reservations.
            "reservations-in-subnet": false,
-           # Specify if server should lookup out-of-pool reservations.
+           # Specify if server can assume that all reserved addresses
+           # are out-of-pool.
            "reservations-out-of-pool": false,
            "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ]
        } ]
@@ -4992,14 +5018,14 @@ following example:
             "hw-address": "aa:bb:cc:dd:ee:fe",
             "client-classes": [ "reserved_class" ]
         }],
-        # It is deprecated by the "reservations-out-of-pool",
-        # "reservations-in-subnet" and "reservations-global" parameters.
-        # "reservation-mode": "global",
+        # It is replaced by the "reservations-global"
+        # "reservations-in-subnet" and "reservations-out-of-pool" parameters.
         # Specify if server should lookup global reservations.
         "reservations-global": true,
         # Specify if server should lookup in-subnet reservations.
         "reservations-in-subnet": false,
-        # Specify if server should lookup out-of-pool reservations.
+        # Specify if server can assume that all reserved addresses
+        # are out-of-pool.
         "reservations-out-of-pool": false,
         "shared-networks": [{
             "subnet4": [
