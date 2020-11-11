@@ -450,12 +450,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // Print the list of known backends.
     HostDataSourceFactory::printRegistered();
 
-    // This is a way to convert ConstElementPtr to ElementPtr.
-    // We need a config that can be edited, because we will insert
-    // default values and will insert derived values as well.
-    ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
-
-    // answer will hold the result.
+    // Answer will hold the result.
     ConstElementPtr answer;
     // Rollback informs whether error occurred and original data
     // have to be restored to global storages.
