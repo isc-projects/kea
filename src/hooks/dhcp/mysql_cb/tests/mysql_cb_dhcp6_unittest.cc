@@ -311,7 +311,7 @@ public:
         shared_network->requireClientClass("required-class2");
         shared_network->setReservationsGlobal(false);
         shared_network->setReservationsInSubnet(false);
-        subnet->setReservationsOutOfPool(false);
+        shared_network->setReservationsOutOfPool(false);
         shared_network->setContext(user_context);
         shared_network->setValid(5555);
         shared_network->setPreferred(4444);
