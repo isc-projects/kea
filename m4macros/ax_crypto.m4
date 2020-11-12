@@ -169,7 +169,7 @@ EOF
 
    # # check -R, "-Wl,-R" or -rpath
    AX_ISC_RPATH
-   
+
    # See crypto_rpath for some info on why we do this
    if test "x$ISC_RPATH_FLAG" != "x"; then
        CRYPTO_RPATH=
@@ -213,7 +213,7 @@ the version of Botan that comes with your distribution. If you have updated
 your C++ compiler we highly recommend that you use support libraries such as
 Boost and Botan that were compiled with the same compiler version.])
         else
-                AC_MSG_RESULT([Missing required header files.])
+                AC_MSG_RESULT([Missing required libcrypto header files])
         fi]
    )
    CPPFLAGS=$CPPFLAGS_SAVED
@@ -231,7 +231,7 @@ then
                          [using namespace Botan;
                           HashFunction *h = HashFunction::create("MD5")
 .release();
-                         ])],   
+                         ])],
         [AC_MSG_RESULT([checking for Botan library... yes])],
         [AC_MSG_RESULT([checking for Botan library... no])
          CRYPTO_INCLUDES=""

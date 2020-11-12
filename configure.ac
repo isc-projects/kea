@@ -1003,7 +1003,8 @@ CPPFLAGS="$LOG4CPLUS_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
 LIBS="$LOG4CPLUS_LIBS $MULTITHREADING_FLAG $LIBS"
 
-AC_CHECK_HEADERS([log4cplus/logger.h],,AC_MSG_ERROR([Missing required header files.]))
+AC_CHECK_HEADERS([log4cplus/logger.h],,
+                 AC_MSG_ERROR([Missing required header file (logger.h) from the log4cplus package]))
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <log4cplus/logger.h>
                          ],
