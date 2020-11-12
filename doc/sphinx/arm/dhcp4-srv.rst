@@ -5465,7 +5465,7 @@ Even though it is technically possible to configure two (or more) subnets
 within the shared network to use different relay addresses, this will almost
 always lead to a different behavior than what the user would expect. In this
 case, the Kea server will initially select one of the subnets by matching
-the relay address in the client's packet with the subnet's conifguration.
+the relay address in the client's packet with the subnet's configuration.
 However, it MAY end up using the other subnet (even though it does not match
 the relay address) if the client already has a lease in this subnet, has a
 host reservation in this subnet or simply the initially selected subnet has no

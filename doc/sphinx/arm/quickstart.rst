@@ -57,7 +57,7 @@ to tweak specific compilation options, it is usually easier to install
 Kea using native packages.
 
 1. Go to `Kea on cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__
-   and choose Kea version and enter repository.
+   and choose Kea version and enter the repository.
 
 2. Use ``Set Me Up`` and follow instructions to add repository
    on your system.

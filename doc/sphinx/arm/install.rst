@@ -228,7 +228,7 @@ options. Some commonly used options are:
    cryptographic functions. It is preferable to use OpenSSL (see below).
 
  - ``--with-openssl``
-   Replace Botan by the OpenSSL the cryptographic library. By default
+   Replace Botan by the OpenSSL cryptographic library. By default
    ``configure`` searches for a valid Botan installation. If one is not
    found, it searches for OpenSSL. Normally this is not necessary.
 
@@ -238,7 +238,7 @@ options. Some commonly used options are:
 
  - ``--with-site-packages``
    Only useful when ``kea-shell`` is enabled. It causes the kea-shell
-   python packages to be installed in specified directory. This is
+   python packages to be installed in the specified directory. This is
    mostly useful for Debian related distros. While most systems store
    python packages in ${prefix}/usr/lib/pythonX/site-packages, Debian
    introduced separate directory for packages installed from DEB. Such
@@ -250,9 +250,9 @@ options. Some commonly used options are:
    is to not build it.
 
  - ``--with-freeradius``
-   Build the optional ``RADIUS`` hook. This option specifies path to the
+   Build the optional ``RADIUS`` hook. This option specifies the path to the
    patched version of FreeRADIUS client. Available in subscriber only version.
-   This option requires subscription-only RADIUS hook.
+   This option requires the subscription-only RADIUS hook.
 
  - ``--with-freeradius-dictionary``
    Specify a non-standard location for a FreeRADIUS dictionary file. That
@@ -602,10 +602,10 @@ use regular UDP sockets (refer to ``dhcp-socket-type`` parameter in the
 
 .. note::
 
-   An alternative approach to running Kea with root privileges is to configure Kea to use
-   non-privileged ports (i.e. those greater than 1024) and redirect traffic. Note that this
-   only works for relayed traffic. Furthermore, we consider it experimental and untested in
-   production environments. Use it only after careful consideration.
+   An alternative approach to avoiding running Kea with root privileges assumes instructing Kea to
+   use non-privileged (greater than 1024) posts and redirecting traffic. This, however, will work
+   only for relayed traffic. This approach in general is considered experimental and not tested
+   enough for deployment in production environments. Use with caution!
 
 To use this approach, configure the server to listen on other non-privileged ports (e.g. 1547
 and 1548) by running the process with ``-p`` option in ``/etc/systemd/system/kea-dhcp4.service``:

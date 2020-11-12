@@ -12,7 +12,7 @@ Databases and Database Version Numbers
 Kea may be configured to use a database as storage for leases or as a
 source of servers' configurations and host reservations (i.e. static
 assignments of addresses, prefixes, options, etc.). Kea
-updates introduce changes to the database schemas to faciliate new
+updates introduce changes to the database schemas to facilitate new
 features and correct discovered issues with the existing schemas.
 
 A given version of Kea expects a particular structure in the backend and
@@ -289,7 +289,7 @@ to create them now:
 Do not do this if the tables were created in Step 4. ``kea-admin``
 implements rudimentary checks; it will refuse to initialize a database
 that contains any existing tables. To start from scratch,
-all must be removed data manually. (This process is a manual operation
+all data must be removed manually. (This process is a manual operation
 on purpose, to avoid possibly irretrievable mistakes by ``kea-admin``.)
 
 .. _mysql-upgrade:
