@@ -294,7 +294,7 @@ can be used to configure the memfile backend.
    disables the LFC.
 
 -  ``max-row-errors``: when the server loads a lease file, it is processed
-   row by row, each row contaning a single lease. If a row is flawed and
+   row by row, each row containing a single lease. If a row is flawed and
    cannot be processed correctly the server will log it, discard the row,
    and go on to the next row. This parameter can be used to set a limit on
    the number of such discards that may occur after which the server will
@@ -3887,7 +3887,7 @@ reserved class has been also assigned.
 .. note::
    Client classes specified within the Kea configuration file may
    depend on the classes specified within the global host reservations.
-   In such case the ``only-if-required`` parameter is not needed.
+   In such a case the ``only-if-required`` parameter is not needed.
    Refer to the :ref:`pool-selection-with-class-reservations6` and
    :ref:`subnet-selection-with-class-reservations6`
    for the specific use cases.
@@ -4419,7 +4419,7 @@ Subnet Selection with Client Class Reservations
 
 There is one specific use case when subnet selection may be influenced by
 client classes specified within host reservations. This is the case when the
-client belongs to a shared network. In such case it is possible to use
+client belongs to a shared network. In such a case it is possible to use
 classification to select a subnet within this shared network. Consider the
 following example:
 

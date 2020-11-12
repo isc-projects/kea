@@ -173,7 +173,7 @@ The ``hooks-libraries`` list contains the list of hooks libraries that
 should be loaded by the CA, along with their configuration information
 specified with ``parameters``.
 
-Please consult :ref:`logging` for the details how to configure
+Please consult :ref:`logging` for the details on how to configure
 logging. The CA's root logger's name is ``kea-ctrl-agent``, as given in
 the example above.
 

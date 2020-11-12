@@ -203,10 +203,10 @@ is specified in the Kea configuration file, using the
 All Kea instances presenting the same server tag to the configuration database
 are given the same configuration. It is the administrator's choice whether
 multiple Kea instances use the same server tag or each Kea instance is using
-a different sever tag. Also, there is no requirement that the instances
+a different server tag. Also, there is no requirement that the instances
 running on the same physical or virtual machine use the same server tag. It is
 even possible to configure the Kea server without assigning it a server tag.
-In such case the server will be given the configuration specified for "all"
+In such a case the server will be given the configuration specified for "all"
 servers.
 
 In order to differentiate the configurations between the Kea servers, a
@@ -239,7 +239,7 @@ the subnet within the network. Some commands provided by the
 information by subnet identifier (or prefix) and explicitly prohibit
 using the server tag to access the subnet. This is because, in a
 general case, the subnet definition is associated with multiple servers
-rather than single server. In fact, it may even be associated
+rather than a single server. In fact, it may even be associated
 with no servers (unassigned). Still, the unassigned subnet has an
 identifier and prefix which can be used to access the subnet.
 
@@ -293,5 +293,5 @@ belong to "all" servers.
    use this configuration. The server fetching the subnets will be
    aware that the subnets are associated with the shared network but
    the shared network will not be found by this server as it doesn't
-   belong to it. In such case, both the shared network and the subnets
+   belong to it. In such a case, both the shared network and the subnets
    should be assigned to the same set of servers.

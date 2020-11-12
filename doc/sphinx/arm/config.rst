@@ -52,7 +52,7 @@ Kea components use an extended JSON with additional features allowed:
    ignored.
 
 -  Multiline comments: any text between /\* and \*/ is ignored. This
-   commenting can span multiple lines.
+   comment can span multiple lines.
 
 -  File inclusion: JSON files can include other JSON files by using a
    statement of the form \<?include "file.json"?\>.
@@ -180,7 +180,7 @@ syntax and its top-level element is a map (i.e. the data must be enclosed in
 curly brackets). However, some hook libraries may expect specific formatting;
 please consult the specific hook library documentation for details.
 
-In a sense the user context mechanism has superseeded the JSON comment
+In a sense the user context mechanism has superseded the JSON comment
 capabilities. ISC would like to encourage people to use user-context in favor of
 the older mechanisms and we hope to deprecate JSON comments one day in the
 future. To promote this way of storing comments, Kea code is able to understand

@@ -127,7 +127,7 @@ default settings will be used.
  .. note::
 
    The verbosity for the server is set when it is started. Once started,
-   the verbosity can be only changed by stopping the server and starting
+   the verbosity can only be changed by stopping the server and starting
    it again with the new value of the ``kea_verbose`` parameter.
 
 .. _keactrl-commands:

@@ -1376,7 +1376,7 @@ successful upgrade of one of the servers to the version supporting
 the maintenance mechanism it is possible to benefit from this
 mechanism during the upgrade of the second server.
 
-In such case, shut down the server running the old version. Next,
+In such a case, shut down the server running the old version. Next,
 send the ``ha-maintenance-start`` to the server that has been
 upgraded and supports the maintenance mechanism. This server should
 immediately transition to the partner-down state as it cannot
@@ -1678,7 +1678,7 @@ The ``last-scopes`` and ``last-state`` contain the information about the
 HA scopes served by the partner and its state. Note that this information
 is gathered during the heartbeat command exchange, so it may not be
 accurate if the communication problem occur between the partners and this
-status information is not refreshed. In such case, it may be useful to
+status information is not refreshed. In such a case, it may be useful to
 send the ``status-get`` command to the partner server directly to check
 its current state. The ``age`` parameter specifies the number of seconds
 since the information from the partner was gathered (the age of this
