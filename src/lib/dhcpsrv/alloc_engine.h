@@ -558,6 +558,11 @@ public:
             /// FQDN has changed.
             Lease6Collection changed_leases_;
 
+            /// @brief Holds addresses and prefixes allocated for this IA.
+            ///
+            /// This collection is used to update at most once new leases.
+            ResourceContainer new_resources_;
+
             /// @brief A pointer to the IA_NA/IA_PD option to be sent in
             /// response
             Option6IAPtr ia_rsp_;
@@ -591,6 +596,20 @@ public:
             ///
             /// @throw BadValue if iaprefix is null.
             void addHint(const Option6IAPrefixPtr& iaprefix);
+
+            /// @brief Convenience method adding new prefix or address.
+            ///
+            /// @param prefix Prefix or address
+            /// @param prefix_len Prefix length. Default is 128 for addresses.
+            void addNewResource(const asiolink::IOAddress& prefix,
+                                const uint8_t prefix_len = 128);
+
+            /// @brief Checks if specified address or prefix was new.
+            ///
+            /// @param prefix Prefix or address
+            /// @param prefix_len Prefix length. Default is 128 for addresses.
+            bool isNewResource(const asiolink::IOAddress& prefix,
+                               const uint8_t prefix_len = 128) const;
         };
 
         /// @brief Container holding IA specific contexts.

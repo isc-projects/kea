@@ -484,7 +484,7 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
 
 AllocEngine::ClientContext6::IAContext::IAContext()
     : iaid_(0), type_(Lease::TYPE_NA), hints_(), old_leases_(),
-      changed_leases_(), ia_rsp_() {
+      changed_leases_(), new_resources_(), ia_rsp_() {
 }
 
 void
@@ -514,6 +514,21 @@ IAContext::addHint(const Option6IAPrefixPtr& iaprefix) {
     }
     addHint(iaprefix->getAddress(), iaprefix->getLength(),
             iaprefix->getPreferred(), iaprefix->getValid());
+}
+
+void
+AllocEngine::ClientContext6::
+IAContext::addNewResource(const asiolink::IOAddress& prefix,
+                          const uint8_t prefix_len) {
+    static_cast<void>(new_resources_.insert(Resource(prefix, prefix_len)));
+}
+
+bool
+AllocEngine::ClientContext6::
+IAContext::isNewResource(const asiolink::IOAddress& prefix,
+                         const uint8_t prefix_len) const {
+    return (static_cast<bool>(new_resources_.count(Resource(prefix,
+                                                            prefix_len))));
 }
 
 void
@@ -748,6 +763,8 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             // succeed, except cases where the reserved addresses are used by
             // someone else.
             allocateReservedLeases6(ctx, leases);
+
+            leases = updateLeaseData(ctx, leases);
 
             // If not, we'll need to continue and will eventually fall into case 4:
             // getting a regular lease. That could happen when we're processing
@@ -1233,12 +1250,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                     }
                 }
 
-                // If this is a real allocation, we may need to extend the lease
-                // lifetime.
-                if (!ctx.fake_allocation_) {
-                    lease->cltt_ = time(NULL);
-                    LeaseMgrFactory::instance().updateLease6(lease);
-                }
+                // Got a lease for a reservation in this IA.
                 return;
             }
         }
@@ -1390,14 +1402,8 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
                                                 static_cast<bool>(fqdn));
             }
 
-            // If this is a real allocation, we may need to extend the lease
-            // lifetime.
-            if (!ctx.fake_allocation_) {
-                lease->cltt_ = time(NULL);
-                LeaseMgrFactory::instance().updateLease6(lease);
-            }
-
-            return;
+            // Got a lease for a reservation in this IA.
+            return(true);
         }
     }
 
@@ -1816,7 +1822,7 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
 
     if (!ctx.fake_allocation_) {
         // Add(update) the extended information on the lease.
-        updateLease6ExtendedInfo(expired, ctx);
+        static_cast<void>(updateLease6ExtendedInfo(expired, ctx));
 
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease6(expired);
@@ -1925,7 +1931,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
 
     if (!ctx.fake_allocation_) {
         // Add(update) the extended information on the lease.
-        updateLease6ExtendedInfo(lease, ctx);
+        static_cast<void>(updateLease6ExtendedInfo(lease, ctx));
 
         // That is a real (REQUEST) allocation
         bool status = LeaseMgrFactory::instance().addLease(lease);
@@ -1950,6 +1956,9 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                                               "cumulative-assigned-pds",
                                               static_cast<int64_t>(1));
             }
+
+            // Record it so it won't be updated twice.
+            ctx.currentIA().addNewResource(addr, prefix_len);
 
             return (lease);
         } else {
@@ -2034,6 +2043,11 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
 
         // Extend all existing leases that passed all checks.
         for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
+            if (ctx.currentIA().isNewResource((*l)->addr_,
+                                              (*l)->prefixlen_)) {
+                // This lease was just created so is already extended.
+                continue;
+            }
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL,
                       ALLOC_ENGINE_V6_EXTEND_LEASE)
                 .arg(ctx.query_->getLabel())
@@ -2123,12 +2137,17 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     // Keep the old data in case the callout tells us to skip update.
     Lease6Ptr old_data(new Lease6(*lease));
 
+    bool changed = false;
+    lease->remaining_preferred_lft_ = lease->preferred_lft_;
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getPreferred()) {
         uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
         lease->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
     } else {
         lease->preferred_lft_ = ctx.subnet_->getPreferred();
+    }
+    if (lease->preferred_lft_ < lease->remaining_preferred_lft_) {
+        changed = true;
     }
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getValid()) {
@@ -2137,13 +2156,29 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     } else {
         lease->valid_lft_ = ctx.subnet_->getValid();
     }
-    lease->cltt_ = time(NULL);
-    lease->hostname_ = ctx.hostname_;
-    lease->fqdn_fwd_ = ctx.fwd_dns_update_;
-    lease->fqdn_rev_ = ctx.rev_dns_update_;
-    lease->hwaddr_ = ctx.hwaddr_;
-    lease->state_ = Lease::STATE_DEFAULT;
+    if (lease->valid_lft_ < lease->current_valid_lft_) {
+        changed = true;
+    }
 
+    lease->cltt_ = time(NULL);
+    if ((lease->fqdn_fwd_ != ctx.fwd_dns_update_) ||
+        (lease->fqdn_rev_ != ctx.rev_dns_update_) ||
+        (lease->hostname_ != ctx.hostname_)) {
+        changed = true;
+        lease->hostname_ = ctx.hostname_;
+        lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+        lease->fqdn_rev_ = ctx.rev_dns_update_;
+    }
+    if ((!ctx.hwaddr_ && lease->hwaddr_) ||
+        (ctx.hwaddr_ &&
+         (!lease->hwaddr_ || (*ctx.hwaddr_ != *lease->hwaddr_)))) {
+        changed = true;
+        lease->hwaddr_ = ctx.hwaddr_;
+    }
+    if (lease->state_ != Lease::STATE_DEFAULT) {
+        changed = true;
+        lease->state_ = Lease::STATE_DEFAULT;
+    }
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
               ALLOC_ENGINE_V6_EXTEND_NEW_LEASE_DATA)
         .arg(ctx.query_->getLabel())
@@ -2207,14 +2242,26 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
             if (ctx.subnet_->inPool(ctx.currentIA().type_, old_data->addr_)) {
                 update_stats = true;
             }
+            changed = true;
         }
 
         // @todo should we call storeLease6ExtendedInfo() here ?
-        updateLease6ExtendedInfo(lease, ctx);
+        if (updateLease6ExtendedInfo(lease, ctx)) {
+            changed = true;
+        }
+
+        // Try to reuse the lease.
+        lease->remaining_valid_lft_ = 0;
+        if (!changed) {
+            setLeaseRemainingLife(lease, ctx);
+        }
+
 
         // Now that the lease has been reclaimed, we can go ahead and update it
         // in the lease database.
-        LeaseMgrFactory::instance().updateLease6(lease);
+        if (lease->remaining_valid_lft_ == 0) {
+            LeaseMgrFactory::instance().updateLease6(lease);
+        }
 
         if (update_stats) {
             StatsMgr::instance().addValue(
@@ -2253,6 +2300,12 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
     for (Lease6Collection::const_iterator lease_it = leases.begin();
          lease_it != leases.end(); ++lease_it) {
         Lease6Ptr lease(new Lease6(**lease_it));
+        if (ctx.currentIA().isNewResource(lease->addr_, lease->prefixlen_)) {
+            // This lease was just created so is already up to date.
+            updated_leases.push_back(lease);
+            continue;
+        }
+
         lease->fqdn_fwd_ = ctx.fwd_dns_update_;
         lease->fqdn_rev_ = ctx.rev_dns_update_;
         lease->hostname_ = ctx.hostname_;
@@ -2271,9 +2324,19 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
                 }
             }
 
+            bool fqdn_changed = ((lease->type_ != Lease::TYPE_PD) &&
+                                 !(lease->hasIdenticalFqdn(**lease_it)));
+
             lease->cltt_ = time(NULL);
-            ctx.currentIA().changed_leases_.push_back(*lease_it);
-            LeaseMgrFactory::instance().updateLease6(lease);
+            lease->remaining_valid_lft_ = 0;
+            if (!fqdn_changed) {
+                lease->remaining_preferred_lft_ = lease->preferred_lft_;
+                setLeaseRemainingLife(lease, ctx);
+            }
+            if (lease->remaining_valid_lft_ == 0) {
+                ctx.currentIA().changed_leases_.push_back(*lease_it);
+                LeaseMgrFactory::instance().updateLease6(lease);
+            }
 
             if (update_stats) {
                 StatsMgr::instance().addValue(
@@ -3870,6 +3933,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
 
     // Update the lease with the information from the context.
     // If there was no significant changes, try reuse.
+    lease->remaining_valid_lft_ = 0;
     if (!updateLease4Information(lease, ctx)) {
         setLeaseRemainingLife(lease, ctx);
     }
@@ -4235,8 +4299,8 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
     if ((!ctx.hwaddr_ && lease->hwaddr_) ||
         (ctx.hwaddr_ &&
          (!lease->hwaddr_ || (*ctx.hwaddr_ != *lease->hwaddr_)))) {
-            changed = true;
-            lease->hwaddr_ = ctx.hwaddr_;
+        changed = true;
+        lease->hwaddr_ = ctx.hwaddr_;
     }
     if (ctx.subnet_->getMatchClientId() && ctx.clientid_) {
         if (!lease->client_id_ || (*ctx.clientid_ != *lease->client_id_)) {
