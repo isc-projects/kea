@@ -1858,9 +1858,31 @@ private:
     ///  - the lease is not updated in the lease database.
     ///  - the previous value of the lease can be returned to the client.
     ///
-    /// @param [in,out] lease The lease to be updated.
+    /// @param [in,out] lease A pointer to the lease to be updated.
     /// @param subnet A pointer to the lease subnet.
-    void setLeaseRemainingLife(Lease& lease, const SubnetPtr& subnet) const;
+    void setLeaseRemainingLife(const Lease4Ptr& lease,
+                               const ClientContext4& ctx) const;
+
+    /// @brief Try to reuse an already allocated lease.
+    ///
+    /// This function computes and sets when acceptable the remaining
+    /// valid lifetime of an already allocated lease.
+    /// This uses the cache-threshold and cache-max-age parameters.
+    ///
+    /// A not zero value for the remaining valid lifetime means the
+    /// lease can reuse i.e.:
+    ///  - the lease is not updated in the lease database.
+    ///  - the previous value of the lease can be returned to the client.
+    ///
+    /// @note: there is no current_preferred_lft_ field in the lease
+    /// so the remaining_preferred_lft_ is used too for this:
+    ///  - it must be set to the previous preferred lifetime before call.
+    ///  - after call it must be ignored if remaining valid lifetime is zero.
+    ///
+    /// @param [in,out] lease A pointer to the lease to be updated.
+    /// @param subnet A pointer to the lease subnet.
+    void setLeaseRemainingLife(const Lease6Ptr& lease,
+                               const ClientContext6& ctx) const;
 
 private:
 

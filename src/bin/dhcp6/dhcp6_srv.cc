@@ -2072,9 +2072,8 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                 .arg(ia->getIAID())
                 .arg(Lease::lifetimeToText(lease->valid_lft_));
         } else {
-            auto age = lease->valid_lft_ - lease->remaining_valid_lft_;
             lease->valid_lft_ = lease->remaining_valid_lft_;
-            lease->preferred_lft_ -= age;
+            lease->preferred_lft_ = lease->remaining_preferred_lft_;
             LOG_INFO(lease6_logger, DHCP6_LEASE_REUSE)
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
@@ -2198,9 +2197,8 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
                     .arg(ia->getIAID())
                     .arg(Lease::lifetimeToText((*l)->valid_lft_));
             } else {
-                auto age = (*l)->valid_lft_ - (*l)->remaining_valid_lft_;
                 (*l)->valid_lft_ = (*l)->remaining_valid_lft_;
-                (*l)->preferred_lft_ -= age;
+                (*l)->preferred_lft_ = (*l)->remaining_preferred_lft_;
                 LOG_INFO(lease6_logger, DHCP6_PD_LEASE_REUSE)
                     .arg(query->getLabel())
                     .arg((*l)->addr_.toText())
@@ -2357,9 +2355,8 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                 .arg((*l)->addr_.toText())
                 .arg(ia->getIAID());
         } else {
-            auto age = (*l)->valid_lft_ - (*l)->remaining_valid_lft_;
             (*l)->valid_lft_ = (*l)->remaining_valid_lft_;
-            (*l)->preferred_lft_ -= age;
+            (*l)->preferred_lft_ = (*l)->remaining_preferred_lft_;
             LOG_INFO(lease6_logger, DHCP6_LEASE_REUSE)
                 .arg(query->getLabel())
                 .arg((*l)->addr_.toText())
@@ -2563,9 +2560,8 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                 .arg(static_cast<int>((*l)->prefixlen_))
                 .arg(ia->getIAID());
         } else {
-            auto age = (*l)->valid_lft_ - (*l)->remaining_valid_lft_;
             (*l)->valid_lft_ = (*l)->remaining_valid_lft_;
-            (*l)->preferred_lft_ -= age;
+            (*l)->preferred_lft_ = (*l)->remaining_preferred_lft_;
             LOG_INFO(lease6_logger, DHCP6_PD_LEASE_REUSE)
                 .arg(query->getLabel())
                 .arg((*l)->addr_.toText())

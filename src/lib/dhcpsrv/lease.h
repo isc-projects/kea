@@ -521,11 +521,17 @@ struct Lease6 : public Lease {
     /// @brief Client identifier
     DuidPtr duid_;
 
-    /// @brief preferred lifetime
+    /// @brief Preferred lifetime
     ///
     /// This parameter specifies the preferred lifetime since the lease was
     /// assigned or renewed (cltt), expressed in seconds.
     uint32_t preferred_lft_;
+
+    /// @brief Remaining preferred lifetime
+    ///
+    /// Expressed as number of seconds since current time, also
+    /// preferred lifetime - age where age is old cltt - new cltt.
+    uint32_t remaining_preferred_lft_;
 
     /// @todo: Add DHCPv6 failover related fields here
 

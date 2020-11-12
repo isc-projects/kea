@@ -4362,25 +4362,29 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
 }
 
 void
-AllocEngine::setLeaseRemainingLife(Lease& lease, const SubnetPtr& subnet) const {
+AllocEngine::setLeaseRemainingLife(const Lease4Ptr& lease,
+                                   const ClientContext4& ctx) const {
     // Sanity.
-    lease.remaining_valid_lft_ = 0;
+    lease->remaining_valid_lft_ = 0;
+    const Subnet4Ptr& subnet = ctx.subnet_;
     if (!subnet) {
         return;
     }
 
     // Always reuse infinite lifetime leases.
-    if (lease.valid_lft_ == Lease::INFINITY_LFT) {
-        lease.remaining_valid_lft_ = Lease::INFINITY_LFT;
-    }
-
-    // Refuse time going backward.
-    if (lease.cltt_ > lease.current_cltt_) {
+    if (lease->valid_lft_ == Lease::INFINITY_LFT) {
+        lease->remaining_valid_lft_ = Lease::INFINITY_LFT;
         return;
     }
-    uint32_t age = lease.current_cltt_ - lease.cltt_;
+
+    // Refuse time not going forward.
+    if (lease->cltt_ >= lease->current_cltt_) {
+        return;
+    }
+
+    uint32_t age = lease->current_cltt_ - lease->cltt_;
     // Already expired.
-    if (age > lease.current_valid_lft_) {
+    if (age >= lease->current_valid_lft_) {
         return;
     }
 
@@ -4399,14 +4403,73 @@ AllocEngine::setLeaseRemainingLife(Lease& lease, const SubnetPtr& subnet) const 
         if ((threshold <= 0.) || (threshold > 1.)) {
             return;
         }
-        max_age = lease.valid_lft_ * threshold;
+        max_age = lease->valid_lft_ * threshold;
         if (age > max_age) {
             return;
         }
     }
 
     // Seems to be reusable.
-    lease.remaining_valid_lft_ = lease.current_cltt_ - age;
+    lease->remaining_valid_lft_ = lease->current_valid_lft_ - age;
+}
+
+void
+AllocEngine::setLeaseRemainingLife(const Lease6Ptr& lease,
+                                   const ClientContext6& ctx) const {
+    // Sanity.
+    lease->remaining_valid_lft_ = 0;
+    const Subnet6Ptr& subnet = ctx.subnet_;
+    if (!subnet) {
+        return;
+    }
+
+    // Refuse time not going forward.
+    if (lease->cltt_ >= lease->current_cltt_) {
+        return;
+    }
+
+    uint32_t age = lease->current_cltt_ - lease->cltt_;
+    // Already expired.
+    if (age >= lease->current_valid_lft_) {
+        return;
+    }
+
+    // Try cache max age.
+    uint32_t max_age = 0;
+    if (!subnet->getCacheMaxAge().unspecified()) {
+        max_age = subnet->getCacheMaxAge().get();
+        if ((max_age == 0) || (age > max_age)) {
+            return;
+        }
+    }
+
+    // Try cache threshold.
+    if (!subnet->getCacheThreshold().unspecified()) {
+        double threshold = subnet->getCacheThreshold().get();
+        if ((threshold <= 0.) || (threshold > 1.)) {
+            return;
+        }
+        max_age = lease->valid_lft_ * threshold;
+        if (age > max_age) {
+            return;
+        }
+    }
+
+    // Seems to be reusable.
+    if ((lease->remaining_preferred_lft_ == Lease::INFINITY_LFT) ||
+        (lease->remaining_preferred_lft_ == 0)) {
+        // Keep these values.
+    } else if (lease->remaining_preferred_lft_ > age) {
+        lease->remaining_preferred_lft_ -= age;
+    } else {
+        // Can be a misconfiguration so stay safe...
+        return;
+    }
+    if (lease->current_valid_lft_ == Lease::INFINITY_LFT) {
+        lease->remaining_valid_lft_ = Lease::INFINITY_LFT;
+    } else {
+        lease->remaining_valid_lft_ = lease->current_valid_lft_ - age;
+    }
 }
 
 }  // namespace dhcp

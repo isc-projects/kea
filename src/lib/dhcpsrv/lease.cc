@@ -489,7 +489,7 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
                SubnetID subnet_id, const HWAddrPtr& hwaddr, uint8_t prefixlen)
     : Lease(addr, valid, subnet_id, 0/*cltt*/, false, false, "", hwaddr),
       type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
-      preferred_lft_(preferred) {
+      preferred_lft_(preferred), remaining_preferred_lft_(0) {
     if (!duid) {
         isc_throw(InvalidOperation, "DUID is mandatory for an IPv6 lease");
     }
@@ -506,7 +506,7 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
     : Lease(addr, valid, subnet_id, 0/*cltt*/,
             fqdn_fwd, fqdn_rev, hostname, hwaddr),
       type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
-      preferred_lft_(preferred) {
+      preferred_lft_(preferred), remaining_preferred_lft_(0) {
     if (!duid) {
         isc_throw(InvalidOperation, "DUID is mandatory for an IPv6 lease");
     }
@@ -518,7 +518,7 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
 Lease6::Lease6()
     : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, false, false, "",
             HWAddrPtr()), type_(TYPE_NA), prefixlen_(0), iaid_(0),
-            duid_(DuidPtr()), preferred_lft_(0) {
+            duid_(DuidPtr()), preferred_lft_(0), remaining_preferred_lft_(0) {
 }
 
 std::string
@@ -621,6 +621,7 @@ Lease6::operator==(const Lease6& other) const {
             prefixlen_ == other.prefixlen_ &&
             iaid_ == other.iaid_ &&
             preferred_lft_ == other.preferred_lft_ &&
+            remaining_preferred_lft_ == other.remaining_preferred_lft_ &&
             valid_lft_ == other.valid_lft_ &&
             current_valid_lft_ == other.current_valid_lft_ &&
             remaining_valid_lft_ == other.remaining_valid_lft_ &&
