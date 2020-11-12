@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <config_backend/base_config_backend.h>
 #include <database/backend_selector.h>
+#include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/server_selector.h>
 #include <functional>
@@ -63,7 +64,7 @@ public:
 
     /// @brief Deletes all backends of the given type from the pool.
     ///
-    /// @param db_type backend to remove
+    /// @param db_type Backend to remove
     void delAllBackends(const std::string& db_type) {
         typename std::list<ConfigBackendTypePtr>::iterator backend = backends_.begin();
 
@@ -74,6 +75,33 @@ public:
                 ++backend;
             }
         }
+    }
+
+    /// @brief Deletes all backends of the given type from the pool.
+    ///
+    /// @param db_type Backend to remove
+    /// @param dbaccess Database access string being a collection of
+    /// key=value pairs.
+    /// @param if_unusable Flag which indicates if the config backend manager
+    /// should be deleted only if it is unusable.
+    bool del(const std::string& db_type, const std::string& dbaccess,
+             bool if_unusable) {
+        isc::db::DatabaseConnection::ParameterMap parameters =
+            isc::db::DatabaseConnection::parse(dbaccess);
+
+        typename std::list<ConfigBackendTypePtr>::iterator backend = backends_.begin();
+
+        while (backend != backends_.end()) {
+            if ((*backend)->getType() != db_type || (*backend)->getParameters() != parameters) {
+                ++backend;
+            } else if (if_unusable && (!(*backend)->isUnusable())) {
+                ++backend;
+            } else {
+                backends_.erase(backend);
+                return (true);
+            }
+        }
+        return (false);
     }
 
 protected:

@@ -34,6 +34,32 @@ int load(LibraryHandle& /* handle */) {
     return (0);
 }
 
+/// @brief This function is called by the DHCPv4 server when it is configured.
+///
+/// The only purpose of this callout is to retrieve io_service_ reference.
+///
+/// @param handle callout handle passed to the callout.
+/// @return 0 on success, 1 otherwise.
+int dhcp4_srv_configured(CalloutHandle& handle) {
+    isc::asiolink::IOServicePtr io_service;
+    handle.getArgument("io_context", io_service);
+    isc::dhcp::MySqlConfigBackendImpl::setIOService(io_service);
+    return (0);
+}
+
+/// @brief This function is called by the DHCPv6 server when it is configured.
+///
+/// The only purpose of this callout is to retrieve io_service_ reference.
+///
+/// @param handle callout handle passed to the callout.
+/// @return 0 on success, 1 otherwise.
+int dhcp6_srv_configured(CalloutHandle& handle) {
+    isc::asiolink::IOServicePtr io_service;
+    handle.getArgument("io_context", io_service);
+    isc::dhcp::MySqlConfigBackendImpl::setIOService(io_service);
+    return (0);
+}
+
 /// @brief This function is called when the library is unloaded.
 ///
 /// @return 0 if deregistration was successful, 1 otherwise

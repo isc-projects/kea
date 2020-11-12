@@ -182,6 +182,23 @@ public:
         pool_->delAllBackends();
     }
 
+    /// @brief Delete a config backend manager.
+    ///
+    /// Delete the first instance of a config database manager which matches
+    /// specific parameters.
+    /// This should have the effect of closing the database connection.
+    ///
+    /// @param db_type Backend to remove
+    /// @param dbaccess Database access string being a collection of
+    /// key=value pairs.
+    /// @param if_unusable Flag which indicates if the config backend manager
+    /// should be deleted only if it is unusable.
+    /// @return true when found and removed, false when not found.
+    bool delBackend(const std::string& db_type, const std::string& access,
+                    bool if_unusable) {
+        return (pool_->del(db_type, access, if_unusable));
+    }
+
     /// @brief Returns underlying config backend pool.
     ConfigBackendPoolPtr getPool() const {
         return (pool_);

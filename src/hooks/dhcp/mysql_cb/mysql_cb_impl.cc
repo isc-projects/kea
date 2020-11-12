@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <utility>
 
+using namespace isc::asiolink;
 using namespace isc::cb;
 using namespace isc::data;
 using namespace isc::db;
@@ -22,6 +23,8 @@ using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
+
+isc::asiolink::IOServicePtr MySqlConfigBackendImpl::io_service_ = isc::asiolink::IOServicePtr();
 
 MySqlConfigBackendImpl::
 ScopedAuditRevision::ScopedAuditRevision(MySqlConfigBackendImpl* impl,
@@ -42,8 +45,10 @@ ScopedAuditRevision::~ScopedAuditRevision() {
 }
 
 MySqlConfigBackendImpl::
-MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters)
-    : conn_(parameters), audit_revision_created_(false) {
+MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters,
+                       const DbCallback callback)
+    : conn_(parameters, MySqlConfigBackendImpl::getIOService(), callback),
+      timer_name_(""), audit_revision_created_(false), parameters_(parameters) {
     // Test schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);

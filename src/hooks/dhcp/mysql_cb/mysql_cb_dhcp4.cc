@@ -11,16 +11,19 @@
 #include <mysql_query_macros_dhcp.h>
 #include <cc/data.h>
 #include <config_backend/constants.h>
+#include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <dhcp/classify.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/network.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <util/buffer.h>
 #include <util/boost_time_utils.h>
 #include <mysql/mysql_connection.h>
@@ -151,6 +154,9 @@ public:
     /// concerned with the database.
     explicit MySqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap&
                                           parameters);
+
+    /// @brief Destructor.
+    ~MySqlConfigBackendDHCPv4Impl();
 
     /// @brief Sends query to retrieve global parameter.
     ///
@@ -2289,6 +2295,59 @@ public:
 
         return (count);
     }
+
+    static bool dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
+        DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl);
+
+        bool reopened = false;
+
+        // At least one connection was lost.
+        try {
+            auto srv_cfg = CfgMgr::instance().getCurrentCfg();
+            auto config_ctl = srv_cfg->getConfigControlInfo();
+            // Iterate over the configured DBs and instantiate them.
+            for (auto db : config_ctl->getConfigDatabases()) {
+                const std::string& access = db.getAccessString();
+                auto parameters = DatabaseConnection::parse(access);
+                if (ConfigBackendDHCPv4Mgr::instance().delBackend(parameters["type"], access, true)) {
+                    ConfigBackendDHCPv4Mgr::instance().addBackend(db.getAccessString());
+                }
+            }
+
+            reopened = true;
+        } catch (const std::exception& ex) {
+            //LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_ATTEMPT_FAILED)
+            //        .arg(ex.what());
+        }
+
+        if (reopened) {
+            // Cancel the timer.
+            const std::string& timer_name = db_reconnect_ctl->timerName();
+            TimerMgr::instance()->cancel(timer_name);
+
+            DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl);
+        } else {
+            if (!db_reconnect_ctl->checkRetries()) {
+                // We're out of retries, log it and initiate shutdown.
+                //LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_RETRIES_EXHAUSTED)
+                //        .arg(db_reconnect_ctl->maxRetries());
+
+                DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
+
+                return (false);
+            }
+
+            //LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_ATTEMPT_SCHEDULE)
+            //        .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft()      1)
+            //        .arg(db_reconnect_ctl->maxRetries())
+            //        .arg(db_reconnect_ctl->retryInterval());
+
+            TimerMgr::instance()->setup(db_reconnect_ctl->timerName());
+        }
+
+        return (true);
+    }
+
 };
 
 namespace {
@@ -2865,18 +2924,39 @@ TaggedStatementArray tagged_statements = { {
 }; // end anonymous namespace
 
 MySqlConfigBackendDHCPv4Impl::MySqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap& parameters)
-    : MySqlConfigBackendImpl(parameters) {
+    : MySqlConfigBackendImpl(parameters, &MySqlConfigBackendDHCPv4Impl::dbReconnect) {
     // Prepare query statements. Those are will be only used to retrieve
     // information from the database, so they can be used even if the
     // database is read only for the current user.
     conn_.prepareStatements(tagged_statements.begin(),
                             tagged_statements.end());
 //                            tagged_statements.begin() + WRITE_STMTS_BEGIN);
+
+    timer_name_ = "MySqlConfigBackend4[";
+    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    timer_name_ += "]DbReconnectTimer";
+
+    conn_.makeReconnectCtl(timer_name_);
+
+    auto db_reconnect_ctl = conn_.reconnectCtl();
+
+    TimerMgr::instance()->registerTimer(timer_name_,
+        std::bind(&MySqlConfigBackendDHCPv4Impl::dbReconnect, db_reconnect_ctl),
+                  db_reconnect_ctl->retryInterval(),
+                  asiolink::IntervalTimer::ONE_SHOT);
+}
+
+MySqlConfigBackendDHCPv4Impl::~MySqlConfigBackendDHCPv4Impl() {
+    TimerMgr::instance()->unregisterTimer(timer_name_);
 }
 
 MySqlConfigBackendDHCPv4::MySqlConfigBackendDHCPv4(const DatabaseConnection::ParameterMap& parameters)
-    : base_impl_(new MySqlConfigBackendDHCPv4Impl(parameters)), impl_() {
-    impl_ = boost::dynamic_pointer_cast<MySqlConfigBackendDHCPv4Impl>(base_impl_);
+    : impl_(new MySqlConfigBackendDHCPv4Impl(parameters)), base_impl_(impl_) {
+}
+
+bool
+MySqlConfigBackendDHCPv4::isUnusable() {
+    return (impl_->conn_.isUnusable());
 }
 
 Subnet4Ptr

@@ -1215,7 +1215,11 @@ PgSqlLeaseMgr::PgSqlLeaseContextAlloc::~PgSqlLeaseContextAlloc() {
 // PgSqlLeaseMgr Constructor and Destructor
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : parameters_(parameters) {
+    : parameters_(parameters), timer_name_("") {
+
+    timer_name_ = "PgSqlLeaseMgr[";
+    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    timer_name_ += "]DbReconnectTimer";
 
     // Validate schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
@@ -1235,22 +1239,14 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
 
     auto db_reconnect_ctl = pool_->pool_[0]->conn_.reconnectCtl();
 
-    std::string manager = "PgSqlLeaseMgr[";
-    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    std::string timer_name = manager + "]DbReconnectTimer";
-
-    TimerMgr::instance()->registerTimer(timer_name,
+    TimerMgr::instance()->registerTimer(timer_name_,
         std::bind(&PgSqlLeaseMgr::dbReconnect, db_reconnect_ctl),
                   db_reconnect_ctl->retryInterval(),
                   asiolink::IntervalTimer::ONE_SHOT);
 }
 
 PgSqlLeaseMgr::~PgSqlLeaseMgr() {
-    std::string manager = "PgSqlLeaseMgr[";
-    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    std::string timer_name = manager + "]DbReconnectTimer";
-
-    TimerMgr::instance()->unregisterTimer(timer_name);
+    TimerMgr::instance()->unregisterTimer(timer_name_);
 }
 
 bool
@@ -1329,11 +1325,7 @@ PgSqlLeaseMgr::createContext() const {
     ctx->exchange4_.reset(new PgSqlLease4Exchange());
     ctx->exchange6_.reset(new PgSqlLease6Exchange());
 
-    std::string manager = "PgSqlLeaseMgr[";
-    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    std::string timer_name = manager + "]DbReconnectTimer";
-
-    ctx->conn_.makeReconnectCtl(timer_name);
+    ctx->conn_.makeReconnectCtl(timer_name_);
 
     return (ctx);
 }

@@ -7,6 +7,8 @@
 #ifndef BASE_CONFIG_BACKEND_H
 #define BASE_CONFIG_BACKEND_H
 
+#include <database/database_connection.h>
+
 #include <boost/shared_ptr.hpp>
 #include <cstdint>
 #include <set>
@@ -56,6 +58,24 @@ public:
     ///
     /// @return Port number on which database service is available.
     virtual uint16_t getPort() const = 0;
+
+    /// @brief Flag which indicates if the config backend has an unusable
+    /// connection.
+    ///
+    /// @return true if there is at least one unusable connection, false
+    /// otherwise
+    virtual bool isUnusable() {
+        return (false);
+    }
+
+    /// @brief Return backend parameters
+    ///
+    /// Returns the backend parameters
+    ///
+    /// @return Parameters of the backend.
+    virtual isc::db::DatabaseConnection::ParameterMap getParameters() const {
+        return (isc::db::DatabaseConnection::ParameterMap());
+    }
 };
 
 /// @brief Shared pointer to the @c BaseConfigBackend.

@@ -943,6 +943,9 @@ private:
 
     /// @brief The pool of contexts
     PgSqlLeaseContextPoolPtr pool_;
+
+    /// @brief Timer name used to register database reconnect timer.
+    std::string timer_name_;
 };
 
 }  // namespace dhcp

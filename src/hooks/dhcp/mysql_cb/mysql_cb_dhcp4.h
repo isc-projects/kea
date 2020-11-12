@@ -543,15 +543,22 @@ public:
     /// This should be called by the hook lib unload() function.
     static void unregisterBackendType();
 
-protected:
+    /// @brief Flag which indicates if the config backend has an unusable
+    /// connection.
+    ///
+    /// @return true if there is at least one unusable connection, false
+    /// otherwise
+    virtual bool isUnusable();
 
-    /// @brief Pointer to the base implementation of the backend shared by
-    /// DHCPv4 and DHCPv6 servers.
-    boost::shared_ptr<MySqlConfigBackendImpl> base_impl_;
+protected:
 
     /// @brief Pointer to the implementation of the @c MySqlConfigBackendDHCPv4
     /// class.
     boost::shared_ptr<MySqlConfigBackendDHCPv4Impl> impl_;
+
+    /// @brief Pointer to the base implementation of the backend shared by
+    /// DHCPv4 and DHCPv6 servers.
+    boost::shared_ptr<MySqlConfigBackendImpl> base_impl_;
 };
 
 /// @brief Pointer to the @c MySqlConfigBackendDHCPv4 class.

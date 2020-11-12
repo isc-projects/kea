@@ -1614,6 +1614,9 @@ public:
     /// @brief Indicates if there is at least one connection that can no longer
     /// be used for normal operations.
     bool unusable_;
+
+    /// @brief Timer name used to register database reconnect timer.
+    std::string timer_name_;
 };
 
 namespace {
@@ -2210,7 +2213,12 @@ PgSqlHostDataSource::PgSqlHostContextAlloc::~PgSqlHostContextAlloc() {
 }
 
 PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::ParameterMap& parameters)
-    : parameters_(parameters), ip_reservations_unique_(true), unusable_(false) {
+    : parameters_(parameters), ip_reservations_unique_(true), unusable_(false),
+      timer_name_("") {
+
+    timer_name_ = "PgSqlHostMgr[";
+    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    timer_name_ += "]DbReconnectTimer";
 
     // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
@@ -2230,11 +2238,7 @@ PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::Param
 
     auto db_reconnect_ctl = pool_->pool_[0]->conn_.reconnectCtl();
 
-    std::string manager = "PgSqlHostMgr[";
-    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    std::string timer_name = manager + "]DbReconnectTimer";
-
-    TimerMgr::instance()->registerTimer(timer_name,
+    TimerMgr::instance()->registerTimer(timer_name_,
         std::bind(&PgSqlHostDataSourceImpl::dbReconnect, db_reconnect_ctl),
                   db_reconnect_ctl->retryInterval(),
                   asiolink::IntervalTimer::ONE_SHOT);
@@ -2274,21 +2278,13 @@ PgSqlHostDataSourceImpl::createContext() const {
     ctx->host_ipv6_reservation_exchange_.reset(new PgSqlIPv6ReservationExchange());
     ctx->host_option_exchange_.reset(new PgSqlOptionExchange());
 
-    std::string manager = "PgSqlHostMgr[";
-    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    std::string timer_name = manager + "]DbReconnectTimer";
-
-    ctx->conn_.makeReconnectCtl(timer_name);
+    ctx->conn_.makeReconnectCtl(timer_name_);
 
     return (ctx);
 }
 
 PgSqlHostDataSourceImpl::~PgSqlHostDataSourceImpl() {
-    std::string manager = "PgSqlHostMgr[";
-    manager += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    std::string timer_name = manager + "]DbReconnectTimer";
-
-    TimerMgr::instance()->unregisterTimer(timer_name);
+    TimerMgr::instance()->unregisterTimer(timer_name_);
 }
 
 bool

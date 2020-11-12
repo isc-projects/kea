@@ -107,7 +107,8 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     /// concerned with the database.
-    explicit MySqlConfigBackendImpl(const db::DatabaseConnection::ParameterMap& parameters);
+    explicit MySqlConfigBackendImpl(const db::DatabaseConnection::ParameterMap& parameters,
+                                    const db::DbCallback callback);
 
     /// @brief Destructor.
     virtual ~MySqlConfigBackendImpl();
@@ -784,12 +785,46 @@ public:
     /// @return Port number on which database service is available.
     uint16_t getPort() const;
 
+    /// @brief Return backend parameters
+    ///
+    /// Returns the backend parameters
+    ///
+    /// @return Parameters of the backend.
+    const isc::db::DatabaseConnection::ParameterMap& getParameters() {
+        return (parameters_);
+    }
+
+    /// @brief Sets IO service to be used by the MySql config backend.
+    ///
+    /// @param IOService object, used for all ASIO operations.
+    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
+        io_service_ = io_service;
+    }
+
+    /// @brief Returns pointer to the IO service.
+    static isc::asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
     /// @brief Represents connection to the MySQL database.
     db::MySqlConnection conn_;
+
+protected:
+
+    /// @brief Timer name used to register database reconnect timer.
+    std::string timer_name_;
+
+private:
 
     /// @brief Boolean flag indicating if audit revision has been created
     /// using @c ScopedAuditRevision object.
     bool audit_revision_created_;
+
+    /// @brief Connection parameters
+    isc::db::DatabaseConnection::ParameterMap parameters_;
+
+    /// The IOService object, used for all ASIO operations.
+    static isc::asiolink::IOServicePtr io_service_;
 };
 
 } // end of namespace isc::dhcp
