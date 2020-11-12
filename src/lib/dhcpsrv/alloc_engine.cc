@@ -3770,7 +3770,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     lease->hostname_ = ctx.hostname_;
 
     // Add(update) the extended information on the lease.
-    updateLease4ExtendedInfo(lease, ctx);
+    static_cast<void>(updateLease4ExtendedInfo(lease, ctx));
 
     // Let's execute all callouts registered for lease4_select
     if (ctx.callout_handle_ &&
@@ -3869,7 +3869,10 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
     ctx.old_lease_.reset(new Lease4(*old_values));
 
     // Update the lease with the information from the context.
-    updateLease4Information(lease, ctx);
+    // If there was no significant changes, try reuse.
+    if (!updateLease4Information(lease, ctx)) {
+        setLeaseRemainingLife(lease, ctx);
+    }
 
     if (!ctx.fake_allocation_) {
         // If the lease is expired we have to reclaim it before
@@ -3931,7 +3934,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         /// DROP status does not make sense here.
     }
 
-    if (!ctx.fake_allocation_ && !skip) {
+    if (!ctx.fake_allocation_ && !skip && (lease->remaining_valid_lft_ == 0)) {
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease4(lease);
 
@@ -3978,7 +3981,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         expired->state_ = Lease::STATE_DEFAULT;
     }
 
-    updateLease4Information(expired, ctx);
+    static_cast<void>(updateLease4Information(expired, ctx));
 
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
               ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA)
@@ -4221,12 +4224,29 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     return (new_lease);
 }
 
-void
+bool
 AllocEngine::updateLease4Information(const Lease4Ptr& lease,
                                      AllocEngine::ClientContext4& ctx) const {
-    lease->subnet_id_ = ctx.subnet_->getID();
-    lease->hwaddr_ = ctx.hwaddr_;
-    lease->client_id_ = ctx.subnet_->getMatchClientId() ? ctx.clientid_ : ClientIdPtr();
+    bool changed = false;
+    if (lease->subnet_id_ != ctx.subnet_->getID()) {
+        changed = true;
+        lease->subnet_id_ = ctx.subnet_->getID();
+    }
+    if ((!ctx.hwaddr_ && lease->hwaddr_) ||
+        (ctx.hwaddr_ &&
+         (!lease->hwaddr_ || (*ctx.hwaddr_ != *lease->hwaddr_)))) {
+            changed = true;
+            lease->hwaddr_ = ctx.hwaddr_;
+    }
+    if (ctx.subnet_->getMatchClientId() && ctx.clientid_) {
+        if (!lease->client_id_ || (*ctx.clientid_ != *lease->client_id_)) {
+            changed = true;
+            lease->client_id_ = ctx.clientid_;
+        }
+    } else if (lease->client_id_) {
+        changed = true;
+        lease->client_id_ = ClientIdPtr();
+    }
     lease->cltt_ = time(NULL);
     if (ctx.query_->inClass("BOOTP")) {
         // BOOTP uses infinite valid lifetime.
@@ -4244,28 +4264,43 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
             lease->valid_lft_ = ctx.subnet_->getValid();
         }
     }
+    // Reduced valid lifetime is a significant change.
+    if (lease->valid_lft_ < lease->current_valid_lft_) {
+        changed = true;
+    }
 
-    lease->fqdn_fwd_ = ctx.fwd_dns_update_;
-    lease->fqdn_rev_ = ctx.rev_dns_update_;
-    lease->hostname_ = ctx.hostname_;
+    if ((lease->fqdn_fwd_ != ctx.fwd_dns_update_) ||
+        (lease->fqdn_rev_ != ctx.rev_dns_update_) ||
+        (lease->hostname_ != ctx.hostname_)) {
+        changed = true;
+        lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+        lease->fqdn_rev_ = ctx.rev_dns_update_;
+        lease->hostname_ = ctx.hostname_;
+    }
 
     // Add(update) the extended information on the lease.
-    updateLease4ExtendedInfo(lease, ctx);
+    if (updateLease4ExtendedInfo(lease, ctx)) {
+        changed = true;
+    }
+
+    return (changed);
 }
 
-void
+bool
 AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
                                       const AllocEngine::ClientContext4& ctx) const {
+    bool changed = false;
+
     // If storage is not enabled then punt.
     if (!ctx.subnet_->getStoreExtendedInfo()) {
-        return;
+        return (changed);
     }
 
     // Look for relay agent information option (option 82)
     OptionPtr rai = ctx.query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (!rai) {
         // Pkt4 doesn't have it, so nothing to store (or update).
-        return;
+        return (changed);
     }
 
     // Create a StringElement with the hex string for relay-agent-info.
@@ -4284,24 +4319,31 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
     }
 
     // Add/replace the extended info entry.
-    user_context->set("ISC", extended_info);
+    ConstElementPtr old_extended_info = user_context->get("ISC");
+    if (!old_extended_info || (*old_extended_info != *extended_info)) {
+        changed = true;
+        user_context->set("ISC", extended_info);
+    }
 
     // Update the lease's user_context.
     lease->setContext(user_context);
+
+    return (changed);
 }
 
-void
+bool
 AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
                                       const AllocEngine::ClientContext6& ctx) const {
+    bool changed = false;
 
     // If storage is not enabled then punt.
     if (!ctx.subnet_->getStoreExtendedInfo()) {
-        return;
+        return (changed);
     }
 
     // If we do not have relay information, then punt.
     if (ctx.query_->relay_info_.empty()) {
-        return;
+        return (changed);
     }
 
     // We need to convert the vector of RelayInfo instances in
@@ -4355,10 +4397,16 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
     }
 
     // Add/replace the extended info entry.
-    user_context->set("ISC", extended_info);
+    ConstElementPtr old_extended_info = user_context->get("ISC");
+    if (!old_extended_info || (*old_extended_info != *extended_info)) {
+        changed = true;
+        user_context->set("ISC", extended_info);
+    }
 
     // Update the lease's user_context.
     lease->setContext(user_context);
+
+    return (changed);
 }
 
 void
@@ -4370,6 +4418,9 @@ AllocEngine::setLeaseRemainingLife(const Lease4Ptr& lease,
     if (!subnet) {
         return;
     }
+    if (lease->state_ != Lease::STATE_DEFAULT) {
+        return;
+    }
 
     // Always reuse infinite lifetime leases.
     if (lease->valid_lft_ == Lease::INFINITY_LFT) {
@@ -4378,11 +4429,11 @@ AllocEngine::setLeaseRemainingLife(const Lease4Ptr& lease,
     }
 
     // Refuse time not going forward.
-    if (lease->cltt_ >= lease->current_cltt_) {
+    if (lease->cltt_ < lease->current_cltt_) {
         return;
     }
 
-    uint32_t age = lease->current_cltt_ - lease->cltt_;
+    uint32_t age = lease->cltt_ - lease->current_cltt_;
     // Already expired.
     if (age >= lease->current_valid_lft_) {
         return;
@@ -4407,6 +4458,11 @@ AllocEngine::setLeaseRemainingLife(const Lease4Ptr& lease,
         if (age > max_age) {
             return;
         }
+    }
+
+    // No cache.
+    if (max_age == 0) {
+        return;
     }
 
     // Seems to be reusable.
@@ -4422,13 +4478,16 @@ AllocEngine::setLeaseRemainingLife(const Lease6Ptr& lease,
     if (!subnet) {
         return;
     }
-
-    // Refuse time not going forward.
-    if (lease->cltt_ >= lease->current_cltt_) {
+    if (lease->state_ != Lease::STATE_DEFAULT) {
         return;
     }
 
-    uint32_t age = lease->current_cltt_ - lease->cltt_;
+    // Refuse time not going forward.
+    if (lease->cltt_ < lease->current_cltt_) {
+        return;
+    }
+
+    uint32_t age = lease->cltt_ - lease->current_cltt_;
     // Already expired.
     if (age >= lease->current_valid_lft_) {
         return;
@@ -4453,6 +4512,11 @@ AllocEngine::setLeaseRemainingLife(const Lease6Ptr& lease,
         if (age > max_age) {
             return;
         }
+    }
+
+    // No cache.
+    if (max_age == 0) {
+        return;
     }
 
     // Seems to be reusable.

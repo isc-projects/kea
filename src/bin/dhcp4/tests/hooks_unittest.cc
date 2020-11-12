@@ -2039,6 +2039,78 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
     checkCalloutHandleReset(client.getContext().query_);
 }
 
+// This test verifies that the callout installed on the leases4_committed hook
+// point is executed as a result of DHCPREQUEST message sent to reuse an
+// an existing lease.
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedReuse) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases4_committed", leases4_committed_callout));
+
+
+    // Modify the subnet to reuse leases.
+    subnet_->setCacheThreshold(.25);
+
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("deleted_leases4");
+    expected_argument_names.push_back("leases4");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be returned.
+    ASSERT_TRUE(callback_lease4_);
+    EXPECT_EQ("192.0.2.100", callback_lease4_->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    EXPECT_FALSE(callback_deleted_lease4_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+
+    resetCalloutBuffers();
+
+    // Renew the lease and make sure that the callout has been executed.
+    client.setState(Dhcp4Client::RENEWING);
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    // Renewed lease should not be present because it was renewed.
+    EXPECT_FALSE(callback_lease4_);
+
+    // Deleted lease must not be present, because it renews the same address.
+    EXPECT_FALSE(callback_deleted_lease4_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+}
+
 // This test verifies that it is possible to park a packet as a result of
 // the leases4_committed callouts.
 TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {

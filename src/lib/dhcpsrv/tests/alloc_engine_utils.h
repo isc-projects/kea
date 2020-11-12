@@ -93,17 +93,19 @@ public:
     /// @brief Wrapper method for invoking AllocEngine4::updateLease4ExtendedInfo().
     /// @param lease lease to update
     /// @param ctx current packet processing context
-    void callUpdateLease4ExtendedInfo(const Lease4Ptr& lease,
+    /// @return the changed returned value
+    bool callUpdateLease4ExtendedInfo(const Lease4Ptr& lease,
                                       AllocEngine::ClientContext4& ctx) const {
-        updateLease4ExtendedInfo(lease,ctx);
+        return (updateLease4ExtendedInfo(lease, ctx));
     }
 
     /// @brief Wrapper method for invoking AllocEngine6::updateLease6ExtendedInfo().
     /// @param lease lease to update
     /// @param ctx current packet processing context
-    void callUpdateLease6ExtendedInfo(const Lease6Ptr& lease,
+    /// @return the changed returned value
+    bool callUpdateLease6ExtendedInfo(const Lease6Ptr& lease,
                                       AllocEngine::ClientContext6& ctx) const {
-        updateLease6ExtendedInfo(lease,ctx);
+        return (updateLease6ExtendedInfo(lease, ctx));
     }
 
 };
@@ -559,6 +561,7 @@ public:
             EXPECT_TRUE(*lease->client_id_ == *clientid_);
         }
         EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
+        EXPECT_EQ(0, lease->remaining_valid_lft_);
         /// @todo: check cltt
     }
 
@@ -620,8 +623,8 @@ public:
                                      ///< allocation engine functions.
 };
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+} // namespace test
+} // namespace dhcp
+} // namespace isc
 
 #endif

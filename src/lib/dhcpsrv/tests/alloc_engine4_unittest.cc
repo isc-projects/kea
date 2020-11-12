@@ -3501,6 +3501,7 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
         std::string orig_context_json_; // user context the lease begins with
         std::string rai_data_;          // RAI option the client packet contains
         std::string exp_context_json_;  // expected user context on the lease
+        bool exp_ret;                   // expected returned value
     };
 
     // Test scenarios.
@@ -3509,37 +3510,43 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
         "no context, no rai",
         "",
         "",
-        ""
+        "",
+        false
     },
     {
         "some original context, no rai",
         "{\"foo\": 123}",
         "",
-        "{\"foo\": 123}"
+        "{\"foo\": 123}",
+        false
     },
     {
         "no original context, rai",
         "",
         "0x52050104aabbccdd",
         "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
+        true
     },
     {
         "some original context, rai",
         "{\"foo\": 123}",
         "0x52050104aabbccdd",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" }, \"foo\": 123 }"
+        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" }, \"foo\": 123 }",
+        true
     },
     {
         "original rai context, no rai",
         "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
         "",
         "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
+        false
     },
     {
         "original rai context, different rai",
         "{ \"ISC\": { \"relay-agent-info\": \"0x52050104AABBCCDD\" } }",
         "0x52050104ddeeffaa",
         "{ \"ISC\": { \"relay-agent-info\": \"0x52050104DDEEFFAA\" } }",
+        true
     }};
 
     // Create the allocation engine, context and lease.
@@ -3609,7 +3616,9 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
         }
 
         // Call AllocEngine::updateLease4ExtendeInfo().
-        ASSERT_NO_THROW_LOG(engine.callUpdateLease4ExtendedInfo(lease, ctx));
+        bool ret = false;
+        ASSERT_NO_THROW_LOG(ret = engine.callUpdateLease4ExtendedInfo(lease, ctx));
+        ASSERT_EQ(scenario.exp_ret, ret);
 
         // Verify the lease has the expected user context content.
         if (!exp_context) {
@@ -3826,6 +3835,435 @@ TEST_F(AllocEngine4Test, storeExtendedInfoDisabled4) {
         ASSERT_FALSE(lease->getContext());
     }
 }
+
+// This test checks if a lease can be reused in DHCPDISCOVER (fake allocation)
+// using cache threshold.
+TEST_F(AllocEngine4Test, discoverCacheThreshold4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    // Set valid lifetime to 500.
+    subnet_->setValid(500);
+
+    // Set the threshold to 25%.
+    subnet_->setCacheThreshold(.25);
+
+    IOAddress addr("192.0.2.105");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
+                               500, now, subnet_->getID()));
+    ASSERT_FALSE(lease->expired());
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create a context for fake allocation.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, addr,
+                                    false, false, "", true);
+
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    lease = engine->allocateLease4(ctx);
+    // Check that we got that single lease.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // The lease was reused.
+    time_t age = lease->cltt_ - now;
+    EXPECT_GE(age, 100);
+    EXPECT_LE(age, 110);
+    EXPECT_EQ(500 - age, lease->remaining_valid_lft_);
+
+    // Check other lease parameters.
+    EXPECT_EQ(lease->subnet_id_, subnet_->getID());
+    ASSERT_TRUE(lease->client_id_);
+    EXPECT_TRUE(*lease->client_id_ == *clientid_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
+}    
+
+// This test checks if a lease can be reused in DHCPREQUEST (real allocation)
+// using cache threshold.
+TEST_F(AllocEngine4Test, requestCacheThreshold4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    // Set valid lifetime to 500.
+    subnet_->setValid(500);
+
+    // Set the threshold to 25%.
+    subnet_->setCacheThreshold(.25);
+
+    IOAddress addr("192.0.2.105");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
+                               500, now, subnet_->getID()));
+    ASSERT_FALSE(lease->expired());
+    // Copy the lease, so as it can be compared with.
+    Lease4Ptr original_lease(new Lease4(*lease));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create a context for real allocation.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, addr,
+                                    false, false, "", false);
+
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    lease = engine->allocateLease4(ctx);
+    // Check that we got that single lease.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // The lease was reused.
+    time_t age = lease->cltt_ - now;
+    EXPECT_GE(age, 100);
+    EXPECT_LE(age, 110);
+    EXPECT_EQ(500 - age, lease->remaining_valid_lft_);
+
+    // Check other lease parameters.
+    EXPECT_EQ(lease->subnet_id_, subnet_->getID());
+    ASSERT_TRUE(lease->client_id_);
+    EXPECT_TRUE(*lease->client_id_ == *clientid_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
+
+    // Check the lease was not updated in the database.
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(from_mgr);
+
+    detailCompareLease(original_lease, from_mgr);
+}    
+
+/// We proved that there is no different from the "cache" feature between
+/// discovers and request at the exception of the lease database update.
+
+// This test checks if a lease can be reused in DHCPDISCOVER (fake allocation)
+// using cache max age.
+TEST_F(AllocEngine4Test, discoverCacheMaxAge4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    // Set valid lifetime to 500.
+    subnet_->setValid(500);
+
+    // Set the max age to 200.
+    subnet_->setCacheMaxAge(200);
+
+    IOAddress addr("192.0.2.105");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
+                               500, now, subnet_->getID()));
+    ASSERT_FALSE(lease->expired());
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create a context for fake allocation.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, addr,
+                                    false, false, "", true);
+
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    lease = engine->allocateLease4(ctx);
+    // Check that we got that single lease.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // The lease was reused.
+    time_t age = lease->cltt_ - now;
+    EXPECT_GE(age, 100);
+    EXPECT_LE(age, 110);
+    EXPECT_EQ(500 - age, lease->remaining_valid_lft_);
+
+    // Check other lease parameters.
+    EXPECT_EQ(lease->subnet_id_, subnet_->getID());
+    ASSERT_TRUE(lease->client_id_);
+    EXPECT_TRUE(*lease->client_id_ == *clientid_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
+}    
+
+// This test checks if a lease can be reused in DHCPREQUEST (real allocation)
+// using both cache threshold and max age.
+TEST_F(AllocEngine4Test, requestCacheBoth4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    // Set valid lifetime to 500.
+    subnet_->setValid(500);
+
+    // Set the threshold to 25%.
+    subnet_->setCacheThreshold(.25);
+
+    // Set the max age to 200.
+    subnet_->setCacheMaxAge(200);
+
+    IOAddress addr("192.0.2.105");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
+                               500, now, subnet_->getID()));
+    ASSERT_FALSE(lease->expired());
+    // Copy the lease, so as it can be compared with.
+    Lease4Ptr original_lease(new Lease4(*lease));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create a context for real allocation.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, addr,
+                                    false, false, "", false);
+
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    lease = engine->allocateLease4(ctx);
+    // Check that we got that single lease.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // The lease was reused.
+    time_t age = lease->cltt_ - now;
+    EXPECT_GE(age, 100);
+    EXPECT_LE(age, 110);
+    EXPECT_EQ(500 - age, lease->remaining_valid_lft_);
+
+    // Check other lease parameters.
+    EXPECT_EQ(lease->subnet_id_, subnet_->getID());
+    ASSERT_TRUE(lease->client_id_);
+    EXPECT_TRUE(*lease->client_id_ == *clientid_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
+
+    // Check the lease was not updated in the database.
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(from_mgr);
+
+    detailCompareLease(original_lease, from_mgr);
+}    
+
+// This test checks if a lease can't be reused in DHCPDISCOVER (fake allocation)
+// using too small cache threshold.
+TEST_F(AllocEngine4Test, discoverCacheBadThreshold4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    // Set valid lifetime to 500.
+    subnet_->setValid(500);
+
+    // Set the threshold to 10%.
+    subnet_->setCacheThreshold(.1);
+
+    IOAddress addr("192.0.2.105");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
+                               500, now, subnet_->getID()));
+    ASSERT_FALSE(lease->expired());
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create a context for fake allocation.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, addr,
+                                    false, false, "", true);
+
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    lease = engine->allocateLease4(ctx);
+    // Check that we got that single lease.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // The lease was not reused.
+    EXPECT_EQ(0, lease->remaining_valid_lft_);
+}    
+
+// This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
+// using too small cache max age.
+TEST_F(AllocEngine4Test, requestCacheBadMaxAge4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    // Set valid lifetime to 500.
+    subnet_->setValid(500);
+
+    // Set the max age to 50.
+    subnet_->setCacheMaxAge(50);
+
+    IOAddress addr("192.0.2.105");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
+                               500, now, subnet_->getID()));
+    ASSERT_FALSE(lease->expired());
+
+    // Create a context for real allocation.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, addr,
+                                    false, false, "", false);
+
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    lease = engine->allocateLease4(ctx);
+    // Check that we got that single lease.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // The lease was not reused.
+    EXPECT_EQ(0, lease->remaining_valid_lft_);
+
+    // Check the lease was updated in the database.
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(from_mgr);
+
+    detailCompareLease(lease, from_mgr);
+}    
+
+// This test checks if a lease can't be reused in DHCPDISCOVER (fake allocation)
+// when the valid lifetime was reduced.
+TEST_F(AllocEngine4Test, discoverCacheReducedValid4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    // Set valid lifetime to 200.
+    subnet_->setValid(200);
+
+    // Set the threshold to 10%.
+    subnet_->setCacheThreshold(.1);
+
+    IOAddress addr("192.0.2.105");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
+                               500, now, subnet_->getID()));
+    ASSERT_FALSE(lease->expired());
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create a context for fake allocation.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, addr,
+                                    false, false, "", true);
+
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    lease = engine->allocateLease4(ctx);
+    // Check that we got that single lease.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // The lease was not reused.
+    EXPECT_EQ(0, lease->remaining_valid_lft_);
+}    
+
+// This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
+// when DDNS parameter changed.
+TEST_F(AllocEngine4Test, requestCacheFwdDDNS4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    // Set valid lifetime to 500.
+    subnet_->setValid(500);
+
+    // Set the max age to 200.
+    subnet_->setCacheMaxAge(200);
+
+    IOAddress addr("192.0.2.105");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
+                               500, now, subnet_->getID()));
+    ASSERT_FALSE(lease->expired());
+
+    // Create a context for real allocation with fwd_dns_update changed.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, addr,
+                                    true, false, "", false);
+
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    lease = engine->allocateLease4(ctx);
+    // Check that we got that single lease.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // The lease was not reused.
+    EXPECT_EQ(0, lease->remaining_valid_lft_);
+
+    // Check the lease was updated in the database.
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(from_mgr);
+
+    detailCompareLease(lease, from_mgr);
+}    
+
+// This test checks if a lease can't be reused in DHCPDISCOVER (fake allocation)
+// when DDNS parameter changed.
+TEST_F(AllocEngine4Test, discoverCacheRevDDNS4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    // Set valid lifetime to 500.
+    subnet_->setValid(500);
+
+    // Set the threshold to 10%.
+    subnet_->setCacheThreshold(.1);
+
+    IOAddress addr("192.0.2.105");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
+                               500, now, subnet_->getID()));
+    ASSERT_FALSE(lease->expired());
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create a context for fake allocation with rev_dns_update changed.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, addr,
+                                    false, true, "", true);
+
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    lease = engine->allocateLease4(ctx);
+    // Check that we got that single lease.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // The lease was not reused.
+    EXPECT_EQ(0, lease->remaining_valid_lft_);
+}    
+
+// This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
+// when hostname changed.
+TEST_F(AllocEngine4Test, requestCacheHostname4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    // Set valid lifetime to 500.
+    subnet_->setValid(500);
+
+    // Set the max age to 200.
+    subnet_->setCacheMaxAge(200);
+
+    IOAddress addr("192.0.2.105");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
+                               500, now, subnet_->getID(),
+                               false, false, "foo"));
+    ASSERT_FALSE(lease->expired());
+
+    // Create a context for real allocation with fwd_dns_update changed.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, addr,
+                                    false, false, "bar", false);
+
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    lease = engine->allocateLease4(ctx);
+    // Check that we got that single lease.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // The lease was not reused.
+    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ("bar", lease->hostname_);
+
+    // Check the lease was updated in the database.
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(from_mgr);
+
+    detailCompareLease(lease, from_mgr);
+}    
 
 }  // namespace test
 }  // namespace dhcp

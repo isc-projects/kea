@@ -4050,6 +4050,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         std::string orig_context_json_; // user context the lease begins with
         std::vector<Pkt6::RelayInfo> relays_; // vector of relays from pkt
         std::string exp_context_json_;  // expected user context on the lease
+        bool exp_ret;                   // expected returned value
     };
 
     // Test scenarios.
@@ -4058,20 +4059,23 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         "no context, no relay",
         "",
         {},
-        ""
+        "",
+        false
     },
     {
         "some original context, no relay",
         "{\"foo\": 123}",
         {},
-        "{\"foo\": 123}"
+        "{\"foo\": 123}",
+        false
     },
     {
         "no original context, one relay",
         "",
         { relay1_ },
         "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
-        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }"
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
+        true
     },
     {
         "some original context, one relay",
@@ -4079,7 +4083,8 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         { relay1_ },
         "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] },"
-        " \"foo\": 123 }"
+        " \"foo\": 123 }",
+        true
     },
     {
         "no original context, two relays",
@@ -4087,7 +4092,8 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         { relay1_, relay2_ },
         "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" },"
-        " {\"hop\": 77, \"link\": \"2001:db8::3\", \"peer\": \"2001:db8::4\" } ] } }"
+        " {\"hop\": 77, \"link\": \"2001:db8::3\", \"peer\": \"2001:db8::4\" } ] } }",
+        true
     },
     {
         "original relay context, no relay",
@@ -4095,7 +4101,8 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
         {},
         "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
-        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }"
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
+        false
     },
     {
         "original relay context, different relay",
@@ -4103,7 +4110,8 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
         { relay2_ },
         "{ \"ISC\": { \"relays\": [ { \"hop\": 77, \"link\": \"2001:db8::3\","
-        " \"peer\": \"2001:db8::4\" } ] } }"
+        " \"peer\": \"2001:db8::4\" } ] } }",
+        true
     }};
 
     // Allocate a lease.
@@ -4156,7 +4164,9 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         ctx.query_->relay_info_ = scenario.relays_;
 
         // Call AllocEngine::updateLease6ExtendeInfo().
-        ASSERT_NO_THROW_LOG(engine_.callUpdateLease6ExtendedInfo(lease, ctx));
+        bool ret;
+        ASSERT_NO_THROW_LOG(ret = engine_.callUpdateLease6ExtendedInfo(lease, ctx));
+        ASSERT_EQ(scenario.exp_ret, ret);
 
         // Verify the lease has the expected user context content.
         if (!exp_context) {

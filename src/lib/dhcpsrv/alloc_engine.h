@@ -1806,7 +1806,9 @@ private:
     /// @param [out] lease A pointer to the lease to be updated.
     /// @param ctx A context containing information from the server about the
     /// client and its message.
-    void updateLease4Information(const Lease4Ptr& lease,
+    /// @return True if there was a significant (e.g. other than cltt) change,
+    /// false otherwise.
+    bool updateLease4Information(const Lease4Ptr& lease,
                                  ClientContext4& ctx) const;
 
 protected:
@@ -1824,7 +1826,9 @@ protected:
     /// @param [out] lease A pointer to the lease to be updated.
     /// @param ctx A context containing information from the server about the
     /// client and its message.
-    void updateLease4ExtendedInfo(const Lease4Ptr& lease,
+    /// @return True if there was a significant (e.g. other than cltt) change,
+    /// false otherwise.
+    bool updateLease4ExtendedInfo(const Lease4Ptr& lease,
                                   const ClientContext4& ctx) const;
 
     /// @brief Stores additional client query parameters on a V6 lease
@@ -1842,7 +1846,9 @@ protected:
     /// @param [out] lease A pointer to the lease to be updated.
     /// @param ctx A context containing information from the server about the
     /// client and its message.
-    void updateLease6ExtendedInfo(const Lease6Ptr& lease,
+    /// @return True if there was a significant (e.g. other than cltt) change,
+    /// false otherwise.
+    bool updateLease6ExtendedInfo(const Lease6Ptr& lease,
                                   const ClientContext6& ctx) const;
 
 private:

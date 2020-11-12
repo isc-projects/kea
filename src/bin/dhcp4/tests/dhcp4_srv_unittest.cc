@@ -1731,6 +1731,86 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     checkClientId(offer, clientid);
 }
 
+// This test verifies that incoming DISCOVER can reuse an existing lease.
+TEST_F(Dhcpv4SrvTest, DiscoverReuse) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+
+    // Enable lease reuse.
+    subnet_->setCacheThreshold(.1);
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_valid = subnet_->getValid();
+    const int delta = 100;
+    const time_t temp_timestamp = time(NULL) - delta;
+
+    // Generate client-id also sets client_id_ member
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+
+    // let's create a lease and put it in the LeaseMgr
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_timestamp, subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Check that preferred, valid and cltt really set.
+    // Constructed lease looks as if it was assigned 10 seconds ago
+    EXPECT_EQ(l->valid_lft_, temp_valid);
+    EXPECT_EQ(l->cltt_, temp_timestamp);
+
+    // Let's create a DISCOVER
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress(addr));
+    dis->addOption(clientid);
+    dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
+    dis->setHWAddr(hwaddr2);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv->processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Check valid lifetime (temp_valid - age)
+    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
+        OptionUint32>(offer->getOption(DHO_DHCP_LEASE_TIME));
+    ASSERT_TRUE(opt);
+    EXPECT_GE(subnet_->getValid() - delta, opt->getValue());
+    EXPECT_LE(subnet_->getValid() - delta - 10, opt->getValue());
+
+    // Check address
+    EXPECT_EQ(addr, offer->getYiaddr());
+
+    // Check T1
+    opt = boost::dynamic_pointer_cast<
+        OptionUint32>(offer->getOption(DHO_DHCP_RENEWAL_TIME));
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(opt->getValue(), subnet_->getT1());
+
+    // Check T2
+    opt = boost::dynamic_pointer_cast<
+        OptionUint32>(offer->getOption(DHO_DHCP_REBINDING_TIME));
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(opt->getValue(), subnet_->getT2());
+
+    // Check identifiers
+    checkServerId(offer, srv->getServerID());
+    checkClientId(offer, clientid);
+}
+
 // Check that option 58 and 59 are not included if they are not specified.
 TEST_F(Dhcpv4SrvTest, RequestNoTimers) {
     IfaceMgrTestConfig test_config(true);
@@ -2157,6 +2237,96 @@ TEST_F(Dhcpv4SrvTest, RenewMaxLifetime) {
 }
 
 } // end of Renew*Lifetime
+
+// This test verifies that incoming RENEW can reuse an existing lease.
+TEST_F(Dhcpv4SrvTest, RenewReuse) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+
+    // Enable lease reuse.
+    subnet_->setCacheThreshold(.1);
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_valid = subnet_->getValid();
+    const int delta = 100;
+    const time_t temp_timestamp = time(NULL) - delta;
+
+    // Generate client-id also sets client_id_ member
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+
+    // let's create a lease and put it in the LeaseMgr
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_timestamp, subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Check that preferred, valid and cltt really set.
+    // Constructed lease looks as if it was assigned 10 seconds ago
+    EXPECT_EQ(l->valid_lft_, temp_valid);
+    EXPECT_EQ(l->cltt_, temp_timestamp);
+
+    // Let's create a RENEW
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress(addr));
+    req->setYiaddr(addr);
+    req->setCiaddr(addr); // client's address
+    req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
+
+    req->addOption(clientid);
+    req->setHWAddr(hwaddr2);
+
+    // Pass it to the server and hope for a REPLY
+    Pkt4Ptr ack = srv->processRequest(req);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPACK, 1234);
+
+    // Check valid lifetime (temp_valid - age)
+    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
+        OptionUint32>(ack->getOption(DHO_DHCP_LEASE_TIME));
+    ASSERT_TRUE(opt);
+    EXPECT_GE(subnet_->getValid() - delta, opt->getValue());
+    EXPECT_LE(subnet_->getValid() - delta - 10, opt->getValue());
+
+    // Check address
+    EXPECT_EQ(addr, ack->getYiaddr());
+
+    // Check T1
+    opt = boost::dynamic_pointer_cast<
+        OptionUint32>(ack->getOption(DHO_DHCP_RENEWAL_TIME));
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(opt->getValue(), subnet_->getT1());
+
+    // Check T2
+    opt = boost::dynamic_pointer_cast<
+        OptionUint32>(ack->getOption(DHO_DHCP_REBINDING_TIME));
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(opt->getValue(), subnet_->getT2());
+
+    // Check identifiers
+    checkServerId(ack, srv->getServerID());
+    checkClientId(ack, clientid);
+
+    // Check that the lease is really in the database
+    Lease4Ptr lease = checkLease(ack, clientid, req->getHWAddr(), addr);
+    ASSERT_TRUE(lease);
+
+    // Check that the lease was not updated
+    EXPECT_EQ(temp_timestamp, lease->cltt_);
+}
 
 // This test verifies that the logic which matches server identifier in the
 // received message with server identifiers used by a server works correctly:
