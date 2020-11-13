@@ -1766,7 +1766,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverCache) {
     ASSERT_TRUE(l);
 
     // Check that preferred, valid and cltt really set.
-    // Constructed lease looks as if it was assigned 10 seconds ago
+    // Constructed lease looks as if it was assigned 100 seconds ago
     EXPECT_EQ(l->valid_lft_, temp_valid);
     EXPECT_EQ(l->cltt_, temp_timestamp);
 
@@ -2273,7 +2273,7 @@ TEST_F(Dhcpv4SrvTest, RenewCache) {
     ASSERT_TRUE(l);
 
     // Check that preferred, valid and cltt really set.
-    // Constructed lease looks as if it was assigned 10 seconds ago
+    // Constructed lease looks as if it was assigned 100 seconds ago
     EXPECT_EQ(l->valid_lft_, temp_valid);
     EXPECT_EQ(l->cltt_, temp_timestamp);
 

@@ -2040,7 +2040,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
 }
 
 // This test verifies that the callout installed on the leases4_committed hook
-// point is executed as a result of DHCPREQUEST message sent to reuse an
+// point is executed as a result of DHCPREQUEST message sent to reuse
 // an existing lease.
 TEST_F(HooksDhcpv4SrvTest, leases4CommittedCache) {
     IfaceMgrTestConfig test_config(true);
@@ -2098,7 +2098,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedCache) {
     // Check that the callback called is indeed the one we installed
     EXPECT_EQ("leases4_committed", callback_name_);
 
-    // Renewed lease should not be present because it was renewed.
+    // Renewed lease should not be present because it was reused.
     EXPECT_FALSE(callback_lease4_);
 
     // Deleted lease must not be present, because it renews the same address.

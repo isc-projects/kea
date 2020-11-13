@@ -4084,6 +4084,9 @@ TEST_F(AllocEngine4Test, requestCacheBadMaxAge4) {
     // Set valid lifetime to 500.
     subnet_->setValid(500);
 
+    // Set the threshold to 25%.
+    subnet_->setCacheThreshold(.25);
+
     // Set the max age to 50.
     subnet_->setCacheMaxAge(50);
 
@@ -4201,6 +4204,9 @@ TEST_F(AllocEngine4Test, discoverCacheRevDDNS4) {
 
     // Set the threshold to 10%.
     subnet_->setCacheThreshold(.1);
+
+    // Set the max age to 200.
+    subnet_->setCacheMaxAge(200);
 
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.

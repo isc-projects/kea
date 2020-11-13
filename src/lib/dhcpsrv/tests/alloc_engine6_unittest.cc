@@ -4394,8 +4394,46 @@ TEST_F(AllocEngine6ExtendedInfoTest, reuseExpiredLease6) {
                 << "  actual: " << *(lease->getContext()) << std::endl;
 }
 
-// V6 engine does not allocate on fake allocation / solicit so the cache
-// feature does nothing visible in this case.
+// Checks whether fake allocation does not use the cache feature.
+TEST_F(AllocEngine6Test, solicitNoCache) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Set the threshold to 25%.
+    subnet_->setCacheThreshold(.25);
+
+    IOAddress addr("2001:db8:1::15");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid_,
+                               300, 400, subnet_->getID()));
+    lease->cltt_ = now;
+    ASSERT_FALSE(lease->expired());
+    // Copy the lease, so as it can be compared with.
+    Lease6Ptr original_lease(new Lease6(*lease));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create a context for fake allocation..
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", true,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().addHint(addr);
+
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    EXPECT_EQ(addr, lease->addr_);
+    EXPECT_EQ(128, lease->prefixlen_);
+
+    // The lease was not reused.
+    EXPECT_EQ(0, lease->remaining_valid_lft_);
+
+    // Check the lease was not updated in the database.
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    detailCompareLease(original_lease, from_mgr);
+}
 
 // Checks whether a lease can be reused (request) using cache threshold.
 TEST_F(AllocEngine6Test, requestCacheThreshold6) {
@@ -4718,6 +4756,9 @@ TEST_F(AllocEngine6Test, requestCacheBadThreshold6) {
     // Set the threshold to 10%.
     subnet_->setCacheThreshold(.1);
 
+    // Set the max age to 150.
+    subnet_->setCacheMaxAge(150);
+
     IOAddress addr("2001:db8:1::15");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid_,
@@ -4757,6 +4798,98 @@ TEST_F(AllocEngine6Test, renewCacheBadThreshold6) {
 
     // Set the threshold to 10%.
     subnet_->setCacheThreshold(.1);
+
+    // Set the max age to 150.
+    subnet_->setCacheMaxAge(150);
+
+    IOAddress prefix("2001:db8:1:2::");
+    uint8_t prefixlen = 80;
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_PD, prefix, duid_, iaid_,
+                               300, 400, subnet_->getID(),
+                               HWAddrPtr(), prefixlen));
+    lease->cltt_ = now;
+    ASSERT_FALSE(lease->expired());
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create a context for renew.
+    Pkt6Ptr query(new Pkt6(DHCPV6_RENEW, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    query);
+    ctx.currentIA().type_ = Lease::TYPE_PD;
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().addHint(prefix, prefixlen);
+
+    EXPECT_NO_THROW(lease = expectOneLease(engine->renewLeases6(ctx)));
+    EXPECT_EQ(prefix, lease->addr_);
+    EXPECT_EQ(prefixlen, lease->prefixlen_);
+
+    // The lease was not reused.
+    EXPECT_EQ(0, lease->remaining_valid_lft_);
+
+    // Check the lease was updated in the database.
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    detailCompareLease(lease, from_mgr);
+}
+
+// Checks whether a lease can't be reused (request) using too small
+// cache max age.
+TEST_F(AllocEngine6Test, requestCacheBadMaxAge6) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Set the threshold to 25%.
+    subnet_->setCacheThreshold(.25);
+
+    // Set the max age to 50.
+    subnet_->setCacheMaxAge(50);
+
+    IOAddress addr("2001:db8:1::15");
+    time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid_,
+                               300, 400, subnet_->getID()));
+    lease->cltt_ = now;
+    ASSERT_FALSE(lease->expired());
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create a context for request.
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().addHint(addr);
+
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    EXPECT_EQ(addr, lease->addr_);
+    EXPECT_EQ(128, lease->prefixlen_);
+
+    // The lease was not reused.
+    EXPECT_EQ(0, lease->remaining_valid_lft_);
+
+    // Check the lease was updated in the database.
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    detailCompareLease(lease, from_mgr);
+}
+
+// Checks whether a lease can't be reused (renew) using too small
+// cache max age.
+TEST_F(AllocEngine6Test, renewCacheBadMaxAge6) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Set the threshold to 25%.
+    subnet_->setCacheThreshold(.25);
+
+    // Set the max age to 50.
+    subnet_->setCacheMaxAge(50);
 
     IOAddress prefix("2001:db8:1:2::");
     uint8_t prefixlen = 80;

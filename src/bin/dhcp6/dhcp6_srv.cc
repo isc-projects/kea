@@ -2344,11 +2344,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     uint32_t min_preferred_lft = std::numeric_limits<uint32_t>::max();
 
     // For all leases we have now, add the IAADDR with non-zero lifetimes.
-    for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
-        Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
-                                (*l)->addr_, (*l)->preferred_lft_, (*l)->valid_lft_));
-        ia_rsp->addOption(iaaddr);
-
+    for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
         if ((*l)->remaining_valid_lft_ == 0) {
             LOG_INFO(lease6_logger, DHCP6_LEASE_RENEW)
                 .arg(query->getLabel())
@@ -2364,6 +2360,10 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                 .arg(Lease::lifetimeToText((*l)->valid_lft_));
         }
 
+        Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
+                                (*l)->addr_, (*l)->preferred_lft_, (*l)->valid_lft_));
+        ia_rsp->addOption(iaaddr);
+
         // Check for new minimum lease time
         if (((*l)->preferred_lft_ > 0) && (min_preferred_lft > (*l)->preferred_lft_)) {
             min_preferred_lft = (*l)->preferred_lft_;
@@ -2376,8 +2376,8 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     }
 
     // For the leases that we just retired, send the addresses with 0 lifetimes.
-    for (Lease6Collection::const_iterator l = ctx.currentIA().old_leases_.begin();
-                                          l != ctx.currentIA().old_leases_.end(); ++l) {
+    for (Lease6Collection::iterator l = ctx.currentIA().old_leases_.begin();
+         l != ctx.currentIA().old_leases_.end(); ++l) {
 
         // Send an address with zero lifetimes only when this lease belonged to
         // this client. Do not send it when we're reusing an old lease that belonged
@@ -2532,7 +2532,23 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // for calculating T1 and T2.
     uint32_t min_preferred_lft = std::numeric_limits<uint32_t>::max();
 
-    for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
+    for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
+        if ((*l)->remaining_valid_lft_ == 0) {
+            LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
+                .arg(query->getLabel())
+                .arg((*l)->addr_.toText())
+                .arg(static_cast<int>((*l)->prefixlen_))
+                .arg(ia->getIAID());
+        } else {
+            (*l)->valid_lft_ = (*l)->remaining_valid_lft_;
+            (*l)->preferred_lft_ = (*l)->remaining_preferred_lft_;
+            LOG_INFO(lease6_logger, DHCP6_PD_LEASE_REUSE)
+                .arg(query->getLabel())
+                .arg((*l)->addr_.toText())
+                .arg(static_cast<int>((*l)->prefixlen_))
+                .arg(ia->getIAID())
+                .arg(Lease::lifetimeToText((*l)->valid_lft_));
+        }
 
         Option6IAPrefixPtr prf(new Option6IAPrefix(D6O_IAPREFIX,
                                (*l)->addr_, (*l)->prefixlen_,
@@ -2553,23 +2569,6 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
             }
         }
 
-        if ((*l)->remaining_valid_lft_ == 0) {
-            LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
-                .arg(query->getLabel())
-                .arg((*l)->addr_.toText())
-                .arg(static_cast<int>((*l)->prefixlen_))
-                .arg(ia->getIAID());
-        } else {
-            (*l)->valid_lft_ = (*l)->remaining_valid_lft_;
-            (*l)->preferred_lft_ = (*l)->remaining_preferred_lft_;
-            LOG_INFO(lease6_logger, DHCP6_PD_LEASE_REUSE)
-                .arg(query->getLabel())
-                .arg((*l)->addr_.toText())
-                .arg(static_cast<int>((*l)->prefixlen_))
-                .arg(ia->getIAID())
-                .arg(Lease::lifetimeToText((*l)->valid_lft_));
-        }
-
         // Check for new minimum lease time
         if (((*l)->preferred_lft_ > 0) && ((*l)->preferred_lft_ < min_preferred_lft)) {
             min_preferred_lft = (*l)->preferred_lft_;
@@ -2582,8 +2581,8 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     }
 
     /// For the leases that we just retired, send the prefixes with 0 lifetimes.
-    for (Lease6Collection::const_iterator l = ctx.currentIA().old_leases_.begin();
-                                          l != ctx.currentIA().old_leases_.end(); ++l) {
+    for (Lease6Collection::iterator l = ctx.currentIA().old_leases_.begin();
+         l != ctx.currentIA().old_leases_.end(); ++l) {
 
         // Send a prefix with zero lifetimes only when this lease belonged to
         // this client. Do not send it when we're reusing an old lease that belonged

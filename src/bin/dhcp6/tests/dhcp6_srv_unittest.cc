@@ -997,6 +997,147 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     cout << "Offered address to client3=" << addr3->getAddress() << endl;
 }
 
+// This test verifies that incoming SOLICIT can't reuse an existing lease
+// and simply return it, i.e. fake allocation ignores the cache feature.
+TEST_F(Dhcpv6SrvTest, SolicitCache) {
+    NakedDhcpv6Srv srv(0);
+
+    // Enable lease reuse.
+    subnet_->setCacheThreshold(.1);
+
+    const IOAddress addr("2001:db8:1:1::cafe:babe");
+    const uint32_t iaid = 234;
+    const uint32_t pref = subnet_->getPreferred();
+    const uint32_t valid = subnet_->getValid();
+    const int delta = 100;
+    const time_t timestamp = time(NULL) - delta;
+
+    // Generate client-id also duid_.
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool.
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
+
+    Lease6Ptr used(new Lease6(Lease::TYPE_NA, addr, duid_, iaid, pref, valid,
+                              subnet_->getID()));
+    used->cltt_ = timestamp;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(l);
+
+    // Check that preferred, valid and cltt really set.
+    // Constructed lease looks as if it was assigned 100 seconds ago.
+    EXPECT_EQ(l->preferred_lft_, pref);
+    EXPECT_EQ(l->valid_lft_, valid);
+    EXPECT_EQ(l->cltt_, timestamp);
+
+    // Let's create a SOLICIT.
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    // check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr> iaaddr =
+        checkIA_NA(reply, 234, subnet_->getT1(), subnet_->getT2());
+    ASSERT_TRUE(iaaddr);
+
+    // Check the address.
+    EXPECT_EQ(addr, iaaddr->getAddress());
+    EXPECT_EQ(pref, iaaddr->getPreferred());
+    EXPECT_EQ(valid, iaaddr->getValid());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
+// This test verifies that incoming SOLICIT can't reuse an existing lease
+// and simply return it, i.e. fake allocation ignores the cache feature.
+// Prefix variant.
+TEST_F(Dhcpv6SrvTest, pdSolicitCache) {
+    NakedDhcpv6Srv srv(0);
+
+    // Enable lease reuse.
+    subnet_->setCacheThreshold(.1);
+
+    const IOAddress prefix("2001:db8:1:2::");
+    const uint8_t prefixlen = pd_pool_->getLength();
+    const uint32_t iaid = 234;
+    const uint32_t pref = subnet_->getPreferred();
+    const uint32_t valid = subnet_->getValid();
+    const int delta = 100;
+    const time_t timestamp = time(NULL) - delta;
+
+    // Generate client-id also duid_.
+    OptionPtr clientid = generateClientId();
+
+    // Check that the prefix we are about to use is indeed in pool.
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_PD, prefix));
+
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, prefix, duid_, iaid, pref, valid,
+                              subnet_->getID(), HWAddrPtr(), prefixlen));
+    used->cltt_ = timestamp;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, prefix);
+    ASSERT_TRUE(l);
+
+    // Check that preferred, valid and cltt really set.
+    // Constructed lease looks as if it was assigned 100 seconds ago.
+    EXPECT_EQ(l->preferred_lft_, pref);
+    EXPECT_EQ(l->valid_lft_, valid);
+    EXPECT_EQ(l->cltt_, timestamp);
+
+    // Let's create a SOLICIT.
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
+    sol->addOption(generateIA(D6O_IA_PD, 234, 1500, 3000));
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    // check that IA_PD was returned and that there's a prefix included
+    boost::shared_ptr<Option6IAPrefix> iapref =
+        checkIA_PD(reply, 234, subnet_->getT1(), subnet_->getT2());
+    ASSERT_TRUE(iapref);
+
+    // Check the prefix.
+    EXPECT_EQ(prefix, iapref->getAddress());
+    EXPECT_EQ(prefixlen, iapref->getLength());
+    EXPECT_EQ(pref, iapref->getPreferred());
+    EXPECT_EQ(valid, iapref->getValid());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
 // This test verifies that incoming REQUEST can be handled properly, that a
 // REPLY is generated, that the response has an address and that address
 // really belongs to the configured pool.
@@ -1222,6 +1363,147 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     cout << "Assigned address to client3=" << addr3->getAddress() << endl;
 }
 
+// This test verifies that incoming REQUEST can reuse an existing lease.
+TEST_F(Dhcpv6SrvTest, RequestCache) {
+    NakedDhcpv6Srv srv(0);
+
+    // Enable lease reuse.
+    subnet_->setCacheThreshold(.1);
+
+    const IOAddress addr("2001:db8:1:1::cafe:babe");
+    const uint32_t iaid = 234;
+    const uint32_t pref = subnet_->getPreferred();
+    const uint32_t valid = subnet_->getValid();
+    const int delta = 100;
+    const time_t timestamp = time(NULL) - delta;
+
+    // Generate client-id also duid_.
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool.
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
+
+    Lease6Ptr used(new Lease6(Lease::TYPE_NA, addr, duid_, iaid, pref, valid,
+                              subnet_->getID()));
+    used->cltt_ = timestamp;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(l);
+
+    // Check that preferred, valid and cltt really set.
+    // Constructed lease looks as if it was assigned 100 seconds ago.
+    EXPECT_EQ(l->preferred_lft_, pref);
+    EXPECT_EQ(l->valid_lft_, valid);
+    EXPECT_EQ(l->cltt_, timestamp);
+
+    // Let's create a REQUEST.
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
+    req->addOption(createIA(Lease::TYPE_NA, addr, 128, iaid));
+    req->addOption(clientid);
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(req, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processRequest(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    // check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr> iaaddr =
+        checkIA_NA(reply, 234, subnet_->getT1(), subnet_->getT2());
+    ASSERT_TRUE(iaaddr);
+
+    // Check the address.
+    EXPECT_EQ(addr, iaaddr->getAddress());
+    EXPECT_EQ(pref - delta, iaaddr->getPreferred());
+    EXPECT_EQ(valid - delta, iaaddr->getValid());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
+// This test verifies that incoming REQUEST can reuse an existing lease.
+// Prefix variant.
+TEST_F(Dhcpv6SrvTest, pdRequestCache) {
+    NakedDhcpv6Srv srv(0);
+
+    // Enable lease reuse.
+    subnet_->setCacheThreshold(.1);
+
+    const IOAddress prefix("2001:db8:1:2::");
+    const uint8_t prefixlen = pd_pool_->getLength();
+    const uint32_t iaid = 234;
+    const uint32_t pref = subnet_->getPreferred();
+    const uint32_t valid = subnet_->getValid();
+    const int delta = 100;
+    const time_t timestamp = time(NULL) - delta;
+
+    // Generate client-id also duid_.
+    OptionPtr clientid = generateClientId();
+
+    // Check that the prefix we are about to use is indeed in pool.
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_PD, prefix));
+
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, prefix, duid_, iaid, pref, valid,
+                              subnet_->getID(), HWAddrPtr(), prefixlen));
+    used->cltt_ = timestamp;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, prefix);
+    ASSERT_TRUE(l);
+
+    // Check that preferred, valid and cltt really set.
+    // Constructed lease looks as if it was assigned 100 seconds ago.
+    EXPECT_EQ(l->preferred_lft_, pref);
+    EXPECT_EQ(l->valid_lft_, valid);
+    EXPECT_EQ(l->cltt_, timestamp);
+
+    // Let's create a REQUEST.
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
+    req->addOption(createIA(Lease::TYPE_PD, prefix, prefixlen, iaid));
+    req->addOption(clientid);
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(req, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processRequest(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    // check that IA_PD was returned and that there's a prefix included
+    boost::shared_ptr<Option6IAPrefix> iapref =
+        checkIA_PD(reply, 234, subnet_->getT1(), subnet_->getT2());
+    ASSERT_TRUE(iapref);
+
+    // Check the prefix.
+    EXPECT_EQ(prefix, iapref->getAddress());
+    EXPECT_EQ(prefixlen, iapref->getLength());
+    EXPECT_EQ(pref - delta, iapref->getPreferred());
+    EXPECT_EQ(valid - delta, iapref->getValid());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
 // This test verifies that incoming (positive) RENEW can be handled properly, that a
 // REPLY is generated, that the response has an address and that address
 // really belongs to the configured pool and that lease is actually renewed.
@@ -1363,6 +1645,147 @@ TEST_F(Dhcpv6SrvTest, maxLifetimeReuseExpired) {
     testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
                    "2001:db8:1:1::cafe:babe", 128,
                    true, true, 5000, 6000, 4000, 5000);
+}
+
+// This test verifies that incoming RENEW can reuse an existing lease.
+TEST_F(Dhcpv6SrvTest, RenewCache) {
+    NakedDhcpv6Srv srv(0);
+
+    // Enable lease reuse.
+    subnet_->setCacheThreshold(.1);
+
+    const IOAddress addr("2001:db8:1:1::cafe:babe");
+    const uint32_t iaid = 234;
+    const uint32_t pref = subnet_->getPreferred();
+    const uint32_t valid = subnet_->getValid();
+    const int delta = 100;
+    const time_t timestamp = time(NULL) - delta;
+
+    // Generate client-id also duid_.
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool.
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
+
+    Lease6Ptr used(new Lease6(Lease::TYPE_NA, addr, duid_, iaid, pref, valid,
+                              subnet_->getID()));
+    used->cltt_ = timestamp;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(l);
+
+    // Check that preferred, valid and cltt really set.
+    // Constructed lease looks as if it was assigned 100 seconds ago.
+    EXPECT_EQ(l->preferred_lft_, pref);
+    EXPECT_EQ(l->valid_lft_, valid);
+    EXPECT_EQ(l->cltt_, timestamp);
+
+    // Let's create a RENEW.
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
+    req->addOption(createIA(Lease::TYPE_NA, addr, 128, iaid));
+    req->addOption(clientid);
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(req, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processRenew(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    // check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr> iaaddr =
+        checkIA_NA(reply, 234, subnet_->getT1(), subnet_->getT2());
+    ASSERT_TRUE(iaaddr);
+
+    // Check the address.
+    EXPECT_EQ(addr, iaaddr->getAddress());
+    EXPECT_EQ(pref - delta, iaaddr->getPreferred());
+    EXPECT_EQ(valid - delta, iaaddr->getValid());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
+// This test verifies that incoming RENEW can reuse an existing lease.
+// Prefix variant.
+TEST_F(Dhcpv6SrvTest, pdRenewCache) {
+    NakedDhcpv6Srv srv(0);
+
+    // Enable lease reuse.
+    subnet_->setCacheThreshold(.1);
+
+    const IOAddress prefix("2001:db8:1:2::");
+    const uint8_t prefixlen = pd_pool_->getLength();
+    const uint32_t iaid = 234;
+    const uint32_t pref = subnet_->getPreferred();
+    const uint32_t valid = subnet_->getValid();
+    const int delta = 100;
+    const time_t timestamp = time(NULL) - delta;
+
+    // Generate client-id also duid_.
+    OptionPtr clientid = generateClientId();
+
+    // Check that the prefix we are about to use is indeed in pool.
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_PD, prefix));
+
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, prefix, duid_, iaid, pref, valid,
+                              subnet_->getID(), HWAddrPtr(), prefixlen));
+    used->cltt_ = timestamp;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, prefix);
+    ASSERT_TRUE(l);
+
+    // Check that preferred, valid and cltt really set.
+    // Constructed lease looks as if it was assigned 100 seconds ago.
+    EXPECT_EQ(l->preferred_lft_, pref);
+    EXPECT_EQ(l->valid_lft_, valid);
+    EXPECT_EQ(l->cltt_, timestamp);
+
+    // Let's create a RENEW.
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
+    req->addOption(createIA(Lease::TYPE_PD, prefix, prefixlen, iaid));
+    req->addOption(clientid);
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(req, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processRenew(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    // check that IA_PD was returned and that there's a prefix included
+    boost::shared_ptr<Option6IAPrefix> iapref =
+        checkIA_PD(reply, 234, subnet_->getT1(), subnet_->getT2());
+    ASSERT_TRUE(iapref);
+
+    // Check the prefix.
+    EXPECT_EQ(prefix, iapref->getAddress());
+    EXPECT_EQ(prefixlen, iapref->getLength());
+    EXPECT_EQ(pref - delta, iapref->getPreferred());
+    EXPECT_EQ(valid - delta, iapref->getValid());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
 }
 
 // This test verifies that incoming (positive) RELEASE with address can be
