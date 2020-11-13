@@ -1187,7 +1187,7 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     network_state_->disableService();
 
     if (!db_reconnect_ctl) {
-        // This shouldn't never happen
+        // This should never happen
         LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_NO_DB_CTL);
         return (false);
     }
@@ -1211,7 +1211,7 @@ ControlledDhcpv6Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
     network_state_->enableService();
 
     if (!db_reconnect_ctl) {
-        // This shouldn't never happen
+        // This should never happen
         LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_NO_DB_CTL);
         return (false);
     }
@@ -1224,7 +1224,7 @@ ControlledDhcpv6Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
 bool
 ControlledDhcpv6Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
     if (!db_reconnect_ctl) {
-        // This shouldn't never happen
+        // This should never happen
         LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_NO_DB_CTL);
         return (false);
     }
