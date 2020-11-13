@@ -919,7 +919,7 @@ public:
     }
 
     virtual std::string invalidConnectString() {
-        return (connectionString(PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST,
+        return (connectionString(PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
                                  VALID_USER, VALID_PASSWORD));
     }
 };

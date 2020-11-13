@@ -3274,6 +3274,14 @@ LeaseMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     DatabaseConnection::db_lost_callback_ =
         std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
 
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
     ASSERT_THROW(LeaseMgrFactory::create(invalidConnectString()),
                  DbOpenError);
 

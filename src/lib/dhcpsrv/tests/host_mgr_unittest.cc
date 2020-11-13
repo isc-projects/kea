@@ -12,6 +12,8 @@
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <testutils/multi_threading_utils.h>
+#include <util/multi_threading_mgr.h>
 
 #if defined HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
@@ -30,9 +32,11 @@
 
 using namespace isc;
 using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::asiolink;
+using namespace isc::test;
 namespace ph = std::placeholders;
 
 namespace {
@@ -1376,8 +1380,24 @@ TEST_F(HostMgrTest, addNoDataSource) {
 class HostMgrDbLostCallbackTest : public ::testing::Test {
 public:
     HostMgrDbLostCallbackTest()
-        : callback_called_(false),
+        : db_lost_callback_called_(0), db_recovered_callback_called_(0),
+          db_failed_callback_called_(0),
           io_service_(boost::make_shared<isc::asiolink::IOService>()) {
+        db::DatabaseConnection::db_lost_callback_ = 0;
+        db::DatabaseConnection::db_recovered_callback_ = 0;
+        db::DatabaseConnection::db_failed_callback_ = 0;
+        HostMgr::setIOService(io_service_);
+        TimerMgr::instance()->setIOService(io_service_);
+        CfgMgr::instance().clear();
+    }
+
+    ~HostMgrDbLostCallbackTest() {
+        db::DatabaseConnection::db_lost_callback_ = 0;
+        db::DatabaseConnection::db_recovered_callback_ = 0;
+        db::DatabaseConnection::db_failed_callback_ = 0;
+        HostMgr::setIOService(isc::asiolink::IOServicePtr());
+        TimerMgr::instance()->unregisterTimers();
+        CfgMgr::instance().clear();
     }
 
     /// @brief Prepares the class for a test.
@@ -1387,11 +1407,14 @@ public:
     /// wipe out any prior instance
     virtual void SetUp() {
         HostMgr::setIOService(io_service_);
-        DatabaseConnection::db_lost_callback_ = 0;
+        db::DatabaseConnection::db_lost_callback_ = 0;
+        db::DatabaseConnection::db_recovered_callback_ = 0;
+        db::DatabaseConnection::db_failed_callback_ = 0;
         // Ensure we have the proper schema with no transient data.
         createSchema();
         // Wipe out any pre-existing mgr
         HostMgr::create();
+        CfgMgr::instance().clear();
     }
 
     /// @brief Pre-text exit clean up
@@ -1400,9 +1423,12 @@ public:
     /// we created.
     virtual void TearDown() {
         HostMgr::setIOService(isc::asiolink::IOServicePtr());
-        DatabaseConnection::db_lost_callback_ = 0;
+        db::DatabaseConnection::db_lost_callback_ = 0;
+        db::DatabaseConnection::db_recovered_callback_ = 0;
+        db::DatabaseConnection::db_failed_callback_ = 0;
         // If data wipe enabled, delete transient data otherwise destroy the schema
         destroySchema();
+        CfgMgr::instance().clear();
     }
 
     /// @brief Abstract method for destroying the back end specific shcema
@@ -1415,41 +1441,145 @@ public:
     /// string
     virtual std::string validConnectString() = 0;
 
+    /// @brief Abstract method which returns invalid back end specific connection
+    /// string
+    virtual std::string invalidConnectString() = 0;
+
 #if defined(HAVE_MYSQL) || defined(HAVE_PGSQL)
+    /// @brief Verifies open failures do NOT invoke db lost callback
+    ///
+    /// The db lost callback should only be invoked after successfully
+    /// opening the DB and then subsequently losing it. Failing to
+    /// open should be handled directly by the application layer.
+    void testNoCallbackOnOpenFailure();
+
     /// @brief Verifies the host manager's behavior if DB connection is lost
     ///
-    /// This function creates a host manager with an alternate data source
-    /// that supports connectivity lost callback (currently only MySQL and
+    /// This function creates a host manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
     /// PostgreSQL currently).  It verifies connectivity by issuing a known
     /// valid query.  Next it simulates connectivity lost by identifying and
     /// closing the socket connection to the host backend.  It then reissues
     /// the query and verifies that:
-    /// -# The Query throws  DbConnectionUnusable (rather than exiting)
+    /// -# The Query throws  DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
-    void testDbLostCallback();
+    /// -# The registered DbRecoveredCallback was invoked
+    void testDbLostAndRecoveredCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection is lost
+    ///
+    /// This function creates a host manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifying and
+    /// closing the socket connection to the host backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked
+    void testDbLostAndFailedCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection is lost
+    ///
+    /// This function creates a host manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifyingLost and
+    /// closing the socket connection to the host backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbRecoveredCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testDbLostAndRecoveredAfterTimeoutCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection is lost
+    ///
+    /// This function creates a host manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifyingLost and
+    /// closing the socket connection to the host backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testDbLostAndFailedAfterTimeoutCallback();
 #endif
 
     /// @brief Callback function registered with the host manager
-    bool db_lost_callback(ReconnectCtlPtr /* not_used */) {
-        return (callback_called_ = true);
+    bool db_lost_callback(db::ReconnectCtlPtr /* not_used */) {
+        return (++db_lost_callback_called_);
     }
 
     /// @brief Flag used to detect calls to db_lost_callback function
-    bool callback_called_;
+    uint32_t db_lost_callback_called_;
+
+    /// @brief Callback function registered with the host manager
+    bool db_recovered_callback(db::ReconnectCtlPtr /* not_used */) {
+        return (++db_recovered_callback_called_);
+    }
+
+    /// @brief Flag used to detect calls to db_recovered_callback function
+    uint32_t db_recovered_callback_called_;
+
+    /// @brief Callback function registered with the host manager
+    bool db_failed_callback(db::ReconnectCtlPtr /* not_used */) {
+        return (++db_failed_callback_called_);
+    }
+
+    /// @brief Flag used to detect calls to db_failed_callback function
+    uint32_t db_failed_callback_called_;
 
     /// The IOService object, used for all ASIO operations.
     isc::asiolink::IOServicePtr io_service_;
 };
 
 #if defined(HAVE_MYSQL) || defined(HAVE_PGSQL)
-void
-HostMgrDbLostCallbackTest::testDbLostCallback() {
-    // Create the HostMgr.
-    HostMgr::create();
 
+void
+HostMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    // Connect to the host backend.
+    ASSERT_THROW(HostMgr::addBackend(invalidConnectString()), DbOpenError);
+
+    io_service_->poll();
+
+    EXPECT_EQ(0, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+}
+
+void
+HostMgrDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     // Set the connectivity lost callback.
     DatabaseConnection::db_lost_callback_ =
         std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    // Create the HostMgr.
+    HostMgr::create();
 
     // Find the most recently opened socket. Our SQL client's socket should
     // be the next one.
@@ -1459,21 +1589,18 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
     FillFdHoles holes(last_open_socket);
 
     // Connect to the host backend.
-    ASSERT_NO_THROW(HostMgr::addBackend(validConnectString()));
+    ASSERT_NO_THROW(HostMgr::addBackend(access));
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
-
-    // Clear the callback invocation marker.
-    callback_called_ = false;
 
     // Verify we can execute a query.  We don't care about the answer.
     ConstHostCollection hosts;
     ASSERT_NO_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")));
 
     // Now close the sql socket out from under backend client
-    ASSERT_FALSE(close(sql_socket)) << "failed to close socket";
+    ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
     ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
@@ -1481,8 +1608,210 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
 
     io_service_->poll();
 
-    // Our lost connectivity callback should have been invoked.
-    EXPECT_TRUE(callback_called_);
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+}
+
+void
+HostMgrDbLostCallbackTest::testDbLostAndFailedCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    // Create the HostMgr.
+    HostMgr::create();
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
+    // Connect to the host backend.
+    ASSERT_NO_THROW(HostMgr::addBackend(access));
+
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ConstHostCollection hosts;
+    ASSERT_NO_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")));
+
+    access = invalidConnectString();
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access + " ");
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+}
+
+void
+HostMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    // Create the HostMgr.
+    HostMgr::create();
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
+    // Connect to the host backend.
+    ASSERT_NO_THROW(HostMgr::addBackend(access));
+
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ConstHostCollection hosts;
+    ASSERT_NO_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")));
+
+    access = invalidConnectString();
+    access += extra;
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access + " ");
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    access = validConnectString();
+    access += extra;
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+}
+
+void
+HostMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    // Create the HostMgr.
+    HostMgr::create();
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
+    // Connect to the host backend.
+    ASSERT_NO_THROW(HostMgr::addBackend(access));
+
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ConstHostCollection hosts;
+    ASSERT_NO_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")));
+
+    access = invalidConnectString();
+    access += extra;
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access + " ");
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
 }
 #endif
 
@@ -1546,6 +1875,11 @@ public:
 
     virtual std::string validConnectString() {
         return (db::test::validMySQLConnectionString());
+    }
+
+    virtual std::string invalidConnectString() {
+        return (connectionString(MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
+                                 VALID_USER, VALID_PASSWORD));
     }
 };
 
@@ -1656,10 +1990,66 @@ TEST_F(MySQLHostMgrTest, setIPReservationsUnique) {
     EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
 }
 
-// Verifies that loss of connectivity to MySQL is handled correctly.
-TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostCallback) {
-    testDbLostCallback();
+/// @brief Verifies that db lost callback is not invoked on an open failure
+TEST_F(MySQLHostMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
+    MultiThreadingTest mt(false);
+    testNoCallbackOnOpenFailure();
 }
+
+/// @brief Verifies that db lost callback is not invoked on an open failure
+TEST_F(MySQLHostMgrDbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreading) {
+    MultiThreadingTest mt(true);
+    testNoCallbackOnOpenFailure();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndFailedCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndFailedCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndFailedAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndFailedAfterTimeoutCallback();
+}
+
 
 #endif
 
@@ -1723,6 +2113,11 @@ public:
 
     virtual std::string validConnectString() {
         return (db::test::validPgSQLConnectionString());
+    }
+
+    virtual std::string invalidConnectString() {
+        return (connectionString(PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
+                                 VALID_USER, VALID_PASSWORD));
     }
 };
 
@@ -1833,10 +2228,66 @@ TEST_F(PostgreSQLHostMgrTest, setIPReservationUnique) {
     EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
 }
 
-// Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostCallback) {
-    testDbLostCallback();
+/// @brief Verifies that db lost callback is not invoked on an open failure
+TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
+    MultiThreadingTest mt(false);
+    testNoCallbackOnOpenFailure();
 }
+
+/// @brief Verifies that db lost callback is not invoked on an open failure
+TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreading) {
+    MultiThreadingTest mt(true);
+    testNoCallbackOnOpenFailure();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostAndFailedCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostAndFailedCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndFailedAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndFailedAfterTimeoutCallback();
+}
+
 
 #endif
 
