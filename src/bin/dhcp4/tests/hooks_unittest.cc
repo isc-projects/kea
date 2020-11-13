@@ -2042,7 +2042,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
 // This test verifies that the callout installed on the leases4_committed hook
 // point is executed as a result of DHCPREQUEST message sent to reuse an
 // an existing lease.
-TEST_F(HooksDhcpv4SrvTest, leases4CommittedReuse) {
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedCache) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 

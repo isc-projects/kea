@@ -1732,7 +1732,7 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
 }
 
 // This test verifies that incoming DISCOVER can reuse an existing lease.
-TEST_F(Dhcpv4SrvTest, DiscoverReuse) {
+TEST_F(Dhcpv4SrvTest, DiscoverCache) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -2239,7 +2239,7 @@ TEST_F(Dhcpv4SrvTest, RenewMaxLifetime) {
 } // end of Renew*Lifetime
 
 // This test verifies that incoming RENEW can reuse an existing lease.
-TEST_F(Dhcpv4SrvTest, RenewReuse) {
+TEST_F(Dhcpv4SrvTest, RenewCache) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 

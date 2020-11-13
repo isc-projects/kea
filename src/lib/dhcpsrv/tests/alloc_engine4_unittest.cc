@@ -3879,7 +3879,7 @@ TEST_F(AllocEngine4Test, discoverCacheThreshold4) {
     EXPECT_TRUE(*lease->client_id_ == *clientid_);
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
-}    
+}
 
 // This test checks if a lease can be reused in DHCPREQUEST (real allocation)
 // using cache threshold.
@@ -3932,7 +3932,7 @@ TEST_F(AllocEngine4Test, requestCacheThreshold4) {
     ASSERT_TRUE(from_mgr);
 
     detailCompareLease(original_lease, from_mgr);
-}    
+}
 
 /// We proved that there is no different from the "cache" feature between
 /// discovers and request at the exception of the lease database update.
@@ -3980,7 +3980,7 @@ TEST_F(AllocEngine4Test, discoverCacheMaxAge4) {
     EXPECT_TRUE(*lease->client_id_ == *clientid_);
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
-}    
+}
 
 // This test checks if a lease can be reused in DHCPREQUEST (real allocation)
 // using both cache threshold and max age.
@@ -4036,7 +4036,7 @@ TEST_F(AllocEngine4Test, requestCacheBoth4) {
     ASSERT_TRUE(from_mgr);
 
     detailCompareLease(original_lease, from_mgr);
-}    
+}
 
 // This test checks if a lease can't be reused in DHCPDISCOVER (fake allocation)
 // using too small cache threshold.
@@ -4049,8 +4049,8 @@ TEST_F(AllocEngine4Test, discoverCacheBadThreshold4) {
     // Set valid lifetime to 500.
     subnet_->setValid(500);
 
-    // Set the threshold to 10%.
-    subnet_->setCacheThreshold(.1);
+    // Set the threshold to 25%.
+    subnet_->setCacheThreshold(.25);
 
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
@@ -4071,7 +4071,7 @@ TEST_F(AllocEngine4Test, discoverCacheBadThreshold4) {
 
     // The lease was not reused.
     EXPECT_EQ(0, lease->remaining_valid_lft_);
-}    
+}
 
 // This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
 // using too small cache max age.
@@ -4111,7 +4111,7 @@ TEST_F(AllocEngine4Test, requestCacheBadMaxAge4) {
     ASSERT_TRUE(from_mgr);
 
     detailCompareLease(lease, from_mgr);
-}    
+}
 
 // This test checks if a lease can't be reused in DHCPDISCOVER (fake allocation)
 // when the valid lifetime was reduced.
@@ -4124,8 +4124,8 @@ TEST_F(AllocEngine4Test, discoverCacheReducedValid4) {
     // Set valid lifetime to 200.
     subnet_->setValid(200);
 
-    // Set the threshold to 10%.
-    subnet_->setCacheThreshold(.1);
+    // Set the threshold to 25%.
+    subnet_->setCacheThreshold(.25);
 
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
@@ -4146,7 +4146,7 @@ TEST_F(AllocEngine4Test, discoverCacheReducedValid4) {
 
     // The lease was not reused.
     EXPECT_EQ(0, lease->remaining_valid_lft_);
-}    
+}
 
 // This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
 // when DDNS parameter changed.
@@ -4186,7 +4186,7 @@ TEST_F(AllocEngine4Test, requestCacheFwdDDNS4) {
     ASSERT_TRUE(from_mgr);
 
     detailCompareLease(lease, from_mgr);
-}    
+}
 
 // This test checks if a lease can't be reused in DHCPDISCOVER (fake allocation)
 // when DDNS parameter changed.
@@ -4221,7 +4221,7 @@ TEST_F(AllocEngine4Test, discoverCacheRevDDNS4) {
 
     // The lease was not reused.
     EXPECT_EQ(0, lease->remaining_valid_lft_);
-}    
+}
 
 // This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
 // when hostname changed.
@@ -4263,7 +4263,7 @@ TEST_F(AllocEngine4Test, requestCacheHostname4) {
     ASSERT_TRUE(from_mgr);
 
     detailCompareLease(lease, from_mgr);
-}    
+}
 
 }  // namespace test
 }  // namespace dhcp

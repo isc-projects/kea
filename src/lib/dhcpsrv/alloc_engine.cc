@@ -1750,6 +1750,7 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     }
     // Use subnet's valid triplet to conditionally determine
     // valid lifetime based on hint
+    expired->remaining_valid_lft_ = 0;
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getValid()) {
         uint32_t valid = ctx.currentIA().hints_[0].getValid();
@@ -2149,6 +2150,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     if (lease->preferred_lft_ < lease->remaining_preferred_lft_) {
         changed = true;
     }
+    lease->remaining_valid_lft_ = 0;
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getValid()) {
         uint32_t valid = ctx.currentIA().hints_[0].getValid();
@@ -2251,7 +2253,6 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         }
 
         // Try to reuse the lease.
-        lease->remaining_valid_lft_ = 0;
         if (!changed) {
             setLeaseRemainingLife(lease, ctx);
         }
@@ -2306,6 +2307,7 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
             continue;
         }
 
+        lease->remaining_valid_lft_ = 0;
         lease->fqdn_fwd_ = ctx.fwd_dns_update_;
         lease->fqdn_rev_ = ctx.rev_dns_update_;
         lease->hostname_ = ctx.hostname_;
@@ -2328,7 +2330,6 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
                                  !(lease->hasIdenticalFqdn(**lease_it)));
 
             lease->cltt_ = time(NULL);
-            lease->remaining_valid_lft_ = 0;
             if (!fqdn_changed) {
                 lease->remaining_preferred_lft_ = lease->preferred_lft_;
                 setLeaseRemainingLife(lease, ctx);
@@ -2986,6 +2987,7 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
     } else if (lease_update_fun) {
         // Clear FQDN information as we have already sent the
         // name change request to remove the DNS record.
+        lease->remaining_valid_lft_ = 0;
         lease->hostname_.clear();
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = false;
@@ -4045,6 +4047,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         expired->state_ = Lease::STATE_DEFAULT;
     }
 
+    expired->remaining_valid_lft_ = 0;
     static_cast<void>(updateLease4Information(expired, ctx));
 
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,

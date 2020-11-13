@@ -4005,10 +4005,16 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer,
         // However, never update lease database for Advertise, just send
         // our notion of client's FQDN in the Client FQDN option.
         if (answer->getType() != DHCPV6_ADVERTISE) {
-            Lease6Ptr lease =
-                LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+            Lease6Ptr lease;
+            for (auto l : ctx.new_leases_) {
+                if ((l->type_ == Lease::TYPE_NA) && (l->addr_ == addr)) {
+                    lease = l;
+                    break;
+                }
+            }
             if (lease) {
                 lease->hostname_ = generated_name;
+                lease->remaining_valid_lft_ = 0;
                 LeaseMgrFactory::instance().updateLease6(lease);
 
             } else {

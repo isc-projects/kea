@@ -242,6 +242,7 @@ public:
         EXPECT_EQ(fqdn_rev_, lease->fqdn_rev_);
         EXPECT_EQ(hostname_, lease->hostname_);
         EXPECT_TRUE(*lease->duid_ == *duid);
+        EXPECT_EQ(0, lease->remaining_valid_lft_);
         /// @todo: check cltt
     }
 
