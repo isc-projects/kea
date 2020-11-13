@@ -63,14 +63,14 @@ public:
     /// connection.
     ///
     /// @return true if there is at least one unusable connection, false
-    /// otherwise
+    /// otherwise.
     virtual bool isUnusable() {
         return (false);
     }
 
-    /// @brief Return backend parameters
+    /// @brief Return backend parameters.
     ///
-    /// Returns the backend parameters
+    /// Returns the backend parameters.
     ///
     /// @return Parameters of the backend.
     virtual isc::db::DatabaseConnection::ParameterMap getParameters() const {

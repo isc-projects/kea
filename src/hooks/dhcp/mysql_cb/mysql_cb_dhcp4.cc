@@ -2296,6 +2296,25 @@ public:
         return (count);
     }
 
+    /// @brief Attempts to reconnect the server to the config DB backend manager.
+    ///
+    /// This is a self-rescheduling function that attempts to reconnect to the
+    /// server's host DB backends after connectivity to one or more have been
+    /// lost. Upon entry it will attempt to reconnect via
+    /// @ref ConfigBackendDHCPv4Mgr.addBackend.
+    /// If this is successful, DHCP servicing is re-enabled and server returns
+    /// to normal operation.
+    ///
+    /// If reconnection fails and the maximum number of retries has not been
+    /// exhausted, it will schedule a call to itself to occur at the
+    /// configured retry interval. DHCP service remains disabled.
+    ///
+    /// If the maximum number of retries has been exhausted an error is logged
+    /// and the server shuts down.
+    ///
+    /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
+    /// configured reconnect parameters.
+    /// @return true if connection has been recovered, false otherwise.
     static bool dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl);
 

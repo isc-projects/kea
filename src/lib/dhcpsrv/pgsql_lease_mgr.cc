@@ -1261,7 +1261,7 @@ PgSqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
         LeaseMgrFactory::destroy();
-        LeaseMgrFactory::create(cfg_db->getLeaseDbAccessString()/*, io_service_ */);
+        LeaseMgrFactory::create(cfg_db->getLeaseDbAccessString());
 
         reopened = true;
     } catch (const std::exception& ex) {

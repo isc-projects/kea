@@ -2775,6 +2775,10 @@ MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const DatabaseConnection::Param
     : parameters_(parameters), ip_reservations_unique_(true), unusable_(false),
       timer_name_("") {
 
+    timer_name_ = "MySqlHostMgr[";
+    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    timer_name_ += "]DbReconnectTimer";
+
     // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);
@@ -2792,10 +2796,6 @@ MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const DatabaseConnection::Param
     pool_->pool_.push_back(createContext());
 
     auto db_reconnect_ctl = pool_->pool_[0]->conn_.reconnectCtl();
-
-    timer_name_ = "MySqlHostMgr[";
-    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    timer_name_ += "]DbReconnectTimer";
 
     TimerMgr::instance()->registerTimer(timer_name_,
         std::bind(&MySqlHostDataSourceImpl::dbReconnect, db_reconnect_ctl),

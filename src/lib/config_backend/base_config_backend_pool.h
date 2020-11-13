@@ -64,7 +64,7 @@ public:
 
     /// @brief Deletes all backends of the given type from the pool.
     ///
-    /// @param db_type Backend to remove
+    /// @param db_type Backend to remove.
     void delAllBackends(const std::string& db_type) {
         typename std::list<ConfigBackendTypePtr>::iterator backend = backends_.begin();
 
@@ -79,7 +79,7 @@ public:
 
     /// @brief Deletes all backends of the given type from the pool.
     ///
-    /// @param db_type Backend to remove
+    /// @param db_type Backend to remove.
     /// @param dbaccess Database access string being a collection of
     /// key=value pairs.
     /// @param if_unusable Flag which indicates if the config backend manager

@@ -188,7 +188,7 @@ public:
     /// specific parameters.
     /// This should have the effect of closing the database connection.
     ///
-    /// @param db_type Backend to remove
+    /// @param db_type Backend to remove.
     /// @param dbaccess Database access string being a collection of
     /// key=value pairs.
     /// @param if_unusable Flag which indicates if the config backend manager

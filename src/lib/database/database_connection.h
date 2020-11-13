@@ -201,7 +201,7 @@ public:
 
     /// @brief The reconnect settings.
     ///
-    /// @brief return The reconnect settings.
+    /// @return The reconnect settings.
     ReconnectCtlPtr reconnectCtl() {
         return (reconnect_ctl_);
     }
