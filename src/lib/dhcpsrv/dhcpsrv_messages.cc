@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Fri Nov 20 2020 15:14
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Fri Nov 13 2020 13:33
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -191,6 +191,12 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_GET_VERSION = "DHCPSRV_MYSQL_GET_
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB = "DHCPSRV_MYSQL_HOST_DB";
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_GET_VERSION = "DHCPSRV_MYSQL_HOST_DB_GET_VERSION";
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_READONLY = "DHCPSRV_MYSQL_HOST_DB_READONLY";
+extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED = "DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED";
+extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE = "DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE";
+extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_RECONNECT_FAILED = "DHCPSRV_MYSQL_HOST_DB_RECONNECT_FAILED";
+extern const isc::log::MessageID DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED = "DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED";
+extern const isc::log::MessageID DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE = "DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE";
+extern const isc::log::MessageID DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED = "DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED";
 extern const isc::log::MessageID DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT = "DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT";
 extern const isc::log::MessageID DHCPSRV_MYSQL_ROLLBACK = "DHCPSRV_MYSQL_ROLLBACK";
 extern const isc::log::MessageID DHCPSRV_MYSQL_START_TRANSACTION = "DHCPSRV_MYSQL_START_TRANSACTION";
@@ -232,6 +238,12 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_GET_VERSION = "DHCPSRV_PGSQL_GET_
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB = "DHCPSRV_PGSQL_HOST_DB";
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_GET_VERSION = "DHCPSRV_PGSQL_HOST_DB_GET_VERSION";
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_READONLY = "DHCPSRV_PGSQL_HOST_DB_READONLY";
+extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED = "DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED";
+extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE = "DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE";
+extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_RECONNECT_FAILED = "DHCPSRV_PGSQL_HOST_DB_RECONNECT_FAILED";
+extern const isc::log::MessageID DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED = "DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED";
+extern const isc::log::MessageID DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE = "DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE";
+extern const isc::log::MessageID DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED = "DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED";
 extern const isc::log::MessageID DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT = "DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT";
 extern const isc::log::MessageID DHCPSRV_PGSQL_ROLLBACK = "DHCPSRV_PGSQL_ROLLBACK";
 extern const isc::log::MessageID DHCPSRV_PGSQL_START_TRANSACTION = "DHCPSRV_PGSQL_START_TRANSACTION";
@@ -440,6 +452,12 @@ const char* values[] = {
     "DHCPSRV_MYSQL_HOST_DB", "opening MySQL hosts database: %1",
     "DHCPSRV_MYSQL_HOST_DB_GET_VERSION", "obtaining schema version information for the MySQL hosts database",
     "DHCPSRV_MYSQL_HOST_DB_READONLY", "MySQL host database opened for read access only",
+    "DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
+    "DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
+    "DHCPSRV_MYSQL_HOST_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
+    "DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
+    "DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
+    "DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
     "DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT", "recount of leases returned a negative value",
     "DHCPSRV_MYSQL_ROLLBACK", "rolling back MySQL database",
     "DHCPSRV_MYSQL_START_TRANSACTION", "starting new MySQL transaction",
@@ -481,6 +499,12 @@ const char* values[] = {
     "DHCPSRV_PGSQL_HOST_DB", "opening PostgreSQL hosts database: %1",
     "DHCPSRV_PGSQL_HOST_DB_GET_VERSION", "obtaining schema version information for the PostgreSQL hosts database",
     "DHCPSRV_PGSQL_HOST_DB_READONLY", "PostgreSQL host database opened for read access only",
+    "DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
+    "DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
+    "DHCPSRV_PGSQL_HOST_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
+    "DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
+    "DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
+    "DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
     "DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT", "recount of leases returned a negative value",
     "DHCPSRV_PGSQL_ROLLBACK", "rolling back PostgreSQL database",
     "DHCPSRV_PGSQL_START_TRANSACTION", "starting a new PostgreSQL transaction",

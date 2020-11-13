@@ -1831,8 +1831,8 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
         reopened = true;
     } catch (const std::exception& ex) {
-        //LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_ATTEMPT_FAILED)
-        //        .arg(ex.what());
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED)
+                .arg(ex.what());
     }
 
     if (reopened) {
@@ -1844,18 +1844,18 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     } else {
         if (!db_reconnect_ctl->checkRetries()) {
             // We're out of retries, log it and initiate shutdown.
-            //LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_RETRIES_EXHAUSTED)
-            //        .arg(db_reconnect_ctl->maxRetries());
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED)
+                    .arg(db_reconnect_ctl->maxRetries());
 
             DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
 
             return (false);
         }
 
-        //LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB_RECONNECT_ATTEMPT_SCHEDULE)
-        //        .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
-        //        .arg(db_reconnect_ctl->maxRetries())
-        //        .arg(db_reconnect_ctl->retryInterval());
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE)
+                .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
+                .arg(db_reconnect_ctl->maxRetries())
+                .arg(db_reconnect_ctl->retryInterval());
 
         TimerMgr::instance()->setup(db_reconnect_ctl->timerName());
     }

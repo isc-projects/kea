@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Fri Nov 13 2020 13:33
 
 #ifndef DHCPSRV_MESSAGES_H
 #define DHCPSRV_MESSAGES_H
@@ -192,6 +192,12 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_GET_VERSION;
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB;
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_GET_VERSION;
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_READONLY;
+extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED;
+extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE;
+extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_RECONNECT_FAILED;
+extern const isc::log::MessageID DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED;
+extern const isc::log::MessageID DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE;
+extern const isc::log::MessageID DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED;
 extern const isc::log::MessageID DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT;
 extern const isc::log::MessageID DHCPSRV_MYSQL_ROLLBACK;
 extern const isc::log::MessageID DHCPSRV_MYSQL_START_TRANSACTION;
@@ -233,6 +239,12 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_GET_VERSION;
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB;
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_GET_VERSION;
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_READONLY;
+extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED;
+extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE;
+extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_RECONNECT_FAILED;
+extern const isc::log::MessageID DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED;
+extern const isc::log::MessageID DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE;
+extern const isc::log::MessageID DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED;
 extern const isc::log::MessageID DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT;
 extern const isc::log::MessageID DHCPSRV_PGSQL_ROLLBACK;
 extern const isc::log::MessageID DHCPSRV_PGSQL_START_TRANSACTION;

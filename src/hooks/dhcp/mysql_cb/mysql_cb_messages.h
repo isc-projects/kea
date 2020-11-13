@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Fri Nov 13 2020 13:09
 
 #ifndef MYSQL_CB_MESSAGES_H
 #define MYSQL_CB_MESSAGES_H
@@ -167,6 +167,12 @@ extern const isc::log::MessageID MYSQL_CB_GET_SUBNET6_BY_SUBNET_ID;
 extern const isc::log::MessageID MYSQL_CB_GET_TYPE4;
 extern const isc::log::MessageID MYSQL_CB_GET_TYPE6;
 extern const isc::log::MessageID MYSQL_CB_INIT_OK;
+extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_FAILED4;
+extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_FAILED6;
+extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_SCHEDULE4;
+extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_SCHEDULE6;
+extern const isc::log::MessageID MYSQL_CB_RECONNECT_FAILED4;
+extern const isc::log::MessageID MYSQL_CB_RECONNECT_FAILED6;
 extern const isc::log::MessageID MYSQL_CB_REGISTER_BACKEND_TYPE4;
 extern const isc::log::MessageID MYSQL_CB_REGISTER_BACKEND_TYPE6;
 extern const isc::log::MessageID MYSQL_CB_UNREGISTER_BACKEND_TYPE4;

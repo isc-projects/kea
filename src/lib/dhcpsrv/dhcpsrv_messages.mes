@@ -947,6 +947,30 @@ database in read-only mode. Kea will not be able to insert or modify
 host reservations but will be able to retrieve existing ones and
 assign them to the clients communicating with the server.
 
+% DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
+An error message issued when an attempt to reconnect has failed.
+
+% DHCPSRV_MYSQL_HOST_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success
+An error message issued when the server failed to reconnect.  Loss of connectivity
+is typically a network or database server issue.
+
+% DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database.  This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+% DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
+An error message issued when an attempt to reconnect has failed.
+
+% DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success
+An error message issued when the server failed to reconnect.  Loss of connectivity
+is typically a network or database server issue.
+
+% DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database.  This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
 % DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT recount of leases returned a negative value
 This warning message is issued when the recount of leases using counters
 in the MySQL database returned a negative value. This shows a problem
@@ -1146,6 +1170,30 @@ This informational message is issued when the user has configured the PostgreSQL
 database in read-only mode. Kea will not be able to insert or modify
 host reservations but will be able to retrieve existing ones and
 assign them to the clients communicating with the server.
+
+% DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
+An error message issued when an attempt to reconnect has failed.
+
+% DHCPSRV_PGSQL_HOST_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success
+An error message issued when the server failed to reconnect.  Loss of connectivity
+is typically a network or database server issue.
+
+% DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database.  This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+% DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
+An error message issued when an attempt to reconnect has failed.
+
+% DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success
+An error message issued when the server failed to reconnect.  Loss of connectivity
+is typically a network or database server issue.
+
+% DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database.  This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
 
 % DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT recount of leases returned a negative value
 This warning message is issued when the recount of leases using counters

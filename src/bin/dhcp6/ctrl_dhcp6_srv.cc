@@ -1186,6 +1186,8 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Disable service until the connection is recovered.
     network_state_->disableService();
 
+    LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_LOST_CONNECTION);
+
     if (!db_reconnect_ctl) {
         // This should never happen
         LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_NO_DB_CTL);
@@ -1210,6 +1212,8 @@ ControlledDhcpv6Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Enable service after the connection is recovered.
     network_state_->enableService();
 
+    LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_SUCCEEDED);
+
     if (!db_reconnect_ctl) {
         // This should never happen
         LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_NO_DB_CTL);
@@ -1229,8 +1233,8 @@ ControlledDhcpv6Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
         return (false);
     }
 
-    //LOG_INFO(dhcp6_logger, DHCP6_DB_FAILED_RECONNECT)
-    //        .arg(db_reconnect_ctl->maxRetries());
+    LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_FAILED)
+            .arg(db_reconnect_ctl->maxRetries());
 
     db_reconnect_ctl->resetRetries();
 
