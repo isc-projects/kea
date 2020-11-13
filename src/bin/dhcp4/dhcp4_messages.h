@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Nov 13 2020 12:55
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -40,11 +40,11 @@ extern const isc::log::MessageID DHCP4_CONFIG_START;
 extern const isc::log::MessageID DHCP4_CONFIG_UNRECOVERABLE_ERROR;
 extern const isc::log::MessageID DHCP4_CONFIG_UNSUPPORTED_OBJECT;
 extern const isc::log::MessageID DHCP4_CONFIG_UPDATE;
-extern const isc::log::MessageID DHCP4_DB_RECONNECT_ATTEMPT_FAILED;
-extern const isc::log::MessageID DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE;
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_DISABLED;
+extern const isc::log::MessageID DHCP4_DB_RECONNECT_FAILED;
+extern const isc::log::MessageID DHCP4_DB_RECONNECT_LOST_CONNECTION;
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_NO_DB_CTL;
-extern const isc::log::MessageID DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED;
+extern const isc::log::MessageID DHCP4_DB_RECONNECT_SUCCEEDED;
 extern const isc::log::MessageID DHCP4_DDNS_REQUEST_SEND_FAILED;
 extern const isc::log::MessageID DHCP4_DEACTIVATE_INTERFACE;
 extern const isc::log::MessageID DHCP4_DECLINE_FAIL;

@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Fri Nov 13 2020 13:02
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -32,11 +32,11 @@ extern const isc::log::MessageID DHCP6_CONFIG_UNRECOVERABLE_ERROR;
 extern const isc::log::MessageID DHCP6_CONFIG_UNSUPPORTED_OBJECT;
 extern const isc::log::MessageID DHCP6_CONFIG_UPDATE;
 extern const isc::log::MessageID DHCP6_DB_BACKEND_STARTED;
-extern const isc::log::MessageID DHCP6_DB_RECONNECT_ATTEMPT_FAILED;
-extern const isc::log::MessageID DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE;
 extern const isc::log::MessageID DHCP6_DB_RECONNECT_DISABLED;
+extern const isc::log::MessageID DHCP6_DB_RECONNECT_FAILED;
+extern const isc::log::MessageID DHCP6_DB_RECONNECT_LOST_CONNECTION;
 extern const isc::log::MessageID DHCP6_DB_RECONNECT_NO_DB_CTL;
-extern const isc::log::MessageID DHCP6_DB_RECONNECT_RETRIES_EXHAUSTED;
+extern const isc::log::MessageID DHCP6_DB_RECONNECT_SUCCEEDED;
 extern const isc::log::MessageID DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST;
 extern const isc::log::MessageID DHCP6_DDNS_FQDN_GENERATED;
 extern const isc::log::MessageID DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL;

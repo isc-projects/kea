@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Fri Nov 20 2020 15:22
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Fri Nov 13 2020 13:02
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -31,11 +31,11 @@ extern const isc::log::MessageID DHCP6_CONFIG_UNRECOVERABLE_ERROR = "DHCP6_CONFI
 extern const isc::log::MessageID DHCP6_CONFIG_UNSUPPORTED_OBJECT = "DHCP6_CONFIG_UNSUPPORTED_OBJECT";
 extern const isc::log::MessageID DHCP6_CONFIG_UPDATE = "DHCP6_CONFIG_UPDATE";
 extern const isc::log::MessageID DHCP6_DB_BACKEND_STARTED = "DHCP6_DB_BACKEND_STARTED";
-extern const isc::log::MessageID DHCP6_DB_RECONNECT_ATTEMPT_FAILED = "DHCP6_DB_RECONNECT_ATTEMPT_FAILED";
-extern const isc::log::MessageID DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE = "DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE";
 extern const isc::log::MessageID DHCP6_DB_RECONNECT_DISABLED = "DHCP6_DB_RECONNECT_DISABLED";
+extern const isc::log::MessageID DHCP6_DB_RECONNECT_FAILED = "DHCP6_DB_RECONNECT_FAILED";
+extern const isc::log::MessageID DHCP6_DB_RECONNECT_LOST_CONNECTION = "DHCP6_DB_RECONNECT_LOST_CONNECTION";
 extern const isc::log::MessageID DHCP6_DB_RECONNECT_NO_DB_CTL = "DHCP6_DB_RECONNECT_NO_DB_CTL";
-extern const isc::log::MessageID DHCP6_DB_RECONNECT_RETRIES_EXHAUSTED = "DHCP6_DB_RECONNECT_RETRIES_EXHAUSTED";
+extern const isc::log::MessageID DHCP6_DB_RECONNECT_SUCCEEDED = "DHCP6_DB_RECONNECT_SUCCEEDED";
 extern const isc::log::MessageID DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST = "DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST";
 extern const isc::log::MessageID DHCP6_DDNS_FQDN_GENERATED = "DHCP6_DDNS_FQDN_GENERATED";
 extern const isc::log::MessageID DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL = "DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL";
@@ -183,11 +183,11 @@ const char* values[] = {
     "DHCP6_CONFIG_UNSUPPORTED_OBJECT", "DHCPv6 server configuration includes an unsupported object: %1",
     "DHCP6_CONFIG_UPDATE", "updated configuration received: %1",
     "DHCP6_DB_BACKEND_STARTED", "lease database started (type: %1, name: %2)",
-    "DHCP6_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
-    "DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
     "DHCP6_DB_RECONNECT_DISABLED", "database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2",
+    "DHCP6_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!",
+    "DHCP6_DB_RECONNECT_LOST_CONNECTION", "database connection lost.",
     "DHCP6_DB_RECONNECT_NO_DB_CTL", "unexpected error in database reconnect",
-    "DHCP6_DB_RECONNECT_RETRIES_EXHAUSTED", "maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!",
+    "DHCP6_DB_RECONNECT_SUCCEEDED", "database connection recovered.",
     "DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST", "created name change request: %1",
     "DHCP6_DDNS_FQDN_GENERATED", "%1: generated FQDN for the client: %2",
     "DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL", "%1: failed to update the lease using address %2, after generating FQDN for a client, reason: %3",

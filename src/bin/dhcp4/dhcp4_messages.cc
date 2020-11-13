@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Nov 13 2020 12:55
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -39,11 +39,11 @@ extern const isc::log::MessageID DHCP4_CONFIG_START = "DHCP4_CONFIG_START";
 extern const isc::log::MessageID DHCP4_CONFIG_UNRECOVERABLE_ERROR = "DHCP4_CONFIG_UNRECOVERABLE_ERROR";
 extern const isc::log::MessageID DHCP4_CONFIG_UNSUPPORTED_OBJECT = "DHCP4_CONFIG_UNSUPPORTED_OBJECT";
 extern const isc::log::MessageID DHCP4_CONFIG_UPDATE = "DHCP4_CONFIG_UPDATE";
-extern const isc::log::MessageID DHCP4_DB_RECONNECT_ATTEMPT_FAILED = "DHCP4_DB_RECONNECT_ATTEMPT_FAILED";
-extern const isc::log::MessageID DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE = "DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE";
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_DISABLED = "DHCP4_DB_RECONNECT_DISABLED";
+extern const isc::log::MessageID DHCP4_DB_RECONNECT_FAILED = "DHCP4_DB_RECONNECT_FAILED";
+extern const isc::log::MessageID DHCP4_DB_RECONNECT_LOST_CONNECTION = "DHCP4_DB_RECONNECT_LOST_CONNECTION";
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_NO_DB_CTL = "DHCP4_DB_RECONNECT_NO_DB_CTL";
-extern const isc::log::MessageID DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED = "DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED";
+extern const isc::log::MessageID DHCP4_DB_RECONNECT_SUCCEEDED = "DHCP4_DB_RECONNECT_SUCCEEDED";
 extern const isc::log::MessageID DHCP4_DDNS_REQUEST_SEND_FAILED = "DHCP4_DDNS_REQUEST_SEND_FAILED";
 extern const isc::log::MessageID DHCP4_DEACTIVATE_INTERFACE = "DHCP4_DEACTIVATE_INTERFACE";
 extern const isc::log::MessageID DHCP4_DECLINE_FAIL = "DHCP4_DECLINE_FAIL";
@@ -191,11 +191,11 @@ const char* values[] = {
     "DHCP4_CONFIG_UNRECOVERABLE_ERROR", "DHCPv4 server new configuration failed with an error which cannot be recovered",
     "DHCP4_CONFIG_UNSUPPORTED_OBJECT", "DHCPv4 server configuration includes an unsupported object: %1",
     "DHCP4_CONFIG_UPDATE", "updated configuration received: %1",
-    "DHCP4_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
-    "DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
     "DHCP4_DB_RECONNECT_DISABLED", "database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2",
+    "DHCP4_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!",
+    "DHCP4_DB_RECONNECT_LOST_CONNECTION", "database connection lost.",
     "DHCP4_DB_RECONNECT_NO_DB_CTL", "unexpected error in database reconnect",
-    "DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED", "maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!",
+    "DHCP4_DB_RECONNECT_SUCCEEDED", "database connection recovered.",
     "DHCP4_DDNS_REQUEST_SEND_FAILED", "failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2",
     "DHCP4_DEACTIVATE_INTERFACE", "deactivate interface %1",
     "DHCP4_DECLINE_FAIL", "%1: error on decline lease for address %2: %3",
