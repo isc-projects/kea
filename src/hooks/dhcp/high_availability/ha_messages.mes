@@ -15,7 +15,7 @@ as a result of load balancing or because it is a primary server in the
 hot standby configuration. The argument provides client identification
 information retrieved from the query.
 
-% HA_BUFFER4_RECEIVE_PACKET_OPTIONS_SKIPPED an error upacking an option, caused subsequent options to be skipped: %1
+% HA_BUFFER4_RECEIVE_PACKET_OPTIONS_SKIPPED an error unpacking an option, caused subsequent options to be skipped: %1
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the DHCPv4 query. The server
 will still attempt to service the packet. The sole argument provides a
@@ -41,7 +41,7 @@ as a result of load balancing or because it is a primary server in the
 hot standby configuration. The argument provides client identification
 information retrieved from the query.
 
-% HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED an error upacking an option, caused subsequent options to be skipped: %1
+% HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED an error unpacking an option, caused subsequent options to be skipped: %1
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the DHCPv6 query. The server
 will still attempt to service the packet. The sole argument provides a

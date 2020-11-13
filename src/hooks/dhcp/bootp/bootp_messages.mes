@@ -8,7 +8,7 @@ The query client and transaction identification are displayed.
 % BOOTP_LOAD Bootp hooks library has been loaded
 This info message indicates that the Bootp hooks library has been loaded.
 
-% BOOTP_PACKET_OPTIONS_SKIPPED an error upacking an option, caused subsequent options to be skipped: %1
+% BOOTP_PACKET_OPTIONS_SKIPPED an error unpacking an option, caused subsequent options to be skipped: %1
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the DHCPv4 query. The server
 will still attempt to service the packet. The sole argument provides a
