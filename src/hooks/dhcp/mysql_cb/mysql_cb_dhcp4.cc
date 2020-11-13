@@ -2320,6 +2320,8 @@ public:
 
         bool reopened = false;
 
+        const std::string timer_name = db_reconnect_ctl->timerName();
+
         // At least one connection was lost.
         try {
             auto srv_cfg = CfgMgr::instance().getCurrentCfg();
@@ -2341,7 +2343,9 @@ public:
 
         if (reopened) {
             // Cancel the timer.
-            TimerMgr::instance()->cancel(db_reconnect_ctl->timerName());
+            if (TimerMgr::instance()->isTimerRegistered(timer_name)) {
+                TimerMgr::instance()->unregisterTimer(timer_name);
+            }
 
             DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl);
         } else {
@@ -2349,6 +2353,11 @@ public:
                 // We're out of retries, log it and initiate shutdown.
                 LOG_ERROR(mysql_cb_logger, MYSQL_CB_RECONNECT_FAILED4)
                         .arg(db_reconnect_ctl->maxRetries());
+
+                // Cancel the timer.
+                if (TimerMgr::instance()->isTimerRegistered(timer_name)) {
+                    TimerMgr::instance()->unregisterTimer(timer_name);
+                }
 
                 DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
 
@@ -2361,7 +2370,13 @@ public:
                     .arg(db_reconnect_ctl->retryInterval());
 
             // Start the timer.
-            TimerMgr::instance()->setup(db_reconnect_ctl->timerName());
+            if (!TimerMgr::instance()->isTimerRegistered(timer_name)) {
+                TimerMgr::instance()->registerTimer(timer_name,
+                    std::bind(&MySqlConfigBackendDHCPv4Impl::dbReconnect, db_reconnect_ctl),
+                              db_reconnect_ctl->retryInterval(),
+                              asiolink::IntervalTimer::ONE_SHOT);
+            }
+            TimerMgr::instance()->setup(timer_name);
         }
 
         return (true);
@@ -2956,17 +2971,9 @@ MySqlConfigBackendDHCPv4Impl::MySqlConfigBackendDHCPv4Impl(const DatabaseConnect
     timer_name_ += "]DbReconnectTimer";
 
     conn_.makeReconnectCtl(timer_name_);
-
-    auto db_reconnect_ctl = conn_.reconnectCtl();
-
-    TimerMgr::instance()->registerTimer(timer_name_,
-        std::bind(&MySqlConfigBackendDHCPv4Impl::dbReconnect, db_reconnect_ctl),
-                  db_reconnect_ctl->retryInterval(),
-                  asiolink::IntervalTimer::ONE_SHOT);
 }
 
 MySqlConfigBackendDHCPv4Impl::~MySqlConfigBackendDHCPv4Impl() {
-    TimerMgr::instance()->unregisterTimer(timer_name_);
 }
 
 MySqlConfigBackendDHCPv4::MySqlConfigBackendDHCPv4(const DatabaseConnection::ParameterMap& parameters)
