@@ -3274,37 +3274,39 @@ LeaseMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     DatabaseConnection::db_lost_callback_ =
         std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
 
-    callback_called_ = false;
     ASSERT_THROW(LeaseMgrFactory::create(invalidConnectString()),
                  DbOpenError);
 
     io_service_->poll();
 
-    EXPECT_FALSE(callback_called_);
+    EXPECT_EQ(0, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
 }
 
 void
-LeaseMgrDbLostCallbackTest::testDbLostCallback() {
+LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     // Set the connectivity lost callback.
     DatabaseConnection::db_lost_callback_ =
         std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
 
-    // Find the most recently opened socket. Our SQL client's socket should
-    // be the next one.
-    int last_open_socket = findLastSocketFd();
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
 
-    // Fill holes.
-    FillFdHoles holes(last_open_socket);
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
     // Connect to the lease backend.
-    ASSERT_NO_THROW(LeaseMgrFactory::create(validConnectString()));
+    ASSERT_NO_THROW(LeaseMgrFactory::create(access));
 
     // The most recently opened socket should be for our SQL client.
     int sql_socket = test::findLastSocketFd();
     ASSERT_TRUE(sql_socket > -1);
-
-    // Clear the callback invocation marker.
-    callback_called_ = false;
 
     // Verify we can execute a query.  We do not care if
     // we find a lease or not.
@@ -3322,8 +3324,185 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
 
     io_service_->poll();
 
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+}
+
+void
+LeaseMgrDbLostCallbackTest::testDbLostAndFailedCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    // Connect to the lease backend.
+    ASSERT_NO_THROW(LeaseMgrFactory::create(access));
+
+    // The most recently opened socket should be for our SQL client.
+    int sql_socket = test::findLastSocketFd();
+    ASSERT_TRUE(sql_socket > -1);
+
+    // Verify we can execute a query.  We do not care if
+    // we find a lease or not.
+    LeaseMgr& lm = LeaseMgrFactory::instance();
+
+    Lease4Ptr lease;
+    ASSERT_NO_THROW(lease = lm.getLease4(IOAddress("192.0.1.0")));
+
+    access = invalidConnectString();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(lease = lm.getLease4(IOAddress("192.0.1.0")),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and failed connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+}
+
+void
+LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    // Connect to the lease backend.
+    ASSERT_NO_THROW(LeaseMgrFactory::create(access));
+
+    // The most recently opened socket should be for our SQL client.
+    int sql_socket = test::findLastSocketFd();
+    ASSERT_TRUE(sql_socket > -1);
+
+    // Verify we can execute a query.  We do not care if
+    // we find a lease or not.
+    LeaseMgr& lm = LeaseMgrFactory::instance();
+
+    Lease4Ptr lease;
+    ASSERT_NO_THROW(lease = lm.getLease4(IOAddress("192.0.1.0")));
+
+    access = invalidConnectString();
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(lease = lm.getLease4(IOAddress("192.0.1.0")),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
     // Our lost connectivity callback should have been invoked.
-    EXPECT_TRUE(callback_called_);
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    access = validConnectString();
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+}
+
+void
+LeaseMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    // Connect to the lease backend.
+    ASSERT_NO_THROW(LeaseMgrFactory::create(access));
+
+    // The most recently opened socket should be for our SQL client.
+    int sql_socket = test::findLastSocketFd();
+    ASSERT_TRUE(sql_socket > -1);
+
+    // Verify we can execute a query.  We do not care if
+    // we find a lease or not.
+    LeaseMgr& lm = LeaseMgrFactory::instance();
+
+    Lease4Ptr lease;
+    ASSERT_NO_THROW(lease = lm.getLease4(IOAddress("192.0.1.0")));
+
+    access = invalidConnectString();
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(lease = lm.getLease4(IOAddress("192.0.1.0")),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our failed connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
 }
 
 void

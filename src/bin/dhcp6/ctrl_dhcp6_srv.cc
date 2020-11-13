@@ -1136,12 +1136,6 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("status-get");
         CommandMgr::instance().deregisterCommand("version-get");
 
-        // TimerMgr uses IO service to run asynchronous timers.
-        TimerMgr::instance()->setIOService(IOServicePtr());
-
-        // CommandMgr uses IO service to run asynchronous socket operations.
-        CommandMgr::instance().setIOService(IOServicePtr());
-
         // LeaseMgr uses IO service to run asynchronous timers.
         LeaseMgr::setIOService(IOServicePtr());
 

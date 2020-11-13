@@ -1802,17 +1802,9 @@ MySqlLeaseMgr::MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     // Create an initial context.
     pool_.reset(new MySqlLeaseContextPool());
     pool_->pool_.push_back(createContext());
-
-    auto db_reconnect_ctl = pool_->pool_[0]->conn_.reconnectCtl();
-
-    TimerMgr::instance()->registerTimer(timer_name_,
-        std::bind(&MySqlLeaseMgr::dbReconnect, db_reconnect_ctl),
-                  db_reconnect_ctl->retryInterval(),
-                  asiolink::IntervalTimer::ONE_SHOT);
 }
 
 MySqlLeaseMgr::~MySqlLeaseMgr() {
-    TimerMgr::instance()->unregisterTimer(timer_name_);
 }
 
 bool
@@ -1822,6 +1814,8 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl);
 
     bool reopened = false;
+
+    const std::string timer_name = db_reconnect_ctl->timerName();
 
     // At least one connection was lost.
     try {
@@ -1837,8 +1831,9 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
     if (reopened) {
         // Cancel the timer.
-        const std::string& timer_name = db_reconnect_ctl->timerName();
-        TimerMgr::instance()->cancel(timer_name);
+        if (TimerMgr::instance()->isTimerRegistered(timer_name)) {
+            TimerMgr::instance()->unregisterTimer(timer_name);
+        }
 
         DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl);
     } else {
@@ -1846,6 +1841,11 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             // We're out of retries, log it and initiate shutdown.
             LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED)
                     .arg(db_reconnect_ctl->maxRetries());
+
+            // Cancel the timer.
+            if (TimerMgr::instance()->isTimerRegistered(timer_name)) {
+                TimerMgr::instance()->unregisterTimer(timer_name);
+            }
 
             DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
 
@@ -1857,7 +1857,14 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
                 .arg(db_reconnect_ctl->maxRetries())
                 .arg(db_reconnect_ctl->retryInterval());
 
-        TimerMgr::instance()->setup(db_reconnect_ctl->timerName());
+        // Start the timer.
+        if (!TimerMgr::instance()->isTimerRegistered(timer_name)) {
+            TimerMgr::instance()->registerTimer(timer_name,
+                std::bind(&MySqlLeaseMgr::dbReconnect, db_reconnect_ctl),
+                          db_reconnect_ctl->retryInterval(),
+                          asiolink::IntervalTimer::ONE_SHOT);
+        }
+        TimerMgr::instance()->setup(timer_name);
     }
 
     return (true);

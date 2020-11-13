@@ -2341,8 +2341,7 @@ public:
 
         if (reopened) {
             // Cancel the timer.
-            const std::string& timer_name = db_reconnect_ctl->timerName();
-            TimerMgr::instance()->cancel(timer_name);
+            TimerMgr::instance()->cancel(db_reconnect_ctl->timerName());
 
             DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl);
         } else {
@@ -2361,6 +2360,7 @@ public:
                     .arg(db_reconnect_ctl->maxRetries())
                     .arg(db_reconnect_ctl->retryInterval());
 
+            // Start the timer.
             TimerMgr::instance()->setup(db_reconnect_ctl->timerName());
         }
 

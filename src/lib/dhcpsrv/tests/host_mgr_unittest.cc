@@ -1837,6 +1837,7 @@ TEST_F(PostgreSQLHostMgrTest, setIPReservationUnique) {
 TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostCallback) {
     testDbLostCallback();
 }
+
 #endif
 
 // The following tests require Cassandra enabled.

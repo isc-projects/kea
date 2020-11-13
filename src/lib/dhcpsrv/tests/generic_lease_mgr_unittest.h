@@ -9,6 +9,7 @@
 
 #include <asiolink/io_service.h>
 #include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/timer_mgr.h>
 
 #include <gtest/gtest.h>
 
@@ -526,15 +527,22 @@ public:
 class LeaseMgrDbLostCallbackTest : public ::testing::Test {
 public:
     LeaseMgrDbLostCallbackTest()
-        : callback_called_(false),
+        : db_lost_callback_called_(0), db_recovered_callback_called_(0),
+          db_failed_callback_called_(0),
           io_service_(boost::make_shared<isc::asiolink::IOService>()) {
         db::DatabaseConnection::db_lost_callback_ = 0;
+        db::DatabaseConnection::db_recovered_callback_ = 0;
+        db::DatabaseConnection::db_failed_callback_ = 0;
         LeaseMgr::setIOService(io_service_);
+        TimerMgr::instance()->setIOService(io_service_);
     }
 
     virtual ~LeaseMgrDbLostCallbackTest() {
         db::DatabaseConnection::db_lost_callback_ = 0;
+        db::DatabaseConnection::db_recovered_callback_ = 0;
+        db::DatabaseConnection::db_failed_callback_ = 0;
         LeaseMgr::setIOService(isc::asiolink::IOServicePtr());
+        TimerMgr::instance()->unregisterTimers();
     }
 
     /// @brief Prepares the class for a test.
@@ -549,10 +557,10 @@ public:
     /// we created and toss our lease manager.
     virtual void TearDown();
 
-    /// @brief Abstract method for destroying the back end specific shcema
+    /// @brief Abstract method for destroying the back end specific schema
     virtual void destroySchema() = 0;
 
-    /// @brief Abstract method for creating the back end specific shcema
+    /// @brief Abstract method for creating the back end specific schema
     virtual void createSchema() = 0;
 
     /// @brief Abstract method which returns the back end specific connection
@@ -570,25 +578,83 @@ public:
     /// open should be handled directly by the application layer.
     void testNoCallbackOnOpenFailure();
 
-    /// @brief Verifies the host manager's behavior if DB connection is lost
+    /// @brief Verifies the lease manager's behavior if DB connection is lost
     ///
     /// This function creates a lease manager with an back end that
     /// supports connectivity lost callback (currently only MySQL and
     /// PostgreSQL currently).  It verifies connectivity by issuing a known
     /// valid query.  Next it simulates connectivity lost by identifying and
-    /// closing the socket connection to the host backend.  It then reissues
+    /// closing the socket connection to the lease backend.  It then reissues
     /// the query and verifies that:
     /// -# The Query throws  DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
-    void testDbLostCallback();
+    /// -# The registered DbRecoveredCallback was invoked
+    void testDbLostAndRecoveredCallback();
 
-    /// @brief Callback function registered with the host manager
+    /// @brief Verifies the lease manager's behavior if DB connection is lost
+    ///
+    /// This function creates a lease manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifying and
+    /// closing the socket connection to the lease backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked
+    void testDbLostAndFailedCallback();
+
+    /// @brief Verifies the lease manager's behavior if DB connection is lost
+    ///
+    /// This function creates a lease manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifyingLost and
+    /// closing the socket connection to the lease backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbRecoveredCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testDbLostAndRecoveredAfterTimeoutCallback();
+
+    /// @brief Verifies the lease manager's behavior if DB connection is lost
+    ///
+    /// This function creates a lease manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifyingLost and
+    /// closing the socket connection to the lease backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testDbLostAndFailedAfterTimeoutCallback();
+
+    /// @brief Callback function registered with the lease manager
     bool db_lost_callback(db::ReconnectCtlPtr /* not_used */) {
-        return (callback_called_ = true);
+        return (++db_lost_callback_called_);
     }
 
     /// @brief Flag used to detect calls to db_lost_callback function
-    bool callback_called_;
+    uint32_t db_lost_callback_called_;
+
+    /// @brief Callback function registered with the lease manager
+    bool db_recovered_callback(db::ReconnectCtlPtr /* not_used */) {
+        return (++db_recovered_callback_called_);
+    }
+
+    /// @brief Flag used to detect calls to db_recovered_callback function
+    uint32_t db_recovered_callback_called_;
+
+    /// @brief Callback function registered with the lease manager
+    bool db_failed_callback(db::ReconnectCtlPtr /* not_used */) {
+        return (++db_failed_callback_called_);
+    }
+
+    /// @brief Flag used to detect calls to db_failed_callback function
+    uint32_t db_failed_callback_called_;
 
     /// The IOService object, used for all ASIO operations.
     isc::asiolink::IOServicePtr io_service_;

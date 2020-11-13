@@ -937,15 +937,51 @@ TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreadin
 }
 
 /// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostCallback) {
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredCallback) {
     MultiThreadingTest mt(false);
-    testDbLostCallback();
+    testDbLostAndRecoveredCallback();
 }
 
 /// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostCallbackMultiThreading) {
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredCallbackMultiThreading) {
     MultiThreadingTest mt(true);
-    testDbLostCallback();
+    testDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostAndFailedCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostAndFailedCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndFailedAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndFailedAfterTimeoutCallback();
 }
 
 /// @brief Tests v4 lease stats query variants.
