@@ -1819,7 +1819,7 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
                 // Try to avoid a race.
                 ResourceHandler4 resource_handler;
                 use_cs = !resource_handler.tryLock4(lease4->addr_);
-                if (use_cs) {
+                if (!use_cs) {
                     added = addOrUpdate4(lease4, force_create);
                 }
             }
