@@ -596,40 +596,6 @@ GenericLeaseMgrTest::testGetLease4HWAddr2() {
 }
 
 void
-GenericLeaseMgrTest::testGetLease4ClientIdHWAddrSubnetId() {
-    Lease4Ptr leaseA = initializeLease4(straddress4_[4]);
-    Lease4Ptr leaseB = initializeLease4(straddress4_[5]);
-    Lease4Ptr leaseC = initializeLease4(straddress4_[6]);
-    // Set NULL client id for one of the leases. This is to make sure that such
-    // a lease may coexist with other leases with non NULL client id.
-    leaseC->client_id_.reset();
-
-    HWAddr hwaddrA(*leaseA->hwaddr_);
-    HWAddr hwaddrB(*leaseB->hwaddr_);
-    HWAddr hwaddrC(*leaseC->hwaddr_);
-    EXPECT_TRUE(lmptr_->addLease(leaseA));
-    EXPECT_TRUE(lmptr_->addLease(leaseB));
-    EXPECT_TRUE(lmptr_->addLease(leaseC));
-    // First case we should retrieve our lease
-    Lease4Ptr lease = lmptr_->getLease4(*leaseA->client_id_, hwaddrA, leaseA->subnet_id_);
-    detailCompareLease(lease, leaseA);
-    // Retrieve the other lease.
-    lease = lmptr_->getLease4(*leaseB->client_id_, hwaddrB, leaseB->subnet_id_);
-    detailCompareLease(lease, leaseB);
-    // The last lease has NULL client id so we will use a different getLease4 function
-    // which doesn't require client id (just a hwaddr and subnet id).
-    lease = lmptr_->getLease4(hwaddrC, leaseC->subnet_id_);
-    detailCompareLease(lease, leaseC);
-
-    // An attempt to retrieve the lease with non matching lease parameters should
-    // result in NULL pointer being returned.
-    lease = lmptr_->getLease4(*leaseA->client_id_, hwaddrB, leaseA->subnet_id_);
-    EXPECT_FALSE(lease);
-    lease = lmptr_->getLease4(*leaseA->client_id_, hwaddrA, leaseB->subnet_id_);
-    EXPECT_FALSE(lease);
-}
-
-void
 GenericLeaseMgrTest::testAddGetDelete6() {
     const std::string addr234("2001:db8:1::234");
     const std::string addr456("2001:db8:1::456");

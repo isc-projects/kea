@@ -910,19 +910,6 @@ TEST_F(MemfileLeaseMgrTest, getLease4HWAddr2MultiThread) {
     testGetLease4HWAddr2();
 }
 
-/// @brief Checks lease4 retrieval with clientId, HWAddr and subnet_id
-TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetId) {
-    startBackend(V4);
-    testGetLease4ClientIdHWAddrSubnetId();
-}
-
-/// @brief Checks lease4 retrieval with clientId, HWAddr and subnet_id
-TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetIdMultiThread) {
-    startBackend(V4);
-    MultiThreadingMgr::instance().setMode(true);
-    testGetLease4ClientIdHWAddrSubnetId();
-}
-
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
@@ -2071,16 +2058,6 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
             << " not found by getLease4(clientid, subnet_id)"
             << error_desc;
         detailCompareLease(tested, lease_by_clientid_subnet);
-
-        // Retrieve lease by client id, HW address and subnet.
-        Lease4Ptr lease_by_clientid_hwaddr_subnet = lmptr_->getLease4(*tested->client_id_,
-                                                                      *tested->hwaddr_,
-                                                                      tested->subnet_id_);
-        ASSERT_TRUE(lease_by_clientid_hwaddr_subnet)
-            << "Lease " << tested->addr_.toText()
-            << " not found by getLease4(clientid, hwaddr, subnet_id)"
-            << error_desc;
-        detailCompareLease(tested, lease_by_clientid_hwaddr_subnet);
 
         // Retrieve lease by HW address.
         Lease4Collection leases_by_hwaddr = lmptr_->getLease4(*tested->hwaddr_);

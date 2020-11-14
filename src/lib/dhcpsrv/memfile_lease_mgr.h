@@ -200,21 +200,6 @@ public:
     /// @return lease collection
     virtual Lease4Collection getLease4(const ClientId& client_id) const;
 
-    /// @brief Returns IPv4 lease for specified client-id/hwaddr/subnet-id tuple
-    ///
-    /// There can be at most one lease for a given client-id/hwaddr tuple
-    /// in a single pool, so this method with either return a single lease
-    /// or NULL.
-    ///
-    /// @param clientid client identifier
-    /// @param hwaddr hardware address of the client
-    /// @param subnet_id identifier of the subnet that lease must belong to
-    ///
-    /// @return a pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const ClientId& clientid,
-                                const HWAddr& hwaddr,
-                                SubnetID subnet_id) const;
-
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
     /// This function returns a copy of the lease. The modification in the

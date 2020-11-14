@@ -169,21 +169,6 @@ public:
     ///        failed.
     virtual Lease4Collection getLease4(const ClientId& clientid) const override;
 
-    /// @brief Returns IPv4 lease for the specified client identifier, HW
-    /// address and subnet identifier.
-    ///
-    /// @param client_id A client identifier.
-    /// @param hwaddr hardware address.
-    /// @param subnet_id A subnet identifier.
-    ///
-    /// @return A pointer to the lease or NULL if the lease is not found.
-    ///
-    /// @throw isc::NotImplemented On every call as this method is currently
-    /// not implemented for the CQL backend.
-    virtual Lease4Ptr getLease4(const ClientId& client_id,
-                                const HWAddr& hwaddr,
-                                SubnetID subnet_id) const override;
-
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
     /// There can be at most one lease for a given HW address in a single

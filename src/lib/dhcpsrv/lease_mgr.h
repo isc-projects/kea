@@ -311,20 +311,6 @@ public:
     /// @return lease collection
     virtual Lease4Collection getLease4(const ClientId& clientid) const = 0;
 
-    /// @brief Returns existing IPv4 lease for a given client identifier,
-    /// HW address and subnet identifier.
-    ///
-    /// @todo Consider whether this function is needed or not. In the basic
-    /// DHCPv4 server implementation it is not used by the allocation engine.
-    ///
-    /// @param client_id A client identifier.
-    /// @param hwaddr Hardware address.
-    /// @param subnet_id A subnet identifier.
-    ///
-    /// @return A pointer to the lease or NULL if the lease is not found.
-    virtual Lease4Ptr getLease4(const ClientId& client_id, const HWAddr& hwaddr,
-                                SubnetID subnet_id) const = 0;
-
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
     /// There can be at most one lease for a given client-id in a single

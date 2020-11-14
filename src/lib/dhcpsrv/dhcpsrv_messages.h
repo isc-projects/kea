@@ -122,7 +122,6 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_GET6_DUID;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_ADDR4;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_ADDR6;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_CLIENTID;
-extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_EXPIRED4;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_EXPIRED6;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_HOSTNAME4;

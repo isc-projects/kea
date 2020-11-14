@@ -174,9 +174,6 @@ public:
     /// HWAddr information.
     void testGetLease4HWAddr2();
 
-    /// @brief Test lease retrieval using client id, HW address and subnet id.
-    void testGetLease4ClientIdHWAddrSubnetId();
-
     /// @brief Get lease4 by hardware address (2)
     ///
     /// Check that the system can cope with getting a hardware address of

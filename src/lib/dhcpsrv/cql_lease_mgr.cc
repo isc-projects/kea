@@ -2264,22 +2264,6 @@ CqlLeaseMgr::getLease4(const ClientId &clientid) const {
 }
 
 Lease4Ptr
-CqlLeaseMgr::getLease4(const ClientId &clientid, const HWAddr &hwaddr,
-                       SubnetID subnet_id) const {
-    /// @todo: Remove this method in this and all other implementations.
-    /// This method is currently not implemented because allocation engine
-    /// searches for the lease using HW address or client identifier.
-    /// It never uses both parameters in the same time. We need to
-    /// consider if this method is needed at all.
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_CLIENTID_HWADDR_SUBID)
-        .arg(clientid.toText())
-        .arg(hwaddr.toText())
-        .arg(subnet_id);
-
-    isc_throw(NotImplemented, "CqlLeaseMgr::getLease4() is obsolete");
-}
-
-Lease4Ptr
 CqlLeaseMgr::getLease4(const ClientId &clientid, SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_SUBID_CLIENTID)
         .arg(subnet_id)

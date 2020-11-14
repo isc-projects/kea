@@ -884,44 +884,6 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
 
 Lease4Ptr
 Memfile_LeaseMgr::getLease4Internal(const ClientId& client_id,
-                                    const HWAddr& hwaddr,
-                                    SubnetID subnet_id) const {
-    // Get the index by client id, HW address and subnet id.
-    const Lease4StorageClientIdHWAddressSubnetIdIndex& idx =
-        storage4_.get<ClientIdHWAddressSubnetIdIndexTag>();
-    // Try to get the lease using client id, hardware address and subnet id.
-    Lease4StorageClientIdHWAddressSubnetIdIndex::const_iterator lease =
-        idx.find(boost::make_tuple(client_id.getClientId(), hwaddr.hwaddr_,
-                                   subnet_id));
-
-    if (lease == idx.end()) {
-        // Lease was not found. Return empty pointer to the caller.
-        return (Lease4Ptr());
-    }
-
-    // Lease was found. Return it to the caller.
-    return (*lease);
-}
-
-Lease4Ptr
-Memfile_LeaseMgr::getLease4(const ClientId& client_id,
-                            const HWAddr& hwaddr,
-                            SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID).arg(client_id.toText())
-                                                        .arg(hwaddr.toText())
-                                                        .arg(subnet_id);
-
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        return (getLease4Internal(client_id, hwaddr, subnet_id));
-    } else {
-        return (getLease4Internal(client_id, hwaddr, subnet_id));
-    }
-}
-
-Lease4Ptr
-Memfile_LeaseMgr::getLease4Internal(const ClientId& client_id,
                                     SubnetID subnet_id) const {
     // Get the index by client and subnet id.
     const Lease4StorageClientIdSubnetIdIndex& idx =

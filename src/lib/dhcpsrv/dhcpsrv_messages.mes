@@ -600,11 +600,6 @@ A debug message issued when the server is attempting to obtain a set of
 IPv4 leases from the memory file database for a client with the specified
 client identification.
 
-% DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID obtaining IPv4 lease for client ID %1, hardware address %2 and subnet ID %3
-A debug message issued when the server is attempting to obtain an IPv4
-lease from the memory file database for a client with the specified
-client ID, hardware address and subnet ID.
-
 % DHCPSRV_MEMFILE_GET_EXPIRED4 obtaining maximum %1 of expired IPv4 leases
 A debug message issued when the server is attempting to obtain expired
 IPv4 leases to reclaim them. The maximum number of leases to be retrieved
