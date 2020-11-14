@@ -132,6 +132,7 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     ///
     /// Expressed as number of seconds since current time, also
     /// valid lifetime - age where age is old cltt - new cltt.
+    /// The value 0 is used for the "cannot be reused" condition.
     uint32_t remaining_valid_lft_;
 
     /// @brief Client last transmission time
@@ -531,6 +532,8 @@ struct Lease6 : public Lease {
     ///
     /// Expressed as number of seconds since current time, also
     /// preferred lifetime - age where age is old cltt - new cltt.
+    /// This parameter is used only when remaining_valid_lft_ is not zero,
+    /// i.e. when the lease can be reused.
     uint32_t remaining_preferred_lft_;
 
     /// @todo: Add DHCPv6 failover related fields here

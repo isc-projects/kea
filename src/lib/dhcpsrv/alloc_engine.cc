@@ -2139,7 +2139,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     Lease6Ptr old_data(new Lease6(*lease));
 
     bool changed = false;
-    lease->remaining_preferred_lft_ = lease->preferred_lft_;
+    uint32_t current_preferred_lft = lease->preferred_lft_;
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getPreferred()) {
         uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
@@ -2147,7 +2147,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     } else {
         lease->preferred_lft_ = ctx.subnet_->getPreferred();
     }
-    if (lease->preferred_lft_ < lease->remaining_preferred_lft_) {
+    if (lease->preferred_lft_ < current_preferred_lft) {
         changed = true;
     }
     lease->remaining_valid_lft_ = 0;
@@ -2254,7 +2254,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 
         // Try to reuse the lease.
         if (!changed) {
-            setLeaseRemainingLife(lease, ctx);
+            setLeaseRemainingLife(lease, current_preferred_lft, ctx);
         }
 
 
@@ -2331,8 +2331,8 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
 
             lease->cltt_ = time(NULL);
             if (!fqdn_changed) {
-                lease->remaining_preferred_lft_ = lease->preferred_lft_;
-                setLeaseRemainingLife(lease, ctx);
+                uint32_t current_preferred_lft = lease->preferred_lft_;
+                setLeaseRemainingLife(lease, current_preferred_lft, ctx);
             }
             if (lease->remaining_valid_lft_ == 0) {
                 ctx.currentIA().changed_leases_.push_back(*lease_it);
@@ -4538,9 +4538,11 @@ AllocEngine::setLeaseRemainingLife(const Lease4Ptr& lease,
 
 void
 AllocEngine::setLeaseRemainingLife(const Lease6Ptr& lease,
+                                   uint32_t current_preferred_lft,
                                    const ClientContext6& ctx) const {
     // Sanity.
     lease->remaining_valid_lft_ = 0;
+    lease->remaining_preferred_lft_ = 0;
     const Subnet6Ptr& subnet = ctx.subnet_;
     if (!subnet) {
         return;
@@ -4587,11 +4589,12 @@ AllocEngine::setLeaseRemainingLife(const Lease6Ptr& lease,
     }
 
     // Seems to be reusable.
-    if ((lease->remaining_preferred_lft_ == Lease::INFINITY_LFT) ||
-        (lease->remaining_preferred_lft_ == 0)) {
+    if ((current_preferred_lft == Lease::INFINITY_LFT) ||
+        (current_preferred_lft == 0)) {
         // Keep these values.
-    } else if (lease->remaining_preferred_lft_ > age) {
-        lease->remaining_preferred_lft_ -= age;
+        lease->remaining_preferred_lft_ = current_preferred_lft;
+    } else if (current_preferred_lft > age) {
+        lease->remaining_preferred_lft_ = current_preferred_lft - age;
     } else {
         // Can be a misconfiguration so stay safe...
         return;

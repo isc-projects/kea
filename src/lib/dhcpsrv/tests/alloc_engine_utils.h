@@ -93,7 +93,7 @@ public:
     /// @brief Wrapper method for invoking AllocEngine4::updateLease4ExtendedInfo().
     /// @param lease lease to update
     /// @param ctx current packet processing context
-    /// @return the changed returned value
+    /// @return true if extended information was changed
     bool callUpdateLease4ExtendedInfo(const Lease4Ptr& lease,
                                       AllocEngine::ClientContext4& ctx) const {
         return (updateLease4ExtendedInfo(lease, ctx));
@@ -102,7 +102,7 @@ public:
     /// @brief Wrapper method for invoking AllocEngine6::updateLease6ExtendedInfo().
     /// @param lease lease to update
     /// @param ctx current packet processing context
-    /// @return the changed returned value
+    /// @return true if extended information was changed
     bool callUpdateLease6ExtendedInfo(const Lease6Ptr& lease,
                                       AllocEngine::ClientContext6& ctx) const {
         return (updateLease6ExtendedInfo(lease, ctx));

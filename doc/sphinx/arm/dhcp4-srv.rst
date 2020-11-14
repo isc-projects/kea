@@ -3998,12 +3998,12 @@ Lease Caching
 -------------
 
 Clients that attempt renewal frequently can cause the server to update
-and write the database frequently resulting in a performance impact on
-the server. The cache parameters instructs the DHCP server to avoid
+and write to the database frequently resulting in a performance impact
+on the server. The cache parameters instruct the DHCP server to avoid
 updating leases too frequently thus avoiding this behavior. Instead
 the server assigns the same lease (i.e. reuses it) with no
-modifications except for CLTT (Client Last Transmission Time)
-which does not require disk operations.
+modifications except for CLTT (Client Last Transmission Time) which
+does not require disk operations.
 
 The two parameters are the ``cache-threshold`` double and the
 ``cache-max-age`` integer and have no default, i.e. the lease caching
@@ -4019,7 +4019,7 @@ as last resort. For example:
             "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
             "subnet": "192.0.2.0/24",
             "cache-threshold": .25,
-	    "cache-max-age": 600,
+            "cache-max-age": 600,
             "valid-lifetime": 2000,
             ...
         }
@@ -4040,16 +4040,17 @@ When an already assigned lease can fulfill a client query:
   - if the ``cache-threshold`` is configured and is between 0. and 1.
     it expresses the percentage of the lease valid lifetime which is
     allowed for the lease age. Values below and including 0. and
-    values greater than 1. disables the lease cache feature.
-    
+    values greater than 1. disable the lease cache feature.
+
 In the example a lease with a valid lifetime of 2000 seconds can be
 reused if it was committed less than 500 seconds ago. With a lifetime
 of 3000 seconds the maximum age of 600 seconds applies.
 
-In responses the ``dhcp-lease-time`` option is set to the remaining
-valid lifetime i.e. the expiration date does not change. Other options
-based on the valid lifetime e.g. ``dhcp-renewal-time`` and
-``dhcp-rebinding-time`` also use the remaining lifetime.
+In outbound client responses (e.g. DHCPACK messages) the
+``dhcp-lease-time`` option is set to the remaining valid lifetime
+i.e. the expiration date does not change. Other options based on the
+valid lifetime e.g. ``dhcp-renewal-time`` and ``dhcp-rebinding-time``
+also use the remaining lifetime.
 
 .. _host-reservation-v4:
 

@@ -1899,14 +1899,11 @@ private:
     ///  - the lease is not updated in the lease database.
     ///  - the previous value of the lease can be returned to the client.
     ///
-    /// @note: there is no current_preferred_lft_ field in the lease
-    /// so the remaining_preferred_lft_ is used too for this:
-    ///  - it must be set to the previous preferred lifetime before call.
-    ///  - after call it must be ignored if remaining valid lifetime is zero.
-    ///
     /// @param [in,out] lease A pointer to the lease to be updated.
+    /// @param current_preferred_lft Current preferred lease lifetime.
     /// @param subnet A pointer to the lease subnet.
     void setLeaseRemainingLife(const Lease6Ptr& lease,
+                               uint32_t current_preferred_lft,
                                const ClientContext6& ctx) const;
 
 private:
