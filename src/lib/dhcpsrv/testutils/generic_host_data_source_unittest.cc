@@ -16,7 +16,6 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
