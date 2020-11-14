@@ -8,8 +8,11 @@
 #define GENERIC_HOST_DATA_SOURCE_UNITTEST_H
 
 #include <asiolink/io_address.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <dhcp/classify.h>
 #include <dhcp/option.h>
@@ -530,6 +533,405 @@ public:
     /// @return HW address with the same value as specified DUID
     HWAddrPtr DuidToHWAddr(const DuidPtr& duid);
 
+};
+
+class HostMgrDbLostCallbackTest : public ::testing::Test {
+public:
+    HostMgrDbLostCallbackTest()
+        : db_lost_callback_called_(0), db_recovered_callback_called_(0),
+          db_failed_callback_called_(0),
+          io_service_(boost::make_shared<isc::asiolink::IOService>()) {
+        isc::db::DatabaseConnection::db_lost_callback_ = 0;
+        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
+        isc::db::DatabaseConnection::db_failed_callback_ = 0;
+        isc::dhcp::HostMgr::setIOService(io_service_);
+        isc::dhcp::TimerMgr::instance()->setIOService(io_service_);
+        isc::dhcp::CfgMgr::instance().clear();
+    }
+
+    ~HostMgrDbLostCallbackTest() {
+        isc::db::DatabaseConnection::db_lost_callback_ = 0;
+        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
+        isc::db::DatabaseConnection::db_failed_callback_ = 0;
+        isc::dhcp::HostMgr::setIOService(isc::asiolink::IOServicePtr());
+        isc::dhcp::TimerMgr::instance()->unregisterTimers();
+        isc::dhcp::CfgMgr::instance().clear();
+    }
+
+    /// @brief Prepares the class for a test.
+    ///
+    /// Invoked by gtest prior test entry, we create the
+    /// appropriate schema and create a basic host manager to
+    /// wipe out any prior instance
+    virtual void SetUp() {
+        isc::dhcp::HostMgr::setIOService(io_service_);
+        isc::db::DatabaseConnection::db_lost_callback_ = 0;
+        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
+        isc::db::DatabaseConnection::db_failed_callback_ = 0;
+        // Ensure we have the proper schema with no transient data.
+        createSchema();
+        // Wipe out any pre-existing mgr
+        isc::dhcp::HostMgr::create();
+        isc::dhcp::CfgMgr::instance().clear();
+    }
+
+    /// @brief Pre-text exit clean up
+    ///
+    /// Invoked by gtest upon test exit, we destroy the schema
+    /// we created.
+    virtual void TearDown() {
+        isc::dhcp::HostMgr::setIOService(isc::asiolink::IOServicePtr());
+        isc::db::DatabaseConnection::db_lost_callback_ = 0;
+        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
+        isc::db::DatabaseConnection::db_failed_callback_ = 0;
+        // If data wipe enabled, delete transient data otherwise destroy the schema
+        destroySchema();
+        isc::dhcp::CfgMgr::instance().clear();
+    }
+
+    /// @brief Abstract method for destroying the back end specific shcema
+    virtual void destroySchema() = 0;
+
+    /// @brief Abstract method for creating the back end specific shcema
+    virtual void createSchema() = 0;
+
+    /// @brief Abstract method which returns the back end specific connection
+    /// string
+    virtual std::string validConnectString() = 0;
+
+    /// @brief Abstract method which returns invalid back end specific connection
+    /// string
+    virtual std::string invalidConnectString() = 0;
+
+    /// @brief Verifies open failures do NOT invoke db lost callback
+    ///
+    /// The db lost callback should only be invoked after successfully
+    /// opening the DB and then subsequently losing it. Failing to
+    /// open should be handled directly by the application layer.
+    void testNoCallbackOnOpenFailure();
+
+    /// @brief Verifies the host manager's behavior if DB connection is lost
+    ///
+    /// This function creates a host manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifying and
+    /// closing the socket connection to the host backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbRecoveredCallback was invoked
+    void testDbLostAndRecoveredCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection is lost
+    ///
+    /// This function creates a host manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifying and
+    /// closing the socket connection to the host backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked
+    void testDbLostAndFailedCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection is lost
+    ///
+    /// This function creates a host manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifyingLost and
+    /// closing the socket connection to the host backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbRecoveredCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testDbLostAndRecoveredAfterTimeoutCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection is lost
+    ///
+    /// This function creates a host manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifyingLost and
+    /// closing the socket connection to the host backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testDbLostAndFailedAfterTimeoutCallback();
+
+    /// @brief Callback function registered with the host manager
+    bool db_lost_callback(db::ReconnectCtlPtr /* not_used */) {
+        return (++db_lost_callback_called_);
+    }
+
+    /// @brief Flag used to detect calls to db_lost_callback function
+    uint32_t db_lost_callback_called_;
+
+    /// @brief Callback function registered with the host manager
+    bool db_recovered_callback(db::ReconnectCtlPtr /* not_used */) {
+        return (++db_recovered_callback_called_);
+    }
+
+    /// @brief Flag used to detect calls to db_recovered_callback function
+    uint32_t db_recovered_callback_called_;
+
+    /// @brief Callback function registered with the host manager
+    bool db_failed_callback(db::ReconnectCtlPtr /* not_used */) {
+        return (++db_failed_callback_called_);
+    }
+
+    /// @brief Flag used to detect calls to db_failed_callback function
+    uint32_t db_failed_callback_called_;
+
+    /// The IOService object, used for all ASIO operations.
+    isc::asiolink::IOServicePtr io_service_;
+};
+
+/// @brief Test fixture class for @c HostMgr class.
+class HostMgrTest : public ::testing::Test {
+protected:
+
+    /// @brief Prepares the class for a test.
+    ///
+    /// This method crates a handful of unique HW address and DUID objects
+    /// for use in unit tests. These objects are held in the @c hwaddrs_ and
+    /// @c duids_ members respectively.
+    ///
+    /// This method also resets the @c CfgMgr configuration and re-creates
+    /// the @c HostMgr object.
+    virtual void SetUp();
+
+    /// @brief Convenience method returning a pointer to the @c CfgHosts object
+    /// in the @c CfgMgr.
+    CfgHostsPtr getCfgHosts() const;
+
+    /// @brief Inserts IPv4 reservation into the host data source.
+    ///
+    /// @param data_source Reference to the data source to which the reservation
+    /// should be inserted.
+    /// @param hwaddr Pointer to the hardware address to be associated with the
+    /// reservation.
+    /// @param subnet_id IPv4 subnet id.
+    /// @param address IPv4 address to be reserved.
+    void addHost4(BaseHostDataSource& data_source,
+                  const HWAddrPtr& hwaddr,
+                  const SubnetID& subnet_id,
+                  const isc::asiolink::IOAddress& address);
+
+    /// @brief Inserts IPv6 reservation into the host data source.
+    ///
+    /// @param data_source Reference to the data source to which the reservation
+    /// should be inserted.
+    /// @param duid Pointer to the DUID to be associated with the reservation.
+    /// @param subnet_id IPv6 subnet id.
+    /// @param address IPv6 address/prefix to be reserved.
+    /// @param prefix_len Prefix length. The default value is 128 which
+    /// indicates that the reservation is for an IPv6 address rather than a
+    /// prefix.
+    void addHost6(BaseHostDataSource& data_source,
+                  const DuidPtr& duid,
+                  const SubnetID& subnet_id,
+                  const isc::asiolink::IOAddress& address,
+                  const uint8_t prefix_len = 128);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified HW address.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAll(BaseHostDataSource& data_source1,
+                    BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified DHCPv4 subnet.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAll4BySubnet(BaseHostDataSource& data_source1,
+                             BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified DHCPv6 subnet.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAll6BySubnet(BaseHostDataSource& data_source1,
+                             BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified hostname.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAllbyHostname(BaseHostDataSource& data_source1,
+                              BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified hostname and DHCPv4 subnet.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAllbyHostnameSubnet4(BaseHostDataSource& data_source1,
+                                     BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified hostname and DHCPv6 subnet.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAllbyHostnameSubnet6(BaseHostDataSource& data_source1,
+                                     BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified DHCPv4 subnet by pages.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param use_database True when the second reservation is inserted
+    /// in a database.
+    void testGetPage4(bool use_database);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified DHCPv6 subnet by pages.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param use_database True when the second reservation is inserted
+    /// in a database.
+    void testGetPage6(bool use_database);
+
+    /// @brief This test verifies that HostMgr returns all reservations
+    /// by pages.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param use_database True when the second reservation is inserted
+    /// in a database.
+    void testGetPage4All(bool use_database);
+
+    /// @brief This test verifies that HostMgr returns all reservations
+    /// by pages.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param use_database True when the second reservation is inserted
+    /// in a database.
+    void testGetPage6All(bool use_database);
+
+    /// @brief This test verifies that it is possible to retrieve IPv4
+    /// reservation for the particular host using HostMgr.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAll4(BaseHostDataSource& data_source1,
+                     BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that it is possible to retrieve an IPv4
+    /// reservation for the particular host using HostMgr.
+    ///
+    /// @param data_source Host data source to which reservation is inserted and
+    /// from which it will be retrieved.
+    void testGet4(BaseHostDataSource& data_source);
+
+    /// @brief This test verifies that it is possible to retrieve negative
+    /// cached reservation with and only with get4Any.
+    void testGet4Any();
+
+    /// @brief This test verifies that it is possible to retrieve an IPv6
+    /// reservation for the particular host using HostMgr.
+    ///
+    /// @param data_source Host data source to which reservation is inserted and
+    /// from which it will be retrieved.
+    void testGet6(BaseHostDataSource& data_source);
+
+    /// @brief This test verifies that it is possible to retrieve negative
+    /// cached reservation with and only with get6Any.
+    void testGet6Any();
+
+    /// @brief This test verifies that it is possible to retrieve an IPv6
+    /// prefix reservation for the particular host using HostMgr.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGet6ByPrefix(BaseHostDataSource& data_source1,
+                          BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified DHCPv4 subnet and IPv4 address.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAll4BySubnetIP(BaseHostDataSource& data_source1,
+                               BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified DHCPv6 subnet and IPv6 address.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
+                               BaseHostDataSource& data_source2);
+
+    /// @brief HW addresses to be used by the tests.
+    std::vector<HWAddrPtr> hwaddrs_;
+    /// @brief DUIDs to be used by the tests.
+    std::vector<DuidPtr> duids_;
 };
 
 }  // namespace test

@@ -3370,6 +3370,8 @@ LeaseMgrDbLostCallbackTest::testDbLostAndFailedCallback() {
     ASSERT_NO_THROW(lease = lm.getLease4(IOAddress("192.0.1.0")));
 
     access = invalidConnectString();
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
     // Now close the sql socket out from under backend client
@@ -3422,6 +3424,8 @@ LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
 
     access = invalidConnectString();
     access += extra;
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
     // Now close the sql socket out from under backend client
@@ -3487,6 +3491,8 @@ LeaseMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
 
     access = invalidConnectString();
     access += extra;
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
     // Now close the sql socket out from under backend client

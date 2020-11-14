@@ -15,8 +15,8 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
-#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <database/testutils/schema.h>
@@ -38,6 +38,7 @@ using namespace isc::db;
 using namespace isc::db::test;
 using namespace isc::util;
 using namespace isc::data;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace dhcp {
@@ -2662,6 +2663,1244 @@ GenericHostDataSourceTest::testMultipleHosts6() {
     host2->setIPv6SubnetID(1);
     // Add the host to the database.
     ASSERT_NO_THROW(hdsptr_->add(host2));
+}
+
+void
+HostMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    // Connect to the host backend.
+    ASSERT_THROW(HostMgr::addBackend(invalidConnectString()), DbOpenError);
+
+    io_service_->poll();
+
+    EXPECT_EQ(0, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+}
+
+void
+HostMgrDbLostCallbackTest::testDbLostAndRecoveredCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    // Create the HostMgr.
+    HostMgr::create();
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
+    // Connect to the host backend.
+    ASSERT_NO_THROW(HostMgr::addBackend(access));
+
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ConstHostCollection hosts;
+    ASSERT_NO_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")));
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+}
+
+void
+HostMgrDbLostCallbackTest::testDbLostAndFailedCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    // Create the HostMgr.
+    HostMgr::create();
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
+    // Connect to the host backend.
+    ASSERT_NO_THROW(HostMgr::addBackend(access));
+
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ConstHostCollection hosts;
+    ASSERT_NO_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")));
+
+    access = invalidConnectString();
+    CfgMgr::instance().clear();
+    // by adding an extra space in the access string will cause the DatabaseConnection::parse
+    // to throw resulting in failure to recreate the manager
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access + " ");
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+}
+
+void
+HostMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    // Create the HostMgr.
+    HostMgr::create();
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
+    // Connect to the host backend.
+    ASSERT_NO_THROW(HostMgr::addBackend(access));
+
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ConstHostCollection hosts;
+    ASSERT_NO_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")));
+
+    access = invalidConnectString();
+    access += extra;
+    CfgMgr::instance().clear();
+    // by adding an extra space in the access string will cause the DatabaseConnection::parse
+    // to throw resulting in failure to recreate the manager
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access + " ");
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    access = validConnectString();
+    access += extra;
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+}
+
+void
+HostMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    // Create the HostMgr.
+    HostMgr::create();
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
+    // Connect to the host backend.
+    ASSERT_NO_THROW(HostMgr::addBackend(access));
+
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ConstHostCollection hosts;
+    ASSERT_NO_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")));
+
+    access = invalidConnectString();
+    access += extra;
+    CfgMgr::instance().clear();
+    // by adding an extra space in the access string will cause the DatabaseConnection::parse
+    // to throw resulting in failure to recreate the manager
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access + " ");
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+}
+
+void
+// cppcheck-suppress unusedFunction
+HostMgrTest::SetUp() {
+    // Remove all configuration which may be dangling from the previous test.
+    CfgMgr::instance().clear();
+    // Recreate HostMgr instance. It drops any previous state.
+    HostMgr::create();
+    // Create HW addresses from the template.
+    const uint8_t mac_template[] = {
+        0x01, 0x02, 0x0A, 0xBB, 0x03, 0x00
+    };
+    for (uint8_t i = 0; i < 10; ++i) {
+        std::vector<uint8_t> vec(mac_template,
+                                 mac_template + sizeof(mac_template));
+        vec[vec.size() - 1] = i;
+        HWAddrPtr hwaddr(new HWAddr(vec, HTYPE_ETHER));
+        hwaddrs_.push_back(hwaddr);
+    }
+    // Create DUIDs from the template.
+    const uint8_t duid_template[] = {
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x00
+    };
+    for (uint8_t i = 0; i < 10; ++i) {
+        std::vector<uint8_t> vec(duid_template,
+                                 duid_template + sizeof(mac_template));
+        vec[vec.size() - 1] = i;
+        DuidPtr duid(new DUID(vec));
+        duids_.push_back(duid);
+    }
+}
+
+CfgHostsPtr
+HostMgrTest::getCfgHosts() const {
+    return (CfgMgr::instance().getStagingCfg()->getCfgHosts());
+}
+
+void
+HostMgrTest::addHost4(BaseHostDataSource& data_source,
+                      const HWAddrPtr& hwaddr,
+                      const SubnetID& subnet_id,
+                      const IOAddress& address) {
+    data_source.add(HostPtr(new Host(hwaddr->toText(false),
+                                     "hw-address", subnet_id, SUBNET_ID_UNUSED,
+                                     address)));
+}
+
+void
+HostMgrTest::addHost6(BaseHostDataSource& data_source,
+                      const DuidPtr& duid,
+                      const SubnetID& subnet_id,
+                      const IOAddress& address,
+                      const uint8_t prefix_len) {
+    HostPtr new_host(new Host(duid->toText(), "duid", SubnetID(1),
+                              subnet_id, IOAddress::IPV4_ZERO_ADDRESS()));
+    new_host->addReservation(IPv6Resrv(prefix_len == 128 ? IPv6Resrv::TYPE_NA :
+                                       IPv6Resrv::TYPE_PD,
+                                       address, prefix_len));
+    data_source.add(new_host);
+}
+
+
+void
+HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
+                        BaseHostDataSource& data_source2) {
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts =
+        HostMgr::instance().getAll(Host::IDENT_HWADDR,
+                                   &hwaddrs_[1]->hwaddr_[0],
+                                   hwaddrs_[1]->hwaddr_.size());
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations for the same HW address. They differ by the IP
+    // address reserved and the IPv4 subnet.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[0], SubnetID(10), IOAddress("192.0.3.10"));
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching HW address is specified, nothing should be
+    // returned.
+    hosts = HostMgr::instance().getAll(Host::IDENT_HWADDR,
+                                       &hwaddrs_[1]->hwaddr_[0],
+                                       hwaddrs_[1]->hwaddr_.size());
+    ASSERT_TRUE(hosts.empty());
+
+    // For the correct HW address, there should be two reservations.
+    hosts = HostMgr::instance().getAll(Host::IDENT_HWADDR,
+                                       &hwaddrs_[0]->hwaddr_[0],
+                                       hwaddrs_[0]->hwaddr_.size());
+    ASSERT_EQ(2, hosts.size());
+
+    // We don't know the order in which the reservations are returned so
+    // we have to match with any of the two reservations returned.
+
+    // Look for the first reservation.
+    bool found = false;
+    for (unsigned i = 0; i < 2; ++i) {
+        if (hosts[0]->getIPv4Reservation() == IOAddress("192.0.2.5")) {
+            ASSERT_EQ(1, hosts[0]->getIPv4SubnetID());
+            found = true;
+        }
+    }
+    if (!found) {
+        ADD_FAILURE() << "Reservation for the IPv4 address 192.0.2.5"
+            " not found using getAll method";
+    }
+
+    // Look for the second reservation.
+    found = false;
+    for (unsigned i = 0; i < 2; ++i) {
+        if (hosts[1]->getIPv4Reservation() == IOAddress("192.0.3.10")) {
+            ASSERT_EQ(10, hosts[1]->getIPv4SubnetID());
+            found = true;
+        }
+    }
+    if (!found) {
+        ADD_FAILURE() << "Reservation for the IPv4 address 192.0.3.10"
+            " not found using getAll method";
+    }
+}
+
+void
+HostMgrTest::testGetAll4BySubnet(BaseHostDataSource& data_source1,
+                                 BaseHostDataSource& data_source2) {
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts = HostMgr::instance().getAll4(SubnetID(1));
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations for the same subnet.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.6"));
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching subnet is specified, nothing should be returned.
+    hosts = HostMgr::instance().getAll4(SubnetID(100));
+    ASSERT_TRUE(hosts.empty());
+
+    // For the correct subnet, there should be two reservations.
+    hosts = HostMgr::instance().getAll4(SubnetID(1));
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1, hosts[1]->getIPv4SubnetID());
+
+    // Make sure that two different hosts were returned.
+    EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    EXPECT_EQ("192.0.2.6", hosts[1]->getIPv4Reservation().toText());
+}
+
+void
+HostMgrTest::testGetAll6BySubnet(BaseHostDataSource& data_source1,
+                                 BaseHostDataSource& data_source2) {
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts = HostMgr::instance().getAll6(SubnetID(1));
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations for the same subnet.
+    addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::6"));
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching subnet is specified, nothing should be returned.
+    hosts = HostMgr::instance().getAll6(SubnetID(100));
+    ASSERT_TRUE(hosts.empty());
+
+    // For the correct subnet, there should be two reservations.
+    hosts = HostMgr::instance().getAll6(SubnetID(1));
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+
+    // Make sure that two different hosts were returned.
+    EXPECT_TRUE(hosts[0]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+    EXPECT_TRUE(hosts[1]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+}
+
+void
+HostMgrTest::testGetAllbyHostname(BaseHostDataSource& data_source1,
+                                  BaseHostDataSource& data_source2) {
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts =
+        HostMgr::instance().getAllbyHostname("host");
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations with the same hostname.
+    HostPtr host1(new Host(hwaddrs_[0]->toText(false), "hw-address",
+                           SubnetID(1), SUBNET_ID_UNUSED,
+                           IOAddress("192.0.2.5")));
+    host1->setHostname("Host");
+    data_source1.add(host1);
+    HostPtr host2(new Host(hwaddrs_[1]->toText(false), "hw-address",
+                           SubnetID(10), SUBNET_ID_UNUSED,
+                           IOAddress("192.0.3.10")));
+    host2->setHostname("hosT");
+    data_source2.add(host2);
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching hostname is specified, nothing should be
+    // returned.
+    hosts = HostMgr::instance().getAllbyHostname("foobar");
+    EXPECT_TRUE(hosts.empty());
+
+    // For the correct hostname, there should be two reservations.
+    hosts = HostMgr::instance().getAllbyHostname("host");
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(10, hosts[1]->getIPv4SubnetID());
+
+    // Make sure that hostname is correct including its case.
+    EXPECT_EQ("Host", hosts[0]->getHostname());
+    EXPECT_EQ("hosT", hosts[1]->getHostname());
+}
+
+void
+HostMgrTest::testGetAllbyHostnameSubnet4(BaseHostDataSource& data_source1,
+                                         BaseHostDataSource& data_source2) {
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts =
+        HostMgr::instance().getAllbyHostname4("host", SubnetID(1));
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations with the same hostname.
+    HostPtr host1(new Host(hwaddrs_[0]->toText(false), "hw-address",
+                           SubnetID(1), SUBNET_ID_UNUSED,
+                           IOAddress("192.0.2.5")));
+    host1->setHostname("Host");
+    data_source1.add(host1);
+    HostPtr host2(new Host(hwaddrs_[1]->toText(false), "hw-address",
+                           SubnetID(1), SUBNET_ID_UNUSED,
+                           IOAddress("192.0.2.6")));
+    host2->setHostname("hosT");
+    data_source2.add(host2);
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching hostname is specified, nothing should be
+    // returned.
+    hosts = HostMgr::instance().getAllbyHostname4("foobar", SubnetID(1));
+    EXPECT_TRUE(hosts.empty());
+
+    // If there non-matching subnet is specified, nothing should be
+    // returned.
+    hosts = HostMgr::instance().getAllbyHostname4("host", SubnetID(10));
+    EXPECT_TRUE(hosts.empty());
+
+    // For the correct hostname, there should be two reservations.
+    hosts = HostMgr::instance().getAllbyHostname4("host", SubnetID(1));
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1, hosts[1]->getIPv4SubnetID());
+
+    // Make sure that two different hosts were returned.
+    EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    EXPECT_EQ("192.0.2.6", hosts[1]->getIPv4Reservation().toText());
+
+    // Make sure that hostname is correct including its case.
+    EXPECT_EQ("Host", hosts[0]->getHostname());
+    EXPECT_EQ("hosT", hosts[1]->getHostname());
+}
+
+void
+HostMgrTest::testGetAllbyHostnameSubnet6(BaseHostDataSource& data_source1,
+                                         BaseHostDataSource& data_source2) {
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts =
+        HostMgr::instance().getAllbyHostname6("host", SubnetID(1));
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations with the same hostname.
+    HostPtr host1(new Host(duids_[0]->toText(), "duid",
+                           SubnetID(1), SubnetID(1),
+                           IOAddress::IPV4_ZERO_ADDRESS()));
+    host1->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                    IOAddress("2001:db8:1::5"), 128));
+    host1->setHostname("Host");
+    data_source1.add(host1);
+    HostPtr host2(new Host(duids_[1]->toText(), "duid",
+                           SubnetID(1), SubnetID(1),
+                           IOAddress::IPV4_ZERO_ADDRESS()));
+    host2->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                    IOAddress("2001:db8:1::6"), 128));
+    host2->setHostname("hosT");
+    data_source2.add(host2);
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching hostname is specified, nothing should be
+    // returned.
+    hosts = HostMgr::instance().getAllbyHostname6("foobar", SubnetID(1));
+    EXPECT_TRUE(hosts.empty());
+
+    // If there non-matching subnet is specified, nothing should be
+    // returned.
+    hosts = HostMgr::instance().getAllbyHostname6("host", SubnetID(10));
+    EXPECT_TRUE(hosts.empty());
+
+    // For the correct hostname, there should be two reservations.
+    hosts = HostMgr::instance().getAllbyHostname6("host", SubnetID(1));
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+
+    // Make sure that two different hosts were returned.
+    EXPECT_TRUE(hosts[0]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+    EXPECT_TRUE(hosts[1]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+
+    // Make sure that hostname is correct including its case.
+    EXPECT_EQ("Host", hosts[0]->getHostname());
+    EXPECT_EQ("hosT", hosts[1]->getHostname());
+}
+
+void
+HostMgrTest::testGetPage4(bool use_database) {
+    BaseHostDataSource& data_source1 = *getCfgHosts();
+    BaseHostDataSource& data_source2 = HostMgr::instance();
+
+    // Initially, no reservations should be present.
+    size_t idx(0);
+    HostPageSize page_size(10);
+    ConstHostCollection hosts =
+        HostMgr::instance().getPage4(SubnetID(1), idx, 0, page_size);
+    ASSERT_TRUE(hosts.empty());
+    if (use_database) {
+        EXPECT_EQ(2, idx);
+    } else {
+        EXPECT_EQ(1, idx);
+    }
+
+    // Add two reservations for the same subnet.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(use_database ? data_source2 : data_source1,
+             hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.6"));
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching subnet is specified, nothing should be returned.
+    idx = 0;
+    hosts = HostMgr::instance().getPage4(SubnetID(100), idx, 0, page_size);
+    ASSERT_TRUE(hosts.empty());
+
+    // For the correct subnet, there should be two reservations.
+    idx = 0;
+    hosts = HostMgr::instance().getPage4(SubnetID(1), idx, 0, page_size);
+    if (use_database) {
+        ASSERT_EQ(1, hosts.size());
+    } else {
+        ASSERT_EQ(2, hosts.size());
+    }
+
+    // Make sure that returned values are correct.
+    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    if (!use_database) {
+        EXPECT_EQ(1, hosts[1]->getIPv4SubnetID());
+        EXPECT_EQ("192.0.2.6", hosts[1]->getIPv4Reservation().toText());
+
+        // Check it was the last page.
+        uint64_t hid = hosts[1]->getHostId();
+        hosts = HostMgr::instance().getPage4(SubnetID(1), idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 1;
+        hosts = HostMgr::instance().getPage4(SubnetID(1), idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+
+    if (use_database) {
+        uint64_t hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        ASSERT_EQ(0, idx);
+        hosts = HostMgr::instance().getPage4(SubnetID(1), idx, hid, page_size);
+        ASSERT_EQ(1, hosts.size());
+        ASSERT_NE(0, idx);
+        EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+        EXPECT_EQ("192.0.2.6", hosts[0]->getIPv4Reservation().toText());
+
+        // Alternate way to use the database.
+        idx = 1;
+        hosts = HostMgr::instance().getPage4(SubnetID(1), idx, 0, page_size);
+        ASSERT_EQ(1, hosts.size());
+        EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+        EXPECT_EQ("192.0.2.6", hosts[0]->getIPv4Reservation().toText());
+
+        // Check it was the last page.
+        hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        hosts = HostMgr::instance().getPage4(SubnetID(1), idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 2;
+        hosts = HostMgr::instance().getPage4(SubnetID(1), idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+}
+
+void
+HostMgrTest::testGetPage6(bool use_database) {
+    BaseHostDataSource& data_source1 = *getCfgHosts();
+    BaseHostDataSource& data_source2 = HostMgr::instance();
+
+    // Initially, no reservations should be present.
+    size_t idx(0);
+    HostPageSize page_size(10);
+    ConstHostCollection hosts =
+        HostMgr::instance().getPage6(SubnetID(1), idx, 0, page_size);
+    ASSERT_TRUE(hosts.empty());
+    if (use_database) {
+        EXPECT_EQ(2, idx);
+    } else {
+        EXPECT_EQ(1, idx);
+    }
+
+    // Add two reservations for the same subnet.
+    addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost6(use_database ? data_source2 : data_source1,
+             duids_[1], SubnetID(1), IOAddress("2001:db8:1::6"));
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching subnet is specified, nothing should be returned.
+    idx = 0;
+    hosts = HostMgr::instance().getPage6(SubnetID(100), idx, 0, page_size);
+    ASSERT_TRUE(hosts.empty());
+
+    // For the correct subnet, there should be two reservations.
+    idx = 0;
+    hosts = HostMgr::instance().getPage6(SubnetID(1), idx, 0, page_size);
+    if (use_database) {
+        ASSERT_EQ(1, hosts.size());
+    } else {
+        ASSERT_EQ(2, hosts.size());
+    }
+
+    // Make sure that returned values are correct.
+    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+    EXPECT_TRUE(hosts[0]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+    if (!use_database) {
+        EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+        EXPECT_TRUE(hosts[1]->hasReservation(
+                    IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+
+        // Check it was the last page.
+        uint64_t hid = hosts[1]->getHostId();
+        hosts = HostMgr::instance().getPage6(SubnetID(1), idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 1;
+        hosts = HostMgr::instance().getPage6(SubnetID(1), idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+
+    if (use_database) {
+        uint64_t hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        ASSERT_EQ(0, idx);
+        hosts = HostMgr::instance().getPage6(SubnetID(1), idx, hid, page_size);
+        ASSERT_EQ(1, hosts.size());
+        ASSERT_NE(0, idx);
+        EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+        EXPECT_TRUE(hosts[0]->hasReservation(
+                    IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+
+        // Alternate way to use the database.
+        idx = 1;
+        hosts = HostMgr::instance().getPage6(SubnetID(1), idx, 0, page_size);
+        ASSERT_EQ(1, hosts.size());
+        EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+        EXPECT_TRUE(hosts[0]->hasReservation(
+                    IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+
+        // Check it was the last page.
+        hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        hosts = HostMgr::instance().getPage6(SubnetID(1), idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 2;
+        hosts = HostMgr::instance().getPage6(SubnetID(1), idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+}
+
+void
+HostMgrTest::testGetPage4All(bool use_database) {
+    BaseHostDataSource& data_source1 = *getCfgHosts();
+    BaseHostDataSource& data_source2 = HostMgr::instance();
+
+    // Initially, no reservations should be present.
+    size_t idx(0);
+    HostPageSize page_size(10);
+    ConstHostCollection hosts =
+        HostMgr::instance().getPage4(idx, 0, page_size);
+    ASSERT_TRUE(hosts.empty());
+    if (use_database) {
+        EXPECT_EQ(2, idx);
+    } else {
+        EXPECT_EQ(1, idx);
+    }
+
+    // Add two reservations.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(use_database ? data_source2 : data_source1,
+             hwaddrs_[1], SubnetID(2), IOAddress("192.0.2.6"));
+
+    CfgMgr::instance().commit();
+
+    // There should be two reservations.
+    idx = 0;
+    hosts = HostMgr::instance().getPage4(idx, 0, page_size);
+    if (use_database) {
+        ASSERT_EQ(1, hosts.size());
+    } else {
+        ASSERT_EQ(2, hosts.size());
+    }
+
+    // Make sure that returned values are correct.
+    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    if (!use_database) {
+        EXPECT_EQ(2, hosts[1]->getIPv4SubnetID());
+        EXPECT_EQ("192.0.2.6", hosts[1]->getIPv4Reservation().toText());
+
+        // Check it was the last page.
+        uint64_t hid = hosts[1]->getHostId();
+        hosts = HostMgr::instance().getPage4(idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 1;
+        hosts = HostMgr::instance().getPage4(idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+
+    if (use_database) {
+        uint64_t hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        ASSERT_EQ(0, idx);
+        hosts = HostMgr::instance().getPage4(idx, hid, page_size);
+        ASSERT_EQ(1, hosts.size());
+        ASSERT_NE(0, idx);
+        EXPECT_EQ(2, hosts[0]->getIPv4SubnetID());
+        EXPECT_EQ("192.0.2.6", hosts[0]->getIPv4Reservation().toText());
+
+        // Alternate way to use the database.
+        idx = 1;
+        hosts = HostMgr::instance().getPage4(idx, 0, page_size);
+        ASSERT_EQ(1, hosts.size());
+        EXPECT_EQ(2, hosts[0]->getIPv4SubnetID());
+        EXPECT_EQ("192.0.2.6", hosts[0]->getIPv4Reservation().toText());
+
+        // Check it was the last page.
+        hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        hosts = HostMgr::instance().getPage4(idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 2;
+        hosts = HostMgr::instance().getPage4(idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+}
+
+void
+HostMgrTest::testGetPage6All(bool use_database) {
+    BaseHostDataSource& data_source1 = *getCfgHosts();
+    BaseHostDataSource& data_source2 = HostMgr::instance();
+
+    // Initially, no reservations should be present.
+    size_t idx(0);
+    HostPageSize page_size(10);
+    ConstHostCollection hosts =
+        HostMgr::instance().getPage6(idx, 0, page_size);
+    ASSERT_TRUE(hosts.empty());
+    if (use_database) {
+        EXPECT_EQ(2, idx);
+    } else {
+        EXPECT_EQ(1, idx);
+    }
+
+    // Add two reservations.
+    addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost6(use_database ? data_source2 : data_source1,
+             duids_[1], SubnetID(2), IOAddress("2001:db8:1::6"));
+
+    CfgMgr::instance().commit();
+
+    // There should be two reservations.
+    idx = 0;
+    hosts = HostMgr::instance().getPage6(idx, 0, page_size);
+    if (use_database) {
+        ASSERT_EQ(1, hosts.size());
+    } else {
+        ASSERT_EQ(2, hosts.size());
+    }
+
+    // Make sure that returned values are correct.
+    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+    EXPECT_TRUE(hosts[0]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+    if (!use_database) {
+        EXPECT_EQ(2, hosts[1]->getIPv6SubnetID());
+        EXPECT_TRUE(hosts[1]->hasReservation(
+                    IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+
+        // Check it was the last page.
+        uint64_t hid = hosts[1]->getHostId();
+        hosts = HostMgr::instance().getPage6(idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 1;
+        hosts = HostMgr::instance().getPage6(idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+
+    if (use_database) {
+        uint64_t hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        ASSERT_EQ(0, idx);
+        hosts = HostMgr::instance().getPage6(idx, hid, page_size);
+        ASSERT_EQ(1, hosts.size());
+        ASSERT_NE(0, idx);
+        EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+        EXPECT_TRUE(hosts[0]->hasReservation(
+                    IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+
+        // Alternate way to use the database.
+        idx = 1;
+        hosts = HostMgr::instance().getPage6(idx, 0, page_size);
+        ASSERT_EQ(1, hosts.size());
+        EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+        EXPECT_TRUE(hosts[0]->hasReservation(
+                    IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+
+        // Check it was the last page.
+        hid = hosts[0]->getHostId();
+        ASSERT_NE(0, hid);
+        hosts = HostMgr::instance().getPage6(idx, hid, page_size);
+        ASSERT_EQ(0, hosts.size());
+        idx = 2;
+        hosts = HostMgr::instance().getPage6(idx, 0, page_size);
+        ASSERT_EQ(0, hosts.size());
+    }
+}
+
+void
+HostMgrTest::testGetAll4(BaseHostDataSource& data_source1,
+                         BaseHostDataSource& data_source2) {
+    // Initially, no hosts should be present.
+    ConstHostCollection hosts =
+        HostMgr::instance().getAll4(IOAddress("192.0.2.5"));
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two hosts to different data sources.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[1], SubnetID(10), IOAddress("192.0.2.5"));
+
+    CfgMgr::instance().commit();
+
+    // Retrieve all hosts, This should return hosts from both sources
+    // in a single container.
+    hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5"));
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that IPv4 address is correct.
+    EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    EXPECT_EQ("192.0.2.5", hosts[1]->getIPv4Reservation().toText());
+
+    // Make sure that two different hosts were returned.
+    EXPECT_NE(hosts[0]->getIPv4SubnetID(), hosts[1]->getIPv4SubnetID());
+}
+
+void
+HostMgrTest::testGet4(BaseHostDataSource& data_source) {
+    // Initially, no host should be present.
+    ConstHostPtr host =
+        HostMgr::instance().get4(SubnetID(1), Host::IDENT_HWADDR,
+                                 &hwaddrs_[0]->hwaddr_[0],
+                                 hwaddrs_[0]->hwaddr_.size());
+    ASSERT_FALSE(host);
+
+    // Add new host to the database.
+    addHost4(data_source, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+
+    CfgMgr::instance().commit();
+
+    // Retrieve the host from the database and expect that the parameters match.
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+}
+
+void
+HostMgrTest::testGet4Any() {
+    // Initially, no host should be present.
+    ConstHostPtr host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                                 &duids_[0]->getDuid()[0],
+                                                 duids_[0]->getDuid().size());
+    ASSERT_FALSE(host);
+    HostMgr::instance().get4Any(SubnetID(1), Host::IDENT_DUID,
+                                &duids_[0]->getDuid()[0],
+                                duids_[0]->getDuid().size());
+    ASSERT_FALSE(host);
+
+    // Add new host to the database.
+    HostPtr new_host(new Host(duids_[0]->toText(), "duid", SubnetID(1),
+                              SUBNET_ID_UNUSED, IOAddress("192.0.2.5")));
+    // Abuse of the server's configuration.
+    getCfgHosts()->add(new_host);
+
+    CfgMgr::instance().commit();
+
+    // Retrieve the host from the database and expect that the parameters match.
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                    &duids_[0]->getDuid()[0],
+                                    duids_[0]->getDuid().size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+
+    // Set the negative cache flag on the host.
+    new_host->setNegative(true);
+
+    // get4 is not supposed to get it.
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                    &duids_[0]->getDuid()[0],
+                                    duids_[0]->getDuid().size());
+    EXPECT_FALSE(host);
+
+    // But get4Any should.
+    host = HostMgr::instance().get4Any(SubnetID(1), Host::IDENT_DUID,
+                                       &duids_[0]->getDuid()[0],
+                                       duids_[0]->getDuid().size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+    EXPECT_TRUE(host->getNegative());
+
+    // To be sure. Note we use the CfgHosts source so only this
+    // get4 overload works.
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                    &duids_[0]->getDuid()[0],
+                                    duids_[0]->getDuid().size());
+    EXPECT_FALSE(host);
+}
+
+void
+HostMgrTest::testGet6(BaseHostDataSource& data_source) {
+    // Initially, no host should be present.
+    ConstHostPtr host =
+        HostMgr::instance().get6(SubnetID(2), Host::IDENT_DUID,
+                                 &duids_[0]->getDuid()[0],
+                                 duids_[0]->getDuid().size());
+    ASSERT_FALSE(host);
+
+    // Add new host to the database.
+    addHost6(data_source, duids_[0], SubnetID(2), IOAddress("2001:db8:1::1"));
+
+    CfgMgr::instance().commit();
+
+    // Retrieve the host from the database and expect that the parameters match.
+    host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_DUID,
+                                    &duids_[0]->getDuid()[0],
+                                    duids_[0]->getDuid().size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                               IOAddress("2001:db8:1::1"))));
+}
+
+void
+HostMgrTest::testGet6Any() {
+    // Initially, no host should be present.
+    ConstHostPtr host = HostMgr::instance().get6(SubnetID(2),
+                                                 Host::IDENT_HWADDR,
+                                                 &hwaddrs_[0]->hwaddr_[0],
+                                                 hwaddrs_[0]->hwaddr_.size());
+    ASSERT_FALSE(host);
+    host = HostMgr::instance().get6Any(SubnetID(2), Host::IDENT_HWADDR,
+                                       &hwaddrs_[0]->hwaddr_[0],
+                                       hwaddrs_[0]->hwaddr_.size());
+    ASSERT_FALSE(host);
+
+    // Add new host to the database.
+    HostPtr new_host(new Host(hwaddrs_[0]->toText(false), "hw-address",
+                              SubnetID(1), SubnetID(2),
+                              IOAddress::IPV4_ZERO_ADDRESS()));
+    new_host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       IOAddress("2001:db8:1::1"), 128));
+    // Abuse of the server's configuration.
+    getCfgHosts()->add(new_host);
+
+    CfgMgr::instance().commit();
+
+    // Retrieve the host from the database and expect that the parameters match.
+    host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                               IOAddress("2001:db8:1::1"))));
+
+    // Set the negative cache flag on the host.
+    new_host->setNegative(true);
+
+    // get6 is not supposed to get it.
+    host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size());
+    EXPECT_FALSE(host);
+
+    // But get6Any should.
+    host = HostMgr::instance().get6Any(SubnetID(2), Host::IDENT_HWADDR,
+                                       &hwaddrs_[0]->hwaddr_[0],
+                                       hwaddrs_[0]->hwaddr_.size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                               IOAddress("2001:db8:1::1"))));
+    EXPECT_TRUE(host->getNegative());
+
+    // To be sure. Note we use the CfgHosts source so only this
+    // get6 overload works.
+    host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size());
+    EXPECT_FALSE(host);
+}
+
+void
+HostMgrTest::testGet6ByPrefix(BaseHostDataSource& data_source1,
+                              BaseHostDataSource& data_source2) {
+    ConstHostPtr host = HostMgr::instance().get6(IOAddress("2001:db8:1::"), 64);
+    ASSERT_FALSE(host);
+
+    // Add a host with a reservation for a prefix 2001:db8:1::/64.
+    addHost6(data_source1, duids_[0], SubnetID(2), IOAddress("2001:db8:1::"), 64);
+
+    // Add another host having a reservation for prefix 2001:db8:1:0:6::/72.
+    addHost6(data_source2, duids_[1], SubnetID(3), IOAddress("2001:db8:1:0:6::"), 72);
+
+    CfgMgr::instance().commit();
+
+    // Retrieve first reservation.
+    host = HostMgr::instance().get6(IOAddress("2001:db8:1::"), 64);
+    ASSERT_TRUE(host);
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                               IOAddress("2001:db8:1::"), 64)));
+
+    // Make sure the first reservation is not retrieved when the prefix
+    // length is incorrect.
+    host = HostMgr::instance().get6(IOAddress("2001:db8:1::"), 72);
+    EXPECT_FALSE(host);
+
+    // Retrieve second reservation.
+    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 72);
+    ASSERT_TRUE(host);
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                               IOAddress("2001:db8:1:0:6::"), 72)));
+
+    // Make sure the second reservation is not retrieved when the prefix
+    // length is incorrect.
+    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 64);
+    EXPECT_FALSE(host);
+}
+
+void
+HostMgrTest::testGetAll4BySubnetIP(BaseHostDataSource& data_source1,
+                                   BaseHostDataSource& data_source2) {
+    // Set the mode of operation with multiple reservations for the same
+    // IP address.
+    ASSERT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->setIPReservationsUnique(false);
+
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts = HostMgr::instance().getAll4(SubnetID(1),
+                                                            IOAddress("192.0.2.5"));
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations for the same subnet and IP address.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching subnet is specified, nothing should be returned.
+    hosts = HostMgr::instance().getAll4(SubnetID(100), IOAddress("192.0.2.5"));
+    ASSERT_TRUE(hosts.empty());
+
+    // For the correct subnet, there should be two reservations.
+    hosts = HostMgr::instance().getAll4(SubnetID(1), IOAddress("192.0.2.5"));
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1, hosts[1]->getIPv4SubnetID());
+
+    // Make sure that two hosts were returned with different identifiers
+    // but the same address.
+    EXPECT_NE(hosts[0]->getIdentifierAsText(), hosts[1]->getIdentifierAsText());
+    EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    EXPECT_EQ("192.0.2.5", hosts[1]->getIPv4Reservation().toText());
+}
+
+void
+HostMgrTest::testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
+                                   BaseHostDataSource& data_source2) {
+    // Set the mode of operation with multiple reservations for the same
+    // IP address.
+    ASSERT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->setIPReservationsUnique(false);
+
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts = HostMgr::instance().getAll6(SubnetID(1),
+                                                            IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations for the same subnet.
+    addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching subnet is specified, nothing should be returned.
+    hosts = HostMgr::instance().getAll6(SubnetID(100), IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(hosts.empty());
+
+    // For the correct subnet, there should be two reservations.
+    hosts = HostMgr::instance().getAll6(SubnetID(1), IOAddress("2001:db8:1::5"));
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+
+    // Make sure that two hosts were returned with different identifiers
+    // but the same address.
+    EXPECT_NE(hosts[0]->getIdentifierAsText(), hosts[1]->getIdentifierAsText());
+    EXPECT_TRUE(hosts[0]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+    EXPECT_TRUE(hosts[1]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
 }
 
 }  // namespace test

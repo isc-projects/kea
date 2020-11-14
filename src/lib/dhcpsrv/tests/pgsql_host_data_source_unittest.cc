@@ -1424,4 +1424,235 @@ TEST_F(PgSqlHostDataSourceTest, testMultipleHosts6MultiThreading) {
     testMultipleHosts6();
 }
 
+/// @brief Test fixture class for validating @c HostMgr using
+/// PostgreSQL as alternate host data source.
+class PgSQLHostMgrTest : public HostMgrTest {
+protected:
+
+    /// @brief Build PostgreSQL schema for a test.
+    virtual void SetUp();
+
+    /// @brief Rollback and drop PostgreSQL schema after the test.
+    virtual void TearDown();
+};
+
+void
+PgSQLHostMgrTest::SetUp() {
+    HostMgrTest::SetUp();
+
+    // Ensure we have the proper schema with no transient data.
+    db::test::createPgSQLSchema();
+
+    // Connect to the database
+    try {
+        HostMgr::addBackend(db::test::validPgSQLConnectionString());
+    } catch (...) {
+        std::cerr << "*** ERROR: unable to open database. The test\n"
+            "*** environment is broken and must be fixed before\n"
+            "*** the PostgreSQL tests will run correctly.\n"
+            "*** The reason for the problem is described in the\n"
+            "*** accompanying exception output.\n";
+        throw;
+    }
+}
+
+void
+PgSQLHostMgrTest::TearDown() {
+    HostMgr::instance().getHostDataSource()->rollback();
+    HostMgr::delBackend("postgresql");
+    // If data wipe enabled, delete transient data otherwise destroy the schema
+    db::test::destroyPgSQLSchema();
+}
+
+/// @brief Test fixture class for validating @c HostMgr using
+/// PostgreSQL as alternate host data source and PostgreSQL connectivity loss.
+class PgSQLHostMgrDbLostCallbackTest : public HostMgrDbLostCallbackTest {
+public:
+    virtual void destroySchema() {
+        // If data wipe enabled, delete transient data otherwise destroy the schema
+        db::test::destroyPgSQLSchema();
+    }
+
+    virtual void createSchema() {
+        // Ensure we have the proper schema with no transient data.
+        db::test::createPgSQLSchema();
+    }
+
+    virtual std::string validConnectString() {
+        return (db::test::validPgSQLConnectionString());
+    }
+
+    virtual std::string invalidConnectString() {
+        return (connectionString(PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
+                                 VALID_USER, VALID_PASSWORD));
+    }
+};
+
+// This test verifies that reservations for a particular client can
+// be retrieved from the configuration file and a database simultaneously.
+TEST_F(PgSQLHostMgrTest, getAll) {
+    testGetAll(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular subnet can
+// be retrieved from the configuration file and a database simultaneously.
+TEST_F(PgSQLHostMgrTest, getAll4BySubnet) {
+    testGetAll4BySubnet(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular subnet can
+// be retrieved from the configuration file and a database simultaneously.
+TEST_F(PgSQLHostMgrTest, getAll6BySubnet) {
+    testGetAll6BySubnet(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that HostMgr returns all reservations for the specified
+// IPv4 subnet and reserved address.
+TEST_F(PgSQLHostMgrTest, getAll4BySubnetIP) {
+    testGetAll4BySubnetIP(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the specified
+// IPv6 subnet and reserved address.
+TEST_F(PgSQLHostMgrTest, getAll6BySubnetIP) {
+    testGetAll6BySubnetIP(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that reservations for a particular hostname can be
+// retrieved from the configuration file and a database simultaneously.
+TEST_F(PgSQLHostMgrTest, getAllbyHostname) {
+    testGetAllbyHostname(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular hostname and
+// DHCPv4 subnet can be retrieved from the configuration file and a
+// database simultaneously.
+TEST_F(PgSQLHostMgrTest, getAllbyHostnameSubnet4) {
+    testGetAllbyHostnameSubnet4(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular hostname and
+// DHCPv6 subnet can be retrieved from the configuration file and a
+// database simultaneously.
+TEST_F(PgSQLHostMgrTest, getAllbyHostnameSubnet6) {
+    testGetAllbyHostnameSubnet6(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular subnet can
+// be retrieved by pages from the configuration file and a database
+// simultaneously.
+TEST_F(PgSQLHostMgrTest, getPage4) {
+    testGetPage4(true);
+}
+
+// This test verifies that all v4 reservations be retrieved by pages
+// from the configuration file and a database simultaneously.
+TEST_F(PgSQLHostMgrTest, getPage4All) {
+    testGetPage4All(true);
+}
+
+// This test verifies that reservations for a particular subnet can
+// be retrieved by pages from the configuration file and a database
+// simultaneously.
+TEST_F(PgSQLHostMgrTest, getPage6) {
+    testGetPage6(true);
+}
+
+// This test verifies that all v6 reservations be retrieved by pages
+// from the configuration file and a database simultaneously.
+TEST_F(PgSQLHostMgrTest, getPage6All) {
+    testGetPage6All(true);
+}
+
+// This test verifies that IPv4 reservations for a particular client can
+// be retrieved from the configuration file and a database simultaneously.
+TEST_F(PgSQLHostMgrTest, getAll4) {
+    testGetAll4(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that the IPv4 reservation can be retrieved from a
+// database.
+TEST_F(PgSQLHostMgrTest, get4) {
+    testGet4(HostMgr::instance());
+}
+
+// This test verifies that the IPv6 reservation can be retrieved from a
+// database.
+TEST_F(PgSQLHostMgrTest, get6) {
+    testGet6(HostMgr::instance());
+}
+
+// This test verifies that the IPv6 prefix reservation can be retrieved
+// from a configuration file and a database.
+TEST_F(PgSQLHostMgrTest, get6ByPrefix) {
+    testGet6ByPrefix(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that it is possible to control whether the reserved
+// IP addresses are unique or non unique via the HostMgr.
+TEST_F(PgSQLHostMgrTest, setIPReservationsUnique) {
+    EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(true));
+    EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
+}
+
+/// @brief Verifies that db lost callback is not invoked on an open failure
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
+    MultiThreadingTest mt(false);
+    testNoCallbackOnOpenFailure();
+}
+
+/// @brief Verifies that db lost callback is not invoked on an open failure
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreading) {
+    MultiThreadingTest mt(true);
+    testNoCallbackOnOpenFailure();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndFailedCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndFailedCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndFailedAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndFailedAfterTimeoutCallback();
+}
+
 }  // namespace
