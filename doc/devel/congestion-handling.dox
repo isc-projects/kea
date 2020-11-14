@@ -52,7 +52,7 @@ The default packet queue implementation for both Kea DHCPv4 and DHCPv6 servers
 is a simple ring buffer.  Once it reaches capacity, new packets get added to
 the back of queue by discarding packets from the front of queue.  Rather than
 always discarding the newest packets, we now always discard the oldest
-packets.  The capacity of the buffer, (i.e the maximum number of packets the
+packets.  The capacity of the buffer (i.e. the maximum number of packets the
 buffer can contain) is configurable.
 
 @section custom-implementations  Custom Packet Queues

@@ -84,7 +84,7 @@ Dual-Stack Environments
 `RFC 4703, section
 5.2, <https://tools.ietf.org/html/rfc4703#section-5.2>`__ describes
 issues that may arise with dual-stack clients. These are clients that
-wish to have have both IPv4 and IPv6 mappings for the same FQDN. For
+wish to have both IPv4 and IPv6 mappings for the same FQDN. For
 this to work properly, the clients are required to embed their IPv6 DUID
 within their IPv4 client identifier option, as described in `RFC
 4703 <https://tools.ietf.org/html/rfc4361>`__. In this way, DNS updates

@@ -335,9 +335,9 @@ database:
         }
     }
 
-The server tag must be unique accross all servers in the database. When the
+The server tag must be unique across all servers in the database. When the
 server information under the given server tag already exists, it is replaced
-with the new information. The specified server tag is case insensitive. The
+with the new information. The specified server tag is case-insensitive, and the
 maximum length of the server tag is 256 characters. The following keywords are
 reserved and must not be used as server tags: "all" and "any".
 
@@ -1366,12 +1366,12 @@ belong. The `server-tags` parameter must not be specified for this command.
 The remote-option6-pd-pool-set Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command creates a new prefix delefation pool specific DHCPv6 option or
+This command creates a new prefix delegation pool-specific DHCPv6 option or
 replaces an existing option in the database. The structure of the option
 information is the same as in the Kea configuration file (see :ref:`dhcp4-std-options`
 and :ref:`dhcp6-std-options`). The option information is carried in the
 `options` list. Another list, `pd-pools`, contains a map with the prefix
-delegation pool prefix and the prefix length identifying the pool. If such
+delegation pool prefix and the prefix length identifying the pool. If such an
 option already exists for the prefix delegation pool, it is replaced with
 the new instance.
 
@@ -1518,7 +1518,7 @@ option is deleted.
 
 The following command attempts to delete an option having the
 option code 5 in the top-level option space from the subnet
-having an identifer of 123.
+having an identifier of 123.
 
 ::
 
@@ -1727,10 +1727,10 @@ be used by the "server1" and "server2":
         }
     }
 
-The `server-tags` parameter is mandatory and it contains one or
-more server tags. It may contain the keyword "all" to fetchg the subnets
+The `server-tags` parameter is mandatory and contains one or
+more server tags. It may contain the keyword "all", to fetch the subnets
 associated with all servers. When the `server-tags` list
-contains the `null` value the returned response contains a list
+contains the `null` value, the returned response contains a list
 of unassigned subnets, i.e. the subnets which are associated with no servers.
 For example:
 

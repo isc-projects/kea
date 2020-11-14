@@ -125,18 +125,18 @@ locations where extra parameters may appear are denoted by an ellipsis
 Comments and User Context
 -------------------------
 
-You can specify shell, C or C++ style comments in the JSON configuration file if
-you use the file locally. This is convenient and works in simple cases where
-your configuration is kept statically using local file. However, since comments
-are not part of JSON syntax, most JSON tools will detect them as
-errors. Another problem with them is once Kea loads its configuration, the
-shell, C and C++ style comments are ignored. If you use commands such as
-`config-get` or `config-write`, those comments will be lost. An example of such
+Shell, C, or C++ style comments are all permitted in the JSON configuration file if
+the file is used locally. This is convenient and works in simple cases where
+the configuration is kept statically using a local file. However, since comments
+are not part of JSON syntax, most JSON tools detect them as
+errors. Another problem with them is that once Kea loads its configuration, the
+shell, C, and C++ style comments are ignored. If commands such as
+`config-get` or `config-write` are used, those comments are lost. An example of such
 comments has been presented in the previous section.
 
-Historically, to address the problem Kea code allowed to put `comment` strings
+Historically, to address the problem, Kea code allowed the use of `comment` strings
 as valid JSON entities. This had the benefit of being retained through various
-operations (such as `config-get`) or allowed processing by JSON tools. An
+operations (such as `config-get`), or allowing processing by JSON tools. An
 example JSON comment looks like this:
 
 ::
@@ -149,18 +149,18 @@ example JSON comment looks like this:
        }]
    }
 
-However, users complained that the comment is only a single line and it's not
-possible to add any other information in more structured form. One specific
+However, the facts that the comment could only be a single line, and that it was not
+possible to add any other information in a more structured form, were frustrating. One specific
 example was a request to add floor levels and building numbers to subnets. This
 was one of the reasons why the concept of user context has been introduced. It
 allows adding arbitrary JSON structure to most Kea configuration structures. It
 has a number of benefits compared to earlier approaches. First, it is fully
 compatible with JSON tools and Kea commands. Second, it allows storing simple
-comment strings if you want to, but it can store much more complex data, such as
-multiple lines (as string array), extra typed data (such as floor numbers being
-actual numbers) and more. Third, the data is exposed to hooks, so it's possible
-to develop third party hooks that take advantage of that extra information. An
-example user context would look like this:
+comment strings, but it can also store much more complex data, such as
+multiple lines (as a string array), extra typed data (such as floor numbers being
+actual numbers), and more. Third, the data is exposed to hooks, so it is possible
+to develop third-party hooks that take advantage of that extra information. An
+example user context looks like this:
 
 ::
 
@@ -188,12 +188,12 @@ JSON comments, but converts them to user context on the fly. The
 comments entries in user-context were converted back to JSON comments to
 keep backward compatibility, but that conversion went away in version 1.7.9.
 
-The is one side effect, however. If your configuration uses the old JSON
-comment, the `config-get` command will return a slightly modified
-configuration. Don't be surprised if you call `config-set` followed by a
-`config-get` and receive a slightly different structure. If this bothers you,
-the best way to avoid this problem is simply abandon JSON comments and start
-using user-context.
+The is one side effect, however. If the configuration uses the old JSON
+comment, the `config-get` command returns a slightly modified
+configuration. It is not uncommon for a call for `config-set` followed by a
+`config-get` to receive a slightly different structure.
+The best way to avoid this problem is simply to abandon JSON comments and
+use user context.
 
 For a discussion about user context used in hooks, see :ref:`user-context-hooks`.
 

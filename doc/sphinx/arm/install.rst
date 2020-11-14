@@ -7,13 +7,13 @@ Installation
 Packages
 ========
 
-Starting with Kea 1.6.0, ISC now publishes native RPM, deb and APK
-packages along with the tarballs with the source code. The packages
+Starting with Kea 1.6.0, ISC now publishes native RPM, deb, and APK
+packages, along with the tarballs with the source code. The packages
 are available on `Cloudsmith <https://cloudsmith.io/~isc/repos/>`_ at
-https://cloudsmith.io/~isc/repos. You can download the native packages
-and install them using the system available in your distribution (such
-as dpkg or rpm). Also, you can add the Kea repository to your system,
-which will make it easier to install updates. For details, please
+https://cloudsmith.io/~isc/repos. The native packages can be downloaded
+and installed using the system available in a specific distribution (such
+as dpkg or rpm). The Kea repository can also be added to the system,
+making it easier to install updates. For details, please
 go to https://cloudsmith.io/~isc/repos, choose the repository of
 interest and then click the ``Set Me Up`` button for detailed
 instructions.
@@ -63,9 +63,9 @@ various development include headers and program development tools.
 .. note::
 
    Some operating systems have split their distribution packages into a
-   run-time and a development package. You will need to install the
+   run-time and a development package. The
    development package versions, which include header files and
-   libraries, to build Kea from the source code.
+   libraries, must be installed to build Kea from the source code.
 
 Building from source code requires the following software installed on
 the system:
@@ -137,7 +137,7 @@ Although Kea may be available in pre-compiled, ready-to-use packages
 from operating system vendors, it is open source software written in
 C++. As such, it is freely available in source code form from ISC as a
 downloadable tar file. The source code can also be obtained from the Kea
-Gitlab repository at https://gitlab.isc.org/isc-projects/kea. This
+GitLab repository at https://gitlab.isc.org/isc-projects/kea. This
 section describes how to build Kea from the source code.
 
 Download Tar File
@@ -146,7 +146,7 @@ Download Tar File
 The Kea release tarballs may be downloaded from:
 https://downloads.isc.org/isc/kea/ .
 
-Retrieve from Git
+Retrieve From Git
 -----------------
 
 Downloading this "bleeding edge" code is recommended only for developers
@@ -176,13 +176,13 @@ files. They can be created by running ``autoreconf`` with the
 ``--install`` switch. This will run ``autoconf``, ``aclocal``,
 ``libtoolize``, ``autoheader``, ``automake``, and related commands.
 
-Write access to the Kea repository is only granted to ISC staff. If you
-are a developer planning to contribute to Kea, please check our
+Write access to the Kea repository is only granted to ISC staff.
+Developers planning to contribute to Kea, should check our
 `Contributor's
 Guide <https://gitlab.isc.org/isc-projects/kea/blob/master/contributors-guide.md>`__.
 The `Kea Developer's
 Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`__ contains more
-information about the process, as well as describes the requirements for
+information about the process, and describes the requirements for
 contributed code to be accepted by ISC.
 
 .. _configure:
@@ -255,11 +255,11 @@ options. Some commonly used options are:
    This option requires subscription-only RADIUS hook.
 
  - ``--with-freeradius-dictionary``
-   Specifies a non-standard location for a FreeRADIUS dictionary file. That
+   Specify a non-standard location for a FreeRADIUS dictionary file. That
    file contains list of supported RADIUS attributes. Available in subscriber
    only version. This option requires subscription-only RADIUS hook.
 
-If you don't see the RADIUS options, make sure you have RADIUS hook sources in
+If the RADIUS options are not available, ensure that the RADIUS hook sources are in
 the ``premium`` directory and rerun ``autoreconf -i``.
 
 .. note::
@@ -267,15 +267,15 @@ the ``premium`` directory and rerun ``autoreconf -i``.
    The ``--runstatedir`` in the installation directories is particular.
    There are three cases:
 
-   - You use autoconf 2.70 or greater which supports this, but this autoconf
+   - The system uses autoconf 2.70 or greater which supports this, but this autoconf
      version has not been released yet.
 
-   - You use autoconf 2.69 patched to add support of this. In this case and the
-     previous simply use when needed the``--runstatedir`` configure parameter.
+   - The system uses autoconf 2.69 patched to add this support. In this case and the
+     previous, simply use the ``--runstatedir`` configure parameter when needed.
 
    - There is no support (the configure parameter is not recognized and configure
      directly raises an error). For autoconf 2.69 the ``runstatedir`` environment
-     variable is supported so simply remove the ``--`` before ``runstatedir``
+     variable is supported, so simply remove the ``--`` before ``runstatedir``
      in the configure script call, e.g.: ``./configure runstatedir=/opt/run ...``
 
 ..
@@ -292,14 +292,14 @@ developers, or people who want to extend Kea code or send patches:
  - ``--with-gtest``, ``--with-gtest-source``
    Enable the building of the C++ Unit Tests using the Google Test
    framework. This option specifies the path to the gtest source. (If
-   the framework is not installed on your system, it can be downloaded
+   the framework is not installed on the system, it can be downloaded
    from https://github.com/google/googletest.)
 
  - ``--enable-generate-docs``
    Enable the rebuilding Kea documentation. ISC publishes Kea
-   documentation for each release; however, in some cases you may want
-   to rebuild it. For example, if you want to change something in the
-   docs, or want to generate new ones from git sources that are not
+   documentation for each release; however, in some cases it may be
+   desirable to rebuild it: for example, to change something in the
+   docs, or to generate new ones from git sources that are not
    released yet.
 
  - ``--enable-generate-parser``
@@ -307,23 +307,23 @@ developers, or people who want to extend Kea code or send patches:
    and bison (.yy files). Kea sources have C++/h files generated out
    from them. By default Kea does not use flex or bison to avoid
    requiring installation of unnecessary dependencies for users.
-   However, if you change anything in the parses (such as adding a new
-   parameter), you will need to use flex and bison to regenerate
-   parsers. This option lets you do that.
+   However, anything in the parses is changed (such as adding a new
+   parameter), flex and bison are required to regenerate
+   parsers. This option permits that.
 
  - ``--enable-generate-messages``
    Enable the regeneration of messages files from their messages source
    files, e.g. regenerate xxx_messages.h and xxx_messages.cc from
    xxx_messages.mes using the Kea message compiler. By default Kea is
    built using these .h and .cc files from the distribution. However, if
-   you change anything in a .mes file (such as adding a new message), you
-   will need to build and use the Kea message compiler. This option lets
-   you do that.
+   anything in a .mes file is changed (such as adding a new message),
+   the Kea message compiler needs to be built and used. This option
+   permits that.
 
  - ``--with-benchmark``, ``--with-benchmark-source``
    Enable the building of the database backend benchmarks using the
    Google Benchmark framework. This option specifies the path to the
-   gtest source. (If the framework is not installed on your system, it
+   gtest source. (If the framework is not installed on the system, it
    can be downloaded from https://github.com/google/benchmark.)
    This support is experimental.
 
@@ -338,9 +338,10 @@ enabled, and sets the installation location to /opt/kea:
          --with-pgsql=/usr/local/bin/pg_config \
          --prefix=/opt/kea
 
-If you have any problems with building Kea using the header-only Boost
-code, or you'd like to use the Boost system library (assumed for the
-sake of this example to be located in /usr/pkg/lib):
+Users who have any problems with building Kea using the header-only Boost
+code, or who would like to use the Boost system library (assumed for the
+sake of this example to be located in /usr/pkg/lib), should issue these
+commands:
 
 .. code-block:: console
 
@@ -384,7 +385,7 @@ errors.
 
 If required, run ``ldconfig`` as root with ``/usr/local/lib`` (or with
 prefix/lib if configured with --prefix) in ``/etc/ld.so.conf`` (or the
-relevant linker cache configuration file for your OS):
+relevant linker cache configuration file for the OS):
 
 .. code-block:: console
 
@@ -394,7 +395,7 @@ relevant linker cache configuration file for your OS):
 
 .. note::
 
-   If you do not run ``ldconfig`` where it is required, you may see
+   If ``ldconfig`` is not run where required, users may see
    errors like the following:
 
    ::
@@ -406,13 +407,13 @@ relevant linker cache configuration file for your OS):
 Cross-Building
 --------------
 
-It is possible to cross-build Kea, i.e. to create binaries in another
-system (the ``build`` system) than the system where Kea will run
+It is possible to cross-build Kea, i.e. to create binaries in a separate
+system (the ``build`` system) from the one where Kea runs
 (the ``host`` system).
 
 It is outside of the scope of common administrator operations and requires
-some developer skills so the Developer Guide explains how to do that
-using a x86_64 Linux system to build Kea for a Raspberry Pi box running
+some developer skills, so the Developer Guide explains how to do that
+using an x86_64 Linux system to build Kea for a Raspberry Pi box running
 Raspbian: `Kea Cross-Compiling Example
 <https://jenkins.isc.org/job/Kea_doc/doxygen/de/d9a/crossCompile.html>`__.
 
@@ -442,7 +443,7 @@ optional backends and the creation of the lease database.
 Building with MySQL Support
 ---------------------------
 
-Install MySQL according to the instructions for your system. The client
+Install MySQL according to the instructions for the system. The client
 development libraries must be installed.
 
 Build and install Kea as described in :ref:`installation`,
@@ -468,7 +469,7 @@ database configuration.
 Building with PostgreSQL support
 --------------------------------
 
-Install PostgreSQL according to the instructions for your system. The
+Install PostgreSQL according to the instructions for the system. The
 client development libraries must be installed. Client development
 libraries are often packaged as "libpq".
 
@@ -494,11 +495,11 @@ database configuration.
 Building with CQL (Cassandra) Support
 -------------------------------------
 
-Install Cassandra according to the instructions for your system. The
+Install Cassandra according to the instructions for the system. The
 Cassandra project website contains useful pointers:
 https://cassandra.apache.org.
 
-If you have a cpp-driver package available as binary or as source,
+If a cpp-driver package is available as binary or as source,
 simply install or build and install the package. Then build and install
 Kea as described in :ref:`installation`. To enable the
 Cassandra (CQL) database code, at the "configure" step (see :ref:`configure`), enter:
@@ -507,10 +508,10 @@ Cassandra (CQL) database code, at the "configure" step (see :ref:`configure`), e
 
    $ ./configure [other-options] --with-cql=path-to-pkg-config
 
-Note if ``pkg-config`` is at its standard location (and thus in the
-shell path) you do not need to supply its path. If it does not work
+Note that if ``pkg-config`` is at its standard location (and thus in the
+shell path), the path does not need to be specified. If it does not work
 (e.g. no pkg-config, package not available in pkg-config with the
-cassandra name), you can still use the ``cql_config`` script in tools/
+cassandra name), the ``cql_config`` script in tools/ can still be used
 as described below.
 
 Download and compile cpp-driver from DataStax. For details regarding
@@ -533,7 +534,7 @@ but, until that is complete, intermediate steps need to be conducted. A
 cql_config script is present in the tools/ directory of the Kea sources.
 Before using it, please create a cql_config_defines.sh file in the same
 directory (there is an example available in cql_config_define.sh.sample;
-you may copy it over to cql_config_defines.sh and edit the path
+copy it over to cql_config_defines.sh and edit the path
 specified in it) and change the environment variable CPP_DRIVER_PATH to
 point to the directory where the cpp-driver sources are located. Make
 sure that appropriate access rights are set on this file. It should be
@@ -565,7 +566,7 @@ First, a regular user account must be created:
 
    useradd admin
 
-Then, change the binaries ownership and group to new user. Note your path may be different. Please
+Then, change the binaries ownership and group to new user. Note that the specific path may be different. Please
 refer to the ``--prefix`` parameter passed to the configure script.:
 
 .. code-block:: console
@@ -577,7 +578,7 @@ refer to the ``--prefix`` parameter passed to the configure script.:
    chown -R admin /var/log/kea-dhcp6.log
    chgrp -R admin /var/log/kea-dhcp6.log
 
-Assuming you are using systemd, you also should modify its service file
+If using systemd, modify its service file
 (e.g. /etc/systemd/system/kea-dhcp6.service):
 
 .. code-block:: console
@@ -595,19 +596,18 @@ more information.
    setcap 'cap_net_bind_service=+ep' /opt/kea/sbin/kea-dhcp6
 
 After this step is complete, the admin user should be able to run Kea. Note that DHCPv4 server by
-default opens raw sockets. If your network is only using relayed traffic, you can instruct Kea to
+default opens raw sockets. If the network is only using relayed traffic, Kea can be instructed to
 use regular UDP sockets (refer to ``dhcp-socket-type`` parameter in the
 :ref:`dhcp4-interface-configuration` section) and the ``cap_net_raw`` capability can be skipped.
 
 .. note::
 
-   An alternative approach to avoiding running Kea with root privileges assumes instructing Kea to
-   use non-privileged (greater than 1024) posts and redirecting traffic. This, however, will work
-   only for relayed traffic. This approach in general is considered experimental and not tested
-   enough for deployment in production environment. Use with caution!
+   An alternative approach to running Kea with root privileges is to configure Kea to use
+   non-privileged ports (i.e. those greater than 1024) and redirecting traffic.  Note that this
+   only works for relayed traffic. Furthermore, we consider it experimental and untested in
+   production environments. Use it only after careful consideration.
 
-
-To use this approach, configure the server to listen on other non privileged port (eg: 1547
+To use this approach, configure the server to listen on other non-privileged ports (e.g. 1547
 and 1548) by running the process with ``-p`` option in ``/etc/systemd/system/kea-dhcp4.service``:
 
 .. code-block:: console
@@ -620,8 +620,8 @@ and ``/etc/systemd/system/kea-dhcp4.service``:
 
    ExecStart=/opt/kea/sbin/kea-dhcp6 -d -c /etc/kea/kea-dhcp6.conf -p 1547
 
-and then configure port redirection with iptables and ip6tables for new ports (eg: 1547
-and 1548). Make sure you replace ens4 with your specific interface name.
+and then configure port redirection with iptables and ip6tables for new ports (e.g. 1547
+and 1548). Be sure to replace ens4 with the specific interface name.
 
 .. code-block:: console
 

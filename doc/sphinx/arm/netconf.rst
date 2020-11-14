@@ -50,7 +50,7 @@ For detailed installation instructions, see the `CentOS installation notes page 
 CentOS 7.5's gcc compiler (version 4.8.5) is very old. Some Sysrepo
 dependencies require at least version 4.9, which unfortunately means
 that a new compiler has to be installed. Also, many of the Sysrepo
-dependencies are not avalable in CentOS as packages, so for the time
+dependencies are not available in CentOS as packages, so for the time
 being they must be installed from sources.
 
 Quick Sysrepo Overview

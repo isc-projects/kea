@@ -86,19 +86,19 @@ In addition, one or more of the following options will be included:
    +------------------------------+-------+-----------------------------------------------+
    | Option                       | Code  | Content                                       |
    +==============================+=======+===============================================+
-   | dhcp-client-identifier       |  61   | copied from the lease (if one)                |
+   | dhcp-client-identifier       |  61   | copied from the lease (if appropriate)        |
    +------------------------------+-------+-----------------------------------------------+
-   | client-last-transaction-time |  91   | amount of time that has elapsed since the     |
-   |                              |       | lease's client-last-transaction-time (CLTT)   |
-   |                              |       | This value will also be used by the server to |
-   |                              |       | adjust life time and timer values.            |
+   | client-last-transaction-time |  91   | the amount of time that has elapsed since the |
+   |                              |       | lease's client-last-transaction-time (CLTT).  |
+   |                              |       | This value is also used by the server to      |
+   |                              |       | adjust lifetime and timer values.             |
    +------------------------------+-------+-----------------------------------------------+
-   | dhcp-lease-time              |  51   | lease's life time reduced by CLTT             |
+   | dhcp-lease-time              |  51   | lease's lifetime reduced by CLTT              |
    +------------------------------+-------+-----------------------------------------------+
    | dhcp-renewal-time            |  58   | as controlled by kea-dhcp4 configuration and  |
    |                              |       | then reduced by CLTT                          |
    +------------------------------+-------+-----------------------------------------------+
-   | dhcp-rebind-time             |  59   | as dictacted by kea-dhcp4 configuration and   |
+   | dhcp-rebind-time             |  59   | as dictated by kea-dhcp4 configuration and    |
    |                              |       | then reduced by CLTT                          |
    +------------------------------+-------+-----------------------------------------------+
    | dhcp-agent-options           |  82   | if stored on the lease. (See                  |
@@ -288,9 +288,9 @@ The client-data option will encapsulate the following options:
    |                              |       | - preferred life time reduced by CLTT         |
    +------------------------------+-------+-----------------------------------------------+
 
-If the lease with the most recent CLTT value (Client Last
-Transmission Time) has relay information in it's user-context (see
-:ref:`store-extended-info-v6`), then an OPTION_LQ_RELAY_DATA option will be
+If the lease with the most recent client-last-transaction-time (CLTT)
+value has relay information in its user-context (see
+:ref:`store-extended-info-v6`), then an OPTION_LQ_RELAY_DATA option is
 added to the reply (see
 `RFC 5007, Section 4.1.2.4 <https://tools.ietf.org/html/rfc5007#section-4.1.2.4>`__).
 

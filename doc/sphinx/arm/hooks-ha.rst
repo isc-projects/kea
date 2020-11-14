@@ -238,12 +238,12 @@ The following is the list of all possible server states:
 -  ``partner-in-maintenance`` - an active server transitions to this state
    after receiving a ``ha-maintenance-start`` command from the
    administrator. The server in this state becomes responsible
-   for responding to all DHCP requests. The server sends
-   ``ha-maintenance-notify`` command to the partner which is supposed
-   to enter the ``in-maintenance`` state. If that is the case, the server
+   for responding to all DHCP requests. The server sends a
+   ``ha-maintenance-notify`` command to the partner, which should
+   enter the ``in-maintenance`` state. The server
    remaining in the ``partner-in-maintenance`` state keeps sending lease
-   updates to the partner until it finds that the parter stops
-   responding to those lease updates, heartbeats or any other commands.
+   updates to the partner until it finds that the partner has stopped
+   responding to those lease updates, heartbeats, or any other commands.
    In this case, the server in the ``partner-in-maintenance`` state
    transitions to the ``partner-down`` state and keeps responding to
    the queries, but no longer sends lease updates.
@@ -259,7 +259,7 @@ The following is the list of all possible server states:
    is still provisioned. This default configuration can be changed by
    setting the ``wait-backup-ack`` configuration parameter to ``true``,
    in which case the primary server always waits for the acknowledgements
-   and drops the DHCP query if sending any of the correponding lease
+   and drops the DHCP query if sending any of the corresponding lease
    updates fails. This improves lease database consistency between the
    primary and the secondary. However, if a communication failure between
    the active server and any of the backups occurs, it effectively causes
@@ -565,7 +565,7 @@ low a value for the ``max-unacked-clients`` parameter may result in a
 transition to the ``partner-down`` state even though the partner is
 still operating. On the other hand, selecting too high a value may
 result in never transitioning to the ``partner-down`` state if the DHCP
-traffic in the network is very low (e.g. at nighttime), because the number
+traffic in the network is very low (e.g. at night), because the number
 of distinct clients trying to communicate with the server could be lower
 than the ``max-unacked-clients`` setting.
 
@@ -879,16 +879,16 @@ mode, thus they are not specified here. For example: ``heartbeat-delay``,
 should not be specified in the passive-backup mode. The ``wait-backup-ack``
 is a boolean parameter not present in previous examples. It defaults to ``false`` and
 must not be modified in the load-balancing and hot-standby modes. In the passive-backup
-mode this parameter can be set to ``true`` which causes the primary server to expect
+mode this parameter can be set to ``true``, which causes the primary server to expect
 acknowledgments to the lease updates from the backup servers prior to responding
-to the DHCP client. It ensures that the lease was propagated to all servers before
-the client is given the lease, but it poses a risk of loosing a DHCP service if
+to the DHCP client. It ensures that the lease has propagated to all servers before
+the client is given the lease, but it poses a risk of losing a DHCP service if
 there is a communication problem with one of the backup servers. This setting
-also increases the latency of the DHCP response because of the time that the
+also increases the latency of the DHCP response, because of the time that the
 primary spends waiting for the acknowledgements. We recommend that the
-``wait-backup-ack`` is left at its default value if the DHCP service reliability
+``wait-backup-ack`` setting be left at its default value, if the DHCP service reliability
 is more important than consistency of the lease information between the
-primary and the backups and in all cases when the DHCP service latency should
+primary and the backups, and in all cases when the DHCP service latency should
 be minimal.
 
 .. _ha-sharing-lease-info:
@@ -1305,16 +1305,16 @@ the servers while the other one continues to respond to the DHCP queries.
 When the upgraded server is back online, the upgrade can be performed for
 the second server. The typical problem reported for the earlier versions
 of the High Availability hooks library was that the administrator did not
-have a direct control over the state of the DHCP server. Shutting down
-one of the servers for maintenance didn't necessarily cause the other
-server to start reponding to all DHCP queries because the failure
+have direct control over the state of the DHCP server. Shutting down
+one of the servers for maintenance did not necessarily cause the other
+server to start responding to all DHCP queries, because the failure
 detection algorithm described in :ref:`ha-scope-transition` requires that
-the partner does not respond for a configured period of time and,
+the partner not respond for a configured period of time and,
 depending on the configuration, may also require that a number of DHCP
-requests are not responded for a configured period of time. The
-maintenance procedure, however, requires that the administrator is able
-to instruct one of the servers to instantly start serving all DHCP clients
-and the other server to instantly stop serving any DHCP clients so as it
+requests are not responded to for a configured period of time. The
+maintenance procedure, however, requires that the administrator be able
+to instruct one of the servers to instantly start serving all DHCP clients,
+and the other server to instantly stop serving any DHCP clients, so it
 can be safely shut down.
 
 The maintenance feature of the High Availability hooks library addresses
@@ -1597,15 +1597,15 @@ to the failing server allows for detecting the failure.
 The status-get Command
 ------------------------
 
-The ``status-get`` is the general purpose command supported by several Kea deamons,
+``status-get`` is a general-purpose command supported by several Kea daemons,
 not only DHCP servers. However, when sent to the DHCP server with HA enabled, it
-can be used to get insight into the details of the HA specific status information
-of the servers being in the HA configuration. Not only does the response contain
-the status information of the server receiving this command but also the
-information about its partner, if this information is available.
+can be used to get insight into the details of the HA-specific status information
+of the servers used in the HA configuration. Not only does the response contain
+the status information of the server receiving this command, but also the
+information about its partner if it is available.
 
-The following is the example response to the ``status-get`` command including
-the HA status of two load balancing servers:
+The following is an example response to the ``status-get`` command, including
+the HA status of two load-balancing servers:
 
 ::
 

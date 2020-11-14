@@ -8,7 +8,7 @@ The primary role of the DHCP server is to assign addresses and/or
 delegate prefixes to DHCP clients. These addresses and prefixes are
 often referred to as "leases." Leases are typically assigned to clients
 for a finite amount of time, known as the "valid lifetime." DHCP clients
-who wish to continue using their assigned leases will periodically renew
+who wish to continue using their assigned leases periodically renew
 them by sending the appropriate message to the DHCP server. The DHCP
 server records the time when these leases are renewed and calculates new
 expiration times for them.
@@ -75,11 +75,11 @@ The following list presents all configuration parameters pertaining to
 processing expired leases with their default values:
 
 -  ``reclaim-timer-wait-time`` - this parameter governs intervals
-   between the completion of the previous reclaimation cycle and the start of the
+   between the completion of the previous reclamation cycle and the start of the
    next one. Specified in seconds. The default value is 10 [seconds].
 
 -  ``flush-reclaimed-timer-wait-time`` - this parameter controls how
-   often the server initiates the lease reclaimation procedure. Expressed in
+   often the server initiates the lease reclamation procedure. Expressed in
    seconds. The default value is 25 [seconds].
 
 -  ``hold-reclaimed-time`` - this parameter governs how long the lease

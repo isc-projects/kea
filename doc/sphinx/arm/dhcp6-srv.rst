@@ -670,9 +670,9 @@ entry, as in:
 For additional Cassandra-specific parameters, see
 :ref:`cassandra-database-configuration4`.
 
-If the same host is configured both in-file and in-database, Kea won't warn of
-the duplicate like it would if you specified them both in the same data source.
-Instead the host configured in-file will have priority over the one configured
+If the same host is configured both in-file and in-database, Kea does not issue a warning,
+as it would if both were specified in the same data source.
+Instead, the host configured in-file has priority over the one configured
 in-database.
 
 .. _read-only-database-configuration6:
@@ -2717,18 +2717,18 @@ The default configuration and values would appear as follows:
    }
 
 As of Kea 1.7.1, there are two parameters which determine if kea-dhcp6
-can generate DDNS requests to D2.  The existing, ``dhcp-ddns:enable-updates``
-parameter which now only controls whether kea-dhcp6 connects to D2.
-And the new behavioral parameter, ``ddns-send-updates``, which determines
-if DDNS updates are enabled at a given level (i.e global, shared-network,
-or subnet).  The following table shows how the two parameters function
+can generate DDNS requests to D2: the existing ``dhcp-ddns:enable-updates``
+parameter, which now only controls whether kea-dhcp6 connects to D2;
+and the new behavioral parameter, ``ddns-send-updates``, which determines
+whether DDNS updates are enabled at a given level (i.e. global, shared-network,
+or subnet). The following table shows how the two parameters function
 together:
 
 .. table:: Enabling and Disabling DDNS Updates
 
    +-----------------+--------------------+-------------------------------+
    | dhcp-ddns:      | Global             | Outcome                       |
-   | enable-updates  | ddns-send-udpates  |                               |
+   | enable-updates  | ddns-send-updates  |                               |
    +=================+====================+===============================+
    | false (default) | false              | no updates at any scope       |
    +-----------------+--------------------+-------------------------------+
@@ -2790,10 +2790,10 @@ conflict with existing entries owned by other DHCP6 clients.
     FQDN while new entries for Client-B will still be added.
 
     Disabling conflict resolution should be done only after careful review of
-    your specific use cases.  The best way to avoid unwanted DNS entries is to
+    specific use cases. The best way to avoid unwanted DNS entries is to
     always ensure leases changes are processed through Kea, whether they are
     released, expire, or are deleted via the lease-del6 command, prior to
-    reassigning either FQDNs or IP addresses.  Doing so will cause kea-dhcp6
+    reassigning either FQDNs or IP addresses. Doing so causes kea-dhcp6
     to generate DNS removal requests to D2.
 
 
@@ -3027,7 +3027,7 @@ follows:
 
     "Dhcp6": {
         ...
-        "ddsn-replace-client-name": "always",
+        "ddns-replace-client-name": "always",
         ...
     }
 
@@ -3056,14 +3056,14 @@ are enabled. To set its value simply set it to the desired string:
         ...
     }
 
-When qualifying a partial name, kea-dhcp6 will construct the name in the
+When qualifying a partial name, kea-dhcp6 constructs the name in the
 format:
 
 [**candidate-name**].[**ddns-qualifying-suffix**].
 
 where **candidate-name** is the partial name supplied in the DHCPREQUEST.
 For example, if the FQDN domain name value is "some-computer" and the
-``ddsn-qualifying-suffix`` "example.com", the generated FQDN is:
+``ddns-qualifying-suffix`` "example.com", the generated FQDN is:
 
 **some-computer.example.com.**
 
@@ -3093,12 +3093,12 @@ accomplished with the following two parameters:
 
 -  ``hostname-char-set`` - a regular expression describing the invalid
    character set. This can be any valid, regular expression using POSIX
-   extended expression syntax.  Embedded nuls (0x00) will always be
+   extended expression syntax.  Embedded nulls (0x00) are always
    considered an invalid character to be replaced (or omitted).
 
 -  ``hostname-char-replacement`` - a string of zero or more characters
    with which to replace each invalid character in the host name.  An empty
-   string and will cause invalid characters to be OMITTED rather than replaced.
+   string causes invalid characters to be OMITTED rather than replaced.
 
 .. note::
 
@@ -3107,10 +3107,10 @@ accomplished with the following two parameters:
     - "hostname-char-set": "[^A-Za-z0-9.-]",
     - "hostname-char-replacement": ""
 
-    This enables sanitizing and will omit any character that is not
-    a letter,digit, hyphen, dot or nul.
+    This enables sanitizing and omits any character that is not
+    a letter, digit, hyphen, dot, or null.
 
-The following configuration will replace anything other than a letter,
+The following configuration replaces anything other than a letter,
 digit, hyphen, or dot with the letter 'x':
 ::
 
@@ -3156,11 +3156,11 @@ qualifying suffix (if one is defined and needed).
 
 .. note::
 
-   Since the 1.6.0 Kea release it is possible to specify hostname-char-set
+   Since the 1.6.0 Kea release, it is possible to specify hostname-char-set
    and/or hostname-char-replacement at the global scope. This allows
-   to sanitize host names without requiring a dhcp-ddns entry. When
+   sanitizing of host names without requiring a dhcp-ddns entry. When
    a hostname-char parameter is defined at the global scope and
-   in a dhcp-ddns entry the second (local) value is used.
+   in a dhcp-ddns entry, the second (local) value is used.
 
 .. _dhcp6-dhcp4o6-config:
 
@@ -3371,16 +3371,16 @@ pretty-printed for clarity):
     information within Kea.
 
 .. note::
-    It is possible that other hook libraries are already making use of
-    user-context.  Enabling store-extended-info should not interfere with
-    any other user-context content so long as it does not also use an element
-    labled "ISC".  In other words, user-context is intended to be a flexible
-    container serving mulitple purposes.  As long as no other purpose also
+    It is possible that other hook libraries are already using
+    user-context. Enabling store-extended-info should not interfere with
+    any other user-context content, as long as it does not also use an element
+    labeled "ISC".  In other words, user-context is intended to be a flexible
+    container serving multiple purposes. As long as no other purpose also
     writes an "ISC" element to user-context there should not be a conflict.
 
 .. _dhcp6-multi-threading-settings:
 
-Multi-threading settings
+Multi-Threading Settings
 ------------------------
 
 The Kea server can be configured to process packets in parallel using multiple
@@ -3411,16 +3411,16 @@ An example configuration that sets these parameter looks as follows:
        ...
    }
 
-Multi-threading settings in different backends
+Multi-Threading Settings in Different Backends
 ----------------------------------------------
 
 Both kea-dhcp4 and kea-dhcp6 are tested internally to determine which settings
-gave the best performance. Although this section describes our results, those are just
+give the best performance. Although this section describes our results, they are merely
 recommendations and are very dependent on the particular hardware that was used
-for testing. We strongly advice to run your own performance tests.
+for testing. We strongly advise that administrators run their own performance tests.
 
-Full report of Kea 1.7 performance results can be found `here <https://jenkins.isc.org/job/kea-1.7/job/performance/KeaPerformanceReport/>`_.
-This includes hardware description, test scenario descriptions and
+A full report of Kea 1.7 performance results can be found `here <https://jenkins.isc.org/job/kea-1.7/job/performance/KeaPerformanceReport/>`_.
+This includes hardware descriptions, test scenario descriptions, and
 current results.
 
 After enabling multi-threading, the number of threads is set by ``thread-pool-size``
@@ -3846,7 +3846,7 @@ to them.
         } ]
     }
 
-In some cases the host reservations can be used in conjuction with client
+In some cases the host reservations can be used in conjunction with client
 classes specified within the Kea configuration. In particular, when a
 host reservation exists for a client within a given subnet, the "KNOWN"
 built-in class is assigned to the client. Conversely, when there is no
@@ -3872,7 +3872,7 @@ evaluation of the class after the lease has been allocated and thus the
 reserved class has been also assigned.
 
 .. note::
-   Be aware that the classes specified in non global host reservations
+   Be aware that the classes specified in non-global host reservations
    are assigned to the processed packet after all classes with the
    ``only-if-required`` parameter set to ``false`` have been evaluated.
    This has an implication that these classes must not depend on the
@@ -3984,8 +3984,8 @@ The ``reservation-mode`` parameter can be specified at:
   ``.Dhcp6["shared-networks"][].subnet6[]["reservation-mode"]`` (highest
   priority: overrides all others)
 
-For deciding what ``"reservation-mode"`` to choose, you may refer to the
-following decision diagram:
+To decide which ``"reservation-mode"`` to choose, the
+following decision diagram may be useful:
 
 ::
 
@@ -4557,25 +4557,25 @@ It is possible to control the ``ip-reservations-unique`` via the
 the currently used backends (backends do not support the new setting),
 the new setting is ignored and the warning log message is output.
 The backends continue to use the default setting, i.e. expecting that
-IP reservations are unique within each subnet. In order to allow
-creating non unique IP reservations the administrator must remove
+IP reservations are unique within each subnet. To allow the
+creation of non-unique IP reservations, the administrator must remove
 the backends which lack support for it from the configuration file.
 
-The administrators must be careful when they have been using multiple
+Administrators must be careful when they have been using multiple
 reservations for the same IP address and/or delegated prefix and later
-decided to return to the default mode in which this is no longer allowed.
+decide to return to the default mode in which this is no longer allowed.
 The administrators must make sure that at most one reservation for
 the given IP address or delegated prefix exists within a subnet prior
 to switching back to the default mode. If such duplicates are left in
-the configuration file, the server will report a configuration error.
+the configuration file, the server reports a configuration error.
 Leaving such reservations in the host databases does not cause
 configuration errors but may lead to lease allocation errors during
-the server operation when it unexpectedly finds multiple reservations
+the server operation, when it unexpectedly finds multiple reservations
 for the same IP address or delegated prefix.
 
 .. note::
 
-   Currently the server does not verify if multiple reservations for
+   Currently the server does not verify whether multiple reservations for
    the same IP address and/or delegated prefix exist in the host
    databases (MySQL and/or PostgreSQL) when ``ip-reservations-unique``
    is updated from ``true`` to ``false``. This may cause issues with
@@ -4932,7 +4932,7 @@ host reservation in this subnet or simply the initially selected subnet has no
 more addresses available. Therefore, it is strongly recommended to always
 specify subnet selectors (interface or a relay address) at shared network
 level if the subnets belong to a shared network, as it is rarely useful to
-specify them at the subnet level and it may lead to the configurtion errors
+specify them at the subnet level and it may lead to the configuration errors
 described above.
 
 Client Classification in Shared Networks
@@ -5459,7 +5459,7 @@ Using a Specific Relay Agent for a Subnet
 =========================================
 
 The DHCPv6 server follows the same principles as the DHCPv4 server to
-select a subnet for the client with noticable differences mainly for
+select a subnet for the client, with noticeable differences mainly for
 relays.
 
 .. note::
@@ -5729,7 +5729,7 @@ default, the following syntax can be used:
 The parameter is expressed in seconds, so the example above will
 instruct the server to recycle declined leases after one hour.
 
-There are several statistics and hook points associated with the Decline
+There are several statistics and hook points associated with the decline
 handling procedure. The lease6_decline hook is triggered after the
 incoming DHCPDECLINE message has been sanitized and the server is about
 to decline the lease. The declined-addresses statistic is increased
@@ -6371,18 +6371,18 @@ The DHCPv6 server supports the following statistics:
    This section describes DHCPv6-specific statistics. For a general
    overview and usage of statistics, see :ref:`stats`.
 
-Beginning with Kea 1.7.7 the DHCPv6 server provides two global
+Beginning with Kea 1.7.7, the DHCPv6 server provides two global
 parameters to control statistics default sample limits:
 
 - ``statistic-default-sample-count`` - determines the default maximum
-  number of samples which will be kept. The special value of zero
-  means to use a default maximum age.
+  number of samples which are kept. The special value of zero
+  indicates that a default maximum age should be used.
 
 - ``statistic-default-sample-age`` - determines the default maximum
-  age in seconds of samples which will be kept.
+  age in seconds of samples which are kept.
 
-For instance to reduce the statistic keeping overhead you can set
-the default maximum sample count to 1 so only one sample will be kept by:
+For instance, to reduce the statistic keeping overhead, set
+the default maximum sample count to 1 so that only one sample is kept:
 
 ::
 

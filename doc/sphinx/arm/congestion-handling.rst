@@ -58,7 +58,7 @@ The default packet queue implementation for both kea-dhcp4 and kea-dhcp6
 is a simple ring buffer. Once it reaches capacity, new packets get added
 to the back of the queue by discarding packets from the front of the
 queue. Rather than always discarding the newest packets, Kea now always
-discards the oldest packets. The capacity of the buffer, i.e the maximum
+discards the oldest packets. The capacity of the buffer, i.e. the maximum
 number of packets the buffer can contain, is configurable. A reasonable
 starting point would be to match the capacity to the number of leases
 per second a specific installation of Kea can handle. Please note that this

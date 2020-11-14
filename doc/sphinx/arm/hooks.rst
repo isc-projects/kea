@@ -86,7 +86,7 @@ Unpack this tarball:
 
 .. parsed-literal::
 
-   $ tar zxvf kea-|release|.tar.gz
+   $ tar -zxvf kea-|release|.tar.gz
 
 This will unpack the tarball into the kea-|release| subdirectory of
 the current working directory.
@@ -99,7 +99,7 @@ steps will unpack the premium tarball into the correct location:
 .. parsed-literal::
 
      $ cd kea-|release|
-     $ tar xvf ../kea-premium-|release|.tar.gz
+     $ tar -xvf ../kea-premium-|release|.tar.gz
 
 Note that unpacking the Kea premium package will put the files into a
 directory named "premium". Regardless of the name of the package, the
@@ -390,7 +390,7 @@ loaded by the correct process per the table below.
    |                 |               |load balancing and is sometimes referred to as              |
    |                 |               |active-active. Each server can handle selected group of     |
    |                 |               |clients in this network or all clients, if it detects that  |
-   |                 |               |its partner has became unavailable.  It is also possible to |
+   |                 |               |its partner has become unavailable. It is also possible to  |
    |                 |               |designate one server to serve all DHCP clients, and leave   |
    |                 |               |another server as "standby". This mode is called hot standby|
    |                 |               |and is sometimes referenced to as active-passive. This      |
@@ -406,7 +406,7 @@ loaded by the correct process per the table below.
    |                 |               |for Kea DHCP servers.                                       |
    +-----------------+---------------+------------------------------------------------------------+
    | Statistics      | Kea sources   |The Statistics Commands library provides additional         |
-   | Commands        | (since 1.4)   |commmands for retrieving accurate DHCP lease statistics for |
+   | Commands        | (since 1.4)   |commands for retrieving accurate DHCP lease statistics for |
    |                 |               |Kea DHCP servers that share the same lease database. This   |
    |                 |               |setup is common in deployments where DHCP service redundancy|
    |                 |               |is required and a shared lease database is used to avoid    |
@@ -2977,8 +2977,8 @@ entries at the beginning of maps, but this was withdrawn in 1.7.9.
 
 As of Kea 1.3, the structures that allow user contexts are pools of all
 types (addresses and prefixes) and subnets. Kea 1.4 extended user
-context support to the global scope, interfaces config, shared networks,
-subnets, client classes, option datas and definitions, host
-reservations, control socket, dhcp ddns, loggers and server id. These
-are supported in both DHCPv4 and DHCPv6, with the exception of server id
+context support to the global scope, interfaces configuration, shared networks,
+subnets, client classes, option data and definitions, host
+reservations, control socket, dhcp ddns, loggers and server ID. These
+are supported in both DHCPv4 and DHCPv6, with the exception of server ID
 which is DHCPv6 only.

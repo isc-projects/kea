@@ -9,7 +9,7 @@ Kea Database Administration
 Databases and Database Version Numbers
 ======================================
 
-Kea may be configured to use a database as a storage for leases or as a
+Kea may be configured to use a database as storage for leases or as a
 source of servers' configurations and host reservations (i.e. static
 assignments of addresses, prefixes, options, etc.). Kea
 updates introduce changes to the database schemas to faciliate new
@@ -213,7 +213,7 @@ To create the database:
 
 4. Create the database.
 
-    You'll need to exit mysql client
+    Exit the MySQL client
 
     .. code-block:: mysql
 
@@ -226,12 +226,13 @@ To create the database:
 
         $ kea-admin db-init mysql -u database-user -p database-password -n database-name
 
-    While it is possible to create the database from within mysql client, we recommend you
-    use the kea-admin tool as it performs some necessary validations to ensure Kea can
+    While it is possible to create the database from within the MySQL client, we recommend
+    using the kea-admin tool as it performs some necessary validations to ensure Kea can
     access the database at runtime.  Among those checks is that the schema does not contain
     any pre-existing tables.  If there are any pre-existing tables they must be removed
-    manaully.  An additional check examines the user's ability to create functions and
-    triggers.  If you encounter the following error:
+    manually. An additional check examines the user's ability to create functions and
+    triggers. The following error indicates that the user does not have the necessary
+    permissions to create functions or triggers:
 
     .. code-block:: console
 
@@ -241,23 +242,22 @@ To create the database:
         mysql: [Warning] Using a password on the command line interface can be insecure.
         ERROR/kea-admin: Create failed, the user, keatest, has insufficient privileges.
 
-    Then user does not have the necessary permissions to create functions or triggers.
-    The simplest way around this is to set the global MySQL variable, log_bin_trust_function_creators to 1
-    via mysql client. Note you must do this as a user with SUPER privileges:
+    The simplest way around this is to set the global MySQL variable, log_bin_trust_function_creators, to 1
+    via the MySQL client. Note this must be done as a user with SUPER privileges:
 
     .. code-block:: mysql
 
         mysql> set @@global.log_bin_trust_function_creators = 1;
         Query OK, 0 rows affected (0.00 sec)
 
-    If you choose to create the database with mysql directly, you may do as as follows:
+    To create the database with MySQL directly, use these steps:
 
     .. code-block:: mysql
 
       mysql> CONNECT database-name;
       mysql> SOURCE path-to-kea/share/kea/scripts/mysql/dhcpdb_create.mysql
 
-   (path-to-kea is the location where Kea is installed.)
+   (where "path-to-kea" is the location where Kea is installed.)
 
     The database may also be dropped manually as follows:
 
@@ -266,10 +266,10 @@ To create the database:
       mysql> CONNECT database-name;
       mysql> SOURCE path-to-kea/share/kea/scripts/mysql/dhcpdb_drop.mysql
 
-   (path-to-kea is the location where Kea is installed.)
+   (where "path-to-kea" is the location where Kea is installed.)
 
 .. warning::
-    Dropping the database will result in the unrecoverable loss of any data it contains.
+    Dropping the database results in the unrecoverable loss of any data it contains.
 
 
 5. Exit MySQL:
@@ -323,10 +323,9 @@ earlier version. To perform an upgrade, issue the following command:
 
 .. note::
 
-    To search host reservations by hostname it is critical the collation of
-    the hostname column in the host table to be case-insensitive. Fortunately
-    the default collation in MySQL is case-insensitive. You can verify this
-    on your MySQL installation by:
+    To search host reservations by hostname it is critical that the collation of
+    the hostname column in the host table be case-insensitive. Fortunately, that
+    is the default in MySQL, but it can be verified via this command:
 
     .. code-block:: mysql
 
@@ -337,7 +336,7 @@ earlier version. To perform an upgrade, issue the following command:
       | utf8_general_ci |
       +-----------------+
 
-    According to the naming of collations when the name finishes by ``_ci``
+    According to naming convention, when the name ends in ``_ci``,
     the collation is case-insensitive.
 
 .. _mysql-performance:
@@ -345,8 +344,8 @@ earlier version. To perform an upgrade, issue the following command:
 Simple MySQL tweak to gain performance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Changing MySQL internal value ``innodb_flush_log_at_trx_commit`` from default value
-``1`` to ``2`` can result with huge gain in Kea performance. It can be set per session for testing:
+Changing the MySQL internal value ``innodb_flush_log_at_trx_commit`` from the default value
+``1`` to ``2`` can result in a huge gain in Kea performance. It can be set per session for testing:
 
 .. code-block:: mysql
 
@@ -361,7 +360,7 @@ or permanently in ``/etc/mysql/my.cnf``:
     innodb_flush_log_at_trx_commit=2
 
 Be aware that changing this value can result with problems during data recovery
-after crash, we strongly recommend to check `MySQL documentation <https://dev.mysql.com/doc/refman/8.0/en/innodb-parameters.html#sysvar_innodb_flush_log_at_trx_commit>`__.
+after a crash, so we strongly recommend checking the `MySQL documentation <https://dev.mysql.com/doc/refman/8.0/en/innodb-parameters.html#sysvar_innodb_flush_log_at_trx_commit>`__.
 
 .. _pgsql-database:
 

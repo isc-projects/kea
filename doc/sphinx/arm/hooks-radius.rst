@@ -111,7 +111,7 @@ To download and compile Boost 1.65, please use the following commands:
 .. code-block:: console
 
    $ wget -nd https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz
-   $ tar zxvf boost_1_65_1.tar.gz
+   $ tar -zxvf boost_1_65_1.tar.gz
    $ cd boost_1_65_1/
    $ ./bootstrap.sh
    $ ./b2 --without-python
@@ -137,7 +137,7 @@ Choice 2: get a tarball and extract it
 
 .. parsed-literal::
 
-   $ tar zxvf kea-|release|.tar.gz
+   $ tar -zxvf kea-|release|.tar.gz
 
 The next step is to extract the premium Kea package that contains the
 RADIUS repository into the Kea sources. After the tarball is extracted,
@@ -146,7 +146,7 @@ the Kea sources should have a premium/ subdirectory.
 .. parsed-literal::
 
      $ cd kea
-     $ tar zxvf ../kea-premium-radius-|release|.tar.gz
+     $ tar -zxvf ../kea-premium-radius-|release|.tar.gz
 
 Once this is done, verify that the Kea sources look similar to this:
 
@@ -283,7 +283,7 @@ Please make sure that the compilation includes the following:
 -  FreeRADIUS client directories printed and pointing to the right
    directories;
 -  Boost version at least 1.65.1. The versions available in CentOS 7
-   (1.48 and and 1.53) are too old.
+   (1.48 and 1.53) are too old.
 
 Once the configuration is complete, compile Kea using make. If the
 system has more than one core, using the "-j N"

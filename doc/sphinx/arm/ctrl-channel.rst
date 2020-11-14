@@ -520,7 +520,7 @@ been initiated.  The optional parameter, "exit-value", specifies the
 numeric value with which the server process will exit to the system.
 The default value is zero.
 
-The DDNS deamon supports an extra parameter "type" which controls the way
+The DDNS daemon supports an extra parameter "type" which controls the way
 the process cleans up on exit. The supported shutdown types are:
 
  -  "normal" - Stops the queue manager and finishes all current transactions
@@ -619,15 +619,15 @@ The ``status-get`` command returns server's runtime information:
 The ``high-availability`` information is returned only when the command is
 sent to the DHCP servers being in the HA setup. This parameter is
 never returned when the ``status-get`` command is sent to the
-Control Agent or DDNS deamon.
+Control Agent or DDNS daemon.
 
 The ``thread-pool-size`` and ``packet-queue-size`` parameters are returned only
 when the command is sent to DHCP servers with multi-threading enabled. These two
 parameters and ``multi-threading-enabled`` are never returned when the
-``status-get`` command is sent to the Control Agent or DDNS deamon.
+``status-get`` command is sent to the Control Agent or DDNS daemon.
 
 To learn more about the HA status information returned by the
-``status-get`` command please refer to the the :ref:`command-ha-status-get`
+``status-get`` command please refer to the :ref:`command-ha-status-get`
 section.
 
 

@@ -732,9 +732,9 @@ entry, as in:
 For additional Cassandra-specific parameters, see
 :ref:`cassandra-database-configuration4`.
 
-If the same host is configured both in-file and in-database, Kea won't warn of
-the duplicate like it would if you specified them both in the same data source.
-Instead the host configured in-file will have priority over the one configured
+If the same host is configured both in-file and in-database, Kea does not issue a warning,
+as it would if both were specified in the same data source.
+Instead, the host configured in-file has priority over the one configured
 in-database.
 
 .. _read-only-database-configuration4:
@@ -2229,14 +2229,14 @@ The definition used to decode a VSI option is:
    sub-option code 0 and 255 mean PAD and END respectively according to
    `RFC 2132 <https://tools.ietf.org/html/rfc2132>`_. In other words, the
    sub-option code values of 0 and 255 are reserved. Kea does, however,
-   allow you to define sub-option codes from 0 to 255.  If you define
-   sub-options with codes 0 and/or 255, bytes with that value will
-   no longer be treated as a PAD or an END, but as the sub-option code
+   allow users to define sub-option codes from 0 to 255. If
+   sub-options with codes 0 and/or 255 are defined, bytes with that value are
+   no longer treated as a PAD or an END, but as the sub-option code
    when parsing a VSI option in an incoming query.
 
-   Option 43 input processing (aka unpacking) is deferred so that it
-   happens after classification.  This means you cannot classify clients
-   using option 43 suboptions.  The definition used to unpack option 43
+   Option 43 input processing (also called unpacking) is deferred so that it
+   happens after classification. This means clients cannot be classified
+   using option 43 suboptions. The definition used to unpack option 43
    is determined as follows:
 
    - If defined at the global scope this definition is used
@@ -2247,12 +2247,12 @@ The definition used to decode a VSI option is:
      definition only says the sub-option space is
      "vendor-encapsulated-options-space"
 
-   The output definition selection  is a bit simpler:
+   The output definition selection is a bit simpler:
 
    - If the packet belongs to a client class which defines the option
      43 use this definition
    - If defined at the global scope use this definition
-   - Otherwise use the built-in last resot definition.
+   - Otherwise use the built-in last-resort definition.
 
    Note as they use a specific/per vendor option space the sub-options
    are defined at the global scope.
@@ -2999,19 +2999,19 @@ The default configuration would appear as follows:
         ...
    }
 
-As of Kea 1.7.1, there are two parameters which determine if kea-dhcp4
-can generate DDNS requests to D2.  The existing, ``dhcp-ddns:enable-updates``
-parameter which now only controls whether kea-dhcp4 connects to D2.
-And the new behavioral parameter, ``ddns-send-updates``, which determines
-if DDNS updates are enabled at a given level (i.e global, shared-network,
-or subnet).  The following table shows how the two parameters function
+As of Kea 1.7.1, there are two parameters which determine whether kea-dhcp4
+can generate DDNS requests to D2: the existing ``dhcp-ddns:enable-updates``
+parameter, which now only controls whether kea-dhcp4 connects to D2;
+and the new behavioral parameter, ``ddns-send-updates``, which determines
+whether DDNS updates are enabled at a given level (i.e. global, shared-network,
+or subnet). The following table shows how the two parameters function
 together:
 
 .. table:: Enabling and Disabling DDNS Updates
 
    +-----------------+--------------------+-------------------------------+
    | dhcp-ddns:      | Global             | Outcome                       |
-   | enable-updates  | ddns-send-udpates  |                               |
+   | enable-updates  | ddns-send-updates  |                               |
    +=================+====================+===============================+
    | false (default) | false              | no updates at any scope       |
    +-----------------+--------------------+-------------------------------+
@@ -3026,12 +3026,12 @@ together:
    |                 |                    | false for ddns-enable-updates |
    +-----------------+--------------------+-------------------------------+
 
-Kea 1.9.1 adds two new parameters.  The first new parameter is ``ddns-update-on-renew``.
-Normally, when leases are renewed the server will only update DNS if the DNS
+Kea 1.9.1 adds two new parameters. The first new parameter is ``ddns-update-on-renew``.
+Normally, when leases are renewed the server only updates DNS if the DNS
 information for the lease (e.g. FQDN, DNS update direction flags) has changed.
 Setting ``ddns-update-on-renew`` to true instructs the server to always update
 the DNS information when a lease is renewed even if its DNS information has not
-changed.  This allows Kea to "self-heal" in the event it was previously unable
+changed. This allows Kea to "self-heal" in the event it was previously unable
 to add DNS entries or they were somehow lost by the DNS server.
 
 .. note::
@@ -3072,7 +3072,7 @@ conflict with existing entries owned by other DHCP4 clients.
     FQDN while new entries for Client-B will still be added.
 
     Disabling conflict resolution should be done only after careful review of
-    your specific use cases.  The best way to avoid unwanted DNS entries is to
+    specific use cases.  The best way to avoid unwanted DNS entries is to
     always ensure leases changes are processed through Kea, whether they are
     released, expire, or are deleted via the lease-del4 command, prior to
     reassigning either FQDNs or IP addresses.  Doing so will cause kea-dhcp4
@@ -3328,9 +3328,9 @@ its value, simply set it to the desired string:
    }
 
 The suffix used when generating an FQDN, or when qualifying a partial
-name, is specified by the ``ddns-qualifying-suffix`` parameter.  It is
-strongly recommended that you supply a value for qualifying prefix when
-DDNS updates are enabled.  For obvious reasons, we cannot supply a
+name, is specified by the ``ddns-qualifying-suffix`` parameter. It is
+strongly recommended that the user supply a value for the qualifying prefix when
+DDNS updates are enabled. For obvious reasons, we cannot supply a
 meaningful default.
 
 ::
@@ -3341,7 +3341,7 @@ meaningful default.
         ...
     }
 
-When generating a name, kea-dhcp4 will construct the name in the format:
+When generating a name, kea-dhcp4 constructs the name in the format:
 
 [**ddns-generated-prefix**]-[**address-text**].[**ddns-qualifying-suffix**].
 
@@ -3366,12 +3366,12 @@ and '-'. This may be accomplished with the following two parameters:
 
 -  ``hostname-char-set`` - a regular expression describing the invalid
    character set. This can be any valid, regular expression using POSIX
-   extended expression syntax.  Embedded nuls (0x00) will always be
+   extended expression syntax.  Embedded nulls (0x00) are always
    considered an invalid character to be replaced (or omitted).
 
 -  ``hostname-char-replacement`` - a string of zero or more characters
-   with which to replace each invalid character in the host name.  An empty
-   string and will cause invalid characters to be OMITTED rather than replaced.
+   with which to replace each invalid character in the host name. An empty
+   string causes invalid characters to be OMITTED rather than replaced.
 
 .. note::
 
@@ -3380,10 +3380,10 @@ and '-'. This may be accomplished with the following two parameters:
     -   "hostname-char-set": "[^A-Za-z0-9.-]",
     -   "hostname-char-replacement": ""
 
-    This enables sanitizing and will omit any character that is not
-    a letter,digit, hyphen, dot or nul.
+    This enables sanitizing and omits any character that is not
+    a letter, digit, hyphen, dot, or null.
 
-The following configuration will replace anything other than a letter,
+The following configuration replaces anything other than a letter,
 digit, hyphen, or dot with the letter 'x':
 ::
 
@@ -3433,11 +3433,11 @@ qualifying suffix (if one is defined and needed).
 
 .. note::
 
-   Since the 1.6.0 Kea release it is possible to specify hostname-char-set
+   Since the 1.6.0 Kea release, it is possible to specify hostname-char-set
    and/or hostname-char-replacement at the global scope. This allows
-   to sanitize host names without requiring a dhcp-ddns entry. When
+   sanitizing host names without requiring a dhcp-ddns entry. When
    a hostname-char parameter is defined at the global scope and
-   in a dhcp-ddns entry the second (local) value is used.
+   in a dhcp-ddns entry, the second (local) value is used.
 
 .. _dhcp4-next-server:
 
@@ -3862,8 +3862,8 @@ be retained on the lease.  The lease's user-context will look something like thi
 .. note::
     It is possible that other hook libraries are already making use of user-context.
     Enabling store-extended-info should not interfere with any other user-context
-    content so long as it does not also use an element labled "ISC".  In other
-    words, user-context is intended to be a flexible container serving mulitple
+    content so long as it does not also use an element labeled "ISC".  In other
+    words, user-context is intended to be a flexible container serving multiple
     purposes.  As long as no other purpose also writes an "ISC" element to
     user-context there should not be a conflict.
 
@@ -3906,10 +3906,10 @@ Multi-threading settings in different backends
 Both kea-dhcp4 and kea-dhcp6 are tested internally to determine which settings
 gave the best performance. Although this section describes our results, those are just
 recommendations and are very dependent on the particular hardware that was used
-for testing. We strongly advice to run your own performance tests.
+for testing. We strongly advise that administrators run their own performance tests.
 
-Full report of Kea 1.7 performance results can be found `here <https://jenkins.isc.org/job/kea-1.7/job/performance/KeaPerformanceReport/>`_.
-This include hardware description, test scenario descriptions and
+A full report of Kea 1.7 performance results can be found `here <https://jenkins.isc.org/job/kea-1.7/job/performance/KeaPerformanceReport/>`_.
+This includes hardware descriptions, test scenario descriptions, and
 current results.
 
 After enabling multi-threading, the number of threads is set by ``thread-pool-size``
@@ -3951,8 +3951,9 @@ IPv6 connectivity is available and they can shut down their IPv4 stack. The new 
 should disable its stack for. The value is expressed in seconds.
 
 The RFC mentions V6ONLY_WAIT timer. This is implemented in Kea by setting the value of
-v6-only-preferred option. This follows the usual practice of setting options. You can specify the
-option value on pool, subnet, shared network, global levels or even specify it in host reservations.
+v6-only-preferred option. This follows the usual practice of setting options. The
+option value can be specified on pool, subnet, shared network, or global levels, or even
+via host reservations.
 
 Note there is no special processing involved. This follows the standard Kea option processing
 regime. The option will not be sent back, unless the client explicitly requests it. For example, to
@@ -4401,7 +4402,7 @@ to them.
        } ]
    }
 
-In some cases the host reservations can be used in conjuction with client
+In some cases the host reservations can be used in conjunction with client
 classes specified within the Kea configuration. In particular, when a
 host reservation exists for a client within a given subnet, the "KNOWN"
 built-in class is assigned to the client. Conversely, when there is no
@@ -4427,7 +4428,7 @@ evaluation of the class after the lease has been allocated and thus the
 reserved class has been also assigned.
 
 .. note::
-   Be aware that the classes specified in non global host reservations
+   Be aware that the classes specified in non-global host reservations
    are assigned to the processed packet after all classes with the
    ``only-if-required`` parameter set to ``false`` have been evaluated.
    This has an implication that these classes must not depend on the
@@ -4539,8 +4540,8 @@ The ``reservation-mode`` parameter can be specified at:
   ``.Dhcp4["shared-networks"][].subnet4[]["reservation-mode"]`` (highest
   priority: overrides all others)
 
-For deciding what ``"reservation-mode"`` to choose, you may refer to the
-following decision diagram:
+To decide which ``"reservation-mode"`` to choose, the
+following decision diagram may be useful:
 
 ::
 
@@ -5125,24 +5126,24 @@ It is possible to control the ``ip-reservations-unique`` via the
 the currently used backends (backends do not support the new setting),
 the new setting is ignored and the warning log message is output.
 The backends continue to use the default setting, i.e. expecting that
-IP reservations are unique within each subnet. In order to allow
-creating non unique IP reservations the administrator must remove
-the backends which lack support for it from the configuration file.
+IP reservations are unique within each subnet. To allow the
+creation of non-unique IP reservations, the administrator must remove
+the backends which lack support for them from the configuration file.
 
-The administrators must be careful when they have been using multiple
-reservations for the same IP address and later decided to return to
+Administrators must be careful when they have been using multiple
+reservations for the same IP address and later decide to return to
 the default mode in which this is no longer allowed. The administrators
 must make sure that at most one reservation for the given IP address
 exists within a subnet prior to switching back to the default mode.
 If such duplicates are left in the configuration file, the server
-will report a configuration error. Leaving such reservations in the host
+reports a configuration error. Leaving such reservations in the host
 databases does not cause configuration errors but may lead to lease
-allocation errors during the server operation when it unexpectedly
+allocation errors during the server's operation, when it unexpectedly
 finds multiple reservations for the same IP address.
 
 .. note::
 
-   Currently the server does not verify if multiple reservations for
+   Currently the server does not verify whether multiple reservations for
    the same IP address exist in the host databases (MySQL and/or
    PostgreSQL) when ``ip-reservations-unique`` is updated from
    ``true`` to ``false``. This may cause issues with lease allocations.
@@ -6385,14 +6386,14 @@ Beginning with Kea 1.7.7 the DHCPv4 server provides two global
 parameters to control statistics default sample limits:
 
 - ``statistic-default-sample-count`` - determines the default maximum
-  number of samples which will be kept. The special value of zero
-  means to use a default maximum age.
+  number of samples which are kept. The special value of zero
+  indicates that a default maximum age should be used.
 
 - ``statistic-default-sample-age`` - determines the default maximum
-  age in seconds of samples which will be kept.
+  age in seconds of samples which are kept.
 
-For instance to reduce the statistic keeping overhead you can set
-the default maximum sample count to 1 so only one sample will be kept by:
+For instance, to reduce the statistic keeping overhead, set
+the default maximum sample count to 1 so only one sample is kept:
 
 ::
 

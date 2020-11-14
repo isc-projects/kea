@@ -24,7 +24,7 @@ Quick Start Guide for using tarball
 
     .. parsed-literal::
 
-       $ tar xvzf kea-|release|.tar.gz
+       $ tar -xvzf kea-|release|.tar.gz
 
 4.  Go into the source directory and run the configure script:
 

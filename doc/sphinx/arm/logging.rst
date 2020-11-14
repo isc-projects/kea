@@ -598,14 +598,14 @@ The pattern (string) Option
 This option can be used to specify the layout pattern of log messages for
 a logger. Kea logging is implemented using the Log4Cplus library and whose
 output formatting is based, conceptually, on the printf formatting from C
-and is discussed in detail in the the next section
+and is discussed in detail in the next section
 :ref:`logging-message-format`.
 
 Each output type (stdout, file, or syslog) has a default ``pattern`` which
 describes the content of its log messages. This parameter can be used to
-specifiy your own pattern.  The pattern for each logger is governed
-individually so each configured logger can have it's own pattern. Omitting
-the ``pattern`` parameter or setting it to an empty string, "", will cause
+specify a desired pattern.  The pattern for each logger is governed
+individually so each configured logger can have its own pattern. Omitting
+the ``pattern`` parameter or setting it to an empty string, "", causes
 Kea to use the default pattern for that logger's output type.
 
 In addition to the log text itself, the default patterns used for ``stdout``
@@ -644,7 +644,7 @@ below:
 
     "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i.%t] %m\n";
 
-and a typical log produced by this pattern would look somethng like this:
+and a typical log produced by this pattern looks something like this:
 
 ::
 

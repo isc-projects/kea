@@ -280,17 +280,17 @@ The lease6-bulk-apply Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``lease6-bulk-apply`` was implemented to address
-the performance penalty in the High Availability when a single DHCPv6
-transaction resulted in multiple lease updates sent to the partner if
+the performance penalty in the High-Availability mode when a single DHCPv6
+transaction resulted in multiple lease updates sent to the partner, if
 multiple address and/or prefix leases were allocated. Consider the case
 when a DHCPv6 client requests the assignment of two IPv6 addresses and two IPv6
-prefixes. That may result in allocation of 4 leases. In addition, the
-DHCPv6 may assign different address than requested by the client during
-the renew or rebind and delete the leases previously used by this client.
-The are 6 of lease changes sent between the HA partners is in this case.
-Sending these updates in individual commands, e.g. ``lease6-update``
-is highly inefficient and produces unnecessary delays in communication
-between the HA partners and in sending the response to the DHCPv6 client.
+prefixes: that may result in allocation of 4 leases. In addition,
+DHCPv6 may assign a different address than the one requested by the client during
+the renew or rebind stage, and delete the leases previously used by this client.
+There are six lease changes sent between the HA partners in this case.
+Sending these updates in individual commands, e.g. via ``lease6-update``,
+is highly inefficient and produces unnecessary delays in communication,
+both between the HA partners and in sending the response to the DHCPv6 client.
 
 The ``lease6-bulk-apply`` command deals with this
 problem by aggregating all lease changes in a single command. Both
@@ -299,7 +299,7 @@ The receiving server iterates over the deleted leases and deletes them
 from its lease database. Next, it iterates over the new/updated leases
 and adds them to the database or updates them if they already exist.
 
-Even though the High Avialability is the major application for
+Even though High Availability is the major application for
 this command, it can be freely used in all cases when it is desired to
 send multiple lease changes in a single command.
 
@@ -342,10 +342,10 @@ or update two other leases in the database:
    }
 
 If any of the leases is malformed, no leases changes are applied
-to the lease database. If the leases are well formed but there is a
+to the lease database. If the leases are well-formed but there is a
 failure to apply any of the lease changes to the database, the command
-will continue to be processed for other leases. All the leases for which
-the command was unable to apply the changes in the database will be
+continues to be processed for other leases. All the leases for which
+the command was unable to apply the changes in the database are
 listed in the response. For example:
 
 ::

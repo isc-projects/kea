@@ -113,7 +113,7 @@ servers, the default empty path in the URL is not enough, so the
 
    $ kea-shell --host 192.0.2.1 --port 8001 --path kea ...
 
-The Kea shell requires Python to to be installed on the system. It has been
+The Kea shell requires Python to be installed on the system. It has been
 tested with Python 2.7 and various versions of Python 3, up to 3.5.
 Since not every Kea deployment uses this feature and there are
 deployments that do not have Python, the Kea shell is not enabled by
