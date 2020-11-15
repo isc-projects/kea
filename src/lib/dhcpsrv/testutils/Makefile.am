@@ -16,6 +16,7 @@ libdhcpsrvtest_la_SOURCES  = config_result_check.cc config_result_check.h
 libdhcpsrvtest_la_SOURCES += dhcp4o6_test_ipc.cc dhcp4o6_test_ipc.h
 libdhcpsrvtest_la_SOURCES += host_data_source_utils.cc host_data_source_utils.h
 libdhcpsrvtest_la_SOURCES += memory_host_data_source.cc memory_host_data_source.h
+libdhcpsrvtest_la_SOURCES += test_utils.cc test_utils.h
 libdhcpsrvtest_la_SOURCES += generic_backend_unittest.cc generic_backend_unittest.h
 libdhcpsrvtest_la_SOURCES += generic_host_data_source_unittest.cc generic_host_data_source_unittest.h
 libdhcpsrvtest_la_SOURCES += lease_file_io.cc lease_file_io.h

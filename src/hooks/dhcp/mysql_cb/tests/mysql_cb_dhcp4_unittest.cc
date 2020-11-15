@@ -7,6 +7,7 @@
 #include <config.h>
 #include <mysql_cb_dhcp4.h>
 #include <mysql_cb_impl.h>
+#include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/server.h>
 #include <database/testutils/schema.h>
@@ -16,22 +17,31 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/testutils/mysql_generic_backend_unittest.h>
+#include <dhcpsrv/testutils/test_utils.h>
 #include <mysql/testutils/mysql_schema.h>
+#include <testutils/multi_threading_utils.h>
+
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <mysql.h>
 #include <map>
 #include <sstream>
 
+using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::db;
 using namespace isc::db::test;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::process;
+using namespace isc::test;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -4151,6 +4161,517 @@ TEST_F(MySqlConfigBackendDHCPv4Test, multipleAuditEntries) {
         EXPECT_EQ(partial_size + 1,
                   std::distance(it, mod_time_idx.end()));
     }
+}
+
+class MySqlConfigBackendDHCPv4DbLostCallbackTest : public ::testing::Test {
+public:
+    MySqlConfigBackendDHCPv4DbLostCallbackTest()
+        : db_lost_callback_called_(0), db_recovered_callback_called_(0),
+          db_failed_callback_called_(0),
+          io_service_(boost::make_shared<isc::asiolink::IOService>()) {
+        isc::db::DatabaseConnection::db_lost_callback_ = 0;
+        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
+        isc::db::DatabaseConnection::db_failed_callback_ = 0;
+        isc::dhcp::MySqlConfigBackendImpl::setIOService(io_service_);
+        isc::dhcp::TimerMgr::instance()->setIOService(io_service_);
+        isc::dhcp::CfgMgr::instance().clear();
+    }
+
+    ~MySqlConfigBackendDHCPv4DbLostCallbackTest() {
+        isc::db::DatabaseConnection::db_lost_callback_ = 0;
+        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
+        isc::db::DatabaseConnection::db_failed_callback_ = 0;
+        isc::dhcp::MySqlConfigBackendImpl::setIOService(isc::asiolink::IOServicePtr());
+        isc::dhcp::TimerMgr::instance()->unregisterTimers();
+        isc::dhcp::CfgMgr::instance().clear();
+    }
+
+    /// @brief Prepares the class for a test.
+    ///
+    /// Invoked by gtest prior test entry, we create the
+    /// appropriate schema and create a basic DB manager to
+    /// wipe out any prior instance
+    virtual void SetUp() {
+        isc::dhcp::MySqlConfigBackendImpl::setIOService(io_service_);
+        isc::db::DatabaseConnection::db_lost_callback_ = 0;
+        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
+        isc::db::DatabaseConnection::db_failed_callback_ = 0;
+        // Ensure we have the proper schema with no transient data.
+        createMySQLSchema();
+        isc::dhcp::CfgMgr::instance().clear();
+        isc::dhcp::MySqlConfigBackendDHCPv4::registerBackendType();
+    }
+
+    /// @brief Pre-text exit clean up
+    ///
+    /// Invoked by gtest upon test exit, we destroy the schema
+    /// we created.
+    virtual void TearDown() {
+        isc::dhcp::MySqlConfigBackendImpl::setIOService(isc::asiolink::IOServicePtr());
+        isc::db::DatabaseConnection::db_lost_callback_ = 0;
+        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
+        isc::db::DatabaseConnection::db_failed_callback_ = 0;
+        // If data wipe enabled, delete transient data otherwise destroy the schema
+        destroyMySQLSchema();
+        isc::dhcp::CfgMgr::instance().clear();
+        isc::dhcp::MySqlConfigBackendDHCPv4::unregisterBackendType();
+    }
+
+    /// @brief Method which returns the back end specific connection
+    /// string
+    virtual std::string validConnectString() {
+        return (validMySQLConnectionString());
+    }
+
+    /// @brief Method which returns invalid back end specific connection
+    /// string
+    virtual std::string invalidConnectString() {
+        return (connectionString(MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
+                                 VALID_USER, VALID_PASSWORD));
+    }
+
+    /// @brief Verifies open failures do NOT invoke db lost callback
+    ///
+    /// The db lost callback should only be invoked after successfully
+    /// opening the DB and then subsequently losing it. Failing to
+    /// open should be handled directly by the application layer.
+    void testNoCallbackOnOpenFailure();
+
+    /// @brief Verifies the CB manager's behavior if DB connection is lost
+    ///
+    /// This function creates a CB manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifying and
+    /// closing the socket connection to the CB backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbRecoveredCallback was invoked
+    void testDbLostAndRecoveredCallback();
+
+    /// @brief Verifies the CB manager's behavior if DB connection is lost
+    ///
+    /// This function creates a CB manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifying and
+    /// closing the socket connection to the CB backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked
+    void testDbLostAndFailedCallback();
+
+    /// @brief Verifies the CB manager's behavior if DB connection is lost
+    ///
+    /// This function creates a CB manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifyingLost and
+    /// closing the socket connection to the CB backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbRecoveredCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testDbLostAndRecoveredAfterTimeoutCallback();
+
+    /// @brief Verifies the CB manager's behavior if DB connection is lost
+    ///
+    /// This function creates a CB manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifyingLost and
+    /// closing the socket connection to the CB backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testDbLostAndFailedAfterTimeoutCallback();
+
+    /// @brief Callback function registered with the CB manager
+    bool db_lost_callback(db::ReconnectCtlPtr /* not_used */) {
+        return (++db_lost_callback_called_);
+    }
+
+    /// @brief Flag used to detect calls to db_lost_callback function
+    uint32_t db_lost_callback_called_;
+
+    /// @brief Callback function registered with the CB manager
+    bool db_recovered_callback(db::ReconnectCtlPtr /* not_used */) {
+        return (++db_recovered_callback_called_);
+    }
+
+    /// @brief Flag used to detect calls to db_recovered_callback function
+    uint32_t db_recovered_callback_called_;
+
+    /// @brief Callback function registered with the CB manager
+    bool db_failed_callback(db::ReconnectCtlPtr /* not_used */) {
+        return (++db_failed_callback_called_);
+    }
+
+    /// @brief Flag used to detect calls to db_failed_callback function
+    uint32_t db_failed_callback_called_;
+
+    /// The IOService object, used for all ASIO operations.
+    isc::asiolink::IOServicePtr io_service_;
+};
+
+void
+MySqlConfigBackendDHCPv4DbLostCallbackTest::testNoCallbackOnOpenFailure() {
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectString();
+
+    // Connect to the CB backend.
+    ASSERT_THROW(ConfigBackendDHCPv4Mgr::instance().addBackend(access), DbOpenError);
+
+    io_service_->poll();
+
+    EXPECT_EQ(0, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+}
+
+void
+MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndRecoveredCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+
+    ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
+    // Connect to the CB backend.
+    ASSERT_NO_THROW(ConfigBackendDHCPv4Mgr::instance().addBackend(access));
+
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ServerCollection servers;
+    ASSERT_NO_THROW(servers = ConfigBackendDHCPv4Mgr::instance().getPool()->getAllServers4(BackendSelector()));
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(servers = ConfigBackendDHCPv4Mgr::instance().getPool()->getAllServers4(BackendSelector()),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+}
+
+void
+MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndFailedCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
+    // Connect to the CB backend.
+    ASSERT_NO_THROW(ConfigBackendDHCPv4Mgr::instance().addBackend(access));
+
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ServerCollection servers;
+    ASSERT_NO_THROW(servers = ConfigBackendDHCPv4Mgr::instance().getPool()->getAllServers4(BackendSelector()));
+
+    access = invalidConnectString();
+    CfgMgr::instance().clear();
+    // by adding an extra space in the access string will cause the DatabaseConnection::parse
+    // to throw resulting in failure to recreate the manager
+    config_ctl_info.reset(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+    const ConfigDbInfoList& cfg = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo()->getConfigDatabases();
+    (const_cast<ConfigDbInfoList&>(cfg))[0].setAccessString(access + " ", true);
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(servers = ConfigBackendDHCPv4Mgr::instance().getPool()->getAllServers4(BackendSelector()),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+}
+
+void
+MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    access += extra;
+    ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
+    // Connect to the CB backend.
+    ASSERT_NO_THROW(ConfigBackendDHCPv4Mgr::instance().addBackend(access));
+
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ServerCollection servers;
+    ASSERT_NO_THROW(servers = ConfigBackendDHCPv4Mgr::instance().getPool()->getAllServers4(BackendSelector()));
+
+    access = invalidConnectString();
+    access += extra;
+    CfgMgr::instance().clear();
+    // by adding an extra space in the access string will cause the DatabaseConnection::parse
+    // to throw resulting in failure to recreate the manager
+    config_ctl_info.reset(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+    const ConfigDbInfoList& cfg = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo()->getConfigDatabases();
+    (const_cast<ConfigDbInfoList&>(cfg))[0].setAccessString(access + " ", true);
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(servers = ConfigBackendDHCPv4Mgr::instance().getPool()->getAllServers4(BackendSelector()),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    access = validConnectString();
+    access += extra;
+    CfgMgr::instance().clear();
+    config_ctl_info.reset(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+}
+
+void
+MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = validConnectString();
+    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    access += extra;
+    ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
+    // Connect to the CB backend.
+    ASSERT_NO_THROW(ConfigBackendDHCPv4Mgr::instance().addBackend(access));
+
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ServerCollection servers;
+    ASSERT_NO_THROW(servers = ConfigBackendDHCPv4Mgr::instance().getPool()->getAllServers4(BackendSelector()));
+
+    access = invalidConnectString();
+    access += extra;
+    CfgMgr::instance().clear();
+    // by adding an extra space in the access string will cause the DatabaseConnection::parse
+    // to throw resulting in failure to recreate the manager
+    config_ctl_info.reset(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+    const ConfigDbInfoList& cfg = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo()->getConfigDatabases();
+    (const_cast<ConfigDbInfoList&>(cfg))[0].setAccessString(access + " ", true);
+
+    // Now close the sql socket out from under backend client
+    ASSERT_EQ(0, close(sql_socket));
+
+    // A query should fail with DbConnectionUnusable.
+    ASSERT_THROW(servers = ConfigBackendDHCPv4Mgr::instance().getPool()->getAllServers4(BackendSelector()),
+                 DbConnectionUnusable);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+}
+
+/// @brief Verifies that db lost callback is not invoked on an open failure
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testNoCallbackOnOpenFailure) {
+    MultiThreadingTest mt(false);
+    testNoCallbackOnOpenFailure();
+}
+
+/// @brief Verifies that db lost callback is not invoked on an open failure
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreading) {
+    MultiThreadingTest mt(true);
+    testNoCallbackOnOpenFailure();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndRecoveredCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndRecoveredCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndFailedCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndFailedCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testDbLostAndFailedAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDbLostAndFailedAfterTimeoutCallback();
 }
 
 }

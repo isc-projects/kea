@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
-#include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/testutils/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/mysql_host_data_source.h>

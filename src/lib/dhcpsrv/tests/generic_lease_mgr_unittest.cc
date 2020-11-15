@@ -13,7 +13,7 @@
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
-#include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/testutils/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
 

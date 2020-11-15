@@ -9,7 +9,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
-#include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/testutils/test_utils.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 

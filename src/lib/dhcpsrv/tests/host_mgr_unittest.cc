@@ -11,7 +11,7 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
-#include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/testutils/test_utils.h>
 #include <testutils/multi_threading_utils.h>
 #include <util/multi_threading_mgr.h>
 

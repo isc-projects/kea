@@ -6,7 +6,7 @@
 
 #include <config.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
-#include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/testutils/test_utils.h>
 
 #include <hooks/server_hooks.h>
 #include <hooks/callout_manager.h>

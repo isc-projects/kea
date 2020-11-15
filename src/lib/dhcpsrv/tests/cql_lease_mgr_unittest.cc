@@ -23,7 +23,7 @@
 #include <cql/testutils/cql_schema.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/cql_lease_mgr.h>
-#include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/testutils/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <exceptions/exceptions.h>
 

@@ -2772,7 +2772,7 @@ public:
             // Iterate over the configured DBs and instantiate them.
             for (auto db : config_ctl->getConfigDatabases()) {
                 const std::string& access = db.getAccessString();
-                auto parameters = DatabaseConnection::parse(access);
+                auto parameters = db.getParameters();
                 if (ConfigBackendDHCPv6Mgr::instance().delBackend(parameters["type"], access, true)) {
                     ConfigBackendDHCPv6Mgr::instance().addBackend(db.getAccessString());
                 }

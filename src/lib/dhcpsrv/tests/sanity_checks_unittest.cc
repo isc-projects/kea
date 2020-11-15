@@ -13,7 +13,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/sanity_checker.h>
-#include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/testutils/test_utils.h>
 #include <util/range_utilities.h>
 #include <cc/data.h>
 #include <gtest/gtest.h>

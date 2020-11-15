@@ -14,10 +14,12 @@ namespace isc {
 namespace process {
 
 void
-ConfigDbInfo::setAccessString(const std::string& access_str) {
+ConfigDbInfo::setAccessString(const std::string& access_str, bool test_mode) {
     access_str_ = access_str;
     access_params_.clear();
-    access_params_ = db::DatabaseConnection::parse(access_str_);
+    if (!test_mode) {
+        access_params_ = db::DatabaseConnection::parse(access_str_);
+    }
 }
 
 bool
