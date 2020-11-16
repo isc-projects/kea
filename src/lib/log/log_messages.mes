@@ -84,9 +84,9 @@ not one contained in the compiled-in message dictionary.  This message
 may appear a number of times in the file, once for every such unknown
 message identification.
 
-There may be several reasons why this message may appear:
+There are several reasons why this message may appear:
 
-- The message ID has been mis-spelled in the local message file.
+- The message ID has been misspelled in the local message file.
 
 - The program outputting the message may not use that particular message
 (e.g. it originates in a module not used by the program).

@@ -205,7 +205,7 @@ has been lost and an automatic attempt to reconnect has failed.
 % DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
 An informational message indicating that the server is scheduling the next
 attempt to reconnect to its lease and/or host databases.  This occurs when the
-server has lost databse connectivity and is attempting to reconnect
+server has lost database connectivity and is attempting to reconnect
 automatically.
 
 % DHCP4_DB_RECONNECT_DISABLED database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2
@@ -214,8 +214,8 @@ lease or host database or both and that automatic reconnect is not enabled.
 
 % DHCP4_DB_RECONNECT_NO_DB_CTL unexpected error in database reconnect
 This is an error message indicating a programmatic error that should not
-occur. It will prohibit the server from attempting to reconnect to its
-databases if connectivy is lost, and the server will exit. This error
+occur. It prohibits the server from attempting to reconnect to its
+databases if connectivity is lost, and the server exits. This error
 should be reported.
 
 % DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!
@@ -235,7 +235,7 @@ used to receive DHCPv4 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
 % DHCP4_DECLINE_FAIL %1: error on decline lease for address %2: %3
-This error message indicates that the software failed to deline a
+This error message indicates that the software failed to decline a
 lease from the lease database due to an error during a database
 operation. The first argument includes the client and the transaction
 identification information. The second argument holds the IPv4 address
@@ -333,7 +333,7 @@ and the expression specified in its configuration generated (was evaluated to)
 an identifier for incoming packet. This debug message is mainly intended as a
 debugging assistance for flexible identifier.
 
-% DHCP4_GENERATE_FQDN %1: client did not send a FQDN or hostname; FQDN will be be generated for the client
+% DHCP4_GENERATE_FQDN %1: client did not send a FQDN or hostname; FQDN will be generated for the client
 This debug message is issued when the server did not receive a Hostname option
 from the client and hostname generation is enabled.  This provides a means to
 create DNS entries for unsophisticated clients.

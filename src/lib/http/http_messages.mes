@@ -55,8 +55,8 @@ This debug message is issued when the server finished receiving a HTTP
 request from the remote endpoint. The address of the remote endpoint is
 specified as an argument.
 
-% HTTP_CLIENT_REQUEST_RECEIVED_DETAILS detailed information about well formed request received from %1:\n%2
-This debug message is issued when the HTTP server receives a well formed
+% HTTP_CLIENT_REQUEST_RECEIVED_DETAILS detailed information about well-formed request received from %1:\n%2
+This debug message is issued when the HTTP server receives a well-formed
 request. It includes detailed information about the received request. The
 first argument specifies an address of the remote endpoint which sent the
 request. The second argument provides the request in the textual format.
@@ -121,8 +121,8 @@ seconds.
 This debug message is issued when the client finished receiving an HTTP
 response from the server. The URL of the server is specified as an argument.
 
-% HTTP_SERVER_RESPONSE_RECEIVED_DETAILS detailed information about well formed response received from %1:\n%2
-This debug message is issued when the HTTP client receives a well formed
+% HTTP_SERVER_RESPONSE_RECEIVED_DETAILS detailed information about well-formed response received from %1:\n%2
+This debug message is issued when the HTTP client receives a well-formed
 response from the server. It includes detailed information about the
 received response. The first argument specifies a URL of the server which
 sent the response. The second argument provides the response in the textual

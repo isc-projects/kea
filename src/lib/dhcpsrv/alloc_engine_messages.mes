@@ -53,8 +53,8 @@ pool size and your classification definitions.
 % ALLOC_ENGINE_V4_DECLINED_RECOVERED IPv4 address %1 was recovered after %2 seconds of probation-period
 This informational message indicates that the specified address was reported
 as duplicate (client sent DECLINE) and the server marked this address as
-unvailable for a period of time. This time now has elapsed and the address
-has been returned to the available pool. This step concludes decline recovery
+unavailable for a period of time. This time now has elapsed and the address
+has been returned to the available pool. This step concludes the decline recovery
 process.
 
 % ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT %1: conflicting reservation for address %2 with existing lease %3
@@ -293,8 +293,8 @@ has now been allocated to another client.
 % ALLOC_ENGINE_V6_DECLINED_RECOVERED IPv6 address %1 was recovered after %2 seconds of probation-period
 This informational message indicates that the specified address was reported
 as duplicate (client sent DECLINE) and the server marked this address as
-unvailable for a period of time. This time now has elapsed and the address
-has been returned to the available pool. This step concludes decline recovery
+unavailable for a period of time. This time now has elapsed and the address
+has been returned to the available pool. This step concludes the decline recovery
 process.
 
 % ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED %1: expired lease for the client's hint %2 is reserved for another client

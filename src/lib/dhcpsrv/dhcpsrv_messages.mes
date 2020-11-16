@@ -54,33 +54,34 @@ there is a good reason for it, to avoid increased number of renewals and
 a need for rebinding (increase of multicast traffic, which may be received
 by multiple servers).
 
-% DHCPSRV_CFGMGR_DDNS_PARAMETER_IGNORED dhpd-ddns:%1 is deprecated, using existing global:%2
+% DHCPSRV_CFGMGR_DDNS_PARAMETER_IGNORED dhcp-ddns:%1 is deprecated, using existing global:%2
 This is an informational message issued during configuration parsing when
 the server detects that a deprecated parameter has been specified in the
 "dhcp-ddns" element which conflicts with its corresponding global parameter.
 When this occurs the server simply ignores the value from dhcp-ddns.
 The log message shows be the deprecated and the supported parameter names.
-Note the configuration change only affects the in memory configuration.
-You should modify your configuration to comply the supported parameters.
+Note the configuration change only affects the in-memory configuration.
+Modify the configuration to comply with the supported parameters.
 
 % DHCPSRV_CFGMGR_DDNS_PARAMETER_MOVED dhcp-ddns:%1 is deprecated, moving it to global:%2
 This is an informational message issued during configuration parsing when
 the server detects that a deprecated parameter has been specified in the
 "dhcp-ddns" element for which no corresponding global value exists. When
-this occurs the server removes the parameter from dhcp-ddns and inserts the
-parameter into the global scope. The log message shows be the deprecated
+this occurs, the server removes the parameter from dhcp-ddns and inserts the
+parameter into the global scope. The log message shows the deprecated
 and the supported parameter names.  Note the configuration change only affects
-the in memory configuration.  You should modify your configuration to comply
+the in-memory configuration. Modify the configuration to comply with
 the supported parameters.
 
 % DHCPSRV_CFGMGR_DEL_SUBNET4 IPv4 subnet %1 removed
 This debug message is issued when a subnet is successfully removed from the
-server configuration. The argument identifies the subnet removed.
+server configuration. The argument identifies the removed subnet.
 
 % DHCPSRV_CFGMGR_DEL_SUBNET6 IPv6 subnet %1 removed
 This debug message is issued when a subnet is successfully removed from the
+server configuration. The argument identifies the removed subnet.
 
-% DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED ignoring "ip-reservations-unique" setting because at least one of the host database backends does not support non unique IP reservations in a subnet
+% DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED ignoring "ip-reservations-unique" setting because at least one of the host database backends does not support non-unique IP reservations in a subnet
 This warning message is issued when the server failed to use the new setting
 of the ip-reservations-unique global parameter configured via the configuration
 backend. Some host database backends used apparently do not support specifying
@@ -441,13 +442,13 @@ A debug message issued when a NameChangeRequest has been successfully sent to
 kea-dhcp-ddns.
 
 % DHCPSRV_DHCP_DDNS_SENDER_STARTED NameChangeRequest sender has been started: %1
-A informational message issued when a communications with kea-dhcp-ddns has
+An informational message issued when a communication with kea-dhcp-ddns has
 been successfully started.
 
 % DHCPSRV_DHCP_DDNS_SENDER_STOPPED NameChangeRequest sender has been stopped.
-A informational message issued when a communications with kea-dhcp-ddns has
+An informational message issued when a communication with kea-dhcp-ddns has
 been stopped. This normally occurs during reconfiguration and as part of normal
-shutdown. It may occur if kea-dhcp-ddns communications breakdown.
+shutdown. It may occur if kea-dhcp-ddns communications break down.
 
 % DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES DHCP_DDNS updates are being suspended.
 This is a warning message indicating the DHCP_DDNS updates have been turned
@@ -678,29 +679,29 @@ replaced by those read from the file.
 A debug message issued when DHCP lease is being loaded from the file to memory.
 
 % DHCPSRV_MEMFILE_LEASE_LOAD_ROW_ERROR discarding row %1, error: %2
-An error message issued the the DHCP lease being loaded from the given row of
+An error message issued if the DHCP lease being loaded from the given row of
 the lease file fails. The log message should contain the specific reason the
-row was discarded. The server will continue loading the remaining data.
+row was discarded. The server continues loading the remaining data.
 This may indicate a corrupt lease file.
 
 % DHCPSRV_MEMFILE_LFC_EXECUTE executing Lease File Cleanup using: %1
-An informational message issued when the Memfile lease database backend
+An informational message issued when the memfile lease database backend
 starts a new process to perform Lease File Cleanup.
 
 % DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL failed to rename the current lease file %1 to %2, reason: %3
-An error message logged when the Memfile lease database backend fails to
+An error message logged when the memfile lease database backend fails to
 move the current lease file to a new file on which the cleanup should
 be performed. This effectively means that the lease file cleanup
-will not take place.
+does not take place.
 
-% DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL failed to reopen lease file %1 after preparing input file for lease file cleanup, reason: %2, new leases will not be persisted!
-An error message logged when the Memfile lease database backend
+% DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL failed to reopen lease file %1 after preparing input file for lease file cleanup, reason: %2, new leases will not persist!
+An error message logged when the memfile lease database backend
 failed to re-open or re-create the lease file after renaming the
-lease file for lease file cleanup. The server will continue to
-operate but leases will not be persisted to disk.
+lease file for lease file cleanup. The server continues to
+operate but leases do not persist to disk.
 
 % DHCPSRV_MEMFILE_LFC_SETUP setting up the Lease File Cleanup interval to %1 sec
-An informational message logged when the Memfile lease database backend
+An informational message logged when the memfile lease database backend
 configures the LFC to be executed periodically. The argument holds the
 interval in seconds in which the LFC will be executed.
 

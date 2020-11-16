@@ -1426,8 +1426,8 @@ logic. Consider the following example:
 ]
 @endcode
 
-This example has three hook libraries configured. The first and and second have
-no parameters. Note that parameters map is optional, but it's perfectly ok to
+This example has three hook libraries configured. The first and second have
+no parameters. Note that parameters map is optional, but it's perfectly okay to
 specify it as an empty map. The third library is more interesting. It has five
 parameters specified. The first one called 'mail' is a string. The second one
 is an integer and the third one is boolean. Fourth and fifth parameters are

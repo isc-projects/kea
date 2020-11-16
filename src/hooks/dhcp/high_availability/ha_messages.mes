@@ -311,7 +311,7 @@ client's DHCP message will be dropped.
 
 % HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER %1: failed to create or update the lease having type %2 for address %3, reason: %4
 This informational message is issued when one of the leases failed to be
-created or updated on the HA peer whilw processing the lease updates sent
+created or updated on the HA peer while processing the lease updates sent
 from this server. This may indicate an issue with communication between
 the peer and its lease database.
 
@@ -384,9 +384,9 @@ failure.
 % HA_MAINTENANCE_SHUTDOWN_SAFE the server can now be shutdown for maintenance as the partner has taken over the DHCP traffic
 This informational message is displayed after the server transitions to the
 in-maintenance state. This server no longer responds to any DHCP queries and its
-partner being in the partner-in-maintenance state has taken over the DHCP traffic.
-When the server in-maintenance state is shut down, the partner will move to
-the partner-down imediatelly.
+partner - in partner-in-maintenance state - has taken over the DHCP traffic.
+When the server in-maintenance state is shut down, the partner moves to
+the partner-down state immediately.
 
 % HA_MAINTENANCE_STARTED the server is now in the partner-in-maintenance state and the partner is in-maintenance state
 This informational message is displayed when the server receiving the
@@ -442,9 +442,9 @@ setup state warrants such behavior.
 % HA_STATE_MACHINE_PAUSED state machine paused in state %1
 This informational message is issued when the HA state machine is paused.
 HA state machine may be paused in certain states specified in the HA hooks library
-confuguration. When the state machine is paused, the server remains in the given
-state until it is explicitly unpaused (via ha-continue command). If the state
-machine is paused, the server operates normally but can't transition to any
+configuration. When the state machine is paused, the server remains in the given
+state until it is explicitly unpaused (via the ha-continue command). If the state
+machine is paused, the server operates normally but cannot transition to any
 other state.
 
 % HA_STATE_TRANSITION server transitions from %1 to %2 state, partner state is %3
@@ -454,13 +454,13 @@ The arguments specify initial server state, new server state and the partner's
 state.
 
 % HA_STATE_TRANSITION_PASSIVE_BACKUP server transitions from %1 to %2 state
-This informational message is issued when the server being in the passive-backup
+This informational message is issued when the server in passive-backup
 mode transitions to a new state. The arguments specify initial server state and
 a new server state.
 
 % HA_SYNC_FAILED lease database synchronization with %1 failed: %2
 This error message is issued to indicate that the lease database synchronization
-failed. The first argument provides partner server's name. The second argument
+failed. The first argument provides the partner server's name. The second argument
 provides a reason for the failure.
 
 % HA_SYNC_HANDLER_FAILED ha-sync command failed: %1

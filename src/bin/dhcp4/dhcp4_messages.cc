@@ -216,7 +216,7 @@ const char* values[] = {
     "DHCP4_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
     "DHCP4_EMPTY_HOSTNAME", "%1: received empty hostname from the client, skipping processing of this option",
     "DHCP4_FLEX_ID", "flexible identifier generated for incoming packet: %1",
-    "DHCP4_GENERATE_FQDN", "%1: client did not send a FQDN or hostname; FQDN will be be generated for the client",
+    "DHCP4_GENERATE_FQDN", "%1: client did not send a FQDN or hostname; FQDN will be generated for the client",
     "DHCP4_HANDLE_SIGNAL_EXCEPTION", "An exception was thrown while handing signal: %1",
     "DHCP4_HOOKS_LIBS_RELOAD_FAIL", "reload of hooks libraries failed",
     "DHCP4_HOOK_BUFFER_RCVD_DROP", "received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag",

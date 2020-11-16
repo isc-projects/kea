@@ -155,7 +155,7 @@ has been lost and an automatic attempt to reconnect has failed.
 % DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
 An informational message indicating that the server is scheduling the next
 attempt to reconnect to its lease and/or host databases.  This occurs when the
-server has lost databse connectivity and is attempting to reconnect
+server has lost database connectivity and is attempting to reconnect
 automatically.
 
 % DHCP6_DB_RECONNECT_DISABLED database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2
@@ -164,8 +164,8 @@ lease or host database or both and that automatic reconnect is not enabled.
 
 % DHCP6_DB_RECONNECT_NO_DB_CTL unexpected error in database reconnect
 This is an error message indicating a programmatic error that should not
-occur. It will prohibit the server from attempting to reconnect to its
-databases if connectivy is lost, and the server will exit. This error
+occur. It prohibits the server from attempting to reconnect to its
+databases if connectivity is lost, and the server exits. This error
 should be reported.
 
 % DHCP6_DB_RECONNECT_RETRIES_EXHAUSTED maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!
@@ -208,7 +208,7 @@ includes the received FQDN.
 
 % DHCP6_DDNS_REMOVE_OLD_LEASE_FQDN %1: FQDN for a lease: %2 has changed. New values: hostname = %3, reverse mapping = %4, forward mapping = %5
 This debug message is logged during lease renewal when an old lease that is
-no longer being offered has a different FQDN than the renewing lesae. Thus
+no longer being offered has a different FQDN than the renewing lease. Thus
 the old DNS entries need to be removed.  The first argument includes the client
 and the transaction identification information. The second argument holds the
 details about the lease for which the FQDN information and/or mappings have
@@ -238,7 +238,7 @@ used to receive DHCPv6 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
 % DHCP6_DECLINE_FAIL %1: error on decline lease for address %2: %3
-This error message indicates that the software failed to deline a
+This error message indicates that the software failed to decline a
 lease from the lease database due to an error during a database
 operation. The first argument includes the client and the transaction
 identification information. The second argument holds the IPv6 address
@@ -685,7 +685,7 @@ message, the server successfully renewed a prefix lease.
 This is a normal behavior and indicates successful operation.
 The first argument includes the client and transaction identification
 information. The remaining arguments hold the allocated prefix,
-prefix length and and IAID.
+prefix length and IAID.
 
 % DHCP6_PROCESS_IA_NA_EXTEND %1: extending lease lifetime for IA_NA option with iaid=%2
 This message is logged when the server is starting to extend the lifetime

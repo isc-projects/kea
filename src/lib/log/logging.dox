@@ -158,7 +158,7 @@ an executable or library) are:
 
 <ol>
 <li>Create a message file.  This defines messages by an identification
-string and and text that explains the message in more detail.  Ideally the
+string and text that explains the message in more detail.  Ideally the
 file should have a file type of ".mes".</li>
 
 <li>Run it through the message compiler to produce the files for your

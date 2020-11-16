@@ -25,7 +25,7 @@ either case the error is unlikely to impair the application's ability to
 process requests but it should be reported for analysis.
 
 % DHCP_DDNS_NCR_RECV_NEXT_ERROR application could not initiate the next read following a request receive.
-This is a error message indicating that NameChangeRequest listener could not
+This is an error message indicating that NameChangeRequest listener could not
 start another read after receiving a request.  While possible, this is highly
 unlikely and is probably a programmatic error.  The application should recover
 on its own.
@@ -38,7 +38,7 @@ case the error is unlikely to impair the client's ability to send requests but
 it should be reported for analysis.
 
 % DHCP_DDNS_NCR_SEND_NEXT_ERROR DHCP-DDNS client could not initiate the next request send following send completion: %1
-This is a error message indicating that NameChangeRequest sender could not
+This is an error message indicating that NameChangeRequest sender could not
 start another send after completing the send of the previous request.  While
 possible, this is highly unlikely and is probably a programmatic error.  The
 application should recover on its own.
