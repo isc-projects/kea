@@ -748,7 +748,9 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     mutable_params = boost::const_pointer_cast<Element>(params);
     if (BaseNetworkParser::moveReservationMode(mutable_params)) {
         // @todo enable warning
-        // LOG_WARN(dhcpsrv_logger, DHCPSRV_DEPRECATED_RESERVATION_MODE);
+        if (false) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_DEPRECATED_RESERVATION_MODE);
+        }
     }
 
     // Parse parameters common to all Network derivations.

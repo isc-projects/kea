@@ -477,7 +477,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // Move from reservation mode to new reservations flags.
         if (BaseNetworkParser::moveReservationMode(mutable_cfg)) {
             // @todo enable warning
-            // LOG_WARN(dhcp6_logger, DHCP6_DEPRECATED_RESERVATION_MODE);
+            if (false) {
+                LOG_WARN(dhcp6_logger, DHCP6_DEPRECATED_RESERVATION_MODE);
+            }
         }
 
         // Set all default values if not specified by the user.
