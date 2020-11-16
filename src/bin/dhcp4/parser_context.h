@@ -84,7 +84,7 @@ public:
         /// This will parse the input as hooks-library.
         PARSER_HOOKS_LIBRARY,
 
-        /// This will parse the input as dhcp-ddns. (D2 client config)
+        /// This will parse the input as dhcp-ddns.
         PARSER_DHCP_DDNS,
 
         /// This will parse the input as config-control.
@@ -192,7 +192,7 @@ public:
     /// Check if a required parameter is present in the map at the top
     /// of the stack and raise an error when it is not.
     ///
-    /// @param name name of the parameter expected to be present
+    /// @param name name of the parameter to check
     /// @param open_loc location of the opening curly bracket
     /// @param close_loc location of the closing curly bracket
     /// @throw Dhcp4ParseError

@@ -39,7 +39,7 @@ ALTER TABLE dhcp6_shared_network
     ADD COLUMN reservations_in_subnet BOOL DEFAULT NULL,
     ADD COLUMN reservations_out_of_pool BOOL DEFAULT NULL;
 
-# Disable audit
+# Disable audit in this session
 SET @disable_audit = 1;
 
 # Translate reservation_mode to new flags.
@@ -141,7 +141,7 @@ ALTER TABLE dhcp4_shared_network DROP COLUMN reservation_mode;
 ALTER TABLE dhcp6_subnet DROP COLUMN reservation_mode;
 ALTER TABLE dhcp6_shared_network DROP COLUMN reservation_mode;
 
-# Enable audit
+# Enable audit in this session
 SET @disable_audit = 0;
 
 # Update the schema version number

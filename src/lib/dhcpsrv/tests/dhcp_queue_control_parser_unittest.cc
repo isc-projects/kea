@@ -48,7 +48,7 @@ DHCPQueueControlParserTest::TearDown() {
 }
 
 // Verifies that DHCPQueueControlParser handles
-// expected valid dhcp-queue-control content
+// expected valid dhcp-queue-control contet
 TEST_F(DHCPQueueControlParserTest, validContent) {
     struct Scenario {
         std::string description_;
@@ -153,8 +153,9 @@ TEST_F(DHCPQueueControlParserTest, invalidContent) {
         }
     };
 
-    // Iterate over the invalid scenarios and verify they throw exception.
+    // Iterate over the valid scenarios and verify they succeed.
     ConstElementPtr config_elems;
+    ConstElementPtr queue_control;
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
