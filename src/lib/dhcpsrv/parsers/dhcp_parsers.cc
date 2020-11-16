@@ -1243,10 +1243,8 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     // Move from reservation mode to new reservations flags.
     ElementPtr mutable_params;
     mutable_params = boost::const_pointer_cast<Element>(params);
-    if (BaseNetworkParser::moveReservationMode(mutable_params)) {
-        // @todo enable warning
-        // LOG_WARN(dhcpsrv_logger, DHCPSRV_DEPRECATED_RESERVATION_MODE);
-    }
+    // @todo add warning
+    BaseNetworkParser::moveReservationMode(mutable_params);
 
     // Parse parameters common to all Network derivations.
     NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet_);
