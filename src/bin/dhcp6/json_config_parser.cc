@@ -475,12 +475,8 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         srv_config->moveDdnsParams(mutable_cfg);
 
         // Move from reservation mode to new reservations flags.
-        if (BaseNetworkParser::moveReservationMode(mutable_cfg)) {
-            // @todo enable warning
-            if (false) {
-                LOG_WARN(dhcp6_logger, DHCP6_DEPRECATED_RESERVATION_MODE);
-            }
-        }
+        // @todo add warning
+        BaseNetworkParser::moveReservationMode(mutable_cfg);
 
         // Set all default values if not specified by the user.
         SimpleParser6::setAllDefaults(mutable_cfg);
