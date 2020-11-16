@@ -535,8 +535,7 @@ isAllocated(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const {
 ConstHostPtr
 AllocEngine::ClientContext6::currentHost() const {
     Subnet6Ptr subnet = host_subnet_ ? host_subnet_ : subnet_;
-    if (subnet && (subnet->getReservationsInSubnet() ||
-        subnet->getReservationsOutOfPool())) {
+    if (subnet && subnet->getReservationsInSubnet()) {
         auto host = hosts_.find(subnet->getID());
         if (host != hosts_.cend()) {
             return (host->second);
@@ -604,8 +603,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
             ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
 
             // If we had only to fetch global reservations it is done.
-            if (!subnet->getReservationsInSubnet() &&
-                !subnet->getReservationsOutOfPool()) {
+            if (!subnet->getReservationsInSubnet()) {
                 return;
             }
         }
@@ -644,7 +642,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
         // Only makes sense to get reservations if the client has access
         // to the class and host reservations are enabled for this subnet.
         if (subnet->clientSupported(ctx.query_->getClasses()) &&
-            (subnet->getReservationsInSubnet() || subnet->getReservationsOutOfPool())) {
+            subnet->getReservationsInSubnet()) {
             // Iterate over configured identifiers in the order of preference
             // and try to use each of them to search for the reservations.
             for (auto id_pair : ctx.host_identifiers_) {
@@ -1483,8 +1481,7 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
     // If host reservation is disabled (so there are no reserved leases)
     // use the simplified version.
     if (!ctx.subnet_->getReservationsGlobal() &&
-        !ctx.subnet_->getReservationsInSubnet() &&
-        !ctx.subnet_->getReservationsOutOfPool()) {
+        !ctx.subnet_->getReservationsInSubnet()) {
         removeNonmatchingReservedNoHostLeases6(ctx, existing_leases);
         return;
     }
@@ -3046,8 +3043,7 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
                     !(host->second->getIPv4Reservation().isV4Zero()));
             // if we want global + other modes we would need to
             // return only if true, else continue
-            if (!subnet->getReservationsInSubnet() &&
-                !subnet->getReservationsOutOfPool()) {
+            if (!subnet->getReservationsInSubnet()) {
                 return (found);
             } else {
                 if (found) {
@@ -3243,8 +3239,7 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
 
 ConstHostPtr
 AllocEngine::ClientContext4::currentHost() const {
-    if (subnet_ && (subnet_->getReservationsInSubnet() ||
-        subnet_->getReservationsOutOfPool())) {
+    if (subnet_ && subnet_->getReservationsInSubnet()) {
         auto host = hosts_.find(subnet_->getID());
         if (host != hosts_.cend()) {
             return (host->second);
@@ -3349,8 +3344,7 @@ AllocEngine::findReservation(ClientContext4& ctx) {
             ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
 
             // If we had only to fetch global reservations it is done.
-            if (!subnet->getReservationsInSubnet() &&
-                !subnet->getReservationsOutOfPool()) {
+            if (!subnet->getReservationsInSubnet()) {
                 return;
             }
         }
@@ -3391,7 +3385,7 @@ AllocEngine::findReservation(ClientContext4& ctx) {
         // Only makes sense to get reservations if the client has access
         // to the class.
         if (subnet->clientSupported(ctx.query_->getClasses()) &&
-            (subnet->getReservationsInSubnet() || subnet->getReservationsOutOfPool())) {
+            subnet->getReservationsInSubnet()) {
             // Iterate over configured identifiers in the order of preference
             // and try to use each of them to search for the reservations.
             BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {

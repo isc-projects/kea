@@ -685,8 +685,7 @@ TEST_F(NetworkReservationTest, move) {
         "}";
     expected = "{"
         " \"reservations-global\": false,"
-        " \"reservations-in-subnet\": false,"
-        " \"reservations-out-of-pool\": false"
+        " \"reservations-in-subnet\": false"
         " }";
     TestMove(config, expected);
 
@@ -712,8 +711,7 @@ TEST_F(NetworkReservationTest, move) {
         "}";
     expected = "{"
         " \"reservations-global\": true,"
-        " \"reservations-in-subnet\": false,"
-        " \"reservations-out-of-pool\": false"
+        " \"reservations-in-subnet\": false"
         " }";
     TestMove(config, expected);
 

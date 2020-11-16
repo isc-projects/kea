@@ -375,7 +375,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
         // Move from reservation mode to new reservations flags.
         if (BaseNetworkParser::moveReservationMode(mutable_cfg)) {
-            LOG_WARN(dhcp4_logger, DHCP4_DEPRECATED_RESERVATION_MODE);
+            // @todo enable warning
+            // LOG_WARN(dhcp4_logger, DHCP4_DEPRECATED_RESERVATION_MODE);
         }
 
         // Set all default values if not specified by the user.

@@ -32,7 +32,6 @@ BaseNetworkParser::moveReservationMode(ElementPtr config) {
     if ((hr_mode == "disabled") || (hr_mode == "off")) {
         config->set("reservations-global", Element::create(false));
         config->set("reservations-in-subnet", Element::create(false));
-        config->set("reservations-out-of-pool", Element::create(false));
     } else if (hr_mode == "out-of-pool") {
         config->set("reservations-global", Element::create(false));
         config->set("reservations-in-subnet", Element::create(true));
@@ -40,7 +39,6 @@ BaseNetworkParser::moveReservationMode(ElementPtr config) {
     } else if (hr_mode == "global") {
         config->set("reservations-global", Element::create(true));
         config->set("reservations-in-subnet", Element::create(false));
-        config->set("reservations-out-of-pool", Element::create(false));
     } else if (hr_mode == "all") {
         config->set("reservations-global", Element::create(false));
         config->set("reservations-in-subnet", Element::create(true));

@@ -481,7 +481,6 @@ const char* DORA_CONFIGS[] = {
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"reservations-global\": false,"
         "    \"reservations-in-subnet\": false,"
-        "    \"reservations-out-of-pool\": false,"
         "    \"reservations\": [ "
         "       {"
         "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","

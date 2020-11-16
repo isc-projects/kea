@@ -49,8 +49,7 @@ SET @disable_audit = 1;
 # 3 is ALL
 UPDATE dhcp4_subnet
     SET reservations_global = FALSE,
-        reservations_in_subnet = FALSE,
-        reservations_out_of_pool = FALSE
+        reservations_in_subnet = FALSE
     WHERE reservation_mode = 0;
 
 UPDATE dhcp4_subnet
@@ -61,8 +60,7 @@ UPDATE dhcp4_subnet
 
 UPDATE dhcp4_subnet
     SET reservations_global = TRUE,
-        reservations_in_subnet = FALSE,
-        reservations_out_of_pool = FALSE
+        reservations_in_subnet = FALSE
     WHERE reservation_mode = 2;
 
 UPDATE dhcp4_subnet
@@ -73,8 +71,7 @@ UPDATE dhcp4_subnet
 
 UPDATE dhcp4_shared_network
     SET reservations_global = FALSE,
-        reservations_in_subnet = FALSE,
-        reservations_out_of_pool = FALSE
+        reservations_in_subnet = FALSE
     WHERE reservation_mode = 0;
 
 UPDATE dhcp4_shared_network
@@ -85,8 +82,7 @@ UPDATE dhcp4_shared_network
 
 UPDATE dhcp4_shared_network
     SET reservations_global = TRUE,
-        reservations_in_subnet = FALSE,
-        reservations_out_of_pool = FALSE
+        reservations_in_subnet = FALSE
     WHERE reservation_mode = 2;
 
 UPDATE dhcp4_shared_network
@@ -97,8 +93,7 @@ UPDATE dhcp4_shared_network
 
 UPDATE dhcp6_subnet
     SET reservations_global = FALSE,
-        reservations_in_subnet = FALSE,
-        reservations_out_of_pool = FALSE
+        reservations_in_subnet = FALSE
     WHERE reservation_mode = 0;
 
 UPDATE dhcp6_subnet
@@ -109,8 +104,7 @@ UPDATE dhcp6_subnet
 
 UPDATE dhcp6_subnet
     SET reservations_global = TRUE,
-        reservations_in_subnet = FALSE,
-        reservations_out_of_pool = FALSE
+        reservations_in_subnet = FALSE
     WHERE reservation_mode = 2;
 
 UPDATE dhcp6_subnet
@@ -121,8 +115,7 @@ UPDATE dhcp6_subnet
 
 UPDATE dhcp6_shared_network
     SET reservations_global = FALSE,
-        reservations_in_subnet = FALSE,
-        reservations_out_of_pool = FALSE
+        reservations_in_subnet = FALSE
     WHERE reservation_mode = 0;
 
 UPDATE dhcp6_shared_network
@@ -133,8 +126,7 @@ UPDATE dhcp6_shared_network
 
 UPDATE dhcp6_shared_network
     SET reservations_global = TRUE,
-        reservations_in_subnet = FALSE,
-        reservations_out_of_pool = FALSE
+        reservations_in_subnet = FALSE
     WHERE reservation_mode = 2;
 
 UPDATE dhcp6_shared_network

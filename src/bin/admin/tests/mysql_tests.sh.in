@@ -1468,64 +1468,64 @@ mysql_reservation_mode_upgrade_test() {
     # Upgrade to schema 9.5.
     mysql_upgrade_schema_to_version 9.5
 
-    # Test DISABLED (0) -> false, false, false
-    qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool = false and name = 'test0';"
+    # Test DISABLED (0) -> false, false, null
+    qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test0';"
     run_statement "#4_shared_disabled" "$qry" 1
 
     # Test OUT_OF_POOL (1) -> false, true, true
     qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and name = 'test1';"
     run_statement "#4_shared_out_of_pool" "$qry" 1
 
-    # Test GLOBAL (2) -> true, false, false
-    qry="select count(id) from dhcp4_shared_network where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool = false and name = 'test2';"
+    # Test GLOBAL (2) -> true, false, null
+    qry="select count(id) from dhcp4_shared_network where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test2';"
     run_statement "#4_shared_global" "$qry" 1
 
     # Test ALL (3) -> false, true, false
     qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and name = 'test3';"
     run_statement "#4_shared_all" "$qry" 1
 
-    # Test DISABLED (0) -> false, false, false
-    qry="select count(subnet_id) from dhcp4_subnet where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool = false and subnet_prefix = '192.0.0.0/24'"
+    # Test DISABLED (0) -> false, false, null
+    qry="select count(subnet_id) from dhcp4_subnet where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool is null and subnet_prefix = '192.0.0.0/24'"
     run_statement "#4_subnet_disabled" "$qry" 1
 
     # Test OUT_OF_POOL (1) -> false, true, true
     qry="select count(subnet_id) from dhcp4_subnet where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and subnet_prefix = '192.0.1.0/24'"
     run_statement "#4_subnet_out_of_pool" "$qry" 1
 
-    # Test GLOBAL (2) -> true, false, false
-    qry="select count(subnet_id) from dhcp4_subnet where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool = false and subnet_prefix = '192.0.2.0/24'"
+    # Test GLOBAL (2) -> true, false, null
+    qry="select count(subnet_id) from dhcp4_subnet where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool is null and subnet_prefix = '192.0.2.0/24'"
     run_statement "#4_subnet_global" "$qry" 1
 
     # Test ALL (3) -> false, true, false
     qry="select count(subnet_id) from dhcp4_subnet where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and subnet_prefix = '192.0.3.0/24'"
     run_statement "#4_subnet_all" "$qry" 1
 
-    # Test DISABLED (0) -> false, false, false
-    qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool = false and name = 'test0';"
+    # Test DISABLED (0) -> false, false, null
+    qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test0';"
     run_statement "#6_shared_disabled" "$qry" 1
 
     # Test OUT_OF_POOL (1) -> false, true, true
     qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and name = 'test1';"
     run_statement "#6_shared_out_of_pool" "$qry" 1
 
-    # Test GLOBAL (2) -> true, false, false
-    qry="select count(id) from dhcp6_shared_network where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool = false and name = 'test2';"
+    # Test GLOBAL (2) -> true, false, null
+    qry="select count(id) from dhcp6_shared_network where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test2';"
     run_statement "#6_shared_global" "$qry" 1
 
     # Test ALL (3) -> false, true, false
     qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and name = 'test3';"
     run_statement "#6_shared_all" "$qry" 1
 
-    # Test DISABLED (0) -> false, false, false
-    qry="select count(subnet_id) from dhcp6_subnet where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool = false and subnet_prefix = '2001:db8::/64'"
+    # Test DISABLED (0) -> false, false, null
+    qry="select count(subnet_id) from dhcp6_subnet where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool is null and subnet_prefix = '2001:db8::/64'"
     run_statement "#6_subnet_disabled" "$qry" 1
 
     # Test OUT_OF_POOL (1) -> false, true, true
     qry="select count(subnet_id) from dhcp6_subnet where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and subnet_prefix = '2001:db8:1::/64'"
     run_statement "#6_subnet_out_of_pool" "$qry" 1
 
-    # Test GLOBAL (2) -> true, false, false
-    qry="select count(subnet_id) from dhcp6_subnet where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool = false and subnet_prefix = '2001:db8:2::/64'"
+    # Test GLOBAL (2) -> true, false, null
+    qry="select count(subnet_id) from dhcp6_subnet where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool is null and subnet_prefix = '2001:db8:2::/64'"
     run_statement "#6_subnet_global" "$qry" 1
 
     # Test ALL (3) -> false, true, false

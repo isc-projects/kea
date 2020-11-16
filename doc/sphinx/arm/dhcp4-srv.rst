@@ -4662,7 +4662,6 @@ The correspondence of old values are:
 
        "reservations-global": false,
        "reservations-in-subnet": false,
-       "reservations-out-of-pool": false,
        ...
    }
 
@@ -4735,19 +4734,20 @@ configuration, as ``out-of-pool`` are also ``in-subnet``.
    "Dhcp4": {
 
        "reservations-global": true,
-       // "reservations-in-subnet": false, <-config error
+       // "reservations-in-subnet": false,
        "reservations-out-of-pool": true,
        ...
    }
 
 
-For this reason, the ``in-subnet`` can be omitted when ``out-of-pool`` is set.
+For this reason, the ``in-subnet`` can not be omitted when ``out-of-pool`` is set.
 
 ::
 
    "Dhcp4": {
 
        "reservations-global": true,
+       "reservations-in-subnet": true,
        "reservations-out-of-pool": true,
        ...
    }
@@ -4765,7 +4765,6 @@ An example configuration that disables reservations looks as follows:
            "subnet": "192.0.2.0/24",
            "reservations-global": false,
            "reservations-in-subnet": false,
-           "reservations-out-of-pool": false,
            ...
        }
        ]
@@ -4780,7 +4779,6 @@ An example configuration using global reservations is shown below:
 
        "reservations-global": true,
        "reservations-in-subnet": false,
-       "reservations-out-of-pool": false,
        "reservations": [
           {
            "hw-address": "01:bb:cc:dd:ee:ff",
