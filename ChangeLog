@@ -1,3 +1,14 @@
+1828.	[bug]		andrei
+	Fix trivial logic error in handling the "lease4-update" command
+	manifesting itself on v4 if multi-threading is enabled.
+	Notable affected environment is a HA with the
+	"send-lease-updates" configuration setting explicitly set to
+	true. Prior to this fix, lease updates would not go through to
+	other HA nodes, even though some log lines would say they would.
+	A simple workaround prior to this fix is to disable
+	multi-threading.
+	(Gitlab #1542)
+
 1827.	[build]		andrei
 	Add `tools/add-config-h.sh` script that can add
 	`#include <config.h>` lines to non-generated source files that
