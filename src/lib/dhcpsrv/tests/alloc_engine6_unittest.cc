@@ -4425,7 +4425,7 @@ TEST_F(AllocEngine6Test, solicitNoCache) {
     EXPECT_EQ(128, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was not updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -4469,8 +4469,8 @@ TEST_F(AllocEngine6Test, requestCacheThreshold6) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->remaining_valid_lft_);
-    EXPECT_EQ(300 - age, lease->remaining_preferred_lft_);
+    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -4521,8 +4521,8 @@ TEST_F(AllocEngine6Test, renewCacheThreshold6) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->remaining_valid_lft_);
-    EXPECT_EQ(300 - age, lease->remaining_preferred_lft_);
+    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -4570,8 +4570,8 @@ TEST_F(AllocEngine6Test, requestCacheMaxAge6) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->remaining_valid_lft_);
-    EXPECT_EQ(300 - age, lease->remaining_preferred_lft_);
+    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -4622,8 +4622,8 @@ TEST_F(AllocEngine6Test, renewCacheMaxAge6) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->remaining_valid_lft_);
-    EXPECT_EQ(300 - age, lease->remaining_preferred_lft_);
+    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -4675,8 +4675,8 @@ TEST_F(AllocEngine6Test, requestCacheBoth6) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->remaining_valid_lft_);
-    EXPECT_EQ(300 - age, lease->remaining_preferred_lft_);
+    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -4731,8 +4731,8 @@ TEST_F(AllocEngine6Test, renewCacheBoth6) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->remaining_valid_lft_);
-    EXPECT_EQ(300 - age, lease->remaining_preferred_lft_);
+    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -4779,7 +4779,7 @@ TEST_F(AllocEngine6Test, requestCacheBadThreshold6) {
     EXPECT_EQ(128, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -4825,7 +4825,7 @@ TEST_F(AllocEngine6Test, renewCacheBadThreshold6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -4868,7 +4868,7 @@ TEST_F(AllocEngine6Test, requestCacheBadMaxAge6) {
     EXPECT_EQ(128, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -4914,7 +4914,7 @@ TEST_F(AllocEngine6Test, renewCacheBadMaxAge6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -4958,7 +4958,7 @@ TEST_F(AllocEngine6Test, renewCacheReducedValid6) {
     EXPECT_EQ(128, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5005,7 +5005,7 @@ TEST_F(AllocEngine6Test, renewCacheReducedPreferred6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5044,7 +5044,7 @@ TEST_F(AllocEngine6Test, requestCacheFwdDDNS6) {
     EXPECT_EQ(128, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5086,7 +5086,7 @@ TEST_F(AllocEngine6Test, renewCacheFwdDDNS6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5125,7 +5125,7 @@ TEST_F(AllocEngine6Test, requestCacheRevDDNS6) {
     EXPECT_EQ(128, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5167,7 +5167,7 @@ TEST_F(AllocEngine6Test, renewCacheRevDDNS6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5207,7 +5207,7 @@ TEST_F(AllocEngine6Test, requestCacheHostname6) {
     EXPECT_EQ(128, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
     EXPECT_EQ("bar", lease->hostname_);
 
     // Check the lease was updated in the database.
@@ -5251,7 +5251,7 @@ TEST_F(AllocEngine6Test, renewCacheHostname6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
     EXPECT_EQ("bar", lease->hostname_);
 
     // Check the lease was updated in the database.

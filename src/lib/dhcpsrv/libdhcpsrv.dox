@@ -278,7 +278,7 @@ The allocation engine provides a cache-like feature: when a suitable
 lease already exists for a client if its age is small enough compared
 to the valid lifetime (threshold parameter) and below a configured maximum
 (max age parameter) the lease can be reused. A reusable lease is marked
-by a not zero remaining_valid_lft_ value.
+by a not zero reuseable_valid_lft_ value.
 
 @section timerManager Timer Manager
 

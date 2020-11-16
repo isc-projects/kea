@@ -1874,27 +1874,27 @@ private:
 
     /// @brief Try to reuse an already allocated lease.
     ///
-    /// This function computes and sets when acceptable the remaining
+    /// This function computes and sets when acceptable the reusable
     /// valid lifetime of an already allocated lease.
     /// This uses the cache-threshold and cache-max-age parameters.
     ///
-    /// A not zero value for the remaining valid lifetime means the
+    /// A not zero value for the reusable valid lifetime means the
     /// lease can reuse i.e.:
     ///  - the lease is not updated in the lease database.
     ///  - the previous value of the lease can be returned to the client.
     ///
     /// @param [in,out] lease A pointer to the lease to be updated.
     /// @param subnet A pointer to the lease subnet.
-    void setLeaseRemainingLife(const Lease4Ptr& lease,
-                               const ClientContext4& ctx) const;
+    void setLeaseReusable(const Lease4Ptr& lease,
+                          const ClientContext4& ctx) const;
 
     /// @brief Try to reuse an already allocated lease.
     ///
-    /// This function computes and sets when acceptable the remaining
+    /// This function computes and sets when acceptable the reusable
     /// valid lifetime of an already allocated lease.
     /// This uses the cache-threshold and cache-max-age parameters.
     ///
-    /// A not zero value for the remaining valid lifetime means the
+    /// A not zero value for the reusable valid lifetime means the
     /// lease can reuse i.e.:
     ///  - the lease is not updated in the lease database.
     ///  - the previous value of the lease can be returned to the client.
@@ -1902,9 +1902,9 @@ private:
     /// @param [in,out] lease A pointer to the lease to be updated.
     /// @param current_preferred_lft Current preferred lease lifetime.
     /// @param subnet A pointer to the lease subnet.
-    void setLeaseRemainingLife(const Lease6Ptr& lease,
-                               uint32_t current_preferred_lft,
-                               const ClientContext6& ctx) const;
+    void setLeaseReusable(const Lease6Ptr& lease,
+                          uint32_t current_preferred_lft,
+                          const ClientContext6& ctx) const;
 
 private:
 

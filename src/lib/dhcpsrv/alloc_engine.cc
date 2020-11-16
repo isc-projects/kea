@@ -1750,7 +1750,7 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     }
     // Use subnet's valid triplet to conditionally determine
     // valid lifetime based on hint
-    expired->remaining_valid_lft_ = 0;
+    expired->reuseable_valid_lft_ = 0;
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getValid()) {
         uint32_t valid = ctx.currentIA().hints_[0].getValid();
@@ -2150,7 +2150,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     if (lease->preferred_lft_ < current_preferred_lft) {
         changed = true;
     }
-    lease->remaining_valid_lft_ = 0;
+    lease->reuseable_valid_lft_ = 0;
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getValid()) {
         uint32_t valid = ctx.currentIA().hints_[0].getValid();
@@ -2254,13 +2254,13 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 
         // Try to reuse the lease.
         if (!changed) {
-            setLeaseRemainingLife(lease, current_preferred_lft, ctx);
+            setLeaseReusable(lease, current_preferred_lft, ctx);
         }
 
 
         // Now that the lease has been reclaimed, we can go ahead and update it
         // in the lease database.
-        if (lease->remaining_valid_lft_ == 0) {
+        if (lease->reuseable_valid_lft_ == 0) {
             LeaseMgrFactory::instance().updateLease6(lease);
         }
 
@@ -2307,7 +2307,7 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
             continue;
         }
 
-        lease->remaining_valid_lft_ = 0;
+        lease->reuseable_valid_lft_ = 0;
         lease->fqdn_fwd_ = ctx.fwd_dns_update_;
         lease->fqdn_rev_ = ctx.rev_dns_update_;
         lease->hostname_ = ctx.hostname_;
@@ -2332,9 +2332,9 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
             lease->cltt_ = time(NULL);
             if (!fqdn_changed) {
                 uint32_t current_preferred_lft = lease->preferred_lft_;
-                setLeaseRemainingLife(lease, current_preferred_lft, ctx);
+                setLeaseReusable(lease, current_preferred_lft, ctx);
             }
-            if (lease->remaining_valid_lft_ == 0) {
+            if (lease->reuseable_valid_lft_ == 0) {
                 ctx.currentIA().changed_leases_.push_back(*lease_it);
                 LeaseMgrFactory::instance().updateLease6(lease);
             }
@@ -2987,7 +2987,7 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
     } else if (lease_update_fun) {
         // Clear FQDN information as we have already sent the
         // name change request to remove the DNS record.
-        lease->remaining_valid_lft_ = 0;
+        lease->reuseable_valid_lft_ = 0;
         lease->hostname_.clear();
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = false;
@@ -3935,9 +3935,9 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
 
     // Update the lease with the information from the context.
     // If there was no significant changes, try reuse.
-    lease->remaining_valid_lft_ = 0;
+    lease->reuseable_valid_lft_ = 0;
     if (!updateLease4Information(lease, ctx)) {
-        setLeaseRemainingLife(lease, ctx);
+        setLeaseReusable(lease, ctx);
     }
 
     if (!ctx.fake_allocation_) {
@@ -4000,7 +4000,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         /// DROP status does not make sense here.
     }
 
-    if (!ctx.fake_allocation_ && !skip && (lease->remaining_valid_lft_ == 0)) {
+    if (!ctx.fake_allocation_ && !skip && (lease->reuseable_valid_lft_ == 0)) {
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease4(lease);
 
@@ -4047,7 +4047,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         expired->state_ = Lease::STATE_DEFAULT;
     }
 
-    expired->remaining_valid_lft_ = 0;
+    expired->reuseable_valid_lft_ = 0;
     static_cast<void>(updateLease4Information(expired, ctx));
 
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
@@ -4477,10 +4477,10 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
 }
 
 void
-AllocEngine::setLeaseRemainingLife(const Lease4Ptr& lease,
-                                   const ClientContext4& ctx) const {
+AllocEngine::setLeaseReusable(const Lease4Ptr& lease,
+                              const ClientContext4& ctx) const {
     // Sanity.
-    lease->remaining_valid_lft_ = 0;
+    lease->reuseable_valid_lft_ = 0;
     const Subnet4Ptr& subnet = ctx.subnet_;
     if (!subnet) {
         return;
@@ -4491,7 +4491,7 @@ AllocEngine::setLeaseRemainingLife(const Lease4Ptr& lease,
 
     // Always reuse infinite lifetime leases.
     if (lease->valid_lft_ == Lease::INFINITY_LFT) {
-        lease->remaining_valid_lft_ = Lease::INFINITY_LFT;
+        lease->reuseable_valid_lft_ = Lease::INFINITY_LFT;
         return;
     }
 
@@ -4533,16 +4533,16 @@ AllocEngine::setLeaseRemainingLife(const Lease4Ptr& lease,
     }
 
     // Seems to be reusable.
-    lease->remaining_valid_lft_ = lease->current_valid_lft_ - age;
+    lease->reuseable_valid_lft_ = lease->current_valid_lft_ - age;
 }
 
 void
-AllocEngine::setLeaseRemainingLife(const Lease6Ptr& lease,
-                                   uint32_t current_preferred_lft,
-                                   const ClientContext6& ctx) const {
+AllocEngine::setLeaseReusable(const Lease6Ptr& lease,
+                              uint32_t current_preferred_lft,
+                              const ClientContext6& ctx) const {
     // Sanity.
-    lease->remaining_valid_lft_ = 0;
-    lease->remaining_preferred_lft_ = 0;
+    lease->reuseable_valid_lft_ = 0;
+    lease->reuseable_preferred_lft_ = 0;
     const Subnet6Ptr& subnet = ctx.subnet_;
     if (!subnet) {
         return;
@@ -4592,17 +4592,17 @@ AllocEngine::setLeaseRemainingLife(const Lease6Ptr& lease,
     if ((current_preferred_lft == Lease::INFINITY_LFT) ||
         (current_preferred_lft == 0)) {
         // Keep these values.
-        lease->remaining_preferred_lft_ = current_preferred_lft;
+        lease->reuseable_preferred_lft_ = current_preferred_lft;
     } else if (current_preferred_lft > age) {
-        lease->remaining_preferred_lft_ = current_preferred_lft - age;
+        lease->reuseable_preferred_lft_ = current_preferred_lft - age;
     } else {
         // Can be a misconfiguration so stay safe...
         return;
     }
     if (lease->current_valid_lft_ == Lease::INFINITY_LFT) {
-        lease->remaining_valid_lft_ = Lease::INFINITY_LFT;
+        lease->reuseable_valid_lft_ = Lease::INFINITY_LFT;
     } else {
-        lease->remaining_valid_lft_ = lease->current_valid_lft_ - age;
+        lease->reuseable_valid_lft_ = lease->current_valid_lft_ - age;
     }
 }
 

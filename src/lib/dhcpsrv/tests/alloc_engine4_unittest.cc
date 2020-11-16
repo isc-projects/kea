@@ -3871,7 +3871,7 @@ TEST_F(AllocEngine4Test, discoverCacheThreshold4) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(500 - age, lease->remaining_valid_lft_);
+    EXPECT_EQ(500 - age, lease->reuseable_valid_lft_);
 
     // Check other lease parameters.
     EXPECT_EQ(lease->subnet_id_, subnet_->getID());
@@ -3918,7 +3918,7 @@ TEST_F(AllocEngine4Test, requestCacheThreshold4) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(500 - age, lease->remaining_valid_lft_);
+    EXPECT_EQ(500 - age, lease->reuseable_valid_lft_);
 
     // Check other lease parameters.
     EXPECT_EQ(lease->subnet_id_, subnet_->getID());
@@ -3972,7 +3972,7 @@ TEST_F(AllocEngine4Test, discoverCacheMaxAge4) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(500 - age, lease->remaining_valid_lft_);
+    EXPECT_EQ(500 - age, lease->reuseable_valid_lft_);
 
     // Check other lease parameters.
     EXPECT_EQ(lease->subnet_id_, subnet_->getID());
@@ -4022,7 +4022,7 @@ TEST_F(AllocEngine4Test, requestCacheBoth4) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(500 - age, lease->remaining_valid_lft_);
+    EXPECT_EQ(500 - age, lease->reuseable_valid_lft_);
 
     // Check other lease parameters.
     EXPECT_EQ(lease->subnet_id_, subnet_->getID());
@@ -4070,7 +4070,7 @@ TEST_F(AllocEngine4Test, discoverCacheBadThreshold4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 }
 
 // This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
@@ -4107,7 +4107,7 @@ TEST_F(AllocEngine4Test, requestCacheBadMaxAge4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
@@ -4148,7 +4148,7 @@ TEST_F(AllocEngine4Test, discoverCacheReducedValid4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 }
 
 // This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
@@ -4182,7 +4182,7 @@ TEST_F(AllocEngine4Test, requestCacheFwdDDNS4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
@@ -4226,7 +4226,7 @@ TEST_F(AllocEngine4Test, discoverCacheRevDDNS4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
 }
 
 // This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
@@ -4261,7 +4261,7 @@ TEST_F(AllocEngine4Test, requestCacheHostname4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->remaining_valid_lft_);
+    EXPECT_EQ(0, lease->reuseable_valid_lft_);
     EXPECT_EQ("bar", lease->hostname_);
 
     // Check the lease was updated in the database.

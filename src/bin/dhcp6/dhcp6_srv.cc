@@ -1005,7 +1005,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         Lease6CollectionPtr new_leases(new Lease6Collection());
         if (!ctx.new_leases_.empty()) {
             for (auto new_lease : ctx.new_leases_) {
-                if (new_lease->remaining_valid_lft_ == 0) {
+                if (new_lease->reuseable_valid_lft_ == 0) {
                     new_leases->push_back(new_lease);
                 }
             }
@@ -2065,15 +2065,15 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
                 .arg(ia->getIAID());
-        } else if (lease->remaining_valid_lft_ == 0) {
+        } else if (lease->reuseable_valid_lft_ == 0) {
             LOG_INFO(lease6_logger, DHCP6_LEASE_ALLOC)
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
                 .arg(ia->getIAID())
                 .arg(Lease::lifetimeToText(lease->valid_lft_));
         } else {
-            lease->valid_lft_ = lease->remaining_valid_lft_;
-            lease->preferred_lft_ = lease->remaining_preferred_lft_;
+            lease->valid_lft_ = lease->reuseable_valid_lft_;
+            lease->preferred_lft_ = lease->reuseable_preferred_lft_;
             LOG_INFO(lease6_logger, DHCP6_LEASE_REUSE)
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
@@ -2189,7 +2189,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
                     .arg((*l)->addr_.toText())
                     .arg(static_cast<int>((*l)->prefixlen_))
                     .arg(ia->getIAID());
-            } else if ((*l)->remaining_valid_lft_ == 0) {
+            } else if ((*l)->reuseable_valid_lft_ == 0) {
                 LOG_INFO(lease6_logger, DHCP6_PD_LEASE_ALLOC)
                     .arg(query->getLabel())
                     .arg((*l)->addr_.toText())
@@ -2197,8 +2197,8 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
                     .arg(ia->getIAID())
                     .arg(Lease::lifetimeToText((*l)->valid_lft_));
             } else {
-                (*l)->valid_lft_ = (*l)->remaining_valid_lft_;
-                (*l)->preferred_lft_ = (*l)->remaining_preferred_lft_;
+                (*l)->valid_lft_ = (*l)->reuseable_valid_lft_;
+                (*l)->preferred_lft_ = (*l)->reuseable_preferred_lft_;
                 LOG_INFO(lease6_logger, DHCP6_PD_LEASE_REUSE)
                     .arg(query->getLabel())
                     .arg((*l)->addr_.toText())
@@ -2345,14 +2345,14 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
     // For all leases we have now, add the IAADDR with non-zero lifetimes.
     for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
-        if ((*l)->remaining_valid_lft_ == 0) {
+        if ((*l)->reuseable_valid_lft_ == 0) {
             LOG_INFO(lease6_logger, DHCP6_LEASE_RENEW)
                 .arg(query->getLabel())
                 .arg((*l)->addr_.toText())
                 .arg(ia->getIAID());
         } else {
-            (*l)->valid_lft_ = (*l)->remaining_valid_lft_;
-            (*l)->preferred_lft_ = (*l)->remaining_preferred_lft_;
+            (*l)->valid_lft_ = (*l)->reuseable_valid_lft_;
+            (*l)->preferred_lft_ = (*l)->reuseable_preferred_lft_;
             LOG_INFO(lease6_logger, DHCP6_LEASE_REUSE)
                 .arg(query->getLabel())
                 .arg((*l)->addr_.toText())
@@ -2533,15 +2533,15 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     uint32_t min_preferred_lft = std::numeric_limits<uint32_t>::max();
 
     for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
-        if ((*l)->remaining_valid_lft_ == 0) {
+        if ((*l)->reuseable_valid_lft_ == 0) {
             LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
                 .arg(query->getLabel())
                 .arg((*l)->addr_.toText())
                 .arg(static_cast<int>((*l)->prefixlen_))
                 .arg(ia->getIAID());
         } else {
-            (*l)->valid_lft_ = (*l)->remaining_valid_lft_;
-            (*l)->preferred_lft_ = (*l)->remaining_preferred_lft_;
+            (*l)->valid_lft_ = (*l)->reuseable_valid_lft_;
+            (*l)->preferred_lft_ = (*l)->reuseable_preferred_lft_;
             LOG_INFO(lease6_logger, DHCP6_PD_LEASE_REUSE)
                 .arg(query->getLabel())
                 .arg((*l)->addr_.toText())
@@ -4013,7 +4013,7 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer,
             }
             if (lease) {
                 lease->hostname_ = generated_name;
-                lease->remaining_valid_lft_ = 0;
+                lease->reuseable_valid_lft_ = 0;
                 LeaseMgrFactory::instance().updateLease6(lease);
 
             } else {
@@ -4336,7 +4336,7 @@ Dhcpv6Srv::checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
             (*l)->hostname_ = ctx.hostname_;
             (*l)->fqdn_fwd_ = ctx.fwd_dns_update_;
             (*l)->fqdn_rev_ = ctx.rev_dns_update_;
-            (*l)->remaining_valid_lft_ = 0;
+            (*l)->reuseable_valid_lft_ = 0;
             LeaseMgrFactory::instance().updateLease6(*l);
         }
     }

@@ -1354,7 +1354,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
         callout_handle->setArgument("query4", query);
 
         Lease4CollectionPtr new_leases(new Lease4Collection());
-        if (ctx->new_lease_ && (ctx->new_lease_->remaining_valid_lft_ == 0)) {
+        if (ctx->new_lease_ && (ctx->new_lease_->reuseable_valid_lft_ == 0)) {
             new_leases->push_back(ctx->new_lease_);
         }
         callout_handle->setArgument("leases4", new_leases);
@@ -2509,8 +2509,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         postAllocateNameUpdate(ctx, lease, query, resp, client_name_changed);
 
         // Reuse the lease if possible.
-        if (lease->remaining_valid_lft_ > 0) {
-            lease->valid_lft_ = lease->remaining_valid_lft_;
+        if (lease->reuseable_valid_lft_ > 0) {
+            lease->valid_lft_ = lease->reuseable_valid_lft_;
             LOG_INFO(lease4_logger, DHCP4_LEASE_REUSE)
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
@@ -2602,7 +2602,7 @@ Dhcpv4Srv::postAllocateNameUpdate(const AllocEngine::ClientContext4Ptr& ctx, con
         try {
             if (!ctx->fake_allocation_) {
                 // The lease can't be reused.
-                lease->remaining_valid_lft_ = 0;
+                lease->reuseable_valid_lft_ = 0;
 
                 // The lease update should be safe, because the lease should
                 // be already in the database. In most cases the exception

@@ -242,7 +242,7 @@ public:
         EXPECT_EQ(fqdn_rev_, lease->fqdn_rev_);
         EXPECT_EQ(hostname_, lease->hostname_);
         EXPECT_TRUE(*lease->duid_ == *duid);
-        EXPECT_EQ(0, lease->remaining_valid_lft_);
+        EXPECT_EQ(0, lease->reuseable_valid_lft_);
         /// @todo: check cltt
     }
 
@@ -562,7 +562,7 @@ public:
             EXPECT_TRUE(*lease->client_id_ == *clientid_);
         }
         EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
-        EXPECT_EQ(0, lease->remaining_valid_lft_);
+        EXPECT_EQ(0, lease->reuseable_valid_lft_);
         /// @todo: check cltt
     }
 

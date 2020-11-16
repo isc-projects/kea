@@ -41,7 +41,7 @@ Lease::Lease(const isc::asiolink::IOAddress& addr,
              const bool fqdn_fwd, const bool fqdn_rev,
              const std::string& hostname, const HWAddrPtr& hwaddr)
     : addr_(addr), valid_lft_(valid_lft), current_valid_lft_(valid_lft),
-      remaining_valid_lft_(0),
+      reuseable_valid_lft_(0),
       cltt_(cltt), current_cltt_(cltt), subnet_id_(subnet_id),
       hostname_(boost::algorithm::to_lower_copy(hostname)), fqdn_fwd_(fqdn_fwd),
       fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
@@ -392,7 +392,7 @@ Lease4::operator=(const Lease4& other) {
         addr_ = other.addr_;
         valid_lft_ = other.valid_lft_;
         current_valid_lft_ = other.current_valid_lft_;
-        remaining_valid_lft_ = other.remaining_valid_lft_;
+        reuseable_valid_lft_ = other.reuseable_valid_lft_;
         cltt_ = other.cltt_;
         current_cltt_ = other.current_cltt_;
         subnet_id_ = other.subnet_id_;
@@ -489,7 +489,7 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
                SubnetID subnet_id, const HWAddrPtr& hwaddr, uint8_t prefixlen)
     : Lease(addr, valid, subnet_id, 0/*cltt*/, false, false, "", hwaddr),
       type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
-      preferred_lft_(preferred), remaining_preferred_lft_(0) {
+      preferred_lft_(preferred), reuseable_preferred_lft_(0) {
     if (!duid) {
         isc_throw(InvalidOperation, "DUID is mandatory for an IPv6 lease");
     }
@@ -506,7 +506,7 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
     : Lease(addr, valid, subnet_id, 0/*cltt*/,
             fqdn_fwd, fqdn_rev, hostname, hwaddr),
       type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
-      preferred_lft_(preferred), remaining_preferred_lft_(0) {
+      preferred_lft_(preferred), reuseable_preferred_lft_(0) {
     if (!duid) {
         isc_throw(InvalidOperation, "DUID is mandatory for an IPv6 lease");
     }
@@ -518,7 +518,7 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
 Lease6::Lease6()
     : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, false, false, "",
             HWAddrPtr()), type_(TYPE_NA), prefixlen_(0), iaid_(0),
-            duid_(DuidPtr()), preferred_lft_(0), remaining_preferred_lft_(0) {
+            duid_(DuidPtr()), preferred_lft_(0), reuseable_preferred_lft_(0) {
 }
 
 std::string
@@ -602,7 +602,7 @@ Lease4::operator==(const Lease4& other) const {
             subnet_id_ == other.subnet_id_ &&
             valid_lft_ == other.valid_lft_ &&
             current_valid_lft_ == other.current_valid_lft_ &&
-            remaining_valid_lft_ == other.remaining_valid_lft_ &&
+            reuseable_valid_lft_ == other.reuseable_valid_lft_ &&
             cltt_ == other.cltt_ &&
             current_cltt_ == other.current_cltt_ &&
             hostname_ == other.hostname_ &&
@@ -621,10 +621,10 @@ Lease6::operator==(const Lease6& other) const {
             prefixlen_ == other.prefixlen_ &&
             iaid_ == other.iaid_ &&
             preferred_lft_ == other.preferred_lft_ &&
-            remaining_preferred_lft_ == other.remaining_preferred_lft_ &&
+            reuseable_preferred_lft_ == other.reuseable_preferred_lft_ &&
             valid_lft_ == other.valid_lft_ &&
             current_valid_lft_ == other.current_valid_lft_ &&
-            remaining_valid_lft_ == other.remaining_valid_lft_ &&
+            reuseable_valid_lft_ == other.reuseable_valid_lft_ &&
             cltt_ == other.cltt_ &&
             current_cltt_ == other.current_cltt_ &&
             subnet_id_ == other.subnet_id_ &&
