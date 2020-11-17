@@ -3022,6 +3022,9 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
 
         if (subnet->getReservationsInSubnet()) {
             auto host = ctx.hosts_.find(subnet->getID());
+            // The out-of-pool flag indicates that no client should be assigned reservations
+            // from within the dynamic pool, and for that reason we only look at reservations that
+            // are outside the pools, hence the inPool check.
             if (host != ctx.hosts_.end()) {
                 auto reservation = host->second->getIPv4Reservation();
                 if (!reservation.isV4Zero() &&
