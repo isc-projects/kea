@@ -3400,8 +3400,8 @@ TEST_F(AllocEngine6Test, hostDynamicAddress) {
     ASSERT_TRUE(engine);
 
     HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                 Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
-                 asiolink::IOAddress("0.0.0.0")));
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
+                          asiolink::IOAddress("0.0.0.0")));
     host->setHostname("host1");
 
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
@@ -3491,8 +3491,8 @@ TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
     ASSERT_TRUE(engine);
 
     HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                 Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
-                 asiolink::IOAddress("0.0.0.0")));
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                          asiolink::IOAddress("0.0.0.0")));
     host->setHostname("ghost1");
 
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
@@ -3576,8 +3576,8 @@ TEST_F(AllocEngine6Test, globalHostReservedAddress) {
     ASSERT_TRUE(engine);
 
     HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                 Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
-                 asiolink::IOAddress("0.0.0.0")));
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                          asiolink::IOAddress("0.0.0.0")));
     host->setHostname("ghost1");
     IPv6Resrv resv(IPv6Resrv::TYPE_NA, asiolink::IOAddress("3001::1"), 128);
     host->addReservation(resv);
@@ -3640,8 +3640,8 @@ TEST_F(AllocEngine6Test, globalHostReservedPrefix) {
     ASSERT_TRUE(engine);
 
     HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                 Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
-                 asiolink::IOAddress("0.0.0.0")));
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                          asiolink::IOAddress("0.0.0.0")));
     host->setHostname("ghost1");
     IPv6Resrv resv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("3001::"), 64);
     host->addReservation(resv);
@@ -3708,8 +3708,8 @@ TEST_F(AllocEngine6Test, mixedHostReservedAddress) {
     ASSERT_TRUE(engine);
 
     HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                 Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
-                 asiolink::IOAddress("0.0.0.0")));
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
+                          asiolink::IOAddress("0.0.0.0")));
     host->setHostname("mhost1");
     IPv6Resrv resv(IPv6Resrv::TYPE_NA, asiolink::IOAddress("2001:db8:1::1c"), 128);
     host->addReservation(resv);
@@ -3774,8 +3774,8 @@ TEST_F(AllocEngine6Test, mixedHostReservedPrefix) {
     ASSERT_TRUE(engine);
 
     HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                 Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
-                 asiolink::IOAddress("0.0.0.0")));
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
+                          asiolink::IOAddress("0.0.0.0")));
     host->setHostname("mhost1");
     IPv6Resrv resv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("2001:db8:1:2::"), 64);
     host->addReservation(resv);
@@ -3843,8 +3843,8 @@ TEST_F(AllocEngine6Test, bothHostReservedAddress) {
     ASSERT_TRUE(engine);
 
     HostPtr ghost(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                  Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
-                  asiolink::IOAddress("0.0.0.0")));
+                           Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                           asiolink::IOAddress("0.0.0.0")));
     ghost->setHostname("ghost1");
     IPv6Resrv gresv(IPv6Resrv::TYPE_NA, asiolink::IOAddress("3001::1"), 128);
     ghost->addReservation(gresv);
@@ -3852,8 +3852,8 @@ TEST_F(AllocEngine6Test, bothHostReservedAddress) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(ghost);
 
     HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                 Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
-                 asiolink::IOAddress("0.0.0.0")));
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
+                          asiolink::IOAddress("0.0.0.0")));
     host->setHostname("mhost1");
     IPv6Resrv resv(IPv6Resrv::TYPE_NA, asiolink::IOAddress("2001:db8:1::1c"), 128);
     host->addReservation(resv);
@@ -3918,8 +3918,8 @@ TEST_F(AllocEngine6Test, bothHostReservedPrefix) {
     ASSERT_TRUE(engine);
 
     HostPtr ghost(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                  Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
-                  asiolink::IOAddress("0.0.0.0")));
+                           Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                           asiolink::IOAddress("0.0.0.0")));
     ghost->setHostname("ghost1");
     IPv6Resrv gresv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("3001::"), 64);
     ghost->addReservation(gresv);
@@ -3927,8 +3927,8 @@ TEST_F(AllocEngine6Test, bothHostReservedPrefix) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(ghost);
 
     HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                 Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
-                 asiolink::IOAddress("0.0.0.0")));
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
+                          asiolink::IOAddress("0.0.0.0")));
     host->setHostname("mhost1");
     IPv6Resrv resv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("2001:db8:1:2::"), 64);
     host->addReservation(resv);

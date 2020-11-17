@@ -1083,8 +1083,8 @@ host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
 };
 
 host_reservation_identifiers_list: host_reservation_identifier
-                                 | host_reservation_identifiers_list COMMA host_reservation_identifier
-                                 ;
+    | host_reservation_identifiers_list COMMA host_reservation_identifier
+    ;
 
 host_reservation_identifier: duid_id
                            | hw_address_id
@@ -1179,8 +1179,8 @@ hooks_libraries_list: %empty
                     ;
 
 not_empty_hooks_libraries_list: hooks_library
-                              | not_empty_hooks_libraries_list COMMA hooks_library
-                              ;
+    | not_empty_hooks_libraries_list COMMA hooks_library
+    ;
 
 hooks_library: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
@@ -1787,8 +1787,8 @@ option_data_params: %empty
 // Those parameters can either be a single parameter or
 // a list of parameters separated by comma.
 not_empty_option_data_params: option_data_param
-                            | not_empty_option_data_params COMMA option_data_param
-                            ;
+    | not_empty_option_data_params COMMA option_data_param
+    ;
 
 // Each single option-data parameter can be one of the following
 // expressions.
@@ -1993,8 +1993,8 @@ reservation_params: %empty
                   ;
 
 not_empty_reservation_params: reservation_param
-                            | not_empty_reservation_params COMMA reservation_param
-                            ;
+    | not_empty_reservation_params COMMA reservation_param
+    ;
 
 /// @todo probably need to add mac-address as well here
 reservation_param: duid
@@ -2177,8 +2177,8 @@ client_class_params: %empty
                    ;
 
 not_empty_client_class_params: client_class_param
-                             | not_empty_client_class_params COMMA client_class_param
-                             ;
+    | not_empty_client_class_params COMMA client_class_param
+    ;
 
 client_class_param: client_class_name
                   | client_class_test
