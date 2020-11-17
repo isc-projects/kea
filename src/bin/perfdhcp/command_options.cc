@@ -132,6 +132,8 @@ CommandOptions::reset() {
     num_request_.clear();
     exit_wait_time_ = 0;
     period_ = 0;
+    wait_for_elapsed_time_ = -1;
+    increased_elapsed_time_ = -1;
     drop_time_set_ = 0;
     drop_time_.assign(dt, dt + 2);
     max_drop_.clear();
@@ -240,7 +242,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // they will be tuned and validated elsewhere
     while((opt = getopt_long(argc, argv,
                              "huv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
-                             "J:T:X:O:o:E:S:I:x:W:w:e:f:F:g:C:",
+                             "J:T:X:O:o:E:S:I:x:W:w:e:f:F:g:C:y:Y:",
                              long_options, NULL)) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
@@ -571,6 +573,16 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                           " unexpected 3rd -X<value> occurrence");
             }
             xid_offset_.push_back(offset_arg);
+            break;
+
+        case 'Y':
+            wait_for_elapsed_time_ = nonNegativeInteger("value of time:"
+                                     " -Y<value> must be a non negative integer");
+            break;
+
+        case 'y':
+            increased_elapsed_time_ = positiveInteger("value of time:"
+                                      " -y<value> must be a positive integer");
             break;
 
         case LONG_OPT_SCENARIO: {
@@ -964,7 +976,10 @@ CommandOptions::validate() {
           "use -I<ip-offset>");
     check((!getMacListFile().empty() && base_.size() > 0),
           "Can't use -b with -M option");
-
+    check((getWaitForElapsedTime() == -1 && getIncreaseElapsedTime() != -1),
+	  "Option -y can't be used without -Y");
+    check((getWaitForElapsedTime() != -1 && getIncreaseElapsedTime() == -1),
+	  "Option -Y can't be used without -y");
     auto nthreads = std::thread::hardware_concurrency();
     if (nthreads == 1 && isSingleThreaded() == false) {
         std::cout << "WARNING: Currently system can run only 1 thread in parallel." << std::endl
@@ -1272,7 +1287,10 @@ CommandOptions::usage() const {
         "   * 't': when finished, print timers of all successful exchanges\n"
         "   * 'T': when finished, print templates\n"
         "-X<xid-offset>: Transaction ID (aka. xid) offset in the template.\n"
-        "\n"
+        "-Y<time>: time in seconds after which perfdhcp will start sending\n"
+        "    messages with increased elapsed time option.\n"
+        "-y<time>: period of time in seconds in which perfdhcp will be sending\n"
+        "    messages with increased elapsed time option.\n"
         "DHCPv4 only options:\n"
         "-B: Force broadcast handling.\n"
         "\n"

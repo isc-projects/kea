@@ -239,6 +239,8 @@ TEST_F(CommandOptionsTest, Defaults) {
     EXPECT_FALSE(opt.isRapidCommit());
     EXPECT_FALSE(opt.isUseFirst());
     EXPECT_FALSE(opt.getAddrUnique());
+    EXPECT_EQ(-1, opt.getIncreaseElapsedTime());
+    EXPECT_EQ(-1, opt.getWaitForElapsedTime());
     EXPECT_EQ(0, opt.getTemplateFiles().size());
     EXPECT_EQ(0, opt.getTransactionIdOffset().size());
     EXPECT_EQ(0, opt.getRandomOffset().size());
@@ -858,4 +860,12 @@ TEST_F(CommandOptionsTest, LoadMacsFromFileNegativeCases) {
     // -M option can't use with -b option
     EXPECT_THROW(process(opt, "perfdhcp -M foo -b mac=1234 all"),
                  isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, ElapsedTime) {
+    CommandOptions opt;
+    EXPECT_NO_THROW(process(opt, "perfdhcp -y 3 -Y 10 192.168.0.1"));
+
+    EXPECT_EQ(3, opt.getIncreaseElapsedTime());
+    EXPECT_EQ(10, opt.getWaitForElapsedTime());
 }

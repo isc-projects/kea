@@ -218,6 +218,18 @@ public:
     /// \return test period before it is aborted.
     int getPeriod() const { return period_; }
 
+    /// \brief Returns time to wait for elapsed time increase.
+    ///
+    /// \return how long perfdhp will wait before start sending
+    /// messages with increased elapsed time.
+    int getWaitForElapsedTime() const { return wait_for_elapsed_time_; }
+
+    /// \brief Returns increased elapsed time.
+    ///
+    /// \return how long perfdhcp will send messages with increased
+    /// elapsed time.
+    int getIncreaseElapsedTime() const { return increased_elapsed_time_; }
+
     /// \brief Returns drop time.
     ///
     /// The method returns maximum time elapsed from
@@ -616,6 +628,14 @@ private:
 
     /// Test period in seconds.
     int period_;
+
+    // for how long perfdhcp will wait before start senging
+    // messages with increased elapsed time.
+    int wait_for_elapsed_time_;
+
+    // Amount of time after which perfdhcp will send messages with
+    // elapsed time increased.
+    int increased_elapsed_time_;
 
     /// Indicates number of -d<value> parameters specified by user.
     /// If this value goes above 2, command line parsing fails.

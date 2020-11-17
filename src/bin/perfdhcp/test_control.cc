@@ -1171,6 +1171,14 @@ TestControl::sendDiscover4(const bool preload /*= false*/) {
     // Set client identifier
     pkt4->addOption(generateClientId(pkt4->getHWAddr()));
 
+    if (options_.getWaitForElapsedTime() &&
+        stats_mgr_.getTestPeriod().length().total_seconds() >= options_.getWaitForElapsedTime() &&
+        stats_mgr_.getTestPeriod().length().total_seconds() <= options_.getWaitForElapsedTime() +
+                                     options_.getIncreaseElapsedTime()) {
+    // increase field elapsed time heree
+    pkt4->setSecs(static_cast<uint16_t>(10));
+    }
+
     // Add any extra options that user may have specified.
     addExtraOpts(pkt4);
 
@@ -1629,7 +1637,18 @@ TestControl::sendSolicit6(const bool preload /*= false*/) {
     if (!pkt6) {
         isc_throw(Unexpected, "failed to create SOLICIT packet");
     }
-    pkt6->addOption(Option::factory(Option::V6, D6O_ELAPSED_TIME));
+    if (options_.getWaitForElapsedTime() &&
+        stats_mgr_.getTestPeriod().length().total_seconds() >= options_.getWaitForElapsedTime() &&
+        stats_mgr_.getTestPeriod().length().total_seconds() <= options_.getWaitForElapsedTime() +
+                                     options_.getIncreaseElapsedTime()) {
+        boost::shared_ptr<LocalizedOption>
+            opt_elapsed_time(new LocalizedOption(Option::V6, D6O_ELAPSED_TIME,
+                                                 OptionBuffer(2, 10)));
+        pkt6->addOption(opt_elapsed_time);
+    } else {
+        pkt6->addOption(Option::factory(Option::V6, D6O_ELAPSED_TIME));
+    }
+
     if (options_.isRapidCommit()) {
         pkt6->addOption(Option::factory(Option::V6, D6O_RAPID_COMMIT));
     }
