@@ -1354,6 +1354,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
         callout_handle->setArgument("query4", query);
 
         Lease4CollectionPtr new_leases(new Lease4Collection());
+        // Filter out the new lease if it was reused so not committed.
         if (ctx->new_lease_ && (ctx->new_lease_->reuseable_valid_lft_ == 0)) {
             new_leases->push_back(ctx->new_lease_);
         }

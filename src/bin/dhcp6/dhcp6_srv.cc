@@ -1004,6 +1004,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
         Lease6CollectionPtr new_leases(new Lease6Collection());
         if (!ctx.new_leases_.empty()) {
+            // Filter out reused leases as they were not committed.
             for (auto new_lease : ctx.new_leases_) {
                 if (new_lease->reuseable_valid_lft_ == 0) {
                     new_leases->push_back(new_lease);

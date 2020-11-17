@@ -3845,7 +3845,8 @@ TEST_F(AllocEngine4Test, discoverCacheThreshold4) {
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
-    subnet_->setValid(500);
+    uint32_t valid = 500;
+    subnet_->setValid(valid);
 
     // Set the threshold to 25%.
     subnet_->setCacheThreshold(.25);
@@ -3853,7 +3854,7 @@ TEST_F(AllocEngine4Test, discoverCacheThreshold4) {
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
     Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
-                               500, now, subnet_->getID()));
+                               valid, now, subnet_->getID()));
     ASSERT_FALSE(lease->expired());
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -3871,7 +3872,7 @@ TEST_F(AllocEngine4Test, discoverCacheThreshold4) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(500 - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(valid - age, lease->reuseable_valid_lft_);
 
     // Check other lease parameters.
     EXPECT_EQ(lease->subnet_id_, subnet_->getID());
@@ -3890,7 +3891,8 @@ TEST_F(AllocEngine4Test, requestCacheThreshold4) {
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
-    subnet_->setValid(500);
+    uint32_t valid = 500;
+    subnet_->setValid(valid);
 
     // Set the threshold to 25%.
     subnet_->setCacheThreshold(.25);
@@ -3898,7 +3900,7 @@ TEST_F(AllocEngine4Test, requestCacheThreshold4) {
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
     Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
-                               500, now, subnet_->getID()));
+                               valid, now, subnet_->getID()));
     ASSERT_FALSE(lease->expired());
     // Copy the lease, so as it can be compared with.
     Lease4Ptr original_lease(new Lease4(*lease));
@@ -3918,7 +3920,7 @@ TEST_F(AllocEngine4Test, requestCacheThreshold4) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(500 - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(valid - age, lease->reuseable_valid_lft_);
 
     // Check other lease parameters.
     EXPECT_EQ(lease->subnet_id_, subnet_->getID());
@@ -3946,7 +3948,8 @@ TEST_F(AllocEngine4Test, discoverCacheMaxAge4) {
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
-    subnet_->setValid(500);
+    uint32_t valid = 500;
+    subnet_->setValid(valid);
 
     // Set the max age to 200.
     subnet_->setCacheMaxAge(200);
@@ -3954,7 +3957,7 @@ TEST_F(AllocEngine4Test, discoverCacheMaxAge4) {
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
     Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
-                               500, now, subnet_->getID()));
+                               valid, now, subnet_->getID()));
     ASSERT_FALSE(lease->expired());
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -3972,7 +3975,7 @@ TEST_F(AllocEngine4Test, discoverCacheMaxAge4) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(500 - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(valid - age, lease->reuseable_valid_lft_);
 
     // Check other lease parameters.
     EXPECT_EQ(lease->subnet_id_, subnet_->getID());
@@ -3991,7 +3994,8 @@ TEST_F(AllocEngine4Test, requestCacheBoth4) {
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
-    subnet_->setValid(500);
+    uint32_t valid = 500;
+    subnet_->setValid(valid);
 
     // Set the threshold to 25%.
     subnet_->setCacheThreshold(.25);
@@ -4002,7 +4006,7 @@ TEST_F(AllocEngine4Test, requestCacheBoth4) {
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
     Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
-                               500, now, subnet_->getID()));
+                               valid, now, subnet_->getID()));
     ASSERT_FALSE(lease->expired());
     // Copy the lease, so as it can be compared with.
     Lease4Ptr original_lease(new Lease4(*lease));
@@ -4022,7 +4026,7 @@ TEST_F(AllocEngine4Test, requestCacheBoth4) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(500 - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(valid - age, lease->reuseable_valid_lft_);
 
     // Check other lease parameters.
     EXPECT_EQ(lease->subnet_id_, subnet_->getID());
@@ -4047,7 +4051,8 @@ TEST_F(AllocEngine4Test, discoverCacheBadThreshold4) {
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
-    subnet_->setValid(500);
+    uint32_t valid = 500;
+    subnet_->setValid(valid);
 
     // Set the threshold to 25%.
     subnet_->setCacheThreshold(.25);
@@ -4055,7 +4060,7 @@ TEST_F(AllocEngine4Test, discoverCacheBadThreshold4) {
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
     Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
-                               500, now, subnet_->getID()));
+                               valid, now, subnet_->getID()));
     ASSERT_FALSE(lease->expired());
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -4082,7 +4087,8 @@ TEST_F(AllocEngine4Test, requestCacheBadMaxAge4) {
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
-    subnet_->setValid(500);
+    uint32_t valid = 500;
+    subnet_->setValid(valid);
 
     // Set the threshold to 25%.
     subnet_->setCacheThreshold(.25);
@@ -4093,7 +4099,7 @@ TEST_F(AllocEngine4Test, requestCacheBadMaxAge4) {
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
     Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
-                               500, now, subnet_->getID()));
+                               valid, now, subnet_->getID()));
     ASSERT_FALSE(lease->expired());
 
     // Create a context for real allocation.
@@ -4132,8 +4138,9 @@ TEST_F(AllocEngine4Test, discoverCacheReducedValid4) {
 
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
+    uint32_t valid = 500; // Used a value greater than subnet_->getValid().
     Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
-                               500, now, subnet_->getID()));
+                               valid, now, subnet_->getID()));
     ASSERT_FALSE(lease->expired());
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -4160,7 +4167,8 @@ TEST_F(AllocEngine4Test, requestCacheFwdDDNS4) {
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
-    subnet_->setValid(500);
+    uint32_t valid = 500;
+    subnet_->setValid(valid);
 
     // Set the max age to 200.
     subnet_->setCacheMaxAge(200);
@@ -4168,7 +4176,7 @@ TEST_F(AllocEngine4Test, requestCacheFwdDDNS4) {
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
     Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
-                               500, now, subnet_->getID()));
+                               valid, now, subnet_->getID()));
     ASSERT_FALSE(lease->expired());
 
     // Create a context for real allocation with fwd_dns_update changed.
@@ -4200,7 +4208,8 @@ TEST_F(AllocEngine4Test, discoverCacheRevDDNS4) {
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
-    subnet_->setValid(500);
+    uint32_t valid = 500;
+    subnet_->setValid(valid);
 
     // Set the threshold to 10%.
     subnet_->setCacheThreshold(.1);
@@ -4211,7 +4220,7 @@ TEST_F(AllocEngine4Test, discoverCacheRevDDNS4) {
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
     Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
-                               500, now, subnet_->getID()));
+                               valid, now, subnet_->getID()));
     ASSERT_FALSE(lease->expired());
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -4238,7 +4247,8 @@ TEST_F(AllocEngine4Test, requestCacheHostname4) {
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
-    subnet_->setValid(500);
+    uint32_t valid = 500;
+    subnet_->setValid(valid);
 
     // Set the max age to 200.
     subnet_->setCacheMaxAge(200);
@@ -4246,7 +4256,7 @@ TEST_F(AllocEngine4Test, requestCacheHostname4) {
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
     Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_,
-                               500, now, subnet_->getID(),
+                               valid, now, subnet_->getID(),
                                false, false, "foo"));
     ASSERT_FALSE(lease->expired());
 
