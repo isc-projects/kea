@@ -2946,12 +2946,9 @@ namespace {
 /// @return true if the address is reserved for another client.
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
-    // The out-of-pool flag indicates that no client should be assigned reservations
-    // from within the dynamic pool, and for that reason we only look at reservations that
-    // are outside the pools, hence the inPool check.
     if (ctx.subnet_ && ctx.subnet_->getReservationsInSubnet() &&
         (!ctx.subnet_->getReservationsOutOfPool() ||
-        !ctx.subnet_->inPool(Lease::TYPE_V4, address))) {
+         !ctx.subnet_->inPool(Lease::TYPE_V4, address))) {
         // The global parameter ip-reservations-unique controls whether it is allowed
         // to specify multiple reservations for the same IP address or delegated prefix
         // or IP reservations must be unique. Some host backends do not support the
@@ -2973,7 +2970,7 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
         }
 
         for (auto host : hosts) {
-            for (const isc::dhcp::AllocEngine::IdentifierPair& id_pair : ctx.host_identifiers_) {
+            for (const AllocEngine::IdentifierPair& id_pair : ctx.host_identifiers_) {
                 // If we find the matching host we know that this address is reserved
                 // for us and we can return immediately.
                 if (id_pair.first == host->getIdentifierType() &&
@@ -3015,28 +3012,25 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
     while (subnet) {
         if (subnet->getReservationsGlobal()) {
             auto host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
-            bool found = (host != ctx.hosts_.end() &&
-                    !(host->second->getIPv4Reservation().isV4Zero()));
             // if we want global + other modes we would need to
             // return only if true, else continue
-            if (!subnet->getReservationsInSubnet()) {
-                return (found);
-            } else {
-                if (found) {
-                    return (found);
-                }
+            if (host != ctx.hosts_.end() &&
+                !(host->second->getIPv4Reservation().isV4Zero())) {
+                return (true);
             }
         }
 
-        auto host = ctx.hosts_.find(subnet->getID());
-        // The out-of-pool flag indicates that no client should be assigned reservations
-        // from within the dynamic pool, and for that reason we only look at reservations that
-        // are outside the pools, hence the inPool check.
-        if (host != ctx.hosts_.end() && !host->second->getIPv4Reservation().isV4Zero() &&
-            (!subnet->getReservationsOutOfPool() ||
-            !subnet->inPool(Lease::TYPE_V4, host->second->getIPv4Reservation()))) {
-            ctx.subnet_ = subnet;
-            return (true);
+        if (subnet->getReservationsInSubnet()) {
+            auto host = ctx.hosts_.find(subnet->getID());
+            if (host != ctx.hosts_.end()) {
+                auto reservation = host->second->getIPv4Reservation();
+                if (!reservation.isV4Zero() &&
+                    (!subnet->getReservationsOutOfPool() ||
+                     !subnet->inPool(Lease::TYPE_V4, reservation))) {
+                    ctx.subnet_ = subnet;
+                    return (true);
+                }
+            }
         }
 
         // No address reservation found here, so let's try another subnet
