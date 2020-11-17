@@ -16,10 +16,10 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-bool
+void
 BaseNetworkParser::moveReservationMode(ElementPtr config) {
     if (!config->contains("reservation-mode")) {
-        return (false);
+        return;
     }
     if (config->contains("reservations-global") ||
         config->contains("reservations-in-subnet") ||
@@ -49,7 +49,6 @@ BaseNetworkParser::moveReservationMode(ElementPtr config) {
                   << getPosition("reservation-mode", config) << ")");
     }
     config->remove("reservation-mode");
-    return (true);
 }
 
 const Triplet<uint32_t>

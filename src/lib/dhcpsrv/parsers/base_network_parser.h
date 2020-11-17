@@ -25,10 +25,7 @@ public:
     /// @param config [in/out] configuration to alter.
     /// @throw DhcpConfigError on error e.g. when both reservation-mode
     /// and a flag are specified.
-    /// @return true if reservation-mode parameter has been replaces with
-    /// new reservations-global, reservations-in-subnet and
-    /// reservations-out-of-pool parameters, false otherwise.
-    static bool moveReservationMode(isc::data::ElementPtr config);
+    static void moveReservationMode(isc::data::ElementPtr config);
 
 protected:
 
