@@ -180,8 +180,8 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
         }
 
         // Find static reservations if not disabled for our subnet.
-        if (subnet->getReservationsGlobal() ||
-            subnet->getReservationsInSubnet()) {
+        if (subnet->getReservationsInSubnet() ||
+            subnet->getReservationsGlobal()) {
             // Before we can check for static reservations, we need to prepare a set
             // of identifiers to be used for this.
             setHostIdentifiers();
