@@ -2965,14 +2965,11 @@ namespace {
 /// @return true if the address is reserved for another client.
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
-    if (!ctx.subnet_) {
-        return false;
-    }
-    bool in_subnet = ctx.subnet_->getReservationsInSubnet();
     // The out-of-pool flag indicates that no client should be assigned reservations
     // from within the dynamic pool, and for that reason we only look at reservations that
     // are outside the pools, hence the inPool check.
-    if (in_subnet && (!ctx.subnet_->getReservationsOutOfPool() ||
+    if (ctx.subnet_ && ctx.subnet_->getReservationsInSubnet() &&
+        (!ctx.subnet_->getReservationsOutOfPool() ||
         !ctx.subnet_->inPool(Lease::TYPE_V4, address))) {
         // The global parameter ip-reservations-unique controls whether it is allowed
         // to specify multiple reservations for the same IP address or delegated prefix
