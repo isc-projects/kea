@@ -597,6 +597,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
     SharedNetwork6Ptr network;
     subnet->getSharedNetwork(network);
 
+    // @todo: This code can be trivially optimized.
     if (subnet->getReservationsGlobal()) {
         ConstHostPtr ghost = findGlobalReservation(ctx);
         if (ghost) {
@@ -916,7 +917,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         }
 
         bool in_subnet = subnet->getReservationsInSubnet();
-        bool out_of_pool = subnet->getReservationsOutOfPool();
 
         /// @todo: We support only one hint for now
         Lease6Ptr lease =
@@ -931,7 +931,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // The out-of-pool flag indicates that no client should be assigned reservations
             // from within the dynamic pool, and for that reason we only look at reservations that
             // are outside the pools, hence the inPool check.
-            if (in_subnet && (!out_of_pool ||
+            if (in_subnet && (!subnet->getReservationsOutOfPool() ||
                 !ctx.subnet_->inPool(ctx.currentIA().type_, hint))) {
                 hosts = getIPv6Resrv(subnet->getID(), hint);
             }
@@ -969,7 +969,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // The out-of-pool flag indicates that no client should be assigned reservations
             // from within the dynamic pool, and for that reason we only look at reservations that
             // are outside the pools, hence the inPool check.
-            if (in_subnet && (!out_of_pool ||
+            if (in_subnet && (!subnet->getReservationsOutOfPool() ||
                 !ctx.subnet_->inPool(ctx.currentIA().type_, hint))) {
                 hosts = getIPv6Resrv(subnet->getID(), hint);
             }
@@ -1259,7 +1259,6 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
         ConstHostPtr host = ctx.hosts_[subnet_id];
 
         bool in_subnet = subnet->getReservationsInSubnet();
-        bool out_of_pool = subnet->getReservationsOutOfPool();
 
         // Get the IPv6 reservations of specified type.
         const IPv6ResrvRange& reservs = host->getIPv6Reservations(type);
@@ -1277,7 +1276,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
             // The out-of-pool flag indicates that no client should be assigned reservations
             // from within the dynamic pool, and for that reason we only look at reservations that
             // are outside the pools, hence the inPool check.
-            if (in_subnet && (!out_of_pool ||
+            if (in_subnet && (!subnet->getReservationsOutOfPool() ||
                 !subnet->inPool(ctx.currentIA().type_, addr))) {
             } else {
                 continue;
@@ -2970,11 +2969,10 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
         return false;
     }
     bool in_subnet = ctx.subnet_->getReservationsInSubnet();
-    bool out_of_pool = ctx.subnet_->getReservationsOutOfPool();
     // The out-of-pool flag indicates that no client should be assigned reservations
     // from within the dynamic pool, and for that reason we only look at reservations that
     // are outside the pools, hence the inPool check.
-    if (in_subnet && (!out_of_pool ||
+    if (in_subnet && (!ctx.subnet->getReservationsOutOfPool() ||
         !ctx.subnet_->inPool(Lease::TYPE_V4, address))) {
         // The global parameter ip-reservations-unique controls whether it is allowed
         // to specify multiple reservations for the same IP address or delegated prefix
@@ -3053,19 +3051,14 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         }
 
         auto host = ctx.hosts_.find(subnet->getID());
-        bool in_subnet = subnet->getReservationsInSubnet();
-        bool out_of_pool = subnet->getReservationsOutOfPool();
         // The out-of-pool flag indicates that no client should be assigned reservations
         // from within the dynamic pool, and for that reason we only look at reservations that
         // are outside the pools, hence the inPool check.
-        if (host != ctx.hosts_.end()) {
-            auto reservation = host->second->getIPv4Reservation();
-            if (!reservation.isV4Zero() &&
-                in_subnet && (!out_of_pool ||
-                !subnet->inPool(Lease::TYPE_V4, reservation))) {
-                ctx.subnet_ = subnet;
-                return (true);
-            }
+        if (host != ctx.hosts_.end() && !host->second->getIPv4Reservation().isV4Zero() &&
+            (!subnet->getReservationsOutOfPool() ||
+            !subnet->inPool(Lease::TYPE_V4, host->second->getIPv4Reservation()))) {
+            ctx.subnet_ = subnet;
+            return (true);
         }
 
         // No address reservation found here, so let's try another subnet
@@ -3338,6 +3331,7 @@ AllocEngine::findReservation(ClientContext4& ctx) {
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
 
+    // @todo: This code can be trivially optimized.
     if (subnet->getReservationsGlobal()) {
         ConstHostPtr ghost = findGlobalReservation(ctx);
         if (ghost) {
