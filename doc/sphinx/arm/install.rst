@@ -130,7 +130,7 @@ system-specific installation tips.
 
 .. _install:
 
-Installation from Source
+Installation From Source
 ========================
 
 Although Kea may be available in pre-compiled, ready-to-use packages
@@ -177,7 +177,7 @@ files. They can be created by running ``autoreconf`` with the
 ``libtoolize``, ``autoheader``, ``automake``, and related commands.
 
 Write access to the Kea repository is only granted to ISC staff.
-Developers planning to contribute to Kea, should check our
+Developers planning to contribute to Kea should check our
 `Contributor's
 Guide <https://gitlab.isc.org/isc-projects/kea/blob/master/contributors-guide.md>`__.
 The `Kea Developer's
@@ -307,7 +307,7 @@ developers, or people who want to extend Kea code or send patches:
    and bison (.yy files). Kea sources have C++/h files generated out
    from them. By default Kea does not use flex or bison to avoid
    requiring installation of unnecessary dependencies for users.
-   However, anything in the parses is changed (such as adding a new
+   However, if anything in the parses is changed (such as adding a new
    parameter), flex and bison are required to regenerate
    parsers. This option permits that.
 
@@ -412,7 +412,7 @@ system (the ``build`` system) from the one where Kea runs
 (the ``host`` system).
 
 It is outside of the scope of common administrator operations and requires
-some developer skills, so the Developer Guide explains how to do that
+some developer skills, but the Developer Guide explains how to do that
 using an x86_64 Linux system to build Kea for a Raspberry Pi box running
 Raspbian: `Kea Cross-Compiling Example
 <https://jenkins.isc.org/job/Kea_doc/doxygen/de/d9a/crossCompile.html>`__.
@@ -603,7 +603,7 @@ use regular UDP sockets (refer to ``dhcp-socket-type`` parameter in the
 .. note::
 
    An alternative approach to running Kea with root privileges is to configure Kea to use
-   non-privileged ports (i.e. those greater than 1024) and redirecting traffic.  Note that this
+   non-privileged ports (i.e. those greater than 1024) and redirect traffic. Note that this
    only works for relayed traffic. Furthermore, we consider it experimental and untested in
    production environments. Use it only after careful consideration.
 

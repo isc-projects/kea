@@ -3031,7 +3031,7 @@ Normally, when leases are renewed the server only updates DNS if the DNS
 information for the lease (e.g. FQDN, DNS update direction flags) has changed.
 Setting ``ddns-update-on-renew`` to true instructs the server to always update
 the DNS information when a lease is renewed even if its DNS information has not
-changed. This allows Kea to "self-heal" in the event it was previously unable
+changed. This allows Kea to "self-heal" if it was previously unable
 to add DNS entries or they were somehow lost by the DNS server.
 
 .. note::
@@ -3860,16 +3860,16 @@ be retained on the lease.  The lease's user-context will look something like thi
     hook library and at this time there is other use for this information within Kea.
 
 .. note::
-    It is possible that other hook libraries are already making use of user-context.
+    It is possible that other hook libraries are already using user-context.
     Enabling store-extended-info should not interfere with any other user-context
-    content so long as it does not also use an element labeled "ISC".  In other
+    content, as long as it does not also use an element labeled "ISC". In other
     words, user-context is intended to be a flexible container serving multiple
     purposes.  As long as no other purpose also writes an "ISC" element to
     user-context there should not be a conflict.
 
 .. _dhcp4-multi-threading-settings:
 
-Multi-threading settings
+Multi-Threading Settings
 ------------------------
 
 The Kea server can be configured to process packets in parallel using multiple
@@ -3900,7 +3900,7 @@ An example configuration that sets these parameter looks as follows:
        ...
    }
 
-Multi-threading settings in different backends
+Multi-Threading Settings in Different Backends
 ----------------------------------------------
 
 Both kea-dhcp4 and kea-dhcp6 are tested internally to determine which settings
@@ -3909,7 +3909,7 @@ recommendations and are very dependent on the particular hardware that was used
 for testing. We strongly advise that administrators run their own performance tests.
 
 A full report of Kea 1.7 performance results can be found `here <https://jenkins.isc.org/job/kea-1.7/job/performance/KeaPerformanceReport/>`_.
-This includes hardware descriptions, test scenario descriptions, and
+This includes hardware and test scenario descriptions, as well as
 current results.
 
 After enabling multi-threading, the number of threads is set by ``thread-pool-size``
@@ -6392,7 +6392,7 @@ parameters to control statistics default sample limits:
 - ``statistic-default-sample-age`` - determines the default maximum
   age in seconds of samples which are kept.
 
-For instance, to reduce the statistic keeping overhead, set
+For instance, to reduce the statistic-keeping overhead, set
 the default maximum sample count to 1 so only one sample is kept:
 
 ::
@@ -6530,7 +6530,7 @@ of LED devices could be configured in the following way:
        }],
    }
 
-Kea does not interpret or use the user context information; it simply stores it and makes it
+Kea does not interpret or use the user-context information; it simply stores it and makes it
 available to the hook libraries. It is up to each hook library to
 extract that information and use it. The parser translates a "comment"
 entry into a user context with the entry, which allows a comment to be

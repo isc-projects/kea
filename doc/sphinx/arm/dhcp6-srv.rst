@@ -2749,7 +2749,7 @@ Normally, when leases are renewed the server will only update DNS if the DNS
 information for the lease (e.g. FQDN, DNS update direction flags) has changed.
 Setting ``ddns-update-on-renew`` to true instructs the server to always update
 the DNS information when a lease is renewed even if its DNS information has not
-changed.  This allows Kea to "self-heal" in the event it was previously unable
+changed.  This allows Kea to "self-heal" if it was previously unable
 to add DNS entries or they were somehow lost by the DNS server.
 
 .. note::
@@ -3374,7 +3374,7 @@ pretty-printed for clarity):
     It is possible that other hook libraries are already using
     user-context. Enabling store-extended-info should not interfere with
     any other user-context content, as long as it does not also use an element
-    labeled "ISC".  In other words, user-context is intended to be a flexible
+    labeled "ISC". In other words, user-context is intended to be a flexible
     container serving multiple purposes. As long as no other purpose also
     writes an "ISC" element to user-context there should not be a conflict.
 
@@ -3420,7 +3420,7 @@ recommendations and are very dependent on the particular hardware that was used
 for testing. We strongly advise that administrators run their own performance tests.
 
 A full report of Kea 1.7 performance results can be found `here <https://jenkins.isc.org/job/kea-1.7/job/performance/KeaPerformanceReport/>`_.
-This includes hardware descriptions, test scenario descriptions, and
+This includes hardware and test scenario descriptions, as well as
 current results.
 
 After enabling multi-threading, the number of threads is set by ``thread-pool-size``
@@ -4559,7 +4559,7 @@ the new setting is ignored and the warning log message is output.
 The backends continue to use the default setting, i.e. expecting that
 IP reservations are unique within each subnet. To allow the
 creation of non-unique IP reservations, the administrator must remove
-the backends which lack support for it from the configuration file.
+the backends which lack support for them from the configuration file.
 
 Administrators must be careful when they have been using multiple
 reservations for the same IP address and/or delegated prefix and later
@@ -6381,7 +6381,7 @@ parameters to control statistics default sample limits:
 - ``statistic-default-sample-age`` - determines the default maximum
   age in seconds of samples which are kept.
 
-For instance, to reduce the statistic keeping overhead, set
+For instance, to reduce the statistic-keeping overhead, set
 the default maximum sample count to 1 so that only one sample is kept:
 
 ::

@@ -29,7 +29,7 @@ Stork is available as source code, but also as native deb and RPM packages, whic
 to install on most popular systems. For more details, please see the
 `Stork ARM <https://stork.readthedocs.io>`_ or the `Stork project page <https://gitlab.isc.org/isc-projects/stork>`_.
 The former has a nice collection of screenshots that is frequently updated, to give users
-an impression of what is currently available. Stork is in the midst of full development with
+an idea of what is currently available. Stork is in the midst of full development with
 monthly releases, so please check back frequently.
 
 .. _grafana:

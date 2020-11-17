@@ -284,7 +284,7 @@ the performance penalty in the High-Availability mode when a single DHCPv6
 transaction resulted in multiple lease updates sent to the partner, if
 multiple address and/or prefix leases were allocated. Consider the case
 when a DHCPv6 client requests the assignment of two IPv6 addresses and two IPv6
-prefixes: that may result in allocation of 4 leases. In addition,
+prefixes: that may result in allocation of four leases. In addition,
 DHCPv6 may assign a different address than the one requested by the client during
 the renew or rebind stage, and delete the leases previously used by this client.
 There are six lease changes sent between the HA partners in this case.
