@@ -4047,10 +4047,10 @@ reused if it was committed less than 500 seconds ago. With a lifetime
 of 3000 seconds the maximum age of 600 seconds applies.
 
 In outbound client responses (e.g. DHCPACK messages) the
-``dhcp-lease-time`` option is set to the remaining valid lifetime
+``dhcp-lease-time`` option is set to the reusable valid lifetime
 i.e. the expiration date does not change. Other options based on the
 valid lifetime e.g. ``dhcp-renewal-time`` and ``dhcp-rebinding-time``
-also use the remaining lifetime.
+also use the reusable lifetime.
 
 .. _host-reservation-v4:
 

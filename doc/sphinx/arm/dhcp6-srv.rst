@@ -3520,7 +3520,7 @@ reused if it was committed less than 500 seconds ago. With a lifetime
 of 3000 seconds the maximum age of 600 seconds applies.
 
 In outbound client responses (e.g. DHCPV6_REPLY messages) used
-preferred and valid lifetimes are the remaining values i.e. the
+preferred and valid lifetimes are the reusable values i.e. the
 expiration dates do not change.
 
 .. _host-reservation-v6:
