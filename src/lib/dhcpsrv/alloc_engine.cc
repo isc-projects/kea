@@ -622,7 +622,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
         (network->getAllSubnets()->size() > ctx.host_identifiers_.size());
 
     if (use_single_query) {
-        for (const auto id_pair : ctx.host_identifiers_) {
+        for (const IdentifierPair& id_pair : ctx.host_identifiers_) {
             ConstHostCollection hosts = HostMgr::instance().getAll(id_pair.first,
                                                                    &id_pair.second[0],
                                                                    id_pair.second.size());
@@ -646,7 +646,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
             subnet->getReservationsInSubnet()) {
             // Iterate over configured identifiers in the order of preference
             // and try to use each of them to search for the reservations.
-            for (const auto id_pair : ctx.host_identifiers_) {
+            for (const IdentifierPair& id_pair : ctx.host_identifiers_) {
                 if (use_single_query) {
                     if (host_map.count(subnet->getID()) > 0) {
                         ctx.hosts_[subnet->getID()] = host_map[subnet->getID()];
@@ -678,7 +678,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
 ConstHostPtr
 AllocEngine::findGlobalReservation(ClientContext6& ctx) {
     ConstHostPtr host;
-    BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
+    for (const IdentifierPair& id_pair : ctx.host_identifiers_) {
         // Attempt to find a host using a specified identifier.
         host = HostMgr::instance().get6(SUBNET_ID_GLOBAL, id_pair.first,
                                         &id_pair.second[0], id_pair.second.size());
@@ -2973,11 +2973,11 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
         }
 
         for (auto host : hosts) {
-            for (const auto id : ctx.host_identifiers_) {
+            for (const isc::dhcp::AllocEngine::IdentifierPair& id_pair : ctx.host_identifiers_) {
                 // If we find the matching host we know that this address is reserved
                 // for us and we can return immediately.
-                if (id.first == host->getIdentifierType() &&
-                    id.second == host->getIdentifier()) {
+                if (id_pair.first == host->getIdentifierType() &&
+                    id_pair.second == host->getIdentifier()) {
                     return (false);
                 }
             }
@@ -3334,7 +3334,7 @@ AllocEngine::findReservation(ClientContext4& ctx) {
         (network->getAllSubnets()->size() > ctx.host_identifiers_.size());
 
     if (use_single_query) {
-        for (const auto id_pair : ctx.host_identifiers_) {
+        for (const IdentifierPair& id_pair : ctx.host_identifiers_) {
             ConstHostCollection hosts = HostMgr::instance().getAll(id_pair.first,
                                                                    &id_pair.second[0],
                                                                    id_pair.second.size());
