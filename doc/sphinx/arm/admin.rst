@@ -323,7 +323,7 @@ earlier version. To perform an upgrade, issue the following command:
 
 .. note::
 
-    To search host reservations by hostname it is critical that the collation of
+    To search host reservations by hostname, it is critical that the collation of
     the hostname column in the host table be case-insensitive. Fortunately, that
     is the default in MySQL, but it can be verified via this command:
 
@@ -345,7 +345,7 @@ Simple MySQL tweak to gain performance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Changing the MySQL internal value ``innodb_flush_log_at_trx_commit`` from the default value
-``1`` to ``2`` can result in a huge gain in Kea performance. It can be set per session for testing:
+ of ``1`` to ``2`` can result in a huge gain in Kea performance. It can be set per-session for testing:
 
 .. code-block:: mysql
 
@@ -359,7 +359,7 @@ or permanently in ``/etc/mysql/my.cnf``:
     [mysqld]
     innodb_flush_log_at_trx_commit=2
 
-Be aware that changing this value can result with problems during data recovery
+Be aware that changing this value can cause problems during data recovery
 after a crash, so we strongly recommend checking the `MySQL documentation <https://dev.mysql.com/doc/refman/8.0/en/innodb-parameters.html#sysvar_innodb_flush_log_at_trx_commit>`__.
 
 .. _pgsql-database:
