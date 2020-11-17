@@ -2972,7 +2972,7 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
     // The out-of-pool flag indicates that no client should be assigned reservations
     // from within the dynamic pool, and for that reason we only look at reservations that
     // are outside the pools, hence the inPool check.
-    if (in_subnet && (!ctx.subnet->getReservationsOutOfPool() ||
+    if (in_subnet && (!ctx.subnet_->getReservationsOutOfPool() ||
         !ctx.subnet_->inPool(Lease::TYPE_V4, address))) {
         // The global parameter ip-reservations-unique controls whether it is allowed
         // to specify multiple reservations for the same IP address or delegated prefix
