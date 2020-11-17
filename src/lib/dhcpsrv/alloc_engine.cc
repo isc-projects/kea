@@ -3015,7 +3015,7 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
             // if we want global + other modes we would need to
             // return only if true, else continue
             if (host != ctx.hosts_.end() &&
-                !(host->second->getIPv4Reservation().isV4Zero())) {
+                !host->second->getIPv4Reservation().isV4Zero()) {
                 return (true);
             }
         }
