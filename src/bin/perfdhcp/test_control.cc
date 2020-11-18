@@ -1171,12 +1171,19 @@ TestControl::sendDiscover4(const bool preload /*= false*/) {
     // Set client identifier
     pkt4->addOption(generateClientId(pkt4->getHWAddr()));
 
+    // Check if we need to simulate HA failures by pretending no responses were received.
+    // The DHCP protocol signals that by increasing secs field (seconds since the configuration attempt started).
     if (options_.getWaitForElapsedTime() &&
         stats_mgr_.getTestPeriod().length().total_seconds() >= options_.getWaitForElapsedTime() &&
-        stats_mgr_.getTestPeriod().length().total_seconds() <= options_.getWaitForElapsedTime() +
+        stats_mgr_.getTestPeriod().length().total_seconds() < options_.getWaitForElapsedTime() +
                                      options_.getIncreaseElapsedTime()) {
-    // increase field elapsed time heree
-    pkt4->setSecs(static_cast<uint16_t>(10));
+
+        // Keep increasing elapsed time. The value should start increasing steadily.
+        uint32_t val = stats_mgr_.getTestPeriod().length().total_seconds() - options_.getWaitForElapsedTime() + 1;
+        if (val > 65535) {
+            val = 65535;
+        }
+        pkt4->setSecs(static_cast<uint16_t>(val));
     }
 
     // Add any extra options that user may have specified.
