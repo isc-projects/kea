@@ -14,6 +14,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
 
@@ -24,6 +25,7 @@
 #include <cstddef>
 #include <stdint.h>
 #include <string>
+#include <vector>
 #include <fstream>
 #include <gtest/gtest.h>
 
@@ -69,6 +71,7 @@ public:
     virtual bool send(const dhcp::Pkt4Ptr& pkt) override {
         sent_cnt_++;
         pkt->updateTimestamp();
+        sent_pkts4_.push_back(pkt);
         return true;
     };
 
@@ -76,6 +79,7 @@ public:
     virtual bool send(const dhcp::Pkt6Ptr& pkt) override {
         sent_cnt_++;
         pkt->updateTimestamp();
+        sent_pkts6_.push_back(pkt);
         return true;
     };
 
@@ -86,6 +90,9 @@ public:
         sent_cnt_ = 0;
         recv_cnt_ = 0;
     }
+
+    std::vector<dhcp::Pkt4Ptr> sent_pkts4_; /// output v4 packets are stored here
+    std::vector<dhcp::Pkt6Ptr> sent_pkts6_; /// output v6 packets are stored here
 };
 
 
@@ -1792,13 +1799,61 @@ TEST_F(TestControlTest, Packet6ExchangeExtraOpts) {
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
 
-    // Check if Solicit was recored and if it contains options 200 and 201.
+    // Check if Solicit was recorded and if it contains options 200 and 201.
     auto sol = tc.template_packets_v6_.find(DHCPV6_SOLICIT);
     ASSERT_TRUE(sol != tc.template_packets_v6_.end());
     checkOptions20x(sol->second);
 
-    // Check if Request was recored and if it contains options 200 and 201.
+    // Check if Request was recorded and if it contains options 200 and 201.
     auto req = tc.template_packets_v6_.find(DHCPV6_REQUEST);
     ASSERT_TRUE(req != tc.template_packets_v6_.end());
     checkOptions20x(req->second);
+}
+
+// This test checks if HA failure can be simulated using -y and -Y options with DHCPv4.
+TEST_F(TestControlTest, haFailure4) {
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake -r 1 -n 1 -R 2 -y 10 -Y 0 -L 10547 127.0.0.1");
+    NakedTestControl tc(opt);
+
+    tc.sendPackets(1); // Send one packet. It should have secs set to 1.
+    sleep(1);          // wait a second...
+    tc.sendPackets(1); // and send another packet. This should have secs set to 2.
+
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, 2); // Make sure the stats are up.
+    ASSERT_EQ(tc.fake_sock_.sent_pkts4_.size(), 2); // And the packets were captured.
+    Pkt4Ptr dis1 = tc.fake_sock_.sent_pkts4_[0];
+    Pkt4Ptr dis2 = tc.fake_sock_.sent_pkts4_[1];
+    ASSERT_TRUE(dis1);
+    ASSERT_TRUE(dis2);
+
+    EXPECT_EQ(dis1->getSecs(), 1); // Make sure it has secs set to 1.
+    EXPECT_GT(dis2->getSecs(), 1); // Should be 2, but we want to avoid rare cases when the test
+                                   // could fall exactly on the second boundary, so checking for
+                                   // greater than 1.
+}
+
+// This test checks if HA failure can be simulated using -y and -Y options with DHCPv6.
+TEST_F(TestControlTest, haFailure6) {
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -6 -l fake -r 1 -n 1 -R 2 -y 10 -Y 0 -L 10547 all");
+    NakedTestControl tc(opt);
+
+    tc.sendPackets(1); // Send one packet. It should have secs set to 1.
+    sleep(1);          // wait a second...
+    tc.sendPackets(1); // and send another packet. This should have secs set to 2.
+
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, 2); // Make sure the stats are up.
+    ASSERT_EQ(tc.fake_sock_.sent_pkts6_.size(), 2); // And the packets were captured.
+    Pkt6Ptr sol1 = tc.fake_sock_.sent_pkts6_[0];
+    Pkt6Ptr sol2 = tc.fake_sock_.sent_pkts6_[1];
+    ASSERT_TRUE(sol1);
+    ASSERT_TRUE(sol2);
+    OptionUint16Ptr elapsed1(boost::dynamic_pointer_cast<OptionUint16>(sol1->getOption(D6O_ELAPSED_TIME)));
+    OptionUint16Ptr elapsed2(boost::dynamic_pointer_cast<OptionUint16>(sol2->getOption(D6O_ELAPSED_TIME)));
+    ASSERT_TRUE(elapsed1);
+    ASSERT_TRUE(elapsed2);
+
+    EXPECT_EQ(elapsed1->getValue(), 100);
+    EXPECT_GT(elapsed2->getValue(), 100);
 }
