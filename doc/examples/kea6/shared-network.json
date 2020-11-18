@@ -83,6 +83,7 @@
 
             // Specify if server can assume that all reserved addresses
             // are out-of-pool.
+            // Ignored when reservations-in-subnet is false.
             "reservations-out-of-pool": false,
 
             // List of subnets belonging to this particular shared-network
@@ -109,6 +110,7 @@
                     "reservations-in-subnet": true,
                     // Specify if server can assume that all reserved addresses
                     // are out-of-pool.
+                    // Ignored when reservations-in-subnet is false.
                     "reservations-out-of-pool": false,
                     "subnet": "2001:db8:1::/64",
                     "pools": [ { "pool": "2001:db8:1:abcd::/64" } ],
@@ -135,6 +137,7 @@
                     "reservations-in-subnet": true,
                     // Specify if server can assume that all reserved addresses
                     // are out-of-pool.
+                    // Ignored when reservations-in-subnet is false.
                     "reservations-out-of-pool": false,
                     "subnet": "3000::/16",
                     "valid-lifetime": 40

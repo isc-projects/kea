@@ -666,6 +666,7 @@
 
                 // Specify if server can assume that all reserved addresses
                 // are out-of-pool.
+                // Ignored when reservations-in-subnet is false.
                 "reservations-out-of-pool": false,
 
                 // List of client classes which must be evaluated when this shared
@@ -865,6 +866,7 @@
 
                         // Specify if server can assume that all reserved
                         // addresses are out-of-pool.
+                        // Ignored when reservations-in-subnet is false.
                         "reservations-out-of-pool": false,
 
                         // Subnet level compute T1 and T2 timers.
@@ -1002,6 +1004,7 @@
 
         // Specify if server can assume that all reserved addresses
         // are out-of-pool.
+        // Ignored when reservations-in-subnet is false.
         "reservations-out-of-pool": false,
 
         // Data directory.

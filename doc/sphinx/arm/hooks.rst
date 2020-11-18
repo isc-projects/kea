@@ -2657,7 +2657,8 @@ An example response could look as follows:
                "renew-timer": 60,
                # "reservation-mode": "all",
                # It is replaced by the "reservations-global"
-               # "reservations-in-subnet" and "reservations-out-of-pool" parameters.
+               # "reservations-in-subnet" and "reservations-out-of-pool"
+               # parameters.
                # Specify if server should lookup global reservations.
                "reservations-global": false,
                # Specify if server should lookup in-subnet reservations.

@@ -4171,19 +4171,9 @@ be used:
        ...
    }
 
-Note that enabling ``out-of-pool`` and disabling ``in-subnet`` in not a valid
-configuration, as ``out-of-pool`` are also ``in-subnet``.
-
-::
-
-   "Dhcp6": {
-
-       "reservations-global": true,
-       // "reservations-in-subnet": false,
-       "reservations-out-of-pool": true,
-       ...
-   }
-
+Note that enabling ``out-of-pool`` and disabling ``in-subnet`` at the same time
+is not recommended because ``out-of-pool`` is about host reservations in a
+subnet which are fetched only when the ``in-subnet`` flag is true.
 
 For this reason, the ``in-subnet`` must not be disabled or it can be enabled
 explicitly when ``out-of-pool`` is enabled.
@@ -4192,7 +4182,6 @@ explicitly when ``out-of-pool`` is enabled.
 
    "Dhcp6": {
 
-       "reservations-global": true,
        "reservations-in-subnet": true,
        "reservations-out-of-pool": true,
        ...

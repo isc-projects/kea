@@ -78,6 +78,7 @@
 
             // Specify if server can assume that all reserved addresses
             // are out-of-pool.
+            // Ignored when reservations-in-subnet is false.
             "reservations-out-of-pool": false,
 
             // This starts a list of subnets allowed in this shared network.
@@ -110,6 +111,7 @@
                     "reservations-in-subnet": true,
                     // Specify if server can assume that all reserved addresses
                     // are out-of-pool.
+                    // Ignored when reservations-in-subnet is false.
                     "reservations-out-of-pool": false,
                     "subnet": "10.0.0.0/8",
                     "valid-lifetime": 30
@@ -134,6 +136,7 @@
                     "reservations-in-subnet": true,
                     // Specify if server can assume that all reserved addresses
                     // are out-of-pool.
+                    // Ignored when reservations-in-subnet is false.
                     "reservations-out-of-pool": false,
                     "subnet": "192.0.2.0/24",
                     "valid-lifetime": 30

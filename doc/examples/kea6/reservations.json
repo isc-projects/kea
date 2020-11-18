@@ -41,37 +41,45 @@
 // least subnet and pool entries.
   "subnet6": [
     {
-      "subnet": "2001:db8:1::/48",
+        "subnet": "2001:db8:1::/48",
 
-      // This directive tells Kea that reservations may be made both in-pool
-      // and out-of-pool. For improved performance, you may move all reservations
-      // out of the dynamic pool and change reservation-mode to "out-of-pool".
-      // Kea will then be able to skip querying for host reservations when
-      // assigning leases from dynamic pool.
-      // "reservation-mode": "all",
-      // It is replaced by the "reservations-global", "reservations-in-subnet"
-      // and "reservations-out-of-pool" parameters.
-      "reservations-in-subnet": true,
+        // This directive tells Kea that reservations may be made both in-pool
+        // and out-of-pool. For improved performance, you may move all reservations
+        // out of the dynamic pool and change reservation-mode to "out-of-pool".
+        // Kea will then be able to skip querying for host reservations when
+        // assigning leases from dynamic pool.
+        // "reservation-mode": "all",
+        // It is replaced by the "reservations-global", "reservations-in-subnet"
+        // and "reservations-out-of-pool" parameters.
 
-      "reservations-out-of-pool": false,
+        // Specify if server should lookup global reservations.
+        "reservations-global": false,
 
-      "pools": [ { "pool": "2001:db8:1::/120" } ],
+        // Specify if server should lookup in-subnet reservations.
+        "reservations-in-subnet": true,
 
-      "pd-pools": [
+        // Specify if server can assume that all reserved addresses
+        // are out-of-pool.
+        // Ignored when reservations-in-subnet is false.
+        "reservations-out-of-pool": false,
+
+        "pools": [ { "pool": "2001:db8:1::/120" } ],
+
+        "pd-pools": [
           {
               "prefix": "2001:db8:1:8000::",
               "prefix-len": 56,
               "delegated-len": 64
           }
-      ],
-      "interface": "ethX",
+        ],
+        "interface": "ethX",
 
 // Host reservations. Define several reservations, note that
 // they are all within the range of the pool of the dynamically
 // allocated address. The server will exclude the addresses from this
 // pool and only assign them to the client which has a reservation for
 // them.
-      "reservations": [
+       "reservations": [
 // This is a simple host reservation. The host with DUID matching
 // the specified value will get an address of 2001:db8:1::100.
           {
@@ -96,7 +104,7 @@
               {
                   "name": "nis-servers",
                   "data": "3000:1::234"
-              }],
+              } ],
               "client-classes": [ "special_snowflake", "office" ]
           },
 // This is a bit more advanced reservation. The client with the specified

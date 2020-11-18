@@ -52,6 +52,7 @@
 
 // Specify if server can assume that all reserved addresses
 // are out-of-pool.
+// Ignored when reservations-in-subnet is false.
   "reservations-out-of-pool": false,
 
 // Define several global host reservations.
