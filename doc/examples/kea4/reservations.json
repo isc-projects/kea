@@ -51,6 +51,8 @@
 // To avoid this check, one can change reservation-mode to out-of-pool, rather
 // than 'all'. If a subnet does not have reservations at all, the reservation
 // lookup can be skipped altogether (reservation-mode is set to 'disabled').
+// The reservation-mode has been replaced by reservations-global,
+// reservations-in-subnet and reservations-out-of-pool.
 
 // Note that the second reservation is for an address which is within the
 // range of the pool of the dynamically allocated address. The server will
@@ -66,7 +68,13 @@
         // out of the dynamic pool and change reservation-mode to "out-of-pool".
         // Kea will then be able to skip querying for host reservations when
         // assigning leases from dynamic pool.
-        "reservation-mode": "all",
+        // "reservation-mode": "all",
+        // It is replaced by the "reservations-global", "reservations-in-subnet"
+        // and "reservations-out-of-pool" parameters.
+        "reservations-in-subnet": true,
+
+        "reservations-out-of-pool": false,
+
         "reservations": [
 
 // This is a reservation for a specific hardware/MAC address. It's a very

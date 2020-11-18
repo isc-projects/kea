@@ -1801,7 +1801,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
 }
 
 // This test verifies that the allocation engine ignores reservations when
-// reservation-mode is set to "disabled".
+// reservations flags are set to "disabled".
 TEST_F(DORATest, reservationModeDisabled) {
     // Client has a reservation.
     Dhcp4Client client(Dhcp4Client::SELECTING);

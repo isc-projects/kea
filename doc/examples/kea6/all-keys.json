@@ -653,10 +653,10 @@
 
                 // Enumeration specifying server's mode of operation when it
                 // fetches host reservations.
+                // "reservation-mode": "all",
                 // It is replaced by the "reservations-global",
                 // "reservations-in-subnet" and "reservations-out-of-pool"
                 // parameters.
-                // "reservation-mode": "all",
 
                 // Specify if server should lookup global reservations.
                 "reservations-global": false,
@@ -852,10 +852,10 @@
 
                         // Enumeration specifying server's mode of operation when it
                         // fetches host reservations.
+                        // "reservation-mode": "all",
                         // It is replaced by the "reservations-global",
                         // "reservations-in-subnet" and
                         // "reservations-out-of-pool" parameters.
-                        // "reservation-mode": "all",
 
                         // Specify if server should lookup global reservations.
                         "reservations-global": false,
@@ -990,9 +990,9 @@
         },
 
         // Fetches host reservations.
+        // "reservation-mode": "all",
         // It is replaced by the "reservations-global",
         // "reservations-in-subnet" and "reservations-out-of-pool" parameters.
-        // "reservation-mode": "all",
 
         // Specify if server should lookup global reservations.
         "reservations-global": false,

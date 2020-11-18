@@ -51,7 +51,19 @@
 
 // This directive tells Kea that reservations are global. Note that this
 // can also be specified at shared network and/or subnet level.
-  "reservation-mode": "global",
+//  "reservation-mode": "global",
+// It is replaced by the "reservations-global", "reservations-in-subnet" and
+// "reservations-out-of-pool" parameters.
+
+// Specify if server should lookup global reservations.
+  "reservations-global": true,
+
+// Specify if server should lookup in-subnet reservations.
+  "reservations-in-subnet": false,
+
+// Specify if server can assume that all reserved addresses
+// are out-of-pool.
+  "reservations-out-of-pool": false,
 
 // Define several global host reservations.
   "reservations": [
@@ -62,10 +74,10 @@
 // the global scope: as it breaks the link between the reservation and
 // the subnet it can lead to a client localized in another subnet than
 // its address belongs to.
-     {
-         "hw-address": "1a:1b:1c:1d:1e:1f",
-         "ip-address": "192.0.2.201"
-     },
+    {
+        "hw-address": "1a:1b:1c:1d:1e:1f",
+        "ip-address": "192.0.2.201"
+    },
 
 // This is a reservation for a specific client-id. It also shows
 // the this client will get a reserved hostname. A hostname can be defined
@@ -136,13 +148,13 @@
   ],
 
   // Define a subnet.
-  "subnet4": [
-    {
-       "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
-       "subnet": "192.0.2.0/24",
-       "interface": "eth0"
-    }
-  ],
+    "subnet4": [
+        {
+           "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+           "subnet": "192.0.2.0/24",
+           "interface": "eth0"
+        }
+    ],
 
 // The following configures logging. It assumes that messages with at
 // least informational level (info, warn, error and fatal) should be

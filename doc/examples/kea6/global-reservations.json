@@ -36,14 +36,26 @@
 // costly database lookup to do so. It is therefore useful from a performance
 // perspective to use only the reservation types that are actually used in a
 // given network.
-    "host-reservation-identifiers": [ "duid", "hw-address", "flex-id" ],
+  "host-reservation-identifiers": [ "duid", "hw-address", "flex-id" ],
 
 // This directive tells Kea that reservations are global. Note that this
 // can also be specified at shared network and/or subnet level.
-    "reservation-mode": "global",
+//  "reservation-mode": "global",
+// It is replaced by the "reservations-global", "reservations-in-subnet" and
+// "reservations-out-of-pool" parameters.
+
+// Specify if server should lookup global reservations.
+  "reservations-global": true,
+
+// Specify if server should lookup in-subnet reservations.
+  "reservations-in-subnet": false,
+
+// Specify if server can assume that all reserved addresses
+// are out-of-pool.
+  "reservations-out-of-pool": false,
 
 // Define several global host reservations.
-    "reservations": [
+  "reservations": [
 
 // This is a simple host reservation. The host with DUID matching
 // the specified value will get an address of 2001:db8:1::100.
@@ -113,11 +125,11 @@
 // quotes.
 // Note: flexible identifier requires flex_id hook library to be
 // loaded to work.
-        {
-            "flex-id": "'somevalue'",
-            "ip-addresses": [ "2001:db8:1:cafe::2" ]
-        }
-    ],
+      {
+          "flex-id": "'somevalue'",
+          "ip-addresses": [ "2001:db8:1:cafe::2" ]
+      }
+  ],
 
 // The following list defines subnets. Subnet, pools and interface definitions
 // are the same as in the regular scenario.

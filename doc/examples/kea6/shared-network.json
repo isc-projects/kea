@@ -69,7 +69,21 @@
                 "ip-address": "2001:db8::1"
             },
             "renew-timer": 100,
-            "reservation-mode": "all",
+
+            // "reservation-mode": "all",
+            // It is replaced by the "reservations-global",
+            // "reservations-in-subnet" and "reservations-out-of-pool"
+            // parameters.
+
+            // Specify if server should lookup global reservations.
+            "reservations-global": false,
+
+            // Specify if server should lookup in-subnet reservations.
+            "reservations-in-subnet": true,
+
+            // Specify if server can assume that all reserved addresses
+            // are out-of-pool.
+            "reservations-out-of-pool": false,
 
             // List of subnets belonging to this particular shared-network
             // start here.
@@ -85,7 +99,17 @@
                         "ip-address": "2001:db8:1::123"
                     },
                     "renew-timer": 10,
-                    "reservation-mode": "all",
+                    // "reservation-mode": "all",
+                    // It is replaced by the "reservations-global",
+                    // "reservations-in-subnet" and "reservations-out-of-pool"
+                    // parameters.
+                    // Specify if server should lookup global reservations.
+                    "reservations-global": false,
+                    // Specify if server should lookup in-subnet reservations.
+                    "reservations-in-subnet": true,
+                    // Specify if server can assume that all reserved addresses
+                    // are out-of-pool.
+                    "reservations-out-of-pool": false,
                     "subnet": "2001:db8:1::/64",
                     "pools": [ { "pool": "2001:db8:1:abcd::/64" } ],
                     "valid-lifetime": 40
@@ -101,7 +125,17 @@
                         "ip-address": "3000::1"
                     },
                     "renew-timer": 10,
-                    "reservation-mode": "all",
+                    // "reservation-mode": "all",
+                    // It is replaced by the "reservations-global",
+                    // "reservations-in-subnet" and "reservations-out-of-pool"
+                    // parameters.
+                    // Specify if server should lookup global reservations.
+                    "reservations-global": false,
+                    // Specify if server should lookup in-subnet reservations.
+                    "reservations-in-subnet": true,
+                    // Specify if server can assume that all reserved addresses
+                    // are out-of-pool.
+                    "reservations-out-of-pool": false,
                     "subnet": "3000::/16",
                     "valid-lifetime": 40
                 }

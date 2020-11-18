@@ -4538,7 +4538,6 @@ following decision diagram:
 
 ::
 
-
                                   O
                                   |
                                   v
@@ -4740,7 +4739,8 @@ configuration, as ``out-of-pool`` are also ``in-subnet``.
    }
 
 
-For this reason, the ``in-subnet`` can not be omitted when ``out-of-pool`` is set.
+For this reason, the ``in-subnet`` must not be disabled or it can be enabled
+explicitly when ``out-of-pool`` is enabled.
 
 ::
 
