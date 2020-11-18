@@ -43,13 +43,19 @@ public:
     /// This method may throw if initialization fails.
     void init(const std::string& config_file);
 
-    /// @brief Loads specific config file
+    /// @brief Configure DHCPv4 server using the configuration file specified.
     ///
     /// This utility method is called whenever we know a filename of the config
     /// and need to load it. It calls config-set command once the content of
     /// the file has been loaded and verified to be a sane JSON configuration.
     /// config-set handler will process the config file (load it as current
     /// configuration).
+    ///
+    /// This function is used to both configure the DHCP server on its startup
+    /// and dynamically reconfigure the server when SIGHUP signal is received.
+    ///
+    /// It fetches DHCPv4 server's configuration from the 'Dhcp4' section of
+    /// the JSON configuration file.
     ///
     /// @param file_name name of the file to be loaded
     /// @return status of the file loading and outcome of config-set

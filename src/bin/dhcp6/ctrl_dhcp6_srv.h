@@ -43,7 +43,13 @@ public:
     /// This method may throw if initialization fails.
     void init(const std::string& config_file);
 
-    /// @brief Loads specific configuration file
+    /// @brief Configure DHCPv6 server using the configuration file specified.
+    ///
+    /// This function is used to both configure the DHCP server on its startup
+    /// and dynamically reconfigure the server when SIGHUP signal is received.
+    ///
+    /// It fetches DHCPv6 server's configuration from the 'Dhcp6' section of
+    /// the JSON configuration file.
     ///
     /// This utility method is called whenever we know a filename of the config
     /// and need to load it. It calls config-set command once the content of

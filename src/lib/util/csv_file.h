@@ -282,9 +282,8 @@ public:
     ///
     /// where {xx} is the two digit hexadecimal ASCII value of the character
     /// escaped. A comma, for example is:
-    /// @verbatim
-    /// &#x2c
-    /// @endverbatim
+    ///
+    /// &\#x2c
     ///
     /// @return A copy of the original string with special characters escaped.
     static std::string escapeCharacters(const std::string& orig_str,

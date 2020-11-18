@@ -18,10 +18,6 @@
 namespace isc {
 namespace cryptolink {
 
-/// @brief Decode the HashAlgorithm enum into a name usable by Botan
-///
-/// @param algorithm algorithm to be converted
-/// @return text representation of the algorithm name
 const std::string
 btn::getHashAlgorithmName(HashAlgorithm algorithm) {
     switch (algorithm) {

@@ -88,16 +88,6 @@ namespace dhcp {
 
 ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
 
-/// @brief Configure DHCPv6 server using the configuration file specified.
-///
-/// This function is used to both configure the DHCP server on its startup
-/// and dynamically reconfigure the server when SIGHUP signal is received.
-///
-/// It fetches DHCPv6 server's configuration from the 'Dhcp6' section of
-/// the JSON configuration file.
-///
-/// @param file_name Configuration file location.
-/// @return status of the command
 ConstElementPtr
 ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
     // This is a configuration backend implementation that reads the

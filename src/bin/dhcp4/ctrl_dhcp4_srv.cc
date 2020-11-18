@@ -117,16 +117,6 @@ void ControlledDhcpv4Srv::cleanup() {
     // Nothing to do here. No need to disconnect from anything.
 }
 
-/// @brief Configure DHCPv4 server using the configuration file specified.
-///
-/// This function is used to both configure the DHCP server on its startup
-/// and dynamically reconfigure the server when SIGHUP signal is received.
-///
-/// It fetches DHCPv4 server's configuration from the 'Dhcp4' section of
-/// the JSON configuration file.
-///
-/// @param file_name Configuration file location.
-/// @return status of the command
 ConstElementPtr
 ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
     // This is a configuration backend implementation that reads the

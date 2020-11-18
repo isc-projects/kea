@@ -22,11 +22,6 @@
 namespace isc {
 namespace cryptolink {
 
-/// @brief Decode the HashAlgorithm enum into an EVP_MD pointer (or 0)
-///
-/// EVP_MD pointer is a OpenSSL's way of identifying hash algorithms
-/// @param algorithm algorithm to be converted
-/// @return pointer to EVP_MD which identifies the algorithm
 const EVP_MD*
 ossl::getHashAlgorithm(HashAlgorithm algorithm) {
     switch (algorithm) {
