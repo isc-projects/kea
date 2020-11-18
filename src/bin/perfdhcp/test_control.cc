@@ -19,6 +19,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
+#include <dhcp/option_int.h>
 #include <util/unittests/check_valgrind.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -1644,14 +1645,21 @@ TestControl::sendSolicit6(const bool preload /*= false*/) {
     if (!pkt6) {
         isc_throw(Unexpected, "failed to create SOLICIT packet");
     }
+
+    // Check if we need to simulate HA failures by pretending no responses were received.
+    // The DHCPv6 protocol signals that by increasing the elapsed option field. Note it is in 1/100 of a second.
     if (options_.getWaitForElapsedTime() &&
         stats_mgr_.getTestPeriod().length().total_seconds() >= options_.getWaitForElapsedTime() &&
-        stats_mgr_.getTestPeriod().length().total_seconds() <= options_.getWaitForElapsedTime() +
+        stats_mgr_.getTestPeriod().length().total_seconds() < options_.getWaitForElapsedTime() +
                                      options_.getIncreaseElapsedTime()) {
-        boost::shared_ptr<LocalizedOption>
-            opt_elapsed_time(new LocalizedOption(Option::V6, D6O_ELAPSED_TIME,
-                                                 OptionBuffer(2, 10)));
-        pkt6->addOption(opt_elapsed_time);
+
+        // Keep increasing elapsed time. The value should start increasing steadily.
+        uint32_t val = (stats_mgr_.getTestPeriod().length().total_seconds() - options_.getWaitForElapsedTime() + 1)*100;
+        if (val > 65535) {
+            val = 65535;
+        }
+        OptionPtr elapsed(new OptionInt<uint16_t>(Option::V6, D6O_ELAPSED_TIME, val));
+        pkt6->addOption(elapsed);
     } else {
         pkt6->addOption(Option::factory(Option::V6, D6O_ELAPSED_TIME));
     }
