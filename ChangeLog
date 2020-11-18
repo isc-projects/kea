@@ -3,7 +3,8 @@
 	reservations-in-subnet and reservations-out-of-pool to replace
 	the old reservation-mode parameter. The new flags can be
 	configured independently, adding support for new configuration
-	scenarios when global and in subnet reservations are both active.
+	scenarios when global and in subnet reservations are both
+	active.
 	(Gitlab #1405)
 
 1828.	[bug]		andrei
