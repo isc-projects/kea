@@ -1,3 +1,11 @@
+1829.	[func]		fdupont, razvan
+	Added new configuration options reservations-global,
+	reservations-in-subnet and reservations-out-of-pool to replace
+	the old reservation-mode parameter. The new flags can be
+	configured independently, adding support for new configuration
+	scenarion when global and in subnet reservations are both active.
+	(Gitlab #1405)
+
 1828.	[bug]		andrei
 	Fix trivial logic error in handling the "lease4-update" command
 	manifesting itself on v4 if multi-threading is enabled.
