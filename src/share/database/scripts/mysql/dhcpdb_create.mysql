@@ -3054,6 +3054,23 @@ ALTER TABLE dhcp4_shared_network DROP COLUMN reservation_mode;
 ALTER TABLE dhcp6_subnet DROP COLUMN reservation_mode;
 ALTER TABLE dhcp6_shared_network DROP COLUMN reservation_mode;
 
+# Add new lease cache parameters.
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN cache_threshold FLOAT DEFAULT NULL,
+    ADD COLUMN cache_max_age INT(10) DEFAULT NULL;
+
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN cache_threshold FLOAT DEFAULT NULL,
+    ADD COLUMN cache_max_age INT(10) DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    ADD COLUMN cache_threshold FLOAT DEFAULT NULL,
+    ADD COLUMN cache_max_age INT(10) DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN cache_threshold FLOAT DEFAULT NULL,
+    ADD COLUMN cache_max_age INT(10) DEFAULT NULL;
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '9', minor = '5';

@@ -4054,8 +4054,8 @@ TEST_F(AllocEngine4Test, discoverCacheBadThreshold4) {
     uint32_t valid = 500;
     subnet_->setValid(valid);
 
-    // Set the threshold to 25%.
-    subnet_->setCacheThreshold(.25);
+    // Set the threshold to 10%.
+    subnet_->setCacheThreshold(.10);
 
     IOAddress addr("192.0.2.105");
     time_t now = time(NULL) - 100; // Allocated 100 seconds ago.
@@ -4211,8 +4211,8 @@ TEST_F(AllocEngine4Test, discoverCacheRevDDNS4) {
     uint32_t valid = 500;
     subnet_->setValid(valid);
 
-    // Set the threshold to 10%.
-    subnet_->setCacheThreshold(.1);
+    // Set the threshold to 25%.
+    subnet_->setCacheThreshold(.25);
 
     // Set the max age to 200.
     subnet_->setCacheMaxAge(200);

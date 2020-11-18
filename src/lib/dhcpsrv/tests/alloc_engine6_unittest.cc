@@ -3728,14 +3728,8 @@ TEST_F(AllocEngine6Test, mixedHostReservedAddress) {
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
 
     // We're going to rollback the clock a little so we can verify a renewal.
-    // We verify the "time" change in case the lease returned to us
-    // by expectOneLease ever becomes a copy and not what is in the lease mgr.
     --lease->cltt_;
-    lease->updateCurrentExpirationTime();
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_TRUE(from_mgr);
-    EXPECT_EQ(from_mgr->cltt_, lease->cltt_);
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().updateLease6(lease));
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
@@ -3794,14 +3788,8 @@ TEST_F(AllocEngine6Test, mixedHostReservedPrefix) {
     EXPECT_EQ("2001:db8:1:2::", lease->addr_.toText());
 
     // We're going to rollback the clock a little so we can verify a renewal.
-    // We verify the "time" change in case the lease returned to us
-    // by expectOneLease ever becomes a copy and not what is in the lease mgr.
     --lease->cltt_;
-    lease->updateCurrentExpirationTime();
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_TRUE(from_mgr);
-    EXPECT_EQ(from_mgr->cltt_, lease->cltt_);
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().updateLease6(lease));
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
@@ -3872,14 +3860,8 @@ TEST_F(AllocEngine6Test, bothHostReservedAddress) {
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
 
     // We're going to rollback the clock a little so we can verify a renewal.
-    // We verify the "time" change in case the lease returned to us
-    // by expectOneLease ever becomes a copy and not what is in the lease mgr.
     --lease->cltt_;
-    lease->updateCurrentExpirationTime();
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_TRUE(from_mgr);
-    EXPECT_EQ(from_mgr->cltt_, lease->cltt_);
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().updateLease6(lease));
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
@@ -3947,14 +3929,8 @@ TEST_F(AllocEngine6Test, bothHostReservedPrefix) {
     EXPECT_EQ("2001:db8:1:2::", lease->addr_.toText());
 
     // We're going to rollback the clock a little so we can verify a renewal.
-    // We verify the "time" change in case the lease returned to us
-    // by expectOneLease ever becomes a copy and not what is in the lease mgr.
     --lease->cltt_;
-    lease->updateCurrentExpirationTime();
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_TRUE(from_mgr);
-    EXPECT_EQ(from_mgr->cltt_, lease->cltt_);
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().updateLease6(lease));
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;

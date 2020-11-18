@@ -809,6 +809,22 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     count=$(echo "${OUTPUT}" | grep -Fci reservation) || true
     assert_eq 0 "${count}" "dhcp6_subnet has still reservation_mode column. (returned count %d, expected %d)"
 
+    # table: dhcp4_shared_network new cache_threshold and cache_max_age columns
+    qry="select cache_threshold, cache_max_age from dhcp4_shared_network"
+    run_statement "dhcp4_shared_network" "$qry"
+
+    # table: dhcp4_subnet new cache_threshold and cache_max_age columns
+    qry="select cache_threshold, cache_max_age from dhcp4_subnet"
+    run_statement "dhcp4_shared_network" "$qry"
+
+    # table: dhcp6_shared_network new cache_threshold and cache_max_age columns
+    qry="select cache_threshold, cache_max_age from dhcp6_shared_network"
+    run_statement "dhcp6_shared_network" "$qry"
+
+    # table: dhcp6_subnet new cache_threshold and cache_max_age columns
+    qry="select cache_threshold, cache_max_age from dhcp6_subnet"
+    run_statement "dhcp6_shared_network" "$qry"
+
     # Verify upgraded schema reports version 9.5
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "9.5" "${version}" "Expected kea-admin to return %s, returned value was %s"

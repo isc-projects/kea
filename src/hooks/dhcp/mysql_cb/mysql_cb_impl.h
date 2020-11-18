@@ -114,6 +114,21 @@ public:
     /// @brief Destructor.
     virtual ~MySqlConfigBackendImpl();
 
+    /// @brief Creates MySQL binding from an integer.
+    ///
+    /// @tparam T Numeric type corresponding to the binding type, e.g.
+    /// @c uint8_t, @c uint16_t etc.
+    /// @param value Optional integet of type T.
+    /// @return Pointer to a null binding if the value is "unspecified" or
+    /// a pointer to a binding representing integer value.
+    template<typename T>
+    static db::MySqlBindingPtr condCreateInteger(const util::Optional<T>& value) {
+        if (value.unspecified()) {
+            return (db::MySqlBinding::createNull());
+        }
+        return (db::MySqlBinding::createInteger(value));
+    }
+
     /// @brief Creates MySQL binding from a @c Triplet.
     ///
     /// @param triplet Triplet value from which the binding should be created.

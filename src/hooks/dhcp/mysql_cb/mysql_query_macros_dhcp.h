@@ -117,6 +117,8 @@ namespace {
     "  s.ddns_qualifying_suffix," \
     "  s.reservations_in_subnet," \
     "  s.reservations_out_of_pool," \
+    "  s.cache_threshold," \
+    "  s.cache_max_age," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -244,6 +246,8 @@ namespace {
     "  s.ddns_qualifying_suffix," \
     "  s.reservations_in_subnet," \
     "  s.reservations_out_of_pool," \
+    "  s.cache_threshold," \
+    "  s.cache_max_age," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     server_join \
@@ -451,6 +455,8 @@ namespace {
     "  n.ddns_qualifying_suffix," \
     "  n.reservations_in_subnet," \
     "  n.reservations_out_of_pool," \
+    "  n.cache_threshold," \
+    "  n.cache_max_age," \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     server_join \
@@ -530,6 +536,8 @@ namespace {
     "  n.ddns_qualifying_suffix," \
     "  n.reservations_in_subnet," \
     "  n.reservations_out_of_pool," \
+    "  n.cache_threshold," \
+    "  n.cache_max_age," \
     "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
     server_join \
