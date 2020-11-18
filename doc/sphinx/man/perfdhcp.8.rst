@@ -308,6 +308,14 @@ Options
    **T**
       When finished, prints templates.
 
+``-y seconds``
+   Time in seconds after which perfdhcp will start simulating the client waiting longer for server responses. This increase the
+   secs field in DHCPv4 and sends increased values in Elapsed option in DHCPv6. Must be used with '-Y'.
+
+``-Y seconds``
+   Period of time in seconds in which perfdhcp will be simulating the client waiting longer for server responses. This increase
+   the secs field in DHCPv4 and sends increased values in Elapsed option in DHCPv6. Must be used with '-y'.
+
 DHCPv4-Only Options
 ~~~~~~~~~~~~~~~~~~~
 
@@ -453,6 +461,32 @@ Exit Status
 3
    No general failures in operation, but one or more exchanges were
    unsuccessful.
+
+Usage Examples
+~~~~~~~~~~~~~~
+
+Simulate regular DHCPv4 traffic: 100 DHCPv4 devices (-R 100), 10 packets per second (-r 10), show the query/response rate details (-xi),
+the report should be shown every 2 seconds (-t 2), send the packets to the IP 192.0.2.1:
+
+sudo perfdhcp -xi -t 2 -r 10 -R 100 192.0.2.1
+
+Here's a similar case, but for DHCPv6. Note that DHCPv6 protocol uses link-local addresses, so you need to specify the interface
+(eth0 in this example) to send the traffic. 'all' is a convenience alias for All_DHCP_Relay_Agents_and_Servers (the multicast
+address FF02::1:2). Alternatively, you can use 'servers' alias to refer to All_DHCP_Servers (the multicast address FF05::1:3),
+or skip it all together and the default value (all) will be used.
+
+sudo perfdhcp -6 -xi -t 1 -r 1 -R 10 -l eth0 all
+
+The following examples simulate normal DHCPv4 and DHCPv6 traffic that after 3 seconds starts pretending to not receive any
+responses from the server for 10 seconds. DHCPv4 protocol signals this by increased secs field and DHCPv6 uses elapsed option
+for that. In real networks this indicates that the clients are not getting responses in a timely matter. This can be used
+to simulate some HA scenarios, as Kea uses secs field and elapsed option value as one of the indicators that the HA partner
+is not responding. When enabled with -y and -Y, the secs and elapsed time value increased steadily.
+
+sudo perfdhcp -xi -t 1 -r 1 -y 10 -Y 3 192.0.2.1
+
+sudo perfdhcp -6 -xi -t 1 -r 1 -y 10 -Y 3 2001:db8::1
+
 
 Mailing Lists and Support
 ~~~~~~~~~~~~~~~~~~~~~~~~~
