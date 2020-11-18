@@ -1174,7 +1174,7 @@ TestControl::sendDiscover4(const bool preload /*= false*/) {
 
     // Check if we need to simulate HA failures by pretending no responses were received.
     // The DHCP protocol signals that by increasing secs field (seconds since the configuration attempt started).
-    if (options_.getWaitForElapsedTime() &&
+    if (options_.getIncreaseElapsedTime() &&
         stats_mgr_.getTestPeriod().length().total_seconds() >= options_.getWaitForElapsedTime() &&
         stats_mgr_.getTestPeriod().length().total_seconds() < options_.getWaitForElapsedTime() +
                                      options_.getIncreaseElapsedTime()) {
@@ -1648,10 +1648,11 @@ TestControl::sendSolicit6(const bool preload /*= false*/) {
 
     // Check if we need to simulate HA failures by pretending no responses were received.
     // The DHCPv6 protocol signals that by increasing the elapsed option field. Note it is in 1/100 of a second.
-    if (options_.getWaitForElapsedTime() &&
+    if (options_.getIncreaseElapsedTime() &&
         stats_mgr_.getTestPeriod().length().total_seconds() >= options_.getWaitForElapsedTime() &&
         stats_mgr_.getTestPeriod().length().total_seconds() < options_.getWaitForElapsedTime() +
                                      options_.getIncreaseElapsedTime()) {
+
 
         // Keep increasing elapsed time. The value should start increasing steadily.
         uint32_t val = (stats_mgr_.getTestPeriod().length().total_seconds() - options_.getWaitForElapsedTime() + 1)*100;
