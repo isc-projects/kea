@@ -3065,7 +3065,7 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
             // reserved addresses from within the dynamic pool, and for that
             // reason look only for reservations that are outside the pools,
             // hence the inPool check.
-            if (host != ctx.hosts_.end() && && host->second) {
+            if (host != ctx.hosts_.end() && host->second) {
                 auto reservation = host->second->getIPv4Reservation();
                 if (!reservation.isV4Zero() &&
                     (!subnet->getReservationsOutOfPool() ||
