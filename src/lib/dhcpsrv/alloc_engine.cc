@@ -3050,7 +3050,7 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
             auto host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
             // if we want global + other modes we would need to
             // return only if true, else continue
-            if (host != ctx.hosts_.end() &&
+            if (host != ctx.hosts_.end() && host->second &&
                 !host->second->getIPv4Reservation().isV4Zero()) {
                 return (true);
             }
@@ -3065,7 +3065,7 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
             // reserved addresses from within the dynamic pool, and for that
             // reason look only for reservations that are outside the pools,
             // hence the inPool check.
-            if (host != ctx.hosts_.end()) {
+            if (host != ctx.hosts_.end() && && host->second) {
                 auto reservation = host->second->getIPv4Reservation();
                 if (!reservation.isV4Zero() &&
                     (!subnet->getReservationsOutOfPool() ||

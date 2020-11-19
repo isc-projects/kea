@@ -940,7 +940,7 @@ public:
     /// @brief Attempts to find appropriate host reservation.
     ///
     /// Attempts to find appropriate host reservation in HostMgr. If found, it
-    /// it is set in the @c ctx.hosts_.
+    /// is set in the @ref ctx.hosts_.
     ///
     /// @node When the out-of-pool flag is enabled, because the function is
     /// called only once per DHCP message, the reservations that are in-subnet
@@ -1582,7 +1582,7 @@ public:
     /// @brief Attempts to find the host reservation for the client.
     ///
     /// This method attempts to find the host reservation for the client. If
-    /// found, it is set in the @c ctx.hosts_.
+    /// found, it is set in the @ref ctx.hosts_.
     ///
     /// @node When the out-of-pool flag is enabled, because the function is
     /// called only once per DHCP message, the reservations that are in-subnet

@@ -122,18 +122,18 @@ namespace {
 /// - Configuration 12:
 ///   - Simple configuration with a single subnet
 ///   - One in-pool reservation for MAC address aa:bb:cc:dd:ee:ff
-///   - The reservations-in-subnet set to true
+///   - The reservations-in-subnet flag is set to true
 ///
 /// - Configuration 13:
 ///   - Simple configuration with a single subnet as in #12
-///   - The reservations-in-subnet set to false for testing that the
+///   - The reservations-in-subnet flag is set to false for testing that the
 ///     reservations are ignored
 ///
 /// - Configuration 14:
 ///   - Simple configuration with a single subnet
 ///   - Two host reservations, one out of the pool, another one in pool
-///   - The reservations-in-subnet and reservations-out-of-pool set to true
-///     to test that only out of pool reservations are honored.
+///   - The reservations-in-subnet and reservations-out-of-pool flags are set to
+///     true to test that only out of pool reservations are honored.
 ///
 /// - Configuration 15:
 ///   - Use for testing authoritative flag

@@ -57,8 +57,8 @@ namespace {
 /// - Configuration 4:
 ///   - Simple configuration with a single subnet
 ///   - Two host reservations, one out of the pool, another one in pool
-///   - The reservations-in-subnet and reservations-out-of-pool set to true
-///     to test that only out of pool reservations are honored.
+///   - The reservations-in-subnet and reservations-out-of-pool flags are set to
+///     true to test that only out of pool reservations are honored.
 ///
 const char* CONFIGS[] = {
     // Configuration 0
