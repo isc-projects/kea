@@ -49,10 +49,16 @@ namespace {
 ///   - an option with unique value specified for each pool, so as it is
 ///     possible to test that pool specific options can be assigned.
 ///
-/// Configuration 3:
+/// - Configuration 3:
 ///   - one subnet 3000::/32 used on eth0 interface
 ///   - prefixes of length 64, delegated from the pool: 2001:db8:3::/48
 ///   - Excluded Prefix specified (RFC 6603).
+///
+/// - Configuration 4:
+///   - Simple configuration with a single subnet
+///   - Two host reservations, one out of the pool another one in pool
+///   - Host reservation mode set to "out-of-pool" to test that
+///     only out of pool reservations are honored.
 ///
 const char* CONFIGS[] = {
     // Configuration 0
