@@ -597,17 +597,14 @@ AllocEngine::findReservation(ClientContext6& ctx) {
     SharedNetwork6Ptr network;
     subnet->getSharedNetwork(network);
 
-    // @todo: This code can be trivially optimized.
-    if (subnet->getReservationsGlobal()) {
-        ConstHostPtr ghost = findGlobalReservation(ctx);
-        if (ghost) {
-            ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
+    if (ctx.hosts_.find(SUBNET_ID_GLOBAL) == ctx.hosts_.end() &&
+        subnet->getReservationsGlobal()) {
+        ctx.hosts_[SUBNET_ID_GLOBAL] = findGlobalReservation(ctx);
+    }
 
-            // If we had only to fetch global reservations it is done.
-            if (!subnet->getReservationsInSubnet()) {
-                return;
-            }
-        }
+    // If we had only to fetch global reservations it is done.
+    if (!subnet->getReservationsInSubnet()) {
+        return;
     }
 
     // If the subnet belongs to a shared network it is usually going to be
@@ -3030,16 +3027,23 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         return (false);
     }
 
+    // flag used to perform search for global reservations only once
+    bool skip_global = false;
+
     Subnet4Ptr subnet = ctx.subnet_;
     while (subnet) {
-        if (subnet->getReservationsGlobal()) {
+        // skip search if the global reservations have already been examined
+        if (!skip_global && subnet->getReservationsGlobal()) {
             auto host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
             // if we want global + other modes we would need to
             // return only if true, else continue
-            if (host != ctx.hosts_.end() &&
+            if (host != ctx.hosts_.end() && host->second &&
                 !host->second->getIPv4Reservation().isV4Zero()) {
                 return (true);
             }
+            // no need to perform this search again as there are no global
+            // reservations
+            skip_global = true;
         }
 
         if (subnet->getReservationsInSubnet()) {
@@ -3328,17 +3332,16 @@ AllocEngine::findReservation(ClientContext4& ctx) {
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
 
-    // @todo: This code can be trivially optimized.
-    if (subnet->getReservationsGlobal()) {
-        ConstHostPtr ghost = findGlobalReservation(ctx);
-        if (ghost) {
-            ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
+    if (ctx.hosts_.find(SUBNET_ID_GLOBAL) == ctx.hosts_.end() &&
+        subnet->getReservationsGlobal()) {
+        // setting null host means there is no host and no need to perform the
+        // search again
+        ctx.hosts_[SUBNET_ID_GLOBAL] = findGlobalReservation(ctx);
+    }
 
-            // If we had only to fetch global reservations it is done.
-            if (!subnet->getReservationsInSubnet()) {
-                return;
-            }
-        }
+    // If we had only to fetch global reservations it is done.
+    if (!subnet->getReservationsInSubnet()) {
+        return;
     }
 
     // If the subnet belongs to a shared network it is usually going to be
