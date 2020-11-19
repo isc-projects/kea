@@ -4519,7 +4519,7 @@ allocating or renewing a lease for the client. Allowed values are:
    defined will be completely ignored. As the checks are skipped, the
    server may operate faster in this mode.
 
-   Since Kea 1.9.1, the ``reservation-mode`` is replaced by the
+Since Kea 1.9.1, the ``reservation-mode`` is replaced by the
 ``reservations-global``, ``reservations-in-subnet`` and
 ``reservations-out-of-pool`` flags.
 The flags can be activated independently and can produce various combinations,
