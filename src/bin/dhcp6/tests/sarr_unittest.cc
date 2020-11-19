@@ -56,9 +56,9 @@ namespace {
 ///
 /// - Configuration 4:
 ///   - Simple configuration with a single subnet
-///   - Two host reservations, one out of the pool another one in pool
-///   - Host reservation mode set to "out-of-pool" to test that
-///     only out of pool reservations are honored.
+///   - Two host reservations, one out of the pool, another one in pool
+///   - The reservations-in-subnet and reservations-out-of-pool set to true
+///     to test that only out of pool reservations are honored.
 ///
 const char* CONFIGS[] = {
     // Configuration 0
@@ -659,7 +659,7 @@ TEST_F(SARRTest, pkt6ReceiveDropStat3) {
 }
 
 // This test verifies that in pool reservations are ignored when the
-// reservation mode is set to "out-of-pool".
+// reservations-out-of-pool is set to true.
 TEST_F(SARRTest, reservationModeOutOfPool) {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
@@ -694,9 +694,8 @@ TEST_F(SARRTest, reservationModeOutOfPool) {
     ASSERT_EQ("2001:db8:1::3", lease.addr_.toText());
 }
 
-// This test verifies that the in-pool reservation can be assigned to
-// the client not owning this reservation when the reservation mode is
-// set to "out-of-pool".
+// This test verifies that the in-pool reservation can be assigned to a client
+// not owning this reservation when the reservations-out-of-pool flag is enabled.
 TEST_F(SARRTest, reservationIgnoredInOutOfPoolMode) {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.

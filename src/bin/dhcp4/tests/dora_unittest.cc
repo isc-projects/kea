@@ -122,18 +122,18 @@ namespace {
 /// - Configuration 12:
 ///   - Simple configuration with a single subnet
 ///   - One in-pool reservation for MAC address aa:bb:cc:dd:ee:ff
-///   - Host reservation mode set to ALL (fully enabled)
+///   - The reservations-in-subnet set to true
 ///
 /// - Configuration 13:
 ///   - Simple configuration with a single subnet as in #12
-///   - Host reservation mode set to "disabled" for testing that the
+///   - The reservations-in-subnet set to false for testing that the
 ///     reservations are ignored
 ///
 /// - Configuration 14:
 ///   - Simple configuration with a single subnet
-///   - Two host reservations, one out of the pool another one in pool
-///   - Host reservation mode set to "out-of-pool" to test that
-///     only out of pool reservations are honored.
+///   - Two host reservations, one out of the pool, another one in pool
+///   - The reservations-in-subnet and reservations-out-of-pool set to true
+///     to test that only out of pool reservations are honored.
 ///
 /// - Configuration 15:
 ///   - Use for testing authoritative flag
@@ -1846,9 +1846,8 @@ TEST_F(DORATest, reservationIgnoredInDisabledMode) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Set MAC address which doesn't match the reservation configured.
     client.setHWAddress("11:22:33:44:55:66");
-    // Configure DHCP server. In this configuration the reservation mode is
-    // set to disabled. Any client should be able to hijack the reserved
-    // address.
+    // Configure DHCP server. In this configuration the reservations flags are
+    // disabled. Any client should be able to hijack the reserved address.
     configure(DORA_CONFIGS[13], *client.getServer());
     // Client requests the 10.0.0.65 address reserved for another client.
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
@@ -1864,7 +1863,7 @@ TEST_F(DORATest, reservationIgnoredInDisabledMode) {
 }
 
 // This test verifies that in pool reservations are ignored when the
-// reservation mode is set to "out-of-pool".
+// reservations-out-of-pool is set to true.
 TEST_F(DORATest, reservationModeOutOfPool) {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
@@ -1902,9 +1901,8 @@ TEST_F(DORATest, reservationModeOutOfPool) {
     ASSERT_EQ("10.0.0.40", clientB.config_.lease_.addr_.toText());
 }
 
-// This test verifies that the in-pool reservation can be assigned to
-// the client not owning this reservation when the reservation mode is
-// set to "out-of-pool".
+// This test verifies that the in-pool reservation can be assigned to a client
+// not owning this reservation when the reservations-out-of-pool flag is enabled.
 TEST_F(DORATest, reservationIgnoredInOutOfPoolMode) {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
