@@ -11,7 +11,7 @@
 	  client.
 	(Gitlab #1550)
 
-1829.	[func]		fdupont, razvan
+1829.	[func, bug]	fdupont, razvan
 	Added new configuration options reservations-global,
 	reservations-in-subnet and reservations-out-of-pool to replace
 	the old reservation-mode parameter. The new flags can be
