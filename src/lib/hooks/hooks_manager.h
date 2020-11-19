@@ -478,12 +478,12 @@ private:
 
     /// Set of library managers.
     ///
-    /// @node: This should never be null.
+    /// @note: This should never be null.
     boost::shared_ptr<LibraryManagerCollection> lm_collection_;
 
     /// Callout manager for the set of library managers.
     ///
-    /// @node: This should never be null.
+    /// @note: This should never be null.
     boost::shared_ptr<CalloutManager> callout_manager_;
 
     /// Test flag to keep @ref callout_manager_ when calling @ref loadLibraries

@@ -942,7 +942,7 @@ public:
     /// Attempts to find appropriate host reservation in HostMgr. If found, it
     /// is set in the @ref ClientContext6::hosts_.
     ///
-    /// @node When the out-of-pool flag is enabled, because the function is
+    /// @note When the out-of-pool flag is enabled, because the function is
     /// called only once per DHCP message, the reservations that are in-subnet
     /// are not filtered out as there is no sufficient information regarding the
     /// selected subnet, shared network or lease types, but will be filtered out
@@ -1584,7 +1584,7 @@ public:
     /// Attempts to find appropriate host reservation in HostMgr. If found, it
     /// is set in the @ref ClientContext4::hosts_.
     ///
-    /// @node When the out-of-pool flag is enabled, because the function is
+    /// @note When the out-of-pool flag is enabled, because the function is
     /// called only once per DHCP message, the reservations that are in-subnet
     /// are not filtered out as there is no sufficient information regarding the
     /// selected subnet or shared network, but will be filtered out at

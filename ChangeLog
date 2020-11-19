@@ -1,8 +1,14 @@
 1830.	[bug]		razvan
-	Fixed the DHCPv6 server implementation of out-of-pool flag to
-	match the DHCPv4 one. The in pool reservations search is now
-	skipped and the reserved addresses are no longer assigned to
-	the clients, but can be assigned dynamically to any client.
+	Fixed the DHCPv6 server implementation of the
+	reservations-out-of-pool flag to match the DHCPv4 one. When the
+	flag is true:
+	* the server assumes that all reserved address do not belong to
+	  the  dynamic pool.
+	* the server will not assign reserved addresses that are inside
+	  the  dynamic pool to the respective clients.
+	* addresses matching the respective reservations from inside
+	  the dynamic pools (if any) can be dynamically assigned to any
+	  client.
 	(Gitlab #1550)
 
 1829.	[func]		fdupont, razvan

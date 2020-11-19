@@ -21,7 +21,7 @@ namespace {
 
 /// @brief test mutex class used to check the internal state of a 'fictional'
 /// mutex so that the functionality of the UnlockGuard can be tested
-/// @node the test mutex can be recursive which means that a lock can be called
+/// @note the test mutex can be recursive which means that a lock can be called
 /// on the same thread and not resulting in a dead lock
 class TestMutex {
 public:
