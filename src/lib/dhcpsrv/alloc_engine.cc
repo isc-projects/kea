@@ -928,10 +928,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // it has been reserved for us we would have already allocated a lease.
 
             ConstHostCollection hosts;
-            // The out-of-pool flag indicates that no client should be assigned
-            // reserved addresses from within the dynamic pool, and for that
-            // reason look only for reservations that are outside the pools,
-            // hence the inPool check.
+            // When out-of-pool flag is true the server may assume that all host
+            // reservations are for addresses that do not belong to the dynamic
+            // pool. Therefore, it can skip the reservation checks when dealing
+            // with in-pool addresses.
             if (in_subnet &&
                 (!subnet->getReservationsOutOfPool() ||
                  !subnet->inPool(ctx.currentIA().type_, hint))) {
@@ -968,10 +968,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
             // If the lease is expired, we may likely reuse it, but...
             ConstHostCollection hosts;
-            // The out-of-pool flag indicates that no client should be assigned
-            // reserved addresses from within the dynamic pool, and for that
-            // reason look only for reservations that are outside the pools,
-            // hence the inPool check.
+            // When out-of-pool flag is true the server may assume that all host
+            // reservations are for addresses that do not belong to the dynamic
+            // pool. Therefore, it can skip the reservation checks when dealing
+            // with in-pool addresses.
             if (in_subnet &&
                 (!subnet->getReservationsOutOfPool() ||
                  !subnet->inPool(ctx.currentIA().type_, hint))) {
@@ -2974,9 +2974,10 @@ namespace {
 /// @return true if the address is reserved for another client.
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
-    // The out-of-pool flag indicates that no client should be assigned reserved
-    // addresses from within the dynamic pool, and for that reason look only
-    // for reservations that are outside the pools, hence the inPool check.
+    // When out-of-pool flag is true the server may assume that all host
+    // reservations are for addresses that do not belong to the dynamic pool.
+    // Therefore, it can skip the reservation checks when dealing with in-pool
+    // addresses.
     if (ctx.subnet_ && ctx.subnet_->getReservationsInSubnet() &&
         (!ctx.subnet_->getReservationsOutOfPool() ||
          !ctx.subnet_->inPool(Lease::TYPE_V4, address))) {
