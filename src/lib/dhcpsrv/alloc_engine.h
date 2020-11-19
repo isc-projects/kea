@@ -720,8 +720,8 @@ public:
     /// it into LeaseMgr (if this allocation is not fake, i.e. this is not a
     /// response to SOLICIT).
     ///
-    /// This method uses host reservation if ctx.hosts_ is set. The easy way to
-    /// set it is to call @ref findReservationDecl.
+    /// This method uses host reservation if @ref ClientContext6::hosts_ is set.
+    /// The easy way to set it is to call @ref findReservationDecl.
     /// The host reservation is convenient, but incurs performance penalty,
     /// so it can be tweaked on a per subnet basis. There are three possible modes:
     /// 1. disabled (no host reservation at all). This is the most performant one
@@ -940,7 +940,7 @@ public:
     /// @brief Attempts to find appropriate host reservation.
     ///
     /// Attempts to find appropriate host reservation in HostMgr. If found, it
-    /// is set in the @ref ctx.hosts_.
+    /// is set in the @ref ClientContext6::hosts_.
     ///
     /// @node When the out-of-pool flag is enabled, because the function is
     /// called only once per DHCP message, the reservations that are in-subnet
@@ -1581,8 +1581,8 @@ public:
 
     /// @brief Attempts to find the host reservation for the client.
     ///
-    /// This method attempts to find the host reservation for the client. If
-    /// found, it is set in the @ref ctx.hosts_.
+    /// Attempts to find appropriate host reservation in HostMgr. If found, it
+    /// is set in the @ref ClientContext4::hosts_.
     ///
     /// @node When the out-of-pool flag is enabled, because the function is
     /// called only once per DHCP message, the reservations that are in-subnet
