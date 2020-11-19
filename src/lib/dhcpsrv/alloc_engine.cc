@@ -928,11 +928,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
             ConstHostCollection hosts;
             // The out-of-pool flag indicates that no client should be assigned
-            // reservations from within the dynamic pool, and for that reason
-            // look only for reservations that are outside the pools, hence the
-            // inPool check.
-            if (in_subnet && (!subnet->getReservationsOutOfPool() ||
-                !ctx.subnet_->inPool(ctx.currentIA().type_, hint))) {
+            // reserved addresses from within the dynamic pool, and for that
+            // reason look only for reservations that are outside the pools,
+            // hence the inPool check.
+            if (in_subnet &&
+                (!subnet->getReservationsOutOfPool() ||
+                 !subnet->inPool(ctx.currentIA().type_, hint))) {
                 hosts = getIPv6Resrv(subnet->getID(), hint);
             }
 
@@ -967,11 +968,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // If the lease is expired, we may likely reuse it, but...
             ConstHostCollection hosts;
             // The out-of-pool flag indicates that no client should be assigned
-            // reservations from within the dynamic pool, and for that reason
-            // look only for reservations that are outside the pools, hence the
-            // inPool check.
-            if (in_subnet && (!subnet->getReservationsOutOfPool() ||
-                !ctx.subnet_->inPool(ctx.currentIA().type_, hint))) {
+            // reserved addresses from within the dynamic pool, and for that
+            // reason look only for reservations that are outside the pools,
+            // hence the inPool check.
+            if (in_subnet &&
+                (!subnet->getReservationsOutOfPool() ||
+                 !subnet->inPool(ctx.currentIA().type_, hint))) {
                 hosts = getIPv6Resrv(subnet->getID(), hint);
             }
 
@@ -1275,12 +1277,12 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
             }
 
             // The out-of-pool flag indicates that no client should be assigned
-            // reservations from within the dynamic pool, and for that reason
-            // look only for reservations that are outside the pools, hence the
-            // inPool check.
-            if (in_subnet && (!subnet->getReservationsOutOfPool() ||
-                !subnet->inPool(ctx.currentIA().type_, addr))) {
-            } else {
+            // reserved addresses from within the dynamic pool, and for that
+            // reason look only for reservations that are outside the pools,
+            // hence the inPool check.
+            if (!in_subnet ||
+                (subnet->getReservationsOutOfPool() &&
+                 subnet->inPool(ctx.currentIA().type_, addr))) {
                 continue;
             }
 
@@ -2971,8 +2973,8 @@ namespace {
 /// @return true if the address is reserved for another client.
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
-    // The out-of-pool flag indicates that no client should be assigned
-    // reservations from within the dynamic pool, and for that reason look only
+    // The out-of-pool flag indicates that no client should be assigned reserved
+    // addresses from within the dynamic pool, and for that reason look only
     // for reservations that are outside the pools, hence the inPool check.
     if (ctx.subnet_ && ctx.subnet_->getReservationsInSubnet() &&
         (!ctx.subnet_->getReservationsOutOfPool() ||
@@ -3036,13 +3038,13 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         return (false);
     }
 
-    // flag used to perform search for global reservations only once
-    bool skip_global = false;
+    // Flag used to perform search for global reservations only once.
+    bool search_global_done = false;
 
     Subnet4Ptr subnet = ctx.subnet_;
     while (subnet) {
-        // skip search if the global reservations have already been examined
-        if (!skip_global && subnet->getReservationsGlobal()) {
+        // Skip search if the global reservations have already been examined.
+        if (!search_global_done && subnet->getReservationsGlobal()) {
             auto host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
             // if we want global + other modes we would need to
             // return only if true, else continue
@@ -3050,17 +3052,17 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
                 !host->second->getIPv4Reservation().isV4Zero()) {
                 return (true);
             }
-            // no need to perform this search again as there are no global
-            // reservations
-            skip_global = true;
+            // No need to perform this search again as there are no global
+            // reservations.
+            search_global_done = true;
         }
 
         if (subnet->getReservationsInSubnet()) {
             auto host = ctx.hosts_.find(subnet->getID());
             // The out-of-pool flag indicates that no client should be assigned
-            // reservations from within the dynamic pool, and for that reason
-            // look only for reservations that are outside the pools, hence the
-            // inPool check.
+            // reserved addresses from within the dynamic pool, and for that
+            // reason look only for reservations that are outside the pools,
+            // hence the inPool check.
             if (host != ctx.hosts_.end()) {
                 auto reservation = host->second->getIPv4Reservation();
                 if (!reservation.isV4Zero() &&

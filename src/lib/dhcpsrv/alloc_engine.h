@@ -948,10 +948,6 @@ public:
     /// selected subnet, shared network or lease types, but will be filtered out
     /// at allocation time.
     ///
-    /// @note If reservations-global flag is enabled but they are no
-    /// reservations found, an empty (HostPtr()) will indicate that the search
-    /// does not need to be performed again.
-    ///
     /// @param ctx Client context that contains all necessary information.
     static void findReservation(ClientContext6& ctx);
 
@@ -1593,10 +1589,6 @@ public:
     /// are not filtered out as there is no sufficient information regarding the
     /// selected subnet or shared network, but will be filtered out at
     /// allocation time.
-    ///
-    /// @note If reservations-global flag is enabled but they are no
-    /// reservations found, an empty (HostPtr()) will indicate that the search
-    /// does not need to be performed again.
     ///
     /// @param ctx Client context holding various information about the client.
     static void findReservation(ClientContext4& ctx);

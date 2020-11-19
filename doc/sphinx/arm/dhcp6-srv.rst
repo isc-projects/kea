@@ -4091,13 +4091,13 @@ The meaning of the reservation flags are:
 
 - ``reservations-out-of-pool``: the makes sense only when the
   ``reservations-in-subnet`` flag is true. When ``reservations-out-of-pool``
-  is true the server may assume that all host reservations of the subnet are
-  for addresses or prefixes that do not belong to the dynamic pool as described
-  in the ``out-of-pool`` reservation mode. In this case, the server will not
-  assign reservations that are inside the dynamic pools to the respective
-  clients. This also means that the addresses matching the respective
-  reservations from inside the dynamic pools can be dynamically assigned to any
-  client.
+  is true the server may assume that all host reservations are for addresses
+  that do not belong to the dynamic pool. Therefore, it can skip the reservation
+  checks when dealing with in-pool addresses, thus improving performance.
+  Also the server will not assign reserved addresses that are inside the dynamic
+  pools to the respective clients. This also means that the addresses matching
+  the respective reservations from inside the dynamic pools (if any) can be
+  dynamically assigned to any client.
 
 The ``reservation-mode`` will be deprecated in a future Kea version.
 
