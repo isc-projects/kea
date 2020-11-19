@@ -659,7 +659,7 @@ TEST_F(SARRTest, pkt6ReceiveDropStat3) {
 }
 
 // This test verifies that in pool reservations are ignored when the
-// reservations-out-of-pool is set to true.
+// reservations-out-of-pool flag is set to true.
 TEST_F(SARRTest, reservationModeOutOfPool) {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.

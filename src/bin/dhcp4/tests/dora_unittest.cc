@@ -1863,7 +1863,7 @@ TEST_F(DORATest, reservationIgnoredInDisabledMode) {
 }
 
 // This test verifies that in pool reservations are ignored when the
-// reservations-out-of-pool is set to true.
+// reservations-out-of-pool flag is set to true.
 TEST_F(DORATest, reservationModeOutOfPool) {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
