@@ -1010,7 +1010,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     // the entire subnet (or more subnets) to discover that the pools
     // have been exhausted. Using a subnet from which a lease was
     // assigned most recently is an optimization which increases
-    // the likelyhood of starting from the subnet which pools are not
+    // the likelihood of starting from the subnet which pools are not
     // exhausted.
     SharedNetwork6Ptr network;
     original_subnet->getSharedNetwork(network);

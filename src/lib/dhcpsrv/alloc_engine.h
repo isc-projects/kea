@@ -936,12 +936,22 @@ public:
     /// deleted.
     void deleteExpiredReclaimedLeases4(const uint32_t secs);
 
-
     /// @anchor findReservationDecl
     /// @brief Attempts to find appropriate host reservation.
     ///
     /// Attempts to find appropriate host reservation in HostMgr. If found, it
-    /// will be set in ctx.host_.
+    /// will be set in ctx.hosts_.
+    ///
+    /// @node When the out-of-pool flag is enabled, because the function is
+    /// called only once per DHCP message, the reservations that are in-subnet
+    /// are not filtered out as there is no sufficient information regarding the
+    /// selected subnet, shared network or lease types, but will be filtered out
+    /// at allocation time.
+    ///
+    /// @note If reservations-global flag is enabled but they are no
+    /// reservations found, an empty (HostPtr()) will indicate that the search
+    /// does not need to be performed again.
+    ///
     /// @param ctx Client context that contains all necessary information.
     static void findReservation(ClientContext6& ctx);
 
@@ -1020,6 +1030,10 @@ private:
     /// may return more than one lease, but we currently handle only one.
     /// This may change in the future.
     ///
+    /// @note If reservations-out-of-pool flag is enabled, dynamic address that
+    /// match reservations from within the dynamic pool will not be prevented to
+    /// be assigned to any client.
+    ///
     /// @param ctx client context that contains all details (subnet, client-id, etc.)
     ///
     /// @return collection of newly allocated leases
@@ -1033,7 +1047,11 @@ private:
     /// new lease is not created, if there is a lease for specified
     /// address on existing_leases list or there is a lease used by
     /// someone else. It last calls @c allocateGlobalReservedLeases6
-    /// to accomodate subnets using global reservations.
+    /// to accommodate subnets using global reservations.
+    ///
+    /// @note If reservations-out-of-pool flag is enabled, reservations from
+    /// within the dynamic pool will not be checked to be assigned to the
+    /// respective client.
     ///
     /// @param ctx client context that contains all details (subnet, client-id, etc.)
     /// @param existing_leases leases that are already associated with the client
@@ -1568,9 +1586,17 @@ public:
     /// @brief Attempts to find the host reservation for the client.
     ///
     /// This method attempts to find the host reservation for the client. If
-    /// found, it is set in the @c ctx.host_. If the host reservations are
-    /// disabled for the particular subnet or the reservation is not found
-    /// for the client, the @c ctx.host_ is set to NULL.
+    /// found, it is set in the @c ctx.hosts_.
+    ///
+    /// @node When the out-of-pool flag is enabled, because the function is
+    /// called only once per DHCP message, the reservations that are in-subnet
+    /// are not filtered out as there is no sufficient information regarding the
+    /// selected subnet or shared network, but will be filtered out at
+    /// allocation time.
+    ///
+    /// @note If reservations-global flag is enabled but they are no
+    /// reservations found, an empty (HostPtr()) will indicate that the search
+    /// does not need to be performed again.
     ///
     /// @param ctx Client context holding various information about the client.
     static void findReservation(ClientContext4& ctx);

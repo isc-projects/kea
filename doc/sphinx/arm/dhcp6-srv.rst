@@ -3964,6 +3964,12 @@ allocating or renewing a lease for the client. Allowed values are:
    defined will be completely ignored. As the checks are skipped, the
    server may operate faster in this mode.
 
+Since Kea 1.9.1, the ``reservation-mode`` is replaced by the
+``reservations-global``, ``reservations-in-subnet`` and
+``reservations-out-of-pool`` flags.
+The flags can be activated independently and can produce various combinations,
+some of them being unsupported by the deprecated ``reservation-mode``.
+
 The ``reservation-mode`` parameter can be specified at:
 
 - global level: ``.Dhcp6["reservation-mode"]`` (lowest priority: gets overridden
@@ -4076,13 +4082,7 @@ An example configuration using global reservations is shown below:
        ]
    }
 
-Since Kea 1.9.1, the ``reservation-mode`` is replaced by the
-``reservations-global``, ``reservations-in-subnet`` and
-``reservations-out-of-pool`` flags.
-The flags can be activated independently and can produce various combinations,
-some of them being unsuported by the deprecated ``reservation-mode``.
-
-The meaning of these flags are:
+The meaning of the reservation flags are:
 
 - ``reservations-global``: fetch global reservations.
 
@@ -4093,7 +4093,11 @@ The meaning of these flags are:
   ``reservations-in-subnet`` flag is true. When ``reservations-out-of-pool``
   is true the server may assume that all host reservations of the subnet are
   for addresses or prefixes that do not belong to the dynamic pool as described
-  in the ``out-of-pool`` reservation mode.
+  in the ``out-of-pool`` reservation mode. In this case, the server will not
+  assign reservations that are inside the dynamic pools to the respective
+  clients. This also means that the addresses matching the respective
+  reservations from inside the dynamic pools can be dynamically assigned to
+  other clients.
 
 The ``reservation-mode`` will be deprecated in a future Kea version.
 
