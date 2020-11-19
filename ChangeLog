@@ -1,10 +1,20 @@
+1830.	[bug]		razvan
+	Fixed the DHCPv6 server implementation of out-of-pool flag to
+	honor the definition. The in pool reservations search is now
+	skipped and the reserved addresses are no longer assigned to
+	the clients, but can be assigned dynamically to any client.
+	(Gitlab #1550)
+
 1829.	[func]		fdupont, razvan
 	Added new configuration options reservations-global,
 	reservations-in-subnet and reservations-out-of-pool to replace
 	the old reservation-mode parameter. The new flags can be
 	configured independently, adding support for new configuration
 	scenarios when global and in subnet reservations are both
-	active.
+	active. Also fixed a bug in the hasAddressReservation function
+	which was causing the search for reservations to end as soon
+	as no global reservation was found when configuring a subnet or
+	shared network with global reservations enabled.
 	(Gitlab #1405)
 
 1828.	[bug]		andrei
