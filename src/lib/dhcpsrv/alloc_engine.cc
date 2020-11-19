@@ -597,16 +597,17 @@ AllocEngine::findReservation(ClientContext6& ctx) {
     SharedNetwork6Ptr network;
     subnet->getSharedNetwork(network);
 
-    if (ctx.hosts_.find(SUBNET_ID_GLOBAL) == ctx.hosts_.end() &&
-        subnet->getReservationsGlobal()) {
-        // setting null host means there is no host and no need to perform the
-        // search again
-        ctx.hosts_[SUBNET_ID_GLOBAL] = findGlobalReservation(ctx);
-    }
+    // @todo: This code can be trivially optimized.
+    if (subnet->getReservationsGlobal()) {
+        ConstHostPtr ghost = findGlobalReservation(ctx);
+        if (ghost) {
+            ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
 
-    // If only global reservations are enabled all work is done.
-    if (!subnet->getReservationsInSubnet()) {
-        return;
+            // If we had only to fetch global reservations it is done.
+            if (!subnet->getReservationsInSubnet()) {
+                return;
+            }
+        }
     }
 
     // If the subnet belongs to a shared network it is usually going to be
@@ -3344,16 +3345,17 @@ AllocEngine::findReservation(ClientContext4& ctx) {
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
 
-    if (ctx.hosts_.find(SUBNET_ID_GLOBAL) == ctx.hosts_.end() &&
-        subnet->getReservationsGlobal()) {
-        // setting null host means there is no host and no need to perform the
-        // search again
-        ctx.hosts_[SUBNET_ID_GLOBAL] = findGlobalReservation(ctx);
-    }
+    // @todo: This code can be trivially optimized.
+    if (subnet->getReservationsGlobal()) {
+        ConstHostPtr ghost = findGlobalReservation(ctx);
+        if (ghost) {
+            ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
 
-    // If only global reservations are enabled all work is done.
-    if (!subnet->getReservationsInSubnet()) {
-        return;
+            // If we had only to fetch global reservations it is done.
+            if (!subnet->getReservationsInSubnet()) {
+                return;
+            }
+        }
     }
 
     // If the subnet belongs to a shared network it is usually going to be
