@@ -1902,7 +1902,8 @@ TEST_F(DORATest, reservationModeOutOfPool) {
 }
 
 // This test verifies that the in-pool reservation can be assigned to a client
-// not owning this reservation when the reservations-out-of-pool flag is enabled.
+// not owning this reservation when the reservations-out-of-pool flag is set to
+// true.
 TEST_F(DORATest, reservationIgnoredInOutOfPoolMode) {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
