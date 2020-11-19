@@ -3,9 +3,9 @@
 	reservations-out-of-pool flag to match the DHCPv4 one. When the
 	flag is true:
 	* the server assumes that all reserved address do not belong to
-	  the  dynamic pool.
+	  the dynamic pool.
 	* the server will not assign reserved addresses that are inside
-	  the  dynamic pool to the respective clients.
+	  the dynamic pool to the respective clients.
 	* addresses matching the respective reservations from inside
 	  the dynamic pools (if any) can be dynamically assigned to any
 	  client.
