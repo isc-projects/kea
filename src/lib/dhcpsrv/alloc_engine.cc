@@ -604,7 +604,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
         ctx.hosts_[SUBNET_ID_GLOBAL] = findGlobalReservation(ctx);
     }
 
-    // If we had only to fetch global reservations it is done.
+    // If only global reservations are enabled all work is done.
     if (!subnet->getReservationsInSubnet()) {
         return;
     }
@@ -3349,7 +3349,7 @@ AllocEngine::findReservation(ClientContext4& ctx) {
         ctx.hosts_[SUBNET_ID_GLOBAL] = findGlobalReservation(ctx);
     }
 
-    // If we had only to fetch global reservations it is done.
+    // If only global reservations are enabled all work is done.
     if (!subnet->getReservationsInSubnet()) {
         return;
     }
