@@ -4096,8 +4096,8 @@ The meaning of the reservation flags are:
   in the ``out-of-pool`` reservation mode. In this case, the server will not
   assign reservations that are inside the dynamic pools to the respective
   clients. This also means that the addresses matching the respective
-  reservations from inside the dynamic pools can be dynamically assigned to
-  other clients.
+  reservations from inside the dynamic pools can be dynamically assigned to any
+  client.
 
 The ``reservation-mode`` will be deprecated in a future Kea version.
 

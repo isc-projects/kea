@@ -4636,7 +4636,7 @@ An example configuration using global reservations is shown below:
        ]
    }
 
-The meaning of these flags are:
+The meaning of the reservation flags are:
 
 - ``reservations-global``: fetch global reservations.
 
@@ -4650,7 +4650,7 @@ The meaning of these flags are:
   ``out-of-pool`` reservation mode. In this case, the server will not assign
   reservations that are inside the dynamic pools to the respective clients.
   This also means that the addresses matching the respective reservations from
-  inside the dynamic pools can be dynamically assigned to other clients.
+  inside the dynamic pools can be dynamically assigned to any client.
 
 The ``reservation-mode`` will be deprecated in a future Kea version.
 
