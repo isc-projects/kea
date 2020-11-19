@@ -1,6 +1,6 @@
 1830.	[bug]		razvan
 	Fixed the DHCPv6 server implementation of out-of-pool flag to
-	honor the definition. The in pool reservations search is now
+	match the DHCPv4 one. The in pool reservations search is now
 	skipped and the reserved addresses are no longer assigned to
 	the clients, but can be assigned dynamically to any client.
 	(Gitlab #1550)
