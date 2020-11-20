@@ -18,7 +18,7 @@ and BIND 9. Stork is useful in a variety of scenarios:
   a single Stork server needs to be deployed, and one Stork agent on each machine to be monitored.
 
 - The Stork agent can integrate Kea with Prometheus and Grafana. Once the Stork
-  agent is active on the server, it serves as a Prometheus exporter. Users who have deployed 
+  agent is active on the server, it serves as a Prometheus exporter. Users who have deployed
   Prometheus in their networks can visualize statistics as time series using Grafana.
 
 - Stork can act as both a dashboard and an integrator for Prometheus/Grafana. Once Stork
@@ -46,5 +46,5 @@ to visualize data available in Prometheus; the most common approach is to use
 Grafana to provide visual dashboards. The Stork project provides dashboard
 definitions for Kea and BIND 9 that can be imported into Grafana very easily.
 
-Learn more about Prometheus and Grafana on their websites: `Prometheus <https://prometheus.io/>`_
-and `Grafana <https://grafana.com/>`_.
+Learn more about Prometheus and Grafana on their websites: `Prometheus <https://prometheus.io/>`
+and `Grafana <https://grafana.com/>`.
