@@ -27,7 +27,7 @@ libkea_cryptolink_la_SOURCES += openssl_hmac.cc
 endif
 
 libkea_cryptolink_la_LDFLAGS = $(CRYPTO_LDFLAGS)
-libkea_cryptolink_la_LDFLAGS += -no-undefined -version-info 5:0:0
+libkea_cryptolink_la_LDFLAGS += -no-undefined -version-info 16:0:0
 libkea_cryptolink_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cryptolink_la_LIBADD += $(CRYPTO_LIBS)
 

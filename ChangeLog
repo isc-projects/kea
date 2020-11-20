@@ -1,3 +1,8 @@
+1826.	[build]		razvan
+	Library version numbers bumped for Kea 1.9.2 development
+	version.
+	(Gitlab #1555)
+
 1835.	[doc]       peterd
 	Several Kea ARM corrections.
 	(Gitlab #1536)
@@ -41,7 +46,7 @@
 	active.
 	(Gitlab #1405)
 
-1829.	[func]		fdupont, razvan
+1829.	[bug]		fdupont, razvan
 	Fixed a bug in the hasAddressReservation function which was
 	causing the search for reservations to end as soon as no global
 	reservation was found when configuring a subnet or shared
