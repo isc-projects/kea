@@ -1,3 +1,11 @@
+1834.	[func]		fdupont
+	Added two new callouts (hook points) in the control agent.
+	The "auth" callout is executed after the basic authentication
+	(if configured) and the command processing. The "response"
+	callout is executed after the command processing and before
+	the HTTP response is returned.
+	(Gitlab #1421)
+
 1833.	[doc]		sgoldlust
 	Many documentation corrections.
 	(Gitlab #1539)
