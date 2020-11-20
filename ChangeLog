@@ -3,7 +3,7 @@
 	version.
 	(Gitlab #1555)
 
-1835.	[doc]       peterd
+1835.	[doc]		peterd
 	Several Kea ARM corrections.
 	(Gitlab #1536)
 
@@ -19,7 +19,7 @@
 	Many documentation corrections.
 	(Gitlab #1539)
 
-1832.	[func]		tomek,wlodek
+1832.	[func]		tomek, wlodek
 	Perfdhcp extended with functionality to gradually
 	increase elapsed time in solicit and secs field in offer.
 	(Gitlab #1332)
