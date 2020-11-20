@@ -693,6 +693,11 @@ public:
         return (size);
     }
 
+    /// @brief Check lease4 statistics.
+    ///
+    /// @param id Subnet id of the stats to check.
+    /// @assigned The expected value of assigned addresses in subnet.
+    /// @declined The expected value of declined addresses in subnet.
     void checkLease4Stats(SubnetID id, int32_t assigned, int32_t declined) {
         ASSERT_EQ(StatsMgr::instance().getObservation(
                       StatsMgr::generateName("subnet", id,
@@ -703,6 +708,12 @@ public:
                           "declined-addresses"))->getInteger().first, declined);
     }
 
+    /// @brief Check lease4 statistics.
+    ///
+    /// @param id Subnet id of the stats to check.
+    /// @assigned_nas The expected value of assigned nas addresses in subnet.
+    /// @declined The expected value of declined addresses in subnet.
+    /// @assigned_pds The expected value of assigned pds addresses in subnet.
     void checkLease6Stats(SubnetID id, int32_t assigned_nas, int32_t declined,
                           int32_t assigned_pds) {
         ASSERT_EQ(StatsMgr::instance().getObservation(
@@ -717,6 +728,595 @@ public:
                       StatsMgr::generateName("subnet", id,
                           "assigned-pds"))->getInteger().first, assigned_pds);
     }
+
+    /// @brief Check that lease4-add with missing parameters will fail.
+    void testLease4AddMissingParams();
+
+    /// @brief Verify that lease4-add can be rejected if parameters are
+    /// specified, but have incorrect values.
+    void testLease4AddBadParams();
+
+    /// @brief Check that a simple, well formed lease4 can be added.
+    void testLease4Add();
+
+    /// @brief Check that a simple, well formed lease4 can be added.
+    void testLease4AddDeclinedLeases();
+
+    /// @brief Check that a lease4 is not added when it already exists.
+    void testLease4AddExisting();
+
+    /// @brief Check that subnet-id is optional. If not specified, Kea should
+    /// select it on its own.
+    void testLease4AddSubnetIdMissing();
+
+    /// @brief Check that subnet-id is optional. If not specified, Kea should
+    /// select it on its own.
+    void testLease4AddSubnetIdMissingDeclinedLeases();
+
+    /// @brief Check that subnet-id is optional. If not specified, Kea should
+    /// select it on its own, but if there's no subnet for address being added,
+    /// it should fail.
+    void testLease4AddSubnetIdMissingBadAddr();
+
+    /// @brief Check that the lease with negative expiration time is rejected.
+    void testLease4AddNegativeExpireTime();
+
+    /// @brief Check that the lease with negative cltt is rejected.
+    void testLease4AddNegativeCltt();
+
+    /// @brief Check that a well formed lease4 with tons of parameters can be
+    /// added.
+    void testLease4AddFull();
+
+    /// @brief Check that a well formed lease4 with a comment can be added.
+    void testLease4AddComment();
+
+    /// @brief Check that lease6-add with missing parameters will fail.
+    void testLease6AddMissingParams();
+
+    /// @brief Verify that lease6-add can be rejected if parameters are
+    /// specified, but have incorrect values.
+    void testLease6AddBadParams();
+
+    /// @brief Check that a simple, well formed lease6 can be added.
+    void testLease6Add();
+
+    /// @brief Check that a simple, well formed lease6 can be added.
+    void testLease6AddDeclinedLeases();
+
+    /// @brief Check that a lease6 is not added when it already exists.
+    void testLease6AddExisting();
+
+    /// @brief Check that subnet-id is optional. If not specified, Kea should
+    /// select it on its own.
+    void testLease6AddSubnetIdMissing();
+
+    /// @brief Check that subnet-id is optional. If not specified, Kea should
+    /// select it on its own.
+    void testLease6AddSubnetIdMissingDeclinedLeases();
+
+    /// @brief Check that subnet-id is optional. If not specified, Kea should
+    /// select it on its own, but if there's no subnet for address being added,
+    /// it should fail.
+    void testLease6AddSubnetIdMissingBadAddr();
+
+    /// @brief Check that a simple, well formed prefix lease can be added.
+    void testLease6AddPrefix();
+
+    /// @brief Check that a well formed lease6 with tons of parameters can be
+    /// added.
+    void testLease6AddFullAddr();
+
+    /// @brief Check that a well formed lease6 with a comment can be added.
+    void testLease6AddComment();
+
+    /// @brief Checks that lease4-get can handle a situation when the query is
+    /// broken (some required parameters are missing).
+    void testLease4GetMissingParams();
+
+    /// @brief Checks that lease4-get sanitizes its input.
+    void testLease4GetByAddrBadParam();
+
+    /// @brief Checks that lease4-get(addr) can handle a situation when the
+    /// query is correctly formed, but the lease is not there.
+    void testLease4GetByAddrNotFound();
+
+    /// @brief Checks that lease4-get can return a lease by address.
+    void testLease4GetByAddr();
+
+    /// @brief Checks that lease4-get can handle a situation when the query is
+    /// well formed, but the lease is not there.
+    void testLease4GetByHWAddrNotFound();
+
+    /// @brief Checks that lease4-get can find a lease by hardware address.
+    void testLease4GetByHWAddr();
+
+    /// @brief Checks that lease6-get can handle a situation when the query is
+    /// broken (some required parameters are missing).
+    void testLease6GetMissingParams();
+
+    /// @brief Checks that lease6-get sanitizes its input.
+    void testLease6GetByAddrBadParam();
+
+    /// @brief Checks that lease6-get(addr) can handle a situation when the
+    /// query is correctly formed, but the lease is not there.
+    void testLease6GetByAddr6NotFound();
+
+    /// @brief Checks that lease6-get(subnet-id, addr6) can handle a situation
+    /// when the query is correctly formed and the lease is returned.
+    void testLease6GetByAddr();
+
+    /// @brief Checks that lease6-get(subnet-id, type, addr6) can handle a
+    /// situation when the query is correctly formed and the lease is returned.
+    void testLease6GetByAddrPrefix();
+
+    /// @brief Checks that lease4-get can handle a situation when the query is
+    /// well formed, but the lease is not there.
+    void testLease4GetByClientIdNotFound();
+
+    /// @brief Check that lease4-get can find a lease by client identifier.
+    void testLease4GetByClientId();
+
+    /// @bfief Checks that lease6-get rejects queries by client-id.
+    void testLease6GetByClientIdInvalidType();
+
+    /// @brief Checks that lease6-get(subnet-id, addr) can handle a situation
+    /// when the query is correctly formed, but the lease is not there.
+    void testLease6GetByDuidNotFound();
+
+    /// @brief Checks that lease6-get(subnet-id, iaid, identifier-type,
+    /// identifier) can handle a situation when the query returns a lease.
+    void testLease6GetByDuid();
+
+    /// @brief Checks that lease4-get-all returns all leases.
+    void testLease4GetAll();
+
+    /// @brief Checks that lease4-get-all returns empty set if no leases are
+    /// found.
+    void testLease4GetAllNoLeases();
+
+    /// @brief Checks that lease4-get-all returns all leases for a subnet.
+    void testLease4GetAllBySubnetId();
+
+    /// @brief Checks that lease4-get-all returns empty set when no leases are
+    /// found.
+    void testLease4GetAllBySubnetIdNoLeases();
+
+    /// @brief Checks that lease4-get-all returns leases from multiple subnets.
+    void testLease4GetAllByMultipleSubnetIds();
+
+    /// @brief Checks that lease4-get-all checks its input arguments.
+    void testLease4GetBySubnetIdInvalidArguments();
+
+    /// @brief Checks that multiple calls to lease4-get-page return all leases.
+    void testLease4GetPaged();
+
+    /// @brief Verifies that first page of IPv4 leases can be retrieved by
+    /// specifying zero IPv4 address.
+    void testLease4GetPagedZeroAddress();
+
+    /// @brief Verifies that IPv6 address as a start address is rejected.
+    void testLease4GetPagedIPv6Address();
+
+    /// @brief Verifies that value of 'from' parameter other than 'start' or an
+    /// IPv4 address is rejected.
+    void testLease4GetPagedInvalidFrom();
+
+    /// @brief Verifies that limit is mandatory.
+    void testLease4GetPagedNoLimit();
+
+    /// @brief Verifies that the limit must be a number.
+    void testLease4GetPagedLimitNotNumber();
+
+    /// @brief Verifies that the limit of 0 is rejected.
+    void testLease4GetPagedLimitIsZero();
+
+    /// @brief Checks that lease6-get-all returns all leases.
+    void testLease6GetAll();
+
+    /// @brief Checks that lease6-get-all returns empty set if no leases are
+    /// found.
+    void testLease6GetAllNoLeases();
+
+    /// @brief Checks that lease6-get-all returns all leases for a subnet.
+    void testLease6GetAllBySubnetId();
+
+    /// @brief Checks that lease6-get-all returns empty set when no leases are
+    /// found.
+    void testLease6GetAllBySubnetIdNoLeases();
+
+    /// @brief Checks that lease6-get-all returns leases from multiple subnets.
+    void testLease6GetAllByMultipleSubnetIds();
+
+    /// @brief Checks that lease6-get-all checks its input arguments.
+    void testLease6GetBySubnetIdInvalidArguments();
+
+    /// @brief Checks that multiple calls to lease6-get-page return all leases.
+    void testLease6GetPaged();
+
+    /// @brief Verifies that first page of IPv6 leases can be retrieved by
+    /// specifying zero IPv6 address.
+    void testLease6GetPagedZeroAddress();
+
+    /// @brief Verifies that IPv4 address as a start address is rejected.
+    void testLease6GetPagedIPv4Address();
+
+    /// @brief Verifies that value of 'from' parameter other than 'start' or an
+    /// IPv6 address is rejected.
+    void testLease6GetPagedInvalidFrom();
+
+    /// @brief Verifies that limit is mandatory.
+    void testLease6GetPagedNoLimit();
+
+    /// @brief Verifies that the limit must be a number.
+    void testLease6GetPagedLimitNotNumber();
+
+    /// @brief Verifies that the limit of 0 is rejected.
+    void testLease6GetPagedLimitIsZero();
+
+    /// @brief Checks that lease4-get-by-hw-address can handle a situation when
+    /// the query is broken (required parameter is missing).
+    void testLeaseGetByHwAddressParams();
+
+    /// @brief Checks that lease4-get-by-hw-address works as expected (find no
+    /// lease).
+    void testLeaseGetByHwAddressFind0();
+
+    /// @brief Checks that lease4-get-by-hw-address works as expected (find two
+    /// leases).
+    void testLeaseGetByHwAddressFind2();
+
+    /// @brief Checks that lease4-get-by-client-id can handle a situation when
+    /// the query is broken (required parameter is missing).
+    void testLeaseGetByClientIdParams();
+
+    /// @brief Checks that lease4-get-by-client-id works as expected (find no
+    /// lease).
+    void testLeaseGetByClientIdFind0();
+
+    /// @brief Checks that lease4-get-by-client-id works as expected (find two
+    /// leases).
+    void testLeaseGetByClientIdFind2();
+
+    /// @brief Checks that lease6-get-by-duid can handle a situation when the
+    /// query is broken (required parameter is missing).
+    void testLeaseGetByDuidParams();
+
+    /// @brief Checks that lease6-get-by-duid works as expected (find no lease).
+    void testLeaseGetByDuidFind0();
+
+    /// @brief Checks that lease6-get-by-duid works as expected (find two
+    /// leases).
+    void testLeaseGetByDuidFind2();
+
+    /// @brief Checks that lease4-get-by-hostname can handle a situation when
+    /// the query is broken (required parameter is missing).
+    void testLease4GetByHostnameParams();
+
+    /// @brief Checks that lease4-get-by-hostname works as expected (find no
+    /// lease).
+    void testLease4GetByHostnameFind0();
+
+    /// @brief Checks that lease4-get-by-hostname works as expected (find two
+    /// leases).
+    void testLease4GetByHostnameFind2();
+
+    /// @brief Checks that lease6-get-by-hostname can handle a situation when
+    /// the query is broken (required parameter is missing).
+    void testLease6GetByHostnameParams();
+
+    /// @brief Checks that lease6-get-by-hostname works as expected (find no
+    /// lease).
+    void testLease6GetByHostnameFind0();
+
+    /// @brief Checks that lease6-get-by-hostname works as expected (find two
+    /// leases).
+    void testLease6GetByHostnameFind2();
+
+    /// @brief Test checks if lease4-update handler refuses calls with missing
+    /// parameters.
+    void testLease4UpdateMissingParams();
+
+    /// @brief Verify that lease4-update can be rejected if parameters are
+    /// specified, but have incorrect values.
+    void testLease4UpdateBadParams();
+
+    /// @brief Check that lease4-update correctly handles case when there is no
+    /// lease to be updated.
+    void testLease4UpdateNoLease();
+
+    /// @brief Check that a lease4 can be updated. We're changing hw-address and
+    /// a hostname.
+    void testLease4Update();
+
+    /// @brief Check that a lease4 can be updated. We're changing hw-address and
+    /// a hostname.
+    void testLease4UpdateDeclinedLeases();
+
+    /// @brief Check that a lease4 can be updated. We're changing hw-address and
+    /// a hostname. The subnet-id is not specified.
+    void testLease4UpdateNoSubnetId();
+
+    /// @brief Check that a lease4 can be updated. We're changing hw-address and
+    /// a hostname. The subnet-id is not specified.
+    void testLease4UpdateNoSubnetIdDeclinedLeases();
+
+    /// @brief Check that a lease4 is created if it doesn't exist during the
+    /// update. To trigger this behavior 'force-create' boolean parameter must
+    /// be included in the command.
+    void testLease4UpdateForceCreate();
+
+    /// @brief Check that a lease4 is created if it doesn't exist during the
+    /// update. To trigger this behavior 'force-create' boolean parameter must
+    /// be included in the command. The subnet-id is not specified, Kea will
+    /// figure it out.
+    void testLease4UpdateForceCreateNoSubnetId();
+
+    /// @brief Check that lease4-update correctly handles case when the
+    /// 'force-create' parameter is explicitly set to false.
+    void testLease4UpdateDoNotForceCreate();
+
+    /// @brief Check that a lease4 can be updated. We're adding a comment and an
+    /// user context.
+    void testLease4UpdateComment();
+
+    /// @brief Test checks if lease6-update handler refuses calls with missing
+    /// parameters.
+    void testLease6UpdateMissingParams();
+
+    /// @brief Verify that lease6-update can be rejected if parameters are
+    /// specified, but have incorrect values.
+    void testLease6UpdateBadParams();
+
+    /// @brief Check that lease6-update correctly handles case when there is no
+    /// lease to be updated.
+    void testLease6UpdateNoLease();
+
+    /// @brief Check that a lease6 can be updated. We're changing hw-address and
+    /// a hostname.
+    void testLease6Update();
+
+    /// @brief Check that a lease6 can be updated. We're changing hw-address and
+    /// a hostname.
+    void testLease6UpdateDeclinedLeases();
+
+    /// @brief Check that a lease6 can be updated. We're changing hw-address and
+    /// a hostname. The subnet-id is not specified.
+    void testLease6UpdateNoSubnetId();
+
+    /// @brief Check that a lease6 can be updated. We're changing hw-address and
+    /// a hostname. The subnet-id is not specified.
+    void testLease6UpdateNoSubnetIdDeclinedLeases();
+
+    /// @brief Check that a lease6 is created if it doesn't exist during the
+    /// update. To trigger this behavior 'force-create' boolean parameter must
+    /// be included in the command.
+    void testLease6UpdateForceCreate();
+
+    /// @brief Check that a lease6 is created if it doesn't exist during the
+    /// update. To trigger this behavior 'force-create' boolean parameter must
+    /// be included in the command. The subnet-id is not specified, Kea will
+    /// figure it out.
+    void testLease6UpdateForceCreateNoSubnetId();
+
+    /// @brief Check that lease6-update correctly handles case when the
+    /// 'force-create' parameter is explicitly set to false.
+    void testLease6UpdateDoNotForceCreate();
+
+    /// @brief Check that a lease6 can be updated. We're adding a comment and an
+    /// user context.
+    void testLease6UpdateComment();
+
+    /// @brief Checks that lease4-del can handle a situation when the query is
+    /// broken (some required parameters are missing).
+    void testLease4DelMissingParams();
+
+    /// @brief Checks that lease4-del can handle a situation when the query is
+    /// valid, but the lease is not there.
+    void testLease4DelByAddrNotFound();
+
+    /// @brief Checks that lease4-del sanitizes its input.
+    void testLease4DelByAddrBadParam();
+
+    /// @brief Checks that lease4-del can handle a situation when the query is
+    /// correctly formed and the lease is deleted.
+    void testLease4DelByAddr();
+
+    /// @brief Checks that lease4-del can handle a situation when the query is
+    /// correctly formed and the lease is deleted.
+    void testLease4DelByAddrDeclinedLeases();
+
+    /// @brief Checks that lease4-del can handle a situation when the query is
+    /// well formed, but the lease is not there.
+    void testLease4DelByHWAddrNotFound();
+
+    /// @brief Checks that lease4-del can find and delete a lease by hardware
+    /// address.
+    void testLease4DelByHWAddr();
+
+    /// @brief Checks that lease4-del can handle a situation when the query is
+    /// well formed, but the lease is not there.
+    void testLease4DelByClientIdNotFound();
+
+    /// @brief Checks that lease4-del can find and delete a lease by client
+    /// identifier.
+    void testLease4DelByClientId();
+
+    /// @brief Checks that lease6-del can handle a situation when the query is
+    /// broken (some required parameters are missing).
+    void testLease6DelMissingParams();
+
+    /// @brief Checks that lease6-del(addr) can handle a situation when the
+    /// query is correctly formed, but the lease is not there.
+    void testLease6DelByAddr6NotFound();
+
+    /// @brief Checks that lease6-del sanitizes its input.
+    void testLease6DelByAddrBadParam();
+
+    /// @brief Checks that lease6-del(subnet-id, addr6) can handle a situation
+    /// when the query is correctly formed and the lease is deleted.
+    void testLease6DelByAddr();
+
+    /// @brief Checks that lease6-del(subnet-id, addr6) can handle a situation
+    /// when the query is correctly formed and the lease is deleted.
+    void testLease6DelByAddrDeclinedLeases();
+
+    /// @brief Checks that lease6-del(subnet-id, type, addr6) can handle a
+    /// situation when the query is correctly formed and the lease is deleted.
+    void testLease6DelByAddrPrefix();
+
+    /// @brief Checks that lease6-del(subnet-id, addr) can handle a situation
+    /// when the query is correctly formed, but the lease is not there.
+    void testLease6DelByDuidNotFound();
+
+    /// @brief Checks that lease6-del(subnet-id, iaid, identifier-type,
+    /// identifier) can find and delete a lease by duid.
+    void testLease6DelByDuid();
+
+    /// @brief Checks that leaseX-del checks update-ddns input.
+    void testLeaseXDelBadUpdateDdnsParam();
+
+    /// @brief Checks that lease4-wipe can remove leases.
+    void testLease4Wipe();
+
+    /// @brief Checks that lease4-wipe can remove leases from all subnets at
+    /// once.
+    void testLease4WipeAll();
+
+    /// @brief Checks that lease4-wipe can remove leases from all subnets at
+    /// once (when no parameters are specified).
+    void testLease4WipeAllNoArgs();
+
+    /// @brief Checks that lease4-wipe properly reports when no leases were
+    /// deleted.
+    void testLease4WipeNoLeases();
+
+    /// @brief Checks that lease4-wipe properly reports when no leases were
+    /// deleted.
+    void testLease4WipeNoLeasesAll();
+
+    /// @brief Checks that lease4\6-wipe can remove leases.
+    void testLease6Wipe();
+
+    /// @brief Checks that lease6-wipe can remove leases from all subnets at
+    /// once.
+    void testLease6WipeAll();
+
+    /// @brief Checks that lease6-wipe can remove leases from all subnets at
+    /// once (when no parameters are specified).
+    void testLease6WipeAllNoArgs();
+
+    /// @brief Checks that lease6-wipe properly reports when no leases were
+    /// deleted.
+    void testLease6WipeNoLeases();
+
+    /// @brief Checks that lease6-wipe properly reports when no leases were
+    /// deleted.
+    void testLease6WipeNoLeasesAll();
+
+    /// @brief Checks that an attempt to update a lease (set incorrect
+    /// subnet-id) will fail.
+    void testLeaseBrokenUpdate();
+
+    /// @brief This test verifies that it is possible to add two leases and
+    /// delete two leases as a result of the single lease6-bulk-apply command.
+    void testLease6BulkApply();
+
+    /// @brief This test verifies that the lease parameters are checked when
+    /// adding new leases only with the lease6-bulk-apply.
+    void testLease6BulkApplyAddsOnlyBadParam();
+
+    /// @brief This test verifies that it is possible to send new leases only
+    /// with the lease6-bulk-apply.
+    void testLease6BulkApplyAddsOnly();
+
+    /// @brief This test verifies that the lease parameters are checked when
+    /// updating leases only with the lease6-bulk-apply.
+    void testLease6BulkApplyUpdatesOnlyBadParam();
+
+    /// @brief This test verifies that it is possible to update leases with the
+    /// lease6-bulk-apply.
+    void testLease6BulkApplyUpdatesOnly();
+
+    /// @brief This test verifies that it is possible to only delete leases with
+    /// the lease6-bulk-apply.
+    void testLease6BulkApplyDeletesOnly();
+
+    /// @brief This test verifies that deleting non existing leases returns an
+    /// 'empty' result.
+    void testLease6BulkApplyDeleteNonExiting();
+
+    /// @brief Check that changes for other leases are not applied if one of the
+    /// leases is malformed.
+    void testLease6BulkApplyRollback();
+
+    /// @brief Checks that lease4-resend-ddns sanitizes its input.
+    void testLease4ResendDdnsBadParam();
+
+    /// @brief Checks that lease4-resend-ddns does not generate an NCR for given
+    /// lease when DDNS updating is disabled.
+    void testLease4ResendDdnsDisabled();
+
+    /// @brief Checks that lease4-resend-ddns does not generate an NCR for when
+    /// there is no matching lease.
+    void testLease4ResendDdnsNoLease();
+
+    /// @brief Checks that lease4-resend-ddns does not generate an NCR for given
+    /// lease when updates are enabled but Lease::hostname_ is blank.
+    void testLease4ResendNoHostname();
+
+    /// @brief Checks that lease4-resend-ddns does not generate an NCR for given
+    /// lease when updates are enabled, Lease::hostname_ is not blank, but both
+    /// Lease::fqdn_fwd_ and fdqn_rev_ are false.
+    void testLease4ResendNoDirectionsEnabled();
+
+    /// @brief Checks that lease4-resend-ddns can generate an NCR for given
+    /// lease when updates are enabled, Lease::hostname_ is not blank, and at
+    /// least one of Lease::fqdn_fwd_ or fdqn_rev_ are true.
+    void testLease4ResendDdnsEnabled();
+
+    /// @brief Checks that lease6-resend-ddns sanitizes its input.
+    void testLease6ResendDdnsBadParam();
+
+    /// @brief Checks that lease6-resend-ddns does not generate an NCR for given
+    /// lease when DDNS updating is disabled.
+    void testLease6ResendDdnsDisabled();
+
+    /// @brief Checks that lease6-resend-ddns does not generate an NCR for when
+    /// there is no matching lease.
+    void testLease6ResendDdnsNoLease();
+
+    /// @brief Checks that lease6-resend-ddns does not generate an NCR for given
+    /// lease when updates are enabled but Lease::hostname_ is blank.
+    void testLease6ResendNoHostname();
+
+    /// @brief Checks that lease6-resend-ddns does not generate an NCR for given
+    /// lease when updates are enabled, Lease::hostname_ is not blank, but both
+    /// Lease::fqdn_fwd_ and fdqn_rev_ are false.
+    void testLease6ResendNoDirectionsEnabled();
+
+    /// @brief Checks that lease6-resend-ddns can generate an NCR for given
+    /// lease when updates are enabled, Lease::hostname_ is not blank, and at
+    /// least one of Lease::fqdn_fwd_ or fdqn_rev_ are true.
+    void testLease6ResendDdnsEnabled();
+
+    /// @brief Checks that lease4-del does (or does not) generate an NCR to
+    /// remove DNS for a given lease based on lease content when DDNS updates
+    /// are enabled.
+    void testLease4DnsRemoveD2Enabled();
+
+    /// @brief Checks that lease4-del does not generate an NCR to remove DNS for
+    /// a given lease based on lease content when DDNS updates are disabled.
+    void testLease4DnsRemoveD2Disabled();
+
+    /// @brief Checks that lease6-del does (or does not) generate an NCR to
+    /// remove DNS for a given lease based on lease content when DDNS updates
+    /// are enabled.
+    void testLease6DnsRemoveD2Enabled();
+
+    /// @brief Checks that lease6-del does not generate an NCR to remove DNS for
+    /// a given lease based on lease content when DDNS updates are disabled.
+    void testLease6DnsRemoveD2Disabled();
 };
 
 // Simple test that checks the library really registers the commands.
@@ -745,8 +1345,7 @@ TEST_F(LeaseCmdsTest, multipleLoads) {
 
 using namespace isc::dhcp;
 
-// Check that lease4-add with missing parameters will fail.
-TEST_F(LeaseCmdsTest, Lease4AddMissingParams) {
+void LeaseCmdsTest::testLease4AddMissingParams() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -798,9 +1397,11 @@ TEST_F(LeaseCmdsTest, Lease4AddMissingParams) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Verify that lease4-add can be rejected if parameters are specified, but
-// have incorrect values.
-TEST_F(LeaseCmdsTest, Lease4AddBadParams) {
+TEST_F(LeaseCmdsTest, lease4AddMissingParams) {
+    testLease4AddMissingParams();
+}
+
+void LeaseCmdsTest::testLease4AddBadParams() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -891,8 +1492,11 @@ TEST_F(LeaseCmdsTest, Lease4AddBadParams) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Check that a simple, well formed lease4 can be added.
-TEST_F(LeaseCmdsTest, Lease4Add) {
+TEST_F(LeaseCmdsTest, lease4AddBadParams) {
+    testLease4AddBadParams();
+}
+
+void LeaseCmdsTest::testLease4Add() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -938,8 +1542,11 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
     EXPECT_EQ(0, l->state_);
 }
 
-// Check that a simple, well formed lease4 can be added.
-TEST_F(LeaseCmdsTest, Lease4AddDeclinedLeases) {
+TEST_F(LeaseCmdsTest, lease4Add) {
+    testLease4Add();
+}
+
+void LeaseCmdsTest::testLease4AddDeclinedLeases() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -986,8 +1593,11 @@ TEST_F(LeaseCmdsTest, Lease4AddDeclinedLeases) {
     EXPECT_EQ(1, l->state_);
 }
 
-// Check that a lease4 is not added when it already exists.
-TEST_F(LeaseCmdsTest, Lease4AddExisting) {
+TEST_F(LeaseCmdsTest, lease4AddDeclinedLeases) {
+    testLease4AddDeclinedLeases();
+}
+
+void LeaseCmdsTest::testLease4AddExisting() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -1014,9 +1624,11 @@ TEST_F(LeaseCmdsTest, Lease4AddExisting) {
     checkLease4Stats(88, 2, 0);
 }
 
-// Check that subnet-id is optional. If not specified, Kea should select
-// it on its own.
-TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissing) {
+TEST_F(LeaseCmdsTest, lease4AddExisting) {
+    testLease4AddExisting();
+}
+
+void LeaseCmdsTest::testLease4AddSubnetIdMissing() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -1048,9 +1660,11 @@ TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissing) {
     EXPECT_EQ(44, l->subnet_id_);
 }
 
-// Check that subnet-id is optional. If not specified, Kea should select
-// it on its own.
-TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissingDeclinedLeases) {
+TEST_F(LeaseCmdsTest, lease4AddSubnetIdMissing) {
+    testLease4AddSubnetIdMissing();
+}
+
+void LeaseCmdsTest::testLease4AddSubnetIdMissingDeclinedLeases() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -1083,10 +1697,11 @@ TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissingDeclinedLeases) {
     EXPECT_EQ(44, l->subnet_id_);
 }
 
-// Check that subnet-id is optional. If not specified, Kea should select
-// it on its own, but if there's no subnet for address being added, it
-// should fail.
-TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissingBadAddr) {
+TEST_F(LeaseCmdsTest, lease4AddSubnetIdMissingDeclinedLeases) {
+    testLease4AddSubnetIdMissingDeclinedLeases();
+}
+
+void LeaseCmdsTest::testLease4AddSubnetIdMissingBadAddr() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -1118,8 +1733,11 @@ TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissingBadAddr) {
     ASSERT_FALSE(l);
 }
 
-// Check that the lease with negative expiration time is rejected.
-TEST_F(LeaseCmdsTest, Lease4AddNegativeExpireTime) {
+TEST_F(LeaseCmdsTest, lease4AddSubnetIdMissingBadAddr) {
+    testLease4AddSubnetIdMissingBadAddr();
+}
+
+void LeaseCmdsTest::testLease4AddNegativeExpireTime() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -1150,8 +1768,11 @@ TEST_F(LeaseCmdsTest, Lease4AddNegativeExpireTime) {
     ASSERT_FALSE(l);
 }
 
-// Check that the lease with negative cltt is rejected.
-TEST_F(LeaseCmdsTest, Lease4AddNegativeCltt) {
+TEST_F(LeaseCmdsTest, lease4AddNegativeExpireTime) {
+    testLease4AddNegativeExpireTime();
+}
+
+void LeaseCmdsTest::testLease4AddNegativeCltt() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -1184,8 +1805,11 @@ TEST_F(LeaseCmdsTest, Lease4AddNegativeCltt) {
     ASSERT_FALSE(l);
 }
 
-// Check that a well formed lease4 with tons of parameters can be added.
-TEST_F(LeaseCmdsTest, Lease4AddFull) {
+TEST_F(LeaseCmdsTest, lease4AddNegativeCltt) {
+    testLease4AddNegativeCltt();
+}
+
+void LeaseCmdsTest::testLease4AddFull() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -1235,8 +1859,11 @@ TEST_F(LeaseCmdsTest, Lease4AddFull) {
     EXPECT_EQ("{ \"foobar\": true }", l->getContext()->str());
 }
 
-// Check that a well formed lease4 with a comment can be added.
-TEST_F(LeaseCmdsTest, Lease4AddComment) {
+TEST_F(LeaseCmdsTest, lease4AddFull) {
+    testLease4AddFull();
+}
+
+void LeaseCmdsTest::testLease4AddComment() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -1274,8 +1901,11 @@ TEST_F(LeaseCmdsTest, Lease4AddComment) {
     EXPECT_EQ("{ \"comment\": \"a comment\" }", l->getContext()->str());
 }
 
-// Check that lease6-add with missing parameters will fail.
-TEST_F(LeaseCmdsTest, Lease6AddMissingParams) {
+TEST_F(LeaseCmdsTest, lease4AddComment) {
+    testLease4AddComment();
+}
+
+void LeaseCmdsTest::testLease6AddMissingParams() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1353,9 +1983,11 @@ TEST_F(LeaseCmdsTest, Lease6AddMissingParams) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Verify that lease6-add can be rejected if parameters specified, but
-// have incorrect values.
-TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
+TEST_F(LeaseCmdsTest, lease6AddMissingParams) {
+    testLease6AddMissingParams();
+}
+
+void LeaseCmdsTest::testLease6AddBadParams() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1503,8 +2135,11 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Check that a simple, well formed lease6 can be added.
-TEST_F(LeaseCmdsTest, Lease6Add) {
+TEST_F(LeaseCmdsTest, lease6AddBadParams) {
+    testLease6AddBadParams();
+}
+
+void LeaseCmdsTest::testLease6Add() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1544,8 +2179,11 @@ TEST_F(LeaseCmdsTest, Lease6Add) {
     EXPECT_EQ(0, l->state_);
 }
 
-// Check that a simple, well formed lease6 can be added.
-TEST_F(LeaseCmdsTest, Lease6AddDeclinedLeases) {
+TEST_F(LeaseCmdsTest, lease6Add) {
+    testLease6Add();
+}
+
+void LeaseCmdsTest::testLease6AddDeclinedLeases() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1586,8 +2224,11 @@ TEST_F(LeaseCmdsTest, Lease6AddDeclinedLeases) {
     EXPECT_EQ(1, l->state_);
 }
 
-// Check that a lease6 is not added when it already exists.
-TEST_F(LeaseCmdsTest, Lease6AddExisting) {
+TEST_F(LeaseCmdsTest, lease6AddDeclinedLeases) {
+    testLease6AddDeclinedLeases();
+}
+
+void LeaseCmdsTest::testLease6AddExisting() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -1615,9 +2256,11 @@ TEST_F(LeaseCmdsTest, Lease6AddExisting) {
     checkLease6Stats(99, 2, 0, 0);
 }
 
-// Check that subnet-id is optional. If not specified, Kea should select
-// it on its own.
-TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissing) {
+TEST_F(LeaseCmdsTest, lease6AddExisting) {
+    testLease6AddExisting();
+}
+
+void LeaseCmdsTest::testLease6AddSubnetIdMissing() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1649,9 +2292,11 @@ TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissing) {
     EXPECT_EQ(66, l->subnet_id_);
 }
 
-// Check that subnet-id is optional. If not specified, Kea should select
-// it on its own.
-TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissingDeclinedLeases) {
+TEST_F(LeaseCmdsTest, lease6AddSubnetIdMissing) {
+    testLease6AddSubnetIdMissing();
+}
+
+void LeaseCmdsTest::testLease6AddSubnetIdMissingDeclinedLeases() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1684,10 +2329,11 @@ TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissingDeclinedLeases) {
     EXPECT_EQ(66, l->subnet_id_);
 }
 
-// Check that subnet-id is optional. If not specified, Kea should select
-// it on its own, but if there's no subnet for address being added, it
-// should fail.
-TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissingBadAddr) {
+TEST_F(LeaseCmdsTest, lease6AddSubnetIdMissingDeclinedLeases) {
+    testLease6AddSubnetIdMissingDeclinedLeases();
+}
+
+void LeaseCmdsTest::testLease6AddSubnetIdMissingBadAddr() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1719,8 +2365,11 @@ TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissingBadAddr) {
     ASSERT_FALSE(l);
 }
 
-// Check that a simple, well formed prefix lease can be added.
-TEST_F(LeaseCmdsTest, Lease6AddPrefix) {
+TEST_F(LeaseCmdsTest, lease6AddSubnetIdMissingBadAddr) {
+    testLease6AddSubnetIdMissingBadAddr();
+}
+
+void LeaseCmdsTest::testLease6AddPrefix() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1758,8 +2407,11 @@ TEST_F(LeaseCmdsTest, Lease6AddPrefix) {
     EXPECT_FALSE(l->getContext());
 }
 
-// Check that a well formed lease6 with tons of parameters can be added.
-TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
+TEST_F(LeaseCmdsTest, lease6AddPrefix) {
+    testLease6AddPrefix();
+}
+
+void LeaseCmdsTest::testLease6AddFullAddr() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1812,8 +2464,11 @@ TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
     EXPECT_EQ("{ \"foobar\": true }", l->getContext()->str());
 }
 
-// Check that a well formed lease6 with a comment can be added.
-TEST_F(LeaseCmdsTest, Lease6AddComment) {
+TEST_F(LeaseCmdsTest, lease6AddFullAddr) {
+    testLease6AddFullAddr();
+}
+
+void LeaseCmdsTest::testLease6AddComment() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1850,9 +2505,11 @@ TEST_F(LeaseCmdsTest, Lease6AddComment) {
     EXPECT_EQ("{ \"comment\": \"a comment\" }", l->getContext()->str());
 }
 
-// Checks that lease6-get can handle a situation when the query is
-// broken (some required parameters are missing).
-TEST_F(LeaseCmdsTest, Lease4GetMissingParams) {
+TEST_F(LeaseCmdsTest, lease6AddComment) {
+    testLease6AddComment();
+}
+
+void LeaseCmdsTest::testLease4GetMissingParams() {
 
     // No parameters whatsoever. You want just a lease, any lease?
     string cmd =
@@ -1927,8 +2584,11 @@ TEST_F(LeaseCmdsTest, Lease4GetMissingParams) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease4-get sanitizes its input.
-TEST_F(LeaseCmdsTest, Lease4GetByAddrBadParam) {
+TEST_F(LeaseCmdsTest, lease4GetMissingParams) {
+    testLease4GetMissingParams();
+}
+
+void LeaseCmdsTest::testLease4GetByAddrBadParam() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -1956,9 +2616,11 @@ TEST_F(LeaseCmdsTest, Lease4GetByAddrBadParam) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease4-get can handle a situation when the query is
-// valid, but the lease is not there.
-TEST_F(LeaseCmdsTest, Lease4GetByAddrNotFound) {
+TEST_F(LeaseCmdsTest, lease4GetByAddrBadParam) {
+    testLease4GetByAddrBadParam();
+}
+
+void LeaseCmdsTest::testLease4GetByAddrNotFound() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -1976,8 +2638,11 @@ TEST_F(LeaseCmdsTest, Lease4GetByAddrNotFound) {
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
-// Checks that lease4-get can return a lease by address.
-TEST_F(LeaseCmdsTest, Lease4GetByAddr) {
+TEST_F(LeaseCmdsTest, lease4GetByAddrNotFound) {
+    testLease4GetByAddrNotFound();
+}
+
+void LeaseCmdsTest::testLease4GetByAddr() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -2002,9 +2667,11 @@ TEST_F(LeaseCmdsTest, Lease4GetByAddr) {
     checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", true);
 }
 
-// Checks that lease4-get can handle a situation when the query is
-// well formed, but the lease is not there.
-TEST_F(LeaseCmdsTest, Lease4GetByHWAddrNotFound) {
+TEST_F(LeaseCmdsTest, lease4GetByAddr) {
+    testLease4GetByAddr();
+}
+
+void LeaseCmdsTest::testLease4GetByHWAddrNotFound() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -2023,8 +2690,11 @@ TEST_F(LeaseCmdsTest, Lease4GetByHWAddrNotFound) {
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
-// Checks that lease4-get can find a lease by hardware address.
-TEST_F(LeaseCmdsTest, Lease4GetByHWAddr) {
+TEST_F(LeaseCmdsTest, lease4GetByHWAddrNotFound) {
+    testLease4GetByHWAddrNotFound();
+}
+
+void LeaseCmdsTest::testLease4GetByHWAddr() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -2051,151 +2721,90 @@ TEST_F(LeaseCmdsTest, Lease4GetByHWAddr) {
     checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
 }
 
-// Checks that lease6-get(addr) can handle a situation when
-// the query is correctly formed, but the lease is not there.
-TEST_F(LeaseCmdsTest, Lease6GetByAddr6NotFound) {
+TEST_F(LeaseCmdsTest, lease4GetByHWAddr) {
+    testLease4GetByHWAddr();
+}
 
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
+void LeaseCmdsTest::testLease6GetMissingParams() {
 
-    // Now send the command.
+    // No parameters whatsoever. You want just a lease, any lease?
     string cmd =
         "{\n"
         "    \"command\": \"lease6-get\",\n"
         "    \"arguments\": {"
-        "        \"subnet-id\": 1,\n"
-        "        \"ip-address\": \"2001:db8:1::10\"\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease not found.";
+    string exp_rsp = "Mandatory 'subnet-id' parameter missing.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Note the status expected is empty. The query completed correctly,
-    // just didn't found the lease.
-    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
-}
-
-// Checks that lease4-get can handle a situation when the query is
-// well formed, but the lease is not there.
-TEST_F(LeaseCmdsTest, Lease4GetByClientIdNotFound) {
-
-    // Initialize lease manager (false = v4, false = don't add leases)
-    initLeaseMgr(false, false);
-
-    // No such lease.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-get\",\n"
-        "    \"arguments\": {"
-        "        \"identifier-type\": \"client-id\","
-        "        \"identifier\": \"01:02:03:04\","
-        "        \"subnet-id\": 44"
-        "    }\n"
-        "}";
-    string exp_rsp = "Lease not found.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
-}
-
-// Check that lease4-get can find a lease by client identifier.
-TEST_F(LeaseCmdsTest, Lease4GetByClientId) {
-
-    // Initialize lease manager (false = v4, true = add leases)
-    initLeaseMgr(false, true);
-
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-get\",\n"
-        "    \"arguments\": {"
-        "        \"identifier-type\": \"client-id\","
-        "        \"identifier\": \"42:42:42:42:42:42:42:42\","
-        "        \"subnet-id\": 44"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv4 lease found.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    // Now check that the lease parameters were indeed returned.
-    ASSERT_TRUE(rsp);
-    ConstElementPtr lease = rsp->get("arguments");
-    ASSERT_TRUE(lease);
-
-    // Let's check if the response makes any sense.
-    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
-}
-
-// Checks that lease6-get rejects queries by client-id.
-TEST_F(LeaseCmdsTest, Lease6GetByClientIdInvalidType) {
-
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    // client-id query is allowed in v4 only.
-    string cmd =
+    // Just the subnet-id won't cut it, either.
+    cmd =
         "{\n"
         "    \"command\": \"lease6-get\",\n"
         "    \"arguments\": {"
-        "        \"identifier-type\": \"client-id\","
-        "        \"identifier\": \"01:02:03:04\","
-        "        \"subnet-id\": 44"
+        "        \"subnet-id\": 123"
         "    }\n"
         "}";
-    string exp_rsp = "Query by client-id is not allowed in v6.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-}
+    exp_rsp = "No 'ip-address' provided and 'identifier-type' is either missing or not a string.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
-// Checks that lease6-get(subnet-id, addr) can handle a situation when
-// the query is correctly formed, but the lease is not there.
-TEST_F(LeaseCmdsTest, Lease6GetByDuidNotFound) {
-
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    // Now send the command.
-    string cmd =
+    // We can't identify your laptop by color. Sorry, buddy.
+    cmd =
         "{\n"
         "    \"command\": \"lease6-get\",\n"
         "    \"arguments\": {"
-        "        \"subnet-id\": 1,\n"
-        "        \"identifier-type\": \"duid\","
-        "        \"identifier\": \"00:01:02:03:04:05:06:07\"\n"
+        "        \"subnet-id\": 123,\n"
+        "        \"identifier-type\": \"color\",\n"
+        "        \"identifier\": \"blue\"\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease not found.";
+    exp_rsp = "Incorrect identifier type: color, the only supported values are: "
+        "address, hw-address, duid";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Note the status expected is empty. The query completed correctly,
-    // just didn't found the lease.
-    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
-}
-
-// Checks that lease6-get(subnet-id, addr6) can handle a situation when
-// the query is correctly formed and the lease is returned.
-TEST_F(LeaseCmdsTest, Lease6GetByAddr) {
-
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    // Now send the command.
-    string cmd =
+    // Query by hw-address is not supported in v6. Sorry.
+    cmd =
         "{\n"
         "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {\n"
-        "        \"ip-address\": \"2001:db8:1::1\"\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 123,\n"
+        "        \"identifier-type\": \"hw-address\",\n"
+        "        \"identifier\": \"01:01:01:01:01:01\"\n"
         "    }\n"
         "}";
-    string exp_rsp = "IPv6 lease found.";
+    exp_rsp = "Query by hw-address is not allowed in v6.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // The status expected is success. The lease should be returned.
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
-    ASSERT_TRUE(rsp);
+    // Identifier value is missing.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 123,\n"
+        "        \"identifier-type\": \"duid\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "No 'ip-address' provided and 'identifier' is either missing or not a string.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
-    ConstElementPtr lease = rsp->get("arguments");
-    ASSERT_TRUE(lease);
-
-    // Now check that the lease was indeed returned.
-    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+    // Identifier-type is missing.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 123,\n"
+        "        \"identifier\": \"01:02:03:04:05\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "No 'ip-address' provided and 'identifier-type' is either missing or not a string.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease6-get sanitizes its input.
-TEST_F(LeaseCmdsTest, Lease6GetByAddrBadParam) {
+TEST_F(LeaseCmdsTest, lease6GetMissingParams) {
+    testLease6GetMissingParams();
+}
+
+void LeaseCmdsTest::testLease6GetByAddrBadParam() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -2223,9 +2832,201 @@ TEST_F(LeaseCmdsTest, Lease6GetByAddrBadParam) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease6-get(subnet-id, type, addr6) can handle a situation when
-// the query is correctly formed and the lease is returned.
-TEST_F(LeaseCmdsTest, Lease6GetByAddrPrefix) {
+TEST_F(LeaseCmdsTest, lease6GetByAddrBadParam) {
+    testLease6GetByAddrBadParam();
+}
+
+void LeaseCmdsTest::testLease6GetByAddr6NotFound() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 1,\n"
+        "        \"ip-address\": \"2001:db8:1::10\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease not found.";
+
+    // Note the status expected is empty. The query completed correctly,
+    // just didn't found the lease.
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByAddr6NotFound) {
+    testLease6GetByAddr6NotFound();
+}
+
+void LeaseCmdsTest::testLease4GetByClientIdNotFound() {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // No such lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease not found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease4GetByClientIdNotFound) {
+    testLease4GetByClientIdNotFound();
+}
+
+void LeaseCmdsTest::testLease4GetByClientId() {
+
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"42:42:42:42:42:42:42:42\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr lease = rsp->get("arguments");
+    ASSERT_TRUE(lease);
+
+    // Let's check if the response makes any sense.
+    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+}
+
+TEST_F(LeaseCmdsTest, lease4GetByClientId) {
+    testLease4GetByClientId();
+}
+
+void LeaseCmdsTest::testLease6GetByClientIdInvalidType() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // client-id query is allowed in v4 only.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Query by client-id is not allowed in v6.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByClientIdInvalidType) {
+    testLease6GetByClientIdInvalidType();
+}
+
+void LeaseCmdsTest::testLease6GetByDuidNotFound() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 1,\n"
+        "        \"identifier-type\": \"duid\","
+        "        \"identifier\": \"00:01:02:03:04:05:06:07\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease not found.";
+
+    // Note the status expected is empty. The query completed correctly,
+    // just didn't found the lease.
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByDuidNotFound) {
+    testLease6GetByDuidNotFound();
+}
+
+void LeaseCmdsTest::testLease6GetByDuid() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"iaid\": 42,"
+        "        \"identifier-type\": \"duid\","
+        "        \"identifier\": \"42:42:42:42:42:42:42:42\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease found.";
+
+    // The status expected is success. The lease should be returned.
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr lease = rsp->get("arguments");
+    ASSERT_TRUE(lease);
+
+    // Now check that the lease was indeed returned.
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByDuid) {
+    testLease6GetByDuid();
+}
+
+void LeaseCmdsTest::testLease6GetByAddr() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {\n"
+        "        \"ip-address\": \"2001:db8:1::1\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease found.";
+
+    // The status expected is success. The lease should be returned.
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr lease = rsp->get("arguments");
+    ASSERT_TRUE(lease);
+
+    // Now check that the lease was indeed returned.
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByAddr) {
+    testLease6GetByAddr();
+}
+
+void LeaseCmdsTest::testLease6GetByAddrPrefix() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -2260,39 +3061,11 @@ TEST_F(LeaseCmdsTest, Lease6GetByAddrPrefix) {
     checkLease6(lease, "2001:db8:1234:ab::", 56, 66, "77:77:77:77:77:77:77:77", false);
 }
 
-// Checks that lease6-get(subnet-id, iaid, identifier-type, identifier) can handle
-// a situation when the query returns a lease.
-TEST_F(LeaseCmdsTest, Lease6GetByDUID) {
-
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    // Now send the command.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 66,\n"
-        "        \"iaid\": 42,"
-        "        \"identifier-type\": \"duid\","
-        "        \"identifier\": \"42:42:42:42:42:42:42:42\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv6 lease found.";
-
-    // The status expected is success. The lease should be returned.
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
-    ASSERT_TRUE(rsp);
-
-    ConstElementPtr lease = rsp->get("arguments");
-    ASSERT_TRUE(lease);
-
-    // Now check that the lease was indeed returned.
-    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+TEST_F(LeaseCmdsTest, lease6GetByAddrPrefix) {
+    testLease6GetByAddrPrefix();
 }
 
-// Checks that lease4-get-all returns all leases.
-TEST_F(LeaseCmdsTest, Lease4GetAll) {
+void LeaseCmdsTest::testLease4GetAll() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -2323,8 +3096,11 @@ TEST_F(LeaseCmdsTest, Lease4GetAll) {
     checkLease4(leases, "192.0.3.2", 88, "09:09:09:09:09:09", true);
 }
 
-// Checks that lease4-get-all returns empty set if no leases are found.
-TEST_F(LeaseCmdsTest, Lease4GetAllNoLeases) {
+TEST_F(LeaseCmdsTest, lease4GetAll) {
+    testLease4GetAll();
+}
+
+void LeaseCmdsTest::testLease4GetAllNoLeases() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -2351,8 +3127,11 @@ TEST_F(LeaseCmdsTest, Lease4GetAllNoLeases) {
     EXPECT_EQ(0, leases->size());
 }
 
-// Checks that lease4-get-all returns all leases for a subnet.
-TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetId) {
+TEST_F(LeaseCmdsTest, lease4GetAllNoLeases) {
+    testLease4GetAllNoLeases();
+}
+
+void LeaseCmdsTest::testLease4GetAllBySubnetId() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -2385,8 +3164,11 @@ TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetId) {
     checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true);
 }
 
-// Checks that lease4-get-all returns empty set when no leases are found.
-TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetIdNoLeases) {
+TEST_F(LeaseCmdsTest, lease4GetAllBySubnetId) {
+    testLease4GetAllBySubnetId();
+}
+
+void LeaseCmdsTest::testLease4GetAllBySubnetIdNoLeases() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -2417,8 +3199,11 @@ TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetIdNoLeases) {
     EXPECT_EQ(0, leases->size());
 }
 
-// Checks that lease4-get-all returns leases from multiple subnets.
-TEST_F(LeaseCmdsTest, Lease4GetAllByMultipleSubnetIds) {
+TEST_F(LeaseCmdsTest, lease4GetAllBySubnetIdNoLeases) {
+    testLease4GetAllBySubnetIdNoLeases();
+}
+
+void LeaseCmdsTest::testLease4GetAllByMultipleSubnetIds() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -2452,8 +3237,11 @@ TEST_F(LeaseCmdsTest, Lease4GetAllByMultipleSubnetIds) {
     checkLease4(leases, "192.0.3.2", 88, "09:09:09:09:09:09", true);
 }
 
-// Checks that lease4-get-all checks its input arguments.
-TEST_F(LeaseCmdsTest, Lease4GetBySubnetIdInvalidArguments) {
+TEST_F(LeaseCmdsTest, lease4GetAllByMultipleSubnetIds) {
+    testLease4GetAllByMultipleSubnetIds();
+}
+
+void LeaseCmdsTest::testLease4GetBySubnetIdInvalidArguments() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -2492,8 +3280,11 @@ TEST_F(LeaseCmdsTest, Lease4GetBySubnetIdInvalidArguments) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that multiple calls to lease4-get-pages return all leases.
-TEST_F(LeaseCmdsTest, Lease4GetPaged) {
+TEST_F(LeaseCmdsTest, lease4GetBySubnetIdInvalidArguments) {
+    testLease4GetBySubnetIdInvalidArguments();
+}
+
+void LeaseCmdsTest::testLease4GetPaged() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -2584,9 +3375,11 @@ TEST_F(LeaseCmdsTest, Lease4GetPaged) {
     EXPECT_EQ(1, lease_addresses.count("192.0.3.2"));
 }
 
-// Verifies that first page of IPv4 leases can be retrieved by specifying
-// zero IPv4 address.
-TEST_F(LeaseCmdsTest, Lease4GetPagedZeroAddress) {
+TEST_F(LeaseCmdsTest, lease4GetPaged) {
+    testLease4GetPaged();
+}
+
+void LeaseCmdsTest::testLease4GetPagedZeroAddress() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -2605,8 +3398,11 @@ TEST_F(LeaseCmdsTest, Lease4GetPagedZeroAddress) {
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 }
 
-// Verifies that IPv6 address as a start address is rejected.
-TEST_F(LeaseCmdsTest, Lease4GetPagedIPv4Address) {
+TEST_F(LeaseCmdsTest, lease4GetPagedZeroAddress) {
+    testLease4GetPagedZeroAddress();
+}
+
+void LeaseCmdsTest::testLease4GetPagedIPv6Address() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -2625,8 +3421,103 @@ TEST_F(LeaseCmdsTest, Lease4GetPagedIPv4Address) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease6-get-all returns all leases.
-TEST_F(LeaseCmdsTest, Lease6GetAll) {
+TEST_F(LeaseCmdsTest, lease4GetPagedIPv6Address) {
+    testLease4GetPagedIPv6Address();
+}
+
+void LeaseCmdsTest::testLease4GetPagedInvalidFrom() {
+
+    // Initialize lease manager (false = v6, true = add leases)
+    initLeaseMgr(false, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"foo\","
+        "        \"limit\": 2"
+        "    }"
+        "}";
+
+    string exp_rsp = "'from' parameter value is neither 'start' keyword "
+        "nor a valid IPv4 address";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease4GetPagedInvalidFrom) {
+    testLease4GetPagedInvalidFrom();
+}
+
+void LeaseCmdsTest::testLease4GetPagedNoLimit() {
+
+    // Initialize lease manager (false = v6, true = add leases)
+    initLeaseMgr(false, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"start\""
+        "    }"
+        "}";
+
+    string exp_rsp = "'limit' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease4GetPagedNoLimit) {
+    testLease4GetPagedNoLimit();
+}
+
+void LeaseCmdsTest::testLease4GetPagedLimitNotNumber() {
+
+    // Initialize lease manager (false = v6, true = add leases)
+    initLeaseMgr(false, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"start\","
+        "        \"limit\": false"
+        "    }"
+        "}";
+
+    string exp_rsp = "'limit' parameter must be a number";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease4GetPagedLimitNotNumber) {
+    testLease4GetPagedLimitNotNumber();
+}
+
+void LeaseCmdsTest::testLease4GetPagedLimitIsZero() {
+
+    // Initialize lease manager (false = v6, true = add leases)
+    initLeaseMgr(false, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"start\","
+        "        \"limit\": 0"
+        "    }"
+        "}";
+
+    string exp_rsp = "page size of retrieved leases must not be 0";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease4GetPagedLimitIsZero) {
+    testLease4GetPagedLimitIsZero();
+}
+
+void LeaseCmdsTest::testLease6GetAll() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -2657,8 +3548,11 @@ TEST_F(LeaseCmdsTest, Lease6GetAll) {
     checkLease6(leases, "2001:db8:2::2", 0, 99, "56:56:56:56:56:56:56:56", false);
 }
 
-// Checks that lease6-get-all returns empty set if no leases are found.
-TEST_F(LeaseCmdsTest, Lease6GetAllNoLeases) {
+TEST_F(LeaseCmdsTest, lease6GetAll) {
+    testLease6GetAll();
+}
+
+void LeaseCmdsTest::testLease6GetAllNoLeases() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -2685,8 +3579,11 @@ TEST_F(LeaseCmdsTest, Lease6GetAllNoLeases) {
     EXPECT_EQ(0, leases->size());
 }
 
-// Checks that lease6-get-all returns all leases for a subnet.
-TEST_F(LeaseCmdsTest, Lease6GetAllBySubnetId) {
+TEST_F(LeaseCmdsTest, lease6GetAllNoLeases) {
+    testLease6GetAllNoLeases();
+}
+
+void LeaseCmdsTest::testLease6GetAllBySubnetId() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -2719,8 +3616,11 @@ TEST_F(LeaseCmdsTest, Lease6GetAllBySubnetId) {
     checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false);
 }
 
-// Checks that lease6-get-all returns empty set when no leases are found.
-TEST_F(LeaseCmdsTest, Lease6GetAllBySubnetIdNoLeases) {
+TEST_F(LeaseCmdsTest, lease6GetAllBySubnetId) {
+    testLease6GetAllBySubnetId();
+}
+
+void LeaseCmdsTest::testLease6GetAllBySubnetIdNoLeases() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -2751,8 +3651,11 @@ TEST_F(LeaseCmdsTest, Lease6GetAllBySubnetIdNoLeases) {
     EXPECT_EQ(0, leases->size());
 }
 
-// Checks that lease6-get-all returns leases from multiple subnets.
-TEST_F(LeaseCmdsTest, Lease6GetAllByMultipleSubnetIds) {
+TEST_F(LeaseCmdsTest, lease6GetAllBySubnetIdNoLeases) {
+    testLease6GetAllBySubnetIdNoLeases();
+}
+
+void LeaseCmdsTest::testLease6GetAllByMultipleSubnetIds() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -2786,8 +3689,11 @@ TEST_F(LeaseCmdsTest, Lease6GetAllByMultipleSubnetIds) {
     checkLease6(leases, "2001:db8:2::2", 0, 99, "56:56:56:56:56:56:56:56", false);
 }
 
-// Checks that lease6-get-all checks its input arguments.
-TEST_F(LeaseCmdsTest, Lease6GetBySubnetIdInvalidArguments) {
+TEST_F(LeaseCmdsTest, lease6GetAllByMultipleSubnetIds) {
+    testLease6GetAllByMultipleSubnetIds();
+}
+
+void LeaseCmdsTest::testLease6GetBySubnetIdInvalidArguments() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -2826,8 +3732,11 @@ TEST_F(LeaseCmdsTest, Lease6GetBySubnetIdInvalidArguments) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that multiple calls to lease6-get-page return all leases.
-TEST_F(LeaseCmdsTest, Lease6GetPaged) {
+TEST_F(LeaseCmdsTest, lease6GetBySubnetIdInvalidArguments) {
+    testLease6GetBySubnetIdInvalidArguments();
+}
+
+void LeaseCmdsTest::testLease6GetPaged() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -2919,9 +3828,11 @@ TEST_F(LeaseCmdsTest, Lease6GetPaged) {
     EXPECT_EQ(1, lease_addresses.count("2001:db8:2::2"));
 }
 
-// Verifies that first page of IPv6 leases can be retrieved by specifying
-// zero IPv6 address.
-TEST_F(LeaseCmdsTest, Lease6GetPagedZeroAddress) {
+TEST_F(LeaseCmdsTest, lease6GetPaged) {
+    testLease6GetPaged();
+}
+
+void LeaseCmdsTest::testLease6GetPagedZeroAddress() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -2940,8 +3851,11 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedZeroAddress) {
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 }
 
-// Verifies that IPv4 address as a start address is rejected.
-TEST_F(LeaseCmdsTest, Lease6GetPagedIPv4Address) {
+TEST_F(LeaseCmdsTest, lease6GetPagedZeroAddress) {
+    testLease6GetPagedZeroAddress();
+}
+
+void LeaseCmdsTest::testLease6GetPagedIPv4Address() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -2960,9 +3874,11 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedIPv4Address) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Verifies that value of 'from' parameter other than 'start' or an IPv6
-// address is rejected.
-TEST_F(LeaseCmdsTest, Lease6GetPagedInvalidFrom) {
+TEST_F(LeaseCmdsTest, lease6GetPagedIPv4Address) {
+    testLease6GetPagedIPv4Address();
+}
+
+void LeaseCmdsTest::testLease6GetPagedInvalidFrom() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -2982,8 +3898,11 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedInvalidFrom) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Verifies that limit is mandatory.
-TEST_F(LeaseCmdsTest, Lease6GetPagedNoLimit) {
+TEST_F(LeaseCmdsTest, lease6GetPagedInvalidFrom) {
+    testLease6GetPagedInvalidFrom();
+}
+
+void LeaseCmdsTest::testLease6GetPagedNoLimit() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -3001,8 +3920,11 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedNoLimit) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Verifies that the limit must be a number.
-TEST_F(LeaseCmdsTest, Lease6GetPagedLimitNotNumber) {
+TEST_F(LeaseCmdsTest, lease6GetPagedNoLimit) {
+    testLease6GetPagedNoLimit();
+}
+
+void LeaseCmdsTest::testLease6GetPagedLimitNotNumber() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -3021,8 +3943,11 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedLimitNotNumber) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Verifies that the limit of 0 is rejected.
-TEST_F(LeaseCmdsTest, Lease6GetPagedLimitIsZero) {
+TEST_F(LeaseCmdsTest, lease6GetPagedLimitNotNumber) {
+    testLease6GetPagedLimitNotNumber();
+}
+
+void LeaseCmdsTest::testLease6GetPagedLimitIsZero() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -3041,9 +3966,11 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedLimitIsZero) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease4-get-by-hw-address can handle a situation when
-// the query is broken (required parameter is missing).
-TEST_F(LeaseCmdsTest, LeaseGetByHwAddressParams) {
+TEST_F(LeaseCmdsTest, lease6GetPagedLimitIsZero) {
+    testLease6GetPagedLimitIsZero();
+}
+
+void LeaseCmdsTest::testLeaseGetByHwAddressParams() {
 
     // No parameters whatsoever.
     string cmd =
@@ -3079,8 +4006,11 @@ TEST_F(LeaseCmdsTest, LeaseGetByHwAddressParams) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease4-get-by-hw-address works as expected (find no lease).
-TEST_F(LeaseCmdsTest, LeaseGetByHwAddressFind0) {
+TEST_F(LeaseCmdsTest, leaseGetByHwAddressParams) {
+    testLeaseGetByHwAddressParams();
+}
+
+void LeaseCmdsTest::testLeaseGetByHwAddressFind0() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -3097,8 +4027,11 @@ TEST_F(LeaseCmdsTest, LeaseGetByHwAddressFind0) {
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
-// Checks that lease4-get-by-hw-address works as expected (find two leases).
-TEST_F(LeaseCmdsTest, LeaseGetByHwAddressFind2) {
+TEST_F(LeaseCmdsTest, leaseGetByHwAddressFind0) {
+    testLeaseGetByHwAddressFind0();
+}
+
+void LeaseCmdsTest::testLeaseGetByHwAddressFind2() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -3133,9 +4066,11 @@ TEST_F(LeaseCmdsTest, LeaseGetByHwAddressFind2) {
     checkLease4(lease, "192.0.3.1", 88, "08:08:08:08:08:08", false);
 }
 
-// Checks that lease4-get-by-client-id can handle a situation when
-// the query is broken (required parameter is missing).
-TEST_F(LeaseCmdsTest, LeaseGetByClientIdParams) {
+TEST_F(LeaseCmdsTest, leaseGetByHwAddressFind2) {
+    testLeaseGetByHwAddressFind2();
+}
+
+void LeaseCmdsTest::testLeaseGetByClientIdParams() {
 
     // No parameters whatsoever.
     string cmd =
@@ -3171,8 +4106,11 @@ TEST_F(LeaseCmdsTest, LeaseGetByClientIdParams) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease4-get-by-client-id works as expected (find no lease).
-TEST_F(LeaseCmdsTest, LeaseGetByClientIdFind0) {
+TEST_F(LeaseCmdsTest, leaseGetByClientIdParams) {
+    testLeaseGetByClientIdParams();
+}
+
+void LeaseCmdsTest::testLeaseGetByClientIdFind0() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -3189,8 +4127,11 @@ TEST_F(LeaseCmdsTest, LeaseGetByClientIdFind0) {
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
-// Checks that lease4-get-by-client-id works as expected (find two leases).
-TEST_F(LeaseCmdsTest, LeaseGetByClientIdFind2) {
+TEST_F(LeaseCmdsTest, leaseGetByClientIdFind0) {
+    testLeaseGetByClientIdFind0();
+}
+
+void LeaseCmdsTest::testLeaseGetByClientIdFind2() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -3225,9 +4166,11 @@ TEST_F(LeaseCmdsTest, LeaseGetByClientIdFind2) {
     checkLease4(lease, "192.0.3.1", 88, "08:08:08:08:08:08", false);
 }
 
-// Checks that lease6-get-by-duid can handle a situation when
-// the query is broken (required parameter is missing).
-TEST_F(LeaseCmdsTest, LeaseGetByDuidParams) {
+TEST_F(LeaseCmdsTest, leaseGetByClientIdFind2) {
+    testLeaseGetByClientIdFind2();
+}
+
+void LeaseCmdsTest::testLeaseGetByDuidParams() {
 
     // No parameters whatsoever.
     string cmd =
@@ -3263,8 +4206,11 @@ TEST_F(LeaseCmdsTest, LeaseGetByDuidParams) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease6-get-by-duid works as expected (find no lease).
-TEST_F(LeaseCmdsTest, LeaseGetByDuidFind0) {
+TEST_F(LeaseCmdsTest, leaseGetByDuidParams) {
+    testLeaseGetByDuidParams();
+}
+
+void LeaseCmdsTest::testLeaseGetByDuidFind0() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -3281,8 +4227,11 @@ TEST_F(LeaseCmdsTest, LeaseGetByDuidFind0) {
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
-// Checks that lease6-get-by-duid works as expected (find two leases).
-TEST_F(LeaseCmdsTest, LeaseGetByDuidFind2) {
+TEST_F(LeaseCmdsTest, leaseGetByDuidFind0) {
+    testLeaseGetByDuidFind0();
+}
+
+void LeaseCmdsTest::testLeaseGetByDuidFind2() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -3317,9 +4266,11 @@ TEST_F(LeaseCmdsTest, LeaseGetByDuidFind2) {
     checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
 }
 
-// Checks that lease4-get-by-hostname can handle a situation when
-// the query is broken (required parameter is missing).
-TEST_F(LeaseCmdsTest, Lease4GetByHostnameParams) {
+TEST_F(LeaseCmdsTest, leaseGetByDuidFind2) {
+    testLeaseGetByDuidFind2();
+}
+
+void LeaseCmdsTest::testLease4GetByHostnameParams() {
 
     // No parameters whatsoever.
     string cmd =
@@ -3354,8 +4305,11 @@ TEST_F(LeaseCmdsTest, Lease4GetByHostnameParams) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease4-get-by-hostname works as expected (find no lease).
-TEST_F(LeaseCmdsTest, Lease4GetByHostnameFind0) {
+TEST_F(LeaseCmdsTest, lease4GetByHostnameParams) {
+    testLease4GetByHostnameParams();
+}
+
+void LeaseCmdsTest::testLease4GetByHostnameFind0() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -3372,8 +4326,11 @@ TEST_F(LeaseCmdsTest, Lease4GetByHostnameFind0) {
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
-// Checks that lease4-get-by-hostname works as expected (find two leases).
-TEST_F(LeaseCmdsTest, Lease4GetByHostnameFind2) {
+TEST_F(LeaseCmdsTest, lease4GetByHostnameFind0) {
+    testLease4GetByHostnameFind0();
+}
+
+void LeaseCmdsTest::testLease4GetByHostnameFind2() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -3408,9 +4365,11 @@ TEST_F(LeaseCmdsTest, Lease4GetByHostnameFind2) {
     checkLease4(lease, "192.0.3.1", 88, "08:08:08:08:08:08", false);
 }
 
-// Checks that lease6-get-by-hostname can handle a situation when
-// the query is broken (required parameter is missing).
-TEST_F(LeaseCmdsTest, Lease6GetByHostnameParams) {
+TEST_F(LeaseCmdsTest, lease4GetByHostnameFind2) {
+    testLease4GetByHostnameFind2();
+}
+
+void LeaseCmdsTest::testLease6GetByHostnameParams() {
 
     // No parameters whatsoever.
     string cmd =
@@ -3445,8 +4404,11 @@ TEST_F(LeaseCmdsTest, Lease6GetByHostnameParams) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease6-get-by-hostname works as expected (find no lease).
-TEST_F(LeaseCmdsTest, Lease6GetByHostnameFind0) {
+TEST_F(LeaseCmdsTest, lease6GetByHostnameParams) {
+    testLease6GetByHostnameParams();
+}
+
+void LeaseCmdsTest::testLease6GetByHostnameFind0() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -3463,8 +4425,11 @@ TEST_F(LeaseCmdsTest, Lease6GetByHostnameFind0) {
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
-// Checks that lease6-get-by-hostname works as expected (find two leases).
-TEST_F(LeaseCmdsTest, Lease6GetByHostnameFind2) {
+TEST_F(LeaseCmdsTest, lease6GetByHostnameFind0) {
+    testLease6GetByHostnameFind0();
+}
+
+void LeaseCmdsTest::testLease6GetByHostnameFind2() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -3499,8 +4464,11 @@ TEST_F(LeaseCmdsTest, Lease6GetByHostnameFind2) {
     checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
 }
 
-// Test checks if lease4-update handler refuses calls with missing parameters.
-TEST_F(LeaseCmdsTest, Lease4UpdateMissingParams) {
+TEST_F(LeaseCmdsTest, lease6GetByHostnameFind2) {
+    testLease6GetByHostnameFind2();
+}
+
+void LeaseCmdsTest::testLease4UpdateMissingParams() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -3552,9 +4520,11 @@ TEST_F(LeaseCmdsTest, Lease4UpdateMissingParams) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Verify that lease4-update can be rejected if parameters are specified, but
-// have incorrect values.
-TEST_F(LeaseCmdsTest, Lease4UpdateBadParams) {
+TEST_F(LeaseCmdsTest, lease4UpdateMissingParams) {
+    testLease4UpdateMissingParams();
+}
+
+void LeaseCmdsTest::testLease4UpdateBadParams() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -3630,9 +4600,11 @@ TEST_F(LeaseCmdsTest, Lease4UpdateBadParams) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Check that lease4-update correctly handles case when there is
-// no lease to be updated.
-TEST_F(LeaseCmdsTest, Lease4UpdateNoLease) {
+TEST_F(LeaseCmdsTest, lease4UpdateBadParams) {
+    testLease4UpdateBadParams();
+}
+
+void LeaseCmdsTest::testLease4UpdateNoLease() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -3654,9 +4626,11 @@ TEST_F(LeaseCmdsTest, Lease4UpdateNoLease) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Check that a lease4 can be updated. We're changing hw-address
-// and a hostname.
-TEST_F(LeaseCmdsTest, Lease4Update) {
+TEST_F(LeaseCmdsTest, lease4UpdateNoLease) {
+    testLease4UpdateNoLease();
+}
+
+void LeaseCmdsTest::testLease4Update() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -3694,9 +4668,11 @@ TEST_F(LeaseCmdsTest, Lease4Update) {
     EXPECT_FALSE(l->getContext());
 }
 
-// Check that a lease4 can be updated. We're changing hw-address
-// and a hostname.
-TEST_F(LeaseCmdsTest, Lease4UpdateDeclinedLeases) {
+TEST_F(LeaseCmdsTest, lease4Update) {
+    testLease4Update();
+}
+
+void LeaseCmdsTest::testLease4UpdateDeclinedLeases() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true, true);
@@ -3734,9 +4710,11 @@ TEST_F(LeaseCmdsTest, Lease4UpdateDeclinedLeases) {
     EXPECT_FALSE(l->getContext());
 }
 
-// Check that a lease4 can be updated. We're changing hw-address
-// and a hostname. The subnet-id is not specified.
-TEST_F(LeaseCmdsTest, Lease4UpdateNoSubnetId) {
+TEST_F(LeaseCmdsTest, lease4UpdateDeclinedLeases) {
+    testLease4UpdateDeclinedLeases();
+}
+
+void LeaseCmdsTest::testLease4UpdateNoSubnetId() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -3773,9 +4751,11 @@ TEST_F(LeaseCmdsTest, Lease4UpdateNoSubnetId) {
     EXPECT_FALSE(l->getContext());
 }
 
-// Check that a lease4 can be updated. We're changing hw-address
-// and a hostname. The subnet-id is not specified.
-TEST_F(LeaseCmdsTest, Lease4UpdateNoSubnetIdDeclinedLeases) {
+TEST_F(LeaseCmdsTest, lease4UpdateNoSubnetId) {
+    testLease4UpdateNoSubnetId();
+}
+
+void LeaseCmdsTest::testLease4UpdateNoSubnetIdDeclinedLeases() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true, true);
@@ -3812,10 +4792,11 @@ TEST_F(LeaseCmdsTest, Lease4UpdateNoSubnetIdDeclinedLeases) {
     EXPECT_FALSE(l->getContext());
 }
 
-// Check that a lease4 is created if it doesn't exist during the update.
-// To trigger this behavior 'force-create' boolean parameter must be
-// included in the command.
-TEST_F(LeaseCmdsTest, Lease4UpdateForceCreate) {
+TEST_F(LeaseCmdsTest, lease4UpdateNoSubnetIdDeclinedLeases) {
+    testLease4UpdateNoSubnetIdDeclinedLeases();
+}
+
+void LeaseCmdsTest::testLease4UpdateForceCreate() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -3854,11 +4835,11 @@ TEST_F(LeaseCmdsTest, Lease4UpdateForceCreate) {
     EXPECT_FALSE(l->getContext());
 }
 
-// Check that a lease4 is created if it doesn't exist during the update.
-// To trigger this behavior 'force-create' boolean parameter must be
-// included in the command. The subnet-id is not specified, Kea will
-// figure it out.
-TEST_F(LeaseCmdsTest, Lease4UpdateForceCreateNoSubnetId) {
+TEST_F(LeaseCmdsTest, lease4UpdateForceCreate) {
+    testLease4UpdateForceCreate();
+}
+
+void LeaseCmdsTest::testLease4UpdateForceCreateNoSubnetId() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -3899,9 +4880,11 @@ TEST_F(LeaseCmdsTest, Lease4UpdateForceCreateNoSubnetId) {
     EXPECT_FALSE(l->getContext());
 }
 
-// Check that lease4-update correctly handles case when the 'force-create'
-// parameter is explicitly set to false.
-TEST_F(LeaseCmdsTest, Lease4UpdateDoNotForceCreate) {
+TEST_F(LeaseCmdsTest, lease4UpdateForceCreateNoSubnetId) {
+    testLease4UpdateForceCreateNoSubnetId();
+}
+
+void LeaseCmdsTest::testLease4UpdateDoNotForceCreate() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -3932,9 +4915,11 @@ TEST_F(LeaseCmdsTest, Lease4UpdateDoNotForceCreate) {
     checkLease4Stats(88, 0, 0);
 }
 
-// Check that a lease4 can be updated. We're adding a comment and an user
-// context.
-TEST_F(LeaseCmdsTest, Lease4UpdateComment) {
+TEST_F(LeaseCmdsTest, lease4UpdateDoNotForceCreate) {
+    testLease4UpdateDoNotForceCreate();
+}
+
+void LeaseCmdsTest::testLease4UpdateComment() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -3980,8 +4965,11 @@ TEST_F(LeaseCmdsTest, Lease4UpdateComment) {
     EXPECT_EQ("true", ctx->get("foobar")->str());
 }
 
-// Test checks if lease6-update handler refuses calls with missing parameters.
-TEST_F(LeaseCmdsTest, Lease6UpdateMissingParams) {
+TEST_F(LeaseCmdsTest, lease4UpdateComment) {
+    testLease4UpdateComment();
+}
+
+void LeaseCmdsTest::testLease6UpdateMissingParams() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -4033,9 +5021,11 @@ TEST_F(LeaseCmdsTest, Lease6UpdateMissingParams) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Verify that lease6-update can be rejected if parameters are specified, but
-// have incorrect values.
-TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
+TEST_F(LeaseCmdsTest, lease6UpdateMissingParams) {
+    testLease6UpdateMissingParams();
+}
+
+void LeaseCmdsTest::testLease6UpdateBadParams() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -4130,9 +5120,46 @@ TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Check that a lease6 can be updated. We're changing hw-address
-// and a hostname.
-TEST_F(LeaseCmdsTest, Lease6Update) {
+TEST_F(LeaseCmdsTest, lease6UpdateBadParams) {
+    testLease6UpdateBadParams();
+}
+
+void LeaseCmdsTest::testLease6UpdateNoLease() {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\""
+        "    }\n"
+        "}";
+    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
+        "either because the lease has been deleted or it has changed in the "
+        "database, in both cases a retry might succeed";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateNoLease) {
+    testLease6UpdateNoLease();
+}
+
+void LeaseCmdsTest::testLease6Update() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -4172,9 +5199,11 @@ TEST_F(LeaseCmdsTest, Lease6Update) {
     EXPECT_FALSE(l->getContext());
 }
 
-// Check that a lease6 can be updated. We're changing hw-address
-// and a hostname.
-TEST_F(LeaseCmdsTest, Lease6UpdateDeclinedLeases) {
+TEST_F(LeaseCmdsTest, lease6Update) {
+    testLease6Update();
+}
+
+void LeaseCmdsTest::testLease6UpdateDeclinedLeases() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true, true);
@@ -4214,9 +5243,11 @@ TEST_F(LeaseCmdsTest, Lease6UpdateDeclinedLeases) {
     EXPECT_FALSE(l->getContext());
 }
 
-// Check that a lease6 can be updated. We're changing hw-address
-// and a hostname. The subnet-id is not specified.
-TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetId) {
+TEST_F(LeaseCmdsTest, lease6UpdateDeclinedLeases) {
+    testLease6UpdateDeclinedLeases();
+}
+
+void LeaseCmdsTest::testLease6UpdateNoSubnetId() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -4258,9 +5289,11 @@ TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetId) {
     EXPECT_FALSE(l->getContext());
 }
 
-// Check that a lease6 can be updated. We're changing hw-address
-// and a hostname. The subnet-id is not specified.
-TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetIdDeclinedLeases) {
+TEST_F(LeaseCmdsTest, lease6UpdateNoSubnetId) {
+    testLease6UpdateNoSubnetId();
+}
+
+void LeaseCmdsTest::testLease6UpdateNoSubnetIdDeclinedLeases() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true, true);
@@ -4302,9 +5335,139 @@ TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetIdDeclinedLeases) {
     EXPECT_FALSE(l->getContext());
 }
 
-// Check that a lease6 can be updated. We're adding a comment and an user
-// context.
-TEST_F(LeaseCmdsTest, Lease6UpdateComment) {
+TEST_F(LeaseCmdsTest, lease6UpdateNoSubnetIdDeclinedLeases) {
+    testLease6UpdateNoSubnetIdDeclinedLeases();
+}
+
+void LeaseCmdsTest::testLease6UpdateForceCreate() {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease6Stats(66, 1, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease is correct.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_FALSE(l->getContext());
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateForceCreate) {
+    testLease6UpdateForceCreate();
+}
+
+void LeaseCmdsTest::testLease6UpdateForceCreateNoSubnetId() {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease6Stats(66, 1, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the subnet-id is figured out correctly.
+    EXPECT_EQ(66, l->subnet_id_);
+
+    // Make sure the lease is correct.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_FALSE(l->getContext());
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateForceCreateNoSubnetId) {
+    testLease6UpdateForceCreateNoSubnetId();
+}
+
+void LeaseCmdsTest::testLease6UpdateDoNotForceCreate() {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": false"
+        "    }\n"
+        "}";
+    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
+        "either because the lease has been deleted or it has changed in the "
+        "database, in both cases a retry might succeed";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateDoNotForceCreate) {
+    testLease6UpdateDoNotForceCreate();
+}
+
+void LeaseCmdsTest::testLease6UpdateComment() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -4350,167 +5513,11 @@ TEST_F(LeaseCmdsTest, Lease6UpdateComment) {
     EXPECT_EQ("true", ctx->get("foobar")->str());
 }
 
-// Check that lease6-update correctly handles case when there is
-// no lease to be updated.
-TEST_F(LeaseCmdsTest, Lease6UpdateNoLease) {
-
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-update\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
-        "        \"iaid\": 7654321,\n"
-        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
-        "        \"hostname\": \"newhostname.example.org\""
-        "    }\n"
-        "}";
-    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
-        "either because the lease has been deleted or it has changed in the "
-        "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
+TEST_F(LeaseCmdsTest, lease6UpdateComment) {
+    testLease6UpdateComment();
 }
 
-// Check that a lease6 is created if it doesn't exist during the update.
-// To trigger this behavior 'force-create' boolean parameter must be
-// included in the command.
-TEST_F(LeaseCmdsTest, Lease6UpdateForceCreate) {
-
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-update\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
-        "        \"iaid\": 7654321,\n"
-        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
-        "        \"hostname\": \"newhostname.example.org\","
-        "        \"force-create\": true"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv6 lease added.";
-    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    checkLease6Stats(66, 1, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now check that the lease is really there.
-    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
-    ASSERT_TRUE(l);
-
-    // Make sure the lease is correct.
-    ASSERT_TRUE(l->duid_);
-    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
-    EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
-    EXPECT_FALSE(l->getContext());
-}
-
-// Check that a lease6 is created if it doesn't exist during the update.
-// To trigger this behavior 'force-create' boolean parameter must be
-// included in the command. The subnet-id is not specified, Kea will
-// figure it out.
-TEST_F(LeaseCmdsTest, Lease6UpdateForceCreateNoSubnetId) {
-
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-update\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
-        "        \"iaid\": 7654321,\n"
-        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
-        "        \"hostname\": \"newhostname.example.org\","
-        "        \"force-create\": true"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv6 lease added.";
-    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    checkLease6Stats(66, 1, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now check that the lease is really there.
-    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
-    ASSERT_TRUE(l);
-
-    // Make sure the subnet-id is figured out correctly.
-    EXPECT_EQ(66, l->subnet_id_);
-
-    // Make sure the lease is correct.
-    ASSERT_TRUE(l->duid_);
-    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
-    EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
-    EXPECT_FALSE(l->getContext());
-}
-
-// Check that lease6-update correctly handles case when the 'force-create'
-// parameter is explicitly set to false.
-TEST_F(LeaseCmdsTest, Lease6UpdateDoNotForceCreate) {
-
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-update\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
-        "        \"iaid\": 7654321,\n"
-        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
-        "        \"hostname\": \"newhostname.example.org\","
-        "        \"force-create\": false"
-        "    }\n"
-        "}";
-    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
-        "either because the lease has been deleted or it has changed in the "
-        "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-}
-
-// Checks that lease6-del can handle a situation when the query is
-// broken (some required parameters are missing).
-TEST_F(LeaseCmdsTest, Lease4DelMissingParams) {
+void LeaseCmdsTest::testLease4DelMissingParams() {
 
     // No parameters whatsoever. You want just a lease, any lease?
     string cmd =
@@ -4585,9 +5592,11 @@ TEST_F(LeaseCmdsTest, Lease4DelMissingParams) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease4-del can handle a situation when the query is
-// valid, but the lease is not there.
-TEST_F(LeaseCmdsTest, Lease4DelByAddrNotFound) {
+TEST_F(LeaseCmdsTest, lease4DelMissingParams) {
+    testLease4DelMissingParams();
+}
+
+void LeaseCmdsTest::testLease4DelByAddrNotFound() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -4613,94 +5622,11 @@ TEST_F(LeaseCmdsTest, Lease4DelByAddrNotFound) {
     checkLease4Stats(88, 2, 0);
 }
 
-// Checks that lease4-del can return a lease by address.
-TEST_F(LeaseCmdsTest, Lease4DelByAddr) {
-
-    // Initialize lease manager (false = v4, true = add leases)
-    initLeaseMgr(false, true);
-
-    checkLease4Stats(44, 2, 0);
-
-    checkLease4Stats(88, 2, 0);
-
-    // Query for valid, existing lease.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-del\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"192.0.2.1\""
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv4 lease deleted.";
-    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    checkLease4Stats(44, 1, 0);
-
-    checkLease4Stats(88, 2, 0);
-
-    // Make sure the lease is really gone.
-    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+TEST_F(LeaseCmdsTest, lease4DelByAddrNotFound) {
+    testLease4DelByAddrNotFound();
 }
 
-// Checks that lease4-del can return a lease by address.
-TEST_F(LeaseCmdsTest, Lease4DelByAddrDeclinedLeases) {
-
-    // Initialize lease manager (false = v4, true = add leases)
-    initLeaseMgr(false, true, true);
-
-    checkLease4Stats(44, 2, 2);
-
-    checkLease4Stats(88, 2, 2);
-
-    // Query for valid, existing lease.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-del\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"192.0.2.1\""
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv4 lease deleted.";
-    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    checkLease4Stats(44, 1, 1);
-
-    checkLease4Stats(88, 2, 2);
-
-    // Make sure the lease is really gone.
-    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
-}
-
-// Checks that leaseX-del checks update-ddns input
-TEST_F(LeaseCmdsTest, LeaseXDelBadUpdateDdnsParam) {
-
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-del\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"192.0.1.0\","
-        "        \"update-ddns\": 77"
-        "    }\n"
-        "}";
-
-    string exp_rsp = "'update-ddns' is not a boolean";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-
-    cmd =
-        "{\n"
-        "    \"command\": \"lease6-del\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"2001:db8:1::1\","
-        "        \"update-ddns\": \"bogus\""
-        "    }\n"
-        "}";
-
-    exp_rsp = "'update-ddns' is not a boolean";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-}
-
-// Checks that lease4-del sanitizes its input.
-TEST_F(LeaseCmdsTest, Lease4DelByAddrBadParam) {
+void LeaseCmdsTest::testLease4DelByAddrBadParam() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -4736,9 +5662,75 @@ TEST_F(LeaseCmdsTest, Lease4DelByAddrBadParam) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease4-del can handle a situation when the query is
-// well formed, but the lease is not there.
-TEST_F(LeaseCmdsTest, Lease4DelByHWAddrNotFound) {
+TEST_F(LeaseCmdsTest, lease4DelByAddrBadParam) {
+    testLease4DelByAddrBadParam();
+}
+
+void LeaseCmdsTest::testLease4DelByAddr() {
+
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    checkLease4Stats(44, 2, 0);
+
+    checkLease4Stats(88, 2, 0);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\""
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease deleted.";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(44, 1, 0);
+
+    checkLease4Stats(88, 2, 0);
+
+    // Make sure the lease is really gone.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
+TEST_F(LeaseCmdsTest, lease4DelByAddr) {
+    testLease4DelByAddr();
+}
+
+void LeaseCmdsTest::testLease4DelByAddrDeclinedLeases() {
+
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true, true);
+
+    checkLease4Stats(44, 2, 2);
+
+    checkLease4Stats(88, 2, 2);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\""
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease deleted.";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(44, 1, 1);
+
+    checkLease4Stats(88, 2, 2);
+
+    // Make sure the lease is really gone.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
+TEST_F(LeaseCmdsTest, lease4DelByAddrDeclinedLeases) {
+    testLease4DelByAddrDeclinedLeases();
+}
+
+void LeaseCmdsTest::testLease4DelByHWAddrNotFound() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -4768,8 +5760,11 @@ TEST_F(LeaseCmdsTest, Lease4DelByHWAddrNotFound) {
     EXPECT_TRUE(lmptr_->getLease4(IOAddress("192.0.2.1")));
 }
 
-// Checks that lease4-del can find a lease by hardware address.
-TEST_F(LeaseCmdsTest, Lease4DelByHWAddr) {
+TEST_F(LeaseCmdsTest, lease4DelByHWAddrNotFound) {
+    testLease4DelByHWAddrNotFound();
+}
+
+void LeaseCmdsTest::testLease4DelByHWAddr() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -4799,9 +5794,11 @@ TEST_F(LeaseCmdsTest, Lease4DelByHWAddr) {
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
 }
 
-// Checks that lease4-del can handle a situation when the query is
-// well formed, but the lease is not there.
-TEST_F(LeaseCmdsTest, Lease4DelByClientIdNotFound) {
+TEST_F(LeaseCmdsTest, lease4DelByHWAddr) {
+    testLease4DelByHWAddr();
+}
+
+void LeaseCmdsTest::testLease4DelByClientIdNotFound() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -4831,8 +5828,11 @@ TEST_F(LeaseCmdsTest, Lease4DelByClientIdNotFound) {
     EXPECT_TRUE(lmptr_->getLease4(IOAddress("192.0.2.1")));
 }
 
-// Checks that lease4-del can find and delete a lease by client identifier.
-TEST_F(LeaseCmdsTest, Lease4DelByClientId) {
+TEST_F(LeaseCmdsTest, lease4DelByClientIdNotFound) {
+    testLease4DelByClientIdNotFound();
+}
+
+void LeaseCmdsTest::testLease4DelByClientId() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -4862,9 +5862,90 @@ TEST_F(LeaseCmdsTest, Lease4DelByClientId) {
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
 }
 
-// Checks that lease6-del(addr) can handle a situation when
-// the query is correctly formed, but the lease is not there.
-TEST_F(LeaseCmdsTest, Lease6DelByAddr6NotFound) {
+TEST_F(LeaseCmdsTest, lease4DelByClientId) {
+    testLease4DelByClientId();
+}
+
+void LeaseCmdsTest::testLease6DelMissingParams() {
+
+    // No parameters whatsoever. You want just a lease, any lease?
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "Mandatory 'subnet-id' parameter missing.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Just the subnet-id won't cut it, either.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 123"
+        "    }\n"
+        "}";
+    exp_rsp = "No 'ip-address' provided and 'identifier-type' is either missing or not a string.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // We can't identify your laptop by color. Sorry, buddy.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 123,\n"
+        "        \"identifier-type\": \"color\",\n"
+        "        \"identifier\": \"blue\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Incorrect identifier type: color, the only supported values are: "
+        "address, hw-address, duid";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Query by hw-address is not supported in v6. Sorry.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 123,\n"
+        "        \"identifier-type\": \"hw-address\",\n"
+        "        \"identifier\": \"01:01:01:01:01:01\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Delete by hw-address is not allowed in v6.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Identifier value is missing.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 123,\n"
+        "        \"identifier-type\": \"hw-address\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "No 'ip-address' provided and 'identifier' is either missing or not a string.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Identifier-type is missing.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 123,\n"
+        "        \"identifier\": \"01:02:03:04:05\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "No 'ip-address' provided and 'identifier-type' is either missing or not a string.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease6DelMissingParams) {
+    testLease6DelMissingParams();
+}
+
+void LeaseCmdsTest::testLease6DelByAddr6NotFound() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -4893,44 +5974,11 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddr6NotFound) {
     checkLease6Stats(99, 2, 0, 0);
 }
 
-// Checks that lease6-del(subnet-id, addr) can handle a situation when
-// the query is correctly formed, but the lease is not there.
-TEST_F(LeaseCmdsTest, Lease6DelByDuidNotFound) {
-
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    checkLease6Stats(66, 2, 0, 0);
-
-    checkLease6Stats(99, 2, 0, 0);
-
-    // Now send the command.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-del\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 1,\n"
-        "        \"identifier-type\": \"duid\","
-        "        \"identifier\": \"00:01:02:03:04:05:06:07\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv6 lease not found.";
-
-    // Note the status expected is empty. The query completed correctly,
-    // just didn't found the lease.
-    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
-
-    checkLease6Stats(66, 2, 0, 0);
-
-    checkLease6Stats(99, 2, 0, 0);
-
-    // Make sure the lease is still there.
-    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+TEST_F(LeaseCmdsTest, lease6DelByAddr6NotFound) {
+    testLease6DelByAddr6NotFound();
 }
 
-// Checks that lease6-del(subnet-id, addr6) can handle a situation when
-// the query is correctly formed and the lease is returned.
-TEST_F(LeaseCmdsTest, Lease6DelByAddr) {
+void LeaseCmdsTest::testLease6DelByAddr() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -4961,9 +6009,11 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddr) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
 }
 
-// Checks that lease6-del(subnet-id, addr6) can handle a situation when
-// the query is correctly formed and the lease is returned.
-TEST_F(LeaseCmdsTest, Lease6DelByAddrDeclinedLeases) {
+TEST_F(LeaseCmdsTest, lease6DelByAddr) {
+    testLease6DelByAddr();
+}
+
+void LeaseCmdsTest::testLease6DelByAddrDeclinedLeases() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true, true);
@@ -4994,8 +6044,11 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddrDeclinedLeases) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
 }
 
-// Checks that lease6-del sanitizes its input.
-TEST_F(LeaseCmdsTest, Lease6DelByAddrBadParam) {
+TEST_F(LeaseCmdsTest, lease6DelByAddrDeclinedLeases) {
+    testLease6DelByAddrDeclinedLeases();
+}
+
+void LeaseCmdsTest::testLease6DelByAddrBadParam() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -5023,9 +6076,11 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddrBadParam) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease6-del(subnet-id, type, addr6) can handle a situation when
-// the query is correctly formed and the lease is deleted.
-TEST_F(LeaseCmdsTest, Lease6DelByAddrPrefix) {
+TEST_F(LeaseCmdsTest, lease6DelByAddrBadParam) {
+    testLease6DelByAddrBadParam();
+}
+
+void LeaseCmdsTest::testLease6DelByAddrPrefix() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -5071,9 +6126,48 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddrPrefix) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_PD, IOAddress("2001:db8:1234:ab::")));
 }
 
-// Checks that lease6-del(subnet-id, iaid, identifier-type, identifier) can handle
-// a situation when the query finds a lease.
-TEST_F(LeaseCmdsTest, Lease6DelByDUID) {
+TEST_F(LeaseCmdsTest, lease6DelByAddrPrefix) {
+    testLease6DelByAddrPrefix();
+}
+
+void LeaseCmdsTest::testLease6DelByDuidNotFound() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 1,\n"
+        "        \"identifier-type\": \"duid\","
+        "        \"identifier\": \"00:01:02:03:04:05:06:07\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease not found.";
+
+    // Note the status expected is empty. The query completed correctly,
+    // just didn't found the lease.
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
+
+    // Make sure the lease is still there.
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+}
+
+TEST_F(LeaseCmdsTest, lease6DelByDuidNotFound) {
+    testLease6DelByDuidNotFound();
+}
+
+void LeaseCmdsTest::testLease6DelByDuid() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -5106,8 +6200,42 @@ TEST_F(LeaseCmdsTest, Lease6DelByDUID) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
 }
 
-// Checks that lease4-wipe can remove leases.
-TEST_F(LeaseCmdsTest, Lease4Wipe) {
+TEST_F(LeaseCmdsTest, lease6DelByDuid) {
+    testLease6DelByDuid();
+}
+
+void LeaseCmdsTest::testLeaseXDelBadUpdateDdnsParam() {
+
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.1.0\","
+        "        \"update-ddns\": 77"
+        "    }\n"
+        "}";
+
+    string exp_rsp = "'update-ddns' is not a boolean";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\","
+        "        \"update-ddns\": \"bogus\""
+        "    }\n"
+        "}";
+
+    exp_rsp = "'update-ddns' is not a boolean";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, leaseXDelBadUpdateDdnsParam) {
+    testLeaseXDelBadUpdateDdnsParam();
+}
+
+void LeaseCmdsTest::testLease4Wipe() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -5140,9 +6268,11 @@ TEST_F(LeaseCmdsTest, Lease4Wipe) {
     EXPECT_TRUE(lmptr_->getLease4(IOAddress("192.0.3.2")));
 }
 
-// Checks that lease4-wipe can remove leases from all subnets
-// at once.
-TEST_F(LeaseCmdsTest, Lease4WipeAll) {
+TEST_F(LeaseCmdsTest, lease4Wipe) {
+    testLease4Wipe();
+}
+
+void LeaseCmdsTest::testLease4WipeAll() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -5175,9 +6305,11 @@ TEST_F(LeaseCmdsTest, Lease4WipeAll) {
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.3.2")));
 }
 
-// Checks that lease4-wipe can remove leases from all subnets
-// at once (when no parameters are specifed).
-TEST_F(LeaseCmdsTest, Lease4WipeAllNoArgs) {
+TEST_F(LeaseCmdsTest, lease4WipeAll) {
+    testLease4WipeAll();
+}
+
+void LeaseCmdsTest::testLease4WipeAllNoArgs() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -5207,8 +6339,11 @@ TEST_F(LeaseCmdsTest, Lease4WipeAllNoArgs) {
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.3.2")));
 }
 
-// Checks that lease4-wipe properly reports when no leases were deleted.
-TEST_F(LeaseCmdsTest, Lease4WipeNoLeases) {
+TEST_F(LeaseCmdsTest, lease4WipeAllNoArgs) {
+    testLease4WipeAllNoArgs();
+}
+
+void LeaseCmdsTest::testLease4WipeNoLeases() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -5233,8 +6368,11 @@ TEST_F(LeaseCmdsTest, Lease4WipeNoLeases) {
     checkLease4Stats(88, 0, 0);
 }
 
-// Checks that lease4-wipe properly reports when no leases were deleted.
-TEST_F(LeaseCmdsTest, Lease4WipeNoLeasesAll) {
+TEST_F(LeaseCmdsTest, lease4WipeNoLeases) {
+    testLease4WipeNoLeases();
+}
+
+void LeaseCmdsTest::testLease4WipeNoLeasesAll() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -5259,8 +6397,11 @@ TEST_F(LeaseCmdsTest, Lease4WipeNoLeasesAll) {
     checkLease4Stats(88, 0, 0);
 }
 
-// Checks that lease4-wipe can remove leases.
-TEST_F(LeaseCmdsTest, Lease6Wipe) {
+TEST_F(LeaseCmdsTest, lease4WipeNoLeasesAll) {
+    testLease4WipeNoLeasesAll();
+}
+
+void LeaseCmdsTest::testLease6Wipe() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -5295,8 +6436,11 @@ TEST_F(LeaseCmdsTest, Lease6Wipe) {
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::2")));
 }
 
-// Checks that lease4-wipe can remove leases from all subnets
-TEST_F(LeaseCmdsTest, Lease6WipeAll) {
+TEST_F(LeaseCmdsTest, lease6Wipe) {
+    testLease6Wipe();
+}
+
+void LeaseCmdsTest::testLease6WipeAll() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -5331,9 +6475,11 @@ TEST_F(LeaseCmdsTest, Lease6WipeAll) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::2")));
 }
 
-// Checks that lease4-wipe can remove leases from all subnets
-// (no arguments)
-TEST_F(LeaseCmdsTest, Lease6WipeAllNoArgs) {
+TEST_F(LeaseCmdsTest, lease6WipeAll) {
+    testLease6WipeAll();
+}
+
+void LeaseCmdsTest::testLease6WipeAllNoArgs() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -5365,8 +6511,11 @@ TEST_F(LeaseCmdsTest, Lease6WipeAllNoArgs) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::2")));
 }
 
-// Checks that lease4-wipe properly reports when no leases were deleted.
-TEST_F(LeaseCmdsTest, Lease6WipeNoLeases) {
+TEST_F(LeaseCmdsTest, lease6WipeAllNoArgs) {
+    testLease6WipeAllNoArgs();
+}
+
+void LeaseCmdsTest::testLease6WipeNoLeases() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -5391,8 +6540,11 @@ TEST_F(LeaseCmdsTest, Lease6WipeNoLeases) {
     checkLease6Stats(99, 0, 0, 0);
 }
 
-// Checks that lease4-wipe properly reports when no leases were deleted.
-TEST_F(LeaseCmdsTest, Lease6WipeNoLeasesAll) {
+TEST_F(LeaseCmdsTest, lease6WipeNoLeases) {
+    testLease6WipeNoLeases();
+}
+
+void LeaseCmdsTest::testLease6WipeNoLeasesAll() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -5417,9 +6569,11 @@ TEST_F(LeaseCmdsTest, Lease6WipeNoLeasesAll) {
     checkLease6Stats(99, 0, 0, 0);
 }
 
-// Checks that an attempt to update a lease (set incorrect subnet-id)
-// will fail.
-TEST_F(LeaseCmdsTest, brokenUpdate) {
+TEST_F(LeaseCmdsTest, lease6WipeNoLeasesAll) {
+    testLease6WipeNoLeasesAll();
+}
+
+void LeaseCmdsTest::testLeaseBrokenUpdate() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -5444,9 +6598,11 @@ TEST_F(LeaseCmdsTest, brokenUpdate) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// This test verifies that it is possible to add two leases and delete
-// two leases as a result of the single lease6-bulk-apply command.
-TEST_F(LeaseCmdsTest, Lease6BulkApply) {
+TEST_F(LeaseCmdsTest, leaseBrokenUpdate) {
+    testLeaseBrokenUpdate();
+}
+
+void LeaseCmdsTest::testLease6BulkApply() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -5504,9 +6660,11 @@ TEST_F(LeaseCmdsTest, Lease6BulkApply) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
 }
 
-// This test verifies that the lease parameters are checked when adding new
-// leases only with the lease6-bulk-apply.
-TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnlyBadParam) {
+TEST_F(LeaseCmdsTest, lease6BulkApply) {
+    testLease6BulkApply();
+}
+
+void LeaseCmdsTest::testLease6BulkApplyAddsOnlyBadParam() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -5537,9 +6695,11 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnlyBadParam) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::123")));
 }
 
-// This test verifies that it is possible to send new leases only
-// with the lease6-bulk-apply.
-TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnly) {
+TEST_F(LeaseCmdsTest, lease6BulkApplyAddsOnlyBadParam) {
+    testLease6BulkApplyAddsOnlyBadParam();
+}
+
+void LeaseCmdsTest::testLease6BulkApplyAddsOnly() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -5583,9 +6743,11 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnly) {
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::123")));
 }
 
-// This test verifies that the lease parameters are checked when updating leases
-// only with the lease6-bulk-apply.
-TEST_F(LeaseCmdsTest, Lease6BulkApplyUpdatesOnlyBadParam) {
+TEST_F(LeaseCmdsTest, lease6BulkApplyAddsOnly) {
+    testLease6BulkApplyAddsOnly();
+}
+
+void LeaseCmdsTest::testLease6BulkApplyUpdatesOnlyBadParam() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -5627,9 +6789,11 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyUpdatesOnlyBadParam) {
     EXPECT_EQ(42, lease1->iaid_);
 }
 
-// This test verifies that it is possible to update leases with
-// the lease6-bulk-apply.
-TEST_F(LeaseCmdsTest, Lease6BulkApplyUpdatesOnly) {
+TEST_F(LeaseCmdsTest, lease6BulkApplyUpdatesOnlyBadParam) {
+    testLease6BulkApplyUpdatesOnlyBadParam();
+}
+
+void LeaseCmdsTest::testLease6BulkApplyUpdatesOnly() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -5679,9 +6843,11 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyUpdatesOnly) {
     EXPECT_EQ(1234, lease2->iaid_);
 }
 
-// This test verifies that it is possible to only delete leases
-// with the lease6-bulk-apply.
-TEST_F(LeaseCmdsTest, Lease6BulkApplyDeletesOnly) {
+TEST_F(LeaseCmdsTest, lease6BulkApplyUpdatesOnly) {
+    testLease6BulkApplyUpdatesOnly();
+}
+
+void LeaseCmdsTest::testLease6BulkApplyDeletesOnly() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -5721,9 +6887,11 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyDeletesOnly) {
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
 }
 
-// This test verifies that deleting non existing leases returns an
-// 'empty' result.
-TEST_F(LeaseCmdsTest, Lease6BulkApplyDeleteNonExiting) {
+TEST_F(LeaseCmdsTest, lease6BulkApplyDeletesOnly) {
+    testLease6BulkApplyDeletesOnly();
+}
+
+void LeaseCmdsTest::testLease6BulkApplyDeleteNonExiting() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -5782,9 +6950,11 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyDeleteNonExiting) {
     }
 }
 
-// Check that changes for other leases are not applied if one of
-// the leases is malformed.
-TEST_F(LeaseCmdsTest, Lease6BulkApplyRollback) {
+TEST_F(LeaseCmdsTest, lease6BulkApplyDeleteNonExiting) {
+    testLease6BulkApplyDeleteNonExiting();
+}
+
+void LeaseCmdsTest::testLease6BulkApplyRollback() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -5840,8 +7010,11 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyRollback) {
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
 }
 
-// Checks that lease4-resend-ddns sanitizes its input.
-TEST_F(LeaseCmdsTest, Lease4ResendDdnsBadParam) {
+TEST_F(LeaseCmdsTest, lease6BulkApplyRollback) {
+    testLease6BulkApplyRollback();
+}
+
+void LeaseCmdsTest::testLease4ResendDdnsBadParam() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -5882,9 +7055,11 @@ TEST_F(LeaseCmdsTest, Lease4ResendDdnsBadParam) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease4-resend-ddns does not generate an NCR for given lease
-// when DDNS updating is disabled.
-TEST_F(LeaseCmdsTest, lease4ResendDdnsDisabled) {
+TEST_F(LeaseCmdsTest, lease4ResendDdnsBadParam) {
+    testLease4ResendDdnsBadParam();
+}
+
+void LeaseCmdsTest::testLease4ResendDdnsDisabled() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -5906,9 +7081,11 @@ TEST_F(LeaseCmdsTest, lease4ResendDdnsDisabled) {
     EXPECT_EQ(ncrQueueSize(), -1);
 }
 
-// Checks that lease4-resend-ddns does not generate an NCR for
-// when there is no matching lease.
-TEST_F(LeaseCmdsTest, lease4ResendDdnsNoLease) {
+TEST_F(LeaseCmdsTest, lease4ResendDdnsDisabled) {
+    testLease4ResendDdnsDisabled();
+}
+
+void LeaseCmdsTest::testLease4ResendDdnsNoLease() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -5925,9 +7102,11 @@ TEST_F(LeaseCmdsTest, lease4ResendDdnsNoLease) {
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
-// Checks that lease4-resend-ddns does not generate an NCR for given lease
-// when updates are enabled but Lease::hostname_ is blank.
-TEST_F(LeaseCmdsTest, lease4ResendNoHostname) {
+TEST_F(LeaseCmdsTest, lease4ResendDdnsNoLease) {
+    testLease4ResendDdnsNoLease();
+}
+
+void LeaseCmdsTest::testLease4ResendNoHostname() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -5957,10 +7136,11 @@ TEST_F(LeaseCmdsTest, lease4ResendNoHostname) {
     EXPECT_EQ(ncrQueueSize(), 0);
 }
 
-// Checks that lease4-resend-ddns does not generate an NCR for given lease
-// when updates are enabled, Lease::hostname_ is not blank, but both
-// Lease::fqdn_fwd_ and fdqn_rev_ are false.
-TEST_F(LeaseCmdsTest, lease4ResendNoDirectionsEnabled) {
+TEST_F(LeaseCmdsTest, lease4ResendNoHostname) {
+    testLease4ResendNoHostname();
+}
+
+void LeaseCmdsTest::testLease4ResendNoDirectionsEnabled() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -5991,10 +7171,11 @@ TEST_F(LeaseCmdsTest, lease4ResendNoDirectionsEnabled) {
     EXPECT_EQ(ncrQueueSize(), 0);
 }
 
-// Checks that lease4-resend-ddns can generate an NCR for given lease
-// when updates are enabled, Lease::hostname_ is not blank, and at least
-// one of Lease::fqdn_fwd_ or fdqn_rev_ are true.
-TEST_F(LeaseCmdsTest, lease4ResendDdnsEnabled) {
+TEST_F(LeaseCmdsTest, lease4ResendNoDirectionsEnabled) {
+    testLease4ResendNoDirectionsEnabled();
+}
+
+void LeaseCmdsTest::testLease4ResendDdnsEnabled() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -6046,8 +7227,11 @@ TEST_F(LeaseCmdsTest, lease4ResendDdnsEnabled) {
     }
 }
 
-// Checks that lease6-resend-ddns sanitizes its input.
-TEST_F(LeaseCmdsTest, Lease6ResendDdnsBadParam) {
+TEST_F(LeaseCmdsTest, lease4ResendDdnsEnabled) {
+    testLease4ResendDdnsEnabled();
+}
+
+void LeaseCmdsTest::testLease6ResendDdnsBadParam() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -6088,9 +7272,11 @@ TEST_F(LeaseCmdsTest, Lease6ResendDdnsBadParam) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that lease6-resend-ddns does not generate an NCR for given lease
-// when DDNS updating is disabled.
-TEST_F(LeaseCmdsTest, lease6ResendDdnsDisabled) {
+TEST_F(LeaseCmdsTest, lease6ResendDdnsBadParam) {
+    testLease6ResendDdnsBadParam();
+}
+
+void LeaseCmdsTest::testLease6ResendDdnsDisabled() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -6113,9 +7299,11 @@ TEST_F(LeaseCmdsTest, lease6ResendDdnsDisabled) {
     EXPECT_EQ(ncrQueueSize(), -1);
 }
 
-// Checks that lease6-resend-ddns does not generate an NCR for
-// when there is no matching lease.
-TEST_F(LeaseCmdsTest, lease6ResendDdnsNoLease) {
+TEST_F(LeaseCmdsTest, lease6ResendDdnsDisabled) {
+    testLease6ResendDdnsDisabled();
+}
+
+void LeaseCmdsTest::testLease6ResendDdnsNoLease() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -6132,9 +7320,11 @@ TEST_F(LeaseCmdsTest, lease6ResendDdnsNoLease) {
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
-// Checks that lease6-resend-ddns does not generate an NCR for given lease
-// when updates are enabled but Lease::hostname_ is blank.
-TEST_F(LeaseCmdsTest, lease6ResendNoHostname) {
+TEST_F(LeaseCmdsTest, lease6ResendDdnsNoLease) {
+    testLease6ResendDdnsNoLease();
+}
+
+void LeaseCmdsTest::testLease6ResendNoHostname() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -6164,10 +7354,11 @@ TEST_F(LeaseCmdsTest, lease6ResendNoHostname) {
     EXPECT_EQ(ncrQueueSize(), 0);
 }
 
-// Checks that lease6-resend-ddns does not generate an NCR for given lease
-// when updates are enabled, Lease::hostname_ is not blank, but both
-// Lease::fqdn_fwd_ and fdqn_rev_ are false.
-TEST_F(LeaseCmdsTest, lease6ResendNoDirectionsEnabled) {
+TEST_F(LeaseCmdsTest, lease6ResendNoHostname) {
+    testLease6ResendNoHostname();
+}
+
+void LeaseCmdsTest::testLease6ResendNoDirectionsEnabled() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -6198,10 +7389,11 @@ TEST_F(LeaseCmdsTest, lease6ResendNoDirectionsEnabled) {
     EXPECT_EQ(ncrQueueSize(), 0);
 }
 
-// Checks that lease6-resend-ddns can generate an NCR for given lease
-// when updates are enabled, Lease::hostname_ is not blank, and at least
-// one of Lease::fqdn_fwd_ or fdqn_rev_ are true.
-TEST_F(LeaseCmdsTest, lease6ResendDdnsEnabled) {
+TEST_F(LeaseCmdsTest, lease6ResendNoDirectionsEnabled) {
+    testLease6ResendNoDirectionsEnabled();
+}
+
+void LeaseCmdsTest::testLease6ResendDdnsEnabled() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -6253,9 +7445,11 @@ TEST_F(LeaseCmdsTest, lease6ResendDdnsEnabled) {
     }
 }
 
-// Checks that lease4-del does (or does not) generate an NCR to remove
-// DNS for a given lease based on lease content when DDNS updates are enabled.
-TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Enabled) {
+TEST_F(LeaseCmdsTest, lease6ResendDdnsEnabled) {
+    testLease6ResendDdnsEnabled();
+}
+
+void LeaseCmdsTest::testLease4DnsRemoveD2Enabled() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -6373,10 +7567,11 @@ TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Enabled) {
     }
 }
 
-// Checks that lease4-del does not generate an NCR to remove
-// DNS for a given lease based on lease content when DDNS
-// updates are disabled.
-TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Disabled) {
+TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Enabled) {
+    testLease4DnsRemoveD2Enabled();
+}
+
+void LeaseCmdsTest::testLease4DnsRemoveD2Disabled() {
 
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
@@ -6414,9 +7609,11 @@ TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Disabled) {
     ASSERT_FALSE(lease);
 }
 
-// Checks that lease6-del does (or does not) generate an NCR to remove
-// DNS for a given lease based on lease content when DDNS updates are enabled.
-TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Enabled) {
+TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Disabled) {
+    testLease4DnsRemoveD2Disabled();
+}
+
+void LeaseCmdsTest::testLease6DnsRemoveD2Enabled() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -6534,10 +7731,11 @@ TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Enabled) {
     }
 }
 
-// Checks that lease6-del does not generate an NCR to remove
-// DNS for a given lease based on lease content when DDNS
-// updates are disabled.
-TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Disabled) {
+TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Enabled) {
+    testLease6DnsRemoveD2Enabled();
+}
+
+void LeaseCmdsTest::testLease6DnsRemoveD2Disabled() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -6573,6 +7771,10 @@ TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Disabled) {
     // Lease should have been deleted.
     lease = lmptr_->getLease6(Lease::TYPE_NA, lease->addr_);
     ASSERT_FALSE(lease);
+}
+
+TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Disabled) {
+    testLease6DnsRemoveD2Disabled();
 }
 
 } // end of anonymous namespace
