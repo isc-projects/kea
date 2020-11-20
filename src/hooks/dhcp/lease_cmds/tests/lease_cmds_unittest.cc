@@ -17,6 +17,7 @@
 #include <cc/data.h>
 #include <stats/stats_mgr.h>
 #include <testutils/user_context_utils.h>
+#include <testutils/multi_threading_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -766,7 +767,7 @@ public:
 
     /// @brief Check that a well formed lease4 with tons of parameters can be
     /// added.
-    void testLease4AddFull();
+    void testLease4AddFullAddr();
 
     /// @brief Check that a well formed lease4 with a comment can be added.
     void testLease4AddComment();
@@ -800,6 +801,12 @@ public:
     /// it should fail.
     void testLease6AddSubnetIdMissingBadAddr();
 
+    /// @brief Check that the lease with negative expiration time is rejected.
+    void testLease6AddNegativeExpireTime();
+
+    /// @brief Check that the lease with negative cltt is rejected.
+    void testLease6AddNegativeCltt();
+
     /// @brief Check that a simple, well formed prefix lease can be added.
     void testLease6AddPrefix();
 
@@ -810,85 +817,82 @@ public:
     /// @brief Check that a well formed lease6 with a comment can be added.
     void testLease6AddComment();
 
-    /// @brief Checks that lease4-get can handle a situation when the query is
+    /// @brief Check that lease4-get can handle a situation when the query is
     /// broken (some required parameters are missing).
     void testLease4GetMissingParams();
 
-    /// @brief Checks that lease4-get sanitizes its input.
+    /// @brief Check that lease4-get sanitizes its input.
     void testLease4GetByAddrBadParam();
 
-    /// @brief Checks that lease4-get(addr) can handle a situation when the
-    /// query is correctly formed, but the lease is not there.
+    /// @brief Check that lease4-get can handle a situation when the query is
+    /// correctly formed, but the lease is not there.
     void testLease4GetByAddrNotFound();
 
-    /// @brief Checks that lease4-get can return a lease by address.
+    /// @brief Check that lease4-get can return a lease by address.
     void testLease4GetByAddr();
 
-    /// @brief Checks that lease4-get can handle a situation when the query is
-    /// well formed, but the lease is not there.
+    /// @brief Check that lease4-get can handle a situation when the query is
+    /// correctly formed, but the lease is not there.
     void testLease4GetByHWAddrNotFound();
 
-    /// @brief Checks that lease4-get can find a lease by hardware address.
+    /// @brief Check that lease4-get can find a lease by hardware address.
     void testLease4GetByHWAddr();
 
-    /// @brief Checks that lease6-get can handle a situation when the query is
-    /// broken (some required parameters are missing).
-    void testLease6GetMissingParams();
-
-    /// @brief Checks that lease6-get sanitizes its input.
-    void testLease6GetByAddrBadParam();
-
-    /// @brief Checks that lease6-get(addr) can handle a situation when the
-    /// query is correctly formed, but the lease is not there.
-    void testLease6GetByAddr6NotFound();
-
-    /// @brief Checks that lease6-get(subnet-id, addr6) can handle a situation
-    /// when the query is correctly formed and the lease is returned.
-    void testLease6GetByAddr();
-
-    /// @brief Checks that lease6-get(subnet-id, type, addr6) can handle a
-    /// situation when the query is correctly formed and the lease is returned.
-    void testLease6GetByAddrPrefix();
-
-    /// @brief Checks that lease4-get can handle a situation when the query is
-    /// well formed, but the lease is not there.
+    /// @brief Check that lease4-get can handle a situation when the query is
+    /// correctly formed, but the lease is not there.
     void testLease4GetByClientIdNotFound();
 
     /// @brief Check that lease4-get can find a lease by client identifier.
     void testLease4GetByClientId();
 
-    /// @bfief Checks that lease6-get rejects queries by client-id.
+    /// @brief Check that lease6-get can handle a situation when the query is
+    /// broken (some required parameters are missing).
+    void testLease6GetMissingParams();
+
+    /// @brief Check that lease6-get sanitizes its input.
+    void testLease6GetByAddrBadParam();
+
+    /// @brief Check that lease6-get can handle a situation when the query is
+    /// correctly formed, but the lease is not there.
+    void testLease6GetByAddrNotFound();
+
+    /// @brief Check that lease6-get can return a lease by address.
+    void testLease6GetByAddr();
+
+    /// @brief Check that lease6-get can return a lease by prefix.
+    void testLease6GetByAddrPrefix();
+
+    /// @bfief Check that lease6-get rejects queries by client-id.
     void testLease6GetByClientIdInvalidType();
 
-    /// @brief Checks that lease6-get(subnet-id, addr) can handle a situation
-    /// when the query is correctly formed, but the lease is not there.
+    /// @brief Check that lease6-get can handle a situation when the query is
+    /// correctly formed, but the lease is not there.
     void testLease6GetByDuidNotFound();
 
-    /// @brief Checks that lease6-get(subnet-id, iaid, identifier-type,
-    /// identifier) can handle a situation when the query returns a lease.
+    /// @bfief Check that lease6-get can find a lease by duid.
     void testLease6GetByDuid();
 
-    /// @brief Checks that lease4-get-all returns all leases.
+    /// @brief Check that lease4-get-all returns all leases.
     void testLease4GetAll();
 
-    /// @brief Checks that lease4-get-all returns empty set if no leases are
+    /// @brief Check that lease4-get-all returns empty set if no leases are
     /// found.
     void testLease4GetAllNoLeases();
 
-    /// @brief Checks that lease4-get-all returns all leases for a subnet.
+    /// @brief Check that lease4-get-all returns all leases for a subnet.
     void testLease4GetAllBySubnetId();
 
-    /// @brief Checks that lease4-get-all returns empty set when no leases are
+    /// @brief Check that lease4-get-all returns empty set when no leases are
     /// found.
     void testLease4GetAllBySubnetIdNoLeases();
 
-    /// @brief Checks that lease4-get-all returns leases from multiple subnets.
+    /// @brief Check that lease4-get-all returns leases from multiple subnets.
     void testLease4GetAllByMultipleSubnetIds();
 
-    /// @brief Checks that lease4-get-all checks its input arguments.
+    /// @brief Check that lease4-get-all checks its input arguments.
     void testLease4GetBySubnetIdInvalidArguments();
 
-    /// @brief Checks that multiple calls to lease4-get-page return all leases.
+    /// @brief Check that multiple calls to lease4-get-page return all leases.
     void testLease4GetPaged();
 
     /// @brief Verifies that first page of IPv4 leases can be retrieved by
@@ -911,27 +915,27 @@ public:
     /// @brief Verifies that the limit of 0 is rejected.
     void testLease4GetPagedLimitIsZero();
 
-    /// @brief Checks that lease6-get-all returns all leases.
+    /// @brief Check that lease6-get-all returns all leases.
     void testLease6GetAll();
 
-    /// @brief Checks that lease6-get-all returns empty set if no leases are
+    /// @brief Check that lease6-get-all returns empty set if no leases are
     /// found.
     void testLease6GetAllNoLeases();
 
-    /// @brief Checks that lease6-get-all returns all leases for a subnet.
+    /// @brief Check that lease6-get-all returns all leases for a subnet.
     void testLease6GetAllBySubnetId();
 
-    /// @brief Checks that lease6-get-all returns empty set when no leases are
+    /// @brief Check that lease6-get-all returns empty set when no leases are
     /// found.
     void testLease6GetAllBySubnetIdNoLeases();
 
-    /// @brief Checks that lease6-get-all returns leases from multiple subnets.
+    /// @brief Check that lease6-get-all returns leases from multiple subnets.
     void testLease6GetAllByMultipleSubnetIds();
 
-    /// @brief Checks that lease6-get-all checks its input arguments.
+    /// @brief Check that lease6-get-all checks its input arguments.
     void testLease6GetBySubnetIdInvalidArguments();
 
-    /// @brief Checks that multiple calls to lease6-get-page return all leases.
+    /// @brief Check that multiple calls to lease6-get-page return all leases.
     void testLease6GetPaged();
 
     /// @brief Verifies that first page of IPv6 leases can be retrieved by
@@ -954,62 +958,62 @@ public:
     /// @brief Verifies that the limit of 0 is rejected.
     void testLease6GetPagedLimitIsZero();
 
-    /// @brief Checks that lease4-get-by-hw-address can handle a situation when
+    /// @brief Check that lease4-get-by-hw-address can handle a situation when
     /// the query is broken (required parameter is missing).
     void testLeaseGetByHwAddressParams();
 
-    /// @brief Checks that lease4-get-by-hw-address works as expected (find no
+    /// @brief Check that lease4-get-by-hw-address works as expected (find no
     /// lease).
     void testLeaseGetByHwAddressFind0();
 
-    /// @brief Checks that lease4-get-by-hw-address works as expected (find two
+    /// @brief Check that lease4-get-by-hw-address works as expected (find two
     /// leases).
     void testLeaseGetByHwAddressFind2();
 
-    /// @brief Checks that lease4-get-by-client-id can handle a situation when
+    /// @brief Check that lease4-get-by-client-id can handle a situation when
     /// the query is broken (required parameter is missing).
     void testLeaseGetByClientIdParams();
 
-    /// @brief Checks that lease4-get-by-client-id works as expected (find no
+    /// @brief Check that lease4-get-by-client-id works as expected (find no
     /// lease).
     void testLeaseGetByClientIdFind0();
 
-    /// @brief Checks that lease4-get-by-client-id works as expected (find two
+    /// @brief Check that lease4-get-by-client-id works as expected (find two
     /// leases).
     void testLeaseGetByClientIdFind2();
 
-    /// @brief Checks that lease6-get-by-duid can handle a situation when the
+    /// @brief Check that lease6-get-by-duid can handle a situation when the
     /// query is broken (required parameter is missing).
     void testLeaseGetByDuidParams();
 
-    /// @brief Checks that lease6-get-by-duid works as expected (find no lease).
+    /// @brief Check that lease6-get-by-duid works as expected (find no lease).
     void testLeaseGetByDuidFind0();
 
-    /// @brief Checks that lease6-get-by-duid works as expected (find two
+    /// @brief Check that lease6-get-by-duid works as expected (find two
     /// leases).
     void testLeaseGetByDuidFind2();
 
-    /// @brief Checks that lease4-get-by-hostname can handle a situation when
+    /// @brief Check that lease4-get-by-hostname can handle a situation when
     /// the query is broken (required parameter is missing).
     void testLease4GetByHostnameParams();
 
-    /// @brief Checks that lease4-get-by-hostname works as expected (find no
+    /// @brief Check that lease4-get-by-hostname works as expected (find no
     /// lease).
     void testLease4GetByHostnameFind0();
 
-    /// @brief Checks that lease4-get-by-hostname works as expected (find two
+    /// @brief Check that lease4-get-by-hostname works as expected (find two
     /// leases).
     void testLease4GetByHostnameFind2();
 
-    /// @brief Checks that lease6-get-by-hostname can handle a situation when
+    /// @brief Check that lease6-get-by-hostname can handle a situation when
     /// the query is broken (required parameter is missing).
     void testLease6GetByHostnameParams();
 
-    /// @brief Checks that lease6-get-by-hostname works as expected (find no
+    /// @brief Check that lease6-get-by-hostname works as expected (find no
     /// lease).
     void testLease6GetByHostnameFind0();
 
-    /// @brief Checks that lease6-get-by-hostname works as expected (find two
+    /// @brief Check that lease6-get-by-hostname works as expected (find two
     /// leases).
     void testLease6GetByHostnameFind2();
 
@@ -1107,116 +1111,120 @@ public:
     /// user context.
     void testLease6UpdateComment();
 
-    /// @brief Checks that lease4-del can handle a situation when the query is
+    /// @brief Check that lease4-del can handle a situation when the query is
     /// broken (some required parameters are missing).
     void testLease4DelMissingParams();
 
-    /// @brief Checks that lease4-del can handle a situation when the query is
+    /// @brief Check that lease4-del can handle a situation when the query is
     /// valid, but the lease is not there.
     void testLease4DelByAddrNotFound();
 
-    /// @brief Checks that lease4-del sanitizes its input.
+    /// @brief Check that lease4-del sanitizes its input.
     void testLease4DelByAddrBadParam();
 
-    /// @brief Checks that lease4-del can handle a situation when the query is
+    /// @brief Check that lease4-del can handle a situation when the query is
     /// correctly formed and the lease is deleted.
     void testLease4DelByAddr();
 
-    /// @brief Checks that lease4-del can handle a situation when the query is
+    /// @brief Check that lease4-del can handle a situation when the query is
     /// correctly formed and the lease is deleted.
     void testLease4DelByAddrDeclinedLeases();
 
-    /// @brief Checks that lease4-del can handle a situation when the query is
-    /// well formed, but the lease is not there.
+    /// @brief Check that lease4-del can handle a situation when the query is
+    /// correctly formed, but the lease is not there.
     void testLease4DelByHWAddrNotFound();
 
-    /// @brief Checks that lease4-del can find and delete a lease by hardware
+    /// @brief Check that lease4-del can find and delete a lease by hardware
     /// address.
     void testLease4DelByHWAddr();
 
-    /// @brief Checks that lease4-del can handle a situation when the query is
-    /// well formed, but the lease is not there.
+    /// @brief Check that lease4-del can handle a situation when the query is
+    /// correctly formed, but the lease is not there.
     void testLease4DelByClientIdNotFound();
 
-    /// @brief Checks that lease4-del can find and delete a lease by client
+    /// @brief Check that lease4-del can find and delete a lease by client
     /// identifier.
     void testLease4DelByClientId();
 
-    /// @brief Checks that lease6-del can handle a situation when the query is
+    /// @brief Check that lease6-del can handle a situation when the query is
     /// broken (some required parameters are missing).
     void testLease6DelMissingParams();
 
-    /// @brief Checks that lease6-del(addr) can handle a situation when the
-    /// query is correctly formed, but the lease is not there.
-    void testLease6DelByAddr6NotFound();
+    /// @brief Check that lease6-del(subnet-id, addr6) can handle a situation
+    /// when the query is correctly formed, but the lease is not there.
+    void testLease6DelByAddrNotFound();
 
-    /// @brief Checks that lease6-del sanitizes its input.
+    /// @brief Check that lease6-del sanitizes its input.
     void testLease6DelByAddrBadParam();
 
-    /// @brief Checks that lease6-del(subnet-id, addr6) can handle a situation
+    /// @brief Check that lease6-del(subnet-id, addr6) can handle a situation
     /// when the query is correctly formed and the lease is deleted.
     void testLease6DelByAddr();
 
-    /// @brief Checks that lease6-del(subnet-id, addr6) can handle a situation
+    /// @brief Check that lease6-del(subnet-id, addr6) can handle a situation
     /// when the query is correctly formed and the lease is deleted.
     void testLease6DelByAddrDeclinedLeases();
 
-    /// @brief Checks that lease6-del(subnet-id, type, addr6) can handle a
+    /// @brief Check that lease6-del(type, addr6) can handle a
     /// situation when the query is correctly formed and the lease is deleted.
     void testLease6DelByAddrPrefix();
 
-    /// @brief Checks that lease6-del(subnet-id, addr) can handle a situation
+    /// @brief Check that lease6-del(subnet-id, addr) can handle a situation
     /// when the query is correctly formed, but the lease is not there.
     void testLease6DelByDuidNotFound();
 
-    /// @brief Checks that lease6-del(subnet-id, iaid, identifier-type,
+    /// @brief Check that lease6-del(subnet-id, iaid, identifier-type,
     /// identifier) can find and delete a lease by duid.
     void testLease6DelByDuid();
 
-    /// @brief Checks that leaseX-del checks update-ddns input.
+    /// @brief Check that leaseX-del checks update-ddns input.
     void testLeaseXDelBadUpdateDdnsParam();
 
-    /// @brief Checks that lease4-wipe can remove leases.
+    /// @brief Check that lease4-wipe can remove leases.
     void testLease4Wipe();
 
-    /// @brief Checks that lease4-wipe can remove leases from all subnets at
+    /// @brief Check that lease4-wipe can remove leases from all subnets at
     /// once.
     void testLease4WipeAll();
 
-    /// @brief Checks that lease4-wipe can remove leases from all subnets at
+    /// @brief Check that lease4-wipe can remove leases from all subnets at
     /// once (when no parameters are specified).
     void testLease4WipeAllNoArgs();
 
-    /// @brief Checks that lease4-wipe properly reports when no leases were
+    /// @brief Check that lease4-wipe properly reports when no leases were
     /// deleted.
     void testLease4WipeNoLeases();
 
-    /// @brief Checks that lease4-wipe properly reports when no leases were
+    /// @brief Check that lease4-wipe properly reports when no leases were
     /// deleted.
     void testLease4WipeNoLeasesAll();
 
-    /// @brief Checks that lease4\6-wipe can remove leases.
+    /// @brief Check that lease6-wipe can remove leases.
     void testLease6Wipe();
 
-    /// @brief Checks that lease6-wipe can remove leases from all subnets at
+    /// @brief Check that lease6-wipe can remove leases from all subnets at
     /// once.
     void testLease6WipeAll();
 
-    /// @brief Checks that lease6-wipe can remove leases from all subnets at
+    /// @brief Check that lease6-wipe can remove leases from all subnets at
     /// once (when no parameters are specified).
     void testLease6WipeAllNoArgs();
 
-    /// @brief Checks that lease6-wipe properly reports when no leases were
+    /// @brief Check that lease6-wipe properly reports when no leases were
     /// deleted.
     void testLease6WipeNoLeases();
 
-    /// @brief Checks that lease6-wipe properly reports when no leases were
+    /// @brief Check that lease6-wipe properly reports when no leases were
     /// deleted.
     void testLease6WipeNoLeasesAll();
 
-    /// @brief Checks that an attempt to update a lease (set incorrect
+    /// @brief Check that an attempt to update a lease (set incorrect
     /// subnet-id) will fail.
-    void testLeaseBrokenUpdate();
+    void testLease4BrokenUpdate();
+
+    /// @brief Check that an attempt to update a lease (set incorrect
+    /// subnet-id) will fail.
+    void testLease6BrokenUpdate();
 
     /// @brief This test verifies that it is possible to add two leases and
     /// delete two leases as a result of the single lease6-bulk-apply command.
@@ -1250,71 +1258,71 @@ public:
     /// leases is malformed.
     void testLease6BulkApplyRollback();
 
-    /// @brief Checks that lease4-resend-ddns sanitizes its input.
+    /// @brief Check that lease4-resend-ddns sanitizes its input.
     void testLease4ResendDdnsBadParam();
 
-    /// @brief Checks that lease4-resend-ddns does not generate an NCR for given
+    /// @brief Check that lease4-resend-ddns does not generate an NCR for given
     /// lease when DDNS updating is disabled.
     void testLease4ResendDdnsDisabled();
 
-    /// @brief Checks that lease4-resend-ddns does not generate an NCR for when
+    /// @brief Check that lease4-resend-ddns does not generate an NCR for when
     /// there is no matching lease.
     void testLease4ResendDdnsNoLease();
 
-    /// @brief Checks that lease4-resend-ddns does not generate an NCR for given
+    /// @brief Check that lease4-resend-ddns does not generate an NCR for given
     /// lease when updates are enabled but Lease::hostname_ is blank.
     void testLease4ResendNoHostname();
 
-    /// @brief Checks that lease4-resend-ddns does not generate an NCR for given
+    /// @brief Check that lease4-resend-ddns does not generate an NCR for given
     /// lease when updates are enabled, Lease::hostname_ is not blank, but both
     /// Lease::fqdn_fwd_ and fdqn_rev_ are false.
     void testLease4ResendNoDirectionsEnabled();
 
-    /// @brief Checks that lease4-resend-ddns can generate an NCR for given
+    /// @brief Check that lease4-resend-ddns can generate an NCR for given
     /// lease when updates are enabled, Lease::hostname_ is not blank, and at
     /// least one of Lease::fqdn_fwd_ or fdqn_rev_ are true.
     void testLease4ResendDdnsEnabled();
 
-    /// @brief Checks that lease6-resend-ddns sanitizes its input.
+    /// @brief Check that lease6-resend-ddns sanitizes its input.
     void testLease6ResendDdnsBadParam();
 
-    /// @brief Checks that lease6-resend-ddns does not generate an NCR for given
+    /// @brief Check that lease6-resend-ddns does not generate an NCR for given
     /// lease when DDNS updating is disabled.
     void testLease6ResendDdnsDisabled();
 
-    /// @brief Checks that lease6-resend-ddns does not generate an NCR for when
+    /// @brief Check that lease6-resend-ddns does not generate an NCR for when
     /// there is no matching lease.
     void testLease6ResendDdnsNoLease();
 
-    /// @brief Checks that lease6-resend-ddns does not generate an NCR for given
+    /// @brief Check that lease6-resend-ddns does not generate an NCR for given
     /// lease when updates are enabled but Lease::hostname_ is blank.
     void testLease6ResendNoHostname();
 
-    /// @brief Checks that lease6-resend-ddns does not generate an NCR for given
+    /// @brief Check that lease6-resend-ddns does not generate an NCR for given
     /// lease when updates are enabled, Lease::hostname_ is not blank, but both
     /// Lease::fqdn_fwd_ and fdqn_rev_ are false.
     void testLease6ResendNoDirectionsEnabled();
 
-    /// @brief Checks that lease6-resend-ddns can generate an NCR for given
+    /// @brief Check that lease6-resend-ddns can generate an NCR for given
     /// lease when updates are enabled, Lease::hostname_ is not blank, and at
     /// least one of Lease::fqdn_fwd_ or fdqn_rev_ are true.
     void testLease6ResendDdnsEnabled();
 
-    /// @brief Checks that lease4-del does (or does not) generate an NCR to
+    /// @brief Check that lease4-del does (or does not) generate an NCR to
     /// remove DNS for a given lease based on lease content when DDNS updates
     /// are enabled.
     void testLease4DnsRemoveD2Enabled();
 
-    /// @brief Checks that lease4-del does not generate an NCR to remove DNS for
+    /// @brief Check that lease4-del does not generate an NCR to remove DNS for
     /// a given lease based on lease content when DDNS updates are disabled.
     void testLease4DnsRemoveD2Disabled();
 
-    /// @brief Checks that lease6-del does (or does not) generate an NCR to
+    /// @brief Check that lease6-del does (or does not) generate an NCR to
     /// remove DNS for a given lease based on lease content when DDNS updates
     /// are enabled.
     void testLease6DnsRemoveD2Enabled();
 
-    /// @brief Checks that lease6-del does not generate an NCR to remove DNS for
+    /// @brief Check that lease6-del does not generate an NCR to remove DNS for
     /// a given lease based on lease content when DDNS updates are disabled.
     void testLease6DnsRemoveD2Disabled();
 };
@@ -1398,6 +1406,11 @@ void LeaseCmdsTest::testLease4AddMissingParams() {
 }
 
 TEST_F(LeaseCmdsTest, lease4AddMissingParams) {
+    testLease4AddMissingParams();
+}
+
+TEST_F(LeaseCmdsTest, lease4AddMissingParamsMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4AddMissingParams();
 }
 
@@ -1496,6 +1509,11 @@ TEST_F(LeaseCmdsTest, lease4AddBadParams) {
     testLease4AddBadParams();
 }
 
+TEST_F(LeaseCmdsTest, lease4AddBadParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4AddBadParams();
+}
+
 void LeaseCmdsTest::testLease4Add() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -1543,6 +1561,11 @@ void LeaseCmdsTest::testLease4Add() {
 }
 
 TEST_F(LeaseCmdsTest, lease4Add) {
+    testLease4Add();
+}
+
+TEST_F(LeaseCmdsTest, lease4AddMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4Add();
 }
 
@@ -1597,6 +1620,11 @@ TEST_F(LeaseCmdsTest, lease4AddDeclinedLeases) {
     testLease4AddDeclinedLeases();
 }
 
+TEST_F(LeaseCmdsTest, lease4AddDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4AddDeclinedLeases();
+}
+
 void LeaseCmdsTest::testLease4AddExisting() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -1625,6 +1653,11 @@ void LeaseCmdsTest::testLease4AddExisting() {
 }
 
 TEST_F(LeaseCmdsTest, lease4AddExisting) {
+    testLease4AddExisting();
+}
+
+TEST_F(LeaseCmdsTest, lease4AddExistingMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4AddExisting();
 }
 
@@ -1661,6 +1694,11 @@ void LeaseCmdsTest::testLease4AddSubnetIdMissing() {
 }
 
 TEST_F(LeaseCmdsTest, lease4AddSubnetIdMissing) {
+    testLease4AddSubnetIdMissing();
+}
+
+TEST_F(LeaseCmdsTest, lease4AddSubnetIdMissingMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4AddSubnetIdMissing();
 }
 
@@ -1701,6 +1739,11 @@ TEST_F(LeaseCmdsTest, lease4AddSubnetIdMissingDeclinedLeases) {
     testLease4AddSubnetIdMissingDeclinedLeases();
 }
 
+TEST_F(LeaseCmdsTest, lease4AddSubnetIdMissingDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4AddSubnetIdMissingDeclinedLeases();
+}
+
 void LeaseCmdsTest::testLease4AddSubnetIdMissingBadAddr() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -1737,6 +1780,11 @@ TEST_F(LeaseCmdsTest, lease4AddSubnetIdMissingBadAddr) {
     testLease4AddSubnetIdMissingBadAddr();
 }
 
+TEST_F(LeaseCmdsTest, lease4AddSubnetIdMissingBadAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4AddSubnetIdMissingBadAddr();
+}
+
 void LeaseCmdsTest::testLease4AddNegativeExpireTime() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -1769,6 +1817,11 @@ void LeaseCmdsTest::testLease4AddNegativeExpireTime() {
 }
 
 TEST_F(LeaseCmdsTest, lease4AddNegativeExpireTime) {
+    testLease4AddNegativeExpireTime();
+}
+
+TEST_F(LeaseCmdsTest, lease4AddNegativeExpireTimeMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4AddNegativeExpireTime();
 }
 
@@ -1809,7 +1862,12 @@ TEST_F(LeaseCmdsTest, lease4AddNegativeCltt) {
     testLease4AddNegativeCltt();
 }
 
-void LeaseCmdsTest::testLease4AddFull() {
+TEST_F(LeaseCmdsTest, lease4AddNegativeClttMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4AddNegativeCltt();
+}
+
+void LeaseCmdsTest::testLease4AddFullAddr() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -1859,8 +1917,13 @@ void LeaseCmdsTest::testLease4AddFull() {
     EXPECT_EQ("{ \"foobar\": true }", l->getContext()->str());
 }
 
-TEST_F(LeaseCmdsTest, lease4AddFull) {
-    testLease4AddFull();
+TEST_F(LeaseCmdsTest, lease4AddFullAddr) {
+    testLease4AddFullAddr();
+}
+
+TEST_F(LeaseCmdsTest, lease4AddFullAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4AddFullAddr();
 }
 
 void LeaseCmdsTest::testLease4AddComment() {
@@ -1902,6 +1965,11 @@ void LeaseCmdsTest::testLease4AddComment() {
 }
 
 TEST_F(LeaseCmdsTest, lease4AddComment) {
+    testLease4AddComment();
+}
+
+TEST_F(LeaseCmdsTest, lease4AddCommentMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4AddComment();
 }
 
@@ -1984,6 +2052,11 @@ void LeaseCmdsTest::testLease6AddMissingParams() {
 }
 
 TEST_F(LeaseCmdsTest, lease6AddMissingParams) {
+    testLease6AddMissingParams();
+}
+
+TEST_F(LeaseCmdsTest, lease6AddMissingParamsMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6AddMissingParams();
 }
 
@@ -2139,6 +2212,11 @@ TEST_F(LeaseCmdsTest, lease6AddBadParams) {
     testLease6AddBadParams();
 }
 
+TEST_F(LeaseCmdsTest, lease6AddBadParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6AddBadParams();
+}
+
 void LeaseCmdsTest::testLease6Add() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -2180,6 +2258,11 @@ void LeaseCmdsTest::testLease6Add() {
 }
 
 TEST_F(LeaseCmdsTest, lease6Add) {
+    testLease6Add();
+}
+
+TEST_F(LeaseCmdsTest, lease6AddMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6Add();
 }
 
@@ -2228,6 +2311,11 @@ TEST_F(LeaseCmdsTest, lease6AddDeclinedLeases) {
     testLease6AddDeclinedLeases();
 }
 
+TEST_F(LeaseCmdsTest, lease6AddDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6AddDeclinedLeases();
+}
+
 void LeaseCmdsTest::testLease6AddExisting() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -2257,6 +2345,11 @@ void LeaseCmdsTest::testLease6AddExisting() {
 }
 
 TEST_F(LeaseCmdsTest, lease6AddExisting) {
+    testLease6AddExisting();
+}
+
+TEST_F(LeaseCmdsTest, lease6AddExistingMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6AddExisting();
 }
 
@@ -2293,6 +2386,11 @@ void LeaseCmdsTest::testLease6AddSubnetIdMissing() {
 }
 
 TEST_F(LeaseCmdsTest, lease6AddSubnetIdMissing) {
+    testLease6AddSubnetIdMissing();
+}
+
+TEST_F(LeaseCmdsTest, lease6AddSubnetIdMissingMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6AddSubnetIdMissing();
 }
 
@@ -2333,6 +2431,11 @@ TEST_F(LeaseCmdsTest, lease6AddSubnetIdMissingDeclinedLeases) {
     testLease6AddSubnetIdMissingDeclinedLeases();
 }
 
+TEST_F(LeaseCmdsTest, lease6AddSubnetIdMissingDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6AddSubnetIdMissingDeclinedLeases();
+}
+
 void LeaseCmdsTest::testLease6AddSubnetIdMissingBadAddr() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -2367,6 +2470,97 @@ void LeaseCmdsTest::testLease6AddSubnetIdMissingBadAddr() {
 
 TEST_F(LeaseCmdsTest, lease6AddSubnetIdMissingBadAddr) {
     testLease6AddSubnetIdMissingBadAddr();
+}
+
+TEST_F(LeaseCmdsTest, lease6AddSubnetIdMissingBadAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6AddSubnetIdMissingBadAddr();
+}
+
+void LeaseCmdsTest::testLease6AddNegativeExpireTime() {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Add a lease with negative expiration time.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234,\n"
+        "        \"expire\": -6218189367\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "expiration time must be positive for address 2001:db8:1::3";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now check that the lease was not added.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_FALSE(l);
+}
+
+TEST_F(LeaseCmdsTest, lease6AddNegativeExpireTime) {
+    testLease6AddNegativeExpireTime();
+}
+
+TEST_F(LeaseCmdsTest, lease6AddNegativeExpireTimeMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6AddNegativeExpireTime();
+}
+
+void LeaseCmdsTest::testLease6AddNegativeCltt() {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Add a lease with negative cltt (expiration time - valid lifetime)
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"expire\": 123456,\n"
+        "        \"iaid\": 1234,\n"
+        "        \"valid-lft\": 123457"
+        "    }\n"
+        "}";
+    string exp_rsp = "expiration time must be greater than valid lifetime for "
+        "address 2001:db8:1::3";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now check that the lease was not added.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_FALSE(l);
+}
+
+TEST_F(LeaseCmdsTest, lease6AddNegativeCltt) {
+    testLease6AddNegativeCltt();
+}
+
+TEST_F(LeaseCmdsTest, lease6AddNegativeClttMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6AddNegativeCltt();
 }
 
 void LeaseCmdsTest::testLease6AddPrefix() {
@@ -2408,6 +2602,11 @@ void LeaseCmdsTest::testLease6AddPrefix() {
 }
 
 TEST_F(LeaseCmdsTest, lease6AddPrefix) {
+    testLease6AddPrefix();
+}
+
+TEST_F(LeaseCmdsTest, lease6AddPrefixMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6AddPrefix();
 }
 
@@ -2468,6 +2667,11 @@ TEST_F(LeaseCmdsTest, lease6AddFullAddr) {
     testLease6AddFullAddr();
 }
 
+TEST_F(LeaseCmdsTest, lease6AddFullAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6AddFullAddr();
+}
+
 void LeaseCmdsTest::testLease6AddComment() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -2506,6 +2710,11 @@ void LeaseCmdsTest::testLease6AddComment() {
 }
 
 TEST_F(LeaseCmdsTest, lease6AddComment) {
+    testLease6AddComment();
+}
+
+TEST_F(LeaseCmdsTest, lease6AddCommentMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6AddComment();
 }
 
@@ -2588,6 +2797,11 @@ TEST_F(LeaseCmdsTest, lease4GetMissingParams) {
     testLease4GetMissingParams();
 }
 
+TEST_F(LeaseCmdsTest, lease4GetMissingParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetMissingParams();
+}
+
 void LeaseCmdsTest::testLease4GetByAddrBadParam() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -2620,6 +2834,11 @@ TEST_F(LeaseCmdsTest, lease4GetByAddrBadParam) {
     testLease4GetByAddrBadParam();
 }
 
+TEST_F(LeaseCmdsTest, lease4GetByAddrBadParamMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByAddrBadParam();
+}
+
 void LeaseCmdsTest::testLease4GetByAddrNotFound() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -2639,6 +2858,11 @@ void LeaseCmdsTest::testLease4GetByAddrNotFound() {
 }
 
 TEST_F(LeaseCmdsTest, lease4GetByAddrNotFound) {
+    testLease4GetByAddrNotFound();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetByAddrNotFoundMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4GetByAddrNotFound();
 }
 
@@ -2671,6 +2895,11 @@ TEST_F(LeaseCmdsTest, lease4GetByAddr) {
     testLease4GetByAddr();
 }
 
+TEST_F(LeaseCmdsTest, lease4GetByAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByAddr();
+}
+
 void LeaseCmdsTest::testLease4GetByHWAddrNotFound() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -2691,6 +2920,11 @@ void LeaseCmdsTest::testLease4GetByHWAddrNotFound() {
 }
 
 TEST_F(LeaseCmdsTest, lease4GetByHWAddrNotFound) {
+    testLease4GetByHWAddrNotFound();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetByHWAddrNotFoundMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4GetByHWAddrNotFound();
 }
 
@@ -2723,6 +2957,198 @@ void LeaseCmdsTest::testLease4GetByHWAddr() {
 
 TEST_F(LeaseCmdsTest, lease4GetByHWAddr) {
     testLease4GetByHWAddr();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetByHWAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByHWAddr();
+}
+
+void LeaseCmdsTest::testLease6GetByAddrNotFound() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 1,\n"
+        "        \"ip-address\": \"2001:db8:1::10\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease not found.";
+
+    // Note the status expected is empty. The query completed correctly,
+    // just didn't found the lease.
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByAddrNotFound) {
+    testLease6GetByAddrNotFound();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByAddrNotFoundMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByAddrNotFound();
+}
+
+void LeaseCmdsTest::testLease4GetByClientIdNotFound() {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // No such lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease not found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease4GetByClientIdNotFound) {
+    testLease4GetByClientIdNotFound();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetByClientIdNotFoundMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByClientIdNotFound();
+}
+
+void LeaseCmdsTest::testLease4GetByClientId() {
+
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"42:42:42:42:42:42:42:42\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr lease = rsp->get("arguments");
+    ASSERT_TRUE(lease);
+
+    // Let's check if the response makes any sense.
+    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+}
+
+TEST_F(LeaseCmdsTest, lease4GetByClientId) {
+    testLease4GetByClientId();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetByClientIdMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByClientId();
+}
+
+void LeaseCmdsTest::testLease6GetByClientIdInvalidType() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // client-id query is allowed in v4 only.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Query by client-id is not allowed in v6.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByClientIdInvalidType) {
+    testLease6GetByClientIdInvalidType();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByClientIdInvalidTypeMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByClientIdInvalidType();
+}
+
+void LeaseCmdsTest::testLease6GetByDuidNotFound() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 1,\n"
+        "        \"identifier-type\": \"duid\","
+        "        \"identifier\": \"00:01:02:03:04:05:06:07\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease not found.";
+
+    // Note the status expected is empty. The query completed correctly,
+    // just didn't found the lease.
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByDuidNotFound) {
+    testLease6GetByDuidNotFound();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByDuidNotFoundMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByDuidNotFound();
+}
+
+void LeaseCmdsTest::testLease6GetByAddr() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {\n"
+        "        \"ip-address\": \"2001:db8:1::1\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease found.";
+
+    // The status expected is success. The lease should be returned.
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr lease = rsp->get("arguments");
+    ASSERT_TRUE(lease);
+
+    // Now check that the lease was indeed returned.
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByAddr) {
+    testLease6GetByAddr();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByAddr();
 }
 
 void LeaseCmdsTest::testLease6GetMissingParams() {
@@ -2804,6 +3230,11 @@ TEST_F(LeaseCmdsTest, lease6GetMissingParams) {
     testLease6GetMissingParams();
 }
 
+TEST_F(LeaseCmdsTest, lease6GetMissingParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetMissingParams();
+}
+
 void LeaseCmdsTest::testLease6GetByAddrBadParam() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -2836,194 +3267,9 @@ TEST_F(LeaseCmdsTest, lease6GetByAddrBadParam) {
     testLease6GetByAddrBadParam();
 }
 
-void LeaseCmdsTest::testLease6GetByAddr6NotFound() {
-
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    // Now send the command.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 1,\n"
-        "        \"ip-address\": \"2001:db8:1::10\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "Lease not found.";
-
-    // Note the status expected is empty. The query completed correctly,
-    // just didn't found the lease.
-    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
-}
-
-TEST_F(LeaseCmdsTest, lease6GetByAddr6NotFound) {
-    testLease6GetByAddr6NotFound();
-}
-
-void LeaseCmdsTest::testLease4GetByClientIdNotFound() {
-
-    // Initialize lease manager (false = v4, false = don't add leases)
-    initLeaseMgr(false, false);
-
-    // No such lease.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-get\",\n"
-        "    \"arguments\": {"
-        "        \"identifier-type\": \"client-id\","
-        "        \"identifier\": \"01:02:03:04\","
-        "        \"subnet-id\": 44"
-        "    }\n"
-        "}";
-    string exp_rsp = "Lease not found.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
-}
-
-TEST_F(LeaseCmdsTest, lease4GetByClientIdNotFound) {
-    testLease4GetByClientIdNotFound();
-}
-
-void LeaseCmdsTest::testLease4GetByClientId() {
-
-    // Initialize lease manager (false = v4, true = add leases)
-    initLeaseMgr(false, true);
-
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-get\",\n"
-        "    \"arguments\": {"
-        "        \"identifier-type\": \"client-id\","
-        "        \"identifier\": \"42:42:42:42:42:42:42:42\","
-        "        \"subnet-id\": 44"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv4 lease found.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    // Now check that the lease parameters were indeed returned.
-    ASSERT_TRUE(rsp);
-    ConstElementPtr lease = rsp->get("arguments");
-    ASSERT_TRUE(lease);
-
-    // Let's check if the response makes any sense.
-    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
-}
-
-TEST_F(LeaseCmdsTest, lease4GetByClientId) {
-    testLease4GetByClientId();
-}
-
-void LeaseCmdsTest::testLease6GetByClientIdInvalidType() {
-
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    // client-id query is allowed in v4 only.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"identifier-type\": \"client-id\","
-        "        \"identifier\": \"01:02:03:04\","
-        "        \"subnet-id\": 44"
-        "    }\n"
-        "}";
-    string exp_rsp = "Query by client-id is not allowed in v6.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-}
-
-TEST_F(LeaseCmdsTest, lease6GetByClientIdInvalidType) {
-    testLease6GetByClientIdInvalidType();
-}
-
-void LeaseCmdsTest::testLease6GetByDuidNotFound() {
-
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    // Now send the command.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 1,\n"
-        "        \"identifier-type\": \"duid\","
-        "        \"identifier\": \"00:01:02:03:04:05:06:07\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "Lease not found.";
-
-    // Note the status expected is empty. The query completed correctly,
-    // just didn't found the lease.
-    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
-}
-
-TEST_F(LeaseCmdsTest, lease6GetByDuidNotFound) {
-    testLease6GetByDuidNotFound();
-}
-
-void LeaseCmdsTest::testLease6GetByDuid() {
-
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    // Now send the command.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 66,\n"
-        "        \"iaid\": 42,"
-        "        \"identifier-type\": \"duid\","
-        "        \"identifier\": \"42:42:42:42:42:42:42:42\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv6 lease found.";
-
-    // The status expected is success. The lease should be returned.
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
-    ASSERT_TRUE(rsp);
-
-    ConstElementPtr lease = rsp->get("arguments");
-    ASSERT_TRUE(lease);
-
-    // Now check that the lease was indeed returned.
-    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
-}
-
-TEST_F(LeaseCmdsTest, lease6GetByDuid) {
-    testLease6GetByDuid();
-}
-
-void LeaseCmdsTest::testLease6GetByAddr() {
-
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    // Now send the command.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {\n"
-        "        \"ip-address\": \"2001:db8:1::1\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv6 lease found.";
-
-    // The status expected is success. The lease should be returned.
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
-    ASSERT_TRUE(rsp);
-
-    ConstElementPtr lease = rsp->get("arguments");
-    ASSERT_TRUE(lease);
-
-    // Now check that the lease was indeed returned.
-    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
-}
-
-TEST_F(LeaseCmdsTest, lease6GetByAddr) {
-    testLease6GetByAddr();
+TEST_F(LeaseCmdsTest, lease6GetByAddrBadParamMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByAddrBadParam();
 }
 
 void LeaseCmdsTest::testLease6GetByAddrPrefix() {
@@ -3065,6 +3311,49 @@ TEST_F(LeaseCmdsTest, lease6GetByAddrPrefix) {
     testLease6GetByAddrPrefix();
 }
 
+TEST_F(LeaseCmdsTest, lease6GetByAddrPrefixMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByAddrPrefix();
+}
+
+void LeaseCmdsTest::testLease6GetByDuid() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"iaid\": 42,"
+        "        \"identifier-type\": \"duid\","
+        "        \"identifier\": \"42:42:42:42:42:42:42:42\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease found.";
+
+    // The status expected is success. The lease should be returned.
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr lease = rsp->get("arguments");
+    ASSERT_TRUE(lease);
+
+    // Now check that the lease was indeed returned.
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByDuid) {
+    testLease6GetByDuid();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByDuidMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByDuid();
+}
+
 void LeaseCmdsTest::testLease4GetAll() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -3100,6 +3389,11 @@ TEST_F(LeaseCmdsTest, lease4GetAll) {
     testLease4GetAll();
 }
 
+TEST_F(LeaseCmdsTest, lease4GetAllMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetAll();
+}
+
 void LeaseCmdsTest::testLease4GetAllNoLeases() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -3128,6 +3422,11 @@ void LeaseCmdsTest::testLease4GetAllNoLeases() {
 }
 
 TEST_F(LeaseCmdsTest, lease4GetAllNoLeases) {
+    testLease4GetAllNoLeases();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetAllNoLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4GetAllNoLeases();
 }
 
@@ -3168,6 +3467,11 @@ TEST_F(LeaseCmdsTest, lease4GetAllBySubnetId) {
     testLease4GetAllBySubnetId();
 }
 
+TEST_F(LeaseCmdsTest, lease4GetAllBySubnetIdMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetAllBySubnetId();
+}
+
 void LeaseCmdsTest::testLease4GetAllBySubnetIdNoLeases() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -3200,6 +3504,11 @@ void LeaseCmdsTest::testLease4GetAllBySubnetIdNoLeases() {
 }
 
 TEST_F(LeaseCmdsTest, lease4GetAllBySubnetIdNoLeases) {
+    testLease4GetAllBySubnetIdNoLeases();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetAllBySubnetIdNoLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4GetAllBySubnetIdNoLeases();
 }
 
@@ -3238,6 +3547,11 @@ void LeaseCmdsTest::testLease4GetAllByMultipleSubnetIds() {
 }
 
 TEST_F(LeaseCmdsTest, lease4GetAllByMultipleSubnetIds) {
+    testLease4GetAllByMultipleSubnetIds();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetAllByMultipleSubnetIdsMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4GetAllByMultipleSubnetIds();
 }
 
@@ -3281,6 +3595,11 @@ void LeaseCmdsTest::testLease4GetBySubnetIdInvalidArguments() {
 }
 
 TEST_F(LeaseCmdsTest, lease4GetBySubnetIdInvalidArguments) {
+    testLease4GetBySubnetIdInvalidArguments();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetBySubnetIdInvalidArgumentsMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4GetBySubnetIdInvalidArguments();
 }
 
@@ -3379,6 +3698,11 @@ TEST_F(LeaseCmdsTest, lease4GetPaged) {
     testLease4GetPaged();
 }
 
+TEST_F(LeaseCmdsTest, lease4GetPagedMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetPaged();
+}
+
 void LeaseCmdsTest::testLease4GetPagedZeroAddress() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -3402,6 +3726,11 @@ TEST_F(LeaseCmdsTest, lease4GetPagedZeroAddress) {
     testLease4GetPagedZeroAddress();
 }
 
+TEST_F(LeaseCmdsTest, lease4GetPagedZeroAddressMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetPagedZeroAddress();
+}
+
 void LeaseCmdsTest::testLease4GetPagedIPv6Address() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -3422,6 +3751,11 @@ void LeaseCmdsTest::testLease4GetPagedIPv6Address() {
 }
 
 TEST_F(LeaseCmdsTest, lease4GetPagedIPv6Address) {
+    testLease4GetPagedIPv6Address();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetPagedIPv6AddressMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4GetPagedIPv6Address();
 }
 
@@ -3449,6 +3783,11 @@ TEST_F(LeaseCmdsTest, lease4GetPagedInvalidFrom) {
     testLease4GetPagedInvalidFrom();
 }
 
+TEST_F(LeaseCmdsTest, lease4GetPagedInvalidFromMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetPagedInvalidFrom();
+}
+
 void LeaseCmdsTest::testLease4GetPagedNoLimit() {
 
     // Initialize lease manager (false = v6, true = add leases)
@@ -3468,6 +3807,11 @@ void LeaseCmdsTest::testLease4GetPagedNoLimit() {
 }
 
 TEST_F(LeaseCmdsTest, lease4GetPagedNoLimit) {
+    testLease4GetPagedNoLimit();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetPagedNoLimitMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4GetPagedNoLimit();
 }
 
@@ -3494,6 +3838,11 @@ TEST_F(LeaseCmdsTest, lease4GetPagedLimitNotNumber) {
     testLease4GetPagedLimitNotNumber();
 }
 
+TEST_F(LeaseCmdsTest, lease4GetPagedLimitNotNumberMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetPagedLimitNotNumber();
+}
+
 void LeaseCmdsTest::testLease4GetPagedLimitIsZero() {
 
     // Initialize lease manager (false = v6, true = add leases)
@@ -3514,6 +3863,11 @@ void LeaseCmdsTest::testLease4GetPagedLimitIsZero() {
 }
 
 TEST_F(LeaseCmdsTest, lease4GetPagedLimitIsZero) {
+    testLease4GetPagedLimitIsZero();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetPagedLimitIsZeroMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4GetPagedLimitIsZero();
 }
 
@@ -3552,6 +3906,11 @@ TEST_F(LeaseCmdsTest, lease6GetAll) {
     testLease6GetAll();
 }
 
+TEST_F(LeaseCmdsTest, lease6GetAllMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetAll();
+}
+
 void LeaseCmdsTest::testLease6GetAllNoLeases() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -3580,6 +3939,11 @@ void LeaseCmdsTest::testLease6GetAllNoLeases() {
 }
 
 TEST_F(LeaseCmdsTest, lease6GetAllNoLeases) {
+    testLease6GetAllNoLeases();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetAllNoLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6GetAllNoLeases();
 }
 
@@ -3620,6 +3984,11 @@ TEST_F(LeaseCmdsTest, lease6GetAllBySubnetId) {
     testLease6GetAllBySubnetId();
 }
 
+TEST_F(LeaseCmdsTest, lease6GetAllBySubnetIdMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetAllBySubnetId();
+}
+
 void LeaseCmdsTest::testLease6GetAllBySubnetIdNoLeases() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -3652,6 +4021,11 @@ void LeaseCmdsTest::testLease6GetAllBySubnetIdNoLeases() {
 }
 
 TEST_F(LeaseCmdsTest, lease6GetAllBySubnetIdNoLeases) {
+    testLease6GetAllBySubnetIdNoLeases();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetAllBySubnetIdNoLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6GetAllBySubnetIdNoLeases();
 }
 
@@ -3690,6 +4064,11 @@ void LeaseCmdsTest::testLease6GetAllByMultipleSubnetIds() {
 }
 
 TEST_F(LeaseCmdsTest, lease6GetAllByMultipleSubnetIds) {
+    testLease6GetAllByMultipleSubnetIds();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetAllByMultipleSubnetIdsMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6GetAllByMultipleSubnetIds();
 }
 
@@ -3733,6 +4112,11 @@ void LeaseCmdsTest::testLease6GetBySubnetIdInvalidArguments() {
 }
 
 TEST_F(LeaseCmdsTest, lease6GetBySubnetIdInvalidArguments) {
+    testLease6GetBySubnetIdInvalidArguments();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetBySubnetIdInvalidArgumentsMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6GetBySubnetIdInvalidArguments();
 }
 
@@ -3832,6 +4216,11 @@ TEST_F(LeaseCmdsTest, lease6GetPaged) {
     testLease6GetPaged();
 }
 
+TEST_F(LeaseCmdsTest, lease6GetPagedMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetPaged();
+}
+
 void LeaseCmdsTest::testLease6GetPagedZeroAddress() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -3855,6 +4244,11 @@ TEST_F(LeaseCmdsTest, lease6GetPagedZeroAddress) {
     testLease6GetPagedZeroAddress();
 }
 
+TEST_F(LeaseCmdsTest, lease6GetPagedZeroAddressMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetPagedZeroAddress();
+}
+
 void LeaseCmdsTest::testLease6GetPagedIPv4Address() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -3875,6 +4269,11 @@ void LeaseCmdsTest::testLease6GetPagedIPv4Address() {
 }
 
 TEST_F(LeaseCmdsTest, lease6GetPagedIPv4Address) {
+    testLease6GetPagedIPv4Address();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetPagedIPv4AddressMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6GetPagedIPv4Address();
 }
 
@@ -3902,6 +4301,11 @@ TEST_F(LeaseCmdsTest, lease6GetPagedInvalidFrom) {
     testLease6GetPagedInvalidFrom();
 }
 
+TEST_F(LeaseCmdsTest, lease6GetPagedInvalidFromMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetPagedInvalidFrom();
+}
+
 void LeaseCmdsTest::testLease6GetPagedNoLimit() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -3921,6 +4325,11 @@ void LeaseCmdsTest::testLease6GetPagedNoLimit() {
 }
 
 TEST_F(LeaseCmdsTest, lease6GetPagedNoLimit) {
+    testLease6GetPagedNoLimit();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetPagedNoLimitMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6GetPagedNoLimit();
 }
 
@@ -3947,6 +4356,11 @@ TEST_F(LeaseCmdsTest, lease6GetPagedLimitNotNumber) {
     testLease6GetPagedLimitNotNumber();
 }
 
+TEST_F(LeaseCmdsTest, lease6GetPagedLimitNotNumberMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetPagedLimitNotNumber();
+}
+
 void LeaseCmdsTest::testLease6GetPagedLimitIsZero() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -3967,6 +4381,11 @@ void LeaseCmdsTest::testLease6GetPagedLimitIsZero() {
 }
 
 TEST_F(LeaseCmdsTest, lease6GetPagedLimitIsZero) {
+    testLease6GetPagedLimitIsZero();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetPagedLimitIsZeroMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6GetPagedLimitIsZero();
 }
 
@@ -4010,6 +4429,11 @@ TEST_F(LeaseCmdsTest, leaseGetByHwAddressParams) {
     testLeaseGetByHwAddressParams();
 }
 
+TEST_F(LeaseCmdsTest, leaseGetByHwAddressParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLeaseGetByHwAddressParams();
+}
+
 void LeaseCmdsTest::testLeaseGetByHwAddressFind0() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -4028,6 +4452,11 @@ void LeaseCmdsTest::testLeaseGetByHwAddressFind0() {
 }
 
 TEST_F(LeaseCmdsTest, leaseGetByHwAddressFind0) {
+    testLeaseGetByHwAddressFind0();
+}
+
+TEST_F(LeaseCmdsTest, leaseGetByHwAddressFind0MultiThreading) {
+    MultiThreadingTest mt(true);
     testLeaseGetByHwAddressFind0();
 }
 
@@ -4067,6 +4496,11 @@ void LeaseCmdsTest::testLeaseGetByHwAddressFind2() {
 }
 
 TEST_F(LeaseCmdsTest, leaseGetByHwAddressFind2) {
+    testLeaseGetByHwAddressFind2();
+}
+
+TEST_F(LeaseCmdsTest, leaseGetByHwAddressFind2MultiThreading) {
+    MultiThreadingTest mt(true);
     testLeaseGetByHwAddressFind2();
 }
 
@@ -4110,6 +4544,11 @@ TEST_F(LeaseCmdsTest, leaseGetByClientIdParams) {
     testLeaseGetByClientIdParams();
 }
 
+TEST_F(LeaseCmdsTest, leaseGetByClientIdParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLeaseGetByClientIdParams();
+}
+
 void LeaseCmdsTest::testLeaseGetByClientIdFind0() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -4128,6 +4567,11 @@ void LeaseCmdsTest::testLeaseGetByClientIdFind0() {
 }
 
 TEST_F(LeaseCmdsTest, leaseGetByClientIdFind0) {
+    testLeaseGetByClientIdFind0();
+}
+
+TEST_F(LeaseCmdsTest, leaseGetByClientIdFind0MultiThreading) {
+    MultiThreadingTest mt(true);
     testLeaseGetByClientIdFind0();
 }
 
@@ -4167,6 +4611,11 @@ void LeaseCmdsTest::testLeaseGetByClientIdFind2() {
 }
 
 TEST_F(LeaseCmdsTest, leaseGetByClientIdFind2) {
+    testLeaseGetByClientIdFind2();
+}
+
+TEST_F(LeaseCmdsTest, leaseGetByClientIdFind2MultiThreading) {
+    MultiThreadingTest mt(true);
     testLeaseGetByClientIdFind2();
 }
 
@@ -4210,6 +4659,11 @@ TEST_F(LeaseCmdsTest, leaseGetByDuidParams) {
     testLeaseGetByDuidParams();
 }
 
+TEST_F(LeaseCmdsTest, leaseGetByDuidParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLeaseGetByDuidParams();
+}
+
 void LeaseCmdsTest::testLeaseGetByDuidFind0() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -4228,6 +4682,11 @@ void LeaseCmdsTest::testLeaseGetByDuidFind0() {
 }
 
 TEST_F(LeaseCmdsTest, leaseGetByDuidFind0) {
+    testLeaseGetByDuidFind0();
+}
+
+TEST_F(LeaseCmdsTest, leaseGetByDuidFind0MultiThreading) {
+    MultiThreadingTest mt(true);
     testLeaseGetByDuidFind0();
 }
 
@@ -4270,6 +4729,11 @@ TEST_F(LeaseCmdsTest, leaseGetByDuidFind2) {
     testLeaseGetByDuidFind2();
 }
 
+TEST_F(LeaseCmdsTest, leaseGetByDuidFind2MultiThreading) {
+    MultiThreadingTest mt(true);
+    testLeaseGetByDuidFind2();
+}
+
 void LeaseCmdsTest::testLease4GetByHostnameParams() {
 
     // No parameters whatsoever.
@@ -4309,6 +4773,11 @@ TEST_F(LeaseCmdsTest, lease4GetByHostnameParams) {
     testLease4GetByHostnameParams();
 }
 
+TEST_F(LeaseCmdsTest, lease4GetByHostnameParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByHostnameParams();
+}
+
 void LeaseCmdsTest::testLease4GetByHostnameFind0() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -4327,6 +4796,11 @@ void LeaseCmdsTest::testLease4GetByHostnameFind0() {
 }
 
 TEST_F(LeaseCmdsTest, lease4GetByHostnameFind0) {
+    testLease4GetByHostnameFind0();
+}
+
+TEST_F(LeaseCmdsTest, lease4GetByHostnameFind0MultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4GetByHostnameFind0();
 }
 
@@ -4369,6 +4843,11 @@ TEST_F(LeaseCmdsTest, lease4GetByHostnameFind2) {
     testLease4GetByHostnameFind2();
 }
 
+TEST_F(LeaseCmdsTest, lease4GetByHostnameFind2MultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByHostnameFind2();
+}
+
 void LeaseCmdsTest::testLease6GetByHostnameParams() {
 
     // No parameters whatsoever.
@@ -4408,6 +4887,11 @@ TEST_F(LeaseCmdsTest, lease6GetByHostnameParams) {
     testLease6GetByHostnameParams();
 }
 
+TEST_F(LeaseCmdsTest, lease6GetByHostnameParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByHostnameParams();
+}
+
 void LeaseCmdsTest::testLease6GetByHostnameFind0() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -4426,6 +4910,11 @@ void LeaseCmdsTest::testLease6GetByHostnameFind0() {
 }
 
 TEST_F(LeaseCmdsTest, lease6GetByHostnameFind0) {
+    testLease6GetByHostnameFind0();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByHostnameFind0MultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6GetByHostnameFind0();
 }
 
@@ -4465,6 +4954,11 @@ void LeaseCmdsTest::testLease6GetByHostnameFind2() {
 }
 
 TEST_F(LeaseCmdsTest, lease6GetByHostnameFind2) {
+    testLease6GetByHostnameFind2();
+}
+
+TEST_F(LeaseCmdsTest, lease6GetByHostnameFind2MultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6GetByHostnameFind2();
 }
 
@@ -4521,6 +5015,11 @@ void LeaseCmdsTest::testLease4UpdateMissingParams() {
 }
 
 TEST_F(LeaseCmdsTest, lease4UpdateMissingParams) {
+    testLease4UpdateMissingParams();
+}
+
+TEST_F(LeaseCmdsTest, lease4UpdateMissingParamsMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4UpdateMissingParams();
 }
 
@@ -4604,6 +5103,11 @@ TEST_F(LeaseCmdsTest, lease4UpdateBadParams) {
     testLease4UpdateBadParams();
 }
 
+TEST_F(LeaseCmdsTest, lease4UpdateBadParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4UpdateBadParams();
+}
+
 void LeaseCmdsTest::testLease4UpdateNoLease() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -4627,6 +5131,11 @@ void LeaseCmdsTest::testLease4UpdateNoLease() {
 }
 
 TEST_F(LeaseCmdsTest, lease4UpdateNoLease) {
+    testLease4UpdateNoLease();
+}
+
+TEST_F(LeaseCmdsTest, lease4UpdateNoLeaseMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4UpdateNoLease();
 }
 
@@ -4672,6 +5181,11 @@ TEST_F(LeaseCmdsTest, lease4Update) {
     testLease4Update();
 }
 
+TEST_F(LeaseCmdsTest, lease4UpdateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4Update();
+}
+
 void LeaseCmdsTest::testLease4UpdateDeclinedLeases() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -4711,6 +5225,11 @@ void LeaseCmdsTest::testLease4UpdateDeclinedLeases() {
 }
 
 TEST_F(LeaseCmdsTest, lease4UpdateDeclinedLeases) {
+    testLease4UpdateDeclinedLeases();
+}
+
+TEST_F(LeaseCmdsTest, lease4UpdateDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4UpdateDeclinedLeases();
 }
 
@@ -4755,6 +5274,11 @@ TEST_F(LeaseCmdsTest, lease4UpdateNoSubnetId) {
     testLease4UpdateNoSubnetId();
 }
 
+TEST_F(LeaseCmdsTest, lease4UpdateNoSubnetIdMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4UpdateNoSubnetId();
+}
+
 void LeaseCmdsTest::testLease4UpdateNoSubnetIdDeclinedLeases() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -4793,6 +5317,11 @@ void LeaseCmdsTest::testLease4UpdateNoSubnetIdDeclinedLeases() {
 }
 
 TEST_F(LeaseCmdsTest, lease4UpdateNoSubnetIdDeclinedLeases) {
+    testLease4UpdateNoSubnetIdDeclinedLeases();
+}
+
+TEST_F(LeaseCmdsTest, lease4UpdateNoSubnetIdDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4UpdateNoSubnetIdDeclinedLeases();
 }
 
@@ -4836,6 +5365,11 @@ void LeaseCmdsTest::testLease4UpdateForceCreate() {
 }
 
 TEST_F(LeaseCmdsTest, lease4UpdateForceCreate) {
+    testLease4UpdateForceCreate();
+}
+
+TEST_F(LeaseCmdsTest, lease4UpdateForceCreateMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4UpdateForceCreate();
 }
 
@@ -4884,6 +5418,11 @@ TEST_F(LeaseCmdsTest, lease4UpdateForceCreateNoSubnetId) {
     testLease4UpdateForceCreateNoSubnetId();
 }
 
+TEST_F(LeaseCmdsTest, lease4UpdateForceCreateNoSubnetIdMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4UpdateForceCreateNoSubnetId();
+}
+
 void LeaseCmdsTest::testLease4UpdateDoNotForceCreate() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -4916,6 +5455,11 @@ void LeaseCmdsTest::testLease4UpdateDoNotForceCreate() {
 }
 
 TEST_F(LeaseCmdsTest, lease4UpdateDoNotForceCreate) {
+    testLease4UpdateDoNotForceCreate();
+}
+
+TEST_F(LeaseCmdsTest, lease4UpdateDoNotForceCreateMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4UpdateDoNotForceCreate();
 }
 
@@ -4966,6 +5510,11 @@ void LeaseCmdsTest::testLease4UpdateComment() {
 }
 
 TEST_F(LeaseCmdsTest, lease4UpdateComment) {
+    testLease4UpdateComment();
+}
+
+TEST_F(LeaseCmdsTest, lease4UpdateCommentMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4UpdateComment();
 }
 
@@ -5022,6 +5571,11 @@ void LeaseCmdsTest::testLease6UpdateMissingParams() {
 }
 
 TEST_F(LeaseCmdsTest, lease6UpdateMissingParams) {
+    testLease6UpdateMissingParams();
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateMissingParamsMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6UpdateMissingParams();
 }
 
@@ -5124,39 +5678,9 @@ TEST_F(LeaseCmdsTest, lease6UpdateBadParams) {
     testLease6UpdateBadParams();
 }
 
-void LeaseCmdsTest::testLease6UpdateNoLease() {
-
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-update\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
-        "        \"iaid\": 7654321,\n"
-        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
-        "        \"hostname\": \"newhostname.example.org\""
-        "    }\n"
-        "}";
-    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
-        "either because the lease has been deleted or it has changed in the "
-        "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-}
-
-TEST_F(LeaseCmdsTest, lease6UpdateNoLease) {
-    testLease6UpdateNoLease();
+TEST_F(LeaseCmdsTest, lease6UpdateBadParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6UpdateBadParams();
 }
 
 void LeaseCmdsTest::testLease6Update() {
@@ -5203,6 +5727,11 @@ TEST_F(LeaseCmdsTest, lease6Update) {
     testLease6Update();
 }
 
+TEST_F(LeaseCmdsTest, lease6UpdateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6Update();
+}
+
 void LeaseCmdsTest::testLease6UpdateDeclinedLeases() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -5244,6 +5773,11 @@ void LeaseCmdsTest::testLease6UpdateDeclinedLeases() {
 }
 
 TEST_F(LeaseCmdsTest, lease6UpdateDeclinedLeases) {
+    testLease6UpdateDeclinedLeases();
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6UpdateDeclinedLeases();
 }
 
@@ -5293,6 +5827,11 @@ TEST_F(LeaseCmdsTest, lease6UpdateNoSubnetId) {
     testLease6UpdateNoSubnetId();
 }
 
+TEST_F(LeaseCmdsTest, lease6UpdateNoSubnetIdMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6UpdateNoSubnetId();
+}
+
 void LeaseCmdsTest::testLease6UpdateNoSubnetIdDeclinedLeases() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -5339,132 +5878,9 @@ TEST_F(LeaseCmdsTest, lease6UpdateNoSubnetIdDeclinedLeases) {
     testLease6UpdateNoSubnetIdDeclinedLeases();
 }
 
-void LeaseCmdsTest::testLease6UpdateForceCreate() {
-
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-update\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
-        "        \"iaid\": 7654321,\n"
-        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
-        "        \"hostname\": \"newhostname.example.org\","
-        "        \"force-create\": true"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv6 lease added.";
-    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    checkLease6Stats(66, 1, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now check that the lease is really there.
-    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
-    ASSERT_TRUE(l);
-
-    // Make sure the lease is correct.
-    ASSERT_TRUE(l->duid_);
-    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
-    EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
-    EXPECT_FALSE(l->getContext());
-}
-
-TEST_F(LeaseCmdsTest, lease6UpdateForceCreate) {
-    testLease6UpdateForceCreate();
-}
-
-void LeaseCmdsTest::testLease6UpdateForceCreateNoSubnetId() {
-
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-update\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
-        "        \"iaid\": 7654321,\n"
-        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
-        "        \"hostname\": \"newhostname.example.org\","
-        "        \"force-create\": true"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv6 lease added.";
-    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    checkLease6Stats(66, 1, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now check that the lease is really there.
-    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
-    ASSERT_TRUE(l);
-
-    // Make sure the subnet-id is figured out correctly.
-    EXPECT_EQ(66, l->subnet_id_);
-
-    // Make sure the lease is correct.
-    ASSERT_TRUE(l->duid_);
-    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
-    EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
-    EXPECT_FALSE(l->getContext());
-}
-
-TEST_F(LeaseCmdsTest, lease6UpdateForceCreateNoSubnetId) {
-    testLease6UpdateForceCreateNoSubnetId();
-}
-
-void LeaseCmdsTest::testLease6UpdateDoNotForceCreate() {
-
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-update\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
-        "        \"iaid\": 7654321,\n"
-        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
-        "        \"hostname\": \"newhostname.example.org\","
-        "        \"force-create\": false"
-        "    }\n"
-        "}";
-    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
-        "either because the lease has been deleted or it has changed in the "
-        "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-}
-
-TEST_F(LeaseCmdsTest, lease6UpdateDoNotForceCreate) {
-    testLease6UpdateDoNotForceCreate();
+TEST_F(LeaseCmdsTest, lease6UpdateNoSubnetIdDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6UpdateNoSubnetIdDeclinedLeases();
 }
 
 void LeaseCmdsTest::testLease6UpdateComment() {
@@ -5515,6 +5931,194 @@ void LeaseCmdsTest::testLease6UpdateComment() {
 
 TEST_F(LeaseCmdsTest, lease6UpdateComment) {
     testLease6UpdateComment();
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateCommentMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6UpdateComment();
+}
+
+void LeaseCmdsTest::testLease6UpdateNoLease() {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\""
+        "    }\n"
+        "}";
+    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
+        "either because the lease has been deleted or it has changed in the "
+        "database, in both cases a retry might succeed";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateNoLease) {
+    testLease6UpdateNoLease();
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateNoLeaseMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6UpdateNoLease();
+}
+
+void LeaseCmdsTest::testLease6UpdateForceCreate() {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease6Stats(66, 1, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease is correct.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_FALSE(l->getContext());
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateForceCreate) {
+    testLease6UpdateForceCreate();
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateForceCreateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6UpdateForceCreate();
+}
+
+void LeaseCmdsTest::testLease6UpdateForceCreateNoSubnetId() {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease6Stats(66, 1, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the subnet-id is figured out correctly.
+    EXPECT_EQ(66, l->subnet_id_);
+
+    // Make sure the lease is correct.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_FALSE(l->getContext());
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateForceCreateNoSubnetId) {
+    testLease6UpdateForceCreateNoSubnetId();
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateForceCreateNoSubnetIdMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6UpdateForceCreateNoSubnetId();
+}
+
+void LeaseCmdsTest::testLease6UpdateDoNotForceCreate() {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": false"
+        "    }\n"
+        "}";
+    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
+        "either because the lease has been deleted or it has changed in the "
+        "database, in both cases a retry might succeed";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateDoNotForceCreate) {
+    testLease6UpdateDoNotForceCreate();
+}
+
+TEST_F(LeaseCmdsTest, lease6UpdateDoNotForceCreateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6UpdateDoNotForceCreate();
 }
 
 void LeaseCmdsTest::testLease4DelMissingParams() {
@@ -5596,6 +6200,11 @@ TEST_F(LeaseCmdsTest, lease4DelMissingParams) {
     testLease4DelMissingParams();
 }
 
+TEST_F(LeaseCmdsTest, lease4DelMissingParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4DelMissingParams();
+}
+
 void LeaseCmdsTest::testLease4DelByAddrNotFound() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -5624,6 +6233,121 @@ void LeaseCmdsTest::testLease4DelByAddrNotFound() {
 
 TEST_F(LeaseCmdsTest, lease4DelByAddrNotFound) {
     testLease4DelByAddrNotFound();
+}
+
+TEST_F(LeaseCmdsTest, lease4DelByAddrNotFoundMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4DelByAddrNotFound();
+}
+
+void LeaseCmdsTest::testLease4DelByAddr() {
+
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    checkLease4Stats(44, 2, 0);
+
+    checkLease4Stats(88, 2, 0);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\""
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease deleted.";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(44, 1, 0);
+
+    checkLease4Stats(88, 2, 0);
+
+    // Make sure the lease is really gone.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
+TEST_F(LeaseCmdsTest, lease4DelByAddr) {
+    testLease4DelByAddr();
+}
+
+TEST_F(LeaseCmdsTest, lease4DelByAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4DelByAddr();
+}
+
+void LeaseCmdsTest::testLease4DelByAddrDeclinedLeases() {
+
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true, true);
+
+    checkLease4Stats(44, 2, 2);
+
+    checkLease4Stats(88, 2, 2);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\""
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease deleted.";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(44, 1, 1);
+
+    checkLease4Stats(88, 2, 2);
+
+    // Make sure the lease is really gone.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
+TEST_F(LeaseCmdsTest, lease4DelByAddrDeclinedLeases) {
+    testLease4DelByAddrDeclinedLeases();
+}
+
+TEST_F(LeaseCmdsTest, lease4DelByAddrDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4DelByAddrDeclinedLeases();
+}
+
+void LeaseCmdsTest::testLeaseXDelBadUpdateDdnsParam() {
+
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.1.0\","
+        "        \"update-ddns\": 77"
+        "    }\n"
+        "}";
+
+    string exp_rsp = "'update-ddns' is not a boolean";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\","
+        "        \"update-ddns\": \"bogus\""
+        "    }\n"
+        "}";
+
+    exp_rsp = "'update-ddns' is not a boolean";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, leaseXDelBadUpdateDdnsParam) {
+    testLeaseXDelBadUpdateDdnsParam();
+}
+
+TEST_F(LeaseCmdsTest, leaseXDelBadUpdateDdnsParamMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLeaseXDelBadUpdateDdnsParam();
 }
 
 void LeaseCmdsTest::testLease4DelByAddrBadParam() {
@@ -5666,68 +6390,9 @@ TEST_F(LeaseCmdsTest, lease4DelByAddrBadParam) {
     testLease4DelByAddrBadParam();
 }
 
-void LeaseCmdsTest::testLease4DelByAddr() {
-
-    // Initialize lease manager (false = v4, true = add leases)
-    initLeaseMgr(false, true);
-
-    checkLease4Stats(44, 2, 0);
-
-    checkLease4Stats(88, 2, 0);
-
-    // Query for valid, existing lease.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-del\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"192.0.2.1\""
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv4 lease deleted.";
-    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    checkLease4Stats(44, 1, 0);
-
-    checkLease4Stats(88, 2, 0);
-
-    // Make sure the lease is really gone.
-    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
-}
-
-TEST_F(LeaseCmdsTest, lease4DelByAddr) {
-    testLease4DelByAddr();
-}
-
-void LeaseCmdsTest::testLease4DelByAddrDeclinedLeases() {
-
-    // Initialize lease manager (false = v4, true = add leases)
-    initLeaseMgr(false, true, true);
-
-    checkLease4Stats(44, 2, 2);
-
-    checkLease4Stats(88, 2, 2);
-
-    // Query for valid, existing lease.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-del\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"192.0.2.1\""
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv4 lease deleted.";
-    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    checkLease4Stats(44, 1, 1);
-
-    checkLease4Stats(88, 2, 2);
-
-    // Make sure the lease is really gone.
-    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
-}
-
-TEST_F(LeaseCmdsTest, lease4DelByAddrDeclinedLeases) {
-    testLease4DelByAddrDeclinedLeases();
+TEST_F(LeaseCmdsTest, lease4DelByAddrBadParamMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4DelByAddrBadParam();
 }
 
 void LeaseCmdsTest::testLease4DelByHWAddrNotFound() {
@@ -5761,6 +6426,11 @@ void LeaseCmdsTest::testLease4DelByHWAddrNotFound() {
 }
 
 TEST_F(LeaseCmdsTest, lease4DelByHWAddrNotFound) {
+    testLease4DelByHWAddrNotFound();
+}
+
+TEST_F(LeaseCmdsTest, lease4DelByHWAddrNotFoundMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4DelByHWAddrNotFound();
 }
 
@@ -5798,6 +6468,11 @@ TEST_F(LeaseCmdsTest, lease4DelByHWAddr) {
     testLease4DelByHWAddr();
 }
 
+TEST_F(LeaseCmdsTest, lease4DelByHWAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4DelByHWAddr();
+}
+
 void LeaseCmdsTest::testLease4DelByClientIdNotFound() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -5832,6 +6507,11 @@ TEST_F(LeaseCmdsTest, lease4DelByClientIdNotFound) {
     testLease4DelByClientIdNotFound();
 }
 
+TEST_F(LeaseCmdsTest, lease4DelByClientIdNotFoundMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4DelByClientIdNotFound();
+}
+
 void LeaseCmdsTest::testLease4DelByClientId() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -5863,6 +6543,11 @@ void LeaseCmdsTest::testLease4DelByClientId() {
 }
 
 TEST_F(LeaseCmdsTest, lease4DelByClientId) {
+    testLease4DelByClientId();
+}
+
+TEST_F(LeaseCmdsTest, lease4DelByClientIdMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4DelByClientId();
 }
 
@@ -5945,7 +6630,12 @@ TEST_F(LeaseCmdsTest, lease6DelMissingParams) {
     testLease6DelMissingParams();
 }
 
-void LeaseCmdsTest::testLease6DelByAddr6NotFound() {
+TEST_F(LeaseCmdsTest, lease6DelMissingParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6DelMissingParams();
+}
+
+void LeaseCmdsTest::testLease6DelByAddrNotFound() {
 
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
@@ -5974,8 +6664,55 @@ void LeaseCmdsTest::testLease6DelByAddr6NotFound() {
     checkLease6Stats(99, 2, 0, 0);
 }
 
-TEST_F(LeaseCmdsTest, lease6DelByAddr6NotFound) {
-    testLease6DelByAddr6NotFound();
+TEST_F(LeaseCmdsTest, lease6DelByAddrNotFound) {
+    testLease6DelByAddrNotFound();
+}
+
+TEST_F(LeaseCmdsTest, lease6DelByAddrNotFoundMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6DelByAddrNotFound();
+}
+
+void LeaseCmdsTest::testLease6DelByDuidNotFound() {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 1,\n"
+        "        \"identifier-type\": \"duid\","
+        "        \"identifier\": \"00:01:02:03:04:05:06:07\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease not found.";
+
+    // Note the status expected is empty. The query completed correctly,
+    // just didn't found the lease.
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
+
+    // Make sure the lease is still there.
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+}
+
+TEST_F(LeaseCmdsTest, lease6DelByDuidNotFound) {
+    testLease6DelByDuidNotFound();
+}
+
+TEST_F(LeaseCmdsTest, lease6DelByDuidNotFoundMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6DelByDuidNotFound();
 }
 
 void LeaseCmdsTest::testLease6DelByAddr() {
@@ -6010,6 +6747,11 @@ void LeaseCmdsTest::testLease6DelByAddr() {
 }
 
 TEST_F(LeaseCmdsTest, lease6DelByAddr) {
+    testLease6DelByAddr();
+}
+
+TEST_F(LeaseCmdsTest, lease6DelByAddrMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6DelByAddr();
 }
 
@@ -6048,6 +6790,11 @@ TEST_F(LeaseCmdsTest, lease6DelByAddrDeclinedLeases) {
     testLease6DelByAddrDeclinedLeases();
 }
 
+TEST_F(LeaseCmdsTest, lease6DelByAddrDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6DelByAddrDeclinedLeases();
+}
+
 void LeaseCmdsTest::testLease6DelByAddrBadParam() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -6077,6 +6824,11 @@ void LeaseCmdsTest::testLease6DelByAddrBadParam() {
 }
 
 TEST_F(LeaseCmdsTest, lease6DelByAddrBadParam) {
+    testLease6DelByAddrBadParam();
+}
+
+TEST_F(LeaseCmdsTest, lease6DelByAddrBadParamMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6DelByAddrBadParam();
 }
 
@@ -6130,41 +6882,9 @@ TEST_F(LeaseCmdsTest, lease6DelByAddrPrefix) {
     testLease6DelByAddrPrefix();
 }
 
-void LeaseCmdsTest::testLease6DelByDuidNotFound() {
-
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    checkLease6Stats(66, 2, 0, 0);
-
-    checkLease6Stats(99, 2, 0, 0);
-
-    // Now send the command.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-del\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 1,\n"
-        "        \"identifier-type\": \"duid\","
-        "        \"identifier\": \"00:01:02:03:04:05:06:07\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv6 lease not found.";
-
-    // Note the status expected is empty. The query completed correctly,
-    // just didn't found the lease.
-    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
-
-    checkLease6Stats(66, 2, 0, 0);
-
-    checkLease6Stats(99, 2, 0, 0);
-
-    // Make sure the lease is still there.
-    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
-}
-
-TEST_F(LeaseCmdsTest, lease6DelByDuidNotFound) {
-    testLease6DelByDuidNotFound();
+TEST_F(LeaseCmdsTest, lease6DelByAddrPrefixMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6DelByAddrPrefix();
 }
 
 void LeaseCmdsTest::testLease6DelByDuid() {
@@ -6204,35 +6924,9 @@ TEST_F(LeaseCmdsTest, lease6DelByDuid) {
     testLease6DelByDuid();
 }
 
-void LeaseCmdsTest::testLeaseXDelBadUpdateDdnsParam() {
-
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-del\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"192.0.1.0\","
-        "        \"update-ddns\": 77"
-        "    }\n"
-        "}";
-
-    string exp_rsp = "'update-ddns' is not a boolean";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-
-    cmd =
-        "{\n"
-        "    \"command\": \"lease6-del\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"2001:db8:1::1\","
-        "        \"update-ddns\": \"bogus\""
-        "    }\n"
-        "}";
-
-    exp_rsp = "'update-ddns' is not a boolean";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-}
-
-TEST_F(LeaseCmdsTest, leaseXDelBadUpdateDdnsParam) {
-    testLeaseXDelBadUpdateDdnsParam();
+TEST_F(LeaseCmdsTest, lease6DelByDuidMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6DelByDuid();
 }
 
 void LeaseCmdsTest::testLease4Wipe() {
@@ -6269,6 +6963,11 @@ void LeaseCmdsTest::testLease4Wipe() {
 }
 
 TEST_F(LeaseCmdsTest, lease4Wipe) {
+    testLease4Wipe();
+}
+
+TEST_F(LeaseCmdsTest, lease4WipeMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4Wipe();
 }
 
@@ -6309,6 +7008,11 @@ TEST_F(LeaseCmdsTest, lease4WipeAll) {
     testLease4WipeAll();
 }
 
+TEST_F(LeaseCmdsTest, lease4WipeAllMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4WipeAll();
+}
+
 void LeaseCmdsTest::testLease4WipeAllNoArgs() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -6343,6 +7047,11 @@ TEST_F(LeaseCmdsTest, lease4WipeAllNoArgs) {
     testLease4WipeAllNoArgs();
 }
 
+TEST_F(LeaseCmdsTest, lease4WipeAllNoArgsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4WipeAllNoArgs();
+}
+
 void LeaseCmdsTest::testLease4WipeNoLeases() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -6372,6 +7081,11 @@ TEST_F(LeaseCmdsTest, lease4WipeNoLeases) {
     testLease4WipeNoLeases();
 }
 
+TEST_F(LeaseCmdsTest, lease4WipeNoLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4WipeNoLeases();
+}
+
 void LeaseCmdsTest::testLease4WipeNoLeasesAll() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -6398,6 +7112,11 @@ void LeaseCmdsTest::testLease4WipeNoLeasesAll() {
 }
 
 TEST_F(LeaseCmdsTest, lease4WipeNoLeasesAll) {
+    testLease4WipeNoLeasesAll();
+}
+
+TEST_F(LeaseCmdsTest, lease4WipeNoLeasesAllMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4WipeNoLeasesAll();
 }
 
@@ -6440,6 +7159,11 @@ TEST_F(LeaseCmdsTest, lease6Wipe) {
     testLease6Wipe();
 }
 
+TEST_F(LeaseCmdsTest, lease6WipeMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6Wipe();
+}
+
 void LeaseCmdsTest::testLease6WipeAll() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -6479,6 +7203,11 @@ TEST_F(LeaseCmdsTest, lease6WipeAll) {
     testLease6WipeAll();
 }
 
+TEST_F(LeaseCmdsTest, lease6WipeAllMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6WipeAll();
+}
+
 void LeaseCmdsTest::testLease6WipeAllNoArgs() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -6515,6 +7244,11 @@ TEST_F(LeaseCmdsTest, lease6WipeAllNoArgs) {
     testLease6WipeAllNoArgs();
 }
 
+TEST_F(LeaseCmdsTest, lease6WipeAllNoArgsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6WipeAllNoArgs();
+}
+
 void LeaseCmdsTest::testLease6WipeNoLeases() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -6541,6 +7275,11 @@ void LeaseCmdsTest::testLease6WipeNoLeases() {
 }
 
 TEST_F(LeaseCmdsTest, lease6WipeNoLeases) {
+    testLease6WipeNoLeases();
+}
+
+TEST_F(LeaseCmdsTest, lease6WipeNoLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6WipeNoLeases();
 }
 
@@ -6573,7 +7312,12 @@ TEST_F(LeaseCmdsTest, lease6WipeNoLeasesAll) {
     testLease6WipeNoLeasesAll();
 }
 
-void LeaseCmdsTest::testLeaseBrokenUpdate() {
+TEST_F(LeaseCmdsTest, lease6WipeNoLeasesAllMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6WipeNoLeasesAll();
+}
+
+void LeaseCmdsTest::testLease4BrokenUpdate() {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
@@ -6589,8 +7333,8 @@ void LeaseCmdsTest::testLeaseBrokenUpdate() {
         "    \"arguments\": {"
         "        \"subnet-id\": 444,\n"
         "        \"ip-address\": \"192.0.2.202\",\n"
-        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
-        "        ,\"force-create\": true\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"force-create\": true\n"
         "    }\n"
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv4 subnet with "
@@ -6598,8 +7342,47 @@ void LeaseCmdsTest::testLeaseBrokenUpdate() {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-TEST_F(LeaseCmdsTest, leaseBrokenUpdate) {
-    testLeaseBrokenUpdate();
+TEST_F(LeaseCmdsTest, lease4BrokenUpdate) {
+    testLease4BrokenUpdate();
+}
+
+TEST_F(LeaseCmdsTest, lease4BrokenUpdateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4BrokenUpdate();
+}
+
+void LeaseCmdsTest::testLease6BrokenUpdate() {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Set the sanity checks level.
+    CfgMgr::instance().getCurrentCfg()->getConsistency()
+        ->setLeaseSanityCheck(CfgConsistency::LEASE_CHECK_FIX);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 444,\n"
+        "        \"ip-address\": \"2001:db8:1::23\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"force-create\": true\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Invalid subnet-id: No IPv6 subnet with "
+                     "subnet-id=444 currently configured.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+TEST_F(LeaseCmdsTest, lease6BrokenUpdate) {
+    testLease6BrokenUpdate();
+}
+
+TEST_F(LeaseCmdsTest, lease6BrokenUpdateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6BrokenUpdate();
 }
 
 void LeaseCmdsTest::testLease6BulkApply() {
@@ -6664,6 +7447,11 @@ TEST_F(LeaseCmdsTest, lease6BulkApply) {
     testLease6BulkApply();
 }
 
+TEST_F(LeaseCmdsTest, lease6BulkApplyMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6BulkApply();
+}
+
 void LeaseCmdsTest::testLease6BulkApplyAddsOnlyBadParam() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -6696,6 +7484,11 @@ void LeaseCmdsTest::testLease6BulkApplyAddsOnlyBadParam() {
 }
 
 TEST_F(LeaseCmdsTest, lease6BulkApplyAddsOnlyBadParam) {
+    testLease6BulkApplyAddsOnlyBadParam();
+}
+
+TEST_F(LeaseCmdsTest, lease6BulkApplyAddsOnlyBadParamMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6BulkApplyAddsOnlyBadParam();
 }
 
@@ -6747,6 +7540,11 @@ TEST_F(LeaseCmdsTest, lease6BulkApplyAddsOnly) {
     testLease6BulkApplyAddsOnly();
 }
 
+TEST_F(LeaseCmdsTest, lease6BulkApplyAddsOnlyMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6BulkApplyAddsOnly();
+}
+
 void LeaseCmdsTest::testLease6BulkApplyUpdatesOnlyBadParam() {
 
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -6790,6 +7588,11 @@ void LeaseCmdsTest::testLease6BulkApplyUpdatesOnlyBadParam() {
 }
 
 TEST_F(LeaseCmdsTest, lease6BulkApplyUpdatesOnlyBadParam) {
+    testLease6BulkApplyUpdatesOnlyBadParam();
+}
+
+TEST_F(LeaseCmdsTest, lease6BulkApplyUpdatesOnlyBadParamMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6BulkApplyUpdatesOnlyBadParam();
 }
 
@@ -6847,6 +7650,11 @@ TEST_F(LeaseCmdsTest, lease6BulkApplyUpdatesOnly) {
     testLease6BulkApplyUpdatesOnly();
 }
 
+TEST_F(LeaseCmdsTest, lease6BulkApplyUpdatesOnlyMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6BulkApplyUpdatesOnly();
+}
+
 void LeaseCmdsTest::testLease6BulkApplyDeletesOnly() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -6888,6 +7696,11 @@ void LeaseCmdsTest::testLease6BulkApplyDeletesOnly() {
 }
 
 TEST_F(LeaseCmdsTest, lease6BulkApplyDeletesOnly) {
+    testLease6BulkApplyDeletesOnly();
+}
+
+TEST_F(LeaseCmdsTest, lease6BulkApplyDeletesOnlyMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6BulkApplyDeletesOnly();
 }
 
@@ -6954,6 +7767,11 @@ TEST_F(LeaseCmdsTest, lease6BulkApplyDeleteNonExiting) {
     testLease6BulkApplyDeleteNonExiting();
 }
 
+TEST_F(LeaseCmdsTest, lease6BulkApplyDeleteNonExitingMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6BulkApplyDeleteNonExiting();
+}
+
 void LeaseCmdsTest::testLease6BulkApplyRollback() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -7014,6 +7832,11 @@ TEST_F(LeaseCmdsTest, lease6BulkApplyRollback) {
     testLease6BulkApplyRollback();
 }
 
+TEST_F(LeaseCmdsTest, lease6BulkApplyRollbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6BulkApplyRollback();
+}
+
 void LeaseCmdsTest::testLease4ResendDdnsBadParam() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -7059,6 +7882,11 @@ TEST_F(LeaseCmdsTest, lease4ResendDdnsBadParam) {
     testLease4ResendDdnsBadParam();
 }
 
+TEST_F(LeaseCmdsTest, lease4ResendDdnsBadParamMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4ResendDdnsBadParam();
+}
+
 void LeaseCmdsTest::testLease4ResendDdnsDisabled() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -7085,6 +7913,11 @@ TEST_F(LeaseCmdsTest, lease4ResendDdnsDisabled) {
     testLease4ResendDdnsDisabled();
 }
 
+TEST_F(LeaseCmdsTest, lease4ResendDdnsDisabledMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4ResendDdnsDisabled();
+}
+
 void LeaseCmdsTest::testLease4ResendDdnsNoLease() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -7103,6 +7936,11 @@ void LeaseCmdsTest::testLease4ResendDdnsNoLease() {
 }
 
 TEST_F(LeaseCmdsTest, lease4ResendDdnsNoLease) {
+    testLease4ResendDdnsNoLease();
+}
+
+TEST_F(LeaseCmdsTest, lease4ResendDdnsNoLeaseMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4ResendDdnsNoLease();
 }
 
@@ -7140,6 +7978,11 @@ TEST_F(LeaseCmdsTest, lease4ResendNoHostname) {
     testLease4ResendNoHostname();
 }
 
+TEST_F(LeaseCmdsTest, lease4ResendNoHostnameMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4ResendNoHostname();
+}
+
 void LeaseCmdsTest::testLease4ResendNoDirectionsEnabled() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -7172,6 +8015,11 @@ void LeaseCmdsTest::testLease4ResendNoDirectionsEnabled() {
 }
 
 TEST_F(LeaseCmdsTest, lease4ResendNoDirectionsEnabled) {
+    testLease4ResendNoDirectionsEnabled();
+}
+
+TEST_F(LeaseCmdsTest, lease4ResendNoDirectionsEnabledMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4ResendNoDirectionsEnabled();
 }
 
@@ -7231,6 +8079,11 @@ TEST_F(LeaseCmdsTest, lease4ResendDdnsEnabled) {
     testLease4ResendDdnsEnabled();
 }
 
+TEST_F(LeaseCmdsTest, lease4ResendDdnsEnabledMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4ResendDdnsEnabled();
+}
+
 void LeaseCmdsTest::testLease6ResendDdnsBadParam() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -7276,6 +8129,11 @@ TEST_F(LeaseCmdsTest, lease6ResendDdnsBadParam) {
     testLease6ResendDdnsBadParam();
 }
 
+TEST_F(LeaseCmdsTest, lease6ResendDdnsBadParamMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6ResendDdnsBadParam();
+}
+
 void LeaseCmdsTest::testLease6ResendDdnsDisabled() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -7303,6 +8161,11 @@ TEST_F(LeaseCmdsTest, lease6ResendDdnsDisabled) {
     testLease6ResendDdnsDisabled();
 }
 
+TEST_F(LeaseCmdsTest, lease6ResendDdnsDisabledMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6ResendDdnsDisabled();
+}
+
 void LeaseCmdsTest::testLease6ResendDdnsNoLease() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -7321,6 +8184,11 @@ void LeaseCmdsTest::testLease6ResendDdnsNoLease() {
 }
 
 TEST_F(LeaseCmdsTest, lease6ResendDdnsNoLease) {
+    testLease6ResendDdnsNoLease();
+}
+
+TEST_F(LeaseCmdsTest, lease6ResendDdnsNoLeaseMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6ResendDdnsNoLease();
 }
 
@@ -7358,6 +8226,11 @@ TEST_F(LeaseCmdsTest, lease6ResendNoHostname) {
     testLease6ResendNoHostname();
 }
 
+TEST_F(LeaseCmdsTest, lease6ResendNoHostnameMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6ResendNoHostname();
+}
+
 void LeaseCmdsTest::testLease6ResendNoDirectionsEnabled() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -7390,6 +8263,11 @@ void LeaseCmdsTest::testLease6ResendNoDirectionsEnabled() {
 }
 
 TEST_F(LeaseCmdsTest, lease6ResendNoDirectionsEnabled) {
+    testLease6ResendNoDirectionsEnabled();
+}
+
+TEST_F(LeaseCmdsTest, lease6ResendNoDirectionsEnabledMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6ResendNoDirectionsEnabled();
 }
 
@@ -7446,6 +8324,11 @@ void LeaseCmdsTest::testLease6ResendDdnsEnabled() {
 }
 
 TEST_F(LeaseCmdsTest, lease6ResendDdnsEnabled) {
+    testLease6ResendDdnsEnabled();
+}
+
+TEST_F(LeaseCmdsTest, lease6ResendDdnsEnabledMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6ResendDdnsEnabled();
 }
 
@@ -7571,6 +8454,11 @@ TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Enabled) {
     testLease4DnsRemoveD2Enabled();
 }
 
+TEST_F(LeaseCmdsTest, lease4DnsRemoveD2EnabledMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4DnsRemoveD2Enabled();
+}
+
 void LeaseCmdsTest::testLease4DnsRemoveD2Disabled() {
 
     // Initialize lease manager (false = v4, true = add leases)
@@ -7610,6 +8498,11 @@ void LeaseCmdsTest::testLease4DnsRemoveD2Disabled() {
 }
 
 TEST_F(LeaseCmdsTest, lease4DnsRemoveD2Disabled) {
+    testLease4DnsRemoveD2Disabled();
+}
+
+TEST_F(LeaseCmdsTest, lease4DnsRemoveD2DisabledMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease4DnsRemoveD2Disabled();
 }
 
@@ -7735,6 +8628,11 @@ TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Enabled) {
     testLease6DnsRemoveD2Enabled();
 }
 
+TEST_F(LeaseCmdsTest, lease6DnsRemoveD2EnabledMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6DnsRemoveD2Enabled();
+}
+
 void LeaseCmdsTest::testLease6DnsRemoveD2Disabled() {
 
     // Initialize lease manager (true = v6, true = add leases)
@@ -7774,6 +8672,11 @@ void LeaseCmdsTest::testLease6DnsRemoveD2Disabled() {
 }
 
 TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Disabled) {
+    testLease6DnsRemoveD2Disabled();
+}
+
+TEST_F(LeaseCmdsTest, lease6DnsRemoveD2DisabledMultiThreading) {
+    MultiThreadingTest mt(true);
     testLease6DnsRemoveD2Disabled();
 }
 
