@@ -1,3 +1,7 @@
+1833.	[doc]		sgoldlust
+	Many documentation corrections.
+	(Gitlab #1539)
+
 1832.	[func]		tomek,wlodek
 	Perfdhcp extended with functionality to gradually
 	increase elapsed time in solicit and secs field in offer.
