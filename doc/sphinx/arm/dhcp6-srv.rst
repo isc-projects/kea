@@ -63,7 +63,7 @@ form: [**runstatedir**]/kea/[**conf name**].kea-dhcp6.pid where:
 -  ``runstatedir``: The value as passed into the build configure
    script; it defaults to "/usr/local/var/run". Note that this value may be
    overridden at runtime by setting the environment variable
-   KEA_PIDFILE_DIR, although this is intended primarily for testing
+   ``KEA_PIDFILE_DIR``, although this is intended primarily for testing
    purposes.
 
 -  ``conf name``: The configuration file name used to start the server,
@@ -5334,7 +5334,7 @@ specified in the configuration.
 
 .. _data-directory:
 
-DHCPv6 data directory
+DHCPv6 Data Directory
 =====================
 
 The Kea DHCPv6 server puts the server identifier file and the default
@@ -6652,7 +6652,7 @@ treated as “not implemented yet”, rather than actual limitations.
 
 .. _dhcp6-srv-examples:
 
-Kea DHCPv6 server examples
+Kea DHCPv6 Server Examples
 ==========================
 
 A collection of simple-to-use examples for the DHCPv6 component of Kea

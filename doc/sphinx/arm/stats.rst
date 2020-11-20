@@ -381,8 +381,8 @@ a status code of 1 (error) and the text field contains the error description.
 
 .. _time-series:
 
-Time series
-====================
+Time Series
+===========
 
 Previously, by default, each statistic held only a single data point. When Kea
 attempted to record a new value, the existing previous value was overwritten.

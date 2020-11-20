@@ -131,7 +131,7 @@ Choice 1: get from github
 
 .. code-block:: console
 
-   $ git clone https://github.com/isc-projects/kea
+   $ git clone https://github.com/isc-projects/kea.git
 
 Choice 2: get a tarball and extract it
 

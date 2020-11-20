@@ -63,7 +63,7 @@ form: [runstatedir]/kea/[conf name].kea-dhcp4.pid where:
 -  ``runstatedir``: The value as passed into the build configure
    script; it defaults to "/usr/local/var/run". Note that this value may be
    overridden at runtime by setting the environment variable
-   KEA_PIDFILE_DIR, although this is intended primarily for testing
+   ``KEA_PIDFILE_DIR``, although this is intended primarily for testing
    purposes.
 
 -  ``conf name``: The configuration file name used to start the server,

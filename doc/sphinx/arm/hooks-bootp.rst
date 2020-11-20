@@ -1,6 +1,6 @@
 .. _hooks-bootp:
 
-BOOTP support
+BOOTP Support
 =============
 
 .. note::

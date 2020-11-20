@@ -197,7 +197,7 @@ To create the database:
 
       mysql> CREATE DATABASE database_name;
 
-   (database_name is the name chosen for the database.)
+   (``database_name`` is the name chosen for the database.)
 
 3. Create the user under which Kea will access the database (and give it
    a password), then grant it access to the database tables:
@@ -242,8 +242,9 @@ To create the database:
         mysql: [Warning] Using a password on the command line interface can be insecure.
         ERROR/kea-admin: Create failed, the user, keatest, has insufficient privileges.
 
-    The simplest way around this is to set the global MySQL variable, log_bin_trust_function_creators, to 1
-    via the MySQL client. Note this must be done as a user with SUPER privileges:
+    The simplest way around this is to set the global MySQL variable,
+    ``log_bin_trust_function_creators``, to 1 via the MySQL client.
+    Note this must be done as a user with SUPER privileges:
 
     .. code-block:: mysql
 
@@ -541,7 +542,7 @@ manually; it cannot be performed by ``kea-admin``.
 
 To create the database:
 
-1. Export CQLSH_HOST environment variable:
+1. Export ``CQLSH_HOST`` environment variable:
 
    .. code-block:: console
 

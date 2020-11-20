@@ -34,27 +34,24 @@ The following is the directory layout of the complete Kea installation.
 
 -  ``lib/kea/hooks`` — additional hooks libraries.
 
--  ``sbin/`` — server software and commands used by the system
-   administrator.
+-  ``sbin/`` — server software and commands used by the system administrator.
 
--  ``share/kea/`` — configuration specifications and examples.
+-  ``share/doc/kea/`` — this guide, other supplementary documentation and examples.
 
--  ``share/doc/kea/`` — this guide, other supplementary documentation,
-   and examples.
+-  ``share/kea/`` — API command examples and database schema scripts.
 
 -  ``share/man/`` — manual pages (online documentation).
 
--  ``var/lib/kea/`` — server identification, and lease databases
-   files.
+-  ``var/lib/kea/`` — server identification and lease database files.
 
 -  ``var/log/`` - log files.
 
--  ``var/run/kea`` - pid and logger lock files.
+-  ``var/run/kea`` - PID file and logger lock file.
 
 .. _build-requirements:
 
 Build Requirements
-=====================
+==================
 
 In addition to the run-time requirements (listed in
 :ref:`required-software`), building Kea from source code requires
@@ -106,13 +103,12 @@ the system:
    running Kea, is required. Note that running the unit tests requires a
    local Cassandra server.
 
--  The FreeRADIUS client library is required to connect to a RADIUS
-   server. (This is specified using the --with-freeradius configuration
-   switch.)
+-  The FreeRADIUS client library is required to connect to a RADIUS server.
+   This is specified using the --with-freeradius configuration switch.
 
--  Sysrepo (version 0.7.6 or later) and libyang (version 0.16-r2 or
-   later) are needed to connect to a Sysrepo database. (This is
-   specified using the --with-sysrepo switch when running "configure".)
+-  Sysrepo (version 0.7.6 or later up to and including 0.7.9) and
+   libyang (version 0.16-r2 or 0.16-r3) are needed to connect to a Sysrepo database.
+   This is specified using the --with-sysrepo switch when running "configure".
 
 -  googletest (version 1.8 or later) is required when using the --with-gtest
    configuration option to build the unit tests.
@@ -144,7 +140,7 @@ Download Tar File
 -----------------
 
 The Kea release tarballs may be downloaded from:
-https://downloads.isc.org/isc/kea/ .
+https://downloads.isc.org/isc/kea/.
 
 Retrieve From Git
 -----------------
@@ -521,7 +517,7 @@ commands were used:
 
 .. code-block:: console
 
-   $ git clone https://github.com/datastax/cpp-driver
+   $ git clone https://github.com/datastax/cpp-driver.git
    $ cd cpp-driver
    $ mkdir build
    $ cd build
@@ -552,8 +548,8 @@ code, at the "configure" step (see :ref:`configure`), enter:
 
 .. include:: hammer.rst
 
-Running Kea from non-root account on Linux
-==========================================
+Running Kea From a Non-root Account on Linux
+============================================
 
 Both Kea DHCPv4 and DHCPv6 servers perform operations that in general require root access
 privileges. In particular, DHCPv4 opens raw sockets and both DHCPv4 and DHCPv6 open UDP sockets on
@@ -566,8 +562,9 @@ First, a regular user account must be created:
 
    useradd admin
 
-Then, change the binaries ownership and group to new user. Note that the specific path may be different. Please
-refer to the ``--prefix`` parameter passed to the configure script.:
+Then, change the binaries ownership and group to new user. Note that
+the specific path may be different. Please refer to the ``--prefix``
+parameter passed to the configure script.:
 
 .. code-block:: console
 

@@ -10,8 +10,8 @@ respective chapters elsewhere in this Kea Administrator Reference Manual (ARM).
 
 .. _quick-start-tarball:
 
-Quick Start Guide for using tarball
-============================================
+Quick Start Guide using tarball
+===============================
 
 1.  Install required run-time and build dependencies. See
     :ref:`build-requirements` for details.
@@ -48,7 +48,7 @@ Quick Start Guide for using tarball
 
 .. _quick-start-repo:
 
-Quick Start Guide using native packages
+Quick Start Guide using Native Packages
 =======================================
 
 Starting with Kea 1.6.0, ISC now provides native RPM, deb and APK
@@ -68,8 +68,9 @@ Kea using native packages.
 
         $ apt-get update
 
-4. Kea is split into various packages. You may check the entire list on `cloudsmith.io
-   <https://cloudsmith.io/~isc/repos/>`__  or using apt/yum/dnf. For example:
+4. Kea is split into various packages. You may check the entire list on
+   `cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__  or using apt/yum/dnf.
+   For example:
 
     .. code-block:: console
 
@@ -91,7 +92,7 @@ Kea using native packages.
 
     .. code-block:: console
 
-        $ sudo apt-get install isc-kea*=1.6.2-isc0043420200221140216
+        $ sudo apt-get install isc-kea*=1.8.1-isc0000920201106154401
 
 6. All installed packages should be now available directly, for example:
 
@@ -105,7 +106,8 @@ Kea using native packages.
 
        # systemctl restart isc-kea-dhcp6-server
 
-   ``keactrl`` is not available in packages as similar functionality is provided by the native systemctl scripts.
+   ``keactrl`` is not available in packages as similar functionality is provided
+   by the native systemctl scripts.
 
 .. _quick-start-services:
 
@@ -114,8 +116,8 @@ Quick Start Guide for DHCPv4 and DHCPv6 Services
 1.  Edit the Kea configuration files which by default are installed in
     the ``[kea-install-dir]/etc/kea/`` directory. These are:
     ``kea-dhcp4.conf``, ``kea-dhcp6.conf``, ``kea-dhcp-ddns.conf`` and
-    ``kea-ctrl-agent.conf``, for DHCPv4 server, DHCPv6 server, D2, and
-    Control Agent, respectively.
+    ``kea-ctrl-agent.conf``, ``keactrl.conf`` for DHCPv4 server, DHCPv6 server,
+    D2, Control Agent and keactrl script respectively.
 
 2.  In order to start the DHCPv4 server in the background, run the
     following command (as root):

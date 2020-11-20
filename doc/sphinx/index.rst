@@ -55,7 +55,7 @@ Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administr
 
 
 
-Indices and tables
+Indices and Tables
 ==================
 
 * :ref:`genindex`
