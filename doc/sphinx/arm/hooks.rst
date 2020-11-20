@@ -406,7 +406,7 @@ loaded by the correct process per the table below.
    |                 |               |for Kea DHCP servers.                                       |
    +-----------------+---------------+------------------------------------------------------------+
    | Statistics      | Kea sources   |The Statistics Commands library provides additional         |
-   | Commands        | (since 1.4)   |commands for retrieving accurate DHCP lease statistics for |
+   | Commands        | (since 1.4)   |commands for retrieving accurate DHCP lease statistics for  |
    |                 |               |Kea DHCP servers that share the same lease database. This   |
    |                 |               |setup is common in deployments where DHCP service redundancy|
    |                 |               |is required and a shared lease database is used to avoid    |
