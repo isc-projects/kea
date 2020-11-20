@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Fri Nov 20 2020 15:14
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -265,11 +265,11 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_CONFIG4_MERGED", "Configuration backend data has been merged.",
     "DHCPSRV_CFGMGR_CONFIG6_MERGED", "Configuration backend data has been merged.",
     "DHCPSRV_CFGMGR_CONFIGURE_SERVERID", "server configuration includes specification of a server identifier",
-    "DHCPSRV_CFGMGR_DDNS_PARAMETER_IGNORED", "dhpd-ddns:%1 is deprecated, using existing global:%2",
+    "DHCPSRV_CFGMGR_DDNS_PARAMETER_IGNORED", "dhcp-ddns:%1 is deprecated, using existing global:%2",
     "DHCPSRV_CFGMGR_DDNS_PARAMETER_MOVED", "dhcp-ddns:%1 is deprecated, moving it to global:%2",
     "DHCPSRV_CFGMGR_DEL_SUBNET4", "IPv4 subnet %1 removed",
     "DHCPSRV_CFGMGR_DEL_SUBNET6", "IPv6 subnet %1 removed",
-    "DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED", "ignoring \"ip-reservations-unique\" setting because at least one of the host database backends does not support non unique IP reservations in a subnet",
+    "DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED", "ignoring \"ip-reservations-unique\" setting because at least one of the host database backends does not support non-unique IP reservations in a subnet",
     "DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED", "ignoring \"ip-reservations-unique\" setting because at least one of the host database backends does not support non unique IP reservations in a subnet",
     "DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE", "setting \"ip-reservations-unique\" from false to true poses a risk that some host backends may still contain multiple reservations for the same IP address",
     "DHCPSRV_CFGMGR_NEW_SUBNET4", "a new subnet has been added to configuration: %1",
@@ -390,7 +390,7 @@ const char* values[] = {
     "DHCPSRV_MEMFILE_LEASE_LOAD_ROW_ERROR", "discarding row %1, error: %2",
     "DHCPSRV_MEMFILE_LFC_EXECUTE", "executing Lease File Cleanup using: %1",
     "DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL", "failed to rename the current lease file %1 to %2, reason: %3",
-    "DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL", "failed to reopen lease file %1 after preparing input file for lease file cleanup, reason: %2, new leases will not be persisted!",
+    "DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL", "failed to reopen lease file %1 after preparing input file for lease file cleanup, reason: %2, new leases will not persist!",
     "DHCPSRV_MEMFILE_LFC_SETUP", "setting up the Lease File Cleanup interval to %1 sec",
     "DHCPSRV_MEMFILE_LFC_SPAWN_FAIL", "lease file cleanup failed to run because kea-lfc process couldn't be spawned",
     "DHCPSRV_MEMFILE_LFC_START", "starting Lease File Cleanup",

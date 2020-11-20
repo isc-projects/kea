@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Fri Nov 20 2020 15:29
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -95,11 +95,11 @@ namespace {
 const char* values[] = {
     "HA_BUFFER4_RECEIVE_FAILED", "buffer4_receive callout failed: %1",
     "HA_BUFFER4_RECEIVE_NOT_FOR_US", "%1: dropping query to be processed by another server",
-    "HA_BUFFER4_RECEIVE_PACKET_OPTIONS_SKIPPED", "an error upacking an option, caused subsequent options to be skipped: %1",
+    "HA_BUFFER4_RECEIVE_PACKET_OPTIONS_SKIPPED", "an error unpacking an option, caused subsequent options to be skipped: %1",
     "HA_BUFFER4_RECEIVE_UNPACK_FAILED", "failed to parse query from %1 to %2, received over interface %3, reason: %4",
     "HA_BUFFER6_RECEIVE_FAILED", "buffer6_receive callout failed: %1",
     "HA_BUFFER6_RECEIVE_NOT_FOR_US", "%1: dropping query to be processed by another server",
-    "HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED", "an error upacking an option, caused subsequent options to be skipped: %1",
+    "HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED", "an error unpacking an option, caused subsequent options to be skipped: %1",
     "HA_BUFFER6_RECEIVE_UNPACK_FAILED", "failed to parse query from %1 to %2, received over interface %3, reason: %4",
     "HA_COMMAND_PROCESSED_FAILED", "command_processed callout failed: %1",
     "HA_COMMUNICATION_INTERRUPTED", "communication with %1 is interrupted",

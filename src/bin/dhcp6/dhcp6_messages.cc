@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Fri Nov 20 2020 15:22
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -250,7 +250,7 @@ const char* values[] = {
     "DHCP6_PACKET_DROP_PARSE_FAIL", "failed to parse packet from %1 to %2, received over interface %3, reason: %4",
     "DHCP6_PACKET_DROP_SERVERID_MISMATCH", "%1: dropping packet with server identifier: %2, server is using: %3",
     "DHCP6_PACKET_DROP_UNICAST", "%1: dropping unicast %2 packet as this packet should be sent to multicast",
-    "DHCP6_PACKET_OPTIONS_SKIPPED", "An error upacking an option, caused subsequent options to be skipped: %1",
+    "DHCP6_PACKET_OPTIONS_SKIPPED", "An error unpacking an option, caused subsequent options to be skipped: %1",
     "DHCP6_PACKET_PROCESS_EXCEPTION", "exception occurred during packet processing",
     "DHCP6_PACKET_PROCESS_FAIL", "processing of %1 message received from %2 failed: %3",
     "DHCP6_PACKET_PROCESS_STD_EXCEPTION", "exception occurred during packet processing: %1",

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/http/http_messages.mes on Fri Oct 23 2020 14:07
+// File created from ../../../src/lib/http/http_messages.mes on Fri Nov 20 2020 15:19
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -47,7 +47,7 @@ const char* values[] = {
     "HTTP_CLIENT_REQUEST_NOT_AUTHORIZED", "received HTTP request with not matching authentication header",
     "HTTP_CLIENT_REQUEST_NO_AUTH_HEADER", "received HTTP request without required authentication header",
     "HTTP_CLIENT_REQUEST_RECEIVED", "received HTTP request from %1",
-    "HTTP_CLIENT_REQUEST_RECEIVED_DETAILS", "detailed information about well formed request received from %1:\n%2",
+    "HTTP_CLIENT_REQUEST_RECEIVED_DETAILS", "detailed information about well-formed request received from %1:\n%2",
     "HTTP_CLIENT_REQUEST_SEND", "sending HTTP request %1 to %2",
     "HTTP_CLIENT_REQUEST_SEND_DETAILS", "detailed information about request sent to %1:\n%2",
     "HTTP_CLIENT_REQUEST_TIMEOUT_OCCURRED", "HTTP request timeout occurred when communicating with %1",
@@ -59,7 +59,7 @@ const char* values[] = {
     "HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED", "premature connection timeout occurred, possibly caused by system clock change",
     "HTTP_REQUEST_RECEIVE_START", "start receiving request from %1 with timeout %2",
     "HTTP_SERVER_RESPONSE_RECEIVED", "received HTTP response from %1",
-    "HTTP_SERVER_RESPONSE_RECEIVED_DETAILS", "detailed information about well formed response received from %1:\n%2",
+    "HTTP_SERVER_RESPONSE_RECEIVED_DETAILS", "detailed information about well-formed response received from %1:\n%2",
     "HTTP_SERVER_RESPONSE_SEND", "sending HTTP response %1 to %2",
     "HTTP_SERVER_RESPONSE_SEND_DETAILS", "detailed information about response sent to %1:\n%2",
     NULL
