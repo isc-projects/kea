@@ -1,3 +1,7 @@
+1835.	[doc]       peterd
+	Several Kea ARM corrections.
+	(Gitlab #1536)
+
 1834.	[func]		fdupont
 	Added two new callouts (hook points) in the control agent.
 	The "auth" callout is executed after the basic authentication
