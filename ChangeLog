@@ -1,3 +1,8 @@
+1832.	[func]		tomek,wlodek
+	Perfdhcp extended with functionality to gradually
+	increase elapsed time in solicit and secs field in offer.
+	(Gitlab #1332)
+
 1831.	[bug]		razvan
 	Fixed the DHCPv6 server implementation of the
 	reservations-out-of-pool flag to match the DHCPv4 one. When the
