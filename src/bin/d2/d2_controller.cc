@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cfgrpt/config_report.h>
 #include <config/command_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
@@ -121,6 +122,9 @@ D2Controller::parseFile(const std::string& file_name) {
 
 D2Controller::~D2Controller() {
 }
+
+// Refer to config_report so it will be embedded in the binary.
+const char* const* d2_config_report = isc::detail::config_report;
 
 std::string
 D2Controller::getVersionAddendum() {
