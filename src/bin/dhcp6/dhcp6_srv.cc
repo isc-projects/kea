@@ -1384,15 +1384,18 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
     }
 
-    BOOST_FOREACH(uint16_t opt, requested_opts) {
-        // Iterate on the configured option list
-        for (CfgOptionList::const_iterator copts = co_list.begin();
-             copts != co_list.end(); ++copts) {
-            OptionDescriptor desc = (*copts)->get(DHCP6_OPTION_SPACE, opt);
-            // Got it: add it and jump to the outer loop
-            if (desc.option_) {
-                answer->addOption(desc.option_);
-                break;
+    for (uint16_t opt : requested_opts) {
+        // Add nothing when it is already there.
+        if (!answer->getOption(opt)) {
+            // Iterate on the configured option list
+            for (CfgOptionList::const_iterator copts = co_list.begin();
+                 copts != co_list.end(); ++copts) {
+                OptionDescriptor desc = (*copts)->get(DHCP6_OPTION_SPACE, opt);
+                // Got it: add it and jump to the outer loop
+                if (desc.option_) {
+                    answer->addOption(desc.option_);
+                    break;
+                }
             }
         }
     }
@@ -1488,14 +1491,16 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     // Get the list of options that client requested.
     bool added = false;
 
-    BOOST_FOREACH(uint16_t opt, requested_opts) {
+    for (uint16_t opt : requested_opts) {
         for (CfgOptionList::const_iterator copts = co_list.begin();
              copts != co_list.end(); ++copts) {
-            OptionDescriptor desc = (*copts)->get(vendor_id, opt);
-            if (desc.option_) {
-                vendor_rsp->addOption(desc.option_);
-                added = true;
-                break;
+            if (!vendor_rsp->getOption(opt)) {
+                OptionDescriptor desc = (*copts)->get(vendor_id, opt);
+                if (desc.option_) {
+                    vendor_rsp->addOption(desc.option_);
+                    added = true;
+                    break;
+                }
             }
         }
     }

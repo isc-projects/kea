@@ -1859,7 +1859,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     bool added = false;
     for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
          code != requested_opts.end(); ++code) {
-        if  (!vendor_rsp->getOption(*code)) {
+        if (!vendor_rsp->getOption(*code)) {
             for (CfgOptionList::const_iterator copts = co_list.begin();
                  copts != co_list.end(); ++copts) {
                 OptionDescriptor desc = (*copts)->get(vendor_id, *code);

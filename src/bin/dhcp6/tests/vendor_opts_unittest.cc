@@ -268,6 +268,36 @@ TEST_F(VendorOptsTest, vendorPersistentOptions) {
     OptionStringPtr config_file = boost::dynamic_pointer_cast<OptionString>(docsis33);
     ASSERT_TRUE(config_file);
     EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
+
+    // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
+    // That suboption has code 1 and is a docsis ORO option.
+    sol->delOption(D6O_VENDOR_OPTS);
+    boost::shared_ptr<OptionUint16Array> vendor_oro(new OptionUint16Array(Option::V6,
+                                                                          DOCSIS3_V6_ORO));
+    vendor_oro->addValue(DOCSIS3_V6_CONFIG_FILE); // Request option 33
+    OptionPtr vendor2(new OptionVendor(Option::V6, 4491));
+    vendor2->addOption(vendor_oro);
+    sol->addOption(vendor2);
+
+    // Need to process SOLICIT again after requesting new option.
+    AllocEngine::ClientContext6 ctx2;
+    srv_.initContext(sol, ctx2, drop);
+    ASSERT_FALSE(drop);
+    adv = srv_.processSolicit(ctx2);
+    ASSERT_TRUE(adv);
+
+    // Check if there is vendor option response
+    tmp = adv->getOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    vendor_resp = boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    // There should be only one suboption despite config-file is both
+    // requested and has the always-send flag.
+    const OptionCollection& opts = vendor_resp->getOptions();
+    ASSERT_EQ(1, opts.size());
 }
 
 // Test checks whether it is possible to use option definitions defined in

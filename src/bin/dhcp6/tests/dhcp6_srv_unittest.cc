@@ -2221,6 +2221,28 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     ASSERT_TRUE(response->getOption(D6O_NAME_SERVERS));
     // and still no sntp-servers
     ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
+
+    // Reset ORO adding subscriber-id
+    sol->delOption(D6O_ORO);
+    OptionUint16ArrayPtr oro2(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro2);
+    oro2->addValue(D6O_SUBSCRIBER_ID);
+    sol->addOption(oro2);
+
+    // Let the server process it again.
+    AllocEngine::ClientContext6 ctx3;
+    srv_.initContext(sol, ctx3, drop);
+    ASSERT_FALSE(drop);
+    response = srv_.processSolicit(ctx3);
+
+    // The subscriber-id option should be present but only once despite
+    // it is both requested and has always-send.
+    const OptionCollection& sifs = response->getOptions(D6O_SUBSCRIBER_ID);
+    ASSERT_EQ(1, sifs.size());
+    // But no dns-servers
+    ASSERT_FALSE(response->getOption(D6O_NAME_SERVERS));
+    // Nor a sntp-servers
+    ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
 }
 
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
