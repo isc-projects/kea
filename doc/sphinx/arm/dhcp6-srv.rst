@@ -2003,6 +2003,12 @@ Alternatively, the option can be specified using its code.
 A common configuration is to set the always-send flag to true so the
 vendor option is sent even when the client did not specify it in the query.
 
+.. note::
+
+   Currently multiple vendors (and sending multiple option instances)
+   are not supported for vendor-class (code 16) and vendor-opts (code 17)
+   options.
+
 .. _dhcp6-option-spaces:
 
 Nested DHCPv6 Options (Custom Option Spaces)
