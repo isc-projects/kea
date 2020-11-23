@@ -5550,7 +5550,7 @@ void LeaseCmdsTest::testLease6UpdateMissingParams() {
         "{\n"
         "    \"command\": \"lease6-update\",\n"
         "    \"arguments\": {"
-        "            \"subnet-id\": 44,\n"
+        "            \"subnet-id\": 66,\n"
         "            \"ip-address\": \"2001:db8:1::1\"\n"
         "    }\n"
         "}";
@@ -5562,11 +5562,37 @@ void LeaseCmdsTest::testLease6UpdateMissingParams() {
         "{\n"
         "    \"command\": \"lease6-update\",\n"
         "    \"arguments\": {"
-        "            \"subnet-id\": 44,\n"
+        "            \"subnet-id\": 66,\n"
         "            \"duid\": \"1a:1b:1c:1d:1e:1f\"\n"
         "    }\n"
         "}";
     exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Just subnet-id, duid and iaid is not enough (ip missing).
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Close, but no cigars. Still missing iaid.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"ip-address\": \"2001:db8:1::1\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "missing parameter 'iaid' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
