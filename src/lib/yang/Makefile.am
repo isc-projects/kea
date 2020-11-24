@@ -66,6 +66,6 @@ libkea_yang_include_HEADERS = \
 	yang_models.h \
 	yang_revisions.h
 
-EXTRA_DIST = yang.dox
+EXTRA_DIST = yang.dox yang_revisions.h.skel
 
 CLEANFILES = *.gcno *.gcda
