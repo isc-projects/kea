@@ -11,6 +11,7 @@
 # ./tools/bump-lib-versions.sh Kea-1.9.1 Kea-1.9.2
 
 set -eu
+set -x
 
 # Define some ANSI color codes.
 if test -t 1; then
@@ -79,7 +80,7 @@ is_stable_release() {
 find_latest_stable_release_tag() {
   tag_pattern=${1}
   for version in $(git tag | grep -F "${tag_pattern}" | tac); do
-    if is_stable_release "${version}"; then
+    if $(is_stable_release "${version}"); then
       printf '%s' "${version}"
       return
     fi
@@ -103,7 +104,7 @@ is_new_tag_stable_release=$(is_stable_release "${new_release_tag}" && printf tru
 # 4. old release is development and new release is stable
 #    illegal as there should only be stable to stable bump lib versions
 
-if ${is_old_tag_stable_release} && ${is_new_tag_stable_release}; then
+if ! ${is_old_tag_stable_release} && ${is_new_tag_stable_release}; then
   printf 'illegal bump in lib versions from development release to stable release'
   exit 1
 fi
@@ -120,15 +121,15 @@ if test -n "${diff}"; then
   exit 1
 fi
 
-latest_stable_release_tag=$(find_latest_stable_release_tag "$(printf '%s' "${old_release_tag}" | cut -d . -f1)")
+latest_stable_release_tag=$(find_latest_stable_release_tag "$(printf '%s' "${old_release_tag}" | cut -d '.' -f1)")
 increment_extra=10
 increment=1
 
 for lib in $(git diff "${old_release_tag}" --name-only src/lib/ | cut -d '/' -f 3 | sort -uV); do
   old_version=$(grep '\-version\-info' "src/lib/${lib}/Makefile.am" | tr -s ' ' | rev | cut -d ' ' -f 1 | rev | cut -d ':' -f 1)
   new_version=$((old_version + increment))
-  if ${is_new_tag_stable_release}; then
-    if ${is_old_tag_stable_release} || test "$(git diff "${latest_stable_release_tag}" "${old_release_tag}" "src/lib/${lib}/Makefile.am" | grep -Fc '\-version\-info')" -eq 0; then
+  if ! ${is_new_tag_stable_release}; then
+    if ${is_old_tag_stable_release} || test "$(git diff -U0 "${latest_stable_release_tag}" "${old_release_tag}" "src/lib/${lib}/Makefile.am" | grep '^+' | grep -v '^+++ ' | grep -c '\-version\-info')" -eq 0; then
       new_version=$((new_version + increment_extra))
     fi
   fi
