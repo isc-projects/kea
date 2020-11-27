@@ -287,10 +287,10 @@ TEST_F(ReadWriteMutexTest, readWrite) {
 
             // Verify the work thread is waiting for the write lock.
             cout << "pausing for one second" << std::endl;
-            auto status = syncw_.done_cv.wait_for(done_lock, chrono::seconds(1), [this](){ return syncw_.done; });
+            bool ret = syncw_.done_cv.wait_for(done_lock, chrono::seconds(1), [this](){ return syncw_.done; });
 
             EXPECT_FALSE(syncw_.done);
-            EXPECT_FALSE(status);
+            EXPECT_FALSE(ret);
 
             // Exiting the read lock guard.
         }
@@ -338,10 +338,10 @@ TEST_F(ReadWriteMutexTest, writeWrite) {
 
             // Verify the work thread is waiting for the write lock.
             cout << "pausing for one second" << std::endl;
-            auto status = syncw_.done_cv.wait_for(done_lock, chrono::seconds(1), [this](){ return syncw_.done; });
+            bool ret = syncw_.done_cv.wait_for(done_lock, chrono::seconds(1), [this](){ return syncw_.done; });
 
             EXPECT_FALSE(syncw_.done);
-            EXPECT_FALSE(status);
+            EXPECT_FALSE(ret);
 
             // Exiting the write lock guard.
         }
@@ -401,10 +401,10 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
 
             // Verify the writer thread is waiting for the write lock.
             cout << "pausing for one second" << std::endl;
-            auto status = syncw_.done_cv.wait_for(donew_lock, chrono::seconds(1), [this](){ return syncw_.done; });
+            bool ret = syncw_.done_cv.wait_for(donew_lock, chrono::seconds(1), [this](){ return syncw_.done; });
 
             EXPECT_FALSE(syncw_.done);
-            EXPECT_FALSE(status);
+            EXPECT_FALSE(ret);
 
             {
                 unique_lock<mutex> doner_lock(syncr_.done_mtx);
@@ -418,10 +418,10 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
 
                 // Verify the reader thread is waiting for the read lock.
                 cout << "pausing for one second" << std::endl;
-                auto status = syncr_.done_cv.wait_for(doner_lock, chrono::seconds(1), [this](){ return syncr_.done; });
+                bool ret = syncr_.done_cv.wait_for(doner_lock, chrono::seconds(1), [this](){ return syncr_.done; });
 
                 EXPECT_FALSE(syncr_.done);
-                EXPECT_FALSE(status);
+                EXPECT_FALSE(ret);
             }
             // Exiting the read lock guard.
         }
@@ -430,10 +430,10 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
             unique_lock<mutex> doner_lock(syncr_.done_mtx);
             // Verify the reader thread is still waiting for the read lock.
             cout << "pausing for one second" << std::endl;
-            auto status = syncr_.done_cv.wait_for(doner_lock, chrono::seconds(1), [this](){ return syncr_.done; });
+            bool ret = syncr_.done_cv.wait_for(doner_lock, chrono::seconds(1), [this](){ return syncr_.done; });
 
             EXPECT_FALSE(syncr_.done);
-            EXPECT_FALSE(status);
+            EXPECT_FALSE(ret);
         }
 
         // Wait writer thread to hold the write lock.
