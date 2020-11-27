@@ -526,7 +526,7 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
 
     // No error occurred, so let's disable the service.
     if (message.tellp() == 0) {
-        network_state_->disableService();
+        network_state_->disableService(NetworkState::COMMAND);
 
         message << "DHCPv6 service disabled";
         if (max_period > 0) {
@@ -542,7 +542,7 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandDhcpEnableHandler(const std::string&, ConstElementPtr) {
-    network_state_->enableService();
+    network_state_->enableService(NetworkState::COMMAND);
     return (config::createAnswer(CONTROL_RESULT_SUCCESS, "DHCP service successfully enabled"));
 }
 
@@ -1178,7 +1178,7 @@ ControlledDhcpv6Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
 bool
 ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Disable service until the connection is recovered.
-    network_state_->disableService();
+    network_state_->disableService(NetworkState::CONNECTION);
 
     LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_LOST_CONNECTION);
 
@@ -1204,7 +1204,7 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
 bool
 ControlledDhcpv6Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Enable service after the connection is recovered.
-    network_state_->enableService();
+    network_state_->enableService(NetworkState::CONNECTION);
 
     LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_SUCCEEDED);
 

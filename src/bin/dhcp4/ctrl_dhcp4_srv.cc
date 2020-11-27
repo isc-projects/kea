@@ -523,7 +523,7 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
 
     // No error occurred, so let's disable the service.
     if (message.tellp() == 0) {
-        network_state_->disableService();
+        network_state_->disableService(NetworkState::COMMAND);
 
         message << "DHCPv4 service disabled";
         if (max_period > 0) {
@@ -539,7 +539,7 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
 
 ConstElementPtr
 ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&, ConstElementPtr) {
-    network_state_->enableService();
+    network_state_->enableService(NetworkState::COMMAND);
     return (config::createAnswer(CONTROL_RESULT_SUCCESS, "DHCP service successfully enabled"));
 }
 
@@ -1159,7 +1159,7 @@ ControlledDhcpv4Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
 bool
 ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Disable service until the connection is recovered.
-    network_state_->disableService();
+    network_state_->disableService(NetworkState::CONNECTION);
 
     LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_LOST_CONNECTION);
 
@@ -1185,7 +1185,7 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
 bool
 ControlledDhcpv4Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Enable service after the connection is recovered.
-    network_state_->enableService();
+    network_state_->enableService(NetworkState::CONNECTION);
 
     LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_SUCCEEDED);
 

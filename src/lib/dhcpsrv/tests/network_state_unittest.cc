@@ -76,18 +76,18 @@ TEST_F(NetworkStateTest, default) {
 // This test verifies that it is possible to disable and then enable DHCPv4 service.
 TEST_F(NetworkStateTest, disableEnableService4) {
     NetworkState state(NetworkState::DHCPv4);
-    state.disableService();
+    state.disableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService();
+    state.enableService(NetworkState::COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv6 service.
 TEST_F(NetworkStateTest, disableEnableService6) {
     NetworkState state(NetworkState::DHCPv6);
-    state.disableService();
+    state.disableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService();
+    state.enableService(NetworkState::COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
@@ -95,7 +95,7 @@ TEST_F(NetworkStateTest, disableEnableService6) {
 // in the future to verify that it also enables disabled scopes.
 TEST_F(NetworkStateTest, enableAll) {
     NetworkState state(NetworkState::DHCPv4);
-    state.disableService();
+    state.disableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
     state.enableAll();
     EXPECT_TRUE(state.isServiceEnabled());
@@ -106,7 +106,7 @@ TEST_F(NetworkStateTest, enableAll) {
 TEST_F(NetworkStateTest, delayedEnableAll) {
     NetworkState state(NetworkState::DHCPv4);
     // Disable the service and then schedule enabling it in 1 second.
-    state.disableService();
+    state.disableService(NetworkState::COMMAND);
     state.delayedEnableAll(1);
     // Initially the service should be still disabled.
     EXPECT_FALSE(state.isServiceEnabled());
@@ -120,7 +120,7 @@ TEST_F(NetworkStateTest, delayedEnableAll) {
 TEST_F(NetworkStateTest, earlyEnableAll) {
     NetworkState state(NetworkState::DHCPv4);
     // Disable the service.
-    state.disableService();
+    state.disableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
     // Schedule enabling the service in 2 seconds.
     state.delayedEnableAll(2);
@@ -136,7 +136,7 @@ TEST_F(NetworkStateTest, earlyEnableAll) {
 TEST_F(NetworkStateTest, multipleDelayedEnableAll) {
     NetworkState state(NetworkState::DHCPv4);
     // Disable the service and then schedule enabling it in 1 second.
-    state.disableService();
+    state.disableService(NetworkState::COMMAND);
     // Schedule the first timer for 5 seconds.
     state.delayedEnableAll(5);
     // When calling it the second time the old timer should be destroyed and

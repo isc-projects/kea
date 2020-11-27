@@ -5044,10 +5044,10 @@ public:
         // Also, let's preset the DHCP server state to the opposite of the expected
         // state.
         if (dhcp_enabled) {
-            service_->network_state_->disableService();
+            service_->network_state_->disableService(NetworkState::HA);
 
         } else {
-            service_->network_state_->enableService();
+            service_->network_state_->enableService(NetworkState::HA);
         }
 
         // Transition to the desired state.
