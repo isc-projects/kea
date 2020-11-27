@@ -214,3 +214,6 @@ We have received the following contributions:
 
  - Niclas Rosenvik
    2020-01: Fix in the gtest detection scripts.
+
+ - Carsten Strotman
+   2020-11: Several Kea ARM corrections.
