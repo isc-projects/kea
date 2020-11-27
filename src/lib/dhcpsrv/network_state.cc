@@ -29,8 +29,10 @@ public:
 
     /// @brief Constructor.
     NetworkStateImpl(const NetworkState::ServerType& server_type)
-        : server_type_(server_type), globally_disabled_(false), disabled_subnets_(),
-          disabled_networks_(), timer_mgr_(TimerMgr::instance()) {
+        : server_type_(server_type), globally_disabled_(false),
+          disabled_subnets_(), disabled_networks_(),
+          timer_mgr_(TimerMgr::instance()), disabled_by_command_(false),
+          disabled_by_connection_(0), disabled_by_ha_(false) {
     }
 
     /// @brief Destructor.
@@ -39,15 +41,44 @@ public:
     }
 
     /// @brief Globally disables or enables DHCP service.
-    void setDisableService(const bool disable) {
-        globally_disabled_ = disable;
+    void setDisableService(const bool disable, const ControllerType& type) {
+        if (disable) {
+            globally_disabled_ = true;
+            switch (type) {
+            case COMMAND:
+                disabled_by_command_ = true;
+                break;
+            case CONNECTION:
+                ++disabled_by_connection_;
+                break;
+            case COMMAND:
+                disabled_by_ha_ = true;
+                break;
+            }
+        } else {
+            switch (type) {
+            case COMMAND:
+                disabled_by_command_ = false;
+                break;
+            case CONNECTION:
+                --disabled_by_connection_;
+                break;
+            case COMMAND:
+                disabled_by_ha_ = false;
+                break;
+            }
+            if (!disabled_by_command_ && disabled_by_connection_ == 0 &&
+                !disabled_by_ha_) {
+                globally_disabled_ = false;
+            }
+        }
     }
 
     /// @brief Enables DHCP service globally and per scopes.
     ///
     /// If delayed enabling DHCP service has been scheduled, it cancels it.
     void enableAll() {
-        setDisableService(false);
+        setDisableService(false, NetworkState::COMMAND);
 
         /// @todo Enable service for all subnets and networks here.
 
@@ -96,6 +127,16 @@ public:
     /// This pointer is held here to make sure that the timer manager is not
     /// destroyed before an instance of this class is destroyed.
     TimerMgrPtr timer_mgr_;
+
+    /// @brief Flag which indicates the state has been disabled by a command.
+    bool disabled_by_command_;
+
+    /// @brief Flag which indicates the state has been disabled by a connection
+    /// loss.
+    uint32_t disabled_by_connection_;
+
+    /// @brief Flag which indicates the state has been disabled by the HA lib.
+    bool disabled_by_ha_;
 };
 
 NetworkState::NetworkState(const NetworkState::ServerType& server_type)
@@ -103,13 +144,13 @@ NetworkState::NetworkState(const NetworkState::ServerType& server_type)
 }
 
 void
-NetworkState::disableService() {
-    impl_->setDisableService(true);
+NetworkState::disableService(const ControllerType& type) {
+    impl_->setDisableService(true, type);
 }
 
 void
-NetworkState::enableService() {
-    impl_->setDisableService(false);
+NetworkState::enableService(const ControllerType& type) {
+    impl_->setDisableService(false, type);
 }
 
 void
@@ -151,7 +192,6 @@ void
 NetworkState::selectiveEnable(const NetworkState::Networks&) {
     isc_throw(NotImplemented, "selectiveEnableService is not implemented");
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

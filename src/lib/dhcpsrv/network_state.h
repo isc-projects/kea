@@ -63,6 +63,13 @@ public:
         DHCPv6
     };
 
+    /// @brief Controller type.
+    enum ControllerType {
+        COMMAND,
+        CONNECTION,
+        HA
+    };
+
     /// @brief Type of the container holding collection of subnet identifiers.
     typedef std::set<SubnetID> Subnets;
 
@@ -76,14 +83,18 @@ public:
     ///
     /// The DHCP service becomes disabled for all subnets and networks,
     /// regardless of the per scope settings.
-    void disableService();
+    ///
+    /// @param type Controller type which issued the state transition.
+    void disableService(const ControllerType& type);
 
     /// @brief Globally enables DHCP service.
     ///
     /// The DHCP service becomes enabled but per scope settings are in effect.
     /// In order to enable the service for all scopes previously disabled with
     /// a control command, use @c enableAll.
-    void enableService();
+    ///
+    /// @param type Controller type which issued the state transition.
+    void enableService(const ControllerType& type);
 
     /// @brief Enables DHCP service globally and for scopes which have been
     /// disabled as a result of control command.
