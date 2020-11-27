@@ -41,29 +41,30 @@ public:
     }
 
     /// @brief Globally disables or enables DHCP service.
-    void setDisableService(const bool disable, const ControllerType& type) {
+    void setDisableService(const bool disable,
+                           const NetworkState::ControllerType& type) {
         if (disable) {
             globally_disabled_ = true;
             switch (type) {
-            case COMMAND:
+            case NetworkState::COMMAND:
                 disabled_by_command_ = true;
                 break;
-            case CONNECTION:
+            case NetworkState::CONNECTION:
                 ++disabled_by_connection_;
                 break;
-            case COMMAND:
+            case NetworkState::HA:
                 disabled_by_ha_ = true;
                 break;
             }
         } else {
             switch (type) {
-            case COMMAND:
+            case NetworkState::COMMAND:
                 disabled_by_command_ = false;
                 break;
-            case CONNECTION:
+            case NetworkState::CONNECTION:
                 --disabled_by_connection_;
                 break;
-            case COMMAND:
+            case NetworkState::HA:
                 disabled_by_ha_ = false;
                 break;
             }
