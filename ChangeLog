@@ -59,7 +59,7 @@ Kea 1.9.2 (development) released on Nov 25, 2020
 	network with global reservations enabled.
 	(Gitlab #1405)
 
-1828.	[bug]		andrei
+1828.	[bug]		andrei, razvan
 	Fix trivial logic error in handling the "lease4-update" command
 	manifesting itself on v4 if multi-threading is enabled.
 	Notable affected environment is a HA with the
