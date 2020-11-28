@@ -1812,12 +1812,48 @@ TestControl::setDefaults6(const Pkt6Ptr& pkt) {
     }
 }
 
+namespace {
+
+static OptionBuffer const concatenateBuffers(OptionBuffer const& a,
+                                             OptionBuffer const& b) {
+    OptionBuffer result;
+    result.insert(result.end(), a.begin(), a.end());
+    result.insert(result.end(), b.begin(), b.end());
+    return result;
+}
+
+static void mergeOptionIntoPacket(Pkt4Ptr const& packet,
+                                  OptionPtr const& extra_option) {
+    uint16_t const code(extra_option->getType());
+    // If option already exists...
+    OptionPtr const& option(packet->getOption(code));
+    if (option) {
+        switch (code) {
+        // List here all the options for which we want to concatenate buffers.
+        case DHO_DHCP_PARAMETER_REQUEST_LIST:
+            packet->delOption(code);
+            packet->addOption(boost::make_shared<Option>(
+                Option::V4, code,
+                concatenateBuffers(option->getData(),
+                                   extra_option->getData())));
+            return;
+        default:
+            // For all others, add option as usual, it will result in "Option
+            // already present in this message" error.
+            break;
+        }
+    }
+    packet->addOption(extra_option);
+}
+
+}  // namespace
+
 void
 TestControl::addExtraOpts(const Pkt4Ptr& pkt) {
     // Add all extra options that the user may have specified.
     const dhcp::OptionCollection& extra_opts = options_.getExtraOpts();
     for (auto entry : extra_opts) {
-        pkt->addOption(entry.second);
+        mergeOptionIntoPacket(pkt, entry.second);
     }
 }
 
