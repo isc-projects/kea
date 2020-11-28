@@ -483,7 +483,7 @@ std::string getAddrStrIA_PD(OptionPtr options) {
     // Get the prefix option the IA_PD option.
     options = ia->getOption(D6O_IAPREFIX);
     if (!options) {
-        isc_throw(isc::BadValue, "D60_IAPREFIX option is missing");
+        isc_throw(isc::BadValue, "D6O_IAPREFIX option is missing");
     }
 
     boost::shared_ptr<Option6IAPrefix> addr_option;

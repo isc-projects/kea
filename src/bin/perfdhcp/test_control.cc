@@ -993,7 +993,7 @@ void
 TestControl::registerOptionFactories6() const {
     static bool factories_registered = false;
     if (!factories_registered) {
-        // D60_ELAPSED_TIME
+        // D6O_ELAPSED_TIME
         LibDHCP::OptionFactoryRegister(Option::V6,
                                        D6O_ELAPSED_TIME,
                                        &TestControl::factoryElapsedTime6);
@@ -1161,6 +1161,7 @@ TestControl::sendDiscover4(const bool preload /*= false*/) {
                                     buf_msg_type));
     pkt4->addOption(Option::factory(Option::V4,
                                     DHO_DHCP_PARAMETER_REQUEST_LIST));
+
 
     // Set client's and server's ports as well as server's address,
     // and local (relay) address.
@@ -1671,6 +1672,7 @@ TestControl::sendSolicit6(const bool preload /*= false*/) {
     pkt6->addOption(Option::factory(Option::V6, D6O_CLIENTID, duid));
     pkt6->addOption(Option::factory(Option::V6, D6O_ORO));
 
+
     // Depending on the lease-type option specified, we should request
     // IPv6 address (with IA_NA) or IPv6 prefix (IA_PD) or both.
 
@@ -1812,7 +1814,7 @@ TestControl::setDefaults6(const Pkt6Ptr& pkt) {
 
 void
 TestControl::addExtraOpts(const Pkt4Ptr& pkt) {
-    // All all extra options that the user may have specified
+    // Add all extra options that the user may have specified.
     const dhcp::OptionCollection& extra_opts = options_.getExtraOpts();
     for (auto entry : extra_opts) {
         pkt->addOption(entry.second);
@@ -1821,7 +1823,7 @@ TestControl::addExtraOpts(const Pkt4Ptr& pkt) {
 
 void
 TestControl::addExtraOpts(const Pkt6Ptr& pkt) {
-    // All all extra options that the user may have specified
+    // Add all extra options that the user may have specified.
     const dhcp::OptionCollection& extra_opts = options_.getExtraOpts();
     for (auto entry : extra_opts) {
         pkt->addOption(entry.second);
