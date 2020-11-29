@@ -333,7 +333,7 @@ public:
     /// @param inheritance inheritance mode to be used.
     Triplet<uint32_t> getValid(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network>(&Network::getValid, valid_, inheritance,
-                                     "valid-lifetime"));
+                                     "valid-lifetime", true));
     }
 
     /// @brief Sets new valid lifetime for a network.
@@ -556,7 +556,7 @@ public:
             (inheritance != Inheritance::PARENT_NETWORK)) {
             // Get global mode.
             util::Optional<std::string> mode_label;
-            mode_label = getGlobalProperty(mode_label, "ddns-replace-client-name");
+            mode_label = getGlobalProperty(mode_label, "ddns-replace-client-name", false);
             if (!mode_label.unspecified()) {
                 try {
                     // If the mode is globally configured, convert it to an enum.
@@ -769,7 +769,8 @@ protected:
     /// of @c property.
     template<typename ReturnType>
     ReturnType getGlobalProperty(ReturnType property,
-                                 const std::string& global_name) const {
+                                 const std::string& global_name,
+                                 bool /*triplet*/) const {
         if (!global_name.empty() && fetch_globals_fn_) {
             data::ConstElementPtr globals = fetch_globals_fn_();
             if (globals && (globals->getType() == data::Element::map)) {
@@ -778,6 +779,59 @@ protected:
                     // If there is a global parameter, convert it to the
                     // optional value of the given type and return.
                     return (data::ElementValue<typename ReturnType::ValueType>()(global_param));
+                }
+            }
+        }
+        return (property);
+    }
+
+    /// @brief The @c getGlobalProperty specialization for Triplet<T>.
+    ///
+    /// The behavior depends on the triplet argument:
+    ///  - if true it tries to get min and max values too
+    ///  - if false the property is implemented as an Optional
+    ///
+    /// @note: use overloading vs specialization because full specialization
+    /// is not allowed in this scope.
+    ///
+    /// @tparam IntType Type of the encapsulated value(s).
+    ///
+    /// @param property Value to be returned when it is specified or when
+    /// no global value is found.
+    /// @param global_name Name of the global parameter which value should
+    /// be returned
+    /// @param triplet False (default) when has no min and max value so
+    /// is in fact only an @c OptionalValue, true otherwise.
+    ///
+    /// @return Optional value fetched from the global level or the value
+    /// of @c property.
+    template<typename IntType>
+    Triplet<IntType> getGlobalProperty(Triplet<IntType> property,
+                                       const std::string& global_name,
+                                       bool triplet) const {
+        if (!global_name.empty() && fetch_globals_fn_) {
+            data::ConstElementPtr globals = fetch_globals_fn_();
+            if (globals && (globals->getType() == data::Element::map)) {
+                data::ConstElementPtr param = globals->get(global_name);
+                if (param) {
+                    IntType def_value = static_cast<IntType>(param->intValue());
+                    if (!triplet) {
+                        return (def_value);
+                    } else {
+                        IntType min_value = def_value;
+                        IntType max_value = def_value;
+                        const std::string& min_name = "min-" + global_name;
+                        data::ConstElementPtr min_param = globals->get(min_name);
+                        if (min_param) {
+                            min_value = static_cast<IntType>(min_param->intValue());
+                        }
+                        const std::string& max_name = "max-" + global_name;
+                        data::ConstElementPtr max_param = globals->get(max_name);
+                        if (min_param) {
+                            min_value = static_cast<IntType>(min_param->intValue());
+                        }
+                        return (Triplet<IntType>(min_value, def_value, max_value));
+                    }
                 }
             }
         }
@@ -802,7 +856,8 @@ protected:
     /// of @c property.
     util::Optional<asiolink::IOAddress>
     getGlobalProperty(util::Optional<asiolink::IOAddress> property,
-                      const std::string& global_name) const;
+                      const std::string& global_name,
+                      bool /*triplet*/) const;
 
     /// @brief Returns a value associated with a network using inheritance.
     ///
@@ -827,6 +882,8 @@ protected:
     /// level. This value is empty by default, which indicates that the
     /// global value for the given parameter is not supported and shouldn't
     /// be fetched.
+    /// @param triplet False (default) when has no min and max value so
+    /// is in fact only an @c OptionalValue, true otherwise.
     ///
     /// @return Optional value fetched from this instance level, parent
     /// network level or global level
@@ -834,7 +891,8 @@ protected:
     ReturnType getProperty(ReturnType(BaseType::*MethodPointer)(const Inheritance&) const,
                            ReturnType property,
                            const Inheritance& inheritance,
-                           const std::string& global_name = "") const {
+                           const std::string& global_name = "",
+                           bool triplet = false) const {
 
         // If no inheritance is to be used, return the value for this
         // network regardless if it is specified or not.
@@ -853,7 +911,7 @@ protected:
 
         // If global value requested, return it.
         } else if (inheritance == Inheritance::GLOBAL) {
-            return (getGlobalProperty(ReturnType(), global_name));
+            return (getGlobalProperty(ReturnType(), global_name, triplet));
         }
 
         // We use inheritance and the value is not specified on the network level.
@@ -876,7 +934,7 @@ protected:
             // can be specified on global level and there is a callback
             // that returns the global values, try to find this parameter
             // at the global scope.
-            return (getGlobalProperty(property, global_name));
+            return (getGlobalProperty(property, global_name, triplet));
         }
 
         // We haven't found the value at any level, so return the unspecified.

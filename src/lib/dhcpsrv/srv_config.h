@@ -124,7 +124,7 @@ public:
 
     /// @brief Returns whether or not DNS should be updated when leases renew.
     ///
-    /// If this is true, DNS should always be updated when leases are 
+    /// If this is true, DNS should always be updated when leases are
     /// extended (i.e. renewed/rebound) even if the DNS information
     /// has not changed.
     ///
@@ -792,6 +792,19 @@ public:
     void addConfiguredGlobal(const std::string& name, isc::data::ConstElementPtr value) {
         configured_globals_->set(name, value);
     }
+
+    /// @brief Conducts sanity checks on global lifetime parameters.
+    ///
+    /// @param name Base name of the lifetime parameter.
+    void sanityChecksLifetime(const std::string& name) const;
+
+    /// @brief Conducts sanity checks on global lifetime parameters
+    /// before merge from the external configuration to the target one.
+    ///
+    /// @param target_config Target configuration.
+    /// @param name Base name of the lifetime parameter.
+    void sanityChecksLifetime(const SrvConfig& target_config,
+                              const std::string& name) const;
 
     /// @brief Moves deprecated parameters from dhcp-ddns element to global element
     ///

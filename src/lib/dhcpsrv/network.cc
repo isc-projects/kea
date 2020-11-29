@@ -101,7 +101,8 @@ Network::getRequiredClasses() const {
 
 Optional<IOAddress>
 Network::getGlobalProperty(Optional<IOAddress> property,
-                           const std::string& global_name) const {
+                           const std::string& global_name,
+                           bool /*triplet*/) const {
     if (!global_name.empty() && fetch_globals_fn_) {
         ConstElementPtr globals = fetch_globals_fn_();
         if (globals && (globals->getType() == Element::map)) {

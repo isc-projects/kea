@@ -78,6 +78,10 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
             // Add defaults.
             external_cfg->applyDefaultsConfiguredGlobals(SimpleParser6::GLOBAL6_DEFAULTS);
 
+            // Sanity check it.
+            external_cfg->sanityChecksLifetime("preferred-lifetime");
+            external_cfg->sanityChecksLifetime("valid-lifetime");
+
             // Now that we successfully fetched the new global parameters, let's
             // remove existing ones and merge them into the current configuration.
             cfg->clearConfiguredGlobals();
@@ -233,6 +237,9 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         // If we're configuring the server after startup, we do not apply the
         // ip-reservations-unique setting here. It will be applied when the
         // configuration is committed.
+        auto const& cfg = CfgMgr::instance().getStagingCfg();
+        external_cfg->sanityChecksLifetime(*cfg, "preferred-lifetime");
+        external_cfg->sanityChecksLifetime(*cfg, "valid-lifetime");
         CfgMgr::instance().mergeIntoStagingCfg(external_cfg->getSequence());
     } else {
         if (globals_fetched) {
@@ -252,6 +259,9 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
                 external_cfg->addConfiguredGlobal("ip-reservations-unique", Element::create(true));
             }
         }
+        auto const& cfg = CfgMgr::instance().getCurrentCfg();
+        external_cfg->sanityChecksLifetime(*cfg, "preferred-lifetime");
+        external_cfg->sanityChecksLifetime(*cfg, "valid-lifetime");
         CfgMgr::instance().mergeIntoCurrentCfg(external_cfg->getSequence());
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_CONFIG6_MERGED);

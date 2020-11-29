@@ -248,7 +248,7 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
             }
         } catch(const std::exception& ex) {
             isc_throw (BadValue, "Invalid value:" << element->str()
-                       << " explict global:" << name);
+                       << " explicit global:" << name);
         }
     }
 }
@@ -397,6 +397,179 @@ SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
             value->second->getType() != Element::map) {
                 addConfiguredGlobal(value->first, value->second);
         }
+    }
+}
+
+void
+SrvConfig::sanityChecksLifetime(const std::string& name) const {
+    // Initialize as some compilers complain otherwise.
+    uint32_t value = 0;
+    ConstElementPtr has_value = getConfiguredGlobal(name);
+    if (has_value) {
+        value = has_value->intValue();
+    }
+
+    uint32_t min_value = 0;
+    ConstElementPtr has_min = getConfiguredGlobal("min-" + name);
+    if (has_min) {
+        min_value = has_min->intValue();
+    }
+
+    uint32_t max_value = 0;
+    ConstElementPtr has_max = getConfiguredGlobal("max-" + name);
+    if (has_max) {
+        max_value = has_max->intValue();
+    }
+
+    if (!has_value && !has_min && !has_max) {
+        return;
+    }
+    if (has_value) {
+        if (!has_min && !has_max) {
+            // default only.
+            min_value = value;
+            max_value = value;
+        } else if (!has_min) {
+            // default and max.
+            min_value = value;
+        } else if (!has_max) {
+            // default and min.
+            max_value = value;
+        }
+    } else if (has_min) {
+        // min only.
+        if (!has_max) {
+            value = min_value;
+            max_value = min_value;
+        } else {
+            // min and max.
+            isc_throw(BadValue, "have min-" << name << " and max-"
+                      << name << " but no " << name << " (default)");
+        }
+    } else {
+        // max only.
+        min_value = max_value;
+        value = max_value;
+    }
+
+    // Check that min <= max.
+    if (min_value > max_value) {
+        if (has_min && has_max) {
+            isc_throw(BadValue, "the value of min-" << name << " ("
+                      << min_value << ") is not less than max-" << name << " ("
+                      << max_value << ")");
+        } else if (has_min) {
+            // Only min and default so min > default.
+            isc_throw(BadValue, "the value of min-" << name << " ("
+                      << min_value << ") is not less than (default) " << name
+                      << " (" << value << ")");
+        } else {
+            // Only default and max so default > max.
+            isc_throw(BadValue, "the value of (default) " << name
+                      << " (" << value << ") is not less than max-" << name
+                      << " (" << max_value << ")");
+        }
+    }
+
+    // Check that value is between min and max.
+    if ((value < min_value) || (value > max_value)) {
+        isc_throw(BadValue, "the value of (default) " << name << " ("
+                  << value << ") is not between min-" << name << " ("
+                  << min_value << ") and max-" << name << " ("
+                  << max_value << ")");
+    }
+}
+
+void
+SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
+                                const std::string& name) const {
+    // Three cases:
+    //  - the external/source config has the parameter: use it.
+    //  - only the target config has the parameter: use this one.
+    //  - no config has the parameter.
+    uint32_t value = 0;
+    ConstElementPtr has_value = getConfiguredGlobal(name);
+    if (!has_value) {
+        has_value = target_config.getConfiguredGlobal(name);
+    }
+    if (has_value) {
+        value = has_value->intValue();
+    }
+
+    uint32_t min_value = 0;
+    ConstElementPtr has_min = getConfiguredGlobal("min-" + name);
+    if (!has_min) {
+        has_min = target_config.getConfiguredGlobal("min-" + name);
+    }
+    if (has_min) {
+        min_value = has_min->intValue();
+    }
+
+    uint32_t max_value = 0;
+    ConstElementPtr has_max = getConfiguredGlobal("max-" + name);
+    if (!has_max) {
+        has_max = target_config.getConfiguredGlobal("max-" + name);
+    }
+    if (has_max) {
+        max_value = has_max->intValue();
+    }
+
+    if (!has_value && !has_min && !has_max) {
+        return;
+    }
+    if (has_value) {
+        if (!has_min && !has_max) {
+            // default only.
+            min_value = value;
+            max_value = value;
+        } else if (!has_min) {
+            // default and max.
+            min_value = value;
+        } else if (!has_max) {
+            // default and min.
+            max_value = value;
+        }
+    } else if (has_min) {
+        // min only.
+        if (!has_max) {
+            value = min_value;
+            max_value = min_value;
+        } else {
+            // min and max.
+            isc_throw(BadValue, "have min-" << name << " and max-"
+                      << name << " but no " << name << " (default)");
+        }
+    } else {
+        // max only.
+        min_value = max_value;
+        value = max_value;
+    }
+
+    // Check that min <= max.
+    if (min_value > max_value) {
+        if (has_min && has_max) {
+            isc_throw(BadValue, "the value of min-" << name << " ("
+                      << min_value << ") is not less than max-" << name << " ("
+                      << max_value << ")");
+        } else if (has_min) {
+            // Only min and default so min > default.
+            isc_throw(BadValue, "the value of min-" << name << " ("
+                      << min_value << ") is not less than (default) " << name
+                      << " (" << value << ")");
+        } else {
+            // Only default and max so default > max.
+            isc_throw(BadValue, "the value of (default) " << name
+                      << " (" << value << ") is not less than max-" << name
+                      << " (" << max_value << ")");
+        }
+    }
+
+    // Check that value is between min and max.
+    if ((value < min_value) || (value > max_value)) {
+        isc_throw(BadValue, "the value of (default) " << name << " ("
+                  << value << ") is not between min-" << name << " ("
+                  << min_value << ") and max-" << name << " ("
+                  << max_value << ")");
     }
 }
 

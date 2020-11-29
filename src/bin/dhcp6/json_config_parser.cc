@@ -269,6 +269,10 @@ public:
     void
     sanityChecks(const SrvConfigPtr& cfg, const ConstElementPtr& global) {
 
+        /// Global lifetime sanity checks
+        cfg->sanityChecksLifetime("preferred-lifetime");
+        cfg->sanityChecksLifetime("valid-lifetime");
+
         /// Shared network sanity checks
         const SharedNetwork6Collection* networks = cfg->getCfgSharedNetworks6()->getAll();
         if (networks) {

@@ -737,6 +737,7 @@ public:
             "\"dhcp-ddns\": { \"enable-updates\" : false }, "
             "\"option-def\": [ ], "
             "\"option-data\": [ ] }";
+        CfgMgr::instance().rollback();
         static_cast<void>(executeConfiguration(config,
                                                "reset configuration database"));
         // The default setting is to listen on all interfaces. In order to
