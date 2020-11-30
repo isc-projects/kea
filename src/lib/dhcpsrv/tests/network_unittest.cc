@@ -739,4 +739,29 @@ TEST_F(NetworkReservationTest, move) {
     TestMove(config, expected);
 }
 
+// This test verifies that the inheritance is supported for triplets.
+TEST_F(NetworkTest, inheritanceTriplet) {
+    NetworkPtr net(new Network());
+    Triplet<uint32_t> empty;
+    EXPECT_EQ(empty, net->getValid());
+    EXPECT_EQ(empty, net->getValid(Network::Inheritance::ALL));
+    EXPECT_EQ(empty, net->getValid(Network::Inheritance::GLOBAL));
+
+    // Set valid lifetime global parameter.
+    globals_->set("valid-lifetime", Element::create(200));
+    net->setFetchGlobalsFn(getFetchGlobalsFn());
+    Triplet<uint32_t> one(200);
+    EXPECT_EQ(one, net->getValid());
+    EXPECT_EQ(one, net->getValid(Network::Inheritance::ALL));
+    EXPECT_EQ(one, net->getValid(Network::Inheritance::GLOBAL));
+
+    // Set all valid lifetime global parameters.
+    globals_->set("min-valid-lifetime", Element::create(100));
+    globals_->set("max-valid-lifetime", Element::create(300));
+    Triplet<uint32_t> three(100, 200, 300);
+    EXPECT_EQ(three, net->getValid());
+    EXPECT_EQ(three, net->getValid(Network::Inheritance::ALL));
+    EXPECT_EQ(three, net->getValid(Network::Inheritance::GLOBAL));
+}
+
 }
