@@ -809,7 +809,7 @@ DControllerBase::~DControllerBase() {
 }
 
 // Refer to config_report so it will be embedded in the binary
-const char* const* d2_config_report = isc::detail::config_report;
+const char* const* d_config_report = isc::detail::config_report;
 
 std::string
 DControllerBase::getVersion(bool extended) {

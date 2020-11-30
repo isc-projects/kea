@@ -70,7 +70,7 @@ NetconfController::getNetconfProcess() {
 }
 
 // Refer to config_report so it will be embedded in the binary.
-static const char* const* netconf_config_report = isc::detail::config_report;
+const char* const* netconf_config_report = isc::detail::config_report;
 
 } // namespace isc::netconf
 } // namespace isc
