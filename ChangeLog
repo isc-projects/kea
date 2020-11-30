@@ -1,4 +1,9 @@
-1802.	[bug]		andrei
+1803.	[build]		razvan
+	Library version numbers bumped for Kea 1.8.2 stable release
+	version.
+	(Gitlab #1583)
+
+1802.	[bug]		andrei, razvan
 	Fix trivial logic error in handling the "lease4-update" command
 	manifesting itself on v4 if multi-threading is enabled.
 	Notable affected environment is a HA with the
