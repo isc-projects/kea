@@ -11,6 +11,7 @@
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/subnet.h>
 #include <process/logging_info.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 
 #include <gtest/gtest.h>
@@ -1618,6 +1619,247 @@ TEST_F(SrvConfigTest, multiThreadingSettings) {
     param->set("enable-multi-threading", Element::create(true));
     conf.setDHCPMultiThreading(param);
     EXPECT_TRUE(isEquivalent(param, conf.getDHCPMultiThreading()));
+}
+
+// Verifies that sanityChecksLifetime works as expected.
+TEST_F(SrvConfigTest, sanityChecksLifetime) {
+    // First the variant checking the current config.
+    // Note that lifetimes have a default so some cases here should not happen.
+    {
+        SCOPED_TRACE("no lifetime");
+
+        SrvConfig conf(32);
+        EXPECT_NO_THROW(conf.sanityChecksLifetime("lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("lifetime only");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("lifetime", Element::create(1000));
+        EXPECT_NO_THROW(conf.sanityChecksLifetime("lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-lifetime only");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(1000));
+        EXPECT_NO_THROW(conf.sanityChecksLifetime("lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("max-lifetime only");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("max-lifetime", Element::create(1000));
+        EXPECT_NO_THROW(conf.sanityChecksLifetime("lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-lifetime and max-lifetime but no lifetime");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(1000));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(2000));
+        std::string msg = "have min-lifetime and max-lifetime but no ";
+        msg += "lifetime (default)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("all lifetime parameters");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(1000));
+        conf.addConfiguredGlobal("lifetime", Element::create(2000));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(3000));
+        EXPECT_NO_THROW(conf.sanityChecksLifetime("lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-lifetime > max-lifetime");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(2000));
+        conf.addConfiguredGlobal("lifetime", Element::create(2000));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(1000));
+        std::string msg = "the value of min-lifetime (2000) is not less ";
+        msg += "than max-lifetime (1000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("min-lifetime > lifetime");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(2000));
+        conf.addConfiguredGlobal("lifetime", Element::create(1000));
+        std::string msg = "the value of min-lifetime (2000) is not less ";
+        msg += "than (default) lifetime (1000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("lifetime > max-lifetime");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("lifetime", Element::create(2000));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(1000));
+        std::string msg = "the value of (default) lifetime (2000) is not ";
+        msg += "less than max-lifetime (1000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("lifetime not between min-lifetime and max-lifetime");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(1000));
+        conf.addConfiguredGlobal("lifetime", Element::create(3000));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(2000));
+        std::string msg = "the value of (default) lifetime (3000) is not ";
+        msg += "between min-lifetime (1000) and max-lifetime (2000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    // Second the cariant checking an external config before merging.
+    // We assume that the target config is correct as this was the case
+    // when this variant is used and its lower the number of cases...
+
+    SrvConfig target(10);
+    target.addConfiguredGlobal("min-lifetime", Element::create(1000));
+    target.addConfiguredGlobal("lifetime", Element::create(2000));
+    target.addConfiguredGlobal("max-lifetime", Element::create(3000));
+
+    {
+        SCOPED_TRACE("no lifetime");
+
+        SrvConfig conf(32);
+        EXPECT_NO_THROW(conf.sanityChecksLifetime(target, "lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("lifetime only");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("lifetime", Element::create(1000));
+        EXPECT_NO_THROW(conf.sanityChecksLifetime(target, "lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-lifetime only");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(1000));
+        EXPECT_NO_THROW(conf.sanityChecksLifetime(target, "lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("max-lifetime only");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("max-lifetime", Element::create(3000));
+        EXPECT_NO_THROW(conf.sanityChecksLifetime(target, "lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-lifetime and max-lifetime but no lifetime");
+
+        SrvConfig empty(10);
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(1000));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(3000));
+        std::string msg = "have min-lifetime and max-lifetime but no ";
+        msg += "lifetime (default)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(empty, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("all lifetime parameters");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(1000));
+        conf.addConfiguredGlobal("lifetime", Element::create(2000));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(3000));
+        EXPECT_NO_THROW(conf.sanityChecksLifetime(target, "lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("overwrite all lifetime parameters");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(100));
+        conf.addConfiguredGlobal("lifetime", Element::create(200));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(300));
+        EXPECT_NO_THROW(conf.sanityChecksLifetime(target, "lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-lifetime > max-lifetime");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(2000));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(1000));
+        std::string msg = "the value of min-lifetime (2000) is not less ";
+        msg += "than max-lifetime (1000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("min-lifetime > target max-lifetime");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(4000));
+        std::string msg = "the value of min-lifetime (4000) is not less ";
+        msg += "than max-lifetime (3000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("min-lifetime > lifetime");
+
+        SrvConfig empty(10);
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(2000));
+        conf.addConfiguredGlobal("lifetime", Element::create(1000));
+        std::string msg = "the value of min-lifetime (2000) is not less ";
+        msg += "than (default) lifetime (1000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(empty, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("lifetime > max-lifetime");
+
+        SrvConfig empty(10);
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("lifetime", Element::create(2000));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(1000));
+        std::string msg = "the value of (default) lifetime (2000) is not ";
+        msg += "less than max-lifetime (1000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(empty, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("lifetime not between min-lifetime and max-lifetime");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("lifetime", Element::create(4000));
+        std::string msg = "the value of (default) lifetime (4000) is not ";
+        msg += "between min-lifetime (1000) and max-lifetime (3000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
+                         isc::BadValue, msg);
+    }
 }
 
 } // end of anonymous namespace

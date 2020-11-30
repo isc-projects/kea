@@ -693,6 +693,7 @@ public:
             "\"dhcp-ddns\": { \"enable-updates\" : false }, "
             "\"option-def\": [ ], "
             "\"option-data\": [ ] }";
+        CfgMgr::instance().rollback();
         static_cast<void>(executeConfiguration(config,
                                                "reset configuration database"));
         CfgMgr::instance().clear();
@@ -956,6 +957,72 @@ TEST_F(Dhcp4ParserTest, outBoundValidLifetime) {
     ASSERT_NO_THROW(json = parseDHCP4(crossed));
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     expected = "subnet configuration failed: "
+        "the value of min-valid-lifetime (2000) is not "
+        "less than max-valid-lifetime (1000)";
+    checkResult(status, 1, expected);
+}
+
+/// Check that valid-lifetime must be between min-valid-lifetime and
+/// max-valid-lifetime when a bound is specified. Check on global
+/// parameters only.
+TEST_F(Dhcp4ParserTest, outBoundGlobalValidLifetime) {
+
+    string too_small =  "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(too_small));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    string expected =
+        "the value of min-valid-lifetime (2000) is not "
+        "less than (default) valid-lifetime (1000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string too_large =  "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 2000, \"max-valid-lifetime\": 1000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP4(too_large));
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    expected =
+        "the value of (default) valid-lifetime (2000) is not "
+        "less than max-valid-lifetime (1000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string before =  "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000, "
+        "\"max-valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP4(before));
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    expected =
+        "the value of (default) valid-lifetime (1000) is not "
+        "between min-valid-lifetime (2000) and max-valid-lifetime (4000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string after =  "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 5000, \"min-valid-lifetime\": 1000, "
+        "\"max-valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP4(after));
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    expected =
+        "the value of (default) valid-lifetime (5000) is not "
+        "between min-valid-lifetime (1000) and max-valid-lifetime (4000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string crossed =  "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 1500, \"min-valid-lifetime\": 2000, "
+        "\"max-valid-lifetime\": 1000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP4(crossed));
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    expected =
         "the value of min-valid-lifetime (2000) is not "
         "less than max-valid-lifetime (1000)";
     checkResult(status, 1, expected);

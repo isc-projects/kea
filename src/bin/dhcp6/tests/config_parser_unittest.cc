@@ -1110,6 +1110,71 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
     checkResult(status, 1, expected);
 }
 
+/// Check that valid-lifetime must be between min-valid-lifetime and
+/// max-valid-lifetime when a bound is specified. Check on global
+/// parameters only.
+TEST_F(Dhcp6ParserTest, outGlobalBoundValidLifetime) {
+
+    string too_small =  "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(too_small));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    string expected =
+        "the value of min-valid-lifetime (2000) is not "
+        "less than (default) valid-lifetime (1000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string too_large =  "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 2000, \"max-valid-lifetime\": 1000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(too_large));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected =
+        "the value of (default) valid-lifetime (2000) is not "
+        "less than max-valid-lifetime (1000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string before =  "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000, "
+        "\"max-valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(before));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected =
+        "the value of (default) valid-lifetime (1000) is not "
+        "between min-valid-lifetime (2000) and max-valid-lifetime (4000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string after =  "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 5000, \"min-valid-lifetime\": 1000, "
+        "\"max-valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(after));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected =
+        "the value of (default) valid-lifetime (5000) is not "
+        "between min-valid-lifetime (1000) and max-valid-lifetime (4000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string crossed =  "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 1500, \"min-valid-lifetime\": 2000, "
+        "\"max-valid-lifetime\": 1000 }";
+    ASSERT_NO_THROW(json = parseDHCP6(crossed));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected =
+        "the value of min-valid-lifetime (2000) is not "
+        "less than max-valid-lifetime (1000)";
+    checkResult(status, 1, expected);
+}
+
 /// Check that preferred-lifetime must be between min-preferred-lifetime and
 /// max-preferred-lifetime when a bound is specified, *AND* a subnet is
 /// specified (boundary check is done when lifetimes are applied).
@@ -1185,6 +1250,71 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
     ASSERT_NO_THROW(json = parseDHCP6(crossed));
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     expected = "subnet configuration failed: "
+        "the value of min-preferred-lifetime (2000) is not "
+        "less than max-preferred-lifetime (1000)";
+    checkResult(status, 1, expected);
+}
+
+/// Check that preferred-lifetime must be between min-preferred-lifetime and
+/// max-preferred-lifetime when a bound is specified. Check on global
+/// parameters only.
+TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
+
+    string too_small =  "{ " + genIfaceConfig() + "," +
+        "\"preferred-lifetime\": 1000, \"min-preferred-lifetime\": 2000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(too_small));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    string expected =
+        "the value of min-preferred-lifetime (2000) is not "
+        "less than (default) preferred-lifetime (1000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string too_large =  "{ " + genIfaceConfig() + "," +
+        "\"preferred-lifetime\": 2000, \"max-preferred-lifetime\": 1000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(too_large));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected =
+        "the value of (default) preferred-lifetime (2000) is not "
+        "less than max-preferred-lifetime (1000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string before =  "{ " + genIfaceConfig() + "," +
+        "\"preferred-lifetime\": 1000, \"min-preferred-lifetime\": 2000, "
+        "\"max-preferred-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(before));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected =
+        "the value of (default) preferred-lifetime (1000) is not between "
+        "min-preferred-lifetime (2000) and max-preferred-lifetime (4000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string after =  "{ " + genIfaceConfig() + "," +
+        "\"preferred-lifetime\": 5000, \"min-preferred-lifetime\": 1000, "
+        "\"max-preferred-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(after));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected =
+        "the value of (default) preferred-lifetime (5000) is not between "
+        "min-preferred-lifetime (1000) and max-preferred-lifetime (4000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string crossed =  "{ " + genIfaceConfig() + "," +
+        "\"preferred-lifetime\": 1500, \"min-preferred-lifetime\": 2000, "
+        "\"max-preferred-lifetime\": 1000 }";
+    ASSERT_NO_THROW(json = parseDHCP6(crossed));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected =
         "the value of min-preferred-lifetime (2000) is not "
         "less than max-preferred-lifetime (1000)";
     checkResult(status, 1, expected);
