@@ -1,4 +1,4 @@
-1838.	[bug]*		fdupont
+1838.	[bug]		fdupont
 	The DHCPv6 sent multiple instances of an option or a
 	sub-option when it seems to be requested more than once
 	directly by the client or using the always-send flag.
