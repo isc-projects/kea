@@ -219,6 +219,8 @@ def get_system_revision():
         revision = platform.release()
     if '"' in revision:
         revision = revision.replace('"', '')
+    if '"' in system:
+        system = system.replace('"', '')
     return system.lower(), revision
 
 
