@@ -57,7 +57,8 @@ SYSTEMS = {
                '9',
                '10'],
     'freebsd': ['11.2',
-                '12.0'],
+                '12.0',
+                '12.1'],
     'alpine': [
         '3.10',
         '3.11',
@@ -927,7 +928,7 @@ def _configure_mysql(system, revision, features):
 
     elif system == 'freebsd':
         cmd = "echo 'SET PASSWORD = \"\";' "
-        cmd += "| sudo mysql -u root --password=\"$(sudo cat /root/.mysql_secret | grep -v '#')\" --connect-expired-password"
+        cmd += "| sudo mysql -u root --password=\"$(sudo cat /root/.mysql_secret | grep -v '^#')\" --connect-expired-password"
         execute(cmd, raise_error=False)
 
     elif system == 'alpine':
@@ -992,8 +993,8 @@ def _configure_pgsql(system, features):
         execute('sudo /usr/local/etc/rc.d/postgresql initdb')
 
     if system == 'freebsd':
-        # echo or redirection to stdout is needed otherwise the script will hang at "line = p.stdout.readline()"
-        execute('sudo service postgresql start && echo "PostgreSQL started"')
+        # redirecting output from start script to /dev/null otherwise the postgresql rc.d script hangs
+        execute('sudo service postgresql start > /dev/null')
     elif system == 'alpine':
         execute('sudo rc-update add postgresql')
         execute('sudo /etc/init.d/postgresql start')
@@ -1380,7 +1381,11 @@ def prepare_system_local(features, check_times):
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs']
 
         if 'docs' in features:
-            packages.extend(['py36-sphinx', 'py36-sphinx_rtd_theme'])
+            if revision.startswith('12.1'):
+                # revision 12.1-RELEASE
+                packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
+            else:
+                packages.extend(['py36-sphinx', 'py36-sphinx_rtd_theme'])
 
         if 'unittest' in features:
             _install_gtest_sources()
