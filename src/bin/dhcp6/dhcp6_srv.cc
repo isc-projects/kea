@@ -1475,7 +1475,9 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         for (OptionContainerPersistIndex::const_iterator desc = range.first;
              desc != range.second; ++desc) {
             // Add the persistent option code to requested options
-            requested_opts.push_back(desc->option_->getType());
+            if (desc->option_) {
+                requested_opts.push_back(desc->option_->getType());
+            }
         }
     }
 
