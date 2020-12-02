@@ -141,7 +141,6 @@ std::set<std::string> dhcp4_statistics = {
 // module is called.
 Dhcp4Hooks Hooks;
 
-
 namespace isc {
 namespace dhcp {
 
@@ -597,7 +596,6 @@ void Dhcpv4Exchange::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
     }
 }
 
-
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
@@ -927,7 +925,7 @@ Dhcpv4Srv::run() {
     // Set up structures needed for fuzzing.
     Fuzz fuzzer(4, server_port_);
     //
-    // The next line is needed as a signature for AFL to recognise that we are
+    // The next line is needed as a signature for AFL to recognize that we are
     // running persistent fuzzing.  This has to be in the main image file.
     while (__AFL_LOOP(fuzzer.maxLoopCount())) {
         // Read from stdin and put the data read into an address/port on which
@@ -1655,7 +1653,7 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
         co_list.push_back(subnet->getCfgOption());
     }
 
-    // Forthly, shared network specific options.
+    // Fourthly, shared network specific options.
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
     if (network && !network->getCfgOption()->empty()) {
@@ -1818,11 +1816,12 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     OptionUint8ArrayPtr oro;
     if (vendor_req) {
         oro = boost::dynamic_pointer_cast<OptionUint8Array>(vendor_req->getOption(DOCSIS3_V4_ORO));
+        // Get the list of options that client requested.
+        if (oro) {
+            requested_opts = oro->getValues();
+        }
     }
-    // Get the list of options that client requested.
-    if (oro) {
-        requested_opts = oro->getValues();
-    }
+
     // Iterate on the configured option list to add persistent options
     for (CfgOptionList::const_iterator copts = co_list.begin();
          copts != co_list.end(); ++copts) {
@@ -1878,7 +1877,6 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         }
     }
 }
-
 
 void
 Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
@@ -2261,7 +2259,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         return;
     }
 
-
     // Get the server identifier. It will be used to determine the state
     // of the client.
     OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<
@@ -2309,7 +2306,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // We used to issue a separate query (two actually: one for client-id
         // and another one for hw-addr for) each subnet in the shared network.
         // That was horribly inefficient if the client didn't have any lease
-        // (or there were many subnets and the client happended to be in one
+        // (or there were many subnets and the client happened to be in one
         // of the last subnets).
         //
         // We now issue at most two queries: get all the leases for specific
@@ -2656,7 +2653,6 @@ Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr
         resp->addOption(t1);
     }
 }
-
 
 uint16_t
 Dhcpv4Srv::checkRelayPort(const Dhcpv4Exchange& ex) {
@@ -3090,7 +3086,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
     appendServerID(ex);
 
     // Return the pointer to the context, which will be required by the
-    // leases4_comitted callouts.
+    // leases4_committed callouts.
     context = ex.getContext();
 
     return (ex.getResponse());
@@ -3782,8 +3778,7 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
 }
 
 void
-Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
-{
+Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query) {
     // Iterate on the list of deferred option codes
     BOOST_FOREACH(const uint16_t& code, query->getDeferredOptions()) {
         OptionDefinitionPtr def;
@@ -3804,7 +3799,7 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
                 continue;
             }
             def = ccdef->getCfgOptionDef()->get(DHCP4_OPTION_SPACE, code);
-            // Stop at the first client class with a defition
+            // Stop at the first client class with a definition
             if (def) {
                 break;
             }

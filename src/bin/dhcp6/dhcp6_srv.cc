@@ -504,7 +504,7 @@ int Dhcpv6Srv::run() {
     // Set up structures needed for fuzzing.
     Fuzz fuzzer(6, server_port_);
     //
-    // The next line is needed as a signature for AFL to recognise that we are
+    // The next line is needed as a signature for AFL to recognize that we are
     // running persistent fuzzing.  This has to be in the main image file.
     while (__AFL_LOOP(fuzzer.maxLoopCount())) {
         // Read from stdin and put the data read into an address/port on which
@@ -1380,7 +1380,9 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         for (OptionContainerPersistIndex::const_iterator desc = range.first;
              desc != range.second; ++desc) {
             // Add the persistent option code to requested options
-            requested_opts.push_back(desc->option_->getType());
+            if (desc->option_) {
+                requested_opts.push_back(desc->option_->getType());
+            }
         }
     }
 
@@ -1492,9 +1494,9 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     bool added = false;
 
     for (uint16_t opt : requested_opts) {
-        for (CfgOptionList::const_iterator copts = co_list.begin();
-             copts != co_list.end(); ++copts) {
-            if (!vendor_rsp->getOption(opt)) {
+        if (!vendor_rsp->getOption(opt)) {
+            for (CfgOptionList::const_iterator copts = co_list.begin();
+                 copts != co_list.end(); ++copts) {
                 OptionDescriptor desc = (*copts)->get(vendor_id, opt);
                 if (desc.option_) {
                     vendor_rsp->addOption(desc.option_);
@@ -2121,7 +2123,6 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
         .arg(ia->getIAID())
         .arg(hint_opt ? hint.toText() : "(no hint)");
 
-
     const Subnet6Ptr& subnet = ctx.subnet_;
 
     // Create IA_PD that we will put in the response.
@@ -2506,7 +2507,6 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                                (*l)->preferred_lft_, (*l)->valid_lft_));
         ia_rsp->addOption(prf);
 
-
         if (pd_exclude_requested) {
             // PD exclude option has been requested via ORO, thus we need to
             // include it if the pool configuration specifies this option.
@@ -2704,7 +2704,6 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_RELEASE)
         .arg(query->getLabel())
         .arg(ia->getIAID());
-
 
     // Release can be done in one of two ways:
     // Approach 1: extract address from client's IA_NA and see if it belongs
@@ -3028,7 +3027,6 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
     return (ia_rsp);
 }
-
 
 Pkt6Ptr
 Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
