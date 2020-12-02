@@ -1869,12 +1869,12 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
                 }
             }
         }
+    }
 
-        // If we added some sub-options and the vivso option is not in
-        // the response already, then add it.
-        if (added && !ex.getResponse()->getOption(DHO_VIVSO_SUBOPTIONS)) {
-            ex.getResponse()->addOption(vendor_rsp);
-        }
+    // If we added some sub-options and the vivso option is not in
+    // the response already, then add it.
+    if (added && !ex.getResponse()->getOption(DHO_VIVSO_SUBOPTIONS)) {
+        ex.getResponse()->addOption(vendor_rsp);
     }
 }
 
