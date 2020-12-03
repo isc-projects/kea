@@ -1,4 +1,5 @@
 #!/bin/sh
+
 # Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -8,39 +9,43 @@
 # The logger supports the idea of a "console" logger than logs to either stdout
 # or stderr.  This test checks that both these options work.
 
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
 testname="Console output test"
-echo $testname
+printf '%s\n' "${testname}"
 
 failcount=0
-tempfile=@abs_builddir@/console_test_tempfile_$$
+tempfile="@abs_builddir@/console_test_tempfile_$$"
 
 # Look at tempfile and check that the count equals the expected count
 passfail() {
-    count=`wc -l $tempfile | awk '{print $1}'`
-    if [ $count -eq $1 ]; then
-        echo " pass"
+    count=$(wc -l $tempfile | awk '{print $1}')
+    if [ "${count}" -eq "${1}" ]; then
+        printf ' pass\n'
     else
-        echo " FAIL"
-        failcount=`expr $failcount + $1`
+        printf ' FAIL\n'
+        failcount=$((failcount + $1))
     fi
 }
 
-echo -n "1. Checking that console output to stdout goes to stdout:"
+printf '1. Checking that console output to stdout goes to stdout:'
 rm -f $tempfile
 ./logger_example -c stdout -s error 1> $tempfile 2> /dev/null
 passfail 4
 
-echo -n "2. Checking that console output to stdout does not go to stderr:"
+printf '2. Checking that console output to stdout does not go to stderr:'
 rm -f $tempfile
 ./logger_example -c stdout -s error 1> /dev/null 2> $tempfile
 passfail 0
 
-echo -n "3. Checking that console output to stderr goes to stderr:"
+printf '3. Checking that console output to stderr goes to stderr:'
 rm -f $tempfile
 ./logger_example -c stderr -s error 1> /dev/null 2> $tempfile
 passfail 4
 
-echo -n "4. Checking that console output to stderr does not go to stdout:"
+printf '4. Checking that console output to stderr does not go to stdout:'
 rm -f $tempfile
 ./logger_example -c stderr -s error 1> $tempfile 2> /dev/null
 passfail 0

@@ -8,6 +8,33 @@
 
 # This is an utility script that is being included by other scripts.
 
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# These are the default parameters. They will likely not work in any
+# specific deployment. Also used in unit tests.
+db_host='localhost'
+db_user='keatest'
+db_password='keatest'
+db_name='keatest'
+
+# Runs all the given arguments as a single command. Maintains quoting. Places
+# output in ${OUTPUT} and exit code in ${EXIT_CODE}. Does not support pipes and
+# redirections. Support for them could be added through eval and single
+# parameter assignment, but eval is not recommended.
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+run_and_return_output_and_exit_code() {
+    if test -n "${DEBUG+x}"; then
+        printf '%s\n' "${*}" >&2
+    fi
+    set +e
+    OUTPUT=$("${@}")
+    EXIT_CODE=${?}
+    set -e
+}
+
 # There are two ways of calling this method.
 # mysql_execute SQL_QUERY - This call is simpler, but requires db_user,
 #     db_password and db_name variables to be set.
@@ -22,15 +49,11 @@ mysql_execute() {
     shift
     if [ $# -gt 1 ]; then
         mysql -N -B "$@" -e "${QUERY}"
-        retcode=$?
     else
         # Shellcheck complains about variables not being set. They're set in the script that calls this script.
         # shellcheck disable=SC2154
         mysql -N -B --host="${db_host}" --database="${db_name}" --user="${db_user}" --password="${db_password}" -e "${QUERY}"
-        retcode=$?
     fi
-
-    return $retcode
 }
 
 mysql_execute_script() {
@@ -38,29 +61,26 @@ mysql_execute_script() {
     shift
     if [ $# -ge 1 ]; then
         mysql -N -B "$@" < "${file}"
-        retcode=$?
     else
         mysql -N -B --host="${db_host}" --database="${db_name}" --user="${db_user}" --password="${db_password}" < "${file}"
-        retcode=$?
     fi
-
-    return $retcode
 }
 
 mysql_version() {
     mysql_execute "SELECT CONCAT_WS('.', version, minor) FROM schema_version" "$@"
-    return $?
 }
 
 checked_mysql_version() {
-    mysql_execute "SELECT CONCAT_WS('.', version, minor) FROM schema_version" "$@"
-    retcode=$?
-    if [ $retcode -ne 0 ]
+    run_and_return_output_and_exit_code \
+        mysql_execute "SELECT CONCAT_WS('.', version, minor) FROM schema_version" "$@"
+
+    if [ "${EXIT_CODE}" -ne 0 ]
     then
-        printf "Failed to get schema version, mysql status  %s\n" "${retcode}"
-        exit 1
+        printf "Failed to get schema version, mysql status  %s\n" "${EXIT_CODE}"
     fi
-    return $retcode
+
+    printf '%s\n' "${OUTPUT}"
+    return "${EXIT_CODE}"
 }
 
 # Submits given SQL text to PostgreSQL
@@ -78,13 +98,10 @@ pgsql_execute() {
     shift
     if [ $# -gt 0 ]; then
         echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q "$@"
-        retcode=$?
     else
         export PGPASSWORD=$db_password
         echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q -U "${db_user}" -d "${db_name}"
-        retcode=$?
     fi
-    return $retcode
 }
 
 # Submits SQL in a given file to PostgreSQL
@@ -102,75 +119,75 @@ pgsql_execute_script() {
     shift
     if [ $# -gt 0 ]; then
         psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q -f "${file}" "$@"
-        retcode=$?
     else
         export PGPASSWORD=$db_password
         psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q -U "${db_user}" -d "${db_name}" -f "${file}"
-        retcode=$?
     fi
-    return $retcode
 }
 
 pgsql_version() {
     pgsql_execute "SELECT version || '.' || minor FROM schema_version" "$@"
-    return $?
 }
 
 checked_pgsql_version() {
-    pgsql_execute "SELECT version || '.' || minor FROM schema_version" "$@"
-    retcode=$?
-    if [ $retcode -ne 0 ]
+    run_and_return_output_and_exit_code \
+        pgsql_execute "SELECT version || '.' || minor FROM schema_version" "$@"
+
+    if [ "${EXIT_CODE}" -ne 0 ]
     then
-        printf "Failed to get schema version, pgsql status %s\n" "${retcode}"
-        exit 1
+        printf "Failed to get schema version, pgsql status %s\n" "${EXIT_CODE}"
     fi
-    return $retcode
+
+    printf '%s\n' "${OUTPUT}"
+    return "${EXIT_CODE}"
 }
 
 cql_execute() {
     query=$1
     shift
     if [ $# -gt 1 ]; then
-        cqlsh "$@" -e "$query"
-        retcode=$?
+        run_and_return_output_and_exit_code \
+            cqlsh "$@" -e "$query"
     else
-        cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -e "${query}"
-        retcode=$?
+        run_and_return_output_and_exit_code \
+            cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -e "${query}"
     fi
 
-    if [ $retcode -ne 0 ]; then
-        printf "cqlsh returned with exit status %s\n" "${retcode}"
-        exit $retcode
+    if [ "${EXIT_CODE}" -ne 0 ]; then
+        printf "cqlsh returned with exit status %s\n" "${EXIT_CODE}"
     fi
 
-    return $retcode
+    printf '%s\n' "${OUTPUT}"
+    return "${EXIT_CODE}"
 }
 
 cql_execute_script() {
     file=$1
     shift
     if [ $# -gt 1 ]; then
-        cqlsh "$@" -e "$file"
-        retcode=$?
+        run_and_return_output_and_exit_code \
+            cqlsh "$@" -e "$file"
     else
-        cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -f "${file}"
-        retcode=$?
+        run_and_return_output_and_exit_code \
+            cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -f "${file}"
     fi
 
-    if [ $retcode -ne 0 ]; then
-        printf "cqlsh returned with exit status %s\n" "${retcode}"
-        exit $retcode
+    if [ "${EXIT_CODE}" -ne 0 ]; then
+        printf "cqlsh returned with exit status %s\n" "${EXIT_CODE}"
     fi
 
-    return $retcode
+    printf '%s\n' "${OUTPUT}"
+    return "${EXIT_CODE}"
 }
 
 cql_version() {
-    version=$(cql_execute "SELECT version, minor FROM schema_version" "$@")
-    error=$?
+    run_and_return_output_and_exit_code \
+        cql_execute "SELECT version, minor FROM schema_version" "$@"
+    version="${OUTPUT}"
+    select_exit_code="${EXIT_CODE}"
     version=$(echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 | tr "|" ".")
     echo "$version"
-    return $error
+    return "${select_exit_code}"
 }
 
 # recount IPv4 leases from scratch

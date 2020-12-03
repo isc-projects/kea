@@ -10,6 +10,10 @@
 # This script is used to run Kea from installation directory,
 # as well as for running tests.
 
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
 cql_lib="cassandra"
 
 if test "$(uname -s)" = "Darwin"; then

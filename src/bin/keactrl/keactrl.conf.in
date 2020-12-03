@@ -1,26 +1,31 @@
+#!/bin/sh
+
 # This is a configuration file for keactrl script which controls
 # the startup, shutdown, reconfiguration and gathering the status
 # of the Kea's processes.
 
 # Note that control agent must be launched after servers and netconf last.
 
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+
 # prefix holds the location where the Kea is installed.
-prefix=@prefix@
+prefix="@prefix@"
 
 # Location of Kea configuration files.
-kea_dhcp4_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp4.conf
-kea_dhcp6_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp6.conf
-kea_dhcp_ddns_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp-ddns.conf
-kea_ctrl_agent_config_file=@sysconfdir@/@PACKAGE@/kea-ctrl-agent.conf
-kea_netconf_config_file=@sysconfdir@/@PACKAGE@/kea-netconf.conf
+kea_dhcp4_config_file="@sysconfdir@/@PACKAGE@/kea-dhcp4.conf"
+kea_dhcp6_config_file="@sysconfdir@/@PACKAGE@/kea-dhcp6.conf"
+kea_dhcp_ddns_config_file="@sysconfdir@/@PACKAGE@/kea-dhcp-ddns.conf"
+kea_ctrl_agent_config_file="@sysconfdir@/@PACKAGE@/kea-ctrl-agent.conf"
+kea_netconf_config_file="@sysconfdir@/@PACKAGE@/kea-netconf.conf"
 
 # Location of Kea binaries.
-exec_prefix=@exec_prefix@
-dhcp4_srv=@sbindir@/kea-dhcp4
-dhcp6_srv=@sbindir@/kea-dhcp6
-dhcp_ddns_srv=@sbindir@/kea-dhcp-ddns
-ctrl_agent_srv=@sbindir@/kea-ctrl-agent
-netconf_srv=@sbindir@/kea-netconf
+exec_prefix="@exec_prefix@"
+dhcp4_srv="@sbindir@/kea-dhcp4"
+dhcp6_srv="@sbindir@/kea-dhcp6"
+dhcp_ddns_srv="@sbindir@/kea-dhcp-ddns"
+ctrl_agent_srv="@sbindir@/kea-ctrl-agent"
+netconf_srv="@sbindir@/kea-netconf"
 
 # Start DHCPv4 server?
 dhcp4=yes

@@ -2387,7 +2387,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
     ASSERT_TRUE(fqdn);
     EXPECT_EQ("client1.example.com.", fqdn->getDomainName());
 
-    // ddns-send-udpates for subnet 1 should be off, so we should NOT have an NRC.
+    // ddns-send-updates for subnet 1 should be off, so we should NOT have an NRC.
     ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     // Now let's try with a client on subnet 2.
@@ -2411,7 +2411,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
     ASSERT_TRUE(fqdn);
     EXPECT_EQ("two.example.com.", fqdn->getDomainName());
 
-    // ddns-send-udpates for subnet 2 are enabled, verify the NCR is correct.
+    // ddns-send-updates for subnet 2 are enabled, verify the NCR is correct.
     ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             resp->getYiaddr().toText(),

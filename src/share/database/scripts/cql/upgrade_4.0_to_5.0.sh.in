@@ -1,13 +1,35 @@
 #!/bin/sh
 
-prefix=@prefix@
+# Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# shellcheck disable=SC2039
+# SC2039: In POSIX sh, arrays are undefined.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
 if [ -e "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh" ]; then
-    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 else
-    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
+
+# Save the command line arguments for later use.
+cqlargs=("${@}")
 
 # Need a path for temporary files created during data update
 # Use the state directory in the install path directory if it exists, otherwise
@@ -18,11 +40,9 @@ else
     temp_file_dir="@abs_top_builddir@/src/share/database/scripts/cql"
 fi
 
-cqlargs=$@
-
 # Ensures the current schema version is 4.0. If not it exits.
 check_version() {
-    version=$(cql_version $cqlargs)
+    version=$(cql_version "${cqlargs[@]}")
 
     if [ "${version}" != "4.0" ]; then
         printf "This script upgrades 4.0 to 5.0. Reported version is %s. Skipping upgrade.\n" "${version}"
@@ -32,7 +52,7 @@ check_version() {
 
 # Peforms the schema changes from 4.0 to 5.0
 update_schema() {
-    cqlsh $cqlargs <<EOF
+    cqlsh "${cqlargs[@]}" <<EOF
 -- This line starts database upgrade to version 5.0
 
 -- Add the lower case hostname column to reservations.
@@ -52,12 +72,6 @@ INSERT INTO schema_version (version, minor) VALUES(5, 0);
 
 -- This line concludes database upgrade to version 5.0
 EOF
-
-    if [ "$?" -ne 0 ]
-    then
-        echo Schema udpate FAILED!
-        exit 1
-    fi
 }
 
 # Functions to delete temporary update files
@@ -65,32 +79,32 @@ clean_up() {
     # clean up the files
     if [ -e "$host_export_file" ]
     then
-        rm $host_export_file
+        rm "$host_export_file"
     fi
 
     if [ -e "$host_update_file" ]
     then
-        rm $host_update_file
+        rm "$host_update_file"
     fi
 
     if [ -e "$lease4_export_file" ]
     then
-        rm $lease4_export_file
+        rm "$lease4_export_file"
     fi
 
     if [ -e "$lease4_update_file" ]
     then
-        rm $lease4_update_file
+        rm "$lease4_update_file"
     fi
 
     if [ -e "$lease6_export_file" ]
     then
-        rm $lease6_export_file
+        rm "$lease6_export_file"
     fi
 
     if [ -e "$lease6_update_file" ]
     then
-        rm $lease6_update_file
+        rm "$lease6_update_file"
     fi
 }
 
@@ -113,7 +127,7 @@ exit_now() {
         echo "Data Update FAILURE! $explanation"
     fi
 
-    exit $status
+    exit "$status"
 }
 
 # This function adds host 'lower_case_hostname' column.
@@ -129,8 +143,8 @@ update_host_data() {
     echo "Exporting hostnames to $host_export_file ..."
     query="COPY hosts (key, id, hostname) TO '$host_export_file'"
 
-    cqlsh $cqlargs -e "$query"
-    if [ "$?" -ne 0 ]
+
+    if ! cqlsh "${cqlargs[@]}" -e "$query"
     then
         exit_now 1 "Cassandra get hostname failed! Could not update host!"
     fi
@@ -138,8 +152,8 @@ update_host_data() {
     # Strip the carriage returns that CQL insists on adding.
     if [ -e "$host_export_file" ]
     then
-        cat $host_export_file | tr -d '\015' > $host_export_file.2
-        mv $host_export_file.2 $host_export_file
+        tr -d '\015' < "$host_export_file" > "$host_export_file.2"
+        mv "$host_export_file.2" "$host_export_file"
     else
         # Shouldn't happen but then again we're talking about CQL here
         exit_now 1 "Cassandra export file $host_export_file is missing?"
@@ -148,14 +162,14 @@ update_host_data() {
     # Iterate through the exported data, accumulating update statements,
     # one for each reservation that needs updating.  We should have one
     # host per line.
-    line_cnt=0;
-    update_cnt=0;
+    line_cnt=0
+    update_cnt=0
 
     while read -r line
     do
-        line_cnt=$((line_cnt + 1));
+        line_cnt=$((line_cnt + 1))
         xIFS="$IFS"
-        IFS=$','
+        IFS=','
 
         i=1
         hostname=
@@ -189,13 +203,13 @@ update_host_data() {
         # If the hostname was not null set the lower case value
         if [ "$hostname" != "" ]
         then
-            lower=$(echo $hostname | tr '[:upper:]' '[:lower:]')
-            echo "update hosts set lower_case_hostname = '$lower' where key = $key and id = $host_id;" >> $host_update_file
+            lower=$(echo "${hostname}" | tr '[:upper:]' '[:lower:]')
+            echo "update hosts set lower_case_hostname = '$lower' where key = $key and id = $host_id;" >> "$host_update_file"
             update_cnt=$((update_cnt + 1))
         fi
 
         IFS="$xIFS"
-    done <  $host_export_file
+    done < "$host_export_file"
 
     # If we didn't record any updates, then hey, we're good to go!
     if [ "$update_cnt" -eq 0 ]
@@ -206,8 +220,8 @@ update_host_data() {
     # We have at least one update in the update file, so submit it # to cqlsh.
     echo "$update_cnt host update statements written to $host_update_file"
     echo "Running the updates..."
-    cqlsh $cqlargs -f "$host_update_file"
-    if [ "$?" -ne 0 ]
+
+    if ! cqlsh "${cqlargs[@]}" -f "$host_update_file"
     then
         exit_now 1 "Cassandra host updates failed"
     fi
@@ -228,8 +242,8 @@ update_lease4_data() {
     echo "Exporting hostnames to $lease4_export_file ..."
     query="COPY lease4 (address, hostname) TO '$lease4_export_file'"
 
-    cqlsh $cqlargs -e "$query"
-    if [ "$?" -ne 0 ]
+
+    if ! cqlsh "${cqlargs[@]}" -e "$query"
     then
         exit_now 1 "Cassandra get hostname failed! Could not update lease4!"
     fi
@@ -237,8 +251,8 @@ update_lease4_data() {
     # Strip the carriage returns that CQL insists on adding.
     if [ -e "$lease4_export_file" ]
     then
-        cat $lease4_export_file | tr -d '\015' > $lease4_export_file.2
-        mv $lease4_export_file.2 $lease4_export_file
+        tr -d '\015' < "$lease4_export_file" > "$lease4_export_file.2"
+        mv "$lease4_export_file.2" "$lease4_export_file"
     else
         # Shouldn't happen but then again we're talking about CQL here
         exit_now 1 "Cassandra export file $lease4_export_file is missing?"
@@ -247,14 +261,14 @@ update_lease4_data() {
     # Iterate through the exported data, accumulating update statements,
     # one for each lease that needs updating.  We should have one lease4
     # per line.
-    line_cnt=0;
-    update_cnt=0;
+    line_cnt=0
+    update_cnt=0
 
     while read -r line
     do
-        line_cnt=$((line_cnt + 1));
+        line_cnt=$((line_cnt + 1))
         xIFS="$IFS"
-        IFS=$','
+        IFS=','
 
         i=1
         hostname=
@@ -285,13 +299,13 @@ update_lease4_data() {
         # If the hostname was not null set the lower case value
         if [ "$hostname" != "" ]
         then
-            lower=$(echo $hostname | tr '[:upper:]' '[:lower:]')
-            echo "update lease4 set hostname = '$lower' where address = $address;" >> $lease4_update_file
+            lower=$(echo "${hostname}" | tr '[:upper:]' '[:lower:]')
+            echo "update lease4 set hostname = '$lower' where address = $address;" >> "$lease4_update_file"
             update_cnt=$((update_cnt + 1))
         fi
 
         IFS="$xIFS"
-    done <  $lease4_export_file
+    done < "$lease4_export_file"
 
     # If we didn't record any updates, then hey, we're good to go!
     if [ "$update_cnt" -eq 0 ]
@@ -302,8 +316,8 @@ update_lease4_data() {
     # We have at least one update in the update file, so submit it # to cqlsh.
     echo "$update_cnt lease4 update statements written to $lease4_update_file"
     echo "Running the updates..."
-    cqlsh $cqlargs -f "$lease4_update_file"
-    if [ "$?" -ne 0 ]
+
+    if ! cqlsh "${cqlargs[@]}" -f "$lease4_update_file"
     then
         exit_now 1 "Cassandra lease4 updates failed"
     fi
@@ -324,8 +338,7 @@ update_lease6_data() {
     echo "Exporting hostnames to $lease6_export_file ..."
     query="COPY lease6 (address, hostname) TO '$lease6_export_file'"
 
-    cqlsh $cqlargs -e "$query"
-    if [ "$?" -ne 0 ]
+    if ! cqlsh "${cqlargs[@]}" -e "$query"
     then
         exit_now 1 "Cassandra get hostname failed! Could not update lease6!"
     fi
@@ -333,8 +346,8 @@ update_lease6_data() {
     # Strip the carriage returns that CQL insists on adding.
     if [ -e "$lease6_export_file" ]
     then
-        cat $lease6_export_file | tr -d '\015' > $lease6_export_file.2
-        mv $lease6_export_file.2 $lease6_export_file
+        tr -d '\015' < "$lease6_export_file" > "$lease6_export_file.2"
+        mv "$lease6_export_file.2" "$lease6_export_file"
     else
         # Shouldn't happen but then again we're talking about CQL here
         exit_now 1 "Cassandra export file $lease6_export_file is missing?"
@@ -343,14 +356,14 @@ update_lease6_data() {
     # Iterate through the exported data, accumulating update statements,
     # one for each lease that needs updating.  We should have one lease6
     # per line.
-    line_cnt=0;
-    update_cnt=0;
+    line_cnt=0
+    update_cnt=0
 
     while read -r line
     do
-        line_cnt=$((line_cnt + 1));
+        line_cnt=$((line_cnt + 1))
         xIFS="$IFS"
-        IFS=$','
+        IFS=','
 
         i=1
         hostname=
@@ -381,13 +394,13 @@ update_lease6_data() {
         # If the hostname was not null set the lower case value
         if [ "$hostname" != "" ]
         then
-            lower=$(echo $hostname | tr '[:upper:]' '[:lower:]')
-            echo "update lease6 set hostname = '$lower' where address = $address;" >> $lease6_update_file
+            lower=$(echo "${hostname}" | tr '[:upper:]' '[:lower:]')
+            echo "update lease6 set hostname = '$lower' where address = $address;" >> "$lease6_update_file"
             update_cnt=$((update_cnt + 1))
         fi
 
         IFS="$xIFS"
-    done <  $lease6_export_file
+    done < "$lease6_export_file"
 
     # If we didn't record any updates, then hey, we're good to go!
     if [ "$update_cnt" -eq 0 ]
@@ -398,8 +411,8 @@ update_lease6_data() {
     # We have at least one update in the update file, so submit it # to cqlsh.
     echo "$update_cnt lease6 update statements written to $lease6_update_file"
     echo "Running the updates..."
-    cqlsh $cqlargs -f "$lease6_update_file"
-    if [ "$?" -ne 0 ]
+
+    if ! cqlsh "${cqlargs[@]}" -f "$lease6_update_file"
     then
         exit_now 1 "Cassandra lease6 updates failed"
     fi
@@ -415,7 +428,10 @@ lease6_export_file="$temp_file_dir/cql_lease6_export.csv"
 lease6_update_file="$temp_file_dir/cql_lease6_update.cql"
 
 check_version
-update_schema
+if ! update_schema; then
+    printf 'Schema update FAILED!\n'
+    exit 1
+fi
 update_host_data
 update_lease4_data
 update_lease6_data

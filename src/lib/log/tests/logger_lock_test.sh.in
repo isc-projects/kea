@@ -1,4 +1,5 @@
 #!/bin/sh
+
 # Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -8,20 +9,27 @@
 # Checks that the locker interprocess sync locks are acquired and
 # released correctly.
 
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# Allow non-zero exit codes to be explicitly checked in this test.
+set +e
+
 failcount=0
-tempfile=@abs_builddir@/logger_lock_test_tempfile_$$
-destfile=@abs_builddir@/logger_lock_test_destfile_$$
+tempfile="@abs_builddir@/logger_lock_test_tempfile_$$"
+destfile="@abs_builddir@/logger_lock_test_destfile_$$"
 
 passfail() {
-    if [ $1 -eq 0 ]; then
-        echo " pass"
+    if [ "${1}" -eq 0 ]; then
+        printf ' pass\n'
     else
-        echo " FAIL"
-        failcount=`expr $failcount + $1`
+        printf ' FAIL\n'
+        failcount=$((failcount + $1))
     fi
 }
 
-echo -n  "Testing that logger acquires and releases locks correctly:"
+printf 'Testing that logger acquires and releases locks correctly:'
 cat > $tempfile << .
 LOGGER_LOCK_TEST: MUTEXLOCK
 LOGGER_LOCK_TEST: LOCK

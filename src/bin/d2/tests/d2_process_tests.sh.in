@@ -1,15 +1,25 @@
+#!/bin/sh
+
 # Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# shellcheck disable=SC2039
+# SC2039: In POSIX sh, 'local' is undefined.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
 # Path to the temporary configuration file.
-CFG_FILE=@abs_top_builddir@/src/bin/d2/tests/test_config.json
+CFG_FILE="@abs_top_builddir@/src/bin/d2/tests/test_config.json"
 # Path to the D2 log file.
-LOG_FILE=@abs_top_builddir@/src/bin/d2/tests/test.log
-# Expected version
-EXPECTED_VERSION="@PACKAGE_VERSION@"
+LOG_FILE="@abs_top_builddir@/src/bin/d2/tests/test.log"
 # D2 configuration to be stored in the configuration file.
 CONFIG="{
     \"DhcpDdns\":
@@ -105,33 +115,33 @@ CONFIG_INVALID="{
 
 # Set the location of the executable.
 bin="kea-dhcp-ddns"
-bin_path=@abs_top_builddir@/src/bin/d2
+bin_path="@abs_top_builddir@/src/bin/d2"
 
 # Import common test library.
-. @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # This test verifies that syntax checking works properly. This function
 # requires 3 parameters:
-# testname
+# test_name
 # config - string with a content of the config (will be written to a file)
-# exp_code - expected exit code returned by kea (0 - success, 1 - failure)
+# expected_code - expected exit code returned by kea (0 - success, 1 - failure)
 syntax_check_test() {
-    local TESTNAME="${1}"
-    local CONFIG="${2}"
-    local EXP_CODE="${3}"
+    local test_name="${1}"
+    local config="${2}"
+    local expected_code="${3}"
 
     # Log the start of the test and print test name.
-    test_start $TESTNAME
+    test_start "${test_name}"
     # Remove dangling Kea instances and remove log files.
     cleanup
     # Create correct configuration file.
-    create_config "${CONFIG}"
+    create_config "${config}"
     # Check it
     printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
-    ${bin_path}/${bin} -t ${CFG_FILE}
-    exit_code=$?
-    if [ ${exit_code} -ne $EXP_CODE ]; then
-        printf "ERROR: expected exit code ${EXP_CODE}, got ${exit_code}\n"
+    run_and_return_output_and_exit_code \
+        "${bin_path}/${bin}" -t "${CFG_FILE}"
+    if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
+        printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
         clean_exit 1
     fi
     test_finish 0
@@ -151,7 +161,7 @@ dynamic_reconfiguration_test() {
     start_kea ${bin_path}/${bin}
     # Wait up to 20s for D2 to start.
     wait_for_kea 20
-    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+    if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
         printf "ERROR: timeout waiting for D2 to start.\n"
         clean_exit 1
     fi
@@ -159,16 +169,16 @@ dynamic_reconfiguration_test() {
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
     get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one D2 process to be started. Found %d processes\
- started.\n" ${_GET_PIDS_NUM}
+ started.\n" "${_GET_PIDS_NUM}"
         clean_exit 1
     fi
 
     # Check in the log file, how many times server has been configured.
     # It should be just once on startup.
     get_reconfigs
-    if [ ${_GET_RECONFIGS} -ne 1 ]; then
+    if [ "${_GET_RECONFIGS}" -ne 1 ]; then
         printf "ERROR: D2 hasn't been configured.\n"
         clean_exit 1
     else
@@ -183,7 +193,7 @@ dynamic_reconfiguration_test() {
 
     # Wait up to 10s for the D2Controller to log reload signal received.
     wait_for_message 10 "DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD"  1
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
         printf "ERROR: D2 did report the reload signal receipt.\n"
         clean_exit 1
     fi
@@ -192,14 +202,14 @@ dynamic_reconfiguration_test() {
     # The configuration provided is invalid so it should result in
     # reconfiguration failure but the server should still be running.
     wait_for_message 10 "DCTL_CFG_FILE_RELOAD_ERROR" 1
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
         printf "ERROR: D2 did not report reload error.\n"
         clean_exit 1
     fi
 
     # Make sure the server is still operational.
     get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: D2 was killed when attempting reconfiguration.\n"
         clean_exit 1
     fi
@@ -217,7 +227,7 @@ dynamic_reconfiguration_test() {
     # After receiving SIGHUP the server should get reconfigured and the
     # reconfiguration should be noted in the log file. We should now
     # have two configurations logged in the log file.
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
         printf "ERROR: D2 hasn't been reconfigured.\n"
         clean_exit 1
     else
@@ -226,7 +236,7 @@ dynamic_reconfiguration_test() {
 
     # Make sure the server is still operational.
     get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: D2 was killed when attempting reconfiguration.\n"
         clean_exit 1
     fi
@@ -238,10 +248,10 @@ dynamic_reconfiguration_test() {
 # This test verifies that DHCPv4 server is shut down gracefully when it
 # receives a SIGINT or SIGTERM signal.
 shutdown_test() {
-    test_name=${1}  # Test name
-    signum=${2}      # Signal number
+    local test_name=${1}    # Test name
+    local signum=${2}       # Signal number
     # Log the start of the test and print test name.
-    test_start ${test_name}
+    test_start "${test_name}"
     # Remove dangling D2 instances and remove log files.
     cleanup
     # Create new configuration file.
@@ -252,7 +262,7 @@ shutdown_test() {
     start_kea ${bin_path}/${bin}
     # Wait up to 20s for D2 to start.
     wait_for_kea 20
-    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+    if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
         printf "ERROR: timeout waiting for D2 to start.\n"
         clean_exit 1
     fi
@@ -260,16 +270,16 @@ shutdown_test() {
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
     get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one D2 process to be started. Found %d processes\
- started.\n" ${_GET_PIDS_NUM}
+ started.\n" "${_GET_PIDS_NUM}"
         clean_exit 1
     fi
 
     # Check in the log file, how many times server has been configured.
     # It should be just once on startup.
     get_reconfigs
-    if [ ${_GET_RECONFIGS} -ne 1 ]; then
+    if [ "${_GET_RECONFIGS}" -ne 1 ]; then
         printf "ERROR: server hasn't been configured.\n"
         clean_exit 1
     else
@@ -277,18 +287,18 @@ shutdown_test() {
     fi
 
     # Send signal to D2 (SIGTERM, SIGINT etc.)
-    send_signal ${signum} ${bin}
+    send_signal "${signum}" "${bin}"
 
     # Now wait for process to log that it is exiting.
     wait_for_message 10 "DCTL_SHUTDOWN" 1
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
         printf "ERROR: DHCP-DDNS did not log shutdown.\n"
         clean_exit 1
     fi
 
     # Make sure the server is down.
     wait_for_server_down 5 ${bin}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0

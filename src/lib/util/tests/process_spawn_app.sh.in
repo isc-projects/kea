@@ -1,5 +1,5 @@
 #!/bin/sh
-#
+
 # Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -24,14 +24,18 @@
 # test has much enough time to verify that the convenience methods
 # checking the state of the process, i.e. process running or not.
 
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
 exit_code=
 
-while [ ! -z "${1}" ]
+while [ -n "${1+x}" ]
 do
     option=${1}
     case ${option} in
         -p)
-            exit_code=$$
+            exit_code=${$}
             ;;
         -e)
             shift
@@ -39,7 +43,7 @@ do
             ;;
         -s)
             shift
-            sleep ${1}
+            sleep "${1}"
             ;;
         *)
             exit 123
@@ -51,7 +55,7 @@ done
 # The exit code of 32 is returned when no args specified or
 # when only the -s arg has been specified.
 if [ -z "${exit_code}" ]; then
-    exit 32;
+    exit 32
 fi
 
-exit ${exit_code}
+exit "${exit_code}"

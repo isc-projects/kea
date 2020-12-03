@@ -1,6 +1,6 @@
 #!/bin/sh
 
-###########################################
+################################################################################
 # This script runs all tests in valgrind. Configure and compile kea the way
 # you want it to be tested (you should use --with-gtest or --with-gtest-source,
 # however, or you get no tests). Then run this script from the top build
@@ -16,21 +16,27 @@
 #      used unmodified inside a sed pattern with # as a modifier, which can
 #      easily break it. There was no motivation to fix this.
 # * VALGRIND_FILE is the file to store the output into. Default is valgrind.log
-###########################################
+################################################################################
+
+# Change directory to Kea's top build directory.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+cd "${script_path}/.."
 
 # First, make sure the tests are up to date
 make
 
-if [ $? = 2 ] ; then
-    echo "Did you run configure? Or maybe you're running the script from the tools directory? (you need to run it from the top kea build directory)"
+if test $? = 2; then
+    printf 'Did you run configure?\n'
     exit 1
 fi
 
-set -e
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
 
 # Some configuration
 # TODO Escape for sed, this might break
-LOGFILE="${VALGRIND_FILE:-`pwd`/valgrind.log}"
+LOGFILE="${VALGRIND_FILE:-$(pwd)/valgrind.log}"
 FLAGS="${VALGRIND_FLAGS:---leak-check=full --track-fds=yes}"
 FLAGS="$FLAGS --log-file=$LOGFILE.%p"
 
@@ -39,14 +45,14 @@ FAILED=
 
 # Find all the tests (yes, doing it by a name is a nasty hack)
 # Since the while runs in a subprocess, we need to get the assignments out, done by the eval
-eval $(find . -type f -name *_unittests -print | grep -v '\.libs/' | while read testname ; do
+find . -type f -name '*_unittests' -print | grep -Fv '.libs/' | while read -r testname ; do
     sed -e 's#exec "#exec valgrind '"$FLAGS"' "#' "$testname" > "$testname.valgrind"
     chmod +x "$testname.valgrind"
     echo "$testname" >>"$LOGFILE"
     echo "===============" >>"$LOGFILE"
-    OLDDIR="`pwd`"
-    cd $(dirname "$testname")
-    ./$(basename $testname).valgrind >&2 &
+    OLDDIR=$(pwd)
+    cd "$(dirname "$testname")"
+    "./$(basename "$testname").valgrind" >&2 &
     PID="$!"
     set +e
     wait "$PID"
@@ -54,18 +60,18 @@ eval $(find . -type f -name *_unittests -print | grep -v '\.libs/' | while read 
     set -e
     cd "$OLDDIR"
     if [ "$CODE" != 0 ] ; then
-        echo 'FAILED="$FAILED
-'"$testname"'"'
+        printf 'FAILED="%s
+%s"' "${FAILED}" "${testname}"
     fi
     NAME="$LOGFILE.$PID"
     rm "$testname.valgrind"
     # Remove the ones from death tests
-    if [ -e $NAME ]; then
+    if [ -e "${NAME}" ]; then
         grep "==$PID==" "$NAME" >>"$LOGFILE"
         rm "$NAME"
     fi
     echo 'FOUND_ANY=true'
-done)
+done
 
 if test -n "$FAILED"; then
     echo "These tests failed:" >&2

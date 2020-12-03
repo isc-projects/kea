@@ -1,11 +1,33 @@
+#!/bin/sh
+
 # Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+
+# shellcheck disable=SC2039
+# SC2039: In POSIX sh, 'local' is undefined.
+
+# shellcheck disable=SC2153
+# SC2153: Possible misspelling: ... may not be assigned, but ... is.
+
+# shellcheck disable=SC2154
+# SC2154: bin_path is referenced but not assigned.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+prefix="@prefix@"
+
 # A list of Kea processes, mainly used by the cleanup functions.
 KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns kea-ctrl-agent"
+# Expected version
+EXPECTED_VERSION="@PACKAGE_VERSION@"
 
 # Expected version
 EXPECTED_VERSION="@PACKAGE_VERSION@"
@@ -18,10 +40,9 @@ test_lib_error() {
     local no_new_line=${2}  # If specified, the message not terminated with
                             # new line.
     printf "ERROR/test_lib: %s" "${s}"
-    if [ -z ${no_new_line} ]; then
-        printf "%s" "\n"
+    if [ -z "${no_new_line}" ]; then
+        printf '\n'
     fi
-
 }
 
 # Prints info message.
@@ -30,8 +51,8 @@ test_lib_info() {
     local no_new_line=${2}  # If specified, the message is not terminated with
                             # new line.
     printf "INFO/test_lib: %s" "${s}"
-    if [ -z ${no_new_line} ]; then
-        printf "%s" "\n"
+    if [ -z "${no_new_line}" ]; then
+        printf '\n'
     fi
 }
 
@@ -42,14 +63,19 @@ test_lib_info() {
 # detailed error is printed. The detailed error must use the printf
 # formatting like this:
 #    "Expected that some value 1 %d is equal to some other value %d".
+# shellcheck disable=SC2059
+# SC2059: Don't use variables in the printf format string. Use printf '..%s..' "$foo"
 assert_eq() {
     val1=${1}         # Reference value
     val2=${2}         # Tested value
     detailed_err=${3} # Detailed error format string
     # If nothing found, present an error an exit.
-    if [ ${val1} -ne ${val2} ]; then
+    if [ "${val1}" -ne "${val2}" ]; then
         printf "Assertion failure: ${val1} != ${val2}, for val1=${val1}, val2=${val2}\n"
-        printf "${detailed_err}\n" ${val1} ${val2}
+        printf "${detailed_err}\n" "${val1}" "${val2}"
+        if test -n "${DEBUG+X}"; then
+            printf '%s\n' "${OUTPUT}" >&2
+        fi
         clean_exit 1
     fi
 }
@@ -65,8 +91,14 @@ assert_str_eq() {
     detailed_err=${3} # Detailed error format string
     # If nothing found, present an error an exit.
     if [ "${val1}" != "${val2}" ]; then
-        printf "Assertion failure: ${val1} != ${val2}, for val1=${val1}, val2=${val2}\n"
-        printf "${detailed_err}\n" ${val1} ${val2}
+        printf 'Assertion failure: %s != %s, for val1=%s, val2=%s\n' \
+            "${val1}" "${val2}" "${val1}" "${val2}"
+        # shellcheck disable=SC2059
+        # SC2059: SC2059: Don't use variables in the printf format string. Use printf '..%s..' "$foo".
+        printf "${detailed_err}\n" "${val1}" "${val2}"
+        if test -n "${DEBUG+X}"; then
+            printf '%s\n' "${OUTPUT}" >&2
+        fi
         clean_exit 1
     fi
 }
@@ -84,11 +116,36 @@ assert_string_contains() {
     match=$( printf "%s" "${text}" | awk /"${pattern}"/ )
     # If nothing found, present an error and exit.
     if [ -z "${match}" ]; then
-        printf "Assertion failure: \n\"%s\"\n\ndoesn't contain pattern:\n
-\"%s\"\n\n" "${text}" "${pattern}"
-        printf "${detailed_err}\n" "\"${pattern}\""
+        printf \
+'Assertion failure:
+"%s"
+
+does not contain pattern:
+"%s"
+
+%s
+' "${text}" "${pattern}" "${detailed_err}"
+        if test -n "${DEBUG+X}"; then
+            printf '%s\n' "${OUTPUT}" >&2
+        fi
         clean_exit 1
     fi
+}
+
+# Runs all the given arguments as a single command. Maintains quoting. Places
+# output in ${OUTPUT} and exit code in ${EXIT_CODE}. Does not support pipes and
+# redirections. Support for them could be added through eval and single
+# parameter assignment, but eval is not recommended.
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+run_and_return_output_and_exit_code() {
+    if test -n "${DEBUG+x}"; then
+        printf '%s\n' "${*}" >&2
+    fi
+    set +e
+    OUTPUT=$("${@}")
+    EXIT_CODE=${?}
+    set -e
 }
 
 # Enable traps to print FAILED status when a command fails unexpectedly or when
@@ -114,7 +171,7 @@ traps_off() {
 # Begins a test by printing its name.
 test_start() {
     TEST_NAME=${1}
-    if [ -z ${TEST_NAME} ]; then
+    if [ -z "${TEST_NAME}" ]; then
         test_lib_error "test_start requires test name as an argument"
         clean_exit 1
     fi
@@ -129,15 +186,15 @@ test_start() {
 # Prints test result an cleans up after the test.
 test_finish() {
     local exit_code=${1}  # Exit code to be returned by the exit function.
-    if [ ${exit_code} -eq 0 ]; then
+    if [ "${exit_code}" -eq 0 ]; then
         cleanup
         printf '\033[92m[       OK ]\033[0m %s\n' "${TEST_NAME}"
     else
         # Dump log file for debugging purposes if specified and exists.
         # Otherwise the code below would simply call cat.
-        if [ -n "${LOG_FILE}" -a -s "${LOG_FILE}" ]; then
-            printf "Log file dump:\n"
-            cat ${LOG_FILE}
+        if test -n "${LOG_FILE+x}" && test -s "${LOG_FILE}"; then
+            printf 'Log file dump:\n'
+            cat "${LOG_FILE}"
         fi
         cleanup
         printf '\033[91m[  FAILED  ]\033[0m %s\n' "${TEST_NAME}"
@@ -151,7 +208,7 @@ test_finish() {
 # file which name has been set in the ${CFG_FILE} variable.
 create_config() {
     local cfg="${1}"  # Configuration string.
-    if [ -z ${CFG_FILE} ]; then
+    if [ -z "${CFG_FILE}" ]; then
         test_lib_error "create_config requires CFG_FILE variable be set"
         clean_exit 1
 
@@ -159,8 +216,8 @@ create_config() {
         test_lib_error "create_config requires argument holding a configuration"
         clean_exit 1
     fi
-    printf "Creating Kea configuration file: %s.\n" ${CFG_FILE}
-    printf "%b" ${cfg} > ${CFG_FILE}
+    printf 'Creating Kea configuration file: %s.\n' "${CFG_FILE}"
+    printf '%b' "${cfg}" > "${CFG_FILE}"
 }
 
 # Stores the DHCP4 configuration specified as a parameter in the
@@ -168,7 +225,7 @@ create_config() {
 # variable.
 create_dhcp4_config() {
     local cfg="${1}"  # Configuration string.
-    if [ -z ${DHCP4_CFG_FILE} ]; then
+    if [ -z "${DHCP4_CFG_FILE}" ]; then
         test_lib_error "create_dhcp4_config requires DHCP4_CFG_FILE \
 variable be set"
         clean_exit 1
@@ -178,8 +235,8 @@ variable be set"
 configuration"
         clean_exit 1
     fi
-    printf "Creating Dhcp4 configuration file: %s.\n" ${DHCP4_CFG_FILE}
-    printf "%b" ${cfg} > ${DHCP4_CFG_FILE}
+    printf 'Creating Dhcp4 configuration file: %s.\n' "${DHCP4_CFG_FILE}"
+    printf '%b' "${cfg}" > "${DHCP4_CFG_FILE}"
 }
 
 # Stores the DHCP6 configuration specified as a parameter in the
@@ -187,7 +244,7 @@ configuration"
 # variable.
 create_dhcp6_config() {
     local cfg="${1}"  # Configuration string.
-    if [ -z ${DHCP6_CFG_FILE} ]; then
+    if [ -z "${DHCP6_CFG_FILE}" ]; then
         test_lib_error "create_dhcp6_config requires DHCP6_CFG_FILE \
 variable be set"
         clean_exit 1
@@ -197,8 +254,8 @@ variable be set"
 configuration"
         clean_exit 1
     fi
-    printf "Creating Dhcp6 configuration file: %s.\n" ${DHCP6_CFG_FILE}
-    printf "%b" ${cfg} > ${DHCP6_CFG_FILE}
+    printf 'Creating Dhcp6 configuration file: %s.\n' "${DHCP6_CFG_FILE}"
+    printf '%b' "${cfg}" > "${DHCP6_CFG_FILE}"
 }
 
 # Stores the D2 configuration specified as a parameter in the
@@ -206,7 +263,7 @@ configuration"
 # variable.
 create_d2_config() {
     local cfg="${1}"  # Configuration string.
-    if [ -z ${D2_CFG_FILE} ]; then
+    if [ -z "${D2_CFG_FILE}" ]; then
         test_lib_error "create_d2_config requires D2_CFG_FILE \
 variable be set"
         clean_exit 1
@@ -216,8 +273,8 @@ variable be set"
 configuration"
         clean_exit 1
     fi
-    printf "Creating D2 configuration file: %s.\n" ${D2_CFG_FILE}
-    printf "%b" ${cfg} > ${D2_CFG_FILE}
+    printf 'Creating D2 configuration file: %s.\n' "${D2_CFG_FILE}"
+    printf '%b' "${cfg}" > "${D2_CFG_FILE}"
 }
 
 # Stores the CA configuration specified as a parameter in the
@@ -225,7 +282,7 @@ configuration"
 # variable.
 create_ca_config() {
     local cfg="${1}"  # Configuration string.
-    if [ -z ${CA_CFG_FILE} ]; then
+    if [ -z "${CA_CFG_FILE}" ]; then
         test_lib_error "create_ca_config requires CA_CFG_FILE \
 variable be set"
         clean_exit 1
@@ -235,8 +292,8 @@ variable be set"
 configuration"
         clean_exit 1
     fi
-    printf "Creating Ca configuration file: %s.\n" ${CA_CFG_FILE}
-    printf "%b" ${cfg} > ${CA_CFG_FILE}
+    printf 'Creating Ca configuration file: %s.\n' "${CA_CFG_FILE}"
+    printf '%b' "${cfg}" > "${CA_CFG_FILE}"
 }
 
 # Stores the NC configuration specified as a parameter in the
@@ -244,7 +301,7 @@ configuration"
 # variable.
 create_nc_config() {
     local cfg="${1}"  # Configuration string.
-    if [ -z ${NC_CFG_FILE} ]; then
+    if [ -z "${NC_CFG_FILE}" ]; then
         test_lib_error "create_nc_config requires NC_CFG_FILE \
 variable be set"
         clean_exit 1
@@ -254,8 +311,8 @@ variable be set"
 configuration"
         clean_exit 1
     fi
-    printf "Creating Nc configuration file: %s.\n" ${NC_CFG_FILE}
-    printf "%b" ${cfg} > ${NC_CFG_FILE}
+    printf 'Creating Nc configuration file: %s.\n' "${NC_CFG_FILE}"
+    printf '%b' "${cfg}" > "${NC_CFG_FILE}"
 }
 
 # Stores the keactrl configuration specified as a parameter in the
@@ -263,7 +320,7 @@ configuration"
 # variable.
 create_keactrl_config() {
     local cfg="${1}" # Configuration string.
-    if [ -z ${KEACTRL_CFG_FILE} ]; then
+    if [ -z "${KEACTRL_CFG_FILE}" ]; then
         test_lib_error "create_keactrl_config requires KEACTRL_CFG_FILE \
 variable be set"
         clean_exit 1
@@ -273,25 +330,25 @@ variable be set"
 configuration"
         clean_exit 1
     fi
-    printf "Creating keactrl configuration file: %s.\n" ${KEACTRL_CFG_FILE}
-    printf "%b" ${cfg} > ${KEACTRL_CFG_FILE}
+    printf 'Creating keactrl configuration file: %s.\n' "${KEACTRL_CFG_FILE}"
+    printf '%b' "${cfg}" > "${KEACTRL_CFG_FILE}"
 }
 
 # Sets Kea logger to write to the file specified by the global value
 # ${LOG_FILE}.
 set_logger() {
-    if [ -z ${LOG_FILE} ]; then
+    if [ -z "${LOG_FILE}" ]; then
         test_lib_error "set_logger requires LOG_FILE variable be set"
         clean_exit 1
     fi
-    printf "Kea log will be stored in %s.\n" ${LOG_FILE}
+    printf 'Kea log will be stored in %s.\n' "${LOG_FILE}"
     export KEA_LOGGER_DESTINATION=${LOG_FILE}
 }
 
 # PID file path is by default <kea-install-dir>/var/run/kea, but can be
 # overridden by the environmental variable.
-PID_FILE_PATH=@runstatedir@/@PACKAGE@/
-if [ ! -z ${KEA_PIDFILE_DIR} ]; then
+PID_FILE_PATH="@runstatedir@/@PACKAGE@/"
+if [ -n "${KEA_PIDFILE_DIR+x}" ]; then
     PID_FILE_PATH="${KEA_PIDFILE_DIR}"
 fi
 
@@ -308,11 +365,11 @@ fi
 #   _GET_PID: holds a PID if process is running
 #   _GET_PIDS_NUM: holds 1 if process is running, 0 otherwise
 get_pid() {
-    local proc_name=${1}     # Process name
-    local cfg_file_name=${2} # Configuration file name without extension.
+    local proc_name=${1}        # Process name
+    local cfg_file_name=${2-}   # Configuration file name without extension.
 
     # PID file name includes process name. The process name is required.
-    if [ -z ${proc_name} ]; then
+    if [ -z "${proc_name}" ]; then
         test_lib_error "get_pid requires process name"
         clean_exit 1
     fi
@@ -320,7 +377,7 @@ get_pid() {
     # PID file name includes server configuration file name. For most of
     # the tests it is 'test-config' (excluding .json extension). It is
     # possible to specify custom name if required.
-    if [ -z ${cfg_file_name} ]; then
+    if [ -z "${cfg_file_name}" ]; then
         cfg_file_name="test_config"
     fi
 
@@ -331,10 +388,9 @@ get_pid() {
     _GET_PIDS_NUM=0
 
     # If the PID file exists, get the PID and see if the process is alive.
-    if [ -e ${abs_pidfile_path} ]; then
-        pid=$( cat $abs_pidfile_path )
-        kill -0 ${pid} > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
+    if [ -e "${abs_pidfile_path}" ]; then
+        pid=$(cat "${abs_pidfile_path}")
+        if kill -0 "${pid}" > /dev/null 2>&1; then
             _GET_PID=${pid}
             _GET_PIDS_NUM=1
         fi
@@ -387,17 +443,18 @@ wait_for_process_to_die() {
 # the value in its PID file is not relevant.
 kill_processes_by_name() {
     local proc_name=${1} # Process name
-    if [ -z ${proc_name} ]; then
+    if [ -z "${proc_name}" ]; then
         test_lib_error "get_pids requires process name"
         clean_exit 1
     fi
     # Obtain PIDs of running processes.
-    local pids=$( pgrep ${proc_name} )
+    local pids
+    pids=$(pidof "${proc_name}" || true)
     # For each PID found, send kill signal.
     for pid in ${pids}
     do
-        printf "Shutting down Kea process ${proc_name} having pid %d.\n" ${pid}
-        kill -9 ${pid}
+        printf 'Shutting down Kea process %s having pid %d.\n' "${proc_name}" "${pid}"
+        kill -9 "${pid}"
     done
 }
 
@@ -406,16 +463,16 @@ kill_processes_by_name() {
 #   _GET_LOG_MESSAGES: number of log message occurrences.
 get_log_messages() {
     local msg="${1}"  # Message id, e.g. DHCP6_SHUTDOWN
-    if [ -z ${msg} ]; then
+    if [ -z "${msg}" ]; then
         test_lib_error "get_log_messages require message identifier"
         clean_exit 1
     fi
     _GET_LOG_MESSAGES=0
     # If log file is not present, the number of occurrences is 0.
-    if [ -s ${LOG_FILE} ]; then
+    if test -n "${LOG_FILE+x}" && test -s "${LOG_FILE}"; then
         # Grep log file for the logger message occurrences and remove
         # whitespaces, if any.
-        _GET_LOG_MESSAGES=$( grep -o ${msg} ${LOG_FILE} | wc -w | tr -d " ")
+        _GET_LOG_MESSAGES=$(grep -Fo "${msg}" "${LOG_FILE}" | wc -w | tr -d " ")
     fi
 }
 
@@ -427,13 +484,22 @@ get_log_messages() {
 get_reconfigs() {
     # Grep log file for CONFIG_COMPLETE occurrences. There should
     # be one occurrence per (re)configuration.
-    _GET_RECONFIGS=$( grep -o CONFIG_COMPLETE ${LOG_FILE} | wc -w )
+    _GET_RECONFIGS=$(grep -Fo CONFIG_COMPLETE "${LOG_FILE}" | wc -w)
     # Grep log file for CONFIG_LOAD_FAIL to check for configuration
     # failures.
-    _GET_RECONFIG_ERRORS=$( grep -o CONFIG_LOAD_FAIL ${LOG_FILE} | wc -w )
+    _GET_RECONFIG_ERRORS=$(grep -Fo CONFIG_LOAD_FAIL "${LOG_FILE}" | wc -w)
     # Remove whitespaces
     ${_GET_RECONFIGS##*[! ]}
     ${_GET_RECONFIG_ERRORS##*[! ]}
+}
+
+remove_if_exists() {
+    while test ${#} -gt 1; do
+        if test -n "${1}"; then
+            rm -rf "${1}"
+        fi
+        shift
+    done
 }
 
 # Performs cleanup after test.
@@ -442,7 +508,6 @@ get_reconfigs() {
 # in the ${LOG_FILE}, ${CFG_FILE} and ${KEACTRL_CFG_FILE} variables
 # respectively, prior to calling this function.
 cleanup() {
-
     # If there is no KEA_PROCS set, just return
     if [ -z "${KEA_PROCS}" ]; then
         return
@@ -452,11 +517,11 @@ cleanup() {
     # of them if running.
     for proc_name in ${KEA_PROCS}
     do
-        get_pid ${proc_name}
+        get_pid "${proc_name}"
         # Shut down running Kea process.
-        if [ ${_GET_PIDS_NUM} -ne 0 ]; then
-            printf "Shutting down Kea process having pid %d.\n" ${_GET_PID}
-            kill -9 ${_GET_PID}
+        if [ "${_GET_PIDS_NUM}" -ne 0 ]; then
+            printf 'Shutting down Kea process having pid %d.\n' "${_GET_PID}"
+            kill -9 "${_GET_PID}"
         fi
     done
 
@@ -470,21 +535,37 @@ cleanup() {
     kill_processes_by_name "kea-lfc"
 
     # Remove temporary files.
-    rm -rf ${LOG_FILE}
-    rm -rf ${LOG_FILE}.lock
+    if test -n "${LOG_FILE+x}"; then
+        rm -rf "${LOG_FILE}"
+        rm -rf "${LOG_FILE}.lock"
+    fi
     # Use asterisk to remove all files starting with the given name,
     # in case the LFC has been run. LFC creates files with postfixes
     # appended to the lease file name.
-    if [ ! -z "${LEASE_FILE}" ]; then
-        rm -rf ${LEASE_FILE}*
+    if test -n "${LEASE_FILE+x}"; then
+        rm -rf "${LEASE_FILE}"*
     fi
-    rm -rf ${CFG_FILE}
-    rm -rf ${DHCP4_CFG_FILE}
-    rm -rf ${DHCP6_CFG_FILE}
-    rm -rf ${D2_CFG_FILE}
-    rm -rf ${CA_CFG_FILE}
-    rm -rf ${NC_CFG_FILE}
-    rm -rf ${KEACTRL_CFG_FILE}
+    if test -n "${CFG_FILE+x}"; then
+        rm -rf "${CFG_FILE}"
+    fi
+    if test -n "${DHCP4_CFG_FILE+x}"; then
+        rm -rf "${DHCP4_CFG_FILE}"
+    fi
+    if test -n "${DHCP6_CFG_FILE+x}"; then
+        rm -rf "${DHCP6_CFG_FILE}"
+    fi
+    if test -n "${D2_CFG_FILE+x}"; then
+        rm -rf "${D2_CFG_FILE}"
+    fi
+    if test -n "${CA_CFG_FILE+x}"; then
+        rm -rf "${CA_CFG_FILE}"
+    fi
+    if test -n "${NC_CFG_FILE+x}"; then
+        rm -rf "${NC_CFG_FILE}"
+    fi
+    if test -n "${KEACTRL_CFG_FILE+x}"; then
+        rm -rf "${KEACTRL_CFG_FILE}"
+    fi
 }
 
 # Exists the test in the clean way.
@@ -497,20 +578,20 @@ clean_exit() {
             test_lib_error "argument passed to clean_exit must be a number" ;;
     esac
     # Print test result and perform a cleanup
-    test_finish ${exit_code}
-    exit ${exit_code}
+    test_finish "${exit_code}"
+    exit "${exit_code}"
 }
 
 # Starts Kea process in background using a configuration file specified
 # in the global variable ${CFG_FILE}.
 start_kea() {
     local bin=${1}
-    if [ -z ${bin} ]; then
+    if [ -z "${bin}" ]; then
         test_lib_error "binary name must be specified for start_kea"
         clean_exit 1
     fi
     printf "Running command %s.\n" "\"${bin} -c ${CFG_FILE}\""
-    ${bin} -c ${CFG_FILE} &
+    "${bin}" -c "${CFG_FILE}" &
 }
 
 # Waits with timeout for Kea to start.
@@ -533,13 +614,13 @@ wait_for_kea() {
     local loops=0 # Loops counter
     _WAIT_FOR_KEA=0
     test_lib_info "wait_for_kea " "skip-new-line"
-    while [ ! -s ${LOG_FILE} ] && [ ${loops} -le ${timeout} ]; do
+    while [ ! -s "${LOG_FILE}" ] && [ "${loops}" -le "${timeout}" ]; do
         printf "."
         sleep 1
-        loops=$( expr $loops + 1 )
+        loops=$(( loops + 1 ))
     done
-    printf "\n"
-    if [ ${loops} -le ${timeout} ]; then
+    printf '\n'
+    if [ "${loops}" -le "${timeout}" ]; then
         _WAIT_FOR_KEA=1
     fi
 }
@@ -569,7 +650,7 @@ be a number"
     esac
 
     # Validate message
-    if [ -z ${message} ]; then
+    if [ -z "${message}" ]; then
         test_lib_error "message id is a required argument for wait_for_message"
         clean_exit 1
     fi
@@ -586,20 +667,20 @@ must be a number"
     _WAIT_FOR_MESSAGE=0
     test_lib_info "wait_for_message ${message}: " "skip-new-line"
     # Check if log file exists and if we reached timeout.
-    while [ ${loops} -le ${timeout} ]; do
+    while [ "${loops}" -le "${timeout}" ]; do
         printf "."
         # Check if the message has been logged.
-        get_log_messages ${message}
-        if [ ${_GET_LOG_MESSAGES} -ge ${occurrences} ]; then
-            printf "\n"
+        get_log_messages "${message}"
+        if [ "${_GET_LOG_MESSAGES}" -ge "${occurrences}" ]; then
+            printf '\n'
             _WAIT_FOR_MESSAGE=1
             return
         fi
         # Message not recorded. Keep going.
         sleep 1
-        loops=$( expr ${loops} + 1 )
+        loops=$(( loops + 1 ))
     done
-    printf "\n"
+    printf '\n'
     # Timeout.
 }
 
@@ -619,18 +700,18 @@ wait_for_server_down() {
     local loops=0 # Loops counter
     _WAIT_FOR_SERVER_DOWN=0
     test_lib_info "wait_for_server_down ${proc_name}: " "skip-new-line"
-    while [ ${loops} -le ${timeout} ]; do
+    while [ "${loops}" -le "${timeout}" ]; do
         printf "."
-        get_pid ${proc_name}
-        if [ ${_GET_PIDS_NUM} -eq 0 ]; then
-            printf "\n"
+        get_pid "${proc_name}"
+        if [ "${_GET_PIDS_NUM}" -eq 0 ]; then
+            printf '\n'
             _WAIT_FOR_SERVER_DOWN=1
             return
         fi
         sleep 1
-        loops=$( expr $loops + 1 )
+        loops=$(( loops + 1 ))
     done
-    printf "\n"
+    printf '\n'
 }
 
 # Sends specified signal to the Kea process.
@@ -646,20 +727,20 @@ must be a number"
         clean_exit 1 ;;
     esac
     # Validate process name
-    if [ -z ${proc_name} ]; then
+    if [ -z "${proc_name}" ]; then
         test_lib_error "send_signal requires process name be passed as argument"
         clean_exit 1
     fi
     # Get Kea pid.
-    get_pid ${proc_name}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    get_pid "${proc_name}"
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started.\
  Found %d processes started.\n" ${_GET_PIDS_NUM}
         clean_exit 1
     fi
-    printf "Sending signal ${sig} to Kea process (pid=%s).\n" ${_GET_PID}
+    printf "Sending signal %s to Kea process (pid=%s).\n" "${sig}" "${_GET_PID}"
     # Actually send a signal.
-    kill -${sig} ${_GET_PID}
+    kill "-${sig}" "${_GET_PID}"
 }
 
 # Verifies that a server is up running by its PID file
@@ -673,12 +754,12 @@ verify_server_pid() {
 
     # We will construct the PID file name based on the server config
     # and binary name
-    if [ -z ${bin_name} ]; then
+    if [ -z "${bin_name}" ]; then
         test_lib_error "verify_server_pid requires binary name"
         clean_exit 1
     fi
 
-    if [ -z ${cfg_file} ]; then
+    if [ -z "${cfg_file}" ]; then
         test_lib_error "verify_server_pid requires config file name"
         clean_exit 1
     fi
@@ -686,10 +767,10 @@ verify_server_pid() {
     # Only the file name portion of the config file is used, try and
     # extract it. NOTE if this "algorithm" changes this code will need
     # to be updated.
-    fname=`basename ${cfg_file}`
-    fname=`echo $fname | cut -f1 -d'.'`
+    fname=$(basename "${cfg_file}")
+    fname=$(echo "${fname}" | cut -f1 -d'.')
 
-    if [ -z ${fname} ]; then
+    if [ -z "${fname}" ]; then
         test_lib_error "verify_server_pid could not extract config name"
         clean_exit 1
     fi
@@ -697,17 +778,16 @@ verify_server_pid() {
     # Now we can build the name:
     pid_file="$KEA_PIDFILE_DIR/$fname.$bin_name.pid"
 
-    if [ ! -e ${pid_file} ]; then
-        printf "ERROR: PID file:[%s] does not exist\n" ${pid_file}
+    if [ ! -e "${pid_file}" ]; then
+        printf "ERROR: PID file:[%s] does not exist\n" "${pid_file}"
         clean_exit 1
     fi
 
     # File exists, does its PID point to a live process?
-    pid=`cat ${pid_file}`
-    kill -0 ${pid}
-    if [ $? -ne 0 ]; then
+    pid=$(cat "${pid_file}")
+    if ! kill -0 "${pid}"; then
         printf "ERROR: PID file:[%s] exists but PID:[%d] does not\n" \
-               ${pid_file} ${pid}
+               "${pid_file}" "${pid}"
         clean_exit 1
     fi
 
@@ -722,7 +802,7 @@ version_test() {
     long_version=${2-}  # Test long version?
 
     # Log the start of the test and print test name.
-    test_start ${test_name}
+    test_start "${test_name}"
 
     # Remove dangling Kea instances and remove log files.
     cleanup
@@ -734,9 +814,10 @@ version_test() {
     fi
 
     for v in -v ${long_version}; do
-        REPORTED_VERSION=$("${bin_path}/${bin}" "${v}")
+        run_command \
+            "${bin_path}/${bin}" "${v}"
 
-        if test "${REPORTED_VERSION}" == "${EXPECTED_VERSION}"; then
+        if test "${OUTPUT}" = "${EXPECTED_VERSION}"; then
             test_finish 0
         else
             printf 'ERROR: Expected version "%s", got "%s" when calling "%s"\n' \
@@ -754,7 +835,7 @@ logger_vars_test() {
     test_name=${1}  # Test name
 
     # Log the start of the test and print test name.
-    test_start ${test_name}
+    test_start "${test_name}"
     # Remove dangling Kea instances and remove log files.
     cleanup
 
@@ -771,16 +852,16 @@ logger_vars_test() {
     KEA_LOCKFILE_DIR=.
 
     # Start Kea.
-    start_kea ${bin_path}/${bin}
+    start_kea "${bin_path}/${bin}"
 
     # Wait for Kea to process the invalid configuration and die.
     sleep 1
 
     # Check if it is still running. It should have terminated.
-    get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 0 ]; then
-        printf "ERROR: expected Kea process to not start. Found %d processes"
-        printf " running.\n" ${_GET_PIDS_NUM}
+    get_pid "${bin}"
+    if [ "${_GET_PIDS_NUM}" -ne 0 ]; then
+        printf 'ERROR: expected Kea process to not start. '
+        printf 'Found %d processes running.\n' "${_GET_PIDS_NUM}"
 
         # Revert to the old KEA_LOCKFILE_DIR value
         KEA_LOCKFILE_DIR=${KEA_LOCKFILE_DIR_OLD}
@@ -788,8 +869,8 @@ logger_vars_test() {
     fi
 
     if [ ! -f "./logger_lockfile" ]; then
-        printf "ERROR: Expect ${bin} to create logger_lockfile in the\n"
-        printf "current directory, but no such file exists.\n"
+        printf 'ERROR: Expect %s to create logger_lockfile in the ' "${bin}"
+        printf 'current directory, but no such file exists.\n'
 
         # Revert to the old KEA_LOCKFILE_DIR value
         KEA_LOCKFILE_DIR=${KEA_LOCKFILE_DIR__OLD}
@@ -803,16 +884,16 @@ logger_vars_test() {
     KEA_LOCKFILE_DIR="none"
 
     # Start Kea.
-    start_kea ${bin_path}/${bin}
+    start_kea "${bin_path}/${bin}"
 
     # Wait for Kea to process the invalid configuration and die.
     sleep 1
 
     # Check if it is still running. It should have terminated.
-    get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 0 ]; then
-        printf "ERROR: expected Kea process to not start. Found %d processes"
-        printf " running.\n" ${_GET_PIDS_NUM}
+    get_pid "${bin}"
+    if [ "${_GET_PIDS_NUM}" -ne 0 ]; then
+        printf 'ERROR: expected Kea process to not start. '
+        printf 'Found %d processes running.\n' "${_GET_PIDS_NUM}"
 
         # Revert to the old KEA_LOCKFILE_DIR value
         KEA_LOCKFILE_DIR=${KEA_LOCKFILE_DIR_OLD}
@@ -821,8 +902,8 @@ logger_vars_test() {
     fi
 
     if [ -f "./logger_lockfile" ]; then
-        printf "ERROR: Expect ${bin} to NOT create logger_lockfile in the\n"
-        printf "current directory, but the file exists."
+        printf 'ERROR: Expect %s to NOT create logger_lockfile in the ' "${bin}"
+        printf 'current directory, but the file exists.\n'
 
         # Revert to the old KEA_LOCKFILE_DIR value
         KEA_LOCKFILE_DIR=${KEA_LOCKFILE_DIR_OLD}
@@ -831,7 +912,7 @@ logger_vars_test() {
     fi
 
     # Revert to the old KEA_LOCKFILE_DIR value
-    printf "Reverting KEA_LOCKFILE_DIR to ${KEA_LOCKFILE_DIR_OLD}\n"
+    printf 'Reverting KEA_LOCKFILE_DIR to %s\n' "${KEA_LOCKFILE_DIR_OLD}"
     KEA_LOCKFILE_DIR=${KEA_LOCKFILE_DIR_OLD}
 
     test_finish 0
@@ -854,30 +935,31 @@ server_pid_file_test() {
     # Instruct server to log to the specific file.
     set_logger
     # Start server
-    start_kea ${bin_path}/${bin}
+    start_kea "${bin_path}/${bin}"
     # Wait up to 20s for server to start.
     wait_for_kea 20
-    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
-        printf "ERROR: timeout waiting for %s to start.\n" ${bin}
+    if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
+        printf 'ERROR: timeout waiting for %s to start.\n' "${bin}"
         clean_exit 1
     fi
 
     # Verify server is still running
-    verify_server_pid ${bin} ${CFG_FILE}
+    verify_server_pid "${bin}" "${CFG_FILE}"
 
-    printf "PID file is [%s],  PID is [%d]" ${_SERVER_PID_FILE} ${_SERVER_PID}
+    printf 'PID file is [%s],  PID is [%d]' "${_SERVER_PID_FILE}" "${_SERVER_PID}"
 
     # Now try to start a second one
-    start_kea ${bin_path}/${bin}
+    start_kea "${bin_path}/${bin}"
 
     wait_for_message 10 "${log_id}" 1
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
-        printf "ERROR: Second %s instance started? PID conflict not reported.\n" ${bin}
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
+        printf 'ERROR: Second %s instance started? ' "${bin}"
+        printf 'PID conflict not reported.\n'
         clean_exit 1
     fi
 
     # Verify server is still running
-    verify_server_pid ${bin} ${CFG_FILE}
+    verify_server_pid "${bin}" "${CFG_FILE}"
 
     # All ok. Shut down the server and exit.
     test_finish 0

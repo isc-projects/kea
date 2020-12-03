@@ -6,8 +6,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
 # Include common test library.
-. @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Locations of memfile tools
 kea_admin="@abs_top_builddir@/src/bin/admin/kea-admin"
@@ -33,12 +40,12 @@ kea_dhcp() {
     printf '%s' "@abs_top_builddir@/src/bin/dhcp${v}/kea-dhcp${v}"
 }
 
-# Print the minimum allowed number of header columns allowed for v4.
+# Print the minimum allowed number of header columns for v4.
 incomplete_memfile_header_v4() {
     printf 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname'
 }
 
-# Print the minimum allowed number of header columns allowed for v6.
+# Print the minimum allowed number of header columns for v6.
 incomplete_memfile_header_v6() {
     printf 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname'
 }

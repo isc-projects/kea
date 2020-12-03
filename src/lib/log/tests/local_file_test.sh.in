@@ -1,4 +1,5 @@
 #!/bin/sh
+
 # Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -8,19 +9,26 @@
 # Checks that a local message file can override the definitions in the message
 # dictionary.
 
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# Allow non-zero exit codes to be explicitly checked in this test.
+set +e
+
 testname="Local message file test"
-echo $testname
+printf '%s\n' "${testname}"
 
 failcount=0
-localmes=@abs_builddir@/localdef_mes_$$
-tempfile=@abs_builddir@/run_time_init_test_tempfile_$$
+localmes="@abs_builddir@/localdef_mes_$$"
+tempfile="@abs_builddir@/run_time_init_test_tempfile_$$"
 
 passfail() {
-    if [ $1 -eq 0 ]; then
-        echo " pass"
+    if [ "${1}" -eq 0 ]; then
+        printf ' pass\n'
     else
-        echo " FAIL"
-        failcount=`expr $failcount + $1`
+        printf ' FAIL\n'
+        failcount=$((failcount + $1))
     fi
 }
 
@@ -32,7 +40,7 @@ cat > $localmes << .
 % LOG_READING_LOCAL_FILE replacement read local message file, parameter is '%1'
 .
 
-echo -n "1. Local message replacement:"
+printf '1. Local message replacement:'
 cat > $tempfile << .
 WARN  [example.log] LOG_NO_SUCH_MESSAGE could not replace message text for 'LOG_NOTHERE': no such message
 FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
@@ -48,7 +56,7 @@ WARN  [example.beta] LOG_BAD_STREAM bad log console output stream: beta_warn
     cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-echo -n "2. Report error if unable to read local message file:"
+printf '2. Report error if unable to read local message file:'
 cat > $tempfile << .
 ERROR [example.log] LOG_INPUT_OPEN_FAIL unable to open message file $localmes for input: No such file or directory
 FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
@@ -66,11 +74,11 @@ rm -f $localmes
 passfail $?
 
 if [ $failcount -eq 0 ]; then
-    echo "PASS: $testname"
+    printf 'PASS: %s\n' "$testname"
 elif [ $failcount -eq 1 ]; then
-    echo "FAIL: $testname - 1 test failed"
+    printf 'FAIL: %s - 1 test failed\n' "$testname"
 else
-    echo "FAIL: $testname - $failcount tests failed"
+    printf 'FAIL: %s - %s tests failed\n' "$testname" "$failcount"
 fi
 
 # Tidy up.

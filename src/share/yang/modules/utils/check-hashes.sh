@@ -1,5 +1,6 @@
 #!/bin/sh
-# Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+
+# Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,22 +13,28 @@
 # Requires yanglint to translate YANG to YIN formats and openssl
 # for a system independent SHA-256.
 
-error=0
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# Change directory to the YANG modules' directory.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+cd "${script_path}/.."
+
 for m in *.yang
 do
-    hash1=`yanglint -f yin $m | openssl dgst -sha256 | sed 's/(stdin)= //'`
-    h=hashes/`basename $m .yang`.hash
-    if test -f $h
+    hash1=$(yanglint -f yin "${m}" | openssl dgst -sha256 | sed 's/(stdin)= //')
+    h="hashes/$(basename "${m}").hash"
+    if test -f "${h}"
     then
-        hash2=`cat $h`
-        if test $hash1 != $hash2
+        hash2=$(cat "${h}")
+        if test "$hash1" != "$hash2"
         then
-            error=1
-            echo hash mismatch on $m expected $hash1 in $h
+            printf 'hash mismatch on %s expected %s in %s\n' "${m}" "${hash1}" "${h}"
+            exit 1
         fi
     else
-        error=1
-        echo missing hash file $h for $m
+        printf 'missing hash file %s for %s\n' "${h}" "${m}"
+        exit 2
     fi
 done
-exit $error

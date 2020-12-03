@@ -1,17 +1,27 @@
+#!/bin/sh
+
 # Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# shellcheck disable=SC2039
+# SC2039: In POSIX sh, 'local' is undefined.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
 # Path to the temporary configuration file.
-CFG_FILE=@abs_top_builddir@/src/bin/dhcp6/tests/test_config.json
+CFG_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/test_config.json"
 # Path to the Kea log file.
-LOG_FILE=@abs_top_builddir@/src/bin/dhcp6/tests/test.log
+LOG_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/test.log"
 # Path to the Kea lease file.
-LEASE_FILE=@abs_top_builddir@/src/bin/dhcp6/tests/test_leases.csv
-# Expected version
-EXPECTED_VERSION="@PACKAGE_VERSION@"
+LEASE_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/test_leases.csv"
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
     \"Dhcp6\":
@@ -163,33 +173,33 @@ CONFIG_BAD_VALUES="{
 
 # Set the location of the executable.
 bin="kea-dhcp6"
-bin_path=@abs_top_builddir@/src/bin/dhcp6
+bin_path="@abs_top_builddir@/src/bin/dhcp6"
 
 # Import common test library.
-. @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # This test verifies that syntax checking works properly. This function
 # requires 3 parameters:
-# testname
+# test_name
 # config - string with a content of the config (will be written to a file)
-# exp_code - expected exit code returned by kea (0 - success, 1 - failure)
+# expected_code - expected exit code returned by kea (0 - success, 1 - failure)
 syntax_check_test() {
-    local TESTNAME="${1}"
-    local CONFIG="${2}"
-    local EXP_CODE="${3}"
+    local test_name="${1}"
+    local config="${2}"
+    local expected_code="${3}"
 
     # Log the start of the test and print test name.
-    test_start $TESTNAME
+    test_start "${test_name}"
     # Remove dangling Kea instances and remove log files.
     cleanup
     # Create correct configuration file.
-    create_config "${CONFIG}"
+    create_config "${config}"
     # Check it
     printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
-    ${bin_path}/${bin} -t ${CFG_FILE}
-    exit_code=$?
-    if [ ${exit_code} -ne $EXP_CODE ]; then
-        printf "ERROR: expected exit code $EXP_CODE, got ${exit_code}\n"
+    run_and_return_output_and_exit_code \
+        "${bin_path}/${bin}" -t "${CFG_FILE}"
+    if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
+        printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
         clean_exit 1
     fi
 
@@ -210,7 +220,7 @@ dynamic_reconfiguration_test() {
     start_kea ${bin_path}/${bin}
     # Wait up to 20s for Kea to start.
     wait_for_kea 20
-    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+    if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
         printf "ERROR: timeout waiting for Kea to start.\n"
         clean_exit 1
     fi
@@ -218,16 +228,16 @@ dynamic_reconfiguration_test() {
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
     get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started. Found %d processes\
- started.\n" ${_GET_PIDS_NUM}
+ started.\n" "${_GET_PIDS_NUM}"
         clean_exit 1
     fi
 
     # Check in the log file, how many times server has been configured. It should
     # be just once on startup.
     get_reconfigs
-    if [ ${_GET_RECONFIGS} -ne 1 ]; then
+    if [ "${_GET_RECONFIGS}" -ne 1 ]; then
         printf "ERROR: server hasn't been configured.\n"
         clean_exit 1
     else
@@ -247,10 +257,10 @@ dynamic_reconfiguration_test() {
     # The configuration provided is invalid so it should result in
     # reconfiguration failure but the server should still be running.
     get_reconfigs
-    if [ ${_GET_RECONFIGS} -ne 1 ]; then
+    if [ "${_GET_RECONFIGS}" -ne 1 ]; then
         printf "ERROR: server has been reconfigured despite bogus configuration.\n"
         clean_exit 1
-    elif [ ${_GET_RECONFIG_ERRORS} -ne 1 ]; then
+    elif [ "${_GET_RECONFIG_ERRORS}" -ne 1 ]; then
         printf "ERROR: server did not report reconfiguration error despite attempt\
  to configure it with invalid configuration.\n"
         clean_exit 1
@@ -258,7 +268,7 @@ dynamic_reconfiguration_test() {
 
     # Make sure the server is still operational.
     get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
         clean_exit 1
     fi
@@ -276,7 +286,7 @@ dynamic_reconfiguration_test() {
     # After receiving SIGHUP the server should get reconfigured and the
     # reconfiguration should be noted in the log file. We should now
     # have two configurations logged in the log file.
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
         printf "ERROR: server hasn't been reconfigured.\n"
         clean_exit 1
     else
@@ -285,7 +295,7 @@ dynamic_reconfiguration_test() {
 
     # Make sure the server is still operational.
     get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
         clean_exit 1
     fi
@@ -293,7 +303,7 @@ dynamic_reconfiguration_test() {
     # When the server receives a signal the call to select() function is
     # interrupted. This should not be logged as an error.
     get_log_messages "DHCP6_PACKET_RECEIVE_FAIL"
-    assert_eq 0 ${_GET_LOG_MESSAGES} \
+    assert_eq 0 "${_GET_LOG_MESSAGES}" \
         "Expected get_log_messages DHCP6_PACKET_RECEIVE_FAIL return %d, \
 returned %d."
 
@@ -304,11 +314,11 @@ returned %d."
 # This test verifies that DHCPv6 server is shut down gracefully when it
 # receives a SIGINT or SIGTERM signal.
 shutdown_test() {
-    test_name=${1}  # Test name
-    signum=${2}      # Signal number
+    local test_name=${1}    # Test name
+    local signum=${2}       # Signal number
 
     # Log the start of the test and print test name.
-    test_start ${test_name}
+    test_start "${test_name}"
     # Remove dangling Kea instances and remove log files.
     cleanup
     # Create new configuration file.
@@ -319,7 +329,7 @@ shutdown_test() {
     start_kea ${bin_path}/${bin}
     # Wait up to 20s for Kea to start.
     wait_for_kea 20
-    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+    if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
         printf "ERROR: timeout waiting for Kea to start.\n"
         clean_exit 1
     fi
@@ -327,16 +337,16 @@ shutdown_test() {
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
     get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started. Found %d processes\
- started.\n" ${_GET_PIDS_NUM}
+ started.\n" "${_GET_PIDS_NUM}"
         clean_exit 1
     fi
 
     # Check in the log file, how many times server has been configured. It should
     # be just once on startup.
     get_reconfigs
-    if [ ${_GET_RECONFIGS} -ne 1 ]; then
+    if [ "${_GET_RECONFIGS}" -ne 1 ]; then
         printf "ERROR: server hasn't been configured.\n"
         clean_exit 1
     else
@@ -344,25 +354,25 @@ shutdown_test() {
     fi
 
     # Send signal to Kea (SIGTERM, SIGINT etc.)
-    send_signal ${signum} ${bin}
+    send_signal "${signum}" "${bin}"
 
     # Wait up to 10s for the server's graceful shutdown. The graceful shut down
     # should be recorded in the log file with the appropriate message.
     wait_for_message 10 "DHCP6_SHUTDOWN" 1
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
         printf "ERROR: Server did not record shutdown in the log.\n"
         clean_exit 1
     fi
 
     # Make sure the server is down.
     wait_for_server_down 5 ${bin}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     # When the server receives a signal the call to select() function is
     # interrupted. This should not be logged as an error.
     get_log_messages "DHCP6_PACKET_RECEIVE_FAIL"
-    assert_eq 0 ${_GET_LOG_MESSAGES} \
+    assert_eq 0 "${_GET_LOG_MESSAGES}" \
         "Expected get_log_messages DHCP6_PACKET_RECEIVE_FAIL return %d, \
 returned %d."
 
@@ -378,7 +388,7 @@ lfc_timer_test() {
     cleanup
     # Create a configuration with the LFC enabled, by replacing the section
     # with the lfc-interval and persist parameters.
-    LFC_CONFIG=$(printf "${CONFIG}" | sed -e 's/\"lfc-interval\": 0/\"lfc-interval\": 3/g' \
+    LFC_CONFIG=$(printf '%s' "${CONFIG}" | sed -e 's/\"lfc-interval\": 0/\"lfc-interval\": 3/g' \
                         | sed -e 's/\"persist\": false,/\"persist\": true,/g')
     # Create new configuration file.
     create_config "${LFC_CONFIG}"
@@ -388,7 +398,7 @@ lfc_timer_test() {
     start_kea ${bin_path}/${bin}
     # Wait up to 20s for Kea to start.
     wait_for_kea 20
-    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+    if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
         printf "ERROR: timeout waiting for Kea to start.\n"
         clean_exit 1
     fi
@@ -396,15 +406,15 @@ lfc_timer_test() {
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
     get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started. Found %d processes\
- started.\n" ${_GET_PIDS_NUM}
+ started.\n" "${_GET_PIDS_NUM}"
         clean_exit 1
     fi
 
     # Check if Kea emits the log message indicating that LFC is started.
     wait_for_message 10 "DHCPSRV_MEMFILE_LFC_EXECUTE" 1
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
         printf "ERROR: Server did not execute LFC.\n"
         clean_exit 1
     fi
@@ -413,7 +423,7 @@ lfc_timer_test() {
     sleep 1
 
     # Modify the interval.
-    LFC_CONFIG=$(printf "${LFC_CONFIG}" | sed -e 's/\"lfc-interval\": 3/\"lfc-interval\": 4/g')
+    LFC_CONFIG=$(printf '%s' "${LFC_CONFIG}" | sed -e 's/\"lfc-interval\": 3/\"lfc-interval\": 4/g')
     # Create new configuration file.
     create_config "${LFC_CONFIG}"
 
@@ -427,7 +437,7 @@ lfc_timer_test() {
     # After receiving SIGHUP the server should get reconfigured and the
     # reconfiguration should be noted in the log file. We should now
     # have two configurations logged in the log file.
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
         printf "ERROR: server hasn't been reconfigured.\n"
         clean_exit 1
     else
@@ -436,14 +446,14 @@ lfc_timer_test() {
 
     # Make sure the server is still operational.
     get_pid ${bin}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
         clean_exit 1
     fi
 
     # Wait for the LFC to run the second time.
     wait_for_message 10 "DHCPSRV_MEMFILE_LFC_EXECUTE" 2
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
         printf "ERROR: Server did not execute LFC.\n"
         clean_exit 1
     fi
@@ -454,14 +464,14 @@ lfc_timer_test() {
     # Wait up to 10s for the server's graceful shutdown. The graceful shut down
     # should be recorded in the log file with the appropriate message.
     wait_for_message 10 "DHCP6_SHUTDOWN" 1
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
         printf "ERROR: Server did not record shutdown in the log.\n"
         clean_exit 1
     fi
 
     # Make sure the server is down.
     wait_for_server_down 5 ${bin}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     # All ok. Shut down Kea and exit.

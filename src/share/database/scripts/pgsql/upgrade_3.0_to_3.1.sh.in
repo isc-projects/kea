@@ -1,18 +1,35 @@
 #!/bin/sh
 
-prefix=@prefix@
+# Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
 if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
-    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 else
-    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
 
-VERSION=`pgsql_version "$@"`
+VERSION=$(pgsql_version "$@")
 
 if [ "$VERSION" != "3.0" ]; then
-    printf "This script upgrades 3.0 to 3.1. Reported version is $VERSION. Skipping upgrade.\n"
+    printf 'This script upgrades 3.0 to 3.1. '
+    printf 'Reported version is %s. Skipping upgrade.\n' "${VERSION}"
     exit 0
 fi
 
@@ -46,6 +63,3 @@ UPDATE schema_version
 COMMIT;
 
 EOF
-
-exit $RESULT
-

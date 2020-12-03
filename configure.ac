@@ -879,16 +879,16 @@ if test "$SYSREPO_CONFIG" != "" ; then
 
     # Let's get the configuration environment for pure Sysrepo (written in C) first
     SYSREPO_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libsysrepo`
-    SYSREPO_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libsysrepo`"
-    SYSREPO_LIBS="`$SYSREPO_CONFIG --libs libsysrepo`"
-    SYSREPO_VERSION=`$SYSREPO_CONFIG --modversion libsysrepo`
-    SYSREPO_REPO=`$SYSREPO_CONFIG --variable=SR_REPOSITORY_LOC libsysrepo`
+    SYSREPO_CPPFLAGS="$SYSREPO_INCLUDEDIR $($SYSREPO_CONFIG --cflags-only-other libsysrepo)"
+    SYSREPO_LIBS=$($SYSREPO_CONFIG --libs libsysrepo)
+    SYSREPO_VERSION=$($SYSREPO_CONFIG --modversion libsysrepo)
+    SYSREPO_REPO=$($SYSREPO_CONFIG --variable=SR_REPOSITORY_LOC libsysrepo)
 
     # Now get the environment for C++ bindings for Sysrepo.
-    SYSREPOCPP_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libSysrepo-cpp`
-    SYSREPOCPP_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libSysrepo-cpp`"
-    SYSREPOCPP_LIBS="`$SYSREPO_CONFIG --libs libSysrepo-cpp`"
-    SYSREPOCPP_VERSION=`$SYSREPO_CONFIG --modversion libSysrepo-cpp`
+    SYSREPOCPP_INCLUDEDIR=$($SYSREPO_CONFIG --cflags-only-I libSysrepo-cpp)
+    SYSREPOCPP_CPPFLAGS="$SYSREPO_INCLUDEDIR $($SYSREPO_CONFIG --cflags-only-other libSysrepo-cpp)"
+    SYSREPOCPP_LIBS=$($SYSREPO_CONFIG --libs libSysrepo-cpp)
+    SYSREPOCPP_VERSION=$($SYSREPO_CONFIG --modversion libSysrepo-cpp)
 
     # If include paths are equal, there's no need to include both. But if they're different,
     # we need both.
@@ -1299,7 +1299,7 @@ if test "x$enable_generate_parser" != "xno"; then
        AC_MSG_ERROR([Flex is required for enable-generate-parser, but was not found])
     fi
 
-    if test "x$YACC" == "x"; then
+    if test "x$YACC" = "x"; then
        AC_MSG_ERROR([Bison is required for enable-generate-parser, but was not found])
     fi
 
@@ -1423,7 +1423,7 @@ if test "x$enable_generate_docs" != xno ; then
 
   if test -z "$PDFLATEX"; then
     PDFLATEX=no
-  elif test "x$PDFLATEX" == "xno"; then
+  elif test "x$PDFLATEX" = "xno"; then
     AC_MSG_CHECKING([for pdflatex])
     AC_MSG_RESULT([no (disabled)])
   else
@@ -1801,6 +1801,42 @@ AC_CONFIG_COMMANDS([permissions], [
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/util/tests/process_spawn_app.sh
+           chmod +x src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh
+           chmod +x src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh
+           chmod +x src/share/database/scripts/cql/upgrade_3.0_to_4.0.sh
+           chmod +x src/share/database/scripts/cql/upgrade_4.0_to_5.0.sh
+           chmod +x src/share/database/scripts/cql/wipe_data.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_3.0_to_4.0.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_8.0_to_8.1.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_8.1_to_8.2.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_8.2_to_9.0.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_9.0_to_9.1.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_9.1_to_9.2.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_9.2_to_9.3.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_9.3_to_9.4.sh
+           chmod +x src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh
+           chmod +x src/share/database/scripts/mysql/wipe_data.sh
+           chmod +x src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
+           chmod +x src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
+           chmod +x src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh
+           chmod +x src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh
+           chmod +x src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh
+           chmod +x src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh
+           chmod +x src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh
+           chmod +x src/share/database/scripts/pgsql/upgrade_5.0_to_5.1.sh
+           chmod +x src/share/database/scripts/pgsql/upgrade_5.1_to_6.0.sh
+           chmod +x src/share/database/scripts/pgsql/upgrade_6.0_to_6.1.sh
+           chmod +x src/share/database/scripts/pgsql/upgrade_6.1_to_6.2.sh
+           chmod +x src/share/database/scripts/pgsql/wipe_data.sh
            chmod +x tools/path_replacer.sh
 ])
 

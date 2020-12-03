@@ -1693,7 +1693,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
     ASSERT_TRUE(fqdn);
     EXPECT_EQ("one.example.org.", fqdn->getDomainName());
 
-    // ddns-send-udpates for subnet 1 should be off, so we should NOT have an NRC.
+    // ddns-send-updates for subnet 1 should be off, so we should NOT have an NRC.
     ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     // Now let's try with a client on subnet 2.
@@ -1720,7 +1720,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
     DdnsParamsPtr p = (CfgMgr::instance().getCurrentCfg()->getDdnsParams(subnet));
     ASSERT_TRUE(p->getEnableUpdates());
 
-    // ddns-send-udpates for subnet 2 are enabled, verify the NCR is correct.
+    // ddns-send-updates for subnet 2 are enabled, verify the NCR is correct.
     ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:2::1",
                             "", 0, 4000);

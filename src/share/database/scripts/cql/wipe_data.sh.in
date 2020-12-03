@@ -12,34 +12,45 @@
 # including leases, reservations, etc... Use at your own peril.
 # Reference tables will be left in-tact.
 
-prefix=@prefix@a
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
 if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
-    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 else
-    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
 
 # First argument is must be the expected schema version <major>.<minor>
 exp_version="$1"
-shift;
+shift
 
 # Remaining arguments are used as cql command line arguments
 
 # If the existing schema doesn't match, the fail
-VERSION=`cql_version "$@"`
+VERSION=$(cql_version "$@")
 if [ "$VERSION" = "" ]; then
     printf "Cannot wipe data, schema version could not be detected.\n"
     exit 1
 fi
 
 if [ "$VERSION" != "$exp_version" ]; then
-    printf "Cannot wipe data, wrong schema version. Expected $exp_version, found version $VERSION.\n"
+    printf 'Cannot wipe data, wrong schema version. '
+    printf 'Expected version %s, found %s.\n' "${exp_version}" "${VERSION}"
     exit 1
 fi
 
-# Delete transient data from tables.  
+# Delete transient data from tables.
 cqlsh "$@" <<EOF
 TRUNCATE TABLE lease4;
 TRUNCATE TABLE lease6;
@@ -49,7 +60,3 @@ TRUNCATE TABLE lease_state;
 TRUNCATE TABLE hosts;
 TRUNCATE TABLE logs;
 EOF
-
-RESULT=$?
-
-exit $RESULT

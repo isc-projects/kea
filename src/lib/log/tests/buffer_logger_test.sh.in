@@ -1,4 +1,5 @@
 #!/bin/sh
+
 # Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -7,26 +8,32 @@
 
 # Checks that the initLogger() call uses for unit tests respects the setting of
 # the buffer value
-#
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# Allow non-zero exit codes to be explicitly checked in this test.
+set +e
 
 testname="bufferLogger test"
-echo $testname
+printf '%s\n' "${testname}"
 
 failcount=0
-tempfile=@abs_builddir@/buffer_logger_test_tempfile_$$
+tempfile="@abs_builddir@/buffer_logger_test_tempfile_$$"
 
 passfail() {
-    if [ $1 -eq 0 ]; then
-        echo " pass"
+    if [ "${1}" -eq 0 ]; then
+        printf ' pass\n'
     else
-        echo " FAIL"
-        failcount=`expr $failcount + $1`
+        printf ' FAIL\n'
+        failcount=$((failcount + $1))
     fi
 }
 
-echo "1. Checking that buffer initialization works"
+printf '1. Checking that buffer initialization works\n'
 
-echo -n  "   - Buffer including process() call: "
+printf '   - Buffer including process() call: '
 cat > $tempfile << .
 INFO  [buffertest.log] LOG_BAD_SEVERITY unrecognized log severity: info
 INFO  [buffertest.log] LOG_BAD_SEVERITY unrecognized log severity: info
@@ -36,7 +43,7 @@ INFO  [buffertest.log] LOG_BAD_SEVERITY unrecognized log severity: info
     cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-echo -n  "   - Buffer excluding process() call: "
+printf '   - Buffer excluding process() call: '
 cat > $tempfile << .
 INFO [buffertest.log]: LOG_BAD_SEVERITY unrecognized log severity: info
 DEBUG [buffertest.log]: LOG_BAD_DESTINATION unrecognized log destination: debug-50
@@ -44,8 +51,6 @@ INFO [buffertest.log]: LOG_BAD_SEVERITY unrecognized log severity: info
 .
 ./buffer_logger_test -n 2>&1 | diff $tempfile -
 passfail $?
-
-
 
 # Tidy up.
 rm -f $tempfile

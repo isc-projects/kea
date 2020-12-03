@@ -983,12 +983,12 @@ public:
         test_timer_.setup(std::bind(&NameChangeUDPTest::testTimeoutHandler,
                                     this),
                           TEST_TIMEOUT);
-        // Disble multi-threading
+        // Disable multi-threading
         MultiThreadingMgr::instance().setMode(false);
     }
 
     ~NameChangeUDPTest() {
-        // Disble multi-threading
+        // Disable multi-threading
         MultiThreadingMgr::instance().setMode(false);
     }
 

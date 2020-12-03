@@ -6,33 +6,50 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# Disclaimer: `${keactrl} start` commands use `set +e` / `set -e` instead of
+# run_and_return_output_and_exit_code because
+# run_and_return_output_and_exit_code launches a subshell which inherently waits
+# for the background processes started in `${keactrl} start` which don't end
+# until explicitly stopped. So the test would freeze if
+# run_and_return_output_and_exit_code would be used.
+
 # Include common test library.
-. @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Set location of the keactrl.
-keactrl=@abs_top_builddir@/src/bin/keactrl/keactrl
+keactrl="@abs_top_builddir@/src/bin/keactrl/keactrl"
 
 # Set the have_netconf flag to know if netconf is available.
-@HAVE_SYSREPO_FALSE@have_netconf=0
-@HAVE_SYSREPO_TRUE@have_netconf=1
+if test -z '@HAVE_SYSREPO_TRUE@'; then
+    have_netconf=true
+else
+    have_netconf=false
+fi
 
 # Configuration file names need to have two '.' to check proper extension detection.
 # This is why the names contain '.conf' followed by the extension which is '.json'
 # Names for DHCPv4
 DHCP4_CFG_FILE_NAME="dhcp4_test_config.conf"
-DHCP4_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${DHCP4_CFG_FILE_NAME}.json
+DHCP4_CFG_FILE="@abs_top_builddir@/src/bin/keactrl/tests/${DHCP4_CFG_FILE_NAME}.json"
 # Names for DHCPv6
 DHCP6_CFG_FILE_NAME="dhcp6_test_config.conf"
-DHCP6_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${DHCP6_CFG_FILE_NAME}.json
+DHCP6_CFG_FILE="@abs_top_builddir@/src/bin/keactrl/tests/${DHCP6_CFG_FILE_NAME}.json"
 # Names for D2
 D2_CFG_FILE_NAME="d2_test_config.conf"
-D2_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${D2_CFG_FILE_NAME}.json
+D2_CFG_FILE="@abs_top_builddir@/src/bin/keactrl/tests/${D2_CFG_FILE_NAME}.json"
 # Names for CA
 CA_CFG_FILE_NAME="ca_test_config.conf"
-CA_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${CA_CFG_FILE_NAME}.json
+CA_CFG_FILE="@abs_top_builddir@/src/bin/keactrl/tests/${CA_CFG_FILE_NAME}.json"
 # Names for Netconf
 NC_CFG_FILE_NAME="nc_test_config.conf"
-NC_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${NC_CFG_FILE_NAME}.json
+NC_CFG_FILE="@abs_top_builddir@/src/bin/keactrl/tests/${NC_CFG_FILE_NAME}.json"
 # Configuration files for all deamons.
 CFG_FILES="kea_dhcp4_config_file=${DHCP4_CFG_FILE}\n\
 kea_dhcp6_config_file=${DHCP6_CFG_FILE}\n\
@@ -40,9 +57,9 @@ kea_dhcp_ddns_config_file=${D2_CFG_FILE}\n\
 kea_ctrl_agent_config_file=${CA_CFG_FILE}\n\
 kea_netconf_config_file=${NC_CFG_FILE}"
 # A name of the keactrl config file
-KEACTRL_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/keactrl_test.conf
+KEACTRL_CFG_FILE="@abs_top_builddir@/src/bin/keactrl/tests/keactrl_test.conf"
 # Path to the Kea log file.
-LOG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/test.log
+LOG_FILE="@abs_top_builddir@/src/bin/keactrl/tests/test.log"
 # Binaries' names
 wildcard_name="kea-"
 kea4_name="${wildcard_name}dhcp4"
@@ -213,50 +230,51 @@ kea_verbose=no\n${keactrl_fixed_config}"
     set_logger
 
     # Start servers using keactrl script.
-    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE} -s all\n"
+    printf 'Starting Kea: %s start -c %s -s all\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
     # Append the -s option to specify all servers. This is not necessary
     # because all should be a default but let's see if it is accepted
     # by the command line parser.
-    ${keactrl} start -c ${KEACTRL_CFG_FILE} -s all
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+    set +e
+    "${keactrl}" start -c ${KEACTRL_CFG_FILE} -s all
+    assert_eq 0 "${?}" "Expected keactrl to return %d, returned value was %d"
+    set -e
 
     # Wait up to 20s for the DHCPv6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 20s for the DHCPv4 server to configure.
     wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait for D2, CA and Netconf to configure.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=3
     else
         expected=2
     fi
     wait_for_message 20 "DCTL_CONFIG_COMPLETE" ${expected}
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for CPL daemons to start. \
 Expected wait_for_message return %d, returned %d."
 
     wait_for_message 20 "DHCP_DDNS_STARTED" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${d2_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     wait_for_message 20 "CTRL_AGENT_HTTP_SERVICE_STARTED" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${agent_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         wait_for_message 20 "NETCONF_STARTED" 1
-        assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+        assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
             "Timeout waiting for${netconf_name} to start. \
 Expected wait_for_message return %d, returned %d."
     fi
@@ -264,15 +282,15 @@ Expected wait_for_message return %d, returned %d."
     # Make sure that debug messages are logged for neither
     # server (non-verbose mode).
     get_log_messages "DHCP6_START_INFO"
-    assert_eq 0 ${_GET_LOG_MESSAGES} \
+    assert_eq 0 "${_GET_LOG_MESSAGES}" \
         "Expected get_log_messages return %d, returned %d."
 
     get_log_messages "DHCP4_START_INFO"
-    assert_eq 0 ${_GET_LOG_MESSAGES} \
+    assert_eq 0 "${_GET_LOG_MESSAGES}" \
         "Expected get_log_messages return %d, returned %d."
 
     get_log_messages "DCTL_STANDALONE"
-    assert_eq 0 ${_GET_LOG_MESSAGES} \
+    assert_eq 0 "${_GET_LOG_MESSAGES}" \
         "Expected get_log_messages return %d, returned %d."
 
     # Server may shut down immediately after configuration has completed.
@@ -281,64 +299,65 @@ Expected wait_for_message return %d, returned %d."
 
     # Make sure that all servers are running.
     get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     get_pid ${d2_name} ${D2_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 1 ${_GET_PIDS_NUM} \
+        assert_eq 1 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop  -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+    printf 'Stopping Kea: %s stop -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    set +e
+    "${keactrl}" stop -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${?}" "Expected keactrl to return %d, returned value was %d."
+    set -e
 
     # Wait up to 10s for the DHCPv6 server to stop.
     wait_for_message 10 "DHCP6_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the DHCPv4 server to stop.
     wait_for_message 10 "DHCP4_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the D2, CA and Netconf to stop.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=3
     else
         expected=2
     fi
     wait_for_message 10 "DCTL_SHUTDOWN" ${expected}
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that all servers are down.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=6
     else
         expected=5
     fi
     wait_for_server_down ${expected} ${wildcard_name}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
@@ -367,41 +386,42 @@ kea_verbose=yes\n${keactrl_fixed_config}"
     set_logger
 
     # Start servers using keactrl script.
-    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} start -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+    printf 'Starting Kea: %s start -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    set +e
+    "${keactrl}" start -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
+    set -e
 
     # Wait up to 20s for the DHCPv6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 20s for the DHCPv4 server to configure.
     wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     wait_for_message 20 "DCTL_CONFIG_COMPLETE" 2
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for CPL daemons to start. \
 Expected wait_for_message return %d, returned %d."
 
     wait_for_message 20 "DHCP_DDNS_STARTED" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${d2_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     wait_for_message 20 "CTRL_AGENT_HTTP_SERVICE_STARTED" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${agent_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         wait_for_message 20 "NETCONF_STARTED" 1
-        assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+        assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
             "Timeout waiting for${netconf_name} to start. \
 Expected wait_for_message return %d, returned %d."
     fi
@@ -409,20 +429,20 @@ Expected wait_for_message return %d, returned %d."
     # Check if the debug messages are present, which should only be
     # the case if the verbose mode is on.
     get_log_messages "DHCP6_START_INFO" 1
-    assert_eq 1 ${_GET_LOG_MESSAGES} \
+    assert_eq 1 "${_GET_LOG_MESSAGES}" \
         "Expected get_log_messages for DHCP6_START_INFO return %d, returned %d."
 
     get_log_messages "DHCP4_START_INFO" 1
-    assert_eq 1 ${_GET_LOG_MESSAGES} \
+    assert_eq 1 "${_GET_LOG_MESSAGES}" \
         "Expected get_log_messages for DHCP4_START_INFO return %d, returned %d."
 
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=3
     else
         expected=2
     fi
     get_log_messages "DCTL_STANDALONE" ${expected}
-    assert_eq ${expected} ${_GET_LOG_MESSAGES} \
+    assert_eq "${expected}" "${_GET_LOG_MESSAGES}" \
         "Expected get_log_messages for DCT_STANDALONE return %d, returned %d."
 
     # Server may shut down immediately after configuration has completed.
@@ -431,64 +451,64 @@ Expected wait_for_message return %d, returned %d."
 
     # Make sure that all servers are running.
     get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     get_pid ${d2_name} ${D2_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 1 ${_GET_PIDS_NUM} \
+        assert_eq 1 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+    printf 'Stopping Kea: %s stop -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" stop -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
     # Wait up to 10s for the DHCPv6 server to stop.
     wait_for_message 10 "DHCP6_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the DHCPv4 server to stop.
     wait_for_message 10 "DHCP4_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the D2, CA and Netconf to stop.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=3
     else
         expected=2
     fi
     wait_for_message 10 "DCTL_SHUTDOWN" ${expected}
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${d2_name} and ${agent_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that all servers are down.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=6
     else
         expected=5
     fi
     wait_for_server_down ${expected} ${wildcard_name}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
@@ -518,14 +538,15 @@ kea_verbose=no\n${keactrl_fixed_config}"
     set_logger
 
     # Start DHCPv4 server using keactrl script.
-    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} start -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return 0, returned value was ${ret}"
+    printf 'Starting Kea: %s start -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    set +e
+    "${keactrl}" start -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return 0, returned value was ${EXIT_CODE}"
+    set -e
 
     # Wait up to 20s for the DHCPv4 server to configure.
     wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
@@ -535,70 +556,70 @@ Expected wait_for_message return %d, returned %d."
 
     # Make sure that DHCPv4 server is running.
     get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that DHCPv6 server is not running.
     get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that D2 server is not running.
     get_pid ${d2_name} ${D2_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is not running.
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is not running.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 0 ${_GET_PIDS_NUM} \
+        assert_eq 0 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Make sure that the status command returns appropriate status.
     printf "Getting status of Kea modules: %s\n" "${keactrl} status \
 -c ${KEACTRL_CFG_FILE}"
-    output=$( ${keactrl} status -c ${KEACTRL_CFG_FILE} )
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned %d"
-    assert_string_contains "DHCPv4 server: active" "${output}" \
+    run_and_return_output_and_exit_code \
+        "${keactrl}" status -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned %d"
+    assert_string_contains "DHCPv4 server: active" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    assert_string_contains "DHCPv6 server: inactive" "${output}" \
+    assert_string_contains "DHCPv6 server: inactive" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    assert_string_contains "DHCP DDNS: inactive" "${output}" \
+    assert_string_contains "DHCP DDNS: inactive" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    assert_string_contains "Control Agent: inactive" "${output}" \
+    assert_string_contains "Control Agent: inactive" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    if [ ${have_netconf} -eq 1 ]; then
-        assert_string_contains "Netconf agent: inactive" "${output}" \
+    if ${have_netconf}; then
+        assert_string_contains "Netconf agent: inactive" "${OUTPUT}" \
             "Expected keactrl status command return %s"
     fi
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+    printf 'Stopping Kea: %s stop -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" stop -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
     # Wait up to 10s for the DHCPv4 server to stop.
     wait_for_message 10 "DHCP4_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that all servers are down.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=6
     else
         expected=5
     fi
     wait_for_server_down ${expected} ${wildcard_name}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
@@ -627,14 +648,15 @@ kea_verbose=no\n${keactrl_fixed_config}"
     set_logger
 
     # Start DHCPv6 server using keactrl script.
-    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} start -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+    printf 'Starting Kea: %s start -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    set +e
+    "${keactrl}" start -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
+    set -e
 
     # Wait up to 20s for the DHCPv6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
@@ -644,69 +666,69 @@ Expected wait_for_message return %d, returned %d."
 
     # Make sure that DHCPv6 server is running.
     get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is not running.
     get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that D2 server is not running.
     get_pid ${d2_name} ${D2_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is not running.
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is not running.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 0 ${_GET_PIDS_NUM} \
+        assert_eq 0 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Make sure that the status command returns appropriate status.
     printf "Getting status of Kea modules: %s\n" "${keactrl} status -c ${KEACTRL_CFG_FILE}"
-    output=$( ${keactrl} status -c ${KEACTRL_CFG_FILE} )
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned %d"
-    assert_string_contains "DHCPv4 server: inactive" "${output}" \
+    run_and_return_output_and_exit_code \
+        "${keactrl}" status -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned %d"
+    assert_string_contains "DHCPv4 server: inactive" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    assert_string_contains "DHCPv6 server: active" "${output}" \
+    assert_string_contains "DHCPv6 server: active" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    assert_string_contains "DHCP DDNS: inactive" "${output}" \
+    assert_string_contains "DHCP DDNS: inactive" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    assert_string_contains "Control Agent: inactive" "${output}" \
+    assert_string_contains "Control Agent: inactive" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    if [ ${have_netconf} -eq 1 ]; then
-        assert_string_contains "Netconf agent: inactive" "${output}" \
+    if ${have_netconf}; then
+        assert_string_contains "Netconf agent: inactive" "${OUTPUT}" \
             "Expected keactrl status command return %s"
     fi
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+    printf 'Stopping Kea: %s stop -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" stop -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
     # Wait up to 10s for the DHCPv6 server to stop.
     wait_for_message 10 "DHCP6_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that all servers are down.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=6
     else
         expected=5
     fi
     wait_for_server_down ${expected} ${wildcard_name}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
@@ -736,14 +758,15 @@ kea_verbose=no\n${keactrl_fixed_config}"
     set_logger
 
     # Start DHCPv6 server using keactrl script.
-    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} start -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return 0, returned value was ${ret}"
+    printf 'Starting Kea: %s start -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    set +e
+    "${keactrl}" start -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return 0, returned value was ${EXIT_CODE}"
+    set -e
 
     # Wait up to 20s for the DHCPv6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
@@ -753,40 +776,40 @@ Expected wait_for_message return %d, returned %d."
 
     # Make sure that DHCPv6 server is running.
     get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is not running.
     get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that D2 server is not running.
     get_pid ${d2_name} ${D2_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is not running.
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is not running.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 0 ${_GET_PIDS_NUM} \
+        assert_eq 0 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Trigger reconfiguration, make sure that the DHCPv6 server reconfigured.
-    printf "Reconfiguring the DHCPv6 server: ${keactrl} reload -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} reload -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+    printf 'Reconfiguring the DHCPv6 server: %s reload -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" reload -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
 
     # There should be two completed reconfigurations so far.
     wait_for_message 10 "DHCP6_CONFIG_COMPLETE" 2
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea6_name} to reconfigure. \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" "Timeout waiting for ${kea6_name} to reconfigure. \
 Expected wait_for_message to return %d, returned %d."
 
     # Update keactrl config to enable other servers.
@@ -796,115 +819,116 @@ kea_verbose=yes\n${keactrl_fixed_config}"
     create_keactrl_config "${keactrl_config}"
 
     # Start other servers using keactrl script.
-    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} start -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+    printf 'Starting Kea: %s start -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    set +e
+    "${keactrl}" start -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
+    set -e
 
     # Wait up to 20s for the DHCPv4 server to configure.
     wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 20s for the D2, CA and Netconf to configure.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=3
     else
         expected=2
     fi
     wait_for_message 20 "DCTL_CONFIG_COMPLETE" ${expected}
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${d2_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that DHCPv6 server is running.
     get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is running.
     get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that D2 server is running.
     get_pid ${d2_name} ${D2_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is running.
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is running.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 1 ${_GET_PIDS_NUM} \
+        assert_eq 1 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Trigger reconfiguration, make sure that servers are reconfigured.
-    printf "Reconfiguring all servers: ${keactrl} reload \
--c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} reload -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+    printf "Reconfiguring all servers: %s reload -c %s\n" \
+        "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" reload -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
 
     # There should be three completed configurations of DHCPv6 server.
     wait_for_message 10 "DHCP6_CONFIG_COMPLETE" 3
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea6_name} to reconfigure. \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" "Timeout waiting for ${kea6_name} to reconfigure. \
 Expected wait_for_message to return %d, returned %d."
 
     # There should be two completed configurations of DHCPv4 server.
     wait_for_message 10 "DHCP4_CONFIG_COMPLETE" 2
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea4_name} to reconfigure. \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" "Timeout waiting for ${kea4_name} to reconfigure. \
 Expected wait_for_message to return %d, returned %d."
 
     # There should be two completed configurations of D2 and two
     # configurations of CA.
     wait_for_message 10 "DCTL_CONFIG_COMPLETE" 4
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${d2_name} or ${ca_name} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" "Timeout waiting for ${d2_name} or ${agent_name} \
 to reconfigure. Expected wait_for_message to return %d, returned %d."
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+    printf 'Stopping Kea: %s stop -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" stop -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
     # Wait up to 10s for the DHCPv6 server to stop.
     wait_for_message 10 "DHCP6_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the DHCPv4 server to stop.
     wait_for_message 10 "DHCP4_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the D2, CA and Netconf to stop.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=3
     else
         expected=2
     fi
     wait_for_message 10 "DCTL_SHUTDOWN" ${expected}
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
-        "Timeout waiting for ${d2_name} and ${ca_name} to shutdown. \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
+        "Timeout waiting for ${d2_name} and ${agent_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that all servers are down.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=6
     else
         expected=5
     fi
     wait_for_server_down ${expected} ${wildcard_name}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
@@ -934,14 +958,15 @@ kea_verbose=yes\n${keactrl_fixed_config}"
     set_logger
 
     # Start DHCPv4 server using keactrl script.
-    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} start -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return 0, returned value was ${ret}"
+    printf 'Starting Kea: %s start -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    set +e
+    "${keactrl}" start -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return 0, returned value was ${EXIT_CODE}"
+    set -e
 
     # Wait up to 20s for the DHCPv4 server to configure.
     wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
@@ -951,40 +976,40 @@ Expected wait_for_message return %d, returned %d."
 
     # Make sure that DHCPv4 server is running.
     get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that DHCPv6 server is not running.
     get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that D2 server is not running.
     get_pid ${d2_name} ${D2_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is not running.
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 0 ${_GET_PIDS_NUM} \
+    assert_eq 0 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is not running.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 0 ${_GET_PIDS_NUM} \
+        assert_eq 0 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Trigger reconfiguration, make sure that the DHCPv4 server is reconfigured.
-    printf "Reconfiguring the DHCPv4 server: ${keactrl} reload -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} reload -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+    printf 'Reconfiguring the DHCPv4 server: %s reload -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" reload -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
 
     # There should be two completed reconfigurations so far.
     wait_for_message 10 "DHCP4_CONFIG_COMPLETE" 2
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea4_name} to reconfigure. \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" "Timeout waiting for ${kea4_name} to reconfigure. \
 Expected wait_for_message to return %d, returned %d."
 
     # Update keactrl config to enable other servers.
@@ -994,111 +1019,112 @@ kea_verbose=no\n${keactrl_fixed_config}"
     create_keactrl_config "${keactrl_config}"
 
     # Start other servers using keactrl script.
-    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} start -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return 0, returned value was ${ret}"
+    printf 'Starting Kea: %s start -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    set +e
+    "${keactrl}" start -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return 0, returned value was ${EXIT_CODE}"
+    set -e
 
     # Wait up to 20s for the DHCPv6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 20s for the D2, CA and Netconf to configure.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=3
     else
         expected=2
     fi
     wait_for_message 20 "DCTL_CONFIG_COMPLETE" ${expected}
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${d2_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
 
     # Make sure that DHCPv6 server is running.
     get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is running.
     get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that D2 server is running.
     get_pid ${d2_name} ${D2_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is running.
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is running.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 1 ${_GET_PIDS_NUM} \
+        assert_eq 1 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Trigger reconfiguration, make sure that servers are reconfigured.
-    printf "Reconfiguring DHCPv6 and DHCPv4 servers: ${keactrl} reload \
--c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} reload -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+    printf 'Reconfiguring DHCPv6 and DHCPv4 servers: %s reload -c %s\n' \
+        "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" reload -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
 
     # There should be three completed configurations of DHCPv4 server.
     wait_for_message 10 "DHCP4_CONFIG_COMPLETE" 3
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea4_name} to reconfigure. \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" "Timeout waiting for ${kea4_name} to reconfigure. \
 Expected wait_for_message to return %d, returned %d."
 
     # There should be two completed configurations of DHCPv6 server.
     wait_for_message 10 "DHCP6_CONFIG_COMPLETE" 2
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${kea6_name} to reconfigure. \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" "Timeout waiting for ${kea6_name} to reconfigure. \
 Expected wait_for_message to return %d, returned %d."
 
     # There should be two completed configurations of D2 and two
     # configurations of CA.
     wait_for_message 10 "DCTL_CONFIG_COMPLETE" 4
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} "Timeout waiting for ${d2_name} to reconfigure. \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" "Timeout waiting for ${d2_name} to reconfigure. \
 Expected wait_for_message to return %d, returned %d."
 
     # Use keactrl stop to shutdown the servers.
-    printf "Stopping Kea: ${keactrl} stop -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} stop -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+    printf 'Stopping Kea: %s stop -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" stop -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
     # Wait up to 10s for the DHCPv6 server to stop.
     wait_for_message 10 "DHCP6_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the DHCPv4 server to stop.
     wait_for_message 10 "DHCP4_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 10s for the D2, CA and Netconf to stop.
     wait_for_message 10 "DCTL_SHUTDOWN" 2
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that all servers are down.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=6
     else
         expected=5
     fi
     wait_for_server_down ${expected} ${wildcard_name}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0
@@ -1126,45 +1152,46 @@ kea_verbose=no\n${keactrl_fixed_config}"
     set_logger
 
     # Start servers using keactrl script.
-    printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} start -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d"
+    printf 'Starting Kea: %s start -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    set +e
+    "${keactrl}" start -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
+    set -e
 
     # Wait up to 20s for the DHCPv6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 20s for the DHCPv4 server to configure.
     wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     # Wait up to 20s for the D2, CA and Netconf to configure.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=3
     else
         expected=2
     fi
     wait_for_message 20 "DCTL_CONFIG_COMPLETE" ${expected}
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${d2_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that debug messages are not logged (non-verbose mode).
     get_log_messages "DHCP6_START_INFO"
-    assert_eq 0 ${_GET_LOG_MESSAGES} \
+    assert_eq 0 "${_GET_LOG_MESSAGES}" \
         "Expected get_log_messages return %d, returned %d."
 
     get_log_messages "DHCP4_START_INFO"
-    assert_eq 0 ${_GET_LOG_MESSAGES} \
+    assert_eq 0 "${_GET_LOG_MESSAGES}" \
         "Expected get_log_messages return %d, returned %d."
 
     get_log_messages "DCTL_STANDALONE"
-    assert_eq 0 ${_GET_LOG_MESSAGES} \
+    assert_eq 0 "${_GET_LOG_MESSAGES}" \
     "Expected get_log_messages return %d, returned %d."
 
     # Server may shut down immediately after configuration has completed.
@@ -1173,182 +1200,182 @@ Expected wait_for_message return %d, returned %d."
 
     # Make sure that all servers are running.
     get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     get_pid ${d2_name} ${D2_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 1 ${_GET_PIDS_NUM} \
+        assert_eq 1 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Use keactrl stop to shutdown DHCPv4 server.
-    printf "Stopping DHCPv4 server: ${keactrl} stop -s dhcp4 -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} stop -s dhcp4 -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+    printf "Stopping DHCPv4 server: %s stop -s dhcp4 -c %s\n" "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" stop -s dhcp4 -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
     # Wait up to 10s for the DHCPv4 server to stop.
     wait_for_message 10 "DHCP4_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that the DHCPv4 server is down.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=6
     else
         expected=5
     fi
     wait_for_server_down ${expected} ${kea4_name}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     # Make sure DHCPv6 server is still running
     get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure D2 server is still running
     get_pid ${d2_name} ${D2_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure CA is still running
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure Netconf agent is still running
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 1 ${_GET_PIDS_NUM} \
+        assert_eq 1 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Use keactrl stop to shutdown DHCPv6 server.
-    printf "Stopping DHCPv6 server: ${keactrl} stop -s dhcp6 -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} stop -s dhcp6 -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+    printf 'Stopping DHCPv6 server: %s stop -s dhcp6 -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" stop -s dhcp6 -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
     # Wait up to 10s for the DHCPv6 server to stop.
     wait_for_message 10 "DHCP6_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that the DHCPv6 server is down.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=6
     else
         expected=5
     fi
     wait_for_server_down ${expected} ${kea6_name}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     # Make sure D2 server is still running
     get_pid ${d2_name} ${D2_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure CA is still running
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Use keactrl stop to shutdown D2 server.
-    printf "Stopping DHCP DDNS server: ${keactrl} stop -s dhcp_ddns -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} stop -s dhcp_ddns -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+    printf 'Stopping DHCP DDNS server: %s stop -s dhcp_ddns -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" stop -s dhcp_ddns -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
     # Wait up to 10s for the D2 server to stop.
     wait_for_message 10 "DCTL_SHUTDOWN" 1
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${d2_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that the D2 server is down.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=6
     else
         expected=5
     fi
     wait_for_server_down ${expected} ${d2_name}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     # Make sure CA is still running
     get_pid ${agent_name} ${CA_CFG_FILE_NAME}
-    assert_eq 1 ${_GET_PIDS_NUM} \
+    assert_eq 1 "${_GET_PIDS_NUM}" \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure Netconf agent is still running
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 1 ${_GET_PIDS_NUM} \
+        assert_eq 1 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Use keactrl stop to shutdown CA.
-    printf "Stopping Control Agent: ${keactrl} stop -s ctrl_agent -c ${KEACTRL_CFG_FILE}\n"
-    ${keactrl} stop -s ctrl_agent -c ${KEACTRL_CFG_FILE}
-    ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+    printf 'Stopping Control Agent: %s stop -s ctrl_agent -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+    run_and_return_output_and_exit_code \
+        "${keactrl}" stop -s ctrl_agent -c ${KEACTRL_CFG_FILE}
+    assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
     # Wait up to 10s for the CA to stop.
     wait_for_message 10 "DCTL_SHUTDOWN" 2
-    assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+    assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${agent_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that the CA is down.
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         expected=6
     else
         expected=5
     fi
     wait_for_server_down ${expected} ${agent_name}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     # Make sure Netconf agent is still running
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
-        assert_eq 1 ${_GET_PIDS_NUM} \
+        assert_eq 1 "${_GET_PIDS_NUM}" \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
 
     # Use keactrl stop to shutdown Netconf agent.
-    if [ ${have_netconf} -eq 1 ]; then
-        printf "Stopping Netconf agent: ${keactrl} stop -s netconf -c ${KEACTRL_CFG_FILE}\n"
-        ${keactrl} stop -s netconf -c ${KEACTRL_CFG_FILE}
-        ret=${?}
-        assert_eq 0 ${ret} "Expected keactrl to return %d, returned value was %d."
+    if ${have_netconf}; then
+        printf 'Stopping Netconf agent: %s stop -s netconf -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
+        run_and_return_output_and_exit_code \
+            "${keactrl}" stop -s netconf -c ${KEACTRL_CFG_FILE}
+        assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
         # Wait up to 10s for the Netconf agent to stop.
         wait_for_message 10 "DCTL_SHUTDOWN" 2
-        assert_eq 1 ${_WAIT_FOR_MESSAGE} \
+        assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
             "Timeout waiting for ${netconf_name} to shutdown. \
 Expected wait_for_message return %d, returned %d."
 
         # Make sure that the Netconf agent is down.
         wait_for_server_down 6 ${netconf_name}
-        assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
             "Expected wait_for_server_down return %d, returned %d"
     fi
 
@@ -1370,23 +1397,23 @@ status_no_config_test() {
     # the config file.
     printf "Getting status without a Kea config file\n"
 
-    output=$( ${keactrl} status -c ${KEACTRL_CFG_FILE} )
-    ret=${?}
-    assert_eq 1 ${ret} "Expected keactrl to return %d, returned %d"
-    assert_string_contains "DHCPv4 server: inactive" "${output}" \
+    run_and_return_output_and_exit_code \
+        "${keactrl}" status -c ${KEACTRL_CFG_FILE}
+    assert_eq 1 "${EXIT_CODE}" "Expected keactrl to return %d, returned %d"
+    assert_string_contains "DHCPv4 server: inactive" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    assert_string_contains "DHCPv6 server: inactive" "${output}" \
+    assert_string_contains "DHCPv6 server: inactive" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    assert_string_contains "DHCP DDNS: inactive" "${output}" \
+    assert_string_contains "DHCP DDNS: inactive" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    assert_string_contains "Control Agent: inactive" "${output}" \
+    assert_string_contains "Control Agent: inactive" "${OUTPUT}" \
         "Expected keactrl status command return %s"
-    if [ ${have_netconf} -eq 1 ]; then
-        assert_string_contains "Netconf agent: inactive" "${output}" \
+    if ${have_netconf}; then
+        assert_string_contains "Netconf agent: inactive" "${OUTPUT}" \
             "Expected keactrl status command return %s"
     fi
     assert_string_contains "Configuration file for Kea does not exist" \
-        "${output}" "Expected keactrl status command return %s"
+        "${OUTPUT}" "Expected keactrl status command return %s"
 
     test_finish 0
 }
@@ -1411,16 +1438,17 @@ version_command_test() {
     exp="${exp}kea-dhcp6: @PACKAGE_VERSION@\n"
     exp="${exp}kea-dhcp-ddns: @PACKAGE_VERSION@\n"
     exp="${exp}kea-ctrl-agent: @PACKAGE_VERSION@"
-    if [ ${have_netconf} -eq 1 ]; then
+    if ${have_netconf}; then
         exp="${exp}\nkea-netconf: @PACKAGE_VERSION@"
     fi
     # The %b parameter tells printf to interpret backslashes.
     EXPECTED_RESP=$(printf "%b" "$exp")
 
     # Let's use short version:
-    reported_version=$(${keactrl} version -c ${KEACTRL_CFG_FILE})
+    run_and_return_output_and_exit_code \
+        "${keactrl}" version -c ${KEACTRL_CFG_FILE}
 
-    assert_str_eq "${EXPECTED_RESP}" "${reported_version}" \
+    assert_str_eq "${EXPECTED_RESP}" "${OUTPUT}" \
                   "Expected keactrl version to report %s, but it reported %s"
 
     test_finish 0

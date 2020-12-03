@@ -10,6 +10,10 @@
 # This script is used to run Kea from installation directory,
 # as well as for running tests.
 
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
 if [ "$(uname -s)" = "Darwin" ]; then
     DIR=$(stat -f %N "$0" | xargs dirname)
 else

@@ -1,13 +1,20 @@
+#!/bin/sh
+
 # Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# Path to the temporary configuration file.
-CFG_FILE=@abs_top_builddir@/src/bin/shell/tests/test_config.json
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
 # Path to the Control Agent log file.
-LOG_FILE=@abs_top_builddir@/src/bin/shell/tests/test.log
+LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
 
 # Control Agent configuration to be stored in the configuration file.
 # todo: use actual configuration once we support it.
@@ -45,15 +52,15 @@ CONFIG="{
 # Using bin and bin_path would be confusing, so we omit defining bin
 # and bin_path on purpose.
 ca_bin="kea-ctrl-agent"
-ca_bin_path=@abs_top_builddir@/src/bin/agent
+ca_bin_path="@abs_top_builddir@/src/bin/agent"
 
 shell_bin="kea-shell"
-shell_bin_path=@abs_top_builddir@/src/bin/shell
+shell_bin_path="@abs_top_builddir@/src/bin/shell"
 
-tmpfile_path=@abs_top_builddir@/src/bin/shell/tests
+tmpfile_path="@abs_top_builddir@/src/bin/shell/tests"
 
 # Import common test library.
-. @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # This test verifies that Control Agent is shut down gracefully when it
 # receives a SIGINT or SIGTERM signal.
@@ -67,7 +74,7 @@ shell_command_test() {
     # Setup phase: start CA.
 
     # Log the start of the test and print test name.
-    test_start ${test_name}
+    test_start "${test_name}"
 
     # Remove any dangling CA instances and remove log files.
     cleanup
@@ -81,7 +88,7 @@ shell_command_test() {
     start_kea ${ca_bin_path}/${ca_bin}
     # Wait up to 20s for Control Agent to start.
     wait_for_kea 20
-    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+    if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
         printf "ERROR: timeout waiting for Control Agent to start.\n"
         clean_exit 1
     fi
@@ -89,18 +96,18 @@ shell_command_test() {
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
     get_pid ${ca_bin}
-    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one Control Agent process to be started.\
- Found %d processes started.\n" ${_GET_PIDS_NUM}
+ Found %d processes started.\n" "${_GET_PIDS_NUM}"
         clean_exit 1
     fi
 
     # Check in the log file, how many times server has been configured.
     # It should be just once on startup.
     get_reconfigs
-    if [ ${_GET_RECONFIGS} -ne 1 ]; then
-        printf "ERROR: server been configured ${_GET_RECONFIGS} time(s),\
- but exactly 1 was expected.\n"
+    if [ "${_GET_RECONFIGS}" -ne 1 ]; then
+        printf "ERROR: server been configured %s time(s),\
+ but exactly 1 was expected.\n" "${_GET_RECONFIGS}"
         clean_exit 1
     else
         printf "Server successfully configured.\n"
@@ -111,19 +118,21 @@ shell_command_test() {
  127.0.0.1 --port 8081 ${auth} ${cmd} > ${tmpfile_path}/shell-stdout.txt"
     echo "Executing kea-shell ($tmp)"
 
+    set +e
     echo | ${shell_bin_path}/${shell_bin} --host 127.0.0.1 \
- --port 8081 ${auth} ${cmd} > ${tmpfile_path}/shell-stdout.txt
+ --port 8081 "${auth}" "${cmd}" > ${tmpfile_path}/shell-stdout.txt
+    shell_exit_code=$?
+    set -e
 
     # Check the exit code
-    shell_exit_code=$?
-    if [ ${exp_result} == "fail" ]; then
-        if [ ${shell_exit_code} -eq 0 ]; then
+    if [ "${exp_result}" = "fail" ]; then
+        if [ "${shell_exit_code}" -eq 0 ]; then
             echo "ERROR:" \
             "kea-shell returned ${shell_exit_code} exit code, expected 1."
         else
             echo "kea-shell returned ${shell_exit_code} exit code as expected."
         fi
-    elif [ ${shell_exit_code} -ne 0 ]; then
+    elif [ "${shell_exit_code}" -ne 0 ]; then
         echo "ERROR:" \
         "kea-shell returned ${shell_exit_code} exit code, expected 0."
     else
@@ -132,10 +141,12 @@ shell_command_test() {
 
     # Now check the response
     rm -f ${tmpfile_path}/shell-expected.txt
-    echo ${exp_rsp} > ${tmpfile_path}/shell-expected.txt
+    printf '%s\n' "${exp_rsp}" > ${tmpfile_path}/shell-expected.txt
+    set +e
     diff ${tmpfile_path}/shell-stdout.txt ${tmpfile_path}/shell-expected.txt
     diff_code=$?
-    if [ ${diff_code} -ne 0 ]; then
+    set -e
+    if [ "${diff_code}" -ne 0 ]; then
         echo "ERROR:" \
         "content returned is different than expected." \
         "See ${tmpfile_path}/shell-*.txt"
@@ -156,14 +167,14 @@ shell_command_test() {
 
     # Now wait for process to log that it is exiting.
     wait_for_message 10 "DCTL_SHUTDOWN" 1
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
         printf "ERROR: Control Agent did not log shutdown.\n"
         clean_exit 1
     fi
 
     # Make sure the server is down.
     wait_for_server_down 5 ${ca_bin}
-    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
     test_finish 0

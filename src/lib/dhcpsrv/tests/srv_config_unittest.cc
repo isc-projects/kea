@@ -1397,18 +1397,18 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     // Enable D2Client.
     enableD2Client(true);
 
-    // Make sure subnet1 udpates are still disabled.
+    // Make sure subnet1 updates are still disabled.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
     EXPECT_FALSE(params->getEnableUpdates());
 
-    // Make sure subnet2 udpates are now enabled.
+    // Make sure subnet2 updates are now enabled.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet2));
     EXPECT_TRUE(params->getEnableUpdates());
 
     // Enable sending updates globally.  This should inherit down subnet1.
     conf.addConfiguredGlobal("ddns-send-updates", Element::create(true));
 
-    // Make sure subnet1 udpates are now enabled.
+    // Make sure subnet1 updates are now enabled.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
     EXPECT_TRUE(params->getEnableUpdates());
 }
@@ -1557,18 +1557,18 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     // Enable D2Client.
     enableD2Client(true);
 
-    // Make sure subnet1 udpates are still disabled.
+    // Make sure subnet1 updates are still disabled.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
     EXPECT_FALSE(params->getEnableUpdates());
 
-    // Make sure subnet2 udpates are now enabled.
+    // Make sure subnet2 updates are now enabled.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet2));
     EXPECT_TRUE(params->getEnableUpdates());
 
     // Enable sending updates globally.  This should inherit down subnet1.
     conf.addConfiguredGlobal("ddns-send-updates", Element::create(true));
 
-    // Make sure subnet1 udpates are now enabled.
+    // Make sure subnet1 updates are now enabled.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
     EXPECT_TRUE(params->getEnableUpdates());
 }

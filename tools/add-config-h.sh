@@ -19,6 +19,10 @@
 # Reason: blackslash+linefeed inside single quotes in sed are needed for
 # POSIX-compliance. \n works only with GNU sed.
 
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
 # Print usage.
 print_usage() {
   printf \
@@ -142,7 +146,6 @@ else
   file=$(mktemp)
 
   # Run once for files that have at least one include.
-  # shellcheck disable=SC1004
   for i in $(get_source_files); do
     sed '1,/#include/s/#include/#include <config.h>\
 \
@@ -152,7 +155,6 @@ else
 
   # Run again for files that don't have any includes. The second command would
   # work for the first case, but the first command is more elegant.
-  # shellcheck disable=SC1004
   for i in $(get_source_files); do
     sed '1,/\(\/\/ file, You can obtain one.*\)/s/\(\/\/ file, You can obtain one.*\)/\1\
 \

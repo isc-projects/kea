@@ -1,12 +1,31 @@
 #!/bin/sh
 
-prefix=@prefix@
+# Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# shellcheck disable=SC2039
+# SC2039: In POSIX sh, arrays are undefined.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
 if [ -e "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh" ]; then
-    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 else
-    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
 
 # Need a path for temporary files created during upgrade data migration
@@ -18,11 +37,12 @@ else
     temp_file_dir="@abs_top_builddir@/src/share/database/scripts/cql"
 fi
 
-cqlargs=$@
+# Save the command line arguments for later use.
+cqlargs=("${@}")
 
 # Ensures the current schema version is 3.0. If not it exits.
 check_version() {
-    version=$(cql_version $cqlargs)
+    version=$(cql_version "${cqlargs[@]}")
 
     if [ "${version}" != "3.0" ]; then
         printf "This script upgrades 3.0 to 4.0. Reported version is %s. Skipping upgrade.\n" "${version}"
@@ -32,7 +52,7 @@ check_version() {
 
 # Peforms the schema changes from 3.0 to 4.0
 update_schema() {
-    cqlsh $cqlargs <<EOF
+    cqlsh "${cqlargs[@]}" <<EOF
 -- This line starts database upgrade to version 4.0
 
 -- -----------------------------------------------------
@@ -81,17 +101,11 @@ CREATE INDEX IF NOT EXISTS hostsindex5 ON hosts (host_ipv4_address);
 CREATE INDEX IF NOT EXISTS hostsindex6 ON hosts (reserved_ipv6_prefix_address);
 CREATE INDEX IF NOT EXISTS hostsindex7 ON hosts (reserved_ipv6_prefix_length);
 EOF
-
-    if [ "$?" -ne 0 ]
-    then
-        echo Schema udpate FAILED!
-        exit 1
-    fi
 }
 
 # Peforms the clean up schema changes from 3.0 to 4.0
 clean_up_schema() {
-    cqlsh $cqlargs <<EOF
+    cqlsh "${cqlargs[@]}" <<EOF
 DROP TABLE IF EXISTS host_reservations;
 
 DROP INDEX IF EXISTS host_reservationsindex1;
@@ -108,12 +122,6 @@ INSERT INTO schema_version (version, minor) VALUES(4, 0);
 
 -- This line concludes database upgrade to version 4.0
 EOF
-
-    if [ "$?" -ne 0 ]
-    then
-        echo Schema udpate FAILED!
-        exit 1
-    fi
 }
 
 # Function to delete temporary migration files
@@ -121,12 +129,12 @@ clean_up() {
     # clean up the files
     if [ -e "$export_file" ]
     then
-        rm $export_file
+        rm "$export_file"
     fi
 
     if [ -e "$update_file" ]
     then
-        rm $update_file
+        rm "$update_file"
     fi
 }
 
@@ -150,48 +158,35 @@ exit_now() {
         echo "Data Migration FAILURE! $explanation"
     fi
 
-    exit $status
+    exit "$status"
 }
 
+# Prefix ${string} with ${count} characters like the one spciefied in
+# ${fill_char}.
 fill() {
     string=$1;shift
     count=$1;shift
     fill_char=$1;shift
-    length=`echo $string | wc -c`
-    length=$((length - 1))
-    if [ $length -gt $count ]; then
-        value=`echo "$string" | cut -c 1-$count`
-        return
-    fi
-    result=""
-    count=$((count - length))
-    i=1
-    while [ $i -le $count ]; do
-        result="$fill_char$result"
-        i=$((i+1))
-    done
-    value="$result$string"
+    value="$(printf "%${count}s" | sed "s/ /${fill_char}/g")${string}"
 }
 
 identifier_text() {
     string=$1;shift
-    length=`echo $string | wc -c`
-    length=$((length - 1))
+    length="${#string}"
     # skip 0x from 0xabcdef
-    string=`echo "$string" | cut -c 3-$length`
+    string=$(echo "$string" | cut -c "3-$length")
     identifier=""
     # add starting 0: 0xabc->0x0abc
     mod=$((length % 2))
     if [ $mod -ne 0 ]; then
         string="0"$string
     fi
-    length=`echo $string | wc -c`
-    length=$((length - 1))
+    length="${#string}"
     i=1
-    while [ $i -le $length ]; do
-        char=`echo "$string" | cut -c $i-$i`
+    while [ "$i" -le "$length" ]; do
+        char=$(echo "$string" | cut -c $i-$i)
         mod=$((i % 2))
-        if [ $mod -ne 0 -a $i -ne 1 ]; then
+        if test $mod -ne 0 && test $i -ne 1; then
             char=":"$char
         fi
         identifier=$identifier$char
@@ -201,15 +196,14 @@ identifier_text() {
 
 key_hash() {
     string=$1;shift
-    length=`echo $string | wc -c`
-    length=$((length - 1))
+    length="${#string}"
     FNV_prime=1099511628211
     FNV_offset_basis=-3750763034362895579 # signed value for 14695981039346656037
     hash=$FNV_offset_basis
     i=1
-    while [ $i -le $length ]; do
-        char=`echo "$string" | cut -c $i-$i`
-        data=`echo "$char" | tr -d "\n" | od -An -t uC | tr -d ' '`
+    while [ "$i" -le "$length" ]; do
+        char=$(echo "$string" | cut -c $i-$i)
+        data=$(echo "$char" | tr -d "\n" | od -An -t uC | tr -d ' ')
         hash=$((hash ^ data))
         hash=$((hash * FNV_prime))
         i=$((i+1))
@@ -226,7 +220,7 @@ generate_key() {
     key=""
     identifier_text "$host_identifier"
     local_host_identifier=$identifier
-    if [ ! -z $host_ipv4_address ] && [ $host_ipv4_address -eq 0 ]; then
+    if [ -n "$host_ipv4_address" ] && [ "$host_ipv4_address" -eq 0 ]; then
         fill "$local_host_identifier" 383 "-"
         key="$key$value"
         fill "$host_identifier_type" 10 "-"
@@ -277,8 +271,8 @@ migrate_host_data() {
          option_scope_id) \
         TO '$export_file'"
 
-    cqlsh $cqlargs -e "$query"
-    if [ "$?" -ne 0 ]
+
+    if ! cqlsh "${cqlargs[@]}" -e "$query"
     then
         exit_now 1 "Cassandra export failed! Could not migrate data!"
     fi
@@ -286,7 +280,7 @@ migrate_host_data() {
     # Strip the carriage returns that CQL insists on adding.
     if [ -e "$export_file" ]
     then
-        cat $export_file | tr -d '\015' > $export_file.2
+        tr -d '\015' < "${export_file}" > $export_file.2
         mv $export_file.2 $export_file
     else
         # Shouldn't happen but then again we're talking about CQL here
@@ -296,12 +290,11 @@ migrate_host_data() {
     # Iterate through the exported data, accumulating update statements,
     # one for each reservation that needs updating.  We should have one
     # host per line.
-    line_cnt=0;
-    update_cnt=0;
-
+    line_cnt=0
+    update_cnt=0
     while read -r line
     do
-        line_cnt=$((line_cnt + 1));
+        line_cnt=$((line_cnt + 1))
         xIFS="$IFS"
         IFS=','
         i=1
@@ -338,8 +331,8 @@ migrate_host_data() {
         update_cnt=$((update_cnt + 1))
 
         IFS="$xIFS"
-        echo $line | sed -e "s/$host_id/$host_id,$key_data/" >> $update_file
-    done <  $export_file
+        echo "${line}" | sed -e "s/$host_id/$host_id,$key_data/" >> "${update_file}"
+    done < "${export_file}"
 
     # If we didn't record any updates, then hey, we're good to go!
     if [ "$update_cnt" -eq 0 ]
@@ -363,8 +356,7 @@ migrate_host_data() {
          option_scope_id) \
         FROM '$update_file'"
 
-    cqlsh $cqlargs -e "$query"
-    if [ "$?" -ne 0 ]
+    if ! cqlsh "${cqlargs[@]}" -e "$query"
     then
         exit_now 1 "Cassandra updates failed"
     fi
@@ -373,5 +365,8 @@ migrate_host_data() {
 }
 
 check_version
-update_schema
+if ! update_schema; then
+    printf 'Schema update FAILED!\n'
+    exit 1
+fi
 migrate_host_data

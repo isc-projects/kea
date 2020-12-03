@@ -1,13 +1,35 @@
 #!/bin/sh
 
-prefix=@prefix@
+# Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# shellcheck disable=SC2039
+# SC2039: In POSIX sh, 'local' is undefined.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
 if [ -e "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh" ]; then
-    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 else
-    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
+
+# Save the command line arguments for later use.
+cqlargs=("${@}")
 
 # Need a path for temporary files created during upgrade data migration
 # Use the state directory in the install path directory if it exists, otherwise
@@ -18,11 +40,9 @@ else
     temp_file_dir="@abs_top_builddir@/src/share/database/scripts/cql"
 fi
 
-cqlargs=$@
-
 # Ensures the current schema version is 2.0. If not it exits.
 check_version() {
-    version=$(cql_version $cqlargs)
+    version=$(cql_version "${cqlargs[@]}")
 
     if [ "${version}" != "2.0" ]; then
         printf "This script upgrades 2.0 to 3.0. Reported version is %s. Skipping upgrade.\n" "${version}"
@@ -32,7 +52,7 @@ check_version() {
 
 # Peforms the schema changes from 2.0 to 3.0
 update_schema() {
-    cqlsh $cqlargs <<EOF
+    cqlsh "${cqlargs[@]}" <<EOF
 -- This line starts database upgrade to version 3.0
 
 -- Add a column holding leases for user context.
@@ -61,25 +81,19 @@ INSERT INTO schema_version (version, minor) VALUES(3, 0);
 
 -- This line concludes database upgrade to version 3.0
 EOF
-
-    if [ "$?" -ne 0 ]
-    then
-        echo Schema udpate FAILED!
-        exit 1
-    fi
 }
 
 # Function to delete temporary migration files
 clean_up() {
     # clean up the files
-    if [ -e "$export_file" ]
+    if [ -e "${export_file}" ]
     then
-        rm $export_file
+        rm "${export_file}"
     fi
 
-    if [ -e "$update_file" ]
+    if [ -e "${update_file}" ]
     then
-        rm $update_file
+        rm "${update_file}"
     fi
 }
 
@@ -102,7 +116,7 @@ exit_now() {
         echo "Data Migration FAILURE! $explanation"
     fi
 
-    exit $status
+    exit "${status}"
 }
 
 # Function adds a column to the global, $update_cols if needed
@@ -131,7 +145,7 @@ check_column() {
     if [ "$val" = "$old_id" ]
     then
         # If the accumulator isn't empty, we need a comma
-        if [ ! -z "$update_cols" ]
+        if [ -n "${update_cols}" ]
         then
             comma=","
         fi
@@ -174,8 +188,7 @@ migrate_host_data() {
         (id, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id)\
         TO '$export_file'"
 
-    cqlsh $cqlargs -e "$query"
-    if [ "$?" -ne 0 ]
+    if ! cqlsh "${cqlargs[@]}" -e "$query"
     then
         exit_now 1 "Cassandra export failed! Could not migrate data!"
     fi
@@ -183,7 +196,7 @@ migrate_host_data() {
     # Strip the carriage returns that CQL insists on adding.
     if [ -e "$export_file" ]
     then
-        cat $export_file | tr -d '\015' > $export_file.2
+        tr -d '\015' < "${export_file}" > "${export_file}.2"
         mv $export_file.2 $export_file
     else
         # Shouldn't happen but then again we're talking about CQL here
@@ -193,8 +206,8 @@ migrate_host_data() {
     # Iterate through the exported data, accumulating update statements,
     # one for each reservation that needs updating.  We should have one
     # host per line.
-    line_cnt=0;
-    update_cnt=0;
+    line_cnt=0
+    update_cnt=0
 
     while read -r line
     do
@@ -212,13 +225,13 @@ migrate_host_data() {
                 host_id="$val"
                 ;;
             2)
-                check_column $val host_ipv4_subnet_id
+                check_column "$val" host_ipv4_subnet_id
                 ;;
             3)
-                check_column $val host_ipv6_subnet_id
+                check_column "$val" host_ipv6_subnet_id
                 ;;
             4)
-                check_column $val option_subnet_id
+                check_column "$val" option_subnet_id
                 ;;
             *)
                 # We're going to assume that since any error is fatal
@@ -235,14 +248,14 @@ migrate_host_data() {
         fi
 
         # If any of the current host's columns need to be replace, append an update for it
-        if [ ! -z "$update_cols" ]
+        if [ -n "$update_cols" ]
         then
             echo "update host_reservations set $update_cols where id = $host_id;" >> $update_file
             update_cnt=$((update_cnt + 1))
         fi
 
         IFS="$xIFS"
-    done <  $export_file
+    done < "${export_file}"
 
     # If we didn't record any updates, then hey, we're good to go!
     if [ "$update_cnt" -eq 0 ]
@@ -253,8 +266,7 @@ migrate_host_data() {
     # We have at least one update in the update file, so submit it # to cqlsh.
     echo "$update_cnt update statements written to $update_file"
     echo "Running the updates..."
-    cqlsh $cqlargs -f "$update_file"
-    if [ "$?" -ne 0 ]
+    if ! cqlsh "${cqlargs[@]}" -f "$update_file"
     then
         exit_now 1 "Cassandra updates failed"
     fi
@@ -263,5 +275,8 @@ migrate_host_data() {
 }
 
 check_version
-update_schema
+if ! update_schema; then
+    printf 'Schema update FAILED!\n'
+    exit 1
+fi
 migrate_host_data

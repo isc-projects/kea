@@ -298,7 +298,7 @@ TEST_F(CfgOptionTest, add) {
     EXPECT_TRUE(options->empty());
 }
 
-// This test verifies that options can be replaced with udpated content.
+// This test verifies that options can be replaced with updated content.
 TEST_F(CfgOptionTest, replace) {
     CfgOption cfg;
 
