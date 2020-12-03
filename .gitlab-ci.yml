@@ -1,10 +1,8 @@
 variables:
-  # Not normally needed, but may be if some script uses `apt-get install`.
-  DEBIAN_FRONTEND: noninteractive
   # Locale settings do not affect the build, but might affect tests.
   LC_ALL: C
 
-  CI_REGISTRY_IMAGE: registry.gitlab.isc.org/isc-projects/images/bind9
+  CI_REGISTRY_IMAGE: registry.gitlab.isc.org/isc-projects/kea
 
   # Disabled warnings:
   # SC2039 - complains about local var: In POSIX sh, 'local' is undefined.
@@ -15,21 +13,84 @@ stages:
 
 shellcheck:
   stage: test
-  image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
+  image: "$CI_REGISTRY_IMAGE:latest"
   tags:
     - linux
     - amd64
-  before_script:
-    - sudo apt-get update
-    - sudo apt-get -y install shellcheck
   script:
-    - SCRIPTS="src/bin/keactrl/keactrl.in "
-    - SCRIPTS+="src/bin/admin/kea-admin.in "
+    - SCRIPTS=
     - SCRIPTS+="src/bin/admin/admin-utils.sh "
-    - SCRIPTS+="tools/cql_config "
-    - SCRIPTS+="tools/sysrepo_config "
+    - SCRIPTS+="src/bin/admin/kea-admin.in "
+    - SCRIPTS+="src/bin/admin/tests/cql_tests.sh.in "
+    - SCRIPTS+="src/bin/admin/tests/memfile_tests.sh.in "
+    - SCRIPTS+="src/bin/admin/tests/mysql_tests.sh.in "
+    - SCRIPTS+="src/bin/admin/tests/pgsql_tests.sh.in "
+    - SCRIPTS+="src/bin/agent/tests/ca_process_tests.sh.in "
+    - SCRIPTS+="src/bin/d2/tests/d2_process_tests.sh.in "
+    - SCRIPTS+="src/bin/dhcp4/tests/dhcp4_process_tests.sh.in "
+    - SCRIPTS+="src/bin/dhcp6/tests/dhcp6_process_tests.sh.in "
+    - SCRIPTS+="src/bin/keactrl/keactrl.conf.in "
+    - SCRIPTS+="src/bin/keactrl/keactrl.in "
+    - SCRIPTS+="src/bin/keactrl/tests/keactrl_tests.sh.in "
+    - SCRIPTS+="src/bin/netconf/tests/shtests/netconf_tests.sh.in "
+    - SCRIPTS+="src/bin/shell/tests/basic_auth_tests.sh.in "
+    - SCRIPTS+="src/bin/shell/tests/shell_process_tests.sh.in "
+    - SCRIPTS+="src/lib/log/tests/buffer_logger_test.sh.in "
+    - SCRIPTS+="src/lib/log/tests/console_test.sh.in "
+    - SCRIPTS+="src/lib/log/tests/destination_test.sh.in "
+    - SCRIPTS+="src/lib/log/tests/init_logger_test.sh.in "
+    - SCRIPTS+="src/lib/log/tests/local_file_test.sh.in "
+    - SCRIPTS+="src/lib/log/tests/logger_lock_test.sh.in "
+    - SCRIPTS+="src/lib/log/tests/severity_test.sh.in "
+    - SCRIPTS+="src/lib/testutils/dhcp_test_lib.sh.in "
+    - SCRIPTS+="src/lib/util/tests/process_spawn_app.sh.in "
+    - SCRIPTS+="src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/cql/upgrade_3.0_to_4.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/cql/upgrade_4.0_to_5.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/cql/wipe_data.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_3.0_to_4.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_8.0_to_8.1.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_8.1_to_8.2.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_8.2_to_9.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_9.0_to_9.1.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_9.1_to_9.2.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_9.2_to_9.3.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_9.3_to_9.4.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh.in "
+    - SCRIPTS+="src/share/database/scripts/mysql/wipe_data.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_5.0_to_5.1.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_5.1_to_6.0.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_6.0_to_6.1.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_6.1_to_6.2.sh.in "
+    - SCRIPTS+="src/share/database/scripts/pgsql/wipe_data.sh.in "
+    - SCRIPTS+="src/share/yang/modules/utils/check-hashes.sh "
+    - SCRIPTS+="src/share/yang/modules/utils/check-revisions.sh "
+    - SCRIPTS+="src/share/yang/modules/utils/gen-revisions.sh "
     - SCRIPTS+="tools/add-config-h.sh "
     - SCRIPTS+="tools/bump-lib-versions.sh "
+    - SCRIPTS+="tools/cql_config "
+    - SCRIPTS+="tools/mk_cfgrpt.sh "
+    - SCRIPTS+="tools/path_replacer.sh.in "
+    - SCRIPTS+="tools/shellcheck-all.sh "
+    - SCRIPTS+="tools/sysrepo_config "
+    - SCRIPTS+="tools/tests_in_valgrind.sh "
     - shellcheck ${SCRIPTS} ${SHELLCHECK_OPTS}
 
 danger:
