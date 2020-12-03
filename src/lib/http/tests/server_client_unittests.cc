@@ -529,6 +529,9 @@ public:
     /// @brief Checks if the TCP connection is still open.
     ///
     /// Tests the TCP connection by trying to read from the socket.
+    /// Unfortunately expected failure depends on a race between the read
+    /// and the other side close so to check if the connection is closed
+    /// please use @c isConnectionClosed instead.
     ///
     /// @return true if the TCP connection is open.
     bool isConnectionAlive() {
@@ -554,6 +557,30 @@ public:
         // closed.
         return (!ec || (ec.value() == boost::asio::error::try_again) ||
                 (ec.value() == boost::asio::error::would_block));
+    }
+
+    /// @brief Checks if the TCP connection is already closed.
+    ///
+    /// Tests the TCP connection by trying to read from the socket.
+    ///
+    /// @return true if the TCP connection is closed.
+    bool isConnectionClosed() {
+        // Remember the current non blocking setting.
+        const bool non_blocking_orig = socket_.non_blocking();
+        // Set the socket to blocking mode. We're going to test if the socket
+        // returns eof status on the attempt to read from it.
+        socket_.non_blocking(false);
+
+        // We need to provide a buffer for a call to read.
+        char data[2];
+        boost::system::error_code ec;
+        boost::asio::read(socket_, boost::asio::buffer(data, sizeof(data)), ec);
+
+        // Revert the original non_blocking flag on the socket.
+        socket_.non_blocking(non_blocking_orig);
+
+        // If the connection is closed we'd typically get eof status code.
+        return (ec.value() == boost::asio::error::eof);
     }
 
     /// @brief Close connection.
@@ -831,7 +858,7 @@ TEST_F(HttpListenerTest, keepAlive) {
     EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
 
     // Connection should have been closed by the server.
-    EXPECT_FALSE(client->isConnectionAlive());
+    EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
     io_service_.poll();
@@ -879,7 +906,7 @@ TEST_F(HttpListenerTest, persistentConnection) {
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
     // Connection should have been closed by the server.
-    EXPECT_FALSE(client->isConnectionAlive());
+    EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
     io_service_.poll();
@@ -921,7 +948,7 @@ TEST_F(HttpListenerTest, keepAliveTimeout) {
     runIOService(1000);
 
     // Make sure the connection has been closed.
-    EXPECT_FALSE(client->isConnectionAlive());
+    EXPECT_TRUE(client->isConnectionClosed());
 
     // Check if we can re-establish the connection and send another request.
     clients_.clear();
@@ -937,7 +964,7 @@ TEST_F(HttpListenerTest, keepAliveTimeout) {
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
 
-    EXPECT_FALSE(client->isConnectionAlive());
+    EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
     io_service_.poll();
@@ -976,7 +1003,7 @@ TEST_F(HttpListenerTest, persistentConnectionTimeout) {
     runIOService(1000);
 
     // Make sure the connection has been closed.
-    EXPECT_FALSE(client->isConnectionAlive());
+    EXPECT_TRUE(client->isConnectionClosed());
 
     // Check if we can re-establish the connection and send another request.
     clients_.clear();
@@ -993,7 +1020,7 @@ TEST_F(HttpListenerTest, persistentConnectionTimeout) {
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
-    EXPECT_FALSE(client->isConnectionAlive());
+    EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
     io_service_.poll();
@@ -1045,7 +1072,7 @@ TEST_F(HttpListenerTest, persistentConnectionBadBody) {
     ASSERT_NO_THROW(runIOService());
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
-    EXPECT_FALSE(client->isConnectionAlive());
+    EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
     io_service_.poll();
