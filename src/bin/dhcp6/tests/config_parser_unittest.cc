@@ -1102,6 +1102,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
         "    \"subnet\": \"2001:db8::/32\" } ],"
         "\"valid-lifetime\": 1500, \"min-valid-lifetime\": 2000, "
         "\"max-valid-lifetime\": 1000 }";
+
     ASSERT_NO_THROW(json = parseDHCP6(crossed));
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     expected = "subnet configuration failed: "
@@ -1113,7 +1114,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
 /// Check that valid-lifetime must be between min-valid-lifetime and
 /// max-valid-lifetime when a bound is specified. Check on global
 /// parameters only.
-TEST_F(Dhcp6ParserTest, outGlobalBoundValidLifetime) {
+TEST_F(Dhcp6ParserTest, outBoundGlobaValidLifetime) {
 
     string too_small =  "{ " + genIfaceConfig() + "," +
         "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000 }";
@@ -1167,6 +1168,7 @@ TEST_F(Dhcp6ParserTest, outGlobalBoundValidLifetime) {
     string crossed =  "{ " + genIfaceConfig() + "," +
         "\"valid-lifetime\": 1500, \"min-valid-lifetime\": 2000, "
         "\"max-valid-lifetime\": 1000 }";
+
     ASSERT_NO_THROW(json = parseDHCP6(crossed));
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     expected =
@@ -1247,6 +1249,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
         "    \"subnet\": \"2001:db8::/32\" } ],"
         "\"preferred-lifetime\": 1500, \"min-preferred-lifetime\": 2000, "
         "\"max-preferred-lifetime\": 1000 }";
+
     ASSERT_NO_THROW(json = parseDHCP6(crossed));
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     expected = "subnet configuration failed: "
@@ -1312,6 +1315,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
     string crossed =  "{ " + genIfaceConfig() + "," +
         "\"preferred-lifetime\": 1500, \"min-preferred-lifetime\": 2000, "
         "\"max-preferred-lifetime\": 1000 }";
+
     ASSERT_NO_THROW(json = parseDHCP6(crossed));
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     expected =

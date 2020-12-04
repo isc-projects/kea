@@ -740,28 +740,44 @@ TEST_F(NetworkReservationTest, move) {
 }
 
 // This test verifies that the inheritance is supported for triplets.
+// Note that triplets have no comparison operator.
 TEST_F(NetworkTest, inheritanceTriplet) {
     NetworkPtr net(new Network());
-    Triplet<uint32_t> empty;
-    EXPECT_EQ(empty, net->getValid());
-    EXPECT_EQ(empty, net->getValid(Network::Inheritance::ALL));
-    EXPECT_EQ(empty, net->getValid(Network::Inheritance::GLOBAL));
+    EXPECT_TRUE(net->getValid().unspecified());
+    EXPECT_TRUE(net->getValid(Network::Inheritance::ALL).unspecified());
+    EXPECT_TRUE(net->getValid(Network::Inheritance::GLOBAL).unspecified());
 
     // Set valid lifetime global parameter.
     globals_->set("valid-lifetime", Element::create(200));
     net->setFetchGlobalsFn(getFetchGlobalsFn());
-    Triplet<uint32_t> one(200);
-    EXPECT_EQ(one, net->getValid());
-    EXPECT_EQ(one, net->getValid(Network::Inheritance::ALL));
-    EXPECT_EQ(one, net->getValid(Network::Inheritance::GLOBAL));
+    EXPECT_FALSE(net->getValid().unspecified());
+    EXPECT_FALSE(net->getValid(Network::Inheritance::ALL).unspecified());
+    EXPECT_FALSE(net->getValid(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_EQ(200, net->getValid().get());
+    EXPECT_EQ(200, net->getValid(Network::Inheritance::ALL).get());
+    EXPECT_EQ(200, net->getValid(Network::Inheritance::GLOBAL).get());
+    EXPECT_EQ(200, net->getValid().getMin());
+    EXPECT_EQ(200, net->getValid(Network::Inheritance::ALL).getMin());
+    EXPECT_EQ(200, net->getValid(Network::Inheritance::GLOBAL).getMin());
+    EXPECT_EQ(200, net->getValid().getMax());
+    EXPECT_EQ(200, net->getValid(Network::Inheritance::ALL).getMax());
+    EXPECT_EQ(200, net->getValid(Network::Inheritance::GLOBAL).getMax());
 
     // Set all valid lifetime global parameters.
     globals_->set("min-valid-lifetime", Element::create(100));
     globals_->set("max-valid-lifetime", Element::create(300));
-    Triplet<uint32_t> three(100, 200, 300);
-    EXPECT_EQ(three, net->getValid());
-    EXPECT_EQ(three, net->getValid(Network::Inheritance::ALL));
-    EXPECT_EQ(three, net->getValid(Network::Inheritance::GLOBAL));
+    EXPECT_FALSE(net->getValid().unspecified());
+    EXPECT_FALSE(net->getValid(Network::Inheritance::ALL).unspecified());
+    EXPECT_FALSE(net->getValid(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_EQ(200, net->getValid().get());
+    EXPECT_EQ(200, net->getValid(Network::Inheritance::ALL).get());
+    EXPECT_EQ(200, net->getValid(Network::Inheritance::GLOBAL).get());
+    EXPECT_EQ(100, net->getValid().getMin());
+    EXPECT_EQ(100, net->getValid(Network::Inheritance::ALL).getMin());
+    EXPECT_EQ(100, net->getValid(Network::Inheritance::GLOBAL).getMin());
+    EXPECT_EQ(300, net->getValid().getMax());
+    EXPECT_EQ(300, net->getValid(Network::Inheritance::ALL).getMax());
+    EXPECT_EQ(300, net->getValid(Network::Inheritance::GLOBAL).getMax());
 }
 
 }

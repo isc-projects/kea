@@ -794,7 +794,7 @@ protected:
     /// @note: use overloading vs specialization because full specialization
     /// is not allowed in this scope.
     ///
-    /// @tparam IntType Type of the encapsulated value(s).
+    /// @tparam NumType Type of the encapsulated value(s).
     ///
     /// @param property Value to be returned when it is specified or when
     /// no global value is found.
@@ -805,8 +805,8 @@ protected:
     ///
     /// @return Optional value fetched from the global level or the value
     /// of @c property.
-    template<typename IntType>
-    Triplet<IntType> getGlobalProperty(Triplet<IntType> property,
+    template<typename NumType>
+    Triplet<NumType> getGlobalProperty(Triplet<NumType> property,
                                        const std::string& global_name,
                                        bool triplet) const {
         if (!global_name.empty() && fetch_globals_fn_) {
@@ -814,23 +814,23 @@ protected:
             if (globals && (globals->getType() == data::Element::map)) {
                 data::ConstElementPtr param = globals->get(global_name);
                 if (param) {
-                    IntType def_value = static_cast<IntType>(param->intValue());
+                    NumType def_value = static_cast<NumType>(param->intValue());
                     if (!triplet) {
                         return (def_value);
                     } else {
-                        IntType min_value = def_value;
-                        IntType max_value = def_value;
+                        NumType min_value = def_value;
+                        NumType max_value = def_value;
                         const std::string& min_name = "min-" + global_name;
                         data::ConstElementPtr min_param = globals->get(min_name);
                         if (min_param) {
-                            min_value = static_cast<IntType>(min_param->intValue());
+                            min_value = static_cast<NumType>(min_param->intValue());
                         }
                         const std::string& max_name = "max-" + global_name;
                         data::ConstElementPtr max_param = globals->get(max_name);
-                        if (min_param) {
-                            min_value = static_cast<IntType>(min_param->intValue());
+                        if (max_param) {
+                            max_value = static_cast<NumType>(max_param->intValue());
                         }
-                        return (Triplet<IntType>(min_value, def_value, max_value));
+                        return (Triplet<NumType>(min_value, def_value, max_value));
                     }
                 }
             }
