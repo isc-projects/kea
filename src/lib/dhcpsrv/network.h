@@ -333,7 +333,8 @@ public:
     /// @param inheritance inheritance mode to be used.
     Triplet<uint32_t> getValid(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network>(&Network::getValid, valid_, inheritance,
-                                     "valid-lifetime", true));
+                                     "valid-lifetime", "min-valid-lifetime",
+                                     "max-valid-lifetime"));
     }
 
     /// @brief Sets new valid lifetime for a network.
@@ -556,7 +557,7 @@ public:
             (inheritance != Inheritance::PARENT_NETWORK)) {
             // Get global mode.
             util::Optional<std::string> mode_label;
-            mode_label = getGlobalProperty(mode_label, "ddns-replace-client-name", false);
+            mode_label = getGlobalProperty(mode_label, "ddns-replace-client-name");
             if (!mode_label.unspecified()) {
                 try {
                     // If the mode is globally configured, convert it to an enum.
@@ -764,13 +765,18 @@ protected:
     /// no global value is found.
     /// @param global_name Name of the global parameter which value should
     /// be returned
+    /// @param min_name Name of the min global parameter which value should
+    /// be returned for triplets
+    /// @param max_name Name of the max global parameter which value should
+    /// be returned for triplets
     ///
     /// @return Optional value fetched from the global level or the value
     /// of @c property.
     template<typename ReturnType>
     ReturnType getGlobalProperty(ReturnType property,
                                  const std::string& global_name,
-                                 bool /*triplet*/) const {
+                                 const std::string& min_name = "",
+                                 const std::string& max_name = "") const {
         if (!global_name.empty() && fetch_globals_fn_) {
             data::ConstElementPtr globals = fetch_globals_fn_();
             if (globals && (globals->getType() == data::Element::map)) {
@@ -787,10 +793,6 @@ protected:
 
     /// @brief The @c getGlobalProperty specialization for Triplet<T>.
     ///
-    /// The behavior depends on the triplet argument:
-    ///  - if true it tries to get min and max values too
-    ///  - if false the property is implemented as an Optional
-    ///
     /// @note: use overloading vs specialization because full specialization
     /// is not allowed in this scope.
     ///
@@ -800,32 +802,34 @@ protected:
     /// no global value is found.
     /// @param global_name Name of the global parameter which value should
     /// be returned
-    /// @param triplet False (default) when has no min and max value so
-    /// is in fact only an @c OptionalValue, true otherwise.
+    /// @param min_name Name of the min global parameter which value should
+    /// be returned for triplets
+    /// @param max_name Name of the max global parameter which value should
+    /// be returned for triplets
     ///
     /// @return Optional value fetched from the global level or the value
     /// of @c property.
     template<typename NumType>
     Triplet<NumType> getGlobalProperty(Triplet<NumType> property,
                                        const std::string& global_name,
-                                       bool triplet) const {
+                                       const std::string& min_name = "",
+                                       const std::string& max_name = "") const {
+
         if (!global_name.empty() && fetch_globals_fn_) {
             data::ConstElementPtr globals = fetch_globals_fn_();
             if (globals && (globals->getType() == data::Element::map)) {
                 data::ConstElementPtr param = globals->get(global_name);
                 if (param) {
                     NumType def_value = static_cast<NumType>(param->intValue());
-                    if (!triplet) {
+                    if (min_name.empty() || max_name.empty()) {
                         return (def_value);
                     } else {
                         NumType min_value = def_value;
                         NumType max_value = def_value;
-                        const std::string& min_name = "min-" + global_name;
                         data::ConstElementPtr min_param = globals->get(min_name);
                         if (min_param) {
                             min_value = static_cast<NumType>(min_param->intValue());
                         }
-                        const std::string& max_name = "max-" + global_name;
                         data::ConstElementPtr max_param = globals->get(max_name);
                         if (max_param) {
                             max_value = static_cast<NumType>(max_param->intValue());
@@ -851,13 +855,18 @@ protected:
     /// no global value is found.
     /// @param global_name Name of the global parameter which value should
     /// be returned
+    /// @param min_name Name of the min global parameter which value should
+    /// be returned for triplets
+    /// @param max_name Name of the max global parameter which value should
+    /// be returned for triplets
     ///
     /// @return Optional value fetched from the global level or the value
     /// of @c property.
     util::Optional<asiolink::IOAddress>
     getGlobalProperty(util::Optional<asiolink::IOAddress> property,
                       const std::string& global_name,
-                      bool /*triplet*/) const;
+                      const std::string& min_name = "",
+                      const std::string& max_name = "") const;
 
     /// @brief Returns a value associated with a network using inheritance.
     ///
@@ -882,8 +891,10 @@ protected:
     /// level. This value is empty by default, which indicates that the
     /// global value for the given parameter is not supported and shouldn't
     /// be fetched.
-    /// @param triplet False (default) when has no min and max value so
-    /// is in fact only an @c OptionalValue, true otherwise.
+    /// @param min_name Name of the min global parameter which value should
+    /// be returned for triplets
+    /// @param max_name Name of the max global parameter which value should
+    /// be returned for triplets
     ///
     /// @return Optional value fetched from this instance level, parent
     /// network level or global level
@@ -892,7 +903,8 @@ protected:
                            ReturnType property,
                            const Inheritance& inheritance,
                            const std::string& global_name = "",
-                           bool triplet = false) const {
+                           const std::string& min_name = "",
+                           const std::string& max_name = "") const {
 
         // If no inheritance is to be used, return the value for this
         // network regardless if it is specified or not.
@@ -911,7 +923,7 @@ protected:
 
         // If global value requested, return it.
         } else if (inheritance == Inheritance::GLOBAL) {
-            return (getGlobalProperty(ReturnType(), global_name, triplet));
+            return (getGlobalProperty(ReturnType(), global_name, min_name, max_name));
         }
 
         // We use inheritance and the value is not specified on the network level.
@@ -934,7 +946,7 @@ protected:
             // can be specified on global level and there is a callback
             // that returns the global values, try to find this parameter
             // at the global scope.
-            return (getGlobalProperty(property, global_name, triplet));
+            return (getGlobalProperty(property, global_name, min_name, max_name));
         }
 
         // We haven't found the value at any level, so return the unspecified.
@@ -1260,7 +1272,9 @@ public:
     Triplet<uint32_t>
     getPreferred(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network6>(&Network6::getPreferred, preferred_,
-                                      inheritance, "preferred-lifetime"));
+                                      inheritance, "preferred-lifetime",
+                                      "min-preferred-lifetime",
+                                      "max-preferred-lifetime"));
     }
 
     /// @brief Sets new preferred lifetime for a network.
