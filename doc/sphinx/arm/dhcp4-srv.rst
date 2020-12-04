@@ -2153,7 +2153,7 @@ classes use the option 43 for different and incompatible purposes:
        "client-classes": [
            {
                "name": "APC",
-               "test": "(option[vendor-class-identifier].text == 'APC'",
+               "test": "option[vendor-class-identifier].text == 'APC'",
                "option-def": [
                    {
                        "name": "vendor-encapsulated-options",
@@ -2176,7 +2176,7 @@ classes use the option 43 for different and incompatible purposes:
            },
            {
                "name": "PXE",
-               "test": "(option[vendor-class-identifier].text == 'PXE'",
+               "test": "option[vendor-class-identifier].text == 'PXE'",
                "option-def": [
                    {
                        "name": "vendor-encapsulated-options",
@@ -5009,7 +5009,7 @@ following example:
             },
             {
                 "name: "unreserved_class",
-                "test": "not member('reserved_class")
+                "test": "not member('reserved_class')"
             }
         ],
         "reservations": [{"
