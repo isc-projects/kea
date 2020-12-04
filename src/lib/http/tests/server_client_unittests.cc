@@ -562,6 +562,9 @@ public:
     /// @brief Checks if the TCP connection is already closed.
     ///
     /// Tests the TCP connection by trying to read from the socket.
+    /// The read can block so this must be used to check if a connection
+    /// is alive so to check if the connection is alive please always
+    /// use @c isConnectionAlive.
     ///
     /// @return true if the TCP connection is closed.
     bool isConnectionClosed() {
