@@ -1623,7 +1623,7 @@ TEST_F(SrvConfigTest, multiThreadingSettings) {
 
 // Verifies that sanityChecksLifetime works as expected.
 TEST_F(SrvConfigTest, sanityChecksLifetime) {
-    // First the variant checking the current config.
+    // First the overload checking the current config.
     // Note that lifetimes have a default so some cases here should not happen.
     {
         SCOPED_TRACE("no lifetime");
@@ -1716,7 +1716,20 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
     }
 
     {
-        SCOPED_TRACE("lifetime not between min-lifetime and max-lifetime");
+        SCOPED_TRACE("lifetime not between min-lifetime and max-lifetime (too small)");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(1000));
+        conf.addConfiguredGlobal("lifetime", Element::create(500));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(2000));
+        std::string msg = "the value of (default) lifetime (500) is not ";
+        msg += "between min-lifetime (1000) and max-lifetime (2000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("lifetime not between min-lifetime and max-lifetime (too large)");
 
         SrvConfig conf(32);
         conf.addConfiguredGlobal("min-lifetime", Element::create(1000));
@@ -1728,9 +1741,9 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
                          isc::BadValue, msg);
     }
 
-    // Second the cariant checking an external config before merging.
+    // Second the overload checking an external config before merging.
     // We assume that the target config is correct as this was the case
-    // when this variant is used and its lower the number of cases...
+    // when this overload is used, and this lowers the number of cases...
 
     SrvConfig target(10);
     target.addConfiguredGlobal("min-lifetime", Element::create(1000));
@@ -1814,6 +1827,18 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
     }
 
     {
+        SCOPED_TRACE("target min-lifetime > max-lifetime");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(2000));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(500));
+        std::string msg = "the value of min-lifetime (2000) is not less ";
+        msg += "than max-lifetime (500)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
         SCOPED_TRACE("min-lifetime > target max-lifetime");
 
         SrvConfig conf(32);
@@ -1851,7 +1876,18 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
     }
 
     {
-        SCOPED_TRACE("lifetime not between min-lifetime and max-lifetime");
+        SCOPED_TRACE("lifetime not between min-lifetime and max-lifetime (too small)");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("lifetime", Element::create(500));
+        std::string msg = "the value of (default) lifetime (500) is not ";
+        msg += "between min-lifetime (1000) and max-lifetime (3000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("lifetime not between min-lifetime and max-lifetime (too large)");
 
         SrvConfig conf(32);
         conf.addConfiguredGlobal("lifetime", Element::create(4000));
@@ -1860,6 +1896,7 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
         EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
                          isc::BadValue, msg);
     }
+
 }
 
 } // end of anonymous namespace
