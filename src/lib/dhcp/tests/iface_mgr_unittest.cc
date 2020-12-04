@@ -1048,10 +1048,10 @@ TEST_F(IfaceMgrTest, getIface) {
     // Interface name, ifindex
     IfacePtr iface1(new Iface("lo1", 100));
     IfacePtr iface2(new Iface("eth9", 101));
-    IfacePtr iface3(new Iface("en7", 102));
+    IfacePtr iface3(new Iface("en99", 102));
     IfacePtr iface4(new Iface("e1000g4", 103));
     cout << "This test assumes that there are less than 100 network interfaces"
-         << " in the tested system and there are no lo1, eth9, en7, e1000g4"
+         << " in the tested system and there are no lo1, eth9, en99, e1000g4"
          << " or wifi15 interfaces present." << endl;
 
     // Note: real interfaces may be detected as well
@@ -1070,7 +1070,7 @@ TEST_F(IfaceMgrTest, getIface) {
     IfacePtr tmp = ifacemgr->getIface(102);
     ASSERT_TRUE(tmp);
 
-    EXPECT_EQ("en7", tmp->getName());
+    EXPECT_EQ("en99", tmp->getName());
     EXPECT_EQ(102, tmp->getIndex());
 
     // Check that interface can be retrieved by name
