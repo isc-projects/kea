@@ -427,8 +427,7 @@ SrvConfig::sanityChecksLifetime(const std::string& name) const {
     if (has_value) {
         if (!has_min && !has_max) {
             // default only.
-            min_value = value;
-            max_value = value;
+            return;
         } else if (!has_min) {
             // default and max.
             min_value = value;
@@ -437,10 +436,9 @@ SrvConfig::sanityChecksLifetime(const std::string& name) const {
             max_value = value;
         }
     } else if (has_min) {
-        // min only.
         if (!has_max) {
-            value = min_value;
-            max_value = min_value;
+            // min only.
+            return;
         } else {
             // min and max.
             isc_throw(BadValue, "have min-" << name << " and max-"
@@ -448,8 +446,7 @@ SrvConfig::sanityChecksLifetime(const std::string& name) const {
         }
     } else {
         // max only.
-        min_value = max_value;
-        value = max_value;
+        return;
     }
 
     // Check that min <= max.
@@ -489,8 +486,10 @@ SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
     //  - no config has the parameter.
     uint32_t value = 0;
     ConstElementPtr has_value = getConfiguredGlobal(name);
+    bool new_value = true;
     if (!has_value) {
         has_value = target_config.getConfiguredGlobal(name);
+        new_value = false;
     }
     if (has_value) {
         value = has_value->intValue();
@@ -498,8 +497,10 @@ SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
 
     uint32_t min_value = 0;
     ConstElementPtr has_min = getConfiguredGlobal("min-" + name);
+    bool new_min = true;
     if (!has_min) {
         has_min = target_config.getConfiguredGlobal("min-" + name);
+        new_min = false;
     }
     if (has_min) {
         min_value = has_min->intValue();
@@ -507,8 +508,10 @@ SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
 
     uint32_t max_value = 0;
     ConstElementPtr has_max = getConfiguredGlobal("max-" + name);
+    bool new_max = true;
     if (!has_max) {
         has_max = target_config.getConfiguredGlobal("max-" + name);
+        new_max = false;
     }
     if (has_max) {
         max_value = has_max->intValue();
@@ -520,8 +523,7 @@ SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
     if (has_value) {
         if (!has_min && !has_max) {
             // default only.
-            min_value = value;
-            max_value = value;
+            return;
         } else if (!has_min) {
             // default and max.
             min_value = value;
@@ -530,10 +532,9 @@ SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
             max_value = value;
         }
     } else if (has_min) {
-        // min only.
         if (!has_max) {
-            value = min_value;
-            max_value = min_value;
+            // min only.
+            return;
         } else {
             // min and max.
             isc_throw(BadValue, "have min-" << name << " and max-"
@@ -541,35 +542,50 @@ SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
         }
     } else {
         // max only.
-        min_value = max_value;
-        value = max_value;
+        return;
     }
 
     // Check that min <= max.
     if (min_value > max_value) {
         if (has_min && has_max) {
-            isc_throw(BadValue, "the value of min-" << name << " ("
-                      << min_value << ") is not less than max-" << name << " ("
-                      << max_value << ")");
+            std::string from_min = (new_min ? "new" : "previous");
+            std::string from_max = (new_max ? "new" : "previous");
+            isc_throw(BadValue, "the value of " << from_min
+                      << " min-" << name << " ("
+                      << min_value << ") is not less than "
+                      << from_max << " max-" << name
+                      << " (" << max_value << ")");
         } else if (has_min) {
             // Only min and default so min > default.
-            isc_throw(BadValue, "the value of min-" << name << " ("
-                      << min_value << ") is not less than (default) " << name
+            std::string from_min = (new_min ? "new" : "previous");
+            std::string from_value = (new_value ? "new" : "previous");
+            isc_throw(BadValue, "the value of " << from_min
+                      << " min-" << name << " ("
+                      << min_value << ") is not less than " << from_value
+                      << " (default) " << name
                       << " (" << value << ")");
         } else {
             // Only default and max so default > max.
-            isc_throw(BadValue, "the value of (default) " << name
-                      << " (" << value << ") is not less than max-" << name
-                      << " (" << max_value << ")");
+            std::string from_max = (new_max ? "new" : "previous");
+            std::string from_value = (new_value ? "new" : "previous");
+            isc_throw(BadValue, "the value of " << from_value
+                      << " (default) " << name
+                      << " (" << value << ") is not less than " << from_max
+                      << " max-" << name << " (" << max_value << ")");
         }
     }
 
     // Check that value is between min and max.
     if ((value < min_value) || (value > max_value)) {
-        isc_throw(BadValue, "the value of (default) " << name << " ("
-                  << value << ") is not between min-" << name << " ("
-                  << min_value << ") and max-" << name << " ("
-                  << max_value << ")");
+        std::string from_value = (new_value ? "new" : "previous");
+        std::string from_min = (new_min ? "new" : "previous");
+        std::string from_max = (new_max ? "new" : "previous");
+        isc_throw(BadValue, "the value of " << from_value
+                  <<" (default) " << name << " ("
+                  << value << ") is not between " << from_min
+                  << " min-" << name << " (" << min_value
+                  << ") and " << from_max << " max-"
+                  << name << " (" << max_value << ")");
     }
 }
 

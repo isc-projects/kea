@@ -1820,8 +1820,8 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
         SrvConfig conf(32);
         conf.addConfiguredGlobal("min-lifetime", Element::create(2000));
         conf.addConfiguredGlobal("max-lifetime", Element::create(1000));
-        std::string msg = "the value of min-lifetime (2000) is not less ";
-        msg += "than max-lifetime (1000)";
+        std::string msg = "the value of new min-lifetime (2000) is not less ";
+        msg += "than new max-lifetime (1000)";
         EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
                          isc::BadValue, msg);
     }
@@ -1830,10 +1830,9 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
         SCOPED_TRACE("target min-lifetime > max-lifetime");
 
         SrvConfig conf(32);
-        conf.addConfiguredGlobal("min-lifetime", Element::create(2000));
         conf.addConfiguredGlobal("max-lifetime", Element::create(500));
-        std::string msg = "the value of min-lifetime (2000) is not less ";
-        msg += "than max-lifetime (500)";
+        std::string msg = "the value of previous min-lifetime (1000) is not ";
+        msg += "less than new max-lifetime (500)";
         EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
                          isc::BadValue, msg);
     }
@@ -1843,8 +1842,8 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
 
         SrvConfig conf(32);
         conf.addConfiguredGlobal("min-lifetime", Element::create(4000));
-        std::string msg = "the value of min-lifetime (4000) is not less ";
-        msg += "than max-lifetime (3000)";
+        std::string msg = "the value of new min-lifetime (4000) is not less ";
+        msg += "than previous max-lifetime (3000)";
         EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
                          isc::BadValue, msg);
     }
@@ -1856,9 +1855,35 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
         SrvConfig conf(32);
         conf.addConfiguredGlobal("min-lifetime", Element::create(2000));
         conf.addConfiguredGlobal("lifetime", Element::create(1000));
-        std::string msg = "the value of min-lifetime (2000) is not less ";
-        msg += "than (default) lifetime (1000)";
+        std::string msg = "the value of new min-lifetime (2000) is not less ";
+        msg += "than new (default) lifetime (1000)";
         EXPECT_THROW_MSG(conf.sanityChecksLifetime(empty, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("target min-lifetime > lifetime");
+
+        SrvConfig conf(32);
+        SrvConfig target2(20);
+        conf.addConfiguredGlobal("lifetime", Element::create(1000));
+        target2.addConfiguredGlobal("min-lifetime", Element::create(2000));
+        std::string msg = "the value of previous min-lifetime (2000) is not ";
+        msg += "less than new (default) lifetime (1000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target2, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("min-lifetime > target lifetime");
+
+        SrvConfig conf(32);
+        SrvConfig target2(20);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(2000));
+        target2.addConfiguredGlobal("lifetime", Element::create(1000));
+        std::string msg = "the value of new min-lifetime (2000) is not less ";
+        msg += "than previous (default) lifetime (1000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target2, "lifetime"),
                          isc::BadValue, msg);
     }
 
@@ -1869,9 +1894,35 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
         SrvConfig conf(32);
         conf.addConfiguredGlobal("lifetime", Element::create(2000));
         conf.addConfiguredGlobal("max-lifetime", Element::create(1000));
-        std::string msg = "the value of (default) lifetime (2000) is not ";
-        msg += "less than max-lifetime (1000)";
+        std::string msg = "the value of new (default) lifetime (2000) is not ";
+        msg += "less than new max-lifetime (1000)";
         EXPECT_THROW_MSG(conf.sanityChecksLifetime(empty, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("target lifetime > max-lifetime");
+
+        SrvConfig conf(32);
+        SrvConfig target2(20);
+        conf.addConfiguredGlobal("max-lifetime", Element::create(1000));
+        target2.addConfiguredGlobal("lifetime", Element::create(2000));
+        std::string msg = "the value of previous (default) lifetime (2000) ";
+        msg += "is not less than new max-lifetime (1000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target2, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("lifetime > target max-lifetime");
+
+        SrvConfig conf(32);
+        SrvConfig target2(20);
+        conf.addConfiguredGlobal("lifetime", Element::create(2000));
+        target2.addConfiguredGlobal("max-lifetime", Element::create(1000));
+        std::string msg = "the value of new (default) lifetime (2000) is not ";
+        msg += "less than previous max-lifetime (1000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target2, "lifetime"),
                          isc::BadValue, msg);
     }
 
@@ -1880,8 +1931,9 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
 
         SrvConfig conf(32);
         conf.addConfiguredGlobal("lifetime", Element::create(500));
-        std::string msg = "the value of (default) lifetime (500) is not ";
-        msg += "between min-lifetime (1000) and max-lifetime (3000)";
+        std::string msg = "the value of new (default) lifetime (500) is not ";
+        msg += "between previous min-lifetime (1000) and ";
+        msg += "previous max-lifetime (3000)";
         EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
                          isc::BadValue, msg);
     }
@@ -1891,12 +1943,38 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
 
         SrvConfig conf(32);
         conf.addConfiguredGlobal("lifetime", Element::create(4000));
-        std::string msg = "the value of (default) lifetime (4000) is not ";
-        msg += "between min-lifetime (1000) and max-lifetime (3000)";
+        std::string msg = "the value of new (default) lifetime (4000) is not ";
+        msg += "between previous min-lifetime (1000) and ";
+        msg += "previous max-lifetime (3000)";
         EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
                          isc::BadValue, msg);
     }
 
+    {
+        SCOPED_TRACE("lifetime not between min-lifetime and max-lifetime (too low)");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(100));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(300));
+        std::string msg = "the value of previous (default) lifetime (2000) ";
+        msg += "is not between new min-lifetime (100) and ";
+        msg += "new max-lifetime (300)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
+                         isc::BadValue, msg);
+    }
+
+    {
+        SCOPED_TRACE("lifetime not between min-lifetime and max-lifetime (too high)");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-lifetime", Element::create(10000));
+        conf.addConfiguredGlobal("max-lifetime", Element::create(30000));
+        std::string msg = "the value of previous (default) lifetime (2000) ";
+        msg += "is not between new min-lifetime (10000) and ";
+        msg += "new max-lifetime (30000)";
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "lifetime"),
+                         isc::BadValue, msg);
+    }
 }
 
 } // end of anonymous namespace
