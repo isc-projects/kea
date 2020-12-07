@@ -506,7 +506,7 @@ public:
 
 private:
 
-    /// @name Internal methods called holding the mutex in multi threading
+    /// @name Internal methods called while holding the mutex in multi threading
     /// mode.
     ///@{
 
