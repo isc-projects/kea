@@ -1,3 +1,11 @@
+1840.	[bug]		fdupont
+	Fixed the inheritance of the triple min-valid-lifetime,
+	valid-lifetime and max-valid-lifetime parameters from
+	the global scope, and fixed it for preferred-lifetime too.
+	Added a sanity check refusing incorrect settings, e.g.
+	the lifetime not being between min and max values.
+	(Gitlab #1456)
+
 1839.	[bug]		tmark
 	kea-dhcp4 and kea-dhcp6 now calculate the DDNS TTL value
 	based on RFC 4702, Section 5 which suggests that the
