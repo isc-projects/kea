@@ -1114,7 +1114,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
 /// Check that valid-lifetime must be between min-valid-lifetime and
 /// max-valid-lifetime when a bound is specified. Check on global
 /// parameters only.
-TEST_F(Dhcp6ParserTest, outBoundGlobaValidLifetime) {
+TEST_F(Dhcp6ParserTest, outBoundGlobalValidLifetime) {
 
     string too_small =  "{ " + genIfaceConfig() + "," +
         "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000 }";
