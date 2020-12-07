@@ -478,4 +478,6 @@ for configuration are not thread safe. Exceptions are:
 
  - last allocated members of subnets are Kea thread safe.
 
+ - timer manager functions are Kea thread safe.
+
 */
