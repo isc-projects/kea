@@ -10,12 +10,16 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/multi_threading_mgr.h>
+
+#include <boost/scoped_ptr.hpp>
 
 #include <functional>
 #include <utility>
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace {
 
@@ -66,7 +70,6 @@ typedef boost::shared_ptr<TimerInfo> TimerInfoPtr;
 
 /// @brief A type definition for the map holding timers configuration.
 typedef std::map<std::string, TimerInfoPtr> TimerInfoMap;
-
 
 /// @brief Implementation of the @c TimerMgr
 class TimerMgrImpl {
@@ -146,6 +149,63 @@ public:
 
 private:
 
+    /// @name Internal methods called holding the mutex in multi threading
+    /// mode.
+
+    /// @brief Registers new timer in the @c TimerMgr.
+    ///
+    /// @param timer_name Unique name for the timer.
+    /// @param callback Pointer to the callback function to be invoked
+    /// when the timer elapses, e.g. function processing expired leases
+    /// in the DHCP server.
+    /// @param interval Timer interval in milliseconds.
+    /// @param scheduling_mode Scheduling mode of the timer as described in
+    /// @c asiolink::IntervalTimer::Mode.
+    ///
+    /// @throw BadValue if the timer name is invalid or duplicate.
+    void registerTimerInternal(const std::string& timer_name,
+                               const asiolink::IntervalTimer::Callback& callback,
+                               const long interval,
+                               const asiolink::IntervalTimer::Mode& scheduling_mode);
+
+
+    /// @brief Unregisters specified timer.
+    ///
+    /// This method cancels the timer if it is setup and removes the timer
+    /// from the internal collection of timers.
+    ///
+    /// @param timer_name Name of the timer to be unregistered.
+    ///
+    /// @throw BadValue if the specified timer hasn't been registered.
+    void unregisterTimerInternal(const std::string& timer_name);
+
+    /// @brief Unregisters all timers.
+    ///
+    /// This method must be explicitly called prior to termination of the
+    /// process.
+    void unregisterTimersInternal();
+
+    /// @brief Schedules the execution of the interval timer.
+    ///
+    /// This method schedules the timer, i.e. the callback will be executed
+    /// after specified interval elapses. The interval has been specified
+    /// during timer registration. Depending on the mode selected during the
+    /// timer registration, the callback will be executed once after it has
+    /// been scheduled or until it is cancelled. Though, in the former case
+    /// the timer can be re-scheduled in the callback function.
+    ///
+    /// @param timer_name Unique timer name.
+    ///
+    /// @throw BadValue if the timer hasn't been registered.
+    void setupInternal(const std::string& timer_name);
+
+    /// @brief Cancels the execution of the interval timer.
+    ///
+    /// @param timer_name Unique timer name.
+    ///
+    /// @throw BadValue if the timer hasn't been registered.
+    void cancelInternal(const std::string& timer_name);
+
     /// @brief Callback function to be executed for each interval timer when
     /// its scheduled interval elapses.
     ///
@@ -158,10 +218,13 @@ private:
     /// @brief Holds mapping of the timer name to timer instance and other
     /// parameters pertaining to the timer.
     TimerInfoMap registered_timers_;
+
+    /// @brief The mutex to protect the timer manager.
+    boost::scoped_ptr<std::mutex> mutex_;
 };
 
-TimerMgrImpl::TimerMgrImpl() :
-    io_service_(new IOService()), registered_timers_() {
+TimerMgrImpl::TimerMgrImpl() : io_service_(new IOService()),
+    registered_timers_(), mutex_(new std::mutex) {
 }
 
 void
@@ -169,6 +232,7 @@ TimerMgrImpl::setIOService(const IOServicePtr& io_service) {
     if (!io_service) {
         isc_throw(BadValue, "IO service object must not be null for TimerMgr");
     }
+
     io_service_ = io_service;
 }
 
@@ -177,7 +241,19 @@ TimerMgrImpl::registerTimer(const std::string& timer_name,
                             const IntervalTimer::Callback& callback,
                             const long interval,
                             const IntervalTimer::Mode& scheduling_mode) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        registerTimerInternal(timer_name, callback, interval, scheduling_mode);
+    } else {
+        registerTimerInternal(timer_name, callback, interval, scheduling_mode);
+    }
+}
 
+void
+TimerMgrImpl::registerTimerInternal(const std::string& timer_name,
+                                    const IntervalTimer::Callback& callback,
+                                    const long interval,
+                                    const IntervalTimer::Mode& scheduling_mode) {
     // Timer name must not be empty.
     if (timer_name.empty()) {
         isc_throw(BadValue, "registered timer name must not be empty");
@@ -202,7 +278,16 @@ TimerMgrImpl::registerTimer(const std::string& timer_name,
 
 void
 TimerMgrImpl::unregisterTimer(const std::string& timer_name) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        unregisterTimerInternal(timer_name);
+    } else {
+        unregisterTimerInternal(timer_name);
+    }
+}
 
+void
+TimerMgrImpl::unregisterTimerInternal(const std::string& timer_name) {
     // Find the timer with specified name.
     TimerInfoMap::iterator timer_info_it = registered_timers_.find(timer_name);
 
@@ -213,7 +298,7 @@ TimerMgrImpl::unregisterTimer(const std::string& timer_name) {
     }
 
     // Cancel any pending asynchronous operation and stop the timer.
-    cancel(timer_name);
+    cancelInternal(timer_name);
 
     // Remove the timer.
     registered_timers_.erase(timer_info_it);
@@ -221,6 +306,16 @@ TimerMgrImpl::unregisterTimer(const std::string& timer_name) {
 
 void
 TimerMgrImpl::unregisterTimers() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        unregisterTimersInternal();
+    } else {
+        unregisterTimersInternal();
+    }
+}
+
+void
+TimerMgrImpl::unregisterTimersInternal() {
     // Copy the map holding timers configuration. This is required so as
     // we don't cut the branch which we're sitting on when we will be
     // erasing the timers. We're going to iterate over the register timers
@@ -235,23 +330,42 @@ TimerMgrImpl::unregisterTimers() {
     // Iterate over the existing timers and unregister them.
     for (TimerInfoMap::iterator timer_info_it = registered_timers_copy.begin();
          timer_info_it != registered_timers_copy.end(); ++timer_info_it) {
-        unregisterTimer(timer_info_it->first);
+        unregisterTimerInternal(timer_info_it->first);
     }
 }
 
 bool
 TimerMgrImpl::isTimerRegistered(const std::string& timer_name) {
-    return (registered_timers_.find(timer_name) != registered_timers_.end());
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (registered_timers_.find(timer_name) != registered_timers_.end());
+    } else {
+        return (registered_timers_.find(timer_name) != registered_timers_.end());
+    }
 }
 
 size_t
 TimerMgrImpl::timersCount() const {
-    return (registered_timers_.size());
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (registered_timers_.size());
+    } else {
+        return (registered_timers_.size());
+    }
 }
 
 void
 TimerMgrImpl::setup(const std::string& timer_name) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        setupInternal(timer_name);
+    } else {
+        setupInternal(timer_name);
+    }
+}
 
+void
+TimerMgrImpl::setupInternal(const std::string& timer_name) {
    // Check if the specified timer exists.
    TimerInfoMap::const_iterator timer_info_it = registered_timers_.find(timer_name);
    if (timer_info_it == registered_timers_.end()) {
@@ -270,7 +384,16 @@ TimerMgrImpl::setup(const std::string& timer_name) {
 
 void
 TimerMgrImpl::cancel(const std::string& timer_name) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        cancelInternal(timer_name);
+    } else {
+        cancelInternal(timer_name);
+    }
+}
 
+void
+TimerMgrImpl::cancelInternal(const std::string& timer_name) {
     // Find the timer of our interest.
     TimerInfoMap::const_iterator timer_info_it = registered_timers_.find(timer_name);
     if (timer_info_it == registered_timers_.end()) {
@@ -326,7 +449,6 @@ TimerMgr::TimerMgr()
 
 TimerMgr::~TimerMgr() {
     impl_->unregisterTimers();
-    delete impl_;
 }
 
 void
@@ -396,7 +518,6 @@ void
 TimerMgr::setIOService(const IOServicePtr& io_service) {
     impl_->setIOService(io_service);
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

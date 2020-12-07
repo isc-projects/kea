@@ -18,6 +18,8 @@ namespace dhcp {
 /// @brief Forward declaration of the @c TimerMgr implementation.
 class TimerMgrImpl;
 
+typedef boost::shared_ptr<TimerMgrImpl> TimerMgrImplPtr;
+
 /// @brief Forward declaration of the @c TimerMgr.
 class TimerMgr;
 
@@ -151,9 +153,8 @@ private:
     /// construction via @c TimerMgr::instance.
     TimerMgr();
 
-    /// @brief Pointer to @c TimerMgr implementation.
-    TimerMgrImpl* impl_;
-
+    /// @brief The @c TimerMgr implementation.
+    TimerMgrImplPtr impl_;
 };
 
 } // end of namespace isc::dhcp
