@@ -79,7 +79,7 @@ is_stable_release() {
 find_latest_stable_release_tag() {
   tag_pattern=${1}
   for version in $(git tag | grep -F "${tag_pattern}" | tac); do
-    if $(is_stable_release "${version}"); then
+    if is_stable_release "${version}"; then
       printf '%s' "${version}"
       return
     fi
@@ -128,13 +128,13 @@ old_hooks_version=$(grep KEA_HOOKS_VERSION "src/lib/hooks/hooks.h" | cut -d '=' 
 new_hooks_version=$((old_hooks_version + increment))
 
 if ! ${is_new_tag_stable_release} && ${is_old_tag_stable_release}; then
-  major=$(echo ${new_release_tag} | cut -d '-' -f 2 | cut -d '.' -f 1)
-  middle=$(echo ${new_release_tag} | cut -d '-' -f 2 | cut -d '.' -f 2)
-  minor=$(echo ${new_release_tag} | cut -d '-' -f 2 | cut -d '.' -f 3)
-  new_hooks_version="${major}$(printf '%02d' ${middle})$(printf '%02d' ${minor})"
+  major=$(echo "${new_release_tag}" | cut -d '-' -f 2 | cut -d '.' -f 1)
+  middle=$(echo "${new_release_tag}" | cut -d '-' -f 2 | cut -d '.' -f 2)
+  minor=$(echo "${new_release_tag}" | cut -d '-' -f 2 | cut -d '.' -f 3)
+  new_hooks_version="${major}$(printf '%02d' "${middle}")$(printf '%02d' "${minor}")"
 fi
 
-sed -i "s/^\/\/ Version.*/\/\/ Version ${new_hooks_version} of the hooks framework, set for $(echo ${new_release_tag} | tr '-' ' ')/" "src/lib/hooks/hooks.h"
+sed -i "s/^\/\/ Version .* of the hooks framework, set for Kea .*/\/\/ Version ${new_hooks_version} of the hooks framework, set for $(echo "${new_release_tag}" | tr '-' ' ')/" "src/lib/hooks/hooks.h"
 sed -i "s/KEA_HOOKS_VERSION.*/KEA_HOOKS_VERSION = ${new_hooks_version};/" "src/lib/hooks/hooks.h"
 
 for lib in $(git diff "${old_release_tag}" --name-only src/lib/ | cut -d '/' -f 3 | sort -uV); do
