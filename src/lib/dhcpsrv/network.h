@@ -25,6 +25,12 @@
 #include <functional>
 #include <string>
 
+/// @brief Template to ignore unused arguments.
+namespace {
+template <typename... Args>
+inline void unused(Args const& ...) {}
+} // end of anonymous namespace
+
 namespace isc {
 namespace dhcp {
 
@@ -777,6 +783,7 @@ protected:
                                  const std::string& global_name,
                                  const std::string& min_name = "",
                                  const std::string& max_name = "") const {
+        unused(min_name, max_name);
         if (!global_name.empty() && fetch_globals_fn_) {
             data::ConstElementPtr globals = fetch_globals_fn_();
             if (globals && (globals->getType() == data::Element::map)) {
