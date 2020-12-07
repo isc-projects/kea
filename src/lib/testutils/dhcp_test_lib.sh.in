@@ -91,6 +91,26 @@ assert_string_contains() {
     fi
 }
 
+# Enable traps to print FAILED status when a command fails unexpectedly or when
+# the user sends a SIGINT. Used in `test_start`.
+traps_on() {
+  for t in HUP INT QUIT KILL TERM EXIT; do
+      trap "
+        exit_code=\${?}
+        printf '\033[91m[  FAILED  ]\033[0m %s (exit code: %d)\n' \
+            \"\${TEST_NAME}\" \"\${exit_code}\"
+      " "${t}"
+  done
+}
+
+# Disable traps so that a double status is not printed. Used in `test_finish`
+# after the status has been printed explicitly.
+traps_off() {
+  for t in HUP INT QUIT KILL TERM EXIT; do
+      trap - "${t}"
+  done
+}
+
 # Begins a test by printing its name.
 test_start() {
     TEST_NAME=${1}
@@ -98,7 +118,12 @@ test_start() {
         test_lib_error "test_start requires test name as an argument"
         clean_exit 1
     fi
-    printf "\nSTART TEST ${TEST_NAME}\n"
+
+    # Set traps first to fail if something goes wrong.
+    traps_on
+
+    # Announce test start.
+    printf '\033[92m[ RUN      ]\033[0m %s\n' "${TEST_NAME}"
 }
 
 # Prints test result an cleans up after the test.
@@ -106,7 +131,7 @@ test_finish() {
     local exit_code=${1}  # Exit code to be returned by the exit function.
     if [ ${exit_code} -eq 0 ]; then
         cleanup
-        printf "PASSED ${TEST_NAME}\n\n"
+        printf '\033[92m[       OK ]\033[0m %s\n' "${TEST_NAME}"
     else
         # Dump log file for debugging purposes if specified and exists.
         # Otherwise the code below would simply call cat.
@@ -115,8 +140,11 @@ test_finish() {
             cat ${LOG_FILE}
         fi
         cleanup
-        printf "FAILED ${TEST_NAME}\n\n"
+        printf '\033[91m[  FAILED  ]\033[0m %s\n' "${TEST_NAME}"
     fi
+
+    # Reset traps.
+    traps_off
 }
 
 # Stores the configuration specified as a parameter in the configuration
