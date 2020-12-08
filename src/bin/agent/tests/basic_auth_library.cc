@@ -60,7 +60,7 @@ ResponseCreator::createNewHttpRequest() const {
 }
 
 HttpResponsePtr
-ResponseCreator::createStockHttpResponse(const HttpRequestPtr& request,
+ResponseCreator::createStockHttpResponse(const HttpRequestPtr& /*request*/,
                                          const HttpStatusCode& status_code) const {
     HttpVersion http_version(1, 1);
     HttpResponsePtr response(new HttpResponseJson(http_version, status_code));
@@ -69,7 +69,7 @@ ResponseCreator::createStockHttpResponse(const HttpRequestPtr& request,
 }
 
 HttpResponsePtr
-ResponseCreator::createDynamicHttpResponse(HttpRequestPtr request) {
+ResponseCreator::createDynamicHttpResponse(HttpRequestPtr /*request*/) {
     isc_throw(NotImplemented, "createDynamicHttpResponse should not be called");
 }
 

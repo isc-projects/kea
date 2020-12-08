@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef AGENT_TEST_LIBRARIES_H
-#define AGENT_TEST_LIBRARIES_H
+#ifndef AGENT_TEST_CALLOUT_LIBRARIES_H
+#define AGENT_TEST_CALLOUT_LIBRARIES_H
 
 #include <config.h>
 
@@ -18,9 +18,6 @@ namespace {
 
 // Basic callout library with context_create and three "standard" callouts.
 static const char* CALLOUT_LIBRARY = "@abs_builddir@/.libs/libcallout.so";
-
-// Basic HTTP authentication as a callout library.
-static const char* BASIC_AUTH_LIBRARY = "@abs_builddir@/.libs/libbasicauth.so";
 
 } // anonymous namespace
 

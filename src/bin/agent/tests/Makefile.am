@@ -27,7 +27,8 @@ AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../agent_parser.yy\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
-DISTCLEANFILES = ca_process_tests.sh test_data_files_config.h test_libraries.h
+DISTCLEANFILES  = ca_process_tests.sh test_data_files_config.h
+DISTCLEANFILES += test_basic_auth_libraries.h test_callout_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -104,7 +105,9 @@ libbasicauth_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.
 libbasicauth_la_LIBADD  += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 libbasicauth_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
-nodist_ca_unittests_SOURCES = test_data_files_config.h test_libraries.h
+nodist_ca_unittests_SOURCES  = test_data_files_config.h
+nodist_ca_unittests_SOURCES += test_basic_auth_libraries.h
+nodist_ca_unittests_SOURCES += test_callout_libraries.h
 
 endif
 

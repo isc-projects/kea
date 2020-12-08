@@ -17,7 +17,7 @@
 #include <http/post_request_json.h>
 #include <http/response_json.h>
 #include <process/testutils/d_test_stubs.h>
-#include <agent/tests/test_libraries.h>
+#include <agent/tests/test_basic_auth_libraries.h>
 #include <gtest/gtest.h>
 #include <boost/pointer_cast.hpp>
 #include <functional>

@@ -11,7 +11,7 @@
 #include <process/testutils/d_test_stubs.h>
 #include <process/d_cfg_mgr.h>
 #include <http/basic_auth_config.h>
-#include <agent/tests/test_libraries.h>
+#include <agent/tests/test_callout_libraries.h>
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
