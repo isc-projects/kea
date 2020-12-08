@@ -12,11 +12,13 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/lease.h>
 #include <dhcp4/tests/dhcp4_client.h>
+#include <util/multi_threading_mgr.h>
 #include <util/range_utilities.h>
 #include <boost/pointer_cast.hpp>
 #include <cstdlib>
 
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -497,12 +499,10 @@ Dhcp4Client::requestOptions(const uint8_t option1, const uint8_t option2,
 
 Pkt4Ptr
 Dhcp4Client::receiveOneMsg() {
-    // Return empty pointer if server hasn't responded.
-    if (srv_->fake_sent_.empty()) {
+    Pkt4Ptr msg = srv_->receiveOneMsg();
+    if (!msg) {
         return (Pkt4Ptr());
     }
-    Pkt4Ptr msg = srv_->fake_sent_.front();
-    srv_->fake_sent_.pop_front();
 
     // Copy the original message to simulate reception over the wire.
     msg->pack();
@@ -562,6 +562,12 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
     } catch (...) {
         // Suppress errors, as the DHCPv4 server does.
     }
+
+    // make sure the server processed all packets in MT.
+    while (isc::util::MultiThreadingMgr::instance().getThreadPool().count()) {
+        usleep(100);
+    }
+    isc::util::MultiThreadingCriticalSection cs;
 }
 
 void

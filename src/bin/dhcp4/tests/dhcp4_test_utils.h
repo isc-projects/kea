@@ -25,6 +25,7 @@
 #include <dhcp4/parser_context.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
+#include <util/multi_threading_mgr.h>
 #include <list>
 
 #include <boost/shared_ptr.hpp>
@@ -148,6 +149,13 @@ public:
             return (pkt);
         }
 
+        // make sure the server processed all packets in MT.
+        while (isc::util::MultiThreadingMgr::instance().getThreadPool().count()) {
+            usleep(100);
+        }
+        {
+            isc::util::MultiThreadingCriticalSection cs;
+        }
         // If not, just trigger shutdown and return immediately
         shutdown();
         return (Pkt4Ptr());
@@ -158,7 +166,31 @@ public:
     /// Pretend to send a packet, but instead just store it in fake_send_ list
     /// where test can later inspect server's response.
     virtual void sendPacket(const Pkt4Ptr& pkt) {
-        fake_sent_.push_back(pkt);
+        if (isc::util::MultiThreadingMgr::instance().getMode()) {
+            std::lock_guard<std::mutex> lk(mutex_);
+            fake_sent_.push_back(pkt);
+        } else {
+            fake_sent_.push_back(pkt);
+        }
+    }
+
+    Pkt4Ptr receiveOneMsg() {
+        if (isc::util::MultiThreadingMgr::instance().getMode()) {
+            std::lock_guard<std::mutex> lk(mutex_);
+            return (receiveOneMsgInternal());
+        } else {
+            return (receiveOneMsgInternal());
+        }
+    }
+
+    Pkt4Ptr receiveOneMsgInternal() {
+        // Return empty pointer if server hasn't responded.
+        if (fake_sent_.empty()) {
+            return (Pkt4Ptr());
+        }
+        Pkt4Ptr msg = fake_sent_.front();
+        fake_sent_.pop_front();
+        return (msg);
     }
 
     /// @brief adds a packet to fake receive queue
@@ -207,6 +239,7 @@ public:
     /// using fakeReceive() and NakedDhcpv4Srv::receivePacket() methods.
     std::list<Pkt4Ptr> fake_received_;
 
+    /// @brief packets we pretend to send
     std::list<Pkt4Ptr> fake_sent_;
 
     using Dhcpv4Srv::adjustIfaceData;
@@ -232,6 +265,9 @@ public:
     using Dhcpv4Srv::alloc_engine_;
     using Dhcpv4Srv::server_port_;
     using Dhcpv4Srv::client_port_;
+
+    /// @brief Mutex to protect the packet buffers.
+    std::mutex mutex_;
 };
 
 // We need to pass one reference to the Dhcp4Client, which is defined in
@@ -266,6 +302,17 @@ public:
     enum ExpectedResult {
         SHOULD_PASS, // pass = accept decline, move lease to declined state.
         SHOULD_FAIL  // fail = reject the decline
+    };
+
+    class Dhcpv4SrvMTTestGuard {
+    public:
+        Dhcpv4SrvMTTestGuard(Dhcpv4SrvTest& test, bool mt_enabled) : test_(test) {
+            test_.setMultiThreading(mt_enabled);
+        }
+        ~Dhcpv4SrvMTTestGuard() {
+            test_.setMultiThreading(false);
+        }
+        Dhcpv4SrvTest& test_;
     };
 
     /// @brief Constructor
@@ -512,8 +559,17 @@ public:
                            const std::string& client_id_2,
                            ExpectedResult expected_result);
 
+    /// @brief Checks if received relay agent info option is echoed back to the
+    /// client
+    void relayAgentInfoEcho();
+
     /// @brief This function cleans up after the test.
     virtual void TearDown();
+
+    /// @brief Set multi-threading mode.
+    void setMultiThreading(bool enabled) {
+        multi_threading_ = enabled;
+    }
 
     /// @brief A subnet used in most tests
     Subnet4Ptr subnet_;
@@ -524,12 +580,17 @@ public:
     /// @brief A client-id used in most tests
     ClientIdPtr client_id_;
 
+    /// @brief Return code
     int rcode_;
 
+    /// @brief Comment
     isc::data::ConstElementPtr comment_;
 
     /// @brief Server object under test.
     NakedDhcpv4Srv srv_;
+
+    /// @brief The multi-threading flag
+    bool multi_threading_;
 };
 
 /// @brief Patch the server config to add interface-config/re-detect=false
@@ -544,13 +605,35 @@ disableIfacesReDetect(isc::data::ConstElementPtr json) {
     }
 }
 
+/// @brief Patch the server config to add multi-threading/enable-multi-threading
+/// @param json the server config
+inline void
+configureMultiThreading(bool enabled, isc::data::ConstElementPtr json) {
+    isc::data::ConstElementPtr multi_threading = json->get("multi-threading");
+    if (!multi_threading) {
+        isc::data::ElementPtr mutable_cfg =
+                boost::const_pointer_cast<isc::data::Element>(json);
+        multi_threading = isc::data::Element::createMap();
+        mutable_cfg->set("multi-threading", multi_threading);
+    }
+
+    isc::data::ElementPtr mutable_cfg =
+        boost::const_pointer_cast<isc::data::Element>(multi_threading);
+    if (enabled) {
+        mutable_cfg->set("enable-multi-threading", isc::data::Element::create(true));
+        mutable_cfg->set("thread-pool-size", isc::data::Element::create(4));
+        mutable_cfg->set("packet-queue-size", isc::data::Element::create(4));
+    } else {
+        mutable_cfg->set("enable-multi-threading", isc::data::Element::create(false));
+    }
+}
+
 /// @brief Runs parser in JSON mode, useful for parser testing
 ///
 /// @param in string to be parsed
 /// @return ElementPtr structure representing parsed JSON
 inline isc::data::ElementPtr
-parseJSON(const std::string& in)
-{
+parseJSON(const std::string& in) {
     isc::dhcp::Parser4Context ctx;
     return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_JSON));
 }
@@ -564,8 +647,7 @@ parseJSON(const std::string& in)
 /// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
 inline isc::data::ElementPtr
-parseDHCP4(const std::string& in, bool verbose = false)
-{
+parseDHCP4(const std::string& in, bool verbose = false) {
     try {
         isc::dhcp::Parser4Context ctx;
         isc::data::ElementPtr json;
@@ -589,8 +671,7 @@ parseDHCP4(const std::string& in, bool verbose = false)
 /// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
 inline isc::data::ElementPtr
-parseOPTION_DEFS(const std::string& in, bool verbose = false)
-{
+parseOPTION_DEFS(const std::string& in, bool verbose = false) {
     try {
         isc::dhcp::Parser4Context ctx;
         return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_OPTION_DEFS));
@@ -603,8 +684,8 @@ parseOPTION_DEFS(const std::string& in, bool verbose = false)
     }
 }
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp::test namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
 
 #endif // DHCP4_TEST_UTILS_H

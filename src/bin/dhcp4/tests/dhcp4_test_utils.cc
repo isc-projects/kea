@@ -20,6 +20,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <dhcpsrv/cfg_db_access.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -31,6 +32,7 @@
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -55,7 +57,7 @@ BaseServerTest::~BaseServerTest() {
 }
 
 Dhcpv4SrvTest::Dhcpv4SrvTest()
-:rcode_(-1), srv_(0) {
+    : rcode_(-1), srv_(0), multi_threading_(false) {
 
     // Wipe any existing statistics
     isc::stats::StatsMgr::instance().removeAll();
@@ -455,6 +457,7 @@ Dhcpv4SrvTest::TearDown() {
                << ex.what();
     }
 
+    setMultiThreading(false);
 }
 
 void
@@ -620,11 +623,12 @@ Dhcpv4SrvTest::configure(const std::string& config,
                          NakedDhcpv4Srv& srv,
                          const bool commit,
                          const bool open_sockets) {
+    MultiThreadingCriticalSection cs;
     ConstElementPtr json;
     try {
         json = parseJSON(config);
     } catch (const std::exception& ex){
-        // Fatal falure on parsing error
+        // Fatal failure on parsing error
         FAIL() << "parsing failure:"
                 << "config:" << config << std::endl
                 << "error: " << ex.what();
@@ -634,6 +638,9 @@ Dhcpv4SrvTest::configure(const std::string& config,
 
     // Disable the re-detect flag
     disableIfacesReDetect(json);
+
+    // Set up multi-threading
+    configureMultiThreading(multi_threading_, json);
 
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
@@ -648,6 +655,13 @@ Dhcpv4SrvTest::configure(const std::string& config,
         cfg_db->setAppendedParameters("universe=4");
         cfg_db->createManagers();
     } );
+
+    try {
+        CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "Error applying multi threading settings: "
+            << ex.what();
+    }
 
     if (commit) {
         CfgMgr::instance().commit();
@@ -705,7 +719,7 @@ Dhcpv4SrvTest::configureWithStatus(const std::string& config, NakedDhcpv4Srv& sr
     }
 
     return (std::make_pair(rcode, comment->stringValue()));
- }
+}
 
 Dhcpv4Exchange
 Dhcpv4SrvTest::createExchange(const Pkt4Ptr& query) {

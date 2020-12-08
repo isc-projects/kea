@@ -104,6 +104,35 @@ public:
                                 const std::string& iface,
                                 const uint32_t ifindex);
 
+    /// @brief This test checks that the message from directly connected client
+    /// is processed and that client is offered IPv4 address from the subnet
+    /// which is suitable for the local interface on which the client's message
+    /// is received. This test uses two subnets, with two active interfaces
+    /// which IP addresses belong to these subnets. The address offered to the
+    /// client which message has been sent over eth0 should belong to a
+    /// different subnet than the address offered for the client sending its
+    /// message via eth1.
+    void twoSubnets();
+
+    /// @brief This test checks that server selects a subnet when receives a
+    /// message through an interface for which the subnet has been configured.
+    /// This interface has IPv4 address assigned which belongs to this subnet.
+    /// This test also verifies that when the message is received through the
+    /// interface for which there is no suitable subnet, the message is
+    /// discarded.
+    void oneSubnet();
+
+    /// @brief This test verifies that the server uses ciaddr to select a subnet
+    /// for a client which renews its lease.
+    void renew();
+
+    /// This test verifies that when a client in the Rebinding state broadcasts
+    /// a Request message through an interface for which a subnet is configured,
+    /// the server responds to this Request. It also verifies that when such a
+    /// Request is sent through the interface for which there is no subnet
+    /// configured the client's message is discarded.
+    void rebind();
+
     /// @brief classes the client belongs to
     ///
     /// This is empty in most cases, but it is needed as a parameter for all
@@ -133,7 +162,6 @@ DirectClientTest::configureSubnet(const std::string& prefix) {
         "\"valid-lifetime\": 4000 }";
 
     configure(config.str());
-
 }
 
 void
@@ -197,15 +225,8 @@ DirectClientTest::createClientMessage(const Pkt4Ptr& msg,
     return (received);
 }
 
-// This test checks that the message from directly connected client
-// is processed and that client is offered IPv4 address from the subnet which
-// is suitable for the local interface on which the client's message is
-// received. This test uses two subnets, with two active interfaces which IP
-// addresses belong to these subnets. The address offered to the client
-// which message has been sent over eth0 should belong to a different
-// subnet than the address offered for the client sending its message
-// via eth1.
-TEST_F(DirectClientTest,  twoSubnets) {
+void
+DirectClientTest::twoSubnets() {
     // Configure IfaceMgr with fake interfaces lo, eth0 and eth1.
     IfaceMgrTestConfig iface_config(true);
     // After creating interfaces we have to open sockets as it is required
@@ -227,40 +248,55 @@ TEST_F(DirectClientTest,  twoSubnets) {
     // Check that the server did send responses.
     ASSERT_EQ(2, srv_.fake_sent_.size());
 
-    // Make sure that we received a response.
-    Pkt4Ptr response = srv_.fake_sent_.front();
-    ASSERT_TRUE(response);
-    srv_.fake_sent_.pop_front();
+    // In multi-threading responses can be received out of order.
+    Pkt4Ptr offer;
+    Pkt4Ptr ack;
+
+    while (srv_.fake_sent_.size()) {
+        // Make sure that we received a response.
+        Pkt4Ptr response = srv_.fake_sent_.front();
+        ASSERT_TRUE(response);
+        srv_.fake_sent_.pop_front();
+
+        if (response->getType() == DHCPOFFER) {
+            offer = response;
+        } else if (response->getType() == DHCPACK) {
+            ack = response;
+        }
+    }
 
     // Client should get an Offer (not a NAK).
-    ASSERT_EQ(DHCPOFFER, response->getType());
+    ASSERT_TRUE(offer);
+
+    // Client should get an Ack (not a NAK).
+    ASSERT_TRUE(ack);
+
     // Check that the offered address belongs to the suitable subnet.
     Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->selectSubnet(response->getYiaddr());
+        getCfgSubnets4()->selectSubnet(offer->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
-    // A client that sent Request over the other interface should get Ack.
-    response = srv_.fake_sent_.front();
-    ASSERT_TRUE(response);
 
-    // Client should get an Ack (not a NAK).
-    ASSERT_EQ(DHCPACK, response->getType());
     // Check that the offered address belongs to the suitable subnet.
     subnet = CfgMgr::instance().getCurrentCfg()->
-        getCfgSubnets4()->selectSubnet(response->getYiaddr());
+        getCfgSubnets4()->selectSubnet(ack->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
-
 }
 
-// This test checks that server selects a subnet when receives a message
-// through an interface for which the subnet has been configured. This
-// interface has IPv4 address assigned which belongs to this subnet.
-// This test also verifies that when the message is received through
-// the interface for which there is no suitable subnet, the message
-// is discarded.
-TEST_F(DirectClientTest, oneSubnet) {
+TEST_F(DirectClientTest, twoSubnets) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    twoSubnets();
+}
+
+TEST_F(DirectClientTest, twoSubnetsMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    twoSubnets();
+}
+
+void
+DirectClientTest::oneSubnet() {
     // Configure IfaceMgr with fake interfaces lo, eth0 and eth1.
     IfaceMgrTestConfig iface_config(true);
     // After creating interfaces we have to open sockets as it is required
@@ -298,12 +334,20 @@ TEST_F(DirectClientTest, oneSubnet) {
         getCfgSubnets4()->selectSubnet(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
-
 }
 
-// This test verifies that the server uses ciaddr to select a subnet for a
-// client which renews its lease.
-TEST_F(DirectClientTest, renew) {
+TEST_F(DirectClientTest, oneSubnet) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    oneSubnet();
+}
+
+TEST_F(DirectClientTest, oneSubnetMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    oneSubnet();
+}
+
+void
+DirectClientTest::renew() {
     // Configure IfaceMgr with fake interfaces lo, eth0 and eth1.
     IfaceMgrTestConfig iface_config(true);
     // After creating interfaces we have to open sockets as it is required
@@ -330,12 +374,18 @@ TEST_F(DirectClientTest, renew) {
     EXPECT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
 }
 
-// This test verifies that when a client in the Rebinding state broadcasts
-// a Request message through an interface for which a subnet is configured,
-// the server responds to this Request. It also verifies that when such a
-// Request is sent through the interface for which there is no subnet configured
-// the client's message is discarded.
-TEST_F(DirectClientTest, rebind) {
+TEST_F(DirectClientTest, renew) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    renew();
+}
+
+TEST_F(DirectClientTest, renewMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    renew();
+}
+
+void
+DirectClientTest::rebind() {
     // Configure IfaceMgr with fake interfaces lo, eth0 and eth1.
     IfaceMgrTestConfig iface_config(true);
     // After creating interfaces we have to open sockets as it is required
@@ -370,6 +420,16 @@ TEST_F(DirectClientTest, rebind) {
     ASSERT_TRUE(client.getContext().response_);
     EXPECT_EQ(DHCPACK, static_cast<int>(client.getContext().response_->getType()));
     EXPECT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
+}
+
+TEST_F(DirectClientTest, rebind) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    rebind();
+}
+
+TEST_F(DirectClientTest, rebindMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    rebind();
 }
 
 }
