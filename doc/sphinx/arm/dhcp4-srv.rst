@@ -3078,6 +3078,17 @@ conflict with existing entries owned by other DHCP4 clients.
     reassigning either FQDNs or IP addresses.  Doing so will cause kea-dhcp4
     to generate DNS removal requests to D2.
 
+.. note::
+
+
+    The DNS entries Kea creates contain a value for TTL (time to live).  As of
+    Kea 1.9.3, kea-dhcp4 calculates that value based on
+    `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__
+    which suggests that the TTL value be 1/3 of the lease's life time with
+    a minimum value of 10 minutes.  Prior to this the server set the TTL value
+    equal to the lease's valid life time.  Future releases may add one or
+    more parameters to customize this value.
+
 .. _dhcpv4-d2-io-config:
 
 DHCP-DDNS Server Connectivity

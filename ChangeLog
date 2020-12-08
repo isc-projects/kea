@@ -1,8 +1,10 @@
-1838.	[bug]		fdupont
-	The DHCPv6 sent multiple instances of an option or a
-	sub-option when it seems to be requested more than once
-	directly by the client or using the always-send flag.
-	(Gitlab #1449)
+1838.	[bug]		tmark
+	kea-dhcp4 and kea-dhcp6 now calculate the DDNS TTL value
+	based on RFC 4702, Section 5 which suggests that the
+	TTL value be 1/3 of the lease's valid life time with a
+	minimum value of 10 minutes. Prior to this the servers
+	set the TTL to equal to the lease's valid life time.
+	(Gitlab #936)
 
 1837.	[doc]		cstrotm
 	Several Kea ARM corrections.
