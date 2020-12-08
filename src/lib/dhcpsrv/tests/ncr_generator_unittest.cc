@@ -228,10 +228,12 @@ public:
         ASSERT_NO_FATAL_FAILURE(sendNCR(chg_type, fwd, rev, fqdn));
         // Expecting one NCR be generated.
         ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+        uint32_t ttl = calculateDdnsTtl(lease_->valid_lft_);
+
         // Check the details of the NCR.
         verifyNameChangeRequest(chg_type, rev, fwd, lease_->addr_.toText(), exp_dhcid,
-                                lease_->cltt_ + lease_->valid_lft_,
-                                lease_->valid_lft_, fqdn, exp_use_cr);
+                                lease_->cltt_ + ttl, ttl, fqdn, exp_use_cr);
     }
 
     /// @brief Test that calling queueNCR for NULL lease doesn't cause
@@ -621,11 +623,12 @@ TEST_F(NCRGenerator4Test, useClientId) {
     ASSERT_NO_FATAL_FAILURE(queueRemovalNCR(true, true, "myhost.example.com."));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
+    uint32_t ttl = calculateDdnsTtl(lease_->valid_lft_);
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "192.0.2.1",
                             "000101C7AA5420483BDA99C437636EA7DA2FE18"
                             "31C9679FEB031C360CA571298F3D1FA",
-                            lease_->cltt_ + lease_->valid_lft_, 100);
+                            lease_->cltt_ + ttl, ttl);
     {
         SCOPED_TRACE("case CHG_REMOVE");
         testNCR(CHG_REMOVE, true, true, "myhost.example.com.",
@@ -670,6 +673,16 @@ TEST_F(NCRGenerator4Test, useConflictResolution) {
                 "000001E356D43E5F0A496D65BCA24D982D646140813E3"
                 "B03AB370BFF46BFA309AE7BFD", true);
     }
+}
+
+// Verify that calculateDdnsTtl() produces the expected values.
+TEST_F(NCRGenerator4Test, calculateDdnsTtl) {
+
+    // A life time less than or equal to 1800 should yield a TTL of 600 seconds.
+    EXPECT_EQ(600, calculateDdnsTtl(100));
+
+    // A life time > 1800 should be 1/3 of the value.
+    EXPECT_EQ(601, calculateDdnsTtl(1803));
 }
 
 } // end of anonymous namespace

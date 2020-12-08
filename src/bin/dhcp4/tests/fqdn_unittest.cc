@@ -15,6 +15,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/ncr_generator.h>
 #include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
@@ -746,10 +747,11 @@ public:
     /// if the value supplied is not empty):w
     /// @param cltt - cltt value from the lease the NCR for which the NCR
     /// was generated expected value for
-    /// @param len - expected lease length in the NCR
+    /// @param lifetime - lease's valid lifetime from which NCR ttl was
+    /// generated
     /// @param not_strict_expire_check - when true the comparison of the NCR
     /// lease expiration time is conducted as greater than or equal to rather
-    /// equal to CLTT plus lease length.
+    /// equal to CLTT plus lease ttl .
     /// @param exp_use_cr expected value of conflict resolution flag
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
@@ -757,7 +759,7 @@ public:
                                  const std::string& fqdn,
                                  const std::string& dhcid,
                                  const time_t cltt,
-                                 const uint16_t len,
+                                 const uint16_t valid_lft,
                                  const bool not_strict_expire_check = false,
                                  const bool exp_use_cr = true) {
         NameChangeRequestPtr ncr;
@@ -774,17 +776,20 @@ public:
         if (!dhcid.empty()) {
             EXPECT_EQ(dhcid, ncr->getDhcid().toStr());
         }
+
         // In some cases, the test doesn't have access to the last transmission
         // time for the particular client. In such cases, the test can use the
         // current time as cltt but the it may not check the lease expiration
         // time for equality but rather check that the lease expiration time
         // is not greater than the current time + lease lifetime.
+        uint32_t ttl = calculateDdnsTtl(valid_lft);
         if (not_strict_expire_check) {
-            EXPECT_GE(cltt + len, ncr->getLeaseExpiresOn());
+            EXPECT_GE(cltt + ttl, ncr->getLeaseExpiresOn());
         } else {
-            EXPECT_EQ(cltt + len, ncr->getLeaseExpiresOn());
+            EXPECT_EQ(cltt + ttl, ncr->getLeaseExpiresOn());
         }
-        EXPECT_EQ(len, ncr->getLeaseLength());
+
+        EXPECT_EQ(ttl, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
         EXPECT_EQ(exp_use_cr, ncr->useConflictResolution());
 

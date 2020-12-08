@@ -56,12 +56,16 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
         std::vector<uint8_t> hostname_wire;
         OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
         D2Dhcid dhcid = D2Dhcid(identifier, hostname_wire);
+
+        // Calculate the TTL based on lease life time.
+        uint32_t ttl = calculateDdnsTtl(lease->valid_lft_);
+
         // Create name change request.
         NameChangeRequestPtr ncr
             (new NameChangeRequest(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
                                    lease->hostname_, lease->addr_.toText(),
-                                   dhcid, lease->cltt_ + lease->valid_lft_,
-                                   lease->valid_lft_, use_conflict_resolution));
+                                   dhcid, lease->cltt_ + ttl,
+                                   ttl, use_conflict_resolution));
 
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA, DHCPSRV_QUEUE_NCR)
             .arg(label)
@@ -127,6 +131,16 @@ void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
         queueNCRCommon(chg_type, lease, *(lease->duid_),
                        Pkt6::makeLabel(lease->duid_, lease->hwaddr_), use_cr);
     }
+}
+
+uint32_t calculateDdnsTtl(uint32_t lease_lft) {
+    // Per RFC 4702 DDNS RR TTL should be given by:
+    // ((lease life time / 3) < 10 minutes) ? 10 minutes : (lease life time / 3)
+    if (lease_lft < 1800) {
+        return (600);
+    }
+
+    return (lease_lft / 3);
 }
 
 }
