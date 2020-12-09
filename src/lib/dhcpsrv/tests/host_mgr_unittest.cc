@@ -24,6 +24,8 @@ using namespace isc::asiolink;
 
 namespace {
 
+// The tests in this file only address the in memory hosts.
+
 // This test verifies that HostMgr returns all reservations for the
 // specified HW address. The reservations are defined in the server's
 // configuration.
