@@ -1,4 +1,4 @@
-1842.	[bug]		razvan
+1842.	[func]		razvan
 	Fixed the db connection reconnect implemenation to honor
 	each connection backend configuration. The most important
 	improvement is that only the affected mananger will be
