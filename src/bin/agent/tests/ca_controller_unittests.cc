@@ -97,7 +97,7 @@ public:
                   sock_info->get("socket-name")->stringValue());
     }
 
-        /// @brief Compares the status in the given parse result to a given value.
+    /// @brief Compares the status in the given parse result to a given value.
     ///
     /// @param answer Element set containing an integer response and string
     /// comment.
@@ -107,13 +107,6 @@ public:
     void checkAnswer(isc::data::ConstElementPtr answer,
                      int exp_status,
                      string exp_txt = "") {
-
-        // Get rid of the outer list.
-        ASSERT_TRUE(answer);
-        ASSERT_EQ(Element::list, answer->getType());
-        ASSERT_LE(1, answer->size());
-        answer = answer->get(0);
-
         int rcode = 0;
         isc::data::ConstElementPtr comment;
         comment = isc::config::parseAnswer(rcode, answer);
@@ -547,9 +540,9 @@ TEST_F(CtrlAgentControllerTest, configReloadMissingFile) {
                                                            params, cmd);
 
     // Verify the reload was rejected.
-    string expected = "[ { \"result\": 1, \"text\": "
+    string expected = "{ \"result\": 1, \"text\": "
         "\"Configuration parsing failed: "
-        "Unable to open file does-not-exist.json\" } ]";
+        "Unable to open file does-not-exist.json\" }";
     EXPECT_EQ(expected, answer->str());
 
     // Now clean up after ourselves.
@@ -594,9 +587,9 @@ TEST_F(CtrlAgentControllerTest, configReloadBrokenFile) {
                                                            params, cmd);
 
     // Verify the reload was rejected.
-    string expected = "[ { \"result\": 1, \"text\": "
+    string expected = "{ \"result\": 1, \"text\": "
         "\"Configuration parsing failed: "
-        "testbad.json:1.1: Invalid character: b\" } ]";
+        "testbad.json:1.1: Invalid character: b\" }";
     EXPECT_EQ(expected, answer->str());
 
     // Remove the file.
@@ -646,8 +639,8 @@ TEST_F(CtrlAgentControllerTest, configReloadFileValid) {
 
 
     // Verify the reload was successful.
-    string expected = "[ { \"result\": 0, \"text\": "
-        "\"Configuration applied successfully.\" } ]";
+    string expected = "{ \"result\": 0, \"text\": "
+        "\"Configuration applied successfully.\" }";
     EXPECT_EQ(expected, answer->str());
 
     // Check that the config was indeed applied?
@@ -734,8 +727,8 @@ TEST_F(CtrlAgentControllerTest, shutdown) {
                                                            params, cmd);
 
     // Verify the reload was successful.
-    string expected = "[ { \"result\": 0, \"text\": "
-                      "\"Control Agent is shutting down\" } ]";
+    string expected = "{ \"result\": 0, \"text\": "
+                      "\"Control Agent is shutting down\" }";
 
     EXPECT_EQ(expected, answer->str());
 
@@ -787,8 +780,8 @@ TEST_F(CtrlAgentControllerTest, shutdownExitValue) {
                                                            params, cmd);
 
     // Verify the reload was successful.
-    string expected = "[ { \"result\": 0, \"text\": "
-                      "\"Control Agent is shutting down\" } ]";
+    string expected = "{ \"result\": 0, \"text\": "
+                      "\"Control Agent is shutting down\" }";
 
     EXPECT_EQ(expected, answer->str());
 

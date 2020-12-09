@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,31 +44,27 @@ CtrlAgentCommandMgr::CtrlAgentCommandMgr()
     : HookedCommandMgr() {
 }
 
-ConstElementPtr
-CtrlAgentCommandMgr::handleCommand(const std::string& cmd_name,
-                                   const isc::data::ConstElementPtr& params,
-                                   const isc::data::ConstElementPtr& original_cmd) {
-    ConstElementPtr answer = handleCommandInternal(cmd_name, params, original_cmd);
+isc::data::ConstElementPtr
+CtrlAgentCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
+    ConstElementPtr answer = HookedCommandMgr::processCommand(cmd);
 
     if (answer->getType() == Element::list) {
         return (answer);
     }
 
-    // In general, the handlers should return a list of answers rather than a
-    // single answer, but in some cases we rely on the generic handlers,
-    // e.g. 'list-commands', which may return a single answer not wrapped in
-    // the list. Such answers need to be wrapped in the list here.
+    // Responses from the Kea Control Agent must be always wrapped
+    // in a list because in general they contain responses from
+    // multiple daemons.
     ElementPtr answer_list = Element::createList();
     answer_list->add(boost::const_pointer_cast<Element>(answer));
 
     return (answer_list);
 }
 
-
 ConstElementPtr
-CtrlAgentCommandMgr::handleCommandInternal(std::string cmd_name,
-                                           isc::data::ConstElementPtr params,
-                                           isc::data::ConstElementPtr original_cmd) {
+CtrlAgentCommandMgr::handleCommand(const std::string& cmd_name,
+                                   const isc::data::ConstElementPtr& params,
+                                   const isc::data::ConstElementPtr& original_cmd) {
 
     ConstElementPtr services = Element::createList();
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,6 +41,22 @@ public:
     /// @brief Returns sole instance of the Command Manager.
     static CtrlAgentCommandMgr& instance();
 
+    /// @brief Triggers command processing.
+    ///
+    /// This method overrides the @c BaseCommandMgr::processCommand to ensure
+    /// that the response is always wrapped in a list. The base implementation
+    /// returns a response map. Kea Control Agent forwards commands to multiple
+    /// daemons behind it and thus it must return a list of responses from
+    /// respective daemons. If an error occurs during command processing the
+    /// error response must also be wrapped in a list because caller expects
+    /// that CA always returns a list.
+    ///
+    /// @param cmd Pointer to the data element representing command in JSON
+    /// format.
+    /// @return Pointer to the response.
+    virtual isc::data::ConstElementPtr
+    processCommand(const isc::data::ConstElementPtr& cmd);
+
     /// @brief Handles the command having a given name and arguments.
     ///
     /// This method extends the base implementation with the ability to forward
@@ -68,24 +84,6 @@ public:
                   const isc::data::ConstElementPtr& original_cmd);
 
 private:
-
-    /// @brief Implements the logic for @ref CtrlAgentCommandMgr::handleCommand.
-    ///
-    /// All parameters are passed by value because they may be modified within
-    /// the method.
-    ///
-    /// @param cmd_name Command name.
-    /// @param params Command arguments.
-    /// @param original_cmd Original command being processed.
-    ///
-    /// @return Pointer to the const data element representing a list of responses
-    /// to the command or a single response (not wrapped in a list). The
-    /// @ref CtrlAgentCommandMgr::handleCommand will wrap non-list value returned
-    /// in a single element list.
-    isc::data::ConstElementPtr
-    handleCommandInternal(std::string cmd_name,
-                          isc::data::ConstElementPtr params,
-                          isc::data::ConstElementPtr original_cmd);
 
     /// @brief Tries to forward received control command to a specified server.
     ///

@@ -235,8 +235,7 @@ public:
         server_socket_->waitForRunning();
 
         ConstElementPtr command = createCommand("foo", service);
-        ConstElementPtr answer = mgr_.handleCommand("foo", ConstElementPtr(),
-                                                    command);
+        ConstElementPtr answer = mgr_.processCommand(command);
 
         // Stop IO service immediatelly and let the thread die.
         getIOService()->stop();
@@ -267,18 +266,28 @@ public:
 /// properly.
 TEST_F(CtrlAgentCommandMgrTest, bogus) {
     ConstElementPtr answer;
-    EXPECT_NO_THROW(answer = mgr_.handleCommand("fish-and-chips-please",
-                                                ConstElementPtr(),
-                                                ConstElementPtr()));
+    EXPECT_NO_THROW(answer = mgr_.processCommand(createCommand("fish-and-chips-please", "")));
     checkAnswer(answer, isc::config::CONTROL_RESULT_COMMAND_UNSUPPORTED);
 };
+
+// Test verifying that parameter other than command, arguments and service is
+// rejected and that the correct error is returned.
+TEST_F(CtrlAgentCommandMgrTest, extraParameter) {
+    ElementPtr command = Element::createMap();
+    command->set("command", Element::create("list-commands"));
+    command->set("arguments", Element::createMap());
+    command->set("extra-arg", Element::createMap());
+
+    ConstElementPtr answer;
+    EXPECT_NO_THROW(answer = mgr_.processCommand(command));
+    checkAnswer(answer, isc::config::CONTROL_RESULT_ERROR);
+}
 
 /// Just a basic test checking that 'list-commands' is supported.
 TEST_F(CtrlAgentCommandMgrTest, listCommands) {
     ConstElementPtr answer;
-    EXPECT_NO_THROW(answer = mgr_.handleCommand("list-commands",
-                                                ConstElementPtr(),
-                                                ConstElementPtr()));
+    EXPECT_NO_THROW(answer = mgr_.processCommand(createCommand("list-commands", "")));
+
     checkAnswer(answer, isc::config::CONTROL_RESULT_SUCCESS);
 };
 

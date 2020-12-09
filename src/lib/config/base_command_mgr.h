@@ -112,9 +112,12 @@ public:
     /// After the command has been handled, callouts for the hook point,
     /// "command-processed" will be invoked.
     ///
+    /// This method is virtual so it can be overridden in derived classes to
+    /// pre-process command and post-process response if necessary.
+    ///
     /// @param cmd Pointer to the data element representing command in JSON
     /// format.
-    isc::data::ConstElementPtr
+    virtual isc::data::ConstElementPtr
     processCommand(const isc::data::ConstElementPtr& cmd);
 
     /// @brief Registers specified command handler for a given command
