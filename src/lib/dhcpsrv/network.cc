@@ -363,7 +363,7 @@ Network6::toElement() const {
     }
 
     // Set interface-id
-    const OptionPtr& ifaceid = getInterfaceId();
+    const OptionPtr& ifaceid = getInterfaceId(Network::Inheritance::NONE);
     if (ifaceid) {
         std::vector<uint8_t> bin = ifaceid->getData();
         std::string ifid;

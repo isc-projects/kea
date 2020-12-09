@@ -7,6 +7,8 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/option.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
@@ -17,6 +19,7 @@
 
 #include <gtest/gtest.h>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 using namespace isc;
@@ -1327,6 +1330,14 @@ TEST(SharedNetwork6Test, unparse) {
     network->setReservationsInSubnet(true);
     network->setReservationsOutOfPool(false);
 
+    // Include interface-id at shared network level. After unparsing the
+    // network we should only see it at shared network level and not at
+    // the subnet level.
+    std::string iface_id_value = "vlan102";
+    OptionBuffer iface_id_buffer(iface_id_value.begin(), iface_id_value.end());
+    OptionPtr iface_id_opt(new Option(Option::V6, D6O_INTERFACE_ID, iface_id_buffer));
+    network->setInterfaceId(iface_id_opt);
+
     // Add several subnets.
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
                                    40, SubnetID(1)));
@@ -1334,11 +1345,21 @@ TEST(SharedNetwork6Test, unparse) {
                                    SubnetID(2)));
     subnet2->addRelayAddress(IOAddress("2001:db8:1::8"));
 
+    // Set subnet specific interface-id for subnet2. This is to ensure that
+    // the subnet specific value is not overriden by shared network specific
+    // value.
+    std::string subnet_interface_id_value = "vlan222";
+    OptionBuffer subnet_iface_id_buffer(subnet_interface_id_value.begin(),
+                                        subnet_interface_id_value.end());
+    OptionPtr subnet_iface_id_opt(new Option(Option::V6, D6O_INTERFACE_ID, subnet_iface_id_buffer));
+    subnet2->setInterfaceId(subnet_iface_id_opt);
+
     network->add(subnet1);
     network->add(subnet2);
 
     std::string expected = "{\n"
         "    \"interface\": \"eth1\",\n"
+        "    \"interface-id\": \"vlan102\",\n"
         "    \"name\": \"frog\",\n"
         "    \"option-data\": [ ],\n"
         "    \"preferred-lifetime\": 200,\n"
@@ -1369,6 +1390,7 @@ TEST(SharedNetwork6Test, unparse) {
         "      },\n"
         "      {\n"
         "        \"id\": 2,\n"
+        "        \"interface-id\": \"vlan222\",\n"
         "        \"option-data\": [ ],\n"
         "        \"pd-pools\": [ ],\n"
         "        \"pools\": [ ],\n"
