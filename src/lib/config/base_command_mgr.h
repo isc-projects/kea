@@ -115,6 +115,9 @@ public:
     /// This method is virtual so it can be overridden in derived classes to
     /// pre-process command and post-process response if necessary.
     ///
+    /// This method is an entry point for dealing with a command. Internally
+    /// it calls @c BaseCommandMgr::handleCommand.
+    ///
     /// @param cmd Pointer to the data element representing command in JSON
     /// format.
     virtual isc::data::ConstElementPtr

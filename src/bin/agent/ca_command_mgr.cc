@@ -48,13 +48,12 @@ isc::data::ConstElementPtr
 CtrlAgentCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
     ConstElementPtr answer = HookedCommandMgr::processCommand(cmd);
 
-    if (answer->getType() == Element::list) {
-        return (answer);
-    }
-
     // Responses from the Kea Control Agent must be always wrapped
     // in a list because in general they contain responses from
     // multiple daemons.
+    if (answer->getType() == Element::list) {
+        return (answer);
+    }
     ElementPtr answer_list = Element::createList();
     answer_list->add(boost::const_pointer_cast<Element>(answer));
 

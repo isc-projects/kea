@@ -1,5 +1,5 @@
 1844.	[bug]		marcin
-	Corrected a bug in Kea Control Agent error responses when
+	Corrected a bug in Kea Control Agent error responses when a
 	malformed command was sent. In some cases a map with an error
 	response was returned instead of a list.
 	(Gitlab #432)

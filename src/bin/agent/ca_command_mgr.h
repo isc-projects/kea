@@ -51,6 +51,9 @@ public:
     /// error response must also be wrapped in a list because caller expects
     /// that CA always returns a list.
     ///
+    /// This method is an entry point for dealing with a command. Internally
+    /// it calls @c CtrlAgentCommandMgr::handleCommand.
+    ///
     /// @param cmd Pointer to the data element representing command in JSON
     /// format.
     /// @return Pointer to the response.
