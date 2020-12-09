@@ -152,7 +152,7 @@ TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
 }
 
 std::string
-TestControl::byte2Hex(const uint8_t b) const {
+TestControl::byte2Hex(const uint8_t b) {
     const int b1 = b / 16;
     const int b0 = b % 16;
     ostringstream stream;
@@ -698,7 +698,7 @@ TestControl::printStats() const {
 
 std::string
 TestControl::vector2Hex(const std::vector<uint8_t>& vec,
-                        const std::string& separator /* ="" */) const {
+                        const std::string& separator /* ="" */) {
     std::ostringstream stream;
     for (std::vector<uint8_t>::const_iterator it = vec.begin();
          it != vec.end();

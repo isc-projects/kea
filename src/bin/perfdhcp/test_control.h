@@ -316,6 +316,24 @@ public:
     std::set<std::string>& getAllUniqueAddrAdvert() {
         return unique_address_;
     }
+
+    /// \brief Convert binary value to hex string.
+    ///
+    /// \todo Consider moving this function to src/lib/util.
+    ///
+    /// \param b byte to convert.
+    /// \return hex string.
+    static std::string byte2Hex(const uint8_t b);
+
+    /// \brief Convert vector in hexadecimal string.
+    ///
+    /// \todo Consider moving this function to src/lib/util.
+    ///
+    /// \param vec vector to be converted.
+    /// \param separator separator.
+    static std::string vector2Hex(const std::vector<uint8_t>& vec,
+                                  const std::string& separator = "");
+
     /// \brief Initialized at first exit condition with the time perfdhcp
     ///  should exit
     boost::posix_time::ptime exit_time_;
@@ -948,14 +966,6 @@ protected:
     /// is NULL.
     void copyIaOptions(const dhcp::Pkt6Ptr& pkt_from, dhcp::Pkt6Ptr& pkt_to);
 
-    /// \brief Convert binary value to hex string.
-    ///
-    /// \todo Consider moving this function to src/lib/util.
-    ///
-    /// \param b byte to convert.
-    /// \return hex string.
-    std::string byte2Hex(const uint8_t b) const;
-
     /// \brief Calculate elapsed time between two packets.
     ///
     /// This function calculates the time elapsed between two packets. If
@@ -998,15 +1008,6 @@ protected:
     /// one to be used.
     /// \return transaction id offset in packet.
     int getTransactionIdOffset(const int arg_idx) const;
-
-    /// \brief Convert vector in hexadecimal string.
-    ///
-    /// \todo Consider moving this function to src/lib/util.
-    ///
-    /// \param vec vector to be converted.
-    /// \param separator separator.
-    std::string vector2Hex(const std::vector<uint8_t>& vec,
-                           const std::string& separator = "") const;
 
     /// \brief Handle child signal.
     ///

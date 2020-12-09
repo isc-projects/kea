@@ -20,6 +20,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -185,7 +186,6 @@ public:
             1 : opt.getClientsNum();
         setMacAddrGenerator(NumberGeneratorPtr(new TestControl::SequentialGenerator(clients_num)));
     };
-
 };
 
 
@@ -1095,6 +1095,30 @@ public:
 
     }
 
+    /// @brief Check presence and content of v4 options 55.
+    ///
+    /// \param pkt packet to be checked
+    /// \param expected_option_requests only these option requests should be
+    ///     found under option 55 in the packet, nothing more, nothing less
+    void checkOptions55(Pkt4Ptr const& pkt,
+                        vector<uint8_t> const& expected_option_requests) {
+        // Sanity checks
+        ASSERT_TRUE(pkt);
+        OptionPtr const& opt(pkt->getOption(55));
+        ASSERT_TRUE(opt);
+        EXPECT_TRUE(opt->getUniverse() == Option::V4);
+
+        // Create the text of the expected option.
+        string const length(to_string(expected_option_requests.size()));
+        string const buffer(
+            TestControl::vector2Hex(expected_option_requests, ":"));
+        string const expected_option_text(boost::str(
+            boost::format("type=055, len=%03u: %s") % length % buffer));
+
+        // Compare.
+        EXPECT_EQ(opt->toText(), expected_option_text);
+    }
+
     /// @brief check if v4 options 200 and 201 are present.
     ///
     /// The options are expected to have specific format, as if parameters
@@ -1808,6 +1832,48 @@ TEST_F(TestControlTest, Packet6ExchangeExtraOpts) {
     auto req = tc.template_packets_v6_.find(DHCPV6_REQUEST);
     ASSERT_TRUE(req != tc.template_packets_v6_.end());
     checkOptions20x(req->second);
+}
+
+// Test checks if multiple v4 PRL options can be sent. They should be merged
+// into a single PRL option by perfdhcp.
+TEST_F(TestControlTest, sendDiscoverMultiplePRLs) {
+    // Important paramters here:
+    // -o 55,1234 - send option 55 with hex content '1234'
+    // -o 55,abcd - send option 55 with hex content 'abcd'
+    CommandOptions opt;
+    processCmdLine(
+        opt, "perfdhcp -4 -l fake -o 55,1234 -o 55,abcd -r 1 -xT 127.0.0.1");
+
+    // Create test control and set up some basic defaults.
+    NakedTestControl tc(opt);
+    tc.registerOptionFactories();
+    NakedTestControl::IncrementalGeneratorPtr gen(
+        boost::make_shared<NakedTestControl::IncrementalGenerator>());
+    tc.setTransidGenerator(gen);
+
+    // Send the packet.
+    tc.sendDiscover4();
+
+    // Let's find the packet and see if it includes the right option.
+    auto const pkt_it(tc.template_packets_v4_.find(DHCPDISCOVER));
+    ASSERT_TRUE(pkt_it != tc.template_packets_v4_.end());
+
+    checkOptions55(pkt_it->second,
+                   {
+                       // Added to all perfdhcp egress packets by default
+                       DHO_SUBNET_MASK,
+                       DHO_BROADCAST_ADDRESS,
+                       DHO_TIME_OFFSET,
+                       DHO_ROUTERS,
+                       DHO_DOMAIN_NAME,
+                       DHO_DOMAIN_NAME_SERVERS,
+                       DHO_HOST_NAME,
+                       // Explicitly added in this test
+                       0x12,
+                       0x34,
+                       0xab,
+                       0xcd,
+                   });
 }
 
 // This test checks if HA failure can be simulated using -y and -Y options with DHCPv4.
