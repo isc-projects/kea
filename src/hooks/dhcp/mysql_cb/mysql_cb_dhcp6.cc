@@ -1269,7 +1269,7 @@ public:
 
         // Create the binding holding interface_id.
         MySqlBindingPtr interface_id_binding = MySqlBinding::createNull();
-        auto opt_iface_id = subnet->getInterfaceId();
+        auto opt_iface_id = subnet->getInterfaceId(Network::Inheritance::NONE);
         if (opt_iface_id) {
             auto iface_id_data = opt_iface_id->getData();
             if (!iface_id_data.empty()) {
@@ -1964,7 +1964,7 @@ public:
 
         // Create the binding holding interface_id.
         MySqlBindingPtr interface_id_binding = MySqlBinding::createNull();
-        auto opt_iface_id = shared_network->getInterfaceId();
+        auto opt_iface_id = shared_network->getInterfaceId(Network::Inheritance::NONE);
         if (opt_iface_id) {
             auto iface_id_data = opt_iface_id->getData();
             if (!iface_id_data.empty()) {
