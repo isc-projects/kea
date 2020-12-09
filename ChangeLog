@@ -1,3 +1,9 @@
+1844.	[bug]		marcin
+	Corrected a bug in Kea Control Agent error responses when
+	malformed command was sent. In some cases a map with an error
+	response was returned instead of a list.
+	(Gitlab #432)
+
 1843.	[func]		andrei
 	Allow perfdhcp to request options via option 55 PRL. perfdhcp
 	adds option 55 with a few requested options by default so in
