@@ -612,12 +612,11 @@ public:
 
     /// @brief Verifies the host manager's behavior if DB connection is lost
     ///
-    /// This function creates a host manager with an back end that
-    /// supports connectivity lost callback (currently only MySQL and
-    /// PostgreSQL currently).  It verifies connectivity by issuing a known
-    /// valid query.  Next it simulates connectivity lost by identifying and
-    /// closing the socket connection to the host backend.  It then reissues
-    /// the query and verifies that:
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// verifies connectivity by issuing a known valid query. Next it simulates
+    /// connectivity lost by identifying and closing the socket connection to
+    /// the CB backend. It then reissues the query and verifies that:
     /// -# The Query throws  DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbRecoveredCallback was invoked
@@ -625,12 +624,11 @@ public:
 
     /// @brief Verifies the host manager's behavior if DB connection is lost
     ///
-    /// This function creates a host manager with an back end that
-    /// supports connectivity lost callback (currently only MySQL and
-    /// PostgreSQL currently).  It verifies connectivity by issuing a known
-    /// valid query.  Next it simulates connectivity lost by identifying and
-    /// closing the socket connection to the host backend.  It then reissues
-    /// the query and verifies that:
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// verifies connectivity by issuing a known valid query. Next it simulates
+    /// connectivity lost by identifying and closing the socket connection to
+    /// the CB backend. It then reissues the query and verifies that:
     /// -# The Query throws  DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbFailedCallback was invoked
@@ -638,12 +636,11 @@ public:
 
     /// @brief Verifies the host manager's behavior if DB connection is lost
     ///
-    /// This function creates a host manager with an back end that
-    /// supports connectivity lost callback (currently only MySQL and
-    /// PostgreSQL currently).  It verifies connectivity by issuing a known
-    /// valid query.  Next it simulates connectivity lost by identifyingLost and
-    /// closing the socket connection to the host backend.  It then reissues
-    /// the query and verifies that:
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// verifies connectivity by issuing a known valid query. Next it simulates
+    /// connectivity lost by identifying and closing the socket connection to
+    /// the CB backend. It then reissues the query and verifies that:
     /// -# The Query throws  DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbRecoveredCallback was invoked after two reconnect
@@ -652,12 +649,11 @@ public:
 
     /// @brief Verifies the host manager's behavior if DB connection is lost
     ///
-    /// This function creates a host manager with an back end that
-    /// supports connectivity lost callback (currently only MySQL and
-    /// PostgreSQL currently).  It verifies connectivity by issuing a known
-    /// valid query.  Next it simulates connectivity lost by identifyingLost and
-    /// closing the socket connection to the host backend.  It then reissues
-    /// the query and verifies that:
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// verifies connectivity by issuing a known valid query. Next it simulates
+    /// connectivity lost by identifying and closing the socket connection to
+    /// the CB backend. It then reissues the query and verifies that:
     /// -# The Query throws  DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbFailedCallback was invoked after two reconnect
