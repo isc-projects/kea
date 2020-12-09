@@ -149,13 +149,9 @@ public:
             return (pkt);
         }
 
-        // make sure the server processed all packets in MT.
-        while (isc::util::MultiThreadingMgr::instance().getThreadPool().count()) {
-            usleep(100);
-        }
-        {
-            isc::util::MultiThreadingCriticalSection cs;
-        }
+        // Make sure the server processed all packets in MT.
+        isc::util::MultiThreadingMgr::instance().getThreadPool().wait();
+
         // If not, just trigger shutdown and return immediately
         shutdown();
         return (Pkt4Ptr());

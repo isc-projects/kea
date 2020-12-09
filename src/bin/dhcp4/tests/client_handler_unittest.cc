@@ -85,9 +85,7 @@ public:
 
     /// @brief Waits for pending continuations.
     void waitForThreads() {
-        while (MultiThreadingMgr::instance().getThreadPool().count() > 0) {
-            usleep(100);
-        }
+        MultiThreadingMgr::instance().getThreadPool().wait();
     }
 
     /// @brief Set called1_ to true.

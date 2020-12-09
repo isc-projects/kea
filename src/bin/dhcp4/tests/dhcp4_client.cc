@@ -563,11 +563,8 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
         // Suppress errors, as the DHCPv4 server does.
     }
 
-    // make sure the server processed all packets in MT.
-    while (isc::util::MultiThreadingMgr::instance().getThreadPool().count()) {
-        usleep(100);
-    }
-    isc::util::MultiThreadingCriticalSection cs;
+    // Make sure the server processed all packets in MT.
+    isc::util::MultiThreadingMgr::instance().getThreadPool().wait();
 }
 
 void
