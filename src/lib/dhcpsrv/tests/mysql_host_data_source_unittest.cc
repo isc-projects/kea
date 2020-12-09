@@ -429,12 +429,12 @@ TEST(MySqlConnection, checkTimeConversion) {
 }
 
 /// @brief This test verifies that database backend can operate in Read-Only mode.
-TEST_F(MySqlHostDataSourceTest, DISABLED_testReadOnlyDatabase) {
+TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabase) {
     testReadOnlyDatabase(MYSQL_VALID_TYPE);
 }
 
 /// @brief This test verifies that database backend can operate in Read-Only mode.
-TEST_F(MySqlHostDataSourceTest, DISABLED_testReadOnlyDatabaseMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabaseMultiThreading) {
     MultiThreadingTest mt(true);
     testReadOnlyDatabase(MYSQL_VALID_TYPE);
 }
