@@ -100,7 +100,7 @@ TEST(DatabaseConnectionTest, getParameter) {
 /// @brief NoDbLostCallback
 ///
 /// This test verifies that DatabaseConnection::invokeDbLostCallback
-/// returns false if the connection has no registered DbCallback.
+/// returns false if the connection has no registered DbLostCallback.
 TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
     DatabaseConnection::ParameterMap pmap;
     pmap[std::string("type")] = std::string("test");
@@ -118,7 +118,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
 /// @brief NoDbRecoveredCallback
 ///
 /// This test verifies that DatabaseConnection::invokeDbRecoveredCallback
-/// returns false if the connection has no registered DbCallback.
+/// returns false if the connection has no registered DbRecoveredCallback.
 TEST_F(DatabaseConnectionCallbackTest, NoDbRecoveredCallback) {
     DatabaseConnection::ParameterMap pmap;
     pmap[std::string("type")] = std::string("test");
@@ -136,7 +136,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbRecoveredCallback) {
 /// @brief NoDbFailedCallback
 ///
 /// This test verifies that DatabaseConnection::invokeDbFailedCallback
-/// returns false if the connection has no registered DbCallback.
+/// returns false if the connection has no registered DbFailedCallback.
 TEST_F(DatabaseConnectionCallbackTest, NoDbFailedCallback) {
     DatabaseConnection::ParameterMap pmap;
     pmap[std::string("type")] = std::string("test");

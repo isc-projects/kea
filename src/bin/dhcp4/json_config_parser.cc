@@ -20,8 +20,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/db_type.h>
-#include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
@@ -62,7 +60,6 @@ using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;
 using namespace isc::config;
-using namespace isc::db;
 
 namespace {
 

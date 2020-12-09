@@ -45,9 +45,10 @@ public:
     ///
     /// @param parameters See MySqlLeaseMgr constructor.
     /// @param io_service The IOService object, used for all ASIO operations.
+    /// @param db_reconnect_callback The connection recovery callback.
     MySqlLeaseContext(const db::DatabaseConnection::ParameterMap& parameters,
                       const isc::asiolink::IOServicePtr& io_service,
-                      db::DbCallback callback);
+                      db::DbCallback db_reconnect_callback);
 
     /// The exchange objects are used for transfer of data to/from the database.
     /// They are pointed-to objects as the contents may change in "const" calls,
@@ -140,6 +141,9 @@ public:
     ///
     /// If the maximum number of retries has been exhausted an error is logged
     /// and the server shuts down.
+    ///
+    /// This function is passed to the connection recovery mechanism. It will be
+    /// invoked when a connection loss is detected.
     ///
     /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
     /// configured reconnect parameters.

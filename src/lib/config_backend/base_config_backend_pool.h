@@ -82,8 +82,8 @@ public:
     /// @param db_type Backend to remove.
     /// @param dbaccess Database access string being a collection of
     /// key=value pairs.
-    /// @param if_unusable Flag which indicates if the config backend manager
-    /// should be deleted only if it is unusable.
+    /// @param if_unusable Flag which indicates if the config backend should be
+    /// deleted only if it is unusable.
     bool del(const std::string& db_type, const std::string& dbaccess,
              bool if_unusable) {
         isc::db::DatabaseConnection::ParameterMap parameters =

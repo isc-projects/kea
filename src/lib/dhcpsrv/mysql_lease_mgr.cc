@@ -1738,8 +1738,8 @@ bool MySqlLeaseStatsQuery::negative_count_ = false;
 
 MySqlLeaseContext::MySqlLeaseContext(const DatabaseConnection::ParameterMap& parameters,
                                      const isc::asiolink::IOServicePtr& io_service,
-                                     DbCallback callback)
-    : conn_(parameters, io_service, callback) {
+                                     DbCallback db_reconnect_callback)
+    : conn_(parameters, io_service, db_reconnect_callback) {
 }
 
 // MySqlLeaseContextAlloc Constructor and Destructor
@@ -1811,7 +1811,10 @@ bool
 MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     MultiThreadingCriticalSection cs;
 
-    DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl);
+    // Invoke application layer connection lost callback.
+    if (!DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl)) {
+        return (false);
+    }
 
     bool reopened = false;
 
@@ -1835,7 +1838,10 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             TimerMgr::instance()->unregisterTimer(timer_name);
         }
 
-        DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl);
+        // Invoke application layer connection recovered callback.
+        if (!DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl)) {
+            return (false);
+        }
     } else {
         if (!db_reconnect_ctl->checkRetries()) {
             // We're out of retries, log it and initiate shutdown.
@@ -1847,6 +1853,7 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
                 TimerMgr::instance()->unregisterTimer(timer_name);
             }
 
+            // Invoke application layer connection failed callback.
             DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
 
             return (false);

@@ -240,6 +240,10 @@ public:
     /// @brief Constructor
     ///
     /// Initialize MySqlConnection object with parameters needed for connection.
+    ///
+    /// @param parameters Specify the connection details.
+    /// @param io_service The IOService object, used for all ASIO operations.
+    /// @param callback The connection recovery callback.
     MySqlConnection(const ParameterMap& parameters,
                     const isc::asiolink::IOServicePtr& io_service = isc::asiolink::IOServicePtr(),
                     DbCallback callback = DbCallback())

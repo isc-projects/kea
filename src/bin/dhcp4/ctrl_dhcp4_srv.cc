@@ -1211,8 +1211,6 @@ ControlledDhcpv4Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
     LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_FAILED)
             .arg(db_reconnect_ctl->maxRetries());
 
-    db_reconnect_ctl->resetRetries();
-
     shutdownServer(EXIT_FAILURE);
 
     return (true);

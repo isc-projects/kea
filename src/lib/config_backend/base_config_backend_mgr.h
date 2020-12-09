@@ -191,8 +191,8 @@ public:
     /// @param db_type Backend to remove.
     /// @param dbaccess Database access string being a collection of
     /// key=value pairs.
-    /// @param if_unusable Flag which indicates if the config backend manager
-    /// should be deleted only if it is unusable.
+    /// @param if_unusable Flag which indicates if the config backend should be
+    /// deleted only if it is unusable.
     /// @return true when found and removed, false when not found.
     bool delBackend(const std::string& db_type, const std::string& access,
                     bool if_unusable) {

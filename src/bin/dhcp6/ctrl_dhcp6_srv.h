@@ -405,7 +405,7 @@ private:
     /// @return false if reconnect is not configured, true otherwise
     bool dbLostCallback(db::ReconnectCtlPtr db_reconnect_ctl);
 
-    /// @brief Callback DB backends should invoke upon restoration of the
+    /// @brief Callback DB backends should invoke upon restoration of
     /// connectivity
     ///
     /// This function is invoked by DB backends when they recover the
@@ -415,7 +415,7 @@ private:
     /// @return false if reconnect is not configured, true otherwise
     bool dbRecoveredCallback(db::ReconnectCtlPtr db_reconnect_ctl);
 
-    /// @brief Callback DB backends should invoke upon failing to restore of the
+    /// @brief Callback DB backends should invoke upon failing to restore
     /// connectivity
     ///
     /// This function is invoked by DB backends when they fail to recover the

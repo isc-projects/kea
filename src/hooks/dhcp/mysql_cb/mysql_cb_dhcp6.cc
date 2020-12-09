@@ -2742,7 +2742,7 @@ public:
     /// @brief Attempts to reconnect the server to the config DB backend manager.
     ///
     /// This is a self-rescheduling function that attempts to reconnect to the
-    /// server's host DB backends after connectivity to one or more have been
+    /// server's config DB backends after connectivity to one or more have been
     /// lost. Upon entry it will attempt to reconnect via
     /// @ref ConfigBackendDHCPv6Mgr.addBackend.
     /// If this is successful, DHCP servicing is re-enabled and server returns
@@ -2759,7 +2759,10 @@ public:
     /// configured reconnect parameters.
     /// @return true if connection has been recovered, false otherwise.
     static bool dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
-        DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl);
+        // Invoke application layer connection lost callback.
+        if (!DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl)) {
+            return (false);
+        }
 
         bool reopened = false;
 
@@ -2790,7 +2793,10 @@ public:
                 TimerMgr::instance()->unregisterTimer(timer_name);
             }
 
-            DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl);
+            // Invoke application layer connection recovered callback.
+            if (!DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl)) {
+                return (false);
+            }
         } else {
             if (!db_reconnect_ctl->checkRetries()) {
                 // We're out of retries, log it and initiate shutdown.
@@ -2802,6 +2808,7 @@ public:
                     TimerMgr::instance()->unregisterTimer(timer_name);
                 }
 
+                // Invoke application layer connection failed callback.
                 DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
 
                 return (false);

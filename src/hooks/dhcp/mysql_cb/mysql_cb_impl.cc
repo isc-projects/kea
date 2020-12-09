@@ -46,8 +46,8 @@ ScopedAuditRevision::~ScopedAuditRevision() {
 
 MySqlConfigBackendImpl::
 MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters,
-                       const DbCallback callback)
-    : conn_(parameters, MySqlConfigBackendImpl::getIOService(), callback),
+                       const DbCallback db_reconnect_callback)
+    : conn_(parameters, MySqlConfigBackendImpl::getIOService(), db_reconnect_callback),
       timer_name_(""), audit_revision_created_(false), parameters_(parameters) {
     // Test schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,

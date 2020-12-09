@@ -1313,9 +1313,11 @@ public:
     /// @brief Constructor
     ///
     /// @param parameters See PgSqlHostMgr constructor.
+    /// @param io_service The IOService object, used for all ASIO operations.
+    /// @param db_reconnect_callback The connection recovery callback.
     PgSqlHostContext(const DatabaseConnection::ParameterMap& parameters,
                      const isc::asiolink::IOServicePtr& io_service,
-                     db::DbCallback callback);
+                     db::DbCallback db_reconnect_callback);
 
     /// The exchange objects are used for transfer of data to/from the database.
     /// They are pointed-to objects as the contents may change in "const" calls,
@@ -1443,6 +1445,9 @@ public:
     ///
     /// If the maximum number of retries has been exhausted an error is logged
     /// and the server shuts down.
+    ///
+    /// This function is passed to the connection recovery mechanism. It will be
+    /// invoked when a connection loss is detected.
     ///
     /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
     /// configured reconnect parameters.
@@ -2168,8 +2173,8 @@ TaggedStatementArray tagged_statements = { {
 
 PgSqlHostContext::PgSqlHostContext(const DatabaseConnection::ParameterMap& parameters,
                                    const isc::asiolink::IOServicePtr& io_service,
-                                   db::DbCallback callback)
-    : conn_(parameters, io_service, callback), is_readonly_(true) {
+                                   db::DbCallback db_reconnect_callback)
+    : conn_(parameters, io_service, db_reconnect_callback), is_readonly_(true) {
 }
 
 // PgSqlHostContextAlloc Constructor and Destructor
@@ -2283,7 +2288,10 @@ bool
 PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     MultiThreadingCriticalSection cs;
 
-    DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl);
+    // Invoke application layer connection lost callback.
+    if (!DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl)) {
+        return (false);
+    }
 
     bool reopened = false;
 
@@ -2312,7 +2320,10 @@ PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             TimerMgr::instance()->unregisterTimer(timer_name);
         }
 
-        DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl);
+        // Invoke application layer connection recovered callback.
+        if (!DatabaseConnection::invokeDbRecoveredCallback(db_reconnect_ctl)) {
+            return (false);
+        }
     } else {
         if (!db_reconnect_ctl->checkRetries()) {
             // We're out of retries, log it and initiate shutdown.
@@ -2324,6 +2335,7 @@ PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
                 TimerMgr::instance()->unregisterTimer(timer_name);
             }
 
+            // Invoke application layer connection failed callback.
             DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
 
             return (false);

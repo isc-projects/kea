@@ -20,8 +20,6 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
-#include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/timer_mgr.h>
@@ -65,7 +63,6 @@
 using namespace std;
 using namespace isc;
 using namespace isc::data;
-using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::hooks;
