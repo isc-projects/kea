@@ -1,3 +1,13 @@
+1842.	[bug]		razvan
+	Fixed the db connection reconnect implemenation to honor
+	each connection backend configuration. The most important
+	improvement is that only the affected mananger will be
+	recreated when a connection is lost. Previously, even
+	managers which were not affected had to be recreated on
+	any connection loss. Also fixed an issue with recovery
+	when multi-threading is enabled.
+	(Gitlab #1375)
+
 1841.	[bug]		marcin
 	Corrected issues with inheritance of the DHCPv6 interface-id
 	parameter. When interface-id is set at shared network level

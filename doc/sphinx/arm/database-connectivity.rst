@@ -26,9 +26,9 @@ up. It is able to process commands but does not serve clients. This
 allows the configuration to be corrected via command, if required.
 
 During normal operations, if connectivity to any of the backends is lost and 
-automatic recovery for that backend is enabled, the server disconnects
-from all backends and then attempts to reconnect. During the recovery
-process, the server ceases to serve clients but continues to respond to 
-commands. If connectivity to all backends is restored, the server 
-returns to normal operations. If connectivity cannot be restored after
-``max-reconnect-tries``, the server issues a fatal error and exits.
+automatic recovery for that backend is enabled, the server disconnects from the
+respective backend and then attempts to reconnect. During the recovery process,
+the server ceases to serve clients but continues to respond to commands. If
+connectivity to all backends is restored, the server returns to normal
+operations. If connectivity cannot be restored after ``max-reconnect-tries``,
+the server issues a fatal error and exits.
