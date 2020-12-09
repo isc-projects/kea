@@ -1,3 +1,11 @@
+1843.	[func]		andrei
+	Allow perfdhcp to request options via option 55 PRL. perfdhcp
+	adds option 55 with a few requested options by default so in
+	order to allow `perfdhcp -o 55,abcd` special logic to merge all
+	the buffers of option 55 was implemented. Works with multiple
+	`-o` arguments.
+	(Gitlab #1508)
+
 1842.	[func]		razvan
 	Fixed the db connection reconnect implemenation to honor
 	each connection backend configuration. The most important
@@ -35,7 +43,7 @@
 	set the TTL to equal to the lease's valid life time.
 	(Gitlab #936)
 
-1838.   [bug]       fdupont
+1838.	[bug]		fdupont
 	The DHCPv6 sent multiple instances of an option or a
 	sub-option when it seems to be requested more than once
 	directly by the client or using the always-send flag.
