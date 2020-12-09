@@ -1346,7 +1346,7 @@ TEST(SharedNetwork6Test, unparse) {
     subnet2->addRelayAddress(IOAddress("2001:db8:1::8"));
 
     // Set subnet specific interface-id for subnet2. This is to ensure that
-    // the subnet specific value is not overriden by shared network specific
+    // the subnet specific value is not overridden by shared network specific
     // value.
     std::string subnet_interface_id_value = "vlan222";
     OptionBuffer subnet_iface_id_buffer(subnet_interface_id_value.begin(),
