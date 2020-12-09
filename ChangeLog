@@ -1,3 +1,14 @@
+1841.	[bug]		marcin
+	Corrected issues with inheritance of the DHCPv6 interface-id
+	parameter. When interface-id is set at shared network level
+	but not at the subnet level this setting is properly propagated
+	to the config backend and reported when responding to the
+	config-get command. Prior to this change, if the interface-id
+	was set for a shared network, it was always returned for the
+	subnets belonging to this shared network, even when subnet
+	specific value was not specified.
+	(Gitlab #652)
+
 1840.	[bug]		fdupont
 	Fixed the inheritance of the triple min-valid-lifetime,
 	valid-lifetime and max-valid-lifetime parameters from
