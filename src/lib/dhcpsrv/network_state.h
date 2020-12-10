@@ -96,6 +96,11 @@ public:
     /// @param type Controller type which issued the state transition.
     void enableService(const ControllerType& type);
 
+    /// @brief Reset internal counters.
+    ///
+    /// Reset internal counters.
+    void resetInternalCounters();
+
     /// @brief Enables DHCP service globally and for scopes which have been
     /// disabled as a result of control command.
     void enableAll();

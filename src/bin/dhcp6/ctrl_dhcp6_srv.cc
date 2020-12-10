@@ -493,6 +493,9 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
                                                ConstElementPtr args) {
     std::ostringstream message;
     int64_t max_period = 0;
+    int64_t handle_id = 0;
+
+    NetworkState::ControllerType type = NetworkState::COMMAND;
 
     // Parse arguments to see if the 'max-period' parameter has been specified.
     if (args) {
@@ -521,12 +524,28 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
                     network_state_->delayedEnableAll(static_cast<unsigned>(max_period));
                 }
             }
+            ConstElementPtr handle_id_element = args->get("handle-id");
+            // handle-id is optional.
+            if (handle_id_element) {
+                // It must be an integer, if specified.
+                if (handle_id_element->getType() != Element::integer) {
+                    message << "'handle-id' argument must be a number";
+
+                } else {
+                    // It must be positive integer.
+                    handle_id = handle_id_element->intValue();
+                    if (handle_id <= 0) {
+                        message << "'handle-id' must be positive integer";
+                    }
+                    type = NetworkState::HA;
+                }
+            }
         }
     }
 
     // No error occurred, so let's disable the service.
     if (message.tellp() == 0) {
-        network_state_->disableService(NetworkState::COMMAND);
+        network_state_->disableService(type);
 
         message << "DHCPv6 service disabled";
         if (max_period > 0) {
@@ -541,9 +560,49 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandDhcpEnableHandler(const std::string&, ConstElementPtr) {
-    network_state_->enableService(NetworkState::COMMAND);
-    return (config::createAnswer(CONTROL_RESULT_SUCCESS, "DHCP service successfully enabled"));
+ControlledDhcpv6Srv::commandDhcpEnableHandler(const std::string&,
+                                              ConstElementPtr args) {
+    std::ostringstream message;
+    int64_t handle_id = 0;
+
+    NetworkState::ControllerType type = NetworkState::COMMAND;
+
+    // Parse arguments to see if the 'max-period' parameter has been specified.
+    if (args) {
+        // Arguments must be a map.
+        if (args->getType() != Element::map) {
+            message << "arguments for the 'dhcp-enable' command must be a map";
+
+        } else {
+            ConstElementPtr handle_id_element = args->get("handle-id");
+            // handle-id is optional.
+            if (handle_id_element) {
+                // It must be an integer, if specified.
+                if (handle_id_element->getType() != Element::integer) {
+                    message << "'handle-id' argument must be a number";
+
+                } else {
+                    // It must be positive integer.
+                    handle_id = handle_id_element->intValue();
+                    if (handle_id <= 0) {
+                        message << "'handle-id' must be positive integer";
+                    }
+                    type = NetworkState::HA;
+                }
+            }
+        }
+    }
+
+    // No error occurred, so let's disable the service.
+    if (message.tellp() == 0) {
+        network_state_->enableService(type);
+
+        // Success.
+        return (config::createAnswer(CONTROL_RESULT_SUCCESS, "DHCP service successfully enabled"));
+    }
+
+    // Failure.
+    return (config::createAnswer(CONTROL_RESULT_ERROR, message.str()));
 }
 
 ConstElementPtr
@@ -820,6 +879,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=6");
         cfg_db->createManagers();
+        // Reset counters related to connections as all managers have been recreated.
+        srv->getNetworkState()->resetInternalCounters();
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));

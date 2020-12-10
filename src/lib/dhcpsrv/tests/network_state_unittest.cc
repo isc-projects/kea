@@ -76,18 +76,188 @@ TEST_F(NetworkStateTest, default) {
 // This test verifies that it is possible to disable and then enable DHCPv4 service.
 TEST_F(NetworkStateTest, disableEnableService4) {
     NetworkState state(NetworkState::DHCPv4);
+
+    // Test that enable/disable command works
     state.disableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
     state.enableService(NetworkState::COMMAND);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that command does not use internal counter
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::COMMAND);
+    EXPECT_TRUE(state.isServiceEnabled());
+    state.enableService(NetworkState::COMMAND);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that enable/disable ha works
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::HA);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that command does not use internal counter
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::HA);
+    EXPECT_TRUE(state.isServiceEnabled());
+    state.enableService(NetworkState::HA);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that enable/disable connection works
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that connection uses internal counter
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_TRUE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that a combination properly affect the state
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv6 service.
 TEST_F(NetworkStateTest, disableEnableService6) {
     NetworkState state(NetworkState::DHCPv6);
+
+    // Test that enable/disable command works
     state.disableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
     state.enableService(NetworkState::COMMAND);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that command does not use internal counter
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::COMMAND);
+    EXPECT_TRUE(state.isServiceEnabled());
+    state.enableService(NetworkState::COMMAND);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that enable/disable ha works
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::HA);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that command does not use internal counter
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::HA);
+    EXPECT_TRUE(state.isServiceEnabled());
+    state.enableService(NetworkState::HA);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that enable/disable connection works
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that connection uses internal counter
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_TRUE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_TRUE(state.isServiceEnabled());
+
+    // Test that a combination properly affect the state
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_TRUE(state.isServiceEnabled());
+}
+
+// This test verifies that resetInternalCounters works, so that internal counter
+// is reset after all managers are recreated.
+TEST_F(NetworkStateTest, resetInternalCounters) {
+    NetworkState state(NetworkState::DHCPv4);
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.resetInternalCounters();
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::HA);
+    EXPECT_TRUE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.resetInternalCounters();
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
@@ -151,6 +321,5 @@ TEST_F(NetworkStateTest, multipleDelayedEnableAll) {
     // with 5 seconds interval.
     EXPECT_FALSE(state.isDelayedEnableAll());
 }
-
 
 } // end of anonymous namespace
