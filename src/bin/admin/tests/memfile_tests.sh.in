@@ -9,62 +9,146 @@
 # Include common test library.
 . @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
 
-# Set location of the kea-admin.
-keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
+# Locations of memfile tools
+kea_admin="@abs_top_builddir@/src/bin/admin/kea-admin"
+kea_lfc="@abs_top_builddir@/src/bin/lfc/kea-lfc"
 
+clean_up() {
+    for i in "${config_file}" "${csv}" "${KEA_PIDFILE_DIR}"; do
+        if test -e "${i}"; then
+            rm -rf "${i}"
+        fi
+    done
+}
+
+# Print location of CSV file. Accepts 4 or 6 as parameter.
+csv_file() {
+    local v=${1}
+    printf '%s' "@abs_top_builddir@/src/bin/admin/tests/kea-dhcp${v}.csv"
+}
+
+# Print location of kea-dhcp[46] binaries. Accepts 4 or 6 as parameter.
+kea_dhcp() {
+    local v=${1}
+    printf '%s' "@abs_top_builddir@/src/bin/dhcp${v}/kea-dhcp${v}"
+}
+
+# Print the minimum allowed number of header columns allowed for v4.
+incomplete_memfile_header_v4() {
+    printf 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname'
+}
+
+# Print the minimum allowed number of header columns allowed for v6.
+incomplete_memfile_header_v6() {
+    printf 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname'
+}
+
+# Print the entire header for v4.
+memfile_header_v4() {
+    printf '%s,state,user_context' "$(incomplete_memfile_header_v4)"
+}
+
+# Print the entire header for v6.
+memfile_header_v6() {
+    printf '%s,hwaddr,state,user_context' "$(incomplete_memfile_header_v6)"
+}
+
+# Test that Kea creates a correctly populated CSV file if configured with
+# persisting memfile.
 memfile_init_test() {
-    test_start "memfile.init"
+    test_start 'memfile.init'
 
-    # @todo: Implement this (ticket #3601)
+    for v in 4 6; do
+        config='
+{
+  "Dhcpx": {
+    "lease-database": {
+      "name": "@abs_top_builddir@/src/bin/admin/tests/kea-dhcpx.csv",
+      "persist": true,
+      "type": "memfile"
+    }
+  }
+}
+'
+        config_file="@abs_top_builddir@/src/bin/admin/tests/kea-dhcp${v}.conf"
+        csv=$(csv_file "${v}")
+        printf '%s\n' "${config}" | \
+            sed "s#Dhcpx#Dhcp${v}#g;
+                 s#\"name\":.*,#\"name\": \"${csv}\",#g" \
+                > "${config_file}"
+        if test -e "${csv}"; then
+            printf 'ERROR: garbage file "%s" should not exist.\n' "${csv}" >&2
+            clean_up
+            clean_exit 1
+        fi
+        export KEA_PIDFILE_DIR="@abs_top_builddir@/src/bin/admin/tests/pid_dir_${v}"
+        mkdir -p "${KEA_PIDFILE_DIR}"
+        "$(kea_dhcp "${v}")" -c "${config_file}" &> /dev/null &
+        pid=${!}
+        # This assumes that the CSV creation + writing to CSV is atomic. Not
+        # sure if it is, but if this ever fails on the comparison further below,
+        # consider waiting here for line DHCPSRV_MEMFILE_LFC_SETUP in logs, even
+        # though it doesn't clearly signal end of CSV writing.
+        if ! wait_for_file "${csv}"; then
+            clean_up
+            clean_exit 1
+        fi
+        kill "${pid}"
+        if ! wait_for_process_to_die "${pid}"; then
+            clean_up
+            clean_exit 2
+        fi
+        content=$(cat "${csv}")
+        expected=$(memfile_header_v${v})
+        if test "${content}" != "${expected}"; then
+            printf 'ERROR: %s does not contain expected header.\n< %s\n> %s\n' \
+                "${csv}" "${content}" "${expected}" >&2
+            clean_up
+            clean_exit 3
+        fi
+
+        clean_up
+        unset KEA_PIDFILE_DIR
+    done
 
     test_finish 0
 }
 
-memfile_version_test() {
-    test_start "memfile.version"
-
-    # @todo: Implement this (ticket #3601)
-
-    test_finish 0
-}
-
+# Test that kea-lfc is able to upgrade a CSV file with incomplete header.
 memfile_upgrade_test() {
-    test_start "memfile.upgrade"
+    test_start 'memfile.upgrade'
 
-    # @todo: Implement this (ticket #3601)
+    for v in 4 6; do
+        csv=$(csv_file "${v}")
+        "incomplete_memfile_header_v${v}" > "${csv}"
+        printf '\n' >> "${csv}"
+
+        "${kea_lfc}" "-${v}" \
+            -c 'ignored-path' \
+            -f "${csv}.completed" \
+            -i "${csv}" \
+            -o "${csv}.output" \
+            -p "${csv}.pid" \
+            -x "${csv}.2"
+
+        content=$(cat "${csv}.2")
+        expected=$(memfile_header_v${v})
+        if test "${content}" != "${expected}"; then
+            printf 'ERROR: %s does not contain expected header.\n< %s\n> %s\n' \
+                "${csv}" "${content}" "${expected}" >&2
+            clean_up
+            clean_exit 1
+        fi
+
+        clean_up
+    done
 
     test_finish 0
 }
 
-# This test checks version reported by kea-admin. It has nothing to do
-# with memfile, but that is the only test file that is always ran,
-# so decided to put the generic test here.
-version_test() {
-    test_start "version"
-
-    # This is what we expect to get.
-    EXPECTED_VERSION=@PACKAGE_VERSION@
-
-    # Let's use short version: -v
-    reported_version=$(${keaadmin} -v)
-
-    assert_str_eq ${EXPECTED_VERSION} ${reported_version} \
-                  "Expected kea-admin -v to report %s, but it reported %s"
-
-    # Let's try the long version: --version
-    reported_version=$(${keaadmin} --version)
-
-    assert_str_eq ${EXPECTED_VERSION} ${reported_version} \
-                  "Expected kea-admin -v to report %s, but it reported %s"
-
-    # This is a test whether the reviewer pays any attention. If you miss this
-    # nonsense, you owe me a beer. If you spot it, it's the other way around.
-    test_finish 0
-}
-
-
-version_test
+bin=$(basename "${kea_admin}")
+bin_path=$(dirname "${kea_admin}")
+version_test 'memfile.version' 'long_version_too_please'
 
 memfile_init_test
-memfile_version_test
 memfile_upgrade_test

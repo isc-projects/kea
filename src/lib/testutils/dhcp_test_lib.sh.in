@@ -7,6 +7,9 @@
 # A list of Kea processes, mainly used by the cleanup functions.
 KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns kea-ctrl-agent"
 
+# Expected version
+EXPECTED_VERSION="@PACKAGE_VERSION@"
+
 ### Logging functions ###
 
 # Prints error message.
@@ -308,6 +311,44 @@ get_pid() {
             _GET_PIDS_NUM=1
         fi
     fi
+}
+
+# Get the name of the process identified by PID.
+get_process_name() {
+    local pid=${1}
+    ps "${pid}" | tr -s ' ' | cut -d ' ' -f 6- | head -n 2 | tail -n 1
+}
+
+# Wait for file to be created.
+wait_for_file() {
+    local file=${1}
+    timeout='4 seconds'
+    deadline=$(date +%s -d "${timeout}")
+    while ! test -f "${file}" >/dev/null; do
+        if test "${deadline}" -lt "$(date +%s)"; then
+            # Time is up.
+            printf 'ERROR: file "%s" was not created in time.\n' "${file}" >&2
+            return 1
+        fi
+        printf 'Waiting for file "%s" to be created...\n' "${file}"
+        sleep 1s
+    done
+}
+
+# Wait for process identified by PID to die.
+wait_for_process_to_die() {
+    local pid=${1}
+    timeout='4 seconds'
+    deadline=$(date +%s -d "${timeout}")
+    while ps "${pid}" >/dev/null; do
+        if test "${deadline}" -lt "$(date +%s)"; then
+            # Time is up.
+            printf 'ERROR: %s does not want to die.\n' "$(get_process_name "${pid}")" >&2
+            return 1
+        fi
+        printf 'Waiting for %s to die...\n' "$(get_process_name "${pid}")"
+        sleep 1s
+    done
 }
 
 # Kills processes specified by name.
@@ -649,7 +690,8 @@ verify_server_pid() {
 
 # This test verifies that the binary is reporting its version properly.
 version_test() {
-    test_name=${1}  # Test name
+    test_name=${1}      # Test name
+    long_version=${2-}  # Test long version?
 
     # Log the start of the test and print test name.
     test_start ${test_name}
@@ -657,14 +699,23 @@ version_test() {
     # Remove dangling Kea instances and remove log files.
     cleanup
 
-    REPORTED_VERSION="`${bin_path}/${bin} -v`"
-
-    if test "${REPORTED_VERSION}" == "${EXPECTED_VERSION}"; then
-        test_finish 0
-    else
-        printf "ERROR: Expected version ${EXPECTED_VERSION}, got ${REPORTED_VERSION}\n"
-        test_finish 1
+    # If set to anything other than empty string, reset it to the long version
+    # parameter.
+    if test -n "${long_version}"; then
+        long_version='--version'
     fi
+
+    for v in -v ${long_version}; do
+        REPORTED_VERSION=$("${bin_path}/${bin}" "${v}")
+
+        if test "${REPORTED_VERSION}" == "${EXPECTED_VERSION}"; then
+            test_finish 0
+        else
+            printf 'ERROR: Expected version "%s", got "%s" when calling "%s"\n' \
+                "${EXPECTED_VERSION}" "${OUTPUT}" "${bin} ${v}"
+            test_finish 1
+        fi
+    done
 }
 
 # This test verifies that the server is using logger variable
