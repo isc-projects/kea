@@ -497,12 +497,12 @@ private:
 
     /// @brief run function of each thread
     void run() {
-        bool register_thread = true;
-        while (queue_.enabled()) {
-            if (register_thread) {
-                queue_.registerThread();
-                register_thread = false;
-            }
+        bool work = queue_.enabled();
+        if (!work) {
+            return;
+        }
+        queue_.registerThread();
+        for (; work; work = queue_.enabled()) {
             WorkItemPtr item = queue_.pop();
             if (item) {
                 try {
@@ -512,9 +512,7 @@ private:
                 }
             }
         }
-        if (!register_thread) {
-            queue_.unregisterThread();
-        }
+        queue_.unregisterThread();
     }
 
     /// @brief list of worker threads
