@@ -497,7 +497,7 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
 
     NetworkState::ControllerType type = NetworkState::COMMAND;
 
-    // Parse arguments to see if the 'max-period' of 'handle-id' parameters have
+    // Parse arguments to see if the 'max-period' or 'handle-id' parameters have
     // been specified.
     if (args) {
         // Arguments must be a map.
