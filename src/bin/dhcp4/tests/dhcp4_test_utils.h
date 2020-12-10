@@ -328,7 +328,9 @@ public:
     /// Also sets up initial configuration in CfgMgr.
     Dhcpv4SrvTest();
 
-    /// @brief destructor
+    /// @brief Destructor
+    ///
+    /// Removes existing configuration.
     virtual ~Dhcpv4SrvTest();
 
     /// @brief Add 'Parameter Request List' option to the packet.

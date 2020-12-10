@@ -557,7 +557,7 @@ public:
     /// pool for prefixes.
     Dhcpv6SrvTest();
 
-    /// @brief destructor
+    /// @brief Destructor
     ///
     /// Removes existing configuration.
     ~Dhcpv6SrvTest();
