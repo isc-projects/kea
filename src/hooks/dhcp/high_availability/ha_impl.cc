@@ -264,9 +264,7 @@ void
 HAImpl::commandProcessed(hooks::CalloutHandle& callout_handle) {
     std::string command_name;
     callout_handle.getArgument("name", command_name);
-    if (command_name == "dhcp-enable") {
-        service_->adjustNetworkState();
-    } else if (command_name == "status-get") {
+    if (command_name == "status-get") {
         // Get the response.
         ConstElementPtr response;
         callout_handle.getArgument("response", response);

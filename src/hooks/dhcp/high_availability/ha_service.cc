@@ -1683,7 +1683,8 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
          HostHttpHeader(remote_config->getUrl().getHostname()));
 
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createDHCPDisable(max_period,
+    request->setBodyAsJson(CommandCreator::createDHCPDisable(server_name,
+                                                             max_period,
                                                              server_type_));
     request->finalize();
 
@@ -1757,7 +1758,8 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getHostname()));
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createDHCPEnable(server_type_));
+    request->setBodyAsJson(CommandCreator::createDHCPEnable(server_name,
+                                                            server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs

@@ -25,7 +25,8 @@ public:
     ///
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createDHCPDisable(const unsigned int max_period,
+    createDHCPDisable(const std::string& service_name,
+                      const unsigned int max_period,
                       const HAServerType& server_type);
 
     /// @brief Creates dhcp-enable command for DHCP server.
@@ -33,7 +34,8 @@ public:
     /// @param server_type type of the DHCP server, i.e. v4 or v6.
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createDHCPEnable(const HAServerType& server_type);
+    createDHCPEnable(const std::string& service_name,
+                     const HAServerType& server_type);
 
     /// @brief Creates ha-reset command.
     ///

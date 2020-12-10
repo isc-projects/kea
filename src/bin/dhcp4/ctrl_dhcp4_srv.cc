@@ -490,11 +490,12 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
                                                ConstElementPtr args) {
     std::ostringstream message;
     int64_t max_period = 0;
-    int64_t handle_id = 0;
+    std::string handle_id;
 
     NetworkState::ControllerType type = NetworkState::COMMAND;
 
-    // Parse arguments to see if the 'max-period' parameter has been specified.
+    // Parse arguments to see if the 'max-period' of 'handle-id' parameters have
+    // been specified.
     if (args) {
         // Arguments must be a map.
         if (args->getType() != Element::map) {
@@ -524,16 +525,12 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
             ConstElementPtr handle_id_element = args->get("handle-id");
             // handle-id is optional.
             if (handle_id_element) {
-                // It must be an integer, if specified.
-                if (handle_id_element->getType() != Element::integer) {
-                    message << "'handle-id' argument must be a number";
+                // It must be a string, if specified.
+                if (handle_id_element->getType() != Element::string) {
+                    message << "'handle-id' argument must be a string";
 
                 } else {
-                    // It must be positive integer.
-                    handle_id = handle_id_element->intValue();
-                    if (handle_id <= 0) {
-                        message << "'handle-id' must be positive integer";
-                    }
+                    handle_id = handle_id_element->stringValue();
                     type = NetworkState::HA;
                 }
             }
@@ -560,11 +557,11 @@ ConstElementPtr
 ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&,
                                               ConstElementPtr args) {
     std::ostringstream message;
-    int64_t handle_id = 0;
+    std::string handle_id;
 
     NetworkState::ControllerType type = NetworkState::COMMAND;
 
-    // Parse arguments to see if the 'max-period' parameter has been specified.
+    // Parse arguments to see if the 'handle-id' parameter has been specified.
     if (args) {
         // Arguments must be a map.
         if (args->getType() != Element::map) {
@@ -574,16 +571,12 @@ ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&,
             ConstElementPtr handle_id_element = args->get("handle-id");
             // handle-id is optional.
             if (handle_id_element) {
-                // It must be an integer, if specified.
-                if (handle_id_element->getType() != Element::integer) {
-                    message << "'handle-id' argument must be a number";
+                // It must be a string, if specified.
+                if (handle_id_element->getType() != Element::string) {
+                    message << "'handle-id' argument must be a string";
 
                 } else {
-                    // It must be positive integer.
-                    handle_id = handle_id_element->intValue();
-                    if (handle_id <= 0) {
-                        message << "'handle-id' must be positive integer";
-                    }
+                    handle_id = handle_id_element->stringValue();
                     type = NetworkState::HA;
                 }
             }
