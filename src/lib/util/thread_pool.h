@@ -12,6 +12,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <atomic>
+#include <chrono>
 #include <cmath>
 #include <condition_variable>
 #include <list>
@@ -120,6 +121,21 @@ struct ThreadPool {
             isc_throw(InvalidOperation, "thread pool stop called by owned thread");
         }
         queue_.wait();
+    }
+
+    /// @brief wait for items to be processed or return after timeout
+    ///
+    /// Used to block the calling thread until all items in the queue have
+    /// been processed or return after timeout
+    ///
+    /// @param seconds the time in seconds to wait for tasks to finish
+    /// @return true if all tasks finished, false on timeout
+    bool wait(uint32_t seconds) {
+        auto id = std::this_thread::get_id();
+        if (checkThreadId(id)) {
+            isc_throw(InvalidOperation, "thread pool stop called by owned thread");
+        }
+        return (queue_.wait(seconds));
     }
 
     /// @brief set maximum number of work items in the queue
@@ -339,6 +355,21 @@ private:
             std::unique_lock<std::mutex> lock(mutex_);
             // Wait for any item or for working threads to finish.
             wait_cv_.wait(lock, [&]() {return (working_ == 0 && queue_.empty());});
+        }
+
+        /// @brief wait for items to be processed or return after timeout
+        ///
+        /// Used to block the calling thread until all items in the queue have
+        /// been processed or return after timeout
+        ///
+        /// @param seconds the time in seconds to wait for tasks to finish
+        /// @return true if all tasks finished, false on timeout
+        bool wait(uint32_t seconds) {
+            std::unique_lock<std::mutex> lock(mutex_);
+            // Wait for any item or for working threads to finish.
+            bool ret = wait_cv_.wait_for(lock, std::chrono::seconds(seconds),
+                                         [&]() {return (working_ == 0 && queue_.empty());});
+            return (ret);
         }
 
         /// @brief get queue length statistic

@@ -61,6 +61,7 @@ public:
         EXPECT_THROW(thread_pool->stop(), InvalidOperation);
         EXPECT_THROW(thread_pool->reset(), InvalidOperation);
         EXPECT_THROW(thread_pool->wait(), InvalidOperation);
+        EXPECT_THROW(thread_pool->wait(0), InvalidOperation);
         EXPECT_NO_THROW(runAndWait());
     }
 
@@ -464,6 +465,60 @@ TEST_F(ThreadPoolTest, wait) {
     uint32_t thread_count;
     CallBack call_back;
     ThreadPool<CallBack> thread_pool;
+    // the item count should be 0
+    ASSERT_EQ(thread_pool.count(), 0);
+    // the thread count should be 0
+    ASSERT_EQ(thread_pool.size(), 0);
+
+    items_count = 16;
+    thread_count = 16;
+    // prepare setup
+    reset(thread_count);
+
+    // create tasks which block thread pool threads until signaled by main
+    // thread to force all threads of the thread pool to run exactly one task
+    call_back = std::bind(&ThreadPoolTest::runAndWait, this);
+
+    // add items to stopped thread pool
+    for (uint32_t i = 0; i < items_count; ++i) {
+        bool ret = true;
+        EXPECT_NO_THROW(ret = thread_pool.add(boost::make_shared<CallBack>(call_back)));
+        EXPECT_TRUE(ret);
+    }
+
+    // the item count should match
+    ASSERT_EQ(thread_pool.count(), items_count);
+    // the thread count should be 0
+    ASSERT_EQ(thread_pool.size(), 0);
+
+    // calling start should create the threads and should keep the queued items
+    EXPECT_NO_THROW(thread_pool.start(thread_count));
+    // the thread count should match
+    ASSERT_EQ(thread_pool.size(), thread_count);
+
+    // wait for all items to be processed
+    waitTasks(thread_count, items_count);
+    // the item count should be 0
+    ASSERT_EQ(thread_pool.count(), 0);
+    // the thread count should match
+    ASSERT_EQ(thread_pool.size(), thread_count);
+    // as each thread pool thread is still waiting on main to unblock, each
+    // thread should have been registered in ids list
+    checkIds(items_count);
+    // all items should have been processed
+    ASSERT_EQ(count(), items_count);
+
+    // check that the number of processed tasks matches the number of items
+    checkRunHistory(items_count);
+
+    // check that waiting on tasks does timeout
+    ASSERT_FALSE(thread_pool.wait(3));
+
+    // signal thread pool tasks to continue
+    signalThreads();
+
+    // calling stop should clear all threads and should keep queued items
+    EXPECT_NO_THROW(thread_pool.stop());
     // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
     // the thread count should be 0
