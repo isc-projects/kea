@@ -185,7 +185,7 @@ private:
         sigaddset(&sset, SIGHUP);
         sigaddset(&sset, SIGTERM);
         pthread_sigmask(SIG_BLOCK, &sset, &osset);
-        queue_.enable(thread_count);
+        queue_.enable();
         try {
             for (uint32_t i = 0; i < thread_count; ++i) {
                 threads_.push_back(boost::make_shared<std::thread>(&ThreadPool::run, this));
@@ -251,6 +251,12 @@ private:
         ~ThreadPoolQueue() {
             disable();
             clear();
+        }
+
+        /// @brief register thread so that it can be taken into account
+        void registerThread() {
+            std::lock_guard<std::mutex> lock(mutex_);
+            ++working_;
         }
 
         /// @brief set maximum number of work items in the queue
@@ -422,12 +428,9 @@ private:
         /// @brief enable the queue
         ///
         /// Sets the queue state to 'enabled'
-        ///
-        /// @param thread_count number of working threads
-        void enable(uint32_t thread_count) {
+        void enable() {
             std::lock_guard<std::mutex> lock(mutex_);
             enabled_ = true;
-            working_ = thread_count;
         }
 
         /// @brief disable the queue
@@ -488,7 +491,12 @@ private:
 
     /// @brief run function of each thread
     void run() {
-        for (bool work = true; work; work = queue_.enabled()) {
+        bool register_thread = true;
+        while (queue_.enabled()) {
+            if (register_thread) {
+                queue_.registerThread();
+                register_thread = false;
+            }
             WorkItemPtr item = queue_.pop();
             if (item) {
                 try {
