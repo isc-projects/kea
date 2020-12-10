@@ -70,7 +70,7 @@ public:
 
     /// @brief Waits for pending continuations.
     void waitForThreads() {
-        MultiThreadingMgr::instance().getThreadPool().wait();
+        MultiThreadingMgr::instance().getThreadPool().wait(3);
     }
 
     /// @brief Set called1_ to true.

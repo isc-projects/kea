@@ -398,6 +398,8 @@ private:
         void clear() {
             std::lock_guard<std::mutex> lock(mutex_);
             queue_ = QueueContainer();
+            working_ = 0;
+            wait_cv_.notify_all();
         }
 
         /// @brief enable the queue

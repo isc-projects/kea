@@ -987,7 +987,7 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     }
 
     // Make sure the server processed all packets in MT.
-    isc::util::MultiThreadingMgr::instance().getThreadPool().wait();
+    isc::util::MultiThreadingMgr::instance().getThreadPool().wait(3);
 }
 
 void

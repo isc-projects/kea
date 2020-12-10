@@ -564,7 +564,7 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
     }
 
     // Make sure the server processed all packets in MT.
-    isc::util::MultiThreadingMgr::instance().getThreadPool().wait();
+    isc::util::MultiThreadingMgr::instance().getThreadPool().wait(3);
 }
 
 void

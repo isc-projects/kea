@@ -81,6 +81,9 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
 
     // Let's wipe all existing statistics.
     isc::stats::StatsMgr::instance().removeAll();
+
+    // Reset the thread pool.
+    MultiThreadingMgr::instance().getThreadPool().reset();
 }
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
@@ -92,6 +95,9 @@ Dhcpv4SrvTest::~Dhcpv4SrvTest() {
 
     // Let's wipe all existing statistics.
     isc::stats::StatsMgr::instance().removeAll();
+
+    // Reset the thread pool.
+    MultiThreadingMgr::instance().getThreadPool().reset();
 }
 
 void Dhcpv4SrvTest::addPrlOption(Pkt4Ptr& pkt) {

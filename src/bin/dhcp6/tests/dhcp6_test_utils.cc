@@ -75,7 +75,17 @@ Dhcpv6SrvTest::Dhcpv6SrvTest()
                                    isc::asiolink::IOAddress("2001:db8:1:2::"),
                                    64, 80));
     subnet_->addPool(pd_pool_);
+
+    // Reset the thread pool.
+    MultiThreadingMgr::instance().getThreadPool().reset();
 }
+
+Dhcpv6SrvTest::~Dhcpv6SrvTest() {
+    isc::dhcp::CfgMgr::instance().clear();
+
+    // Reset the thread pool.
+    MultiThreadingMgr::instance().getThreadPool().reset();
+};
 
 // Checks that server response (ADVERTISE or REPLY) contains proper IA_NA option
 // It returns IAADDR option for each chaining with checkIAAddr method.

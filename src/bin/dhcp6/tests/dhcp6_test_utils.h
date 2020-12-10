@@ -159,7 +159,7 @@ public:
         }
 
         // Make sure the server processed all packets in MT.
-        isc::util::MultiThreadingMgr::instance().getThreadPool().wait();
+        isc::util::MultiThreadingMgr::instance().getThreadPool().wait(3);
 
         // If not, just trigger shutdown and
         // return immediately
@@ -560,9 +560,7 @@ public:
     /// @brief destructor
     ///
     /// Removes existing configuration.
-    ~Dhcpv6SrvTest() {
-        isc::dhcp::CfgMgr::instance().clear();
-    };
+    ~Dhcpv6SrvTest();
 
     /// @brief Runs DHCPv6 configuration from the JSON string.
     ///
