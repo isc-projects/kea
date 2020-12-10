@@ -20,6 +20,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 #include <functional>
+#include <sstream>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -701,16 +702,33 @@ TEST_F(CommunicationStateTest, logFormatClockSkew) {
     state_.setPartnerTime(HttpDateTime(now + offset).rfc1123Format());
     ASSERT_NO_THROW(log = state_.logFormatClockSkew());
 
-    // We don't check the exact string for obvious reasons.
-    EXPECT_TRUE(log.find("15s ahead") != std::string::npos) <<
+    // The logFormatClockSkew uses the clock_skew_ value which is computed
+    // at the time when setPartnerTime() is called. Therefore, we can't
+    // just assume that it is 15s because it may be already slightly off.
+    // Let's compare the output with the actual clock_skew_ value remembered
+    // in the state_ instance.
+    ASSERT_FALSE(state_.clock_skew_.is_special());
+    ASSERT_FALSE(state_.clock_skew_.is_negative());
+    std::ostringstream s;
+    s << state_.clock_skew_.seconds() << "s ahead";
+    EXPECT_TRUE(log.find(s.str()) != std::string::npos) <<
                 " log content wrong: " << log;
-
 
     // Partner time is behind by 15s.
     state_.setPartnerTime(HttpDateTime(now - offset).rfc1123Format());
     ASSERT_NO_THROW(log = state_.logFormatClockSkew());
-    // We don't check the exact string for obvious reasons.
-    EXPECT_TRUE(log.find("15s behind") != std::string::npos) <<
+
+    // Again, extract the actual clock skew remembered in the state_ instance.
+    ASSERT_FALSE(state_.clock_skew_.is_special());
+    auto skew = state_.clock_skew_;
+
+    // It must be negative this time.
+    ASSERT_TRUE(skew.is_negative());
+    // Convert it to positive value so we can use to to build the expected string.
+    skew = -skew;
+    std::ostringstream s2;
+    s2 << skew.seconds() << "s behind";
+    EXPECT_TRUE(log.find(s2.str()) != std::string::npos) <<
                 " log content wrong: " << log;
 
     offset = hours(18) + minutes(37) + seconds(15);
