@@ -21,6 +21,7 @@
 #include <dhcpsrv/pool.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <util/buffer.h>
+#include <util/multi_threading_mgr.h>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 #include <algorithm>
@@ -31,6 +32,7 @@
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::util;
 
 namespace {
 
@@ -618,7 +620,6 @@ Dhcp6Client::doRelease() {
     }
 }
 
-
 void
 Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query,
                                   const bool include_address) {
@@ -778,8 +779,7 @@ Dhcp6Client::hasLeaseForAddressRange(const asiolink::IOAddress& first,
 }
 
 bool
-Dhcp6Client::
-hasLeaseWithZeroLifetimeForAddress(const asiolink::IOAddress& address) const {
+Dhcp6Client::hasLeaseWithZeroLifetimeForAddress(const asiolink::IOAddress& address) const {
     std::vector<Lease6> leases = getLeasesByAddress(address);
     BOOST_FOREACH(const Lease6& lease, leases) {
         if ((lease.preferred_lft_ == 0) && (lease.valid_lft_ == 0)) {
@@ -919,13 +919,7 @@ Dhcp6Client::modifyDUID() {
 
 Pkt6Ptr
 Dhcp6Client::receiveOneMsg() {
-    // Return empty pointer if server hasn't responded.
-    if (srv_->fake_sent_.empty()) {
-        return (Pkt6Ptr());
-    }
-    Pkt6Ptr msg = srv_->fake_sent_.front();
-    srv_->fake_sent_.pop_front();
-    return (msg);
+    return (srv_->receiveOneMsg());
 }
 
 void
@@ -991,6 +985,9 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     } catch (...) {
         // Suppress errors, as the DHCPv6 server does.
     }
+
+    // Make sure the server processed all packets in MT.
+    isc::util::MultiThreadingMgr::instance().getThreadPool().wait();
 }
 
 void

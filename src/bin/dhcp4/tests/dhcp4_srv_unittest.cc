@@ -2244,8 +2244,14 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
                  RFCViolation);
 }
 
-// Checks if received relay agent info option is echoed back to the client
-TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
+} // end of anonymous namespace
+
+namespace isc {
+namespace dhcp {
+namespace test {
+
+void
+Dhcpv4SrvTest::relayAgentInfoEcho() {
     IfaceMgrTestConfig test_config(true);
     NakedDhcpv4Srv srv(0);
 
@@ -2288,9 +2294,8 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
     EXPECT_TRUE(rai_response->equals(rai_query));
 }
 
-// Checks if received bad relay agent info option is not echoed back
-// to the client
-TEST_F(Dhcpv4SrvTest, badRelayAgentInfoEcho) {
+void
+Dhcpv4SrvTest::badRelayAgentInfoEcho() {
     IfaceMgrTestConfig test_config(true);
     NakedDhcpv4Srv srv(0);
 
@@ -2333,8 +2338,8 @@ TEST_F(Dhcpv4SrvTest, badRelayAgentInfoEcho) {
     ASSERT_FALSE(rai_response);
 }
 
-// Checks if client port can be overridden in packets being sent.
-TEST_F(Dhcpv4SrvTest, portsClientPort) {
+void
+Dhcpv4SrvTest::portsClientPort() {
     IfaceMgrTestConfig test_config(true);
     NakedDhcpv4Srv srv(0);
 
@@ -2374,8 +2379,8 @@ TEST_F(Dhcpv4SrvTest, portsClientPort) {
     EXPECT_EQ(srv.client_port_, offer->getRemotePort());
 }
 
-// Checks if server port can be overridden in packets being sent.
-TEST_F(Dhcpv4SrvTest, portsServerPort) {
+void
+Dhcpv4SrvTest::portsServerPort() {
     IfaceMgrTestConfig test_config(true);
 
     // Do not use DHCP4_SERVER_PORT here as 0 means don't open sockets.
@@ -2413,6 +2418,52 @@ TEST_F(Dhcpv4SrvTest, portsServerPort) {
 
     // Get Relay Agent Info from query...
     EXPECT_EQ(srv.server_port_, offer->getLocalPort());
+}
+
+} // end of isc::dhcp::test namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
+
+namespace {
+
+TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    relayAgentInfoEcho();
+}
+
+TEST_F(Dhcpv4SrvTest, relayAgentInfoEchoMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    relayAgentInfoEcho();
+}
+
+TEST_F(Dhcpv4SrvTest, badRelayAgentInfoEcho) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    badRelayAgentInfoEcho();
+}
+
+TEST_F(Dhcpv4SrvTest, badRelayAgentInfoEchoMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    badRelayAgentInfoEcho();
+}
+
+TEST_F(Dhcpv4SrvTest, portsClientPort) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    portsClientPort();
+}
+
+TEST_F(Dhcpv4SrvTest, portsClientPortMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    portsClientPort();
+}
+
+TEST_F(Dhcpv4SrvTest, portsServerPort) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    portsServerPort();
+}
+
+TEST_F(Dhcpv4SrvTest, portsServerPortMultiTHreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    portsServerPort();
 }
 
 /// @todo Implement tests for subnetSelect See tests in dhcp6_srv_unittest.cc:

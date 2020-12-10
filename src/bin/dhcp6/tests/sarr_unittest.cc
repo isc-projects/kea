@@ -242,17 +242,69 @@ public:
         isc::stats::StatsMgr::instance().removeAll();
     }
 
+    /// @brief Check that server processes correctly a prefix hint sent by the
+    /// client. This test checks that the server doesn't allocate colliding
+    /// prefixes as a result of receiving hints from two clients which set the
+    /// non-significant bytes of the prefix in their hints. The server should
+    /// zero the non-significant bytes of the hint and allocate the prefix of
+    /// the correct (configured) length.
+    void directClientPrefixHint();
+
+    /// @brief This test verifies that the same options can be specified on the
+    /// global level, subnet level and pool level. The options associated with
+    /// pools are used when the lease is handed out from these pools.
+    void optionsInheritance();
+
+    /// @brief This test verifies that it is possible to specify an excluded
+    /// prefix (RFC 6603) and send it back to the client requesting prefix
+    /// delegation.
+    void directClientExcludedPrefix();
+
+    /// @brief Check that when the client includes the Rapid Commit option in
+    /// its Solicit, the server responds with Reply and commits the lease.
+    void rapidCommitEnable();
+
+    /// @brief Check that the server responds with Advertise if the client
+    /// hasn't included the Rapid Commit option in the Solicit.
+    void rapidCommitNoOption();
+
+    /// @brief Check that when the Rapid Commit support is disabled for the
+    /// subnet the server replies with an Advertise and ignores the Rapid Commit
+    /// option sent by the client.
+    void rapidCommitDisable();
+
+    /// @brief This test verifies that regular Solicit/Adv/Request/Reply
+    /// exchange will result in appropriately set statistics.
+    void sarrStats();
+
+    /// @brief This test verifies that pkt6-receive-drop is increased properly
+    /// when the client's packet is rejected due to mismatched server-id value.
+    void pkt6ReceiveDropStat1();
+
+    /// @brief This test verifies that pkt6-receive-drop is increased properly
+    /// when the client's packet is rejected due to being unicast communication.
+    void pkt6ReceiveDropStat2();
+
+    /// @brief This test verifies that pkt6-receive-drop is increased properly
+    /// when the client's packet is rejected due to having too many client-id
+    /// options (exactly one is expected).
+    void pkt6ReceiveDropStat3();
+
+    /// @brief This test verifies that in pool reservations are ignored when the
+    /// reservations-out-of-pool flag is set to true.
+    void reservationModeOutOfPool();
+
+    /// @brief This test verifies that the in-pool reservation can be assigned
+    /// to a client not owning this reservation when the
+    /// reservations-out-of-pool flag is set to true.
+    void reservationIgnoredInOutOfPoolMode();
+
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
 
-/// Check that server processes correctly a prefix hint sent by the client.
-/// This test checks that the server doesn't allocate colliding prefixes
-/// as a result of receiving hints from two clients which set the
-/// non-significant bytes of the prefix in their hints. The server should zero
-/// the non-significant bytes of the hint and allocate the prefix of the
-/// correct (configured) length.
-TEST_F(SARRTest, directClientPrefixHint) {
+void
+SARRTest::directClientPrefixHint() {
     Dhcp6Client client;
     // Configure client to request IA_PD.
     client.requestPrefix();
@@ -306,10 +358,18 @@ TEST_F(SARRTest, directClientPrefixHint) {
     ASSERT_TRUE(lease_server);
 }
 
-// This test verifies that the same options can be specified on the global
-// level, subnet level and pool level. The options associated with pools
-// are used when the lease is handed out from these pools.
-TEST_F(SARRTest, optionsInheritance) {
+TEST_F(SARRTest, directClientPrefixHint) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    directClientPrefixHint();
+}
+
+TEST_F(SARRTest, directClientPrefixHintMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    directClientPrefixHint();
+}
+
+void
+SARRTest::optionsInheritance() {
     Dhcp6Client client;
     // Request a single address and single prefix.
     ASSERT_NO_THROW(client.requestPrefix(0xabac, 64, IOAddress("2001:db8:4::")));
@@ -367,9 +427,18 @@ TEST_F(SARRTest, optionsInheritance) {
     ASSERT_TRUE(client.hasOptionWithAddress(D6O_SNTP_SERVERS, "3000:2::2"));
 }
 
-/// This test verifies that it is possible to specify an excluded prefix
-/// (RFC 6603) and send it back to the client requesting prefix delegation.
-TEST_F(SARRTest, directClientExcludedPrefix) {
+TEST_F(SARRTest, optionsInheritance) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    optionsInheritance();
+}
+
+TEST_F(SARRTest, optionsInheritanceMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    optionsInheritance();
+}
+
+void
+SARRTest::directClientExcludedPrefix() {
     Dhcp6Client client;
     // Configure client to request IA_PD.
     client.requestPrefix();
@@ -408,9 +477,18 @@ TEST_F(SARRTest, directClientExcludedPrefix) {
     EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 
-// Check that when the client includes the Rapid Commit option in its
-// Solicit, the server responds with Reply and commits the lease.
-TEST_F(SARRTest, rapidCommitEnable) {
+TEST_F(SARRTest, directClientExcludedPrefix) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    directClientExcludedPrefix();
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    directClientExcludedPrefix();
+}
+
+void
+SARRTest::rapidCommitEnable() {
     Dhcp6Client client;
     // Configure client to request IA_NA
     client.requestAddress();
@@ -446,9 +524,18 @@ TEST_F(SARRTest, rapidCommitEnable) {
     EXPECT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 }
 
-// Check that the server responds with Advertise if the client hasn't
-// included the Rapid Commit option in the Solicit.
-TEST_F(SARRTest, rapidCommitNoOption) {
+TEST_F(SARRTest, rapidCommitEnable) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    rapidCommitEnable();
+}
+
+TEST_F(SARRTest, rapidCommitEnableMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    rapidCommitEnable();
+}
+
+void
+SARRTest::rapidCommitNoOption() {
     Dhcp6Client client;
     // Configure client to request IA_NA
     client.requestAddress();
@@ -476,10 +563,18 @@ TEST_F(SARRTest, rapidCommitNoOption) {
     EXPECT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 }
 
-// Check that when the Rapid Commit support is disabled for the subnet
-// the server replies with an Advertise and ignores the Rapid Commit
-// option sent by the client.
-TEST_F(SARRTest, rapidCommitDisable) {
+TEST_F(SARRTest, rapidCommitNoOption) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    rapidCommitNoOption();
+}
+
+TEST_F(SARRTest, rapidCommitNoOptionMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    rapidCommitNoOption();
+}
+
+void
+SARRTest::rapidCommitDisable() {
     Dhcp6Client client;
     // The subnet assigned to eth1 has Rapid Commit disabled.
     client.setInterface("eth1");
@@ -511,9 +606,18 @@ TEST_F(SARRTest, rapidCommitDisable) {
     EXPECT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 }
 
-// This test verifies that regular Solicit/Adv/Request/Reply exchange will
-// result in appropriately set statistics.
-TEST_F(SARRTest, sarrStats) {
+TEST_F(SARRTest, rapidCommitDisable) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    rapidCommitDisable();
+}
+
+TEST_F(SARRTest, rapidCommitDisableMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    rapidCommitDisable();
+}
+
+void
+SARRTest::sarrStats() {
 
     // Let's use one of the existing configurations and tell the client to
     // ask for an address.
@@ -577,9 +681,18 @@ TEST_F(SARRTest, sarrStats) {
     EXPECT_EQ(2, pkt6_sent->getInteger().first);
 }
 
-// This test verifies that pkt6-receive-drop is increased properly when the
-// client's packet is rejected due to mismatched server-id value.
-TEST_F(SARRTest, pkt6ReceiveDropStat1) {
+TEST_F(SARRTest, sarrStats) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    sarrStats();
+}
+
+TEST_F(SARRTest, sarrStatsMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    sarrStats();
+}
+
+void
+SARRTest::pkt6ReceiveDropStat1() {
 
     // Dummy server-id (0xff repeated 10 times)
     std::vector<uint8_t> data(10, 0xff);
@@ -606,9 +719,18 @@ TEST_F(SARRTest, pkt6ReceiveDropStat1) {
     EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
 }
 
-// This test verifies that pkt6-receive-drop is increased properly when the
-// client's packet is rejected due to being unicast communication.
-TEST_F(SARRTest, pkt6ReceiveDropStat2) {
+TEST_F(SARRTest, pkt6ReceiveDropStat1) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    pkt6ReceiveDropStat1();
+}
+
+TEST_F(SARRTest, pkt6ReceiveDropStat1MultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    pkt6ReceiveDropStat1();
+}
+
+void
+SARRTest::pkt6ReceiveDropStat2() {
 
     // Let's use one of the existing configurations and tell the client to
     // ask for an address.
@@ -630,10 +752,18 @@ TEST_F(SARRTest, pkt6ReceiveDropStat2) {
     EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
 }
 
-// This test verifies that pkt6-receive-drop is increased properly when the
-// client's packet is rejected due to having too many client-id options
-// (exactly one is expected).
-TEST_F(SARRTest, pkt6ReceiveDropStat3) {
+TEST_F(SARRTest, pkt6ReceiveDropStat2) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    pkt6ReceiveDropStat2();
+}
+
+TEST_F(SARRTest, pkt6ReceiveDropStat2MultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    pkt6ReceiveDropStat2();
+}
+
+void
+SARRTest::pkt6ReceiveDropStat3() {
 
     // Let's use one of the existing configurations and tell the client to
     // ask for an address.
@@ -658,9 +788,18 @@ TEST_F(SARRTest, pkt6ReceiveDropStat3) {
     EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
 }
 
-// This test verifies that in pool reservations are ignored when the
-// reservations-out-of-pool flag is set to true.
-TEST_F(SARRTest, reservationModeOutOfPool) {
+TEST_F(SARRTest, pkt6ReceiveDropStat3) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    pkt6ReceiveDropStat3();
+}
+
+TEST_F(SARRTest, pkt6ReceiveDropStat3MultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    pkt6ReceiveDropStat3();
+}
+
+void
+SARRTest::reservationModeOutOfPool() {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
     Dhcp6Client client;
@@ -694,10 +833,18 @@ TEST_F(SARRTest, reservationModeOutOfPool) {
     ASSERT_EQ("2001:db8:1::3", lease.addr_.toText());
 }
 
-// This test verifies that the in-pool reservation can be assigned to a client
-// not owning this reservation when the reservations-out-of-pool flag is set to
-// true.
-TEST_F(SARRTest, reservationIgnoredInOutOfPoolMode) {
+TEST_F(SARRTest, reservationModeOutOfPool) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    reservationModeOutOfPool();
+}
+
+TEST_F(SARRTest, reservationModeOutOfPoolMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    reservationModeOutOfPool();
+}
+
+void
+SARRTest::reservationIgnoredInOutOfPoolMode() {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
     Dhcp6Client client;
@@ -714,6 +861,16 @@ TEST_F(SARRTest, reservationIgnoredInOutOfPoolMode) {
     Lease6 lease = client.getLease(0);
     // Check that the server allocated the reserved address.
     ASSERT_EQ("2001:db8:1::5", lease.addr_.toText());
+}
+
+TEST_F(SARRTest, reservationIgnoredInOutOfPoolMode) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    reservationIgnoredInOutOfPoolMode();
+}
+
+TEST_F(SARRTest, reservationIgnoredInOutOfPoolModeMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    reservationIgnoredInOutOfPoolMode();
 }
 
 } // end of anonymous namespace

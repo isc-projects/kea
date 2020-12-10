@@ -170,6 +170,11 @@ public:
         }
     }
 
+    /// @brief fake receive packet from server
+    ///
+    /// The client uses this packet as a reply from the server.
+    ///
+    /// @return The received packet.
     Pkt4Ptr receiveOneMsg() {
         if (isc::util::MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<std::mutex> lk(mutex_);
@@ -179,6 +184,12 @@ public:
         }
     }
 
+    /// @brief fake receive packet from server
+    ///
+    /// The client uses this packet as a reply from the server.
+    /// This function should be called in a thread safe context.
+    ///
+    /// @return The received packet.
     Pkt4Ptr receiveOneMsgInternal() {
         // Return empty pointer if server hasn't responded.
         if (fake_sent_.empty()) {
@@ -216,7 +227,7 @@ public:
         processRelease(release, context);
     }
 
-    /// @brief Runs processing DHCPDECLINE
+    /// @brief Runs processing DHCPDECLINE.
     ///
     /// @param decline message received from client
     void processDecline(Pkt4Ptr& decline) {
@@ -227,7 +238,7 @@ public:
     /// @brief Dummy server identifier option used by various tests.
     OptionPtr server_id_;
 
-    /// @brief packets we pretend to receive
+    /// @brief packets we pretend to receive.
     ///
     /// Instead of setting up sockets on interfaces that change between OSes, it
     /// is much easier to fake packet reception. This is a list of packets that
@@ -235,7 +246,7 @@ public:
     /// using fakeReceive() and NakedDhcpv4Srv::receivePacket() methods.
     std::list<Pkt4Ptr> fake_received_;
 
-    /// @brief packets we pretend to send
+    /// @brief packets we pretend to send.
     std::list<Pkt4Ptr> fake_sent_;
 
     using Dhcpv4Srv::adjustIfaceData;
@@ -556,8 +567,18 @@ public:
                            ExpectedResult expected_result);
 
     /// @brief Checks if received relay agent info option is echoed back to the
-    /// client
+    /// client.
     void relayAgentInfoEcho();
+
+    /// @brief Checks if received bad relay agent info option is not echoed back
+    /// to the client.
+    void badRelayAgentInfoEcho();
+
+    /// @brief Checks if client port can be overridden in packets being sent.
+    void portsClientPort();
+
+    /// @brief  Checks if server port can be overridden in packets being sent.
+    void portsServerPort();
 
     /// @brief This function cleans up after the test.
     virtual void TearDown();
@@ -567,25 +588,25 @@ public:
         multi_threading_ = enabled;
     }
 
-    /// @brief A subnet used in most tests
+    /// @brief A subnet used in most tests.
     Subnet4Ptr subnet_;
 
-    /// @brief A pool used in most tests
+    /// @brief A pool used in most tests.
     Pool4Ptr pool_;
 
-    /// @brief A client-id used in most tests
+    /// @brief A client-id used in most tests.
     ClientIdPtr client_id_;
 
     /// @brief Return code
     int rcode_;
 
-    /// @brief Comment
+    /// @brief Comment received from configuration.
     isc::data::ConstElementPtr comment_;
 
     /// @brief Server object under test.
     NakedDhcpv4Srv srv_;
 
-    /// @brief The multi-threading flag
+    /// @brief The multi-threading flag.
     bool multi_threading_;
 };
 

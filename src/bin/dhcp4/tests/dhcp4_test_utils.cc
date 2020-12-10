@@ -456,8 +456,6 @@ Dhcpv4SrvTest::TearDown() {
                << " class after the test. Exception has been caught: "
                << ex.what();
     }
-
-    setMultiThreading(false);
 }
 
 void
