@@ -29,10 +29,6 @@ Some of those checks and updates can be made before actual freeze.
 
 The following steps may involve changing files in the repository.
 
-1. [ ] Add `-git` suffix and bump up Kea version in `configure.ac` to next development version `x.y.z-git` which could be, based on previous `xx.yy.zz` version:
-    * `xx.yy.z-git` where `z == zz + 1` or
-    * `xx.y.0-git` where `y == yy + 1` or
-    * `x.1.0-git` where `x == xx + 1`
 1. [ ] Create a Kea issue for code changes that will be made due to the following checks:
 1. Check User's Guide sections:
    1. Chapter 1. Introduction
@@ -125,7 +121,6 @@ This is the last moment to freeze code! :snowflake:
  - [ ] ***(Support)*** If it is a new major version, sweng will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Then update support customers that this new private repo exists.
  - [ ] ***(Support)*** Update tickets in case of waiting support customers.
  - [ ] ***(QA)*** Inform Marketing of the release.
- - [ ] ***(QA)*** ***(Deprecated)*** Update the internal [Kea Release Dates wiki page](https://wiki.isc.org/bin/view/Main/KeaReleaseDates) when public announcement has been made.
  - [ ] ***(Marketing)*** Upload Premium hooks tarball to SendOwl. Create a new product if a new branch, otherwise update existing product. Send notifications to existing subscribers of the new version.
  - [ ] ***(Marketing)*** Announce on social media.
  - [ ] ***(Marketing)*** Update [Wikipedia entry for Kea](https://en.wikipedia.org/wiki/Kea_(software)).
@@ -135,6 +130,10 @@ This is the last moment to freeze code! :snowflake:
  - [ ] ***(Marketing)*** Update [significant features matrix](https://kb.isc.org/docs/en/aa-01615) (if any significant new features).
  - [ ] ***(Marketing)*** Update [Kea documentation page in KB](https://kb.isc.org/docs/en/kea-administrator-reference-manual).
 
-## Post-Release
+## Post-Release, But Before Code Unfreeze
 
+- [ ] Bump up Kea version in `configure.ac` to next development version `xx.yy.zz-git` which could be, based on previous `x.y.z-git` version:
+    * `x.y.zz-git` where `zz == z + 1` or
+    * `x.yy.0-git` where `yy == y + 1` or
+    * `xx.1.0-git` where `xx == x + 1`
 - [ ] Bump up `REF_KEA_VERSION` in `qa-dhcp/kea/jenkins/tarball-internal.jenkinsfile` to `x.y.z` i.e. released version
