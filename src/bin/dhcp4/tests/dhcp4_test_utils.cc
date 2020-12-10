@@ -83,7 +83,7 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     isc::stats::StatsMgr::instance().removeAll();
 
     // Reset the thread pool.
-    MultiThreadingMgr::instance().getThreadPool().reset();
+    MultiThreadingMgr::instance().apply(false, 0, 0);
 }
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
@@ -97,7 +97,7 @@ Dhcpv4SrvTest::~Dhcpv4SrvTest() {
     isc::stats::StatsMgr::instance().removeAll();
 
     // Reset the thread pool.
-    MultiThreadingMgr::instance().getThreadPool().reset();
+    MultiThreadingMgr::instance().apply(false, 0, 0);
 }
 
 void Dhcpv4SrvTest::addPrlOption(Pkt4Ptr& pkt) {

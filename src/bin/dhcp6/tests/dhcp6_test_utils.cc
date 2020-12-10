@@ -77,14 +77,14 @@ Dhcpv6SrvTest::Dhcpv6SrvTest()
     subnet_->addPool(pd_pool_);
 
     // Reset the thread pool.
-    MultiThreadingMgr::instance().getThreadPool().reset();
+    MultiThreadingMgr::instance().apply(false, 0, 0);
 }
 
 Dhcpv6SrvTest::~Dhcpv6SrvTest() {
     isc::dhcp::CfgMgr::instance().clear();
 
     // Reset the thread pool.
-    MultiThreadingMgr::instance().getThreadPool().reset();
+    MultiThreadingMgr::instance().apply(false, 0, 0);
 };
 
 // Checks that server response (ADVERTISE or REPLY) contains proper IA_NA option
