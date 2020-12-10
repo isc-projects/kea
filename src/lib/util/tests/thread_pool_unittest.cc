@@ -512,7 +512,7 @@ TEST_F(ThreadPoolTest, wait) {
     checkRunHistory(items_count);
 
     // check that waiting on tasks does timeout
-    ASSERT_FALSE(thread_pool.wait(3));
+    ASSERT_FALSE(thread_pool.wait(1));
 
     // signal thread pool tasks to continue
     signalThreads();
