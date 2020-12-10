@@ -376,8 +376,8 @@ TEST_F(RenewTest, renewWithExcludedPrefix) {
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 
     // The leases should have been renewed.
-    EXPECT_EQ(1000, leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_);
-    EXPECT_EQ(1000, leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_);
+    EXPECT_GE(leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_, 1000);
+    EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
 
     // This time, the Prefix Exclude option should be included.
     option = client.getContext().response_->getOption(D6O_IA_PD);

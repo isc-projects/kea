@@ -945,7 +945,7 @@ TEST_F(RebindTest, requestPrefixInRebind) {
     EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
 
     // The lease should have been rebound.
-    EXPECT_EQ(1000, leases_client_na_rebound[0].cltt_ - leases_client_na[0].cltt_);
+    EXPECT_GE(leases_client_na_rebound[0].cltt_ - leases_client_na[0].cltt_, 1000);
 
     // The client should now also acquire a PD lease.
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
