@@ -13,10 +13,14 @@
 # used.
 set -eu
 
+# Path to the temporary configuration file.
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+# reason: used in dhcp_test_lib.sh.in
+CFG_FILE="@abs_top_builddir@/src/bin/shell/tests/test_config.json"
+
 # Path to the Control Agent log file.
 LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
-# Expected version
-EXPECTED_VERSION="@PACKAGE_VERSION@"
 
 # Control Agent configuration to be stored in the configuration file.
 # todo: use actual configuration once we support it.

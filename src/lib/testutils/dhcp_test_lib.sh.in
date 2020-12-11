@@ -24,13 +24,11 @@ set -eu
 
 prefix="@prefix@"
 
-# A list of Kea processes, mainly used by the cleanup functions.
-KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns kea-ctrl-agent"
 # Expected version
 EXPECTED_VERSION="@PACKAGE_VERSION@"
 
-# Expected version
-EXPECTED_VERSION="@PACKAGE_VERSION@"
+# A list of Kea processes, mainly used by the cleanup functions.
+KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns kea-ctrl-agent"
 
 ### Logging functions ###
 

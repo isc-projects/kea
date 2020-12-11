@@ -13,6 +13,12 @@
 # used.
 set -eu
 
+# Path to the temporary configuration file.
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+# reason: used in dhcp_test_lib.sh.in
+CFG_FILE="@abs_top_builddir@/src/bin/shell/tests/test_config.json"
+
 # Path to the Control Agent log file.
 LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
 
@@ -119,8 +125,13 @@ shell_command_test() {
     echo "Executing kea-shell ($tmp)"
 
     set +e
+    # shellcheck disable=SC2086
+    # SC2086: Double quote to prevent globbing and word splitting.
+    # reason: ${auth} can be empty here, if we quote, it will be interpreted as
+    # an empty string which is not desired as it will result in unrecognized
+    # argument from kea-shell.
     echo | ${shell_bin_path}/${shell_bin} --host 127.0.0.1 \
- --port 8081 "${auth}" "${cmd}" > ${tmpfile_path}/shell-stdout.txt
+ --port 8081 ${auth} "${cmd}" > ${tmpfile_path}/shell-stdout.txt
     shell_exit_code=$?
     set -e
 
