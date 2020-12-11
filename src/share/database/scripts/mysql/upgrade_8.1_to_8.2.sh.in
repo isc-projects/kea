@@ -58,10 +58,10 @@ fi
 
 # Function to rename a column in a table.
 change_column() {
-    local schema="${1-}"
-    local table="${2-}"
-    local ocolumn="${3-}"
-    local ncolumn="${4-}"
+    local schema="${1-}"; shift
+    local table="${1-}"; shift
+    local ocolumn="${1-}"; shift
+    local ncolumn="${1-}"; shift
 
     # First let's find out if the column name in the table actually needs updating.
     sql="select count(column_name) from information_schema.columns where table_schema='$schema' and table_name = '$table' and column_name = '$ocolumn'"
