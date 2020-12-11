@@ -140,6 +140,20 @@ struct ThreadPool {
         return (queue_.wait(seconds));
     }
 
+    /// @brief pause threads
+    ///
+    /// Used to pause threads so that they stop processing tasks
+    void pause() {
+        queue_.pause();
+    }
+
+    /// @brief resume threads
+    ///
+    /// Used to resume threads so that they start processing tasks
+    void resume() {
+        queue_.resume();
+    }
+
     /// @brief set maximum number of work items in the queue
     ///
     /// @param max_queue_size the maximum size (0 means unlimited)
@@ -241,7 +255,7 @@ private:
         ///
         /// Creates the thread pool queue in 'disabled' state
         ThreadPoolQueue()
-            : enabled_(false), max_queue_size_(0), working_(0),
+            : enabled_(false), paused_(false), max_queue_size_(0), working_(0),
               stat10(0.), stat100(0.), stat1000(0.) {
         }
 
@@ -355,6 +369,7 @@ private:
                 wait_cv_.notify_all();
             }
             cv_.wait(lock, [&]() {return (!enabled_ || !queue_.empty());});
+            pause_cv_.wait(lock, [&]() {return (!enabled_ || !paused_);});
             ++working_;
             if (!enabled_) {
                 return (Item());
@@ -401,6 +416,23 @@ private:
             bool ret = wait_cv_.wait_for(lock, std::chrono::seconds(seconds),
                                          [&]() {return (working_ == 0 && queue_.empty());});
             return (ret);
+        }
+
+        /// @brief pause threads
+        ///
+        /// Used to pause threads so that they stop processing tasks
+        void pause() {
+            std::unique_lock<std::mutex> lock(mutex_);
+            paused_ = true;
+        }
+
+        /// @brief resume threads
+        ///
+        /// Used to resume threads so that they start processing tasks
+        void resume() {
+            std::unique_lock<std::mutex> lock(mutex_);
+            paused_ = false;
+            pause_cv_.notify_all();
         }
 
         /// @brief get queue length statistic
@@ -473,10 +505,18 @@ private:
         /// @brief condition variable used to wait for all items to be processed
         std::condition_variable wait_cv_;
 
+        /// @brief condition variable used to pause threads
+        std::condition_variable pause_cv_;
+
         /// @brief the state of the queue
         /// The 'enabled' state corresponds to true value
         /// The 'disabled' state corresponds to false value
         std::atomic<bool> enabled_;
+
+        /// @brief the pause state of the queue
+        /// The 'paused' state corresponds to true value
+        /// The 'resumed' state corresponds to false value
+        std::atomic<bool> paused_;
 
         /// @brief maximum number of work items in the queue
         /// (0 means unlimited)
