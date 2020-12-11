@@ -441,6 +441,11 @@ wait_for_process_to_die() {
 # It uses 'pgrep' to obtain pids of those processes.
 # This function should be used when identifying process by
 # the value in its PID file is not relevant.
+#
+# Linux limitation for pgrep: The process name used for matching is
+# limited to the 15 characters. If you call this with long process
+# names, add this before pgrep:
+# proc_name=$(printf '%s' "${proc_name}" | cut -c1-15)
 kill_processes_by_name() {
     local proc_name=${1} # Process name
     if [ -z "${proc_name}" ]; then
@@ -449,8 +454,7 @@ kill_processes_by_name() {
     fi
     # Obtain PIDs of running processes.
     local pids
-    truncated_proc_name=$(printf '%s' "${proc_name}" | cut -c1-15)
-    pids=$(pgrep "${truncated_proc_name}" || true)
+    pids=$(pgrep "${proc_name}" || true)
     # For each PID found, send kill signal.
     for pid in ${pids}
     do
