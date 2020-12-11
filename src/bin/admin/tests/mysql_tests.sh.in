@@ -44,7 +44,7 @@ kea_admin="@abs_top_builddir@/src/bin/admin/kea-admin"
 run_statement() {
     hdr="$1";shift
     qry="$1";shift
-    exp_value="${1-}"
+    exp_value="${1-}" # Optional value. If not given, replace with empty string.
 
     # Execute the statment
     run_command \
