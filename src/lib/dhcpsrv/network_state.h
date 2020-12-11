@@ -99,7 +99,9 @@ public:
     /// @brief Reset internal counters.
     ///
     /// Reset internal counters.
-    void resetInternalCounters();
+    ///
+    /// @param type The internal state information type that needs to be reset.
+    void resetInternalState(const NetworkState::ControllerType& type);
 
     /// @brief Enables DHCP service globally and for scopes which have been
     /// disabled as a result of control command.

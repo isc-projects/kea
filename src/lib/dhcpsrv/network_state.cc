@@ -78,8 +78,18 @@ public:
     }
 
     /// @brief Reset internal counters.
-    void resetInternalCounters() {
-        disabled_by_connection_ = 0;
+    void resetInternalState(const NetworkState::ControllerType& type) {
+        switch (type) {
+        case NetworkState::COMMAND:
+            disabled_by_command_ = false;
+            break;
+        case NetworkState::CONNECTION:
+            disabled_by_connection_ = 0;
+            break;
+        case NetworkState::HA:
+            disabled_by_ha_ = false;
+            break;
+        }
         if (!disabled_by_command_ && disabled_by_connection_ == 0 &&
             !disabled_by_ha_) {
             globally_disabled_ = false;
@@ -166,8 +176,8 @@ NetworkState::enableService(const ControllerType& type) {
 }
 
 void
-NetworkState::resetInternalCounters() {
-    impl_->resetInternalCounters();
+NetworkState::resetInternalState(const NetworkState::ControllerType& type) {
+    impl_->resetInternalState(type);
 }
 
 void

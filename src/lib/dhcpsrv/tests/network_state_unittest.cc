@@ -231,9 +231,60 @@ TEST_F(NetworkStateTest, disableEnableService6) {
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
-// This test verifies that resetInternalCounters works, so that internal counter
-// is reset after all managers are recreated.
-TEST_F(NetworkStateTest, resetInternalCounters) {
+// This test verifies that resetInternalState works, so that internal state is
+// reset after all managers are recreated.
+TEST_F(NetworkStateTest, resetInternalState) {
+    // Test COMMAND
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.resetInternalState(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_TRUE(state.isServiceEnabled());
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.resetInternalCounters(NetworkState::COMMAND);
+    EXPECT_TRUE(state.isServiceEnabled());
+    // Test HA
+    state.disableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::CONNECTION);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.resetInternalState(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::COMMAND);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService(NetworkState::CONNECTION);
+    EXPECT_TRUE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.disableService(NetworkState::HA);
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.resetInternalCounters(NetworkState::HA);
+    EXPECT_TRUE(state.isServiceEnabled());
+    // Test CONNECTION
     NetworkState state(NetworkState::DHCPv4);
     state.disableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
@@ -245,7 +296,7 @@ TEST_F(NetworkStateTest, resetInternalCounters) {
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.resetInternalCounters();
+    state.resetInternalState(NetworkState::CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
     state.enableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
@@ -257,7 +308,7 @@ TEST_F(NetworkStateTest, resetInternalCounters) {
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.resetInternalCounters();
+    state.resetInternalState(NetworkState::CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
