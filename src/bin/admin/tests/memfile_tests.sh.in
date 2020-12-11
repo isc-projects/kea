@@ -104,7 +104,7 @@ memfile_init_test() {
       "persist": true,
       "type": "memfile"
     }' \
-    $(server_id_v${v}) \
+    "$(server_id_v${v})" \
     '
   }
 }
