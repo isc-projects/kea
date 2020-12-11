@@ -33,7 +33,7 @@ cql_wipe() {
     # Wipe the database.
     run_command \
         cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
-    assert_eq 0 "${EXIT_CODE}" "drop table query failed, exit code %d, expected %d"
+    assert_eq 0 "${EXIT_CODE}" "drop table query failed, expected %d, returned %d"
 }
 
 cql_db_init_test() {

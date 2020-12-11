@@ -580,7 +580,7 @@ pgsql_lease4_stat_test() {
     # Ok, now let's initialize the database
     run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
-    assert_eq 0 "${EXIT_CODE}" "kea-admin db-init pgsql returned non-zero status code %d, expected %d"
+    assert_eq 0 "${EXIT_CODE}" "kea-admin db-init pgsql failed, expected %d, returned non-zero status code %d"
 
     # Verify lease4 stat table is present
     qry="select count(subnet_id) from lease4_stat"
@@ -672,7 +672,7 @@ pgsql_lease6_stat_test() {
     # Ok, now let's initialize the database
     run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
-    assert_eq 0 "${EXIT_CODE}" "kea-admin db-init pgsql returned non-zero status code %d, expected %d"
+    assert_eq 0 "${EXIT_CODE}" "kea-admin db-init pgsql failed, expected %d, returned non-zero status code %d"
 
     # verify lease6 stat table is present
     qry="select count(subnet_id) from lease6_stat"
@@ -846,7 +846,7 @@ pgsql_lease_stat_recount_test() {
     run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
-    assert_eq 0 "${EXIT_CODE}" "kea-admin db-init pgsql returned non-zero status code %d, expected %d"
+    assert_eq 0 "${EXIT_CODE}" "kea-admin db-init pgsql failed, expected %d, returned non-zero status code %d"
 
     # Now we need insert some leases to "recount"
     qry=\
@@ -883,7 +883,7 @@ pgsql_lease_stat_recount_test() {
     run_command \
         "${kea_admin}" stats-recount pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
 
-    assert_eq 0 "${EXIT_CODE}" "kea-admin stats-recount pgsql returned non-zero status code %d, expected %d"
+    assert_eq 0 "${EXIT_CODE}" "kea-admin stats-recount pgsql failed, expected %d, returned non-zero status code %d"
 
     #
     # First we'll verify lease4_stats are correct after recount.
