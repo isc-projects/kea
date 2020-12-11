@@ -201,6 +201,11 @@ test_finish() {
 
     # Reset traps.
     traps_off
+
+    # Explicitly return ${exit_code}. The effect should be for `make check` to
+    # return with the exit same code or at least another non-zero exit code thus
+    # reporting a failure.
+    return "${exit_code}"
 }
 
 # Stores the configuration specified as a parameter in the configuration
