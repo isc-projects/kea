@@ -271,8 +271,8 @@ migrate_host_data() {
     exit_now 0 "Updated $update_cnt of $line_cnt records"
 }
 
-check_version "{@}"
-if ! update_schema "{@}"; then
+check_version "${@}"
+if ! update_schema "${@}"; then
     printf 'Schema update FAILED!\n'
     exit 1
 fi

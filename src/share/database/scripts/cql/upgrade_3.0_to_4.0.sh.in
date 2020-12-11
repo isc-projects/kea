@@ -271,7 +271,7 @@ migrate_host_data() {
 
     if ! cqlsh "${@}" -e "$query"
     then
-        exit_now 1 "Cassandra export failed! Could not migrate data!" "{@}"
+        exit_now 1 "Cassandra export failed! Could not migrate data!" "${@}"
     fi
 
     # Strip the carriage returns that CQL insists on adding.
@@ -281,7 +281,7 @@ migrate_host_data() {
         mv $export_file.2 $export_file
     else
         # Shouldn't happen but then again we're talking about CQL here
-        exit_now 1 "Cassandra export file $export_file is missing?" "{@}"
+        exit_now 1 "Cassandra export file $export_file is missing?" "${@}"
     fi
 
     # Iterate through the exported data, accumulating update statements,
@@ -334,7 +334,7 @@ migrate_host_data() {
     # If we didn't record any updates, then hey, we're good to go!
     if [ "$update_cnt" -eq 0 ]
     then
-        exit_now 0 "Completed successfully: No updates were needed" "{@}"
+        exit_now 0 "Completed successfully: No updates were needed" "${@}"
     fi
 
     # We have at least one update in the update file, so submit it # to cqlsh.
@@ -355,10 +355,10 @@ migrate_host_data() {
 
     if ! cqlsh "${@}" -e "$query"
     then
-        exit_now 1 "Cassandra updates failed" "{@}"
+        exit_now 1 "Cassandra updates failed" "${@}"
     fi
 
-    exit_now 0 "Updated $update_cnt of $line_cnt records" "{@}"
+    exit_now 0 "Updated $update_cnt of $line_cnt records" "${@}"
 }
 
 check_version "${@}"
