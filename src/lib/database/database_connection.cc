@@ -90,6 +90,7 @@ DatabaseConnection::parse(const std::string& dbaccess) {
                 }
             }
         } catch (const std::exception& ex) {
+            // We'd obscure the password if we could parse the access string.
             DB_LOG_ERROR(DB_INVALID_ACCESS).arg(dbaccess);
             throw;
         }
