@@ -812,14 +812,14 @@ version_test() {
         run_command \
             "${bin_path}/${bin}" "${v}"
 
-        if test "${OUTPUT}" = "${EXPECTED_VERSION}"; then
-            test_finish 0
-        else
+        if test "${OUTPUT}" != "${EXPECTED_VERSION}"; then
             printf 'ERROR: Expected version "%s", got "%s" when calling "%s"\n' \
                 "${EXPECTED_VERSION}" "${OUTPUT}" "${bin} ${v}"
             test_finish 1
         fi
     done
+
+    test_finish 0
 }
 
 # This test verifies that the server is using logger variable
