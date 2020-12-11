@@ -138,7 +138,7 @@ does not contain pattern:
 # parameter assignment, but eval is not recommended.
 # shellcheck disable=SC2034
 # SC2034: ... appears unused. Verify use (or export if used externally).
-run_and_return_output_and_exit_code() {
+run_command() {
     if test -n "${DEBUG+x}"; then
         printf '%s\n' "${*}" >&2
     fi
@@ -814,7 +814,7 @@ version_test() {
         long_version='--version'
     fi
 
-    for v in -v ${long_version}; do
+    for v in -v "${long_version}"; do
         run_command \
             "${bin_path}/${bin}" "${v}"
 

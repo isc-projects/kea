@@ -47,7 +47,7 @@ run_statement() {
     exp_value="${1-}" # Optional value. If not given, replace with empty string.
 
     # Execute the statment
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "${qry}"
     value="${OUTPUT}"
 
@@ -66,7 +66,7 @@ pgsql_wipe() {
     printf "Wiping whole database %s...\n" "${db_name}"
     export PGPASSWORD="${db_password}"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         psql --set ON_ERROR_STOP=1 -A -t -q -U keatest -d keatest -f "${db_scripts_dir}/pgsql/dhcpdb_drop.pgsql"
     assert_eq 0 "${EXIT_CODE}" "pgsql_wipe drop failed, expected exit code: %d, actual: %d"
 }
@@ -78,41 +78,41 @@ pgsql_db_init_test() {
     pgsql_wipe
 
     # Create the database
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-init pgsql failed, expected exit code: %d, actual: %d"
 
     # Verify that all the expected tables exist
 
     # Check schema_version table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "SELECT version, minor FROM schema_version;"
     assert_eq 0 "${EXIT_CODE}" "schema_version table check failed, expected exit code: %d, actual: %d"
 
     # Check lease4 table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, state, user_context FROM lease4;"
     assert_eq 0 "${EXIT_CODE}" "lease4 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6 table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, state, user_context FROM lease6;"
     assert_eq 0 "${EXIT_CODE}" "lease6 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6_types table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "SELECT lease_type, name FROM lease6_types;"
     assert_eq 0 "${EXIT_CODE}" "lease6_types table check failed, expected exit code: %d, actual: %d"
 
     # Check lease_state table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "SELECT state, name FROM lease_state;"
     assert_eq 0 "${EXIT_CODE}" "lease_state table check failed, expected exit code: %d, actual: %d"
 
     # Trying to create it again should fail.  This verifies the db present
     # check
     printf '\nDB created successfully, make sure we are not allowed to try it again:\n'
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 2 "${EXIT_CODE}" "kea-admin failed to deny db-init, expected exit code: %d, actual: %d"
 
@@ -130,17 +130,17 @@ pgsql_db_version_test() {
 
     # Do not create any table so db-version will raise an error
     printf 'Checking db-version error case...\n'
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     assert_eq 3 "${EXIT_CODE}" "schema_version table still exists. (expected %d, exit code %d)"
 
     # Create the database
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "cannot initialize the database, expected exit code: %d, actual: %d"
 
     # Verify that kea-admin db-version returns the correct version
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
     assert_str_eq "6.2" "${version}" "Expected kea-admin to return %s, returned value was %s"
@@ -153,110 +153,110 @@ pgsql_db_version_test() {
 
 pgsql_upgrade_1_0_to_2_0() {
     # Added state column to lease4
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select state from lease4;"
     assert_eq 0 "${EXIT_CODE}" "lease4 is missing state column. (expected status code %d, returned %d)"
 
     # Added state column to lease6
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select state from lease6;"
     assert_eq 0 "${EXIT_CODE}" "lease6 is missing state column. (expected status code %d, returned %d)"
 
     # Added stored procedures for lease dumps
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select lease4DumpHeader from lease4DumpHeader();"
     assert_eq 0 "${EXIT_CODE}" "function lease4DumpHeader() broken or missing. (expected status code %d, returned %d)"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select address from lease4DumpData();"
     assert_eq 0 "${EXIT_CODE}" "function lease4DumpData() broken or missing. (expected status code %d, returned %d)"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select lease6DumpHeader from lease6DumpHeader();"
     assert_eq 0 "${EXIT_CODE}" "function lease6DumpHeader() broken or missing. (expected status code %d, returned %d)"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select address from lease6DumpData();"
     assert_eq 0 "${EXIT_CODE}" "function lease6DumpData() broken or missing. (expected status code %d, returned %d)"
 }
 
 pgsql_upgrade_2_0_to_3_0() {
     # Added hwaddr, hwtype, and hwaddr_source columns to lease6 table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select hwaddr, hwtype, hwaddr_source from lease6;"
     assert_eq 0 "${EXIT_CODE}" "lease6 table not upgraded to 3.0 (expected status code %d, returned %d)"
 
     # Added lease_hwaddr_source table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select hwaddr_source, name from lease_hwaddr_source;"
     assert_eq 0 "${EXIT_CODE}" "lease_hwaddr_source table is missing or broken. (expected status code %d, returned %d)"
 
     # Added hosts table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key from hosts;"
     assert_eq 0 "${EXIT_CODE}" "hosts table is missing or broken. (expected status code %d, returned %d)"
 
     # Added ipv6_reservations table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select reservation_id, address, prefix_len, type, dhcp6_iaid, host_id from ipv6_reservations;"
     assert_eq 0 "${EXIT_CODE}" "ipv6_reservations table is missing or broken. (expected status code %d, returned %d)"
 
     # Added dhcp4_options table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id from dhcp4_options;"
     assert_eq 0 "${EXIT_CODE}" "dhcp4_options table is missing or broken. (expected status code %d, returned %d)"
 
     # Added dhcp6_options table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id,scope_id from dhcp6_options;"
     assert_eq 0 "${EXIT_CODE}" "dhcp6_options table is missing or broken. (expected status code %d, returned %d)"
 
     # Added  host_identifier_type table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select type, name from host_identifier_type;"
     assert_eq 0 "${EXIT_CODE}" "host_identifier_type table is missing or broken. (expected status code %d, returned %d)"
 
     # Added dhcp_option_scope table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select scope_id, scope_name from dhcp_option_scope;"
     assert_eq 0 "${EXIT_CODE}" "dhcp_option_scope table is missing or broken. (expected status code %d, returned %d)"
 
     # Added dhcp6_options table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id,scope_id from dhcp6_options;"
     assert_eq 0 "${EXIT_CODE}" "dhcp6_options table is missing or broken. (expected status code %d, returned %d)"
 
     # Added order by clause to lease4DumpData
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select address from lease4DumpData();"
     assert_eq 0 "${EXIT_CODE}" "function lease4DumpData() broken or missing. (expected status code %d, returned %d)"
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "\sf lease4DumpData"
     assert_eq 0 "${EXIT_CODE}" "\sf of lease4DumpData failed. (expected status code %d, returned %d)"
     count=$(echo "${OUTPUT}" | grep -Fci 'order by l.address') || true
     assert_eq 1 "${count}" "lease4DumpData is missing order by clause"
 
     # Added hwaddr columns to lease6DumpHeader
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select lease6DumpHeader from lease6DumpHeader();"
     assert_eq 0 "${EXIT_CODE}" "function lease6DumpHeader() broken or missing. (expected status code %d, returned %d)"
     count=$(echo "${OUTPUT}" | grep -Fci 'hwaddr,hwtype,hwaddr_source') || true
     assert_eq 1 "${count}" "lease6DumpHeader is missing hwaddr columns"
 
     # Added hwaddr columns to lease6DumpData
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select hwaddr,hwtype,hwaddr_source from lease6DumpData();"
     assert_eq 0 "${EXIT_CODE}" "function lease6DumpData() broken or missing. (expected status code %d, returned %d)"
 
     # Added order by clause to lease6DumpData
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "\sf lease4DumpData"
     assert_eq 0 "${EXIT_CODE}" "\sf of lease4DumpData failed. (expected status code %d, returned %d)"
     count=$(echo "${OUTPUT}" | grep -Fci 'order by l.address') || true
     assert_eq 1 "${count}" "lease4DumpData is missing order by clause"
 
     # lease_hardware_source should have row for source = 0
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select count(hwaddr_source) from lease_hwaddr_source where hwaddr_source = 0 and name='HWADDR_SOURCE_UNKNOWN';"
     assert_eq 0 "${EXIT_CODE}" "select from lease_hwaddr_source failed. (expected status code %d, returned %d)"
     assert_eq 1 "${OUTPUT}" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UNKNOWN. (record count %d, expected %d)"
@@ -264,17 +264,17 @@ pgsql_upgrade_2_0_to_3_0() {
 
 pgsql_upgrade_3_0_to_6_1() {
     # Added user_context to lease4
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select user_context from lease4;"
     assert_eq 0 "${EXIT_CODE}" "lease4 is missing user_context column. (expected status code %d, returned %d)"
 
     # Added user_context to lease6
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select user_context from lease6;"
     assert_eq 0 "${EXIT_CODE}" "lease6 is missing user_context column. (expected status code %d, returned %d)"
 
     # Added logs table
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select timestamp, address, log from logs;"
     assert_eq 0 "${EXIT_CODE}" "logs table is missing or broken. (expected status code %d, returned %d)"
 }
@@ -287,7 +287,7 @@ pgsql_upgrade_6_1_to_6_2() {
     insert_sql="\
 insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_address) values (decode('010101010101', 'hex'), 0, 1, x'FFAF0002'::int);\
 insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_address) values (decode('010101010102', 'hex'), 0, 1, x'FFAF0002'::int);"
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "$insert_sql"
     assert_eq 0 "${EXIT_CODE}" "insert into hosts failed, expected exit code %d, actual %d"
 }
@@ -299,11 +299,11 @@ pgsql_upgrade_test() {
     pgsql_wipe
 
     # Initialize database to schema 1.0.
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
     assert_eq 0 "${EXIT_CODE}" "cannot initialize the database, expected exit code: %d, actual: %d"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-upgrade pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "db-upgrade failed, expected exit code: %d, actual: %d"
 
@@ -332,7 +332,7 @@ get_local_time() {
 
     # Expiration field is a "timestamp with timezone" so we need a reference
     # time for the machine/DB this test is running upon.
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "select timestamptz '$1';"
     assert_eq 0 "${EXIT_CODE}" "reference time query failed for [$timestamp], expected exit code %d, actual %d"
     echo "${OUTPUT}"
@@ -378,7 +378,7 @@ pgsql_lease4_dump_test() {
     pgsql_wipe
 
     # Ok, now let's initialize the database
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "could not create database, expected exit code %d, actual %d"
 
@@ -392,12 +392,12 @@ insert into lease4 values(10,E'\\x20',E'\\x30',40,'$timestamp1',50,'t','t','one.
 insert into lease4 values(11,'',E'\\x0123',40,'$timestamp2',50,'t','t','', 1, '');\
 insert into lease4 values(12,E'\\x22','',40,'$timestamp3',50,'t','t','three.example.com', 2, '');"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "$insert_sql"
     assert_eq 0 "${EXIT_CODE}" "insert into lease4 failed, expected exit code %d, actual %d"
 
     # Dump lease4 to output_file
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" lease-dump pgsql -4 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed,  status code %d"
 
@@ -414,13 +414,13 @@ s/<timestamp1>/${local_timestamp1}/g;\
 s/<timestamp2>/${local_timestamp2}/g; \
 s/<timestamp3>/${local_timestamp3}/g"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         sed "${sed_command}" "${ref_file}"
     printf '%s\n' "${OUTPUT}" > "${ref_file_tmp}"
     assert_eq 0 "${EXIT_CODE}" "timestamp replacement failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
-    run_and_return_output_and_exit_code \
+    run_command \
         cmp -s "${output_file}" "${ref_file_tmp}"
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d"
 
@@ -473,7 +473,7 @@ pgsql_lease6_dump_test() {
     pgsql_wipe
 
     # Ok, now let's initialize the database
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "could not create database,  status code %d"
 
@@ -487,12 +487,12 @@ insert into lease6 values(10,E'\\x20',30,'$timestamp1',40,50,1,60,70,'t','t','on
 insert into lease6 values(11,'',30,'$timestamp2',40,50,1,60,70,'t','t','', 1,decode('80','hex'),90,1,'');\
 insert into lease6 values(12,E'\\x21',30,'$timestamp3',40,50,1,60,70,'t','t','three.example.com', 2,decode('80','hex'),90,4,'');"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "$insert_sql"
     assert_eq 0 "${EXIT_CODE}" "insert into lease6 failed, status code %d"
 
     # Dump lease6 to output_file
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" lease-dump pgsql -6 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, status code %d"
 
@@ -509,13 +509,13 @@ s/<timestamp1>/${local_timestamp1}/g;\
 s/<timestamp2>/${local_timestamp2}/g; \
 s/<timestamp3>/${local_timestamp3}/g"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         sed "${sed_command}" "${ref_file}"
     printf '%s\n' "${OUTPUT}" > "${ref_file_tmp}"
     assert_eq 0 "${EXIT_CODE}" "timestamp replacement failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
-    run_and_return_output_and_exit_code \
+    run_command \
         cmp -s "${output_file}" "${ref_file_tmp}"
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file"
 
@@ -578,7 +578,7 @@ pgsql_lease4_stat_test() {
     pgsql_wipe
 
     # Ok, now let's initialize the database
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-init pgsql returned non-zero status code %d, expected %d"
 
@@ -670,7 +670,7 @@ pgsql_lease6_stat_test() {
     pgsql_wipe
 
     # Ok, now let's initialize the database
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-init pgsql returned non-zero status code %d, expected %d"
 
@@ -729,7 +729,7 @@ pgsql_lease_stat_upgrade_test() {
     run_statement "insert v6 leases" "$qry"
 
     # Ok, we have a 2.0 database with leases. Let's upgrade it to 4.0
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-upgrade pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
     #
@@ -843,7 +843,7 @@ pgsql_lease_stat_recount_test() {
     pgsql_wipe
 
     # Ok, now let's initialize the database
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-init pgsql returned non-zero status code %d, expected %d"
@@ -880,7 +880,7 @@ pgsql_lease_stat_recount_test() {
     run_statement "change v6 stats" "$qry"
 
     # Recount all statistics from scratch.
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" stats-recount pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
 
     assert_eq 0 "${EXIT_CODE}" "kea-admin stats-recount pgsql returned non-zero status code %d, expected %d"
@@ -974,7 +974,7 @@ pgsql_unused_subnet_id_test() {
     run_statement "insert options" "$qry"
 
     # Ok, we have a 4.0 database with hosts and options. Let's upgrade it to 5.0
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-upgrade pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
     # Upgrade should succeed

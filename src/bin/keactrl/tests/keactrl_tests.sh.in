@@ -14,11 +14,11 @@
 set -eu
 
 # Disclaimer: `${keactrl} start` commands use `set +e` / `set -e` instead of
-# run_and_return_output_and_exit_code because
-# run_and_return_output_and_exit_code launches a subshell which inherently waits
+# run_command because
+# run_command launches a subshell which inherently waits
 # for the background processes started in `${keactrl} start` which don't end
 # until explicitly stopped. So the test would freeze if
-# run_and_return_output_and_exit_code would be used.
+# run_command would be used.
 
 # Include common test library.
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
@@ -474,7 +474,7 @@ Expected wait_for_message return %d, returned %d."
 
     # Use keactrl stop to shutdown the servers.
     printf 'Stopping Kea: %s stop -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" stop -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
@@ -584,7 +584,7 @@ Expected wait_for_message return %d, returned %d."
     # Make sure that the status command returns appropriate status.
     printf "Getting status of Kea modules: %s\n" "${keactrl} status \
 -c ${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" status -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned %d"
     assert_string_contains "DHCPv4 server: active" "${OUTPUT}" \
@@ -602,7 +602,7 @@ Expected wait_for_message return %d, returned %d."
 
     # Use keactrl stop to shutdown the servers.
     printf 'Stopping Kea: %s stop -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" stop -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
@@ -693,7 +693,7 @@ Expected wait_for_message return %d, returned %d."
 
     # Make sure that the status command returns appropriate status.
     printf "Getting status of Kea modules: %s\n" "${keactrl} status -c ${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" status -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned %d"
     assert_string_contains "DHCPv4 server: inactive" "${OUTPUT}" \
@@ -711,7 +711,7 @@ Expected wait_for_message return %d, returned %d."
 
     # Use keactrl stop to shutdown the servers.
     printf 'Stopping Kea: %s stop -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" stop -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
@@ -803,7 +803,7 @@ Expected wait_for_message return %d, returned %d."
 
     # Trigger reconfiguration, make sure that the DHCPv6 server reconfigured.
     printf 'Reconfiguring the DHCPv6 server: %s reload -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" reload -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
 
@@ -872,7 +872,7 @@ Expected wait_for_message return %d, returned %d."
     # Trigger reconfiguration, make sure that servers are reconfigured.
     printf "Reconfiguring all servers: %s reload -c %s\n" \
         "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" reload -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
 
@@ -894,7 +894,7 @@ to reconfigure. Expected wait_for_message to return %d, returned %d."
 
     # Use keactrl stop to shutdown the servers.
     printf 'Stopping Kea: %s stop -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" stop -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
@@ -1003,7 +1003,7 @@ Expected wait_for_message return %d, returned %d."
 
     # Trigger reconfiguration, make sure that the DHCPv4 server is reconfigured.
     printf 'Reconfiguring the DHCPv4 server: %s reload -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" reload -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
 
@@ -1073,7 +1073,7 @@ Expected wait_for_message return %d, returned %d."
     # Trigger reconfiguration, make sure that servers are reconfigured.
     printf 'Reconfiguring DHCPv6 and DHCPv4 servers: %s reload -c %s\n' \
         "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" reload -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d"
 
@@ -1095,7 +1095,7 @@ Expected wait_for_message to return %d, returned %d."
 
     # Use keactrl stop to shutdown the servers.
     printf 'Stopping Kea: %s stop -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" stop -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
@@ -1223,7 +1223,7 @@ Expected wait_for_message return %d, returned %d."
 
     # Use keactrl stop to shutdown DHCPv4 server.
     printf "Stopping DHCPv4 server: %s stop -s dhcp4 -c %s\n" "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" stop -s dhcp4 -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
@@ -1267,7 +1267,7 @@ Expected wait_for_message return %d, returned %d."
 
     # Use keactrl stop to shutdown DHCPv6 server.
     printf 'Stopping DHCPv6 server: %s stop -s dhcp6 -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" stop -s dhcp6 -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
@@ -1299,7 +1299,7 @@ Expected wait_for_message return %d, returned %d."
 
     # Use keactrl stop to shutdown D2 server.
     printf 'Stopping DHCP DDNS server: %s stop -s dhcp_ddns -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" stop -s dhcp_ddns -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
@@ -1333,7 +1333,7 @@ Expected wait_for_message return %d, returned %d."
 
     # Use keactrl stop to shutdown CA.
     printf 'Stopping Control Agent: %s stop -s ctrl_agent -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" stop -s ctrl_agent -c ${KEACTRL_CFG_FILE}
     assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
@@ -1363,7 +1363,7 @@ Expected wait_for_message return %d, returned %d."
     # Use keactrl stop to shutdown Netconf agent.
     if ${have_netconf}; then
         printf 'Stopping Netconf agent: %s stop -s netconf -c %s\n' "${keactrl}" "${KEACTRL_CFG_FILE}"
-        run_and_return_output_and_exit_code \
+        run_command \
             "${keactrl}" stop -s netconf -c ${KEACTRL_CFG_FILE}
         assert_eq 0 "${EXIT_CODE}" "Expected keactrl to return %d, returned value was %d."
 
@@ -1397,7 +1397,7 @@ status_no_config_test() {
     # the config file.
     printf "Getting status without a Kea config file\n"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" status -c ${KEACTRL_CFG_FILE}
     assert_eq 1 "${EXIT_CODE}" "Expected keactrl to return %d, returned %d"
     assert_string_contains "DHCPv4 server: inactive" "${OUTPUT}" \
@@ -1445,7 +1445,7 @@ version_command_test() {
     EXPECTED_RESP=$(printf "%b" "$exp")
 
     # Let's use short version:
-    run_and_return_output_and_exit_code \
+    run_command \
         "${keactrl}" version -c ${KEACTRL_CFG_FILE}
 
     assert_str_eq "${EXPECTED_RESP}" "${OUTPUT}" \

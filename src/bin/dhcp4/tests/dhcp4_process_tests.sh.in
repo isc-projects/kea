@@ -193,7 +193,7 @@ syntax_check_test() {
     create_config "${config}"
     # Check it
     printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
-    run_and_return_output_and_exit_code \
+    run_command \
         "${bin_path}/${bin}" -t "${CFG_FILE}"
     if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
         printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"

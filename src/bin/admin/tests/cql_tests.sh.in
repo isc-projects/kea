@@ -31,7 +31,7 @@ kea_admin="@abs_top_builddir@/src/bin/admin/kea-admin"
 
 cql_wipe() {
     # Wipe the database.
-    run_and_return_output_and_exit_code \
+    run_command \
         cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
     assert_eq 0 "${EXIT_CODE}" "drop table query failed, exit code %d, expected %d"
 }
@@ -43,41 +43,41 @@ cql_db_init_test() {
     cql_wipe
 
     # Create the database
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-init cql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-init cql failed, expected exit code: %d, actual: %d"
 
     # Verify that all the expected tables exist
 
     # Check schema_version table
-    run_and_return_output_and_exit_code \
+    run_command \
       cql_execute "SELECT version, minor FROM schema_version;"
     assert_eq 0 "${EXIT_CODE}" "schema_version table check failed, expected exit code: %d, actual: %d"
 
     # Check lease4 table
-    run_and_return_output_and_exit_code \
+    run_command \
       cql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, state, user_context FROM lease4;"
     assert_eq 0 "${EXIT_CODE}" "lease4 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6 table
-    run_and_return_output_and_exit_code \
+    run_command \
       cql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, state, user_context FROM lease6;"
     assert_eq 0 "${EXIT_CODE}" "lease6 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6_types table
-    run_and_return_output_and_exit_code \
+    run_command \
       cql_execute "SELECT lease_type, name FROM lease6_types;"
     assert_eq 0 "${EXIT_CODE}" "lease6_types table check failed, expected exit code: %d, actual: %d"
 
     # Check lease_state table
-    run_and_return_output_and_exit_code \
+    run_command \
       cql_execute "SELECT state, name FROM lease_state;"
     assert_eq 0 "${EXIT_CODE}" "lease_state table check failed, expected exit code: %d, actual: %d"
 
     # Trying to create it again should fail. This verifies the db present
     # check
     echo "Making sure keyspace creation fails the second time..."
-    run_and_return_output_and_exit_code \
+    run_command \
       "${kea_admin}" db-init cql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 2 "${EXIT_CODE}" "kea-admin failed to deny db-init, expected exit code: %d, actual: %d"
 
@@ -94,7 +94,7 @@ cql_db_version_test() {
     cql_wipe
 
     # Create the database.
-    run_and_return_output_and_exit_code \
+    run_command \
       "${kea_admin}" db-init cql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-init cql failed, expected exit code: %d, actual: %d"
 
@@ -115,11 +115,11 @@ cql_upgrade_test() {
     cql_wipe
 
     # Initialize database to schema 1.0.
-    run_and_return_output_and_exit_code \
+    run_command \
       cql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.cql"
     assert_eq 0 "${EXIT_CODE}" "cannot initialize the database, expected exit code: %d, actual: %d"
 
-    run_and_return_output_and_exit_code \
+    run_command \
       "${kea_admin}" db-upgrade cql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "db-upgrade failed, expected exit code: %d, actual: %d"
 
@@ -154,7 +154,7 @@ cql_lease4_dump_test() {
     cql_wipe
 
     # Create the database
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-init cql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-init cql failed, expected exit code: %d, actual: %d"
 
@@ -176,12 +176,12 @@ cql_lease4_dump_test() {
         fqdn_fwd, fqdn_rev, hostname, state, user_context) \
         VALUES (-1073741300,textAsBlob('22'),NULL,40,1436173267,50,true,true,'three.example.com', 2, '');"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         cql_execute "$insert_cql"
     assert_eq 0 "${EXIT_CODE}" "insert into lease4 failed, expected exit code %d, actual %d"
 
     # Dump lease4 to output_file.
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" lease-dump cql -4 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
@@ -189,7 +189,7 @@ cql_lease4_dump_test() {
     sort -g "${output_file}" > "${sorted_file}"
 
     # Compare the dump output to reference file, they should be identical.
-    run_and_return_output_and_exit_code \
+    run_command \
         cmp -s $sorted_file $ref_file
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d"
 
@@ -230,7 +230,7 @@ cql_lease6_dump_test() {
     cql_wipe
 
     # Create the database.
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" db-init cql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "could not create database, expected exit code %d, actual %d"
 
@@ -255,12 +255,12 @@ cql_lease6_dump_test() {
         VALUES ('2001:db8::12',textAsBlob('21'),30,1436173267,40,50,1,60,70,true,true, \
             'three.example.com',textAsBlob('80'),90,4,2,'');"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         cql_execute "$insert_cql"
     assert_eq 0 "${EXIT_CODE}" "insert into lease6 failed, expected exit code %d, actual %d"
 
     # Dump lease4 to output_file.
-    run_and_return_output_and_exit_code \
+    run_command \
         "${kea_admin}" lease-dump cql -6 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, status code %d"
 
@@ -268,7 +268,7 @@ cql_lease6_dump_test() {
     sort -g "${output_file}" > "${sorted_file}"
 
     # Compare the dump output to reference file, they should be identical.
-    run_and_return_output_and_exit_code \
+    run_command \
         cmp -s $sorted_file $ref_file
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d"
 
@@ -349,12 +349,12 @@ cql_unused_subnet_id_test() {
     INSERT INTO host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, hostname, option_subnet_id) \
         VALUES (5, 0, textAsBlob('3123456'), -1, 6, 'host3', 6);"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         cql_execute "$qry"
     assert_eq 0 "${EXIT_CODE}" "insert hosts failed, expected exit code: %d, actual: %d"
 
     # Ok, we have a 2.0 database with hosts and options. Let's upgrade it.
-    run_and_return_output_and_exit_code \
+    run_command \
       "${kea_admin}" db-upgrade cql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
     # Upgrade should succeed
@@ -374,7 +374,7 @@ cql_unused_subnet_id_test() {
     SELECT id, host_ipv4_subnet_id, host_ipv6_subnet_id, hostname, lower_case_hostname, option_subnet_id\
         FROM hosts WHERE id IN (1,2,3,4,5) ALLOW FILTERING;"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         cql_execute "$qry"
     printf '%s\n' "${OUTPUT}" > "${export_file}"
     assert_eq 0 "${EXIT_CODE}" "insert hosts failed, expected exit code: %d, actual: %d"
@@ -383,7 +383,7 @@ cql_unused_subnet_id_test() {
     grep -F '|' "${export_file}" | sort -V | tr -d " " | sed 's/|/,/g' > $sorted_file
 
     # Compare the dump output to reference file, they should be identical.
-    run_and_return_output_and_exit_code \
+    run_command \
         cmp -s $sorted_file $ref_file
     assert_eq 0 "${EXIT_CODE}" "export file does not match reference file, expected exit code %d, actual %d"
 
@@ -445,12 +445,12 @@ cql_upgrade_hosts_test() {
          option_scope_id) \
     FROM '$data_file'"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         cql_execute "$qry"
     assert_eq 0 "${EXIT_CODE}" "insert hosts failed, expected exit code: %d, actual: %d"
 
     # Ok, we have a 3.0 database with hosts and options. Let's upgrade it.
-    run_and_return_output_and_exit_code \
+    run_command \
       "${kea_admin}" db-upgrade cql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
     # Upgrade should succeed
@@ -471,7 +471,7 @@ cql_upgrade_hosts_test() {
          option_scope_id) \
     TO '$export_file'"
 
-    run_and_return_output_and_exit_code \
+    run_command \
         cql_execute "$qry"
     assert_eq 0 "${EXIT_CODE}" "insert hosts failed, expected exit code: %d, actual: %d"
 
@@ -479,7 +479,7 @@ cql_upgrade_hosts_test() {
     sort -V "${export_file}" > "${sorted_file}"
 
     # Compare the dump output to reference file, they should be identical.
-    run_and_return_output_and_exit_code \
+    run_command \
         cmp -s $sorted_file $ref_file
     assert_eq 0 "${EXIT_CODE}" "export file does not match reference file, expected exit code %d, actual %d"
 
