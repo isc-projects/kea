@@ -272,20 +272,24 @@ CSVFile::next(CSVRow& row, const bool skip_validation) {
     // Get exactly one line of the file.
     std::string line;
     std::getline(*fs_, line);
-    // If we got empty line because we reached the end of file
-    // return an empty row.
-    if (line.empty() && fs_->eof()) {
-        row = EMPTY_ROW();
-        return (true);
 
-    } else if (!fs_->good()) {
-        // If we hit an IO error, communicate it to the caller but do NOT close
-        // the stream. Caller may try again.
-        setReadMsg("error reading a row from CSV file '"
-                   + std::string(filename_) + "'");
-        return (false);
+    // If we didn't read anything...
+    if (line.empty()) {
+        // If we reached the end of file, return an empty row to signal EOF.
+        if (fs_->eof()) {
+            row = EMPTY_ROW();
+            return (true);
+
+        } else if (!fs_->good()) {
+            // If we hit an IO error, communicate it to the caller but do NOT close
+            // the stream. Caller may try again.
+            setReadMsg("error reading a row from CSV file '"
+                    + std::string(filename_) + "'");
+            return (false);
+        }
     }
-    // If we read anything, parse it.
+
+    // Parse the line.
     row.parse(line);
 
     // And check if it is correct.
