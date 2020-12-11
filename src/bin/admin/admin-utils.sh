@@ -25,7 +25,7 @@ db_name='keatest'
 # parameter assignment, but eval is not recommended.
 # shellcheck disable=SC2034
 # SC2034: ... appears unused. Verify use (or export if used externally).
-run_and_return_output_and_exit_code() {
+run_command() {
     if test -n "${DEBUG+x}"; then
         printf '%s\n' "${*}" >&2
     fi
@@ -71,7 +71,7 @@ mysql_version() {
 }
 
 checked_mysql_version() {
-    run_and_return_output_and_exit_code \
+    run_command \
         mysql_execute "SELECT CONCAT_WS('.', version, minor) FROM schema_version" "$@"
 
     if [ "${EXIT_CODE}" -ne 0 ]
@@ -130,7 +130,7 @@ pgsql_version() {
 }
 
 checked_pgsql_version() {
-    run_and_return_output_and_exit_code \
+    run_command \
         pgsql_execute "SELECT version || '.' || minor FROM schema_version" "$@"
 
     if [ "${EXIT_CODE}" -ne 0 ]
@@ -146,10 +146,10 @@ cql_execute() {
     query=$1
     shift
     if [ $# -gt 1 ]; then
-        run_and_return_output_and_exit_code \
+        run_command \
             cqlsh "$@" -e "$query"
     else
-        run_and_return_output_and_exit_code \
+        run_command \
             cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -e "${query}"
     fi
 
@@ -165,10 +165,10 @@ cql_execute_script() {
     file=$1
     shift
     if [ $# -gt 1 ]; then
-        run_and_return_output_and_exit_code \
+        run_command \
             cqlsh "$@" -e "$file"
     else
-        run_and_return_output_and_exit_code \
+        run_command \
             cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -f "${file}"
     fi
 
@@ -181,7 +181,7 @@ cql_execute_script() {
 }
 
 cql_version() {
-    run_and_return_output_and_exit_code \
+    run_command \
         cql_execute "SELECT version, minor FROM schema_version" "$@"
     version="${OUTPUT}"
     select_exit_code="${EXIT_CODE}"
