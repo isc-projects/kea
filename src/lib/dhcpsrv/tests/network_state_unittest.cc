@@ -234,6 +234,8 @@ TEST_F(NetworkStateTest, disableEnableService6) {
 // This test verifies that resetInternalState works, so that internal state is
 // reset after all managers are recreated.
 TEST_F(NetworkStateTest, resetInternalState) {
+    NetworkState state(NetworkState::DHCPv4);
+
     // Test COMMAND
     state.disableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
@@ -257,8 +259,9 @@ TEST_F(NetworkStateTest, resetInternalState) {
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.resetInternalCounters(NetworkState::COMMAND);
+    state.resetInternalState(NetworkState::COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
+
     // Test HA
     state.disableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
@@ -282,10 +285,10 @@ TEST_F(NetworkStateTest, resetInternalState) {
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::HA);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.resetInternalCounters(NetworkState::HA);
+    state.resetInternalState(NetworkState::HA);
     EXPECT_TRUE(state.isServiceEnabled());
+
     // Test CONNECTION
-    NetworkState state(NetworkState::DHCPv4);
     state.disableService(NetworkState::COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::HA);
