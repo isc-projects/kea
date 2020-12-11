@@ -408,7 +408,7 @@ wait_for_file() {
     local file=${1}
     timeout='4 seconds'
     deadline=$(date +%s -d "${timeout}")
-    while ! test -f "${file}" >/dev/null; do
+    while ! test -f "${file}"; do
         if test "${deadline}" -lt "$(date +%s)"; then
             # Time is up.
             printf 'ERROR: file "%s" was not created in time.\n' "${file}" >&2

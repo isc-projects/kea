@@ -9,6 +9,9 @@
 # shellcheck disable=SC1091
 # SC1091: Not following: ... was not specified as input (see shellcheck -x).
 
+# shellcheck disable=SC2039
+# SC2039: In POSIX sh, 'local' is undefined.
+
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
@@ -90,7 +93,7 @@ memfile_init_test() {
         fi
         export KEA_PIDFILE_DIR="@abs_top_builddir@/src/bin/admin/tests/pid_dir_${v}"
         mkdir -p "${KEA_PIDFILE_DIR}"
-        "$(kea_dhcp "${v}")" -c "${config_file}" &> /dev/null &
+        "$(kea_dhcp "${v}")" -c "${config_file}" > /dev/null 2>&1 &
         pid=${!}
         # This assumes that the CSV creation + writing to CSV is atomic. Not
         # sure if it is, but if this ever fails on the comparison further below,
@@ -153,9 +156,14 @@ memfile_upgrade_test() {
     test_finish 0
 }
 
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+# reason: bin and bin_path are used in version_test
+{
 bin=$(basename "${kea_admin}")
 bin_path=$(dirname "${kea_admin}")
 version_test 'memfile.version' 'long_version_too_please'
+}
 
 memfile_init_test
 memfile_upgrade_test

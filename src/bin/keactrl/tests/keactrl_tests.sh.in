@@ -1454,9 +1454,14 @@ version_command_test() {
     test_finish 0
 }
 
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+# reason: bin and bin_path are used in version_test
+{
 bin=$(basename "${keactrl}")
 bin_path=$(dirname "${keactrl}")
 version_test 'keactrl.version' 'long_version_too_please'
+}
 
 version_command_test
 start_all_servers_no_verbose_test
