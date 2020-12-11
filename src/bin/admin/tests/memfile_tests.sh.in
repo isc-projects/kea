@@ -24,11 +24,11 @@ kea_admin="@abs_top_builddir@/src/bin/admin/kea-admin"
 kea_lfc="@abs_top_builddir@/src/bin/lfc/kea-lfc"
 
 clean_up() {
-    for i in "${config_file}" "${csv}" "${KEA_PIDFILE_DIR}"; do
-        if test -e "${i}"; then
-            rm -rf "${i}"
-        fi
-    done
+    remove_if_exists \
+        "${config_file-}" \
+        "${csv-}" \
+        "${KEA_LOCKFILE_DIR-}" \
+        "${KEA_PIDFILE_DIR-}"
 }
 
 # Print location of CSV file. Accepts 4 or 6 as parameter.
@@ -63,23 +63,52 @@ memfile_header_v6() {
     printf '%s,hwaddr,state,user_context' "$(incomplete_memfile_header_v6)"
 }
 
+# Print "server-id" configuration. Not available for v4.
+server_id_v4() {
+    :
+}
+
+# Print "server-id" configuration. Not available for v4.
+server_id_v6() {
+    printf ',
+    "server-id": {
+        "persist": false,
+        "type": "EN"
+    }
+'
+}
+
+# Starts Kea and sets PID. It logs to stdout and stderr if DEBUG is enabled.
+# Accepts 4 or 6 as parameter.
+start_kea_dhcp() {
+    local v=${1}
+    if test -n "${DEBUG+x}"; then
+        "$(kea_dhcp "${v}")" -c "${config_file}" &
+    else
+        "$(kea_dhcp "${v}")" -c "${config_file}" > /dev/null 2>&1 &
+    fi
+    PID=${!}
+}
+
 # Test that Kea creates a correctly populated CSV file if configured with
 # persisting memfile.
 memfile_init_test() {
     test_start 'memfile.init'
 
     for v in 4 6; do
-        config='
+        config=$(printf '%s%s%s' '
 {
   "Dhcpx": {
     "lease-database": {
       "name": "@abs_top_builddir@/src/bin/admin/tests/kea-dhcpx.csv",
       "persist": true,
       "type": "memfile"
-    }
+    }' \
+    $(server_id_v${v}) \
+    '
   }
 }
-'
+')
         config_file="@abs_top_builddir@/src/bin/admin/tests/kea-dhcp${v}.conf"
         csv=$(csv_file "${v}")
         printf '%s\n' "${config}" | \
@@ -91,10 +120,11 @@ memfile_init_test() {
             clean_up
             clean_exit 1
         fi
+        export KEA_LOCKFILE_DIR="@abs_top_builddir@/src/bin/admin/tests/lock_dir_${v}"
         export KEA_PIDFILE_DIR="@abs_top_builddir@/src/bin/admin/tests/pid_dir_${v}"
+        mkdir -p "${KEA_LOCKFILE_DIR}"
         mkdir -p "${KEA_PIDFILE_DIR}"
-        "$(kea_dhcp "${v}")" -c "${config_file}" > /dev/null 2>&1 &
-        pid=${!}
+        start_kea_dhcp "${v}"
         # This assumes that the CSV creation + writing to CSV is atomic. Not
         # sure if it is, but if this ever fails on the comparison further below,
         # consider waiting here for line DHCPSRV_MEMFILE_LFC_SETUP in logs, even
@@ -103,8 +133,8 @@ memfile_init_test() {
             clean_up
             clean_exit 1
         fi
-        kill "${pid}"
-        if ! wait_for_process_to_die "${pid}"; then
+        kill "${PID}"
+        if ! wait_for_process_to_die "${PID}"; then
             clean_up
             clean_exit 2
         fi
@@ -118,6 +148,7 @@ memfile_init_test() {
         fi
 
         clean_up
+        unset KEA_LOCKFILE_DIR
         unset KEA_PIDFILE_DIR
     done
 
