@@ -2443,7 +2443,9 @@ Another possibility is to redefine the option; see :ref:`dhcp4-private-opts`.
 .. note::
 
    Currently only one vendor is supported for vivco-suboptions (code 124)
-   and vivso-suboptions (code 125) options.
+   and vivso-suboptions (code 125) options. It is not supported to specify
+   multiple enterprise numbers within a single option instance or multiple
+   options with different enterprise numbers.
 
 .. _dhcp4-option-spaces:
 

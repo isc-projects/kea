@@ -2005,9 +2005,10 @@ vendor option is sent even when the client did not specify it in the query.
 
 .. note::
 
-   Currently multiple vendors (and sending multiple option instances)
-   are not supported for vendor-class (code 16) and vendor-opts (code 17)
-   options.
+   Currently only a single instance of the vendor-class (code 16) and
+   a single instance of the vendor-opts (code 17) options can be
+   specified.  Specifying multiple options with different enterprise
+   numbers is currently not supported by Kea.
 
 .. _dhcp6-option-spaces:
 
