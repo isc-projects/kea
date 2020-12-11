@@ -449,7 +449,8 @@ kill_processes_by_name() {
     fi
     # Obtain PIDs of running processes.
     local pids
-    pids=$(pidof "${proc_name}" || true)
+    truncated_proc_name=$(printf '%s' "${proc_name}" | cut -c1-15)
+    pids=$(pgrep "${truncated_proc_name}" || true)
     # For each PID found, send kill signal.
     for pid in ${pids}
     do
