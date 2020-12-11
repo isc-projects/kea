@@ -412,6 +412,10 @@ TEST(DatabaseConnectionTest, parseInvalid) {
     invalid = "   noequalshere  ";
     EXPECT_THROW(DatabaseConnection::parse(invalid), isc::InvalidParameter);
 
+    // Mismatched single quote.
+    invalid = "password='xyz";
+    EXPECT_THROW(DatabaseConnection::parse(invalid), isc::InvalidParameter);
+
     // A single "=" is valid string, but is placed here as the result is
     // expected to be nothing.
     invalid = "=";

@@ -64,7 +64,7 @@ DatabaseConnection::parse(const std::string& dbaccess) {
                 // algorithm parsing other parameters requires that there are no whitespaces
                 // within the parameter values.
                 dba.erase(password_pos, password_prefix.length() + password.length() + 2);
-                // Leaing or trailing whitespace may remain after the password removal.
+                // Leading or trailing whitespace may remain after the password removal.
                 dba = util::str::trim(dba);
                 // If the password was the only parameter in the access string, there is
                 // nothing more to do.
