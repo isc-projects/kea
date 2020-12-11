@@ -37,12 +37,9 @@ else
     temp_file_dir="@abs_top_builddir@/src/share/database/scripts/cql"
 fi
 
-# Save the command line arguments for later use.
-cqlargs=("${@}")
-
 # Ensures the current schema version is 3.0. If not it exits.
 check_version() {
-    version=$(cql_version "${cqlargs[@]}")
+    version=$(cql_version "${@}")
 
     if [ "${version}" != "3.0" ]; then
         printf "This script upgrades 3.0 to 4.0. Reported version is %s. Skipping upgrade.\n" "${version}"
@@ -52,7 +49,7 @@ check_version() {
 
 # Peforms the schema changes from 3.0 to 4.0
 update_schema() {
-    cqlsh "${cqlargs[@]}" <<EOF
+    cqlsh "${@}" <<EOF
 -- This line starts database upgrade to version 4.0
 
 -- -----------------------------------------------------
@@ -105,7 +102,7 @@ EOF
 
 # Peforms the clean up schema changes from 3.0 to 4.0
 clean_up_schema() {
-    cqlsh "${cqlargs[@]}" <<EOF
+    cqlsh "${@}" <<EOF
 DROP TABLE IF EXISTS host_reservations;
 
 DROP INDEX IF EXISTS host_reservationsindex1;
@@ -146,13 +143,13 @@ clean_up() {
 # status - integer value to pass to sh:exit
 # explanation - "quoted" text message to emit to stdout
 exit_now() {
-    status=$1;shift
-    explanation=$1
+    status=$1; shift
+    explanation=$1; shift
 
     clean_up
     if [ "$status" -eq 0 ]
     then
-        clean_up_schema
+        clean_up_schema "${@}"
         echo "Data Migration SUCCESS! $explanation"
     else
         echo "Data Migration FAILURE! $explanation"
@@ -272,9 +269,9 @@ migrate_host_data() {
         TO '$export_file'"
 
 
-    if ! cqlsh "${cqlargs[@]}" -e "$query"
+    if ! cqlsh "${@}" -e "$query"
     then
-        exit_now 1 "Cassandra export failed! Could not migrate data!"
+        exit_now 1 "Cassandra export failed! Could not migrate data!" "{@}"
     fi
 
     # Strip the carriage returns that CQL insists on adding.
@@ -284,7 +281,7 @@ migrate_host_data() {
         mv $export_file.2 $export_file
     else
         # Shouldn't happen but then again we're talking about CQL here
-        exit_now 1 "Cassandra export file $export_file is missing?"
+        exit_now 1 "Cassandra export file $export_file is missing?" "{@}"
     fi
 
     # Iterate through the exported data, accumulating update statements,
@@ -337,7 +334,7 @@ migrate_host_data() {
     # If we didn't record any updates, then hey, we're good to go!
     if [ "$update_cnt" -eq 0 ]
     then
-        exit_now 0 "Completed successfully: No updates were needed"
+        exit_now 0 "Completed successfully: No updates were needed" "{@}"
     fi
 
     # We have at least one update in the update file, so submit it # to cqlsh.
@@ -356,17 +353,17 @@ migrate_host_data() {
          option_scope_id) \
         FROM '$update_file'"
 
-    if ! cqlsh "${cqlargs[@]}" -e "$query"
+    if ! cqlsh "${@}" -e "$query"
     then
-        exit_now 1 "Cassandra updates failed"
+        exit_now 1 "Cassandra updates failed" "{@}"
     fi
 
-    exit_now 0 "Updated $update_cnt of $line_cnt records"
+    exit_now 0 "Updated $update_cnt of $line_cnt records" "{@}"
 }
 
-check_version
-if ! update_schema; then
+check_version "${@}"
+if ! update_schema "${@}"; then
     printf 'Schema update FAILED!\n'
     exit 1
 fi
-migrate_host_data
+migrate_host_data "${@}"

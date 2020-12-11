@@ -28,9 +28,6 @@ else
     . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
 
-# Save the command line arguments for later use.
-cqlargs=("${@}")
-
 # Need a path for temporary files created during data update
 # Use the state directory in the install path directory if it exists, otherwise
 # use the build tree
@@ -42,7 +39,7 @@ fi
 
 # Ensures the current schema version is 4.0. If not it exits.
 check_version() {
-    version=$(cql_version "${cqlargs[@]}")
+    version=$(cql_version "${@}")
 
     if [ "${version}" != "4.0" ]; then
         printf "This script upgrades 4.0 to 5.0. Reported version is %s. Skipping upgrade.\n" "${version}"
@@ -52,7 +49,7 @@ check_version() {
 
 # Peforms the schema changes from 4.0 to 5.0
 update_schema() {
-    cqlsh "${cqlargs[@]}" <<EOF
+    cqlsh "${@}" <<EOF
 -- This line starts database upgrade to version 5.0
 
 -- Add the lower case hostname column to reservations.
@@ -144,7 +141,7 @@ update_host_data() {
     query="COPY hosts (key, id, hostname) TO '$host_export_file'"
 
 
-    if ! cqlsh "${cqlargs[@]}" -e "$query"
+    if ! cqlsh "${@}" -e "$query"
     then
         exit_now 1 "Cassandra get hostname failed! Could not update host!"
     fi
@@ -221,7 +218,7 @@ update_host_data() {
     echo "$update_cnt host update statements written to $host_update_file"
     echo "Running the updates..."
 
-    if ! cqlsh "${cqlargs[@]}" -f "$host_update_file"
+    if ! cqlsh "${@}" -f "$host_update_file"
     then
         exit_now 1 "Cassandra host updates failed"
     fi
@@ -243,7 +240,7 @@ update_lease4_data() {
     query="COPY lease4 (address, hostname) TO '$lease4_export_file'"
 
 
-    if ! cqlsh "${cqlargs[@]}" -e "$query"
+    if ! cqlsh "${@}" -e "$query"
     then
         exit_now 1 "Cassandra get hostname failed! Could not update lease4!"
     fi
@@ -317,7 +314,7 @@ update_lease4_data() {
     echo "$update_cnt lease4 update statements written to $lease4_update_file"
     echo "Running the updates..."
 
-    if ! cqlsh "${cqlargs[@]}" -f "$lease4_update_file"
+    if ! cqlsh "${@}" -f "$lease4_update_file"
     then
         exit_now 1 "Cassandra lease4 updates failed"
     fi
@@ -338,7 +335,7 @@ update_lease6_data() {
     echo "Exporting hostnames to $lease6_export_file ..."
     query="COPY lease6 (address, hostname) TO '$lease6_export_file'"
 
-    if ! cqlsh "${cqlargs[@]}" -e "$query"
+    if ! cqlsh "${@}" -e "$query"
     then
         exit_now 1 "Cassandra get hostname failed! Could not update lease6!"
     fi
@@ -412,7 +409,7 @@ update_lease6_data() {
     echo "$update_cnt lease6 update statements written to $lease6_update_file"
     echo "Running the updates..."
 
-    if ! cqlsh "${cqlargs[@]}" -f "$lease6_update_file"
+    if ! cqlsh "${@}" -f "$lease6_update_file"
     then
         exit_now 1 "Cassandra lease6 updates failed"
     fi
@@ -427,11 +424,11 @@ lease4_update_file="$temp_file_dir/cql_lease4_update.cql"
 lease6_export_file="$temp_file_dir/cql_lease6_export.csv"
 lease6_update_file="$temp_file_dir/cql_lease6_update.cql"
 
-check_version
-if ! update_schema; then
+check_version "${@}"
+if ! update_schema "${@}"; then
     printf 'Schema update FAILED!\n'
     exit 1
 fi
-update_host_data
-update_lease4_data
-update_lease6_data
+update_host_data "${@}"
+update_lease4_data "${@}"
+update_lease6_data "${@}"

@@ -177,8 +177,7 @@ process is not running"
 # Start the Kea process. Do not start the process if there is an instance
 # already running.
 start_server() {
-    binary_path=${1}   # Full path to the binary.
-    full_command=("${@}")    # Binary and arguments.
+    binary_path=${1}    # Full path to the binary.
     # Extract the name of the binary from the path.
     local binary_name
     binary_name=$(basename -- "${binary_path}")
@@ -189,9 +188,9 @@ start_server() {
         log_info "${binary_name} appears to be running, see: \
 PID ${_pid}, PID file: ${_pid_file}."
     else
-        log_info "Starting ${full_command[*]}"
+        log_info "Starting ${*}"
         # Start the process.
-        "${full_command[@]}" &
+        "${@}" &
     fi
 }
 

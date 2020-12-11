@@ -28,9 +28,6 @@ else
     . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
 
-# Save the command line arguments for later use.
-cqlargs=("${@}")
-
 # Need a path for temporary files created during upgrade data migration
 # Use the state directory in the install path directory if it exists, otherwise
 # use the build tree
@@ -42,7 +39,7 @@ fi
 
 # Ensures the current schema version is 2.0. If not it exits.
 check_version() {
-    version=$(cql_version "${cqlargs[@]}")
+    version=$(cql_version "${@}")
 
     if [ "${version}" != "2.0" ]; then
         printf "This script upgrades 2.0 to 3.0. Reported version is %s. Skipping upgrade.\n" "${version}"
@@ -52,7 +49,7 @@ check_version() {
 
 # Peforms the schema changes from 2.0 to 3.0
 update_schema() {
-    cqlsh "${cqlargs[@]}" <<EOF
+    cqlsh "${@}" <<EOF
 -- This line starts database upgrade to version 3.0
 
 -- Add a column holding leases for user context.
@@ -188,7 +185,7 @@ migrate_host_data() {
         (id, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id)\
         TO '$export_file'"
 
-    if ! cqlsh "${cqlargs[@]}" -e "$query"
+    if ! cqlsh "${@}" -e "$query"
     then
         exit_now 1 "Cassandra export failed! Could not migrate data!"
     fi
@@ -266,7 +263,7 @@ migrate_host_data() {
     # We have at least one update in the update file, so submit it # to cqlsh.
     echo "$update_cnt update statements written to $update_file"
     echo "Running the updates..."
-    if ! cqlsh "${cqlargs[@]}" -f "$update_file"
+    if ! cqlsh "${@}" -f "$update_file"
     then
         exit_now 1 "Cassandra updates failed"
     fi
@@ -274,9 +271,9 @@ migrate_host_data() {
     exit_now 0 "Updated $update_cnt of $line_cnt records"
 }
 
-check_version
-if ! update_schema; then
+check_version "{@}"
+if ! update_schema "{@}"; then
     printf 'Schema update FAILED!\n'
     exit 1
 fi
-migrate_host_data
+migrate_host_data "${@}"

@@ -55,7 +55,6 @@ then
 fi
 
 # Save the command line args, as we use these later change_column function.
-cmdargs=("${@}")
 
 # Function to rename a column in a table.
 change_column() {
@@ -66,7 +65,7 @@ change_column() {
 
     # First let's find out if the column name in the table actually needs updating.
     sql="select count(column_name) from information_schema.columns where table_schema='$schema' and table_name = '$table' and column_name = '$ocolumn'"
-    if ! count=$(mysql -N -B "${cmdargs[@]}" -e "$sql")
+    if ! count=$(mysql -N -B "${@}" -e "${sql}")
     then
         printf 'change_column: schema query failed [%s]\n' "${sql}"
         exit 255
@@ -76,7 +75,7 @@ change_column() {
     if [ "$count" -eq 1 ]
     then
         sql="ALTER TABLE $table CHANGE COLUMN $ocolumn $ncolumn"
-        if ! mysql -N -B "${cmdargs[@]}" -e "$sql"
+        if ! mysql -N -B "${@}" -e "${sql}"
         then
             printf 'change_column: alter query failed [%s]\n' "${sql}"
             exit 255
@@ -497,5 +496,5 @@ EOF
 
 # We need to rename the columns in the option def tables because "array" is
 # a MySQL keyword as of 8.0.17
-change_column "${schema}" dhcp4_option_def array "is_array TINYINT(1) NOT NULL"
-change_column "${schema}" dhcp6_option_def array "is_array TINYINT(1) NOT NULL"
+change_column "${schema}" dhcp4_option_def array "is_array TINYINT(1) NOT NULL" "${@}"
+change_column "${schema}" dhcp6_option_def array "is_array TINYINT(1) NOT NULL" "${@}"
