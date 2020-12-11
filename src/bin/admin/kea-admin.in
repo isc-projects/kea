@@ -220,7 +220,6 @@ mysql_init() {
     # mysql may spit out connection or access errors to stderr, we ignore those.
     # We should not hide them as they may give hints to user what is wrong with
     # his setup.
-    #
     run_and_return_output_and_exit_code \
         mysql_execute "SHOW TABLES;"
     if [ "${EXIT_CODE}" -ne 0 ]
@@ -229,7 +228,7 @@ mysql_init() {
         exit 1
     fi
 
-    count=$(wc -w <<<"${OUTPUT}")
+    count=$(printf '%s' "${OUTPUT}" | wc -w)
     if [ "${count}" -gt 0 ]; then
         # Let's start with a new line. mysql could have printed something out.
         printf '\n'
@@ -270,8 +269,9 @@ pgsql_init() {
         exit 1
     fi
 
-    count=$(wc -w <<<"${OUTPUT}")
+    count=$(printf '%s' "${OUTPUT}" | wc -w)
     if [ "${count}" -gt 0 ]; then
+        # Let's start with a new line. pgsql could have printed something out.
         printf '\n'
         log_error "Expected empty database ${db_name}. Aborting, the following tables are present:
         ${OUTPUT}"
@@ -301,7 +301,7 @@ cql_init() {
     # Shellcheck complaints about missing quotes and word splitting here. There
     # is no problem here as wc -w always returns a single number.
     # shellcheck disable=SC2046
-    if test "$(grep -c "<empty>" <<<"${OUTPUT}")" -gt 0; then
+    if test "$(printf '%s' "${OUTPUT}" | grep -c '<empty>')" -gt 0; then
         printf 'Creating and initializing tables using script %s...\n' "${scripts_dir}/cql/dhcpdb_create.cql"
         cql_execute_script "${scripts_dir}/cql/dhcpdb_create.cql"
     else
