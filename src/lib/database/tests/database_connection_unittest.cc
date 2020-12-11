@@ -328,7 +328,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbFailedCallback) {
 TEST(DatabaseConnectionTest, parse) {
 
     DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(
-        "user=me password=forbidden name=kea somethingelse= type=mysql");
+        "user=me password='forbidden' name=kea somethingelse= type=mysql");
 
     EXPECT_EQ(5, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
@@ -336,6 +336,64 @@ TEST(DatabaseConnectionTest, parse) {
     EXPECT_EQ("kea", parameters["name"]);
     EXPECT_EQ("mysql", parameters["type"]);
     EXPECT_EQ("", parameters["somethingelse"]);
+}
+
+// This test checks that it is allowed to specify password including whitespaces
+// assuming that the password is enclosed in ''.
+TEST(DatabaseConnectionTest, parsePasswordWithWhitespace) {
+
+    // Case 1: password in the middle.
+    DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(
+        "user=me password='forbidden with space' name=kea type=mysql");
+
+    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ("me", parameters["user"]);
+    EXPECT_EQ("forbidden with space", parameters["password"]);
+    EXPECT_EQ("kea", parameters["name"]);
+    EXPECT_EQ("mysql", parameters["type"]);
+
+    // Case 2: password at the end.
+    parameters = DatabaseConnection::parse("user=me name=kea type=mysql password='forbidden with space'");
+
+    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ("me", parameters["user"]);
+    EXPECT_EQ("forbidden with space", parameters["password"]);
+    EXPECT_EQ("kea", parameters["name"]);
+    EXPECT_EQ("mysql", parameters["type"]);
+
+    // Case 3: Empty password at the end.
+    parameters = DatabaseConnection::parse("user=me name=kea type=mysql password=''");
+
+    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ("me", parameters["user"]);
+    EXPECT_EQ("", parameters["password"]);
+    EXPECT_EQ("kea", parameters["name"]);
+    EXPECT_EQ("mysql", parameters["type"]);
+
+    // Case 4: password at the beginning.
+    parameters = DatabaseConnection::parse("password='forbidden with space' user=me name=kea type=mysql");
+
+    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ("me", parameters["user"]);
+    EXPECT_EQ("forbidden with space", parameters["password"]);
+    EXPECT_EQ("kea", parameters["name"]);
+    EXPECT_EQ("mysql", parameters["type"]);
+
+    // Case 5: Empty password at the beginning.
+    parameters = DatabaseConnection::parse("password='' user=me name=kea type=mysql");
+
+    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ("me", parameters["user"]);
+    EXPECT_EQ("", parameters["password"]);
+    EXPECT_EQ("kea", parameters["name"]);
+    EXPECT_EQ("mysql", parameters["type"]);
+
+
+    // Case 6: Password is a sole parameter.
+    parameters = DatabaseConnection::parse("password='forbidden with spaces'");
+
+    EXPECT_EQ(1, parameters.size());
+    EXPECT_EQ("forbidden with spaces", parameters["password"]);
 }
 
 // This test checks that an invalid database access string behaves as expected.

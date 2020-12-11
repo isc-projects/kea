@@ -105,6 +105,7 @@ DbAccessParser::parse(std::string& access_string,
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(max_row_errors);
             } else {
+
                 // all remaining string parameters
                 // type
                 // user
@@ -259,7 +260,11 @@ DbAccessParser::getDbAccessString() const {
             }
 
             // Add the keyword/value pair to the access string.
-            dbaccess += (keyval.first + std::string("=") + keyval.second);
+            auto val = keyval.second;
+            if (val.find_first_of("\t ") != string::npos){
+                val = "'" + val + "'";
+            }
+            dbaccess += (keyval.first + std::string("=") + val);
         }
     }
 

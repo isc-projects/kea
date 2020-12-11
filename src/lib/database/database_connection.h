@@ -216,7 +216,8 @@ public:
     /// @brief Parse database access string
     ///
     /// Parses the string of "keyword=value" pairs and separates them
-    /// out into the map.
+    /// out into the map. A value of the password parameter may include
+    /// whitespace in which case it must be surrounded by apostrophes.
     ///
     /// @param dbaccess Database access string.
     ///

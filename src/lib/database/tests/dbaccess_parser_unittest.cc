@@ -663,6 +663,7 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
     const char* config[] = {"type",     "mysql",
                             "host",     "",
                             "name",     "keatest",
+                            "password", "password with spaces",
                             NULL};
 
     string json_config = toJson(config);
@@ -678,7 +679,7 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
     // String should be either "type=mysql name=keatest" or
     // "name=keatest type=mysql". The "host" entry is null, so should not be
     // output.
-    EXPECT_EQ(dbaccess, "name=keatest type=mysql");
+    EXPECT_EQ(dbaccess, "name=keatest password='password with spaces' type=mysql");
 }
 
 // Check that the configuration is accepted for the valid value

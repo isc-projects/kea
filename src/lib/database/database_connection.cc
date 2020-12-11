@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <database/db_log.h>
 #include <database/db_messages.h>
 #include <exceptions/exceptions.h>
+#include <util/strutil.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -36,26 +37,61 @@ DatabaseConnection::getParameter(const std::string& name) const {
 DatabaseConnection::ParameterMap
 DatabaseConnection::parse(const std::string& dbaccess) {
     DatabaseConnection::ParameterMap mapped_tokens;
+    std::string dba = dbaccess;
 
-    if (!dbaccess.empty()) {
-        vector<string> tokens;
+    if (!dba.empty()) {
+        try {
+            vector<string> tokens;
 
-        // We need to pass a string to is_any_of, not just char*. Otherwise
-        // there are cryptic warnings on Debian6 running g++ 4.4 in
-        // /usr/include/c++/4.4/bits/stl_algo.h:2178 "array subscript is above
-        // array bounds"
-        boost::split(tokens, dbaccess, boost::is_any_of(string("\t ")));
-        BOOST_FOREACH(std::string token, tokens) {
-            size_t pos = token.find("=");
-            if (pos != string::npos) {
-                string name = token.substr(0, pos);
-                string value = token.substr(pos + 1);
-                mapped_tokens.insert(make_pair(name, value));
-            } else {
-                DB_LOG_ERROR(DB_INVALID_ACCESS).arg(dbaccess);
-                isc_throw(InvalidParameter, "Cannot parse " << token
-                          << ", expected format is name=value");
+            // Handle the special case of a password which is enclosed in apostrophes.
+            // Such password may include whitespace.
+            std::string password_prefix = "password='";
+            auto password_pos = dba.find(password_prefix);
+            if (password_pos != string::npos) {
+                // Password starts with apostrophe, so let's find ending apostrophe.
+                auto password_end_pos = dba.find('\'', password_pos + password_prefix.length());
+                if (password_end_pos == string::npos) {
+                    // No ending apostrophe. This is wrong.
+                    isc_throw(InvalidParameter, "Apostrophe (') expected at the end of password");
+                }
+                // Extract the password value. It starts after the password=' prefix and ends
+                // at the position of ending apostrophe.
+                auto password = dba.substr(password_pos + password_prefix.length(),
+                                           password_end_pos - password_pos - password_prefix.length());
+                mapped_tokens.insert(make_pair("password", password));
+
+                // We need to erase the password from the access string because the generic
+                // algorithm parsing other parameters requires that there are no whitespaces
+                // within the parameter values.
+                dba.erase(password_pos, password_prefix.length() + password.length() + 2);
+                // Leaing or trailing whitespace may remain after the password removal.
+                dba = util::str::trim(dba);
+                // If the password was the only parameter in the access string, there is
+                // nothing more to do.
+                if (dba.empty()) {
+                    return (mapped_tokens);
+                }
             }
+
+            // We need to pass a string to is_any_of, not just char*. Otherwise
+            // there are cryptic warnings on Debian6 running g++ 4.4 in
+            // /usr/include/c++/4.4/bits/stl_algo.h:2178 "array subscript is above
+            // array bounds"
+            boost::split(tokens, dba, boost::is_any_of(string("\t ")));
+            BOOST_FOREACH(std::string token, tokens) {
+                size_t pos = token.find("=");
+                if (pos != string::npos) {
+                    string name = token.substr(0, pos);
+                    string value = token.substr(pos + 1);
+                    mapped_tokens.insert(make_pair(name, value));
+                } else {
+                    isc_throw(InvalidParameter, "Cannot parse " << token
+                              << ", expected format is name=value");
+                }
+            }
+        } catch (const std::exception& ex) {
+            DB_LOG_ERROR(DB_INVALID_ACCESS).arg(dbaccess);
+            throw;
         }
     }
 
