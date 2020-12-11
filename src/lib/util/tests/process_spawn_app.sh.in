@@ -30,7 +30,7 @@ set -eu
 
 exit_code=
 
-while [ -n "${1+x}" ]
+while test "${#}" -gt 0
 do
     option=${1}
     case ${option} in
