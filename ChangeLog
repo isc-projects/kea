@@ -1,3 +1,8 @@
+1846.	[build]		razvan
+	Library version numbers bumped for Kea 1.9.3 development
+	version.
+	(Gitlab #1605)
+
 1845.	[func]		marcin
 	Kea configuration now allows for using database passwords
 	which include whitespace.
