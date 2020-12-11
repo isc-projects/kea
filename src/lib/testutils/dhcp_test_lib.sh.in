@@ -808,7 +808,9 @@ version_test() {
         long_version='--version'
     fi
 
-    for v in -v "${long_version}"; do
+    # Keep ${long_version} unquoted so that it is not included as an empty
+    # string if not given as argument.
+    for v in -v ${long_version}; do
         run_command \
             "${bin_path}/${bin}" "${v}"
 
