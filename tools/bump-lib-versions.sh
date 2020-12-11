@@ -68,8 +68,8 @@ test -z "${old_release_tag+x}" && error '$old_release_tag is mandatory'
 test -z "${new_release_tag+x}" && error '$new_release_tag is mandatory'
 
 is_stable_release() {
-  local version=$(printf '%s' "${1}" | cut -d . -f2)
-  if test $((version % 2)) -eq 0; then
+  version_number=$(printf '%s' "${1}" | cut -d . -f2)
+  if test $((version_number % 2)) -eq 0; then
     return 0
   else
     return 1
@@ -77,7 +77,7 @@ is_stable_release() {
 }
 
 find_latest_stable_release_tag() {
-  local tag_pattern=${1}
+  tag_pattern=${1}
   for version in $(git tag | grep -F "${tag_pattern}" | tac); do
     if is_stable_release "${version}"; then
       printf '%s' "${version}"
