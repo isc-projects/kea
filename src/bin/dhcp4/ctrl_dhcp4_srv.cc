@@ -583,7 +583,7 @@ ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&,
         }
     }
 
-    // No error occurred, so let's disable the service.
+    // No error occurred, so let's enable the service.
     if (message.tellp() == 0) {
         network_state_->enableService(type);
 
