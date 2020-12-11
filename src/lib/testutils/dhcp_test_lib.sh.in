@@ -539,6 +539,15 @@ cleanup() {
     kill_processes_by_name "kea-lfc"
 
     # Remove temporary files.
+    remove_if_exists \
+        "${CA_CFG_FILE-}" \
+        "${CFG_FILE-}" \
+        "${D2_CFG_FILE-}" \
+        "${DHCP4_CFG_FILE-}" \
+        "${DHCP6_CFG_FILE-}" \
+        "${KEACTRL_CFG_FILE-}" \
+        "${NC_CFG_FILE-}"
+
     # Use ${var+x} to test if ${var} is defined.
     if test -n "${LOG_FILE+x}" && test -n "${LOG_FILE}"; then
         rm -rf "${LOG_FILE}"
@@ -549,27 +558,6 @@ cleanup() {
     # appended to the lease file name.
     if test -n "${LEASE_FILE+x}" && test -n "${LEASE_FILE}"; then
         rm -rf "${LEASE_FILE}"*
-    fi
-    if test -n "${CFG_FILE+x}" && test -n "${CFG_FILE}"; then
-        rm -rf "${CFG_FILE}"
-    fi
-    if test -n "${DHCP4_CFG_FILE+x}" && test -n "${DHCP4_CFG_FILE}"; then
-        rm -rf "${DHCP4_CFG_FILE}"
-    fi
-    if test -n "${DHCP6_CFG_FILE+x}" && test -n "${DHCP6_CFG_FILE}"; then
-        rm -rf "${DHCP6_CFG_FILE}"
-    fi
-    if test -n "${D2_CFG_FILE+x}" && test -n "${D2_CFG_FILE}"; then
-        rm -rf "${D2_CFG_FILE}"
-    fi
-    if test -n "${CA_CFG_FILE+x}" && test -n "${CA_CFG_FILE}"; then
-        rm -rf "${CA_CFG_FILE}"
-    fi
-    if test -n "${NC_CFG_FILE+x}" && test -n "${NC_CFG_FILE}"; then
-        rm -rf "${NC_CFG_FILE}"
-    fi
-    if test -n "${KEACTRL_CFG_FILE+x}" && test -n "${KEACTRL_CFG_FILE}"; then
-        rm -rf "${KEACTRL_CFG_FILE}"
     fi
 }
 
