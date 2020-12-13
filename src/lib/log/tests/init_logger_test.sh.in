@@ -35,7 +35,6 @@ passfail() {
 
 printf '1. Checking that KEA_LOGGER_SEVERITY/KEA_LOGGER_DBGLEVEL work\n'
 
-set +e
 printf '   - severity=DEBUG, dbglevel=99: '
 cat > $tempfile << .
 DEBUG [kea.log] LOG_BAD_DESTINATION unrecognized log destination: debug-0
