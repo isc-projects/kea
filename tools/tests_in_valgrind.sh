@@ -45,7 +45,8 @@ FAILED=
 
 # Find all the tests (yes, doing it by a name is a nasty hack)
 # Since the while runs in a subprocess, we need to get the assignments out, done by the eval
-find . -type f -name '*_unittests' -print | grep -Fv '.libs/' | while read -r testname ; do
+set -x
+for testname in $(find . -type f -name '*_unittests' -print | grep -Fv '.libs/'); do
     sed -e 's#exec "#exec valgrind '"$FLAGS"' "#' "$testname" > "$testname.valgrind"
     chmod +x "$testname.valgrind"
     echo "$testname" >>"$LOGFILE"
@@ -54,23 +55,19 @@ find . -type f -name '*_unittests' -print | grep -Fv '.libs/' | while read -r te
     cd "$(dirname "$testname")"
     "./$(basename "$testname").valgrind" >&2 &
     PID="$!"
-    set +e
-    wait "$PID"
-    CODE="$?"
-    set -e
     cd "$OLDDIR"
-    if [ "$CODE" != 0 ] ; then
+    if ! wait "$PID"; then
         printf 'FAILED="%s
 %s"' "${FAILED}" "${testname}"
     fi
     NAME="$LOGFILE.$PID"
     rm "$testname.valgrind"
     # Remove the ones from death tests
-    if [ -e "${NAME}" ]; then
+    if test -e "${NAME}"; then
         grep "==$PID==" "$NAME" >>"$LOGFILE"
         rm "$NAME"
     fi
-    echo 'FOUND_ANY=true'
+    FOUND_ANY=true
 done
 
 if test -n "$FAILED"; then
@@ -78,7 +75,7 @@ if test -n "$FAILED"; then
     echo "$FAILED" >&2
 fi
 
-if ! $FOUND_ANY ; then
+if ! $FOUND_ANY; then
     echo "No test was found. It is possible you configured without --with-gtest or you run it from wrong directory" >&2
     exit 1
 fi
