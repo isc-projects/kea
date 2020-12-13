@@ -30,6 +30,14 @@ EXPECTED_VERSION="@PACKAGE_VERSION@"
 # A list of Kea processes, mainly used by the cleanup functions.
 KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns kea-ctrl-agent"
 
+### Colors ###
+
+if test -t 1; then
+  green='\033[92m'
+  red='\033[91m'
+  reset='\033[0m'
+fi
+
 ### Logging functions ###
 
 # Prints error message.
@@ -149,21 +157,25 @@ run_command() {
 # Enable traps to print FAILED status when a command fails unexpectedly or when
 # the user sends a SIGINT. Used in `test_start`.
 traps_on() {
-  for t in HUP INT QUIT KILL TERM EXIT; do
-      trap "
-        exit_code=\${?}
-        printf '\033[91m[  FAILED  ]\033[0m %s (exit code: %d)\n' \
-            \"\${TEST_NAME}\" \"\${exit_code}\"
-      " "${t}"
-  done
+    for t in HUP INT QUIT KILL TERM EXIT; do
+        # shellcheck disable=SC2064
+        # SC2064: Use single quotes, otherwise this expands now rather than when signalled.
+        # reason: we want ${red-} and ${reset-} to expand here, at trap-time
+        # they will be empty or have other values
+        trap "
+            exit_code=\${?}
+            printf '${red-}[  FAILED  ]${reset-} %s (exit code: %d)\n' \
+                \"\${TEST_NAME}\" \"\${exit_code}\"
+        " "${t}"
+    done
 }
 
 # Disable traps so that a double status is not printed. Used in `test_finish`
 # after the status has been printed explicitly.
 traps_off() {
-  for t in HUP INT QUIT KILL TERM EXIT; do
-      trap - "${t}"
-  done
+    for t in HUP INT QUIT KILL TERM EXIT; do
+        trap - "${t}"
+    done
 }
 
 # Begins a test by printing its name.
@@ -178,7 +190,7 @@ test_start() {
     traps_on
 
     # Announce test start.
-    printf '\033[92m[ RUN      ]\033[0m %s\n' "${TEST_NAME}"
+    printf "${green-}[ RUN      ]${reset-} %s\n" "${TEST_NAME}"
 }
 
 # Prints test result an cleans up after the test.
@@ -186,7 +198,7 @@ test_finish() {
     local exit_code=${1}  # Exit code to be returned by the exit function.
     if [ "${exit_code}" -eq 0 ]; then
         cleanup
-        printf '\033[92m[       OK ]\033[0m %s\n' "${TEST_NAME}"
+        printf "${green-}[       OK ]${reset-}%s\n" "${TEST_NAME}"
     else
         # Dump log file for debugging purposes if specified and exists.
         # Otherwise the code below would simply call cat.
@@ -196,7 +208,7 @@ test_finish() {
             cat "${LOG_FILE}"
         fi
         cleanup
-        printf '\033[91m[  FAILED  ]\033[0m %s\n' "${TEST_NAME}"
+        printf "${red-}[  FAILED  ]${reset-} %s\n" "${TEST_NAME}"
     fi
 
     # Reset traps.
