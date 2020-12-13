@@ -112,7 +112,9 @@ initializer_unittests_1_LDFLAGS  = $(TESTSLDFLAGS)
 noinst_PROGRAMS += $(TESTS)
 endif
 
-noinst_SCRIPTS  = console_test.sh
+noinst_SCRIPTS  =
+noinst_SCRIPTS += buffer_logger_test.sh
+noinst_SCRIPTS += console_test.sh
 noinst_SCRIPTS += destination_test.sh
 noinst_SCRIPTS += init_logger_test.sh
 noinst_SCRIPTS += local_file_test.sh
@@ -124,10 +126,10 @@ noinst_SCRIPTS += severity_test.sh
 # output needs to be compared with stored output (where "cut" and
 # "diff" are useful utilities).
 check-local:
+	$(SHELL) $(abs_builddir)/buffer_logger_test.sh
 	$(SHELL) $(abs_builddir)/console_test.sh
 	$(SHELL) $(abs_builddir)/destination_test.sh
 	$(SHELL) $(abs_builddir)/init_logger_test.sh
-	$(SHELL) $(abs_builddir)/buffer_logger_test.sh
 	$(SHELL) $(abs_builddir)/local_file_test.sh
 	$(SHELL) $(abs_builddir)/logger_lock_test.sh
 	$(SHELL) $(abs_builddir)/severity_test.sh

@@ -13,25 +13,14 @@
 # used.
 set -eu
 
-# Allow non-zero exit codes to be explicitly checked in this test.
-set +e
+# Include common test library.
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
-testname="Severity test"
-printf '%s\n' "${testname}"
-
-failcount=0
 tempfile="@abs_builddir@/severity_test_tempfile_$$"
 
-passfail() {
-    if [ "${1}" -eq 0 ]; then
-        printf ' pass\n'
-    else
-        printf ' FAIL\n'
-        failcount=$((failcount + $1))
-    fi
-}
-
-printf '1. Default parameters:'
+test_start 'severity.default-parameters'
 cat > $tempfile << .
 FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
 ERROR [example] LOG_READING_LOCAL_FILE reading local message file dummy/file
@@ -46,9 +35,9 @@ INFO  [example.beta] LOG_READ_ERROR error reading from message file beta: info
 ./logger_example -c stdout | \
     sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
-passfail $?
+test_finish $?
 
-printf '2. Severity filter:'
+test_start 'severity.filter'
 cat > $tempfile << .
 FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
 ERROR [example] LOG_READING_LOCAL_FILE reading local message file dummy/file
@@ -58,9 +47,9 @@ ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_erro
 ./logger_example -c stdout -s error | \
     sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
-passfail $?
+test_finish $?
 
-printf '3. Debug level:'
+test_start 'severity.debug-level'
 cat > $tempfile << .
 FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
 ERROR [example] LOG_READING_LOCAL_FILE reading local message file dummy/file
@@ -79,17 +68,7 @@ DEBUG [example.beta] LOG_BAD_SEVERITY unrecognized log severity: beta/25
 ./logger_example -c stdout -s debug -d 25 | \
     sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
-passfail $?
-
-if [ $failcount -eq 0 ]; then
-    printf 'PASS: %s\n' "$testname"
-elif [ $failcount -eq 1 ]; then
-    printf 'FAIL: %s - 1 test failed\n' "$testname"
-else
-    printf 'FAIL: %s - %s tests failed\n' "$testname" "$failcount"
-fi
+test_finish $?
 
 # Tidy up
 rm -f $tempfile
-
-exit $failcount

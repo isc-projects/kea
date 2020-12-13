@@ -13,27 +13,16 @@
 # used.
 set -eu
 
-# Allow non-zero exit codes to be explicitly checked in this test.
-set +e
+# Include common test library.
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
-testname="bufferLogger test"
-printf '%s\n' "${testname}"
-
-failcount=0
 tempfile="@abs_builddir@/buffer_logger_test_tempfile_$$"
 
-passfail() {
-    if [ "${1}" -eq 0 ]; then
-        printf ' pass\n'
-    else
-        printf ' FAIL\n'
-        failcount=$((failcount + $1))
-    fi
-}
+printf 'Checking that buffer initialization works:\n'
 
-printf '1. Checking that buffer initialization works\n'
-
-printf '   - Buffer including process() call: '
+test_start 'buffer-logger.buffer-including-process()-call'
 cat > $tempfile << .
 INFO  [buffertest.log] LOG_BAD_SEVERITY unrecognized log severity: info
 INFO  [buffertest.log] LOG_BAD_SEVERITY unrecognized log severity: info
@@ -41,18 +30,16 @@ INFO  [buffertest.log] LOG_BAD_SEVERITY unrecognized log severity: info
 ./buffer_logger_test 2>&1 | \
     sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
-passfail $?
+test_finish 0
 
-printf '   - Buffer excluding process() call: '
+test_start 'buffer-logger.buffer-excluding-process()-call'
 cat > $tempfile << .
 INFO [buffertest.log]: LOG_BAD_SEVERITY unrecognized log severity: info
 DEBUG [buffertest.log]: LOG_BAD_DESTINATION unrecognized log destination: debug-50
 INFO [buffertest.log]: LOG_BAD_SEVERITY unrecognized log severity: info
 .
 ./buffer_logger_test -n 2>&1 | diff $tempfile -
-passfail $?
+test_finish 0
 
 # Tidy up.
 rm -f $tempfile
-
-exit $failcount

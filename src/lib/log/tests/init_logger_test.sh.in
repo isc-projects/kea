@@ -13,29 +13,18 @@
 # used.
 set -eu
 
-# Allow non-zero exit codes to be explicitly checked in this test.
-set +e
+# Include common test library.
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
-testname="initLogger test"
-printf '%s\n' "${testname}"
-
-failcount=0
 tempfile="@abs_builddir@/init_logger_test_tempfile_$$"
 destfile_tmp="@abs_builddir@/init_logger_test_destfile_tmp_$$"
 destfile="@abs_builddir@/init_logger_test_destfile_$$"
 
-passfail() {
-    if [ "${1}" -eq 0 ]; then
-        printf ' pass\n'
-    else
-        printf ' FAIL\n'
-        failcount=$((failcount + $1))
-    fi
-}
+printf '1. Checking that KEA_LOGGER_SEVERITY/KEA_LOGGER_DBGLEVEL work:\n'
 
-printf '1. Checking that KEA_LOGGER_SEVERITY/KEA_LOGGER_DBGLEVEL work\n'
-
-printf '   - severity=DEBUG, dbglevel=99: '
+test_start 'init-logger.severity=DEBUG,dbglevel=99'
 cat > $tempfile << .
 DEBUG [kea.log] LOG_BAD_DESTINATION unrecognized log destination: debug-0
 DEBUG [kea.log] LOG_BAD_DESTINATION unrecognized log destination: debug-50
@@ -48,9 +37,9 @@ FATAL [kea.log] LOG_NO_MESSAGE_ID line fatal: message definition line found with
 KEA_LOGGER_DESTINATION=stdout KEA_LOGGER_SEVERITY=DEBUG KEA_LOGGER_DBGLEVEL=99 ./init_logger_test | \
     sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
-passfail $?
+test_finish $?
 
-printf '   - severity=DEBUG, dbglevel=50: '
+test_start 'init-logger.severity=DEBUG,dbglevel=50'
 cat > $tempfile << .
 DEBUG [kea.log] LOG_BAD_DESTINATION unrecognized log destination: debug-0
 DEBUG [kea.log] LOG_BAD_DESTINATION unrecognized log destination: debug-50
@@ -62,9 +51,9 @@ FATAL [kea.log] LOG_NO_MESSAGE_ID line fatal: message definition line found with
 KEA_LOGGER_DESTINATION=stdout KEA_LOGGER_SEVERITY=DEBUG KEA_LOGGER_DBGLEVEL=50 ./init_logger_test | \
     sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
-passfail $?
+test_finish $?
 
-printf '   - severity=WARN: '
+test_start 'init-logger.severity=WARN'
 cat > $tempfile << .
 WARN  [kea.log] LOG_BAD_STREAM bad log console output stream: warn
 ERROR [kea.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in compiled code
@@ -73,11 +62,11 @@ FATAL [kea.log] LOG_NO_MESSAGE_ID line fatal: message definition line found with
 KEA_LOGGER_DESTINATION=stdout KEA_LOGGER_SEVERITY=WARN ./init_logger_test | \
     sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
-passfail $?
+test_finish $?
 
-printf '2. Checking that KEA_LOGGER_DESTINATION works\n'
+printf '2. Checking that KEA_LOGGER_DESTINATION works:\n'
 
-printf '   - stdout: '
+test_start 'init-logger.stdout'
 cat > $tempfile << .
 FATAL [kea.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
 .
@@ -85,33 +74,23 @@ rm -f $destfile_tmp $destfile
 KEA_LOGGER_SEVERITY=FATAL KEA_LOGGER_DESTINATION=stdout ./init_logger_test 1> $destfile_tmp
 sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' < $destfile_tmp > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
-passfail $?
+test_finish $?
 
-printf '   - stderr: '
+test_start 'init-logger.stderr'
 rm -f $destfile_tmp $destfile
 KEA_LOGGER_SEVERITY=FATAL KEA_LOGGER_DESTINATION=stderr ./init_logger_test 2> $destfile_tmp
 sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' < $destfile_tmp > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
-passfail $?
+test_finish $?
 
-printf '   - file: '
+test_start 'init-logger.file'
 rm -f $destfile_tmp $destfile
 KEA_LOGGER_SEVERITY=FATAL KEA_LOGGER_DESTINATION=$destfile_tmp ./init_logger_test
 sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' < $destfile_tmp > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
-passfail $?
+test_finish $?
 
 # Note: can't automatically test syslog output.
 
-if [ $failcount -eq 0 ]; then
-    printf 'PASS: %s\n' "${testname}"
-elif [ $failcount -eq 1 ]; then
-    printf 'FAIL: %s - 1 test failed\n' "${testname}"
-else
-    printf 'FAIL: %s - %s tests failed\n' "${testname}" "${failcount}"
-fi
-
 # Tidy up.
 rm -f $tempfile $destfile_tmp $destfile
-
-exit $failcount

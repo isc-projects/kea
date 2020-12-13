@@ -12,29 +12,19 @@
 # used.
 set -eu
 
-# Allow non-zero exit codes to be explicitly checked in this test.
-set +e
+# Include common test library.
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
-testname="Destination test"
-printf '%s\n' "${testname}"
-
-failcount=0
 tempfile="@abs_builddir@/destination_test_tempfile_$$"
 destfile1_tmp="@abs_builddir@/destination_test_destfile_1_tmp_$$"
 destfile2_tmp="@abs_builddir@/destination_test_destfile_2_tmp_$$"
 destfile1="@abs_builddir@/destination_test_destfile_1_$$"
 destfile2="@abs_builddir@/destination_test_destfile_2_$$"
 
-passfail() {
-    if [ "${1}" -eq 0 ]; then
-        printf ' pass\n'
-    else
-        printf ' FAIL\n'
-        failcount=$((failcount + $1))
-    fi
-}
+printf '1. One logger, multiple destinations:\n'
 
-echo "1. One logger, multiple destinations:"
 cat > $tempfile << .
 FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
 ERROR [example] LOG_READING_LOCAL_FILE reading local message file dummy/file
@@ -49,18 +39,18 @@ sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1
 sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1,\}\)\]/[\1]/' < $destfile2_tmp > $destfile2
 # strip the thread ids
 
-printf '   - destination 1:'
+test_start 'logger-destination.one-logger-file-1'
 cut -d' ' -f3- $destfile1 | diff $tempfile -
-passfail $?
+test_finish $?
 
-printf '   - destination 2:'
+test_start 'logger-destination.one-logger-file-2'
 cut -d' ' -f3- $destfile2 | diff $tempfile -
-passfail $?
+test_finish $?
 
 # Tidy up.
 rm -f $tempfile $destfile1_tmp $destfile2_tmp $destfile1 $destfile2
 
-printf '2. Two loggers, different destinations and severities\n'
+printf '2. Two loggers, different destinations and severities:\n'
 rm -f $destfile1 $destfile2
 ./logger_example -l example -s info -f $destfile1_tmp -l alpha -s warn -f $destfile2_tmp
 
@@ -71,6 +61,7 @@ sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\.\(0x\)\{0,1\}\([0-9A-Fa-f]\{1
 # All output for example and example.beta should have gone to destfile1.
 # Output for example.alpha should have done to destfile2.
 
+test_start 'logger-destination.multiples-loggers-file-1'
 cat > $tempfile << .
 FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
 ERROR [example] LOG_READING_LOCAL_FILE reading local message file dummy/file
@@ -80,25 +71,15 @@ ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_erro
 WARN  [example.beta] LOG_BAD_STREAM bad log console output stream: beta_warn
 INFO  [example.beta] LOG_READ_ERROR error reading from message file beta: info
 .
-printf '   - destination 1:'
 cut -d' ' -f3- $destfile1 | diff $tempfile -
-passfail $?
+test_finish $?
 
-printf '   - destination 2:'
+test_start 'logger-destination.multiples-loggers-file-2'
 cat > $tempfile << .
 WARN  [example.alpha] LOG_READ_ERROR error reading from message file a.txt: dummy reason
 .
 cut -d' ' -f3- $destfile2 | diff $tempfile -
-passfail $?
-if [ $failcount -eq 0 ]; then
-    echo "PASS: $testname"
-elif [ $failcount -eq 1 ]; then
-    echo "FAIL: $testname - 1 test failed"
-else
-    echo "FAIL: $testname - $failcount tests failed"
-fi
+test_finish $?
 
 # Tidy up.
 rm -f $tempfile $destfile1_tmp $destfile2_tmp $destfile1 $destfile2
-
-exit $failcount
