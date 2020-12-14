@@ -27,6 +27,7 @@ clean_up() {
     remove_if_exists \
         "${config_file-}" \
         "${csv-}" \
+        "${csv_2-}" \
         "${KEA_LOCKFILE_DIR-}" \
         "${KEA_PIDFILE_DIR-}"
 }
@@ -163,6 +164,7 @@ memfile_upgrade_test() {
         csv=$(csv_file "${v}")
         "incomplete_memfile_header_v${v}" > "${csv}"
         printf '\n' >> "${csv}"
+        csv_2="${csv}.2"
 
         "${kea_lfc}" "-${v}" \
             -c 'ignored-path' \
@@ -170,9 +172,9 @@ memfile_upgrade_test() {
             -i "${csv}" \
             -o "${csv}.output" \
             -p "${csv}.pid" \
-            -x "${csv}.2"
+            -x "${csv_2}"
 
-        content=$(cat "${csv}.2")
+        content=$(cat "${csv_2}")
         expected=$(memfile_header_v${v})
         if test "${content}" != "${expected}"; then
             printf 'ERROR: %s does not contain expected header.\n< %s\n> %s\n' \
