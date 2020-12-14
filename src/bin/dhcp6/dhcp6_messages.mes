@@ -151,6 +151,12 @@ lease and other information.
 This is an informational message indicating that connectivity to either the
 lease or host database or both and that automatic reconnect is not enabled.
 
+% DHCP6_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!
+This error indicates that the server is shutting down after failing to reconnect to
+the lease and/or host database(s) after making the maximum configured number
+of reconnect attempts.  Loss of connectivity is typically a network or database
+server issue.
+
 % DHCP6_DB_RECONNECT_LOST_CONNECTION database connection lost.
 This info message indicates that the connection has been lost and the dhcp
 service has been disabled in order to try to recover the connection.
@@ -164,12 +170,6 @@ should be reported.
 % DHCP6_DB_RECONNECT_SUCCEEDED database connection recovered.
 This info message indicates that the connection has been recovered and the dhcp
 service has been restored.
-
-% DHCP6_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!
-This error indicates that the server is shutting down after failing to reconnect to
-the lease and/or host database(s) after making the maximum configured number
-of reconnect attempts.  Loss of connectivity is typically a network or database
-server issue.
 
 % DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST created name change request: %1
 This debug message is logged when the new Name Change Request has been created

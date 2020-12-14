@@ -1,3 +1,5 @@
+Kea 1.9.3 (development) released on Dec 16, 2020
+
 1847.	[bug]		andrei
 	Harden shell scripts and fix some of the resulted test failures.
 	* #!/bin/sh for all scripts
@@ -31,9 +33,9 @@
 	(Gitlab #1508)
 
 1842.	[func]		razvan
-	Fixed the db connection reconnect implemenation to honor
+	Fixed the db connection reconnect implementation to honor
 	each connection backend configuration. The most important
-	improvement is that only the affected mananger will be
+	improvement is that only the affected manager will be
 	recreated when a connection is lost. Previously, even
 	managers which were not affected had to be recreated on
 	any connection loss. Also fixed an issue with recovery
