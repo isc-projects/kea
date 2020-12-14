@@ -423,8 +423,8 @@ get_process_name() {
 # Wait for file to be created.
 wait_for_file() {
     local file=${1}
-    timeout='4 seconds'
-    deadline=$(date +%s -d "${timeout}")
+    timeout='4' # seconds
+    deadline=$(($(date +%s) + timeout))
     while ! test -f "${file}"; do
         if test "${deadline}" -lt "$(date +%s)"; then
             # Time is up.
@@ -439,8 +439,8 @@ wait_for_file() {
 # Wait for process identified by PID to die.
 wait_for_process_to_die() {
     local pid=${1}
-    timeout='4 seconds'
-    deadline=$(date +%s -d "${timeout}")
+    timeout='4' # seconds
+    deadline=$(($(date +%s) + timeout))
     while ps "${pid}" >/dev/null; do
         if test "${deadline}" -lt "$(date +%s)"; then
             # Time is up.
