@@ -1722,6 +1722,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/stats/tests/Makefile
                  src/lib/testutils/Makefile
                  src/lib/testutils/dhcp_test_lib.sh
+                 src/lib/testutils/xml_reporting_test_lib.sh
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
                  src/lib/util/python/Makefile

@@ -6,6 +6,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
 # shellcheck disable=SC2034
 # SC2034: ... appears unused. Verify use (or export if used externally).
 
@@ -21,6 +24,9 @@
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
+
+# Include XML reporting library.
+. "@abs_top_builddir@/src/lib/testutils/xml_reporting_test_lib.sh"
 
 prefix="@prefix@"
 
@@ -178,6 +184,23 @@ traps_off() {
     done
 }
 
+# Print UNIX time with millisecond resolution.
+get_current_time() {
+    local time
+    time=$(date +%s%3N)
+
+    # In some systems, particularly BSD-based, `+%3N` millisecond resolution is
+    # not supported. It instead prints the literal '3N', but we check for any
+    # alphabetical character. If we do find one, revert to second resolution and
+    # convert to milliseconds.
+    if printf '%s' "${time}" | grep -E '[A-Za-z]' > /dev/null 2>&1; then
+        time=$(date +%s)
+        time=$((1000 * time))
+    fi
+
+    printf '%s' "${time}"
+}
+
 # Begins a test by printing its name.
 test_start() {
     TEST_NAME=${1}
@@ -191,11 +214,24 @@ test_start() {
 
     # Announce test start.
     printf "${green-}[ RUN      ]${reset-} %s\n" "${TEST_NAME}"
+
+    # Start timer in milliseconds.
+    START_TIME=$(get_current_time)
 }
 
 # Prints test result an cleans up after the test.
 test_finish() {
-    local exit_code=${1}  # Exit code to be returned by the exit function.
+    # Exit code to be returned by the exit function
+    local exit_code=${1}
+
+    # Stop timer and set duration.
+    FINISH_TIME=$(get_current_time)
+    local duration
+    duration=$((FINISH_TIME - START_TIME))
+
+    # Add the test result to the XML.
+    report_test_result_in_xml "${TEST_NAME}" "${exit_code}" "${duration}"
+
     if [ "${exit_code}" -eq 0 ]; then
         cleanup
         printf "${green-}[       OK ]${reset-} %s\n" "${TEST_NAME}"

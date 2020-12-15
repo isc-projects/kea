@@ -1,0 +1,327 @@
+#!/bin/sh
+
+# Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# shellcheck disable=SC2039
+# SC2039: In POSIX sh, 'local' is undefined.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+############################### Public functions ###############################
+
+# Add an entry to the XML test report.
+report_test_result_in_xml() {
+    # If GTEST_OUTPUT is not defined...
+    if ! test -n "${GTEST_OUTPUT+x}"; then
+        # There is nowhere to report.
+        return
+    fi
+
+    # Declarations
+    local test_name=${1}; shift
+    local exit_code=${1}; shift
+    local duration=${1}; shift # milliseconds
+    local now
+    local test_case
+    local test_suite
+    local xml
+    now=$(date '+%FT%H:%M:%S')
+    test_suite=$(printf '%s' "${test_name}" | cut -d '.' -f 1)
+    test_case=$(printf '%s' "${test_name}" | cut -d '.' -f 2-)
+
+    # Strip the 'xml:' at the start of GTEST_OUTPUT if it is there.
+    xml="${GTEST_OUTPUT}"
+    if test "$(printf '%s' "${xml}" | cut -c 1-4)" = 'xml:'; then
+        xml=$(printf '%s' "${xml}" | cut -c 5-)
+    fi
+    xml="${xml}/${test_suite}.sh.xml"
+
+    # Convert to seconds, but keep the millisecond precision.
+    duration=$(_calculate "${duration} / 1000.0")
+
+    # For test suites that have a single test case and no name for the test
+    # case, name the test case after the test suite.
+    if test -z "${test_case}"; then
+        test_case="${test_suite}"
+    fi
+
+    # Determine result based on exit code. Googletest seems to omit the failed
+    # tests, instead we are explicitly adding them with a 'failed' result.
+    local result
+    if test "${exit_code}" -eq 0; then
+        result='completed'
+    else
+        result='failed'
+    fi
+
+    _create_xml "${xml}" "${now}"
+
+    _add_test_suite "${test_suite}" "${xml}" "${now}"
+
+    _add_test_case "${test_suite}" "${test_case}" "${duration}" "${result}" \
+        "${xml}" "${now}"
+}
+
+############################## Private functions ###############################
+
+# Add ${string} after ${reference} in ${file}.
+_add_after() {
+    local string=${1}; shift
+    local reference=${1}; shift
+    local file=${1}; shift
+
+    # Escape all slashes.
+    string=$(printf '%s' "${string}" | sed 's#\/#\\\/#g')
+    reference=$(printf '%s' "${reference}" | sed 's#\/#\\\/#g')
+
+    # Escape all spaces. Only trailing spaces need escaped, but that's harder
+    # and this still empirically works.
+    string=$(printf '%s' "${string}" | sed 's#\ #\\\ #g')
+    reference=$(printf '%s' "${reference}" | sed 's#\ #\\\ #g')
+
+    # Add ${string} after ${reference} in ${file}.
+    # The "\\" followed by newline is for BSD support.
+    sed "/${reference}/a\\
+${string}
+" "${file}" > "${file}.tmp"
+    mv "${file}.tmp" "${file}"
+}
+
+# Add ${string} before ${reference} in ${file}.
+_add_before() {
+    local string=${1}; shift
+    local reference=${1}; shift
+    local file=${1}; shift
+
+    # Get the line number of the reference line.
+    local line_number
+    line_number=$(grep -Fn "${reference}" "${file}" | cut -d ':' -f 1)
+
+    # Escape all slashes.
+    string=$(printf '%s' "${string}" | sed 's#\/#\\\/#g')
+    reference=$(printf '%s' "${reference}" | sed 's#\/#\\\/#g')
+
+    # Escape all spaces. Only trailing spaces need escaped, but that's harder
+    # and this still empirically works.
+    string=$(printf '%s' "${string}" | sed 's#\ #\\\ #g')
+    reference=$(printf '%s' "${reference}" | sed 's#\ #\\\ #g')
+
+    # Add ${string} before ${reference} in ${file}.
+    # The "\\" followed by newline is for BSD support.
+    sed "${line_number}i\\
+${string}
+" "${file}" > "${file}.tmp"
+    mv "${file}.tmp" "${file}"
+}
+
+# Add test result if not in file.
+_add_test_case() {
+    local test_suite=${1}; shift
+    local test_case=${1}; shift
+    local result=${1}; shift
+    local duration=${1}; shift
+    local xml=${1}; shift
+    local now=${1}; shift
+
+    # Create the test XML tag.
+    local test_case_line
+    test_case_line=$(printf '    <testcase name="%s" status="run" result="%s" time="%s" timestamp="%s" classname="%s" />' \
+        "${test_case}" "${duration}" "${result}" "${now}" "${test_suite}")
+
+    # Add this test case to all the other test cases and sort them.
+    local all_test_cases
+    all_test_cases=$(_print_lines_between_matching_patterns \
+        "  <testsuite name=\"${test_suite}\"" '  </testsuite>' "${xml}")
+    all_test_cases=$(printf '%s\n%s' "${all_test_cases}" "${test_case_line}")
+
+    _update_test_suite_metrics "${test_suite}" "${all_test_cases}" "${xml}" "${now}"
+
+    # Find the test following this one.
+    local following_line
+    following_line=$(printf '%s' "${all_test_cases}" | \
+        grep -A1 -F "${test_case_line}" | \
+        grep -Fv "${test_case_line}" || true)
+    if test -n "${following_line}"; then
+        # If found, add it before.
+        _add_before "${test_case_line}" "${following_line}" "${xml}"
+        return
+    fi
+
+    # Find the test before this one.
+    local previous_line
+    previous_line=$(printf '%s' "${all_test_cases}" | \
+        grep -B1 -F "${test_case_line}" | \
+        grep -Fv "${test_case_line}" || true)
+    if test -n "${previous_line}"; then
+        # If found, add it after.
+        _add_after "${test_case_line}" "${previous_line}" "${xml}"
+        return
+    fi
+
+    # If neither were found, add it as the first test case following the test
+    # suite line.
+    _add_after "${test_case_line}" "  <testsuite name=\"${test_suite}\"" "${xml}"
+}
+
+# Add a set of test suite tags if not already present in the XML.
+_add_test_suite() {
+    local test_suite=${1}; shift
+    local xml=${1}; shift
+    local now=${1}; shift
+    local test_suite_line
+    local all_test_suites
+
+    # If test suite tag is already there, then there is nothing to do.
+    if grep -F "<testsuite name=\"${test_suite}\"" "${xml}" \
+        > /dev/null 2>&1; then
+        return
+    fi
+
+    # Create the test suite XML tag.
+    local test_suite_line
+    test_suite_line=$(printf '  <testsuite name="%s" tests="0" failures="0" disabled="0" errors="0" time="0" timestamp="%s">' \
+        "${test_suite}" "${now}")
+
+    # Add this test suite to all the other test suites and sort them.
+    local all_test_suites
+    all_test_suites=$(printf '%s\n%s' "  ${test_suite_line}" \
+        "$(grep -E '  <testsuite name=|</testsuites>' "${xml}")")
+
+    # Find the test suite following this one.
+    local following_line
+    following_line=$(printf '%s' "${all_test_suites}" | \
+        grep -A1 -F "${test_suite_line}" | \
+        grep -Fv "${test_suite_line}" || true)
+
+    # Add the test suite tag to the XML.
+    _add_before "${test_suite_line}" "${following_line}" "${xml}"
+    _add_after '  </testsuite>' "${test_suite_line}" "${xml}"
+}
+
+# Calculate the given mathematical expression and print it in a format that
+# matches googletest's time in the XML attribute time="..." which is seconds
+# rounded to 3 decimals.
+_calculate() {
+    local expression=${1}
+    local result
+    result=$(echo "
+
+        # 3 decimals maximum
+        scale = 3
+
+        # Store result.
+        result = ${expression}
+
+        # If subunit, print the leading zero.
+        if (0 < result && result < 1) print 0
+
+        # Print the result.
+        print result
+
+    " | bc)
+
+    # Delete trailing zeros and trailing dot.
+    if printf '%s' "${result}" | grep -F '.' > /dev/null 2>&1; then
+        result=$(printf '%s' "${result}" | sed 's/0*$//g' | sed 's/\.$//g')
+    fi
+
+    printf '%s' "${result}"
+}
+
+# Create XML with header and top-level tags if the file doesn't exist.
+_create_xml() {
+    # If file exists and we have set GTEST_OUTPUT_CREATED previously, then there
+    # is nothing to do.
+    if test -f "${xml}" && test -n "${GTEST_OUTPUT_CREATED+x}"; then
+        return;
+    fi
+
+    local xml=${1}; shift
+    local now=${1}; shift
+
+    mkdir -p "$(dirname "${xml}")"
+    printf \
+'<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="0" failures="0" disabled="0" errors="0" time="0" timestamp="%s" name="AllTests">
+</testsuites>
+' "${now}" > "${xml}"
+
+    # GTEST_OUTPUT_CREATED is not a googletest variable, but our way of allowing
+    # to overwrite XMLs created in a previous test run. The lifetime of
+    # GTEST_OUTPUT_CREATED is extended to the oldest ancestor file who has
+    # sourced this script i.e. the *_test.sh file. So it gets lost from one
+    # *_test.sh to another. The consensus that need to be kept so that this
+    # works correctly are:
+    #   * Needless to say, don't set this variable on your own.
+    #   * Always call these scripts directly or through `make check`.
+    # Never source test files e.g. `source memfile_tests.sh` or
+    # `. memfile_tests.sh`.
+    #   * The ${xml} passed here must be deterministically and uniquely
+    # attributed to the *_test.sh. At the time of this writing, ${xml} is the
+    # part of the name before the dot. So for example, for memfile, all tests
+    # should start with the same thing e.g. `memfile.*`.
+    export GTEST_OUTPUT_CREATED=true
+}
+
+# Print the lines between two matching regex patterns from a file. Excludes the
+# lines that contain the patterns themselves. Matches only the first occurence.
+_print_lines_between_matching_patterns() {
+    local start_pattern=${1}; shift
+    local end_pattern=${1}; shift
+    local file=${1}; shift
+
+    # Escape all slashes.
+    start_pattern=$(printf '%s' "${start_pattern}" | sed 's#\/#\\\/#g')
+    end_pattern=$(printf '%s' "${end_pattern}" | sed 's#\/#\\\/#g')
+
+    # Print with sed.
+    sed -n "/${start_pattern}/,/${end_pattern}/p;/${end_pattern}/q" "${file}" \
+        | sed '$d' | tail -n +2
+}
+
+# Update the test suite XML attributes with metrics collected from the child
+# test cases.
+_update_test_suite_metrics() {
+    local test_suite=${1}; shift
+    local all_test_cases=${1}; shift
+    local xml=${1}; shift
+    local now=${1}; shift
+
+    # Get the metrics on the parent test suite.
+    local duration
+    local durations_summed
+    local failures
+    local tests
+    tests=$(echo "${all_test_cases}" | wc -l)
+    failures=$(printf '%s' "${all_test_cases}" \
+        | grep -Fc 'result="failed"' || true)
+    durations_summed=$(printf '%s' "${all_test_cases}" \
+        | grep -Eo 'time="[0-9.]+"' | cut -d '"' -f 2 | xargs | sed 's/ / + /g')
+    duration=$(_calculate "${durations_summed}")
+
+    # Create the test suite XML tag.
+    local test_suite_line
+    test_suite_line=$(printf '  <testsuite name="%s" tests="%s" failures="%s" disabled="0" errors="0" time="%s" timestamp="%s">' \
+        "${test_suite}" "${tests}" "${failures}" "${duration}" "${now}")
+
+    # Update the test suite with the collected metrics.
+    sed "s#  <testsuite name=\"${test_suite}\".*>#${test_suite_line}#g" \
+        "${xml}" > "${xml}.tmp"
+    mv "${xml}.tmp" "${xml}"
+
+    # Create the test suites XML tag.
+    local test_suites_line
+    test_suites_line=$(printf '<testsuites tests="%s" failures="%s" disabled="0" errors="0" time="%s" timestamp="%s" name="AllTests">' \
+        "${tests}" "${failures}" "${duration}" "${now}")
+
+    # Update the test suites with the collected metrics.
+    sed "s#<testsuites .*>#${test_suites_line}#g" \
+        "${xml}" > "${xml}.tmp"
+    mv "${xml}.tmp" "${xml}"
+}

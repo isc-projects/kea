@@ -2,7 +2,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS=$(KEA_CXXFLAGS)
 
-noinst_SCRIPTS = dhcp_test_lib.sh
+noinst_SCRIPTS = dhcp_test_lib.sh xml_reporting_test_lib.sh
 
 if HAVE_GTEST
 noinst_LTLIBRARIES = libkea-testutils.la
@@ -22,8 +22,8 @@ libkea_testutils_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 endif
 
 # Include common libraries being used by shell-based tests.
-SHLIBS = dhcp_test_lib.sh.in
+SHLIBS = dhcp_test_lib.sh.in xml_reporting_test_lib.sh.in
 
 EXTRA_DIST = $(SHLIBS)
 
-CLEANFILES = dhcp_test_lib.sh
+CLEANFILES = dhcp_test_lib.sh xml_reporting_test_lib.sh

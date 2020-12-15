@@ -1064,7 +1064,7 @@ mysql_lease6_stat_test() {
 # lease<4/6>_stat tables will be populated based on existing
 # leases and that the stat triggers work properly.
 mysql_lease_stat_upgrade_test() {
-    test_start "my_sql_lease_stat_upgrade_test"
+    test_start "mysql.lease_stat_upgrade_test"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1208,7 +1208,7 @@ mysql_lease_stat_upgrade_test() {
 }
 
 mysql_lease_stat_recount_test() {
-    test_start "my_sql_lease_stat_recount_test"
+    test_start "mysql.lease_stat_recount_test"
 
     # Let's wipe the whole database
     mysql_wipe
