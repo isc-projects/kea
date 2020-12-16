@@ -123,6 +123,32 @@ public:
     /// no-op during all subsequent passes.
     void backupStateHandler();
 
+    /// @brief Handler for the "communication-recovery" state.
+    ///
+    /// This is a handler invoked for the active servers running in
+    /// the load-balancing mode. A primary or secondary server may
+    /// transition into this state when it detects that the
+    /// communication with its partner is failing.
+    ///
+    /// If the communication is resumed before the server transitions
+    /// to the partner-down state, the server will transition back to
+    /// the load-balancing state.
+    ///
+    /// In the communication-recovery state the server remains
+    /// responsive to the DHCP clients but does not send lease updates
+    /// to the partner. Instead, it collects the lease updates and
+    /// tries to send them in bulk when it returns to the
+    /// load-balancing state.
+    ///
+    /// A server running in the hot-standby mode never enters this
+    /// state. In this mode, even a short communication failure may
+    /// cause the primary server to transition to the partner-down
+    /// state. Consequently, two servers would be responding to
+    /// DHCP queries, possibly allocating the same addresses to two
+    /// different clients. This doesn't occur in load-balancing mode
+    /// because the address pools are required to be split.
+    void communicationRecoveryHandler();
+
     /// @brief Handler for the "hot-standby" and "load-balancing"
     /// states.
     ///
@@ -312,6 +338,14 @@ protected:
     ///
     /// @param state the new value to assign to the current state.
     void verboseTransition(const unsigned state);
+
+    /// @brief Returns normal operation state for the current configruation.
+    ///
+    /// @return "load-balancing" for active servers in load balancing mode,
+    /// "hot-standby" for active servers in hot-standby mode, "backup" for
+    /// backup servers and "passive-backup" for primary server in the
+    /// "passive-backup" mode.
+    int getNormalState() const;
 
 public:
 

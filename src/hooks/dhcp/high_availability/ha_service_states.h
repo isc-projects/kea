@@ -16,35 +16,38 @@ namespace ha {
 /// Backup state.
 const int HA_BACKUP_ST = util::StateModel::SM_DERIVED_STATE_MIN + 1;
 
+/// Communication recovery state.
+const int HA_COMMUNICATION_RECOVERY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 2;
+
 /// Hot standby state.
-const int HA_HOT_STANDBY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 2;
+const int HA_HOT_STANDBY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 3;
 
 /// Load balancing state.
-const int HA_LOAD_BALANCING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 3;
+const int HA_LOAD_BALANCING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 4;
 
 /// In maintenance state.
-const int HA_IN_MAINTENANCE_ST = util::StateModel::SM_DERIVED_STATE_MIN + 4;
+const int HA_IN_MAINTENANCE_ST = util::StateModel::SM_DERIVED_STATE_MIN + 5;
 
 /// Partner down state.
-const int HA_PARTNER_DOWN_ST = util::StateModel::SM_DERIVED_STATE_MIN + 5;
+const int HA_PARTNER_DOWN_ST = util::StateModel::SM_DERIVED_STATE_MIN + 6;
 
 /// Partner in-maintenance state.
-const int HA_PARTNER_IN_MAINTENANCE_ST = util::StateModel::SM_DERIVED_STATE_MIN + 6;
+const int HA_PARTNER_IN_MAINTENANCE_ST = util::StateModel::SM_DERIVED_STATE_MIN + 7;
 
 /// In passive-backup state with a single active server and backup servers.
-const int HA_PASSIVE_BACKUP_ST = util::StateModel::SM_DERIVED_STATE_MIN + 7;
+const int HA_PASSIVE_BACKUP_ST = util::StateModel::SM_DERIVED_STATE_MIN + 8;
 
 /// Server ready state, i.e. synchronized database, can enable DHCP service.
-const int HA_READY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 8;
+const int HA_READY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 9;
 
 /// Synchronizing database state.
-const int HA_SYNCING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 9;
+const int HA_SYNCING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 10;
 
 /// HA service terminated state.
-const int HA_TERMINATED_ST = util::StateModel::SM_DERIVED_STATE_MIN + 10;
+const int HA_TERMINATED_ST = util::StateModel::SM_DERIVED_STATE_MIN + 11;
 
 /// Server waiting state, i.e. waiting for another server to be ready.
-const int HA_WAITING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 11;
+const int HA_WAITING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 12;
 
 /// Special state indicating that this server is unable to communicate with
 /// the partner.

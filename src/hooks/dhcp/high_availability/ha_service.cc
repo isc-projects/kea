@@ -103,6 +103,10 @@ HAService::defineStates() {
                 std::bind(&HAService::backupStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_BACKUP_ST)->getPausing());
 
+    defineState(HA_COMMUNICATION_RECOVERY_ST, stateToString(HA_COMMUNICATION_RECOVERY_ST),
+                std::bind(&HAService::communicationRecoveryHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_COMMUNICATION_RECOVERY_ST)->getPausing());
+
     defineState(HA_HOT_STANDBY_ST, stateToString(HA_HOT_STANDBY_ST),
                 std::bind(&HAService::normalStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_HOT_STANDBY_ST)->getPausing());
@@ -160,10 +164,7 @@ HAService::backupStateHandler() {
 }
 
 void
-HAService::normalStateHandler() {
-    // If we are transitioning from another state, we have to define new
-    // serving scopes appropriate for the new state. We don't do it if
-    // we remain in this state.
+HAService::communicationRecoveryHandler() {
     if (doOnEntry()) {
         query_filter_.serveDefaultScopes();
         adjustNetworkState();
@@ -213,7 +214,87 @@ HAService::normalStateHandler() {
         break;
 
     default:
+        if (!communication_state_->isCommunicationInterrupted()) {
+            verboseTransition(getNormalState());
+
+        } else {
+            postNextEvent(NOP_EVT);
+        }
+    }
+
+    if (doOnExit()) {
+        if (getCurrState() == getNormalState()) {
+            // Try to send outstanding lease updates here.
+        } else {
+            // Clear the updates and issue warnings as appropriate.
+        }
+    }
+}
+
+void
+HAService::normalStateHandler() {
+    // If we are transitioning from another state, we have to define new
+    // serving scopes appropriate for the new state. We don't do it if
+    // we remain in this state.
+    if (doOnEntry()) {
+        query_filter_.serveDefaultScopes();
+        adjustNetworkState();
+
+        // Log if the state machine is paused.
+        conditionalLogPausedState();
+    }
+
+    scheduleHeartbeat();
+
+    if (isMaintenanceCanceled() || isModelPaused()) {
         postNextEvent(NOP_EVT);
+        return;
+    }
+
+    // Check if the clock skew is still acceptable. If not, transition to
+    // the terminated state.
+    if (shouldTerminate()) {
+        verboseTransition(HA_TERMINATED_ST);
+        return;
+    }
+
+    switch (communication_state_->getPartnerState()) {
+    case HA_IN_MAINTENANCE_ST:
+        verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST);
+        break;
+
+    case HA_PARTNER_DOWN_ST:
+        verboseTransition(HA_WAITING_ST);
+        break;
+
+    case HA_PARTNER_IN_MAINTENANCE_ST:
+        verboseTransition(HA_IN_MAINTENANCE_ST);
+        break;
+
+    case HA_TERMINATED_ST:
+        verboseTransition(HA_TERMINATED_ST);
+        break;
+
+    case HA_UNAVAILABLE_ST:
+        if (shouldPartnerDown()) {
+            verboseTransition(HA_PARTNER_DOWN_ST);
+
+        } else if (config_->getHAMode() == HAConfig::LOAD_BALANCING) {
+            verboseTransition(HA_COMMUNICATION_RECOVERY_ST);
+
+        } else {
+            postNextEvent(NOP_EVT);
+        }
+        break;
+
+    default:
+        postNextEvent(NOP_EVT);
+    }
+
+    if (doOnExit()) {
+        // Do nothing but clear the flag in case we enter the
+        // communication-recovery state. This state utilizes the flag
+        // to detect when outstanding lease updates should be sent.
     }
 }
 
@@ -291,6 +372,7 @@ HAService::partnerDownStateHandler() {
     switch (communication_state_->getPartnerState()) {
     case HA_HOT_STANDBY_ST:
     case HA_LOAD_BALANCING_ST:
+    case HA_COMMUNICATION_RECOVERY_ST:
     case HA_PARTNER_DOWN_ST:
     case HA_PARTNER_IN_MAINTENANCE_ST:
         verboseTransition(HA_WAITING_ST);
@@ -396,11 +478,9 @@ HAService::readyStateHandler() {
 
     switch (communication_state_->getPartnerState()) {
     case HA_HOT_STANDBY_ST:
-        verboseTransition(HA_HOT_STANDBY_ST);
-        break;
-
     case HA_LOAD_BALANCING_ST:
-        verboseTransition(HA_LOAD_BALANCING_ST);
+    case HA_COMMUNICATION_RECOVERY_ST:
+        verboseTransition(getNormalState());
         break;
 
     case HA_IN_MAINTENANCE_ST:
@@ -588,6 +668,7 @@ HAService::waitingStateHandler() {
     }
 
     switch (communication_state_->getPartnerState()) {
+    case HA_COMMUNICATION_RECOVERY_ST:
     case HA_HOT_STANDBY_ST:
     case HA_LOAD_BALANCING_ST:
     case HA_IN_MAINTENANCE_ST:
@@ -708,6 +789,22 @@ HAService::verboseTransition(const unsigned state) {
     }
 }
 
+int
+HAService::getNormalState() const {
+    if (config_->getThisServerConfig()->getRole() == HAConfig::PeerConfig::BACKUP) {
+        return (HA_BACKUP_ST);
+    }
+
+    switch (config_->getHAMode()) {
+    case HAConfig::LOAD_BALANCING:
+        return (HA_LOAD_BALANCING_ST);
+    case HAConfig::HOT_STANDBY:
+        return (HA_HOT_STANDBY_ST);
+    default:
+        return (HA_PASSIVE_BACKUP_ST);
+    }
+}
+
 bool
 HAService::unpause() {
     if (isModelPaused()) {
@@ -770,7 +867,8 @@ HAService::adjustNetworkState() {
     boost::to_upper(current_state_name);
 
     // DHCP service should be enabled in the following states.
-    const bool should_enable = ((getCurrState() == HA_LOAD_BALANCING_ST) ||
+    const bool should_enable = ((getCurrState() == HA_COMMUNICATION_RECOVERY_ST) ||
+                                (getCurrState() == HA_LOAD_BALANCING_ST) ||
                                 (getCurrState() == HA_HOT_STANDBY_ST) ||
                                 (getCurrState() == HA_PARTNER_DOWN_ST) ||
                                 (getCurrState() == HA_PARTNER_IN_MAINTENANCE_ST) ||

@@ -158,11 +158,16 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     ASSERT_TRUE(cfg->getBasicAuth());
     EXPECT_EQ("foo:bar", cfg->getBasicAuth()->getSecret());
 
-    // Verify that per-state configuration is correct.x
+    // Verify that per-state configuration is correct.
 
     HAConfig::StateConfigPtr state_cfg;
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_BACKUP_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_COMMUNICATION_RECOVERY_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 

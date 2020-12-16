@@ -15,6 +15,8 @@ std::string stateToString(int state) {
     switch (state) {
     case HA_BACKUP_ST:
         return ("backup");
+    case HA_COMMUNICATION_RECOVERY_ST:
+        return ("communication-recovery");
     case HA_HOT_STANDBY_ST:
         return ("hot-standby");
     case HA_LOAD_BALANCING_ST:
@@ -47,6 +49,9 @@ std::string stateToString(int state) {
 int stringToState(const std::string& state_name) {
     if (state_name == "backup") {
         return (HA_BACKUP_ST);
+
+    } else if (state_name == "communication-recovery") {
+        return (HA_COMMUNICATION_RECOVERY_ST);
 
     } else if (state_name == "hot-standby") {
         return (HA_HOT_STANDBY_ST);
