@@ -135,13 +135,18 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
 
         // Add definitions for DHCPv4 non-standard options.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "vendor-encapsulated-1", 1, "uint32")),
+                         "vendor-encapsulated-1", 1,
+                         "vendor-encapsulated-options", "uint32")),
                      "vendor-encapsulated-options");
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "option-254", 254, "ipv4-address", true)),
+                         "option-254", 254, DHCP4_OPTION_SPACE,
+                         "ipv4-address", true)),
                      DHCP4_OPTION_SPACE);
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "empty")), "isc");
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2, "ipv4-address", true)),
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
+                         "isc-1", 1, "isc", "empty")),
+                     "isc");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
+                         "isc-2", 2, "isc", "ipv4-address", true)),
                      "isc");
     }
 
@@ -167,10 +172,14 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
 
         // Add definitions for DHCPv6 non-standard options.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "option-1024", 1024, "ipv6-address", true)),
+                         "option-1024", 1024, DHCP6_OPTION_SPACE,
+                         "ipv6-address", true)),
                      DHCP6_OPTION_SPACE);
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1", 1, "empty")), "isc2");
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-2", 2, "ipv6-address", true)),
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
+                         "option-1", 1, "isc2", "empty")),
+                     "isc2");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
+                         "option-2", 2, "isc2", "ipv6-address", true)),
                      "isc2");
     }
 

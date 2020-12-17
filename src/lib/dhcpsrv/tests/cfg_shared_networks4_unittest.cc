@@ -279,7 +279,7 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     // Create custom options dictionary for testing merge. We're keeping it
     // simple because they are more rigorous tests elsewhere.
     CfgOptionDefPtr cfg_def(new CfgOptionDef());
-    cfg_def->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "string"))), "isc");
+    cfg_def->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "isc", "string"))), "isc");
 
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"),
                                    26, 1, 2, 100, SubnetID(1)));

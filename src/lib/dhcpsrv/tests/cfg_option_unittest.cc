@@ -482,13 +482,13 @@ TEST_F(CfgOptionTest, validMerge) {
     CfgOption this_cfg;
     CfgOption other_cfg;
 
-    // We need to create a dictionary of defintions pass into option merge.
+    // We need to create a dictionary of definitions pass into option merge.
     CfgOptionDefPtr defs(new CfgOptionDef());
-    defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint8"))), "isc");
-    defs->add((OptionDefinitionPtr(new OptionDefinition("two", 2, "uint8"))), "isc");
-    defs->add((OptionDefinitionPtr(new OptionDefinition("four", 4, "uint8"))), "isc");
-    defs->add((OptionDefinitionPtr(new OptionDefinition("three", 3, "uint8"))), "fluff");
-    defs->add((OptionDefinitionPtr(new OptionDefinition("four", 4, "uint8"))), "fluff");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "isc", "uint8"))), "isc");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("two", 2, "isc", "uint8"))), "isc");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("four", 4, "isc", "uint8"))), "isc");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("three", 3, "fluff", "uint8"))), "fluff");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("four", 4, "fluff", "uint8"))), "fluff");
 
     // Create our existing config, that gets merged into.
     OptionPtr option(new Option(Option::V4, 1, OptionBuffer(1, 0x01)));
@@ -584,7 +584,7 @@ TEST_F(CfgOptionTest, mergeInvalid) {
 
     // Now let's add an option definition that will force data truncated
     // error for option 1.
-    defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint16"))), "isc");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "isc", "uint16"))), "isc");
 
     // When we attempt to merge, it should fail because option 1's data
     // is not valid per its definition.
@@ -604,8 +604,8 @@ TEST_F(CfgOptionTest, mergeInvalid) {
 TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     // First we'll create our "known" user definitions
     CfgOptionDefPtr defs(new CfgOptionDef());
-    defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint8"))), "isc");
-    defs->add((OptionDefinitionPtr(new OptionDefinition("two", 2, "uint8", true))), "isc");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "isc", "uint8"))), "isc");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("two", 2, "isc", "uint8", true))), "isc");
 
     // We'll try a standard V4 option first.
     std::string space = DHCP4_OPTION_SPACE;

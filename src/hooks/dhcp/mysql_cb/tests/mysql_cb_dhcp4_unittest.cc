@@ -332,27 +332,27 @@ public:
         ElementPtr user_context = Element::createMap();
         user_context->set("foo", Element::create("bar"));
 
-        OptionDefinitionPtr option_def(new OptionDefinition("foo", 234, "string",
+        OptionDefinitionPtr option_def(new OptionDefinition("foo", 234,
+                                                            DHCP4_OPTION_SPACE,
+                                                            "string",
                                                             "espace"));
-        option_def->setOptionSpaceName(DHCP4_OPTION_SPACE);
         test_option_defs_.push_back(option_def);
 
-        option_def.reset(new OptionDefinition("bar", 234, "uint32", true));
-        option_def->setOptionSpaceName(DHCP4_OPTION_SPACE);
+        option_def.reset(new OptionDefinition("bar", 234, DHCP4_OPTION_SPACE,
+                                              "uint32", true));
         test_option_defs_.push_back(option_def);
 
-        option_def.reset(new OptionDefinition("fish", 235, "record", true));
-        option_def->setOptionSpaceName(DHCP4_OPTION_SPACE);
+        option_def.reset(new OptionDefinition("fish", 235, DHCP4_OPTION_SPACE,
+                                              "record", true));
         option_def->addRecordField("uint32");
         option_def->addRecordField("string");
         test_option_defs_.push_back(option_def);
 
-        option_def.reset(new OptionDefinition("whale", 236, "string"));
-        option_def->setOptionSpaceName("xyz");
+        option_def.reset(new OptionDefinition("whale", 236, "xyz", "string"));
         test_option_defs_.push_back(option_def);
 
-        option_def.reset(new OptionDefinition("foobar", 234, "uint64", true));
-        option_def->setOptionSpaceName(DHCP4_OPTION_SPACE);
+        option_def.reset(new OptionDefinition("foobar", 234, DHCP4_OPTION_SPACE,
+                                              "uint64", true));
         test_option_defs_.push_back(option_def);
     }
 
@@ -410,13 +410,18 @@ public:
         // the @c toElement functions require option definitions to generate the
         // proper output.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "vendor-encapsulated-1", 1, "uint32")),
+                         "vendor-encapsulated-1", 1,
+                         "vendor-encapsulated-options", "uint32")),
                      "vendor-encapsulated-options");
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "option-254", 254, "ipv4-address", true)),
+                         "option-254", 254, DHCP4_OPTION_SPACE,
+                         "ipv4-address", true)),
                      DHCP4_OPTION_SPACE);
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "empty")), "isc");
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2, "ipv4-address", true)),
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
+                         "isc-1", 1, "isc", "empty")),
+                     "isc");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
+                         "isc-2", 2, "isc", "ipv4-address", true)),
                      "isc");
 
         // Register option definitions.

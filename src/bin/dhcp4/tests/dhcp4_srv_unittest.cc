@@ -2178,7 +2178,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
 
     // Create definition of the server identifier option.
     OptionDefinition def("server-identifier", DHO_DHCP_SERVER_IDENTIFIER,
-                         "ipv4-address", false);
+                         DHCP4_OPTION_SPACE, "ipv4-address", false);
 
     // Add a server identifier option which doesn't match server ids being
     // used by the server. The accepted server ids are the IPv4 addresses

@@ -28,10 +28,10 @@ TEST(CfgOptionDefTest, equal) {
     ASSERT_FALSE(cfg1 != cfg2);
 
     // Let's add the same option but to two different option spaces.
-    cfg1.add(OptionDefinitionPtr(new OptionDefinition("option-foo",
-                                                      5, "uint16")), "isc");
-    cfg2.add(OptionDefinitionPtr(new OptionDefinition("option-foo",
-                                                      5, "uint16")), "dns");
+    cfg1.add(OptionDefinitionPtr(new OptionDefinition("option-foo", 5, "isc",
+                                                      "uint16")), "isc");
+    cfg2.add(OptionDefinitionPtr(new OptionDefinition("option-foo", 5, "dns",
+                                                      "uint16")), "dns");
     // Configurations must be unequal.
     ASSERT_FALSE(cfg1 == cfg2);
     ASSERT_TRUE(cfg1 != cfg2);
@@ -39,10 +39,10 @@ TEST(CfgOptionDefTest, equal) {
     // Now, let's add them again but to original option spaces. Both objects
     // should now contain the same options under two option spaces. The
     // order should not matter so configurations should be equal.
-    cfg1.add(OptionDefinitionPtr(new OptionDefinition("option-foo",
-                                                      5, "uint16")), "dns");
-    cfg2.add(OptionDefinitionPtr(new OptionDefinition("option-foo",
-                                                      5, "uint16")), "isc");
+    cfg1.add(OptionDefinitionPtr(new OptionDefinition("option-foo", 5, "dns",
+                                                      "uint16")), "dns");
+    cfg2.add(OptionDefinitionPtr(new OptionDefinition("option-foo", 5, "isc",
+                                                      "uint16")), "isc");
 
     EXPECT_TRUE(cfg1 == cfg2);
     EXPECT_FALSE(cfg1 != cfg2);
@@ -60,7 +60,7 @@ TEST(CfgOptionDefTest, getAllThenDelete) {
         // Option name is unique, e.g. option-100, option-101 etc.
         option_name << "option-" << code;
         OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
-                                                     "uint16"));
+                                                     "isc", "uint16"));
         // We're setting id of 123 for all option definitions in this
         // code range.
         def->setId(123);
@@ -77,7 +77,7 @@ TEST(CfgOptionDefTest, getAllThenDelete) {
         std::ostringstream option_name;
         option_name << "option-" << code;
         OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
-                                                     "uint16"));
+                                                     "abcde", "uint16"));
         // We're setting id of 234 for all option definitions in this
         // code range.
         def->setId(234);
@@ -158,7 +158,7 @@ TEST(CfgOptionDefTest, get) {
         // Option name is unique, e.g. option-100, option-101 etc.
         option_name << "option-" << code;
         OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
-                                                     "uint16"));
+                                                     "isc", "uint16"));
         // Add option definition to "isc" option space.
         // Option codes are not duplicated so expect no error
         // when adding them.
@@ -171,7 +171,7 @@ TEST(CfgOptionDefTest, get) {
         std::ostringstream option_name;
         option_name << "option-other-" << code;
         OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
-                                                     "uint16"));
+                                                     "abcde", "uint16"));
         ASSERT_NO_THROW(cfg.add(def, "abcde"));
     }
 
@@ -217,10 +217,14 @@ TEST(CfgOptionDefTest, get) {
     // Check that an option definition can be added to the standard
     // (dhcp4 and dhcp6) option spaces when the option code is not
     // reserved by the standard option.
-    OptionDefinitionPtr def6(new OptionDefinition("option-foo", 1000, "uint16"));
+    OptionDefinitionPtr def6(new OptionDefinition("option-foo", 1000,
+                                                  DHCP6_OPTION_SPACE,
+                                                  "uint16"));
     EXPECT_NO_THROW(cfg.add(def6, DHCP6_OPTION_SPACE));
 
-    OptionDefinitionPtr def4(new OptionDefinition("option-foo", 222, "uint16"));
+    OptionDefinitionPtr def4(new OptionDefinition("option-foo", 222,
+                                                  DHCP4_OPTION_SPACE,
+                                                  "uint16"));
     EXPECT_NO_THROW(cfg.add(def4, DHCP4_OPTION_SPACE));
 
     // Try to query the option definition from an non-existing
@@ -242,29 +246,34 @@ TEST(CfgOptionDefTest, overrideStdOptionDef) {
     OptionDefinitionPtr def;
     // There is a definition for routers option in libdhcp++, so an attempt
     // to add (override) another definition for this option should fail.
-    def.reset(new OptionDefinition("routers", DHO_ROUTERS, "uint32"));
+    def.reset(new OptionDefinition("routers", DHO_ROUTERS,
+                                   DHCP4_OPTION_SPACE, "uint32"));
     EXPECT_THROW(cfg.add(def, DHCP4_OPTION_SPACE), isc::BadValue);
 
     // Check code duplicate (same code, different name).
-    def.reset(new OptionDefinition("routers-bis", DHO_ROUTERS, "uint32"));
+    def.reset(new OptionDefinition("routers-bis", DHO_ROUTERS,
+                                   DHCP4_OPTION_SPACE, "uint32"));
     EXPECT_THROW(cfg.add(def, DHCP4_OPTION_SPACE), isc::BadValue);
 
     // Check name duplicate (different code, same name).
-    def.reset(new OptionDefinition("routers", 170, "uint32"));
+    def.reset(new OptionDefinition("routers", 170, DHCP4_OPTION_SPACE,
+                                   "uint32"));
     EXPECT_THROW(cfg.add(def, DHCP4_OPTION_SPACE), isc::BadValue);
 
     /// There is no definition for unassigned option 170.
-    def.reset(new OptionDefinition("unassigned-option-170", 170, "string"));
+    def.reset(new OptionDefinition("unassigned-option-170", 170,
+                                   DHCP4_OPTION_SPACE, "string"));
     EXPECT_NO_THROW(cfg.add(def, DHCP4_OPTION_SPACE));
 
     // It is not allowed to override the definition of the option which
     // has its definition in the libdhcp++.
     def.reset(new OptionDefinition("sntp-servers", D6O_SNTP_SERVERS,
-                                   "ipv4-address"));
+                                   DHCP6_OPTION_SPACE, "ipv4-address"));
     EXPECT_THROW(cfg.add(def, DHCP6_OPTION_SPACE), isc::BadValue);
     // There is no definition for option 163 in libdhcp++ yet, so it should
     // be possible provide a custom definition.
-    def.reset(new OptionDefinition("geolocation", 163, "uint32"));
+    def.reset(new OptionDefinition("geolocation", 163, DHCP6_OPTION_SPACE,
+                                   "uint32"));
     EXPECT_NO_THROW(cfg.add(def, DHCP6_OPTION_SPACE));
 }
 
@@ -273,7 +282,8 @@ TEST(CfgOptionDefTest, overrideStdOptionDef) {
 TEST(CfgOptionDefTest, addNegative) {
     CfgOptionDef cfg;
 
-    OptionDefinitionPtr def(new OptionDefinition("option-foo", 1000, "uint16"));
+    OptionDefinitionPtr def(new OptionDefinition("option-foo", 1000, "isc",
+                                                 "uint16"));
 
     // Try empty option space name.
     ASSERT_THROW(cfg.add(def, ""), isc::BadValue);
@@ -293,12 +303,12 @@ TEST(CfgOptionDefTest, unparse) {
 
     // Add some options.
     cfg.add(OptionDefinitionPtr(new
-        OptionDefinition("option-foo", 5, "uint16")), "isc");
+        OptionDefinition("option-foo", 5, "isc", "uint16")), "isc");
     cfg.add(OptionDefinitionPtr(new
-        OptionDefinition("option-bar", 5, "uint16", true)), "dns");
+        OptionDefinition("option-bar", 5, "dns", "uint16", true)), "dns");
     cfg.add(OptionDefinitionPtr(new
-        OptionDefinition("option-baz", 6, "uint16", "dns")), "isc");
-    OptionDefinitionPtr rec(new OptionDefinition("option-rec", 6, "record"));
+        OptionDefinition("option-baz", 6, "isc", "uint16", "dns")), "isc");
+    OptionDefinitionPtr rec(new OptionDefinition("option-rec", 6, "dns", "record"));
     std::string json = "{ \"comment\": \"foo\", \"bar\": 1 }";
     rec->setContext(data::Element::fromJSON(json));
     rec->addRecordField("uint16");
@@ -350,10 +360,10 @@ TEST(CfgOptionDefTest, merge) {
     CfgOptionDef to;         // Configuration we are merging to.
 
     // Add some options to the "to" config.
-    to.add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint16"))), "isc");
-    to.add((OptionDefinitionPtr(new OptionDefinition("two", 2, "uint16"))), "isc");
-    to.add((OptionDefinitionPtr(new OptionDefinition("three", 3, "uint16"))), "fluff");
-    to.add((OptionDefinitionPtr(new OptionDefinition("four", 4, "uint16"))), "fluff");
+    to.add((OptionDefinitionPtr(new OptionDefinition("one", 1, "isc", "uint16"))), "isc");
+    to.add((OptionDefinitionPtr(new OptionDefinition("two", 2, "isc", "uint16"))), "isc");
+    to.add((OptionDefinitionPtr(new OptionDefinition("three", 3, "fluff", "uint16"))), "fluff");
+    to.add((OptionDefinitionPtr(new OptionDefinition("four", 4, "fluff", "uint16"))), "fluff");
 
     // Clone the "to" config and use that for merging.
     CfgOptionDef to_clone;
@@ -372,15 +382,15 @@ TEST(CfgOptionDefTest, merge) {
     // Construct a non-empty "from" config.
     // Options "two" and "three" will be updated definitions and "five" will be new.
     CfgOptionDef from;
-    from.add((OptionDefinitionPtr(new OptionDefinition("two", 22, "uint16"))), "isc");
-    from.add((OptionDefinitionPtr(new OptionDefinition("three", 3, "string"))), "fluff");
-    from.add((OptionDefinitionPtr(new OptionDefinition("five", 5, "uint16"))), "fluff");
+    from.add((OptionDefinitionPtr(new OptionDefinition("two", 22, "isc", "uint16"))), "isc");
+    from.add((OptionDefinitionPtr(new OptionDefinition("three", 3, "fluff", "string"))), "fluff");
+    from.add((OptionDefinitionPtr(new OptionDefinition("five", 5, "fluff", "uint16"))), "fluff");
 
     // Now let's clone "from" config and use that manually construct the expected config.
     CfgOptionDef expected;
     from.copyTo(expected);
-    expected.add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint16"))), "isc");
-    expected.add((OptionDefinitionPtr(new OptionDefinition("four", 4, "uint16"))), "fluff");
+    expected.add((OptionDefinitionPtr(new OptionDefinition("one", 1, "isc", "uint16"))), "isc");
+    expected.add((OptionDefinitionPtr(new OptionDefinition("four", 4, "fluff", "uint16"))), "fluff");
 
     // Do the merge.
     ASSERT_NO_THROW(to_clone.merge(from));
@@ -388,6 +398,5 @@ TEST(CfgOptionDefTest, merge) {
     // Verify we have the expected content.
     ASSERT_TRUE(expected.equals(to_clone));
 }
-
 
 }

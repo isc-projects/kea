@@ -264,18 +264,15 @@ TEST_F(Dhcp4CBTest, mergeOptionDefs) {
 
     // Create option one replacement and add it to first backend.
     OptionDefinitionPtr def;
-    def.reset(new OptionDefinition("one", 101, "uint16"));
-    def->setOptionSpaceName("isc");
+    def.reset(new OptionDefinition("one", 101, "isc", "uint16"));
     db1_->createUpdateOptionDef4(ServerSelector::ALL(), def);
 
     // Create option three and add it to first backend.
-    def.reset(new OptionDefinition("three", 3, "string"));
-    def->setOptionSpaceName("isc");
+    def.reset(new OptionDefinition("three", 3, "isc", "string"));
     db1_->createUpdateOptionDef4(ServerSelector::ALL(), def);
 
     // Create option four and add it to second backend.
-    def.reset(new OptionDefinition("four", 4, "string"));
-    def->setOptionSpaceName("isc");
+    def.reset(new OptionDefinition("four", 4, "isc", "string"));
     db2_->createUpdateOptionDef4(ServerSelector::ALL(), def);
 
     // Should parse and merge without error.

@@ -185,9 +185,9 @@ public:
 // Verifies that initCodesInternal works as expected.
 TEST(AdaptorOptionTest, initCodesInternal) {
     const OptionDefParams DEFS[] = {
-        { "subnet-mask", DHO_SUBNET_MASK, OPT_IPV4_ADDRESS_TYPE,
-          false, 0, 0, "" },
-        { "time-offset", DHO_TIME_OFFSET, OPT_INT32_TYPE,
+        { "subnet-mask", DHO_SUBNET_MASK, DHCP4_OPTION_SPACE,
+          OPT_IPV4_ADDRESS_TYPE, false, 0, 0, "" },
+        { "time-offset", DHO_TIME_OFFSET, DHCP4_OPTION_SPACE, OPT_INT32_TYPE,
           false, 0, 0, "" }
     };
     const size_t DEFS_SIZE = sizeof(DEFS) / sizeof(DEFS[0]);
@@ -237,4 +237,4 @@ TEST(AdaptorOptionTest, initCodes6) {
     EXPECT_EQ(ISC_V6_4O6_INTERFACE, codes["vendor-2495@4o6-interface"]);
 }
 
-}; // end of anonymous namespace
+} // end of anonymous namespace

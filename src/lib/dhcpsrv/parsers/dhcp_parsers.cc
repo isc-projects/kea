@@ -211,12 +211,12 @@ OptionDefParser::parse(ConstElementPtr option_def) {
                       << option_def->getPosition() << ")");
 
         } else {
-            def.reset(new OptionDefinition(name, code, type,
+            def.reset(new OptionDefinition(name, code, space, type,
                         encapsulates.c_str()));
         }
 
     } else {
-        def.reset(new OptionDefinition(name, code, type, array_type));
+        def.reset(new OptionDefinition(name, code, space, type, array_type));
 
     }
 

@@ -427,6 +427,7 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
                 // Create array option.
                 last_def = OptionDefinition::create(out_bindings[2]->getString(),
                                                     out_bindings[1]->getInteger<uint16_t>(),
+                                                    out_bindings[3]->getString(),
                                                     static_cast<OptionDataType>
                                                     (out_bindings[4]->getInteger<uint8_t>()),
                                                     array_type);
@@ -434,13 +435,11 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
                 // Create non-array option.
                 last_def = OptionDefinition::create(out_bindings[2]->getString(),
                                                     out_bindings[1]->getInteger<uint16_t>(),
+                                                    out_bindings[3]->getString(),
                                                     static_cast<OptionDataType>
                                                     (out_bindings[4]->getInteger<uint8_t>()),
                                                     out_bindings[7]->getStringOrDefault("").c_str());
             }
-
-            // space
-            last_def->setOptionSpaceName(out_bindings[3]->getStringOrDefault(""));
 
             // id
             last_def->setId(last_def_id);
@@ -538,8 +537,7 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
     MySqlBindingCollection in_bindings = {
         MySqlBinding::createInteger<uint16_t>(option_def->getCode()),
         MySqlBinding::createString(option_def->getName()),
-        MySqlBinding::createString(option_def->getOptionSpaceName().empty() ?
-                                   space : option_def->getOptionSpaceName()),
+        MySqlBinding::createString(option_def->getOptionSpaceName()),
         MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option_def->getType())),
         MySqlBinding::createTimestamp(option_def->getModificationTime()),
         MySqlBinding::createBool(option_def->getArrayType()),

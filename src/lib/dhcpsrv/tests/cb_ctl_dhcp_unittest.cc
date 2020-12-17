@@ -317,16 +317,14 @@ public:
                                                                     global_parameter));
 
         // Insert option definitions into the database.
-        OptionDefinitionPtr def(new OptionDefinition("one", 101, "uint16"));
+        OptionDefinitionPtr def(new OptionDefinition("one", 101, "isc", "uint16"));
         def->setId(1);
-        def->setOptionSpaceName("isc");
         def->setModificationTime(getTimestamp("dhcp4_option_def"));
         ASSERT_NO_THROW(mgr.getPool()->createUpdateOptionDef4(BackendSelector::UNSPEC(),
                                                               ServerSelector::ALL(),
                                                               def));
-        def.reset(new OptionDefinition("two", 102, "uint16"));
+        def.reset(new OptionDefinition("two", 102, "isc", "uint16"));
         def->setId(2);
-        def->setOptionSpaceName("isc");
         def->setModificationTime(getTimestamp("dhcp4_option_def"));
         ASSERT_NO_THROW(mgr.getPool()->createUpdateOptionDef4(BackendSelector::UNSPEC(),
                                                               ServerSelector::ALL(),
@@ -1035,16 +1033,14 @@ public:
                                                                     global_parameter));
 
         // Insert option definitions into the database.
-        OptionDefinitionPtr def(new OptionDefinition("one", 101, "uint16"));
+        OptionDefinitionPtr def(new OptionDefinition("one", 101, "isc", "uint16"));
         def->setId(1);
-        def->setOptionSpaceName("isc");
         def->setModificationTime(getTimestamp("dhcp6_option_def"));
         ASSERT_NO_THROW(mgr.getPool()->createUpdateOptionDef6(BackendSelector::UNSPEC(),
                                                               ServerSelector::ALL(),
                                                               def));
-        def.reset(new OptionDefinition("two", 102, "uint16"));
+        def.reset(new OptionDefinition("two", 102, "isc", "uint16"));
         def->setId(2);
-        def->setOptionSpaceName("isc");
         def->setModificationTime(getTimestamp("dhcp6_option_def"));
         ASSERT_NO_THROW(mgr.getPool()->createUpdateOptionDef6(BackendSelector::UNSPEC(),
                                                               ServerSelector::ALL(),

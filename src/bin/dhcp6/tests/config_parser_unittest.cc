@@ -2808,7 +2808,7 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
     // should override it, but when the new configuration fails, it should
     // revert to this original configuration.
     OptionDefSpaceContainer defs;
-    OptionDefinitionPtr def(new OptionDefinition("bar", 233, "string"));
+    OptionDefinitionPtr def(new OptionDefinition("bar", 233, "isc", "string"));
     defs.addItem(def, "isc");
     LibDHCP::setRuntimeOptionDefs(defs);
     LibDHCP::commitRuntimeOptionDefs();

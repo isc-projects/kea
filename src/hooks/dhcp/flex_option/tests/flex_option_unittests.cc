@@ -323,7 +323,8 @@ TEST_F(FlexOptionTest, optionConfigStandardName) {
 // Verify that the name can be an user defined option.
 TEST_F(FlexOptionTest, optionConfigDefinedName) {
     OptionDefSpaceContainer defs;
-    OptionDefinitionPtr def(new OptionDefinition("my-option", 222, "string"));
+    OptionDefinitionPtr def(new OptionDefinition("my-option", 222,
+                                                 DHCP4_OPTION_SPACE, "string"));
     defs.addItem(def, DHCP4_OPTION_SPACE);
     EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
 
@@ -1086,7 +1087,8 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
     OptionStringPtr str(new OptionString(Option::V6, D6O_BOOTFILE_URL, "http"));
     response->addOption(str);
-    OptionDefinition def("domain-name", D6O_DOMAIN_SEARCH, OPT_FQDN_TYPE);
+    OptionDefinition def("domain-name", D6O_DOMAIN_SEARCH, DHCP6_OPTION_SPACE,
+                         OPT_FQDN_TYPE);
     OptionCustomPtr option_domain_name(new OptionCustom(def, Option::V6));
     option_domain_name->writeFqdn("old.example.com");
     response->addOption(option_domain_name);

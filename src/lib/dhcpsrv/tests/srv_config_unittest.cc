@@ -326,7 +326,7 @@ TEST_F(SrvConfigTest, copy) {
     conf1.addLoggingInfo(info);
 
     // Add option definition.
-    OptionDefinitionPtr def(new OptionDefinition("option-foo", 5, "string"));
+    OptionDefinitionPtr def(new OptionDefinition("option-foo", 5, "isc", "string"));
     conf1.getCfgOptionDef()->add(def, "isc");
 
     // Add an option.
@@ -390,14 +390,14 @@ TEST_F(SrvConfigTest, equality) {
 
     // Differ by option definitions.
     conf1.getCfgOptionDef()->
-        add(OptionDefinitionPtr(new OptionDefinition("option-foo", 123,
+        add(OptionDefinitionPtr(new OptionDefinition("option-foo", 123, "isc",
                                                      "uint16_t")), "isc");
 
     EXPECT_FALSE(conf1 == conf2);
     EXPECT_TRUE(conf1 != conf2);
 
     conf2.getCfgOptionDef()->
-        add(OptionDefinitionPtr(new OptionDefinition("option-foo", 123,
+        add(OptionDefinitionPtr(new OptionDefinition("option-foo", 123, "isc",
                                                      "uint16_t")), "isc");
     EXPECT_TRUE(conf1 == conf2);
     EXPECT_FALSE(conf1 != conf2);

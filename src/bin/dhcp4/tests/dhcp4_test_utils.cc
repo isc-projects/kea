@@ -127,7 +127,8 @@ void Dhcpv4SrvTest::configureRequestedOptions() {
     ASSERT_NO_THROW(subnet_->getCfgOption()->add(option_dns_servers, false, DHCP4_OPTION_SPACE));
 
     // domain-name
-    OptionDefinition def("domain-name", DHO_DOMAIN_NAME, OPT_FQDN_TYPE);
+    OptionDefinition def("domain-name", DHO_DOMAIN_NAME, DHCP4_OPTION_SPACE,
+                         OPT_FQDN_TYPE);
     OptionCustomPtr option_domain_name(new OptionCustom(def, Option::V4));
     option_domain_name->writeFqdn("example.com");
     subnet_->getCfgOption()->add(option_domain_name, false, DHCP4_OPTION_SPACE);
