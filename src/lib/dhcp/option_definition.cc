@@ -42,9 +42,10 @@ namespace isc {
 namespace dhcp {
 
 OptionDefinition::OptionDefinition(const std::string& name,
-                                 const uint16_t code,
-                                 const std::string& type,
-                                 const bool array_type /* = false */)
+                                   const uint16_t code,
+                                   const std::string& space,
+                                   const std::string& type,
+                                   const bool array_type /* = false */)
     : name_(name),
       code_(code),
       type_(OPT_UNKNOWN_TYPE),
@@ -52,7 +53,7 @@ OptionDefinition::OptionDefinition(const std::string& name,
       encapsulated_space_(""),
       record_fields_(),
       user_context_(),
-      option_space_name_() {
+      option_space_name_(space) {
     // Data type is held as enum value by this class.
     // Use the provided option type string to get the
     // corresponding enum value.
@@ -61,19 +62,22 @@ OptionDefinition::OptionDefinition(const std::string& name,
 
 OptionDefinition::OptionDefinition(const std::string& name,
                                    const uint16_t code,
+                                   const std::string& space,
                                    const OptionDataType type,
                                    const bool array_type /* = false */)
     : name_(name),
       code_(code),
       type_(type),
       array_type_(array_type),
-      encapsulated_space_("") {
+      encapsulated_space_(""),
+      option_space_name_(space){
 }
 
 OptionDefinition::OptionDefinition(const std::string& name,
                                    const uint16_t code,
+                                   const std::string& space,
                                    const std::string& type,
-                                   const char* encapsulated_space)
+                                   const std::string& encapsulated_space)
     : name_(name),
       code_(code),
       // Data type is held as enum value by this class.
@@ -84,13 +88,14 @@ OptionDefinition::OptionDefinition(const std::string& name,
       encapsulated_space_(encapsulated_space),
       record_fields_(),
       user_context_(),
-      option_space_name_() {
+      option_space_name_(space) {
 }
 
 OptionDefinition::OptionDefinition(const std::string& name,
                                    const uint16_t code,
+                                   const std::string& space,
                                    const OptionDataType type,
-                                   const char* encapsulated_space)
+                                   const std::string& encapsulated_space)
     : name_(name),
       code_(code),
       type_(type),
@@ -98,39 +103,43 @@ OptionDefinition::OptionDefinition(const std::string& name,
       encapsulated_space_(encapsulated_space),
       record_fields_(),
       user_context_(),
-      option_space_name_() {
+      option_space_name_(space) {
 }
 
 OptionDefinitionPtr
 OptionDefinition::create(const std::string& name,
                          const uint16_t code,
+                         const std::string& space,
                          const std::string& type,
                          const bool array_type) {
-    return (boost::make_shared<OptionDefinition>(name, code, type, array_type));
+    return (boost::make_shared<OptionDefinition>(name, code, space, type, array_type));
 }
 
 OptionDefinitionPtr
 OptionDefinition::create(const std::string& name,
                          const uint16_t code,
+                         const std::string& space,
                          const OptionDataType type,
                          const bool array_type) {
-    return (boost::make_shared<OptionDefinition>(name, code, type, array_type));
+    return (boost::make_shared<OptionDefinition>(name, code, space, type, array_type));
 }
 
 OptionDefinitionPtr
 OptionDefinition::create(const std::string& name,
                          const uint16_t code,
+                         const std::string& space,
                          const std::string& type,
-                         const char* encapsulated_space) {
-    return (boost::make_shared<OptionDefinition>(name, code, type, encapsulated_space));
+                         const std::string& encapsulated_space) {
+    return (boost::make_shared<OptionDefinition>(name, code, space, type, encapsulated_space));
 }
 
 OptionDefinitionPtr
 OptionDefinition::create(const std::string& name,
                          const uint16_t code,
+                         const std::string& space,
                          const OptionDataType type,
-                         const char* encapsulated_space) {
-    return (boost::make_shared<OptionDefinition>(name, code, type, encapsulated_space));
+                         const std::string& encapsulated_space) {
+    return (boost::make_shared<OptionDefinition>(name, code, space, type, encapsulated_space));
 }
 
 bool
@@ -341,6 +350,10 @@ OptionDefinition::validate() const {
         all(find_head(name_, 1), boost::is_any_of(std::string("-_"))) ||
         all(find_tail(name_, 1), boost::is_any_of(std::string("-_")))) {
         err_str << "invalid option name '" << name_ << "'";
+
+    } else if (!OptionSpace::validateName(option_space_name_)) {
+        err_str << "invalid option space name: '"
+                << option_space_name_ << "'";
 
     } else if (!encapsulated_space_.empty() &&
                !OptionSpace::validateName(encapsulated_space_)) {
@@ -897,7 +910,7 @@ OptionPtr
 OptionDefinition::factorySpecialFormatOption(Option::Universe u,
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end) const {
-    if (u == Option::V6) {
+    if ((u == Option::V6) && haveSpace(DHCP6_OPTION_SPACE)) {
         if ((getCode() == D6O_IA_NA || getCode() == D6O_IA_PD) &&
             haveIA6Format()) {
             // Return Option6IA instance for IA_PD and IA_NA option
@@ -937,7 +950,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // Prefix Exclude (option code 67)
             return (OptionPtr(new Option6PDExclude(begin, end)));
         }
-    } else {
+    } else if ((u == Option::V4) && haveSpace(DHCP4_OPTION_SPACE)) {
         if ((getCode() == DHO_SERVICE_SCOPE) && haveServiceScopeFormat()) {
             return (OptionPtr(new Option4SlpServiceScope(begin, end)));
         } else if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {

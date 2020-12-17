@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,6 @@ public:
     BadDataTypeCast(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
-
 
 /// @brief Data types of DHCP option fields.
 ///
@@ -68,6 +67,7 @@ enum OptionDataType {
 struct OptionDefParams {
     const char*             name;           // option name
     uint16_t                code;           // option code
+    const char*             space;          // option space
     OptionDataType          type;           // data type
     bool                    array;          // is array
     const OptionDataType*   records;        // record fields

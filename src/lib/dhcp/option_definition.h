@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,6 +80,7 @@ class OptionIntArray;
 /// the format of the option. In particular, it defines:
 /// - option name,
 /// - option code,
+/// - option space,
 /// - data fields order and their types,
 /// - sub options space that the particular option encapsulates.
 ///
@@ -132,7 +133,6 @@ class OptionIntArray;
 /// - "record" (set of data fields of different types)
 ///
 /// @todo Extend the comment to describe "generic factories".
-/// @todo Extend this class to use custom namespaces.
 /// @todo Extend this class with more factory functions.
 /// @todo Derive from UserContext without breaking the multi index.
 class OptionDefinition : public data::StampedElement {
@@ -147,11 +147,13 @@ public:
     ///
     /// @param name option name.
     /// @param code option code.
+    /// @param space option space.
     /// @param type option data type as string.
     /// @param array_type array indicator, if true it indicates that the
     /// option fields are the array.
     explicit OptionDefinition(const std::string& name,
                               const uint16_t code,
+                              const std::string& space,
                               const std::string& type,
                               const bool array_type = false);
 
@@ -159,11 +161,13 @@ public:
     ///
     /// @param name option name.
     /// @param code option code.
+    /// @param space option space.
     /// @param type option data type.
     /// @param array_type array indicator, if true it indicates that the
     /// option fields are the array.
     explicit OptionDefinition(const std::string& name,
                               const uint16_t code,
+                              const std::string& space,
                               const OptionDataType type,
                               const bool array_type = false);
 
@@ -178,13 +182,15 @@ public:
     ///
     /// @param name option name.
     /// @param code option code.
+    /// @param space option space.
     /// @param type option data type given as string.
     /// @param encapsulated_space name of the option space being
     /// encapsulated by this option.
     explicit OptionDefinition(const std::string& name,
                               const uint16_t code,
+                              const std::string& space,
                               const std::string& type,
-                              const char* encapsulated_space);
+                              const std::string& encapsulated_space);
 
     /// @brief Constructor.
     ///
@@ -197,13 +203,15 @@ public:
     ///
     /// @param name option name.
     /// @param code option code.
+    /// @param space option space.
     /// @param type option data type.
     /// @param encapsulated_space name of the option space being
     /// encapsulated by this option.
     explicit OptionDefinition(const std::string& name,
                               const uint16_t code,
+                              const std::string& space,
                               const OptionDataType type,
-                              const char* encapsulated_space);
+                              const std::string& encapsulated_space);
 
     /// @brief Factory function creating an instance of the @c OptionDefinition.
     ///
@@ -214,6 +222,7 @@ public:
     ///
     /// @param name option name.
     /// @param code option code.
+    /// @param space option space.
     /// @param type option data type as string.
     /// @param array_type array indicator, if true it indicates that the
     /// option fields are the array.
@@ -221,6 +230,7 @@ public:
     /// @return Pointer to the @c OptionDefinition instance.
     static OptionDefinitionPtr create(const std::string& name,
                                       const uint16_t code,
+                                      const std::string& space,
                                       const std::string& type,
                                       const bool array_type = false);
 
@@ -233,6 +243,7 @@ public:
     ///
     /// @param name option name.
     /// @param code option code.
+    /// @param space option space.
     /// @param type option data type.
     /// @param array_type array indicator, if true it indicates that the
     /// option fields are the array.
@@ -240,6 +251,7 @@ public:
     /// @return Pointer to the @c OptionDefinition instance.
     static OptionDefinitionPtr create(const std::string& name,
                                       const uint16_t code,
+                                      const std::string& space,
                                       const OptionDataType type,
                                       const bool array_type = false);
 
@@ -252,6 +264,7 @@ public:
     ///
     /// @param name option name.
     /// @param code option code.
+    /// @param space option space.
     /// @param type option data type given as string.
     /// @param encapsulated_space name of the option space being
     /// encapsulated by this option.
@@ -259,8 +272,9 @@ public:
     /// @return Pointer to the @c OptionDefinition instance.
     static OptionDefinitionPtr create(const std::string& name,
                                       const uint16_t code,
+                                      const std::string& space,
                                       const std::string& type,
-                                      const char* encapsulated_space);
+                                      const std::string& encapsulated_space);
 
     /// @brief Factory function creating an instance of the @c OptionDefinition.
     ///
@@ -271,6 +285,7 @@ public:
     ///
     /// @param name option name.
     /// @param code option code.
+    /// @param space option space.
     /// @param type option data type.
     /// @param encapsulated_space name of the option space being
     /// encapsulated by this option.
@@ -278,8 +293,9 @@ public:
     /// @return Pointer to the @c OptionDefinition instance.
     static OptionDefinitionPtr create(const std::string& name,
                                       const uint16_t code,
+                                      const std::string& space,
                                       const OptionDataType type,
-                                      const char* encapsulated_space);
+                                      const std::string& encapsulated_space);
 
     /// @name Comparison functions and operators.
     ///
@@ -358,6 +374,13 @@ public:
         return (record_fields_);
     }
 
+    /// @brief Returns option space name.
+    ///
+    /// @return Option space name.
+    std::string getOptionSpaceName() const {
+        return (option_space_name_);
+    }
+
     /// @brief Return option data type.
     ///
     /// @return option data type.
@@ -382,32 +405,6 @@ public:
     /// @param map A pointer to map where the user context will be unparsed.
     void contextToElement(data::ElementPtr map) const {
         user_context_.contextToElement(map);
-    }
-
-    /// @brief Returns option space name.
-    ///
-    /// Option definitions are associated with option spaces. Typically,
-    /// such association is made when the option definition is put into
-    /// the @c CfgOptionDef structure. However, in some cases it is also
-    /// required to associate option definition with the particular option
-    /// space outside of that structure. In particular, when the option
-    /// definition is fetched from a database. The database configuration
-    /// backend will set option space upon return of the option definition.
-    /// In other cases this value won't be set.
-    ///
-    /// @return Option space name or empty string if option space
-    /// name is not set.
-    std::string getOptionSpaceName() const {
-        return (option_space_name_);
-    }
-
-    /// @brief Sets option space name for option definition.
-    ///
-    /// See @c getOptionSpaceName to learn when option space name is set.
-    ///
-    /// @param option_space_name New option space name.
-    void setOptionSpaceName(const std::string& option_space_name) {
-        option_space_name_ = option_space_name;
     }
 
     /// @brief Check if the option definition is valid.
@@ -766,6 +763,13 @@ private:
     /// @return true if specified type matches option definition type.
     inline bool haveType(const OptionDataType type) const {
         return (type == type_);
+    }
+
+    /// @brief Check if specified type matches option definition space.
+    ///
+    /// @return true if specified type matches option definition space.
+    inline bool haveSpace(const std::string& space) const {
+        return (space == option_space_name_);
     }
 
     /// @brief Converts a string value to a boolean value.

@@ -978,12 +978,14 @@ initOptionSpace(OptionDefContainerPtr& defs,
             // Option does not encapsulate any option space.
             definition.reset(new OptionDefinition(params[i].name,
                                                   params[i].code,
+                                                  params[i].space,
                                                   params[i].type,
                                                   params[i].array));
         } else {
             // Option does encapsulate an option space.
             definition.reset(new OptionDefinition(params[i].name,
                                                   params[i].code,
+                                                  params[i].space,
                                                   params[i].type,
                                                   params[i].encapsulates));
 

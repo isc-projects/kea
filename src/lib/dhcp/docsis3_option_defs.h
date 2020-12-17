@@ -24,8 +24,10 @@ namespace dhcp {
 
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams DOCSIS3_V4_OPTION_DEFINITIONS[] = {
-    { "oro", DOCSIS3_V4_ORO, OPT_UINT8_TYPE, true, NO_RECORD_DEF, "" },
-    { "tftp-servers", DOCSIS3_V4_TFTP_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" }
+    { "oro", DOCSIS3_V4_ORO,
+      DOCSIS3_V4_OPTION_SPACE, OPT_UINT8_TYPE, true, NO_RECORD_DEF, "" },
+    { "tftp-servers", DOCSIS3_V4_TFTP_SERVERS,
+      DOCSIS3_V4_OPTION_SPACE, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" }
 };
 
 /// Number of option definitions defined.
@@ -50,16 +52,26 @@ const int DOCSIS3_V4_OPTION_DEFINITIONS_SIZE =
 
 /// @brief Definitions of standard DHCPv6 options.
 const OptionDefParams DOCSIS3_V6_OPTION_DEFINITIONS[] = {
-    { "oro",            DOCSIS3_V6_ORO, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
-    { "device-type",    DOCSIS3_V6_DEVICE_TYPE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
-    { "vendor-type",    DOCSIS3_V6_VENDOR_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
-    { "tftp-servers",   DOCSIS3_V6_TFTP_SERVERS, OPT_IPV6_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
-    { "time-servers",   DOCSIS3_V6_TIME_SERVERS, OPT_IPV6_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
-    { "config-file",    DOCSIS3_V6_CONFIG_FILE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
-    { "syslog-servers", DOCSIS3_V6_SYSLOG_SERVERS, OPT_IPV6_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
-    { "device-id",      DOCSIS3_V6_DEVICE_ID, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
-    { "time-offset",    DOCSIS3_V6_TIME_OFFSET, OPT_INT32_TYPE, false, NO_RECORD_DEF, "" },
-    { "cmts-cm-mac",    DOCSIS3_V6_CMTS_CM_MAC, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" }
+    { "oro",            DOCSIS3_V6_ORO,
+      DOCSIS3_V6_OPTION_SPACE, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
+    { "device-type",    DOCSIS3_V6_DEVICE_TYPE,
+      DOCSIS3_V6_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "vendor-type",    DOCSIS3_V6_VENDOR_NAME,
+      DOCSIS3_V6_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "tftp-servers",   DOCSIS3_V6_TFTP_SERVERS,
+      DOCSIS3_V6_OPTION_SPACE, OPT_IPV6_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "time-servers",   DOCSIS3_V6_TIME_SERVERS,
+      DOCSIS3_V6_OPTION_SPACE, OPT_IPV6_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "config-file",    DOCSIS3_V6_CONFIG_FILE,
+      DOCSIS3_V6_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "syslog-servers", DOCSIS3_V6_SYSLOG_SERVERS,
+      DOCSIS3_V6_OPTION_SPACE, OPT_IPV6_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "device-id",      DOCSIS3_V6_DEVICE_ID,
+      DOCSIS3_V6_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "time-offset",    DOCSIS3_V6_TIME_OFFSET,
+      DOCSIS3_V6_OPTION_SPACE, OPT_INT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "cmts-cm-mac",    DOCSIS3_V6_CMTS_CM_MAC,
+      DOCSIS3_V6_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" }
     // @todo add definitions for all remaining options.
 };
 
