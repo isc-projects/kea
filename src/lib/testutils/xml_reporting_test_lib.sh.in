@@ -55,7 +55,7 @@ report_test_result_in_xml() {
     # tests, instead we are explicitly adding them with a 'failed' result.
     local result
     if test "${exit_code}" -eq 0; then
-        result='completed'
+        result='success'
     else
         result='failed'
     fi
@@ -64,7 +64,7 @@ report_test_result_in_xml() {
 
     _add_test_suite "${test_suite}" "${xml}" "${now}"
 
-    _add_test_case "${test_suite}" "${test_case}" "${duration}" "${result}" \
+    _add_test_case "${test_suite}" "${test_case}" "${result}" "${duration}" \
         "${xml}" "${now}"
 }
 
@@ -84,6 +84,9 @@ _add_after() {
     # and this still empirically works.
     string=$(printf '%s' "${string}" | sed 's#\ #\\\ #g')
     reference=$(printf '%s' "${reference}" | sed 's#\ #\\\ #g')
+
+    # Linearize. To avoid this change, add one line at a time.
+    string=$(printf '%s' "${string}" | tr '\n' ' ')
 
     # Add ${string} after ${reference} in ${file}.
     # The "\\" followed by newline is for BSD support.
@@ -112,12 +115,38 @@ _add_before() {
     string=$(printf '%s' "${string}" | sed 's#\ #\\\ #g')
     reference=$(printf '%s' "${reference}" | sed 's#\ #\\\ #g')
 
+    # Linearize. To avoid this change, add one line at a time.
+    string=$(printf '%s' "${string}" | tr '\n' ' ')
+
     # Add ${string} before ${reference} in ${file}.
     # The "\\" followed by newline is for BSD support.
     sed "${line_number}i\\
 ${string}
 " "${file}" > "${file}.tmp"
     mv "${file}.tmp" "${file}"
+}
+
+_add_failure_tag() {
+    local test_case_tag=${1}; shift
+    local xml=${1}; shift
+
+    local closing_tag='    </testcase>'
+    local failure_tag
+    local failure_text
+    local linearized_failure_text
+    # Remove characters which are suspected to not be allowed in:
+    # * sed
+    # * XML attribute values
+    # * XML CDATA
+    failure_text=$(printf '%s\n%s' "${ERROR}" "${OUTPUT}" | \
+        sed 's/"/ /g' | sed 's/\[/ /g' | sed 's/\]/ /g')
+    linearized_failure_text=$(printf '%s' "${failure_text}" | tr '\n' ' ')
+    failure_tag=$(printf '      <failure message="%s" type=""><![CDATA[%s]]></failure>' \
+        "${linearized_failure_text}" "${failure_text}")
+
+    # Add.
+    _add_after "${closing_tag}" "${test_case_tag}" "${xml}"
+    _add_after "${failure_tag}" "${test_case_tag}" "${xml}"
 }
 
 # Add test result if not in file.
@@ -129,10 +158,21 @@ _add_test_case() {
     local xml=${1}; shift
     local now=${1}; shift
 
+    # Determine the test case tag and, in case of failure - the failure tag.
+    local closing_backslash
+    local closing_tag
+    local failure
+    if test "${result}" = 'success'; then
+        closing_backslash=' /'
+    else
+        closing_backslash=
+    fi
+
     # Create the test XML tag.
     local test_case_line
-    test_case_line=$(printf '    <testcase name="%s" status="run" result="%s" time="%s" timestamp="%s" classname="%s" />' \
-        "${test_case}" "${duration}" "${result}" "${now}" "${test_suite}")
+    test_case_line=$(printf '    <testcase name="%s" status="run" result="completed" time="%s" timestamp="%s" classname="%s"%s>' \
+        "${test_case}" "${duration}" "${now}" "${test_suite}" \
+        "${closing_backslash}")
 
     # Add this test case to all the other test cases and sort them.
     local all_test_cases
@@ -150,6 +190,9 @@ _add_test_case() {
     if test -n "${following_line}"; then
         # If found, add it before.
         _add_before "${test_case_line}" "${following_line}" "${xml}"
+        if test "${result}" != 'success'; then
+            _add_failure_tag "${test_case_line}" "${xml}"
+        fi
         return
     fi
 
@@ -161,12 +204,18 @@ _add_test_case() {
     if test -n "${previous_line}"; then
         # If found, add it after.
         _add_after "${test_case_line}" "${previous_line}" "${xml}"
+        if test "${result}" != 'success'; then
+            _add_failure_tag "${test_case_line}" "${xml}"
+        fi
         return
     fi
 
     # If neither were found, add it as the first test case following the test
     # suite line.
     _add_after "${test_case_line}" "  <testsuite name=\"${test_suite}\"" "${xml}"
+    if test "${result}" != 'success'; then
+        _add_failure_tag "${test_case_line}" "${xml}"
+    fi
 }
 
 # Add a set of test suite tags if not already present in the XML.

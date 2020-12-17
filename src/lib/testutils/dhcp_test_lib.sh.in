@@ -75,19 +75,18 @@ test_lib_info() {
 # detailed error is printed. The detailed error must use the printf
 # formatting like this:
 #    "Expected that some value 1 %d is equal to some other value %d".
-# shellcheck disable=SC2059
-# SC2059: Don't use variables in the printf format string. Use printf '..%s..' "$foo"
 assert_eq() {
     val1=${1}         # Reference value
     val2=${2}         # Tested value
     detailed_err=${3} # Detailed error format string
     # If nothing found, present an error an exit.
     if [ "${val1}" -ne "${val2}" ]; then
-        printf "Assertion failure: ${val1} != ${val2}, for val1=${val1}, val2=${val2}\n"
-        printf "${detailed_err}\n" "${val1}" "${val2}"
-        if test -n "${DEBUG+X}"; then
-            printf '%s\n' "${OUTPUT}" >&2
-        fi
+        printf "Assertion failure: %s != %s, for val1=%s, val2=%s\n" \
+            "${val1}" "${val2}" "${val1}" "${val2}"
+        # shellcheck disable=SC2059
+        # SC2059: Don't use variables in the printf format string. Use printf '..%s..' "$foo"
+        ERROR=$(printf "${detailed_err}" "${val1}" "${val2}")
+        printf '%s\n%s\n' "${ERROR}" "${OUTPUT}" >&2
         clean_exit 1
     fi
 }
@@ -107,10 +106,8 @@ assert_str_eq() {
             "${val1}" "${val2}" "${val1}" "${val2}"
         # shellcheck disable=SC2059
         # SC2059: SC2059: Don't use variables in the printf format string. Use printf '..%s..' "$foo".
-        printf "${detailed_err}\n" "${val1}" "${val2}"
-        if test -n "${DEBUG+X}"; then
-            printf '%s\n' "${OUTPUT}" >&2
-        fi
+        ERROR=$(printf "${detailed_err}" "${val1}" "${val2}")
+        printf '%s\n%s\n' "${ERROR}" "${OUTPUT}" >&2
         clean_exit 1
     fi
 }
@@ -128,18 +125,16 @@ assert_string_contains() {
     match=$( printf "%s" "${text}" | awk /"${pattern}"/ )
     # If nothing found, present an error and exit.
     if [ -z "${match}" ]; then
-        printf \
-'Assertion failure:
-"%s"
+        ERROR=$(printf \
+"Assertion failure:
+\"%s\"
 
 does not contain pattern:
-"%s"
+\"%s\"
 
-%s
-' "${text}" "${pattern}" "${detailed_err}"
-        if test -n "${DEBUG+X}"; then
-            printf '%s\n' "${OUTPUT}" >&2
-        fi
+${detailed_err}
+" "${text}" "${pattern}" "${pattern}")
+        printf '%s\n%s\n' "${ERROR}" "${OUTPUT}" >&2
         clean_exit 1
     fi
 }
@@ -214,6 +209,10 @@ test_start() {
 
     # Announce test start.
     printf "${green-}[ RUN      ]${reset-} %s\n" "${TEST_NAME}"
+
+    # Reset variables that are used in error reporting.
+    ERROR=
+    OUTPUT=
 
     # Start timer in milliseconds.
     START_TIME=$(get_current_time)
