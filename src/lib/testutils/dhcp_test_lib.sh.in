@@ -432,7 +432,7 @@ wait_for_file() {
             return 1
         fi
         printf 'Waiting for file "%s" to be created...\n' "${file}"
-        sleep 1s
+        sleep 1
     done
 }
 
@@ -448,7 +448,7 @@ wait_for_process_to_die() {
             return 1
         fi
         printf 'Waiting for %s to die...\n' "$(get_process_name "${pid}")"
-        sleep 1s
+        sleep 1
     done
 }
 
