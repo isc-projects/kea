@@ -1,3 +1,8 @@
+1848.	[bug]		razvan
+	The cql upgrade script from schema v3.0 to v4.0 was broken in
+	Kea-1.9.3 and has been fixed also enabling the unittest.
+	(Gitlab #1616)
+
 Kea 1.9.3 (development) released on Dec 16, 2020
 
 1847.	[bug]		andrei
