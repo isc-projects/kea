@@ -504,7 +504,4 @@ cql_upgrade_test
 cql_lease4_dump_test
 cql_lease6_dump_test
 cql_unused_subnet_id_test
-# TODO: cql_upgrade_hosts_test below is commented because `generate_key` in
-# upgrade_3.0_to_4.0.sh generates different keys than the ones in the reference
-# file. To be investigated...
-# cql_upgrade_hosts_test
+cql_upgrade_hosts_test

@@ -163,6 +163,8 @@ exit_now() {
 fill() {
     string=$1;shift
     count=$1;shift
+    length="${#string}"
+    count=$((count - length));
     fill_char=$1;shift
     value="$(printf "%${count}s" | sed "s/ /${fill_char}/g")${string}"
 }
