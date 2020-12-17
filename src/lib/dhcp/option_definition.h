@@ -190,7 +190,7 @@ public:
                               const uint16_t code,
                               const std::string& space,
                               const std::string& type,
-                              const std::string& encapsulated_space);
+                              const char* encapsulated_space);
 
     /// @brief Constructor.
     ///
@@ -211,7 +211,7 @@ public:
                               const uint16_t code,
                               const std::string& space,
                               const OptionDataType type,
-                              const std::string& encapsulated_space);
+                              const char* encapsulated_space);
 
     /// @brief Factory function creating an instance of the @c OptionDefinition.
     ///
@@ -274,7 +274,7 @@ public:
                                       const uint16_t code,
                                       const std::string& space,
                                       const std::string& type,
-                                      const std::string& encapsulated_space);
+                                      const char* encapsulated_space);
 
     /// @brief Factory function creating an instance of the @c OptionDefinition.
     ///
@@ -295,7 +295,7 @@ public:
                                       const uint16_t code,
                                       const std::string& space,
                                       const OptionDataType type,
-                                      const std::string& encapsulated_space);
+                                      const char* encapsulated_space);
 
     /// @name Comparison functions and operators.
     ///

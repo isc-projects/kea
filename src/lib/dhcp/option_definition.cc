@@ -77,7 +77,7 @@ OptionDefinition::OptionDefinition(const std::string& name,
                                    const uint16_t code,
                                    const std::string& space,
                                    const std::string& type,
-                                   const std::string& encapsulated_space)
+                                   const char* encapsulated_space)
     : name_(name),
       code_(code),
       // Data type is held as enum value by this class.
@@ -95,7 +95,7 @@ OptionDefinition::OptionDefinition(const std::string& name,
                                    const uint16_t code,
                                    const std::string& space,
                                    const OptionDataType type,
-                                   const std::string& encapsulated_space)
+                                   const char* encapsulated_space)
     : name_(name),
       code_(code),
       type_(type),
@@ -129,7 +129,7 @@ OptionDefinition::create(const std::string& name,
                          const uint16_t code,
                          const std::string& space,
                          const std::string& type,
-                         const std::string& encapsulated_space) {
+                         const char* encapsulated_space) {
     return (boost::make_shared<OptionDefinition>(name, code, space, type, encapsulated_space));
 }
 
@@ -138,7 +138,7 @@ OptionDefinition::create(const std::string& name,
                          const uint16_t code,
                          const std::string& space,
                          const OptionDataType type,
-                         const std::string& encapsulated_space) {
+                         const char* encapsulated_space) {
     return (boost::make_shared<OptionDefinition>(name, code, space, type, encapsulated_space));
 }
 

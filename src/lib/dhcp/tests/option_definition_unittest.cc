@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,20 +48,22 @@ public:
 TEST_F(OptionDefinitionTest, constructor) {
     // Specify the option data type as string. This should get converted
     // to enum value returned by getType().
-    OptionDefinition opt_def1("OPTION_CLIENTID", D6O_CLIENTID, "string");
+    OptionDefinition opt_def1("OPTION_CLIENTID", D6O_CLIENTID,
+                              DHCP6_OPTION_SPACE, "string");
     EXPECT_EQ("OPTION_CLIENTID", opt_def1.getName());
-
     EXPECT_EQ(1, opt_def1.getCode());
-    EXPECT_EQ(OPT_STRING_TYPE,  opt_def1.getType());
+    EXPECT_EQ(DHCP6_OPTION_SPACE, opt_def1.getOptionSpaceName());
+    EXPECT_EQ(OPT_STRING_TYPE, opt_def1.getType());
     EXPECT_FALSE(opt_def1.getArrayType());
     EXPECT_TRUE(opt_def1.getEncapsulatedSpace().empty());
     EXPECT_NO_THROW(opt_def1.validate());
 
     // Specify the option data type as an enum value.
     OptionDefinition opt_def2("OPTION_RAPID_COMMIT", D6O_RAPID_COMMIT,
-                              OPT_EMPTY_TYPE);
+                              DHCP6_OPTION_SPACE, OPT_EMPTY_TYPE);
     EXPECT_EQ("OPTION_RAPID_COMMIT", opt_def2.getName());
     EXPECT_EQ(14, opt_def2.getCode());
+    EXPECT_EQ(DHCP6_OPTION_SPACE, opt_def2.getOptionSpaceName());
     EXPECT_EQ(OPT_EMPTY_TYPE, opt_def2.getType());
     EXPECT_FALSE(opt_def2.getArrayType());
     EXPECT_TRUE(opt_def2.getEncapsulatedSpace().empty());
@@ -70,9 +72,10 @@ TEST_F(OptionDefinitionTest, constructor) {
     // Specify encapsulated option space name and option data type
     // as enum value.
     OptionDefinition opt_def3("OPTION_VENDOR_OPTS", D6O_VENDOR_OPTS,
-                              OPT_UINT32_TYPE, "isc");
+                              DHCP6_OPTION_SPACE, OPT_UINT32_TYPE, "isc");
     EXPECT_EQ("OPTION_VENDOR_OPTS", opt_def3.getName());
     EXPECT_EQ(D6O_VENDOR_OPTS, opt_def3.getCode());
+    EXPECT_EQ(DHCP6_OPTION_SPACE, opt_def3.getOptionSpaceName());
     EXPECT_EQ(OPT_UINT32_TYPE, opt_def3.getType());
     EXPECT_FALSE(opt_def3.getArrayType());
     EXPECT_EQ("isc", opt_def3.getEncapsulatedSpace());
@@ -81,9 +84,10 @@ TEST_F(OptionDefinitionTest, constructor) {
     // Specify encapsulated option space name and option data type
     // as string value.
     OptionDefinition opt_def4("OPTION_VENDOR_OPTS", D6O_VENDOR_OPTS,
-                              "uint32", "isc");
+                              DHCP6_OPTION_SPACE, "uint32", "isc");
     EXPECT_EQ("OPTION_VENDOR_OPTS", opt_def4.getName());
     EXPECT_EQ(D6O_VENDOR_OPTS, opt_def4.getCode());
+    EXPECT_EQ(DHCP6_OPTION_SPACE, opt_def4.getOptionSpaceName());
     EXPECT_EQ(OPT_UINT32_TYPE, opt_def4.getType());
     EXPECT_FALSE(opt_def4.getArrayType());
     EXPECT_EQ("isc", opt_def4.getEncapsulatedSpace());
@@ -91,10 +95,12 @@ TEST_F(OptionDefinitionTest, constructor) {
 
     // Check if it is possible to set that option is an array.
     OptionDefinition opt_def5("OPTION_NIS_SERVERS", 27,
+                              DHCP6_OPTION_SPACE,
                               OPT_IPV6_ADDRESS_TYPE,
                               true);
     EXPECT_EQ("OPTION_NIS_SERVERS", opt_def5.getName());
     EXPECT_EQ(27, opt_def5.getCode());
+    EXPECT_EQ(DHCP6_OPTION_SPACE, opt_def5.getOptionSpaceName());
     EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, opt_def5.getType());
     EXPECT_TRUE(opt_def5.getArrayType());
     EXPECT_NO_THROW(opt_def5.validate());
@@ -105,19 +111,21 @@ TEST_F(OptionDefinitionTest, constructor) {
     EXPECT_NO_THROW(
         OptionDefinition opt_def6("OPTION_SERVERID",
                                   OPT_UNKNOWN_TYPE + 10,
+                                  DHCP6_OPTION_SPACE,
                                   OPT_STRING_TYPE);
     );
 }
 
 // This test checks that the copy constructor works properly.
 TEST_F(OptionDefinitionTest, copyConstructor) {
-    OptionDefinition opt_def("option-foo", 27, "record", true);
+    OptionDefinition opt_def("option-foo", 27, "my-space", "record", true);
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("string"));
 
     OptionDefinition opt_def_copy(opt_def);
     EXPECT_EQ("option-foo", opt_def_copy.getName());
     EXPECT_EQ(27, opt_def_copy.getCode());
+    EXPECT_EQ("my-space", opt_def_copy.getOptionSpaceName());
     EXPECT_TRUE(opt_def_copy.getArrayType());
     EXPECT_TRUE(opt_def_copy.getEncapsulatedSpace().empty());
     ASSERT_EQ(OPT_RECORD_TYPE, opt_def_copy.getType());
@@ -129,10 +137,11 @@ TEST_F(OptionDefinitionTest, copyConstructor) {
 
     // Let's make another test to check if encapsulated option space is
     // copied properly.
-    OptionDefinition opt_def2("option-bar", 30, "uint32", "isc");
+    OptionDefinition opt_def2("option-bar", 30, "my-space", "uint32", "isc");
     OptionDefinition opt_def_copy2(opt_def2);
     EXPECT_EQ("option-bar", opt_def_copy2.getName());
     EXPECT_EQ(30, opt_def_copy2.getCode());
+    EXPECT_EQ("my-space", opt_def_copy2.getOptionSpaceName());
     EXPECT_FALSE(opt_def_copy2.getArrayType());
     EXPECT_EQ(OPT_UINT32_TYPE, opt_def_copy2.getType());
     EXPECT_EQ("isc", opt_def_copy2.getEncapsulatedSpace());
@@ -141,11 +150,13 @@ TEST_F(OptionDefinitionTest, copyConstructor) {
 // This test checks that the factory function taking string option
 // data type as argument creates a valid instance.
 TEST_F(OptionDefinitionTest, createStringType) {
-    auto def = OptionDefinition::create("option-foo", 123, "uint16", "isc");
+    auto def = OptionDefinition::create("option-foo", 123, "my-space",
+                                        "uint16", "isc");
     ASSERT_TRUE(def);
 
     EXPECT_EQ("option-foo", def->getName());
     EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ("my-space", def->getOptionSpaceName());
     EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ("isc", def->getEncapsulatedSpace());
@@ -154,11 +165,13 @@ TEST_F(OptionDefinitionTest, createStringType) {
 // This test checks that the factory function taking enum option
 // data type as argument creates a valid instance.
 TEST_F(OptionDefinitionTest, createEnumType) {
-    auto def = OptionDefinition::create("option-foo", 123, OPT_UINT16_TYPE, "isc");
+    auto def = OptionDefinition::create("option-foo", 123, "my-space",
+                                        OPT_UINT16_TYPE, "isc");
     ASSERT_TRUE(def);
 
     EXPECT_EQ("option-foo", def->getName());
     EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ("my-space", def->getOptionSpaceName());
     EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ("isc", def->getEncapsulatedSpace());
@@ -167,11 +180,13 @@ TEST_F(OptionDefinitionTest, createEnumType) {
 // This test checks that the factory function creating an array and
 // taking string option data type as argument creates a valid instance.
 TEST_F(OptionDefinitionTest, createStringTypeArray) {
-    auto def = OptionDefinition::create("option-foo", 123, "uint16", true);
+    auto def = OptionDefinition::create("option-foo", 123, "my-space",
+                                        "uint16", true);
     ASSERT_TRUE(def);
 
     EXPECT_EQ("option-foo", def->getName());
     EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ("my-space", def->getOptionSpaceName());
     EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
     EXPECT_TRUE(def->getArrayType());
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
@@ -180,11 +195,13 @@ TEST_F(OptionDefinitionTest, createStringTypeArray) {
 // This test checks that the factory function creating an array and
 // taking enum option data type as argument creates a valid instance.
 TEST_F(OptionDefinitionTest, createEnumTypeArray) {
-    auto def = OptionDefinition::create("option-foo", 123, OPT_UINT16_TYPE, true);
+    auto def = OptionDefinition::create("option-foo", 123, "my-space",
+                                        OPT_UINT16_TYPE, true);
     ASSERT_TRUE(def);
 
     EXPECT_EQ("option-foo", def->getName());
     EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ("my-space", def->getOptionSpaceName());
     EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
     EXPECT_TRUE(def->getArrayType());
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
@@ -193,40 +210,46 @@ TEST_F(OptionDefinitionTest, createEnumTypeArray) {
 // This test checks that two option definitions may be compared for equality.
 TEST_F(OptionDefinitionTest, equality) {
     // Equal definitions.
-    EXPECT_TRUE(OptionDefinition("option-foo", 5, "uint16", false)
-                == OptionDefinition("option-foo", 5, "uint16", false));
-    EXPECT_FALSE(OptionDefinition("option-foo", 5, "uint16", false)
-                 != OptionDefinition("option-foo", 5, "uint16", false));
+    EXPECT_TRUE(OptionDefinition("option-foo", 5, "my-space", "uint16", false)
+                == OptionDefinition("option-foo", 5, "my-space", "uint16", false));
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "my-space", "uint16", false)
+                 != OptionDefinition("option-foo", 5, "my-space", "uint16", false));
 
     // Differ by name.
-    EXPECT_FALSE(OptionDefinition("option-foo", 5, "uint16", false)
-                 == OptionDefinition("option-foobar", 5, "uint16", false));
-    EXPECT_FALSE(OptionDefinition("option-bar", 5, "uint16", false)
-                == OptionDefinition("option-foo", 5, "uint16", false));
-    EXPECT_TRUE(OptionDefinition("option-bar", 5, "uint16", false)
-                 != OptionDefinition("option-foo", 5, "uint16", false));
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "my-space", "uint16", false)
+                 == OptionDefinition("option-foobar", 5, "my-space", "uint16", false));
+    EXPECT_FALSE(OptionDefinition("option-bar", 5, "my-space", "uint16", false)
+                == OptionDefinition("option-foo", 5, "my-space", "uint16", false));
+    EXPECT_TRUE(OptionDefinition("option-bar", 5, "my-space", "uint16", false)
+                 != OptionDefinition("option-foo", 5, "my-space", "uint16", false));
 
     // Differ by option code.
-    EXPECT_FALSE(OptionDefinition("option-foo", 5, "uint16", false)
-                == OptionDefinition("option-foo", 6, "uint16", false));
-    EXPECT_TRUE(OptionDefinition("option-foo", 5, "uint16", false)
-                 != OptionDefinition("option-foo", 6, "uint16", false));
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "my-space", "uint16", false)
+                == OptionDefinition("option-foo", 6, "my-space", "uint16", false));
+    EXPECT_TRUE(OptionDefinition("option-foo", 5, "my-space", "uint16", false)
+                 != OptionDefinition("option-foo", 6, "my-space", "uint16", false));
+
+    // Differ by option space name.
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "my-space", "uint16", false)
+                == OptionDefinition("option-foo", 5, "mi-space", "uint16", false));
+    EXPECT_TRUE(OptionDefinition("option-foo", 5, "my-space", "uint16", false)
+                 != OptionDefinition("option-foo", 5, "mi-space", "uint16", false));
 
     // Differ by type of the data.
-    EXPECT_FALSE(OptionDefinition("option-foo", 5, "uint16", false)
-                == OptionDefinition("option-foo", 5, "uint32", false));
-    EXPECT_TRUE(OptionDefinition("option-foo", 5, "uint16", false)
-                 != OptionDefinition("option-foo", 5, "uint32", false));
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "my-space", "uint16", false)
+                == OptionDefinition("option-foo", 5, "my-space", "uint32", false));
+    EXPECT_TRUE(OptionDefinition("option-foo", 5, "my-space", "uint16", false)
+                 != OptionDefinition("option-foo", 5, "my-space", "uint32", false));
 
     // Differ by array-type property.
-    EXPECT_FALSE(OptionDefinition("option-foo", 5, "uint16", false)
-                == OptionDefinition("option-foo", 5, "uint16", true));
-    EXPECT_TRUE(OptionDefinition("option-foo", 5, "uint16", false)
-                 != OptionDefinition("option-foo", 5, "uint16", true));
+    EXPECT_FALSE(OptionDefinition("option-foo", 5, "my-space", "uint16", false)
+                == OptionDefinition("option-foo", 5, "my-space", "uint16", true));
+    EXPECT_TRUE(OptionDefinition("option-foo", 5, "my-space", "uint16", false)
+                 != OptionDefinition("option-foo", 5, "my-space", "uint16", true));
 
     // Differ by record fields.
-    OptionDefinition def1("option-foo", 5, "record");
-    OptionDefinition def2("option-foo", 5, "record");
+    OptionDefinition def1("option-foo", 5, "my-space", "record");
+    OptionDefinition def2("option-foo", 5, "my-space", "record");
 
     // There are no record fields specified yet, so initially they have
     // to be equal.
@@ -268,13 +291,13 @@ TEST_F(OptionDefinitionTest, addRecordField) {
         if (i == OPT_RECORD_TYPE) {
             continue;
         }
-        OptionDefinition opt_def("OPTION_IAADDR", 5,
+        OptionDefinition opt_def("OPTION_IAADDR", 5, DHCP6_OPTION_SPACE,
                                  static_cast<OptionDataType>(i));
         EXPECT_THROW(opt_def.addRecordField("uint8"), isc::InvalidOperation);
     }
 
     // Positive scenario starts here.
-    OptionDefinition opt_def("OPTION_IAADDR", 5, "record");
+    OptionDefinition opt_def("OPTION_IAADDR", 5, DHCP6_OPTION_SPACE, "record");
     EXPECT_NO_THROW(opt_def.addRecordField("ipv6-address"));
     EXPECT_NO_THROW(opt_def.addRecordField("uint32"));
     // It should not matter if we specify field type by its name or using enum.
@@ -295,7 +318,7 @@ TEST_F(OptionDefinitionTest, addRecordField) {
 
     // It is bad if we use 'record' option type but don't specify
     // at least two fields.
-    OptionDefinition opt_def2("OPTION_EMPTY_RECORD", 100, "record");
+    OptionDefinition opt_def2("OPTION_EMPTY_RECORD", 100, "my-space", "record");
     EXPECT_THROW(opt_def2.validate(), MalformedOptionDefinition);
     opt_def2.addRecordField("uint8");
     EXPECT_THROW(opt_def2.validate(), MalformedOptionDefinition);
@@ -307,89 +330,150 @@ TEST_F(OptionDefinitionTest, addRecordField) {
 // reports errors for invalid option definitions.
 TEST_F(OptionDefinitionTest, validate) {
     // Not supported option type string is not allowed.
-    OptionDefinition opt_def1("OPTION_CLIENTID", D6O_CLIENTID, "non-existent-type");
+    OptionDefinition opt_def1("OPTION_CLIENTID", D6O_CLIENTID,
+                              DHCP6_OPTION_SPACE, "non-existent-type");
     EXPECT_THROW(opt_def1.validate(), MalformedOptionDefinition);
 
     // Not supported option type enum value is not allowed.
-    OptionDefinition opt_def2("OPTION_CLIENTID", D6O_CLIENTID, OPT_UNKNOWN_TYPE);
+    OptionDefinition opt_def2("OPTION_CLIENTID", D6O_CLIENTID,
+                              DHCP6_OPTION_SPACE, OPT_UNKNOWN_TYPE);
     EXPECT_THROW(opt_def2.validate(), MalformedOptionDefinition);
 
     OptionDefinition opt_def3("OPTION_CLIENTID", D6O_CLIENTID,
+                              DHCP6_OPTION_SPACE,
                               static_cast<OptionDataType>(OPT_UNKNOWN_TYPE
                                                                       + 2));
     EXPECT_THROW(opt_def3.validate(), MalformedOptionDefinition);
 
     // Empty option name is not allowed.
-    OptionDefinition opt_def4("", D6O_CLIENTID, "string");
+    OptionDefinition opt_def4("", D6O_CLIENTID, DHCP6_OPTION_SPACE, "string");
     EXPECT_THROW(opt_def4.validate(), MalformedOptionDefinition);
 
     // Option name must not contain spaces.
-    OptionDefinition opt_def5(" OPTION_CLIENTID", D6O_CLIENTID, "string");
+    OptionDefinition opt_def5(" OPTION_CLIENTID", D6O_CLIENTID,
+                              DHCP6_OPTION_SPACE, "string");
     EXPECT_THROW(opt_def5.validate(), MalformedOptionDefinition);
 
     // Option name must not contain spaces.
-    OptionDefinition opt_def6("OPTION CLIENTID", D6O_CLIENTID, "string");
+    OptionDefinition opt_def6("OPTION CLIENTID", D6O_CLIENTID,
+                              DHCP6_OPTION_SPACE, "string");
     EXPECT_THROW(opt_def6.validate(), MalformedOptionDefinition);
 
     // Option name may contain lower case letters.
-    OptionDefinition opt_def7("option_clientid", D6O_CLIENTID, "string");
+    OptionDefinition opt_def7("option_clientid", D6O_CLIENTID,
+                              DHCP6_OPTION_SPACE, "string");
     EXPECT_NO_THROW(opt_def7.validate());
 
     // Using digits in option name is legal.
-    OptionDefinition opt_def8("option_123", D6O_CLIENTID, "string");
+    OptionDefinition opt_def8("option_123", D6O_CLIENTID, DHCP6_OPTION_SPACE,
+                              "string");
     EXPECT_NO_THROW(opt_def8.validate());
 
     // Using hyphen is legal.
-    OptionDefinition opt_def9("option-clientid", D6O_CLIENTID, "string");
+    OptionDefinition opt_def9("option-clientid", D6O_CLIENTID,
+                              DHCP6_OPTION_SPACE, "string");
     EXPECT_NO_THROW(opt_def9.validate());
 
     // Using hyphen or underscore at the beginning or at the end
     // of the option name is not allowed.
-    OptionDefinition opt_def10("-option-clientid", D6O_CLIENTID, "string");
+    OptionDefinition opt_def10("-option-clientid", D6O_CLIENTID,
+                               DHCP6_OPTION_SPACE, "string");
     EXPECT_THROW(opt_def10.validate(), MalformedOptionDefinition);
 
-    OptionDefinition opt_def11("_option-clientid", D6O_CLIENTID, "string");
+    OptionDefinition opt_def11("_option-clientid", D6O_CLIENTID,
+                               DHCP6_OPTION_SPACE, "string");
     EXPECT_THROW(opt_def11.validate(), MalformedOptionDefinition);
 
-    OptionDefinition opt_def12("option-clientid_", D6O_CLIENTID, "string");
+    OptionDefinition opt_def12("option-clientid_", D6O_CLIENTID,
+                               DHCP6_OPTION_SPACE, "string");
     EXPECT_THROW(opt_def12.validate(), MalformedOptionDefinition);
 
-    OptionDefinition opt_def13("option-clientid-", D6O_CLIENTID, "string");
+    OptionDefinition opt_def13("option-clientid-", D6O_CLIENTID,
+                               DHCP6_OPTION_SPACE, "string");
     EXPECT_THROW(opt_def13.validate(), MalformedOptionDefinition);
+
+    // Empty option space name is not allowed.
+    OptionDefinition opt_def14("OPTION_CLIENTID", D6O_CLIENTID, "", "string");
+    EXPECT_THROW(opt_def14.validate(), MalformedOptionDefinition);
+
+    // Option name must not contain spaces.
+    OptionDefinition opt_def15("OPTION_CLIENTID", D6O_CLIENTID, " space",
+                               "string");
+    EXPECT_THROW(opt_def15.validate(), MalformedOptionDefinition);
+
+    // Option name must not contain spaces.
+    OptionDefinition opt_def16("OPTION_CLIENTID", D6O_CLIENTID, "my space",
+                               "string");
+    EXPECT_THROW(opt_def16.validate(), MalformedOptionDefinition);
+
+    // Option name may contain upper case letters.
+    OptionDefinition opt_def17("OPTION_CLIENTID", D6O_CLIENTID, "SPACE",
+                               "string");
+    EXPECT_NO_THROW(opt_def17.validate());
+
+    // Using digits in option name is legal.
+    OptionDefinition opt_def18("OPTION_CLIENTID", D6O_CLIENTID, "space_123",
+                               "string");
+    EXPECT_NO_THROW(opt_def18.validate());
+
+    // Using hyphen is legal.
+    OptionDefinition opt_def19("OPTION_CLIENTID", D6O_CLIENTID, "my-space",
+                               "string");
+    EXPECT_NO_THROW(opt_def19.validate());
+
+    // Using hyphen or underscore at the beginning or at the end
+    // of the option name is not allowed.
+    OptionDefinition opt_def20("OPTION_CLIENTID", D6O_CLIENTID, "-space",
+                               "string");
+    EXPECT_THROW(opt_def20.validate(), MalformedOptionDefinition);
+
+    OptionDefinition opt_def21("OPTION_CLIENTID", D6O_CLIENTID, "_space",
+                               "string");
+    EXPECT_THROW(opt_def21.validate(), MalformedOptionDefinition);
+
+    OptionDefinition opt_def22("OPTION_CLIENTID", D6O_CLIENTID, "space_",
+                               "string");
+    EXPECT_THROW(opt_def22.validate(), MalformedOptionDefinition);
+
+    OptionDefinition opt_def23("OPTION_CLIENTID", D6O_CLIENTID, "space-",
+                               "string");
+    EXPECT_THROW(opt_def23.validate(), MalformedOptionDefinition);
 
     // Having array of strings does not make sense because there is no way
     // to determine string's length.
-    OptionDefinition opt_def14("OPTION_CLIENTID", D6O_CLIENTID, "string", true);
-    EXPECT_THROW(opt_def14.validate(), MalformedOptionDefinition);
+    OptionDefinition opt_def24("OPTION_CLIENTID", D6O_CLIENTID,
+                               DHCP6_OPTION_SPACE, "string", true);
+    EXPECT_THROW(opt_def24.validate(), MalformedOptionDefinition);
 
     // It does not make sense to have string field within the record before
     // other fields because there is no way to determine the length of this
     // string and thus there is no way to determine where the other field
     // begins.
-    OptionDefinition opt_def15("OPTION_STATUS_CODE", D6O_STATUS_CODE,
-                               "record");
-    opt_def15.addRecordField("string");
-    opt_def15.addRecordField("uint16");
-    EXPECT_THROW(opt_def15.validate(), MalformedOptionDefinition);
+    OptionDefinition opt_def25("OPTION_STATUS_CODE", D6O_STATUS_CODE,
+                               DHCP6_OPTION_SPACE, "record");
+    opt_def25.addRecordField("string");
+    opt_def25.addRecordField("uint16");
+    EXPECT_THROW(opt_def25.validate(), MalformedOptionDefinition);
 
     // ... but it is ok if the string value is the last one.
-    OptionDefinition opt_def16("OPTION_STATUS_CODE", D6O_STATUS_CODE,
-                               "record");
-    opt_def16.addRecordField("uint8");
-    opt_def16.addRecordField("string");
-    EXPECT_NO_THROW(opt_def16.validate());
+    OptionDefinition opt_def26("OPTION_STATUS_CODE", D6O_STATUS_CODE,
+                               DHCP6_OPTION_SPACE, "record");
+    opt_def26.addRecordField("uint8");
+    opt_def26.addRecordField("string");
+    EXPECT_NO_THROW(opt_def26.validate());
 
     // ... at least if it is not an array.
-    OptionDefinition opt_def17("OPTION_STATUS_CODE", D6O_STATUS_CODE,
-                               "record", true);
-    opt_def17.addRecordField("uint8");
-    opt_def17.addRecordField("string");
-    EXPECT_THROW(opt_def17.validate(), MalformedOptionDefinition);
+    OptionDefinition opt_def27("OPTION_STATUS_CODE", D6O_STATUS_CODE,
+                               DHCP6_OPTION_SPACE, "record", true);
+    opt_def27.addRecordField("uint8");
+    opt_def27.addRecordField("string");
+    EXPECT_THROW(opt_def27.validate(), MalformedOptionDefinition);
 
     // Check invalid encapsulated option space name.
-    OptionDefinition opt_def18("OPTION_VENDOR_OPTS", D6O_VENDOR_OPTS,
-                               "uint32", "invalid%space%name");
-    EXPECT_THROW(opt_def18.validate(), MalformedOptionDefinition);
+    OptionDefinition opt_def28("OPTION_VENDOR_OPTS", D6O_VENDOR_OPTS,
+                               DHCP6_OPTION_SPACE, "uint32",
+                               "invalid%space%name");
+    EXPECT_THROW(opt_def28.validate(), MalformedOptionDefinition);
 }
 
 
@@ -398,7 +482,7 @@ TEST_F(OptionDefinitionTest, validate) {
 // of option with a list of IPv6 addresses.
 TEST_F(OptionDefinitionTest, ipv6AddressArray) {
     OptionDefinition opt_def("OPTION_NIS_SERVERS", D6O_NIS_SERVERS,
-                             "ipv6-address", true);
+                             DHCP6_OPTION_SPACE, "ipv6-address", true);
 
     // Create a list of some V6 addresses.
     std::vector<asiolink::IOAddress> addrs;
@@ -453,7 +537,7 @@ TEST_F(OptionDefinitionTest, ipv6AddressArray) {
 // IPv6 address).
 TEST_F(OptionDefinitionTest, ipv6AddressArrayTokenized) {
     OptionDefinition opt_def("OPTION_NIS_SERVERS", D6O_NIS_SERVERS,
-                             "ipv6-address", true);
+                             DHCP6_OPTION_SPACE, "ipv6-address", true);
 
     // Create a vector of some V6 addresses.
     std::vector<asiolink::IOAddress> addrs;
@@ -500,7 +584,7 @@ TEST_F(OptionDefinitionTest, ipv6AddressArrayTokenized) {
 // of option with a list of IPv4 addresses.
 TEST_F(OptionDefinitionTest, ipv4AddressArray) {
     OptionDefinition opt_def("OPTION_NAME_SERVERS", D6O_NIS_SERVERS,
-                             "ipv4-address", true);
+                             DHCP6_OPTION_SPACE, "ipv4-address", true);
 
     // Create a list of some V6 addresses.
     std::vector<asiolink::IOAddress> addrs;
@@ -552,7 +636,7 @@ TEST_F(OptionDefinitionTest, ipv4AddressArray) {
 // IPv4 address).
 TEST_F(OptionDefinitionTest, ipv4AddressArrayTokenized) {
     OptionDefinition opt_def("OPTION_NIS_SERVERS", DHO_NIS_SERVERS,
-                             "ipv4-address", true);
+                             DHCP4_OPTION_SPACE, "ipv4-address", true);
 
     // Create a vector of some V6 addresses.
     std::vector<asiolink::IOAddress> addrs;
@@ -597,7 +681,8 @@ TEST_F(OptionDefinitionTest, ipv4AddressArrayTokenized) {
 // The purpose of this test is to verify that option definition for
 // 'empty' option can be created and that it returns 'empty' option.
 TEST_F(OptionDefinitionTest, empty) {
-    OptionDefinition opt_def("OPTION_RAPID_COMMIT", D6O_RAPID_COMMIT, "empty");
+    OptionDefinition opt_def("OPTION_RAPID_COMMIT", D6O_RAPID_COMMIT,
+                             DHCP6_OPTION_SPACE, "empty");
 
     // Create option instance and provide empty buffer as expected.
     OptionPtr option_v6;
@@ -630,8 +715,8 @@ TEST_F(OptionDefinitionTest, emptyWithSuboptions) {
     // with this definition the OptionCustom should be returned. The
     // Option Custom is generic option which support variety of formats
     // and supports decoding suboptions.
-    OptionDefinition opt_def("option-foo", 1024, "empty", "option-foo-space");
-
+    OptionDefinition opt_def("option-foo", 1024, "my-space", "empty",
+                             "option-foo-space");
     // Define a suboption.
     const uint8_t subopt_data[] = {
         0x04, 0x01,  // Option code 1025
@@ -674,7 +759,8 @@ TEST_F(OptionDefinitionTest, binary) {
     // class but for some of them it is just natural. The SERVERID
     // option consists of the option code, length and binary data so
     // this one was picked for this test.
-    OptionDefinition opt_def("OPTION_SERVERID", D6O_SERVERID, "binary");
+    OptionDefinition opt_def("OPTION_SERVERID", D6O_SERVERID,
+                             DHCP6_OPTION_SPACE, "binary");
 
     // Prepare some dummy data (serverid): 0, 1, 2 etc.
     OptionBuffer buf(14);
@@ -725,7 +811,8 @@ TEST_F(OptionDefinitionTest, recordIA6) {
     const int option6_ia_len = 12;
 
     // Get the factory function pointer.
-    OptionDefinition opt_def("OPTION_IA_NA", D6O_IA_NA, "record", false);
+    OptionDefinition opt_def("OPTION_IA_NA", D6O_IA_NA, DHCP6_OPTION_SPACE,
+                             "record", false);
     // Each data field is uint32.
     for (int i = 0; i < 3; ++i) {
         EXPECT_NO_THROW(opt_def.addRecordField("uint32"));
@@ -763,7 +850,8 @@ TEST_F(OptionDefinitionTest, recordIAAddr6) {
     // valid-lifetime fields (each 4 bytes long).
     const int option6_iaaddr_len = 24;
 
-    OptionDefinition opt_def("OPTION_IAADDR", D6O_IAADDR, "record");
+    OptionDefinition opt_def("OPTION_IAADDR", D6O_IAADDR, DHCP6_OPTION_SPACE,
+                             "record");
     ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
     ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
     ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
@@ -808,7 +896,8 @@ TEST_F(OptionDefinitionTest, recordIAAddr6) {
 TEST_F(OptionDefinitionTest, recordIAAddr6Tokenized) {
     // This option consists of IPV6 Address (16 bytes) and preferred-lifetime and
     // valid-lifetime fields (each 4 bytes long).
-    OptionDefinition opt_def("OPTION_IAADDR", D6O_IAADDR, "record");
+    OptionDefinition opt_def("OPTION_IAADDR", D6O_IAADDR, DHCP6_OPTION_SPACE,
+                             "record");
     ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
     ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
     ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
@@ -838,7 +927,7 @@ TEST_F(OptionDefinitionTest, recordIAAddr6Tokenized) {
 TEST_F(OptionDefinitionTest, boolValue) {
     // The IP Forwarding option comprises one boolean value.
     OptionDefinition opt_def("ip-forwarding", DHO_IP_FORWARDING,
-                             "boolean");
+                             DHCP4_OPTION_SPACE, "boolean");
 
     OptionPtr option_v4;
     // Use an option buffer which holds one value of 1 (true).
@@ -877,7 +966,8 @@ TEST_F(OptionDefinitionTest, boolValue) {
 // the following values: "true", "false", "1" or "0". For all other
 // values exception should be thrown.
 TEST_F(OptionDefinitionTest, boolTokenized) {
-    OptionDefinition opt_def("ip-forwarding", DHO_IP_FORWARDING, "boolean");
+    OptionDefinition opt_def("ip-forwarding", DHO_IP_FORWARDING,
+                             DHCP6_OPTION_SPACE, "boolean");
 
     OptionPtr option_v4;
     std::vector<std::string> values;
@@ -952,7 +1042,8 @@ TEST_F(OptionDefinitionTest, boolTokenized) {
 // comprises single uint8 value can be created and that this definition
 // can be used to create an option with single uint8 value.
 TEST_F(OptionDefinitionTest, uint8) {
-    OptionDefinition opt_def("OPTION_PREFERENCE", D6O_PREFERENCE, "uint8");
+    OptionDefinition opt_def("OPTION_PREFERENCE", D6O_PREFERENCE,
+                             DHCP6_OPTION_SPACE, "uint8");
 
     OptionPtr option_v6;
     // Try to use correct buffer length = 1 byte.
@@ -981,7 +1072,8 @@ TEST_F(OptionDefinitionTest, uint8) {
 // comprises single uint8 value can be created and that this definition
 // can be used to create an option with single uint8 value.
 TEST_F(OptionDefinitionTest, uint8Tokenized) {
-    OptionDefinition opt_def("OPTION_PREFERENCE", D6O_PREFERENCE, "uint8");
+    OptionDefinition opt_def("OPTION_PREFERENCE", D6O_PREFERENCE,
+                             DHCP6_OPTION_SPACE, "uint8");
 
     OptionPtr option_v6;
     std::vector<std::string> values;
@@ -1005,7 +1097,8 @@ TEST_F(OptionDefinitionTest, uint8Tokenized) {
 // comprises single uint16 value can be created and that this definition
 // can be used to create an option with single uint16 value.
 TEST_F(OptionDefinitionTest, uint16) {
-    OptionDefinition opt_def("OPTION_ELAPSED_TIME", D6O_ELAPSED_TIME, "uint16");
+    OptionDefinition opt_def("OPTION_ELAPSED_TIME", D6O_ELAPSED_TIME,
+                             DHCP6_OPTION_SPACE, "uint16");
 
     OptionPtr option_v6;
     // Try to use correct buffer length = 2 bytes.
@@ -1036,7 +1129,8 @@ TEST_F(OptionDefinitionTest, uint16) {
 // comprises single uint16 value can be created and that this definition
 // can be used to create an option with single uint16 value.
 TEST_F(OptionDefinitionTest, uint16Tokenized) {
-    OptionDefinition opt_def("OPTION_ELAPSED_TIME", D6O_ELAPSED_TIME, "uint16");
+    OptionDefinition opt_def("OPTION_ELAPSED_TIME", D6O_ELAPSED_TIME,
+                             DHCP6_OPTION_SPACE, "uint16");
 
     OptionPtr option_v6;
 
@@ -1062,7 +1156,8 @@ TEST_F(OptionDefinitionTest, uint16Tokenized) {
 // comprises single uint32 value can be created and that this definition
 // can be used to create an option with single uint32 value.
 TEST_F(OptionDefinitionTest, uint32) {
-    OptionDefinition opt_def("OPTION_CLT_TIME", D6O_CLT_TIME, "uint32");
+    OptionDefinition opt_def("OPTION_CLT_TIME", D6O_CLT_TIME,
+                             DHCP6_OPTION_SPACE, "uint32");
 
     OptionPtr option_v6;
     OptionBuffer buf;
@@ -1094,7 +1189,8 @@ TEST_F(OptionDefinitionTest, uint32) {
 // comprises single uint32 value can be created and that this definition
 // can be used to create an option with single uint32 value.
 TEST_F(OptionDefinitionTest, uint32Tokenized) {
-    OptionDefinition opt_def("OPTION_CLT_TIME", D6O_CLT_TIME, "uint32");
+    OptionDefinition opt_def("OPTION_CLT_TIME", D6O_CLT_TIME,
+                             DHCP6_OPTION_SPACE, "uint32");
 
     OptionPtr option_v6;
     std::vector<std::string> values;
@@ -1120,7 +1216,8 @@ TEST_F(OptionDefinitionTest, uint32Tokenized) {
 TEST_F(OptionDefinitionTest, uint16Array) {
     // Let's define some dummy option.
     const uint16_t opt_code = 79;
-    OptionDefinition opt_def("OPTION_UINT16_ARRAY", opt_code, "uint16", true);
+    OptionDefinition opt_def("OPTION_UINT16_ARRAY", opt_code, "my-space",
+                             "uint16", true);
 
     OptionPtr option_v6;
     // Positive scenario, initiate the buffer with length being
@@ -1168,7 +1265,8 @@ TEST_F(OptionDefinitionTest, uint16Array) {
 TEST_F(OptionDefinitionTest, uint16ArrayTokenized) {
     // Let's define some dummy option.
     const uint16_t opt_code = 79;
-    OptionDefinition opt_def("OPTION_UINT16_ARRAY", opt_code, "uint16", true);
+    OptionDefinition opt_def("OPTION_UINT16_ARRAY", opt_code, "my-space",
+                             "uint16", true);
 
     OptionPtr option_v6;
     std::vector<std::string> str_values;
@@ -1197,7 +1295,8 @@ TEST_F(OptionDefinitionTest, uint32Array) {
     // Let's define some dummy option.
     const uint16_t opt_code = 80;
 
-    OptionDefinition opt_def("OPTION_UINT32_ARRAY", opt_code, "uint32", true);
+    OptionDefinition opt_def("OPTION_UINT32_ARRAY", opt_code, "my-space",
+                             "uint32", true);
 
     OptionPtr option_v6;
     // Positive scenario, initiate the buffer with length being
@@ -1246,7 +1345,8 @@ TEST_F(OptionDefinitionTest, uint32ArrayTokenized) {
     // Let's define some dummy option.
     const uint16_t opt_code = 80;
 
-    OptionDefinition opt_def("OPTION_UINT32_ARRAY", opt_code, "uint32", true);
+    OptionDefinition opt_def("OPTION_UINT32_ARRAY", opt_code, "my-space",
+                             "uint32", true);
 
     OptionPtr option_v6;
     std::vector<std::string> str_values;
@@ -1277,7 +1377,8 @@ TEST_F(OptionDefinitionTest, uint32ArrayTokenized) {
 TEST_F(OptionDefinitionTest, utf8StringTokenized) {
     // Let's create some dummy option.
     const uint16_t opt_code = 80;
-    OptionDefinition opt_def("OPTION_WITH_STRING", opt_code, "string");
+    OptionDefinition opt_def("OPTION_WITH_STRING", opt_code, "my-space",
+                             "string");
 
     std::vector<std::string> values;
     values.push_back("Hello World");
@@ -1314,32 +1415,37 @@ TEST_F(OptionDefinitionTest, integerInvalidType) {
 // IA_NA  and IAADDR option formats.
 TEST_F(OptionDefinitionTest, haveIAFormat) {
     // IA_NA option format.
-    OptionDefinition opt_def1("OPTION_IA_NA", D6O_IA_NA, "record");
+    OptionDefinition opt_def1("OPTION_IA_NA", D6O_IA_NA, DHCP6_OPTION_SPACE,
+                              "record");
     for (int i = 0; i < 3; ++i) {
         opt_def1.addRecordField("uint32");
     }
     EXPECT_TRUE(opt_def1.haveIA6Format());
     // Create non-matching format to check that this function does not
     // return 'true' all the time.
-    OptionDefinition opt_def2("OPTION_IA_NA", D6O_IA_NA, "uint16");
+    OptionDefinition opt_def2("OPTION_IA_NA", D6O_IA_NA, DHCP6_OPTION_SPACE,
+                              "uint16");
     EXPECT_FALSE(opt_def2.haveIA6Format());
 
     // IAADDR option format.
-    OptionDefinition opt_def3("OPTION_IAADDR", D6O_IAADDR, "record");
+    OptionDefinition opt_def3("OPTION_IAADDR", D6O_IAADDR, DHCP6_OPTION_SPACE,
+                              "record");
     opt_def3.addRecordField("ipv6-address");
     opt_def3.addRecordField("uint32");
     opt_def3.addRecordField("uint32");
     EXPECT_TRUE(opt_def3.haveIAAddr6Format());
     // Create non-matching format to check that this function does not
     // return 'true' all the time.
-    OptionDefinition opt_def4("OPTION_IAADDR", D6O_IAADDR, "uint32", true);
+    OptionDefinition opt_def4("OPTION_IAADDR", D6O_IAADDR, DHCP6_OPTION_SPACE,
+                              "uint32", true);
     EXPECT_FALSE(opt_def4.haveIAAddr6Format());
 }
 
 // This test verifies that haveClientFqdnFormat function recognizes that option
 // definition describes the format of DHCPv6 Client Fqdn Option Format.
 TEST_F(OptionDefinitionTest, haveClientFqdnFormat) {
-    OptionDefinition opt_def("OPTION_CLIENT_FQDN", D6O_CLIENT_FQDN, "record");
+    OptionDefinition opt_def("OPTION_CLIENT_FQDN", D6O_CLIENT_FQDN,
+                             DHCP6_OPTION_SPACE, "record");
     opt_def.addRecordField("uint8");
     opt_def.addRecordField("fqdn");
     EXPECT_TRUE(opt_def.haveClientFqdnFormat());
@@ -1347,14 +1453,14 @@ TEST_F(OptionDefinitionTest, haveClientFqdnFormat) {
     // Create option format which is not matching the Client FQDN option format
     // to verify that tested function does dont always return true.
     OptionDefinition opt_def_invalid("OPTION_CLIENT_FQDN", D6O_CLIENT_FQDN,
-                                     "uint8");
+                                     DHCP6_OPTION_SPACE, "uint8");
     EXPECT_FALSE(opt_def_invalid.haveClientFqdnFormat());
 }
 
 // This test verifies that a definition of an option with a single IPv6
 // prefix can be created and used to create an instance of the option.
 TEST_F(OptionDefinitionTest, prefix) {
-    OptionDefinition opt_def("option-prefix", 1000, "ipv6-prefix");
+    OptionDefinition opt_def("option-prefix", 1000, "my-space", "ipv6-prefix");
 
     // Create a buffer holding a prefix.
     OptionBuffer buf;
@@ -1388,7 +1494,7 @@ TEST_F(OptionDefinitionTest, prefix) {
 // prefix can be created and that the instance of this option can be
 // created by specifying the prefix in the textual format.
 TEST_F(OptionDefinitionTest, prefixTokenized) {
-    OptionDefinition opt_def("option-prefix", 1000, "ipv6-prefix");
+    OptionDefinition opt_def("option-prefix", 1000, "my-space", "ipv6-prefix");
 
     OptionPtr option_v6;
     // Specify a single prefix.
@@ -1418,7 +1524,8 @@ TEST_F(OptionDefinitionTest, prefixTokenized) {
 // option can be created by specifying multiple prefixes in the
 // textual format.
 TEST_F(OptionDefinitionTest, prefixArrayTokenized) {
-    OptionDefinition opt_def("option-prefix", 1000, "ipv6-prefix", true);
+    OptionDefinition opt_def("option-prefix", 1000, "my-space",
+                             "ipv6-prefix", true);
 
     OptionPtr option_v6;
 
@@ -1466,7 +1573,7 @@ TEST_F(OptionDefinitionTest, prefixArrayTokenized) {
 // This test verifies that a definition of an option with a single PSID
 // value can be created and used to create an instance of the option.
 TEST_F(OptionDefinitionTest, psid) {
-    OptionDefinition opt_def("option-psid", 1000, "psid");
+    OptionDefinition opt_def("option-psid", 1000, "my-space", "psid");
 
     OptionPtr option_v6;
 
@@ -1499,7 +1606,7 @@ TEST_F(OptionDefinitionTest, psid) {
 // value can be created and that the instance of this option can be
 // created by specifying PSID length and value in the textual format.
 TEST_F(OptionDefinitionTest, psidTokenized) {
-    OptionDefinition opt_def("option-psid", 1000, "psid");
+    OptionDefinition opt_def("option-psid", 1000, "my-space", "psid");
 
     OptionPtr option_v6;
     // Specify a single PSID with a length of 6 and value of 3.
@@ -1528,7 +1635,7 @@ TEST_F(OptionDefinitionTest, psidTokenized) {
 // of PSIDs can be created and that the instance of this option can be
 // created by specifying multiple PSIDs in the textual format.
 TEST_F(OptionDefinitionTest, psidArrayTokenized) {
-    OptionDefinition opt_def("option-psid", 1000, "psid", true);
+    OptionDefinition opt_def("option-psid", 1000, "my-space", "psid", true);
 
     OptionPtr option_v6;
 
@@ -1575,7 +1682,7 @@ TEST_F(OptionDefinitionTest, psidArrayTokenized) {
 // This test verifies that a definition of an option with a single DHCPv4
 // tuple can be created and used to create an instance of the option.
 TEST_F(OptionDefinitionTest, tuple4) {
-    OptionDefinition opt_def("option-tuple", 232, "tuple");
+    OptionDefinition opt_def("option-tuple", 232, "my-space", "tuple");
 
     OptionPtr option;
 
@@ -1607,7 +1714,7 @@ TEST_F(OptionDefinitionTest, tuple4) {
 // This test verifies that a definition of an option with a single DHCPv6
 // tuple can be created and used to create an instance of the option.
 TEST_F(OptionDefinitionTest, tuple6) {
-    OptionDefinition opt_def("option-tuple", 1000, "tuple");
+    OptionDefinition opt_def("option-tuple", 1000, "my-space", "tuple");
 
     OptionPtr option;
 
@@ -1640,7 +1747,7 @@ TEST_F(OptionDefinitionTest, tuple6) {
 // tuple can be created and that the instance of this option can be
 // created by specifying tuple value in the textual format.
 TEST_F(OptionDefinitionTest, tuple4Tokenized) {
-    OptionDefinition opt_def("option-tuple", 232, "tuple");
+    OptionDefinition opt_def("option-tuple", 232, "my-space", "tuple");
 
     OptionPtr option;
     // Specify a single tuple with "foobar" content.
@@ -1669,7 +1776,7 @@ TEST_F(OptionDefinitionTest, tuple4Tokenized) {
 // tuple can be created and that the instance of this option can be
 // created by specifying tuple value in the textual format.
 TEST_F(OptionDefinitionTest, tuple6Tokenized) {
-    OptionDefinition opt_def("option-tuple", 1000, "tuple");
+    OptionDefinition opt_def("option-tuple", 1000, "my-space", "tuple");
 
     OptionPtr option;
     // Specify a single tuple with "foobar" content.
@@ -1698,7 +1805,7 @@ TEST_F(OptionDefinitionTest, tuple6Tokenized) {
 // of DHCPv4 tuples can be created and that the instance of this option
 // can be created by specifying multiple DHCPv4 tuples in the textual format.
 TEST_F(OptionDefinitionTest, tuple4ArrayTokenized) {
-    OptionDefinition opt_def("option-tuple", 232, "tuple", true);
+    OptionDefinition opt_def("option-tuple", 232, "my-space", "tuple", true);
 
     OptionPtr option;
 
@@ -1740,7 +1847,7 @@ TEST_F(OptionDefinitionTest, tuple4ArrayTokenized) {
 // of DHCPv6 tuples can be created and that the instance of this option
 // can be created by specifying multiple DHCPv6 tuples in the textual format.
 TEST_F(OptionDefinitionTest, tuple6ArrayTokenized) {
-    OptionDefinition opt_def("option-tuple", 1000, "tuple", true);
+    OptionDefinition opt_def("option-tuple", 1000, "my-space", "tuple", true);
 
     OptionPtr option;
 

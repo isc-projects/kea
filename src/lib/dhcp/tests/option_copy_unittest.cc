@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -709,13 +709,13 @@ TEST(OptionCopyTest, option6ClientFqdnAssignment) {
 /// @param op_type Copy operation type.
 void testOptionCustom(const OpType& op_type) {
     // Create option with a single field carrying 16-bits integer.
-    OptionDefinition def("foo", 1, "uint16", true);
+    OptionDefinition def("foo", 1, "my-space", "uint16", true);
     OptionCustomPtr option(new OptionCustom(def, Option::V4));
     option->addArrayDataField<uint16_t>(5555);
 
     // Create option with two fields carrying IPv4 address and 32-bit
     // integer.
-    OptionDefinition def_copy("bar", 10, "record");
+    OptionDefinition def_copy("bar", 10, "my-space", "record");
     def_copy.addRecordField("ipv4-address");
     def_copy.addRecordField("uint32");
     OptionCustomPtr option_copy(new OptionCustom(def_copy, Option::V6));

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -137,7 +137,7 @@ public:
 // members.
 TEST_F(OptionCustomTest, constructor) {
     // Create option definition for a DHCPv6 option.
-    OptionDefinition opt_def1("OPTION_FOO", 1000, "boolean", true);
+    OptionDefinition opt_def1("OPTION_FOO", 1000, "my-space", "boolean", true);
 
     // Initialize some dummy buffer that holds single boolean value.
     OptionBuffer buf;
@@ -155,7 +155,7 @@ TEST_F(OptionCustomTest, constructor) {
     EXPECT_EQ(1000, option->getType());
 
     // Do another round of testing for DHCPv4 option.
-    OptionDefinition opt_def2("OPTION_FOO", 232, "boolean");
+    OptionDefinition opt_def2("OPTION_FOO", 232, "my-space", "boolean");
 
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def2, Option::V4, buf.begin(), buf.end()));
@@ -166,7 +166,7 @@ TEST_F(OptionCustomTest, constructor) {
     EXPECT_EQ(232, option->getType());
 
     // Try to create an option using 'empty data' constructor
-    OptionDefinition opt_def3("OPTION_FOO", 1000, "uint32");
+    OptionDefinition opt_def3("OPTION_FOO", 1000, "my-space", "uint32");
 
     ASSERT_NO_THROW(
         option.reset(new OptionCustom(opt_def3, Option::V6));
@@ -180,7 +180,8 @@ TEST_F(OptionCustomTest, constructor) {
 // The purpose of this test is to verify that 'empty' option definition can
 // be used to create an instance of custom option.
 TEST_F(OptionCustomTest, emptyData) {
-    OptionDefinition opt_def("option-foo", 232, "empty", "option-foo-space");
+    OptionDefinition opt_def("option-foo", 232, "my-space", "empty",
+                             "option-foo-space");
 
     // Create a buffer holding 1 suboption.
     OptionBuffer buf;
@@ -204,7 +205,8 @@ TEST_F(OptionCustomTest, emptyData) {
 // The purpose of this test is to verify that the option definition comprising
 // a binary value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, binaryData) {
-    OptionDefinition opt_def("option-foo", 231, "binary", "option-foo-space");
+    OptionDefinition opt_def("option-foo", 231, "my-space", "binary",
+                             "option-foo-space");
 
     // Create a buffer holding some binary data. This data will be
     // used as reference when we read back the data from a created
@@ -258,7 +260,8 @@ TEST_F(OptionCustomTest, binaryData) {
 // The purpose of this test is to verify that an option definition comprising
 // a single boolean value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, booleanData) {
-    OptionDefinition opt_def("option-foo", 1000, "boolean", "option-foo-space");
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "boolean",
+                             "option-foo-space");
 
     OptionBuffer buf;
     // Push back the value that represents 'false'.
@@ -300,7 +303,8 @@ TEST_F(OptionCustomTest, booleanData) {
 // The purpose of this test is to verify that the data from a buffer
 // can be read as a DHCPv4 tuple.
 TEST_F(OptionCustomTest, tupleData4) {
-    OptionDefinition opt_def("option-foo", 232, "tuple", "option-foo-space");
+    OptionDefinition opt_def("option-foo", 232, "my-space", "tuple",
+                             "option-foo-space");
 
     const char data[] = {
         6, 102, 111, 111, 98, 97, 114 // "foobar"
@@ -352,7 +356,8 @@ TEST_F(OptionCustomTest, tupleData4) {
 // The purpose of this test is to verify that the data from a buffer
 // can be read as a DHCPv6 tuple.
 TEST_F(OptionCustomTest, tupleData6) {
-    OptionDefinition opt_def("option-foo", 1000, "tuple", "option-foo-space");
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "tuple",
+                             "option-foo-space");
 
     const char data[] = {
         0, 6, 102, 111, 111, 98, 97, 114 // "foobar"
@@ -403,7 +408,8 @@ TEST_F(OptionCustomTest, tupleData6) {
 // The purpose of this test is to verify that the data from a buffer
 // can be read as FQDN.
 TEST_F(OptionCustomTest, fqdnData) {
-    OptionDefinition opt_def("option-foo", 1000, "fqdn", "option-foo-space");
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "fqdn",
+                             "option-foo-space");
 
     const char data[] = {
         8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
@@ -443,7 +449,8 @@ TEST_F(OptionCustomTest, fqdnData) {
 // The purpose of this test is to verify that the option definition comprising
 // 16-bit signed integer value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, int16Data) {
-    OptionDefinition opt_def("option-foo", 1000, "int16", "option-foo-space");
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "int16",
+                             "option-foo-space");
 
     OptionBuffer buf;
     // Store signed integer value in the input buffer.
@@ -482,7 +489,8 @@ TEST_F(OptionCustomTest, int16Data) {
 // The purpose of this test is to verify that the option definition comprising
 // 32-bit signed integer value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, int32Data) {
-    OptionDefinition opt_def("option-foo", 1000, "int32", "option-foo-space");
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "int32",
+                             "option-foo-space");
 
     OptionBuffer buf;
     writeInt<int32_t>(-234, buf);
@@ -520,7 +528,7 @@ TEST_F(OptionCustomTest, int32Data) {
 // The purpose of this test is to verify that the option definition comprising
 // single IPv4 address can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, ipv4AddressData) {
-    OptionDefinition opt_def("OPTION_FOO", 231, "ipv4-address",
+    OptionDefinition opt_def("OPTION_FOO", 231, "my-space", "ipv4-address",
                              "option-foo-space");
 
     // Create input buffer.
@@ -560,7 +568,7 @@ TEST_F(OptionCustomTest, ipv4AddressData) {
 // The purpose of this test is to verify that the option definition comprising
 // single IPv6 address can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, ipv6AddressData) {
-    OptionDefinition opt_def("option-foo", 1000, "ipv6-address",
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "ipv6-address",
                              "option-foo-space");
 
     // Initialize input buffer.
@@ -604,7 +612,7 @@ TEST_F(OptionCustomTest, ipv6AddressData) {
 // single variable length prefix can be used to create an instance of custom
 // option.
 TEST_F(OptionCustomTest, prefixData) {
-    OptionDefinition opt_def("option-foo", 1000, "ipv6-prefix",
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "ipv6-prefix",
                              "option-foo-space");
 
     // Initialize input buffer.
@@ -642,7 +650,7 @@ TEST_F(OptionCustomTest, prefixData) {
 // The purpose of this test is to verify that the option definition comprising
 // single PSID can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, psidData) {
-    OptionDefinition opt_def("option-foo", 1000, "psid",
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "psid",
                              "option-foo-space");
 
     // Initialize input buffer.
@@ -680,7 +688,8 @@ TEST_F(OptionCustomTest, psidData) {
 // The purpose of this test is to verify that the option definition comprising
 // string value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, stringData) {
-    OptionDefinition opt_def("option-foo", 1000, "string", "option-foo-space");
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "string",
+                             "option-foo-space");
 
     // Create an input buffer holding some string value.
     OptionBuffer buf;
@@ -728,7 +737,7 @@ TEST_F(OptionCustomTest, stringData) {
 // The purpose of this test is to verify that the option definition comprising
 // an array of boolean values can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, booleanDataArray) {
-    OptionDefinition opt_def("option-foo", 1000, "boolean", true);
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "boolean", true);
 
     // Create a buffer with 5 values that represent array of
     // booleans.
@@ -784,7 +793,7 @@ TEST_F(OptionCustomTest, booleanDataArray) {
 // an array of 32-bit signed integer values can be used to create an instance
 // of custom option.
 TEST_F(OptionCustomTest, uint32DataArray) {
-    OptionDefinition opt_def("option-foo", 1000, "uint32", true);
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "uint32", true);
 
     // Create an input buffer that holds 4 uint32 values that
     // represent an array.
@@ -832,7 +841,8 @@ TEST_F(OptionCustomTest, uint32DataArray) {
 // The purpose of this test is to verify that the option definition comprising
 // an array of IPv4 addresses can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, ipv4AddressDataArray) {
-    OptionDefinition opt_def("OPTION_FOO", 231, "ipv4-address", true);
+    OptionDefinition opt_def("OPTION_FOO", 231, "my-space", "ipv4-address",
+                             true);
 
     // Initialize reference data.
     std::vector<IOAddress> addresses;
@@ -882,7 +892,8 @@ TEST_F(OptionCustomTest, ipv4AddressDataArray) {
 // The purpose of this test is to verify that the option definition comprising
 // an array of IPv6 addresses can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, ipv6AddressDataArray) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address", true);
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "ipv6-address",
+                             true);
 
     // Initialize reference data.
     std::vector<IOAddress> addresses;
@@ -934,7 +945,7 @@ TEST_F(OptionCustomTest, ipv6AddressDataArray) {
 // multiple FQDN values encoded as described in the RFC1035, section
 // 3.1
 TEST_F(OptionCustomTest, fqdnDataArray) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "fqdn", true);
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "fqdn", true);
 
     const char data[] = {
         8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
@@ -971,7 +982,8 @@ TEST_F(OptionCustomTest, fqdnDataArray) {
 // The purpose of this test is to verify that the option definition comprising
 // an array of IPv6 prefixes can be used to create an instance of OptionCustom.
 TEST_F(OptionCustomTest, prefixDataArray) {
-    OptionDefinition opt_def("option-foo", 1000, "ipv6-prefix", true);
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "ipv6-prefix",
+                             true);
 
     // The following buffer comprises three prefixes with different
     // prefix lengths.
@@ -1016,7 +1028,7 @@ TEST_F(OptionCustomTest, prefixDataArray) {
 // The purpose of this test is to verify that the option definition comprising
 // an array of PSIDs can be used to create an instance of OptionCustom.
 TEST_F(OptionCustomTest, psidDataArray) {
-    OptionDefinition opt_def("option-foo", 1000, "psid", true);
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "psid", true);
 
     // The following buffer comprises three PSIDs.
     const uint8_t data[] = {
@@ -1062,7 +1074,7 @@ TEST_F(OptionCustomTest, psidDataArray) {
 // The purpose of this test is to verify that the data from a buffer
 // can be read as DHCPv4 tuples.
 TEST_F(OptionCustomTest, tupleDataArray4) {
-    OptionDefinition opt_def("option-foo", 232, "tuple", true);
+    OptionDefinition opt_def("option-foo", 232, "my-space", "tuple", true);
 
     const char data[] = {
         5, 104, 101, 108, 108, 111, // "hello"
@@ -1104,7 +1116,7 @@ TEST_F(OptionCustomTest, tupleDataArray4) {
 // The purpose of this test is to verify that the data from a buffer
 // can be read as DHCPv6 tuples.
 TEST_F(OptionCustomTest, tupleDataArray6) {
-    OptionDefinition opt_def("option-foo", 1000, "tuple", true);
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "tuple", true);
 
     const char data[] = {
         0, 5, 104, 101, 108, 108, 111, // "hello"
@@ -1153,7 +1165,8 @@ TEST_F(OptionCustomTest, tupleDataArray6) {
 // a record of fixed-size fields can be used to create an option with a
 // suboption.
 TEST_F(OptionCustomTest, recordDataWithSuboption) {
-    OptionDefinition opt_def("option-foo", 1000, "record", "option-foo-space");
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "record",
+                             "option-foo-space");
     ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
 
@@ -1196,7 +1209,7 @@ TEST_F(OptionCustomTest, recordDataWithSuboption) {
 TEST_F(OptionCustomTest, recordData) {
     // Create the definition of an option which comprises
     // a record of fields of different types.
-    OptionDefinition opt_def("OPTION_FOO", 1000, "record");
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "record");
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
     ASSERT_NO_THROW(opt_def.addRecordField("fqdn"));
@@ -1281,7 +1294,7 @@ TEST_F(OptionCustomTest, recordData) {
 TEST_F(OptionCustomTest, recordArrayData) {
     // Create the definition of an option which comprises
     // a record of fields of different types.
-    OptionDefinition opt_def("OPTION_FOO", 1000, "record", true);
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "record", true);
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
     ASSERT_NO_THROW(opt_def.addRecordField("fqdn"));
@@ -1372,7 +1385,7 @@ TEST_F(OptionCustomTest, recordArrayData) {
 TEST_F(OptionCustomTest, recordDataTruncated) {
     // Create the definition of an option which comprises
     // a record of fields of different types.
-    OptionDefinition opt_def("OPTION_FOO", 1000, "record");
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "record");
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
     ASSERT_NO_THROW(opt_def.addRecordField("string"));
@@ -1426,7 +1439,7 @@ TEST_F(OptionCustomTest, recordDataTruncated) {
 // test also checks that it is possible to override this default
 // value.
 TEST_F(OptionCustomTest, setBinaryData) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "binary");
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "binary");
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1458,7 +1471,7 @@ TEST_F(OptionCustomTest, setBinaryData) {
 // single boolean data field can be created and that its default
 // value can be overridden by a new value.
 TEST_F(OptionCustomTest, setBooleanData) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "boolean");
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "boolean");
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1483,7 +1496,7 @@ TEST_F(OptionCustomTest, setBooleanData) {
 TEST_F(OptionCustomTest, setUint32Data) {
     // Create a definition of an option that holds single
     // uint32 value.
-    OptionDefinition opt_def("OPTION_FOO", 1000, "uint32");
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "uint32");
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1511,7 +1524,7 @@ TEST_F(OptionCustomTest, setUint32Data) {
 // single IPv4 address can be created and that this address can
 // be overridden by a new value.
 TEST_F(OptionCustomTest, setIpv4AddressData) {
-    OptionDefinition opt_def("OPTION_FOO", 232, "ipv4-address");
+    OptionDefinition opt_def("OPTION_FOO", 232, "my-space", "ipv4-address");
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1535,7 +1548,7 @@ TEST_F(OptionCustomTest, setIpv4AddressData) {
 // single IPv6 address can be created and that this address can
 // be overridden by a new value.
 TEST_F(OptionCustomTest, setIpv6AddressData) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address");
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "ipv6-address");
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1559,7 +1572,7 @@ TEST_F(OptionCustomTest, setIpv6AddressData) {
 // a prefix can be created and that the prefix can be overridden by
 // a new value.
 TEST_F(OptionCustomTest, setPrefixData) {
-    OptionDefinition opt_def("option-foo", 1000, "ipv6-prefix");
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "ipv6-prefix");
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1588,7 +1601,7 @@ TEST_F(OptionCustomTest, setPrefixData) {
 // a single PSID can be created and that the PSID can be overridden
 // by a new value.
 TEST_F(OptionCustomTest, setPsidData) {
-    OptionDefinition opt_def("option-foo", 1000, "psid");
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "psid");
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1618,7 +1631,7 @@ TEST_F(OptionCustomTest, setPsidData) {
 // is initialized to the default value. Also, this test checks that
 // this value can be overwritten by a new value.
 TEST_F(OptionCustomTest, setStringData) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "string");
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "string");
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1644,7 +1657,7 @@ TEST_F(OptionCustomTest, setStringData) {
 /// a default FQDN value can be created and that this value can be
 /// overridden after the option has been created.
 TEST_F(OptionCustomTest, setFqdnData) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "fqdn");
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "fqdn");
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1668,7 +1681,7 @@ TEST_F(OptionCustomTest, setFqdnData) {
 // an array of boolean values can be created with no values
 // initially and that values can be later added to it.
 TEST_F(OptionCustomTest, setBooleanDataArray) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "boolean", true);
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "boolean", true);
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1702,7 +1715,7 @@ TEST_F(OptionCustomTest, setBooleanDataArray) {
 // an array of 16-bit signed integer values can be created with
 // no values initially and that the values can be later added to it.
 TEST_F(OptionCustomTest, setUint16DataArray) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "uint16", true);
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "uint16", true);
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1739,7 +1752,8 @@ TEST_F(OptionCustomTest, setUint16DataArray) {
 /// array of IPv4 address can be created with no addresses and that
 /// multiple IPv4 addresses can be added to it after creation.
 TEST_F(OptionCustomTest, setIpv4AddressDataArray) {
-    OptionDefinition opt_def("OPTION_FOO", 232, "ipv4-address", true);
+    OptionDefinition opt_def("OPTION_FOO", 232, "my-space", "ipv4-address",
+                             true);
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1781,7 +1795,8 @@ TEST_F(OptionCustomTest, setIpv4AddressDataArray) {
 /// array of IPv6 address can be created with no addresses and that
 /// multiple IPv6 addresses can be added to it after creation.
 TEST_F(OptionCustomTest, setIpv6AddressDataArray) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address", true);
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "ipv6-address",
+                             true);
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1824,7 +1839,7 @@ TEST_F(OptionCustomTest, setIpv6AddressDataArray) {
 /// array of PSIDs can be created with no PSIDs and that PSIDs can be
 /// later added after the option has been created.
 TEST_F(OptionCustomTest, setPSIDPrefixArray) {
-    OptionDefinition opt_def("option-foo", 1000, "psid", true);
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "psid", true);
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1866,7 +1881,8 @@ TEST_F(OptionCustomTest, setPSIDPrefixArray) {
 /// array of IPv6 prefixes can be created with no prefixes and that
 /// prefixes can be later added after the option has been created.
 TEST_F(OptionCustomTest, setIPv6PrefixDataArray) {
-    OptionDefinition opt_def("option-foo", 1000, "ipv6-prefix", true);
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "ipv6-prefix",
+                             true);
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1914,7 +1930,7 @@ TEST_F(OptionCustomTest, setIPv6PrefixDataArray) {
 /// array of DHCPv4 tuples can be created with no tuples and that
 /// tuples can be later added after the option has been created.
 TEST_F(OptionCustomTest, setTupleDataArray4) {
-    OptionDefinition opt_def("option-foo", 232, "tuple", true);
+    OptionDefinition opt_def("option-foo", 232, "my-space", "tuple", true);
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -1959,7 +1975,7 @@ TEST_F(OptionCustomTest, setTupleDataArray4) {
 /// array of DHCPv6 tuples can be created with no tuples and that
 /// tuples can be later added after the option has been created.
 TEST_F(OptionCustomTest, setTupleDataArray6) {
-    OptionDefinition opt_def("option-foo", 1000, "tuple", true);
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "tuple", true);
 
     // Create an option and let the data field be initialized
     // to default value (do not provide any data buffer).
@@ -2001,7 +2017,7 @@ TEST_F(OptionCustomTest, setTupleDataArray6) {
 }
 
 TEST_F(OptionCustomTest, setRecordData) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "record");
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "record");
 
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
@@ -2092,7 +2108,7 @@ TEST_F(OptionCustomTest, setRecordData) {
 }
 
 TEST_F(OptionCustomTest, setRecordArrayData) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "record", true);
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "record", true);
 
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
@@ -2191,7 +2207,7 @@ TEST_F(OptionCustomTest, setRecordArrayData) {
 // The purpose of this test is to verify that pack function for
 // DHCPv4 custom option works correctly.
 TEST_F(OptionCustomTest, pack4) {
-    OptionDefinition opt_def("OPTION_FOO", 234, "record");
+    OptionDefinition opt_def("OPTION_FOO", 234, "my-space", "record");
     ASSERT_NO_THROW(opt_def.addRecordField("uint8"));
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
@@ -2224,7 +2240,7 @@ TEST_F(OptionCustomTest, pack4) {
 // The purpose of this test is to verify that pack function for
 // DHCPv6 custom option works correctly.
 TEST_F(OptionCustomTest, pack6) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "record");
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "record");
     ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("string"));
@@ -2259,7 +2275,8 @@ TEST_F(OptionCustomTest, pack6) {
 // The purpose of this test is to verify that unpack function works
 // correctly for a custom option.
 TEST_F(OptionCustomTest, unpack) {
-    OptionDefinition opt_def("OPTION_FOO", 231, "ipv4-address", true);
+    OptionDefinition opt_def("OPTION_FOO", 231, "my-space", "ipv4-address",
+                             true);
 
     // Initialize reference data.
     std::vector<IOAddress> addresses;
@@ -2321,7 +2338,7 @@ TEST_F(OptionCustomTest, unpack) {
 // The purpose of this test is to verify that unpack function works
 // correctly for a custom option with record and trailing array.
 TEST_F(OptionCustomTest, unpackRecordArray) {
-    OptionDefinition opt_def("OPTION_FOO", 231, "record", true);
+    OptionDefinition opt_def("OPTION_FOO", 231, "my-space", "record", true);
 
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
@@ -2370,7 +2387,8 @@ TEST_F(OptionCustomTest, unpackRecordArray) {
 // The purpose of this test is to verify that new data can be set for
 // a custom option.
 TEST_F(OptionCustomTest, initialize) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address", true);
+    OptionDefinition opt_def("OPTION_FOO", 1000, "my-space", "ipv6-address",
+                             true);
 
     // Initialize reference data.
     std::vector<IOAddress> addresses;
@@ -2431,7 +2449,7 @@ TEST_F(OptionCustomTest, initialize) {
 // The purpose of this test is to verify that an invalid index
 // value can't be used to access option data fields.
 TEST_F(OptionCustomTest, invalidIndex) {
-    OptionDefinition opt_def("OPTION_FOO", 999, "uint32", true);
+    OptionDefinition opt_def("OPTION_FOO", 999, "my-space", "uint32", true);
 
     OptionBuffer buf;
     for (int i = 0; i < 10; ++i) {
@@ -2458,7 +2476,7 @@ TEST_F(OptionCustomTest, invalidIndex) {
 // This test checks that the custom option holding a record of data
 // fields can be presented in the textual format.
 TEST_F(OptionCustomTest, toTextRecord) {
-    OptionDefinition opt_def("foo", 123, "record");
+    OptionDefinition opt_def("foo", 123, "my-space", "record");
     opt_def.addRecordField("uint32");
     opt_def.addRecordField("string");
 
@@ -2473,12 +2491,12 @@ TEST_F(OptionCustomTest, toTextRecord) {
 // This test checks that the custom option holding other data type
 // than "record" be presented in the textual format.
 TEST_F(OptionCustomTest, toTextNoRecord) {
-    OptionDefinition opt_def("foo", 234, "uint32");
+    OptionDefinition opt_def("foo", 234, "my-space", "uint32");
 
     OptionCustom option(opt_def, Option::V6);
     option.writeInteger<uint32_t>(123456);
 
-    OptionDefinition sub_opt_def("bar", 333, "fqdn");
+    OptionDefinition sub_opt_def("bar", 333, "my-space", "fqdn");
     OptionCustomPtr sub_opt(new OptionCustom(sub_opt_def, Option::V6));
     sub_opt->writeFqdn("myhost.example.org.");
     option.addOption(sub_opt);
