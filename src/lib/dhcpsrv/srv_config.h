@@ -11,6 +11,7 @@
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <dhcpsrv/cfg_expiration.h>
+#include <dhcpsrv/cfg_globals.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_iface.h>
@@ -769,23 +770,50 @@ public:
         d2_client_config_ = d2_client_config;
     }
 
-    /// @brief Returns pointer to configured global parameters
-    isc::data::ConstElementPtr getConfiguredGlobals() const {
-        return (isc::data::ConstElementPtr(configured_globals_));
+    /// @brief Returns non-const pointer to configured global parameters.
+    ///
+    /// This function returns a non-const pointer to the configured
+    /// global parameters.
+    ///
+    /// @return Object representing configured global parameters.
+    CfgGlobalsPtr  getConfiguredGlobals() {
+        return (configured_globals_);
+    }
+
+    /// @brief Returns const pointer to configured global parameters.
+    ///
+    /// This function returns a onst pointer to the configured
+    /// global parameters.
+    ///
+    /// @return Object representing configured global parameters.
+    ConstCfgGlobalsPtr getConfiguredGlobals() const {
+        return (configured_globals_);
     }
 
     /// @brief Returns pointer to a given configured global parameter
     /// @param name name of the parameter to fetch
     /// @return Pointer to the parameter if it exists, otherwise an
     /// empty pointer.
-    isc::data::ConstElementPtr getConfiguredGlobal(std::string name) const;
+    isc::data::ConstElementPtr getConfiguredGlobal(std::string name) const {
+        return (configured_globals_->get(name));
+    }
+
+    /// @brief Returns pointer to a given configured global parameter
+    /// @param index index of the parameter to fetch
+    /// @return Pointer to the parameter if it exists, otherwise an
+    /// empty pointer.
+    isc::data::ConstElementPtr getConfiguredGlobal(int index) const {
+        return (configured_globals_->get(index));
+    }
 
     /// @brief Removes all configured global parameters.
     /// @note This removes the default values too so either
     /// @c applyDefaultsConfiguredGlobals and @c mergeGlobals,
     /// or @c isc::data::SimpleParser::setDefaults and
     /// @c extractConfiguredGlobals should be called after.
-    void clearConfiguredGlobals();
+    void clearConfiguredGlobals() {
+        configured_globals_->clear();
+    }
 
     /// @brief Applies defaults to global parameters.
     /// @param defaults vector of (name, type, value) defaults to apply.
@@ -1026,7 +1054,7 @@ private:
     D2ClientConfigPtr d2_client_config_;
 
     /// @brief Stores the global parameters specified via configuration
-    isc::data::ElementPtr configured_globals_;
+    CfgGlobalsPtr configured_globals_;
 
     /// @brief Pointer to the configuration consistency settings
     CfgConsistencyPtr cfg_consist_;

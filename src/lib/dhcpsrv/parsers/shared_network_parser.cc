@@ -208,7 +208,7 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
     // In order to take advantage of the dynamic inheritance of global
     // parameters to a shared network we need to set a callback function
     // for each shared network to allow for fetching global parameters.
-     shared_network->setFetchGlobalsFn([]() -> ConstElementPtr {
+     shared_network->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
     });
 
@@ -385,7 +385,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
     // In order to take advantage of the dynamic inheritance of global
     // parameters to a shared network we need to set a callback function
     // for each shared network which can be used to fetch global parameters.
-     shared_network->setFetchGlobalsFn([]() -> ConstElementPtr {
+     shared_network->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
     });
 

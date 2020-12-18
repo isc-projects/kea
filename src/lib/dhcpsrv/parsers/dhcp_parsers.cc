@@ -655,7 +655,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // In order to take advantage of the dynamic inheritance of global
     // parameters to a subnet we need to set a callback function for each
     // subnet to allow for fetching global parameters.
-    subnet_->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet_->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
     });
 }

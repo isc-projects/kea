@@ -1452,7 +1452,7 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
     // Reset the fetch global function to staging (vs current) config.
-    subnet->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().get().toText());
@@ -1719,7 +1719,7 @@ TEST_F(Dhcp4ParserTest, matchClientIdNoGlobal) {
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
     // Reset the fetch global function to staging (vs current) config.
-    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_TRUE(subnet1->getMatchClientId());
@@ -1727,7 +1727,7 @@ TEST_F(Dhcp4ParserTest, matchClientIdNoGlobal) {
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
     // Reset the fetch global function to staging (vs current) config.
-    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_FALSE(subnet2->getMatchClientId());
@@ -1765,7 +1765,7 @@ TEST_F(Dhcp4ParserTest, matchClientIdGlobal) {
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
     // Reset the fetch global function to staging (vs current) config.
-    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_FALSE(subnet1->getMatchClientId());
@@ -1773,7 +1773,7 @@ TEST_F(Dhcp4ParserTest, matchClientIdGlobal) {
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
     // Reset the fetch global function to staging (vs current) config.
-    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_TRUE(subnet2->getMatchClientId());
@@ -1810,7 +1810,7 @@ TEST_F(Dhcp4ParserTest, authoritativeNoGlobal) {
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
     // Reset the fetch global function to staging (vs current) config.
-    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_TRUE(subnet1->getAuthoritative());
@@ -1818,7 +1818,7 @@ TEST_F(Dhcp4ParserTest, authoritativeNoGlobal) {
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
     // Reset the fetch global function to staging (vs current) config.
-    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_FALSE(subnet2->getAuthoritative());
@@ -1856,7 +1856,7 @@ TEST_F(Dhcp4ParserTest, authoritativeGlobal) {
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
     // Reset the fetch global function to staging (vs current) config.
-    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_FALSE(subnet1->getAuthoritative());
@@ -1864,7 +1864,7 @@ TEST_F(Dhcp4ParserTest, authoritativeGlobal) {
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
     // Reset the fetch global function to staging (vs current) config.
-    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_TRUE(subnet2->getAuthoritative());
@@ -5531,7 +5531,7 @@ TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
     subnet = subnets->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet);
     // Reset the fetch global function to staging (vs current) config.
-    subnet->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_FALSE(subnet->getReservationsGlobal());
@@ -5542,7 +5542,7 @@ TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
     subnet = subnets->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet);
     // Reset the fetch global function to staging (vs current) config.
-    subnet->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_FALSE(subnet->getReservationsGlobal());
@@ -7380,7 +7380,7 @@ TEST_F(Dhcp4ParserTest, storeExtendedInfoNoGlobal) {
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
     // Reset the fetch global function to staging (vs current) config.
-    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_TRUE(subnet1->getStoreExtendedInfo());
@@ -7388,7 +7388,7 @@ TEST_F(Dhcp4ParserTest, storeExtendedInfoNoGlobal) {
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
     // Reset the fetch global function to staging (vs current) config.
-    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_FALSE(subnet2->getStoreExtendedInfo());
@@ -7426,7 +7426,7 @@ TEST_F(Dhcp4ParserTest, storeExtendedInfoGlobal) {
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
     // Reset the fetch global function to staging (vs current) config.
-    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_FALSE(subnet1->getStoreExtendedInfo());
@@ -7434,7 +7434,7 @@ TEST_F(Dhcp4ParserTest, storeExtendedInfoGlobal) {
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
     // Reset the fetch global function to staging (vs current) config.
-    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_TRUE(subnet2->getStoreExtendedInfo());

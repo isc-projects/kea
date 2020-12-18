@@ -21,26 +21,8 @@ CfgGlobals::nameToIndex = {
     { "renew-timer", RENEW_TIMER },
     { "rebind-timer", REBIND_TIMER },
     { "decline-probation-period", DECLINE_PROBATION_PERIOD },
-    { "shared-networks", SHARED_NETWORKS },
-    { "interfaces-config", INTERFACES_CONFIG },
-    { "lease-database", LEASE_DATABASE },
-    { "hosts-database", HOSTS_DATABASE },
-    { "hosts-databases", HOSTS_DATABASES },
-    { "host-reservation-identifiers", HOST_RESERVATION_IDENTIFIERS },
-    { "client-classes", CLIENT_CLASSES },
-    { "option-def", OPTION_DEF },
-    { "option-data", OPTION_DATA },
-    { "hooks-libraries", HOOKS_LIBRARIES },
-    { "expired-leases-processing", EXPIRED_LEASES_PROCESSING },
     { "dhcp4o6-port", DHCP4O6_PORT },
-    { "control-socket", CONTROL_SOCKET },
-    { "dhcp-queue-control", DHCP_QUEUE_CONTROL },
-    { "dhcp-ddns", DHCP_DDNS },
-    { "user-context", USER_CONTEXT },
     { "comment", COMMENT },
-    { "sanity-checks", SANITY_CHECKS },
-    { "reservations", RESERVATIONS },
-    { "config-control", CONFIG_CONTROL },
     { "server-tag", SERVER_TAG },
     { "reservation-mode", RESERVATION_MODE },
     { "reservations-global", RESERVATIONS_GLOBAL },
@@ -49,7 +31,6 @@ CfgGlobals::nameToIndex = {
     { "calculate-tee-times", CALCULATE_TEE_TIMES },
     { "t1-percent", T1_PERCENT },
     { "t2-percent", T2_PERCENT },
-    { "loggers", LOGGERS },
     { "hostname-char-set", HOSTNAME_CHAR_SET },
     { "hostname-char-replacement", HOSTNAME_CHAR_REPLACEMENT },
     { "ddns-send-updates", DDNS_SEND_UPDATES },
@@ -61,7 +42,6 @@ CfgGlobals::nameToIndex = {
     { "store-extended-info", STORE_EXTENDED_INFO },
     { "statistic-default-sample-count", STATISTIC_DEFAULT_SAMPLE_COUNT },
     { "statistic-default-sample-age", STATISTIC_DEFAULT_SAMPLE_AGE },
-    { "multi-threading", MULTI_THREADING },
     { "cache-threshold", CACHE_THRESHOLD },
     { "cache-max-age", CACHE_MAX_AGE },
     { "ip-reservations-unique", IP_RESERVATIONS_UNIQUE },
@@ -69,7 +49,6 @@ CfgGlobals::nameToIndex = {
     { "ddns-use-conflict-resolution", DDNS_USE_CONFLICT_RESOLUTION },
 
     // DHCPv4 specific parameters.
-    { "subnet4", SUBNET4 },
     { "echo-client-id", ECHO_CLIENT_ID },
     { "match-client-id", MATCH_CLIENT_ID },
     { "authoritative", AUTHORITATIVE },
@@ -81,11 +60,7 @@ CfgGlobals::nameToIndex = {
     { "data-directory", DATA_DIRECTORY },
     { "preferred-lifetime", PREFERRED_LIFETIME },
     { "min-preferred-lifetime", MIN_PREFERRED_LIFETIME },
-    { "max-preferred-lifetime", MAX_PREFERRED_LIFETIME },
-    { "subnet6", SUBNET6 },
-    { "mac-sources", MAC_SOURCES },
-    { "relay-supplied-options", RELAY_SUPPLIED_OPTIONS },
-    { "server-id", SERVER_ID }
+    { "max-preferred-lifetime", MAX_PREFERRED_LIFETIME }
 };
 
 // Load time sanity check.
@@ -172,6 +147,19 @@ CfgGlobals::clear() {
             values_[idx] = ConstElementPtr();
         }
     }
+}
+
+const CfgGlobals::MapType
+CfgGlobals::valuesMap() const {
+    MapType map;
+    for (auto it = nameToIndex.cbegin(); it != nameToIndex.cend(); ++it) {
+        int idx = it->second;
+        ConstElementPtr value = values_[idx];
+        if (value) {
+            map.insert(make_pair(it->first, value));
+        }
+    }
+    return (map);
 }
 
 ElementPtr

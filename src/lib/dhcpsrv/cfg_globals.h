@@ -44,26 +44,8 @@ public:
         RENEW_TIMER,
         REBIND_TIMER,
         DECLINE_PROBATION_PERIOD,
-        SHARED_NETWORKS,
-        INTERFACES_CONFIG,
-        LEASE_DATABASE,
-        HOSTS_DATABASE,
-        HOSTS_DATABASES,
-        HOST_RESERVATION_IDENTIFIERS,
-        CLIENT_CLASSES,
-        OPTION_DEF,
-        OPTION_DATA,
-        HOOKS_LIBRARIES,
-        EXPIRED_LEASES_PROCESSING,
         DHCP4O6_PORT,
-        CONTROL_SOCKET,
-        DHCP_QUEUE_CONTROL,
-        DHCP_DDNS,
-        USER_CONTEXT,
         COMMENT,
-        SANITY_CHECKS,
-        RESERVATIONS,
-        CONFIG_CONTROL,
         SERVER_TAG,
         RESERVATION_MODE,
         RESERVATIONS_GLOBAL,
@@ -72,7 +54,6 @@ public:
         CALCULATE_TEE_TIMES,
         T1_PERCENT,
         T2_PERCENT,
-        LOGGERS,
         HOSTNAME_CHAR_SET,
         HOSTNAME_CHAR_REPLACEMENT,
         DDNS_SEND_UPDATES,
@@ -84,7 +65,6 @@ public:
         STORE_EXTENDED_INFO,
         STATISTIC_DEFAULT_SAMPLE_COUNT,
         STATISTIC_DEFAULT_SAMPLE_AGE,
-        MULTI_THREADING,
         CACHE_THRESHOLD,
         CACHE_MAX_AGE,
         IP_RESERVATIONS_UNIQUE,
@@ -92,7 +72,6 @@ public:
         DDNS_USE_CONFLICT_RESOLUTION,
 
         // DHCPv4 specific parameters.
-        SUBNET4,
         ECHO_CLIENT_ID,
         MATCH_CLIENT_ID,
         AUTHORITATIVE,
@@ -104,17 +83,13 @@ public:
         DATA_DIRECTORY,
         PREFERRED_LIFETIME,
         MIN_PREFERRED_LIFETIME,
-        MAX_PREFERRED_LIFETIME,
-        SUBNET6,
-        MAC_SOURCES,
-        RELAY_SUPPLIED_OPTIONS,
-        SERVER_ID
+        MAX_PREFERRED_LIFETIME
     };
 
     /// @brief Last index.
     ///
     /// @note: please update when a new element is appended to the Index enum.
-    static const int MAX_INDEX = SERVER_ID;
+    static const int MAX_INDEX = MAX_PREFERRED_LIFETIME;
 
     /// @brief Size of configured global objects.
     static const size_t SIZE = MAX_INDEX + 1;
@@ -160,9 +135,18 @@ public:
     /// @brief Clear configured parameter values.
     void clear();
 
-    /// @brief Unparse configured globals.
+    /// @brief Type of name and value map.
+    typedef std::map<std::string, isc::data::ConstElementPtr> MapType;
+
+    /// @brief Returns configured parameters as a map.
     ///
-    /// @return a pointer to unparsed globals.
+    /// @note: the map includes only set global parameters i.e.
+    /// ConstElementPtr values are never null.
+    const MapType valuesMap() const;
+
+    /// @brief Unparse configured global parameters.
+    ///
+    /// @return a pointer to unparsed global parameters.
     isc::data::ElementPtr toElement() const;
 
 protected:
@@ -170,8 +154,11 @@ protected:
     std::vector<isc::data::ConstElementPtr> values_;
 };
 
-/// @brief Shared pointer to a CfgGlobals instance.
+/// @brief Non-const shared pointer to a CfgGlobals instance.
 typedef boost::shared_ptr<CfgGlobals> CfgGlobalsPtr;
+
+/// @brief Const shared pointer to a CfgGlobals instance.
+typedef boost::shared_ptr<const CfgGlobals> ConstCfgGlobalsPtr;
 
 } // namespace isc::dhcp
 } // namespace isc

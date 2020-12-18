@@ -14,6 +14,7 @@
 #include <cc/user_context.h>
 #include <dhcp/classify.h>
 #include <dhcp/option.h>
+#include <dhcpsrv/cfg_globals.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
 #include <dhcpsrv/d2_client_cfg.h>
@@ -47,7 +48,7 @@ typedef boost::weak_ptr<Network> WeakNetworkPtr;
 
 /// @brief Callback function for @c Network that retrieves globally
 /// configured parameters.
-typedef std::function<data::ConstElementPtr()> FetchNetworkGlobalsFn;
+typedef std::function<ConstCfgGlobalsPtr()> FetchNetworkGlobalsFn;
 
 /// @brief Common interface representing a network to which the DHCP clients
 /// are connected.
@@ -785,8 +786,8 @@ protected:
                                  const std::string& max_name = "") const {
         unused(min_name, max_name);
         if (!global_name.empty() && fetch_globals_fn_) {
-            data::ConstElementPtr globals = fetch_globals_fn_();
-            if (globals && (globals->getType() == data::Element::map)) {
+            ConstCfgGlobalsPtr globals = fetch_globals_fn_();
+            if (globals) {
                 data::ConstElementPtr global_param = globals->get(global_name);
                 if (global_param) {
                     // If there is a global parameter, convert it to the
@@ -823,8 +824,8 @@ protected:
                                        const std::string& max_name = "") const {
 
         if (!global_name.empty() && fetch_globals_fn_) {
-            data::ConstElementPtr globals = fetch_globals_fn_();
-            if (globals && (globals->getType() == data::Element::map)) {
+            ConstCfgGlobalsPtr globals = fetch_globals_fn_();
+            if (globals) {
                 data::ConstElementPtr param = globals->get(global_name);
                 if (param) {
                     NumType def_value = static_cast<NumType>(param->intValue());

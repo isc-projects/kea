@@ -46,7 +46,7 @@ SrvConfig::SrvConfig()
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
-      configured_globals_(Element::createMap()),
+      configured_globals_(new CfgGlobals()),
       cfg_consist_(new CfgConsistency()),
       lenient_option_parsing_(false) {
 }
@@ -65,7 +65,7 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
-      configured_globals_(Element::createMap()),
+      configured_globals_(new CfgGlobals()),
       cfg_consist_(new CfgConsistency()),
       lenient_option_parsing_(false) {
 }
@@ -243,7 +243,7 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
     }
     // Iterate over the "other" globals, adding/overwriting them into
     // this config's list of globals.
-    for (auto other_global : other.getConfiguredGlobals()->mapValue()) {
+    for (auto other_global : other.getConfiguredGlobals()->valuesMap()) {
         addConfiguredGlobal(other_global.first, other_global.second);
     }
 
@@ -251,8 +251,8 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
     BaseNetworkParser::moveReservationMode(mutable_cfg);
 
     // A handful of values are stored as members in SrvConfig. So we'll
-    // iterate over the merged globals, setting appropriate members.
-    for (auto merged_global : config_set->mapValue()) {
+    // iterate over the merged globals, setting approprate members.
+    for (auto merged_global : getConfiguredGlobals()->valuesMap()) {
         std::string name = merged_global.first;
         ConstElementPtr element = merged_global.second;
         try {
@@ -322,21 +322,6 @@ SrvConfig::updateStatistics() {
     }
 }
 
-isc::data::ConstElementPtr
-SrvConfig::getConfiguredGlobal(std::string name) const {
-    isc::data::ConstElementPtr global;
-    if (configured_globals_->contains(name)) {
-        global = configured_globals_->get(name);
-    }
-
-    return (global);
-}
-
-void
-SrvConfig::clearConfiguredGlobals() {
-    configured_globals_ = isc::data::Element::createMap();
-}
-
 void
 SrvConfig::applyDefaultsConfiguredGlobals(const SimpleDefaults& defaults) {
     // Code from SimpleParser::setDefaults
@@ -344,14 +329,13 @@ SrvConfig::applyDefaultsConfiguredGlobals(const SimpleDefaults& defaults) {
     // we're inserting here are not present in whatever the config file
     // came from, we need to make sure it's clearly labeled as default.
     const Element::Position pos("<default-value>", 0, 0);
-    ConstElementPtr globals = getConfiguredGlobals();
 
     // Let's go over all parameters we have defaults for.
     for (auto def_value : defaults) {
 
         // Try if such a parameter is there. If it is, let's
         // skip it, because user knows best *cough*.
-        ConstElementPtr x = globals->get(def_value.name_);
+        ConstElementPtr x = getConfiguredGlobal(def_value.name_);
         if (x) {
             // There is such a value already, skip it.
             continue;
@@ -619,11 +603,9 @@ SrvConfig::toElement() const {
 
     // Get family for the configuration manager
     uint16_t family = CfgMgr::instance().getFamily();
-    // DhcpX global map
-    ElementPtr dhcp = ConfigBase::toElement();
 
-    // Add in explicitly configured globals.
-    dhcp->setValue(configured_globals_->mapValue());
+    // DhcpX global map initialiazed from configured globals
+    ElementPtr dhcp = configured_globals_->toElement();
 
     // Set user-context
     contextToElement(dhcp);

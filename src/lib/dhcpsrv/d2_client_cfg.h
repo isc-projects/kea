@@ -16,6 +16,7 @@
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
 #include <dhcp_ddns/ncr_io.h>
+#include <dhcpsrv/cfg_globals.h>
 #include <exceptions/exceptions.h>
 #include <util/optional.h>
 
@@ -44,7 +45,7 @@ public:
 
 /// @brief Callback function for @c D2ClientConfig that retrieves globally
 /// configured parameters.
-typedef std::function<data::ConstElementPtr()> FetchNetworkGlobalsFn;
+typedef std::function<ConstCfgGlobalsPtr()> FetchNetworkGlobalsFn;
 
 
 /// @brief Acts as a storage vault for D2 client configuration

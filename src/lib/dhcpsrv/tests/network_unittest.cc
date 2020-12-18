@@ -57,8 +57,7 @@ class NetworkTest : public ::testing::Test {
 public:
 
     /// @brief Constructor.
-    NetworkTest()
-        : globals_(Element::createMap()) {
+    NetworkTest() : globals_(new CfgGlobals()) {
     }
 
     /// @brief Returns pointer to the function which returns configured
@@ -68,7 +67,7 @@ public:
     }
 
     /// @brief Returns configured global parameters.
-    ConstElementPtr fetchGlobalsFn() {
+    ConstCfgGlobalsPtr fetchGlobalsFn() {
         return (globals_);
     }
 
@@ -146,7 +145,7 @@ public:
     }
 
     /// @brief Holds the collection of configured globals.
-    ElementPtr globals_;
+    CfgGlobalsPtr globals_;
 };
 
 // This test verifies that the inheritance is supported for certain

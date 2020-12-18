@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -105,7 +105,7 @@ void
 GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                           const std::string &name,
                                           ConstElementPtr exp_value) {
-    ConstElementPtr globals = srv_cfg->getConfiguredGlobals();
+    ConstCfgGlobalsPtr globals = srv_cfg->getConfiguredGlobals();
     ConstElementPtr found_global = globals->get(name);
     ASSERT_TRUE(found_global) << "expected global: "
                               << name << " not found";
@@ -122,7 +122,6 @@ GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                           StampedValuePtr& exp_global) {
     checkConfiguredGlobal(srv_cfg, exp_global->getName(), exp_global->getElementValue());
 }
-
 
 } // end of namespace isc::dhcp::test
 } // end of namespace isc::dhcp

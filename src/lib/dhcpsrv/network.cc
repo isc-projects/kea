@@ -105,8 +105,8 @@ Network::getGlobalProperty(Optional<IOAddress> property,
                            const std::string& /*min_name*/,
                            const std::string& /*max_name*/) const {
     if (!global_name.empty() && fetch_globals_fn_) {
-        ConstElementPtr globals = fetch_globals_fn_();
-        if (globals && (globals->getType() == Element::map)) {
+        ConstCfgGlobalsPtr globals = fetch_globals_fn_();
+        if (globals) {
             ConstElementPtr global_param = globals->get(global_name);
             if (global_param) {
                 std::string global_str = global_param->stringValue();
