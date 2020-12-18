@@ -421,6 +421,12 @@ This error message is issued to indicate that the configuration for the
 High Availability hooks library hasn't been specified. The 'high-availability'
 parameter must be specified for the hooks library to load properly.
 
+% HA_SEND_LEASE_UPDATES_BACKLOG sending %1 outstanding leases after communication recovery
+This informational message is issued when the server in the communication-recovery
+state re-established connection with the partner and is attempting to
+send all outstanding lease updates to a partner. The argument indicates
+how many outstanding leases are being sent.
+
 % HA_SCOPES_HANDLER_FAILED ha-scopes command failed: %1
 This error message is issued to indicate that the ha-scopes command handler
 failed while processing the command. The argument provides reason for

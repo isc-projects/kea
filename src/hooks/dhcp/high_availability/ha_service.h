@@ -10,6 +10,7 @@
 #include <communication_state.h>
 #include <ha_config.h>
 #include <ha_server_type.h>
+#include <lease_update_backlog.h>
 #include <query_filter.h>
 #include <asiolink/io_service.h>
 #include <cc/data.h>
@@ -574,6 +575,19 @@ protected:
     /// @return true if the server should send lease updates, false otherwise.
     bool shouldSendLeaseUpdates(const HAConfig::PeerConfigPtr& peer_config) const;
 
+    /// @brief Checks if the lease updates should be queued.
+    ///
+    /// If lease updates should be sent to the partner but the server is in
+    /// the communication-recovery state (temporarily unavailable) the lease
+    /// updates should be queued and later sent when the communication is
+    /// re-established. This function checks if the server is in the state
+    /// in which lease updates should be queued.
+    ///
+    /// @param peer_config pointer to the configuration of the peer to which
+    /// the updates are to be sent.
+    /// @return true if the server should queue lease updates, false otherwise.
+    bool shouldQueueLeaseUpdates(const HAConfig::PeerConfigPtr& peer_config) const;
+
 public:
 
     /// @brief Processes ha-heartbeat command and returns a response.
@@ -1056,6 +1070,22 @@ private:
     /// the number of responses received so far and unpark the packet when
     /// all responses have been received. That's what this map is used for.
     std::map<boost::shared_ptr<dhcp::Pkt>, int> pending_requests_;
+
+protected:
+
+    /// @brief Backlog of DHCPv4 lease updates.
+    ///
+    /// Unsent DHCPv4 updates are stored in this queue when the server is in
+    /// the communication-recovery state and is temporarily unable to send
+    /// lease updates to the partner.
+    Lease4UpdateBacklog lease4_update_backlog_;
+
+    /// @brief Backlog of DHCPv6 lease updates.
+    ///
+    /// Unsent DHCPv6 updates are stored in this queue when the server is in
+    /// the communication-recovery state and is temporarily unable to send
+    /// lease updates to the partner.
+    Lease6UpdateBacklog lease6_update_backlog_;
 };
 
 /// @brief Pointer to the @c HAService class.

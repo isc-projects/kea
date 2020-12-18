@@ -8,7 +8,9 @@
 #define HA_LEASE_BACKLOG_H
 
 #include <dhcpsrv/lease.h>
+#include <util/multi_threading_mgr.h>
 #include <deque>
+#include <mutex>
 #include <utility>
 
 namespace isc {
@@ -58,12 +60,11 @@ public:
     /// @return boolean value indicating whether the lease was successfully
     /// appended to the queue (if true) or not (if false).
     bool push(const OpType op_type, const LeaseTypePtr& lease) {
-        if (outstanding_updates_.size() >= limit_) {
-            overflown_ = true;
-            return (false);
+        if (util::MultiThreadingMgr::instance().getMode()) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            return (pushInternal(op_type, lease));
         }
-        outstanding_updates_.push_back(std::make_pair(op_type, lease));
-        return (true);
+        return (pushInternal(op_type, lease));
     }
 
     /// @brief Returns the next lease update and removes it from the queue.
@@ -72,13 +73,11 @@ public:
     /// @return pointer to the next lease update in the queue or null pointer
     /// when the queue is empty.
     LeaseTypePtr pop(OpType& op_type) {
-        if (outstanding_updates_.empty()) {
-            return (LeaseTypePtr());
+        if (util::MultiThreadingMgr::instance().getMode()) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            return (popInternal(op_type));
         }
-        auto item = outstanding_updates_.front();
-        outstanding_updates_.pop_front();
-        op_type = item.first;
-        return (item.second);
+        return (popInternal(op_type));
     }
 
     /// @brief Checks if the queue was overflown.
@@ -94,7 +93,11 @@ public:
     /// This flag is reset to false when @c clear is called.
     ///
     /// @return true if the queue was overflown, false otherwise.
-    bool wasOverflown() const {
+    bool wasOverflown() {
+        if (util::MultiThreadingMgr::instance().getMode()) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            return (overflown_);
+        }
         return (overflown_);
     }
 
@@ -102,16 +105,55 @@ public:
     ///
     /// It also resets the flag indicating that the queue was overflown.
     void clear() {
+        if (util::MultiThreadingMgr::instance().getMode()) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            outstanding_updates_.clear();
+            overflown_ = false;
+        }
         outstanding_updates_.clear();
         overflown_ = false;
     }
 
     /// @brief Returns the current size of the queue.
-    size_t size() const {
+    size_t size() {
+        if (util::MultiThreadingMgr::instance().getMode()) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            return (outstanding_updates_.size());
+        }
         return (outstanding_updates_.size());
     }
 
 private:
+
+    /// @brief Appends lease update to the queue (thread unsafe).
+    ///
+    /// @param op_type type of the lease update (operation type).
+    /// @param lease pointer to the lease being added, or deleted.
+    /// @return boolean value indicating whether the lease was successfully
+    /// appended to the queue (if true) or not (if false).
+    bool pushInternal(const OpType op_type, const LeaseTypePtr& lease) {
+        if (outstanding_updates_.size() >= limit_) {
+            overflown_ = true;
+            return (false);
+        }
+        outstanding_updates_.push_back(std::make_pair(op_type, lease));
+        return (true);
+    }
+
+    /// @brief Returns the next lease update and removes it from the queue (thread unsafe).
+    ///
+    /// @param [out] op_type reference to the value receiving lease update type.
+    /// @return pointer to the next lease update in the queue or null pointer
+    /// when the queue is empty.
+    LeaseTypePtr popInternal(OpType& op_type) {
+        if (outstanding_updates_.empty()) {
+            return (LeaseTypePtr());
+        }
+        auto item = outstanding_updates_.front();
+        outstanding_updates_.pop_front();
+        op_type = item.first;
+        return (item.second);
+    }
 
     /// @brief Holds the queue size limit.
     size_t limit_;
@@ -121,6 +163,9 @@ private:
 
     /// @brief Actual queue of lease updates and their types.
     std::deque<std::pair<OpType, LeaseTypePtr> > outstanding_updates_;
+
+    /// @brief Mutex to protect internal state.
+    std::mutex mutex_;
 };
 
 /// @brief Pointer to a backlog of DHCPv4 lease updates.

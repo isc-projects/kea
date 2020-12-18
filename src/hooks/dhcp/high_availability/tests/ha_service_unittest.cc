@@ -195,12 +195,15 @@ public:
     using HAService::transition;
     using HAService::verboseTransition;
     using HAService::shouldSendLeaseUpdates;
+    using HAService::shouldQueueLeaseUpdates;
     using HAService::pendingRequestSize;
     using HAService::getPendingRequest;
     using HAService::network_state_;
     using HAService::config_;
     using HAService::communication_state_;
     using HAService::query_filter_;
+    using HAService::lease4_update_backlog_;
+    using HAService::lease6_update_backlog_;
 };
 
 /// @brief Pointer to the @c TestHAService.
@@ -562,6 +565,7 @@ public:
     /// @brief Constructor.
     HAServiceTest()
         : HATest(),
+          service_(),
           factory_(new TestHttpResponseCreatorFactory()),
           factory2_(new TestHttpResponseCreatorFactory()),
           factory3_(new TestHttpResponseCreatorFactory()),
@@ -801,20 +805,20 @@ public:
         state->modifyPokeTime(-30);
 
         // Create HA service and schedule lease updates.
-        TestHAService service(io_service_, network_state_, config_storage);
-        service.communication_state_ = state;
+        service_.reset(new TestHAService(io_service_, network_state_, config_storage));
+        service_->communication_state_ = state;
 
-        service.transition(my_state.state_, HAService::NOP_EVT);
+        service_->transition(my_state.state_, HAService::NOP_EVT);
 
         EXPECT_EQ(num_updates,
-                  service.asyncSendLeaseUpdates(query, leases4, deleted_leases4,
-                                                parking_lot_handle));
+                  service_->asyncSendLeaseUpdates(query, leases4, deleted_leases4,
+                                                  parking_lot_handle));
 
         // The number of pending requests should be 2 times the number of
         // contacted servers because we send one lease update and one
         // lease deletion to each contacted server from which we expect
         // an acknowledgment.
-        EXPECT_EQ(2 * num_updates, service.getPendingRequest(query));
+        EXPECT_EQ(2 * num_updates, service_->getPendingRequest(query));
 
         EXPECT_FALSE(state->isPoked());
 
@@ -827,12 +831,12 @@ public:
         ASSERT_NO_THROW(parking_lot->park(query, unpark_handler));
 
         // Actually perform the lease updates.
-        ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, [&service]() {
+        ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, [this]() {
             // Finish running IO service when there are no more pending requests.
-            return (service.pendingRequestSize() == 0);
+            return (service_->pendingRequestSize() == 0);
         }));
 
-        // Only if we wait for lease updates to complete it makes senst to test
+        // Only if we wait for lease updates to complete it makes sense to test
         // that the packet was either dropped or unparked.
         if (num_updates > 0) {
             // Try to drop the packet. We expect that the packet has been already
@@ -1060,6 +1064,28 @@ public:
             factory3_->getResponseCreator()->findRequest("lease4-del",
                                                          "192.2.3.4");
         EXPECT_TRUE(delete_request3);
+    }
+
+    /// @brief Tests that lease updates are queued when the server is in the
+    /// communication-recovery state.
+    void testSendUpdatesCommunicationRecovery() {
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        // This flag will be set to true if unpark is called.
+        bool unpark_called = false;
+        testSendLeaseUpdates([&unpark_called] { unpark_called = true; },
+                             false, 0, MyState(HA_COMMUNICATION_RECOVERY_ST));
+
+        // Packet shouldn't be unparked because no updates went out. We merely
+        // queued the updates.
+        EXPECT_FALSE(unpark_called);
+
+        EXPECT_EQ(2, service_->lease4_update_backlog_.size());
     }
 
     /// @brief Tests scenarios when lease updates are not sent to the failover peer.
@@ -1597,6 +1623,9 @@ public:
         io_service_->poll();
     }
 
+    /// @brief Pointer to the HA service under test.
+    TestHAServicePtr service_;
+
     /// @brief HTTP response factory for server 1.
     TestHttpResponseCreatorFactoryPtr factory_;
 
@@ -1797,6 +1826,19 @@ TEST_F(HAServiceTest, sendSuccessfulUpdates) {
 TEST_F(HAServiceTest, sendSuccessfulUpdatesMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     testSendSuccessfulUpdates();
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state for later send.
+TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery) {
+    testSendUpdatesCommunicationRecovery();
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state for later send. Multi threading case.
+TEST_F(HAServiceTest, sendUpdatesCommunicationRecoveryMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesCommunicationRecovery();
 }
 
 // Test scenario when all lease updates are sent successfully.
@@ -4608,6 +4650,19 @@ public:
     }
 
     /// @brief Transitions the server to the specified state and checks if the
+    /// HA service would queue lease updates in this state.
+    ///
+    /// @param my_state this server's state
+    /// @param peer_config configuration of the server to which lease updates are
+    /// to be sent or queued.
+    /// @return true if the lease updates would be queued, false otherwise.
+    bool expectQueueLeaseUpdates(const MyState& my_state,
+                                 const HAConfig::PeerConfigPtr& peer_config) {
+        service_->verboseTransition(my_state.state_);
+        return (service_->shouldQueueLeaseUpdates(peer_config));
+    }
+
+    /// @brief Transitions the server to the specified state and checks if the
     /// HA service is sending heartbeat in this state.
     ///
     /// @param my_state this server's state
@@ -5137,16 +5192,16 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
                        FinalState(HA_IN_MAINTENANCE_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_READY_ST),
-                       FinalState(HA_LOAD_BALANCING_ST));
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_SYNCING_ST),
-                       FinalState(HA_LOAD_BALANCING_ST));
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_TERMINATED_ST),
                        FinalState(HA_TERMINATED_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_WAITING_ST),
-                       FinalState(HA_LOAD_BALANCING_ST));
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_COMMUNICATION_RECOVERY_ST));
@@ -5468,16 +5523,16 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
                        FinalState(HA_IN_MAINTENANCE_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_READY_ST),
-                       FinalState(HA_LOAD_BALANCING_ST));
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_SYNCING_ST),
-                       FinalState(HA_LOAD_BALANCING_ST));
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_TERMINATED_ST),
                        FinalState(HA_TERMINATED_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_WAITING_ST),
-                       FinalState(HA_LOAD_BALANCING_ST));
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_COMMUNICATION_RECOVERY_ST));
@@ -5980,6 +6035,7 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesLoadBalancing) {
 
     HAConfig::PeerConfigPtr peer_config = valid_config->getFailoverPeerConfig();
 
+    EXPECT_TRUE(expectLeaseUpdates(MyState(HA_COMMUNICATION_RECOVERY_ST), peer_config));
     EXPECT_TRUE(expectLeaseUpdates(MyState(HA_LOAD_BALANCING_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_IN_MAINTENANCE_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_PARTNER_DOWN_ST), peer_config));
@@ -6011,6 +6067,7 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesDisabledLoadBalancing) {
 
     HAConfig::PeerConfigPtr peer_config = valid_config->getFailoverPeerConfig();
 
+    EXPECT_FALSE(expectLeaseUpdates(MyState(HA_COMMUNICATION_RECOVERY_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_LOAD_BALANCING_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_IN_MAINTENANCE_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_PARTNER_DOWN_ST), peer_config));
@@ -6019,6 +6076,56 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesDisabledLoadBalancing) {
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_SYNCING_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_TERMINATED_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_WAITING_ST), peer_config));
+}
+
+// Check that lease updates to the backup server are not queued.
+TEST_F(HAServiceStateMachineTest, shouldQueueLeaseUpdatesToBackup) {
+    HAConfigPtr valid_config = createValidConfiguration();
+    valid_config->setWaitBackupAck(false);
+    startService(valid_config);
+
+    HAConfig::PeerConfigPtr backup_config = valid_config->getPeerConfig("server3");
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_COMMUNICATION_RECOVERY_ST), backup_config));
+}
+
+// This test verifies if the server would queue lease updates to the partner
+// while being in communication-recovery state. The HA configuration is load
+// balancing.
+TEST_F(HAServiceStateMachineTest, shouldQueueLeaseUpdatesLoadBalancing) {
+    HAConfigPtr valid_config = createValidConfiguration();
+    startService(valid_config);
+
+    HAConfig::PeerConfigPtr peer_config = valid_config->getFailoverPeerConfig();
+
+    EXPECT_TRUE(expectQueueLeaseUpdates(MyState(HA_COMMUNICATION_RECOVERY_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_LOAD_BALANCING_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_IN_MAINTENANCE_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_PARTNER_DOWN_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_PARTNER_IN_MAINTENANCE_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_READY_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_SYNCING_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_TERMINATED_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_WAITING_ST), peer_config));
+}
+
+// This test verifies if the server would not queue lease updates to the
+// partner if lease updates are administratively disabled.
+TEST_F(HAServiceStateMachineTest, shouldQueueLeaseUpdatesDisabledLoadBalancing) {
+    HAConfigPtr valid_config = createValidConfiguration();
+    valid_config->setSendLeaseUpdates(false);
+    startService(valid_config);
+
+    HAConfig::PeerConfigPtr peer_config = valid_config->getFailoverPeerConfig();
+
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_COMMUNICATION_RECOVERY_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_LOAD_BALANCING_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_IN_MAINTENANCE_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_PARTNER_DOWN_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_PARTNER_IN_MAINTENANCE_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_READY_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_SYNCING_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_TERMINATED_ST), peer_config));
+    EXPECT_FALSE(expectQueueLeaseUpdates(MyState(HA_WAITING_ST), peer_config));
 }
 
 // This test verifies if the server would send heartbeat to the partner
