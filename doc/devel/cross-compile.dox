@@ -195,7 +195,7 @@ Some explainations:
  - I did not try yet database config scripts: perhaps they detect
   cross-compiling and produce correct paths.
  - CONF_CMD contains the ./configure common arguments.
- 
+
 The script can be used by:
  - eventually run "autoreconf -i" (if sources are from git)
  - put its content in a file, e.g. ccenv

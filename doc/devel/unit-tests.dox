@@ -69,7 +69,7 @@ The following environment variable can affect the unit tests:
   default is <i>prefix</i>/var/run/kea, where <i>prefix</i> defaults to
   /usr/local. This variable must not end with a slash.
 
-- KEA_SOCKET_TEST_DIR - if set, it specifies the directory where Unix
+- KEA_SOCKET_TEST_DIR - If set, it specifies the directory where Unix
   sockets are created. There is an operating system limitation on how
   long a Unix socket path can be, typically slightly over 100
   characters. By default unit-tests create sockets in temporary folder
@@ -84,10 +84,21 @@ The following environment variable can affect the unit tests:
   exist, is not the expected version, or for some reason the data wipe fails,
   the schema will be dropped and recreated. Setting this value to "false"
   will cause the test setup logic to always drop and create the database
-  schema. The default value is "true". 
+  schema. The default value is "true".
 
-@note Setting KEA_TEST_DB_WIPE_DATA_ONLY to false may dramatically 
-increase the time it takes each unit test to execute. 
+@note Setting KEA_TEST_DB_WIPE_DATA_ONLY to false may dramatically
+increase the time it takes each unit test to execute.
+
+- GTEST_OUTPUT - Save the test results in XML files. Make it point to a location
+where a file or directory can be safely created. If there is no file or
+directory at that location, adding a trailing slash
+`GTEST_OUTPUT=${PWD}/test-results/` will create a directory containing an XML
+file for each directory being tested. Leaving the slash out will create a single
+XML file and will put all the test results in it.
+
+- DEBUG - Set this variable to make shell tests output the commands that are
+run. They are shown just before they are effectively run. Can be set to
+anything e.g. `DEBUG=true`. `unset DEBUG` to remove this behavior.
 
 @section unitTestsSanitizers Use Sanitizers
 
@@ -341,5 +352,198 @@ local   all             postgres                                trust
  [cqlsh 5.0.1 | Cassandra 3.11.1 | CQL spec 3.4.4 | Native protocol v4]
  Use HELP for help.
  cqlsh> @endverbatim\n
+
+@section writingShellTests Writing shell tests
+
+Shell tests are `shellcheck`ed. But there are other writing practices that are
+good to follow in order to keep, not only shell tests, but shell scripts in
+general, POSIX-compliant. See below:
+
+- For portability, all shell scripts should have a shebang.
+@code
+#!/bin/sh
+@endcode
+The `sh` shell can differ on various operating systems. On most systems it is
+GNU sh. Notable exceptions are Alpine which links it to ash, FreeBSD which has
+the primordial non-GNU sh, Ubuntu which links it to dash. These four shells
+should all be tested against, when adding shell scripts or making changes to
+them.
+
+- Reference variables with accolades.
+@code
+${var}  # better
+$var
+@endcode
+For consistency with cases where you need advanced features from the variables
+which make the accolades mandatory. Such cases are:
+@code
+# Retrieving variable/string length...
+${#var}
+
+# Defaulting to a given value when the variable is undefined...
+${var-default}
+
+# Substituting the variable with a given value when the variable is defined...
+${var+value}
+@endcode
+
+- Always use `printf` instead of `echo`. There are times when a newline is not
+desired such as when you want to print on a single line from multiple points
+in your script or when you want to get the character count from an expression:
+@code
+var1='not '
+var2=' you want to ignore'
+
+# Prints the number of characters.
+printf '%s' "${var1}something${var2}" | wc -c
+# Result:
+  32
+
+# This one prints a plus one i.e. the inherent newline.
+echo "${var1}something${var2}" | wc -c
+# Result:
+  33
+
+# `echo` does have `-n` to suppress newline, but...
+# SC2039: In POSIX sh, echo flags are undefined.
+echo -n "${var1}something${var2}" | wc -c
+# Result:
+  32  # sometimes
+@endcode
+`printf` also has the benefit of separating the format from the actual variables
+which has many use cases. One such use case is coloring output with ANSI escape
+sequence codes, see the `test_finish` function in
+`src/lib/testutils/dhcp_test_lib.sh.in`, which is not possible with POSIX echo.
+
+- `set -e` should be enabled at all times to immediately fail when a command
+returns a non-zero exit code. There are times when you expect a non-zero exit
+code in your tests. This is what the `run_command` function in
+`src/lib/testutils/dhcp_test_lib.sh.in` is for. It momentarily disables the `-e`
+flag to capture the output and exit code and enables it again afterwards. The
+variables used are `${EXIT_CODE}` and `${OUTPUT}`. /dev/stderr is not captured.
+`run_command` also doesn't work with pipes and redirections. When these
+mechanisms are needed, you can always wrap your complex expression in a function
+and then call `run_command wrapping_function`. Alternatively, if you only care
+about checking for zero exit code, you can use `if` conditions.
+@code
+# The non-zero exit code does not stop script execution, but we can still adjust
+# behavior based on it.
+if maybe-failing-command; then
+  f
+else
+  g
+fi
+@endcode
+There are times when your piped or redirected command that is expected to return
+non-zero is so small or has so few instantiations that it doesn't deserve a
+separate function. Such an example could be grepping for something in a
+variable. `grep` returns a non-zero exit code if it doesn't find anything. In
+that case, you can add `|| true` at the end to signal the fact that you allow
+finding nothing like so:
+@code
+printf '%s' "${var}" | grep -F 'search-criterion' || true
+@endcode
+
+- `set -u` should be enabled at all times to immediately signal an undefined
+variable. If you're a stickler for the legacy behavior of defaulting to an empty
+space then you can reference all your variables with:
+@code
+# Default variable is an empty space.
+${var-}
+
+# Or like this if you prefer to quote the empty space.
+${var-''}
+@endcode
+
+- SC2086: Double quote to prevent globbing and word splitting.
+Even though covered by shellcheck, it's worth mentioning because shellcheck
+doesn't always warn you because of what might be a systematic deduction of when
+quoting is not needed. Globbing is a pattern matching mechanism. It's used a lot
+with the `*` wildcard character e.g. `ls *.txt`. Sometimes, you want to glob
+intentionally. In that case, you can omit quoting, but it is preferable to take
+the wildcard characters outside the variable so that you are able to quote to
+prevent other globbing and word splitting e.g.:
+@code
+# Globbing done right
+ls "${var}"*.txt
+
+# Word splitting problem
+path='/home/my user'
+ls ${path}
+
+# Result:
+  ls: cannot access '/home/my': No such file or directory
+  ls: cannot access 'user': No such file or directory
+
+# Word splitting avoided
+path='/home/my user'
+ls "${path}"
+
+# Result:
+  Desktop
+  Documents
+  Downloads
+@endcode
+If you have an expression composed of multiple variables don't just quote the
+variables. It's correct, but not readable. Quote the entire expression.
+@code
+# no
+"${var1}"some-fixed-contiguous-value"${var2}"
+
+# yes
+"${var1}some-fixed-contiguous-value${var2}"
+@endcode
+
+- Single quote expressions when no variables are inside. This is to avoid the
+need to escape special shell characters like `$`.
+
+- All shell tessts are created from `.in` autoconf template files. They
+initially contain template variables like `@prefix@` which are then substituted
+with the configured values. All of these should be double quoted, not
+single-quoted since they themselves can contain shell variables that need to be
+expanded.
+
+- Use `$(...)` notation instead of legacy backticks. One important advantage is
+that the `$(...)` notation allows for nested executions.
+@code
+# SC2006 Use `$(...)` notation instead of legacy backticked `...`.
+hostname=`cat /etc/hostname`
+
+# Better
+hostname=$(cat /etc/hostname)
+
+# Nested executions
+is_ssh_open=$(nc -vz $(cat /etc/hostname).lab.isc.org 22)
+
+# Results in "command not found" messages.
+is_ssh_open=`nc -vz `cat /etc/hostname`.lab.isc.org 22`
+@endcode
+
+- When using `test` and `[`, `==` is just a convenience alias for `=`. Use `=`
+because it's more widely supported. If using, `[[`, then indeed `==` has extra
+features like glob matching. But don't use `[[`, it's not part of the POSIX
+standard.
+
+- Capturing parameters in functions or scripts simply cannot be done without
+breaking POSIX compliance. In POSIX, pass the quoted parameters `"${@}"` as
+positional parameters to all the function and scripts invocations. if it gets
+too unmanageable or you need custom positional arguments then break your script
+into multiple scripts or handle all possible parameters and don't accept any
+ad-hoc parameters.
+@code
+# Neither of these preserve original quoting.
+parameters="${*}"
+parameters="${@}"
+
+# In advanced shells this could be done with lists.
+parameters=( "${@}" )
+do-something --some --other --optional --parameters "${parameters[@]}"
+
+# Proper POSIX way
+do-something --some --other --optional --parameters "${@}"
+@endcode
+
+- Never use `eval`. They don't preserve original quoting. Have faith that there
+are always good alternatives.
 
  */
