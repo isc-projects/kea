@@ -169,7 +169,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
             if (!audit_entries.empty() && !hasObjectId(updated_entries, (*option_def)->getId())) {
                 continue;
             }
-            external_cfg->getCfgOptionDef()->add((*option_def), (*option_def)->getOptionSpaceName());
+            external_cfg->getCfgOptionDef()->add(*option_def);
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,7 +73,6 @@ public:
     /// @brief Add new option definition.
     ///
     /// @param def option definition to be added.
-    /// @param option_space name of the option space to add definition to.
     ///
     /// @throw isc::dhcp::DuplicateOptionDefinition when the particular
     /// option definition already exists.
@@ -82,7 +81,7 @@ public:
     /// @throw isc::BadValue when the option space name is empty or
     /// when trying to override the standard option (in dhcp4 or dhcp6
     /// option space).
-    void add(const OptionDefinitionPtr& def, const std::string& option_space);
+    void add(const OptionDefinitionPtr& def);
 
     /// @brief Return option definitions for particular option space.
     ///

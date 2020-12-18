@@ -200,7 +200,7 @@ TEST(ClientClassDef, copyAndEquality) {
     def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, 43);
     EXPECT_TRUE(def);
     CfgOptionDefPtr cfg(new CfgOptionDef());
-    ASSERT_NO_THROW(cfg->add(def, DHCP4_OPTION_SPACE));
+    ASSERT_NO_THROW(cfg->add(def));
     cclass2->setCfgOptionDef(cfg);
     EXPECT_FALSE(cclass->equals(*cclass2));
     EXPECT_FALSE(*cclass == *cclass2);

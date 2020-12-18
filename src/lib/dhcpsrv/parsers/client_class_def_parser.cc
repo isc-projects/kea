@@ -123,7 +123,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                           << option_def->getPosition() << ")");
             }
             try {
-                defs->add(def.first, def.second);
+                defs->add(def.first);
             } catch (const std::exception& ex) {
                 // Sanity check: it should never happen
                 isc_throw(DhcpConfigError, ex.what() << " ("

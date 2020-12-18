@@ -30,7 +30,7 @@ CfgOptionDef::copyTo(CfgOptionDef& new_config) const {
              def != defs->end(); ++def) {
             OptionDefinitionPtr new_def =
                 OptionDefinitionPtr(new OptionDefinition(**def));
-            new_config.add(new_def, *name);
+            new_config.add(new_def);
         }
     }
 }
@@ -76,23 +76,16 @@ CfgOptionDef::equals(const CfgOptionDef& other) const {
 }
 
 void
-CfgOptionDef::add(const OptionDefinitionPtr& def,
-                  const std::string& option_space) {
+CfgOptionDef::add(const OptionDefinitionPtr& def) {
     // Option definition being added must be a valid pointer.
     if (!def) {
         isc_throw(MalformedOptionDefinition,
                   "option definition must not be NULL");
-
-    } else if (option_space != def->getOptionSpaceName()) {
-        isc_throw(BadValue, "option space name '"
-                  << option_space << "' is not def one '"
-                  << def->getOptionSpaceName() << "'");
-    } else if (!OptionSpace::validateName(option_space)) {
-        isc_throw(BadValue, "invalid option space name '"
-                  << option_space << "'");
+    }
+    const std::string& option_space = def->getOptionSpaceName();
 
     // Must not duplicate an option definition.
-    } else if (get(option_space, def->getCode())) {
+    if (get(option_space, def->getCode())) {
         isc_throw(DuplicateOptionDefinition, "option definition with code '"
                   << def->getCode() << "' already exists in option"
                   " space '" << option_space << "'");
@@ -256,7 +249,7 @@ CfgOptionDef::merge(CfgOptionDef& other) {
             }
 
             // Not in "other" so add it.
-            other.add(my_def, space);
+            other.add(my_def);
         }
     }
 

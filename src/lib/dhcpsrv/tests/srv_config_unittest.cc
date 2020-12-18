@@ -327,7 +327,7 @@ TEST_F(SrvConfigTest, copy) {
 
     // Add option definition.
     OptionDefinitionPtr def(new OptionDefinition("option-foo", 5, "isc", "string"));
-    conf1.getCfgOptionDef()->add(def, "isc");
+    conf1.getCfgOptionDef()->add(def);
 
     // Add an option.
     OptionPtr option(new Option(Option::V6, 1000, OptionBuffer(10, 0xFF)));
@@ -391,14 +391,14 @@ TEST_F(SrvConfigTest, equality) {
     // Differ by option definitions.
     conf1.getCfgOptionDef()->
         add(OptionDefinitionPtr(new OptionDefinition("option-foo", 123, "isc",
-                                                     "uint16_t")), "isc");
+                                                     "uint16_t")));
 
     EXPECT_FALSE(conf1 == conf2);
     EXPECT_TRUE(conf1 != conf2);
 
     conf2.getCfgOptionDef()->
         add(OptionDefinitionPtr(new OptionDefinition("option-foo", 123, "isc",
-                                                     "uint16_t")), "isc");
+                                                     "uint16_t")));
     EXPECT_TRUE(conf1 == conf2);
     EXPECT_FALSE(conf1 != conf2);
 

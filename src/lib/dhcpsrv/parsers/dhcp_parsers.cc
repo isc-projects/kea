@@ -276,7 +276,7 @@ OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_l
 
         def = parser.parse(option_def);
         try {
-            storage->add(def.first, def.second);
+            storage->add(def.first);
         } catch (const std::exception& ex) {
             // Append position if there is a failure.
             isc_throw(DhcpConfigError, ex.what() << " ("
