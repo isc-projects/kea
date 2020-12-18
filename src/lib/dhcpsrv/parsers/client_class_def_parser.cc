@@ -109,21 +109,20 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
         OptionDefParser parser(family);
         BOOST_FOREACH(ConstElementPtr option_def, option_defs->listValue()) {
-            OptionDefinitionTuple def;
+            OptionDefinitionPtr def = parser.parse(option_def);
 
-            def = parser.parse(option_def);
             // Verify if the defition is for an option which are
             // in a deferred processing list.
-            if (!LibDHCP::shouldDeferOptionUnpack(def.second,
-                                                  def.first->getCode())) {
+            if (!LibDHCP::shouldDeferOptionUnpack(def->getOptionSpaceName(),
+                                                  def->getCode())) {
                 isc_throw(DhcpConfigError,
                           "Not allowed option definition for code '"
-                          << def.first->getCode() << "' in space '"
-                          << def.second << "' at ("
+                          << def->getCode() << "' in space '"
+                          << def->getOptionSpaceName() << "' at ("
                           << option_def->getPosition() << ")");
             }
             try {
-                defs->add(def.first);
+                defs->add(def);
             } catch (const std::exception& ex) {
                 // Sanity check: it should never happen
                 isc_throw(DhcpConfigError, ex.what() << " ("

@@ -221,8 +221,6 @@ public:
     void parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr value);
 };
 
-typedef std::pair<isc::dhcp::OptionDefinitionPtr, std::string> OptionDefinitionTuple;
-
 /// @brief Parser for a single option definition.
 ///
 /// This parser creates an instance of a single option definition.
@@ -236,11 +234,10 @@ public:
     /// @brief Parses an entry that describes single option definition.
     ///
     /// @param option_def a configuration entry to be parsed.
-    /// @return tuple (option definition, option space) of the parsed structure
+    /// @return option definition of the parsed structure.
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
-    OptionDefinitionTuple
-    parse(isc::data::ConstElementPtr option_def);
+    OptionDefinitionPtr parse(isc::data::ConstElementPtr option_def);
 
 private:
     /// @brief Address family: @c AF_INET or @c AF_INET6.

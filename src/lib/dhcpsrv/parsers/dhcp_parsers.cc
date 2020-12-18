@@ -119,7 +119,7 @@ OptionDefParser::OptionDefParser(const uint16_t address_family)
     : address_family_(address_family) {
 }
 
-std::pair<isc::dhcp::OptionDefinitionPtr, std::string>
+OptionDefinitionPtr
 OptionDefParser::parse(ConstElementPtr option_def) {
 
     // Check parameters.
@@ -252,7 +252,7 @@ OptionDefParser::parse(ConstElementPtr option_def) {
     }
 
     // Option definition has been created successfully.
-    return make_pair(def, space);
+    return (def);
 }
 
 // ******************************** OptionDefListParser ************************
@@ -272,11 +272,9 @@ OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_l
 
     OptionDefParser parser(address_family_);
     BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
-        OptionDefinitionTuple def;
-
-        def = parser.parse(option_def);
+        OptionDefinitionPtr def = parser.parse(option_def);
         try {
-            storage->add(def.first);
+            storage->add(def);
         } catch (const std::exception& ex) {
             // Append position if there is a failure.
             isc_throw(DhcpConfigError, ex.what() << " ("
