@@ -158,10 +158,9 @@ _add_test_case() {
     local xml=${1}; shift
     local now=${1}; shift
 
-    # Determine the test case tag and, in case of failure - the failure tag.
+    # Determine the test case tag.
     local closing_backslash
     local closing_tag
-    local failure
     if test "${result}" = 'success'; then
         closing_backslash=' /'
     else
