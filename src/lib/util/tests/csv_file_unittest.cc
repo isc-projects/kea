@@ -579,4 +579,65 @@ TEST_F(CSVFileTest, exists) {
     EXPECT_FALSE(csv->exists());
 }
 
+// Check that a single header without a trailing blank line can be parsed.
+TEST_F(CSVFileTest, parseHeaderWithoutTrailingBlankLine) {
+    // Create a new CSV file that only contains a header without a new line.
+    writeFile("animal,age,color");
+
+    // Open this file and check that the header is parsed.
+    CSVFile csv(testfile_);
+    ASSERT_NO_THROW(csv.open());
+    ASSERT_EQ(3, csv.getColumnCount());
+    EXPECT_EQ("animal", csv.getColumnName(0));
+    EXPECT_EQ("age", csv.getColumnName(1));
+    EXPECT_EQ("color", csv.getColumnName(2));
+
+    // Attempt to read the next row which doesn't exist.
+    CSVRow row;
+    ASSERT_TRUE(csv.next(row));
+    EXPECT_EQ(CSVFile::EMPTY_ROW(), row);
+
+    // Close the file.
+    csv.close();
+}
+
+// Check that content without a trailing blank line can be parsed.
+TEST_F(CSVFileTest, parseContentWithoutTrailingBlankLine) {
+    // Now create a new CSV file that contains header plus data, but the last
+    // line is missing a new line.
+    writeFile("animal,age,color\n"
+              "cat,4,white\n"
+              "lion,8,yellow");
+
+    // Open this file and check that the header is parsed.
+    CSVFile csv(testfile_);
+    ASSERT_NO_THROW(csv.open());
+    ASSERT_EQ(3, csv.getColumnCount());
+    EXPECT_EQ("animal", csv.getColumnName(0));
+    EXPECT_EQ("age", csv.getColumnName(1));
+    EXPECT_EQ("color", csv.getColumnName(2));
+
+    // Check the first data row.
+    CSVRow row;
+    ASSERT_TRUE(csv.next(row));
+    EXPECT_EQ("cat", row.readAt(0));
+    EXPECT_EQ("4", row.readAt(1));
+    EXPECT_EQ("white", row.readAt(2));
+    EXPECT_EQ("success", csv.getReadMsg());
+
+    // Check the second data row.
+    ASSERT_TRUE(csv.next(row));
+    EXPECT_EQ("lion", row.readAt(0));
+    EXPECT_EQ("8", row.readAt(1));
+    EXPECT_EQ("yellow", row.readAt(2));
+    EXPECT_EQ("success", csv.getReadMsg());
+
+    // Attempt to read the next row which doesn't exist.
+    ASSERT_TRUE(csv.next(row));
+    EXPECT_EQ(CSVFile::EMPTY_ROW(), row);
+
+    // Close the file.
+    csv.close();
+}
+
 } // end of anonymous namespace
