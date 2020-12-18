@@ -220,7 +220,7 @@ LibDHCP::setRuntimeOptionDefs(const OptionDefSpaceContainer& defs) {
         for (OptionDefContainer::const_iterator def = container->begin();
              def != container->end(); ++def) {
             OptionDefinitionPtr def_copy(new OptionDefinition(**def));
-            defs_copy.addItem(def_copy, *name);
+            defs_copy.addItem(def_copy);
         }
     }
     runtime_option_defs_ = defs_copy;

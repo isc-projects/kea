@@ -459,18 +459,12 @@ public:
         // proper output.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
                          "vendor-encapsulated-1", 1,
-                         "vendor-encapsulated-options", "uint32")),
-                     "vendor-encapsulated-options");
+                         "vendor-encapsulated-options", "uint32")));
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
                          "option-1254", 1254, DHCP6_OPTION_SPACE,
-                         "ipv6-address", true)),
-                     DHCP6_OPTION_SPACE);
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "isc-1", 1, "isc", "empty")),
-                     "isc");
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "isc-2", 2, "isc", "ipv6-address", true)),
-                     "isc");
+                         "ipv6-address", true)));
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "isc", "empty")));
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2, "isc", "ipv6-address", true)));
 
         // Register option definitions.
         LibDHCP::setRuntimeOptionDefs(defs);

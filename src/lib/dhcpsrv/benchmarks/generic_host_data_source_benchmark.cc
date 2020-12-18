@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2017 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -120,12 +120,12 @@ GenericHostDataSourceBenchmark::addTestOptions(const HostPtr& host,
 
         // Add definitions for DHCPv4 non-standard options.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition("vendor-encapsulated-1",
-                                         1, "uint32")), "vendor-encapsulated-options");
+                                         1, "vendor-encapsulated-options", "uint32")));
         defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-254", 254,
-                                         "ipv4-address", true)), DHCP4_OPTION_SPACE);
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "empty")), "isc");
+                                         DHCP4_OPTION_SPACE, "ipv4-address", true)));
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "isc", "empty")));
         defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2,
-                                         "ipv4-address", true)), "isc");
+                                         "isc", "ipv4-address", true)));
     }
 
     if ((added_options == DHCP6_ONLY) || (added_options == DHCP4_AND_DHCP6)) {
@@ -148,10 +148,10 @@ GenericHostDataSourceBenchmark::addTestOptions(const HostPtr& host,
 
         // Add definitions for DHCPv6 non-standard options.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1024", 1024,
-                                         "ipv6-address", true)), DHCP6_OPTION_SPACE);
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1", 1, "empty")), "isc2");
+                                         DHCP6_OPTION_SPACE, "ipv6-address", true)));
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1", 1, "isc2", "empty")));
         defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-2", 2,
-                                         "ipv6-address", true)), "isc2");
+                                         "isc2", "ipv6-address", true)));
     }
 
     // Register created "runtime" option definitions. They will be used by a

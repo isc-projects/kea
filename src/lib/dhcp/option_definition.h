@@ -419,96 +419,6 @@ public:
     /// @throw MalformedOptionDefinition option definition is invalid.
     void validate() const;
 
-    /// @brief Check if specified format is IA_NA option format.
-    ///
-    /// @return true if specified format is IA_NA option format.
-    bool haveIA6Format() const;
-
-    /// @brief Check if specified format is IAADDR option format.
-    ///
-    /// @return true if specified format is IAADDR option format.
-    bool haveIAAddr6Format() const;
-
-    /// @brief Check if specified format is IAPREFIX option format.
-    ///
-    /// @return true if specified format is IAPREFIX option format.
-    bool haveIAPrefix6Format() const;
-
-    /// @brief Check if specified format is OPTION_CLIENT_FQDN option format.
-    ///
-    /// @return true of specified format is OPTION_CLIENT_FQDN option format,
-    /// false otherwise.
-    bool haveClientFqdnFormat() const;
-
-    /// @brief Check if option has format of the DHCPv4 Client FQDN
-    /// %Option.
-    ///
-    /// The encoding of the domain-name carried by the FQDN option is
-    /// conditional and is specified in the flags field of the option.
-    /// The domain-name can be encoded in the ASCII format or canonical
-    /// wire format. The ASCII format is deprecated, therefore canonical
-    /// format is selected for the FQDN option definition and this function
-    /// returns true if the option definition comprises the domain-name
-    /// field encoded in canonical format.
-    ///
-    /// @return true if option has the format of DHCPv4 Client FQDN
-    /// %Option.
-    bool haveFqdn4Format() const;
-
-    /// @brief Check if the option has format of Vendor-Identifying Vendor
-    /// Specific Options.
-    ///
-    /// @return Always true.
-    /// @todo The Vendor-Identifying Vendor-Specific Option has a complex format
-    /// which we do not support here. Therefore it is not really possible to
-    /// check that the current definition is valid. We may need to add support
-    /// for such option format or simply do not check the format for certain
-    /// options, e.g. vendor options, IA_NA, IAADDR and always return objects
-    /// of the certain type.
-    bool haveVendor4Format() const;
-
-    /// @brief Check if option has a format of the Vendor-Specific Information
-    /// %Option.
-    ///
-    /// The Vendor-Specific Information %Option comprises 32-bit enterprise id
-    /// and the suboptions.
-    ///
-    /// @return true if option definition conforms to the format of the
-    /// Vendor-Specific Information %Option.
-    bool haveVendor6Format() const;
-
-    /// @brief Check if the option has format of DHCPv4 V-I Vendor Class option.
-    ///
-    /// @return true if the option has the format of DHCPv4 Vendor Class option.
-    bool haveVendorClass4Format() const;
-
-    /// @brief Check if the option has format of DHCPv6 Vendor Class option.
-    ///
-    /// @return true if option has the format of DHCPv6 Vendor Class option.
-    bool haveVendorClass6Format() const;
-
-    /// @brief Check if option has format of the SLP Service Scope
-    /// %Option.
-    ///
-    /// The scope list in the SLP Service Scope option is optional
-    /// (i.e., as the error message in the DHCPv6 Status code option).
-    ///
-    /// @return true if option has the format of SLP Service Scope %Option.
-    bool haveServiceScopeFormat() const;
-
-    /// @brief Check if the option has format of DHCPv6 Status Code option.
-    ///
-    /// @return true if option has the format of DHCPv6 Status code option.
-    bool haveStatusCodeFormat() const;
-
-    /// @brief Check if the option has format of OpaqueDataTuples type options.
-    ///
-    /// @return true if option has the format of OpaqueDataTuples type options.
-    bool haveOpaqueDataTuplesFormat() const;
-
-    /// @brief Check if the option has format of CompressedFqdnList options.
-    bool haveCompressedFqdnListFormat() const;
-
     /// @brief Option factory.
     ///
     /// This function creates an instance of DHCP option using
@@ -714,6 +624,9 @@ public:
 
 private:
 
+    /// @brief Check if the option has format of CompressedFqdnList options.
+    bool haveCompressedFqdnListFormat() const;
+
     /// @brief Factory function to create option with a compressed FQDN list.
     ///
     /// @param u universe (V4 or V6).
@@ -746,17 +659,6 @@ private:
     OptionPtr factorySpecialFormatOption(Option::Universe u,
                                          OptionBufferConstIter begin,
                                          OptionBufferConstIter end) const;
-
-    /// @brief Check if specified option format is a record with 3 fields
-    /// where first one is custom, and two others are uint32.
-    ///
-    /// This is a helper function for functions that detect IA_NA and IAAddr
-    /// option formats.
-    ///
-    /// @param first_type type of the first data field.
-    ///
-    /// @return true if actual option format matches expected format.
-    bool haveIAx6Format(const OptionDataType first_type) const;
 
     /// @brief Check if specified type matches option definition type.
     ///
@@ -939,10 +841,27 @@ typedef OptionDefContainer::nth_index<2>::type OptionDefContainerNameIndex;
 typedef std::pair<OptionDefContainerNameIndex::const_iterator,
                   OptionDefContainerNameIndex::const_iterator> OptionDefContainerNameRange;
 
+/// Base type of option definition space container.
 typedef OptionSpaceContainer<
     OptionDefContainer, OptionDefinitionPtr, std::string
-> OptionDefSpaceContainer;
+> BaseOptionDefSpaceContainer;
 
+/// @brief Class of option definition space container.
+class OptionDefSpaceContainer : public BaseOptionDefSpaceContainer {
+public:
+
+    /// @brief Adds a new option definition to the container.
+    ///
+    /// The option definition already contains the option space.
+    ///
+    /// @note: this method hides the parent one so it becomes hard to get
+    /// a mismatch between the option definition and the space container.
+    ///
+    /// @param def reference to the option definition being added.
+    void addItem(const OptionDefinitionPtr& def) {
+        BaseOptionDefSpaceContainer::addItem(def, def->getOptionSpaceName());
+    }
+};
 
 } // namespace isc::dhcp
 } // namespace isc

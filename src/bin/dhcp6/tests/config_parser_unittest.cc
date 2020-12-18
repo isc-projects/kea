@@ -2809,7 +2809,7 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
     // revert to this original configuration.
     OptionDefSpaceContainer defs;
     OptionDefinitionPtr def(new OptionDefinition("bar", 233, "isc", "string"));
-    defs.addItem(def, "isc");
+    defs.addItem(def);
     LibDHCP::setRuntimeOptionDefs(defs);
     LibDHCP::commitRuntimeOptionDefs();
 

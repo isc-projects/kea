@@ -1410,53 +1410,6 @@ TEST_F(OptionDefinitionTest, integerInvalidType) {
     );
 }
 
-// The purpose of this test is to verify that helper methods
-// haveIA6Format and haveIAAddr6Format can be used to determine
-// IA_NA  and IAADDR option formats.
-TEST_F(OptionDefinitionTest, haveIAFormat) {
-    // IA_NA option format.
-    OptionDefinition opt_def1("OPTION_IA_NA", D6O_IA_NA, DHCP6_OPTION_SPACE,
-                              "record");
-    for (int i = 0; i < 3; ++i) {
-        opt_def1.addRecordField("uint32");
-    }
-    EXPECT_TRUE(opt_def1.haveIA6Format());
-    // Create non-matching format to check that this function does not
-    // return 'true' all the time.
-    OptionDefinition opt_def2("OPTION_IA_NA", D6O_IA_NA, DHCP6_OPTION_SPACE,
-                              "uint16");
-    EXPECT_FALSE(opt_def2.haveIA6Format());
-
-    // IAADDR option format.
-    OptionDefinition opt_def3("OPTION_IAADDR", D6O_IAADDR, DHCP6_OPTION_SPACE,
-                              "record");
-    opt_def3.addRecordField("ipv6-address");
-    opt_def3.addRecordField("uint32");
-    opt_def3.addRecordField("uint32");
-    EXPECT_TRUE(opt_def3.haveIAAddr6Format());
-    // Create non-matching format to check that this function does not
-    // return 'true' all the time.
-    OptionDefinition opt_def4("OPTION_IAADDR", D6O_IAADDR, DHCP6_OPTION_SPACE,
-                              "uint32", true);
-    EXPECT_FALSE(opt_def4.haveIAAddr6Format());
-}
-
-// This test verifies that haveClientFqdnFormat function recognizes that option
-// definition describes the format of DHCPv6 Client Fqdn Option Format.
-TEST_F(OptionDefinitionTest, haveClientFqdnFormat) {
-    OptionDefinition opt_def("OPTION_CLIENT_FQDN", D6O_CLIENT_FQDN,
-                             DHCP6_OPTION_SPACE, "record");
-    opt_def.addRecordField("uint8");
-    opt_def.addRecordField("fqdn");
-    EXPECT_TRUE(opt_def.haveClientFqdnFormat());
-
-    // Create option format which is not matching the Client FQDN option format
-    // to verify that tested function does dont always return true.
-    OptionDefinition opt_def_invalid("OPTION_CLIENT_FQDN", D6O_CLIENT_FQDN,
-                                     DHCP6_OPTION_SPACE, "uint8");
-    EXPECT_FALSE(opt_def_invalid.haveClientFqdnFormat());
-}
-
 // This test verifies that a definition of an option with a single IPv6
 // prefix can be created and used to create an instance of the option.
 TEST_F(OptionDefinitionTest, prefix) {

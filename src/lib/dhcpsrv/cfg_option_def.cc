@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,14 +78,19 @@ CfgOptionDef::equals(const CfgOptionDef& other) const {
 void
 CfgOptionDef::add(const OptionDefinitionPtr& def,
                   const std::string& option_space) {
-    if (!OptionSpace::validateName(option_space)) {
+    // Option definition being added must be a valid pointer.
+    if (!def) {
+        isc_throw(MalformedOptionDefinition,
+                  "option definition must not be NULL");
+
+    } else if (option_space != def->getOptionSpaceName()) {
+        isc_throw(BadValue, "option space name '"
+                  << option_space << "' is not def one '"
+                  << def->getOptionSpaceName() << "'");
+    } else if (!OptionSpace::validateName(option_space)) {
         isc_throw(BadValue, "invalid option space name '"
                   << option_space << "'");
 
-    // Option definition being added must be a valid pointer.
-    } else if (!def) {
-        isc_throw(MalformedOptionDefinition,
-                  "option definition must not be NULL");
     // Must not duplicate an option definition.
     } else if (get(option_space, def->getCode())) {
         isc_throw(DuplicateOptionDefinition, "option definition with code '"
@@ -107,7 +112,7 @@ CfgOptionDef::add(const OptionDefinitionPtr& def,
                   << option_space << "'");
     }
     // Add the definition.
-    option_definitions_.addItem(def, option_space);
+    option_definitions_.addItem(def);
 }
 
 OptionDefContainerPtr

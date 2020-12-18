@@ -187,7 +187,7 @@ public:
                                                                  code,
                                                                  space_name.str(),
                                                                  "string"));
-                defs.addItem(opt_def, space_name.str());
+                defs.addItem(opt_def);
             }
         }
     }
@@ -549,7 +549,7 @@ TEST_F(LibDhcpTest, unpackEmptyOption6) {
     // option definitions set when it detects that this definition is
     // not a standard definition.
     OptionDefSpaceContainer defs;
-    defs.addItem(opt_def, DHCP6_OPTION_SPACE);
+    defs.addItem(opt_def);
     LibDHCP::setRuntimeOptionDefs(defs);
     LibDHCP::commitRuntimeOptionDefs();
 
@@ -598,9 +598,9 @@ TEST_F(LibDhcpTest, unpackSubOptions6) {
 
     // Register created option definitions as runtime option definitions.
     OptionDefSpaceContainer defs;
-    ASSERT_NO_THROW(defs.addItem(opt_def, opt_def->getOptionSpaceName()));
-    ASSERT_NO_THROW(defs.addItem(opt_def2, opt_def2->getOptionSpaceName()));
-    ASSERT_NO_THROW(defs.addItem(opt_def3, opt_def3->getOptionSpaceName()));
+    ASSERT_NO_THROW(defs.addItem(opt_def));
+    ASSERT_NO_THROW(defs.addItem(opt_def2));
+    ASSERT_NO_THROW(defs.addItem(opt_def3));
     LibDHCP::setRuntimeOptionDefs(defs);
     LibDHCP::commitRuntimeOptionDefs();
 
@@ -921,7 +921,7 @@ TEST_F(LibDhcpTest, unpackEmptyOption4) {
     // option definitions set when it detects that this definition is
     // not a standard definition.
     OptionDefSpaceContainer defs;
-    defs.addItem(opt_def, DHCP4_OPTION_SPACE);
+    defs.addItem(opt_def);
     LibDHCP::setRuntimeOptionDefs(defs);
     LibDHCP::commitRuntimeOptionDefs();
 
@@ -972,9 +972,9 @@ TEST_F(LibDhcpTest, unpackSubOptions4) {
 
     // Register created option definitions as runtime option definitions.
     OptionDefSpaceContainer defs;
-    ASSERT_NO_THROW(defs.addItem(opt_def, opt_def->getOptionSpaceName()));
-    ASSERT_NO_THROW(defs.addItem(opt_def2, opt_def2->getOptionSpaceName()));
-    ASSERT_NO_THROW(defs.addItem(opt_def3, opt_def3->getOptionSpaceName()));
+    ASSERT_NO_THROW(defs.addItem(opt_def));
+    ASSERT_NO_THROW(defs.addItem(opt_def2));
+    ASSERT_NO_THROW(defs.addItem(opt_def3));
     LibDHCP::setRuntimeOptionDefs(defs);
     LibDHCP::commitRuntimeOptionDefs();
 
@@ -1045,10 +1045,10 @@ TEST_F(LibDhcpTest, unpackPadEnd) {
 
     // Register created option definitions as runtime option definitions.
     OptionDefSpaceContainer defs;
-    ASSERT_NO_THROW(defs.addItem(opt_def, DHCP4_OPTION_SPACE));
-    ASSERT_NO_THROW(defs.addItem(opt_def0, "my-space"));
-    ASSERT_NO_THROW(defs.addItem(opt_def255, "my-space"));
-    ASSERT_NO_THROW(defs.addItem(opt_def2, "my-space"));
+    ASSERT_NO_THROW(defs.addItem(opt_def));
+    ASSERT_NO_THROW(defs.addItem(opt_def0));
+    ASSERT_NO_THROW(defs.addItem(opt_def255));
+    ASSERT_NO_THROW(defs.addItem(opt_def2));
     LibDHCP::setRuntimeOptionDefs(defs);
     LibDHCP::commitRuntimeOptionDefs();
 
@@ -1129,8 +1129,8 @@ TEST_F(LibDhcpTest, option43Pad) {
 
     // Register created option definitions as runtime option definitions.
     OptionDefSpaceContainer defs;
-    ASSERT_NO_THROW(defs.addItem(opt_def1, space));
-    ASSERT_NO_THROW(defs.addItem(opt_def2, space));
+    ASSERT_NO_THROW(defs.addItem(opt_def1));
+    ASSERT_NO_THROW(defs.addItem(opt_def2));
     LibDHCP::setRuntimeOptionDefs(defs);
     LibDHCP::commitRuntimeOptionDefs();
 
@@ -1169,7 +1169,7 @@ TEST_F(LibDhcpTest, option43Pad) {
 
     // Create option definition for option 0 and register it.
     OptionDefinitionPtr opt_def0(new OptionDefinition("zero", 0, space, "uint8"));
-    ASSERT_NO_THROW(defs.addItem(opt_def0, space));
+    ASSERT_NO_THROW(defs.addItem(opt_def0));
     LibDHCP::clearRuntimeOptionDefs();
     LibDHCP::setRuntimeOptionDefs(defs);
     LibDHCP::commitRuntimeOptionDefs();
@@ -1227,7 +1227,7 @@ TEST_F(LibDhcpTest, option43End) {
 
     // Register created option definition as runtime option definitions.
     OptionDefSpaceContainer defs;
-    ASSERT_NO_THROW(defs.addItem(opt_def255, space));
+    ASSERT_NO_THROW(defs.addItem(opt_def255));
     LibDHCP::setRuntimeOptionDefs(defs);
     LibDHCP::commitRuntimeOptionDefs();
 

@@ -325,7 +325,7 @@ TEST_F(FlexOptionTest, optionConfigDefinedName) {
     OptionDefSpaceContainer defs;
     OptionDefinitionPtr def(new OptionDefinition("my-option", 222,
                                                  DHCP4_OPTION_SPACE, "string"));
-    defs.addItem(def, DHCP4_OPTION_SPACE);
+    defs.addItem(def);
     EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
 
     ElementPtr options = Element::createList();
