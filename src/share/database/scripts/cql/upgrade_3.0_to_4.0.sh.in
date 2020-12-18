@@ -158,7 +158,7 @@ exit_now() {
     exit "$status"
 }
 
-# Prefix ${string} with ${count} characters like the one spciefied in
+# Prefix ${string} with ${count} characters like the one specified in
 # ${fill_char}.
 fill() {
     string=$1;shift
