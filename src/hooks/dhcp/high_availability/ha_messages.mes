@@ -252,6 +252,37 @@ because there are neither new leases nor deleted leases for which updates
 should be sent. The sole argument specifies the details of the client
 which sent the packet.
 
+% HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED failed to communicate with %1 while sending lease updates backlog: %2
+This error message is issued to indicate that there was a communication error
+with a partner server while sending outstanding lease updates after resuming
+connection. The second argument contains a reason for the error.
+
+% HA_LEASES_BACKLOG_FAILED failed to send lease updates backlog to %1: %2
+This error message is issued to indicate that sending lease updates backlog
+to a partner server failed. The lease updates backlog is sent to the partner
+after resuming tremporarily broken communication with the partner. If this
+operation fails the server will transition to the waiting state to initiate
+full lease database synchronization.
+
+% HA_LEASES_BACKLOG_NOTHING_TO_SEND no leases in backlog after communication recovery
+This informational message is issued when there are no outstanding leases to
+be sent after communication recovery with a partner. This means that the
+communication interruption was short enough that no DHCP clients obtained
+any leases from the server while it was in the communication-recovery state.
+The server may now transition to the load-balancing state.
+
+% HA_LEASES_BACKLOG_START starting to send %1 outstanding lease updates to %2
+This informational message is issued when the server starts to send outstanding
+lease updates to the partner after resuming communications. The first argument
+specifies the number of lease updates to be sent. The name of the partner is
+specified with the second argument.
+
+% HA_LEASES_BACKLOG_SUCCESS sending lease updates backlog to %1 successful in %2
+This informational message is issued when server successfully completes
+sending lease updates backlog to the partner. The first argument specifies the
+name of the remote server. The second argument specifies the duration of
+this operation.
+
 % HA_LEASES_SYNC_COMMUNICATIONS_FAILED failed to communicate with %1 while syncing leases: %2
 This error message is issued to indicate that there was a communication error
 with a partner server while trying to fetch leases from its lease database.
@@ -420,12 +451,6 @@ failure.
 This error message is issued to indicate that the configuration for the
 High Availability hooks library hasn't been specified. The 'high-availability'
 parameter must be specified for the hooks library to load properly.
-
-% HA_SEND_LEASE_UPDATES_BACKLOG sending %1 outstanding leases after communication recovery
-This informational message is issued when the server in the communication-recovery
-state re-established connection with the partner and is attempting to
-send all outstanding lease updates to a partner. The argument indicates
-how many outstanding leases are being sent.
 
 % HA_SCOPES_HANDLER_FAILED ha-scopes command failed: %1
 This error message is issued to indicate that the ha-scopes command handler

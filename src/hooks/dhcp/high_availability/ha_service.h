@@ -824,6 +824,40 @@ protected:
     int synchronize(std::string& status_message, const std::string& server_name,
                     const unsigned int max_period);
 
+    /// @brief Sends lease updates from backlog to partner asynchronously.
+    ///
+    /// This method checks if there are any outstanding DHCPv4 or DHCOPv6 leases
+    /// in the backlog and schedules asynchronous sends of these leases. In
+    /// DHCPv6 case it sends a single lease6-bulk-apply command with all
+    /// outstanding leases. In DHCPv4 case, it sends lease4-update or lease4-delete
+    /// commands recursively (when one lease update completes successfully it
+    /// schedules sending next lease update).
+    ///
+    /// If there are no lease updates in the backlog it calls @c post_request_action
+    /// callback.
+    ///
+    /// This method is called from @c sendLeaseUpdatesFromBacklog.
+    ///
+    /// @param http_client reference to the HTTP client to be used for communication.
+    /// @param remote_config pointer to the remote server's configuration.
+    /// @param post_request_action callback to be invoked when the operation
+    /// completes. It can be used for handling errors.
+    void asyncSendLeaseUpdatesFromBacklog(http::HttpClient& http_client,
+                                          const HAConfig::PeerConfigPtr& remote_config,
+                                          PostRequestCallback post_request_action);
+
+    /// @brief Attempts to send all lease updates from the backlog synchronously.
+    ///
+    /// This method is called upon exiting communication-recovery state and before
+    /// entering the load-balancing state. It ensures that all outstanding lease
+    /// updates are sent to the partner before the server can continue normal
+    /// operation in the load-balancing state. In order to prevent collisions
+    /// between new allocations and oustanding updates this method is synchronous.
+    ///
+    /// @return boolean value indicating that the lease updates were delivered
+    /// successfully (when true) or unsuccessfully (when false).
+    bool sendLeaseUpdatesFromBacklog();
+
 public:
 
     /// @brief Processes ha-scopes command and returns a response.

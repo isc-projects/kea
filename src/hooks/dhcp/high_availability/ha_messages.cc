@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Fri Dec 18 2020 13:43
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Tue Dec 22 2020 09:50
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -47,6 +47,11 @@ extern const isc::log::MessageID HA_LEASES4_COMMITTED_FAILED = "HA_LEASES4_COMMI
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE = "HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE";
 extern const isc::log::MessageID HA_LEASES6_COMMITTED_FAILED = "HA_LEASES6_COMMITTED_FAILED";
 extern const isc::log::MessageID HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE = "HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE";
+extern const isc::log::MessageID HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED = "HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED";
+extern const isc::log::MessageID HA_LEASES_BACKLOG_FAILED = "HA_LEASES_BACKLOG_FAILED";
+extern const isc::log::MessageID HA_LEASES_BACKLOG_NOTHING_TO_SEND = "HA_LEASES_BACKLOG_NOTHING_TO_SEND";
+extern const isc::log::MessageID HA_LEASES_BACKLOG_START = "HA_LEASES_BACKLOG_START";
+extern const isc::log::MessageID HA_LEASES_BACKLOG_SUCCESS = "HA_LEASES_BACKLOG_SUCCESS";
 extern const isc::log::MessageID HA_LEASES_SYNC_COMMUNICATIONS_FAILED = "HA_LEASES_SYNC_COMMUNICATIONS_FAILED";
 extern const isc::log::MessageID HA_LEASES_SYNC_FAILED = "HA_LEASES_SYNC_FAILED";
 extern const isc::log::MessageID HA_LEASES_SYNC_LEASE_PAGE_RECEIVED = "HA_LEASES_SYNC_LEASE_PAGE_RECEIVED";
@@ -75,7 +80,6 @@ extern const isc::log::MessageID HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN = "HA_MA
 extern const isc::log::MessageID HA_MAINTENANCE_START_HANDLER_FAILED = "HA_MAINTENANCE_START_HANDLER_FAILED";
 extern const isc::log::MessageID HA_MISSING_CONFIGURATION = "HA_MISSING_CONFIGURATION";
 extern const isc::log::MessageID HA_SCOPES_HANDLER_FAILED = "HA_SCOPES_HANDLER_FAILED";
-extern const isc::log::MessageID HA_SEND_LEASE_UPDATES_BACKLOG = "HA_SEND_LEASE_UPDATES_BACKLOG";
 extern const isc::log::MessageID HA_SERVICE_STARTED = "HA_SERVICE_STARTED";
 extern const isc::log::MessageID HA_STATE_MACHINE_CONTINUED = "HA_STATE_MACHINE_CONTINUED";
 extern const isc::log::MessageID HA_STATE_MACHINE_PAUSED = "HA_STATE_MACHINE_PAUSED";
@@ -134,6 +138,11 @@ const char* values[] = {
     "HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE", "%1: leases4_committed callout was invoked without any leases",
     "HA_LEASES6_COMMITTED_FAILED", "leases6_committed callout failed: %1",
     "HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE", "%1: leases6_committed callout was invoked without any leases",
+    "HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED", "failed to communicate with %1 while sending lease updates backlog: %2",
+    "HA_LEASES_BACKLOG_FAILED", "failed to send lease updates backlog to %1: %2",
+    "HA_LEASES_BACKLOG_NOTHING_TO_SEND", "no leases in backlog after communication recovery",
+    "HA_LEASES_BACKLOG_START", "starting to send %1 outstanding lease updates to %2",
+    "HA_LEASES_BACKLOG_SUCCESS", "sending lease updates backlog to %1 successful in %2",
     "HA_LEASES_SYNC_COMMUNICATIONS_FAILED", "failed to communicate with %1 while syncing leases: %2",
     "HA_LEASES_SYNC_FAILED", "failed to synchronize leases with %1: %2",
     "HA_LEASES_SYNC_LEASE_PAGE_RECEIVED", "received %1 leases from %2",
@@ -162,7 +171,6 @@ const char* values[] = {
     "HA_MAINTENANCE_START_HANDLER_FAILED", "ha-maintenance-start command failed: %1",
     "HA_MISSING_CONFIGURATION", "high-availability parameter not specified for High Availability hooks library",
     "HA_SCOPES_HANDLER_FAILED", "ha-scopes command failed: %1",
-    "HA_SEND_LEASE_UPDATES_BACKLOG", "sending %1 outstanding leases after communication recovery",
     "HA_SERVICE_STARTED", "started high availability service in %1 mode as %2 server",
     "HA_STATE_MACHINE_CONTINUED", "state machine is un-paused",
     "HA_STATE_MACHINE_PAUSED", "state machine paused in state %1",

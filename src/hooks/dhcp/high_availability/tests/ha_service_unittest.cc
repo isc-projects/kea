@@ -906,19 +906,19 @@ public:
         state->modifyPokeTime(-30);
 
         // Create HA service and schedule lease updates.
-        TestHAService service(io_service_, network_state_, config_storage);
-        service.communication_state_ = state;
+        service_.reset(new TestHAService(io_service_, network_state_, config_storage));
+        service_->communication_state_ = state;
 
-        service.transition(my_state.state_, HAService::NOP_EVT);
+        service_->transition(my_state.state_, HAService::NOP_EVT);
 
         EXPECT_EQ(num_updates,
-                  service.asyncSendLeaseUpdates(query, leases6, deleted_leases6,
-                                                parking_lot_handle));
+                  service_->asyncSendLeaseUpdates(query, leases6, deleted_leases6,
+                                                  parking_lot_handle));
 
         // The number of requests we send is equal to the number of servers
         // from which we expect an acknowledgement. We send both lease updates
         // and the deletions in a single bulk update command.
-        EXPECT_EQ(num_updates, service.getPendingRequest(query));
+        EXPECT_EQ(num_updates, service_->getPendingRequest(query));
 
         EXPECT_FALSE(state->isPoked());
 
@@ -931,9 +931,9 @@ public:
         ASSERT_NO_THROW(parking_lot->park(query, unpark_handler));
 
         // Actually perform the lease updates.
-        ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, [&service]() {
+        ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, [this]() {
             // Finish running IO service when there are no more pending requests.
-            return (service.pendingRequestSize() == 0);
+            return (service_->pendingRequestSize() == 0);
         }));
 
         // Only if we wait for lease updates to complete it makes senst to test
@@ -1066,8 +1066,9 @@ public:
         EXPECT_TRUE(delete_request3);
     }
 
-    /// @brief Tests that lease updates are queued when the server is in the
-    /// communication-recovery state.
+    /// @brief Tests that DHCPv4 lease updates are queued when the server is in the
+    /// communication-recovery state and later sent before transitioning back to
+    /// the load-balancing state.
     void testSendUpdatesCommunicationRecovery() {
         // Start HTTP servers.
         ASSERT_NO_THROW({
@@ -1085,7 +1086,79 @@ public:
         // queued the updates.
         EXPECT_FALSE(unpark_called);
 
+        // Let's make sure they have been queued.
         EXPECT_EQ(2, service_->lease4_update_backlog_.size());
+
+        // Make partner available.
+        service_->communication_state_->poke();
+        service_->communication_state_->setPartnerState("load-balancing");
+
+        // This should cause the server to send outstanding lease updates and
+        // because they are all successful the server should transition to the
+        // load-balancing state and continue normal operation.
+        testSynchronousCommands([this]() {
+            service_->runModel(HAService::NOP_EVT);
+            EXPECT_EQ(HA_LOAD_BALANCING_ST, service_->getCurrState());
+        });
+
+        // Lease updates should have been sent.
+        EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                                 "192.1.2.3"));
+        EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-del",
+                                                                 "192.2.3.4"));
+
+        // Backlog should be empty.
+        EXPECT_EQ(0, service_->lease4_update_backlog_.size());
+    }
+
+    /// @brief Tests that a DHCPv4 server trying to recover from the communication
+    /// interruption transitions to the waiting state if the partner refuses delayed
+    /// lease updates.
+    void testSendUpdatesCommunicationRecoveryFailed() {
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        // Simulate that the partner returns an error.
+        factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
+
+        // This flag will be set to true if unpark is called.
+        bool unpark_called = false;
+        testSendLeaseUpdates([&unpark_called] { unpark_called = true; },
+                             false, 0, MyState(HA_COMMUNICATION_RECOVERY_ST));
+
+        // Packet shouldn't be unparked because no updates went out. We merely
+        // queued the updates.
+        EXPECT_FALSE(unpark_called);
+
+        // Let's make sure they have been queued.
+        EXPECT_EQ(2, service_->lease4_update_backlog_.size());
+
+        // Make partner available.
+        service_->communication_state_->poke();
+        service_->communication_state_->setPartnerState("load-balancing");
+
+        // This should cause the server to attempt to send outstanding lease
+        // updates to the partner. The partner reports an error so that should
+        // cause this server to transition to the waiting state from which it
+        // will recover doing full lease database synchronization.
+        testSynchronousCommands([this]() {
+            service_->runModel(HAService::NOP_EVT);
+            EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+        });
+
+        // Deletions are scheduled first and this should cause the failure.
+        EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-del",
+                                                                 "192.2.3.4"));
+        // This lease update should not be sent because the first update
+        // triggered an error.
+        EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                                 "192.1.2.3"));
+        // The backlog should be empty.
+        EXPECT_EQ(0, service_->lease4_update_backlog_.size());
     }
 
     /// @brief Tests scenarios when lease updates are not sent to the failover peer.
@@ -1315,6 +1388,98 @@ public:
                                                          "2001:db8:1::cafe",
                                                          "2001:db8:1::efac");
         EXPECT_TRUE(update_request3);
+    }
+
+    /// @brief Tests that DHCPv6 lease updates are queued when the server is in the
+    /// communication-recovery state and later sent before transitioning back to
+    /// the load-balancing state.
+    void testSendUpdatesCommunicationRecovery6() {
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        // This flag will be set to true if unpark is called.
+        bool unpark_called = false;
+        testSendLeaseUpdates6([&unpark_called] { unpark_called = true; },
+                             false, 0, MyState(HA_COMMUNICATION_RECOVERY_ST));
+
+        // Packet shouldn't be unparked because no updates went out. We merely
+        // queued the updates.
+        EXPECT_FALSE(unpark_called);
+
+        // Let's make sure they have been queued.
+        EXPECT_EQ(2, service_->lease6_update_backlog_.size());
+
+        // Make partner available.
+        service_->communication_state_->poke();
+        service_->communication_state_->setPartnerState("load-balancing");
+
+        // This should cause the server to send outstanding lease updates and
+        // because they are all successful the server should transition to the
+        // load-balancing state and continue normal operation.
+        testSynchronousCommands([this]() {
+            service_->runModel(HAService::NOP_EVT);
+            EXPECT_EQ(HA_LOAD_BALANCING_ST, service_->getCurrState());
+        });
+
+        // Bulk lease update should have been sent.
+        EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                 "2001:db8:1::cafe",
+                                                                 "2001:db8:1::efac"));
+
+        // Backlog should be empty.
+        EXPECT_EQ(0, service_->lease6_update_backlog_.size());
+    }
+
+    /// @brief Tests that a DHCPv6 server trying to recover from the communication
+    /// interruption transitions to the waiting state if the partner refuses delayed
+    /// lease updates.
+    void testSendUpdatesCommunicationRecovery6Failed() {
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        // Simulate that the partner returns an error.
+        factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
+
+        // This flag will be set to true if unpark is called.
+        bool unpark_called = false;
+        testSendLeaseUpdates6([&unpark_called] { unpark_called = true; },
+                             false, 0, MyState(HA_COMMUNICATION_RECOVERY_ST));
+
+        // Packet shouldn't be unparked because no updates went out. We merely
+        // queued the updates.
+        EXPECT_FALSE(unpark_called);
+
+        // Let's make sure they have been queued.
+        EXPECT_EQ(2, service_->lease6_update_backlog_.size());
+
+        // Make partner available.
+        service_->communication_state_->poke();
+        service_->communication_state_->setPartnerState("load-balancing");
+
+        // This should cause the server to attempt to send outstanding lease
+        // updates to the partner. The partner reports an error so that should
+        // cause this server to transition to the waiting state from which it
+        // will recover doing full lease database synchronization.
+        testSynchronousCommands([this]() {
+            service_->runModel(HAService::NOP_EVT);
+            EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+        });
+
+        // The server should have sent lease updates in a single command.
+        EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                 "2001:db8:1::cafe",
+                                                                 "2001:db8:1::efac"));
+
+        // Backlog should be empty.
+        EXPECT_EQ(0, service_->lease6_update_backlog_.size());
     }
 
     /// @brief Tests scenarios when lease updates are not sent to the failover peer.
@@ -1841,6 +2006,19 @@ TEST_F(HAServiceTest, sendUpdatesCommunicationRecoveryMultiThreading) {
     testSendUpdatesCommunicationRecovery();
 }
 
+// Test scenario when lease updates are queued in the communication-recovery
+// state for later send.
+TEST_F(HAServiceTest, sendUpdatesCommunicationRecoveryFailed) {
+    testSendUpdatesCommunicationRecoveryFailed();
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state for later send. Multi threading case.
+TEST_F(HAServiceTest, sendUpdatesCommunicationRecoveryFailedMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesCommunicationRecoveryFailed();
+}
+
 // Test scenario when all lease updates are sent successfully.
 TEST_F(HAServiceTest, sendSuccessfulUpdatesAuthorized) {
     // Update config to provide authentication.
@@ -1936,6 +2114,34 @@ TEST_F(HAServiceTest, sendSuccessfulUpdates6) {
 TEST_F(HAServiceTest, sendSuccessfulUpdates6MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     testSendSuccessfulUpdates6();
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state for later send. Then, the partner refuses lease updates causing the
+// server to transition to the waiting state.
+TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery6) {
+    testSendUpdatesCommunicationRecovery6();
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state for later send. Then, the partner refuses lease updates causing the
+// server to transition to the waiting state.
+TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesCommunicationRecovery6();
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state for later send.
+TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery6Failed) {
+    testSendUpdatesCommunicationRecovery6Failed();
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state for later send. Multi threading case.
+TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery6FailedMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesCommunicationRecovery6Failed();
 }
 
 // Test scenario when all lease updates are sent successfully.

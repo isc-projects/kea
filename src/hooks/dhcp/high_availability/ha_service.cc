@@ -178,76 +178,86 @@ HAService::communicationRecoveryHandler() {
 
     if (isMaintenanceCanceled() || isModelPaused()) {
         postNextEvent(NOP_EVT);
-        return;
-    }
 
     // Check if the clock skew is still acceptable. If not, transition to
     // the terminated state.
-    if (shouldTerminate()) {
+    } else if (shouldTerminate()) {
         verboseTransition(HA_TERMINATED_ST);
-        return;
-    }
 
-    switch (communication_state_->getPartnerState()) {
-    case HA_IN_MAINTENANCE_ST:
-        verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST);
-        break;
+    } else {
 
-    case HA_PARTNER_DOWN_ST:
-        verboseTransition(HA_WAITING_ST);
-        break;
+        // Transitions based on the partner's state.
+        switch (communication_state_->getPartnerState()) {
+        case HA_IN_MAINTENANCE_ST:
+            verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST);
+            break;
 
-    case HA_PARTNER_IN_MAINTENANCE_ST:
-        verboseTransition(HA_IN_MAINTENANCE_ST);
-        break;
+        case HA_PARTNER_DOWN_ST:
+            verboseTransition(HA_WAITING_ST);
+            break;
 
-    case HA_TERMINATED_ST:
-        verboseTransition(HA_TERMINATED_ST);
-        break;
+        case HA_PARTNER_IN_MAINTENANCE_ST:
+            verboseTransition(HA_IN_MAINTENANCE_ST);
+            break;
 
-    case HA_UNAVAILABLE_ST:
-        if (shouldPartnerDown()) {
-            verboseTransition(HA_PARTNER_DOWN_ST);
+        case HA_TERMINATED_ST:
+            verboseTransition(HA_TERMINATED_ST);
+            break;
 
-        } else {
+        case HA_UNAVAILABLE_ST:
+            if (shouldPartnerDown()) {
+                verboseTransition(HA_PARTNER_DOWN_ST);
+
+            } else {
+                postNextEvent(NOP_EVT);
+            }
+            break;
+
+        case HA_WAITING_ST:
+        case HA_SYNCING_ST:
+        case HA_READY_ST:
+            // The partner seems to be waking up. Let's wait for it to get to
+            // the load-balancing state before we transition to the load-balancing
+            // state.
             postNextEvent(NOP_EVT);
-        }
-        break;
+            break;
 
-   case HA_WAITING_ST:
-   case HA_SYNCING_ST:
-   case HA_READY_ST:
-       postNextEvent(NOP_EVT);
-       break;
+        default:
+            // If the communication is still interrupted let's continue sitting
+            // in this state until it is resumed or until transition to the
+            // partner-down state, depending on what happens first.
+            if (communication_state_->isCommunicationInterrupted()) {
+                postNextEvent(NOP_EVT);
+                break;
+            }
 
-    default:
-        if (!communication_state_->isCommunicationInterrupted()) {
+            // The communication has been resumed. The partner server must be in a state
+            // in which it can receive outstanding lease updates we collected. The number of
+            // oustanding lease updates must not exceed the configured limit. Finally, the
+            // lease updates must be successfully send. If that all works, we will transition
+            // to the normal operation.
             if ((communication_state_->getPartnerState() == getNormalState() ||
                  (communication_state_->getPartnerState() == HA_COMMUNICATION_RECOVERY_ST)) &&
                 !lease4_update_backlog_.wasOverflown() &&
-                !lease6_update_backlog_.wasOverflown()) {
+                !lease6_update_backlog_.wasOverflown() &&
+                sendLeaseUpdatesFromBacklog()) {
+                // Everything went fine, so we can go back to the normal operation.
                 verboseTransition(getNormalState());
-            } else {
-                verboseTransition(HA_WAITING_ST);
+                break;
             }
 
-        } else {
-            postNextEvent(NOP_EVT);
+            // The partner appears to be in unexpected state, we have exceeded the number
+            // of lease updates in a backlog or an attempt to send lease updates failed.
+            // In all these cases we follow plan B and transition to the waiting state.
+            // The server will then attempt to synchronize the entire lease database.
+            verboseTransition(HA_WAITING_ST);
         }
     }
 
+    // When exiting this state we must ensure that lease updates backlog is cleared.
     if (doOnExit()) {
-        if (getCurrState() == getNormalState()) {
-            size_t updates_count = lease4_update_backlog_.size() > 0 ? lease4_update_backlog_.size() :
-                lease6_update_backlog_.size();
-            LOG_INFO(ha_logger, HA_SEND_LEASE_UPDATES_BACKLOG)
-                .arg(updates_count);
-            /// @todo try to send outstanding lease updates here.
-
-        } else {
-            lease4_update_backlog_.clear();
-            lease6_update_backlog_.clear();
-        }
+        lease4_update_backlog_.clear();
+        lease6_update_backlog_.clear();
     }
 }
 
@@ -312,9 +322,9 @@ HAService::normalStateHandler() {
     }
 
     if (doOnExit()) {
-        // Do nothing but clear the flag in case we enter the
-        // communication-recovery state. This state utilizes the flag
-        // to detect when outstanding lease updates should be sent.
+        // Do nothing here but doOnExit() call clears the "on exit" flag
+        // when transitioning to the communication-recovery state. In that
+        // state we need this flag to be cleared.
     }
 }
 
@@ -2039,6 +2049,123 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
     return (CONTROL_RESULT_SUCCESS);
 }
 
+void
+HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
+                                            const HAConfig::PeerConfigPtr& config,
+                                            PostRequestCallback post_request_action) {
+    auto num_updates = lease4_update_backlog_.size() > 0 ? lease4_update_backlog_.size() :
+        lease6_update_backlog_.size();
+    if (num_updates == 0) {
+        post_request_action(true, "");
+        return;
+    }
+
+    ConstElementPtr command;
+    if (lease4_update_backlog_.size() > 0) {
+        Lease4UpdateBacklog::OpType op_type;
+        Lease4Ptr lease = lease4_update_backlog_.pop(op_type);
+        if (op_type == Lease4UpdateBacklog::ADD) {
+            command = CommandCreator::createLease4Update(*lease);
+        } else {
+            command = CommandCreator::createLease4Delete(*lease);
+        }
+
+    } else if (lease6_update_backlog_.size() > 0) {
+        command = CommandCreator::createLease6BulkApply(lease6_update_backlog_);
+
+    } else {
+        post_request_action(true, "");
+        return;
+    }
+
+    // Create HTTP/1.1 request including our command.
+    PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
+        (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
+         HostHttpHeader(config->getUrl().getHostname()));
+    config->addBasicAuthHttpHeader(request);
+    request->setBodyAsJson(command);
+    request->finalize();
+
+    // Response object should also be created because the HTTP client needs
+    // to know the type of the expected response.
+    HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
+
+    http_client.asyncSendRequest(config->getUrl(), request, response,
+        [this, &http_client, config, post_request_action]
+            (const boost::system::error_code& ec,
+             const HttpResponsePtr& response,
+             const std::string& error_str) {
+
+             std::string error_message;
+
+             if (ec || !error_str.empty()) {
+                 error_message = (ec ? ec.message() : error_str);
+                 LOG_WARN(ha_logger, HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED)
+                     .arg(config->getLogLabel())
+                     .arg(ec ? ec.message() : error_str);
+
+             } else {
+                 // Handle third group of errors.
+                 try {
+                    int rcode = 0;
+                    auto args = verifyAsyncResponse(response, rcode);
+                 } catch (const std::exception& ex) {
+                     error_message = ex.what();
+                     LOG_WARN(ha_logger, HA_LEASES_BACKLOG_FAILED)
+                         .arg(config->getLogLabel())
+                         .arg(ex.what());
+                 }
+             }
+
+             if (error_message.empty()) {
+                 asyncSendLeaseUpdatesFromBacklog(http_client, config, post_request_action);
+             } else {
+                 post_request_action(error_message.empty(), error_message);
+             }
+   });
+}
+
+bool
+HAService::sendLeaseUpdatesFromBacklog() {
+    auto num_updates = lease4_update_backlog_.size() > 0 ? lease4_update_backlog_.size() :
+        lease6_update_backlog_.size();
+    if (num_updates == 0) {
+        LOG_INFO(ha_logger, HA_LEASES_BACKLOG_NOTHING_TO_SEND);
+        return (true);
+    }
+
+    IOService io_service;
+    HttpClient client(io_service);
+    auto remote_config = config_->getFailoverPeerConfig();
+    bool updates_successful = true;
+
+    LOG_INFO(ha_logger, HA_LEASES_BACKLOG_START)
+        .arg(num_updates)
+        .arg(remote_config->getName());
+
+    asyncSendLeaseUpdatesFromBacklog(client, remote_config,
+                                     [&](const bool success, const std::string& error_message) {
+        io_service.stop();
+        updates_successful = success;
+    });
+
+    // Measure duration of the updates.
+    Stopwatch stopwatch;
+
+    // Run the IO service until it is stopped by the callback. This makes it synchronous.
+    io_service.run();
+
+    // End measuring duration.
+    stopwatch.stop();
+
+    if (updates_successful) {
+        LOG_INFO(ha_logger, HA_LEASES_BACKLOG_SUCCESS)
+            .arg(remote_config->getName())
+            .arg(stopwatch.logFormatLastDuration());
+    }
+
+    return (updates_successful);
+}
 
 ConstElementPtr
 HAService::processScopes(const std::vector<std::string>& scopes) {
