@@ -7,6 +7,7 @@
 #ifndef HA_COMMAND_CREATOR_H
 #define HA_COMMAND_CREATOR_H
 
+#include <lease_update_backlog.h>
 #include <ha_server_type.h>
 #include <cc/data.h>
 #include <dhcpsrv/lease.h>
@@ -80,7 +81,7 @@ public:
     createLease4GetPage(const dhcp::Lease4Ptr& lease4,
                         const uint32_t limit);
 
-    /// @brief Creates lease6-bulk-update command.
+    /// @brief Creates lease6-bulk-apply command.
     ///
     /// @param leases Pointer to the collection of leases to be created
     /// or/and updated.
@@ -90,6 +91,16 @@ public:
     static data::ConstElementPtr
     createLease6BulkApply(const dhcp::Lease6CollectionPtr& leases,
                           const dhcp::Lease6CollectionPtr& deleted_leases);
+
+    /// @brief Creates lease6-bulk-apply command.
+    ///
+    /// This command pops the leases from the backlog. As a result, the
+    /// backlog is empty after calling this function.
+    ///
+    /// @param leases Reference to the collection of DHCPv6 leases backlog.
+    /// @return Pointer to the JSON representation of the command.
+    static data::ConstElementPtr
+    createLease6BulkApply(Lease6UpdateBacklog& leases);
 
     /// @brief Creates lease6-update command.
     ///

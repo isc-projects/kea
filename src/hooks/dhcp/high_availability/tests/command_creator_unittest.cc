@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <ha_server_type.h>
+#include <lease_update_backlog.h>
 #include <command_creator.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
@@ -334,6 +335,41 @@ TEST(CommandCreatorTest, createLease6BulkApply) {
     ASSERT_EQ(1, leases_json->size());
     lease_as_json = leases_json->get(0);
     EXPECT_EQ(leaseAsJson(createLease6())->str(), lease_as_json->str());
+}
+
+// This test verifies that the lease6-bulk-apply command can be created
+// from DHCPv6 leases backlog.
+TEST(CommandCreatorTest, createLease6BulkApplyFromBacklog) {
+    Lease6Ptr lease = createLease6();
+    Lease6Ptr deleted_lease = createLease6();
+
+    Lease6UpdateBacklog backlog(100);
+    backlog.push(Lease6UpdateBacklog::ADD, lease);
+    backlog.push(Lease6UpdateBacklog::DELETE, deleted_lease);
+
+    ConstElementPtr command = CommandCreator::createLease6BulkApply(backlog);
+    ConstElementPtr arguments;
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease6-bulk-apply",
+                                              "dhcp6", arguments));
+
+    // Verify deleted-leases.
+    auto deleted_leases_json = arguments->get("deleted-leases");
+    ASSERT_TRUE(deleted_leases_json);
+    ASSERT_EQ(Element::list, deleted_leases_json->getType());
+    ASSERT_EQ(1, deleted_leases_json->size());
+    auto lease_as_json = deleted_leases_json->get(0);
+    EXPECT_EQ(leaseAsJson(createLease6())->str(), lease_as_json->str());
+
+    // Verify leases.
+    auto leases_json = arguments->get("leases");
+    ASSERT_TRUE(leases_json);
+    ASSERT_EQ(Element::list, leases_json->getType());
+    ASSERT_EQ(1, leases_json->size());
+    lease_as_json = leases_json->get(0);
+    EXPECT_EQ(leaseAsJson(createLease6())->str(), lease_as_json->str());
+
+    // Make sure the backlog is now empty.
+    EXPECT_EQ(0, backlog.size());
 }
 
 // This test verifies that the lease6-get-all command is correct.
