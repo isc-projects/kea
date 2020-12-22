@@ -120,3 +120,14 @@ duplicate-includes:
     - amd64
   script:
     - tools/check-for-duplicate-includes.sh
+
+missing-config-h-include:
+  stage: test
+  image: "$CI_REGISTRY_IMAGE:latest"
+  tags:
+    - linux
+    - amd64
+  script:
+    - FILES=$(tools/add-config-h.sh -n)
+    - printf '%s\n' "${FILES}"
+    - test -z "${FILES}"
