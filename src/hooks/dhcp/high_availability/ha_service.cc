@@ -986,40 +986,42 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
     for (auto p = peers_configs.begin(); p != peers_configs.end(); ++p) {
         HAConfig::PeerConfigPtr conf = p->second;
 
+        if (shouldQueueLeaseUpdates(conf)) {
+            // Lease updates for deleted leases.
+            for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
+                lease4_update_backlog_.push(Lease4UpdateBacklog::DELETE, *l);
+            }
+
+            // Lease updates for new allocations and updated leases.
+            for (auto l = leases->begin(); l != leases->end(); ++l) {
+                lease4_update_backlog_.push(Lease4UpdateBacklog::ADD, *l);
+            }
+
+            continue;
+        }
+
         // Check if the lease update should be sent to the server. If we're in
         // the partner-down state we don't send lease updates to the partner.
         if (!shouldSendLeaseUpdates(conf)) {
             continue;
         }
 
-        // Check whether we should queue or send lease updates.
-        bool queue_updates = shouldQueueLeaseUpdates(conf);
-
         // Lease updates for deleted leases.
         for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
-            if (queue_updates) {
-                lease4_update_backlog_.push(Lease4UpdateBacklog::DELETE, *l);
-            } else {
-                asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Delete(**l),
-                                     parking_lot);
-            }
+            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Delete(**l),
+                                 parking_lot);
         }
 
         // Lease updates for new allocations and updated leases.
         for (auto l = leases->begin(); l != leases->end(); ++l) {
-            if (queue_updates) {
-                lease4_update_backlog_.push(Lease4UpdateBacklog::ADD, *l);
-            } else {
-                asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Update(**l),
-                                     parking_lot);
-            }
+            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Update(**l),
+                                 parking_lot);
         }
 
         // If we're contacting a backup server from which we don't expect a
         // response prior to responding to the DHCP client we don't count
         // it.
-        if (!queue_updates &&
-            (config_->amWaitingBackupAck() || (conf->getRole() != HAConfig::PeerConfig::BACKUP))) {
+        if ((config_->amWaitingBackupAck() || (conf->getRole() != HAConfig::PeerConfig::BACKUP))) {
             ++sent_num;
         }
     }
@@ -1042,12 +1044,6 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
     for (auto p = peers_configs.begin(); p != peers_configs.end(); ++p) {
         HAConfig::PeerConfigPtr conf = p->second;
 
-        // Check if the lease update should be sent to the server. If we're in
-        // the partner-down state we don't send lease updates to the partner.
-        if (!shouldSendLeaseUpdates(conf)) {
-            continue;
-        }
-
         if (shouldQueueLeaseUpdates(conf)) {
             for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
                 lease6_update_backlog_.push(Lease6UpdateBacklog::DELETE, *l);
@@ -1057,6 +1053,13 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
             for (auto l = leases->begin(); l != leases->end(); ++l) {
                 lease6_update_backlog_.push(Lease6UpdateBacklog::ADD, *l);
             }
+
+            continue;
+        }
+
+        // Check if the lease update should be sent to the server. If we're in
+        // the partner-down state we don't send lease updates to the partner.
+        if (!shouldSendLeaseUpdates(conf)) {
             continue;
         }
 
@@ -1281,7 +1284,6 @@ HAService::shouldSendLeaseUpdates(const HAConfig::PeerConfigPtr& peer_config) co
     // In other case, whether we send lease updates or not depends on our
     // state.
     switch (getCurrState()) {
-    case HA_COMMUNICATION_RECOVERY_ST:
     case HA_HOT_STANDBY_ST:
     case HA_LOAD_BALANCING_ST:
     case HA_PARTNER_IN_MAINTENANCE_ST:

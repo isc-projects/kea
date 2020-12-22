@@ -6246,7 +6246,7 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesLoadBalancing) {
 
     HAConfig::PeerConfigPtr peer_config = valid_config->getFailoverPeerConfig();
 
-    EXPECT_TRUE(expectLeaseUpdates(MyState(HA_COMMUNICATION_RECOVERY_ST), peer_config));
+    EXPECT_FALSE(expectLeaseUpdates(MyState(HA_COMMUNICATION_RECOVERY_ST), peer_config));
     EXPECT_TRUE(expectLeaseUpdates(MyState(HA_LOAD_BALANCING_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_IN_MAINTENANCE_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_PARTNER_DOWN_ST), peer_config));
