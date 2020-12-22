@@ -8,7 +8,6 @@
 
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
-#include <hooks/callout_manager.h>
 #include <hooks/library_handle.h>
 #include <hooks/library_manager_collection.h>
 #include <hooks/hooks_manager.h>

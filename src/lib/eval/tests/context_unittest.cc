@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <eval/token.h>
+
 #include <eval/eval_context.h>
 #include <eval/token.h>
 #include <dhcp/option.h>

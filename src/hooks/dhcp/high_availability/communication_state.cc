@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <communication_state.h>
-#include <exceptions/exceptions.h>
 #include <ha_log.h>
 #include <ha_service_states.h>
 #include <cc/data.h>

@@ -13,7 +13,6 @@
 #include <util/time_utilities.h>
 
 #include <gtest/gtest.h>
-#include <gtest/gtest.h>
 #include <algorithm>
 #include <functional>
 #include <vector>

@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <dhcp4/tests/dhcp4_test_utils.h>
-#include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
 #include <asiolink/io_service.h>

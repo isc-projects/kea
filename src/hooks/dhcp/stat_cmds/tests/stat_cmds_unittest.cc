@@ -5,7 +5,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 //
 
-
 #include <config.h>
 
 #include <exceptions/exceptions.h>
@@ -15,7 +14,6 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <cc/command_interpreter.h>
-#include <cc/data.h>
 #include <cc/data.h>
 #include <stats/stats_mgr.h>
 

@@ -8,7 +8,6 @@
 
 #include <asiolink/io_service.h>
 #include <d2/d2_cfg_mgr.h>
-#include <d2/d2_cfg_mgr.h>
 #include <d2/nc_add.h>
 #include <dns/messagerenderer.h>
 #include <nc_test_utils.h>

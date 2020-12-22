@@ -11,13 +11,11 @@
 #include <nc_test_utils.h>
 #include <d2/nc_add.h>
 #include <d2/nc_remove.h>
-#include <d2/nc_remove.h>
 #include <d2/simple_add.h>
 #include <d2/simple_remove.h>
 #include <process/testutils/d_test_stubs.h>
 #include <util/time_utilities.h>
 
-#include <gtest/gtest.h>
 #include <gtest/gtest.h>
 #include <algorithm>
 #include <vector>
@@ -680,8 +678,8 @@ TEST_F(D2UpdateMgrTest, addTransaction) {
     ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
     NameChangeTransactionPtr trans = (*pos).second;
     ASSERT_TRUE(trans);
-   
-    // Verify the correct type of transaction was created. 
+
+    // Verify the correct type of transaction was created.
     NameAddTransaction* t = dynamic_cast<NameAddTransaction*>(trans.get());
     ASSERT_TRUE(t);
 
@@ -738,7 +736,7 @@ TEST_F(D2UpdateMgrTest, removeTransaction) {
     NameChangeTransactionPtr trans = (*pos).second;
     ASSERT_TRUE(trans);
 
-    // Verify the correct type of transaction was created. 
+    // Verify the correct type of transaction was created.
     NameRemoveTransaction* t = dynamic_cast<NameRemoveTransaction*>(trans.get());
     ASSERT_TRUE(t);
 
@@ -896,8 +894,8 @@ TEST_F(D2UpdateMgrTest, simpleAddTransaction) {
     ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
     NameChangeTransactionPtr trans = (*pos).second;
     ASSERT_TRUE(trans);
-   
-    // Verify the correct type of transaction was created. 
+
+    // Verify the correct type of transaction was created.
     SimpleAddTransaction* t = dynamic_cast<SimpleAddTransaction*>(trans.get());
     ASSERT_TRUE(t);
 
@@ -955,7 +953,7 @@ TEST_F(D2UpdateMgrTest, simpleRemoveTransaction) {
     NameChangeTransactionPtr trans = (*pos).second;
     ASSERT_TRUE(trans);
 
-    // Verify the correct type of transaction was created. 
+    // Verify the correct type of transaction was created.
     SimpleRemoveTransaction* t = dynamic_cast<SimpleRemoveTransaction*>(trans.get());
     ASSERT_TRUE(t);
 

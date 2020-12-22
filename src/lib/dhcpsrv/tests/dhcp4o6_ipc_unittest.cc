@@ -5,8 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcp/iface_mgr.h>
-#include <dhcp/option_vendor.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option6_addrlst.h>
@@ -15,6 +15,7 @@
 #include <dhcp/option_int.h>
 #include <dhcpsrv/dhcp4o6_ipc.h>
 #include <dhcpsrv/testutils/dhcp4o6_test_ipc.h>
+
 #include <gtest/gtest.h>
 #include <functional>
 #include <sstream>

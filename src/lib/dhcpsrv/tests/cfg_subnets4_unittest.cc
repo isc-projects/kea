@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcp/classify.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_custom.h>
@@ -15,14 +16,12 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
-#include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>

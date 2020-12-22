@@ -19,7 +19,6 @@
 #include <log/message_dictionary.h>
 #include <log/message_exception.h>
 #include <log/message_initializer.h>
-#include <log/message_initializer.h>
 #include <log/message_reader.h>
 #include <log/message_types.h>
 #include <log/interprocess/interprocess_sync_null.h>

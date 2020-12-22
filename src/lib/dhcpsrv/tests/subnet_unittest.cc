@@ -13,7 +13,6 @@
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
-#include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>

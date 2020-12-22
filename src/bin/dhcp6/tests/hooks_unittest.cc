@@ -11,7 +11,6 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp6/json_config_parser.h>
-#include <dhcp/dhcp6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -20,7 +19,6 @@
 #include <util/range_utilities.h>
 #include <hooks/server_hooks.h>
 #include <hooks/callout_manager.h>
-
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>

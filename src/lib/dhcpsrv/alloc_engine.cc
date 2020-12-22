@@ -29,7 +29,6 @@
 #include <util/encode/hex.h>
 #include <util/stopwatch.h>
 #include <hooks/server_hooks.h>
-#include <hooks/hooks_manager.h>
 
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>

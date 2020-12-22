@@ -102,6 +102,11 @@ root_path=$(cd "$(dirname "${0}")/.." && pwd)
 
 # Generated files will be filtered out. Hardcoded list
 filtered_out=$(cat "${root_path}/tools/.generated-files.txt")
+# src/lib/asiolink/asio_wrapper.h includes <boost/asio.hpp> in both
+# conditionals of an #ifdef. Make an exception for it.
+filtered_out="${filtered_out}
+src/lib/asiolink/asio_wrapper.h
+"
 
 found=false
 for i in $(get_source_files); do

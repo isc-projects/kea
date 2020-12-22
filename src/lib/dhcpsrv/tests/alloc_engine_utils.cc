@@ -21,8 +21,6 @@
 #include <dhcpsrv/testutils/test_utils.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 
-#include <hooks/hooks_manager.h>
-
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 

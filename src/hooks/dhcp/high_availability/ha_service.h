@@ -15,12 +15,12 @@
 #include <cc/data.h>
 #include <dhcp/pkt4.h>
 #include <http/response.h>
-#include <dhcp/pkt4.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/network_state.h>
 #include <hooks/parking_lots.h>
 #include <http/client.h>
 #include <util/state_model.h>
+
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <functional>

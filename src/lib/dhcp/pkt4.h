@@ -8,7 +8,6 @@
 #define PKT4_H
 
 #include <asiolink/io_address.h>
-#include <dhcp/option.h>
 #include <dhcp/duid.h>
 #include <util/buffer.h>
 #include <dhcp/option.h>
