@@ -86,6 +86,7 @@ shellcheck:
     - SCRIPTS+="src/share/yang/modules/utils/gen-revisions.sh "
     - SCRIPTS+="tools/add-config-h.sh "
     - SCRIPTS+="tools/bump-lib-versions.sh "
+    - SCRIPTS+="tools/check-for-duplicate-includes.sh "
     - SCRIPTS+="tools/cql_config "
     - SCRIPTS+="tools/mk_cfgrpt.sh "
     - SCRIPTS+="tools/path_replacer.sh.in "
@@ -110,3 +111,12 @@ danger:
     - sysctl -w net.ipv6.conf.default.disable_ipv6=1
     - gem install danger-commit_lint
     - danger --fail-on-errors=true --new-comment
+
+duplicate-includes:
+  stage: test
+  image: "$CI_REGISTRY_IMAGE:latest"
+  tags:
+    - linux
+    - amd64
+  script:
+    - tools/check-for-duplicate-includes.sh
