@@ -18,8 +18,14 @@ using namespace isc::http;
 
 namespace {
 
+/// @brief Default values for HA load balancing.
+const SimpleDefaults HA_CONFIG_LB_DEFAULTS = {
+    { "delayed-updates-limit", Element::integer, "100" },
+};
+
 /// @brief Default values for HA configuration.
 const SimpleDefaults HA_CONFIG_DEFAULTS = {
+    { "delayed-updates-limit", Element::integer, "0" },
     { "heartbeat-delay", Element::integer, "10000" },
     { "max-ack-delay", Element::integer, "10000" },
     { "max-response-delay", Element::integer, "60000" },
@@ -86,7 +92,15 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     // Get the HA configuration.
     ElementPtr c = config_vec[0];
 
-    // Set default values.
+    // Get 'mode'. That's the first thing to gather because the defaults we
+    // apply to the configuration depend on the mode.
+    config_storage->setHAMode(getString(c, "mode"));
+
+    // Set load-balancing specific defaults.
+    if (config_storage->getHAMode() == HAConfig::LOAD_BALANCING) {
+        setDefaults(c, HA_CONFIG_LB_DEFAULTS);
+    }
+    // Set general defaults.
     setDefaults(c, HA_CONFIG_DEFAULTS);
 
     // HA configuration must be a map.
@@ -94,7 +108,7 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
         isc_throw(ConfigError, "expected list of maps in the HA configuration");
     }
 
-    // It must contains peers section.
+    // It must contain peers section.
     if (!c->contains("peers")) {
         isc_throw(ConfigError, "'peers' parameter missing in HA configuration");
     }
@@ -119,14 +133,10 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
         }
     }
 
-
     // We have made major sanity checks, so let's try to gather some values.
 
     // Get 'this-server-name'.
     config_storage->setThisServerName(getString(c, "this-server-name"));
-
-    // Get 'mode'.
-    config_storage->setHAMode(getString(c, "mode"));
 
     // Get 'send-lease-updates'.
     config_storage->setSendLeaseUpdates(getBoolean(c, "send-lease-updates"));
@@ -141,6 +151,10 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     // Get 'sync-page-limit'.
     uint32_t sync_page_limit = getAndValidateInteger<uint32_t>(c, "sync-page-limit");
     config_storage->setSyncPageLimit(sync_page_limit);
+
+    // Get 'delayed-updates-limit'.
+    uint32_t delayed_updates_limit = getAndValidateInteger<uint32_t>(c, "delayed-updates-limit");
+    config_storage->setDelayedUpdatesLimit(delayed_updates_limit);
 
     // Get 'heartbeat-delay'.
     uint16_t heartbeat_delay = getAndValidateInteger<uint16_t>(c, "heartbeat-delay");

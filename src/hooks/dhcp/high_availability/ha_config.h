@@ -382,6 +382,49 @@ public:
         sync_page_limit_ = sync_page_limit;
     }
 
+    /// @brief Returns the maximum number of lease updates which can be held
+    /// unsent in the communication-recovery state.
+    ///
+    /// If the server is in the communication-recovery state it is unable to
+    /// send lease updates to the partner. Instead it keeps lease updates
+    /// hoping to send them when the communication is resumed. This value
+    /// designates a limit of how many such updates can be held. If this
+    /// number is exceeded the server continues to respond to the clients
+    /// but will have to go through regular lease database synchronization
+    /// when the communication is resumed.
+    ///
+    /// @return Limit of the lease backlog size in communication-recovery.
+    uint32_t getDelayedUpdatesLimit() const {
+        return (delayed_updates_limit_);
+    }
+
+    /// @brief Sets new limit for the number of lease updates to be held
+    /// unsent in the communication-recovery state.
+    ///
+    /// If the server is in the communication-recovery state it is unable to
+    /// send lease updates to the partner. Instead it keeps lease updates
+    /// hoping to send them when the communication is resumed. This value
+    /// designates a limit of how many such updates can be held. If this
+    /// number is exceeded the server continues to respond to the clients
+    /// but will have to go through regular lease database synchronization
+    /// when the communication is resumed.
+    ///
+    /// @param delayed_updates_limit new limit.
+    void setDelayedUpdatesLimit(const uint32_t delayed_updates_limit) {
+        delayed_updates_limit_ = delayed_updates_limit;
+    }
+
+    /// @brief Convenience function checking if communication recovery is allowed.
+    ///
+    /// Communication recovery is only allowed in load-balancing configurations.
+    /// It is enabled by setting delayed-updates-limit to a value greater
+    /// than 0.
+    ///
+    /// @return true if communication recovery is enabled, false otherwise.
+    bool amAllowingCommRecovery() const {
+        return (delayed_updates_limit_ > 0);
+    }
+
     /// @brief Returns heartbeat delay in milliseconds.
     ///
     /// This value indicates the delay in sending a heartbeat command after
@@ -534,6 +577,8 @@ public:
     uint32_t sync_timeout_;               ///< Timeout for syncing lease database (ms)
     uint32_t sync_page_limit_;            ///< Page size limit while synchronizing
                                           ///< leases.
+    uint32_t delayed_updates_limit_;      ///< Maximum number of lease updates held
+                                          ///< for later send in communication-recovery.
     uint32_t heartbeat_delay_;            ///< Heartbeat delay in milliseconds.
     uint32_t max_response_delay_;         ///< Max delay in response to heartbeats.
     uint32_t max_ack_delay_;              ///< Maximum DHCP message ack delay.

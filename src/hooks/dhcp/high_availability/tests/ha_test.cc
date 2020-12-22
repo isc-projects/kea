@@ -216,11 +216,11 @@ HATest::createValidPassiveBackupJsonConfiguration() const {
 
 
 HAConfigPtr
-HATest::createValidConfiguration() const {
+HATest::createValidConfiguration(const HAConfig::HAMode& ha_mode) const {
     HAConfigPtr config_storage(new HAConfig());
     HAConfigParser parser;
 
-    parser.parse(config_storage, createValidJsonConfiguration());
+    parser.parse(config_storage, createValidJsonConfiguration(ha_mode));
     return (config_storage);
 }
 

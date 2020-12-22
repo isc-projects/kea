@@ -1878,11 +1878,7 @@ TEST_F(HAServiceTest, loadBalancingScopeSelection) {
 
 // Test that primary server in hot standby configuration processes all queries.
 TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
-    // Create HA configuration for load balancing.
-    HAConfigPtr config_storage = createValidConfiguration();
-
-    // Turn it into hot-standby configuration.
-    config_storage->setHAMode("hot-standby");
+    HAConfigPtr config_storage = createValidConfiguration(HAConfig::HOT_STANDBY);
     config_storage->getPeerConfig("server2")->setRole("standby");
 
     // ... and HA service using this configuration.
@@ -1931,11 +1927,7 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
 
 // Test that secondary server in hot standby configuration processes no queries.
 TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
-    // Create HA configuration for load balancing.
-    HAConfigPtr config_storage = createValidConfiguration();
-
-    // Turn it into hot-standby configuration.
-    config_storage->setHAMode("hot-standby");
+    HAConfigPtr config_storage = createValidConfiguration(HAConfig::HOT_STANDBY);
     config_storage->getPeerConfig("server2")->setRole("standby");
     config_storage->setThisServerName("server2");
 
@@ -5052,11 +5044,10 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
 //     me to transition to the waiting state and then synchronize my lease
 //     database.
 TEST_F(HAServiceStateMachineTest, waitingParterDownHotStandbyPartnerDown) {
-    HAConfigPtr valid_config = createValidConfiguration();
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
 
     // Turn it into hot-standby configuration.
     valid_config->setThisServerName("server2");
-    valid_config->setHAMode("hot-standby");
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     // Start the server: offline ---> WAITING state.
@@ -5641,6 +5632,20 @@ TEST_F(HAServiceStateMachineTest, noSyncingTransitionsLoadBalancingPrimary) {
 
     testTransition(MyState(HA_WAITING_ST), PartnerState(HA_READY_ST),
                    FinalState(HA_READY_ST));
+}
+
+// This test verifies that the load balancing server does not transition to
+// the communication recovery state when delayed-updates-limit is set
+// to 0.
+TEST_F(HAServiceStateMachineTest, noCommunicationRecoverytransitionsLoadBalancingPrimary) {
+    partner_->startup();
+
+    HAConfigPtr valid_config = createValidConfiguration();
+    valid_config->setDelayedUpdatesLimit(0);
+    startService(valid_config);
+
+    testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_UNAVAILABLE_ST),
+                   FinalState(HA_LOAD_BALANCING_ST));
 }
 
 // This test checks that the server in the load balancing mode transitions to
@@ -6356,10 +6361,9 @@ TEST_F(HAServiceStateMachineTest, heartbeatLoadBalancing) {
 TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
     partner_->startup();
 
-    HAConfigPtr valid_config = createValidConfiguration();
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
 
     // Turn it into hot-standby configuration.
-    valid_config->setHAMode("hot-standby");
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     startService(valid_config);
@@ -6581,10 +6585,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
 TEST_F(HAServiceStateMachineTest, noSyncingTransitionsHotStandbyPrimary) {
     partner_->startup();
 
-    HAConfigPtr valid_config = createValidConfiguration();
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
 
     // Turn it into hot-standby configuration.
-    valid_config->setHAMode("hot-standby");
     valid_config->getPeerConfig("server2")->setRole("standby");
     valid_config->setSyncLeases(false);
 
@@ -6605,10 +6608,9 @@ TEST_F(HAServiceStateMachineTest, noSyncingTransitionsHotStandbyPrimary) {
 TEST_F(HAServiceStateMachineTest, terminateTransitionsHotStandbyPrimary) {
     partner_->startup();
 
-    HAConfigPtr valid_config = createValidConfiguration();
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
 
     // Turn it into hot-standby configuration.
-    valid_config->setHAMode("hot-standby");
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     startService(valid_config);
@@ -6627,11 +6629,10 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
     partner_.reset(new HAPartner(listener_, factory_));
     partner_->startup();
 
-    HAConfigPtr valid_config = createValidConfiguration();
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
 
     // Turn it into hot-standby configuration.
     valid_config->setThisServerName("server2");
-    valid_config->setHAMode("hot-standby");
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     startService(valid_config);
@@ -6820,11 +6821,10 @@ TEST_F(HAServiceStateMachineTest, noSyncingTransitionsHotStandbyStandby) {
     partner_.reset(new HAPartner(listener_, factory_));
     partner_->startup();
 
-    HAConfigPtr valid_config = createValidConfiguration();
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
 
     // Turn it into hot-standby configuration.
     valid_config->setThisServerName("server2");
-    valid_config->setHAMode("hot-standby");
     valid_config->getPeerConfig("server2")->setRole("standby");
     valid_config->setSyncLeases(false);
 
@@ -6846,11 +6846,10 @@ TEST_F(HAServiceStateMachineTest, terminateTransitionsHotStandbyStandby) {
     partner_.reset(new HAPartner(listener_, factory_));
     partner_->startup();
 
-    HAConfigPtr valid_config = createValidConfiguration();
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
 
     // Turn it into hot-standby configuration.
     valid_config->setThisServerName("server2");
-    valid_config->setHAMode("hot-standby");
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     startService(valid_config);
@@ -6865,10 +6864,7 @@ TEST_F(HAServiceStateMachineTest, terminateTransitionsHotStandbyStandby) {
 // and whether the DHCP service is disabled or enabled in certain states.
 // This is primary server.
 TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyPrimary) {
-    HAConfigPtr valid_config = createValidConfiguration();
-
-    // Turn it into hot-standby configuration.
-    valid_config->setHAMode("hot-standby");
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     startService(valid_config);
@@ -6890,9 +6886,7 @@ TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyPrimary) {
 // This test verifies that auto-failover setting does not affect scopes
 // handling by the primary server in the hot-standby mode.
 TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyPrimaryNoFailover) {
-    HAConfigPtr valid_config = createValidConfiguration();
-    // Turn it into hot-standby configuration.
-    valid_config->setHAMode("hot-standby");
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     // Disable auto-failover.
@@ -6918,10 +6912,7 @@ TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyPrimaryNoFailover) {
 // while being in various states. The HA configuration is hot standby and
 // the server is primary.
 TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesHotStandbyPrimary) {
-    HAConfigPtr valid_config = createValidConfiguration();
-
-    // Turn it into hot-standby configuration.
-    valid_config->setHAMode("hot-standby");
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     startService(valid_config);
@@ -6941,10 +6932,7 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesHotStandbyPrimary) {
 // This test verifies if the server would send heartbeat to the partner
 // while being in various states. The HA configuration is hot standby.
 TEST_F(HAServiceStateMachineTest, heartbeatHotStandby) {
-    HAConfigPtr valid_config = createValidConfiguration();
-
-    // Turn it into hot-standby configuration.
-    valid_config->setHAMode("hot-standby");
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     startService(valid_config);
@@ -6962,11 +6950,8 @@ TEST_F(HAServiceStateMachineTest, heartbeatHotStandby) {
 // and whether the DHCP service is disabled or enabled in certain states.
 // This is standby server.
 TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyStandby) {
-    HAConfigPtr valid_config = createValidConfiguration();
-
-    // Turn it into hot-standby configuration.
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
     valid_config->setThisServerName("server2");
-    valid_config->setHAMode("hot-standby");
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     startService(valid_config);
@@ -6992,11 +6977,8 @@ TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyStandby) {
 // This test verifies that the standby server does not take ownership
 // of the primary server's scope when auto-failover is set to false
 TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyStandbyNoFailover) {
-    HAConfigPtr valid_config = createValidConfiguration();
-
-    // Turn it into hot-standby configuration.
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
     valid_config->setThisServerName("server2");
-    valid_config->setHAMode("hot-standby");
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     // Disable auto-failover.
@@ -7032,11 +7014,8 @@ TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyStandbyNoFailover) {
 // while being in various states. The HA configuration is hot standby and
 // the server is secondary.
 TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesHotStandbyStandby) {
-    HAConfigPtr valid_config = createValidConfiguration();
-
-    // Turn it into hot-standby configuration.
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
     valid_config->setThisServerName("server2");
-    valid_config->setHAMode("hot-standby");
     valid_config->getPeerConfig("server2")->setRole("standby");
 
     startService(valid_config);

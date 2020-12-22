@@ -314,9 +314,7 @@ QueryFilterTest::loadBalancingThisBackup() {
 
 void
 QueryFilterTest::hotStandbyThisPrimary() {
-    HAConfigPtr config = createValidConfiguration();
-
-    config->setHAMode("hot-standby");
+    HAConfigPtr config = createValidConfiguration(HAConfig::HOT_STANDBY);
     config->getPeerConfig("server2")->setRole("standby");
 
     QueryFilter filter(config);
@@ -350,9 +348,7 @@ QueryFilterTest::hotStandbyThisPrimary() {
 
 void
 QueryFilterTest::hotStandbyThisSecondary() {
-    HAConfigPtr config = createValidConfiguration();
-
-    config->setHAMode("hot-standby");
+    HAConfigPtr config = createValidConfiguration(HAConfig::HOT_STANDBY);
     config->getPeerConfig("server2")->setRole("standby");
     config->setThisServerName("server2");
 
@@ -389,9 +385,7 @@ QueryFilterTest::hotStandbyThisSecondary() {
 
 void
 QueryFilterTest::hotStandbyThisBackup() {
-    HAConfigPtr config = createValidConfiguration();
-
-    config->setHAMode("hot-standby");
+    HAConfigPtr config = createValidConfiguration(HAConfig::HOT_STANDBY);
     config->getPeerConfig("server2")->setRole("standby");
     config->setThisServerName("server3");
 
@@ -577,9 +571,7 @@ QueryFilterTest::loadBalancingThisBackup6() {
 
 void
 QueryFilterTest::hotStandbyThisPrimary6() {
-    HAConfigPtr config = createValidConfiguration();
-
-    config->setHAMode("hot-standby");
+    HAConfigPtr config = createValidConfiguration(HAConfig::HOT_STANDBY);
     config->getPeerConfig("server2")->setRole("standby");
 
     QueryFilter filter(config);
@@ -613,9 +605,7 @@ QueryFilterTest::hotStandbyThisPrimary6() {
 
 void
 QueryFilterTest::hotStandbyThisSecondary6() {
-    HAConfigPtr config = createValidConfiguration();
-
-    config->setHAMode("hot-standby");
+    HAConfigPtr config = createValidConfiguration(HAConfig::HOT_STANDBY);
     config->getPeerConfig("server2")->setRole("standby");
     config->setThisServerName("server2");
 
@@ -652,9 +642,7 @@ QueryFilterTest::hotStandbyThisSecondary6() {
 
 void
 QueryFilterTest::hotStandbyThisBackup6() {
-    HAConfigPtr config = createValidConfiguration();
-
-    config->setHAMode("hot-standby");
+    HAConfigPtr config = createValidConfiguration(HAConfig::HOT_STANDBY);
     config->getPeerConfig("server2")->setRole("standby");
     config->setThisServerName("server3");
 

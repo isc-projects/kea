@@ -150,8 +150,10 @@ public:
 
     /// @brief Return HA configuration with three servers.
     ///
+    /// @param ha_mode HA operation mode (default is load balancing).
     /// @return Pointer to the parsed configuration.
-    HAConfigPtr createValidConfiguration() const;
+    HAConfigPtr createValidConfiguration(const HAConfig::HAMode& ha_mode =
+                                         HAConfig::LOAD_BALANCING) const;
 
     /// @brief Return passive-backup configuration.
     ///

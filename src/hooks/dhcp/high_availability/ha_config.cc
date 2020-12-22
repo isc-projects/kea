@@ -153,9 +153,9 @@ HAConfig::StateMachineConfig::getStateConfig(const int state) {
 HAConfig::HAConfig()
     : this_server_name_(), ha_mode_(HOT_STANDBY), send_lease_updates_(true),
       sync_leases_(true), sync_timeout_(60000), sync_page_limit_(10000),
-      heartbeat_delay_(10000), max_response_delay_(60000), max_ack_delay_(10000),
-      max_unacked_clients_(10), wait_backup_ack_(false), peers_(),
-      state_machine_(new StateMachineConfig()) {
+      delayed_updates_limit_(0), heartbeat_delay_(10000), max_response_delay_(60000),
+      max_ack_delay_(10000), max_unacked_clients_(10), wait_backup_ack_(false),
+      peers_(), state_machine_(new StateMachineConfig()) {
 }
 
 HAConfig::PeerConfigPtr
@@ -343,6 +343,13 @@ HAConfig::validate() const {
                       " hot standby configuration");
         }
 
+        // The server must not transition to communication-recovery state in
+        // hot-standby mode.
+        if (delayed_updates_limit_ > 0) {
+            isc_throw(HAConfigValidationError, "'delayed-updates-limit' must be set to 0 in"
+                      " the hot standby configuration");
+        }
+
     } else if (ha_mode_ == PASSIVE_BACKUP) {
         if (peers_cnt.count(PeerConfig::SECONDARY) > 0) {
             isc_throw(HAConfigValidationError, "secondary servers not allowed in the"
@@ -357,6 +364,13 @@ HAConfig::validate() const {
         if (peers_cnt.count(PeerConfig::PRIMARY) == 0) {
             isc_throw(HAConfigValidationError, "primary server required in the"
                       " passive backup configuration");
+        }
+
+        // The server must not transition to communication-recovery state in
+        // passive-backup mode.
+        if (delayed_updates_limit_ > 0) {
+            isc_throw(HAConfigValidationError, "'delayed-updates-limit' must be set to 0 in"
+                      " the passive backup configuration");
         }
     }
 

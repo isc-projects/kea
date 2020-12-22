@@ -53,8 +53,9 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
                      const HAConfigPtr& config, const HAServerType& server_type)
     : io_service_(io_service), network_state_(network_state), config_(config),
       server_type_(server_type), client_(*io_service), communication_state_(),
-      query_filter_(config), mutex_(), pending_requests_(), lease4_update_backlog_(100),
-      lease6_update_backlog_(100) {
+      query_filter_(config), mutex_(), pending_requests_(),
+      lease4_update_backlog_(config->getDelayedUpdatesLimit()),
+      lease6_update_backlog_(config->getDelayedUpdatesLimit()) {
 
     if (server_type == HAServerType::DHCPv4) {
         communication_state_.reset(new CommunicationState4(io_service_, config));
@@ -81,7 +82,7 @@ HAService::defineEvents() {
     defineEvent(HA_MAINTENANCE_NOTIFY_EVT, "HA_MAINTENANCE_NOTIFY_EVT");
     defineEvent(HA_MAINTENANCE_START_EVT, "HA_MAINTENANCE_START_EVT");
     defineEvent(HA_MAINTENANCE_CANCEL_EVT, "HA_MAINTENANCE_CANCEL_EVT");
-}
+ }
 
 void
 HAService::verifyEvents() {
@@ -309,7 +310,7 @@ HAService::normalStateHandler() {
         if (shouldPartnerDown()) {
             verboseTransition(HA_PARTNER_DOWN_ST);
 
-        } else if (config_->getHAMode() == HAConfig::LOAD_BALANCING) {
+        } else if (config_->amAllowingCommRecovery()) {
             verboseTransition(HA_COMMUNICATION_RECOVERY_ST);
 
         } else {

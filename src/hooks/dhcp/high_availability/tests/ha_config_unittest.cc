@@ -69,6 +69,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
         "        \"sync-leases\": false,"
         "        \"sync-timeout\": 20000,"
         "        \"sync-page-limit\": 3,"
+        "        \"delayed-updates-limit\": 111,"
         "        \"heartbeat-delay\": 8,"
         "        \"max-response-delay\": 11,"
         "        \"max-ack-delay\": 5,"
@@ -124,6 +125,8 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_FALSE(impl->getConfig()->amSyncingLeases());
     EXPECT_EQ(20000, impl->getConfig()->getSyncTimeout());
     EXPECT_EQ(3, impl->getConfig()->getSyncPageLimit());
+    EXPECT_EQ(111, impl->getConfig()->getDelayedUpdatesLimit());
+    EXPECT_TRUE(impl->getConfig()->amAllowingCommRecovery());
     EXPECT_EQ(8, impl->getConfig()->getHeartbeatDelay());
     EXPECT_EQ(11, impl->getConfig()->getMaxResponseDelay());
     EXPECT_EQ(5, impl->getConfig()->getMaxAckDelay());
@@ -241,6 +244,8 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_TRUE(impl->getConfig()->amSyncingLeases());
     EXPECT_EQ(60000, impl->getConfig()->getSyncTimeout());
     EXPECT_EQ(10000, impl->getConfig()->getSyncPageLimit());
+    EXPECT_EQ(0, impl->getConfig()->getDelayedUpdatesLimit());
+    EXPECT_FALSE(impl->getConfig()->amAllowingCommRecovery());
     EXPECT_EQ(10000, impl->getConfig()->getHeartbeatDelay());
     EXPECT_EQ(10000, impl->getConfig()->getMaxAckDelay());
     EXPECT_EQ(10, impl->getConfig()->getMaxUnackedClients());
@@ -1175,7 +1180,7 @@ TEST_F(HAConfigTest, invalidUser) {
         "            },"
         "            {"
         "                \"name\": \"server2\","
-        "                \"url\": \":http//127.0.0.1:8080/\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
         "                \"basic-auth-user\": \"foo:bar\","
         "                \"role\": \"secondary\","
         "                \"auto-failover\": true"
@@ -1186,6 +1191,57 @@ TEST_F(HAConfigTest, invalidUser) {
         "user 'foo:bar' must not contain a ':' in peer 'server2'");
 }
 
+// Test that setting delayed-updates-limit is not allowed in hot-standby mode.
+TEST_F(HAConfigTest, hotStandbyDelayedUpdatesLimit) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"hot-standby\","
+        "        \"delayed-updates-limit\": 1,"
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "'delayed-updates-limit' must be set to 0 in the hot standby configuration");
+}
+
+// Test that setting delayed-updates-limit is not allowed in passive-backup mode.
+TEST_F(HAConfigTest, passiveBackupDelayedUpdatesLimit) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"passive-backup\","
+        "        \"delayed-updates-limit\": 1,"
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"backup\""
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "'delayed-updates-limit' must be set to 0 in the passive backup configuration");
+}
 
 // Test that conversion of the role names works correctly.
 TEST_F(HAConfigTest, stringToRole) {
