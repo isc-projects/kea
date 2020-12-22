@@ -97,52 +97,11 @@ posix_diff() {
   rm -f "${left_file}" "${right_file}"
 }
 
+# Get root path.
+root_path=$(cd "$(dirname "${0}")/.." && pwd)
+
 # Generated files will be filtered out. Hardcoded list
-filtered_out='
-  ./src/bin/admin/messages.cc
-  ./src/bin/agent/agent_lexer.cc
-  ./src/bin/agent/agent_parser.cc
-  ./src/bin/agent/ca_messages.cc
-  ./src/lib/cfgrpt/config_report.cc
-  ./src/lib/dns/rdataclass.h
-  ./src/lib/dns/rdataclass.cc
-  ./src/bin/d2/d2_lexer.cc
-  ./src/bin/d2/d2_messages.cc
-  ./src/bin/d2/d2_parser.cc
-  ./src/bin/dhcp4/dhcp4_lexer.cc
-  ./src/bin/dhcp4/dhcp4_messages.cc
-  ./src/bin/dhcp4/dhcp4_parser.cc
-  ./src/bin/dhcp6/dhcp6_lexer.cc
-  ./src/bin/dhcp6/dhcp6_messages.cc
-  ./src/bin/dhcp6/dhcp6_parser.cc
-  ./src/bin/lfc/lfc_messages.cc
-  ./src/bin/netconf/netconf_lexer.cc
-  ./src/bin/netconf/netconf_messages.cc
-  ./src/bin/netconf/netconf_parser.cc
-  ./src/hooks/dhcp/bootp/bootp_messages.cc
-  ./src/hooks/dhcp/flex_option/flex_option_messages.cc
-  ./src/hooks/dhcp/high_availability/ha_messages.cc
-  ./src/hooks/dhcp/lease_cmds/lease_cmds_messages.cc
-  ./src/hooks/dhcp/mysql_cb/mysql_cb_messages.cc
-  ./src/hooks/dhcp/stat_cmds/stat_cmds_messages.cc
-  ./src/hooks/dhcp/user_chk/user_chk_messages.cc
-  ./src/lib/asiodns/asiodns_messages.cc
-  ./src/lib/config/config_messages.cc
-  ./src/lib/database/db_messages.cc
-  ./src/lib/database/server_selector.cc
-  ./src/lib/dhcp_ddns/dhcp_ddns_messages.cc
-  ./src/lib/dhcpsrv/alloc_engine_messages.cc
-  ./src/lib/dhcpsrv/dhcpsrv_messages.cc
-  ./src/lib/dhcpsrv/fuzz_messages.cc
-  ./src/lib/dhcpsrv/hosts_messages.cc
-  ./src/lib/eval/eval_messages.cc
-  ./src/lib/eval/lexer.cc
-  ./src/lib/eval/parser.cc
-  ./src/lib/hooks/hooks_messages.cc
-  ./src/lib/http/http_messages.cc
-  ./src/lib/log/tests/log_test_messages.cc
-  ./src/lib/process/process_messages.cc
-'
+filtered_out=$(cat "${root_path}/tools/.generated-files.txt")
 
 found=false
 for i in $(get_source_files); do

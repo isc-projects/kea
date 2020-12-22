@@ -71,10 +71,17 @@ root_path=$(cd "$(dirname "${0}")/.." && pwd)
 # Get source files that are missing an '#include <config.h>' line.
 get_source_files() {
   mandatory_commands cut find grep sed sort uniq
-  source_files=$(cd "${root_path}" && find . -type f | grep -Fv '.git' | grep -E '\.cc$' | xargs grep -EL '#include\s*[\"|\<]config.h[\"|\>]' | cut -d ':' -f 1 | sort -uV | uniq)
+
+  # Get the files that are missing the include.
+  source_files=$(cd "${root_path}" && find . -type f | grep -Fv '.git' | \
+    grep -E '\.cc$' | xargs grep -EL '#include\s*[\"|\<]config.h[\"|\>]' | \
+    cut -d ':' -f 1 | sort -uV)
+
+  # Filter out generated files.
   for file in ${filtered_out}; do
-    source_files=$(printf '%s\n' "${source_files}" | sed "s#${file}##g" | sed '/^$/d')
+    source_files=$(printf '%s\n' "${source_files}" | grep -Fv "${file}" | sed '/^$/d')
   done
+
   printf '%s' "${source_files}"
 }
 
@@ -91,49 +98,7 @@ mandatory_commands() {
 }
 
 # Generated files will be filtered out. Hardcoded list
-filtered_out='
-  ./src/bin/admin/messages.cc
-  ./src/bin/agent/agent_lexer.cc
-  ./src/bin/agent/agent_parser.cc
-  ./src/bin/agent/ca_messages.cc
-  ./src/lib/cfgrpt/config_report.cc
-  ./src/bin/d2/d2_lexer.cc
-  ./src/bin/d2/d2_messages.cc
-  ./src/bin/d2/d2_parser.cc
-  ./src/bin/dhcp4/dhcp4_lexer.cc
-  ./src/bin/dhcp4/dhcp4_messages.cc
-  ./src/bin/dhcp4/dhcp4_parser.cc
-  ./src/bin/dhcp6/dhcp6_lexer.cc
-  ./src/bin/dhcp6/dhcp6_messages.cc
-  ./src/bin/dhcp6/dhcp6_parser.cc
-  ./src/bin/lfc/lfc_messages.cc
-  ./src/bin/netconf/netconf_lexer.cc
-  ./src/bin/netconf/netconf_messages.cc
-  ./src/bin/netconf/netconf_parser.cc
-  ./src/hooks/dhcp/bootp/bootp_messages.cc
-  ./src/hooks/dhcp/flex_option/flex_option_messages.cc
-  ./src/hooks/dhcp/high_availability/ha_messages.cc
-  ./src/hooks/dhcp/lease_cmds/lease_cmds_messages.cc
-  ./src/hooks/dhcp/mysql_cb/mysql_cb_messages.cc
-  ./src/hooks/dhcp/stat_cmds/stat_cmds_messages.cc
-  ./src/hooks/dhcp/user_chk/user_chk_messages.cc
-  ./src/lib/asiodns/asiodns_messages.cc
-  ./src/lib/config/config_messages.cc
-  ./src/lib/database/db_messages.cc
-  ./src/lib/database/server_selector.cc
-  ./src/lib/dhcp_ddns/dhcp_ddns_messages.cc
-  ./src/lib/dhcpsrv/alloc_engine_messages.cc
-  ./src/lib/dhcpsrv/dhcpsrv_messages.cc
-  ./src/lib/dhcpsrv/fuzz_messages.cc
-  ./src/lib/dhcpsrv/hosts_messages.cc
-  ./src/lib/eval/eval_messages.cc
-  ./src/lib/eval/lexer.cc
-  ./src/lib/eval/parser.cc
-  ./src/lib/hooks/hooks_messages.cc
-  ./src/lib/http/http_messages.cc
-  ./src/lib/log/tests/log_test_messages.cc
-  ./src/lib/process/process_messages.cc
-'
+filtered_out=$(cat "${root_path}/tools/.generated-files.txt")
 
 if "${name_only}"; then
   # Only display file names.
