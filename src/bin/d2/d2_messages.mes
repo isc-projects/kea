@@ -215,7 +215,7 @@ requests too quickly, or perhaps upstream DNS servers are experiencing
 load issues.
 
 % DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE Request ID %1: received and queued a request.
-This is an informational message indicating that the NameChangeREquest listener used
+This is an informational message indicating that the NameChangeRequest listener used
 by DHCP-DDNS to receive a request has received a request and queued it for further
 processing.
 
