@@ -173,13 +173,11 @@ _add_test_case() {
         "${test_case}" "${duration}" "${now}" "${test_suite}" \
         "${closing_backslash}")
 
-    # Add this test case to all the other test cases and sort them.
+    # Add this test case to all the other test cases.
     local all_test_cases
     all_test_cases=$(_print_lines_between_matching_patterns \
         "  <testsuite name=\"${test_suite}\"" '  </testsuite>' "${xml}")
     all_test_cases=$(printf '%s\n%s' "${all_test_cases}" "${test_case_line}")
-
-    _update_test_suite_metrics "${test_suite}" "${all_test_cases}" "${xml}" "${now}"
 
     # Find the test following this one.
     local following_line
@@ -189,32 +187,34 @@ _add_test_case() {
     if test -n "${following_line}"; then
         # If found, add it before.
         _add_before "${test_case_line}" "${following_line}" "${xml}"
-        if test "${result}" != 'success'; then
-            _add_failure_tag "${test_case_line}" "${xml}"
+    else
+        # Find the test before this one.
+        local previous_line
+        previous_line=$(printf '%s' "${all_test_cases}" | \
+            grep -B1 -F "${test_case_line}" | \
+            grep -Fv "${test_case_line}" || true)
+        if test -n "${previous_line}"; then
+            # If found, add it after.
+            _add_after "${test_case_line}" "${previous_line}" "${xml}"
+        else
+            # If neither were found, add it as the first test case following the test
+            # suite line.
+            _add_after "${test_case_line}" "  <testsuite name=\"${test_suite}\"" "${xml}"
         fi
-        return
     fi
 
-    # Find the test before this one.
-    local previous_line
-    previous_line=$(printf '%s' "${all_test_cases}" | \
-        grep -B1 -F "${test_case_line}" | \
-        grep -Fv "${test_case_line}" || true)
-    if test -n "${previous_line}"; then
-        # If found, add it after.
-        _add_after "${test_case_line}" "${previous_line}" "${xml}"
-        if test "${result}" != 'success'; then
-            _add_failure_tag "${test_case_line}" "${xml}"
-        fi
-        return
-    fi
-
-    # If neither were found, add it as the first test case following the test
-    # suite line.
-    _add_after "${test_case_line}" "  <testsuite name=\"${test_suite}\"" "${xml}"
+    # Add the failure tag if it is the case.
     if test "${result}" != 'success'; then
         _add_failure_tag "${test_case_line}" "${xml}"
     fi
+
+    # Retrieve again to include the failure tag that may have just been added
+    # among other tags or lines.
+    all_test_cases=$(_print_lines_between_matching_patterns \
+        "  <testsuite name=\"${test_suite}\"" '  </testsuite>' "${xml}")
+
+    # Update attributes for the parent <testsuite> and the global <testsuites>.
+    _update_test_suite_metrics "${test_suite}" "${all_test_cases}" "${xml}" "${now}"
 }
 
 # Add a set of test suite tags if not already present in the XML.
@@ -346,11 +346,12 @@ _update_test_suite_metrics() {
     local durations_summed
     local failures
     local tests
-    tests=$(echo "${all_test_cases}" | wc -l)
-    failures=$(printf '%s' "${all_test_cases}" \
-        | grep -Fc 'result="failed"' || true)
-    durations_summed=$(printf '%s' "${all_test_cases}" \
-        | grep -Eo 'time="[0-9.]+"' | cut -d '"' -f 2 | xargs | sed 's/ / + /g')
+    tests=$(printf '%s' "${all_test_cases}" | \
+        grep -Fc '<testcase' || true)
+    failures=$(printf '%s' "${all_test_cases}" | \
+        grep -Fc '<failure' || true)
+    durations_summed=$(printf '%s' "${all_test_cases}" | \
+        grep -Eo 'time="[0-9.]+"' | cut -d '"' -f 2 | xargs | sed 's/ / + /g')
     duration=$(_calculate "${durations_summed}")
 
     # Create the test suite XML tag.
