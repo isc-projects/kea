@@ -1,3 +1,12 @@
+1855.	[func]		marcin
+	Improved failover procedure in Kea High Availability library
+	by introducing new communication-recovery state. In this
+	state the load balancing servers remain responsive to DHCP
+	queries when the communication between them is interrupted.
+	The new feature is controlled using the delayed-updates-limit
+	configuration parameter.
+	(Gitlab #1402)
+
 1854.	[func, perf]	fdupont
 	Implemented "lease caching", a feature similar to ISC
 	DHCP's dhcp-cache-threshold. Lease caching is configured
