@@ -1,5 +1,7 @@
 1849.	[doc]		tomek
-	Known RFC violations are now documented.
+	Two known DHCPv4 RFC violations are now documented in the ARM.
+	They are both cases where Kea deliberately deviates from the
+	RFC to accommodate some common broken-client behaviors.
 	(Gitlab #1608, #1615)
 
 1848.	[bug]		razvan
