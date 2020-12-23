@@ -70,14 +70,14 @@ the primary server to complete the lease database synchronization before
 it starts the synchronization.
 
 In the hot-standby configuration, one of the servers is also designated
-as "primary" and the second as "secondary." However, during normal
+as "primary" and the second as "standby." However, during normal
 operation, the primary server is the only one that responds to DHCP
-requests. The secondary or standby server receives lease updates from
-the primary over the control channel; however, it does not respond to
-any DHCP queries as long as the primary is running or, more accurately,
-until the secondary considers the primary to be offline. If the
-secondary server detects the failure of the primary, it starts
-responding to all DHCP queries.
+requests. The standby server receives lease updates from the primary
+over the control channel; however, it does not respond to any DHCP
+queries as long as the primary is running or, more accurately,
+until the standby considers the primary to be offline. If the standby
+server detects the failure of the primary, it starts responding to all
+DHCP queries.
 
 In the configurations described above, the primary and secondary/standby
 are referred to as ``"active"`` servers, because they receive lease
@@ -204,6 +204,20 @@ The following is the list of all possible server states:
 
 -  ``backup`` - normal operation of the backup server. In this state it
    receives lease updates from the active servers.
+
+-  ``comunication-recovery`` - an active server running in load-balancing
+   mode may transition to this state when it experiences communication
+   issues with a partner server over the control channel. This is an
+   intermediate state between the ``load-balancing`` and ``partner-down``
+   states. In this state the server continues to respond to DHCP queries
+   but does not send lease updates to the partner. The lease updates are
+   queued and will be sent when the communication is resumed. If the
+   communication is not resumed the server may transition to the
+   ``partner-down`` state. The ``communication-recovery`` state was
+   introduced to ensure reliable DHCP service when both active servers
+   remain operational but the communication between them is interrupted
+   for a prolonged period of time. The server can be configured to never
+   enter this state by setting the ``delayed-updates-limit`` to 0.
 
 -  ``hot-standby`` - normal operation of the active server running in
    the hot-standby mode; both the primary and the standby server are in
@@ -339,6 +353,11 @@ the scopes can be found below.
    +========================+=================+=================+=================+
    | backup                 | backup server   | disabled        | none            |
    +------------------------+-----------------+-----------------+-----------------+
+   | communication-recovery | primary or      | enabled         | ``HA_server1``  |
+   |                        | secondary       |                 | or              |
+   |                        | (load-balancing |                 | ``HA_server2``  |
+   |                        | mode only)      |                 |                 |
+   +------------------------+-----------------+-----------------+-----------------+
    | hot-standby            | primary or      | enabled         | ``HA_server1``  |
    |                        | standby         |                 | if primary,     |
    |                        | (hot-standby    |                 | none otherwise  |
@@ -456,6 +475,7 @@ with the only difference that ``this-server-name`` should be set to
                    "max-response-delay": 10000,
                    "max-ack-delay": 5000,
                    "max-unacked-clients": 5,
+                   "delayed-updates-limit": 100,
                    "peers": [{
                        "name": "server1",
                        "url": "http://192.168.56.33:8000/",
@@ -555,6 +575,14 @@ behavior with respect to HA:
    the partner server is down and transitions to the ``partner-down``
    state immediately. The default value of this parameter is 10.
 
+-  ``delayed-updates-limit`` - specifies a maximum number of lease
+   updates which can be queued while the server is in the
+   ``communication-recovery`` state. This parameter was introduced in
+   Kea 1.9.4 release. The special value of 0 configures the server to
+   never transition to the ``communication-recovery`` state and the
+   server behaves as in earlier Kea versions. The default value of this
+   parameter is 100.
+
 The values of ``max-ack-delay`` and ``max-unacked-clients`` must be
 selected carefully, taking into account the specifics of the network in
 which the DHCP servers are operating. Note that the server in question
@@ -574,6 +602,64 @@ mechanism altogether, if the servers are located very close to each
 other and network partitioning is unlikely, i.e. failure to respond to
 heartbeats is only possible when the partner is offline. In such cases,
 set the ``max-unacked-clients`` to 0.
+
+The ``delayed-updates-limit`` parameter was introduced in Kea 1.9.4. It
+is used to enable or disable the use of the communication recovery
+procedure and controls server's behavior in the ``communication-recovery``
+state which were introduced in the same release. This parameter may
+only be used in the load balancing mode.
+
+If the server is in the ``load-balancing`` state and it experiences
+communication issues with a partner (heartbeat or lease update fail),
+the server transitions to the ``communication-recovery`` state. In this
+state the server keeps responding to DHCP queries but it does not send
+lease updates to the partner. The lease updates are queued until the
+communication is re-established. This ensures that the DHCP service
+remains available even in the event of the communication loss between
+the partners. Note that the communication loss may appear both when
+one of the servers terminated or when both servers remain available
+but can't communicate. In the former case, the surviving server will
+follow the normal failover procedure and should eventually transition to
+the ``partner-down`` state. In the latter case both servers should
+transition to the ``communication-recovery`` state and should never
+transition to the ``partner-down`` state (if ``max-unacked-clients``
+is set to non zero value), because all DHCP queries are responded and
+servers would not see any unacked DHCP queries.
+
+Introduction of the communication recovery procedure was mostly
+motivated by issues which may appear when two servers remain online
+but the communication between them remains interrupted for a long
+period of time. In earlier Kea versions, the servers having communication
+issues used to drop DHCP packets before transitioning to the
+``partner-down`` state. In some cases they both transitioned to the
+``partner-down`` state which could potentially result in allocations
+of the same IP addresses or delegated prefixes to different clients
+by respective servers. By entering the intermediate ``communication-recovery``
+state these problems are avoided.
+
+If the server in the ``communication-recovery`` state re-establishes
+communication with the partner, it will try to send all outstanding
+lease updates to it. This is done synchronously and may take considerable
+amount of time before the server transitions to the ``load-balancing``
+state and resumes normal operation. The maximum number of lease updates
+which can be queued in the ``communication-recovery`` state is controlled
+by the ``delayed-updates-limit``. If the limit is exceeded, the server
+stops queuing lease updates and will perform full database synchronization
+after re-establishing the connection with the partner instead of
+sending outstanding lease updates before transitioning to
+``load-balancing`` state. Even if the limit is exceeded, the server
+in the ``communication-recovery`` state remains responsive to the DHCP
+clients.
+
+It is preferred to set higher values of ``delayed-updates-limit`` when
+there is a risk of prolonged communication interruption between the
+servers and the lease database is large. This would avoid costly
+lease database synchronization. On the other hand, if the lease
+database is small the time required to send outstanding lease updates
+may be longer than lease database synchronization. In such cases it
+may be better to use lower value, e.g. 10. The default value is 100
+which seems to be a reasonable compromise and should work well in
+most deployments with moderate traffic.
 
 The ``peers`` parameter contains a list of servers within this HA setup.
 This configuration must contain at least one primary and one secondary
