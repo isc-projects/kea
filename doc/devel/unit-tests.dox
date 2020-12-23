@@ -353,7 +353,7 @@ local   all             postgres                                trust
  Use HELP for help.
  cqlsh> @endverbatim\n
 
-@section writingShellTests Writing shell tests
+@section writingShellScriptsAndTests Writing shell scripts and tests
 
 Shell tests are `shellcheck`ed. But there are other writing practices that are
 good to follow in order to keep, not only shell tests, but shell scripts in
@@ -369,13 +369,13 @@ the primordial non-GNU sh, Ubuntu which links it to dash. These four shells
 should all be tested against, when adding shell scripts or making changes to
 them.
 
-- Reference variables with accolades.
+- Reference variables with curly brackets.
 @code
 ${var}  # better
 $var
 @endcode
 For consistency with cases where you need advanced features from the variables
-which make the accolades mandatory. Such cases are:
+which make the curly brackets mandatory. Such cases are:
 @code
 # Retrieving variable/string length...
 ${#var}
@@ -385,6 +385,9 @@ ${var-default}
 
 # Substituting the variable with a given value when the variable is defined...
 ${var+value}
+
+# Concatenating the value of a variable with an alphanumeric constant...
+${var}constant
 @endcode
 
 - Always use `printf` instead of `echo`. There are times when a newline is not
@@ -408,7 +411,7 @@ echo "${var1}something${var2}" | wc -c
 # SC2039: In POSIX sh, echo flags are undefined.
 echo -n "${var1}something${var2}" | wc -c
 # Result:
-  32  # sometimes
+  32  # sometimes, other times an error
 @endcode
 `printf` also has the benefit of separating the format from the actual variables
 which has many use cases. One such use case is coloring output with ANSI escape
@@ -515,7 +518,7 @@ hostname=$(cat /etc/hostname)
 # Nested executions
 is_ssh_open=$(nc -vz $(cat /etc/hostname).lab.isc.org 22)
 
-# Results in "command not found" messages.
+# Results in confusing "command not found" messages.
 is_ssh_open=`nc -vz `cat /etc/hostname`.lab.isc.org 22`
 @endcode
 
@@ -543,7 +546,7 @@ do-something --some --other --optional --parameters "${parameters[@]}"
 do-something --some --other --optional --parameters "${@}"
 @endcode
 
-- Never use `eval`. They don't preserve original quoting. Have faith that there
+- Never use `eval`. It doesn't preserve original quoting. Have faith that there
 are always good alternatives.
 
  */

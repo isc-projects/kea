@@ -42,7 +42,7 @@
  *   - @subpage unitTestsSanitizers
  *   - @subpage unitTestsDatabaseConfig
  *   - @subpage unitTestsSysrepo
- *   - @subpage writingShellTests
+ *   - @subpage writingShellScriptsAndTests
  *
  * @section performance Performance
  * - @subpage benchmarks
