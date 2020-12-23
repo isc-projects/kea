@@ -2147,7 +2147,7 @@ HAService::sendLeaseUpdatesFromBacklog() {
         .arg(remote_config->getName());
 
     asyncSendLeaseUpdatesFromBacklog(client, remote_config,
-                                     [&](const bool success, const std::string& error_message) {
+                                     [&](const bool success, const std::string&) {
         io_service.stop();
         updates_successful = success;
     });
