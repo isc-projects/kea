@@ -613,7 +613,7 @@ The ``status-get`` command returns server's runtime information:
  - packet-queue-statistics: average queue size for last 10, 100 and 1000
    packets. This statistic uses approach similar to Unix ``top`` command.
    The averaged queue size for the last 10 packets can be considered an
-   instantanous value, while average for the last 1000 packets shows
+   instantaneous value, while average for the last 1000 packets shows
    longer term trend.
 
 The ``high-availability`` information is returned only when the command is
