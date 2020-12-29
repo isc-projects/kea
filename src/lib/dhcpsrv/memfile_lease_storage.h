@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,10 +39,7 @@ struct HWAddressSubnetIdIndexTag { };
 /// @brief Tag for indexes by client and subnet identifiers.
 struct ClientIdSubnetIdIndexTag { };
 
-/// @brief Tag for indexes by client id, HW address and subnet id.
-struct ClientIdHWAddressSubnetIdIndexTag { };
-
-/// @brief Tag for indexs by subnet-id.
+/// @brief Tag for indexes by subnet-id.
 struct SubnetIdIndexTag { };
 
 /// @brief Tag for index using DUID.
@@ -63,7 +60,7 @@ struct HostnameIndexTag { };
 /// - using a composite index: boolean flag indicating if the state is
 ///   "expired-reclaimed" and expiration time.
 ///
-/// Indexes can be accessed using the index number (from 0 to 2) or a
+/// Indexes can be accessed using the index number (from 0 to 5) or a
 /// name tag. It is recommended to use the tags to access indexes as
 /// they do not depend on the order of indexes in the container.
 typedef boost::multi_index_container<
@@ -146,11 +143,10 @@ typedef boost::multi_index_container<
 /// - IPv6 address,
 /// - composite index: HW address and subnet id,
 /// - composite index: client id and subnet id,
-/// - composite index: HW address, client id and subnet id
 /// - using a composite index: boolean flag indicating if the state is
 ///   "expired-reclaimed" and expiration time.
 ///
-/// Indexes can be accessed using the index number (from 0 to 4) or a
+/// Indexes can be accessed using the index number (from 0 to 5) or a
 /// name tag. It is recommended to use the tags to access indexes as
 /// they do not depend on the order of indexes in the container.
 typedef boost::multi_index_container<
@@ -207,28 +203,6 @@ typedef boost::multi_index_container<
 
         // Specification of the fourth index starts here.
         boost::multi_index::ordered_non_unique<
-            boost::multi_index::tag<ClientIdHWAddressSubnetIdIndexTag>,
-            // This is a composite index that uses three values to search for a
-            // lease: client id, HW address and subnet id.
-            boost::multi_index::composite_key<
-                Lease4,
-                // The client id can be retrieved from the Lease4 object by
-                // calling getClientIdVector const function.
-                boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
-                                                  &Lease4::getClientIdVector>,
-                // The hardware address is held in the hwaddr_ object. We can
-                // access the raw data using lease->hwaddr_->hwaddr_, but Boost
-                // doesn't seem to provide a way to use member of a member for this,
-                // so we need a simple key extractor method (getHWAddrVector).
-                boost::multi_index::const_mem_fun<Lease, const std::vector<uint8_t>&,
-                                                  &Lease::getHWAddrVector>,
-                // The subnet id is accessed through the subnet_id_ member.
-                boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
-            >
-        >,
-
-        // Specification of the fifth index starts here.
-        boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<ExpirationIndexTag>,
             // This is a composite index that will be used to search for
             // the expired leases. Depending on the value of the first component
@@ -245,7 +219,7 @@ typedef boost::multi_index_container<
             >
         >,
 
-        // Specification of the sixth index starts here.
+        // Specification of the fifth index starts here.
         // This index sorts leases by SubnetID.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SubnetIdIndexTag>,
@@ -280,7 +254,7 @@ typedef Lease6Storage::index<ExpirationIndexTag>::type Lease6StorageExpirationIn
 /// @brief DHCPv6 lease storage index by Subnet-id.
 typedef Lease6Storage::index<SubnetIdIndexTag>::type Lease6StorageSubnetIdIndex;
 
-/// @brief DHCPv6 lease storage index by Subnet-id.
+/// @brief DHCPv6 lease storage index by DUID.
 typedef Lease6Storage::index<DuidIndexTag>::type Lease6StorageDuidIndex;
 
 /// @brief DHCPv6 lease storage index by hostname.
@@ -300,11 +274,7 @@ Lease4StorageHWAddressSubnetIdIndex;
 typedef Lease4Storage::index<ClientIdSubnetIdIndexTag>::type
 Lease4StorageClientIdSubnetIdIndex;
 
-/// @brief DHCPv4 lease storage index by client id, HW address and subnet id.
-typedef Lease4Storage::index<ClientIdHWAddressSubnetIdIndexTag>::type
-Lease4StorageClientIdHWAddressSubnetIdIndex;
-
-/// @brief DHCPv4 lease storage index by client id, HW address and subnet id.
+/// @brief DHCPv4 lease storage index subnet identifier.
 typedef Lease4Storage::index<SubnetIdIndexTag>::type Lease4StorageSubnetIdIndex;
 
 /// @brief DHCPv4 lease storage index by hostname.
