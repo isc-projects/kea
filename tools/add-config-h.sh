@@ -97,8 +97,8 @@ mandatory_commands() {
   done
 }
 
-# Generated files will be filtered out. Hardcoded list
-filtered_out=$(cat "${root_path}/tools/.generated-files.txt")
+# Generated files will be filtered out.
+filtered_out=$("${root_path}/tools/print-generated-files.sh")
 
 if "${name_only}"; then
   # Only display file names.

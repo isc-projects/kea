@@ -39,7 +39,7 @@ print_usage() {
 Options:
   [-d|--debug]                 enable debug mode, showing every executed command
   [-h|--help]                  print usage (this text)
-  [-a|--amend]                 amend tools/.generated-files.txt and .gitattributes
+  [-a|--amend]                 amend .gitattributes
 ' \
     "$(basename "${0}")"
 }
@@ -62,7 +62,7 @@ while test ${#} -gt 0; do
     # [-h|--help]              print usage (this text).
     '-h'|'--help') print_usage ;;
 
-    # [-a|--amend]                 amend tools/.generated-files.txt and .gitattributes
+    # [-a|--amend]                 amend .gitattributes
     '-a'|'--amend') amend=true ;;
 
     # Unrecognized argument
@@ -173,9 +173,6 @@ print_all_sorted() {
 mandatory_commands cut find grep sort
 
 if "${amend}"; then
-  # Write to tools/.generated-files.txt
-  print_all_sorted > ./tools/.generated-files.txt
-
   # Write to .gitattributes.
   find . -type f -name '.gitattributes' -exec rm -f {} \;
   for i in $(print_all_sorted false); do

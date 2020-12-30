@@ -101,8 +101,8 @@ posix_diff() {
 # Get root path.
 root_path=$(cd "$(dirname "${0}")/.." && pwd)
 
-# Generated files will be filtered out. Hardcoded list
-filtered_out=$(cat "${root_path}/tools/.generated-files.txt")
+# Generated files will be filtered out.
+filtered_out=$("${root_path}/tools/print-generated-files.sh")
 # Exceptions:
 # src/lib/asiolink/asio_wrapper.h includes <boost/asio.hpp> in both
 # conditionals of an #ifdef.
