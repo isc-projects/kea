@@ -90,6 +90,7 @@ shellcheck:
     - SCRIPTS+="tools/cql_config "
     - SCRIPTS+="tools/mk_cfgrpt.sh "
     - SCRIPTS+="tools/path_replacer.sh.in "
+    - SCRIPTS+="tools/print-generated-files.sh "
     - SCRIPTS+="tools/shellcheck-all.sh "
     - SCRIPTS+="tools/sysrepo_config "
     - SCRIPTS+="tools/tests_in_valgrind.sh "
@@ -131,3 +132,14 @@ missing-config-h-include:
     - FILES=$(tools/add-config-h.sh -n)
     - printf '%s\n' "${FILES}"
     - test -z "${FILES}"
+
+missing-git-attribute:
+  stage: test
+  image: "$CI_REGISTRY_IMAGE:latest"
+  tags:
+    - linux
+    - amd64
+  script:
+    - test -z $(git diff)
+    - ./tools/print-generated-files -a
+    - test -z $(git diff)
