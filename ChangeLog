@@ -1,3 +1,21 @@
+1850.	[build]		andrei
+	Add two scripts to help with code aesthetics, insight on how Kea
+	is built or minor build optimizations:
+		* ./tools/check-for-duplicate-includes.sh: warns you if there
+	is a source file that includes the same header twice. While this
+	wouldn't normally result in any errors, in a significant amount
+	due to header guards, it is an unusual practice. If you feel that
+	a header should be included twice in a file, add the file under
+	"# Exceptions:" in the script.
+		* ./tools/print-generated-files.sh: prints all the files that
+	are generated which may or may not be part of the repository.
+	These consist of messages, parser files and built sources (as
+	called in Makefile.am files). While messages and parser files are
+	included with the source files, the built sources are only
+	created when building or some of them included in the Kea
+	installation.
+	(Gitlab #1602)
+
 1849.	[doc]		tomek
 	Two known DHCPv4 RFC violations are now documented in the ARM.
 	They are both cases where Kea deliberately deviates from the
