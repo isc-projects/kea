@@ -70,7 +70,7 @@ root_path=$(cd "$(dirname "${0}")/.." && pwd)
 
 # Get source files that are missing an '#include <config.h>' line.
 get_source_files() {
-  mandatory_commands cut find grep sed sort uniq
+  mandatory_commands cut find grep sed sort
 
   # Get the files that are missing the include.
   source_files=$(cd "${root_path}" && find . -type f | grep -Fv '.git' | \

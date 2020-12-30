@@ -50,16 +50,17 @@ while test ${#} -gt 0; do
   esac; shift
 done
 
-# Get source files that have duplicate '#include' lines.
+# Get the source files that have at least one '#include' line minus the
+# generated files.
 get_source_files() {
-  mandatory_commands cut find grep sed sort uniq
+  mandatory_commands cut find grep sed sort
 
-  # Get the files that have duplicate includes.
+  # Get the files that have at least one include line.
   source_files=$(cd "${root_path}" && find . -type f | grep -Fv '.git' | \
     grep -E '\.cc$|\.h$' | xargs grep -El '#include' | \
     cut -d ':' -f 1 | sort -uV)
 
-  # Filter out generated files.
+  # Filter out the generated files.
   for file in ${filtered_out}; do
     source_files=$(printf '%s\n' "${source_files}" | grep -Fv "${file}" | sed '/^$/d')
   done
@@ -102,8 +103,9 @@ root_path=$(cd "$(dirname "${0}")/.." && pwd)
 
 # Generated files will be filtered out. Hardcoded list
 filtered_out=$(cat "${root_path}/tools/.generated-files.txt")
+# Exceptions:
 # src/lib/asiolink/asio_wrapper.h includes <boost/asio.hpp> in both
-# conditionals of an #ifdef. Make an exception for it.
+# conditionals of an #ifdef.
 filtered_out="${filtered_out}
 src/lib/asiolink/asio_wrapper.h
 "
