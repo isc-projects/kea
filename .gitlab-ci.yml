@@ -141,5 +141,5 @@ missing-git-attribute:
     - amd64
   script:
     - test -z $(git diff)
-    - ./tools/print-generated-files -a
+    - ./tools/print-generated-files.sh -a
     - test -z $(git diff)

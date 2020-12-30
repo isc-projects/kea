@@ -117,13 +117,13 @@ print_file_name() {
 }
 
 # Generated messages
+# shellcheck disable=SC1003
+# SC1003: Want to escape a single quote? echo 'This is how it'\''s done'
+# reason: No, we don't want to escape a single quote, we want a backslash.
 print_generated_messages() {
   local makefile_am=${1}; shift
   local directory=${1}; shift
 
-  # shellcheck disable=SC1003
-  # SC1003: Want to escape a single quote? echo 'This is how it'\''s done'
-  # reason: No, we don't want to escape a single quote, we want a backslash.
   for j in $(grep -F 'messages:' "${makefile_am}" | cut -d ':' -f '2-' | \
     cut -d '\' -f 1); do
     print_file_name "${directory}/${j}"
