@@ -640,4 +640,61 @@ TEST_F(CSVFileTest, parseContentWithoutTrailingBlankLine) {
     csv.close();
 }
 
+// Check that blank lines are skipped when reading from a file.
+TEST_F(CSVFileTest, parseContentWithBlankLines) {
+    for (std::string const& content : {
+        // Single intermediary blank line
+        "animal,age,color\n"
+        "cat,4,white\n"
+        "\n"
+        "lion,8,yellow\n",
+
+        // Blank lines all over
+        "\n"
+        "\n"
+        "animal,age,color\n"
+        "\n"
+        "\n"
+        "cat,4,white\n"
+        "\n"
+        "\n"
+        "lion,8,yellow\n"
+        "\n"
+        "\n",
+    }) {
+        // Create a new CSV file.
+        writeFile(content);
+
+        // Open this file and check that the header is parsed.
+        CSVFile csv(testfile_);
+        ASSERT_NO_THROW(csv.open());
+        ASSERT_EQ(3, csv.getColumnCount());
+        EXPECT_EQ("animal", csv.getColumnName(0));
+        EXPECT_EQ("age", csv.getColumnName(1));
+        EXPECT_EQ("color", csv.getColumnName(2));
+
+        // Check the first data row.
+        CSVRow row;
+        ASSERT_TRUE(csv.next(row));
+        EXPECT_EQ("cat", row.readAt(0));
+        EXPECT_EQ("4", row.readAt(1));
+        EXPECT_EQ("white", row.readAt(2));
+        EXPECT_EQ("success", csv.getReadMsg());
+
+        // Check the second non-blank data row.
+        ASSERT_TRUE(csv.next(row));
+        EXPECT_EQ("lion", row.readAt(0));
+        EXPECT_EQ("8", row.readAt(1));
+        EXPECT_EQ("yellow", row.readAt(2));
+        EXPECT_EQ("success", csv.getReadMsg());
+
+        // Attempt to read the next row which doesn't exist.
+        ASSERT_TRUE(csv.next(row));
+        EXPECT_EQ(CSVFile::EMPTY_ROW(), row);
+
+        // Close the file.
+        csv.close();
+    }
+}
+
 } // end of anonymous namespace
