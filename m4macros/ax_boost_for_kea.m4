@@ -50,8 +50,7 @@ boost_lib_path=
 #
 # If explicitly specified, use it.
 AC_ARG_WITH([boost-include],
-  AC_HELP_STRING([--with-boost-include=PATH],
-    [specify exact directory for Boost headers]),
+  AS_HELP_STRING([--with-boost-include=PATH],[specify exact directory for Boost headers]),
     [boost_include_path="$withval"])
 # If not specified, try some common paths.
 if test -z "$with_boost_include"; then
@@ -88,12 +87,11 @@ AC_CHECK_HEADERS(boost/integer/common_factor.hpp)
 # the code and we'll end up using the system header rather than the boost. For
 # example, if your boost headers are in /usr/local/include/boost, you should
 # use --with-boost-include=/usr/local/include
-AC_TRY_COMPILE([
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <regex.h>
 #ifdef BOOST_RE_REGEX_H
 #error "boost/regex.h"
-#endif],,,
-[AC_MSG_ERROR([${boost_include_path}/regex.h is used in place of /usr/include/regex.h: when specifying path to boost, please omit the /boost at the end of the include path.])])
+#endif]], [[]])],[],[AC_MSG_ERROR([${boost_include_path}/regex.h is used in place of /usr/include/regex.h: when specifying path to boost, please omit the /boost at the end of the include path.])])
 
 # clang can cause false positives with -Werror without -Qunused-arguments.
 # it can be triggered if used with ccache.
@@ -104,26 +102,22 @@ AC_CHECK_DECL([__clang__], [CLANG_CXXFLAGS="-Qunused-arguments"], [])
 # may depend on preceding header files, and if inconsistency happens
 # it could lead to a critical disruption.
 AC_MSG_CHECKING([whether Boost tries to use threads])
-AC_TRY_COMPILE([
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <boost/config.hpp>
 #ifdef BOOST_HAS_THREADS
 #error "boost will use threads"
-#endif],,
-[AC_MSG_RESULT(no)
- CPPFLAGS_BOOST_THREADCONF="-DBOOST_DISABLE_THREADS=1"],
-[AC_MSG_RESULT(yes)])
+#endif]], [[]])],[AC_MSG_RESULT(no)
+ CPPFLAGS_BOOST_THREADCONF="-DBOOST_DISABLE_THREADS=1"],[AC_MSG_RESULT(yes)])
 
 # Boost offset_ptr is known to not compile on some platforms, depending on
 # boost version, its local configuration, and compiler.  Detect it.
 CXXFLAGS_SAVED="$CXXFLAGS"
 CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS -Werror"
 AC_MSG_CHECKING([Boost offset_ptr compiles])
-AC_TRY_COMPILE([
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <boost/interprocess/offset_ptr.hpp>
-],,
-[AC_MSG_RESULT(yes)
- BOOST_OFFSET_PTR_WOULDFAIL=no],
-[AC_MSG_RESULT(no)
+]], [[]])],[AC_MSG_RESULT(yes)
+ BOOST_OFFSET_PTR_WOULDFAIL=no],[AC_MSG_RESULT(no)
  BOOST_OFFSET_PTR_WOULDFAIL=yes])
 CXXFLAGS="$CXXFLAGS_SAVED"
 
@@ -134,13 +128,12 @@ if test "X$GXX" = "Xyes"; then
    CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS -Werror"
 
    AC_MSG_CHECKING([Boost numeric_cast compiles with -Werror])
-   AC_TRY_COMPILE([
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
    #include <boost/numeric/conversion/cast.hpp>
-   ],[
+   ]], [[
    return (boost::numeric_cast<short>(0));
-   ],[AC_MSG_RESULT(yes)
-      BOOST_NUMERIC_CAST_WOULDFAIL=no],
-   [AC_MSG_RESULT(no)
+   ]])],[AC_MSG_RESULT(yes)
+      BOOST_NUMERIC_CAST_WOULDFAIL=no],[AC_MSG_RESULT(no)
     BOOST_NUMERIC_CAST_WOULDFAIL=yes])
 
    CXXFLAGS="$CXXFLAGS_SAVED"
@@ -152,26 +145,22 @@ fi
 # BOOST_STATIC_ASSERT in versions below Boost 1.54.0 is known to result
 # in warnings with GCC 4.8.  Detect it.
 AC_MSG_CHECKING([BOOST_STATIC_ASSERT compiles])
-AC_TRY_COMPILE([
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <boost/static_assert.hpp>
 void testfn(void) { BOOST_STATIC_ASSERT(true); }
-],,
-[AC_MSG_RESULT(yes)
- BOOST_STATIC_ASSERT_WOULDFAIL=no],
-[AC_MSG_RESULT(no)
+]], [[]])],[AC_MSG_RESULT(yes)
+ BOOST_STATIC_ASSERT_WOULDFAIL=no],[AC_MSG_RESULT(no)
  BOOST_STATIC_ASSERT_WOULDFAIL=yes])
 
 # Get libs when explicitly configured
 AC_ARG_WITH([boost-libs],
-  AC_HELP_STRING([--with-boost-libs=SPEC],
-    [specify Boost libraries to link with, e.g., '-lboost_system']),
+  AS_HELP_STRING([--with-boost-libs=SPEC],[specify Boost libraries to link with, e.g., '-lboost_system']),
     [BOOST_LIBS="$withval"
      DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boost-libs=$withval"])
 
 # Get lib dir when explicitly configured
 AC_ARG_WITH([boost-lib-dir],
-  AC_HELP_STRING([--with-boost-lib-dir=PATH],
-    [specify directory where to find Boost libraries]),
+  AS_HELP_STRING([--with-boost-lib-dir=PATH],[specify directory where to find Boost libraries]),
     [BOOST_LIB_DIR="$withval"
      DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boost-lib-dir=$withval"])
 
@@ -192,11 +181,9 @@ if test "x${BOOST_LIBS}" = "x"; then
    CPPFLAGS="$CPPFLAGS -DBOOST_ERROR_CODE_HEADER_ONLY"
    CPPFLAGS="$CPPFLAGS -DBOOST_SYSTEM_NO_DEPRECATED"
 
-   AC_TRY_COMPILE([
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
    #include <boost/system/error_code.hpp>
-   ],,
-   [AC_MSG_RESULT(yes)],
-   [AC_MSG_RESULT(no)
+   ]], [[]])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)
     AC_MSG_WARN([The Boost system library is required.])
     BOOST_LIBS="-lboost_system"
     if test "x${BOOST_LIB_DIR}" = "x"; then
