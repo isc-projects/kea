@@ -1,3 +1,11 @@
+1853.	[func]		fdupont
+	Populated the space field of option definitions. This solved
+	reported bugs where a specific standard option processing
+	was applied to an option from another space but sharing the
+	same code. In particular, this fixes the problem reported
+	with vendor suboption 125.
+	(Gitlab #1585)
+
 1852.	[bug]		razvan
 	Corrected the value of unacked-clients-left returned in response
 	to the status-get command and the corresponding log messages.
