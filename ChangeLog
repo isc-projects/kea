@@ -1,3 +1,8 @@
+1851.	[func]		fdupont
+	Removed methods fetching leases by both client identifier
+	and hardware addresses from the API.
+	(Gitlab #1540)
+
 1850.	[build]		andrei
 	Add two scripts to help with code aesthetics, insight on how Kea
 	is built or minor build optimizations:
