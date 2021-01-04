@@ -269,9 +269,11 @@ CSVFile::next(CSVRow& row, const bool skip_validation) {
         return (false);
     }
 
-    // Get exactly one line of the file.
+    // Get the next non-blank line from the file.
     std::string line;
-    std::getline(*fs_, line);
+    while (fs_->good() && line.empty()) {
+        std::getline(*fs_, line);
+    }
 
     // If we didn't read anything...
     if (line.empty()) {
