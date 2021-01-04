@@ -629,7 +629,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
             // belong to subnets outside of the shared network. We'll need
             // to eliminate them.
             for (auto host = hosts.begin(); host != hosts.end(); ++host) {
-                if ((*host)->getIPv6SubnetID()) {
+                if ((*host)->getIPv6SubnetID() > 0) {
                     host_map[(*host)->getIPv6SubnetID()] = *host;
                 }
             }
@@ -649,6 +649,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
                 if (use_single_query) {
                     if (host_map.count(subnet->getID()) > 0) {
                         ctx.hosts_[subnet->getID()] = host_map[subnet->getID()];
+                        break;
                     }
 
                 } else {
@@ -664,7 +665,6 @@ AllocEngine::findReservation(ClientContext6& ctx) {
                     }
                 }
             }
-
         }
 
         // We need to get to the next subnet if this is a shared network. If it
@@ -3389,7 +3389,7 @@ AllocEngine::findReservation(ClientContext4& ctx) {
     while (subnet) {
 
         // Only makes sense to get reservations if the client has access
-        // to the class.
+        // to the class and host reservations are enabled for this subnet.
         if (subnet->clientSupported(ctx.query_->getClasses()) &&
             subnet->getReservationsInSubnet()) {
             // Iterate over configured identifiers in the order of preference
