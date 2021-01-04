@@ -199,14 +199,13 @@ EOF
    # failure handler we can detect the difference between a header not existing
    # (or not even passing the pre-processor phase) and a header file resulting
    # in compilation failures.
-   HEADER_TO_CHECK=botan/botan.h
-   AC_CHECK_HEADERS([${HEADER_TO_CHECK}],,[
+   AC_CHECK_HEADERS([botan/botan.h],,[
         CRYPTO_INCLUDES=""
         CRYPTO_LIBS=""
         CRYPTO_LDFLAGS=""
         CRYPTO_RPATH=""
         if test "x$ac_header_preproc" = "xyes"; then
-                AC_MSG_RESULT([${HEADER_TO_CHECK}
+                AC_MSG_RESULT([botan/botan.h}
 was found but is unusable. The most common cause of this problem
 is attempting to use an updated C++ compiler with older C++ libraries, such as
 the version of Botan that comes with your distribution. If you have updated
