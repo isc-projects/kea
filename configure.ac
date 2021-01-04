@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.70])
+AC_PREREQ([2.69])
 
 # For released versions, this is in x.y.z format.
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the next development
@@ -89,8 +89,8 @@ fi
 # enables some debugging aids that perform slowly and hence aren't built
 # by default.
 AC_ARG_ENABLE([debug],
-  AS_HELP_STRING([--enable-debug],
-    [enable debugging (default is no)]),
+  [AS_HELP_STRING([--enable-debug],
+    [enable debugging (default is no)])],
   [case "${enableval}" in
     yes) debug_enabled=yes ;;
     no)  debug_enabled=no ;;
@@ -360,10 +360,16 @@ if test $with_werror = 1; then
    AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
    # We use struct, not class, here, because some compilers complain about
    # "unused private members", causing a false positive.
-   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[namespace { struct Foo {}; }
-   namespace isc {struct Bar {Foo foo_;};} ]], [[]])],[AC_MSG_RESULT(no)
-         werror_ok=1
-         KEA_CXXFLAGS="$KEA_CXXFLAGS -Werror"],[AC_MSG_RESULT(yes)])
+   AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([[
+      namespace { struct Foo {}; }
+      namespace isc { struct Bar { Foo foo_; }; }
+    ]], [[]])],
+    [AC_MSG_RESULT(no)
+     werror_ok=1
+     KEA_CXXFLAGS="$KEA_CXXFLAGS -Werror"],
+    [AC_MSG_RESULT(yes)]
+   )
    CXXFLAGS="$CXXFLAGS_SAVED"
 fi
 
@@ -396,7 +402,8 @@ fi                              dnl GXX = yes
 # allow building programs with static link.  we need to make it selective
 # because loadable modules cannot be statically linked.
 AC_ARG_ENABLE([static-link],
-AS_HELP_STRING([--enable-static-link],[build programs with static link [[default=no]]]),
+  [AS_HELP_STRING([--enable-static-link],
+    [build programs with static link [[default=no]]])],
   [enable_static_link=yes], [enable_static_link=no])
 AM_CONDITIONAL(USE_STATIC_LINK, test $enable_static_link = yes)
 AM_COND_IF([USE_STATIC_LINK], [AC_DEFINE([USE_STATIC_LINK], [1], [Was Kea statically linked?])])
@@ -432,13 +439,20 @@ case "$host" in
         # In OS X 10.9 (and possibly any future versions?) pthread_cond_destroy
         # doesn't work as documented, which makes some of unit tests fail.
         AC_MSG_CHECKING([OS X versions where destroying locked locks do not fail])
-        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Availability.h>]], [[#ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
-         #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1090
-         #error " OS X >= 10.9"
-         #endif
-         #endif
-         return 1;]])],[AC_MSG_RESULT([OS X < 10.9])],[AC_MSG_RESULT([OS X >= 10.9])
-         kea_undefined_pthread_behavior=yes])
+        AC_COMPILE_IFELSE(
+         [AC_LANG_PROGRAM([[
+          #include <Availability.h>
+         ]], [[
+          #ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
+          #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1090
+          #error " OS X >= 10.9"
+          #endif
+          #endif
+          return 1;
+         ]])],
+         [AC_MSG_RESULT([OS X < 10.9])],
+         [AC_MSG_RESULT([OS X >= 10.9])
+          kea_undefined_pthread_behavior=yes])
         ;;
 *-freebsd*)
         # On FreeBSD10.1 pthread_cond_destroy doesn't work as documented, which
@@ -473,8 +487,9 @@ case "$host" in
 esac
 
 # Made perfdhcp optional.
-AC_ARG_ENABLE(perfdhcp, [AS_HELP_STRING([--enable-perfdhcp],[enable perfdhcp, a DHCP benchmarking tool [default=no]])],
-  enable_perfdhcp=$enableval, enable_perfdhcp=no)
+AC_ARG_ENABLE(perfdhcp, [AS_HELP_STRING([--enable-perfdhcp],
+              [enable perfdhcp, a DHCP benchmarking tool [default=no]])],
+              enable_perfdhcp=$enableval, enable_perfdhcp=no)
 
 DISTCHECK_PERFDHCP_CONFIGURE_FLAG=
 if test "x$enable_perfdhcp" != xno ; then
@@ -581,10 +596,19 @@ AM_CONDITIONAL(OS_OPENBSD, test $BSD_TYPE = OpenBSD)
 
 
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <sys/types.h>
-#include <sys/socket.h>]], [[struct sockaddr sa; sa.sa_len = 0; return (0);]])],[AC_MSG_RESULT(yes)
-        AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],[AC_MSG_RESULT(no)])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[
+    #include <sys/types.h>
+    #include <sys/socket.h>
+  ]], [[
+    struct sockaddr sa;
+    sa.sa_len = 0;
+    return (0);
+  ]])],
+  [AC_MSG_RESULT(yes)
+   AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],
+  [AC_MSG_RESULT(no)]
+)
 
 usable_regex=
 AC_MSG_CHECKING(for usable C++11 regex)
@@ -596,9 +620,12 @@ int main() {
   const std::string string = "This should match!";
   const auto result = std::regex_search(string, regex);
   return result ? EXIT_SUCCESS : EXIT_FAILURE;
-}]])],[AC_MSG_RESULT(yes)
-         usable_regex="yes"],[AC_MSG_RESULT(no)
-         usable_regex="no"],[AC_MSG_RESULT(cross compiling)])
+}]])],
+        [AC_MSG_RESULT(yes)
+         usable_regex="yes"],
+        [AC_MSG_RESULT(no)
+         usable_regex="no"],
+        [AC_MSG_RESULT(cross compiling)])
 # When cross-compiling we don't have any way to check if regex is
 # usable or not.
 # Let's be optimistic and assume it is by testing only the negative case.
@@ -638,8 +665,9 @@ defaultdirs="/usr /usr/local /usr/pkg /opt /opt/local"
 # the software is not built with MySQL support enabled.
 mysql_config="no"
 AC_ARG_WITH([mysql],
-  AS_HELP_STRING([--with-mysql=PATH],[path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
-    [mysql_config="$withval"])
+  AS_HELP_STRING([--with-mysql=PATH],
+    [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
+  [mysql_config="$withval"])
 
 deprec_msg="no"
 AC_ARG_WITH([dhcp-mysql],,
@@ -717,8 +745,9 @@ AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
 
 pg_config="no"
 AC_ARG_WITH([pgsql],
-  AS_HELP_STRING([--with-pgsql=PATH],[path to the PostgreSQL 'pg_config' script]),
-    [pg_config="$withval"])
+  AS_HELP_STRING([--with-pgsql=PATH],
+    [path to the PostgreSQL 'pg_config' script]),
+  [pg_config="$withval"])
 
 deprec_msg="no"
 AC_ARG_WITH([dhcp-pgsql],,
@@ -788,8 +817,8 @@ AM_CONDITIONAL(HAVE_PGSQL, test "$PG_CONFIG" != "")
 
 # allow building kea programs with static link to cassandra cpp-driver.
 AC_ARG_ENABLE([cql-static-lib],
-AS_HELP_STRING([--enable-cql-static-lib],
-    [build programs with cassandra cpp driver static library [[default=no]]]),
+  [AS_HELP_STRING([--enable-cql-static-lib],
+    [build programs with cassandra cpp driver static library [[default=no]]])],
     [enable_cql_static_lib=yes], [enable_cql_static_lib=no])
 AM_CONDITIONAL(USE_CQL_STATIC_LIB, test "$enable_cql_static_lib" = yes)
 #AC_DEFINE USE_CQL_STATIC_LIB? (unused)
@@ -801,8 +830,9 @@ fi
 
 cql_config="no"
 AC_ARG_WITH([cql],
-  AS_HELP_STRING([--with-cql=PATH],[path to pkg-config or the Cassandra CQL 'cql_config' script]),
-    [cql_config="$withval"])
+  AS_HELP_STRING([--with-cql=PATH],
+    [path to pkg-config or the Cassandra CQL 'cql_config' script]),
+  [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
     CQL_CONFIG="$PKG_CONFIG"
@@ -858,8 +888,9 @@ AM_CONDITIONAL(HAVE_CQL, test "$CQL_CONFIG" != "")
 DISTCHECK_SYSREPO_CONFIGURE_FLAG=
 sysrepo_config="no"
 AC_ARG_WITH([sysrepo],
-  AS_HELP_STRING([--with-sysrepo=PATH],[path to pkg-config or the Sysrepo 'sysrepo_config' script]),
-    [sysrepo_config="$withval"])
+  AS_HELP_STRING([--with-sysrepo=PATH],
+    [path to pkg-config or the Sysrepo 'sysrepo_config' script]),
+  [sysrepo_config="$withval"])
 
 if test "${sysrepo_config}" = "yes" ; then
     if test "$PKG_CONFIG" = ""; then
@@ -968,8 +999,9 @@ AM_CONDITIONAL(HAVE_SYSREPO, test "$SYSREPO_CONFIG" != "")
 DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG=
 log4cplus_path="yes"
 AC_ARG_WITH([log4cplus],
-  AS_HELP_STRING([--with-log4cplus=PATH],[specify exact directory of log4cplus library and headers]),
-    [log4cplus_path="$withval"])
+  AS_HELP_STRING([--with-log4cplus=PATH],
+    [path to pkg-config or the Sysrepo 'sysrepo_config' script]),
+  [log4cplus_path="$withval"])
 if test "${log4cplus_path}" = "no" ; then
     AC_MSG_ERROR([Need log4cplus])
 elif test "${log4cplus_path}" != "yes" ; then
@@ -1023,7 +1055,7 @@ cat > conftest.cpp << EOF
 AUTOCONF_LOG4CPLUS_VERSION=LOG4CPLUS_VERSION_STR
 EOF
 
-LOG4CPLUS_VERSION=`$CPPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+LOG4CPLUS_VERSION=`$CPPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[   ]]//g' -e 's/"//g' 2> /dev/null`
 if test -z "$LOG4CPLUS_VERSION"; then
   LOG4CPLUS_VERSION="unknown"
 fi
@@ -1268,7 +1300,9 @@ AC_SUBST(PERL)
 AC_PATH_PROGS(AWK, gawk awk)
 AC_SUBST(AWK)
 
-AC_ARG_ENABLE(generate_messages, [AS_HELP_STRING([--enable-generate-messages],[indicates that the messages files will be regenerated. [default=no]])],
+AC_ARG_ENABLE(generate_messages,
+  [AS_HELP_STRING([--enable-generate-messages],
+    [indicates that the messages files will be regenerated. [default=no]])],
   enable_generate_messages=$enableval, enable_generate_messages=no)
 
 AM_CONDITIONAL([GENERATE_MESSAGES], [test x$enable_generate_messages != xno])
@@ -1280,9 +1314,11 @@ if test "$cross_compiling" = "yes"; then
     fi
 fi
 
-AC_ARG_ENABLE(generate_parser, [AS_HELP_STRING([--enable-generate-parser],[indicates that the parsers will be regenerated. This implies that the
-   bison and flex are required [default=no]])],
-   enable_generate_parser=$enableval, enable_generate_parser=no)
+AC_ARG_ENABLE(generate_parser,
+  [AS_HELP_STRING([--enable-generate-parser],
+    [indicates that the parsers will be regenerated. This implies that the
+     bison and flex are required [default=no]])],
+  enable_generate_parser=$enableval, enable_generate_parser=no)
 
 # Check if flex is available. Flex is not needed for building Kea sources,
 # unless you want to regenerate grammars
@@ -1329,11 +1365,15 @@ AM_CONDITIONAL([GENERATE_PARSER], [test x$enable_generate_parser != xno])
 # It may likely work with earlier versions, but 2.7 was the oldest one we tested
 # it with. We require python only if kea-shell was enabled. It is disabled
 # by default to not introduce hard dependency on python.
-AC_ARG_ENABLE(shell, [AS_HELP_STRING([--enable-shell],[enable kea-shell, a text management client for Control Agent [default=no]])],
+AC_ARG_ENABLE(shell,
+  [AS_HELP_STRING([--enable-shell],
+    [enable kea-shell, a text management client for Control Agent [default=no]])],
   enable_shell=$enableval, enable_shell=no)
 
 
-AC_ARG_ENABLE(generate_docs, [AS_HELP_STRING([--enable-generate-docs],[regenerate documentation using Sphinx [default=no]])],
+AC_ARG_ENABLE(generate_docs,
+  [AS_HELP_STRING([--enable-generate-docs],
+    [regenerate documentation using Sphinx [default=no]])],
   enable_generate_docs=$enableval, enable_generate_docs=no)
 
 
@@ -1349,7 +1389,8 @@ if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
   AM_PATH_PYTHON([2.7])
 
   AC_ARG_WITH(site-packages,
-           AS_HELP_STRING([--with-site-packages],[place to install Kea Python module]),
+           AS_HELP_STRING([--with-site-packages],
+                          [place to install Kea Python module]),
            [pythondir=$withval;
             pkgpythondir=${pythondir}/$PACKAGE_NAME])
   if test "$pythondir" = "yes"; then
@@ -1494,11 +1535,14 @@ AM_CONDITIONAL(HAVE_PDFLATEX, test "x$PDFLATEX" != "xno")
 AM_CONDITIONAL(GENERATE_DOCS, test x$enable_generate_docs != xno)
 
 AC_ARG_ENABLE(install-configurations,
-  [AS_HELP_STRING([--disable-install-configurations],[do not install configuration])], install_configurations=$enableval, install_configurations=yes)
+  [AS_HELP_STRING([--disable-install-configurations],
+  [do not install configuration])], install_configurations=$enableval, install_configurations=yes)
 
 AM_CONDITIONAL(INSTALL_CONFIGURATIONS, test x$install_configurations = xyes || test x$install_configurations = xtrue)
 
-AC_ARG_ENABLE(logger-checks, [AS_HELP_STRING([--enable-logger-checks],[check logger messages [default=no]])], enable_logger_checks=$enableval, enable_logger_checks=no)
+AC_ARG_ENABLE(logger-checks,
+  [AS_HELP_STRING([--enable-logger-checks],
+  [check logger messages [default=no]])], enable_logger_checks=$enableval, enable_logger_checks=no)
 AM_CONDITIONAL(ENABLE_LOGGER_CHECKS, test x$enable_logger_checks != xno)
 AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Check logger messages?])])
 
@@ -1526,9 +1570,11 @@ if test "x$VALGRIND" != "xno"; then
    found_valgrind="found"
 fi
 
-AC_ARG_ENABLE([fuzzing], [AS_HELP_STRING([--enable-fuzzing],[indicates that the code will be built with AFL (American Fuzzy Lop) support.
+AC_ARG_ENABLE([fuzzing],
+  [AS_HELP_STRING([--enable-fuzzing],
+  [indicates that the code will be built with AFL (American Fuzzy Lop) support.
    Code built this way is unusable as a regular server. [default=no]])],
-   [enable_fuzzing=$enableval], [enable_fuzzing=no])
+  [enable_fuzzing=$enableval], [enable_fuzzing=no])
 AM_CONDITIONAL([ENABLE_AFL], [test x$enable_fuzzing != xno])
 
 if test "x$enable_fuzzing" != "xno" ; then
@@ -1553,10 +1599,18 @@ fi
 # to reset internal state of getopt(). Failing to do so will result
 # in unpredictable output from getopt().
 AC_MSG_CHECKING([whether optreset variable is defined in unistd.h])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[extern int optreset; optreset=1;]])],[ AC_MSG_RESULT(yes)
-      var_optreset_exists=yes],[ AC_MSG_RESULT(no)
-      var_optreset_exists=no
-])
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM([[
+    #include <unistd.h>
+  ]], [[
+    extern int optreset;
+    optreset=1;
+  ]])],
+  [AC_MSG_RESULT(yes)
+   var_optreset_exists=yes],
+  [AC_MSG_RESULT(no)
+   var_optreset_exists=no]
+)
 AM_CONDITIONAL(HAVE_OPTRESET, test "x$var_optreset_exists" != "xno")
 AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset?])])
 

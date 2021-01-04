@@ -50,8 +50,9 @@ boost_lib_path=
 #
 # If explicitly specified, use it.
 AC_ARG_WITH([boost-include],
-  AS_HELP_STRING([--with-boost-include=PATH],[specify exact directory for Boost headers]),
-    [boost_include_path="$withval"])
+  AS_HELP_STRING([--with-boost-include=PATH],
+    [specify exact directory for Boost headers]),
+  [boost_include_path="$withval"])
 # If not specified, try some common paths.
 if test -z "$with_boost_include"; then
         boostdirs="/usr/local /usr/pkg /opt /opt/local"
@@ -91,7 +92,8 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <regex.h>
 #ifdef BOOST_RE_REGEX_H
 #error "boost/regex.h"
-#endif]], [[]])],[],[AC_MSG_ERROR([${boost_include_path}/regex.h is used in place of /usr/include/regex.h: when specifying path to boost, please omit the /boost at the end of the include path.])])
+#endif]], [[]])],[],
+[AC_MSG_ERROR([${boost_include_path}/regex.h is used in place of /usr/include/regex.h: when specifying path to boost, please omit the /boost at the end of the include path.])])
 
 # clang can cause false positives with -Werror without -Qunused-arguments.
 # it can be triggered if used with ccache.
@@ -102,12 +104,15 @@ AC_CHECK_DECL([__clang__], [CLANG_CXXFLAGS="-Qunused-arguments"], [])
 # may depend on preceding header files, and if inconsistency happens
 # it could lead to a critical disruption.
 AC_MSG_CHECKING([whether Boost tries to use threads])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <boost/config.hpp>
-#ifdef BOOST_HAS_THREADS
-#error "boost will use threads"
-#endif]], [[]])],[AC_MSG_RESULT(no)
- CPPFLAGS_BOOST_THREADCONF="-DBOOST_DISABLE_THREADS=1"],[AC_MSG_RESULT(yes)])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[
+   #include <boost/config.hpp>
+   #ifdef BOOST_HAS_THREADS
+   #error "boost will use threads"
+   #endif]], [[]])],
+  [AC_MSG_RESULT(no)
+   CPPFLAGS_BOOST_THREADCONF="-DBOOST_DISABLE_THREADS=1"],
+  [AC_MSG_RESULT(yes)])
 
 # Boost offset_ptr is known to not compile on some platforms, depending on
 # boost version, its local configuration, and compiler.  Detect it.
@@ -115,10 +120,13 @@ CXXFLAGS_SAVED="$CXXFLAGS"
 CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS -Werror"
 AC_MSG_CHECKING([Boost offset_ptr compiles])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <boost/interprocess/offset_ptr.hpp>
-]], [[]])],[AC_MSG_RESULT(yes)
- BOOST_OFFSET_PTR_WOULDFAIL=no],[AC_MSG_RESULT(no)
- BOOST_OFFSET_PTR_WOULDFAIL=yes])
+  #include <boost/interprocess/offset_ptr.hpp>
+]], [[]])],
+  [AC_MSG_RESULT(yes)
+   BOOST_OFFSET_PTR_WOULDFAIL=no],
+  [AC_MSG_RESULT(no)
+   BOOST_OFFSET_PTR_WOULDFAIL=yes]
+)
 CXXFLAGS="$CXXFLAGS_SAVED"
 
 # Detect build failure case known to happen with Boost installed via
@@ -129,12 +137,15 @@ if test "X$GXX" = "Xyes"; then
 
    AC_MSG_CHECKING([Boost numeric_cast compiles with -Werror])
    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-   #include <boost/numeric/conversion/cast.hpp>
+     #include <boost/numeric/conversion/cast.hpp>
    ]], [[
-   return (boost::numeric_cast<short>(0));
-   ]])],[AC_MSG_RESULT(yes)
-      BOOST_NUMERIC_CAST_WOULDFAIL=no],[AC_MSG_RESULT(no)
-    BOOST_NUMERIC_CAST_WOULDFAIL=yes])
+     return (boost::numeric_cast<short>(0));
+   ]])],
+   [AC_MSG_RESULT(yes)
+    BOOST_NUMERIC_CAST_WOULDFAIL=no],
+   [AC_MSG_RESULT(no)
+    BOOST_NUMERIC_CAST_WOULDFAIL=yes]
+   )
 
    CXXFLAGS="$CXXFLAGS_SAVED"
 else
@@ -154,9 +165,10 @@ void testfn(void) { BOOST_STATIC_ASSERT(true); }
 
 # Get libs when explicitly configured
 AC_ARG_WITH([boost-libs],
-  AS_HELP_STRING([--with-boost-libs=SPEC],[specify Boost libraries to link with, e.g., '-lboost_system']),
-    [BOOST_LIBS="$withval"
-     DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boost-libs=$withval"])
+  AS_HELP_STRING([--with-boost-libs=SPEC],
+    [specify Boost libraries to link with, e.g., '-lboost_system']),
+  [BOOST_LIBS="$withval"
+   DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boost-libs=$withval"])
 
 # Get lib dir when explicitly configured
 AC_ARG_WITH([boost-lib-dir],

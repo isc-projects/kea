@@ -33,12 +33,14 @@ if test x$rpath != xno; then
 
     # check -Wl,-R and -R rather than gcc specific -rpath to be as portable
     # as possible.  -Wl,-R seems to be safer, so we try it first.  In some
-    # cases -R is not actually recognized but AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]) doesn't fail due to
+    # cases -R is not actually recognized but AC_LINK_IFELSE doesn't fail due to
     # that.
     AC_MSG_CHECKING([whether -Wl,-R flag is available in linker])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[ AC_MSG_RESULT(yes)
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+        [AC_MSG_RESULT(yes)
             ISC_RPATH_FLAG=-Wl,-R
-        ],[ AC_MSG_RESULT(no)
+        ],
+        [AC_MSG_RESULT(no)
             AC_MSG_CHECKING([whether -R flag is available in linker])
 
             # Apple clang 5.1 is now considers unknown parameters
@@ -48,11 +50,12 @@ if test x$rpath != xno; then
             # up, is to use -Werror.
             CXXFLAGS="$CXXFLAGS_SAVED -R/usr/lib"
             CCFLAGS="$CCFLAGS_SAVED -R/usr/lib"
-        _au_m4_changequote([,])AC_TRY_LINK([], [],
-            [ AC_MSG_RESULT([yes; note that -R is more sensitive about the position in option arguments])
-                ISC_RPATH_FLAG=-R
-            ],[ AC_MSG_RESULT(no) ])
-        ])
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+                [AC_MSG_RESULT([yes; note that -R is more sensitive about the position in option arguments])
+                    ISC_RPATH_FLAG=-R],
+                [AC_MSG_RESULT(no)])
+        ]
+    )
 
     CXXFLAGS=$CXXFLAGS_SAVED
     CCFLAGS=$CCFLAGS_SAVED
