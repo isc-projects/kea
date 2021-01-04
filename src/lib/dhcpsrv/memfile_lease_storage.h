@@ -23,7 +23,6 @@
 namespace isc {
 namespace dhcp {
 
-
 /// @brief Tag for indexes by address.
 struct AddressIndexTag { };
 
@@ -225,7 +224,6 @@ typedef boost::multi_index_container<
             boost::multi_index::tag<SubnetIdIndexTag>,
             boost::multi_index::member<Lease, isc::dhcp::SubnetID, &Lease::subnet_id_>
         >,
-
 
         // Specification of the seventh index starts here
         // This index is used to retrieve leases for matching hostname.
