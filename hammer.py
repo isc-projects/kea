@@ -232,7 +232,7 @@ class ExecutionError(Exception):
 
 def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False, log_file_path=None,
             quiet=False, check_times=False, capture=False, interactive=False, attempts=1,
-            sleep_time_after_attempt=None):
+            sleep_time_after_attempt=None, super_quiet=False):
     """Execute a command in shell.
 
     :param str cmd: a command to be executed
@@ -252,7 +252,10 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
     :param int attempts: number of attempts to run the command if it fails
     :param int sleep_time_after_attempt: number of seconds to sleep before taking next attempt
     """
-    log.info('>>>>> Executing %s in %s', cmd, cwd if cwd else os.getcwd())
+    if super_quiet:
+        quiet = True
+    if not super_quiet:
+        log.info('>>>>> Executing %s in %s', cmd, cwd if cwd else os.getcwd())
     if not check_times:
         timeout = None
     if dry_run:
@@ -2203,6 +2206,10 @@ def list_created_systems():
 
 def destroy_system(path):
     """Destroy Vagrant system under given path."""
+    vf = os.path.join(path, 'Vagrantfile')
+    if not os.path.exists(vf):
+        print('Wrong directory. It does not have Vagrantfile.')
+        sys.exit(1)
     execute('vagrant destroy', cwd=path, interactive=True)
 
 
@@ -2320,6 +2327,7 @@ def prepare_system_cmd(args):
 
     ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
 
+    _check_deps_presence()
     prepare_system_in_vagrant(args.provider, args.system, args.revision, features,
                               args.dry_run, args.check_times, args.clean_start,
                               ccache_dir)
@@ -2340,6 +2348,8 @@ def build_cmd(args):
         msg = "Enabling 'native-pkg' requires passing --repository-url."
         print(msg)
         sys.exit(1)
+
+    _check_deps_presence()
 
     if args.provider == 'all':
         providers = ['lxc', 'virtualbox']
@@ -2390,6 +2400,13 @@ def build_cmd(args):
         sys.exit(1)
 
 
+def _check_deps_presence():
+    ret = execute('vagrant -v', super_quiet=True)
+    if ret != 0:
+        print('Missing vagrant. Please install it from https://www.vagrantup.com/')
+        sys.exit(1)
+
+
 def main():
     """Main function - parse args and invoke proper command."""
     args, parser = parse_args()
@@ -2408,9 +2425,11 @@ def main():
         list_supported_systems()
 
     elif args.command == 'created-systems':
+        _check_deps_presence()
         list_created_systems()
 
     elif args.command == "package-box":
+        _check_deps_presence()
         _check_system_revision(args.system, args.revision)
         features = set(['docs', 'perfdhcp', 'shell', 'mysql', 'pgsql', 'radius', 'native-pkg'])
 
@@ -2425,12 +2444,20 @@ def main():
 
     elif args.command == "ssh":
         _check_system_revision(args.system, args.revision)
+        if not args.system or not args.revision or args.system == 'all' or args.revision == 'all':
+            print('System (-s) and revision (-r) parameters are required')
+            sys.exit(1)
+        _check_deps_presence()
         ssh(args.provider, args.system, args.revision)
 
     elif args.command == "ensure-hammer-deps":
         ensure_hammer_deps()
 
     elif args.command == "destroy":
+        if not args.directory:
+            print('Missing directory (-d) parameter')
+            sys.exit(1)
+        _check_deps_presence()
         destroy_system(args.directory)
 
     else:
