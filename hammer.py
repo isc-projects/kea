@@ -2401,14 +2401,9 @@ def build_cmd(args):
 
 
 def _check_deps_presence():
-    try:
-        ret = execute('vagrant -v', super_quiet=True)
-        if ret != 0:
-            print('Missing vagrant. Please install it from https://www.vagrantup.com/')
-            sys.exit(1)
-    except ExecutionError as e:
-        print('Unable to run vagrant. Please install it from https://www.vagrantup.com/')
-        print('Encountered error: %s' % e)
+    ret = execute('vagrant -v', super_quiet=True, raise_error=False)
+    if ret != 0:
+        print('Missing vagrant. Please install it from https://www.vagrantup.com/')
         sys.exit(1)
 
 
