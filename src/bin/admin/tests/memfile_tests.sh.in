@@ -23,6 +23,7 @@ set -eu
 kea_admin="@abs_top_builddir@/src/bin/admin/kea-admin"
 kea_lfc="@abs_top_builddir@/src/bin/lfc/kea-lfc"
 
+# Clean up any files used in testing.
 clean_up() {
     remove_if_exists \
         "${config_file-}" \

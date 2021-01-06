@@ -551,9 +551,10 @@ get_reconfigs() {
     ${_GET_RECONFIG_ERRORS##*[! ]}
 }
 
+# Remove the given directories or files if they exist.
 remove_if_exists() {
-    while test ${#} -gt 1; do
-        if test -n "${1}"; then
+    while test ${#} -gt 0; do
+        if test -e "${1}"; then
             rm -rf "${1}"
         fi
         shift
