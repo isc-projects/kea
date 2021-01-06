@@ -55,24 +55,24 @@ AC_ARG_WITH([boost-include],
     [boost_include_path="$withval"])
 # If not specified, try some common paths.
 if test -z "$with_boost_include"; then
-	boostdirs="/usr/local /usr/pkg /opt /opt/local"
-	for d in $boostdirs
-	do
-		if test -f $d/include/boost/shared_ptr.hpp; then
-			boost_include_path=$d/include
-			boost_lib_path=$d/lib
-			break
-		fi
-	done
+        boostdirs="/usr/local /usr/pkg /opt /opt/local"
+        for d in $boostdirs
+        do
+                if test -f $d/include/boost/shared_ptr.hpp; then
+                        boost_include_path=$d/include
+                        boost_lib_path=$d/lib
+                        break
+                fi
+        done
 else
-	DISTCHECK_BOOST_CONFIGURE_FLAG="--with-boost-include=${boost_include_path}"
+        DISTCHECK_BOOST_CONFIGURE_FLAG="--with-boost-include=${boost_include_path}"
 fi
 
 # Check the path with some specific headers.
 CPPFLAGS_SAVED="$CPPFLAGS"
 if test "${boost_include_path}" ; then
-	BOOST_INCLUDES="-isystem ${boost_include_path}"
-	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
+        BOOST_INCLUDES="-isystem ${boost_include_path}"
+        CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/asio.hpp boost/asio/ip/address.hpp boost/asio/signal_set.hpp boost/system/error_code.hpp boost/atomic.hpp boost/circular_buffer.hpp boost/functional/hash.hpp],,
   AC_MSG_ERROR([Missing required boost header files]))

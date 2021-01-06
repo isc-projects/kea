@@ -42,9 +42,11 @@ if test x$rpath != xno; then
         ],[ AC_MSG_RESULT(no)
             AC_MSG_CHECKING([whether -R flag is available in linker])
 
-	    # Apple clang 5.1 is now considers unknown parameters passed to linker (ld) as errors.
-	    # However, the same unknown parameters passed to compiler (g++ ) are merely threated
-	    # as warnings. To make sure that we pick those up, is to use -Werror.
+            # Apple clang 5.1 is now considers unknown parameters
+            # passed to linker (ld) as errors.  However, the same
+            # unknown parameters passed to compiler (g++ ) are merely
+            # threated as warnings. To make sure that we pick those
+            # up, is to use -Werror.
             CXXFLAGS="$CXXFLAGS_SAVED -R/usr/lib"
             CCFLAGS="$CCFLAGS_SAVED -R/usr/lib"
         AC_TRY_LINK([], [],
