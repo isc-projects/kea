@@ -9,12 +9,6 @@ EXTRA_DIST = asiolink.dox
 
 CLEANFILES = *.gcno *.gcda
 
-# This is a wrapper library.
-
-# The ASIO header files have some code fragments that would hit
-# gcc's unused-parameter warning, which would make the build fail
-# with -Werror (our default setting).
-
 lib_LTLIBRARIES = libkea-asiolink.la
 
 libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 21:0:0
