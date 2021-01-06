@@ -1413,7 +1413,7 @@ def prepare_system_local(features, check_times):
     elif system == 'alpine':
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'openssl-dev',
-                    'boost-libs', 'boost-dev']
+                    'boost-libs', 'boost-dev', 'procps']
 
         if 'docs' in features:
             if revision == '3.10':
