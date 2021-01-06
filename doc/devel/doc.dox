@@ -36,7 +36,7 @@ unless you alter description of existing commands or add a new one.
 There are several steps needed to document a new API command:
 
  1. Configure sources with ./configure --enable-generate-docs
- 1. Copy src/shared/api/_template.json to appropriate name.
+ 1. Copy src/share/api/_template.json to appropriate name.
  2. Remove comments from it and fill in the actual content.
  3. Update api_files.mk file in src/share/api/Makefile.am
  4. make html will generate multi-page html.
