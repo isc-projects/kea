@@ -4,7 +4,6 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib -I$(top_builddir
 AM_CPPFLAGS += -I$(srcdir)/.. -I$(builddir)/..
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_srcdir)/testdata\"
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CPPFLAGS += -Werror
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 if USE_STATIC_LINK
