@@ -119,7 +119,7 @@ shell_command_test() {
     # Check the exit code
     if [ "${shell_exit_code}" -ne 0 ]; then
         echo "ERROR:" \
-        "kea-shell returned ${shell_exit_code} exit code,  expected 0."
+        "kea-shell returned ${shell_exit_code} exit code, expected 0."
     else
         echo "kea-shell returned ${shell_exit_code} exit code as expected."
     fi

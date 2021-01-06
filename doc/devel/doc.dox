@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,9 +36,9 @@ unless you alter description of existing commands or add a new one.
 There are several steps needed to document a new API command:
 
  1. Configure sources with ./configure --enable-generate-docs
- 1. Copy doc/sphinx/api/_template.json to appropriate name.
+ 1. Copy src/shared/api/_template.json to appropriate name.
  2. Remove comments from it and fill in the actual content.
- 3. Update api_files variable in doc/sphinx/Makefile.am
+ 3. Update api_files.mk file in src/share/api/Makefile.am
  4. make html will generate multi-page html.
  5. make singlehtml will generate a single page html.
 

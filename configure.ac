@@ -178,10 +178,10 @@ AC_COMPILE_IFELSE(
     [AC_LANG_PROGRAM(
         [#include <chrono>
         #include <type_traits>]
-	[static_assert(!std::is_same<
+        [static_assert(!std::is_same<
                            std::chrono::system_clock::duration,
-	                   std::chrono::steady_clock::duration
-			            >::value, "");])],
+                           std::chrono::steady_clock::duration
+                                    >::value, "");])],
     [AC_MSG_RESULT(yes)],
     [AC_MSG_RESULT(no)
     AC_DEFINE([CHRONO_SAME_DURATION], [1],
