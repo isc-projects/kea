@@ -438,8 +438,8 @@ CommunicationState4::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
     if (log_unacked) {
         unsigned unacked_left = 0;
         unsigned unacked_total = connecting_clients_.get<1>().count(true);
-        if (config_->getMaxUnackedClients() > unacked_total) {
-            unacked_left = config_->getMaxUnackedClients() - unacked_total;
+        if (config_->getMaxUnackedClients() >= unacked_total) {
+            unacked_left = config_->getMaxUnackedClients() - unacked_total + 1;
         }
         LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED)
             .arg(message->getLabel())
@@ -570,8 +570,8 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
     if (log_unacked) {
         unsigned unacked_left = 0;
         unsigned unacked_total = connecting_clients_.get<1>().count(true);
-        if (config_->getMaxUnackedClients() > unacked_total) {
-            unacked_left = config_->getMaxUnackedClients() - unacked_total;
+        if (config_->getMaxUnackedClients() >= unacked_total) {
+            unacked_left = config_->getMaxUnackedClients() - unacked_total + 1;
         }
         LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED)
             .arg(message->getLabel())
