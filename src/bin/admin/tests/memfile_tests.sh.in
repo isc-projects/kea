@@ -136,7 +136,7 @@ memfile_init_test() {
             clean_exit 1
         fi
         kill "${PID}"
-        if ! wait_for_process_to_die "${PID}"; then
+        if ! wait_for_process_to_stop "${PID}"; then
             clean_up
             clean_exit 2
         fi
