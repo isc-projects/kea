@@ -125,16 +125,16 @@ CommandCreator::createLease6BulkApply(const Lease6CollectionPtr& leases,
 }
 
 ConstElementPtr
-CommandCreator::createLease6BulkApply(Lease6UpdateBacklog& leases) {
+CommandCreator::createLease6BulkApply(LeaseUpdateBacklog& leases) {
     ElementPtr deleted_leases_list = Element::createList();
     ElementPtr leases_list = Element::createList();
 
-    Lease6UpdateBacklog::OpType op_type;
+    LeaseUpdateBacklog::OpType op_type;
     Lease6Ptr lease;
-    while ((lease = leases.pop(op_type))) {
+    while ((lease = boost::dynamic_pointer_cast<Lease6>(leases.pop(op_type)))) {
         ElementPtr lease_as_json = lease->toElement();
         insertLeaseExpireTime(lease_as_json);
-        if (op_type == Lease6UpdateBacklog::DELETE) {
+        if (op_type == LeaseUpdateBacklog::DELETE) {
             deleted_leases_list->add(lease_as_json);
         } else {
             leases_list->add(lease_as_json);

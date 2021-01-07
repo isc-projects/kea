@@ -54,8 +54,7 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
     : io_service_(io_service), network_state_(network_state), config_(config),
       server_type_(server_type), client_(*io_service), communication_state_(),
       query_filter_(config), mutex_(), pending_requests_(),
-      lease4_update_backlog_(config->getDelayedUpdatesLimit()),
-      lease6_update_backlog_(config->getDelayedUpdatesLimit()) {
+      lease_update_backlog_(config->getDelayedUpdatesLimit()) {
 
     if (server_type == HAServerType::DHCPv4) {
         communication_state_.reset(new CommunicationState4(io_service_, config));
@@ -239,8 +238,7 @@ HAService::communicationRecoveryHandler() {
             // to the normal operation.
             if ((communication_state_->getPartnerState() == getNormalState() ||
                  (communication_state_->getPartnerState() == HA_COMMUNICATION_RECOVERY_ST)) &&
-                !lease4_update_backlog_.wasOverflown() &&
-                !lease6_update_backlog_.wasOverflown() &&
+                !lease_update_backlog_.wasOverflown() &&
                 sendLeaseUpdatesFromBacklog()) {
                 // Everything went fine, so we can go back to the normal operation.
                 verboseTransition(getNormalState());
@@ -257,8 +255,7 @@ HAService::communicationRecoveryHandler() {
 
     // When exiting this state we must ensure that lease updates backlog is cleared.
     if (doOnExit()) {
-        lease4_update_backlog_.clear();
-        lease6_update_backlog_.clear();
+        lease_update_backlog_.clear();
     }
 }
 
@@ -992,12 +989,12 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
         if (shouldQueueLeaseUpdates(conf)) {
             // Lease updates for deleted leases.
             for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
-                lease4_update_backlog_.push(Lease4UpdateBacklog::DELETE, *l);
+                lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, *l);
             }
 
             // Lease updates for new allocations and updated leases.
             for (auto l = leases->begin(); l != leases->end(); ++l) {
-                lease4_update_backlog_.push(Lease4UpdateBacklog::ADD, *l);
+                lease_update_backlog_.push(LeaseUpdateBacklog::ADD, *l);
             }
 
             continue;
@@ -1052,12 +1049,12 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
         // be sent when the communication is re-established.
         if (shouldQueueLeaseUpdates(conf)) {
             for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
-                lease6_update_backlog_.push(Lease6UpdateBacklog::DELETE, *l);
+                lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, *l);
             }
 
             // Lease updates for new allocations and updated leases.
             for (auto l = leases->begin(); l != leases->end(); ++l) {
-                lease6_update_backlog_.push(Lease6UpdateBacklog::ADD, *l);
+                lease_update_backlog_.push(LeaseUpdateBacklog::ADD, *l);
             }
 
             continue;
@@ -2062,29 +2059,23 @@ void
 HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
                                             const HAConfig::PeerConfigPtr& config,
                                             PostRequestCallback post_request_action) {
-    auto num_updates = lease4_update_backlog_.size() > 0 ? lease4_update_backlog_.size() :
-        lease6_update_backlog_.size();
-    if (num_updates == 0) {
+    if (lease_update_backlog_.size() == 0) {
         post_request_action(true, "");
         return;
     }
 
     ConstElementPtr command;
-    if (lease4_update_backlog_.size() > 0) {
-        Lease4UpdateBacklog::OpType op_type;
-        Lease4Ptr lease = lease4_update_backlog_.pop(op_type);
-        if (op_type == Lease4UpdateBacklog::ADD) {
+    if (server_type_ == HAServerType::DHCPv4) {
+        LeaseUpdateBacklog::OpType op_type;
+        Lease4Ptr lease = boost::dynamic_pointer_cast<Lease4>(lease_update_backlog_.pop(op_type));
+        if (op_type == LeaseUpdateBacklog::ADD) {
             command = CommandCreator::createLease4Update(*lease);
         } else {
             command = CommandCreator::createLease4Delete(*lease);
         }
 
-    } else if (lease6_update_backlog_.size() > 0) {
-        command = CommandCreator::createLease6BulkApply(lease6_update_backlog_);
-
     } else {
-        post_request_action(true, "");
-        return;
+        command = CommandCreator::createLease6BulkApply(lease_update_backlog_);
     }
 
     // Create HTTP/1.1 request including our command.
@@ -2141,8 +2132,7 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
 
 bool
 HAService::sendLeaseUpdatesFromBacklog() {
-    auto num_updates = lease4_update_backlog_.size() > 0 ? lease4_update_backlog_.size() :
-        lease6_update_backlog_.size();
+    auto num_updates = lease_update_backlog_.size();
     if (num_updates == 0) {
         LOG_INFO(ha_logger, HA_LEASES_BACKLOG_NOTHING_TO_SEND);
         return (true);

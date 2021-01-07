@@ -1119,19 +1119,12 @@ private:
 
 protected:
 
-    /// @brief Backlog of DHCPv4 lease updates.
+    /// @brief Backlog of DHCP lease updates.
     ///
-    /// Unsent DHCPv4 updates are stored in this queue when the server is in
+    /// Unsent lease updates are stored in this queue when the server is in
     /// the communication-recovery state and is temporarily unable to send
     /// lease updates to the partner.
-    Lease4UpdateBacklog lease4_update_backlog_;
-
-    /// @brief Backlog of DHCPv6 lease updates.
-    ///
-    /// Unsent DHCPv6 updates are stored in this queue when the server is in
-    /// the communication-recovery state and is temporarily unable to send
-    /// lease updates to the partner.
-    Lease6UpdateBacklog lease6_update_backlog_;
+    LeaseUpdateBacklog lease_update_backlog_;
 };
 
 /// @brief Pointer to the @c HAService class.

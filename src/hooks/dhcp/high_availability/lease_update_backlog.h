@@ -8,7 +8,6 @@
 #define HA_LEASE_BACKLOG_H
 
 #include <dhcpsrv/lease.h>
-#include <util/multi_threading_mgr.h>
 #include <deque>
 #include <mutex>
 #include <utility>
@@ -32,10 +31,6 @@ namespace ha {
 ///
 /// There are two types of lease updates: "Add" and "Delete". The type
 /// is specified when the lease is appended to the queue.
-///
-/// @tparam LeaseTypePtr Type of the lease, i.e. @c Lease4Ptr or
-/// @c Lease6Ptr.
-template<typename LeaseTypePtr>
 class LeaseUpdateBacklog {
 public:
 
@@ -49,9 +44,7 @@ public:
     ///
     /// @param limit specifies the maximum number of lease updates which
     /// can be stored in the queue.
-    LeaseUpdateBacklog(const size_t limit)
-        : limit_(limit), overflown_(false), outstanding_updates_() {
-    }
+    LeaseUpdateBacklog(const size_t limit);
 
     /// @brief Appends lease update to the queue.
     ///
@@ -59,26 +52,14 @@ public:
     /// @param lease pointer to the lease being added, or deleted.
     /// @return boolean value indicating whether the lease was successfully
     /// appended to the queue (if true) or not (if false).
-    bool push(const OpType op_type, const LeaseTypePtr& lease) {
-        if (util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return (pushInternal(op_type, lease));
-        }
-        return (pushInternal(op_type, lease));
-    }
+    bool push(const OpType op_type, const dhcp::LeasePtr& lease);
 
     /// @brief Returns the next lease update and removes it from the queue.
     ///
     /// @param [out] op_type reference to the value receiving lease update type.
     /// @return pointer to the next lease update in the queue or null pointer
     /// when the queue is empty.
-    LeaseTypePtr pop(OpType& op_type) {
-        if (util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return (popInternal(op_type));
-        }
-        return (popInternal(op_type));
-    }
+    dhcp::LeasePtr pop(OpType& op_type);
 
     /// @brief Checks if the queue was overflown.
     ///
@@ -93,35 +74,15 @@ public:
     /// This flag is reset to false when @c clear is called.
     ///
     /// @return true if the queue was overflown, false otherwise.
-    bool wasOverflown() {
-        if (util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return (overflown_);
-        }
-        return (overflown_);
-    }
+    bool wasOverflown();
 
     /// @brief Removes all lease updates from the queue.
     ///
     /// It also resets the flag indicating that the queue was overflown.
-    void clear() {
-        if (util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            outstanding_updates_.clear();
-            overflown_ = false;
-        }
-        outstanding_updates_.clear();
-        overflown_ = false;
-    }
+    void clear();
 
     /// @brief Returns the current size of the queue.
-    size_t size() {
-        if (util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return (outstanding_updates_.size());
-        }
-        return (outstanding_updates_.size());
-    }
+    size_t size();
 
 private:
 
@@ -131,29 +92,14 @@ private:
     /// @param lease pointer to the lease being added, or deleted.
     /// @return boolean value indicating whether the lease was successfully
     /// appended to the queue (if true) or not (if false).
-    bool pushInternal(const OpType op_type, const LeaseTypePtr& lease) {
-        if (outstanding_updates_.size() >= limit_) {
-            overflown_ = true;
-            return (false);
-        }
-        outstanding_updates_.push_back(std::make_pair(op_type, lease));
-        return (true);
-    }
+    bool pushInternal(const OpType op_type, const dhcp::LeasePtr& lease);
 
     /// @brief Returns the next lease update and removes it from the queue (thread unsafe).
     ///
     /// @param [out] op_type reference to the value receiving lease update type.
     /// @return pointer to the next lease update in the queue or null pointer
     /// when the queue is empty.
-    LeaseTypePtr popInternal(OpType& op_type) {
-        if (outstanding_updates_.empty()) {
-            return (LeaseTypePtr());
-        }
-        auto item = outstanding_updates_.front();
-        outstanding_updates_.pop_front();
-        op_type = item.first;
-        return (item.second);
-    }
+    dhcp::LeasePtr popInternal(OpType& op_type);
 
     /// @brief Holds the queue size limit.
     size_t limit_;
@@ -162,17 +108,11 @@ private:
     bool overflown_;
 
     /// @brief Actual queue of lease updates and their types.
-    std::deque<std::pair<OpType, LeaseTypePtr> > outstanding_updates_;
+    std::deque<std::pair<OpType, dhcp::LeasePtr> > outstanding_updates_;
 
     /// @brief Mutex to protect internal state.
     std::mutex mutex_;
 };
-
-/// @brief Pointer to a backlog of DHCPv4 lease updates.
-typedef LeaseUpdateBacklog<dhcp::Lease4Ptr> Lease4UpdateBacklog;
-
-/// @brief Pointer to a backlog of DHCPv6 lease updates.
-typedef LeaseUpdateBacklog<dhcp::Lease6Ptr> Lease6UpdateBacklog;
 
 } // end of namespace isc::ha
 } // end of namespace isc

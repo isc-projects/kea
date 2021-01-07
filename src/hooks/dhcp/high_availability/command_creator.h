@@ -100,7 +100,7 @@ public:
     /// @param leases Reference to the collection of DHCPv6 leases backlog.
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createLease6BulkApply(Lease6UpdateBacklog& leases);
+    createLease6BulkApply(LeaseUpdateBacklog& leases);
 
     /// @brief Creates lease6-update command.
     ///

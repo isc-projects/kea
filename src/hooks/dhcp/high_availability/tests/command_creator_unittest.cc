@@ -343,9 +343,9 @@ TEST(CommandCreatorTest, createLease6BulkApplyFromBacklog) {
     Lease6Ptr lease = createLease6();
     Lease6Ptr deleted_lease = createLease6();
 
-    Lease6UpdateBacklog backlog(100);
-    backlog.push(Lease6UpdateBacklog::ADD, lease);
-    backlog.push(Lease6UpdateBacklog::DELETE, deleted_lease);
+    LeaseUpdateBacklog backlog(100);
+    backlog.push(LeaseUpdateBacklog::ADD, lease);
+    backlog.push(LeaseUpdateBacklog::DELETE, deleted_lease);
 
     ConstElementPtr command = CommandCreator::createLease6BulkApply(backlog);
     ConstElementPtr arguments;

@@ -202,8 +202,7 @@ public:
     using HAService::config_;
     using HAService::communication_state_;
     using HAService::query_filter_;
-    using HAService::lease4_update_backlog_;
-    using HAService::lease6_update_backlog_;
+    using HAService::lease_update_backlog_;
 };
 
 /// @brief Pointer to the @c TestHAService.
@@ -906,7 +905,8 @@ public:
         state->modifyPokeTime(-30);
 
         // Create HA service and schedule lease updates.
-        service_.reset(new TestHAService(io_service_, network_state_, config_storage));
+        service_.reset(new TestHAService(io_service_, network_state_, config_storage,
+                                         HAServerType::DHCPv6));
         service_->communication_state_ = state;
 
         service_->transition(my_state.state_, HAService::NOP_EVT);
@@ -1087,7 +1087,7 @@ public:
         EXPECT_FALSE(unpark_called);
 
         // Let's make sure they have been queued.
-        EXPECT_EQ(2, service_->lease4_update_backlog_.size());
+        EXPECT_EQ(2, service_->lease_update_backlog_.size());
 
         // Make partner available.
         service_->communication_state_->poke();
@@ -1108,7 +1108,7 @@ public:
                                                                  "192.2.3.4"));
 
         // Backlog should be empty.
-        EXPECT_EQ(0, service_->lease4_update_backlog_.size());
+        EXPECT_EQ(0, service_->lease_update_backlog_.size());
     }
 
     /// @brief Tests that a DHCPv4 server trying to recover from the communication
@@ -1135,7 +1135,7 @@ public:
         EXPECT_FALSE(unpark_called);
 
         // Let's make sure they have been queued.
-        EXPECT_EQ(2, service_->lease4_update_backlog_.size());
+        EXPECT_EQ(2, service_->lease_update_backlog_.size());
 
         // Make partner available.
         service_->communication_state_->poke();
@@ -1158,7 +1158,7 @@ public:
         EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease4-update",
                                                                  "192.1.2.3"));
         // The backlog should be empty.
-        EXPECT_EQ(0, service_->lease4_update_backlog_.size());
+        EXPECT_EQ(0, service_->lease_update_backlog_.size());
     }
 
     /// @brief Tests scenarios when lease updates are not sent to the failover peer.
@@ -1411,7 +1411,7 @@ public:
         EXPECT_FALSE(unpark_called);
 
         // Let's make sure they have been queued.
-        EXPECT_EQ(2, service_->lease6_update_backlog_.size());
+        EXPECT_EQ(2, service_->lease_update_backlog_.size());
 
         // Make partner available.
         service_->communication_state_->poke();
@@ -1431,7 +1431,7 @@ public:
                                                                  "2001:db8:1::efac"));
 
         // Backlog should be empty.
-        EXPECT_EQ(0, service_->lease6_update_backlog_.size());
+        EXPECT_EQ(0, service_->lease_update_backlog_.size());
     }
 
     /// @brief Tests that a DHCPv6 server trying to recover from the communication
@@ -1458,7 +1458,7 @@ public:
         EXPECT_FALSE(unpark_called);
 
         // Let's make sure they have been queued.
-        EXPECT_EQ(2, service_->lease6_update_backlog_.size());
+        EXPECT_EQ(2, service_->lease_update_backlog_.size());
 
         // Make partner available.
         service_->communication_state_->poke();
@@ -1479,7 +1479,7 @@ public:
                                                                  "2001:db8:1::efac"));
 
         // Backlog should be empty.
-        EXPECT_EQ(0, service_->lease6_update_backlog_.size());
+        EXPECT_EQ(0, service_->lease_update_backlog_.size());
     }
 
     /// @brief Tests scenarios when lease updates are not sent to the failover peer.

@@ -25,7 +25,7 @@ libha_la_SOURCES += ha_messages.cc ha_messages.h
 libha_la_SOURCES += ha_server_type.h
 libha_la_SOURCES += ha_service.cc ha_service.h
 libha_la_SOURCES += ha_service_states.cc ha_service_states.h
-libha_la_SOURCES += lease_update_backlog.h
+libha_la_SOURCES += lease_update_backlog.cc lease_update_backlog.h
 libha_la_SOURCES += query_filter.cc query_filter.h
 libha_la_SOURCES += version.cc
 
