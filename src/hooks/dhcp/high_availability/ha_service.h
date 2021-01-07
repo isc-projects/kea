@@ -470,6 +470,23 @@ protected:
     /// @return true if the maintenance was canceled, false otherwise.
     bool isMaintenanceCanceled() const;
 
+    /// @brief Indicates if the partner's state is invalid.
+    ///
+    /// Partner's state is invalid from the local server's perspective when the
+    /// remote server can't transition to this state if the configuration is
+    /// consistent with the local server's configuration.
+    ///
+    /// The following cases are currently checked:
+    /// - partner in communication-recovery state but this server not in the
+    ///   load balancing mode,
+    /// - partner in the hot-standby state but this server not in the hot standby
+    ///   mode,
+    /// - partner in the load-balancing state but this server not in the
+    ///   load balancing mode.
+    ///
+    /// @return true if the partner's state is invalid, false otherwise.
+    bool isPartnerStateInvalid() const;
+
 public:
 
     /// @brief Schedules asynchronous IPv4 leases updates.

@@ -228,6 +228,24 @@ servers to resume the HA service.
 This informational message indicates that the High Availability hooks library
 has been loaded successfully.
 
+% HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY partner is in the communication-recovery state unexpectedly
+This warning message is issued when a partner is in the communication-recovery
+state, and this server is not running in the load balancing mode. The server
+may only transition to the communication-recovery state when it runs in the
+load balancing mode. The HA mode of both servers must be the same.
+
+% HA_INVALID_PARTNER_STATE_HOT_STANDBY partner is in the hot-standby state unexpectedly
+This warning message is issued when a partner is in the hot-standby state,
+and this server is not running in the hot standby mode. The server may only
+transition to the hot-standby state when it runs in the hot standby mode.
+The HA mode of both servers must be the same.
+
+% HA_INVALID_PARTNER_STATE_LOAD_BALANCING partner is in the load-balancing state unexpectedly
+This warning message is issued when a partner is in the load-balancing state,
+and this server is not running in the load balancing mode. The server may only
+transition to the load-balancing state when it runs in the load balancing mode.
+The HA mode of both servers must be the same.
+
 % HA_LEASES4_COMMITTED_FAILED leases4_committed callout failed: %1
 This error message is issued when the callout for the leases4_committed hook
 point failed. This includes unexpected errors like wrong arguments provided to

@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Tue Dec 22 2020 09:50
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes
 
 #ifndef HA_MESSAGES_H
 #define HA_MESSAGES_H
@@ -44,6 +44,9 @@ extern const isc::log::MessageID HA_HEARTBEAT_HANDLER_FAILED;
 extern const isc::log::MessageID HA_HIGH_CLOCK_SKEW;
 extern const isc::log::MessageID HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION;
 extern const isc::log::MessageID HA_INIT_OK;
+extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY;
+extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_HOT_STANDBY;
+extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_LOAD_BALANCING;
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_FAILED;
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE;
 extern const isc::log::MessageID HA_LEASES6_COMMITTED_FAILED;

@@ -184,6 +184,9 @@ HAService::communicationRecoveryHandler() {
     } else if (shouldTerminate()) {
         verboseTransition(HA_TERMINATED_ST);
 
+    } else if (isPartnerStateInvalid()) {
+        verboseTransition(HA_WAITING_ST);
+
     } else {
 
         // Transitions based on the partner's state.
@@ -283,6 +286,14 @@ HAService::normalStateHandler() {
     // the terminated state.
     if (shouldTerminate()) {
         verboseTransition(HA_TERMINATED_ST);
+        return;
+    }
+
+    // Check if the partner state is valid per current configuration. If it is
+    // in an invalid state let's transition to the waiting state and stay there
+    // until the configuration is corrected.
+    if (isPartnerStateInvalid()) {
+        verboseTransition(HA_WAITING_ST);
         return;
     }
 
@@ -397,6 +408,14 @@ HAService::partnerDownStateHandler() {
         return;
     }
 
+    // Check if the partner state is valid per current configuration. If it is
+    // in an invalid state let's transition to the waiting state and stay there
+    // until the configuration is corrected.
+    if (isPartnerStateInvalid()) {
+        verboseTransition(HA_WAITING_ST);
+        return;
+    }
+
     switch (communication_state_->getPartnerState()) {
     case HA_HOT_STANDBY_ST:
     case HA_LOAD_BALANCING_ST:
@@ -504,6 +523,14 @@ HAService::readyStateHandler() {
         return;
     }
 
+    // Check if the partner state is valid per current configuration. If it is
+    // in an invalid state let's transition to the waiting state and stay there
+    // until the configuration is corrected.
+    if (isPartnerStateInvalid()) {
+        verboseTransition(HA_WAITING_ST);
+        return;
+    }
+
     switch (communication_state_->getPartnerState()) {
     case HA_HOT_STANDBY_ST:
     case HA_LOAD_BALANCING_ST:
@@ -570,6 +597,14 @@ HAService::syncingStateHandler() {
     // the terminated state.
     if (shouldTerminate()) {
         verboseTransition(HA_TERMINATED_ST);
+        return;
+    }
+
+    // Check if the partner state is valid per current configuration. If it is
+    // in an invalid state let's transition to the waiting state and stay there
+    // until the configuration is corrected.
+    if (isPartnerStateInvalid()) {
+        verboseTransition(HA_WAITING_ST);
         return;
     }
 
@@ -692,6 +727,14 @@ HAService::waitingStateHandler() {
     // the terminated state.
     if (shouldTerminate()) {
         verboseTransition(HA_TERMINATED_ST);
+        return;
+    }
+
+    // Check if the partner state is valid per current configuration. If it is
+    // in an invalid state let's sit in the waiting state until the configuration
+    // is corrected.
+    if (isPartnerStateInvalid()) {
+        postNextEvent(NOP_EVT);
         return;
     }
 
@@ -966,6 +1009,36 @@ HAService::shouldTerminate() const {
 bool
 HAService::isMaintenanceCanceled() const {
     return (getLastEvent() == HA_MAINTENANCE_CANCEL_EVT);
+}
+
+bool
+HAService::isPartnerStateInvalid() const {
+    switch (communication_state_->getPartnerState()) {
+        case HA_COMMUNICATION_RECOVERY_ST:
+            if (config_->getHAMode() != HAConfig::LOAD_BALANCING) {
+                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY);
+                return (true);
+            }
+            break;
+
+        case HA_HOT_STANDBY_ST:
+            if (config_->getHAMode() != HAConfig::HOT_STANDBY) {
+                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_HOT_STANDBY);
+                return (true);
+            }
+            break;
+
+        case HA_LOAD_BALANCING_ST:
+            if (config_->getHAMode() != HAConfig::LOAD_BALANCING) {
+                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_LOAD_BALANCING);
+                return (true);
+            }
+            break;
+
+       default:
+           ;
+    }
+    return (false);
 }
 
 size_t

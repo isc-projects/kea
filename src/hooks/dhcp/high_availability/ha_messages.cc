@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Tue Dec 22 2020 09:50
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -43,6 +43,9 @@ extern const isc::log::MessageID HA_HEARTBEAT_HANDLER_FAILED = "HA_HEARTBEAT_HAN
 extern const isc::log::MessageID HA_HIGH_CLOCK_SKEW = "HA_HIGH_CLOCK_SKEW";
 extern const isc::log::MessageID HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION = "HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION";
 extern const isc::log::MessageID HA_INIT_OK = "HA_INIT_OK";
+extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY = "HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY";
+extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_HOT_STANDBY = "HA_INVALID_PARTNER_STATE_HOT_STANDBY";
+extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_LOAD_BALANCING = "HA_INVALID_PARTNER_STATE_LOAD_BALANCING";
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_FAILED = "HA_LEASES4_COMMITTED_FAILED";
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE = "HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE";
 extern const isc::log::MessageID HA_LEASES6_COMMITTED_FAILED = "HA_LEASES6_COMMITTED_FAILED";
@@ -134,6 +137,9 @@ const char* values[] = {
     "HA_HIGH_CLOCK_SKEW", "%1, please synchronize clocks!",
     "HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION", "%1, causing HA service to terminate",
     "HA_INIT_OK", "loading High Availability hooks library successful",
+    "HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY", "partner is in the communication-recovery state unexpectedly",
+    "HA_INVALID_PARTNER_STATE_HOT_STANDBY", "partner is in the hot-standby state unexpectedly",
+    "HA_INVALID_PARTNER_STATE_LOAD_BALANCING", "partner is in the load-balancing state unexpectedly",
     "HA_LEASES4_COMMITTED_FAILED", "leases4_committed callout failed: %1",
     "HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE", "%1: leases4_committed callout was invoked without any leases",
     "HA_LEASES6_COMMITTED_FAILED", "leases6_committed callout failed: %1",
