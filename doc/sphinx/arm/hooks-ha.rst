@@ -218,6 +218,9 @@ The following is the list of all possible server states:
    remain operational but the communication between them is interrupted
    for a prolonged period of time. The server can be configured to never
    enter this state by setting the ``delayed-updates-limit`` to 0.
+   Disabling entry into this state will cause the server to begin testing
+   for and possibly enter ``partner-down`` state when the server is unable
+   to communicate with its partner.
 
 -  ``hot-standby`` - normal operation of the active server running in
    the hot-standby mode; both the primary and the standby server are in
@@ -609,6 +612,17 @@ procedure and controls server's behavior in the ``communication-recovery``
 state which was introduced in the same release. This parameter may
 only be used in the load balancing mode.
 
+.. note::
+
+   In Kea 1.9.4, with the introduction of the ``delayed-updates-limit``,
+   the default server's behavior has changed when the server
+   runs in the load balancing mode. When the server experiences
+   communication issues with its partner, it enters ``communication-recovery``
+   state and queues lease updates until communication is resumed. Before
+   Kea 1.9.4 the server would begin the failover procedure in the
+   ``load-balancing`` state and possibly transition straight to the
+   ``partner-down`` state when communication is not resumed.
+
 If the server is in the ``load-balancing`` state and it experiences
 communication issues with its partner (heartbeat or lease update fail),
 the server transitions to the ``communication-recovery`` state. In this
@@ -660,6 +674,12 @@ may be longer than lease database synchronization. In such cases it
 may be better to use a lower value, e.g. 10. The default value is 100
 which seems to be a reasonable compromise and should work well in
 most deployments with moderate traffic.
+
+.. note::
+
+   This parameter is new and values for it that work well in some environments
+   may not work well in others.  Feedback from users will help us build a
+   better working set of recommendations.
 
 The ``peers`` parameter contains a list of servers within this HA setup.
 This configuration must contain at least one primary and one secondary
