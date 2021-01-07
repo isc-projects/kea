@@ -69,8 +69,8 @@ server synchronizes the database first. The secondary server waits for
 the primary server to complete the lease database synchronization before
 it starts the synchronization.
 
-In the hot-standby configuration, one of the servers is also designated
-as "primary" and the second as "standby." However, during normal
+In the hot-standby configuration, one of the servers is designated
+as "primary" and the other as "standby." However, during normal
 operation, the primary server is the only one that responds to DHCP
 requests. The standby server receives lease updates from the primary
 over the control channel; however, it does not respond to any DHCP
@@ -606,11 +606,11 @@ set the ``max-unacked-clients`` to 0.
 The ``delayed-updates-limit`` parameter was introduced in Kea 1.9.4. It
 is used to enable or disable the use of the communication recovery
 procedure and controls server's behavior in the ``communication-recovery``
-state which were introduced in the same release. This parameter may
+state which was introduced in the same release. This parameter may
 only be used in the load balancing mode.
 
 If the server is in the ``load-balancing`` state and it experiences
-communication issues with a partner (heartbeat or lease update fail),
+communication issues with its partner (heartbeat or lease update fail),
 the server transitions to the ``communication-recovery`` state. In this
 state the server keeps responding to DHCP queries but it does not send
 lease updates to the partner. The lease updates are queued until the
@@ -637,27 +637,27 @@ of the same IP addresses or delegated prefixes to different clients
 by respective servers. By entering the intermediate ``communication-recovery``
 state these problems are avoided.
 
-If the server in the ``communication-recovery`` state re-establishes
-communication with the partner, it will try to send all outstanding
-lease updates to it. This is done synchronously and may take considerable
-amount of time before the server transitions to the ``load-balancing``
-state and resumes normal operation. The maximum number of lease updates
-which can be queued in the ``communication-recovery`` state is controlled
-by the ``delayed-updates-limit``. If the limit is exceeded, the server
-stops queuing lease updates and will perform full database synchronization
-after re-establishing the connection with the partner instead of
-sending outstanding lease updates before transitioning to
-``load-balancing`` state. Even if the limit is exceeded, the server
-in the ``communication-recovery`` state remains responsive to the DHCP
-clients.
+If a server in the ``communication-recovery`` state re-establishes
+communication with its partner, it will try to send the partner all
+of the outstanding lease updates the server has queued. This is done
+synchronously and may take considerable amount of time before the server
+transitions to the ``load-balancing`` state and resumes normal operation.
+The maximum number of lease updates which can be queued in the
+``communication-recovery`` state is controlled by the ``delayed-updates-limit``.
+If the limit is exceeded, the server stops queuing lease updates and
+will perform full database synchronization after re-establishing the
+connection with the partner instead of sending outstanding lease updates
+before transitioning to ``load-balancing`` state. Even if the limit is
+exceeded, the server in the ``communication-recovery`` state remains
+responsive to the DHCP clients.
 
-It is preferred to set higher values of ``delayed-updates-limit`` when
+It may be preferable to set higher values of ``delayed-updates-limit`` when
 there is a risk of prolonged communication interruption between the
 servers and the lease database is large. This would avoid costly
 lease database synchronization. On the other hand, if the lease
 database is small the time required to send outstanding lease updates
 may be longer than lease database synchronization. In such cases it
-may be better to use lower value, e.g. 10. The default value is 100
+may be better to use a lower value, e.g. 10. The default value is 100
 which seems to be a reasonable compromise and should work well in
 most deployments with moderate traffic.
 
