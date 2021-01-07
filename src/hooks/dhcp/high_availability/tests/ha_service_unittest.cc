@@ -1115,13 +1115,6 @@ public:
     /// interruption transitions to the waiting state if the partner refuses delayed
     /// lease updates.
     void testSendUpdatesCommunicationRecoveryFailed() {
-        // Start HTTP servers.
-        ASSERT_NO_THROW({
-                listener_->start();
-                listener2_->start();
-                listener3_->start();
-        });
-
         // Simulate that the partner returns an error.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
 
@@ -1140,6 +1133,13 @@ public:
         // Make partner available.
         service_->communication_state_->poke();
         service_->communication_state_->setPartnerState("load-balancing");
+
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
 
         // This should cause the server to attempt to send outstanding lease
         // updates to the partner. The partner reports an error so that should
@@ -1438,13 +1438,6 @@ public:
     /// interruption transitions to the waiting state if the partner refuses delayed
     /// lease updates.
     void testSendUpdatesCommunicationRecovery6Failed() {
-        // Start HTTP servers.
-        ASSERT_NO_THROW({
-                listener_->start();
-                listener2_->start();
-                listener3_->start();
-        });
-
         // Simulate that the partner returns an error.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
 
@@ -1463,6 +1456,13 @@ public:
         // Make partner available.
         service_->communication_state_->poke();
         service_->communication_state_->setPartnerState("load-balancing");
+
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
 
         // This should cause the server to attempt to send outstanding lease
         // updates to the partner. The partner reports an error so that should
