@@ -386,7 +386,7 @@ public:
     /// unsent in the communication-recovery state.
     ///
     /// If the server is in the communication-recovery state it is unable to
-    /// send lease updates to the partner. Instead it keeps lease updates
+    /// send lease updates to the partner. Instead it keeps lease updates,
     /// hoping to send them when the communication is resumed. This value
     /// designates a limit of how many such updates can be held. If this
     /// number is exceeded the server continues to respond to the clients
@@ -402,7 +402,7 @@ public:
     /// unsent in the communication-recovery state.
     ///
     /// If the server is in the communication-recovery state it is unable to
-    /// send lease updates to the partner. Instead it keeps lease updates
+    /// send lease updates to the partner. Instead it keeps lease updates,
     /// hoping to send them when the communication is resumed. This value
     /// designates a limit of how many such updates can be held. If this
     /// number is exceeded the server continues to respond to the clients

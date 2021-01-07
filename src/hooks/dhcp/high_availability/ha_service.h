@@ -141,9 +141,12 @@ public:
     /// tries to send them in bulk when it returns to the
     /// load-balancing state.
     ///
-    /// A server running in the hot-standby mode never enters this
-    /// state. In this mode, even a short communication failure may
-    /// cause the primary server to transition to the partner-down
+    /// Transitioning into this state is only enabled when delayed-updates-limit
+    /// is non-zero.
+    ///
+    /// A server running in the hot-standby mode is never allowed to
+    /// enter this state. In this mode, even a short communication failure
+    /// may cause the primary server to transition to the partner-down
     /// state. Consequently, two servers would be responding to
     /// DHCP queries, possibly allocating the same addresses to two
     /// different clients. This doesn't occur in load-balancing mode
@@ -813,6 +816,9 @@ protected:
     /// It instructs the server to disable the DHCP service on the HA peer,
     /// fetch all leases from the peer and update the local lease database.
     ///
+    /// This method creates its own instances of the HttpClient and IOService and
+    /// invokes IOService::run().
+    ///
     /// @param [out] status_message status message in textual form.
     /// @param server_name name of the server to fetch leases from.
     /// @param max_period maximum number of seconds to disable DHCP service
@@ -853,6 +859,9 @@ protected:
     /// updates are sent to the partner before the server can continue normal
     /// operation in the load-balancing state. In order to prevent collisions
     /// between new allocations and oustanding updates this method is synchronous.
+    ///
+    /// This method creates its own instances of the HttpClient and IOService and
+    /// invokes IOService::run().
     ///
     /// @return boolean value indicating that the lease updates were delivered
     /// successfully (when true) or unsuccessfully (when false).
@@ -905,6 +914,9 @@ public:
     /// with an error, this server won't transition to the partner-in-maintenance
     /// state and signal an error to the caller. If the partner is unavailable,
     /// this server will directly transition to the partner-down state.
+    ///
+    /// This method creates its own instances of the HttpClient and IOService and
+    /// invokes IOService::run().
     ///
     /// @return Pointer to the response to the ha-maintenance-start.
     data::ConstElementPtr processMaintenanceStart();

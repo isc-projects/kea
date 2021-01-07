@@ -82,7 +82,7 @@ HAService::defineEvents() {
     defineEvent(HA_MAINTENANCE_NOTIFY_EVT, "HA_MAINTENANCE_NOTIFY_EVT");
     defineEvent(HA_MAINTENANCE_START_EVT, "HA_MAINTENANCE_START_EVT");
     defineEvent(HA_MAINTENANCE_CANCEL_EVT, "HA_MAINTENANCE_CANCEL_EVT");
- }
+}
 
 void
 HAService::verifyEvents() {
@@ -986,6 +986,9 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
     for (auto p = peers_configs.begin(); p != peers_configs.end(); ++p) {
         HAConfig::PeerConfigPtr conf = p->second;
 
+        // Check if the lease updates should be queued. This is the case when the
+        // server is in the communication-recovery state. Queued lease updates may
+        // be sent when the communication is re-established.
         if (shouldQueueLeaseUpdates(conf)) {
             // Lease updates for deleted leases.
             for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
@@ -1044,6 +1047,9 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
     for (auto p = peers_configs.begin(); p != peers_configs.end(); ++p) {
         HAConfig::PeerConfigPtr conf = p->second;
 
+        // Check if the lease updates should be queued. This is the case when the
+        // server is in the communication-recovery state. Queued lease updates may
+        // be sent when the communication is re-established.
         if (shouldQueueLeaseUpdates(conf)) {
             for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
                 lease6_update_backlog_.push(Lease6UpdateBacklog::DELETE, *l);
@@ -2120,6 +2126,11 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
                  }
              }
 
+             // Recursively send all outstanding lease updates or break when an
+             // error occurs. In DHCPv6, this is a single iteration because we use
+             // lease6-bulk-apply, which combines many lease updates in a single
+             // transaction. In the case of DHCPv4, each update is sent in its own
+             // transaction.
              if (error_message.empty()) {
                  asyncSendLeaseUpdatesFromBacklog(http_client, config, post_request_action);
              } else {
