@@ -1,7 +1,7 @@
 1852.	[bug]		razvan
-	Fixed log and report values for unacked-clients-left used to inform
-	the user about clients that need to be unacked before transitioning
-	to partner-down state.
+	Corrected the value of unacked-clients-left returned in response
+	to the status-get command and the corresponding log messages.
+	The previously returned value was too low by 1.
 	(Gitlab #1578)
 
 1851.	[func]		fdupont
