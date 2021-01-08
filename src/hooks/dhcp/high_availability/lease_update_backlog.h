@@ -31,6 +31,17 @@ namespace ha {
 ///
 /// There are two types of lease updates: "Add" and "Delete". The type
 /// is specified when the lease is appended to the queue.
+///
+/// The backlog queue holds both "Add" and "Delete" lease updates in a
+/// single std::deque container, which allows for ordering them
+/// chronologically and using this ordering for queue optimizations in
+/// the future. For example, if the queue contains consecutive "Delete"
+/// updates for a particular IP address, the server could only delete
+/// the lease once. If the queue contains multiple "Delete" lease updates
+/// followed by an "Add" update, the server could skip sending "Delete"
+/// updates.
+///
+/// Queue optimizations will be subject to future work!
 class LeaseUpdateBacklog {
 public:
 
