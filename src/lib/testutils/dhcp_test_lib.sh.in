@@ -1002,7 +1002,7 @@ server_pid_file_test() {
     # Verify server is still running
     verify_server_pid "${bin}" "${CFG_FILE}"
 
-    printf 'PID file is [%s],  PID is [%d]' "${_SERVER_PID_FILE}" "${_SERVER_PID}"
+    printf 'PID file is [%s], PID is [%d]\n' "${_SERVER_PID_FILE}" "${_SERVER_PID}"
 
     # Now try to start a second one
     start_kea "${bin_path}/${bin}"

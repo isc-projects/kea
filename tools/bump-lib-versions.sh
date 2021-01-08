@@ -104,7 +104,7 @@ is_new_tag_stable_release=$(is_stable_release "${new_release_tag}" && printf tru
 #    illegal as there should only be stable to stable bump lib versions
 
 if ! ${is_old_tag_stable_release} && ${is_new_tag_stable_release}; then
-  printf 'illegal bump in lib versions from development release to stable release'
+  printf 'ERROR: illegal bump in lib versions from development release to stable release\n' >&2
   exit 1
 fi
 
@@ -116,7 +116,7 @@ cd "${root_path}"
 # Check if there are any unstaged changes.
 diff=$(git diff 2>&1)
 if test -n "${diff}"; then
-  printf 'Stage changes for %s before running this script...\n' "${root_path}"
+  printf 'ERROR: stage changes for %s before running this script\n' "${root_path}" >&2
   exit 1
 fi
 
