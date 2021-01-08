@@ -341,9 +341,9 @@ CommunicationState::getReport() const {
     report->set("unacked-clients", Element::create(static_cast<long long>(getUnackedClientsCount())));
 
     long long unacked_clients_left = 0;
-    if (isCommunicationInterrupted() && (config_->getMaxUnackedClients() > getUnackedClientsCount())) {
+    if (isCommunicationInterrupted() && (config_->getMaxUnackedClients() >= getUnackedClientsCount())) {
         unacked_clients_left = static_cast<long long>(config_->getMaxUnackedClients() -
-                                                      getUnackedClientsCount());
+                                                      getUnackedClientsCount() + 1);
     }
     report->set("unacked-clients-left", Element::create(unacked_clients_left));
     report->set("analyzed-packets", Element::create(static_cast<long long>(getAnalyzedMessagesCount())));

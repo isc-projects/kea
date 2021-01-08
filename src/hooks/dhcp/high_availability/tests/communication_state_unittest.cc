@@ -775,7 +775,7 @@ TEST_F(CommunicationStateTest, getReport) {
         "    \"communication-interrupted\": true,"
         "    \"connecting-clients\": 2,"
         "    \"unacked-clients\": 1,"
-        "    \"unacked-clients-left\": 9,"
+        "    \"unacked-clients-left\": 10,"
         "    \"analyzed-packets\": 2"
         "}";
     EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), report));
