@@ -1,3 +1,9 @@
+1852.	[bug]		razvan
+	Fixed log and report values for unacked-clients-left used to inform
+	the user about clients that need to be unacked before transitioning
+	to partner-down state.
+	(Gitlab #1578)
+
 1851.	[func]		fdupont
 	Removed methods fetching leases by both client identifier
 	and hardware addresses from the API.
