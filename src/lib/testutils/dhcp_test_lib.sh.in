@@ -508,10 +508,9 @@ kill_processes_by_name() {
     local pids
     pids=$(pgrep "${proc_name}" || true)
     # For each PID found, send kill signal.
-    for pid in ${pids}
-    do
-        printf 'Shutting down Kea process %s having pid %d.\n' "${proc_name}" "${pid}"
-        kill -9 "${pid}"
+    for pid in ${pids}; do
+        printf 'Shutting down Kea process %s with PID %d...\n' "${proc_name}" "${pid}"
+        kill -9 "${pid}" || true
     done
 }
 
