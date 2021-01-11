@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4371,6 +4371,29 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerUnauthorized) {
     EXPECT_EQ(HA_PARTNER_IN_MAINTENANCE_ST, service.getCurrState());
 }
 
+// This test verifies that the ha-reset command is processed successfully.
+TEST_F(HAServiceTest, processHAReset) {
+    HAConfigPtr config_storage = createValidConfiguration();
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    // Transion the server to the load-balancing state.
+    EXPECT_NO_THROW(service.transition(HA_LOAD_BALANCING_ST, HAService::NOP_EVT));
+
+    // Process ha-reset command that should cause the server to transition
+    // to the waiting state.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processHAReset());
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "HA state machine reset.");
+
+    // Response should include no arguments.
+    EXPECT_FALSE(rsp->get("arguments"));
+
+    // The server should be in the waiting state.
+    EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
+}
 
 /// @brief HA partner to the server under test.
 ///

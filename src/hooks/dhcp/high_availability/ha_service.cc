@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1504,6 +1504,13 @@ HAService::processHeartbeat() {
 
     return (createAnswer(CONTROL_RESULT_SUCCESS, "HA peer status returned.",
                          arguments));
+}
+
+ConstElementPtr
+HAService::processHAReset() {
+    verboseTransition(HA_WAITING_ST);
+    runModel(NOP_EVT);
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "HA state machine reset."));
 }
 
 void

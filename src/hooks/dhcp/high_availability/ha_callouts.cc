@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -270,6 +270,17 @@ int maintenance_cancel_command(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief ha-reset command handler implementation.
+int ha_reset_command(CalloutHandle& handle) {
+    try {
+        impl->haResetHandler(handle);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_RESET_HANDLER_FAILED)
+            .arg(ex.what());
+    }
+}
+
 /// @brief This function is called when the library is loaded.
 ///
 /// @param handle library handle
@@ -307,6 +318,7 @@ int load(LibraryHandle& handle) {
         handle.registerCommandCallout("ha-maintenance-notify", maintenance_notify_command);
         handle.registerCommandCallout("ha-maintenance-start", maintenance_start_command);
         handle.registerCommandCallout("ha-maintenance-cancel", maintenance_cancel_command);
+        handle.registerCommandCallout("ha-reset", ha_reset_command);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_CONFIGURATION_FAILED)

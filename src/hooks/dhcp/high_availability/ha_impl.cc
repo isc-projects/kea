@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -458,6 +458,12 @@ HAImpl::maintenanceStartHandler(hooks::CalloutHandle& callout_handle) {
 void
 HAImpl::maintenanceCancelHandler(hooks::CalloutHandle& callout_handle) {
     ConstElementPtr response = service_->processMaintenanceCancel();
+    callout_handle.setArgument("response", response);
+}
+
+void
+HAImpl::haResetHandler(hooks::CalloutHandle& callout_handle) {
+    ConstElementPtr response = service_->processHAReset();
     callout_handle.setArgument("response", response);
 }
 

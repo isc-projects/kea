@@ -470,6 +470,11 @@ This error message is issued to indicate that the configuration for the
 High Availability hooks library hasn't been specified. The 'high-availability'
 parameter must be specified for the hooks library to load properly.
 
+% HA_RESET_HANDLER_FAILED ha-reset command failed: %1
+This error message is issued to indicate that the ha-reset command handler
+failed while processing the command. The argument provides the reason for
+failure.
+
 % HA_SCOPES_HANDLER_FAILED ha-scopes command failed: %1
 This error message is issued to indicate that the ha-scopes command handler
 failed while processing the command. The argument provides reason for

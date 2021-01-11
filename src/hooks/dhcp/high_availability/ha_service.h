@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -638,11 +638,23 @@ public:
 
     /// @brief Processes status-get command and returns a response.
     ///
-    ///
-    ///
     /// @c HAImpl::commandProcessed calls this to add information about the
     /// HA servers status into the status-get response.
     data::ConstElementPtr processStatusGet() const;
+
+    /// @brief Processes ha-reset command and returns a response.
+    ///
+    /// This method processes ha-reset command which instructs the server to
+    /// transition to the waiting state. A partner may send this command when
+    /// the communication is re-established between the servers in the
+    /// communication-recovery state and full lease database synchronization is
+    /// required. This command may also be sent by an operator if the server's
+    /// state is invalid and the reset operation may help correct the situation.
+    ///
+    /// The ha-reset takes no arguments.
+    ///
+    /// @return Pointer to a response to the ha-reset command.
+    data::ConstElementPtr processHAReset();
 
 protected:
 
