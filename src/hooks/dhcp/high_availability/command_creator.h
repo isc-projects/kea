@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,9 +30,17 @@ public:
 
     /// @brief Creates dhcp-enable command for DHCP server.
     ///
+    /// @param server_type type of the DHCP server, i.e. v4 or v6.
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
     createDHCPEnable(const HAServerType& server_type);
+
+    /// @brief Creates ha-reset command.
+    ///
+    /// @param server_type type of the DHCP server, i.e. v4 or v6.
+    /// @return Pointer to the JSON representation of the command.
+    static data::ConstElementPtr
+    createHAReset(const HAServerType& server_type);
 
     /// @brief Creates ha-heartbeat command for DHCP server.
     ///

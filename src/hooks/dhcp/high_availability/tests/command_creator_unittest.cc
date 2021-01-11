@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -170,6 +170,12 @@ TEST(CommandCreatorTest, createDHCPEnable4) {
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-enable", "dhcp4"));
 }
 
+// This test verifies that the ha-reset command sent to DHCPv4 server is correct.
+TEST(CommandCreatorTest, createHAReset4) {
+    ConstElementPtr command = CommandCreator::createHAReset(HAServerType::DHCPv4);
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-reset", "dhcp4"));
+}
+
 // This test verifies that the ha-heartbeat command is correct.
 TEST(CommandCreatorTest, createHeartbeat4) {
     ConstElementPtr command = CommandCreator::createHeartbeat(HAServerType::DHCPv4);
@@ -281,6 +287,14 @@ TEST(CommandCreatorTest, createDHCPEnable6) {
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-enable", "dhcp6"));
 }
 
+// This test verifies that the ha-reset command sent to DHCPv6 server is correct.
+TEST(CommandCreatorTest, createHAReset6) {
+    ConstElementPtr command = CommandCreator::createHAReset(HAServerType::DHCPv6);
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-reset", "dhcp6"));
+}
+
+// This test verifies that the command generated for the lease update
+// is correct.
 TEST(CommandCreatorTest, createLease6Update) {
     ConstElementPtr command = CommandCreator::createLease6Update(*createLease6());
     ConstElementPtr arguments;

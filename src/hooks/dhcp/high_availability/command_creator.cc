@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,6 +34,13 @@ CommandCreator::createDHCPDisable(const unsigned int max_period,
 ConstElementPtr
 CommandCreator::createDHCPEnable(const HAServerType& server_type) {
     ConstElementPtr command = config::createCommand("dhcp-enable");
+    insertService(command, server_type);
+    return (command);
+}
+
+ConstElementPtr
+CommandCreator::createHAReset(const HAServerType& server_type) {
+    ConstElementPtr command = config::createCommand("ha-reset");
     insertService(command, server_type);
     return (command);
 }
