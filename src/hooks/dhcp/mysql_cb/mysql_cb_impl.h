@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -114,11 +114,11 @@ public:
     /// @brief Destructor.
     virtual ~MySqlConfigBackendImpl();
 
-    /// @brief Creates MySQL binding from an integer.
+    /// @brief Creates MySQL binding from an @c Optional of integer type.
     ///
     /// @tparam T Numeric type corresponding to the binding type, e.g.
     /// @c uint8_t, @c uint16_t etc.
-    /// @param value Optional integet of type T.
+    /// @param value Optional integer of type T.
     /// @return Pointer to a null binding if the value is "unspecified" or
     /// a pointer to a binding representing integer value.
     template<typename T>
