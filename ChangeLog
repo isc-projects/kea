@@ -1,3 +1,14 @@
+1854.	[func, perf]	fdupont
+	Implemented "lease caching", a feature similar to ISC
+	DHCP's dhcp-cache-threshold. Lease caching is configured
+	through two new parameters: cache-max-age and cache-threshold,
+	and is supported by both kea-dhcp4 and kea-dhcp6. When enabled,
+	lease-caching allows the server to skip updating lease storage,
+	when a client is requesting it's own pre-existing lease whose
+	age falls under the cache threshold and for which there are no
+	substantive changes to lease values such as the hostname.
+	(Gitlab #1418)
+
 1853.	[func]		fdupont
 	Populated the space field of option definitions. This solved
 	reported bugs where a specific standard option processing
