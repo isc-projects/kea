@@ -26,6 +26,7 @@ src/share/api/ha-heartbeat.json
 src/share/api/ha-maintenance-cancel.json
 src/share/api/ha-maintenance-notify.json
 src/share/api/ha-maintenance-start.json
+src/share/api/ha-reset.json
 src/share/api/ha-scopes.json
 src/share/api/ha-sync.json
 src/share/api/lease4-add.json

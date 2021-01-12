@@ -1,0 +1,14 @@
+{
+    "access": "write",
+    "avail": "1.9.4",
+    "brief": [
+        "This command resets the HA state machine of the server by transitioning it to the waiting state."
+    ],
+    "description": "See <xref linkend=\"command-ha-reset\"/>",
+    "hook": "high_availability",
+    "name": "ha-reset",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

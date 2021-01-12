@@ -1912,3 +1912,35 @@ state to a previous state. See the :ref:`ha-maintenance` for the details.
    a pair of HA enabled DHCP servers. Direct use of this command is not
    supported and may produce unintended consequences.
 
+.. _command-ha-reset:
+
+The ha-reset Command
+--------------------
+
+This command causes the server to reset its High Availibility state machine
+by transitioning it to the waiting state. A partner in the
+``communication-recovery`` state may send this command to cause the server
+to synchronize its lease database. The database synchronization is required
+when the partner failed to send all lease database updates after
+re-establishing connection after a temporary connection failure.
+
+A server administrator may also send the command to reset a misbehaving
+state machine.
+
+This command includes no arguments, e.g.:
+
+::
+
+   {
+       "command": "ha-reset",
+       "service": [ "dhcp4" ]
+   }
+
+The response:
+
+::
+
+   {
+       "result": 0,
+       "text": "HA state machine reset."
+   }

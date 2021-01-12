@@ -26,6 +26,7 @@ api_files += $(top_srcdir)/src/share/api/ha-heartbeat.json
 api_files += $(top_srcdir)/src/share/api/ha-maintenance-cancel.json
 api_files += $(top_srcdir)/src/share/api/ha-maintenance-notify.json
 api_files += $(top_srcdir)/src/share/api/ha-maintenance-start.json
+api_files += $(top_srcdir)/src/share/api/ha-reset.json
 api_files += $(top_srcdir)/src/share/api/ha-scopes.json
 api_files += $(top_srcdir)/src/share/api/ha-sync.json
 api_files += $(top_srcdir)/src/share/api/lease4-add.json
