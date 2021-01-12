@@ -769,6 +769,7 @@ public:
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
         config_storage->setWaitBackupAck(wait_backup_ack);
+        config_storage->setDelayedUpdatesLimit(10);
         setBasicAuth(config_storage);
 
         // Create parking lot where query is going to be parked and unparked.
@@ -871,6 +872,7 @@ public:
         // Create HA configuration for 3 servers. This server is
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
+        config_storage->setDelayedUpdatesLimit(10);
         config_storage->setWaitBackupAck(wait_backup_ack);
         setBasicAuth(config_storage);
 
@@ -1111,12 +1113,26 @@ public:
         EXPECT_EQ(0, service_->lease_update_backlog_.size());
     }
 
-    /// @brief Tests that a DHCPv4 server trying to recover from the communication
-    /// interruption transitions to the waiting state if the partner refuses delayed
-    /// lease updates.
-    void testSendUpdatesCommunicationRecoveryFailed() {
-        // Simulate that the partner returns an error.
-        factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
+    /// @brief Test the cases when the trying to recover from the communication
+    /// interruption and sending lease updates or/and ha-reset fails.
+    ///
+    /// @param partner_state partner state when communication is re-established.
+    /// @param lease_update_result control result returned to lease updates.
+    /// @param ha_reset_result control result returned to ha-reset command.
+    /// @param overflow boolean value indicating if this test should verify the
+    /// case when the leases backlog is overflown (when true), or not (when
+    /// false).
+    void testSendUpdatesCommunicationRecoveryFailed(const std::string& partner_state,
+                                                    const int lease_update_result,
+                                                    const int ha_reset_result,
+                                                    const bool overflow = false) {
+        // Partner responds with a specified control result to lease updates.
+        factory2_->getResponseCreator()->setControlResult("lease4-update",
+                                                          lease_update_result);
+        factory2_->getResponseCreator()->setControlResult("lease4-del",
+                                                          lease_update_result);
+        // Partner returns specified control result to ha-reset.
+        factory2_->getResponseCreator()->setControlResult("ha-reset", ha_reset_result);
 
         // This flag will be set to true if unpark is called.
         bool unpark_called = false;
@@ -1130,9 +1146,18 @@ public:
         // Let's make sure they have been queued.
         EXPECT_EQ(2, service_->lease_update_backlog_.size());
 
+        // When testing the case when the backlog should be overflown, we need
+        // to add several more leases to the backlog to exceed the limit.
+        if (overflow) {
+            ASSERT_NO_THROW(generateTestLeases4());
+            for (auto lease : leases4_) {
+                service_->lease_update_backlog_.push(LeaseUpdateBacklog::ADD, lease);
+            }
+        }
+
         // Make partner available.
         service_->communication_state_->poke();
-        service_->communication_state_->setPartnerState("load-balancing");
+        service_->communication_state_->setPartnerState(partner_state);
 
         // Start HTTP servers.
         ASSERT_NO_THROW({
@@ -1142,21 +1167,45 @@ public:
         });
 
         // This should cause the server to attempt to send outstanding lease
-        // updates to the partner. The partner reports an error so that should
-        // cause this server to transition to the waiting state from which it
-        // will recover doing full lease database synchronization.
-        testSynchronousCommands([this]() {
+        // updates to the partner.
+        testSynchronousCommands([this, ha_reset_result]() {
             service_->runModel(HAService::NOP_EVT);
-            EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+            // If the ha-reset returns success the server should transition to the
+            // waiting state and begin synchronization. Otherwise, if the ha-reset
+            // fails the server should wait in the communication-recovery state
+            // until it succeeds.
+            if (ha_reset_result == CONTROL_RESULT_SUCCESS) {
+                EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+            } else {
+                EXPECT_EQ(HA_COMMUNICATION_RECOVERY_ST, service_->getCurrState());
+            }
         });
 
-        // Deletions are scheduled first and this should cause the failure.
-        EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-del",
-                                                                 "192.2.3.4"));
-        // This lease update should not be sent because the first update
-        // triggered an error.
-        EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease4-update",
-                                                                 "192.1.2.3"));
+        // The server will only send lease updates if it is not overflown. If
+        // it is overflown, it will rather transition to the waiting state to
+        // initiate full synchronization.
+        if (!overflow) {
+            // Deletions are scheduled first and this should cause the failure.
+            EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-del",
+                                                                     "192.2.3.4"));
+            // This lease update should not be sent because the first update
+            // triggered an error.
+            EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                                      "192.1.2.3"));
+        }
+
+        if ((partner_state == "load-balancing") || (partner_state == "communication-recovery")) {
+            // The lease updates failed and the partner remains in the load-balancing or
+            // communication-recovery state, so the server should send ha-reset to the
+            // partner to cause it to transition to the waiting state and synchronize
+            // the lease database.
+            EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-reset", ""));
+        } else {
+            // The lease updates failed but the partner is already synchronizing lease
+            // database. In this case, don't send the ha-reset.
+            EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("ha-reset", ""));
+        }
+
         // The backlog should be empty.
         EXPECT_EQ(0, service_->lease_update_backlog_.size());
     }
@@ -1434,12 +1483,25 @@ public:
         EXPECT_EQ(0, service_->lease_update_backlog_.size());
     }
 
-    /// @brief Tests that a DHCPv6 server trying to recover from the communication
-    /// interruption transitions to the waiting state if the partner refuses delayed
-    /// lease updates.
-    void testSendUpdatesCommunicationRecovery6Failed() {
-        // Simulate that the partner returns an error.
-        factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
+    /// @brief Test the cases when the trying to recover from the communication
+    /// interruption and sending lease updates or/and ha-reset fails.
+    ///
+    /// @param partner_state partner state when communication is re-established.
+    /// @param lease_update_result control result returned to lease updates.
+    /// @param ha_reset_result control result returned to ha-reset command.
+    /// @param overflow boolean value indicating if this test should verify the
+    /// case when the leases backlog is overflown (when true), or not (when
+    /// false).
+    void testSendUpdatesCommunicationRecovery6Failed(const std::string& partner_state,
+                                                     const int lease_update_result,
+                                                     const int ha_reset_result,
+                                                     const bool overflow = false) {
+        // Partner responds with a specified control result to lease updates.
+        factory2_->getResponseCreator()->setControlResult("lease6-bulk-apply",
+                                                          lease_update_result);
+        // Partner returns specified control result to ha-reset.
+        factory2_->getResponseCreator()->setControlResult("ha-reset",
+                                                          ha_reset_result);
 
         // This flag will be set to true if unpark is called.
         bool unpark_called = false;
@@ -1453,9 +1515,18 @@ public:
         // Let's make sure they have been queued.
         EXPECT_EQ(2, service_->lease_update_backlog_.size());
 
+        // When testing the case when the backlog should be overflown, we need
+        // to add several more leases to the backlog to exceed the limit.
+        if (overflow) {
+            ASSERT_NO_THROW(generateTestLeases6());
+            for (auto lease : leases6_) {
+                service_->lease_update_backlog_.push(LeaseUpdateBacklog::ADD, lease);
+            }
+        }
+
         // Make partner available.
         service_->communication_state_->poke();
-        service_->communication_state_->setPartnerState("load-balancing");
+        service_->communication_state_->setPartnerState(partner_state);
 
         // Start HTTP servers.
         ASSERT_NO_THROW({
@@ -1465,18 +1536,41 @@ public:
         });
 
         // This should cause the server to attempt to send outstanding lease
-        // updates to the partner. The partner reports an error so that should
-        // cause this server to transition to the waiting state from which it
-        // will recover doing full lease database synchronization.
-        testSynchronousCommands([this]() {
+        // updates to the partner.
+        testSynchronousCommands([this, ha_reset_result]() {
             service_->runModel(HAService::NOP_EVT);
-            EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+            // If the ha-reset returns success the server should transition to the
+            // waiting state and begin synchronization. Otherwise, if the ha-reset
+            // fails the server should wait in the communication-recovery state
+            // until it succeeds.
+            if (ha_reset_result == CONTROL_RESULT_SUCCESS) {
+                EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+            } else {
+                EXPECT_EQ(HA_COMMUNICATION_RECOVERY_ST, service_->getCurrState());
+            }
         });
 
-        // The server should have sent lease updates in a single command.
-        EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
-                                                                 "2001:db8:1::cafe",
-                                                                 "2001:db8:1::efac"));
+        // The server will only send lease updates if it is not overflown. If
+        // it is overflown, it will rather transition to the waiting state to
+        // initiate full synchronization.
+        if (!overflow) {
+            // The server should have sent lease updates in a single command.
+            EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                     "2001:db8:1::cafe",
+                                                                     "2001:db8:1::efac"));
+        }
+
+        if ((partner_state == "load-balancing") || (partner_state == "communication-recovery")) {
+            // The lease updates failed and the partner remains in the load-balancing or
+            // communication-recovery state, so the server should send ha-reset to the
+            // partner to cause it to transition to the waiting state and synchronize
+            // the lease database.
+            EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-reset", ""));
+        } else {
+            // The lease updates failed but the partner is already synchronizing lease
+            // database. In this case, don't send the ha-reset.
+            EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("ha-reset", ""));
+        }
 
         // Backlog should be empty.
         EXPECT_EQ(0, service_->lease_update_backlog_.size());
@@ -1999,16 +2093,62 @@ TEST_F(HAServiceTest, sendUpdatesCommunicationRecoveryMultiThreading) {
 }
 
 // Test scenario when lease updates are queued in the communication-recovery
-// state for later send.
-TEST_F(HAServiceTest, sendUpdatesCommunicationRecoveryFailed) {
-    testSendUpdatesCommunicationRecoveryFailed();
+// state and sending them later is unsuccessful. Partner is in load-balancing
+// state when the communication is re-established, so the test expects that the
+// ha-reset command is sent to the partner.
+TEST_F(HAServiceTest, communicationRecoveryFailedPartnerLoadBalancing) {
+    testSendUpdatesCommunicationRecoveryFailed("load-balancing", CONTROL_RESULT_ERROR,
+                                               CONTROL_RESULT_SUCCESS);
 }
 
 // Test scenario when lease updates are queued in the communication-recovery
-// state for later send. Multi threading case.
-TEST_F(HAServiceTest, sendUpdatesCommunicationRecoveryFailedMultiThreading) {
+// state and sending them later is unsuccessful. Partner is in load-balancing
+// state when the communication is re-established, so the test expects that the
+// ha-reset command is sent to the partner.
+TEST_F(HAServiceTest, communicationRecoveryFailedPartnerLoadBalancingMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    testSendUpdatesCommunicationRecoveryFailed();
+    testSendUpdatesCommunicationRecoveryFailed("load-balancing", CONTROL_RESULT_ERROR,
+                                               CONTROL_RESULT_SUCCESS);
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state and sending them later fails. The partner server in the load-balancing
+// state but sending ha-reset fails. The server should remain in the
+// communication-recovery state.
+TEST_F(HAServiceTest, communicationRecoveryFailedResetFailed) {
+    testSendUpdatesCommunicationRecoveryFailed("load-balancing", CONTROL_RESULT_ERROR,
+                                               CONTROL_RESULT_ERROR);
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state and sending them later fails. The partner server in the load-balancing
+// state but sending ha-reset fails. The server should remain in the
+// communication-recovery state.
+TEST_F(HAServiceTest, communicationRecoveryFailedResetFailedMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesCommunicationRecoveryFailed("load-balancing", CONTROL_RESULT_ERROR,
+                                               CONTROL_RESULT_ERROR);
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state and sending them later is unsuccessful. Partner is in ready state
+// when the communication is re-established, so the test expects that the
+// ha-reset command is NOT sent to the partner. The lease backlog is overflown,
+// so the server should transition to the waiting state.
+TEST_F(HAServiceTest, communicationRecoveryFailedPartnerReady) {
+    testSendUpdatesCommunicationRecoveryFailed("ready", CONTROL_RESULT_ERROR,
+                                               CONTROL_RESULT_SUCCESS, true);
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state and sending them later is unsuccessful. Partner is in ready state
+// when the communication is re-established, so the test expects that the
+// ha-reset command is NOT sent to the partner. The lease backlog is overflown,
+// so the server should transition to the waiting state.
+TEST_F(HAServiceTest, communicationRecoveryFailedPartnerReadyMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesCommunicationRecoveryFailed("ready", CONTROL_RESULT_ERROR,
+                                               CONTROL_RESULT_SUCCESS, true);
 }
 
 // Test scenario when all lease updates are sent successfully.
@@ -2124,16 +2264,62 @@ TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery6MultiThreading) {
 }
 
 // Test scenario when lease updates are queued in the communication-recovery
-// state for later send.
-TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery6Failed) {
-    testSendUpdatesCommunicationRecovery6Failed();
+// state and sending them later is unsuccessful. Partner is in load-balancing
+// state when the communication is re-established, so the test expects that the
+// ha-reset command is sent to the partner.
+TEST_F(HAServiceTest, communicationRecoveryFailed6PartnerLoadBalancing) {
+    testSendUpdatesCommunicationRecovery6Failed("load-balancing", CONTROL_RESULT_ERROR,
+                                                CONTROL_RESULT_SUCCESS);
 }
 
 // Test scenario when lease updates are queued in the communication-recovery
-// state for later send. Multi threading case.
-TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery6FailedMultiThreading) {
+// state and sending them later is unsuccessful. Partner is in load-balancing
+// state when the communication is re-established, so the test expects that the
+// ha-reset command is sent to the partner.
+TEST_F(HAServiceTest, communicationRecovery6FailedPartnerLoadBalancingMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    testSendUpdatesCommunicationRecovery6Failed();
+    testSendUpdatesCommunicationRecovery6Failed("load-balancing", CONTROL_RESULT_ERROR,
+                                                CONTROL_RESULT_SUCCESS);
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state and sending them later fails. The partner server in the load-balancing
+// state but sending ha-reset fails. The server should remain in the
+// communication-recovery state.
+TEST_F(HAServiceTest, communicationRecovery6FailedResetFailed) {
+    testSendUpdatesCommunicationRecovery6Failed("load-balancing", CONTROL_RESULT_ERROR,
+                                               CONTROL_RESULT_ERROR);
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state and sending them later fails. The partner server in the load-balancing
+// state but sending ha-reset fails. The server should remain in the
+// communication-recovery state.
+TEST_F(HAServiceTest, communicationRecovery6FailedResetFailedMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesCommunicationRecovery6Failed("load-balancing", CONTROL_RESULT_ERROR,
+                                                CONTROL_RESULT_ERROR);
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state and sending them later is unsuccessful. Partner is in ready state
+// when the communication is re-established, so the test expects that the
+// ha-reset command is NOT sent to the partner. The lease backlog is overflown,
+// so the server should transition to the waiting state.
+TEST_F(HAServiceTest, communicationRecovery6FailedPartnerReady) {
+    testSendUpdatesCommunicationRecovery6Failed("ready", CONTROL_RESULT_ERROR,
+                                                CONTROL_RESULT_SUCCESS, true);
+}
+
+// Test scenario when lease updates are queued in the communication-recovery
+// state and sending them later is unsuccessful. Partner is in ready state
+// when the communication is re-established, so the test expects that the
+// ha-reset command is NOT sent to the partner. The lease backlog is overflown,
+// so the server should transition to the waiting state.
+TEST_F(HAServiceTest, communicationRecovery6FailedPartnerReadyMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesCommunicationRecovery6Failed("ready", CONTROL_RESULT_ERROR,
+                                               CONTROL_RESULT_SUCCESS, true);
 }
 
 // Test scenario when all lease updates are sent successfully.

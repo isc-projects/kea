@@ -896,6 +896,30 @@ protected:
     /// successfully (when true) or unsuccessfully (when false).
     bool sendLeaseUpdatesFromBacklog();
 
+    /// @brief Sends ha-reset command to partner asynchronously.
+    ///
+    /// @param http_client reference to the HTTP client to be used for communication.
+    /// @param remote_config pointer to the remote server's configuration.
+    /// @param post_request_action callback to be invoked when the operation
+    /// completes. It can be used for handling errors.
+    void asyncSendHAReset(http::HttpClient& http_client,
+                          const HAConfig::PeerConfigPtr& remote_config,
+                          PostRequestCallback post_request_action);
+
+    /// @brief Sends ha-reset command to partner synchronously.
+    ///
+    /// This method attempts to send ha-reset command to the active partner
+    /// synchronously. It may be invoked when the communication with the partner
+    /// is re-established after temporary failure. It causes the partner to
+    /// transition the partner to the waiting state. This effectively means that
+    /// the partner will synchronize its lease database with this server.
+    ///
+    /// This method creates its own instances of the HttpClient and IOService and
+    /// invokes IOService::run().
+    ///
+    /// @return true if the command was sent successfully, false otherwise.
+    bool sendHAReset();
+
 public:
 
     /// @brief Processes ha-scopes command and returns a response.

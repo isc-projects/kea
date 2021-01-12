@@ -219,15 +219,24 @@ HAService::communicationRecoveryHandler() {
         case HA_WAITING_ST:
         case HA_SYNCING_ST:
         case HA_READY_ST:
-            // The partner seems to be waking up. Let's wait for it to get to
-            // the load-balancing state before we transition to the load-balancing
-            // state.
-            postNextEvent(NOP_EVT);
+            // The partner seems to be waking up, perhaps after communication-recovery.
+            // If our backlog queue is overflown we need to synchronize our lease database.
+            // There is no need to send ha-reset to the partner because the partner is
+            // already synchronizing its lease database.
+            if (!communication_state_->isCommunicationInterrupted() &&
+                lease_update_backlog_.wasOverflown()) {
+                verboseTransition(HA_WAITING_ST);
+            } else {
+                // Backlog was not overflown, so there is no need to synchronize our
+                // lease database. Let's wait until our partner completes synchronization
+                // and transitions to the load-balancing state.
+                postNextEvent(NOP_EVT);
+            }
             break;
 
         default:
-            // If the communication is still interrupted let's continue sitting
-            // in this state until it is resumed or until transition to the
+            // If the communication is still interrupted, let's continue sitting
+            // in this state until it is resumed or until the transition to the
             // partner-down state, depending on what happens first.
             if (communication_state_->isCommunicationInterrupted()) {
                 postNextEvent(NOP_EVT);
@@ -236,14 +245,24 @@ HAService::communicationRecoveryHandler() {
 
             // The communication has been resumed. The partner server must be in a state
             // in which it can receive outstanding lease updates we collected. The number of
-            // oustanding lease updates must not exceed the configured limit. Finally, the
-            // lease updates must be successfully send. If that all works, we will transition
+            // outstanding lease updates must not exceed the configured limit. Finally, the
+            // lease updates must be successfully sent. If that all works, we will transition
             // to the normal operation.
-            if ((communication_state_->getPartnerState() == getNormalState() ||
-                 (communication_state_->getPartnerState() == HA_COMMUNICATION_RECOVERY_ST)) &&
-                !lease_update_backlog_.wasOverflown() &&
-                sendLeaseUpdatesFromBacklog()) {
-                // Everything went fine, so we can go back to the normal operation.
+            if ((communication_state_->getPartnerState() == getNormalState()) ||
+                (communication_state_->getPartnerState() == HA_COMMUNICATION_RECOVERY_ST)) {
+                if (lease_update_backlog_.wasOverflown() || !sendLeaseUpdatesFromBacklog()) {
+                    // If our lease backlog was overflown or we were unable to send lease
+                    // updates to the partner we should notify the partner that it should
+                    // synchronize the lease database. We do it by sending ha-reset command.
+                    if (sendHAReset()) {
+                        verboseTransition(HA_WAITING_ST);
+                    }
+                    break;
+                }
+                // The backlog was not overflown and we successfully sent our lease updates.
+                // We can now transition to the normal operation state. If the partner
+                // fails to send his outstanding lease updates to us it should send the
+                // ha-reset command to us.
                 verboseTransition(getNormalState());
                 break;
             }
@@ -2249,6 +2268,74 @@ HAService::sendLeaseUpdatesFromBacklog() {
     }
 
     return (updates_successful);
+}
+
+void
+HAService::asyncSendHAReset(HttpClient& http_client,
+                            const HAConfig::PeerConfigPtr& config,
+                            PostRequestCallback post_request_action) {
+    ConstElementPtr command = CommandCreator::createHAReset(server_type_);
+
+    // Create HTTP/1.1 request including our command.
+    PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
+        (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
+         HostHttpHeader(config->getUrl().getHostname()));
+    config->addBasicAuthHttpHeader(request);
+    request->setBodyAsJson(command);
+    request->finalize();
+
+    // Response object should also be created because the HTTP client needs
+    // to know the type of the expected response.
+    HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
+
+    http_client.asyncSendRequest(config->getUrl(), request, response,
+        [this, config, post_request_action]
+            (const boost::system::error_code& ec,
+             const HttpResponsePtr& response,
+             const std::string& error_str) {
+
+             std::string error_message;
+
+             if (ec || !error_str.empty()) {
+                 error_message = (ec ? ec.message() : error_str);
+                 LOG_WARN(ha_logger, HA_RESET_COMMUNICATIONS_FAILED)
+                     .arg(config->getLogLabel())
+                     .arg(ec ? ec.message() : error_str);
+
+             } else {
+                 // Handle third group of errors.
+                 try {
+                    int rcode = 0;
+                    auto args = verifyAsyncResponse(response, rcode);
+                 } catch (const std::exception& ex) {
+                     error_message = ex.what();
+                     LOG_WARN(ha_logger, HA_RESET_FAILED)
+                         .arg(config->getLogLabel())
+                         .arg(ex.what());
+                 }
+             }
+
+             post_request_action(error_message.empty(), error_message);
+   });
+}
+
+bool
+HAService::sendHAReset() {
+    IOService io_service;
+    HttpClient client(io_service);
+    auto remote_config = config_->getFailoverPeerConfig();
+    bool reset_successful = true;
+
+    asyncSendHAReset(client, remote_config,
+                     [&](const bool success, const std::string&) {
+        io_service.stop();
+        reset_successful = success;
+    });
+
+    // Run the IO service until it is stopped by the callback. This makes it synchronous.
+    io_service.run();
+
+    return (reset_successful);
 }
 
 ConstElementPtr

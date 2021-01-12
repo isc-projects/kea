@@ -470,6 +470,16 @@ This error message is issued to indicate that the configuration for the
 High Availability hooks library hasn't been specified. The 'high-availability'
 parameter must be specified for the hooks library to load properly.
 
+% HA_RESET_COMMUNICATIONS_FAILED failed to send ha-reset command to %1: %2
+This warning message indicates a problem with communication with a HA peer
+while sending the ha-reset command. The first argument specifies a remote
+server name. The second argument specifies a reason for failure.
+
+% HA_RESET_FAILED failed to reset HA state machine of %1: %2
+This warning message indicates that a peer returned an error status code
+in response to the ha-reset command.  The first argument specifies a
+remote server name. The second argument specifies a reason for failure.
+
 % HA_RESET_HANDLER_FAILED ha-reset command failed: %1
 This error message is issued to indicate that the ha-reset command handler
 failed while processing the command. The argument provides the reason for
