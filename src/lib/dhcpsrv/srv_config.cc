@@ -7,6 +7,7 @@
 #include <config.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/parsers/base_network_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -218,30 +219,39 @@ SrvConfig::merge6(SrvConfig& other) {
 
 void
 SrvConfig::mergeGlobals(SrvConfig& other) {
+    auto config_set = getConfiguredGlobals();
+    ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+    // If the deprecated reservation-mode is found in database, overwrite other
+    // reservation flags so there is no conflict when merging to new flags.
+    if (other.getConfiguredGlobals()->find("reservation-mode")) {
+        mutable_cfg->remove("reservations-global");
+        mutable_cfg->remove("reservations-in-subnet");
+        mutable_cfg->remove("reservations-out-of-pool");
+    }
     // Iterate over the "other" globals, adding/overwriting them into
     // this config's list of globals.
     for (auto other_global : other.getConfiguredGlobals()->mapValue()) {
         addConfiguredGlobal(other_global.first, other_global.second);
     }
 
+    // Merge the reservation-mode to new reservation flags.
+    BaseNetworkParser::moveReservationMode(mutable_cfg);
+
     // A handful of values are stored as members in SrvConfig. So we'll
-    // iterate over the merged globals, setting approprate members.
-    for (auto merged_global : getConfiguredGlobals()->mapValue()) {
+    // iterate over the merged globals, setting appropriate members.
+    for (auto merged_global : config_set->mapValue()) {
         std::string name = merged_global.first;
         ConstElementPtr element = merged_global.second;
         try {
             if (name == "decline-probation-period") {
                 setDeclinePeriod(element->intValue());
-            }
-            else if (name == "echo-client-id") {
+            } else if (name == "echo-client-id") {
                 // echo-client-id is v4 only, but we'll let upstream
                 // worry about that.
                 setEchoClientId(element->boolValue());
-            }
-            else if (name == "dhcp4o6-port") {
+            } else if (name == "dhcp4o6-port") {
                 setDhcp4o6Port(element->intValue());
-            }
-            else if (name == "server-tag") {
+            } else if (name == "server-tag") {
                 setServerTag(element->stringValue());
             } else if (name == "ip-reservations-unique") {
                 setIPReservationsUnique(element->boolValue());

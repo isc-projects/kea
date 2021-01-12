@@ -25,7 +25,7 @@ BaseNetworkParser::moveReservationMode(ElementPtr config) {
         config->contains("reservations-in-subnet") ||
         config->contains("reservations-out-of-pool")) {
         isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
-                  " one of 'reservations-global', 'reservations-in-subnet'"
+                  " and one of 'reservations-global', 'reservations-in-subnet'"
                   " or 'reservations-out-of-pool' parameters");
     }
     std::string hr_mode = getString(config, "reservation-mode");

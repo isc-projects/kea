@@ -71,6 +71,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "reservations",                   Element::list },
     { "config-control",                 Element::map },
     { "server-tag",                     Element::string },
+    { "reservation-mode",               Element::string },
     { "reservations-global",            Element::boolean },
     { "reservations-in-subnet",         Element::boolean },
     { "reservations-out-of-pool",       Element::boolean },

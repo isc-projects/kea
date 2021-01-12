@@ -638,7 +638,7 @@ TEST_F(NetworkReservationTest, errors) {
         "\"reservations-global\": true\n"
         "}";
     std::string expected = "invalid use of both 'reservation-mode'"
-        " one of 'reservations-global', 'reservations-in-subnet'"
+        " and one of 'reservations-global', 'reservations-in-subnet'"
         " or 'reservations-out-of-pool' parameters";
     TestError(config, expected);
 
