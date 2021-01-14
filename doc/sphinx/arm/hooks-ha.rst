@@ -1922,10 +1922,12 @@ by transitioning it to the waiting state. A partner in the
 ``communication-recovery`` state may send this command to cause the server
 to synchronize its lease database. The database synchronization is required
 when the partner failed to send all lease database updates after
-re-establishing connection after a temporary connection failure.
+re-establishing connection after a temporary connection failure. It is also
+required when the ``delayed-updates-limit`` is exceeded when the server is
+in the ``communication-recovery`` state.
 
-A server administrator may also send the command to reset a misbehaving
-state machine.
+A server administrator may send the command to reset a misbehaving state
+machine.
 
 This command includes no arguments, e.g.:
 
