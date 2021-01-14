@@ -769,6 +769,10 @@ public:
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
         config_storage->setWaitBackupAck(wait_backup_ack);
+        // Let's override the default value. The lower value makes it easier
+        // for some unit tests to simulate the server's overflow. Simulating it
+        // requires appending leases to the backlog. It is easier to add 10
+        // than 100.
         config_storage->setDelayedUpdatesLimit(10);
         setBasicAuth(config_storage);
 
