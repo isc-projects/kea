@@ -756,7 +756,7 @@ TEST_F(HAImplTest, haReset) {
     callout_handle->getArgument("response", response);
     ASSERT_TRUE(response);
 
-    checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA state machine reset.");
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA state machine already in WAITING state.");
 }
 
 }

@@ -4585,6 +4585,32 @@ TEST_F(HAServiceTest, processHAReset) {
     EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
 }
 
+// This test verifies that the ha-reset command is processed successfully when
+// the server is already in the waiting state.
+TEST_F(HAServiceTest, processHAResetWaiting) {
+    HAConfigPtr config_storage = createValidConfiguration();
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    // Transion the server to the load-balancing state.
+    EXPECT_NO_THROW(service.transition(HA_WAITING_ST, HAService::NOP_EVT));
+
+    // Process ha-reset command that should not change the state of the
+    // server because the server is already in the waiting state. It
+    // should not fail though.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processHAReset());
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "HA state machine already in WAITING state.");
+
+    // Response should include no arguments.
+    EXPECT_FALSE(rsp->get("arguments"));
+
+    // The server should be in the waiting state.
+    EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
+}
+
 /// @brief HA partner to the server under test.
 ///
 /// This is a wrapper class around @c HttpListener which simulates a

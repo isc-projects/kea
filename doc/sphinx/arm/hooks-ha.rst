@@ -1946,3 +1946,6 @@ The response:
        "result": 0,
        "text": "HA state machine reset."
    }
+
+If the server receiving this command is already in the waiting state,
+the command has no effect.

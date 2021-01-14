@@ -1527,6 +1527,9 @@ HAService::processHeartbeat() {
 
 ConstElementPtr
 HAService::processHAReset() {
+    if (getCurrState() == HA_WAITING_ST) {
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "HA state machine already in WAITING state."));
+    }
     verboseTransition(HA_WAITING_ST);
     runModel(NOP_EVT);
     return (createAnswer(CONTROL_RESULT_SUCCESS, "HA state machine reset."));
