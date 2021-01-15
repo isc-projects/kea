@@ -513,7 +513,7 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
 void
 MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_selector,
                                               const OptionDefinitionPtr& option_def,
-                                              const std::string& space,
+                                              const std::string& /*space*/,
                                               const int& /*get_option_def_code_space*/,
                                               const int& insert_option_def,
                                               const int& update_option_def,

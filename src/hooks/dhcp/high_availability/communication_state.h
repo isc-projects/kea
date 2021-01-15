@@ -131,6 +131,9 @@ public:
     void startHeartbeat(const long interval,
                         const std::function<void()>& heartbeat_impl);
 
+    /// @brief Stops recurring heartbeat.
+    void stopHeartbeat();
+
 protected:
 
     /// @brief Starts recurring heartbeat.
@@ -141,10 +144,10 @@ protected:
     void startHeartbeatInternal(const long interval = 0,
                                 const std::function<void()>& heartbeat_impl = 0);
 
-public:
-
     /// @brief Stops recurring heartbeat.
-    void stopHeartbeat();
+    void stopHeartbeatInternal();
+
+public:
 
     /// @brief Checks if recurring heartbeat is running.
     ///

@@ -112,7 +112,12 @@ CommunicationState::setPartnerScopes(ConstElementPtr new_scopes) {
 void
 CommunicationState::startHeartbeat(const long interval,
                                    const std::function<void()>& heartbeat_impl) {
-    startHeartbeatInternal(interval, heartbeat_impl);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        startHeartbeatInternal(interval, heartbeat_impl);
+    } else {
+        startHeartbeatInternal(interval, heartbeat_impl);
+    }
 }
 
 void
@@ -158,6 +163,16 @@ CommunicationState::startHeartbeatInternal(const long interval,
 
 void
 CommunicationState::stopHeartbeat() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        stopHeartbeatInternal();
+    } else {
+        stopHeartbeatInternal();
+    }
+}
+
+void
+CommunicationState::stopHeartbeatInternal() {
     if (timer_) {
         timer_->cancel();
         timer_.reset();

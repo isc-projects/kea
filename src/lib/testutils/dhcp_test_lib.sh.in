@@ -440,8 +440,8 @@ get_pid() {
     _GET_PIDS_NUM=0
 
     # If the PID file exists, get the PID and see if the process is alive.
-    if [ -e "${abs_pidfile_path}" ]; then
-        pid=$(cat "${abs_pidfile_path}")
+    pid=$(cat "${abs_pidfile_path}" || true)
+    if test -n "${pid}"; then
         if kill -0 "${pid}" > /dev/null 2>&1; then
             _GET_PID=${pid}
             _GET_PIDS_NUM=1
