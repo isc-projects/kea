@@ -28,8 +28,11 @@ AC_CONFIG_MACRO_DIR([m4macros])
 AC_CANONICAL_HOST
 AC_CANONICAL_BUILD
 
-# Checks for programs.
+# Check for compilers.
 AC_PROG_CXX
+
+# Check for preprocessors.
+AC_PROG_CXXCPP
 
 # Check for exact Kea version.
 AC_MSG_CHECKING(whether this is a tarball or git source)
@@ -263,6 +266,23 @@ CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
 KEA_CXXFLAGS="$KEA_CXXFLAGS -Qunused-arguments"
 fi
 
+# Comparison function based on the sort command that works with decimal numbers
+# in a portable manner to the detriment of expr, test and most other commands.
+less_than() {
+    # Equal means not less than.
+    if test "${1}" = "${2}"; then
+        return 1
+    fi
+
+    # Sort numerically, check the first item against ${1}.
+    if test "$(printf '%s\n%s\n' "${1}" "${2}" | sort -V | head -n 1)" = "${1}"; then
+        return 0
+    fi
+
+    # ${2} is smaller than ${1}.
+    return 1
+}
+
 # gcc/clang specific settings:
 if test "X$GXX" = "Xyes"; then
 CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
@@ -270,14 +290,14 @@ KEA_CXXFLAGS="$KEA_CXXFLAGS -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Wo
 # gcc 4.4 would emit warnings about breaking strict aliasing rules.
 # See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=41874
 CXX_DUMP_VERSION=`$CXX -dumpversion | cut -f1-2 -d.`
-if expr "$CXX_DUMP_VERSION" \< "4.5" > /dev/null; then
+if less_than "$CXX_DUMP_VERSION" "4.5"; then
        WARNING_GCC_44_STRICT_ALIASING_CFLAG="-fno-strict-aliasing"
 fi
 AC_SUBST(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
-CPPP="$CPP"
+CPPP="$CXXCPP"
 # gcc 5 preprocessor requires -P for checking its output
-if expr "$CXX_DUMP_VERSION" \> "5" > /dev/null; then
-       CPPP="$CPP -P"
+if less_than "5" "$CXX_DUMP_VERSION"; then
+       CPPP="$CPPP -P"
 fi
 
 case "$host" in
