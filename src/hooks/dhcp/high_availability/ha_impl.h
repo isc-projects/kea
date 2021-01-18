@@ -113,13 +113,9 @@ public:
 
     /// @brief Implementation of the "command_processed" callout.
     ///
-    /// This callout adjusts network state (DHCP service state) after receiving
-    /// a "dhcp-enable" commands. It is preventing a situation when the DHCP
-    /// service is enabled in a state for which this is not allowed, e.g.
-    /// waiting, syncing etc. We don't want to rely on the HA partner to do
-    /// a correct thing in that respect.
-    /// It too adds the HA servers information to "status-get" command
-    /// responses by calling @c HAService::commandProcessed.
+    /// The 'dhcp-enable' and 'dhcp-disable' commands update the appropriate
+    /// network state according to the 'origin' type in the
+    /// 'commandDhcpDisableHandler' and 'commandDhcpEnableHandler' callbacks.
     ///
     /// @param callout_handle Callout handle provided to the callout.
     void commandProcessed(hooks::CalloutHandle& callout_handle);

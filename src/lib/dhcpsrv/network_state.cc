@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,34 +40,52 @@ public:
         destroyTimer();
     }
 
-    /// @brief Globally disables or enables DHCP service.
+    /// @brief Sets appropriate disabled or enabled DHCP service state to
+    /// respective origin type.
+    ///
+    /// @node If any of the user commands, HA internal commands or connection
+    /// recovery processes disable the dhcp service, the service will remain
+    /// disabled until all flags are cleared.
+    /// The connection recovery mechanics use a reference count, so that all
+    /// connections must be restored before enabling the network state.
+    ///
+    /// @param disable The value of the flag used to perform the transition.
+    /// @param type The origin type the enabled or disabled flag must be set for:
+    /// either caused by an user command, HA internal command or connection
+    /// recovery process.
     void setDisableService(const bool disable,
-                           const NetworkState::ControllerType& type) {
+                           const NetworkState::Origin& type) {
         if (disable) {
             globally_disabled_ = true;
             switch (type) {
-            case NetworkState::COMMAND:
+            case NetworkState::Origin::COMMAND:
                 disabled_by_command_ = true;
                 break;
-            case NetworkState::CONNECTION:
+            case NetworkState::Origin::CONNECTION:
                 ++disabled_by_connection_;
                 break;
-            case NetworkState::HA:
+            case NetworkState::Origin::HA:
                 disabled_by_ha_ = true;
+                break;
+            default:
+                isc_throw(BadValue, "value not handled");
                 break;
             }
         } else {
             switch (type) {
-            case NetworkState::COMMAND:
+            case NetworkState::Origin::COMMAND:
                 disabled_by_command_ = false;
                 break;
-            case NetworkState::CONNECTION:
+            case NetworkState::Origin::CONNECTION:
                 if (disabled_by_connection_) {
                     --disabled_by_connection_;
                 }
                 break;
-            case NetworkState::HA:
+            case NetworkState::Origin::HA:
                 disabled_by_ha_ = false;
+                break;
+            default:
+                isc_throw(BadValue, "value not handled");
                 break;
             }
             if (!disabled_by_command_ && disabled_by_connection_ == 0 &&
@@ -77,17 +95,26 @@ public:
         }
     }
 
-    /// @brief Reset internal counters.
-    void resetInternalState(const NetworkState::ControllerType& type) {
+    /// @brief Reset internal counters for a specific origin type.
+    ///
+    /// @note The dhcp service will remain disabled until all flags are cleared.
+    ///
+    /// @param type The origin type for which the state flags need to be reset:
+    /// either related to any user command, HA internal command or connection
+    /// recovery process.
+    void resetInternalState(const NetworkState::Origin& type) {
         switch (type) {
-        case NetworkState::COMMAND:
+        case NetworkState::Origin::COMMAND:
             disabled_by_command_ = false;
             break;
-        case NetworkState::CONNECTION:
+        case NetworkState::Origin::CONNECTION:
             disabled_by_connection_ = 0;
             break;
-        case NetworkState::HA:
+        case NetworkState::Origin::HA:
             disabled_by_ha_ = false;
+            break;
+        default:
+            isc_throw(BadValue, "value not handled");
             break;
         }
         if (!disabled_by_command_ && disabled_by_connection_ == 0 &&
@@ -100,7 +127,7 @@ public:
     ///
     /// If delayed enabling DHCP service has been scheduled, it cancels it.
     void enableAll() {
-        setDisableService(false, NetworkState::COMMAND);
+        setDisableService(false, NetworkState::Origin::COMMAND);
 
         /// @todo Enable service for all subnets and networks here.
 
@@ -166,17 +193,17 @@ NetworkState::NetworkState(const NetworkState::ServerType& server_type)
 }
 
 void
-NetworkState::disableService(const ControllerType& type) {
+NetworkState::disableService(const Origin& type) {
     impl_->setDisableService(true, type);
 }
 
 void
-NetworkState::enableService(const ControllerType& type) {
+NetworkState::enableService(const Origin& type) {
     impl_->setDisableService(false, type);
 }
 
 void
-NetworkState::resetInternalState(const NetworkState::ControllerType& type) {
+NetworkState::resetInternalState(const NetworkState::Origin& type) {
     impl_->resetInternalState(type);
 }
 

@@ -18,12 +18,12 @@ namespace isc {
 namespace ha {
 
 ConstElementPtr
-CommandCreator::createDHCPDisable(const std::string& service_name,
+CommandCreator::createDHCPDisable(const std::string& origin,
                                   const unsigned int max_period,
                                   const HAServerType& server_type) {
     ElementPtr args;
     args = Element::createMap();
-    args->set("handle-id", Element::create(service_name));
+    args->set("origin", Element::create(origin));
     // max-period is optional. A value of 0 means that it is not specified.
     if (max_period > 0) {
         args->set("max-period", Element::create(static_cast<long int>(max_period)));
@@ -34,11 +34,11 @@ CommandCreator::createDHCPDisable(const std::string& service_name,
 }
 
 ConstElementPtr
-CommandCreator::createDHCPEnable(const std::string& service_name,
+CommandCreator::createDHCPEnable(const std::string& origin,
                                  const HAServerType& server_type) {
     ElementPtr args;
     args = Element::createMap();
-    args->set("handle-id", Element::create(service_name));
+    args->set("origin", Element::create(origin));
     ConstElementPtr command = config::createCommand("dhcp-enable", args);
     insertService(command, server_type);
     return (command);

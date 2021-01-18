@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,7 +64,7 @@ public:
     };
 
     /// @brief Controller type.
-    enum ControllerType {
+    enum class Origin {
         COMMAND,
         CONNECTION,
         HA
@@ -79,29 +79,35 @@ public:
     /// @brief Constructor.
     NetworkState(const ServerType& server_type);
 
-    /// @brief Globally disables DHCP service.
+    /// @brief Disable the DHCP service state for respective origin type.
     ///
-    /// The DHCP service becomes disabled for all subnets and networks,
-    /// regardless of the per scope settings.
+    /// @node If any of the user commands, HA internal commands or connection
+    /// recovery processes disable the dhcp service, the service will remain
+    /// disabled until all flags are cleared.
     ///
-    /// @param type Controller type which issued the state transition.
-    void disableService(const ControllerType& type);
+    /// @param type The origin type the state must set disabled flag for:
+    /// either caused by an user command, HA internal command or connection
+    /// recovery process.
+    void disableService(const NetworkState::Origin& type);
 
-    /// @brief Globally enables DHCP service.
+    /// @brief Enable the DHCP service state for respective origin type.
     ///
-    /// The DHCP service becomes enabled but per scope settings are in effect.
-    /// In order to enable the service for all scopes previously disabled with
-    /// a control command, use @c enableAll.
+    /// @node If any of the user commands, HA internal commands or connection
+    /// recovery processes disable the dhcp service, the service will remain
+    /// disabled until all flags are cleared.
     ///
-    /// @param type Controller type which issued the state transition.
-    void enableService(const ControllerType& type);
+    /// @param type The origin type the state must set enabled flag for:
+    /// either caused by an user command, HA internal command or connection
+    /// recovery process.
+    void enableService(const NetworkState::Origin& type);
 
     /// @brief Reset internal counters.
     ///
-    /// Reset internal counters.
+    /// Reset internal counters related to a specific 'origin' type after the
+    /// server has been reconfigured or all the connections have been restored.
     ///
-    /// @param type The internal state information type that needs to be reset.
-    void resetInternalState(const NetworkState::ControllerType& type);
+    /// @param type The origin type for which the state flags need to be reset.
+    void resetInternalState(const NetworkState::Origin& type);
 
     /// @brief Enables DHCP service globally and for scopes which have been
     /// disabled as a result of control command.

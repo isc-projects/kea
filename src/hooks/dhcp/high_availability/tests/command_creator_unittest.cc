@@ -160,9 +160,9 @@ TEST(CommandCreatorTest, createDHCPDisable4) {
     ASSERT_TRUE(max_period);
     ASSERT_EQ(Element::integer, max_period->getType());
     EXPECT_EQ(20, max_period->intValue());
-    ConstElementPtr handle_id = arguments->get("handle-id");
-    ASSERT_TRUE(handle_id);
-    ASSERT_EQ("this-server", handle_id->stringValue());
+    ConstElementPtr origin = arguments->get("orgin");
+    ASSERT_TRUE(origin);
+    ASSERT_EQ("this-server", origin->stringValue());
 
     // Repeat the test but this time the max-period is not specified.
     command = CommandCreator::createDHCPDisable("this-server", 0,
@@ -170,9 +170,9 @@ TEST(CommandCreatorTest, createDHCPDisable4) {
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-disable", "dhcp4",
                                               arguments));
     ASSERT_EQ(1, arguments->size());
-    handle_id = arguments->get("handle-id");
-    ASSERT_TRUE(handle_id);
-    ASSERT_EQ("this-server", handle_id->stringValue());
+    origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    ASSERT_EQ("this-server", origin->stringValue());
 }
 
 // This test verifies that the dhcp-enable command is correct.
@@ -183,9 +183,9 @@ TEST(CommandCreatorTest, createDHCPEnable4) {
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-enable", "dhcp4",
                                               arguments));
     ASSERT_EQ(1, arguments->size());
-    ConstElementPtr handle_id = arguments->get("handle-id");
-    ASSERT_TRUE(handle_id);
-    ASSERT_EQ("this-server", handle_id->stringValue());
+    ConstElementPtr origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    ASSERT_EQ("this-server", origin->stringValue());
 }
 
 // This test verifies that the ha-reset command sent to DHCPv4 server is correct.
@@ -294,9 +294,9 @@ TEST(CommandCreatorTest, createDHCPDisable6) {
     ASSERT_TRUE(max_period);
     ASSERT_EQ(Element::integer, max_period->getType());
     EXPECT_EQ(20, max_period->intValue());
-    ConstElementPtr handle_id = arguments->get("handle-id");
-    ASSERT_TRUE(handle_id);
-    ASSERT_EQ("this-server", handle_id->stringValue());
+    ConstElementPtr origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    ASSERT_EQ("this-server", origin->stringValue());
 
     // Repeat the test but this time the max-period is not specified.
     command = CommandCreator::createDHCPDisable("this-server", 0,
@@ -304,9 +304,9 @@ TEST(CommandCreatorTest, createDHCPDisable6) {
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-disable", "dhcp6",
                                               arguments));
     ASSERT_EQ(1, arguments->size());
-    handle_id = arguments->get("handle-id");
-    ASSERT_TRUE(handle_id);
-    ASSERT_EQ("this-server", handle_id->stringValue());
+    origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    ASSERT_EQ("this-server", origin->stringValue());
 }
 
 // This test verifies that the dhcp-enable command (DHCPv6 case) is
@@ -318,9 +318,9 @@ TEST(CommandCreatorTest, createDHCPEnable6) {
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-enable", "dhcp6",
                                               arguments));
     ASSERT_EQ(1, arguments->size());
-    ConstElementPtr handle_id = arguments->get("handle-id");
-    ASSERT_TRUE(handle_id);
-    ASSERT_EQ("this-server", handle_id->stringValue());
+    ConstElementPtr origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    ASSERT_EQ("this-server", origin->stringValue());
 }
 
 // This test verifies that the ha-reset command sent to DHCPv6 server is correct.

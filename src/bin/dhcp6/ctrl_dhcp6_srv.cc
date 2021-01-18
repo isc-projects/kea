@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -493,11 +493,13 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
                                                ConstElementPtr args) {
     std::ostringstream message;
     int64_t max_period = 0;
-    std::string handle_id;
+    std::string origin;
 
-    NetworkState::ControllerType type = NetworkState::COMMAND;
+    // If the args map does not contain 'origin' parameter, the default type
+    // will be used (user command).
+    NetworkState::Origin type = NetworkState::Origin::COMMAND;
 
-    // Parse arguments to see if the 'max-period' or 'handle-id' parameters have
+    // Parse arguments to see if the 'max-period' or 'origin' parameters have
     // been specified.
     if (args) {
         // Arguments must be a map.
@@ -525,16 +527,16 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
                     network_state_->delayedEnableAll(static_cast<unsigned>(max_period));
                 }
             }
-            ConstElementPtr handle_id_element = args->get("handle-id");
-            // handle-id is optional.
-            if (handle_id_element) {
+            ConstElementPtr origin_element = args->get("origin");
+            // The 'origin' parameter is optional.
+            if (origin_element) {
                 // It must be a string, if specified.
-                if (handle_id_element->getType() != Element::string) {
-                    message << "'handle-id' argument must be a string";
+                if (origin_element->getType() != Element::string) {
+                    message << "'origin' argument must be a string";
 
                 } else {
-                    handle_id = handle_id_element->stringValue();
-                    type = NetworkState::HA;
+                    origin = origin_element->stringValue();
+                    type = NetworkState::Origin::HA;
                 }
             }
         }
@@ -560,27 +562,29 @@ ConstElementPtr
 ControlledDhcpv6Srv::commandDhcpEnableHandler(const std::string&,
                                               ConstElementPtr args) {
     std::ostringstream message;
-    std::string handle_id;
+    std::string origin;
 
-    NetworkState::ControllerType type = NetworkState::COMMAND;
+    // If the args map does not contain 'origin' parameter, the default type
+    // will be used (user command).
+    NetworkState::Origin type = NetworkState::Origin::COMMAND;
 
-    // Parse arguments to see if the 'handle-id' parameter has been specified.
+    // Parse arguments to see if the 'origin' parameter has been specified.
     if (args) {
         // Arguments must be a map.
         if (args->getType() != Element::map) {
             message << "arguments for the 'dhcp-enable' command must be a map";
 
         } else {
-            ConstElementPtr handle_id_element = args->get("handle-id");
-            // handle-id is optional.
-            if (handle_id_element) {
+            ConstElementPtr origin_element = args->get("origin");
+            // The 'origin' parameter is optional.
+            if (origin_element) {
                 // It must be a string, if specified.
-                if (handle_id_element->getType() != Element::string) {
-                    message << "'handle-id' argument must be a string";
+                if (origin_element->getType() != Element::string) {
+                    message << "'origin' argument must be a string";
 
                 } else {
-                    handle_id = handle_id_element->stringValue();
-                    type = NetworkState::HA;
+                    origin = origin_element->stringValue();
+                    type = NetworkState::Origin::HA;
                 }
             }
         }
@@ -873,7 +877,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         cfg_db->setAppendedParameters("universe=6");
         cfg_db->createManagers();
         // Reset counters related to connections as all managers have been recreated.
-        srv->getNetworkState()->resetInternalState(NetworkState::CONNECTION);
+        srv->getNetworkState()->resetInternalState(NetworkState::Origin::CONNECTION);
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
@@ -1232,7 +1236,7 @@ ControlledDhcpv6Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
 bool
 ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Disable service until the connection is recovered.
-    network_state_->disableService(NetworkState::CONNECTION);
+    network_state_->disableService(NetworkState::Origin::CONNECTION);
 
     LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_LOST_CONNECTION);
 
@@ -1258,7 +1262,7 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
 bool
 ControlledDhcpv6Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Enable service after the connection is recovered.
-    network_state_->enableService(NetworkState::CONNECTION);
+    network_state_->enableService(NetworkState::Origin::CONNECTION);
 
     LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_SUCCEEDED);
 

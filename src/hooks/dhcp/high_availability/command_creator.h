@@ -23,18 +23,25 @@ public:
 
     /// @brief Creates dhcp-disable command for DHCP server.
     ///
+    /// @param origin The 'origin' of the dhcp-disable command.
+    /// @param max_period The max-period time the service can stay disabled
+    /// before automatically transitioning to enabled state.
+    /// @param server_type type of the DHCP server, i.e. v4 or v6.
+    ///
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createDHCPDisable(const std::string& service_name,
+    createDHCPDisable(const std::string& origin,
                       const unsigned int max_period,
                       const HAServerType& server_type);
 
     /// @brief Creates dhcp-enable command for DHCP server.
     ///
+    /// @param origin The 'origin' of the dhcp-enable command.
     /// @param server_type type of the DHCP server, i.e. v4 or v6.
+    ///
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createDHCPEnable(const std::string& service_name,
+    createDHCPEnable(const std::string& origin,
                      const HAServerType& server_type);
 
     /// @brief Creates ha-reset command.
