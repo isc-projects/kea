@@ -160,7 +160,7 @@ TEST(CommandCreatorTest, createDHCPDisable4) {
     ASSERT_TRUE(max_period);
     ASSERT_EQ(Element::integer, max_period->getType());
     EXPECT_EQ(20, max_period->intValue());
-    ConstElementPtr origin = arguments->get("orgin");
+    ConstElementPtr origin = arguments->get("origin");
     ASSERT_TRUE(origin);
     ASSERT_EQ("this-server", origin->stringValue());
 
