@@ -224,11 +224,13 @@ public:
 
     /// @brief Removes all received requests.
     void clearReceivedRequests() {
+        std::lock_guard<std::mutex> lk(mutex_);
         requests_.clear();
     }
 
     /// @brief Returns a vector of received requests.
     std::vector<PostHttpRequestJsonPtr> getReceivedRequests() {
+        std::lock_guard<std::mutex> lk(mutex_);
         return (requests_);
     }
 
@@ -245,6 +247,7 @@ public:
     PostHttpRequestJsonPtr
     findRequest(const std::string& str1, const std::string& str2,
                 const std::string& str3 = "") {
+        std::lock_guard<std::mutex> lk(mutex_);
         for (auto r = requests_.begin(); r < requests_.end(); ++r) {
             std::string request_as_string = (*r)->toString();
             if (request_as_string.find(str1) != std::string::npos) {
@@ -273,6 +276,7 @@ public:
     /// @param control_result new control result value.
     void setControlResult(const std::string& command_name,
                           const int control_result) {
+        std::lock_guard<std::mutex> lk(mutex_);
         per_request_control_result_[command_name] = control_result;
     }
 
@@ -280,6 +284,7 @@ public:
     ///
     /// @param arguments pointer to the arguments.
     void setArguments(const ElementPtr& arguments) {
+        std::lock_guard<std::mutex> lk(mutex_);
         arguments_ = arguments;
     }
 
@@ -298,11 +303,13 @@ public:
     /// @param arguments pointer to the arguments.
     void setArguments(const std::string& command_name,
                       const ElementPtr& arguments) {
+        std::lock_guard<std::mutex> lk(mutex_);
         per_request_arguments_[command_name].push_back(isc::data::copy(arguments));
         // Create request index for this command if it doesn't exist.
         if (request_index_.count(command_name) == 0) {
             request_index_[command_name] = 0;
         }
+        //cv_.notify_one();
     }
 
     /// @brief Create a new request.
@@ -325,6 +332,7 @@ public:
     /// @param user The user id to authorize.
     /// @param password The password.
     void addBasicAuth(const std::string& user, const std::string& password) {
+        std::lock_guard<std::mutex> lk(mutex_);
         basic_auth_.add(user, password);
     }
 
@@ -360,6 +368,7 @@ private:
     /// @return Pointer to the generated HTTP OK response.
     virtual HttpResponsePtr
     createDynamicHttpResponse(HttpRequestPtr request) {
+        std::unique_lock<std::mutex> lk(mutex_);
         // Check authentication.
         const BasicHttpAuthMap& credentials = getCredentials();
         if (!credentials.empty()) {
@@ -428,6 +437,8 @@ private:
                     control_result = per_request_control_result_[command_name];
                 }
 
+                //bool ret = cv_.wait_for(lk, std::chrono::seconds(30), [&](){ return per_request_arguments_.count(command_name) > 0 || command_name != "lease4-get-page"; });
+                //EXPECT_EQ(true, ret);
                 // Check if there are specific arguments to be returned for this
                 // command.
                 if (per_request_arguments_.count(command_name) > 0) {
@@ -495,6 +506,11 @@ private:
 
     /// @brief Basic HTTP authentication configuration.
     BasicHttpAuthConfig basic_auth_;
+
+    /// @brief Mutex to protect member access.
+    std::mutex mutex_;
+
+    std::condition_variable cv_;
 };
 
 /// @brief Shared pointer to the @c TestHttpResponseCreator.
