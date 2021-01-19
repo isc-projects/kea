@@ -43,7 +43,8 @@ SYSTEMS = {
         #'29',  # EOLed
         '30',   # EOLed
         '31',
-        '32'],
+        '32',
+        '33'],
     'centos': ['7', '8'],
     'rhel': ['8'],
     'ubuntu': [
@@ -52,7 +53,8 @@ SYSTEMS = {
         #'18.10',  # EOLed
         #'19.04',  # EOLed
         '19.10',
-        '20.04'],
+        '20.04',
+        '20.10'],
     'debian': [#'8',
                '9',
                '10'],
@@ -79,6 +81,7 @@ IMAGE_TEMPLATES = {
     'fedora-31-lxc':           {'bare': 'isc/lxc-fedora-31',           'kea': 'isc/kea-fedora-31'},
     'fedora-31-virtualbox':    {'bare': 'isc/vbox-fedora-31',          'kea': 'isc/kea-fedora-31'},
     'fedora-32-lxc':           {'bare': 'isc/lxc-fedora-32',           'kea': 'isc/kea-fedora-32'},
+    'fedora-33-lxc':           {'bare': 'isc/lxc-fedora-33',           'kea': 'isc/kea-fedora-33'},
     'centos-7-lxc':            {'bare': 'godfryd/lxc-centos-7',        'kea': 'godfryd/kea-centos-7'},
     'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
     'centos-8-lxc':            {'bare': 'isc/lxc-centos-8',            'kea': 'isc/kea-centos-8'},
@@ -95,6 +98,7 @@ IMAGE_TEMPLATES = {
     'ubuntu-19.10-lxc':        {'bare': 'isc/lxc-ubuntu-19.10',        'kea': 'isc/kea-ubuntu-19.10'},
     'ubuntu-19.10-virtualbox': {'bare': 'generic/ubuntu1910',          'kea': 'isc/kea-ubuntu-19.10'},
     'ubuntu-20.04-lxc':        {'bare': 'isc/lxc-ubuntu-20.04',        'kea': 'isc/kea-ubuntu-20.04'},
+    'ubuntu-20.10-lxc':        {'bare': 'isc/lxc-ubuntu-20.10',        'kea': 'isc/kea-ubuntu-20.10'},
     'debian-8-lxc':            {'bare': 'godfryd/lxc-debian-8',        'kea': 'godfryd/kea-debian-8'},
     'debian-8-virtualbox':     {'bare': 'debian/jessie64',             'kea': 'godfryd/kea-debian-8'},
     'debian-9-lxc':            {'bare': 'godfryd/lxc-debian-9',        'kea': 'godfryd/kea-debian-9'},
@@ -913,9 +917,9 @@ class VagrantEnv(object):
 def _install_gtest_sources():
     """Install gtest sources."""
     # download gtest sources only if it is not present as native package
-    if not os.path.exists('/usr/src/googletest-release-1.8.0/googletest'):
+    if not os.path.exists('/usr/src/googletest-release-1.10.0/googletest'):
         cmd = 'wget --no-verbose -O /tmp/gtest.tar.gz '
-        cmd += 'https://github.com/google/googletest/archive/release-1.8.0.tar.gz'
+        cmd += 'https://github.com/google/googletest/archive/release-1.10.0.tar.gz'
         execute(cmd)
         execute('sudo mkdir -p /usr/src')
         execute('sudo tar -C /usr/src -zxf /tmp/gtest.tar.gz')
@@ -1045,6 +1049,9 @@ def _apt_update(system, revision, env=None, check_times=False, attempts=1, sleep
 
 def _install_cassandra_deb(system, revision, env, check_times):
     """Install Cassandra and cpp-driver using DEB package."""
+    if system == 'ubuntu' and revision == '20.10':
+        # no support for ubuntu 20.10
+        return 0
     if not os.path.exists('/usr/sbin/cassandra'):
         cmd = 'echo "deb http://www.apache.org/dist/cassandra/debian 311x main" '
         cmd += '| sudo tee /etc/apt/sources.list.d/cassandra.sources.list'
@@ -1084,6 +1091,9 @@ def _install_cassandra_rpm(system, revision, env, check_times):
             execute('sudo yum-config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/', raise_error=False)
             execute('sudo rpm --import https://www.apache.org/dist/cassandra/KEYS')
             pkgs = 'cassandra cassandra-tools libuv libuv-devel openssl'
+        elif system == 'fedora' and int(revision) == 33:
+            # there are not rpms for fedora33
+            return 0
         else:
             pkgs = 'cassandra cassandra-server libuv libuv-devel'
         install_pkgs(pkgs, env=env, check_times=check_times)
@@ -1526,20 +1536,22 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cmd += ' --with-mysql'
     if 'pgsql' in features:
         cmd += ' --with-pgsql'
-    if 'cql' in features and not (system == 'debian' and revision == '8'):
-        # debian 8 does not have all deps required
+    if 'cql' in features and not (system in ['debian', 'fedora', 'ubuntu'] and revision in ['8', '33', '20.10']):
+        # debian 8, fedora 33, ubuntu 20.10 does not have all deps required
+        # combinations in (system in ['debian', 'fedora', 'ubuntu'] and revision in ['8', '33', '20.10'])
+        # will not generate errors
         cmd += ' --with-cql=/usr/bin/pkg-config'
     if 'unittest' in features:
         # prepare gtest switch - use downloaded gtest sources only if it is not present as native package
         if system in ['centos', 'fedora', 'rhel', 'freebsd', 'alpine']:
-            cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
+            cmd += ' --with-gtest-source=/usr/src/googletest-release-1.10.0/googletest/'
         elif system == 'debian' and revision == '8':
-            cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
+            cmd += ' --with-gtest-source=/usr/src/googletest-release-1.10.0/googletest/'
         elif system == 'debian':
             cmd += ' --with-gtest-source=/usr/src/googletest/googletest'
         elif system == 'ubuntu':
             if revision.startswith('16.'):
-                cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
+                cmd += ' --with-gtest-source=/usr/src/googletest-release-1.10.0/googletest/'
             else:
                 cmd += ' --with-gtest-source=/usr/src/googletest/googletest'
         else:
