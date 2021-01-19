@@ -1,8 +1,8 @@
 1856.	[bug]		razvan
-	The 'reservation-mode' global parameter is now converted
-	internally to new reservation flags when it is read from the
-	config backend and the new flags are the ones listed when
-	issuing the config-get command.
+	When using the config backend, the server converts the old
+	'reservation-mode' global parameter internally to new
+	reservation flags. The new flags are listed when issuing the
+	config-get command.
 	(Gitlab #1598)
 
 1855.	[func]		marcin
