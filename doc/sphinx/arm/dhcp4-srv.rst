@@ -3828,7 +3828,9 @@ There are five levels which are supported:
 -  ``del`` - this is the strictest mode. If any inconsistency is
    detected, reject the lease. Use with care.
 
-This feature is currently implemented for the memfile backend.
+This feature is currently implemented for the memfile backend. Note the
+sanity check applies to the lease database in memory, not to the lease file,
+i.e. inconsistent leases will stay in the lease file.
 
 An example configuration that sets this parameter looks as follows:
 
