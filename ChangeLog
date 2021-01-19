@@ -1,3 +1,10 @@
+1856.	[bug]		razvan
+	The 'reservation-mode' global parameter is now converted
+	internally to new reservation flags when it is stored in config
+	backend and the new flags are the ones listed when issuing the
+	config-get command.
+	(Gitlab #1598)
+
 1855.	[func]		marcin
 	Improved failover procedure in Kea High Availability library
 	by introducing new communication-recovery state. In this
