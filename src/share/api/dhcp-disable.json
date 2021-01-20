@@ -8,7 +8,8 @@
         "{",
         "    \"command\": \"dhcp-disable\",",
         "    \"arguments\": {",
-        "        \"max-period\": 20",
+        "        \"max-period\": 20,",
+        "        \"origin\": \"user\",
         "    }",
         "}"
     ],

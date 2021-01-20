@@ -1,3 +1,14 @@
+1858.	[bug]		razvan
+	The network state can be independently altered by the user
+	command, the database connection recovery mechanics or by
+	the HA library. The state transitions to disabled when any
+	originator sets the flag and remains disabled until all flags
+	are cleared. The 'dhcp-enable' and 'dhcp-disable' commands
+	accept 'origin' parameter with valid values of 'user' (which
+	is the default) indicating user generated command and
+	'ha-partner' which is used internally by the HA library.
+	(Gitlab #1601)
+
 1857.	[build]		andrei
 	Code format styles meant to be as close as possible to the
 	recommended coding guidelines are now included with the Kea

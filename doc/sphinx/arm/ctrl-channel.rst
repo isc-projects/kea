@@ -557,6 +557,13 @@ synchronization of the lease databases at startup, or recovery after a
 failure. The optional parameter "max-period" specifies the time in
 seconds after which the DHCP service should be automatically re-enabled,
 if the ``dhcp-enable`` command is not sent before this time elapses.
+Since Kea 1.9.4 there is an additional "origin" parameter which specifies
+the source of the command: either user requested or internally required by
+the HA library. If not specified, the command is considered to be requested
+by user. Valid values for the 'origin' parameter are: 'user' (which is the
+default value) and 'ha-partner'. Using the 'ha-partner' value is not
+recommended because it can interfere with the HA mechanics and can result
+in undesired effects.
 
 ::
 
@@ -567,17 +574,43 @@ if the ``dhcp-enable`` command is not sent before this time elapses.
        }
    }
 
+::
+
+   {
+       "command": "dhcp-disable",
+       "arguments": {
+           "max-period": 20,
+           "origin": "user"
+       }
+   }
+
 .. _command-dhcp-enable:
 
 The dhcp-enable Command
 -----------------------
 
 The ``dhcp-enable`` command globally enables the DHCP service.
+Since Kea 1.9.4 there is an additional "origin" parameter which specifies
+the source of the command: either user requested or internally required by
+the HA library. If not specified, the command is considered to be requested
+by user. Valid values for the 'origin' parameter are: 'user' (which is the
+default value) and 'ha-partner'. Using the 'ha-partner' value is not
+recommended because it can interfere with the HA mechanics and can result
+in undesired effects.
 
 ::
 
    {
        "command": "dhcp-enable"
+   }
+
+::
+
+   {
+       "command": "dhcp-enable",
+       "arguments": {
+           "origin": "user"
+       }
    }
 
 .. _command-status-get:
