@@ -971,7 +971,7 @@ HAService::adjustNetworkState() {
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_DISABLE)
             .arg(config_->getThisServerName())
             .arg(current_state_name);
-        network_state_->disableService(NetworkState::Origin::HA);
+        network_state_->disableService(NetworkState::Origin::HA_COMMAND);
 
     } else if (should_enable && !network_state_->isServiceEnabled()) {
         std::string current_state_name = getStateLabel(getCurrState());
@@ -979,7 +979,7 @@ HAService::adjustNetworkState() {
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_ENABLE)
             .arg(config_->getThisServerName())
             .arg(current_state_name);
-        network_state_->enableService(NetworkState::Origin::HA);
+        network_state_->enableService(NetworkState::Origin::HA_COMMAND);
     }
 }
 
@@ -1683,8 +1683,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
          HostHttpHeader(remote_config->getUrl().getHostname()));
 
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createDHCPDisable(server_name,
-                                                             max_period,
+    request->setBodyAsJson(CommandCreator::createDHCPDisable(max_period,
                                                              server_type_));
     request->finalize();
 
@@ -1758,8 +1757,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getHostname()));
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createDHCPEnable(server_name,
-                                                            server_type_));
+    request->setBodyAsJson(CommandCreator::createDHCPEnable(server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
@@ -1823,12 +1821,12 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
 
 void
 HAService::localDisableDHCPService() {
-    network_state_->disableService(NetworkState::Origin::HA);
+    network_state_->disableService(NetworkState::Origin::HA_COMMAND);
 }
 
 void
 HAService::localEnableDHCPService() {
-    network_state_->enableService(NetworkState::Origin::HA);
+    network_state_->enableService(NetworkState::Origin::HA_COMMAND);
 }
 
 void

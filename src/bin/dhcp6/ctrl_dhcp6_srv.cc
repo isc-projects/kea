@@ -497,7 +497,7 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
 
     // If the args map does not contain 'origin' parameter, the default type
     // will be used (user command).
-    NetworkState::Origin type = NetworkState::Origin::COMMAND;
+    NetworkState::Origin type = NetworkState::Origin::USER_COMMAND;
 
     // Parse arguments to see if the 'max-period' or 'origin' parameters have
     // been specified.
@@ -520,11 +520,6 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
                     if (max_period <= 0) {
                         message << "'max-period' must be positive integer";
                     }
-
-                    // The user specified that the DHCP service should resume not
-                    // later than in max-period seconds. If the 'dhcp-enable' command
-                    // is not sent, the DHCP service will resume automatically.
-                    network_state_->delayedEnableAll(static_cast<unsigned>(max_period));
                 }
             }
             ConstElementPtr origin_element = args->get("origin");
@@ -536,7 +531,15 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
 
                 } else {
                     origin = origin_element->stringValue();
-                    type = NetworkState::Origin::HA;
+                    if (origin == "ha-partner") {
+                        type = NetworkState::Origin::HA_COMMAND;
+                    } else if (origin != "user") {
+                        if (origin.empty()) {
+                            origin = "(empty string)";
+                        }
+                        message << "invalid value used for 'origin' parameter: "
+                                << origin;
+                    }
                 }
             }
         }
@@ -544,12 +547,18 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
 
     // No error occurred, so let's disable the service.
     if (message.tellp() == 0) {
-        network_state_->disableService(type);
-
         message << "DHCPv6 service disabled";
         if (max_period > 0) {
             message << " for " << max_period << " seconds";
+
+            // The user specified that the DHCP service should resume not
+            // later than in max-period seconds. If the 'dhcp-enable' command
+            // is not sent, the DHCP service will resume automatically.
+            network_state_->delayedEnableAll(static_cast<unsigned>(max_period),
+                                             type);
         }
+        network_state_->disableService(type);
+
         // Success.
         return (config::createAnswer(CONTROL_RESULT_SUCCESS, message.str()));
     }
@@ -566,7 +575,7 @@ ControlledDhcpv6Srv::commandDhcpEnableHandler(const std::string&,
 
     // If the args map does not contain 'origin' parameter, the default type
     // will be used (user command).
-    NetworkState::Origin type = NetworkState::Origin::COMMAND;
+    NetworkState::Origin type = NetworkState::Origin::USER_COMMAND;
 
     // Parse arguments to see if the 'origin' parameter has been specified.
     if (args) {
@@ -584,7 +593,15 @@ ControlledDhcpv6Srv::commandDhcpEnableHandler(const std::string&,
 
                 } else {
                     origin = origin_element->stringValue();
-                    type = NetworkState::Origin::HA;
+                    if (origin == "ha-partner") {
+                        type = NetworkState::Origin::HA_COMMAND;
+                    } else if (origin != "user") {
+                        if (origin.empty()) {
+                            origin = "(empty string)";
+                        }
+                        message << "invalid value used for 'origin' parameter: "
+                                << origin;
+                    }
                 }
             }
         }
@@ -595,7 +612,8 @@ ControlledDhcpv6Srv::commandDhcpEnableHandler(const std::string&,
         network_state_->enableService(type);
 
         // Success.
-        return (config::createAnswer(CONTROL_RESULT_SUCCESS, "DHCP service successfully enabled"));
+        return (config::createAnswer(CONTROL_RESULT_SUCCESS,
+                                     "DHCP service successfully enabled"));
     }
 
     // Failure.
@@ -877,7 +895,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         cfg_db->setAppendedParameters("universe=6");
         cfg_db->createManagers();
         // Reset counters related to connections as all managers have been recreated.
-        srv->getNetworkState()->resetInternalState(NetworkState::Origin::CONNECTION);
+        srv->getNetworkState()->reset(NetworkState::Origin::DB_CONNECTION);
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
@@ -1236,7 +1254,7 @@ ControlledDhcpv6Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
 bool
 ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Disable service until the connection is recovered.
-    network_state_->disableService(NetworkState::Origin::CONNECTION);
+    network_state_->disableService(NetworkState::Origin::DB_CONNECTION);
 
     LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_LOST_CONNECTION);
 
@@ -1262,7 +1280,7 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
 bool
 ControlledDhcpv6Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Enable service after the connection is recovered.
-    network_state_->enableService(NetworkState::Origin::CONNECTION);
+    network_state_->enableService(NetworkState::Origin::DB_CONNECTION);
 
     LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_SUCCEEDED);
 

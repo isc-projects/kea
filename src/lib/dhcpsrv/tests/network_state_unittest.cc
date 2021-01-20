@@ -74,336 +74,336 @@ TEST_F(NetworkStateTest, default) {
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv4
-// service using origin type command.
-TEST_F(NetworkStateTest, disableEnableService4UsingOriginTypeCommand) {
+// service using 'user command' origin.
+TEST_F(NetworkStateTest, disableEnableService4UsingUserCommandOrigin) {
     NetworkState state(NetworkState::DHCPv4);
 
-    // Test that enable/disable using origin type command works
-    state.disableService(NetworkState::Origin::COMMAND);
+    // Test that enable/disable using 'user command' origin works
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::COMMAND);
+    state.enableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 
-    // Test that using origin type command does not use internal counter
-    state.disableService(NetworkState::Origin::COMMAND);
+    // Test that using 'user command' origin does not use internal counter
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::COMMAND);
+    state.enableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::COMMAND);
+    state.enableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv4
-// service using origin type HA.
-TEST_F(NetworkStateTest, disableEnableService4UsingOriginTypeHA) {
+// service using 'HA command' origin.
+TEST_F(NetworkStateTest, disableEnableService4UsingHACommandOrigin) {
     NetworkState state(NetworkState::DHCPv4);
 
-    // Test that enable/disable using origin type HA works
-    state.disableService(NetworkState::Origin::HA);
+    // Test that enable/disable using 'HA command' origin works
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::HA);
+    state.enableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 
-    // Test that using origin type HA does not use internal counter
-    state.disableService(NetworkState::Origin::HA);
+    // Test that using 'HA command' origin does not use internal counter
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::HA);
+    state.enableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::HA);
+    state.enableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv4
-// service using origin type connection.
-TEST_F(NetworkStateTest, disableEnableService4UsingOriginTypeConnection) {
+// service using using 'DB connection' origin.
+TEST_F(NetworkStateTest, disableEnableService4UsingDBConnectionOrigin) {
     NetworkState state(NetworkState::DHCPv4);
 
-    // Test that enable/disable origin type connection works
-    state.disableService(NetworkState::Origin::CONNECTION);
+    // Test that enable/disable using 'DB connection' origin works
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 
-    // Test that using origin type connection uses internal counter
-    state.disableService(NetworkState::Origin::CONNECTION);
+    // Test that using using 'DB connection' origin uses internal counter
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv4
-// service using a combination of origin types.
-// 1. Disable using origin type command 2 times (expect disabled state).
-// 2. Disable using origin type HA 2 times (expect disabled state).
-// 3. Disable using origin type connection 2 times (expect disabled state).
-// 4. Enable using origin type command 1 time (expect disabled state).
-// 5. Enable using origin type HA 1 time (expect disabled state).
-// 6. Enable using origin type connection 2 times (expect enabled state).
-TEST_F(NetworkStateTest, disableEnableService4UsingMultipleOriginTypes) {
+// service using a combination of origins.
+// 1. Disable using 'user command' origin 2 times (expect disabled state).
+// 2. Disable using 'HA command' origin 2 times (expect disabled state).
+// 3. Disable using using 'DB connection' origin 2 times (expect disabled state).
+// 4. Enable using 'user command' origin 1 time (expect disabled state).
+// 5. Enable using 'HA command' origin 1 time (expect disabled state).
+// 6. Enable using using 'DB connection' origin 2 times (expect enabled state).
+TEST_F(NetworkStateTest, disableEnableService4UsingMultipleOrigins) {
     NetworkState state(NetworkState::DHCPv4);
 
     // Test that a combination properly affects the state
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::COMMAND);
+    state.enableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::HA);
+    state.enableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv6
-// service using origin type command.
-TEST_F(NetworkStateTest, disableEnableService6UsingOriginCommand) {
+// service using 'user command' origin.
+TEST_F(NetworkStateTest, disableEnableService6UsingUserCommandOrigin) {
     NetworkState state(NetworkState::DHCPv6);
 
-    // Test that enable/disable using origin type command works
-    state.disableService(NetworkState::Origin::COMMAND);
+    // Test that enable/disable using 'user command' origin works
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::COMMAND);
+    state.enableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 
-    // Test that using origin type command does not use internal counter
-    state.disableService(NetworkState::Origin::COMMAND);
+    // Test that using 'user command' origin does not use internal counter
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::COMMAND);
+    state.enableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::COMMAND);
+    state.enableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv6
-// service using origin type HA.
-TEST_F(NetworkStateTest, disableEnableService6UsingOriginTypeHA) {
+// service using 'HA command' origin.
+TEST_F(NetworkStateTest, disableEnableService6UsingHACommandOrigin) {
     NetworkState state(NetworkState::DHCPv6);
 
-    // Test that enable/disable using origin type HA works
-    state.disableService(NetworkState::Origin::HA);
+    // Test that enable/disable using 'HA command' origin works
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::HA);
+    state.enableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 
-    // Test that using origin type HA does not use internal counter
-    state.disableService(NetworkState::Origin::HA);
+    // Test that using 'HA command' origin does not use internal counter
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::HA);
+    state.enableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::HA);
+    state.enableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv6
-// service using origin type connection.
-TEST_F(NetworkStateTest, disableEnableService6UsingOriginTypeConnection) {
+// service using using 'DB connection' origin.
+TEST_F(NetworkStateTest, disableEnableService6UsingDBConnectionOrigin) {
     NetworkState state(NetworkState::DHCPv6);
 
-    // Test that enable/disable using origin type connection works
-    state.disableService(NetworkState::Origin::CONNECTION);
+    // Test that enable/disable using using 'DB connection' origin works
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 
-    // Test that using origin type connection uses internal counter
-    state.disableService(NetworkState::Origin::CONNECTION);
+    // Test that using using 'DB connection' origin uses internal counter
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv6
-// service using a combination of origin types.
-// 1. Disable using origin type command 2 times (expect disabled state).
-// 2. Disable using origin type HA 2 times (expect disabled state).
-// 3. Disable using origin type connection 2 times (expect disabled state).
-// 4. Enable using origin type command 1 time (expect disabled state).
-// 5. Enable using origin type HA 1 time (expect disabled state).
-// 6. Enable using origin type connection 2 times (expect enabled state).
-TEST_F(NetworkStateTest, disableEnableService6UsingMultipleOriginTypes) {
+// service using a combination of origins.
+// 1. Disable using 'user command' origin 2 times (expect disabled state).
+// 2. Disable using 'HA command' origin 2 times (expect disabled state).
+// 3. Disable using using 'DB connection' origin 2 times (expect disabled state).
+// 4. Enable using 'user command' origin 1 time (expect disabled state).
+// 5. Enable using 'HA command' origin 1 time (expect disabled state).
+// 6. Enable using using 'DB connection' origin 2 times (expect enabled state).
+TEST_F(NetworkStateTest, disableEnableService6UsingMultipleOrigins) {
     NetworkState state(NetworkState::DHCPv6);
 
     // Test that a combination properly affects the state
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::COMMAND);
+    state.enableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::HA);
+    state.enableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
-// This test verifies that resetInternalState works, so that internal state is
-// reset after all managers are recreated.
-// 1. Disable using origin type command 3 times (expect disabled state).
-// 2. Disable using origin type HA 1 time (expect disabled state).
-// 3. Disable using origin type connection 1 time (expect disabled state).
-// 4. Reset using origin type command (expect disabled state).
-// 5. Enable using origin type HA 1 time (expect disabled state).
-// 6. Enable using origin type connection 1 time (expect enabled state).
-// 7. Disable using origin type command 3 times (expect disabled state).
-// 8. Reset using origin type command (expect enabled state).
-TEST_F(NetworkStateTest, resetInternalStateUsingOriginTypeCommand) {
+// This test verifies that reset works, so that internal state is reset after
+// all managers are recreated.
+// 1. Disable using 'user command' origin 3 times (expect disabled state).
+// 2. Disable using 'HA command' origin 1 time (expect disabled state).
+// 3. Disable using using 'DB connection' origin 1 time (expect disabled state).
+// 4. Reset using 'user command' origin (expect disabled state).
+// 5. Enable using 'HA command' origin 1 time (expect disabled state).
+// 6. Enable using using 'DB connection' origin 1 time (expect enabled state).
+// 7. Disable using 'user command' origin 3 times (expect disabled state).
+// 8. Reset using 'user command' origin (expect enabled state).
+TEST_F(NetworkStateTest, resetUsingUserCommandOrigin) {
     NetworkState state(NetworkState::DHCPv4);
 
-    // Test COMMAND + HA + CONNECTION types
-    state.disableService(NetworkState::Origin::COMMAND);
+    // Test User COMMAND + HA COMMAND + DB CONNECTION origins
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.resetInternalState(NetworkState::Origin::COMMAND);
+    state.reset(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::HA);
+    state.enableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 
-    // Test COMMAND type only
-    state.disableService(NetworkState::Origin::COMMAND);
+    // Test User COMMAND origin only
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.resetInternalState(NetworkState::Origin::COMMAND);
+    state.reset(NetworkState::Origin::USER_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
-// This test verifies that resetInternalState works, so that internal state is
-// reset after all managers are recreated.
-// 1. Disable using origin type command 1 time (expect disabled state).
-// 2. Disable using origin type HA 3 times (expect disabled state).
-// 3. Disable using origin type connection 1 time (expect disabled state).
-// 4. Reset using origin type HA (expect disabled state).
-// 5. Enable using origin type command 1 time (expect disabled state).
-// 6. Enable using origin type connection 1 time (expect enabled state).
-// 7. Disable using origin type HA 3 times (expect disabled state).
-// 8. Reset using origin type HA (expect enabled state).
-TEST_F(NetworkStateTest, resetInternalStateUsingOriginTypeHA) {
+// This test verifies that reset works, so that internal state is reset after
+// all managers are recreated.
+// 1. Disable using 'user command' origin 1 time (expect disabled state).
+// 2. Disable using 'HA command' origin 3 times (expect disabled state).
+// 3. Disable using using 'DB connection' origin 1 time (expect disabled state).
+// 4. Reset using 'HA command' origin (expect disabled state).
+// 5. Enable using 'user command' origin 1 time (expect disabled state).
+// 6. Enable using using 'DB connection' origin 1 time (expect enabled state).
+// 7. Disable using 'HA command' origin 3 times (expect disabled state).
+// 8. Reset using 'HA command' origin (expect enabled state).
+TEST_F(NetworkStateTest, resetUsingHACommandOrigin) {
     NetworkState state(NetworkState::DHCPv4);
 
-    // Test HA + COMMAND + CONNECTION types
-    state.disableService(NetworkState::Origin::COMMAND);
+    // Test HA COMMAND + User COMMAND + DB CONNECTION origins
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.resetInternalState(NetworkState::Origin::HA);
+    state.reset(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::COMMAND);
+    state.enableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 
-    // Test HA type only
-    state.disableService(NetworkState::Origin::HA);
+    // Test HA COMMAND origin only
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.resetInternalState(NetworkState::Origin::HA);
+    state.reset(NetworkState::Origin::HA_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
-// This test verifies that resetInternalState works, so that internal state is
-// reset after all managers are recreated.
-// 1. Disable using origin type command 1 time (expect disabled state).
-// 2. Disable using origin type HA a time (expect disabled state).
-// 3. Disable using origin type connection 3 time (expect disabled state).
-// 4. Reset using origin type connection (expect disabled state).
-// 5. Enable using origin type command 1 time (expect disabled state).
-// 6. Enable using origin type connection 1 time (expect enabled state).
-// 7. Disable using origin type connection 3 times (expect disabled state).
-// 8. Reset using origin type connection (expect enabled state).
-TEST_F(NetworkStateTest, resetInternalStateUsingOriginTypeConnection) {
+// This test verifies that reset works, so that internal state is  reset after
+// all managers are recreated.
+// 1. Disable using 'user command' origin 1 time (expect disabled state).
+// 2. Disable using 'HA command' origin 1 time (expect disabled state).
+// 3. Disable using using 'DB connection' origin 3 time (expect disabled state).
+// 4. Reset using using 'DB connection' origin (expect disabled state).
+// 5. Enable using 'user command' origin 1 time (expect disabled state).
+// 6. Enable using using 'DB connection' origin 1 time (expect enabled state).
+// 7. Disable using using 'DB connection' origin 3 times (expect disabled state).
+// 8. Reset using using 'DB connection' origin (expect enabled state).
+TEST_F(NetworkStateTest, resetUsingDBConnectionOrigin) {
     NetworkState state(NetworkState::DHCPv4);
 
-    // Test CONNECTION + COMMAND + HA types
-    state.disableService(NetworkState::Origin::COMMAND);
+    // Test DB CONNECTION + User COMMAND + HA COMMAND origins
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::HA);
+    state.disableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.resetInternalState(NetworkState::Origin::CONNECTION);
+    state.reset(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::COMMAND);
+    state.enableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableService(NetworkState::Origin::HA);
+    state.enableService(NetworkState::Origin::HA_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 
-    // Test CONNECTION type only
-    state.disableService(NetworkState::Origin::CONNECTION);
+    // Test DB CONNECTION origin only
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.disableService(NetworkState::Origin::CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.resetInternalState(NetworkState::Origin::CONNECTION);
+    state.reset(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
@@ -411,9 +411,9 @@ TEST_F(NetworkStateTest, resetInternalStateUsingOriginTypeConnection) {
 // in the future to verify that it also enables disabled scopes.
 TEST_F(NetworkStateTest, enableAll) {
     NetworkState state(NetworkState::DHCPv4);
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.enableAll();
+    state.enableAll(NetworkState::Origin::USER_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
@@ -422,8 +422,8 @@ TEST_F(NetworkStateTest, enableAll) {
 TEST_F(NetworkStateTest, delayedEnableAll) {
     NetworkState state(NetworkState::DHCPv4);
     // Disable the service and then schedule enabling it in 1 second.
-    state.disableService(NetworkState::Origin::COMMAND);
-    state.delayedEnableAll(1);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
+    state.delayedEnableAll(1, NetworkState::Origin::USER_COMMAND);
     // Initially the service should be still disabled.
     EXPECT_FALSE(state.isServiceEnabled());
     // After running IO service for 2 seconds, the service should be enabled.
@@ -436,12 +436,12 @@ TEST_F(NetworkStateTest, delayedEnableAll) {
 TEST_F(NetworkStateTest, earlyEnableAll) {
     NetworkState state(NetworkState::DHCPv4);
     // Disable the service.
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
     // Schedule enabling the service in 2 seconds.
-    state.delayedEnableAll(2);
+    state.delayedEnableAll(2, NetworkState::Origin::USER_COMMAND);
     // Explicitly enable the service.
-    state.enableAll();
+    state.enableAll(NetworkState::Origin::USER_COMMAND);
     // The timer should be now canceled and the service should be enabled.
     EXPECT_FALSE(state.isDelayedEnableAll());
     EXPECT_TRUE(state.isServiceEnabled());
@@ -452,12 +452,12 @@ TEST_F(NetworkStateTest, earlyEnableAll) {
 TEST_F(NetworkStateTest, multipleDelayedEnableAll) {
     NetworkState state(NetworkState::DHCPv4);
     // Disable the service and then schedule enabling it in 1 second.
-    state.disableService(NetworkState::Origin::COMMAND);
+    state.disableService(NetworkState::Origin::USER_COMMAND);
     // Schedule the first timer for 5 seconds.
-    state.delayedEnableAll(5);
+    state.delayedEnableAll(5, NetworkState::Origin::USER_COMMAND);
     // When calling it the second time the old timer should be destroyed and
     // the timeout should be set to 2 seconds.
-    state.delayedEnableAll(2);
+    state.delayedEnableAll(2, NetworkState::Origin::USER_COMMAND);
     // Initially the service should be still disabled.
     EXPECT_FALSE(state.isServiceEnabled());
     // After running IO service for 3 seconds, the service should be enabled.

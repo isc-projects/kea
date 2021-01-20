@@ -24,15 +24,26 @@ class NetworkStateImpl;
 /// or for specific networks, this has to be recorded to allow for re-enabling
 /// DHCP service for these networks as a result of receiving a command from
 /// the administrator or when the timeout for re-enabling the service occurs.
-///
+/// Currently there are two types of command originating either from user or
+/// HA internal mechanism.
+/// The global state can also be altered by the DB recovery mechanism which
+/// disables the service on connection loss and re-enables it after the
+/// connection is restored. Because the server supports recovery for multiple
+/// connections, this is implemented using an internal counter.
+/// Combining all the origins of the alteration of the network state, the
+/// behavior is:
+/// a) the network state is disabled if any of the originators explicitly set
+///    the disabled flag.
+/// b) the network state is restored only if all originators explicitly clear
+///    the disabled flag.
 /// In the future, it will be possible to specify "disabled" parameter for
 /// a subnet (or network) in the configuration file to indicate that this subnet
 /// should be excluded from the service. When a command is subsequently sent to
 /// temporarily disable a service for some other subnets for a specified amount
-/// ot time, only these subnets should be re-enabled when the time elapses. This
-/// class fulfils this requirement by recording the subnets disabled with a command
+/// of time, only these subnets should be re-enabled when the time elapses. This
+/// class fulfills this requirement by recording the subnets disabled with a command
 /// and re-enabling them when required. The subnets specified as "disabled" in
-/// the configuration file should remain disabled until explcitly enabled with a
+/// the configuration file should remain disabled until explicitly enabled with a
 /// control command.
 ///
 /// This class also allows for disabling the DHCP service globally. In this case
@@ -63,11 +74,19 @@ public:
         DHCPv6
     };
 
-    /// @brief Controller type.
+    /// @brief Origin of the network state transition.
+    ///
+    /// The enumeration indicates the originator of the state transition of the
+    /// network state: either user command, HA internal command or DB connection
+    /// recovery mechanism.
     enum class Origin {
-        COMMAND,
-        CONNECTION,
-        HA
+        /// @brief The network state is being altered by an user command.
+        USER_COMMAND,
+        /// @brief The network state is being altered by a HA internal command.
+        HA_COMMAND,
+        /// @brief The network state is being altered by the DB connection
+        /// recovery mechanics.
+        DB_CONNECTION
     };
 
     /// @brief Type of the container holding collection of subnet identifiers.
@@ -79,45 +98,45 @@ public:
     /// @brief Constructor.
     NetworkState(const ServerType& server_type);
 
-    /// @brief Disable the DHCP service state for respective origin type.
+    /// @brief Disable the DHCP service state for respective transition origin.
     ///
     /// @node If any of the user commands, HA internal commands or connection
     /// recovery processes disable the dhcp service, the service will remain
     /// disabled until all flags are cleared.
     ///
-    /// @param type The origin type the state must set disabled flag for:
-    /// either caused by an user command, HA internal command or connection
-    /// recovery process.
-    void disableService(const NetworkState::Origin& type);
+    /// @param origin The origin of the state transition.
+    void disableService(const NetworkState::Origin& origin);
 
-    /// @brief Enable the DHCP service state for respective origin type.
+    /// @brief Enable the DHCP service state for respective transition origin.
     ///
     /// @node If any of the user commands, HA internal commands or connection
     /// recovery processes disable the dhcp service, the service will remain
     /// disabled until all flags are cleared.
     ///
-    /// @param type The origin type the state must set enabled flag for:
-    /// either caused by an user command, HA internal command or connection
-    /// recovery process.
-    void enableService(const NetworkState::Origin& type);
+    /// @param origin The origin of the state transition.
+    void enableService(const NetworkState::Origin& origin);
 
     /// @brief Reset internal counters.
     ///
-    /// Reset internal counters related to a specific 'origin' type after the
-    /// server has been reconfigured or all the connections have been restored.
+    /// Reset internal counters for a specific 'origin' after the server has
+    /// been reconfigured or all the connections have been restored.
     ///
-    /// @param type The origin type for which the state flags need to be reset.
-    void resetInternalState(const NetworkState::Origin& type);
+    /// @param origin The origin for which the state flags need to be reset.
+    void reset(const NetworkState::Origin& type);
 
     /// @brief Enables DHCP service globally and for scopes which have been
     /// disabled as a result of control command.
-    void enableAll();
+    ///
+    /// @param origin The origin of the state transition.
+    void enableAll(const NetworkState::Origin& origin);
 
     /// @brief Schedules enabling DHCP service in the future.
     ///
     /// @param seconds Number of seconds after which the service should be enabled
     /// unless @c enableAll is enabled before that time.
-    void delayedEnableAll(const unsigned int seconds);
+    /// @param origin The origin of the state transition.
+    void delayedEnableAll(const unsigned int seconds,
+                          const NetworkState::Origin& origin);
 
     /// @brief Checks if the DHCP service is globally enabled.
     ///
