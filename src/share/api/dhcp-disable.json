@@ -9,7 +9,7 @@
         "    \"command\": \"dhcp-disable\",",
         "    \"arguments\": {",
         "        \"max-period\": 20,",
-        "        \"origin\": \"user\",
+        "        \"origin\": \"user\"",
         "    }",
         "}"
     ],

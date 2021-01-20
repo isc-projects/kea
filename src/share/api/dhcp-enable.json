@@ -8,7 +8,7 @@
         "{",
         "    \"command\": \"dhcp-enable\",",
         "    \"arguments\": {",
-        "        \"origin\": \"user\",
+        "        \"origin\": \"user\"",
         "    }",
         "}"
     ],
