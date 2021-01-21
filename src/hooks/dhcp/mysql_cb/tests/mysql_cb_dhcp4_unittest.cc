@@ -1443,7 +1443,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4ByPrefix) {
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
 
     // Fetching the subnet for an explicitly specified server tag should
-    // succeeed too.
+    // succeed too.
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server1"),
                                          "192.0.2.0/24");
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
@@ -2250,7 +2250,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4Selectors) {
 TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateSharedNetwork4) {
     auto shared_network = test_networks_[0];
 
-    // An attempto insert the shared network for non-existing server should fail.
+    // An attempt to insert the shared network for non-existing server should fail.
     EXPECT_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ONE("server1"),
                                                     shared_network),
                  NullKeyError);
@@ -2958,7 +2958,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, sharedNetworkOptions) {
     EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), test_networks_[0]));
     EXPECT_EQ(4, countRows("dhcp4_options"));
 
-    // Delete this shared netwiork. This should not affect the option associated
+    // Delete this shared network. This should not affect the option associated
     // with the remaining shared network.
     EXPECT_NO_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                                  test_networks_[0]->getName()));
@@ -3227,7 +3227,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
             ++updates_num;
 
         } else {
-            SCOPED_TRACE("CREATE audit entry for the option defnition " + name);
+            SCOPED_TRACE("CREATE audit entry for the option definition " + name);
             testNewAuditEntry("dhcp4_option_def",
                               AuditEntry::ModificationType::CREATE,
                               "option definition set");

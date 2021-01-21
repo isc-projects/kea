@@ -334,7 +334,7 @@ public:
 ///
 /// This test checks if the CqlLeaseMgr can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// CqlLeaseMgr test fixure set.  This test checks that the database can be
+/// CqlLeaseMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(CqlOpenTest, OpenDatabase) {
 
@@ -704,7 +704,7 @@ TEST_F(CqlLeaseMgrTest, lease6InvalidHostname) {
 /// @brief Verify that large IAID values work correctly.
 ///
 /// Adds lease with a large IAID to the database and verifies it can
-/// fetched correclty.
+/// fetched correctly.
 TEST_F(CqlLeaseMgrTest, leases6LargeIaidCheck) {
     testLease6LargeIaidCheck();
 }

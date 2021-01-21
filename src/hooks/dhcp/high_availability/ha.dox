@@ -334,7 +334,7 @@ i.e.:
 - Monitoring the clocks skew between the active servers, which is
   calculated by substracting the current time (on the local
   server) from the time returned by the partner in response to the
-  heartbeat comand.
+  heartbeat command.
 
 The large part of this class is common for the DHCPv4 and DHCPv6 servers.
 However, there are differences in how the DHCPv4 and the DHCPv6 messages

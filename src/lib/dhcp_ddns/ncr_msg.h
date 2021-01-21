@@ -290,7 +290,7 @@ public:
     /// @brief Instance method for marshalling the contents of the request
     /// into the given buffer in the given format.
     ///
-    /// Whe the format is:
+    /// When the format is:
     ///
     /// JSON: Upon completion, the buffer will contain a two byte unsigned
     /// integer which specifies the length of the JSON text; followed by the

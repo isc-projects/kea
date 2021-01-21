@@ -953,7 +953,7 @@ public:
             return (service_->pendingRequestSize() == 0);
         }));
 
-        // Only if we wait for lease updates to complete it makes senst to test
+        // Only if we wait for lease updates to complete it makes sense to test
         // that the packet was either dropped or unparked.
         if (num_updates > 0) {
             // Try to drop the packet. We expect that the packet has been already
@@ -2600,7 +2600,7 @@ TEST_F(HAServiceTest, recurringHeartbeatServerOffline) {
     });
 
     // The servers are configured to return success but the server 2 is offline
-    // so the heartbeat should be unsuccessul.
+    // so the heartbeat should be unsuccessful.
     ASSERT_NO_FATAL_FAILURE(testRecurringHeartbeat(CONTROL_RESULT_SUCCESS, false));
 
     // Server 2 is offline so it would be very weird if it received any command.
@@ -2672,7 +2672,7 @@ TEST_F(HAServiceTest, asyncSyncLeases) {
     }
 
     // Modify cltt of the first lease. This lease should be updated as a result
-    // of synchrnonization process because cltt is checked and the lease is
+    // of synchronization process because cltt is checked and the lease is
     // updated if the cltt of the fetched lease is later than the cltt of the
     // existing lease.
     ++leases4_[0]->cltt_;
@@ -2683,7 +2683,7 @@ TEST_F(HAServiceTest, asyncSyncLeases) {
     ++leases4_[1]->subnet_id_ = 0;
 
     // Modify the partner's lease cltt so it is earlier than the local lease.
-    // Therfore, this lease update should be rejected.
+    // Therefore, this lease update should be rejected.
     --leases4_[2]->cltt_;
 
     // Create HA configuration.
@@ -2801,7 +2801,7 @@ TEST_F(HAServiceTest, asyncSyncLeasesAuthorized) {
     }
 
     // Modify cltt of the first lease. This lease should be updated as a result
-    // of synchrnonization process because cltt is checked and the lease is
+    // of synchronization process because cltt is checked and the lease is
     // updated if the cltt of the fetched lease is later than the cltt of the
     // existing lease.
     ++leases4_[0]->cltt_;
@@ -2812,7 +2812,7 @@ TEST_F(HAServiceTest, asyncSyncLeasesAuthorized) {
     ++leases4_[1]->subnet_id_ = 0;
 
     // Modify the partner's lease cltt so it is earlier than the local lease.
-    // Therfore, this lease update should be rejected.
+    // Therefore, this lease update should be rejected.
     --leases4_[2]->cltt_;
 
     // Create HA configuration.
@@ -3013,7 +3013,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
     }
 
     // Modify cltt of the first lease. This lease should be updated as a result
-    // of synchrnonization process because cltt is checked and the lease is
+    // of synchronization process because cltt is checked and the lease is
     // updated if the cltt of the fetched lease is later than the cltt of the
     // existing lease.
     ++leases6_[0]->cltt_;
@@ -3024,7 +3024,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
     ++leases6_[1]->subnet_id_ = 0;
 
     // Modify the partner's lease cltt so it is earlier than the local lease.
-    // Therfore, this lease update should be rejected.
+    // Therefore, this lease update should be rejected.
     --leases6_[2]->cltt_;
 
     // Create HA configuration.
@@ -3143,7 +3143,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6Authorized) {
     }
 
     // Modify cltt of the first lease. This lease should be updated as a result
-    // of synchrnonization process because cltt is checked and the lease is
+    // of synchronization process because cltt is checked and the lease is
     // updated if the cltt of the fetched lease is later than the cltt of the
     // existing lease.
     ++leases6_[0]->cltt_;
@@ -3154,7 +3154,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6Authorized) {
     ++leases6_[1]->subnet_id_ = 0;
 
     // Modify the partner's lease cltt so it is earlier than the local lease.
-    // Therfore, this lease update should be rejected.
+    // Therefore, this lease update should be rejected.
     --leases6_[2]->cltt_;
 
     // Create HA configuration.
@@ -4381,7 +4381,7 @@ TEST_F(HAServiceTest, processMaintenanceStartNotAllowed) {
     checkAnswer(rsp, CONTROL_RESULT_ERROR,
                 "Unable to transition to the partner-in-maintenance state."
                 " The partner server responded with the following message"
-                " to the ha-maintenance-notify commmand: response returned,"
+                " to the ha-maintenance-notify command: response returned,"
                 " error code 1001.");
 
     // The partner's state precludes entering the in-maintenance state. Thus, this
@@ -4520,7 +4520,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerError) {
     checkAnswer(rsp, CONTROL_RESULT_ERROR,
                 "Unable to cancel maintenance. The partner server responded"
                 " with the following message to the ha-maintenance-notify"
-                " commmand: response returned, error code 1.");
+                " command: response returned, error code 1.");
 
     // The state of this server should not change.
     EXPECT_EQ(HA_PARTNER_IN_MAINTENANCE_ST, service.getCurrState());
@@ -4566,7 +4566,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerUnauthorized) {
     checkAnswer(rsp, CONTROL_RESULT_ERROR,
                 "Unable to cancel maintenance. The partner server responded"
                 " with the following message to the ha-maintenance-notify"
-                " commmand: Unauthorized, error code 1.");
+                " command: Unauthorized, error code 1.");
 
     // The state of this server should not change.
     EXPECT_EQ(HA_PARTNER_IN_MAINTENANCE_ST, service.getCurrState());
@@ -4577,7 +4577,7 @@ TEST_F(HAServiceTest, processHAReset) {
     HAConfigPtr config_storage = createValidConfiguration();
     TestHAService service(io_service_, network_state_, config_storage);
 
-    // Transion the server to the load-balancing state.
+    // Transition the server to the load-balancing state.
     EXPECT_NO_THROW(service.transition(HA_LOAD_BALANCING_ST, HAService::NOP_EVT));
 
     // Process ha-reset command that should cause the server to transition
@@ -4602,7 +4602,7 @@ TEST_F(HAServiceTest, processHAResetWaiting) {
     HAConfigPtr config_storage = createValidConfiguration();
     TestHAService service(io_service_, network_state_, config_storage);
 
-    // Transion the server to the load-balancing state.
+    // Transition the server to the load-balancing state.
     EXPECT_NO_THROW(service.transition(HA_WAITING_ST, HAService::NOP_EVT));
 
     // Process ha-reset command that should not change the state of the
@@ -5283,7 +5283,7 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
 // 4. Partner shows up and eventually transitions to the ready state.
 // 5. I can communicate with the partner so I transition to the hot-standby
 //    state as a standby server.
-// 6. Patrtner stops responding again.
+// 6. Partner stops responding again.
 // 7. I monitor communication with the partner and eventually consider the
 //    communication to be interrupted.
 // 8. I start monitoring the DHCP traffic directed to the partner and observe
@@ -5305,7 +5305,7 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownHotStandbyPartnerDown) {
 
     EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
 
-    // WAITING state: no heartbeat reponse for a long period of time.
+    // WAITING state: no heartbeat response for a long period of time.
     ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
     simulateNoCommunication();
     ASSERT_TRUE(isDoingHeartbeat());
@@ -5526,7 +5526,7 @@ TEST_F(HAServiceStateMachineTest, waitingSyncingReadyLoadBalancingPrimary) {
     });
 
     // READY state: our partner sees that we're ready so it will start to
-    // synchronize. We reamain the READY state as long as the partner is not
+    // synchronize. We remain in the READY state as long as the partner is not
     // ready.
     partner.transition("syncing");
     ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));

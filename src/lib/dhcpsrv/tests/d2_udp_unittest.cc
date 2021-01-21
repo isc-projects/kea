@@ -435,7 +435,7 @@ TEST_F(D2ClientMgrTest, ifaceRegister) {
     // Calling receive should complete the first message and start the second.
     IfaceMgr::instance().receive4(0, 0);
 
-    // Verify the callback hander was invoked, no errors counted.
+    // Verify the callback handler was invoked, no errors counted.
     EXPECT_EQ(2, getQueueSize());
     ASSERT_EQ(1, callback_count_);
     ASSERT_EQ(0, error_handler_count_);

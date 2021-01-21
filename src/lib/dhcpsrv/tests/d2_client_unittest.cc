@@ -146,7 +146,7 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     Optional<std::string> opt_hostname_char_set("", true);
     Optional<std::string> opt_hostname_char_replacement("", true);
 
-    // Veeify that constructor handles optional hostname char stuff.
+    // Verify that constructor handles optional hostname char stuff.
     ASSERT_NO_THROW(d2_client_config.reset(new
                                            D2ClientConfig(enable_updates,
                                                           server_ip,

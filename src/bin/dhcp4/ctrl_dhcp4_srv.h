@@ -234,7 +234,7 @@ private:
     /// @brief A handler for processing 'dhcp-disable' command.
     ///
     /// @param command command name (ignored).
-    /// @param args aguments for the command. It must be a map and
+    /// @param args arguments for the command. It must be a map and
     /// it may include optional 'max-period' parameter.
     ///
     /// @return result of the command.

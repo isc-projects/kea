@@ -148,7 +148,7 @@ public:
     /// @param client_n  N Flag from the client's FQDN
     /// @param server_s [out] S Flag for the server's FQDN
     /// @param server_n [out] N Flag for the server's FQDN
-    /// @param ddns_params DDNS behaviorial configuration parameters
+    /// @param ddns_params DDNS behavioral configuration parameters
     ///
     /// @throw isc::BadValue if client_s and client_n are both 1 as this is
     /// an invalid combination per RFCs.
@@ -168,7 +168,7 @@ public:
     /// ('.' for IPv4 or ':' for IPv6) replaced with a hyphen, '-'.
     ///
     /// @param address IP address from which to derive the name (IPv4 or IPv6)
-    /// @param ddns_params DDNS behaviorial configuration parameters
+    /// @param ddns_params DDNS behavioral configuration parameters
     /// @param trailing_dot A boolean value which indicates whether trailing
     /// dot should be appended (if true) or not (false).
     ///
@@ -185,7 +185,7 @@ public:
     ///     <partial_name>.<qualifying-suffix>.
     ///
     /// @param partial_name domain name to qualify
-    /// @param ddns_params DDNS behaviorial configuration parameters
+    /// @param ddns_params DDNS behavioral configuration parameters
     /// @param trailing_dot A boolean value which when true guarantees the
     /// result will end with a "." and when false that the result will not
     /// end with a "."   Note that this rule is applied even if the qualifying
@@ -205,7 +205,7 @@ public:
     ///
     /// @param fqdn FQDN option from which to read client (inbound) flags
     /// @param fqdn_resp FQDN option to update with the server (outbound) flags
-    /// @param ddns_params DDNS behaviorial configuration parameters
+    /// @param ddns_params DDNS behavioral configuration parameters
     /// @tparam T FQDN Option class containing the FQDN data such as
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
     template <class T>
@@ -256,7 +256,7 @@ public:
     ///
     /// @param fqdn FQDN option from which to get client (inbound) name
     /// @param fqdn_resp FQDN option to update with the adjusted name
-    /// @param ddns_params DDNS behaviorial configuration parameters
+    /// @param ddns_params DDNS behavioral configuration parameters
     /// @tparam T  FQDN Option class containing the FQDN data such as
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
     template <class T>
@@ -276,8 +276,8 @@ public:
     /// @param io_service IOService to be used for sender IO event processing
     /// @warning It is up to the invoking layer to ensure the io_service
     /// instance used outlives the D2ClientMgr send mode. When the send mode
-    /// is exited, either explicitly by callind stopSender() or implicitly
-    /// through D2CLientMgr destruction, any ASIO objects such as sockets or
+    /// is exited, either explicitly by calling stopSender() or implicitly
+    /// through D2ClientMgr destruction, any ASIO objects such as sockets or
     /// timers will be closed and released.  If the io_service goes out of scope
     /// first this behavior could be unpredictable.
     ///

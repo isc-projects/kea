@@ -19,7 +19,7 @@ using namespace isc::util;
 
 // Verifies initializing via an access string and unparsing into elements
 // We just test basic unparsing, as more rigorous testing is done in
-// libkea-db testing which ConfibDBInfo uses.
+// libkea-db testing which ConfigDBInfo uses.
 TEST(ConfigDbInfo, basicOperation) {
     ConfigDbInfo db;
     std::string access = "type=mysql user=tom password=terrific";
@@ -144,7 +144,7 @@ TEST(ConfigControlInfo, basicOperation) {
     EXPECT_FALSE(db_info2 == ConfigControlInfo::EMPTY_DB());
     EXPECT_EQ (access_str2, db_info2.getAccessString());
 
-    // Verify not finding a db reutrns EMPTY_DB().
+    // Verify not finding a db returns EMPTY_DB().
     const ConfigDbInfo& db_info3 = ctl.findConfigDb("type", "bogus");
     EXPECT_TRUE(db_info3 == ConfigControlInfo::EMPTY_DB());
 

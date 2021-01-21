@@ -47,7 +47,7 @@ typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
 /// unpacking efforts and allow the server to attempt to process
 /// the packet as it stands.  In other words, the option that failed
 /// is perhaps optional, and rather than drop the packet as unusable
-/// we wish to attempt to proces it.
+/// we wish to attempt to process it.
 class SkipRemainingOptionsError : public Exception {
 public:
     SkipRemainingOptionsError (const char* file, size_t line, const char* what) :

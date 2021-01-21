@@ -569,7 +569,7 @@ To create the database:
 
    ::
 
-      cqslh -k keyspace-name -f path-to-kea/share/kea/scripts/cql/dhcpdb_create.cql
+      cqlsh -k keyspace-name -f path-to-kea/share/kea/scripts/cql/dhcpdb_create.cql
 
    (path-to-kea is the location where Kea is installed.)
 

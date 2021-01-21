@@ -261,7 +261,7 @@ protected:
 
     /// @brief Provides alternate parse file implementation
     ///
-    /// Overrides the base class implementation to mimick controllers which
+    /// Overrides the base class implementation to mimic controllers which
     /// implement alternate file parsing.  If enabled via useAlternateParser()
     /// the method will return a fixed map of elements reflecting the following
     /// JSON:
@@ -284,7 +284,7 @@ public:
     ///
     /// Overrides the base class implementation so we can
     /// verify the getting the extended version text
-    /// contains derivaiton specific contributions.
+    /// contains derivation specific contributions.
     virtual std::string getVersionAddendum() {
         return ("StubController Version Text");
     }

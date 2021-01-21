@@ -268,7 +268,7 @@ public:
     uint64_t getRangeIndex(const RangeType& range) const {
         auto cont = ranges_.get<1>().find(range.start_);
         if (cont == ranges_.get<1>().end()) {
-            isc_throw(BadValue, "conatiner for the specified range " << range.start_
+            isc_throw(BadValue, "container for the specified range " << range.start_
                       << ":" << range.end_ << " does not exist");
         }
         return (std::distance(ranges_.get<2>().begin(), ranges_.project<2>(cont)));
@@ -376,7 +376,7 @@ private:
     /// @throw BadValue if the range with the given index does not exist.
     RangeDescriptor getRangeDescriptor(const uint64_t range_index) const;
 
-    /// @brief This is internal implemenation of the @c next and @c pop
+    /// @brief This is internal implementation of the @c next and @c pop
     /// methods.
     ///
     /// @param range range for which next address is to be returned.

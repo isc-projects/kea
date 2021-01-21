@@ -123,7 +123,7 @@ DUIDFactory::createEN(const uint32_t enterprise_id,
     // We'll need DUID stored in the file to compare it against the
     // new configuration. If the new configuration indicates that some
     // bits of the DUID should be generated we'll first try to use the
-    // values stored in the file to prvent DUID from changing if possible.
+    // values stored in the file to prevent DUID from changing if possible.
     readFromFile();
 
     uint32_t enterprise_id_current = 0;
@@ -190,7 +190,7 @@ DUIDFactory::createLL(const uint16_t htype,
     // We'll need DUID stored in the file to compare it against the
     // new configuration. If the new configuration indicates that some
     // bits of the DUID should be generated we'll first try to use the
-    // values stored in the file to prvent DUID from changing if possible.
+    // values stored in the file to prevent DUID from changing if possible.
     readFromFile();
 
     uint16_t htype_current = 0;

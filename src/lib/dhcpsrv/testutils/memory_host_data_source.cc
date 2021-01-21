@@ -38,7 +38,7 @@ ConstHostCollection
 MemHostDataSource::getAll4(const SubnetID& subnet_id) const {
     ConstHostCollection hosts;
     for (auto h = store_.begin(); h != store_.end(); ++h) {
-        // Keep it when subnet_id matchs.
+        // Keep it when subnet_id matches.
         if ((*h)->getIPv4SubnetID() == subnet_id) {
             hosts.push_back(*h);
         }
@@ -50,7 +50,7 @@ ConstHostCollection
 MemHostDataSource::getAll6(const SubnetID& subnet_id) const {
     ConstHostCollection hosts;
     for (auto h = store_.begin(); h != store_.end(); ++h) {
-        // Keep it when subnet_id matchs.
+        // Keep it when subnet_id matches.
         if ((*h)->getIPv6SubnetID() == subnet_id) {
             hosts.push_back(*h);
         }
@@ -62,7 +62,7 @@ ConstHostCollection
 MemHostDataSource::getAllbyHostname(const std::string& hostname) const {
     ConstHostCollection hosts;
     for (auto h = store_.begin(); h != store_.end(); ++h) {
-        // Keep it when hostname matchs.
+        // Keep it when hostname matches.
         if ((*h)->getLowerHostname() == hostname) {
             hosts.push_back(*h);
         }

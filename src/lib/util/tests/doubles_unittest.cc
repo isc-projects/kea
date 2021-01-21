@@ -24,7 +24,7 @@ TEST(Doubles, areDoublesEquivalent) {
     EXPECT_TRUE(areDoublesEquivalent( 1.0000000, 1.0000005));
     EXPECT_FALSE(areDoublesEquivalent(1.0000000, 1.000005));
 
-    // Check custome tolerance.
+    // Check custom tolerance.
     EXPECT_TRUE(areDoublesEquivalent( 1.000, 1.005, 0.01));
     EXPECT_FALSE(areDoublesEquivalent(1.000, 1.005, 0.001));
 }

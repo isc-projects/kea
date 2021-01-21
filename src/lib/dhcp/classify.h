@@ -21,7 +21,7 @@
 /// exposure of the DHCP library to server side concepts such as client
 /// classification the classes herein provide a mechanism to maintain lists
 /// of class names, rather than the classes they represent.  It is the
-/// upper layers' perogative to use these names as they see fit.
+/// upper layers' prerogative to use these names as they see fit.
 ///
 /// @todo This file should be moved to dhcpsrv eventually as the classification
 /// is server side concept. Client has no notion of classifying incoming server

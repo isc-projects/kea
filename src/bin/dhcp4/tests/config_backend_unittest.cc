@@ -74,7 +74,7 @@ protected:
                         }
                     }
 
-                    // Apparently we're looking for one that does not prexist.
+                    // Apparently we're looking for a new one.
                     return (TestConfigBackendDHCPv4Ptr(new TestConfigBackendDHCPv4(params)));
                 });
     }

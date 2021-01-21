@@ -685,7 +685,7 @@ Dhcpv4SrvTest::configureWithStatus(const std::string& config, NakedDhcpv4Srv& sr
     try {
         json = parseJSON(config);
     } catch (const std::exception& ex){
-        // Fatal falure on parsing error
+        // Fatal failure on parsing error
 
         std::stringstream tmp;
         tmp << "parsing failure:"
@@ -704,7 +704,7 @@ Dhcpv4SrvTest::configureWithStatus(const std::string& config, NakedDhcpv4Srv& sr
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
     EXPECT_TRUE(status);
     if (!status) {
-        return (make_pair(-1, "configureDhcp4Server didn't return anythin"));
+        return (make_pair(-1, "configureDhcp4Server didn't return anything"));
     }
 
     int rcode;

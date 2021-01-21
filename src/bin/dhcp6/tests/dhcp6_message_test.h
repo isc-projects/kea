@@ -16,7 +16,7 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-/// @brief Base class for test fixure classes used to validate the DHCPv6
+/// @brief Base class for test fixture classes used to validate the DHCPv6
 /// message processing by the server.
 class Dhcpv6MessageTest : public Dhcpv6SrvTest {
 public:

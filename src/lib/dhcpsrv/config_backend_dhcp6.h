@@ -424,7 +424,7 @@ public:
     /// @param server_selector Server selector.
     /// @param pd_pool_prefix Address part of the prefix of the prefix
     /// delegation pool to which the option belongs.
-    /// @param pd_pool_prefix_length Prefix length of the prefix delegayion
+    /// @param pd_pool_prefix_length Prefix length of the prefix delegation
     /// pool to which the option belongs.
     /// @param option Option to be added or updated.
     virtual void

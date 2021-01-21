@@ -364,7 +364,7 @@ public:
 
 private:
 
-    /// @brief This method checks whether the hook_vector_ size is suffucient
+    /// @brief This method checks whether the hook_vector_ size is sufficient
     ///        and extends it if necessary.
     ///
     /// The problem is as follows: some hooks are initialized statically

@@ -143,13 +143,13 @@ public:
     /// The query created will return statistics for a single subnet
     ///
     /// @param subnet_id id of the subnet for which stats are desired
-    /// @throw BadValue if sunbet_id given is 0.
+    /// @throw BadValue if subnet_id given is 0.
     LeaseStatsQuery(const SubnetID& subnet_id);
 
     /// @brief Constructor to query for the stats for a range of subnets
     ///
     /// The query created will return statistics for the inclusive range of
-    /// subnets described by first and last sunbet IDs.
+    /// subnets described by first and last subnet IDs.
     ///
     /// @param first_subnet_id first subnet in the range of subnets
     /// @param last_subnet_id last subnet in the range of subnets

@@ -307,7 +307,7 @@ public:
     void testClientIdNotHWAddr();
 
     /// @brief Test adds specified number of hosts with unique hostnames, then
-    /// retrives them and checks that the hostnames are set properly.
+    /// retrieves them and checks that the hostnames are set properly.
     ///
     /// Uses gtest macros to report failures.
     ///
@@ -589,10 +589,10 @@ public:
         isc::dhcp::CfgMgr::instance().clear();
     }
 
-    /// @brief Abstract method for destroying the back end specific shcema
+    /// @brief Abstract method for destroying the back end specific schema
     virtual void destroySchema() = 0;
 
-    /// @brief Abstract method for creating the back end specific shcema
+    /// @brief Abstract method for creating the back end specific schema
     virtual void createSchema() = 0;
 
     /// @brief Abstract method which returns the back end specific connection

@@ -162,7 +162,7 @@ int leases6_committed(CalloutHandle& handle) {
     return (0);
 }
 
-/// @brief comand_processed callout implementation.
+/// @brief command_processed callout implementation.
 ///
 /// @param handle callout handle.
 int command_processed(CalloutHandle& handle) {

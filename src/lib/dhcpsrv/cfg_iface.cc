@@ -81,7 +81,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // inactive state. We will later enable them selectively using the
     // interface names specified by the user. If wildcard interface was
     // specified, mark all interfaces active. Mark loopback inactive when
-    // not explicitely allowed.
+    // not explicitly allowed.
     setState(family, !wildcard_used_, !loopback_used_);
     IfaceMgr& iface_mgr = IfaceMgr::instance();
     // Remove selection of unicast addresses from all interfaces.

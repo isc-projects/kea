@@ -224,7 +224,7 @@ public:
     /// notation). It simply creates an @c OptionDescriptor with the generic
     /// option instance (containing an option code and no option value) and
     /// the other @c OptionDescriptor parameters set appropriately. The
-    /// @c CfgOption class contains methds that can be used on demand to
+    /// @c CfgOption class contains methods that can be used on demand to
     /// replace these instances with the appropriate types (derived from
     /// @c Option) which represent formatted option data, if necessary.
     ///
@@ -249,7 +249,7 @@ public:
     ///
     /// @param srv_cfg server config where the global should be checked.
     /// @param name name of the global parameter
-    /// @param exp_value expected value of the global paramter as an Element
+    /// @param exp_value expected value of the global parameter as an Element
     void checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                const std::string &name,
                                data::ConstElementPtr exp_value);

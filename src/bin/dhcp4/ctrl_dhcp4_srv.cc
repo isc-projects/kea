@@ -1061,7 +1061,7 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     // LeaseMgr uses IO service to run asynchronous timers.
     LeaseMgr::setIOService(getIOService());
 
-    // HosrMgr uses IO service to run asynchronous timers.
+    // HostMgr uses IO service to run asynchronous timers.
     HostMgr::setIOService(getIOService());
 
     // These are the commands always supported by the DHCPv4 server.
@@ -1196,7 +1196,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         // LeaseMgr uses IO service to run asynchronous timers.
         LeaseMgr::setIOService(IOServicePtr());
 
-        // HosrMgr uses IO service to run asynchronous timers.
+        // HostMgr uses IO service to run asynchronous timers.
         HostMgr::setIOService(IOServicePtr());
     } catch (...) {
         // Don't want to throw exceptions from the destructor. The server

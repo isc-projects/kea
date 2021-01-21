@@ -1023,7 +1023,7 @@ public:
                       " IPv6 reservation");
         }
 
-        // If we have reservation id we havent' seen yet, retrieve the
+        // If we have reservation id we haven't seen yet, retrieve the
         // the reservation, adding it to the current host
         uint64_t reservation_id = getReservationId(r, row);
         if (reservation_id && (reservation_id > most_recent_reservation_id_)) {
@@ -1356,7 +1356,7 @@ public:
 /// @brief PostgreSQL Host Context Pool
 ///
 /// This class provides a pool of contexts.
-/// The manager will use this class to handle avalilable contexts.
+/// The manager will use this class to handle available contexts.
 /// There is only one ContextPool per manager per back-end, which is created
 /// and destroyed by the respective manager factory class.
 class PgSqlHostContextPool {

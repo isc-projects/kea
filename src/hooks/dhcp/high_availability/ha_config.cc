@@ -160,7 +160,7 @@ HAConfig::HAConfig()
 
 HAConfig::PeerConfigPtr
 HAConfig::selectNextPeerConfig(const std::string& name) {
-    // Check if there is a configuration for this server name alrady. We can't
+    // Check if there is a configuration for this server name already. We can't
     // have two servers with the same name.
     if (peers_.count(name) > 0) {
         isc_throw(BadValue, "peer with name '" << name << "' already specified");

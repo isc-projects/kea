@@ -661,7 +661,7 @@ protected:
 
     /// @brief Cache an answer.
     ///
-    /// @param host Pointer to the missied host.
+    /// @param host Pointer to the missed host.
     virtual void cache(ConstHostPtr host) const;
 
     /// @brief Cache a negative answer.

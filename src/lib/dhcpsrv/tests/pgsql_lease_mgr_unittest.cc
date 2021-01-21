@@ -110,10 +110,10 @@ public:
 ///
 /// This test checks if the PgSqlLeaseMgr can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// PgSqlLeaseMgr test fixure set.  This test checks that the database can be
+/// PgSqlLeaseMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(PgSqlOpenTest, OpenDatabase) {
-    // Explicitely disable Multi-Threading.
+    // Explicitly disable Multi-Threading.
     MultiThreadingMgr::instance().setMode(false);
 
     // Schema needs to be created for the test to work.
@@ -642,7 +642,7 @@ TEST_F(PgSqlLeaseMgrTest, lease6InvalidHostnameMultiThreading) {
 /// @brief Verify that large IAID values work correctly.
 ///
 /// Adds lease with a large IAID to the database and verifies it can
-/// fetched correclty.
+/// fetched correctly.
 TEST_F(PgSqlLeaseMgrTest, leases6LargeIaidCheck) {
     testLease6LargeIaidCheck();
 }

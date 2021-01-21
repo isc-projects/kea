@@ -13,7 +13,7 @@
 //               Unfortunately, its definition is blurry, so there are many
 //               similar, but not exact implementations that do things in
 //               different ways.
-// vivco (124) - vendor indepdent vendor class option.
+// vivco (124) - vendor independent vendor class option.
 // class identifier (60) - not exactly vendor specific. It's a string, but the
 //               content of that string identifies what kind of vendor device
 //               this is.

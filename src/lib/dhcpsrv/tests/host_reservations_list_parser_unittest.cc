@@ -36,7 +36,7 @@ protected:
 
     /// @brief Setup for each test.
     ///
-    /// Clears the configuration in the @c CfgMgr. It alse initializes
+    /// Clears the configuration in the @c CfgMgr. It also initializes
     /// hwaddr_ and duid_ class members.
     virtual void SetUp();
 
@@ -130,8 +130,8 @@ CfgHostsSubnet::toElement() const {
         if (boot_file_name && boot_file_name->stringValue().empty()) {
             resv->remove("boot-file-name");
         }
-        ConstElementPtr client_classess = resv->get("client-classes");
-        if (client_classess && client_classess->empty()) {
+        ConstElementPtr client_classes = resv->get("client-classes");
+        if (client_classes && client_classes->empty()) {
             resv->remove("client-classes");
         }
         ConstElementPtr option_data = resv->get("option-data");
@@ -259,7 +259,7 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue4) {
 // parses IPv6 reservations correctly.
 TEST_F(HostReservationsListParserTest, ipv6Reservations) {
     // hexadecimal in lower case for toElement()
-    std::string config = 
+    std::string config =
         "[ "
         "  { \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "    \"ip-addresses\": [ ],"

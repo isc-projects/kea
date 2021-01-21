@@ -146,7 +146,7 @@ cppcheck:
 		--template '{file}:{line}: check_fail: {message} ({severity},{id})' \
 		src
 
-# this is a shortcut that builds only documentation dependecies and documentation itself
+# this is a shortcut that builds only documentation dependencies and documentation itself
 docs:
 	$(MAKE) -C doc/sphinx
 

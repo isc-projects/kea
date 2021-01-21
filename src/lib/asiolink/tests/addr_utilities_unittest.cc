@@ -96,7 +96,7 @@ TEST(AddrUtilitiesTest, lastAddrInPrefix6) {
 
     IOAddress addr2("2001::");
 
-    // These are tricker, though, as they are done in 1 bit increments
+    // These are trickier, though, as they are done in 1 bit increments
 
     // the last address in 2001::/127 pool should be 2001::1
     EXPECT_EQ("2001::1", lastAddrInPrefix(addr2, 127).toText());
@@ -134,7 +134,7 @@ TEST(AddrUtilitiesTest, firstAddrInPrefix6) {
 
     IOAddress addr2("2001::ffff");
 
-    // These are tricker, though, as they are done in 1 bit increments
+    // These are trickier, though, as they are done in 1 bit increments
 
     // the first address in 2001::/127 pool should be 2001::1
     EXPECT_EQ("2001::fffe", firstAddrInPrefix(addr2, 127).toText());

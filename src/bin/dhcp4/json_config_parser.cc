@@ -118,8 +118,8 @@ public:
     /// @brief Sets global parameters before other parameters are parsed.
     ///
     /// This method sets selected global parameters before other parameters
-    /// are parsed. This is important when the bahavior of the parsers
-    /// run later depends on these global paramters.
+    /// are parsed. This is important when the behavior of the parsers
+    /// run later depends on these global parameters.
     ///
     /// Currently this method sets the following global parameters:
     /// - ip-reservations-unique

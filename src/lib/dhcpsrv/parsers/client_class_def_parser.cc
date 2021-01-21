@@ -258,7 +258,7 @@ ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_
                                                       "user-context",
                                                       "only-if-required" };
 
-    // The v4 client class supports additional parmeters.
+    // The v4 client class supports additional parameters.
     static std::set<std::string> supported_params_v4 = { "option-def",
                                                          "next-server",
                                                          "server-hostname",

@@ -71,7 +71,7 @@ public:
 
     /// @brief Check statistics.
     ///
-    /// @param bumped True if pkt4-receive-drop shoud have been bumped by one,
+    /// @param bumped True if pkt4-receive-drop should have been bumped by one,
     /// false otherwise.
     void checkStat(bool bumped) {
         ObservationPtr obs = StatsMgr::instance().getObservation("pkt4-receive-drop");

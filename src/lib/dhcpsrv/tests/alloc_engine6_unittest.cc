@@ -2949,7 +2949,7 @@ public:
         return (lease);
     }
 
-    /// Covenience pointers to configuration elements. These are initialized
+    /// Convenience pointers to configuration elements. These are initialized
     /// in the constructor and are used throughout the tests.
     AllocEngine engine_;
     Subnet6Ptr subnet1_;
@@ -3379,7 +3379,7 @@ TEST_F(SharedNetworkAlloc6Test, requestRunningOut) {
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:2::ff", lease->addr_.toText());
 
-    // Ok, now try for anoher client. We should be completely full.
+    // Ok, now try for another client. We should be completely full.
     DuidPtr other_duid(new DUID(vector<uint8_t>(12, 0xff)));
     AllocEngine::ClientContext6 ctx2(subnet2_, other_duid, false, false, "", false,
                                     query);

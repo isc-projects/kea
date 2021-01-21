@@ -91,7 +91,7 @@ typedef AnyArray AnyCollection;
 
 /// @brief Binds a C++ object to a Cassandra statement's parameter. Used in all
 ///     statements.
-/// @param value the value to be set or retreived
+/// @param value the value to be set or retrieved
 /// @param index offset of the value being processed
 /// @param statement pointer to the parent statement being used
 typedef CassError (*CqlBindFunction)(const boost::any& value,
@@ -99,7 +99,7 @@ typedef CassError (*CqlBindFunction)(const boost::any& value,
                                      CassStatement* statement);
 
 /// @brief Sets a member in a UDT. Used in INSERT & UPDATE statements.
-/// @param value the value to be set or retreived
+/// @param value the value to be set or retrieved
 /// @param index offset of the value being processed
 /// @param cass_user_type pointer to the user type that uses this member
 typedef CassError (*CqlUdtSetFunction)(const boost::any& value,
@@ -216,9 +216,9 @@ public:
     /// @param column_count number of columns queried
     ///
     /// On insert, a false [applied] means there is a duplicate entry with the
-    ///     same priumary key.
+    ///     same primary key.
     ///
-    /// @return true if statement has been succesfully applied, false otherwise
+    /// @return true if statement has been successfully applied, false otherwise
     bool statementApplied(CassFuture* future, size_t* row_count = NULL,
                           size_t* column_count = NULL);
 

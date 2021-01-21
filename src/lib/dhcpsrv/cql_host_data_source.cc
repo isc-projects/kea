@@ -209,7 +209,7 @@ public:
     /// values which uniquely determine an entry in the table. Uses FNV-1a
     /// on 64 bits.
     ///
-    /// The primary key clustering column aggregates: host_dentifier,
+    /// The primary key clustering column aggregates: host_identifier,
     /// host_identifier_type, host_ipv4_subnet_id, host_ipv6_subnet_id,
     /// host_ipv4_address, reserved_ipv6_prefix_address,
     /// reserved_ipv6_prefix_length, option_code, option_space.
@@ -217,14 +217,14 @@ public:
 
     /// @brief Create unique key for storage in table key.
     ///
-    /// The primary key partition key aggregates: host_dentifier,
+    /// The primary key partition key aggregates: host_identifier,
     /// host_identifier_type, host_ipv4_subnet_id, host_ipv6_subnet_id,
     /// host_ipv4_address
     uint64_t hashIntoKey() const;
 
     /// @brief Create unique key string for a host.
     ///
-    /// The primary key partition key aggregates: host_dentifier,
+    /// The primary key partition key aggregates: host_identifier,
     /// host_identifier_type, host_ipv4_subnet_id, host_ipv6_subnet_id,
     /// host_ipv4_address
     std::string hostKey() const;
@@ -384,7 +384,7 @@ private:
     /// Pointer to Host object holding information being inserted into database.
     HostPtr host_;
 
-    /// @brief Primary key. Partition key. Aggregates: host_dentifier,
+    /// @brief Primary key. Partition key. Aggregates: host_identifier,
     /// host_identifier_type, host_ipv4_subnet_id host_ipv6_subnet_id,
     /// host_ipv4_address
     cass_int64_t key_;

@@ -749,7 +749,7 @@ public:
     ///
     /// binary is the binary value (note it can be any value, i.e.
     /// it is not checked to really be not printable).
-    /// separator is litteral for instance '-' or ':'. The empty separator
+    /// separator is literal for instance '-' or ':'. The empty separator
     /// means no separator.
     ///
     /// The following example use a binary MAC address 06:ce:8f:55:b3:33:

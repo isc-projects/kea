@@ -39,7 +39,7 @@ public:
     /// <b>Exceptions</b>
     ///
     /// \c InvalidRdataLength is thrown if rdata_len exceeds the maximum.
-    /// \c DNSMessageFORMERR is thrown if the RR is misformed.
+    /// \c DNSMessageFORMERR is thrown if the RR is malformed.
     TXTLikeImpl(util::InputBuffer& buffer, size_t rdata_len) {
         if (rdata_len > MAX_RDLENGTH) {
             isc_throw(InvalidRdataLength, "RDLENGTH too large: " << rdata_len);

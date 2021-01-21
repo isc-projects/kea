@@ -222,7 +222,7 @@ public:
     /// @throw InvalidOperation if the value is NULL or the binding
     /// type is not @c MYSQL_TYPE_BLOB.
     ///
-    /// @return Blob in a vactor.
+    /// @return Blob in a vector.
     std::vector<uint8_t> getBlob() const;
 
     /// @brief Returns value held in the binding as blob.
@@ -233,7 +233,7 @@ public:
     ///
     /// @throw InvalidOperation if the binding type is not @c MYSQL_TYPE_BLOB.
     ///
-    /// @return Blob in a vactor.
+    /// @return Blob in a vector.
     std::vector<uint8_t>
     getBlobOrDefault(const std::vector<uint8_t>& default_value) const;
 

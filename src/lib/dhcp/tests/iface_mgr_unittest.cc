@@ -46,7 +46,7 @@ namespace {
 // "eth0" or "eth1".
 // Name of loopback interface detection.
 const size_t BUF_SIZE = 32;
-// Can be overwriten to "lo0" for instance on BSD systems.
+// Can be overwritten to "lo0" for instance on BSD systems.
 char LOOPBACK_NAME[BUF_SIZE] = "lo";
 // In fact is never 0, 1 is by far the most likely.
 uint32_t LOOPBACK_INDEX = 0;
@@ -453,7 +453,7 @@ public:
     /// @param errmsg An error string indicating the reason for failure.
     void ifaceMgrErrorHandler(const std::string&) {
         // Increase the counter of invocations to this function. By checking
-        // this number, a test amy check if the expected number of errors
+        // this number, a test may check if the expected number of errors
         // has occurred.
         ++errors_count_;
     }
@@ -749,7 +749,7 @@ public:
         // Now check whether the second callback is still functional
         EXPECT_EQ(38, write(secondpipe[1], "Hi, this is a message sent over a pipe", 38));
 
-        // Call recevie4 again, this should work.
+        // Call receive4 again, this should work.
         ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(RECEIVE_WAIT_MS(10)));
 
         // Should have callback2 data only.
@@ -836,7 +836,7 @@ public:
         // Now check whether the second callback is still functional
         EXPECT_EQ(38, write(secondpipe[1], "Hi, this is a message sent over a pipe", 38));
 
-        // Call recevie6 again, this should work.
+        // Call receive6 again, this should work.
         ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(RECEIVE_WAIT_MS(10)));
 
         // Should have callback2 data only.

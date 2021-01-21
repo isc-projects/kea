@@ -298,7 +298,7 @@ public:
     ///
     /// Creates a lease manager (memfile, trimmed down to keep everything in memory
     /// only) and optionally can create a lease, which is useful for leaseX-get and
-    /// leasex-del type of tests. For lease details, see @ref createLease4 and
+    /// leaseX-del type of tests. For lease details, see @ref createLease4 and
     /// @ref createLease6.
     ///
     /// @param v6 true = v6, false = v4
@@ -3627,7 +3627,7 @@ void LeaseCmdsTest::testLease4GetPaged() {
             "    }"
             "}";
 
-        // For the first two pages we shuould get success. For the last
+        // For the first two pages we should get success. For the last
         // one an empty status code.
         ConstElementPtr rsp;
         if (i < 2) {
@@ -4144,7 +4144,7 @@ void LeaseCmdsTest::testLease6GetPaged() {
             "    }"
             "}";
 
-        // For the first two pages we shuould get success. For the last
+        // For the first two pages we should get success. For the last
         // one an empty status code.
         ConstElementPtr rsp;
         if (i < 2) {
@@ -4409,7 +4409,7 @@ void LeaseCmdsTest::testLeaseGetByHwAddressParams() {
         "        \"hw-address\": 1234\n"
         "    }\n"
         "}";
-    exp_rsp = "'hw-address'parameter must be a string";
+    exp_rsp = "'hw-address' parameter must be a string";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Simply bad value.
@@ -4524,7 +4524,7 @@ void LeaseCmdsTest::testLeaseGetByClientIdParams() {
         "        \"client-id\": 1234\n"
         "    }\n"
         "}";
-    exp_rsp = "'client-id'parameter must be a string";
+    exp_rsp = "'client-id' parameter must be a string";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Simply bad value.
@@ -4639,7 +4639,7 @@ void LeaseCmdsTest::testLeaseGetByDuidParams() {
         "        \"duid\": 1234\n"
         "    }\n"
         "}";
-    exp_rsp = "'duid'parameter must be a string";
+    exp_rsp = "'duid' parameter must be a string";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Simply bad value.
@@ -4754,7 +4754,7 @@ void LeaseCmdsTest::testLease4GetByHostnameParams() {
         "        \"hostname\": 1234\n"
         "    }\n"
         "}";
-    exp_rsp = "'hostname'parameter must be a string";
+    exp_rsp = "'hostname' parameter must be a string";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // hostname must be not empty.
@@ -4868,7 +4868,7 @@ void LeaseCmdsTest::testLease6GetByHostnameParams() {
         "        \"hostname\": 1234\n"
         "    }\n"
         "}";
-    exp_rsp = "'hostname'parameter must be a string";
+    exp_rsp = "'hostname' parameter must be a string";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // hostname must be not empty.

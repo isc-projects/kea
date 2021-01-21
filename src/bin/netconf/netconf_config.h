@@ -228,19 +228,19 @@ private:
 
     /// @brief The boot-update flag.
     ///
-    /// If true (the defaul) Kea server configuration is updated at (netconf
+    /// If true (the default) Kea server configuration is updated at (netconf
     /// agent) boot time.
     bool boot_update_;
 
     /// @brief The subscribe-changes flag.
     ///
-    /// If true (the deault) the netconf agent subscribes module changes
+    /// If true (the default) the netconf agent subscribes module changes
     /// so will be notified when the YANG running configuration is changed.
     bool subscribe_changes_;
 
     /// @brief The validate-changes flag.
     ///
-    /// If true (the deault) the netconf agent validates module changes
+    /// If true (the default) the netconf agent validates module changes
     /// and can reject bad configurations.
     bool validate_changes_;
 

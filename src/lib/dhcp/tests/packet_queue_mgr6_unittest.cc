@@ -101,7 +101,7 @@ TEST_F(PacketQueueMgr6Test, defaultQueue) {
                       << default_queue_type_ << "\", \"size\": 0 }");
 }
 
-// Verifies that PQM registry and creation of custome queue implementations.
+// Verifies that PQM registry and creation of custom queue implementations.
 TEST_F(PacketQueueMgr6Test, customQueueType) {
 
     // Verify that we cannot create a queue for a non-existant type

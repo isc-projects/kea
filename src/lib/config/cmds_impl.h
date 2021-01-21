@@ -60,7 +60,7 @@ protected:
     /// @brief Set the callout argument "response" to the given response
     ///
     /// @param handle Callout context handle in which to set the "response" argument
-    /// @param response ElementPtr to a the result to use as the reponse
+    /// @param response ElementPtr to a the result to use as the response
     void setResponse(hooks::CalloutHandle& handle, data::ConstElementPtr& response) {
         handle.setArgument ("response", response);
     }

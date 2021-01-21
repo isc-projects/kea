@@ -218,7 +218,7 @@ FreeLeaseQueue::LeasesPtr
 FreeLeaseQueue::getLeases(const AddressRange& range) const {
     auto cont = ranges_.find(range.start_);
     if (cont == ranges_.end()) {
-        isc_throw(BadValue, "conatiner for the specified address range " << range.start_
+        isc_throw(BadValue, "container for the specified address range " << range.start_
                   << ":" << range.end_ << " does not exist");
     }
     return (cont->leases_);
@@ -228,7 +228,7 @@ FreeLeaseQueue::LeasesPtr
 FreeLeaseQueue::getLeases(const PrefixRange& range) const {
     auto cont = ranges_.find(range.start_);
     if (cont == ranges_.end()) {
-        isc_throw(BadValue, "conatiner for the specified prefix " << range.start_
+        isc_throw(BadValue, "container for the specified prefix " << range.start_
                   << " and delegated length of " << static_cast<int>(range.delegated_length_)
                   << " does not exist");
     }
@@ -238,7 +238,7 @@ FreeLeaseQueue::getLeases(const PrefixRange& range) const {
 FreeLeaseQueue::RangeDescriptor
 FreeLeaseQueue::getRangeDescriptor(const uint64_t range_index) const {
     if (ranges_.get<2>().size() <= range_index) {
-        isc_throw(BadValue, "conatiner for the specified range index " << range_index
+        isc_throw(BadValue, "container for the specified range index " << range_index
                   << " does not exist");
     }
     auto cont = ranges_.get<2>().at(range_index);

@@ -1041,7 +1041,7 @@ protected:
     /// @note The only-if-required flag is related because it avoids
     /// double evaluation (which is not forbidden).
     ///
-    /// @param ex The exchange holding needed informations.
+    /// @param ex The exchange holding needed information.
     void requiredClassify(Dhcpv4Exchange& ex);
 
     /// @brief Perform deferred option unpacking.

@@ -470,7 +470,7 @@ public:
                                      inheritance, "t1-percent"));
     }
 
-    /// @brief Sets new precentage for calculating T1 (renew timer).
+    /// @brief Sets new percentage for calculating T1 (renew timer).
     ///
     /// @param t1_percent New percentage to use.
     void setT1Percent(const util::Optional<double>& t1_percent) {
@@ -486,7 +486,7 @@ public:
                                      inheritance, "t2-percent"));
     }
 
-    /// @brief Sets new precentage for calculating T2 (rebind timer).
+    /// @brief Sets new percentage for calculating T2 (rebind timer).
     ///
     /// @param t2_percent New percentage to use.
     void setT2Percent(const util::Optional<double>& t2_percent) {
@@ -526,7 +526,7 @@ public:
         ddns_override_no_update_ = ddns_override_no_update;
     }
 
-    /// @brief Returns ddns-overridie-client-update
+    /// @brief Returns ddns-override-client-update
     ///
     /// @param inheritance inheritance mode to be used.
     util::Optional<bool>
@@ -1105,7 +1105,7 @@ protected:
     /// Meaningful only if hostname_char_set_ is not empty.
     util::Optional<std::string> hostname_char_replacement_;
 
-    /// @brief Should Kea store addtional client query data (e.g. relay-agent-info)
+    /// @brief Should Kea store additional client query data (e.g. relay-agent-info)
     /// on the lease.
     util::Optional<bool> store_extended_info_;
 

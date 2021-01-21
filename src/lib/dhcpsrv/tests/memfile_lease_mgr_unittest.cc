@@ -1071,7 +1071,7 @@ TEST_F(MemfileLeaseMgrTest, getLeases6HostnameMultiThread) {
 }
 
 /// @brief This test adds 3 leases  and verifies fetch by DUID.
-/// Verifies retrival of non existant DUID fails
+/// Verifies retrieval of non existant DUID fails
 TEST_F(MemfileLeaseMgrTest, getLeases6Duid) {
     startBackend(V6);
     testGetLeases6Duid();

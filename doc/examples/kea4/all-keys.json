@@ -475,7 +475,7 @@
         "match-client-id": false,
 
         // Global value of the next server address set in 'siaddr' field.
-        // The global value may be overriden in lower level configuration
+        // The global value may be overridden in lower level configuration
         // scopes.
         "next-server": "192.0.2.123",
 

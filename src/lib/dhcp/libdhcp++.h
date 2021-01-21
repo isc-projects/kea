@@ -183,7 +183,7 @@ public:
     /// @ref Pkt4::pack(). That call leads to it being called recursively in
     /// @ref Option::packOptions(). Thus the logic used to output the
     /// message type should only be executed by the top-most. This is governed
-    /// by the paramater top, below.
+    /// by the parameter top, below.
     ///
     /// @param buf output buffer (assembled options will be stored here)
     /// @param options collection of options to store to

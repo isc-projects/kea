@@ -205,7 +205,7 @@ The following is the list of all possible server states:
 -  ``backup`` - normal operation of the backup server. In this state it
    receives lease updates from the active servers.
 
--  ``comunication-recovery`` - an active server running in load-balancing
+-  ``communication-recovery`` - an active server running in load-balancing
    mode may transition to this state when it experiences communication
    issues with a partner server over the control channel. This is an
    intermediate state between the ``load-balancing`` and ``partner-down``
@@ -1917,7 +1917,7 @@ state to a previous state. See the :ref:`ha-maintenance` for the details.
 The ha-reset Command
 --------------------
 
-This command causes the server to reset its High Availibility state machine
+This command causes the server to reset its High Availability state machine
 by transitioning it to the waiting state. A partner in the
 ``communication-recovery`` state may send this command to cause the server
 to synchronize its lease database. The database synchronization is required

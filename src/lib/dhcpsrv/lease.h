@@ -326,7 +326,7 @@ struct Lease4 : public Lease {
     /// @brief Constructor.
     ///
     /// @param address IPv4 address.
-    /// @param hw_address Pointer to client's HW addresss.
+    /// @param hw_address Pointer to client's HW address.
     /// @param client_id  pointer to the client id structure.
     /// @param valid_lifetime Valid lifetime value.
     /// @param cltt Timestamp when the lease is acquired, renewed.

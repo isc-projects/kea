@@ -346,7 +346,7 @@ public:
 };
 @endcode
 
-DHCPv6 Factory implemenation:
+DHCPv6 Factory implementation:
 
 @code
 const std::string QUEUE_TYPE = "Your-Q6";

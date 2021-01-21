@@ -402,7 +402,7 @@ void Netlink::release_list(NetlinkMessages& messages) {
         delete[] (*msg);
     }
 
-    // ang get rid of the message pointers as well
+    // and get rid of the message pointers as well
     messages.clear();
 }
 

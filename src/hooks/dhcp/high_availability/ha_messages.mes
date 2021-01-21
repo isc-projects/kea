@@ -278,7 +278,7 @@ connection. The second argument contains a reason for the error.
 % HA_LEASES_BACKLOG_FAILED failed to send lease updates backlog to %1: %2
 This error message is issued to indicate that sending lease updates backlog
 to a partner server failed. The lease updates backlog is sent to the partner
-after resuming tremporarily broken communication with the partner. If this
+after resuming temporarily broken communication with the partner. If this
 operation fails the server will transition to the waiting state to initiate
 full lease database synchronization.
 

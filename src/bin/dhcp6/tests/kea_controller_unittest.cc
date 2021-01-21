@@ -111,7 +111,7 @@ public:
         }
 
         if (enable_throw_) {
-            isc_throw(Unexpected, "testing if exceptions are corectly handled");
+            isc_throw(Unexpected, "testing if exceptions are correctly handled");
         }
     }
 
@@ -308,7 +308,7 @@ public:
             if (throw_during_fetch) {
                 expected = "{ \"result\": 1, \"text\": ";
                 expected += "\"On demand configuration update failed: ";
-                expected += "testing if exceptions are corectly handled\" }";
+                expected += "testing if exceptions are correctly handled\" }";
             } else {
                 expected = "{ \"result\": 0, \"text\": ";
                 expected += "\"On demand configuration update successful.\" }";

@@ -1,6 +1,6 @@
 // This is an example configuration of the Kea DHCPv6 server. It uses High
 // Availability hooks library and Lease Commands hooks library to enable
-// High Availibility function for the DHCP server. Note that almost exactly
+// High Availability function for the DHCP server. Note that almost exactly
 // the same configuration must be used on the second server (partner).
 // The only difference is that "this-server-name" must be set to "server1"
 // on this other server. Also, the interface configuration depends on the

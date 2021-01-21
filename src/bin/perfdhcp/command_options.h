@@ -220,7 +220,7 @@ public:
 
     /// \brief Returns time to wait for elapsed time increase.
     ///
-    /// \return how long perfdhp will wait before start sending
+    /// \return how long perfdhcp will wait before start sending
     /// messages with increased elapsed time.
     int getWaitForElapsedTime() const { return wait_for_elapsed_time_; }
 
@@ -629,7 +629,7 @@ private:
     /// Test period in seconds.
     int period_;
 
-    // for how long perfdhcp will wait before start senging
+    // for how long perfdhcp will wait before start sending
     // messages with increased elapsed time.
     int wait_for_elapsed_time_;
 

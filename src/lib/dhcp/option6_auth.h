@@ -11,7 +11,7 @@
 #include <dhcp/option.h>
 #include <boost/shared_ptr.hpp>
 
-#include <vector> 
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -29,7 +29,7 @@ class Option6Auth: public Option {
 public:
     static const uint8_t OPTION6_AUTH_MIN_LEN  = 11;
     static const uint8_t OPTION6_HASH_MSG_LEN  = 16;
-    static const uint8_t OPTION6_HDR = 4; 
+    static const uint8_t OPTION6_HDR = 4;
     /// @brief Constructor, used for auth options while transmitting
     ///
     /// @param proto protocol type
@@ -49,7 +49,7 @@ public:
     /// @param buf buffer (option will be stored here)
     void pack(isc::util::OutputBuffer& buf) const;
 
-    /// Writes option in wire-format to buf, for computing hash  
+    /// Writes option in wire-format to buf, for computing hash
     /// auth info filled with 0 for a length of 128 bits
     /// returns with pointer to first unused
     /// byte after stored option.
@@ -78,9 +78,9 @@ public:
     /// @param proto protocol type to be set
     void setProtocol(uint8_t proto) { protocol_ = proto; }
 
-    /// Set hash alogrithm type
+    /// Set hash algorithm type
     ///
-    /// @param algo hash alogrithm type to be set
+    /// @param algo hash algorithm type to be set
     void setHashAlgo(uint8_t algo) { algorithm_ = algo; }
 
     /// Set replay detection method type
@@ -93,7 +93,7 @@ public:
     /// @param value replay detection method value to be set
     void setReplyDetectionValue(uint64_t value) { rdm_value_ = value; }
 
-    /// Set authentication information 
+    /// Set authentication information
     ///
     /// @param auth_info authentication information to be set
     void setAuthInfo(const std::vector<uint8_t>& auth_info) { auth_info_ = auth_info; }
@@ -113,31 +113,31 @@ public:
     /// @return replay detection method type value
     uint8_t getReplyDetectionMethod() const { return rdm_method_; }
 
-    /// Return replay detection mechanism 
+    /// Return replay detection mechanism
     ///
     /// @return replay detection method value
     uint64_t getReplyDetectionValue() const { return rdm_value_; }
-    
-    /// Return authentication information 
+
+    /// Return authentication information
     ///
     /// @return authentication information value
     std::vector<uint8_t> getAuthInfo() const { return auth_info_; }
 
 protected:
-    /// keeps protocol type 
+    /// keeps protocol type
     uint8_t protocol_;
-    
+
     /// keeps hash algorithm value
     uint8_t algorithm_;
-    
+
     /// keeps replay detection method type
     uint8_t rdm_method_;
-    
+
     /// keeps replay detection method value
     uint64_t rdm_value_;
-    
+
     /// keeps authentication information
-    std::vector<uint8_t> auth_info_;   
+    std::vector<uint8_t> auth_info_;
 };
 
 } // isc::dhcp namespace

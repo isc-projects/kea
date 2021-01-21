@@ -600,7 +600,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelNegative) {
               response);
 }
 
-// Tests that the server properly responds to shtudown command sent
+// Tests that the server properly responds to shutdown command sent
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
     createUnixChannelServer();
@@ -1319,7 +1319,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
               response);
 }
 
-// Tests that the server properly responds to shtudown command sent
+// Tests that the server properly responds to shutdown command sent
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
     createUnixChannelServer();

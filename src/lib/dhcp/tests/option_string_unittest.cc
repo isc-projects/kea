@@ -56,7 +56,7 @@ TEST_F(OptionStringTest, constructorFromString) {
     // will result in an exception.
     EXPECT_THROW(OptionString(Option::V6, 123, ""), isc::OutOfRange);
 
-    // Check that an attempt to use string containgin only nulls
+    // Check that an attempt to use string containing only nulls
     // in the constructor will result in an exception.
     std::string nulls{"\0\0",2};
     EXPECT_THROW(OptionString(Option::V6, 123, nulls), isc::OutOfRange);

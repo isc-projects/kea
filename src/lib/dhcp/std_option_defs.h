@@ -277,7 +277,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
       OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
     { "bcms-controller-address", DHO_BCMCS_IPV4_ADDR, DHCP4_OPTION_SPACE,
       OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
-    // Unfortunatelly the AUTHENTICATE option contains a 64-bit
+    // Unfortunately the AUTHENTICATE option contains a 64-bit
     // data field called 'replay-detection' that can't be added
     // as a record field to a custom option. Also, there is no
     // dedicated option class to handle it so we simply return

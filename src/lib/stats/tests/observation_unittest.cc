@@ -292,7 +292,7 @@ TEST_F(ObservationTest, setCountLimit) {
     ASSERT_EQ(c.getSize(), 20);
     ASSERT_EQ(d.getSize(), 20);
 
-    // And whether storaged values are correct
+    // And whether stored values are correct
     uint32_t i = 20; // index of the last element in array of test's samples
     for (std::list<IntegerSample>::iterator it = samples_int.begin(); it != samples_int.end(); ++it) {
         EXPECT_EQ((*it).first, int_samples[i]);

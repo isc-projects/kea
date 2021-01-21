@@ -73,7 +73,7 @@ public:
     /// - tcp-keepalive no
     /// - tcp-nodelay no
     ///
-    /// For details regarding those paraemters, see
+    /// For details regarding those parameters, see
     /// @ref isc::db::CqlConnection::openDatabase.
     ///
     /// Finally, all the CQL commands are pre-compiled.
@@ -109,7 +109,7 @@ public:
     ///
     /// This method supports both v4 and v6.
     ///
-    /// @param subnet_id subnet identfier.
+    /// @param subnet_id subnet identifier.
     /// @param addr specified address.
     /// @return true if deletion was successful, false if the host was not
     ///     there.

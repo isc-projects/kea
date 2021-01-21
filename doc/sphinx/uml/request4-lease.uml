@@ -72,7 +72,7 @@ note right : exit point
 findClientLease --> addressReserved : has requested address (hint)
 findClientLease --> hasAddressReservation : no requested address (hint)
 addressReserved --> check_hint : no conflicting reservation
-addressReserved --> no_lease : revervation owned by another client
+addressReserved --> no_lease : reservation owned by another client
 hasAddressReservation -> update_hint : has a reservation
 update_hint --> check_hint : request reserved address
 hasAddressReservation --> check_done : no reservation

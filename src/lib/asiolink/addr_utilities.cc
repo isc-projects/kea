@@ -379,7 +379,7 @@ IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {
         return (addr);
     }
 
-    // If this is IPv4 addrss we utilize the conversion to uint32_t.
+    // If this is an IPv4 address, then we utilize the conversion to uint32_t.
     if (addr.isV4()) {
         auto addr_uint32 = static_cast<uint64_t>(addr.toUint32());
         // If the result would exceed the maximum possible IPv4 address, let's return

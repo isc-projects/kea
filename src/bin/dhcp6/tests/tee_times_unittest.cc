@@ -102,7 +102,7 @@ public:
         // Do the actual 4-way exchange.
         ASSERT_NO_THROW(client.doSARR());
 
-        // Make sure that we go the expectec number of leases.
+        // Make sure that we go the expected number of leases.
         ASSERT_EQ(exp_leases, client.getLeaseNum());
 
         // Simulate aging of leases, by moving their cltt_ back by 1000s.
@@ -195,7 +195,7 @@ TEST_F(TeeTest, defaultTimers) {
     EXPECT_EQ(2400, actual_t2);
 }
 
-// This test verifies that custom percentags for T1 and T2
+// This test verifies that custom percentages for T1 and T2
 // can be used for calculation.
 TEST_F(TeeTest, calculateTimers) {
     Dhcp6Client client;

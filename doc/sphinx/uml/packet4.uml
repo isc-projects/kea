@@ -19,7 +19,7 @@ note right : hook
 
 agent "Check DROP class" as drop_class
 
-agent "Avoid same client race in multi-threade mode" as same_client
+agent "Avoid same client race in multi-threaded mode" as same_client
 note right : postpone processing or drop
 
 rectangle "Process Query on its Message Type" as process {

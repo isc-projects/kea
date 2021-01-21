@@ -91,7 +91,7 @@ mandatory_commands() {
 }
 
 # Print the lines between two matching regex patterns from a file. Excludes the
-# lines that contain the patterns themselves. Matches only the first occurence.
+# lines that contain the patterns themselves. Matches only the first occurrence.
 print_lines_between_matching_patterns() {
   mandatory_commands sed
 

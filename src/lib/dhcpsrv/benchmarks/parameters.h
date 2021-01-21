@@ -16,7 +16,7 @@ namespace bench {
 /// @defgroup benchmark_params Benchmark parameters that define boundary values
 ///           for benchmarks.
 ///
-/// The range is defined as 512..65533. Google benchmark will pick a few specifc
+/// The range is defined as 512..65533. Google benchmark will pick a few specific
 /// values: 512, 4096, 32768, 65533.
 
 /// @{

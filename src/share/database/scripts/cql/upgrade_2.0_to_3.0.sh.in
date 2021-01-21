@@ -167,7 +167,7 @@ check_column() {
 # for each row that needs at least one of the columns updated. In other
 # words, if at least one of the subnet ID columns in a row is 0, an
 # update statement for that row will be emitted.  The update statements
-# are captured in a second temprory file, the "update" file.
+# are captured in a second temporary file, the "update" file.
 #
 # After exhausting the export file, the update file is submitted to
 # cqlsh for execution.

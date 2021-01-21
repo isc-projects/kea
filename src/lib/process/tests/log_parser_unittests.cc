@@ -313,7 +313,7 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
 // Verifies that log rotation occurs when configured.  We do not
 // worry about contents of the log files, only that rotation occurs.
 // Such details are tested in lib/log.  This test verifies that
-// we can correcty configure logging such that rotation occurs as
+// we can correctly configure logging such that rotation occurs as
 // expected.
 TEST_F(LoggingTest, logRotate) {
     wipeFiles();

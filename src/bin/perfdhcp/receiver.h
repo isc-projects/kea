@@ -20,14 +20,14 @@
 namespace isc {
 namespace perfdhcp {
 
-/// \brief A receviving DHCP packets class.
+/// \brief A receiving DHCP packets class.
 ///
 /// Receiver can be used in two modes: single-thread and multi-thread.
 ///
 /// In single-thread mode the class directly reads packets from socket
 /// and returns them to consumer using getPkt method.
 ///
-/// In case of multi-thread mode the class starts a thread in backgroud.
+/// In case of multi-thread mode the class starts a thread in the background.
 /// The thread reads the packets and pushes them to pkt_queue_. Then
 /// in main thread packets can be consumed from the queue using getPkt
 /// method.

@@ -18,7 +18,7 @@ namespace util {
 ///
 /// This template class encapsulates an optional value. The default implementation
 /// encapsulates numeric values, but additional specializations are defined
-/// as neccessary to support other types od data.
+/// as necessary to support other types od data.
 ///
 /// This class includes a boolean flag which indicates if the encapsulated
 /// value is specified or unspecified. For example, a configuration parser

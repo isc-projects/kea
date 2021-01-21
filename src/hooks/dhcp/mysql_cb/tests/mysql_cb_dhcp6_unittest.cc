@@ -1472,7 +1472,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSubnet6ByPrefix) {
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
 
     // Fetching the subnet for an explicitly specified server tag should
-    // succeeed too.
+    // succeed too.
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ONE("server1"),
                                          "2001:db8::/64");
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
@@ -2285,7 +2285,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6Selectors) {
 TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateSharedNetwork6) {
     auto shared_network = test_networks_[0];
 
-    // An attempto insert the shared network for non-existing server should fail.
+    // An attempt to insert the shared network for non-existing server should fail.
     EXPECT_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ONE("server1"),
                                                     shared_network),
                  NullKeyError);
@@ -2335,7 +2335,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateSharedNetwork6) {
     EXPECT_FALSE(network->hasServerTag(ServerTag()));
 }
 
-// Test that craeteUpdateSharedNetwork6 throws appropriate exceptions for various
+// Test that createUpdateSharedNetwork6 throws appropriate exceptions for various
 // server selectors.
 TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateSharedNetwork6Selectors) {
     ASSERT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
@@ -2995,7 +2995,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, sharedNetworkOptions) {
     EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), test_networks_[0]));
     EXPECT_EQ(4, countRows("dhcp6_options"));
 
-    // Delete this shared netwiork. This should not affect the option associated
+    // Delete this shared network. This should not affect the option associated
     // with the remaining shared network.
     EXPECT_NO_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::ALL(),
                                                  test_networks_[0]->getName()));

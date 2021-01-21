@@ -134,7 +134,7 @@ public:
         // If we expect nothing and nothing is what we got, we're done.
         if (exp_args->size() == 0) {
             ASSERT_TRUE(actual_args->size() == 0)
-                << "Acutal args should be empty:" << toJSON(actual_args);
+                << "Actual args should be empty:" << toJSON(actual_args);
             return;
         }
 
@@ -1245,7 +1245,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "}\n"
         },
         {
-        "ALL-Subnets6 arugments omitted",
+        "ALL-Subnets6 arguments omitted",
         "{\n"
         "    \"command\": \"stat-lease6-get\"\n"
         "}",

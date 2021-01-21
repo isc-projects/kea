@@ -107,7 +107,7 @@ public:
     /// @brief Returns existing IPv4 lease for specified client identifier,
     /// HW address and subnet identifier.
     ///
-    /// @param client_id Aclient identifier
+    /// @param client_id A client identifier
     /// @param hwaddr A HW address.
     /// @param subnet_id A subnet identifier.
     ///
@@ -352,13 +352,13 @@ public:
     /// @brief Pretends to wipe all IPv4 leases from a subnet
     /// @param subnet_id (ignored, but one day may specify the subnet)
     virtual size_t wipeLeases4(const SubnetID&) {
-        isc_throw(NotImplemented, "ConreteLeaseMgr::wipeLeases4 not implemented");
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::wipeLeases4 not implemented");
     }
 
     /// @brief Pretends to wipe all IPv4 leases from a subnet
     /// @param subnet_id (ignored, but one day may specify the subnet)
     virtual size_t wipeLeases6(const SubnetID&) {
-        isc_throw(NotImplemented, "ConreteLeaseMgr::wipeLeases4 not implemented");
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::wipeLeases4 not implemented");
     }
 
     /// @brief Returns backend type.

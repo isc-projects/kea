@@ -284,7 +284,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
                 output = ''
             t0 = time.time()
             t1 = time.time()
-            # repeat until process is running or timeout not occured
+            # repeat until process is running or timeout not occurred
             while p.poll() is None and (timeout is None or t1 - t0 < timeout):
                 line = p.stdout.readline()
                 if line:
@@ -297,7 +297,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
                         log_file.write(line)
                 t1 = time.time()
 
-            # If no exitcode yet, ie. process is still running then it means that timeout occured.
+            # If no exitcode yet, ie. process is still running then it means that timeout occurred.
             # In such case terminate the process and raise an exception.
             if p.poll() is None:
                 # kill using sudo to be able to kill other sudo commands

@@ -1730,7 +1730,7 @@ public:
     /// @brief Constructor to query for the stats for a range of subnets
     ///
     /// The query created will return statistics for the inclusive range of
-    /// subnets described by first and last sunbet IDs.
+    /// subnets described by first and last subnet IDs.
     ///
     /// @param conn An open connection to the database housing the lease data
     /// @param statement The lease data SQL prepared statement tag to execute

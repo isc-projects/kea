@@ -142,7 +142,7 @@ public:
                                  HAConfig::LOAD_BALANCING) const;
 
     /// @brief Return HA configuration with one primary and two backup
-    /// serveers in the JSON format.
+    /// servers in the JSON format.
     ///
     /// @return Pointer to the unparsed configuration.
     data::ConstElementPtr

@@ -32,7 +32,7 @@ namespace yang {
 /// {
 ///    "output": <output, e.g. log file name>,
 ///    "maxver": <maximum file version>,
-///    "maxsize": <maxium file size>,
+///    "maxsize": <maximum file size>,
 ///    "flush": <flush flag>,
 ///    "pattern": <custom layout>
 /// }
@@ -169,7 +169,7 @@ protected:
 /// @brief A translator class for converting a logger list between
 /// YANG and JSON.
 ///
-/// Currently supports all kea servers and agents. Speficic to Kea.
+/// Currently supports all kea servers and agents. Specific to Kea.
 class TranslatorLoggers : virtual public TranslatorLogger {
 public:
 

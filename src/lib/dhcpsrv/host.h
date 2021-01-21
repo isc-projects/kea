@@ -108,7 +108,7 @@ public:
     ///
     /// Set the key value.
     //  If the size is greater than 16 bytes, we resize to 16 bytes.
-    /// Doesnt throw an exception.
+    /// Doesn't throw an exception.
     /// @param key auth key in binary to be stored
     void setAuthKey(const std::vector<uint8_t>& key);
 

@@ -50,7 +50,7 @@ CA_CFG_FILE="@abs_top_builddir@/src/bin/keactrl/tests/${CA_CFG_FILE_NAME}.json"
 # Names for Netconf
 NC_CFG_FILE_NAME="nc_test_config.conf"
 NC_CFG_FILE="@abs_top_builddir@/src/bin/keactrl/tests/${NC_CFG_FILE_NAME}.json"
-# Configuration files for all deamons.
+# Configuration files for all daemons.
 CFG_FILES="kea_dhcp4_config_file=${DHCP4_CFG_FILE}\n\
 kea_dhcp6_config_file=${DHCP6_CFG_FILE}\n\
 kea_dhcp_ddns_config_file=${D2_CFG_FILE}\n\

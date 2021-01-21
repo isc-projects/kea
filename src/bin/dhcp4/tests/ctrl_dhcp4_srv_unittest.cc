@@ -583,7 +583,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelNegative) {
               response);
 }
 
-// Tests that the server properly responds to shtudown command sent
+// Tests that the server properly responds to shutdown command sent
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelShutdown) {
     createUnixChannelServer();
@@ -1290,7 +1290,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
     ASSERT_FALSE(lease1);
 }
 
-// Tests that the server properly responds to shtudown command sent
+// Tests that the server properly responds to shutdown command sent
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     createUnixChannelServer();

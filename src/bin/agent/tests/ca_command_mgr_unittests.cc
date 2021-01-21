@@ -237,7 +237,7 @@ public:
         ConstElementPtr command = createCommand("foo", service);
         ConstElementPtr answer = mgr_.processCommand(command);
 
-        // Stop IO service immediatelly and let the thread die.
+        // Stop IO service immediately and let the thread die.
         getIOService()->stop();
 
         // Wait for the thread to finish.
@@ -402,7 +402,7 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     ConstElementPtr answer = mgr_.handleCommand("list-commands", ConstElementPtr(),
                                                 command);
 
-    // Stop IO service immediatelly and let the thread die.
+    // Stop IO service immediately and let the thread die.
     getIOService()->stop();
 
     // Wait for the thread to finish.

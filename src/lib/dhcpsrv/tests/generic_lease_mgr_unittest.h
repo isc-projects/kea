@@ -104,7 +104,7 @@ public:
 
     /// @brief Compares a StatsMgr statistic to an expected value
     ///
-    /// Attempt to fetch the named statistic from the StatsMg and if
+    /// Attempt to fetch the named statistic from the StatsMgr and if
     /// found, compare its observed value to the given value.
     /// Fails if the stat is not found or if the values do not match.
     ///
@@ -299,7 +299,7 @@ public:
     /// @brief verifies getLeases6 method by DUID
     ///
     /// Adds 3 leases to backend and retrieves, verifes empty
-    /// retrival of non existent DUID.
+    /// retrieval of non existent DUID.
     void testGetLeases6Duid();
 
     /// @brief Checks that getLease6() works with different DUID sizes
@@ -447,7 +447,7 @@ public:
 
     /// @brief Checks operation of v4 LeaseStatsQuery variants
     ///
-    /// It creates three subnets with leasese in various states in
+    /// It creates three subnets with leases in various states in
     /// each.  It runs and verifies the returned query contents for
     /// each of the v4 startLeaseQuery variants:
     ///
@@ -459,7 +459,7 @@ public:
 
     /// @brief Checks operation of v6 LeaseStatsQuery variants
     ///
-    /// It creates three subnets with leasese in various states in
+    /// It creates three subnets with leases in various states in
     /// each.  It runs and verifies the returned query contents for
     /// each of the v6 startLeaseQuery variants:
     ///

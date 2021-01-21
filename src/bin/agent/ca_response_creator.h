@@ -59,7 +59,7 @@ private:
 
     /// @brief Creates unfinalized stock HTTP response.
     ///
-    /// The unfinilized response is the response that can't be sent over the
+    /// The unfinalized response is the response that can't be sent over the
     /// wire until @c finalize() is called, which commits the contents of the
     /// message body.
     ///

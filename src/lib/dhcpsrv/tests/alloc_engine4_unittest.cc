@@ -192,7 +192,7 @@ TEST_F(AllocEngine4Test, hintAlloc4) {
     subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
 
-    // Speficy the valid lifetime we want.
+    // Specify the valid lifetime we want.
     OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 4));
     ctx.query_->addOption(opt);
 
@@ -229,7 +229,7 @@ TEST_F(AllocEngine4Test, minAlloc4) {
     subnet_->setValid(Triplet<uint32_t>(2, 3, 5));
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
 
-    // Speficy the valid lifetime we want, as it is lower than the min value
+    // Specify the valid lifetime we want, as it is lower than the min value
     // we'll get this min value instead.
     OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 1));
     ctx.query_->addOption(opt);
@@ -267,7 +267,7 @@ TEST_F(AllocEngine4Test, maxAlloc4) {
     subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
 
-    // Speficy the valid lifetime we want, as it is greater than the max value
+    // Specify the valid lifetime we want, as it is greater than the max value
     // we'll get this max value instead.
     OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 6));
     ctx.query_->addOption(opt);
@@ -644,7 +644,7 @@ TEST_F(AllocEngine4Test, hintRenew4) {
     subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
 
-    // Speficy the valid lifetime we want.
+    // Specify the valid lifetime we want.
     OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 4));
     ctx.query_->addOption(opt);
 
@@ -686,7 +686,7 @@ TEST_F(AllocEngine4Test, minRenew4) {
     subnet_->setValid(Triplet<uint32_t>(2, 3, 5));
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
 
-    // Speficy the valid lifetime we want, as it is lower than the min value
+    // Specify the valid lifetime we want, as it is lower than the min value
     // we'll get this min value instead.
     OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 1));
     ctx.query_->addOption(opt);
@@ -729,7 +729,7 @@ TEST_F(AllocEngine4Test, maxRenew4) {
     subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
 
-    // Speficy the valid lifetime we want, as it is greater than the max value
+    // Specify the valid lifetime we want, as it is greater than the max value
     // we'll get this max value instead.
     OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 6));
     ctx.query_->addOption(opt);
@@ -1053,7 +1053,7 @@ public:
         return (lease);
     }
 
-    /// Covenience pointers to configuration elements. These are initialized
+    /// Convenience pointers to configuration elements. These are initialized
     /// in the constructor and are used throughout the tests.
     AllocEngine engine_;
     Subnet4Ptr subnet1_;

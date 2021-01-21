@@ -1021,7 +1021,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_subnet_server (
 # Modify the primary key to BINGINT as other tables have.
 ALTER TABLE dhcp4_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
-# Add conifguration backend specific columns.
+# Add configuration backend specific columns.
 ALTER TABLE dhcp4_options
     ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
     ADD COLUMN pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
@@ -1291,7 +1291,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_pool (
 # Modify the primary key to BINGINT as other tables have.
 ALTER TABLE dhcp6_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
-# Add conifguration backend specific columns.
+# Add configuration backend specific columns.
 ALTER TABLE dhcp6_options
     ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
     ADD COLUMN pool_id BIGINT(20) UNSIGNED DEFAULT NULL,

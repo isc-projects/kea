@@ -110,10 +110,10 @@ public:
 ///
 /// This test checks if the MySqlLeaseMgr can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// MySqlLeaseMgr test fixure set.  This test checks that the database can be
+/// MySqlLeaseMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(MySqlOpenTest, OpenDatabase) {
-    // Explicitely disable Multi-Threading.
+    // Explicitly disable Multi-Threading.
     MultiThreadingMgr::instance().setMode(false);
 
     // Schema needs to be created for the test to work.
@@ -686,7 +686,7 @@ TEST_F(MySqlLeaseMgrTest, lease6InvalidHostnameMultiThreading) {
 /// @brief Verify that large IAID values work correctly.
 ///
 /// Adds lease with a large IAID to the database and verifies it can
-/// fetched correclty.
+/// fetched correctly.
 TEST_F(MySqlLeaseMgrTest, leases6LargeIaidCheck) {
     testLease6LargeIaidCheck();
 }

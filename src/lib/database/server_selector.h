@@ -24,9 +24,9 @@ namespace db {
 /// In the latter case, a subnet may be associated with a subset of
 /// servers or all servers. An administrator may also add the
 /// configuration data into the database and do not associate this data
-/// with any patrticular server.
+/// with any particular server.
 ///
-/// When fetching the configuration data from a databse or when storing
+/// When fetching the configuration data from a database or when storing
 /// data in the database there is a need to specify which servers this
 /// data is associated with. The @c ServerSelector class represents
 /// such associations.

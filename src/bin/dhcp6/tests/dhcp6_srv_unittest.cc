@@ -3304,9 +3304,9 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
         Triplet<uint32_t> cfg_t2_;
         // whether or not calculation is enabled
         bool calculate_tee_times;
-        // configured value for sunbet's t1_percent.
+        // configured value for subnet's t1_percent.
         double t1_percent_;
-        // configured value for sunbet's t2_percent.
+        // configured value for subnet's t2_percent.
         double t2_percent_;
         // expected value for T1 in server response.
         // A value of 0 means server should not have sent T1.
@@ -3423,7 +3423,7 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
     for (auto test = tests.begin(); test != tests.end(); ++test) {
         {
             SCOPED_TRACE((*test).description_);
-            // Configure sunbet for the scenario
+            // Configure subnet for the scenario
             subnet_->setT1((*test).cfg_t1_);
             subnet_->setT2((*test).cfg_t2_);
             subnet_->setCalculateTeeTimes((*test).calculate_tee_times);

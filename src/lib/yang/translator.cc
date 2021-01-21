@@ -103,7 +103,7 @@ TranslatorBasic::value(S_Val s_val) {
 
     default:
         isc_throw(NotImplemented,
-                  "value called with unupported type: " << s_val->type());
+                  "value called with unsupported type: " << s_val->type());
     }
 }
 
@@ -278,7 +278,7 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
 
     default:
         isc_throw(NotImplemented,
-                  "value called with unupported type: " << type);
+                  "value called with unsupported type: " << type);
     }
 
     return (s_val);

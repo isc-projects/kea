@@ -1833,7 +1833,7 @@ private:
 protected:
     /// @brief Stores additional client query parameters on a V4 lease
     ///
-    /// Extended features such as LeaseQuery require addtional parameters
+    /// Extended features such as LeaseQuery require additional parameters
     /// to be stored for each lease, than we would otherwise retain.
     /// This function adds that information to the lease's user-context.
     /// (Note it is protected to facilitate unit testing).
@@ -1853,7 +1853,7 @@ protected:
     /// @brief Stores additional client query parameters on a V6 lease
     ///
     /// Extended features such as LeaseQuery and Reconfigure require
-    /// addtional parameters to be stored for each lease, than we would
+    /// additional parameters to be stored for each lease, than we would
     /// otherwise retain.  This function adds that information to the
     /// lease's user-context.
     /// (Note it is protected to facilitate unit testing).

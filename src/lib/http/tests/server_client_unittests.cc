@@ -221,7 +221,7 @@ protected:
 
     /// @brief Creates an instance of the @c HttpConnection.
     ///
-    /// This method is virtual so as it can be overriden when customized
+    /// This method is virtual so as it can be overridden when customized
     /// connections are to be used, e.g. in case of unit testing.
     ///
     /// @param io_service IO service to be used by the connection.
@@ -694,7 +694,7 @@ public:
         return (s.str());
     }
 
-    /// @brief Tests that HTTP request tiemout status is returned when the
+    /// @brief Tests that HTTP request timeout status is returned when the
     /// server does not receive the entire request.
     ///
     /// @param request Partial request for which the parser will be waiting for
@@ -818,7 +818,7 @@ TEST_F(HttpListenerTest, listen) {
 
 
 // This test verifies that persistent HTTP connection can be established when
-// "Conection: Keep-Alive" header value is specified.
+// "Connection: Keep-Alive" header value is specified.
 TEST_F(HttpListenerTest, keepAlive) {
 
     // The first request contains the keep-alive header which instructs the server
@@ -1697,9 +1697,9 @@ public:
     }
 
     /// @brief Tests that underlying TCP socket can be registered and
-    /// unregsitered via connection and close callbacks.
+    /// unregistered via connection and close callbacks.
     ///
-    /// It conducts to consequetive requests over the same client.
+    /// It conducts to consecutive requests over the same client.
     ///
     /// @param version HTTP version to be used.
     void testConnectCloseCallbacks(const HttpVersion& version) {

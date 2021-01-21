@@ -228,7 +228,7 @@ TEST_F(AvalancheScenTest, Packet4Exchange) {
 
     as.run();
 
-    // Check if basic exchange of packets happend. No retransmissions expected.
+    // Check if basic exchange of packets happened. No retransmissions expected.
     EXPECT_EQ(as.total_resent_, 0);
     EXPECT_EQ(as.fake_sock_.sent_cnt_, 20); // Discovery + Request
     EXPECT_EQ(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 10);
@@ -245,7 +245,7 @@ TEST_F(AvalancheScenTest, Packet4ExchangeOnlyDO) {
 
     as.run();
 
-    // Check if DO exchange of packets happend only. No retransmissions expected.
+    // Check if DO exchange of packets happened only. No retransmissions expected.
     EXPECT_EQ(as.total_resent_, 0);
     EXPECT_EQ(as.fake_sock_.sent_cnt_, 10); // Discovery + Request
     EXPECT_EQ(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 10);
@@ -262,7 +262,7 @@ TEST_F(AvalancheScenTest, Packet4ExchangeWithRetransmissions) {
     as.fake_sock_.initial_drops_cnt_ = 2;
     as.run();
 
-    // Check if basic exchange of packets happend. No retransmissions expected.
+    // Check if basic exchange of packets happened. No retransmissions expected.
     EXPECT_EQ(as.total_resent_, 2);
     EXPECT_EQ(as.fake_sock_.sent_cnt_, 22); // Discovery + Request
     EXPECT_EQ(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 10);
@@ -279,7 +279,7 @@ TEST_F(AvalancheScenTest, Packet6Exchange) {
 
     as.run();
 
-    // Check if basic exchange of packets happend. No retransmissions expected.
+    // Check if basic exchange of packets happened. No retransmissions expected.
     EXPECT_EQ(as.total_resent_, 0);
     EXPECT_GE(as.fake_sock_.sent_cnt_, 20); // Solicit + Request
     EXPECT_GE(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 10);
@@ -296,7 +296,7 @@ TEST_F(AvalancheScenTest, Packet6ExchangeOnlySA) {
 
     as.run();
 
-    // Check if SA exchange of packets happend only. No retransmissions expected.
+    // Check if SA exchange of packets happened only. No retransmissions expected.
     EXPECT_EQ(as.total_resent_, 0);
     EXPECT_GE(as.fake_sock_.sent_cnt_, 10); // Solicit + Request
     EXPECT_GE(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 10);
@@ -313,7 +313,7 @@ TEST_F(AvalancheScenTest, Packet6ExchangeWithRetransmissions) {
     as.fake_sock_.initial_drops_cnt_ = 2;
     as.run();
 
-    // Check if basic exchange of packets happend. No retransmissions expected.
+    // Check if basic exchange of packets happened. No retransmissions expected.
     EXPECT_EQ(as.total_resent_, 2);
     EXPECT_EQ(as.fake_sock_.sent_cnt_, 22); // Discovery + Request
     EXPECT_EQ(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 10);

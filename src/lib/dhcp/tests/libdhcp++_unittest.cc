@@ -1116,7 +1116,7 @@ TEST_F(LibDhcpTest, unpackPadEnd) {
     EXPECT_EQ("foo", sub->getValue());
 }
 
-// Verfies that option 0 (PAD) is handled as PAD in option 43 (so when
+// Verifies that option 0 (PAD) is handled as PAD in option 43 (so when
 // flexible pad end flag is true) only when option 0 (PAD) is not defined.
 TEST_F(LibDhcpTest, option43Pad) {
     string space = "my-option43-space";
@@ -1197,7 +1197,7 @@ TEST_F(LibDhcpTest, option43Pad) {
     EXPECT_EQ(1, sub2->getValue());
 }
 
-// Verfies that option 255 (END) is handled as END in option 43 (so when
+// Verifies that option 255 (END) is handled as END in option 43 (so when
 //flexible pad end flag is true) only when option 255 (END) is not defined.
 TEST_F(LibDhcpTest, option43End) {
     string space = "my-option43-space";

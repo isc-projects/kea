@@ -68,7 +68,7 @@ protected:
     /// @brief Mutex used to synchronize threads.
     std::mutex mutex_;
 
-    /// Condtional variable for thread waits.
+    /// Conditional variable for thread waits.
     std::condition_variable condvar_;
 
     /// Flag indicating that the thread is ready.

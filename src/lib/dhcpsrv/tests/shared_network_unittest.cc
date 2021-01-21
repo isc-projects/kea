@@ -1294,7 +1294,7 @@ TEST(SharedNetwork6Test, relayInfoList) {
     EXPECT_FALSE(network->hasRelays());
     EXPECT_FALSE(network->hasRelayAddress(IOAddress("2001:db8:2::1")));
 
-    // Add realy addresses to the network.
+    // Add relay addresses to the network.
     network->addRelayAddress(IOAddress("2001:db8:2::1"));
     network->addRelayAddress(IOAddress("2001:db8:2::2"));
     network->addRelayAddress(IOAddress("2001:db8:2::3"));

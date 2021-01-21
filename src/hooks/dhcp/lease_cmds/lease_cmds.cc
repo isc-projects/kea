@@ -1248,7 +1248,7 @@ LeaseCmdsImpl::leaseGetByHwAddressHandler(CalloutHandle& handle) {
 
         // The 'hw-address' argument is a string.
         if (hw_address->getType() != Element::string) {
-            isc_throw(BadValue, "'hw-address'parameter must be a string");
+            isc_throw(BadValue, "'hw-address' parameter must be a string");
         }
 
         HWAddr hwaddr = HWAddr::fromText(hw_address->stringValue());
@@ -1298,7 +1298,7 @@ LeaseCmdsImpl::leaseGetByClientIdHandler(CalloutHandle& handle) {
 
         // The 'client-id' argument is a string.
         if (client_id->getType() != Element::string) {
-            isc_throw(BadValue, "'client-id'parameter must be a string");
+            isc_throw(BadValue, "'client-id' parameter must be a string");
         }
 
         ClientIdPtr clientid = ClientId::fromText(client_id->stringValue());
@@ -1348,7 +1348,7 @@ LeaseCmdsImpl::leaseGetByDuidHandler(CalloutHandle& handle) {
 
         // The 'duid' argument is a string.
         if (duid->getType() != Element::string) {
-            isc_throw(BadValue, "'duid'parameter must be a string");
+            isc_throw(BadValue, "'duid' parameter must be a string");
         }
 
         DUID duid_ = DUID::fromText(duid->stringValue());
@@ -1400,7 +1400,7 @@ LeaseCmdsImpl::leaseGetByHostnameHandler(CalloutHandle& handle) {
 
         // The 'hostname' argument is a string.
         if (hostname->getType() != Element::string) {
-            isc_throw(BadValue, "'hostname'parameter must be a string");
+            isc_throw(BadValue, "'hostname' parameter must be a string");
         }
 
         std::string hostname_ = hostname->stringValue();

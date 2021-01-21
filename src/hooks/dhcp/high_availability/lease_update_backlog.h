@@ -115,7 +115,7 @@ private:
     /// @brief Holds the queue size limit.
     size_t limit_;
 
-    /// @brief Remebers whether the queue was overflown.
+    /// @brief Remembers whether the queue was overflown.
     bool overflown_;
 
     /// @brief Actual queue of lease updates and their types.

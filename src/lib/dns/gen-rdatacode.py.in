@@ -271,7 +271,7 @@ def generate_typeclasscode(fileprefix, basemtime, code2txt, type_or_class):
         return
 
     # Create a list of (code, code-text) pairs, where code-text is generally
-    # upper-cased, with applying speicial filters when necessary.
+    # upper-cased, with applying special filters when necessary.
     def convert(code_txt):
         # Workaround by heuristics: there's a "NULL" RR type, but it would
         # cause conflict with the C/C++ macro.  We use Null as a special case.

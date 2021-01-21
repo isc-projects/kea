@@ -273,7 +273,7 @@ private:
     /// @brief Parse an option config.
     ///
     /// @param option The element with option config.
-    /// @throw BadValue and similar exceptionson error.
+    /// @throw BadValue and similar exceptions on error.
     void parseOptionConfig(isc::data::ConstElementPtr option);
 
 };

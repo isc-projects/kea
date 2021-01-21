@@ -1532,7 +1532,7 @@ public:
     /// @param statement_index Index of the query's prepared statement
     /// @param fetch_type Indicates if query supplies lease type
     /// @param subnet_id id of the subnet for which stats are desired
-    /// @throw BadValue if sunbet_id given is 0 or if statement index is invalid.
+    /// @throw BadValue if subnet_id given is 0 or if statement index is invalid.
     MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
                          const bool fetch_type, const SubnetID& subnet_id)
         : LeaseStatsQuery(subnet_id), conn_(conn), statement_index_(statement_index),
@@ -1547,7 +1547,7 @@ public:
     /// @brief Constructor to query for the stats for a range of subnets
     ///
     /// The query created will return statistics for the inclusive range of
-    /// subnets described by first and last sunbet IDs.
+    /// subnets described by first and last subnet IDs.
     ///
     /// @param conn An open connection to the database housing the lease data
     /// @param statement_index Index of the query's prepared statement

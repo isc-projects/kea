@@ -285,7 +285,7 @@ YangRepr::set(const Tree& tree, S_Session session) const {
 
             default:
                 isc_throw(NotImplemented,
-                          "YangRepr::set called with unupported type: "
+                          "YangRepr::set called with unsupported type: "
                           << item.type_);
             }
             session->set_item(item.xpath_.c_str(), s_val);

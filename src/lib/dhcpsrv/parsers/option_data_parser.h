@@ -96,7 +96,7 @@ private:
     /// literal, then it is converted into binary format.  These literals
     /// may contain upper and lower case digits.  They may be octets
     /// delimited by colons or spaces (octets may be 1 or 2 digits)
-    /// If not delimited octets then they must be a continous string of
+    /// If not delimited octets then they must be a continuous string of
     /// digits with or without a "0x" prefix.  Examples:
     ///
     /// -# ab:cd:ef   - colon delimited

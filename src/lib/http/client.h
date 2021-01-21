@@ -76,7 +76,7 @@ public:
     struct RequestTimeout {
         /// @brief Constructor.
         ///
-        /// @param value Reuqest/response timeout value in milliseconds.
+        /// @param value Request/response timeout value in milliseconds.
         explicit RequestTimeout(long value)
             : value_(value) {
         }
@@ -118,7 +118,7 @@ public:
     /// transaction is still in progress, the new transaction is queued. The
     /// queued transactions are started in the FIFO order one after another. If
     /// the connection is idle or the connection doesn't exist, the new
-    /// transaction is started immediatelly.
+    /// transaction is started immediately.
     ///
     /// The existing connection is tested before it is used for the new
     /// transaction by attempting to read (with message peeking) from the open
@@ -142,7 +142,7 @@ public:
     ///
     /// The callback function provided by the caller is invoked when the
     /// transaction terminates, i.e. when the server has responded or when an
-    /// error occured. The callback is expected to be exception safe, but the
+    /// error occurred. The callback is expected to be exception safe, but the
     /// client internally guards against exceptions thrown by the callback.
     ///
     /// The first argument of the callback indicates an IO error during

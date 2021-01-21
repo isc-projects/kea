@@ -1715,7 +1715,7 @@ GenericLeaseMgrTest::testGetLeases6Duid() {
 
     uint32_t iaid = 7; // random number
 
-    SubnetID subnet_id = 8; // radom number
+    SubnetID subnet_id = 8; // random number
 
     Lease6Ptr lease1(new Lease6(Lease::TYPE_NA, addr1, duid1, iaid, 100, 200,
                                 subnet_id));

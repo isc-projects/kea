@@ -49,7 +49,7 @@ public:
     /// Lease database synchronization failed.
     static const int HA_SYNCING_FAILED_EVT = SM_DERIVED_EVENT_MIN + 3;
 
-    /// Lease database synchroniation succeeded.
+    /// Lease database synchronization succeeded.
     static const int HA_SYNCING_SUCCEEDED_EVT = SM_DERIVED_EVENT_MIN + 4;
 
     /// ha-maintenance-notify command received.
@@ -292,7 +292,7 @@ public:
     /// This indicates that the HA service is disabled, typically as a result
     /// of an unrecoverable error such as detecting that clocks skew between
     /// the active HA servers being too large. This situation requires
-    /// manual intervation of an administrator. When the problem is corrected,
+    /// manual intervention of an administrator. When the problem is corrected,
     /// the HA service needs to be restarted.
     ///
     /// @note Currently, restarting the HA service requires restarting the
@@ -861,7 +861,7 @@ protected:
 
     /// @brief Sends lease updates from backlog to partner asynchronously.
     ///
-    /// This method checks if there are any outstanding DHCPv4 or DHCOPv6 leases
+    /// This method checks if there are any outstanding DHCPv4 or DHCPv6 leases
     /// in the backlog and schedules asynchronous sends of these leases. In
     /// DHCPv6 case it sends a single lease6-bulk-apply command with all
     /// outstanding leases. In DHCPv4 case, it sends lease4-update or lease4-delete
@@ -939,7 +939,7 @@ public:
     /// This command attempts to tramsition the server to the in-maintenance state
     /// if the cancel flag is set to false. Such transition is not allowed if
     /// the server is currently in one of the following states:
-    /// - backup: becase maintenance is not supported for backup servers,
+    /// - backup: because maintenance is not supported for backup servers,
     /// - partner-in-maintenance: because only one server is in maintenance while
     ///   the partner must be in parter-in-maintenance state,
     /// - terminated: because the only way to resume HA service is by shutting
@@ -953,7 +953,7 @@ public:
     /// canceled with this operation. If it is set to false the maintenance
     /// is being started.
     ///
-    /// @return Pointer to the reponse to the ha-maintenance-notify.
+    /// @return Pointer to the response to the ha-maintenance-notify.
     data::ConstElementPtr processMaintenanceNotify(const bool cancel);
 
     /// @brief Processes ha-maintenance-start command and returns a response.
@@ -982,7 +982,7 @@ public:
     /// previous state. It effectively means canceling the request for
     /// maintenance signaled with the ha-maintenance-start command.
     ///
-    /// In some cases canceling the maintenace is no longer possible, e.g.
+    /// In some cases canceling the maintenance is no longer possible, e.g.
     /// if the server has already got into the partner-down state. Generally,
     /// canceling the maintenance is only possible if this server is in the
     /// partner-in-maintenance state and the partner is in the in-maintenance
@@ -1027,8 +1027,8 @@ protected:
     ///
     /// We do this in case the other peer closed the socket (e.g. idle timeout),
     /// as this will cause the socket to appear ready to read to the
-    /// IfaceMgr::select(). If this happens while no transcations are
-    /// in progess, we won't have anything to deal with the socket event.
+    /// IfaceMgr::select(). If this happens while no transactions are
+    /// in progress, we won't have anything to deal with the socket event.
     /// This causes IfaceMgr::select() to endlessly interrupt on the socket.
     ///
     /// @param tcp_native_fd socket descriptor of the ready socket

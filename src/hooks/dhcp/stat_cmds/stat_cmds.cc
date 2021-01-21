@@ -89,7 +89,7 @@ public:
     /// @ref isc::stat_cmds::StatCmds::statLease4GetHandler
     ///
     /// It parses the command arguments, and then invokes makeResult4()
-    /// to fulfull the lease4 statistics fetch. It then constructs the outbound
+    /// to fulfil the lease4 statistics fetch. It then constructs the outbound
     /// response based on those results.  If a NotFound exception is caught,
     /// a CONTROL_RESULT_EMTPY response is generated.
     ///
@@ -103,7 +103,7 @@ public:
     /// @ref isc::stat_cmds::StatCmds::statLease6GetHandler
     ///
     /// It parses the command arguments, and then invokes makeResult6()
-    /// to fulfull the lease6 statistics fetch. It then constructs the outbound
+    /// to fulfil the lease6 statistics fetch. It then constructs the outbound
     /// response based on those results.  If a NotFound exception is caught,
     /// a CONTROL_RESULT_EMTPY response is generated.
     ///

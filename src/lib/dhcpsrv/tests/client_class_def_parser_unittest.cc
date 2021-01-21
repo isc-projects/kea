@@ -102,7 +102,7 @@ protected:
     /// occur.
     /// @return Returns a pointer to class instance created, or NULL if
     /// for some unforeseen reason it wasn't created in the local dictionary
-    /// @throw indirectly, exceptions convertring the JSON text to elements,
+    /// @throw indirectly, exceptions converting the JSON text to elements,
     /// or by the parsing itself are not caught
     ClientClassDefPtr parseClientClassDef(const std::string& config,
                                           uint16_t family) {
@@ -128,7 +128,7 @@ protected:
     }
 
     /// @brief Test that client class parser throws when unspported parameter
-    /// is specfied.
+    /// is specified.
     ///
     /// @param config JSON string containing the client class configuration.
     /// @param family The address family indicating whether the DHCPv4 or
@@ -157,7 +157,7 @@ protected:
     /// @param family - the address family in which the parsing should
     /// occur.
     /// @return Returns a pointer to class dictionary created
-    /// @throw indirectly, execptions convertring the JSON text to elements,
+    /// @throw indirectly, execptions converting the JSON text to elements,
     /// or by the parsing itself are not caught
     ClientClassDictionaryPtr parseClientClassDefList(const std::string& config,
                                                      uint16_t family)

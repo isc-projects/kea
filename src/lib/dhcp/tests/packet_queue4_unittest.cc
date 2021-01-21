@@ -22,7 +22,7 @@ namespace {
 /// @brief DHCPv4 queue with implements drop and eat logic
 ///
 /// This class derives from the default DHCPv4 ring queue
-/// and provies implementations for shouldDropPacket() and
+/// and provides implementations for shouldDropPacket() and
 /// eatPackets().  This permits a full exercising of the
 /// PacketQueue interface as well as the basic v4 ring queue
 /// mechanics.

@@ -27,7 +27,7 @@ namespace test {
 /// @brief Test config backend that implements all of the DHCPv4 API calls
 ///
 /// This backend should be used for unit testing the DHCPv4 server and the
-/// commands which manpiluate the configuration information stored in the
+/// commands which manipulate the configuration information stored in the
 /// database.
 ///
 /// Server selectors supported by this test configuration backend are a

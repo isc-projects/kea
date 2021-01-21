@@ -335,7 +335,7 @@ protected:
     /// @param transaction Pointer to the transaction to be guarded by the timeout.
     void setupRequestTimer(TransactionPtr transaction = TransactionPtr());
 
-    /// @brief Reset timer for detecing idle timeout in persistent connections.
+    /// @brief Reset timer for detecting idle timeout in persistent connections.
     void setupIdleTimer();
 
     /// @brief Callback invoked when the HTTP Request Timeout occurs.

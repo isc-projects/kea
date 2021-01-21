@@ -40,7 +40,7 @@ namespace dhcp {
 
 class CfgMgr;
 
-/// @brief Convenience container for conveying DDNS behaviorial parameters
+/// @brief Convenience container for conveying DDNS behavioral parameters
 /// It is intended to be created per Packet exchange using the selected
 /// subnet passed into functions that require them
 class DdnsParams {
@@ -542,7 +542,7 @@ public:
     /// @brief Fetches the DDNS parameters for a given DHCPv4 subnet.
     ///
     /// Creates a DdnsParams structure which retain and thereafter
-    /// use the given subnet to fetch DDNS behaviorial parameters.
+    /// use the given subnet to fetch DDNS behavioral parameters.
     /// The values are fetched with the inheritance scope mode
     /// of Network::ALL.
     ///
@@ -553,7 +553,7 @@ public:
     /// @brief Fetches the DDNS parameters for a given DHCPv6 subnet.
     ///
     /// Creates a DdnsParams structure which retain and thereafter
-    /// use the given subnet to fetch DDNS behaviorial parameters.
+    /// use the given subnet to fetch DDNS behavioral parameters.
     /// The values are fetched with the inheritance scope mode
     /// of Network::ALL.
     ///
@@ -641,7 +641,7 @@ public:
     /// stored in the staging configuration. The other part of the
     /// configuration comes from the database. The configuration fetched
     /// from the database is stored in a separate @c SrvConfig instance
-    /// and then merged into the staging configuration prior to commiting
+    /// and then merged into the staging configuration prior to committing
     /// it.
     ///
     /// The merging strategy depends on the underlying data being merged.

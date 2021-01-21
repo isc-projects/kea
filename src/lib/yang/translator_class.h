@@ -25,7 +25,7 @@ namespace yang {
 ///     "option-data": <option data list>,
 ///     (DHCPv4 only)
 ///     "option-def": <option definition list>,
-///     "next-server": <next server addresss>,
+///     "next-server": <next server address>,
 ///     "server-hostname": <server hostname>,
 ///     "boot-file-name": <boot filename>,
 ///     "user-context": { <json map> },
@@ -67,8 +67,8 @@ namespace yang {
 /// @brief A translator class for converting a client class between
 /// YANG and JSON.
 ///
-/// Currently supports on kea-dhcp[46]-server. Ietf-dhcpv6-server does
-/// not define client classe contents.
+/// Currently supports only kea-dhcp[46]-server. Ietf-dhcpv6-server does
+/// not define client class contents.
 class TranslatorClass : virtual public TranslatorOptionDataList,
     virtual public TranslatorOptionDefList  {
 public:
@@ -118,8 +118,8 @@ protected:
 /// @brief A translator class for converting a client class list between
 /// YANG and JSON.
 ///
-/// Currently supports on kea-dhcp[46]-server. Ietf-dhcpv6-server does
-/// not define client classe contents.
+/// Currently supports only kea-dhcp[46]-server. Ietf-dhcpv6-server does
+/// not define client class contents.
 class TranslatorClasses : virtual public TranslatorClass {
 public:
 

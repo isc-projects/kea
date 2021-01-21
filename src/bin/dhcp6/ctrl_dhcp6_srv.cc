@@ -1080,7 +1080,7 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     // LeaseMgr uses IO service to run asynchronous timers.
     LeaseMgr::setIOService(getIOService());
 
-    // HosrMgr uses IO service to run asynchronous timers.
+    // HostMgr uses IO service to run asynchronous timers.
     HostMgr::setIOService(getIOService());
 
     // These are the commands always supported by the DHCPv6 server.
@@ -1215,7 +1215,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         // LeaseMgr uses IO service to run asynchronous timers.
         LeaseMgr::setIOService(IOServicePtr());
 
-        // HosrMgr uses IO service to run asynchronous timers.
+        // HostMgr uses IO service to run asynchronous timers.
         HostMgr::setIOService(IOServicePtr());
     } catch (...) {
         // Don't want to throw exceptions from the destructor. The server

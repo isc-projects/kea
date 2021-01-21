@@ -401,7 +401,7 @@ cql_unused_subnet_id_test() {
 }
 
 # Verifies that you can upgrade from an earlier version and
-# that all hosts and options from old host_reseravation table (version 3.0) are
+# that all hosts and options from old host_reservation table (version 3.0) are
 # converted to new schema (version 4.0) with new key partition key and are
 # moved to new hosts table
 cql_upgrade_hosts_test() {

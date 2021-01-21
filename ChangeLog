@@ -1674,7 +1674,7 @@ Kea 1.6.0-beta2 (development) released on July 24, 2019
 
 1593.	[bug]		marcin
 	Fixed a bug in the Kea Control Agent which caused a sporadic crash
-	after a tiemout while sending the HTTP response to the controlling
+	after a timeout while sending the HTTP response to the controlling
 	client.
 	(Gitlab #491,!363, git ff204dfe4dd80702f8bb2edf83f8486e019a7e04)
 

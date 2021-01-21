@@ -57,7 +57,7 @@ public:
 
     /// @brief returns captured DISCOVER from Genexis hardware.
     ///
-    /// This device in uncommon, because it doesn't send VIVSO in Dicover, but
+    /// This device in uncommon, because it doesn't send VIVSO in Discover, but
     /// expects one in Offer.
     /// @return DISCOVER.
     static isc::dhcp::Pkt4Ptr discoverGenexis();

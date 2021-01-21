@@ -1662,7 +1662,7 @@ TEST_F(EvalContextTest, vendorClass6DataIndex) {
     testVendorClass("vendor-class[4491].data[3] == 0x1234", Option::V6, 4491, 3);
 }
 
-// Test the parsing of a sub-option with perent by code.
+// Test the parsing of a sub-option with parent by code.
 TEST_F(EvalContextTest, subOptionWithCode) {
     EvalContext eval(Option::V4);
 
@@ -1672,7 +1672,7 @@ TEST_F(EvalContextTest, subOptionWithCode) {
     checkTokenSubOption(eval.expression.at(0), 123, 234, TokenOption::TEXTUAL);
 }
 
-// Test the parsing of a sub-option with perent by name.
+// Test the parsing of a sub-option with parent by name.
 TEST_F(EvalContextTest, subOptionWithName) {
     EvalContext eval(Option::V4);
 

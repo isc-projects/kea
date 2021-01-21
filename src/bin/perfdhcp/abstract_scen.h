@@ -49,7 +49,7 @@ public:
 
 protected:
     CommandOptions& options_; ///< Reference to commandline options.
-    TestControl tc_;  ///< Object for controling sending and receiving packets.
+    TestControl tc_;  ///< Object for controlling sending and receiving packets.
 
     // Helper fields to avoid checking IP version each time an exchange type
     // is needed.

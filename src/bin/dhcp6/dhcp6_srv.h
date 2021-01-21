@@ -859,7 +859,7 @@ protected:
     /// double evaluation (which is not forbidden).
     ///
     /// @param pkt packet to be classified
-    /// @param ctx allocation context where to get informations
+    /// @param ctx allocation context where to get information
     void requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
 
     /// @brief Attempts to get a MAC/hardware address using configured sources

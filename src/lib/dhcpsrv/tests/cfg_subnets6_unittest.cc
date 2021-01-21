@@ -48,7 +48,7 @@ generateInterfaceId(const std::string& text) {
 
 /// @brief Verifies that a set of subnets contains a given a subnet
 ///
-/// @param cfg_subnets set of sunbets in which to look
+/// @param cfg_subnets set of subnets in which to look
 /// @param exp_subnet_id expected id of the target subnet
 /// @param prefix prefix of the target subnet
 /// @param exp_valid expected valid lifetime of the subnet

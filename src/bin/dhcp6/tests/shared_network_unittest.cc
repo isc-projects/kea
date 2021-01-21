@@ -1366,9 +1366,9 @@ public:
     ///
     /// @param config - text version of the configuration to be tested
     /// @param enabled - true = rapid-commit is expected to work
-    /// @param exp_addr1 - an eddress the first client is expected to get (if
+    /// @param exp_addr1 - an address the first client is expected to get (if
     ///                    rapid-commit is enabled).
-    /// @param exp_addr2 - an eddress the second client is expected to get (if
+    /// @param exp_addr2 - an address the second client is expected to get (if
     ///                    rapid-commit is enabled).
     void testRapidCommit(const std::string& config, bool enabled,
                          const std::string& exp_addr1,
@@ -1552,7 +1552,7 @@ TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
 
-    // Cient #3. It sends Solicit which should result in NoAddrsAvail status
+    // Client #3. It sends Solicit which should result in NoAddrsAvail status
     // code because all addresses available for this link have been assigned.
     Dhcp6Client client3(client1.getServer());
     client3.setInterface("eth1");
@@ -2290,7 +2290,7 @@ TEST_F(Dhcpv6SharedNetworkTest, relaySpecifiedForEachSubnet) {
 // Shared network is selected based on interface id.
 TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceId) {
     // Create client #1. This is a relayed client for which interface id
-    // has been spefified and this interface id is matching the one specified
+    // has been specified and this interface id is matching the one specified
     // for the shared network.
     Dhcp6Client client1;
     client1.useRelay(true, IOAddress("3001::1"));
@@ -2323,7 +2323,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceId) {
 // belonging to a shared network.
 TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceIdInSubnet) {
     // Create client #1. This is a relayed client for which interface id
-    // has been spefified and this interface id is matching the one specified
+    // has been specified and this interface id is matching the one specified
     // for the shared network.
     Dhcp6Client client1;
     client1.useRelay(true, IOAddress("3001::1"));

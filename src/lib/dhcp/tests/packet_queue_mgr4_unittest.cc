@@ -20,7 +20,7 @@ using namespace isc::dhcp::test;
 
 /// @brief Convenience function for construction a dhcp-queue-control element map
 ///
-/// @param queue_type logical name of the queue implemenation type
+/// @param queue_type logical name of the queue implementation type
 /// @param capacity maximum queue capacity
 /// @param enable_queue bool value to ascribe to the 'enable-queue' parameter, defaults to true
 data::ElementPtr
@@ -112,7 +112,7 @@ TEST_F(PacketQueueMgr4Test, defaultQueue) {
                       << default_queue_type_ << "\", \"size\": 0 }");
 }
 
-// Verifies that PQM registry and creation of custome queue implementations.
+// Verifies that PQM registry and creation of custom queue implementations.
 TEST_F(PacketQueueMgr4Test, customQueueType) {
 
     // Verify that we cannot create a queue for a non-existant type

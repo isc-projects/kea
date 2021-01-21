@@ -204,7 +204,7 @@ TEST_F(CfgIfaceTest, explicitLoopbackV4) {
     // Reset configuration.
     cfg.reset();
 
-    // Retry with wirdcard
+    // Retry with wildcard
     ASSERT_NO_THROW(cfg.use(AF_INET, "*"));
     ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
     ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
@@ -378,7 +378,7 @@ TEST_F(CfgIfaceTest, explicitLoopbackV6) {
     // Reset configuration.
     cfg.reset();
 
-    // Retry with wirdcard
+    // Retry with wildcard
     ASSERT_NO_THROW(cfg.use(AF_INET6, "*"));
     ASSERT_NO_THROW(cfg.use(AF_INET6, "lo/::1"));
     cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);

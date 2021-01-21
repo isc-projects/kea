@@ -238,7 +238,7 @@ to process ${proc_name}, PID ${_pid}."
     fi
 }
 
-# Print Kea daemon verison
+# Print Kea daemon version
 print_version() {
     name=${1}
     binary_path=${2}

@@ -387,7 +387,7 @@ HttpConnection::requestTimeoutCallback(TransactionPtr transaction) {
     // if such transaction exists.
     auto request = spawned_transaction->getRequest();
 
-    // Depending on when the timeout occured, the HTTP version of the request
+    // Depending on when the timeout occurred, the HTTP version of the request
     // may or may not be available. Therefore we check if the HTTP version is
     // set in the request. If it is not available, we need to create a dummy
     // request with the default HTTP/1.0 version. This version will be used

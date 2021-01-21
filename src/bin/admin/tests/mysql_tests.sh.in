@@ -46,7 +46,7 @@ run_statement() {
     qry="$1";shift
     exp_value="${1-}" # Optional value. If not given, replace with empty string.
 
-    # Execute the statment
+    # Execute the statement
     run_command \
         mysql_execute "${qry}"
     value="${OUTPUT}"
@@ -396,7 +396,7 @@ mysql_upgrade_test() {
     count="${OUTPUT}"
     assert_eq 0 "${EXIT_CODE}" "select scope_id from dhcp6_options failed. (expected status code %d, returned %d)"
 
-    #table: DHCPv4 fixed field colums (upgrade 4.1 -> 5.0)
+    #table: DHCPv4 fixed field columns (upgrade 4.1 -> 5.0)
     # verify that hosts table has columns holding values for DHCPv4 fixed fields
     qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key from hosts";
     run_command \

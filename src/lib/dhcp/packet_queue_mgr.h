@@ -30,7 +30,7 @@ public:
 
 /// @brief Packet Queue Managers (PQM).
 ///
-/// Base class to manage the registry of packet queue implemenations
+/// Base class to manage the registry of packet queue implementations
 /// and the creation of and access to the current packet queue.
 ///
 /// @tparam PacktQueueTypePtr Base type of packet queues managed by
@@ -41,7 +41,7 @@ public:
     /// @brief Defines the type of the packet queue factory function.
     ///
     /// Factory function returns a pointer to the instance of the packet
-    /// queue created. 
+    /// queue created.
     typedef std::function<PacketQueueTypePtr(data::ConstElementPtr)> Factory;
 
     /// @brief Constructor.

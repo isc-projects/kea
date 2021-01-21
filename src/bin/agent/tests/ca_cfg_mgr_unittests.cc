@@ -497,7 +497,7 @@ TEST_F(AgentParserTest, configParseAuth) {
     // Check realm
     EXPECT_EQ("foobar", basic_auth->getRealm());
 
-    // Check credentails
+    // Check credentials
     auto credentials = basic_auth->getCredentialMap();
     EXPECT_EQ(2, credentials.size());
     std::string user;

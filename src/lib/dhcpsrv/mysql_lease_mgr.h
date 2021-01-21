@@ -67,7 +67,7 @@ typedef boost::shared_ptr<MySqlLeaseContext> MySqlLeaseContextPtr;
 /// @brief MySQL Lease Context Pool
 ///
 /// This class provides a pool of contexts.
-/// The manager will use this class to handle avalilable contexts.
+/// The manager will use this class to handle available contexts.
 /// There is only one ContextPool per manager per back-end, which is created
 /// and destroyed by the respective manager factory class.
 class MySqlLeaseContextPool {

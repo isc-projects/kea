@@ -1509,7 +1509,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsExplicitIDs) {
     } while (++cnt < 3);
 }
 
-// CHeck that the configuration with two subnets having the same id is rejected.
+// Check that the configuration with two subnets having the same ID is rejected.
 TEST_F(Dhcp6ParserTest, multipleSubnetsOverlappingIDs) {
     ConstElementPtr x;
     // Four subnets, two of them have the same id.
@@ -6949,7 +6949,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
         ->getCfgSharedNetworks6();
 
-    // Two shared networks are expeced.
+    // Two shared networks are expected.
     ASSERT_TRUE(cfg_net);
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
@@ -7059,7 +7059,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
     CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
         ->getCfgSharedNetworks6();
 
-    // Two shared networks are expeced.
+    // Two shared networks are expected.
     ASSERT_TRUE(cfg_net);
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
@@ -7247,7 +7247,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommit) {
     CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
         ->getCfgSharedNetworks6();
 
-    // Two shared networks are expeced.
+    // Two shared networks are expected.
     ASSERT_TRUE(cfg_net);
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);

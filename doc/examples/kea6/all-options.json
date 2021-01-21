@@ -1826,7 +1826,7 @@
       },
 
       // A single encapsulating space can be used. An option containing any
-      // option from said space will now be unpacked succesfully by Kea.
+      // option from said space will now be unpacked successfully by Kea.
       {
         "array": false,
         "code": 12321,

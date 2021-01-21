@@ -149,7 +149,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     // Everything is clear for launch, so start the application's
     // event loop.
     try {
-        // Now that we have a proces, we can set up signal handling.
+        // Now that we have a process, we can set up signal handling.
         initSignalHandling();
         runProcess();
     } catch (const std::exception& ex) {
@@ -392,7 +392,7 @@ DControllerBase::configFromFile() {
         // Temporary storage for logging configuration
         ConfigPtr storage(new ConfigBase());
 
-        // Configure logging to the tempoary storage.
+        // Configure logging to the temporary storage.
         Daemon::configureLogger(module_config, storage);
 
         // Let's apply the new logging. We do it early, so we'll be able
@@ -622,7 +622,7 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
         // Temporary storage for logging configuration
         ConfigPtr storage(new ConfigBase());
 
-        // Configure logging to the tempoary storage.
+        // Configure logging to the temporary storage.
         Daemon::configureLogger(module_config, storage);
 
         // Let's apply the new logging. We do it early, so we'll be able

@@ -34,7 +34,7 @@ public:
     /// @brief Constructor.
     HAImpl();
 
-    /// @brief Parases configuration.
+    /// @brief Parses configuration.
     ///
     /// @param input_config Configuration specified for the hooks library.
     /// @throw ConfigError when configuration fails.

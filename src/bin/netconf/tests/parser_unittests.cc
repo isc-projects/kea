@@ -655,7 +655,7 @@ TEST(ParserTest, errors) {
 
     // unknown keyword
     testError("{ \"Netconf\":{\n"
-              " \"topping\": \"Mozarella\" }}\n",
+              " \"topping\": \"Mozzarella\" }}\n",
               ParserContext::PARSER_NETCONF,
               "<string>:2.2-10: got unexpected keyword "
               "\"topping\" in Netconf map.");

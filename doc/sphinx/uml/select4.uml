@@ -55,13 +55,13 @@ relay_network --> set_address : no match
 relay_network --> relay_class : match
 relay_class ---> found : compatible
 relay_class --> set_address : not compatible
-set_address --> relay_address : try the relay addreess
+set_address --> relay_address : try the relay address
 relay_address -r-> client_address : has no relay address
-client_address -r-> source_address : has no client addrss
+client_address -r-> source_address : has no client address
 source_address --> interface_subnet : no suitable address
 relay_address --> inRange : has a relay address
 client_address --> inRange : has a client address
-source_address --> inRange : has source addess and use unicast
+source_address --> inRange : has source address and use unicast
 interface_subnet ---> not_found : no interface
 interface_subnet --> interface_class : match
 interface_subnet --> interface_network : no match
@@ -82,4 +82,4 @@ subnet4_select --> success : CONTINUE and subnet set
 subnet4_select --> no_subnet : SKIP or subnet not set
 subnet4_select --> drop : DROP
 
-@endutl
+@enduml

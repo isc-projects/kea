@@ -27,14 +27,14 @@ constexpr long TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT = 30000;
 /// Kea server, e.g. DHCP server.
 ///
 /// This value is high to ensure that the server have enough time
-/// to generate large responses, e.g. dump whole lease databse.
+/// to generate large responses, e.g. dump whole lease database.
 constexpr long TIMEOUT_AGENT_FORWARD_COMMAND = 60000;
 
 /// @brief Timeout for the HTTP clients awaiting a response to a request.
 ///
 /// This value is high to ensure that the client waits long enough
 /// for the fulfilling server to generate a response.  Specified
-/// milliseconds. 
+/// milliseconds.
 constexpr long TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST = 10000;
 
 

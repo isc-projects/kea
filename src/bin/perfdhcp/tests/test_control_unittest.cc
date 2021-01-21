@@ -509,7 +509,7 @@ public:
         tc.setTransidGenerator(generator);
         for (int i = 0; i < iterations_num; ++i) {
             // Get next transaction id, without actually using it. The same
-            // id wll be used by the TestControl class for DHCPDISCOVER.
+            // id will be used by the TestControl class for DHCPDISCOVER.
             uint32_t transid = generator->getNext();
             if (use_templates) {
                 tc.sendDiscover4(tc.getTemplateBuffer(0));
@@ -1736,7 +1736,7 @@ TEST_F(TestControlTest, createRelease) {
 // Test checks if sendDiscover really includes custom options
 TEST_F(TestControlTest, sendDiscoverExtraOpts) {
 
-    // Important paramters here:
+    // Important parameters here:
     // -xT - save first packet of each type for templates (useful for packet inspection)
     // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
     // -o 201,00 - send option 201 with hex content: 00
@@ -1763,7 +1763,7 @@ TEST_F(TestControlTest, sendDiscoverExtraOpts) {
 // Test checks if regular packet exchange inserts the extra v4 options
 // specified on command line.
 TEST_F(TestControlTest, Packet4ExchangeExtraOpts) {
-    // Important paramters here:
+    // Important parameters here:
     // -xT - save first packet of each type for templates (useful for packet inspection)
     // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
     // -o 201,00 - send option 201 with hex content: 00
@@ -1798,7 +1798,7 @@ TEST_F(TestControlTest, Packet4ExchangeExtraOpts) {
 // Test checks if regular packet exchange inserts the extra v6 options
 // specified on command line.
 TEST_F(TestControlTest, Packet6ExchangeExtraOpts) {
-    // Important paramters here:
+    // Important parameters here:
     // -xT - save first packet of each type for templates (useful for packet inspection)
     // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
     // -o 201,00 - send option 201 with hex content: 00
@@ -1837,7 +1837,7 @@ TEST_F(TestControlTest, Packet6ExchangeExtraOpts) {
 // Test checks if multiple v4 PRL options can be sent. They should be merged
 // into a single PRL option by perfdhcp.
 TEST_F(TestControlTest, sendDiscoverMultiplePRLs) {
-    // Important paramters here:
+    // Important parameters here:
     // -o 55,1234 - send option 55 with hex content '1234'
     // -o 55,abcd - send option 55 with hex content 'abcd'
     CommandOptions opt;

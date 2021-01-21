@@ -596,7 +596,7 @@ TEST(ParserTest, errors) {
 
     // unknown keyword
     testError("{ \"Control-agent\":{\n"
-              " \"topping\": \"Mozarella\" }}\n",
+              " \"topping\": \"Mozzarella\" }}\n",
               ParserContext::PARSER_AGENT,
               "<string>:2.2-10: got unexpected keyword "
               "\"topping\" in Control-agent map.");

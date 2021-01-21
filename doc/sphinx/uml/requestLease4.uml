@@ -63,7 +63,7 @@ else (no)
     endif
   else (no)
     if (client lease and lease address in allowed pool) then (no)
-      while (iterate over pools and subnect)
+      while (iterate over pools and subnets)
         :pick candidate address;
         if (candidate is reserved for another client) then (no)
           if (candidate is used by another thread) then (no)

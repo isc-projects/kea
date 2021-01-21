@@ -95,7 +95,7 @@ TEST_F(Rdata_NAPTR_Test, badText) {
     // Order or preference cannot be missed
     EXPECT_THROW(const NAPTR naptr("10 \"S\" SIP \"\" _sip._udp.example.com."),
                  InvalidRdataText);
-    // Unquoted fields must be seperated by spaces
+    // Unquoted fields must be separated by spaces
     EXPECT_THROW(const NAPTR naptr("100 10S SIP \"\" _sip._udp.example.com."),
                  InvalidRdataText);
     EXPECT_THROW(const NAPTR naptr("10010 \"S\" \"SIP\" \"\" _sip._udp.example.com."),

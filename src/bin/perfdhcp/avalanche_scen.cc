@@ -97,13 +97,13 @@ AvalancheScen::run() {
     // First indicated number of DISCOVER packets eg. 4000 are sent.
     // Then in a loop responses to received packets (this is
     // consumeReceivedPackets()) are sent and then for every 200ms it is checked
-    // if reponses to sent packets were received. If not packets are resent.
+    // if responses to sent packets were received. If not packets are resent.
     // This happens in resendPackets() method. For each packet it is checked
     // how many times it was already resent and then back off time is calculated:
     // 1, 2, 4, 8, 16, 64 (max) seconds. If estimated time has elapsed
     // from previous sending then the packet is resent. Some stats are collected
-    // and printed during runtime. The whole procedure is stopeed when
-    // all packets got reponses.
+    // and printed during runtime. The whole procedure is stoped when
+    // all packets got responses.
 
     uint32_t clients_num = options_.getClientsNum() == 0 ?
         1 : options_.getClientsNum();

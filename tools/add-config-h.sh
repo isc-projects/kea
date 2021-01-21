@@ -16,7 +16,7 @@
 # shellcheck disable=SC1004
 # SC1004: This backslash+linefeed is literal. Break outside single quotes if you
 # just want to break the line.
-# Reason: blackslash+linefeed inside single quotes in sed are needed for
+# Reason: backslash+linefeed inside single quotes in sed are needed for
 # POSIX-compliance. \n works only with GNU sed.
 
 # Exit with error if commands exit with non-zero and if undefined variables are

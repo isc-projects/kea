@@ -29,7 +29,7 @@ namespace dhcp {
 /// The @c Lease6 is a structure that should be itself responsible for this
 /// validation (see http://oldkea.isc.org/ticket/2405). However, when #2405
 /// is implemented, the @c next function may need to be updated to use the
-/// validation capablity of @c Lease6.
+/// validation capability of @c Lease6.
 class CSVLeaseFile6 : public isc::util::VersionedCSVFile, public LeaseFileStats {
 public:
 

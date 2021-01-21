@@ -73,7 +73,7 @@ public:
     /// @brief Collect definition.
     ///
     /// This method looks at an option definition and adds the
-    /// space+name to code maping into the OptionCodes codes store
+    /// space+name to code mapping into the OptionCodes codes store
     /// aka definitions.
     ///
     /// @param option The option definition.

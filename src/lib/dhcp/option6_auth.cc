@@ -49,7 +49,7 @@ Option6Auth::pack(isc::util::OutputBuffer& buf) const {
     buf.writeUint16(11 + uint16_t(auth_info_.size()));
     // protocol 1 byte
     buf.writeUint8(protocol_);
-    // algoritm 1 byte
+    // algorithm 1 byte
     buf.writeUint8(algorithm_);
     // replay detection method
     buf.writeUint8(rdm_method_);
@@ -76,7 +76,7 @@ Option6Auth::packHashInput(isc::util::OutputBuffer& buf) const {
     buf.writeUint16(OPTION6_AUTH_MIN_LEN + OPTION6_HASH_MSG_LEN);
     // protocol 1 byte
     buf.writeUint8(protocol_);
-    // algoritm 1 byte
+    // algorithm 1 byte
     buf.writeUint8(algorithm_);
     // replay detection method
     buf.writeUint8(rdm_method_);

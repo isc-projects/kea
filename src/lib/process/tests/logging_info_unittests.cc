@@ -66,7 +66,7 @@ public:
 TEST_F(LoggingInfoTest, defaults) {
 
     // We now need to set the default logger explicitly.
-    // Otherwise leftovers from pervious tests that use DController
+    // Otherwise leftovers from previous tests that use DController
     // would leave the default logger set to TestBin.
     Daemon::setDefaultLoggerName("kea");
 

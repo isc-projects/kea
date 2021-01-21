@@ -98,7 +98,7 @@ private:
 
 };
 
-/// @brief Fixture class intended for testin control channel in D2.
+/// @brief Fixture class intended for testing control channel in D2.
 class CtrlChannelD2Test : public ::testing::Test {
 public:
     isc::test::Sandbox sandbox;

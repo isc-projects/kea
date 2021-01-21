@@ -1034,7 +1034,7 @@ public:
     typedef enum AuthoritativeFlag {
         AUTH_DEFAULT, // explicit value not specified (use default)
         AUTH_YES,     // defined explicitly as yes
-        AUTH_NO       // defined explciitly as no
+        AUTH_NO       // defined explicitly as no
     } AuthoritativeFlag;
 
     /// @brief Returns subnet having specified address in range.
@@ -1272,9 +1272,9 @@ public:
     ///   - first subnet: authoritative (subnet1 flag here)
     ///   - second subnet: authoritative (subnet2 flag here)
     ///
-    /// @param global coverns presence/value of global authoritative flag
-    /// @param subnet1 coverns presence/value of authoritative flag in subnet1
-    /// @param subnet2 coverns presence/value of authoritative flag in subnet2
+    /// @param global governs presence/value of global authoritative flag
+    /// @param subnet1 governs presence/value of authoritative flag in subnet1
+    /// @param subnet2 governs presence/value of authoritative flag in subnet2
     string generateAuthConfig(AuthoritativeFlag global, AuthoritativeFlag subnet1,
                               AuthoritativeFlag subnet2) {
         string cfg = "{"
@@ -2010,7 +2010,7 @@ TEST_F(Dhcpv4SharedNetworkTest, matchClientId) {
     ASSERT_TRUE(resp2);
     ASSERT_EQ(DHCPACK, resp2->getType());
 
-    // The lease should get rewnewed.
+    // The lease should get renewed.
     EXPECT_EQ(resp2->getYiaddr().toText(), resp1->getYiaddr().toText());
 }
 

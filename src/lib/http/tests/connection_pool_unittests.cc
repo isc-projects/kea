@@ -33,7 +33,7 @@ typedef boost::shared_ptr<Response> ResponsePtr;
 /// @brief Request timeout used in tests.
 const long CONN_REQUEST_TIMEOUT = 1000;
 
-/// @brief Idle connecion timeout used in tests.
+/// @brief Idle connection timeout used in tests.
 const long CONN_IDLE_TIMEOUT = 1000;
 
 /// @brief Implementation of the @ref HttpResponseCreator.

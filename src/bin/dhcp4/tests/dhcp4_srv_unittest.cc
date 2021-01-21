@@ -294,7 +294,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     IfaceMgr::instance().openSockets4();
 
     // Create configuration for interfaces. It includes the outbound-interface
-    // setting which indicates that the responses aren't neccessarily sent
+    // setting which indicates that the responses aren't necessarily sent
     // over the same interface via which a request has been received, but routing
     // information is used to determine this interface.
     CfgMgr::instance().clear();
@@ -1412,7 +1412,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
     for (auto test = tests.begin(); test != tests.end(); ++test) {
         {
             SCOPED_TRACE((*test).description_);
-            // Configure sunbet's timer values
+            // Configure subnet's timer values
             subnet_->setT1((*test).cfg_t1_);
             subnet_->setT2((*test).cfg_t2_);
 
@@ -1465,9 +1465,9 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
         Triplet<uint32_t> cfg_t1_;
         // configured value for subnet's T1
         Triplet<uint32_t> cfg_t2_;
-        // configured value for sunbet's t1_percent.
+        // configured value for subnet's t1_percent.
         double t1_percent_;
-        // configured value for sunbet's t2_percent.
+        // configured value for subnet's t2_percent.
         double t2_percent_;
         // expected value for T1 in server response.
         // A value of 0 means server should not have sent T1.
@@ -1529,7 +1529,7 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
     for (auto test = tests.begin(); test != tests.end(); ++test) {
         {
             SCOPED_TRACE((*test).description_);
-            // Configure sunbet's timer values
+            // Configure subnet's timer values
             subnet_->setT1((*test).cfg_t1_);
             subnet_->setT2((*test).cfg_t2_);
 
@@ -3558,7 +3558,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyUnknown) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
-    // Set harware address / identifier
+    // Set hardware address / identifier
     const HWAddr& hw = HWAddr::fromText("00:00:00:11:22:33");
     HWAddrPtr hw_addr(new HWAddr(hw));
     dis->setHWAddr(hw_addr);

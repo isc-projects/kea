@@ -46,7 +46,7 @@ run_statement() {
     qry="$1";shift
     exp_value="${1-}" # Optional value. If not given, replace with empty string.
 
-    # Execute the statment
+    # Execute the statement
     run_command \
         pgsql_execute "${qry}"
     value="${OUTPUT}"

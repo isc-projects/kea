@@ -199,7 +199,7 @@ public:
             return (pausing_);
         }
 
-        /// @brief Sets pausing mode for the gievn state.
+        /// @brief Sets pausing mode for the given state.
         ///
         /// @param pausing new pausing mode in the textual form. Supported
         /// values are: always, never, once.
@@ -361,7 +361,7 @@ public:
 
     /// @brief Sets new lease database syncing timeout in milliseconds.
     ///
-    /// @param sync_timeout new timeout for lease database synchornization.
+    /// @param sync_timeout new timeout for lease database synchronization.
     void setSyncTimeout(const uint32_t sync_timeout) {
         sync_timeout_ = sync_timeout;
     }

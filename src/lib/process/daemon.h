@@ -66,7 +66,7 @@ public:
     ///
     /// Performs configuration backend specific final clean-up. This is called
     /// shortly before the daemon terminates. Depending on backend, it may
-    /// terminat existing msgq session, close LDAP connection or similar.
+    /// terminate existing msgq session, close LDAP connection or similar.
     ///
     /// The daemon is not expected to receive any further commands or
     /// configuration updates as it is in final stages of shutdown.

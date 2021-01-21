@@ -89,7 +89,7 @@ protected:
 
     /// @brief Creates an instance of the @c HttpConnection.
     ///
-    /// This method is virtual so as it can be overriden when customized
+    /// This method is virtual so as it can be overridden when customized
     /// connections are to be used, e.g. in case of unit testing.
     ///
     /// @param response_creator Pointer to the response creator object used to

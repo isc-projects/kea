@@ -43,9 +43,9 @@ namespace yang {
 ///     "next-server": "<next server>",
 ///     "server-hostname": "<server hostname>",
 ///     "boot-file-name": "<boot file name>",
-///     "4o6-interface": "<dhpv4-over-dhcpv6 interface>",
-///     "4o6-interface-id": "<dhpv4-over-dhcpv6 interface id>",
-///     "4o6-subnet": "<dhpv4-over-dhcpv6 subnet>",
+///     "4o6-interface": "<dhcpv4-over-dhcpv6 interface>",
+///     "4o6-interface-id": "<dhcpv4-over-dhcpv6 interface id>",
+///     "4o6-subnet": "<dhcpv4-over-dhcpv6 subnet>",
 ///     "authoritative": <authoritative flag>,
 ///     "user-context": { <json map> },
 ///     "comment": "<comment>"

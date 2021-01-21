@@ -235,7 +235,7 @@ public:
     /// revision.
     /// @param log_message log message to be used for the audit revision.
     /// @param cascade_transaction Boolean value indicating whether the
-    /// configuration modification is performed as part of the ownining
+    /// configuration modification is performed as part of the owning
     /// element modification, e.g. subnet is modified resulting in
     /// modification of the DHCP options it owns. In that case only the
     /// audit entry for the owning element should be created.

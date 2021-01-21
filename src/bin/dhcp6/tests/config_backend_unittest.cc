@@ -76,7 +76,7 @@ protected:
                         }
                     }
 
-                    // Apparently we're looking for one that does not prexist.
+                    // Apparently we're looking for a new one.
                     return (TestConfigBackendDHCPv6Ptr(new TestConfigBackendDHCPv6(params)));
                 });
     }

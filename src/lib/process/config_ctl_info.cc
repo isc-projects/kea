@@ -43,7 +43,7 @@ ConfigDbInfo::getParameterValue(const std::string& name, std::string& value) con
     return(true);
 }
 
-//********* ConfiControlInfo ************//
+//******** ConfigControlInfo ********//
 
 ConfigControlInfo::ConfigControlInfo(const ConfigControlInfo& other)
     : config_fetch_wait_time_(other.config_fetch_wait_time_) {

@@ -1000,7 +1000,7 @@ public:
     /// This method opens sockets only on interfaces which have the
     /// @c inactive4_ field set to false (are active). If the interface is active
     /// but it is not running, it is down, or is a loopback interface when
-    /// oopback is not allowed, an error is reported.
+    /// loopback is not allowed, an error is reported.
     ///
     /// The type of the socket being open depends on the selected Packet Filter
     /// represented by a class derived from @c isc::dhcp::PktFilter abstract

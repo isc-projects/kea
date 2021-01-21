@@ -54,7 +54,7 @@ isc::hooks::CalloutHandlePtr getCalloutHandle(const T& pktptr) {
     return (isc::hooks::CalloutHandlePtr());
 }
 
-} // namespace shcp
+} // namespace dhcp
 } // namespace isc
 
 #endif // CALLOUT_HANDLE_STORE_H

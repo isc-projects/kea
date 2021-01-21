@@ -1558,7 +1558,7 @@ HAService::asyncSendHeartbeat() {
              const HttpResponsePtr& response,
              const std::string& error_str) {
 
-            // There are three possible groups of errors during the heartneat.
+            // There are three possible groups of errors during the heartbeat.
             // One is the IO error causing issues in communication with the peer.
             // Another one is an HTTP parsing error. The last type of error is
             // when non-success error code is returned in the response carried
@@ -1698,7 +1698,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
              const HttpResponsePtr& response,
              const std::string& error_str) {
 
-             // There are three possible groups of errors during the heartneat.
+             // There are three possible groups of errors during the heartbeat.
              // One is the IO error causing issues in communication with the peer.
              // Another one is an HTTP parsing error. The last type of error is
              // when non-success error code is returned in the response carried
@@ -1771,7 +1771,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
              const HttpResponsePtr& response,
              const std::string& error_str) {
 
-             // There are three possible groups of errors during the heartneat.
+             // There are three possible groups of errors during the heartbeat.
              // One is the IO error causing issues in communication with the peer.
              // Another one is an HTTP parsing error. The last type of error is
              // when non-success error code is returned in the response carried
@@ -1917,7 +1917,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
              // page was hit, this value remains null.
              LeasePtr last_lease;
 
-            // There are three possible groups of errors during the heartneat.
+            // There are three possible groups of errors during the heartbeat.
             // One is the IO error causing issues in communication with the peer.
             // Another one is an HTTP parsing error. The last type of error is
             // when non-success error code is returned in the response carried
@@ -2516,7 +2516,7 @@ HAService::processMaintenanceStart() {
         return (createAnswer(CONTROL_RESULT_ERROR, "Unable to transition to the"
                              " partner-in-maintenance state. The partner server responded"
                              " with the following message to the ha-maintenance-notify"
-                             " commmand: " + captured_error_message + "."));
+                             " command: " + captured_error_message + "."));
 
     }
 
@@ -2606,7 +2606,7 @@ HAService::processMaintenanceCancel() {
         return (createAnswer(CONTROL_RESULT_ERROR,
                              "Unable to cancel maintenance. The partner server responded"
                              " with the following message to the ha-maintenance-notify"
-                             " commmand: " + error_message + "."));
+                             " command: " + error_message + "."));
     }
 
     // Successfully reverted partner's state. Let's also revert our state to the
@@ -2681,7 +2681,7 @@ bool
 HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
 
     // If things look ok register the socket with Interface Manager. Note
-    // we don't register if the FD is < 0 to avoid an expection throw.
+    // we don't register if the FD is < 0 to avoid an exception throw.
     // It is unlikely that this will occur but we want to be liberal
     // and avoid issues.
     if ((!ec || (ec.value() == boost::asio::error::in_progress))

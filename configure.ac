@@ -579,7 +579,7 @@ AC_TRY_COMPILE([
         AC_MSG_RESULT(no))
 
 usable_regex=
-AC_MSG_CHECKING(for usuable C++11 regex)
+AC_MSG_CHECKING(for usable C++11 regex)
 AC_TRY_RUN([
 #include <regex>
 #include <iostream>
@@ -1036,7 +1036,7 @@ LIBS=$LIBS_SAVED
 # Older log4cplus versions (1.2.0) don't have the initializer.h header that
 # would allow explicit initialization. Newer versions (2.0.4 for sure, possibly
 # older as well) have it and it's recommended to use it. We detect whether
-# it's present or not and do explicit initalization if possible.
+# it's present or not and do explicit initialization if possible.
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$LOG4CPLUS_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"

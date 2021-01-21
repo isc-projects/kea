@@ -290,7 +290,7 @@ BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
         network->setHostnameCharReplacement(hostname_char_replacement);
     }
 
-    // We need to validate santizer values here so we can detect problems and
+    // We need to validate sanitizer values here so we can detect problems and
     // cause a configuration.  We don't retain the compilation because it's not
     // something we can inherit.
     if (!hostname_char_set.empty()) {

@@ -2187,7 +2187,7 @@ public:
     /// @param subnet_id Identifier of the subnet the option belongs to.
     /// @param option Pointer to the option descriptor encapsulating the option.
     /// @param cascade_update Boolean value indicating whether the update is
-    /// performed as part of the ownining element, e.g. subnet.
+    /// performed as part of the owning element, e.g. subnet.
     void createUpdateOption6(const ServerSelector& server_selector,
                              const SubnetID& subnet_id,
                              const OptionDescriptorPtr& option,
@@ -2304,7 +2304,7 @@ public:
     /// the option belongs to.
     /// @param option Pointer to the option descriptor encapsulating the option.
     /// @param cascade_update Boolean value indicating whether the update is
-    /// performed as part of the ownining element, e.g. subnet.
+    /// performed as part of the owning element, e.g. subnet.
     void createUpdateOption6(const ServerSelector& server_selector,
                              const Lease::Type& pool_type,
                              const uint64_t pool_id,
@@ -2404,7 +2404,7 @@ public:
     /// belongs to.
     /// @param option Pointer to the option descriptor encapsulating the option.
     /// @param cascade_update Boolean value indicating whether the update is
-    /// performed as part of the ownining element, e.g. shared network.
+    /// performed as part of the owning element, e.g. shared network.
     void createUpdateOption6(const ServerSelector& server_selector,
                              const std::string& shared_network_name,
                              const OptionDescriptorPtr& option,

@@ -54,7 +54,7 @@ public:
         timestamp_ = timestamp;
     }
 
-    /// @brief Sets timestmp to the current time.
+    /// @brief Sets timestamp to the current time.
     void updateModificationTime();
 
     /// @brief Returns timestamp.

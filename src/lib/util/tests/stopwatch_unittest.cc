@@ -244,7 +244,7 @@ TEST_F(StopwatchTest, realTime) {
     // Start it again.
     stopwatch.start();
 
-    // Slee for 1 ms.
+    // Sleep for 1 ms.
     usleep(1000);
 
     // The durations should get updated as appropriate.

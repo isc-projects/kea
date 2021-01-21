@@ -31,7 +31,7 @@ validMySQLConnectionString() {
 }
 
 void destroyMySQLSchema(bool show_err, bool force) {
-    // If force is true or wipeMySQLData() fails, destory the schema.
+    // If force is true or wipeMySQLData() fails, destroy the schema.
     if (force || (!softWipeEnabled()) || wipeMySQLData(show_err)) {
         runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_drop.mysql", show_err);
     }

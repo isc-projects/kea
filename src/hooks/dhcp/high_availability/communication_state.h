@@ -56,7 +56,7 @@ namespace ha {
 /// It must also run @c poke when the lease update is successful.
 ///
 /// The @c poke method sets the "last poke time" to current time, thus
-/// indicating that the connection is healty. The @c getDurationInMillisecs
+/// indicating that the connection is healthy. The @c getDurationInMillisecs
 /// method is used to check for how long the server hasn't been able
 /// to communicate with the partner. This duration is simply a time
 /// elapsed since last successful poke time. If this duration becomes
@@ -172,7 +172,7 @@ public:
     ///
     /// This method checks if the communication with the partner appears
     /// to be interrupted. This is the case when the time since last
-    /// successful communication is longer than the confgured
+    /// successful communication is longer than the configured
     /// max-response-delay value.
     ///
     /// @return true if communication is interrupted, false otherwise.
@@ -227,7 +227,7 @@ public:
     /// Returning true in that case simplifies the code of the
     /// @c HAService which doesn't need to check if the failure detection
     /// is enabled or not. It simply calls this method in the
-    /// 'communications interrupted' situtation to check if the
+    /// 'communications interrupted' situation to check if the
     /// server should be transitioned to the 'partner-down' state.
     ///
     /// @return true if the partner failure has been detected, false
@@ -293,7 +293,7 @@ public:
     /// will reset the gating counter.
     ///
     /// @return true if the warning message should be logged because of the clock
-    /// skew exceeding a warning thresdhold.
+    /// skew exceeding a warning threshold.
     bool clockSkewShouldWarn();
 
     /// @brief Indicates whether the HA service should enter "terminated"

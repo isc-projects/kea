@@ -971,7 +971,7 @@ TEST_F(HostTest, toText) {
                                        IOAddress("2001:db8:1::1")));
     );
 
-    // Add invisble user context
+    // Add invisible user context
     std::string user_context = "{ \"foo\": \"bar\" }";
     host->setContext(Element::fromJSON(user_context));
 
@@ -1237,7 +1237,7 @@ TEST_F(HostTest, hostId) {
     EXPECT_EQ(12345, host->getHostId());
 }
 
-// Tets verifies if we can modify the host keys.
+// Test verifies if we can modify the host keys.
 TEST_F(HostTest, keys) {
     HostPtr host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",

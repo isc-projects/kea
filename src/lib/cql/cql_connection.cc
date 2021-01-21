@@ -55,7 +55,7 @@ CqlConnection::~CqlConnection() {
         CassFuture* close_future = cass_session_close(session_);
         cass_future_wait(close_future);
         error = checkFutureError(
-            "CqlConnection::~CqlConnection(): cass_sesssion_close() != CASS_OK",
+            "CqlConnection::~CqlConnection(): cass_session_close() != CASS_OK",
             close_future);
         rc = cass_future_error_code(close_future);
         cass_future_free(close_future);
@@ -457,7 +457,7 @@ CqlConnection::checkFutureError(const std::string& what,
         stream << "Session action ";
     }
     if (cass_error == CASS_OK) {
-        stream << " executed succesfully.";
+        stream << " executed successfully.";
     } else {
         stream << " failed, Kea error: " << what
                << ", Cassandra error code: " << cass_error_desc(cass_error)

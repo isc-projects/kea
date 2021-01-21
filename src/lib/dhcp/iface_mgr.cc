@@ -532,7 +532,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             // that the interface configuration is valid and that the interface
             // is not a loopback interface. In both cases, we want to report
             // that the socket will not be opened.
-            // Relax the check when the loopback interface was explicitely
+            // Relax the check when the loopback interface was explicitly
             // allowed
             if (iface->flag_loopback_ && !allow_loopback_) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
@@ -661,7 +661,7 @@ IfaceMgr::openSockets6(const uint16_t port,
             // that the interface configuration is valid and that the interface
             // is not a loopback interface. In both cases, we want to report
             // that the socket will not be opened.
-            // Relax the check when the loopback interface was explicitely
+            // Relax the check when the loopback interface was explicitly
             // allowed
             if (iface->flag_loopback_ && !allow_loopback_) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
@@ -743,7 +743,7 @@ IfaceMgr::startDHCPReceiver(const uint16_t family) {
     switch (family) {
     case AF_INET:
         // If the queue doesn't exist, packet queing has been configured
-        // as disabled. If there is no queue, we do not create a reciever.
+        // as disabled. If there is no queue, we do not create a receiver.
         if(!getPacketQueue4()) {
             return;
         }
@@ -753,7 +753,7 @@ IfaceMgr::startDHCPReceiver(const uint16_t family) {
         break;
     case AF_INET6:
         // If the queue doesn't exist, packet queing has been configured
-        // as disabled. If there is no queue, we do not create a reciever.
+        // as disabled. If there is no queue, we do not create a receiver.
         if(!getPacketQueue6()) {
             return;
         }
@@ -1676,7 +1676,7 @@ IfaceMgr::receiveDHCP4Packets() {
         // zero out the errno to be safe.
         errno = 0;
 
-        // Select with null timeouts to wait indefinetly an event
+        // Select with null timeouts to wait indefinitely an event
         int result = select(maxfd + 1, &rd_set, 0, 0, 0);
 
         // Re-check the watch socket.

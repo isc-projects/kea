@@ -1189,7 +1189,7 @@ Connection::runParserInternal(const boost::system::error_code& ec,
 
 void
 Connection::timerCallback() {
-    // Request timeout occured.
+    // Request timeout occurred.
     terminate(boost::asio::error::timed_out);
 }
 

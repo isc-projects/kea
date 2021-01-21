@@ -1960,7 +1960,7 @@ TEST_F(TokenTest, concat) {
 TEST_F(TokenTest, tohexstring) {
     ASSERT_NO_THROW(t_.reset(new TokenToHexString()));
 
-    // Hexstring equires two values on the stack, try
+    // Hexstring requires two values on the stack, try
     // with 0 and 1 both should throw an exception
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
@@ -2260,7 +2260,7 @@ TEST_F(TokenTest, vendor4SpecificVendorExists) {
     // Case 2: option present, but uses different enterprise-id, should fail
     testVendorExists(Option::V4, 4491, 1234, "false");
 
-    // Case 3: option present and has matchin enterprise-id, should succeed
+    // Case 3: option present and has matching enterprise-id, should succeed
     testVendorExists(Option::V4, 4491, 4491, "true");
 
     // Check if the logged messages are correct.
@@ -2281,7 +2281,7 @@ TEST_F(TokenTest, vendor6SpecificVendorExists) {
     // Case 2: option present, but uses different enterprise-id, should fail
     testVendorExists(Option::V6, 4491, 1234, "false");
 
-    // Case 3: option present and has matchin enterprise-id, should succeed
+    // Case 3: option present and has matching enterprise-id, should succeed
     testVendorExists(Option::V6, 4491, 4491, "true");
 
     // Check if the logged messages are correct.

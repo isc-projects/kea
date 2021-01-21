@@ -102,12 +102,12 @@ Receiver::readPktFromSocket() {
     PktPtr pkt;
     uint32_t timeout;
     if (single_threaded_) {
-        // In case of single thread just check socket and if empty exit immediatelly
+        // In case of single thread just check socket and if empty exit immediately
         // to not slow down sending part.
         timeout = 0;
     } else {
         // In case of multi thread wait for packets a little bit (1ms) as it is run
-        // in separate thread and do not interefere with sending thread.
+        // in separate thread and do not interfere with sending thread.
         timeout = 1000;
     }
     try {

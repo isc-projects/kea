@@ -26,7 +26,7 @@ namespace {
 /// @brief Test fixture for testing dependency.
 ///
 /// This class provides several convenience objects to be used during testing
-/// of the dependcy of classification expressions.
+/// of the dependency of classification expressions.
 class DependencyTest : public ::testing::Test {
 public:
 

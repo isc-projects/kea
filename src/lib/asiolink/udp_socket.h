@@ -87,7 +87,7 @@ public:
     /// Opens the UDP socket.  This is a synchronous operation.
     ///
     /// \param endpoint Endpoint to which the socket will send data.  This is
-    ///        used to determine the address family trhat should be used for the
+    ///        used to determine the address family that should be used for the
     ///        underlying socket.
     /// \param callback Unused as the operation is synchronous.
     virtual void open(const IOEndpoint* endpoint, C& callback);

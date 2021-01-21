@@ -1713,7 +1713,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6Select) {
 
 // This test checks if callout installed on subnet6_select hook point can pick
 // a different subnet.
-TEST_F(HooksDhcpv6SrvTest, subnet6SselectChange) {
+TEST_F(HooksDhcpv6SrvTest, subnet6SelectChange) {
 
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)

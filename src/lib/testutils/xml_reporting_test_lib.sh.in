@@ -318,7 +318,7 @@ _create_xml() {
 }
 
 # Print the lines between two matching regex patterns from a file. Excludes the
-# lines that contain the patterns themselves. Matches only the first occurence.
+# lines that contain the patterns themselves. Matches only the first occurrence.
 _print_lines_between_matching_patterns() {
     local start_pattern=${1}; shift
     local end_pattern=${1}; shift

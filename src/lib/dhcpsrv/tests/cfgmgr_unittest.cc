@@ -328,7 +328,7 @@ TEST_F(CfgMgrTest, configuration) {
 
 // This test checks the data directory handling.
 TEST_F(CfgMgrTest, dataDir) {
-    // It is only in DHCPv6 systax so switch to IPv6.
+    // It is only in DHCPv6 syntax so switch to IPv6.
     CfgMgr::instance().setFamily(AF_INET6);
 
     // Default.

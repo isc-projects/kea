@@ -47,7 +47,7 @@ psql "$@" >/dev/null <<EOF
 -- Note we have introduced a bug a while ago which causes the index to have
 -- different names depending on whether the schema was created via the
 -- dhcpdb_create.pgsql script or via updates. Therefore, let's make sure
--- that we drop the index regarless of its current name.
+-- that we drop the index regardless of its current name.
 DROP INDEX IF EXISTS key_dhcp4_ipv4_address_subnet_id;
 DROP INDEX IF EXISTS hosts_dhcp4_ipv4_address_subnet_id;
 CREATE INDEX key_dhcp4_ipv4_address_subnet_id

@@ -73,7 +73,7 @@ public:
         }
         if (lock_ == 1) {
             // only one thread has the lock
-            // self healing mutex reseting the dead lock flag
+            // self healing mutex resetting the dead lock flag
             dead_lock_ = false;
             // reset the thread id
             id_ = std::thread::id();
