@@ -588,8 +588,15 @@ more information.
 
 .. code-block:: console
 
-   setcap 'cap_net_bind_service,cap_net_raw=+ep' /usr/local/sbin/kea-dhcp4
+   setcap 'cap_net_bind_service,cap_net_raw=+ep' /opt/kea/sbin/kea-dhcp4
    setcap 'cap_net_bind_service=+ep' /opt/kea/sbin/kea-dhcp6
+
+If using systemd, also add this to service file
+(e.g. /etc/systemd/system/kea-dhcp6.service):
+
+.. code-block:: console
+
+ExecStartPre=setcap 'cap_net_bind_service=+ep' /opt/kea/sbin/kea-dhcp6
 
 After this step is complete, the admin user should be able to run Kea. Note that DHCPv4 server by
 default opens raw sockets. If the network is only using relayed traffic, Kea can be instructed to
