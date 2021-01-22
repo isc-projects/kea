@@ -1,3 +1,5 @@
+Kea 1.9.4 (development) released on Jan 27, 2021
+
 1858.	[bug]		razvan
 	The DHCP service can be independently enabled or disabled by
 	the user command, by the database connection mechanics or
