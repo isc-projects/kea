@@ -15,7 +15,6 @@ libkea_log_la_SOURCES += log_dbglevels.cc log_dbglevels.h
 libkea_log_la_SOURCES += log_formatter.h log_formatter.cc
 libkea_log_la_SOURCES += logger.cc logger.h
 libkea_log_la_SOURCES += logger_impl.cc logger_impl.h
-libkea_log_la_SOURCES += logger_level.h
 libkea_log_la_SOURCES += logger_level.cc logger_level.h
 libkea_log_la_SOURCES += logger_level_impl.cc logger_level_impl.h
 libkea_log_la_SOURCES += logger_manager.cc logger_manager.h
@@ -82,3 +81,39 @@ libkea_log_interprocess_include_HEADERS = \
 	interprocess/interprocess_sync.h \
 	interprocess/interprocess_sync_file.h \
 	interprocess/interprocess_sync_null.h
+
+# If we want to get rid of all generated messages files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required.  To make it easy to rebuild messages without going through
+# reconfigure, a new target messages-clean has been added.
+maintainer-clean-local:
+	rm -f log_messages.cc log_messages.h logimpl_messages.cc logimpl_messages.h
+
+# To regenerate messages files, one can do:
+#
+# make messages-clean
+# make messages
+#
+# This is needed only when a .mes file is modified.
+messages-clean: maintainer-clean-local
+
+if GENERATE_MESSAGES
+
+# Define rule to build logging source files from message file.
+messages: log_messages.cc log_messages.h logimpl_messages.cc logimpl_messages.h
+	@echo Message files regenerated
+
+log_messages.cc log_messages.h: log_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/log_messages.mes
+
+logimpl_messages.cc logimpl_messages.h: log_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/logimpl_messages.mes
+
+else
+
+messages log_messages.cc log_messages.h logimpl_messages.cc logimpl_messages.h:
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
+
+endif
