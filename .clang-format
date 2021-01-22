@@ -1,0 +1,100 @@
+﻿AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignConsecutiveMacros: true
+AlignEscapedNewlinesLeft: false
+AlignEscapedNewlines: Left
+AlignTrailingComments: true
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: TopLevel
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: true
+BasedOnStyle: LLVM
+BinPackArguments: true
+BinPackParameters: false
+BraceWrapping:
+  AfterClass:      false
+  AfterEnum:       false
+  AfterStruct:     false
+  AfterUnion:      false
+  AfterControlStatement: MultiLine
+  AfterFunction:   false # should also be MultiLine, but not yet supported
+  AfterExternBlock: false
+  BeforeElse:      false
+  IndentBraces:    false
+  SplitEmptyFunction: true
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Attach
+BreakBeforeTernaryOperators: false
+BreakConstructorInitializersBeforeComma: false
+ColumnLimit: 100
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+DerivePointerAlignment: false
+DerivePointerBinding: true
+DisableFormat: false
+ExperimentalAutoDetectBinPacking: false
+ForEachMacros: [ BOOST_FOREACH ]
+IncludeBlocks: Regroup
+IncludeCategories:
+    # config.h first thing
+  - Regex:           '^<config.h>$'
+    Priority:        0
+    # Kea's own files
+  - Regex:           '^<(asiodns|asiolink|cc|cfgrpt|config|config_backend|cql|cryptolink|database|dhcp|dhcpsrv|dhcp_ddns|dns|eval|exceptions|hooks|http|log|mysql|pgsql|process|stats|testutils|util|yang|admin|agent|d2|dhcp4|dhcp6|keactrl|lfc|netconf|perfdhcp|shell)/'
+    Priority:        1
+    # C++ standard library headers
+  - Regex:           '^<[[:alnum:]]>$'
+    Priority:        2
+    # boost headers
+  - Regex:           '^<boost/'
+    Priority:        3
+    # C headers
+  - Regex:           '^<[[:alnum:]].h>$'
+    Priority:        4
+    # everything else
+  - Regex:           '.*'
+    Priority:        5
+IndentCaseLabels: false
+IndentFunctionDeclarationAfterType: false
+IndentWidth: 4
+IndentWrappedFunctionNames: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+KeepEmptyLinesAtTheStartOfBlocks: true
+Language: Cpp
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+PenaltyBreakAssignment: 30
+PenaltyBreakBeforeFirstCallParameter: 80
+PenaltyBreakComment: 10
+PenaltyBreakFirstLessLess: 0
+PenaltyBreakString: 80
+PenaltyBreakTemplateDeclaration: 100
+PenaltyExcessCharacter: 100
+PenaltyReturnTypeOnItsOwnLine: 0
+PointerAlignment: Left
+PointerBindsToType: true
+ReflowComments: true
+SortIncludes: true
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 2
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+Standard: Cpp11
+TabWidth: 4
+UseTab: Never
