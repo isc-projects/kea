@@ -1,3 +1,12 @@
+1857.	[build]		andrei
+	Code format styles meant to be as close as possible to the
+	recommended coding guidelines are now included with the Kea
+	source repository in the form of .clang-format and
+	.uncrustify.cfg. The clang-format.sh and uncrustify.sh scripts in
+	the tools directory can be used to apply these styles to chosen
+	files. See coding guidelines in CONTRIBUTING.md for more details.
+	(Gitlab #1455)
+
 1856.	[bug]		razvan
 	When using the config backend, the server converts the old
 	'reservation-mode' global parameter internally to new
