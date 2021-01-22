@@ -1,6 +1,4 @@
-// File created from logimpl_messages.mes on Wed Jun 22 10:57:02 2011
-
-#include <config.h>
+// File created from ../../../src/lib/log/logimpl_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

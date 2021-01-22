@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes on Mon Dec 14 2020 03:36
+// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes
 
 #ifndef ALLOC_ENGINE_MESSAGES_H
 #define ALLOC_ENGINE_MESSAGES_H

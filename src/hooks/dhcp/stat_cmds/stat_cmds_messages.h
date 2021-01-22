@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/stat_cmds/stat_cmds_messages.mes on Mon Dec 14 2020 03:36
+// File created from ../../../../src/hooks/dhcp/stat_cmds/stat_cmds_messages.mes
 
 #ifndef STAT_CMDS_MESSAGES_H
 #define STAT_CMDS_MESSAGES_H

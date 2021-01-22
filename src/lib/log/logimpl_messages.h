@@ -1,4 +1,4 @@
-// File created from logimpl_messages.mes on Wed Jun 22 10:57:02 2011
+// File created from ../../../src/lib/log/logimpl_messages.mes
 
 #ifndef LOGIMPL_MESSAGES_H
 #define LOGIMPL_MESSAGES_H

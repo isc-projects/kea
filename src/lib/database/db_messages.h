@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/database/db_messages.mes on Mon Dec 14 2020 03:36
+// File created from ../../../src/lib/database/db_messages.mes
 
 #ifndef DB_MESSAGES_H
 #define DB_MESSAGES_H

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Mon Dec 14 2020 03:36
+// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes
 
 #ifndef HOSTS_MESSAGES_H
 #define HOSTS_MESSAGES_H

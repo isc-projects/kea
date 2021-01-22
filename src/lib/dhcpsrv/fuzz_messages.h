@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/fuzz_messages.mes on Mon Dec 14 2020 03:36
+// File created from ../../../src/lib/dhcpsrv/fuzz_messages.mes
 
 #ifndef FUZZ_MESSAGES_H
 #define FUZZ_MESSAGES_H

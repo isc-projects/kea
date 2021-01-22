@@ -1,4 +1,4 @@
-// File created from ../../../../src/lib/log/tests/log_test_messages.mes on Mon Dec 14 2020 03:35
+// File created from ../../../../src/lib/log/tests/log_test_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

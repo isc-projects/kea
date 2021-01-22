@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/flex_option/flex_option_messages.mes on Mon Dec 14 2020 03:36
+// File created from ../../../../src/hooks/dhcp/flex_option/flex_option_messages.mes
 
 #ifndef FLEX_OPTION_MESSAGES_H
 #define FLEX_OPTION_MESSAGES_H

@@ -1,4 +1,4 @@
-// File created from log_messages.mes on Thu Jul  7 15:32:06 2011
+// File created from ../../../src/lib/log/log_messages.mes
 
 #ifndef LOG_MESSAGES_H
 #define LOG_MESSAGES_H

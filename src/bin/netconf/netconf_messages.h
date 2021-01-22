@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/netconf/netconf_messages.mes on Mon Dec 14 2020 03:36
+// File created from ../../../src/bin/netconf/netconf_messages.mes
 
 #ifndef NETCONF_MESSAGES_H
 #define NETCONF_MESSAGES_H

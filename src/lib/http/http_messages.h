@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/http/http_messages.mes on Mon Dec 14 2020 03:36
+// File created from ../../../src/lib/http/http_messages.mes
 
 #ifndef HTTP_MESSAGES_H
 #define HTTP_MESSAGES_H
