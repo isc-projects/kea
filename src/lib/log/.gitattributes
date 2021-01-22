@@ -1,0 +1,4 @@
+/logimpl_messages.cc             -diff merge=ours
+/logimpl_messages.h              -diff merge=ours
+/log_messages.cc                 -diff merge=ours
+/log_messages.h                  -diff merge=ours
