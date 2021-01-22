@@ -42,12 +42,47 @@ expected to run on many other architectures. You may take a look at [system spec
 notes](https://kb.isc.org/docs/installing-kea). For a complete list of systems we build on, you may
 take a look at the [Jenkins build farm](https://jenkins.isc.org/).
 
+### Coding guidelines
+
 Does your patch conform to [Kea coding
 guidelines](https://gitlab.isc.org/isc-projects/kea/wikis/coding-guidelines)?  You can submit a
 patch that does not adhere to them, but that will reduce its chances of being accepted.  If the
 deviations are minor, one of the Kea engineers who does the review will likely fix the issues.
 However, if there are lots of issues, the reviewer may simply reject the patch and ask you to fix it
 before re-submitting.
+
+Placed in the root of the repository are files that formally describe the coding
+guidelines above as close as possible. They are `.clang-format` and
+`.uncrustify.cfg` used by `clang-format` and `uncrustify` respectively. If you
+want to format code automatically, you will need to have at least one of these
+tools installed. Since by default, these tools look for the closest style file
+located in one of the parent directories or, otherwise, in a default location,
+there are a a couple of helpful scripts i.e. `./tools/clang-format.sh` and
+`./tools/uncrustify.sh` to assure you that the Kea-owned file is used. They
+accept any number of customized parameters that would be passed to the
+underlying tool followed by any number of files and/or directories. Passing
+directories will have all non-generated C++ files under it formatted.
+
+IDEs often offer support for code formatting tools. For example, in Visual
+Studio Code, you may install `Clang-Format` and `crustless` through the Command
+Palette (`Ctrl + Shift + P` by default), `Extensions: Install Extensions`.
+Then open a source file, select code that you want formatted, open the Command
+Palette, and choose `Format Selection`. You might go through an onboarding step
+where you choose the formatter in the case you have both installed, but that
+should be it.
+
+When using these tools, it can be tempting to format entire files at once. In
+the interest of preserving git history as much as possible, it is recommended
+that you only format code that you have added or changed. This is much easier
+done in an IDE, but as long as the tool supports it, it can be done using the
+provided scripts e.g.:
+
+```bash
+./tools/clang-format.sh --lines=13:37 ./src/lib/dhcpsrv/alloc_engine.cc
+```
+
+Uncrustify does not seem to have a line-range-limiting option at the time of
+this writing.
 
 ## Running unit-tests
 
