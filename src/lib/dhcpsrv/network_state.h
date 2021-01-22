@@ -80,7 +80,7 @@ public:
     /// network state: either user command, HA internal command or DB connection
     /// recovery mechanism.
     enum class Origin {
-        /// @brief The network state is being altered by an user command.
+        /// @brief The network state is being altered by a user command.
         USER_COMMAND,
         /// @brief The network state is being altered by a HA internal command.
         HA_COMMAND,
