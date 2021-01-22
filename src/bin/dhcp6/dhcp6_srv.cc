@@ -396,7 +396,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
             case Host::IDENT_FLEX:
                 // At this point the information in the packet has been unpacked into
                 // the various packet fields and option objects has been created.
-                // Execute callouts registered for packet6_receive.
+                // Execute callouts registered for host6_identifier.
                 if (HooksManager::calloutsPresent(Hooks.hook_index_host6_identifier_)) {
                     CalloutHandlePtr callout_handle = getCalloutHandle(pkt);
 

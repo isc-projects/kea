@@ -279,6 +279,8 @@ int ha_reset_command(CalloutHandle& handle) {
         LOG_ERROR(ha_logger, HA_RESET_HANDLER_FAILED)
             .arg(ex.what());
     }
+
+    return (0);
 }
 
 /// @brief This function is called when the library is loaded.

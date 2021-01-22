@@ -368,8 +368,7 @@ CommunicationState::getReport() const {
 
 CommunicationState4::CommunicationState4(const IOServicePtr& io_service,
                                          const HAConfigPtr& config)
-    : CommunicationState(io_service, config), connecting_clients_(),
-      mutex_(new mutex()) {
+    : CommunicationState(io_service, config), connecting_clients_() {
 }
 
 void
@@ -512,8 +511,7 @@ CommunicationState4::clearConnectingClients() {
 
 CommunicationState6::CommunicationState6(const IOServicePtr& io_service,
                                          const HAConfigPtr& config)
-    : CommunicationState(io_service, config), connecting_clients_(),
-      mutex_(new mutex()) {
+    : CommunicationState(io_service, config), connecting_clients_() {
 }
 
 void

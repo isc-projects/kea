@@ -1915,7 +1915,7 @@ public:
     /// @brief Test HTTP server 2.
     HttpListenerPtr listener2_;
 
-    /// @brief Test HTTP server 2.
+    /// @brief Test HTTP server 3.
     HttpListenerPtr listener3_;
 
     /// @brief IPv4 leases to be used in the tests.

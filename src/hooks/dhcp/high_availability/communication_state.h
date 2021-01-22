@@ -561,9 +561,6 @@ protected:
     /// the partner server while the servers are in communications
     /// interrupted state.
     ConnectingClients4 connecting_clients_;
-
-    /// @brief The mutex used to protect internal state.
-    const boost::scoped_ptr<std::mutex> mutex_;
 };
 
 /// @brief Pointer to the @c CommunicationState4 object.
@@ -680,9 +677,6 @@ protected:
     /// the partner server while the servers are in communications
     /// interrupted state.
     ConnectingClients6 connecting_clients_;
-
-    /// @brief The mutex used to protect internal state.
-    const boost::scoped_ptr<std::mutex> mutex_;
 };
 
 /// @brief Pointer to the @c CommunicationState6 object.
