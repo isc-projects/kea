@@ -7,8 +7,6 @@ about: Create a new issue using this checklist for each release
 
 This is thoroughly documented in [the Kea Release Process guide](https://wiki.isc.org/bin/view/QA/KeaReleaseProcess).
 
-1. [ ] Make this issue confidential :exclamation: :exclamation: :exclamation: :exclamation:
-
 ## Pre-Release Preparation
 
 Some of those checks and updates can be made before actual freeze.
@@ -22,6 +20,7 @@ Some of those checks and updates can be made before actual freeze.
    - the library versions are being updated
    - `KEA_HOOKS_VERSION` is being updated
    - [ ] create an issue for that for developers in Gitlab
+   - script: [./tools/bump-lib-versions.sh](https://gitlab.isc.org/isc-projects/kea/-/blob/master/tools/bump-lib-versions.sh) Kea-q.w.e Kea-a.b.c (where `a.b.c` is the released version and `q.w.e` is the version previous to that)
 1. Prepare Release Notes
    1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" directory, like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/release%20notes/release-notes-1.9.2
    1. [ ] Finish release notes and conduct its review
@@ -103,10 +102,10 @@ This is the last moment to freeze code! :snowflake:
    1. Click "Build with Parameters" link
    1. Pick your selected pkg build in Packages field, and select `PrivPubRepos: "both"`, `TestProdRepos: "production"` and click Build button.
    1. When it finishes run check: [releases-pkgs-check-internal](https://jenkins.isc.org/job/kea-dev/job/release-pkgs-check-internal/).
-1. [ ] Create git tags `Kea-x.y.z` in Kea main and premium repositories.
+1. [ ] Create git tags `Kea-a.b.c` in Kea main and premium repositories.
 1. Update ReadTheDocs
    1. [ ] Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds).
-   1. [ ] Publish currently released version. On the `Versions` tab, scroll down to `Activate a version`, search for `kea-x.y.z` and click `Activate`.
+   1. [ ] Publish currently released version. On the `Versions` tab, scroll down to `Activate a version`, search for `kea-a.b.c` and click `Activate`.
    1. [ ] For stable releases, change the default version to point to this stable release.
 
 
@@ -132,8 +131,8 @@ This is the last moment to freeze code! :snowflake:
 
 ## Post-Release, But Before Code Unfreeze
 
-- [ ] Bump up Kea version in `configure.ac` to next development version `xx.yy.zz-git` which could be, based on previous `x.y.z-git` version:
-    * `x.y.zz-git` where `zz == z + 1` or
-    * `x.yy.0-git` where `yy == y + 1` or
-    * `xx.1.0-git` where `xx == x + 1`
+- [ ] Bump up Kea version in `configure.ac` to next development version which could be, based on just released version `a.b.c`:
+    * `a.b.z-git` where `z == c + 1` or
+    * `a.y.0-git` where `y == b + 1` or
+    * `x.1.0-git` where `x == a + 1`
 - [ ] Bump up `REF_KEA_VERSION` in `qa-dhcp/kea/jenkins/tarball-internal.jenkinsfile` to `x.y.z` i.e. released version
