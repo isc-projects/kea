@@ -584,13 +584,16 @@ The dhcp-enable Command
 -----------------------
 
 The ``dhcp-enable`` command globally enables the DHCP service.
-Since Kea 1.9.4 there is an additional "origin" parameter which specifies
-the source of the command: either user requested or internally required by
-the HA library. If not specified, the command is considered to be requested
-by user. Valid values for the 'origin' parameter are: 'user' (which is the
-default value) and 'ha-partner'. Using the 'ha-partner' value is not
-recommended because it can interfere with the HA mechanics and can result
-in undesired effects.
+
+Since Kea 1.9.4 there is an additional "origin" parameter that specifies the
+command source. A server administrator should typically omit this parameter
+because the default value "user" indicates that the administrator sent the
+command. This command can also be sent by the partner server running HA hooks
+library. In that case, the partner server sets the parameter to "ha-partner".
+This value is reserved for the communication between HA partners and should not
+be specified in the administrator's commands because it may interfere with the
+HA operation. The administrator should either omit this parameter or set it to
+"user".
 
 ::
 
