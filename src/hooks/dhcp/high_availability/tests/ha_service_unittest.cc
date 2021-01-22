@@ -309,7 +309,6 @@ public:
         if (request_index_.count(command_name) == 0) {
             request_index_[command_name] = 0;
         }
-        //cv_.notify_one();
     }
 
     /// @brief Create a new request.
@@ -437,8 +436,6 @@ private:
                     control_result = per_request_control_result_[command_name];
                 }
 
-                //bool ret = cv_.wait_for(lk, std::chrono::seconds(30), [&](){ return per_request_arguments_.count(command_name) > 0 || command_name != "lease4-get-page"; });
-                //EXPECT_EQ(true, ret);
                 // Check if there are specific arguments to be returned for this
                 // command.
                 if (per_request_arguments_.count(command_name) > 0) {
@@ -509,8 +506,6 @@ private:
 
     /// @brief Mutex to protect member access.
     std::mutex mutex_;
-
-    std::condition_variable cv_;
 };
 
 /// @brief Shared pointer to the @c TestHttpResponseCreator.
