@@ -5450,10 +5450,15 @@ TEST_F(HAServiceStateMachineTest, waitingSyncingReadyLoadBalancing) {
         service_->runModel(HAService::NOP_EVT);
         EXPECT_EQ(HA_SYNCING_ST, service_->getCurrState());
 
+        // We better stop the heartbeat to not interfere with the synchronous
+        // commands.
+        state_->stopHeartbeat();
+
         // Enable the partner to correctly respond to the lease fetching and retry.
         // We should successfully update the database and transition.
         // SYNCING ---> READY
         partner.enableRespondLeaseFetching();
+
         // After previous attempt to synchronize the recorded partner state became
         // "unavailable". This server won't synchronize until the heartbeat is
         // sent which would indicate that the server is running. Therefore, we

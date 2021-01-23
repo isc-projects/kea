@@ -666,7 +666,7 @@ HAService::syncingStateHandler() {
                                       config_->getFailoverPeerConfig()->getName(),
                                       dhcp_disable_timeout);
 
-       // If the leases synchronization was successful, let's transition
+        // If the leases synchronization was successful, let's transition
         // to the ready state.
         if (sync_status == CONTROL_RESULT_SUCCESS) {
             verboseTransition(HA_READY_ST);
