@@ -35,7 +35,7 @@
                     {
 // Vendor-specific option has to be defined on the class level, if we're planning
 // to send a single value, then define its type accordingly. If this option
-// should encapsulate other suboptions "space" parameter should be the same
+// should encapsulate other suboptions, the "space" parameter should be the same
 // as included suboptions and "type" set to empty
                         "code": 43,
                         "encapsulate": "339",
