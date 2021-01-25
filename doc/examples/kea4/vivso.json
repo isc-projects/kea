@@ -1,0 +1,88 @@
+// This is an example configuration file for the DHCPv4 server in Kea.
+// The purpose of this example is to showcase how configure
+// Vendor-Identifying Vendor-specific Information option
+// (code 125) RFC 3925
+
+
+{
+    "Dhcp4": {
+// If we want to send suboptions in option 125 first those have to be defined
+// on global level
+        "option-def": [
+            {
+                "array": false,
+                "code": 2,
+                "name": "vlanid",
+// In case of suboption of option 125 space has to start with prefix "vendor-"
+// in this case it's "vendor-" + vendor id from option 60 send by client
+// 339 is Siemens Industry Inc.
+                "space": "vendor-339",
+                "type": "uint32"
+            },
+            {
+                "array": false,
+                "code": 3,
+                "name": "dls",
+                "space": "vendor-339",
+                "type": "string"
+            }
+        ],
+        "client-classes": [
+            {
+// Kea needs classification based on option 60, you can either use name:
+// VENDOR_CLASS_ + option 60 content (test parameter is not required than)
+// or use any name and add "test" parameter accordingly e.g.
+// "test": "substring(option[60].hex,0,9) == 'partial-content-of-option-60'"
+                "name": "VENDOR_CLASS_339",
+                "option-data": [
+                    {
+// In "option-data" list we have to configure option 125 with data parameter equal
+// to vendor-id we are expecting
+                        "data": "339",
+                        "name": "vivso-suboptions"
+                    },
+                    {
+// And additionally we have to configure all previously defined suboptions
+// with "space" parameter same as in option-def.
+// Because Kea will send only option that client ask for, and there is no way
+// to ask for suboptions parameter "always-send" with value set
+// to true has also be included in all custom suboptions.
+                        "always-send": true,
+                        "data": "123",
+                        "name": "vlanid",
+                        "space": "vendor-339"
+                    },
+                    {
+                        "always-send": true,
+                        "data": "sdlp://11.11.11.11:18443",
+                        "name": "dls",
+                        "space": "vendor-339"
+                    }
+                ]
+            }
+        ],
+// Kea is told to listen on ethX interface only.
+        "interfaces-config": {
+            "interfaces": [
+                "ethX"
+            ]
+        },
+// We need to specify the the database used to store leases.
+        "lease-database": {
+            "type": "memfile"
+        },
+// The following list defines subnets. We have only one subnet
+// here. We tell Kea that it is directly available over local interface.
+        "subnet4": [
+            {
+                "interface": "ethX",
+                "pools": [
+                    {
+                        "pool": "192.168.50.50-192.168.50.50"
+                    }
+                ],
+                "subnet": "192.168.50.0/24"
+            }
+        ]
+    }
+}

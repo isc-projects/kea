@@ -285,6 +285,8 @@ TEST(ParserTest, file) {
                                "several-subnets.json",
                                "shared-network.json",
                                "single-subnet.json",
+                               "vendor-specific.json",
+                               "vivso.json",
                                "with-ddns.json" };
 
     for (int i = 0; i<configs.size(); i++) {
