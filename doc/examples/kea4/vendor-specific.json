@@ -33,7 +33,7 @@
                 "name": "VENDOR_CLASS_339",
                 "option-def": [
                     {
-// vendor specific option have to be defined on class level, if we planing
+// Vendor-specific option has to be defined on the class level, if we're planning
 // to send single value define it's type accordingly, if this option
 // should encapsulate other suboptions "space" parameter should be the same
 // as included suboptions and "type" set to empty
