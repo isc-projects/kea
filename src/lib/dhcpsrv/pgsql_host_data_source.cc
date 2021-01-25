@@ -79,7 +79,7 @@ const size_t DHCP_IDENTIFIER_MAX_LEN = 128;
 ///   when host reservation is created for the DHCPv4 server, the IPv6 subnet id
 ///   should be ignored. Conversely, when host reservation is created for the
 ///   DHCPv6 server, the IPv4 subnet id should be ignored.
-///   NOTE! Zero is a the "global" subnet id as Kea 1.5.0
+///   NOTE! Zero is the "global" subnet id as Kea 1.5.0
 ///
 /// To exclude those special case values, the Postgres backend uses partial
 /// indexes, i.e. the only values that are included in the index are those that

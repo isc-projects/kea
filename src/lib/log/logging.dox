@@ -140,7 +140,7 @@ associated with it (e.g. "unable to open %1 for input"), after which it
 substitutes any message parameters (in this example, the name of the file
 where the write operation failed) and logs the result to the destination.
 
-In Kea, a the default text for each message is linked into the
+In Kea, the default text for each message is linked into the
 program.  Each program is able to read a locally-defined message file
 when it starts, updating the stored definitions with site-specific text.
 When the message is logged, the updated text is output. However, the

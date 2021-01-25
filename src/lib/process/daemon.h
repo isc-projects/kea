@@ -18,7 +18,7 @@
 namespace isc {
 namespace process {
 
-/// @brief Exception thrown when a the PID file points to a live PID
+/// @brief Exception thrown when the PID file points to a live PID
 class DaemonPIDExists : public Exception {
 public:
     DaemonPIDExists(const char* file, size_t line, const char* what) :

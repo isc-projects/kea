@@ -102,7 +102,7 @@ AvalancheScen::run() {
     // how many times it was already resent and then back off time is calculated:
     // 1, 2, 4, 8, 16, 64 (max) seconds. If estimated time has elapsed
     // from previous sending then the packet is resent. Some stats are collected
-    // and printed during runtime. The whole procedure is stoped when
+    // and printed during runtime. The whole procedure is stopped when
     // all packets got responses.
 
     uint32_t clients_num = options_.getClientsNum() == 0 ?

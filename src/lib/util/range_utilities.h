@@ -34,7 +34,7 @@ isRangeZero(Iterator begin, Iterator end) {
 /// @brief Fill in specified range with a random data.
 ///
 /// Make sure that random number generator is initialized
-/// properly. Otherwise you will get a the same pseudo-random sequence
+/// properly. Otherwise you will get the same pseudo-random sequence
 /// after every start of your process.  Calling srand() is enough. This
 /// method uses default rand(), which is usually a LCG pseudo-random
 /// number generator, so it is not suitable for security

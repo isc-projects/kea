@@ -242,7 +242,7 @@ public:
 
     /// @brief Conducts a single out-of-range test scenario
     ///
-    /// Each test cycles consists of a the following two stages, the first is
+    /// Each test cycles consists of the following two stages, the first is
     /// a set-up stage during which the server is configured with an initial,
     /// reference, configuration and a client then verifies that it can acquire
     /// and renew a lease.  The second stage verifies that the server, having

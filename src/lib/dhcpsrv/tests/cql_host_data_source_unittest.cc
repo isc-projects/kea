@@ -299,13 +299,13 @@ TEST_F(CqlHostDataSourceTest, basic4HWAddr) {
     testBasic4(Host::IDENT_HWADDR);
 }
 
-// Verifies that IPv4 host reservation with options can have a the global
+// Verifies that IPv4 host reservation with options can have the global
 // subnet id value
 TEST_F(CqlHostDataSourceTest, globalSubnetId4) {
     testGlobalSubnetId4();
 }
 
-// Verifies that IPv6 host reservation with options can have a the global
+// Verifies that IPv6 host reservation with options can have the global
 // subnet id value
 TEST_F(CqlHostDataSourceTest, globalSubnetId6) {
     testGlobalSubnetId6();

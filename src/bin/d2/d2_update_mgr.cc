@@ -78,7 +78,7 @@ D2UpdateMgr::checkFinishedTransactions() {
     // to expand as DHCP_DDNS matures.
     // NOTE: One must use postfix increments of the iterator on the calls
     // to erase.  This replaces the old iterator which becomes invalid by the
-    // erase with a the next valid iterator.  Prefix incrementing will not
+    // erase with the next valid iterator.  Prefix incrementing will not
     // work.
     TransactionList::iterator it = transaction_list_.begin();
     while (it != transaction_list_.end()) {

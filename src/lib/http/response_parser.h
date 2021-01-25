@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018,2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -201,7 +201,7 @@ private:
     /// If the next_state is HTTP_PARSE_OK_ST it indicates that the parsed
     /// value is a 3rd new line within request HTTP message. In this case the
     /// handler calls @ref HttpRequest::create to validate the received message
-    /// (excluding body). The hander then reads the "Content-Length" header to
+    /// (excluding body). The handler then reads the "Content-Length" header to
     /// check if the request contains a body. If the "Content-Length" is greater
     /// than zero, the parser transitions to HTTP_BODY_ST. If the
     /// "Content-Length" doesn't exist the parser transitions to

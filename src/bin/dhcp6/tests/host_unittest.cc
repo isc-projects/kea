@@ -855,7 +855,7 @@ public:
     /// @brief Initiate exchange with DHCPv6 server.
     ///
     /// This method initiates DHCPv6 message exchange between a specified
-    /// client a the server. The msg_type is used to indicate what kind
+    /// client and the server. The msg_type is used to indicate what kind
     /// of exchange should be initiated. If the message type is a Renew
     /// or Rebind, the 4-way handshake is made first. If the message type
     /// is a Request, the Solicit-Advertise is done prior to this.

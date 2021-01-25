@@ -452,26 +452,26 @@ TEST_F(MySqlHostDataSourceTest, basic4HWAddrMultiThreading) {
     testBasic4(Host::IDENT_HWADDR);
 }
 
-/// @brief Verifies that IPv4 host reservation with options can have a the global
+/// @brief Verifies that IPv4 host reservation with options can have the global
 /// subnet id value
 TEST_F(MySqlHostDataSourceTest, globalSubnetId4) {
     testGlobalSubnetId4();
 }
 
-/// @brief Verifies that IPv4 host reservation with options can have a the global
+/// @brief Verifies that IPv4 host reservation with options can have the global
 /// subnet id value
 TEST_F(MySqlHostDataSourceTest, globalSubnetId4MultiThreading) {
     MultiThreadingTest mt(true);
     testGlobalSubnetId4();
 }
 
-/// @brief Verifies that IPv6 host reservation with options can have a the global
+/// @brief Verifies that IPv6 host reservation with options can have the global
 /// subnet id value
 TEST_F(MySqlHostDataSourceTest, globalSubnetId6) {
     testGlobalSubnetId6();
 }
 
-/// @brief Verifies that IPv6 host reservation with options can have a the global
+/// @brief Verifies that IPv6 host reservation with options can have the global
 /// subnet id value
 TEST_F(MySqlHostDataSourceTest, globalSubnetId6MultiThreading) {
     MultiThreadingTest mt(true);

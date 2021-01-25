@@ -186,7 +186,7 @@ normal operations but should be temporary situation.
 
 % DHCP_DDNS_NO_FWD_MATCH_ERROR Request ID %1: the configured list of forward DDNS domains does not contain a match for: %2  The request has been discarded.
 This is an error message that indicates that DHCP_DDNS received a request to
-update a the forward DNS information for the given FQDN but for which there are
+update the forward DNS information for the given FQDN but for which there are
 no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
 configuration needs to be updated or the source of the FQDN itself should be
 investigated.
@@ -198,7 +198,7 @@ request for the FQDN cannot be processed.
 
 % DHCP_DDNS_NO_REV_MATCH_ERROR Request ID %1: the configured list of reverse DDNS domains does not contain a match for: %2  The request has been discarded.
 This is an error message that indicates that DHCP_DDNS received a request to
-update a the reverse DNS information for the given FQDN but for which there are
+update the reverse DNS information for the given FQDN but for which there are
 no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
 configuration needs to be updated or the source of the FQDN itself should be
 investigated.

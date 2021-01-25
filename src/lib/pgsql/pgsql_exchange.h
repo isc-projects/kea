@@ -135,7 +135,7 @@ struct PsqlBindArray {
     /// @param byte the one byte value to add.
     void add(const uint8_t& byte);
 
-    /// @brief Adds a the given IOAddress value to the bind array.
+    /// @brief Adds the given IOAddress value to the bind array.
     ///
     /// Converts the IOAddress, based on its protocol family, to the
     /// corresponding string literal and adds it as a TEXT_FMT value to
@@ -145,7 +145,7 @@ struct PsqlBindArray {
     /// @param addr IP address value to add.
     void add(const isc::asiolink::IOAddress& addr);
 
-    /// @brief Adds a the given value to the bind array.
+    /// @brief Adds the given value to the bind array.
     ///
     /// Converts the given value to its corresponding string literal
     /// boost::lexical_cast and adds it as a TEXT_FMT value to the bind array.
@@ -158,7 +158,7 @@ struct PsqlBindArray {
         addTempString(boost::lexical_cast<std::string>(value));
     }
 
-    /// @brief Binds a the given string to the bind array.
+    /// @brief Binds the given string to the bind array.
     ///
     /// Prior to add the given string the vector of exchange values,
     /// it duplicated as a ConstStringPtr and saved internally.  This guarantees
@@ -170,7 +170,7 @@ struct PsqlBindArray {
 
     /// @brief Adds a NULL value to the bind array
     ///
-    /// This should be used whenever a the value for a parameter specified
+    /// This should be used whenever the value for a parameter specified
     /// in the SQL statement should be NULL.
     void addNull(const int format = PsqlBindArray::TEXT_FMT);
 

@@ -157,7 +157,7 @@ protected:
     /// @param family - the address family in which the parsing should
     /// occur.
     /// @return Returns a pointer to class dictionary created
-    /// @throw indirectly, execptions converting the JSON text to elements,
+    /// @throw indirectly, exceptions converting the JSON text to elements,
     /// or by the parsing itself are not caught
     ClientClassDictionaryPtr parseClientClassDefList(const std::string& config,
                                                      uint16_t family)
