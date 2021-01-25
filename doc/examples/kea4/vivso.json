@@ -37,7 +37,8 @@
                 "option-data": [
                     {
 // In "option-data" list we have to configure option 125 with data parameter equal
-// to vendor-id we are expecting
+// to vendor-id we are expecting, also it will tell Kea which vendor space
+// encapsulate in suboptions.
                         "data": "339",
                         "name": "vivso-suboptions"
                     },
@@ -54,7 +55,7 @@
                     },
                     {
                         "always-send": true,
-                        "data": "sdlp://11.11.11.11:18443",
+                        "data": "sdlp://192.0.2.11:18443",
                         "name": "dls",
                         "space": "vendor-339"
                     }
@@ -78,10 +79,10 @@
                 "interface": "ethX",
                 "pools": [
                     {
-                        "pool": "192.168.50.50-192.168.50.50"
+                        "pool": "192.0.2.50-192.0.2.50"
                     }
                 ],
-                "subnet": "192.168.50.0/24"
+                "subnet": "192.0.2.0/24"
             }
         ]
     }

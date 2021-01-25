@@ -38,6 +38,9 @@
 // should encapsulate other suboptions, the "space" parameter should be the same
 // as included suboptions and "type" set to empty
                         "code": 43,
+// Using the "encapsulate" direction, Kea is told to include options from
+// the "339" namespace. We have defined several such options earlier.
+// This way, the sub-options are "glued" to this option 43.
                         "encapsulate": "339",
                         "name": "vendor-encapsulated-options",
                         "type": "empty"
@@ -60,7 +63,7 @@
                     },
                     {
                         "always-send": true,
-                        "data": "sdlp://11.11.11.11:18443",
+                        "data": "sdlp://192.0.2.11:18443",
                         "name": "dls",
                         "space": "339"
                     }
@@ -82,10 +85,10 @@
                 "interface": "ethX",
                 "pools": [
                     {
-                        "pool": "192.168.50.50-192.168.50.50"
+                        "pool": "192.0.2.50-192.0.2.50"
                     }
                 ],
-                "subnet": "192.168.50.0/24"
+                "subnet": "192.0.2.0/24"
             }
         ]
     }
