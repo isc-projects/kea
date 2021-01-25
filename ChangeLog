@@ -1,5 +1,10 @@
 Kea 1.9.4 (development) released on Jan 27, 2021
 
+1860.	[build]		razvan
+	Library version numbers bumped for Kea 1.9.4 development
+	version.
+	(Gitlab #1666)
+
 1859.	[doc]		wlodek
 	Added example files with configured Vendor Specific Information
 	option (code 43) and Vendor-Identifying Vendor-specific
