@@ -1,5 +1,11 @@
 Kea 1.9.4 (development) released on Jan 27, 2021
 
+1859.	[doc]		wlodek
+	Added example files with configured Vendor Specific Information
+	option (code 43) and Vendor-Identifying Vendor-specific
+	Information option (code 125) with several suboptions each.
+	(Gitlab #1546)
+
 1858.	[bug]		razvan
 	The DHCP service can be independently enabled or disabled by
 	the user command, by the database connection mechanics or
