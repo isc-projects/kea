@@ -20,7 +20,7 @@ Some of those checks and updates can be made before actual freeze.
    - the library versions are being updated
    - `KEA_HOOKS_VERSION` is being updated
    - [ ] create an issue for that for developers in Gitlab
-   - script: [./tools/bump-lib-versions.sh](https://gitlab.isc.org/isc-projects/kea/-/blob/master/tools/bump-lib-versions.sh) Kea-q.w.e Kea-a.b.c (where `a.b.c` is the released version and `q.w.e` is the version previous to that)
+   - script: [./tools/bump-lib-versions.sh](https://gitlab.isc.org/isc-projects/kea/-/blob/master/tools/bump-lib-versions.sh) Kea-q.w.e Kea-a.b.c (where `a.b.c` is the version to be released and `q.w.e` is the version previous to that)
 1. Prepare Release Notes
    1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" directory, like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/release%20notes/release-notes-1.9.2
    1. [ ] Finish release notes and conduct its review
