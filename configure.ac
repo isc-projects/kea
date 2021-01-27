@@ -4,10 +4,9 @@
 AC_PREREQ([2.69])
 
 # For released versions, this is in x.y.z format.
-# For GIT versions, this is x.y.z-git, where x.y.z denotes the software
-# version that was used as a base + changes that were made later, but
-# are not released yet.
-AC_INIT(kea,1.9.4-git, kea-dev@lists.isc.org)
+# For GIT versions, this is x.y.z-git, where x.y.z denotes the next development
+# version that is worked on and that is to be released.
+AC_INIT(kea,1.9.5-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
