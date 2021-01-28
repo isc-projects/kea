@@ -122,6 +122,25 @@ TEST(ProcessSpawn, spawnWithArgs) {
     EXPECT_EQ(64, process.getExitStatus(pid));
 }
 
+// This test verifies that the external application can be ran with
+// arguments and environment variables that the exit code is gathered.
+TEST(ProcessSpawn, spawnWithArgsAndEnvVars) {
+    std::vector<std::string> args;
+    std::vector<std::string> vars;
+    args.push_back("-v");
+    args.push_back("TEST_VARIABLE_NAME");
+    args.push_back("TEST_VARIABLE_VALUE");
+    vars.push_back("TEST_VARIABLE_NAME=TEST_VARIABLE_VALUE");
+
+    ProcessSpawn process(getApp(), args, vars);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
+
+    ASSERT_TRUE(waitForProcess(process, pid, 2));
+
+    EXPECT_EQ(32, process.getExitStatus(pid));
+}
+
 // This test verifies that the single ProcessSpawn object can be used
 // to start two processes and that their status codes can be gathered.
 // It also checks that it is possible to clear the status of the
@@ -163,7 +182,6 @@ TEST(ProcessSpawn, spawnNoArgs) {
 
     EXPECT_EQ(32, process.getExitStatus(pid));
 }
-
 
 // This test verifies that the EXIT_FAILURE code is returned when
 // application can't be executed.
@@ -246,6 +264,5 @@ TEST(ProcessSpawn, errnoInvariance) {
     // will likely set errno to ECHILD. See trac4000.
     EXPECT_EQ(123, errno);
 }
-
 
 } // end of anonymous namespace

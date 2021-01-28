@@ -12,6 +12,7 @@
 #include <string>
 #include <sys/types.h>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace util {
@@ -27,9 +28,16 @@ public:
 /// class.
 class ProcessSpawnImpl;
 
+/// @brief Pointer to a ProcessSpawnImpl class.
+typedef boost::shared_ptr<ProcessSpawnImpl> ProcessSpawnImplPtr;
+
 /// @brief Type of the container holding arguments of the executable
 /// being run as a background process.
 typedef std::vector<std::string> ProcessArgs;
+
+/// @brief Type of the container holding environment variables of the executable
+/// being run as a background process.
+typedef std::vector<std::string> ProcessEnvVars;
 
 /// @brief Utility class for spawning new processes.
 ///
@@ -64,8 +72,10 @@ public:
     ///
     /// @param executable A path to the program to be executed.
     /// @param args Arguments for the program to be executed.
+    /// @param vars Environment variables for the program to be executed.
     ProcessSpawn(const std::string& executable,
-                 const ProcessArgs& args = ProcessArgs());
+                 const ProcessArgs& args = ProcessArgs(),
+                 const ProcessEnvVars& = ProcessEnvVars());
 
     /// @brief Destructor.
     ~ProcessSpawn();
@@ -132,9 +142,8 @@ public:
 
 private:
 
-    /// @brief A pointer to the implementation of this class.
-    ProcessSpawnImpl* impl_;
-
+    /// @brief A smart pointer to the implementation of this class.
+    ProcessSpawnImplPtr impl_;
 };
 
 }

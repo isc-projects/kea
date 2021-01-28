@@ -1,0 +1,11 @@
+# Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+
+% RUN_SCRIPT_LOAD Run Script hooks library has been loaded
+This info message indicates that the Run Script hooks library has been loaded.
+
+% RUN_SCRIPT_LOAD_ERROR Run Script hooks library failed: %1
+This error message indicates an error during loading the Run Script hooks
+library. The details of the error are provided as argument of the log message.
+
+% RUN_SCRIPT_UNLOAD Run Script hooks library has been unloaded
+This info message indicates that the RunScript hooks library has been unloaded.

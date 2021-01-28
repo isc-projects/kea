@@ -45,6 +45,16 @@ do
             shift
             sleep "${1}"
             ;;
+        -v)
+            shift
+            VAR_NAME=${1}
+            shift
+            VAR_VALUE=${1}
+            EXPECTED=$(env | grep ${VAR_NAME})
+            if ! test "${VAR_NAME}=${VAR_VALUE}" = "${EXPECTED}"; then
+                exit 123
+            fi
+            ;;
         *)
             exit 123
             ;;

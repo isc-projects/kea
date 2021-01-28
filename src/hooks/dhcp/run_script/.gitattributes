@@ -1,0 +1,2 @@
+/run_script_messages.cc               -diff merge=ours
+/run_script_messages.h                -diff merge=ours

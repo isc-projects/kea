@@ -59,8 +59,10 @@ public:
     ///
     /// @param executable A path to the program to be executed.
     /// @param args Arguments for the program to be executed.
+    /// @param vars Environment variables for the program to be executed.
     ProcessSpawnImpl(const std::string& executable,
-                     const ProcessArgs& args);
+                     const ProcessArgs& args,
+                     const ProcessEnvVars& vars);
 
     /// @brief Destructor.
     ~ProcessSpawnImpl();
@@ -146,13 +148,18 @@ private:
     std::string executable_;
 
     /// @brief An array holding arguments for the executable.
-    char** args_;
+    boost::shared_ptr<char*[]> args_;
+
+    /// @brief An array holding environment variables for the executable.
+    boost::shared_ptr<char*[]> vars_;
 };
 
 ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
-                                   const ProcessArgs& args)
+                                   const ProcessArgs& args,
+                                   const ProcessEnvVars& vars)
     : signals_(new SignalSet(SIGCHLD)), process_state_(),
-      executable_(executable), args_(new char*[args.size() + 2]) {
+      executable_(executable), args_(new char*[args.size() + 2]),
+      vars_(new char*[vars.size() + 1]) {
     // Set the handler which is invoked immediately when the signal
     // is received.
     signals_->setOnReceiptHandler(std::bind(&ProcessSpawnImpl::waitForProcess,
@@ -160,12 +167,17 @@ ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
     // Conversion of the arguments to the C-style array we start by setting
     // all pointers within an array to NULL to indicate that they haven't
     // been allocated yet.
-    memset(args_, 0, (args.size() + 2) * sizeof(char*));
+    memset(args_.get(), 0, (args.size() + 2) * sizeof(char*));
+    memset(vars_.get(), 0, (vars.size() + 1) * sizeof(char*));
     // By convention, the first argument points to an executable name.
     args_[0] = allocateArg(executable_);
     // Copy arguments to the array.
     for (int i = 1; i <= args.size(); ++i) {
-        args_[i] = allocateArg(args[i-1]);
+        args_[i] = allocateArg(args[i - 1]);
+    }
+    // Copy environment variables to the array.
+    for (int i = 0; i < vars.size(); ++i) {
+        vars_[i] = allocateArg(vars[i]);
     }
 }
 
@@ -176,8 +188,13 @@ ProcessSpawnImpl::~ProcessSpawnImpl() {
         delete[] args_[i];
         ++i;
     }
-    // Deallocate the array.
-    delete[] args_;
+
+    i = 0;
+    // Deallocate strings in the array of environment variables.
+    while (vars_[i] != NULL) {
+        delete[] vars_[i];
+        ++i;
+    }
 }
 
 std::string
@@ -217,8 +234,8 @@ ProcessSpawnImpl::spawn() {
         // We're in the child process.
         sigprocmask(SIG_SETMASK, &osset, 0);
         // Run the executable.
-        if (execvp(executable_.c_str(), args_) != 0) {
-            // We may end up here if the execvp failed, e.g. as a result
+        if (execvpe(executable_.c_str(), args_.get(), vars_.get()) != 0) {
+            // We may end up here if the execvpe failed, e.g. as a result
             // of issue with permissions or invalid executable name.
             _exit(EXIT_FAILURE);
         }
@@ -332,12 +349,12 @@ ProcessSpawnImpl::clearState(const pid_t pid) {
 }
 
 ProcessSpawn::ProcessSpawn(const std::string& executable,
-                           const ProcessArgs& args)
-    : impl_(new ProcessSpawnImpl(executable, args)) {
+                           const ProcessArgs& args,
+                           const ProcessEnvVars& vars)
+    : impl_(new ProcessSpawnImpl(executable, args, vars)) {
 }
 
 ProcessSpawn::~ProcessSpawn() {
-    delete impl_;
 }
 
 std::string
