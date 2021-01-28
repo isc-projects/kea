@@ -1586,280 +1586,285 @@ if (echo ${runstatedir} | grep -q localstatedir); then
     runstatedir="$(eval echo ${runstatedir})"
 fi
 
-AC_CONFIG_FILES([Makefile
-                 doc/Makefile
-                 doc/sphinx/Makefile
-                 doc/devel/Makefile
-                 ext/Makefile
-                 ext/gtest/Makefile
-                 ext/coroutine/Makefile
-                 kea_version.h
-                 m4macros/Makefile
-                 src/Makefile
-                 src/bin/Makefile
-                 src/bin/admin/Makefile
-                 src/bin/admin/kea-admin
-                 src/bin/admin/tests/Makefile
-                 src/bin/admin/tests/cql_tests.sh
-                 src/bin/admin/tests/data/Makefile
-                 src/bin/admin/tests/memfile_tests.sh
-                 src/bin/admin/tests/mysql_tests.sh
-                 src/bin/admin/tests/pgsql_tests.sh
-                 src/bin/agent/Makefile
-                 src/bin/agent/tests/Makefile
-                 src/bin/agent/tests/ca_process_tests.sh
-                 src/bin/agent/tests/test_basic_auth_libraries.h
-                 src/bin/agent/tests/test_callout_libraries.h
-                 src/bin/agent/tests/test_data_files_config.h
-                 src/bin/d2/Makefile
-                 src/bin/d2/tests/Makefile
-                 src/bin/d2/tests/d2_process_tests.sh
-                 src/bin/d2/tests/test_data_files_config.h
-                 src/bin/dhcp4/Makefile
-                 src/bin/dhcp4/tests/Makefile
-                 src/bin/dhcp4/tests/dhcp4_process_tests.sh
-                 src/bin/dhcp4/tests/marker_file.h
-                 src/bin/dhcp4/tests/test_data_files_config.h
-                 src/bin/dhcp4/tests/test_libraries.h
-                 src/bin/dhcp6/Makefile
-                 src/bin/dhcp6/tests/Makefile
-                 src/bin/dhcp6/tests/dhcp6_process_tests.sh
-                 src/bin/dhcp6/tests/marker_file.h
-                 src/bin/dhcp6/tests/test_data_files_config.h
-                 src/bin/dhcp6/tests/test_libraries.h
-                 src/bin/keactrl/Makefile
-                 src/bin/keactrl/keactrl
-                 src/bin/keactrl/keactrl.conf
-                 src/bin/keactrl/tests/Makefile
-                 src/bin/keactrl/tests/keactrl_tests.sh
-                 src/bin/lfc/Makefile
-                 src/bin/lfc/tests/Makefile
-                 src/bin/netconf/Makefile
-                 src/bin/netconf/tests/Makefile
-                 src/bin/netconf/tests/shtests/Makefile
-                 src/bin/netconf/tests/shtests/netconf_tests.sh
-                 src/bin/netconf/tests/test_data_files_config.h
-                 src/bin/netconf/tests/test_libraries.h
-                 src/bin/perfdhcp/Makefile
-                 src/bin/perfdhcp/tests/Makefile
-                 src/bin/perfdhcp/tests/testdata/Makefile
-                 src/bin/shell/Makefile
-                 src/bin/shell/kea-shell
-                 src/bin/shell/tests/Makefile
-                 src/bin/shell/tests/basic_auth_tests.sh
-                 src/bin/shell/tests/shell_process_tests.sh
-                 src/bin/shell/tests/shell_unittest.py
-                 src/hooks/Makefile
-                 src/hooks/dhcp/Makefile
-                 src/hooks/dhcp/bootp/Makefile
-                 src/hooks/dhcp/bootp/tests/Makefile
-                 src/hooks/dhcp/flex_option/Makefile
-                 src/hooks/dhcp/flex_option/libloadtests/Makefile
-                 src/hooks/dhcp/flex_option/tests/Makefile
-                 src/hooks/dhcp/high_availability/Makefile
-                 src/hooks/dhcp/high_availability/libloadtests/Makefile
-                 src/hooks/dhcp/high_availability/tests/Makefile
-                 src/hooks/dhcp/lease_cmds/Makefile
-                 src/hooks/dhcp/lease_cmds/tests/Makefile
-                 src/hooks/dhcp/mysql_cb/Makefile
-                 src/hooks/dhcp/mysql_cb/tests/Makefile
-                 src/hooks/dhcp/stat_cmds/Makefile
-                 src/hooks/dhcp/stat_cmds/tests/Makefile
-                 src/hooks/dhcp/user_chk/Makefile
-                 src/hooks/dhcp/user_chk/tests/Makefile
-                 src/hooks/dhcp/user_chk/tests/test_data_files_config.h
-                 src/lib/Makefile
-                 src/lib/asiodns/Makefile
-                 src/lib/asiodns/tests/Makefile
-                 src/lib/asiolink/Makefile
-                 src/lib/asiolink/testutils/Makefile
-                 src/lib/asiolink/tests/Makefile
-                 src/lib/cc/Makefile
-                 src/lib/cc/tests/Makefile
-                 src/lib/cfgrpt/Makefile
-                 src/lib/cfgrpt/tests/Makefile
-                 src/lib/config/Makefile
-                 src/lib/config/tests/Makefile
-                 src/lib/config/tests/data_def_unittests_config.h
-                 src/lib/config/tests/testdata/Makefile
-                 src/lib/config_backend/Makefile
-                 src/lib/config_backend/tests/Makefile
-                 src/lib/cryptolink/Makefile
-                 src/lib/cryptolink/tests/Makefile
-                 src/lib/database/Makefile
-                 src/lib/database/tests/Makefile
-                 src/lib/database/testutils/Makefile
-                 src/lib/dhcp/Makefile
-                 src/lib/dhcp/tests/Makefile
-                 src/lib/dhcp_ddns/Makefile
-                 src/lib/dhcp_ddns/tests/Makefile
-                 src/lib/dhcpsrv/Makefile
-                 src/lib/dhcpsrv/benchmarks/Makefile
-                 src/lib/dhcpsrv/tests/Makefile
-                 src/lib/dhcpsrv/tests/test_libraries.h
-                 src/lib/dhcpsrv/testutils/Makefile
-                 src/lib/dns/Makefile
-                 src/lib/dns/gen-rdatacode.py
-                 src/lib/dns/tests/Makefile
-                 src/lib/dns/tests/testdata/Makefile
-                 src/lib/eval/Makefile
-                 src/lib/eval/tests/Makefile
-                 src/lib/exceptions/Makefile
-                 src/lib/exceptions/tests/Makefile
-                 src/lib/hooks/Makefile
-                 src/lib/hooks/tests/Makefile
-                 src/lib/hooks/tests/marker_file.h
-                 src/lib/hooks/tests/test_libraries.h
-                 src/lib/http/Makefile
-                 src/lib/http/tests/Makefile
-                 src/lib/log/Makefile
-                 src/lib/log/compiler/Makefile
-                 src/lib/log/interprocess/Makefile
-                 src/lib/log/interprocess/tests/Makefile
-                 src/lib/log/tests/Makefile
-                 src/lib/log/tests/buffer_logger_test.sh
-                 src/lib/log/tests/console_test.sh
-                 src/lib/log/tests/destination_test.sh
-                 src/lib/log/tests/init_logger_test.sh
-                 src/lib/log/tests/local_file_test.sh
-                 src/lib/log/tests/logger_lock_test.sh
-                 src/lib/log/tests/severity_test.sh
-                 src/lib/log/tests/tempdir.h
-                 src/lib/mysql/Makefile
-                 src/lib/mysql/testutils/Makefile
-                 src/lib/mysql/tests/Makefile
-                 src/lib/pgsql/Makefile
-                 src/lib/pgsql/tests/Makefile
-                 src/lib/pgsql/testutils/Makefile
-                 src/lib/cql/Makefile
-                 src/lib/cql/tests/Makefile
-                 src/lib/cql/testutils/Makefile
-                 src/lib/process/Makefile
-                 src/lib/process/tests/Makefile
-                 src/lib/process/testutils/Makefile
-                 src/lib/stats/Makefile
-                 src/lib/stats/tests/Makefile
-                 src/lib/testutils/Makefile
-                 src/lib/testutils/dhcp_test_lib.sh
-                 src/lib/testutils/xml_reporting_test_lib.sh
-                 src/lib/util/Makefile
-                 src/lib/util/io/Makefile
-                 src/lib/util/python/Makefile
-                 src/lib/util/python/gen_wiredata.py
-                 src/lib/util/tests/Makefile
-                 src/lib/util/tests/process_spawn_app.sh
-                 src/lib/util/unittests/Makefile
-                 src/lib/yang/Makefile
-                 src/lib/yang/pretests/Makefile
-                 src/lib/yang/tests/Makefile
-                 src/lib/yang/testutils/Makefile
-                 src/share/Makefile
-                 src/share/api/Makefile
-                 src/share/database/Makefile
-                 src/share/database/scripts/Makefile
-                 src/share/database/scripts/cql/Makefile
-                 src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh
-                 src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh
-                 src/share/database/scripts/cql/upgrade_3.0_to_4.0.sh
-                 src/share/database/scripts/cql/upgrade_4.0_to_5.0.sh
-                 src/share/database/scripts/cql/wipe_data.sh
-                 src/share/database/scripts/mysql/Makefile
-                 src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh
-                 src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh
-                 src/share/database/scripts/mysql/upgrade_3.0_to_4.0.sh
-                 src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh
-                 src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh
-                 src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh
-                 src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh
-                 src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh
-                 src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh
-                 src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh
-                 src/share/database/scripts/mysql/upgrade_8.0_to_8.1.sh
-                 src/share/database/scripts/mysql/upgrade_8.1_to_8.2.sh
-                 src/share/database/scripts/mysql/upgrade_8.2_to_9.0.sh
-                 src/share/database/scripts/mysql/upgrade_9.0_to_9.1.sh
-                 src/share/database/scripts/mysql/upgrade_9.1_to_9.2.sh
-                 src/share/database/scripts/mysql/upgrade_9.2_to_9.3.sh
-                 src/share/database/scripts/mysql/upgrade_9.3_to_9.4.sh
-                 src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh
-                 src/share/database/scripts/mysql/wipe_data.sh
-                 src/share/database/scripts/pgsql/Makefile
-                 src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
-                 src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
-                 src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh
-                 src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh
-                 src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh
-                 src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh
-                 src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh
-                 src/share/database/scripts/pgsql/upgrade_5.0_to_5.1.sh
-                 src/share/database/scripts/pgsql/upgrade_5.1_to_6.0.sh
-                 src/share/database/scripts/pgsql/upgrade_6.0_to_6.1.sh
-                 src/share/database/scripts/pgsql/upgrade_6.1_to_6.2.sh
-                 src/share/database/scripts/pgsql/wipe_data.sh
-                 src/share/yang/Makefile
-                 src/share/yang/modules/Makefile
-                 tools/Makefile
-                 tools/path_replacer.sh
-])
-
-AC_CONFIG_COMMANDS([permissions], [
-           chmod +x src/bin/admin/kea-admin
-           chmod +x src/bin/dhcp4/tests/dhcp4_process_tests.sh
-           chmod +x src/bin/dhcp6/tests/dhcp6_process_tests.sh
-           chmod +x src/bin/keactrl/keactrl
-           chmod +x src/bin/keactrl/tests/keactrl_tests.sh
-           chmod +x src/bin/shell/kea-shell
-           chmod +x src/bin/shell/tests/shell_process_tests.sh
-           chmod +x src/bin/shell/tests/shell_unittest.py
-           chmod +x src/lib/dns/gen-rdatacode.py
-           chmod +x src/lib/log/tests/buffer_logger_test.sh
-           chmod +x src/lib/log/tests/console_test.sh
-           chmod +x src/lib/log/tests/destination_test.sh
-           chmod +x src/lib/log/tests/init_logger_test.sh
-           chmod +x src/lib/log/tests/local_file_test.sh
-           chmod +x src/lib/log/tests/logger_lock_test.sh
-           chmod +x src/lib/log/tests/severity_test.sh
-           chmod +x src/lib/util/python/gen_wiredata.py
-           chmod +x src/lib/util/tests/process_spawn_app.sh
-           chmod +x src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh
-           chmod +x src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh
-           chmod +x src/share/database/scripts/cql/upgrade_3.0_to_4.0.sh
-           chmod +x src/share/database/scripts/cql/upgrade_4.0_to_5.0.sh
-           chmod +x src/share/database/scripts/cql/wipe_data.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_3.0_to_4.0.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_8.0_to_8.1.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_8.1_to_8.2.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_8.2_to_9.0.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_9.0_to_9.1.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_9.1_to_9.2.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_9.2_to_9.3.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_9.3_to_9.4.sh
-           chmod +x src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh
-           chmod +x src/share/database/scripts/mysql/wipe_data.sh
-           chmod +x src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
-           chmod +x src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
-           chmod +x src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh
-           chmod +x src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh
-           chmod +x src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh
-           chmod +x src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh
-           chmod +x src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh
-           chmod +x src/share/database/scripts/pgsql/upgrade_5.0_to_5.1.sh
-           chmod +x src/share/database/scripts/pgsql/upgrade_5.1_to_6.0.sh
-           chmod +x src/share/database/scripts/pgsql/upgrade_6.0_to_6.1.sh
-           chmod +x src/share/database/scripts/pgsql/upgrade_6.1_to_6.2.sh
-           chmod +x src/share/database/scripts/pgsql/wipe_data.sh
-           chmod +x tools/path_replacer.sh
-])
-
+AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([doc/Makefile])
+AC_CONFIG_FILES([doc/sphinx/Makefile])
+AC_CONFIG_FILES([doc/devel/Makefile])
+AC_CONFIG_FILES([ext/Makefile])
+AC_CONFIG_FILES([ext/gtest/Makefile])
+AC_CONFIG_FILES([ext/coroutine/Makefile])
+AC_CONFIG_FILES([kea_version.h])
+AC_CONFIG_FILES([m4macros/Makefile])
+AC_CONFIG_FILES([src/Makefile])
+AC_CONFIG_FILES([src/bin/Makefile])
+AC_CONFIG_FILES([src/bin/admin/Makefile])
+AC_CONFIG_FILES([src/bin/admin/kea-admin],
+                [chmod +x src/bin/admin/kea-admin])
+AC_CONFIG_FILES([src/bin/admin/tests/Makefile])
+AC_CONFIG_FILES([src/bin/admin/tests/cql_tests.sh],
+                [chmod +x src/bin/admin/tests/cql_tests.sh])
+AC_CONFIG_FILES([src/bin/admin/tests/data/Makefile])
+AC_CONFIG_FILES([src/bin/admin/tests/memfile_tests.sh],
+                [chmod +x src/bin/admin/tests/memfile_tests.sh])
+AC_CONFIG_FILES([src/bin/admin/tests/mysql_tests.sh],
+                [chmod +x src/bin/admin/tests/mysql_tests.sh])
+AC_CONFIG_FILES([src/bin/admin/tests/pgsql_tests.sh],
+                [chmod +x src/bin/admin/tests/pgsql_tests.sh])
+AC_CONFIG_FILES([src/bin/agent/Makefile])
+AC_CONFIG_FILES([src/bin/agent/tests/Makefile])
+AC_CONFIG_FILES([src/bin/agent/tests/ca_process_tests.sh],
+                [chmod +x src/bin/agent/tests/ca_process_tests.sh])
+AC_CONFIG_FILES([src/bin/agent/tests/test_basic_auth_libraries.h])
+AC_CONFIG_FILES([src/bin/agent/tests/test_callout_libraries.h])
+AC_CONFIG_FILES([src/bin/agent/tests/test_data_files_config.h])
+AC_CONFIG_FILES([src/bin/d2/Makefile])
+AC_CONFIG_FILES([src/bin/d2/tests/Makefile])
+AC_CONFIG_FILES([src/bin/d2/tests/d2_process_tests.sh],
+                [chmod +x src/bin/d2/tests/d2_process_tests.sh])
+AC_CONFIG_FILES([src/bin/d2/tests/test_data_files_config.h])
+AC_CONFIG_FILES([src/bin/dhcp4/Makefile])
+AC_CONFIG_FILES([src/bin/dhcp4/tests/Makefile])
+AC_CONFIG_FILES([src/bin/dhcp4/tests/dhcp4_process_tests.sh],
+                [chmod +x src/bin/dhcp4/tests/dhcp4_process_tests.sh])
+AC_CONFIG_FILES([src/bin/dhcp4/tests/marker_file.h])
+AC_CONFIG_FILES([src/bin/dhcp4/tests/test_data_files_config.h])
+AC_CONFIG_FILES([src/bin/dhcp4/tests/test_libraries.h])
+AC_CONFIG_FILES([src/bin/dhcp6/Makefile])
+AC_CONFIG_FILES([src/bin/dhcp6/tests/Makefile])
+AC_CONFIG_FILES([src/bin/dhcp6/tests/dhcp6_process_tests.sh],
+                [chmod +x src/bin/dhcp6/tests/dhcp6_process_tests.sh])
+AC_CONFIG_FILES([src/bin/dhcp6/tests/marker_file.h])
+AC_CONFIG_FILES([src/bin/dhcp6/tests/test_data_files_config.h])
+AC_CONFIG_FILES([src/bin/dhcp6/tests/test_libraries.h])
+AC_CONFIG_FILES([src/bin/keactrl/Makefile])
+AC_CONFIG_FILES([src/bin/keactrl/keactrl],
+                [chmod +x src/bin/keactrl/keactrl])
+AC_CONFIG_FILES([src/bin/keactrl/keactrl.conf])
+AC_CONFIG_FILES([src/bin/keactrl/tests/Makefile])
+AC_CONFIG_FILES([src/bin/keactrl/tests/keactrl_tests.sh],
+                [chmod +x src/bin/keactrl/tests/keactrl_tests.sh])
+AC_CONFIG_FILES([src/bin/lfc/Makefile])
+AC_CONFIG_FILES([src/bin/lfc/tests/Makefile])
+AC_CONFIG_FILES([src/bin/netconf/Makefile])
+AC_CONFIG_FILES([src/bin/netconf/tests/Makefile])
+AC_CONFIG_FILES([src/bin/netconf/tests/shtests/Makefile])
+AC_CONFIG_FILES([src/bin/netconf/tests/shtests/netconf_tests.sh],
+                [chmod +x src/bin/netconf/tests/shtests/netconf_tests.sh])
+AC_CONFIG_FILES([src/bin/netconf/tests/test_data_files_config.h])
+AC_CONFIG_FILES([src/bin/netconf/tests/test_libraries.h])
+AC_CONFIG_FILES([src/bin/perfdhcp/Makefile])
+AC_CONFIG_FILES([src/bin/perfdhcp/tests/Makefile])
+AC_CONFIG_FILES([src/bin/perfdhcp/tests/testdata/Makefile])
+AC_CONFIG_FILES([src/bin/shell/Makefile])
+AC_CONFIG_FILES([src/bin/shell/kea-shell],
+                [chmod +x src/bin/shell/kea-shell])
+AC_CONFIG_FILES([src/bin/shell/tests/Makefile])
+AC_CONFIG_FILES([src/bin/shell/tests/basic_auth_tests.sh],
+                [chmod +x src/bin/shell/tests/basic_auth_tests.sh])
+AC_CONFIG_FILES([src/bin/shell/tests/shell_process_tests.sh],
+                [chmod +x src/bin/shell/tests/shell_process_tests.sh])
+AC_CONFIG_FILES([src/bin/shell/tests/shell_unittest.py],
+                [chmod +x src/bin/shell/tests/shell_unittest.py])
+AC_CONFIG_FILES([src/hooks/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/bootp/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/bootp/tests/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/flex_option/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/flex_option/libloadtests/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/flex_option/tests/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/high_availability/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/high_availability/libloadtests/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/high_availability/tests/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/lease_cmds/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/lease_cmds/tests/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/mysql_cb/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/mysql_cb/tests/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/stat_cmds/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/stat_cmds/tests/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/user_chk/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/user_chk/tests/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/user_chk/tests/test_data_files_config.h])
+AC_CONFIG_FILES([src/lib/Makefile])
+AC_CONFIG_FILES([src/lib/asiodns/Makefile])
+AC_CONFIG_FILES([src/lib/asiodns/tests/Makefile])
+AC_CONFIG_FILES([src/lib/asiolink/Makefile])
+AC_CONFIG_FILES([src/lib/asiolink/testutils/Makefile])
+AC_CONFIG_FILES([src/lib/asiolink/tests/Makefile])
+AC_CONFIG_FILES([src/lib/cc/Makefile])
+AC_CONFIG_FILES([src/lib/cc/tests/Makefile])
+AC_CONFIG_FILES([src/lib/cfgrpt/Makefile])
+AC_CONFIG_FILES([src/lib/cfgrpt/tests/Makefile])
+AC_CONFIG_FILES([src/lib/config/Makefile])
+AC_CONFIG_FILES([src/lib/config/tests/Makefile])
+AC_CONFIG_FILES([src/lib/config/tests/data_def_unittests_config.h])
+AC_CONFIG_FILES([src/lib/config/tests/testdata/Makefile])
+AC_CONFIG_FILES([src/lib/config_backend/Makefile])
+AC_CONFIG_FILES([src/lib/config_backend/tests/Makefile])
+AC_CONFIG_FILES([src/lib/cryptolink/Makefile])
+AC_CONFIG_FILES([src/lib/cryptolink/tests/Makefile])
+AC_CONFIG_FILES([src/lib/database/Makefile])
+AC_CONFIG_FILES([src/lib/database/tests/Makefile])
+AC_CONFIG_FILES([src/lib/database/testutils/Makefile])
+AC_CONFIG_FILES([src/lib/dhcp/Makefile])
+AC_CONFIG_FILES([src/lib/dhcp/tests/Makefile])
+AC_CONFIG_FILES([src/lib/dhcp_ddns/Makefile])
+AC_CONFIG_FILES([src/lib/dhcp_ddns/tests/Makefile])
+AC_CONFIG_FILES([src/lib/dhcpsrv/Makefile])
+AC_CONFIG_FILES([src/lib/dhcpsrv/benchmarks/Makefile])
+AC_CONFIG_FILES([src/lib/dhcpsrv/tests/Makefile])
+AC_CONFIG_FILES([src/lib/dhcpsrv/tests/test_libraries.h])
+AC_CONFIG_FILES([src/lib/dhcpsrv/testutils/Makefile])
+AC_CONFIG_FILES([src/lib/dns/Makefile])
+AC_CONFIG_FILES([src/lib/dns/gen-rdatacode.py],
+                [chmod +x src/lib/dns/gen-rdatacode.py])
+AC_CONFIG_FILES([src/lib/dns/tests/Makefile])
+AC_CONFIG_FILES([src/lib/dns/tests/testdata/Makefile])
+AC_CONFIG_FILES([src/lib/eval/Makefile])
+AC_CONFIG_FILES([src/lib/eval/tests/Makefile])
+AC_CONFIG_FILES([src/lib/exceptions/Makefile])
+AC_CONFIG_FILES([src/lib/exceptions/tests/Makefile])
+AC_CONFIG_FILES([src/lib/hooks/Makefile])
+AC_CONFIG_FILES([src/lib/hooks/tests/Makefile])
+AC_CONFIG_FILES([src/lib/hooks/tests/marker_file.h])
+AC_CONFIG_FILES([src/lib/hooks/tests/test_libraries.h])
+AC_CONFIG_FILES([src/lib/http/Makefile])
+AC_CONFIG_FILES([src/lib/http/tests/Makefile])
+AC_CONFIG_FILES([src/lib/log/Makefile])
+AC_CONFIG_FILES([src/lib/log/compiler/Makefile])
+AC_CONFIG_FILES([src/lib/log/interprocess/Makefile])
+AC_CONFIG_FILES([src/lib/log/interprocess/tests/Makefile])
+AC_CONFIG_FILES([src/lib/log/tests/Makefile])
+AC_CONFIG_FILES([src/lib/log/tests/buffer_logger_test.sh],
+                [chmod +x src/lib/log/tests/buffer_logger_test.sh])
+AC_CONFIG_FILES([src/lib/log/tests/console_test.sh],
+                [chmod +x src/lib/log/tests/console_test.sh])
+AC_CONFIG_FILES([src/lib/log/tests/destination_test.sh],
+                [chmod +x src/lib/log/tests/destination_test.sh])
+AC_CONFIG_FILES([src/lib/log/tests/init_logger_test.sh],
+                [chmod +x src/lib/log/tests/init_logger_test.sh])
+AC_CONFIG_FILES([src/lib/log/tests/local_file_test.sh],
+                [chmod +x src/lib/log/tests/local_file_test.sh])
+AC_CONFIG_FILES([src/lib/log/tests/logger_lock_test.sh],
+                [chmod +x src/lib/log/tests/logger_lock_test.sh])
+AC_CONFIG_FILES([src/lib/log/tests/severity_test.sh],
+                [chmod +x src/lib/log/tests/severity_test.sh])
+AC_CONFIG_FILES([src/lib/log/tests/tempdir.h])
+AC_CONFIG_FILES([src/lib/mysql/Makefile])
+AC_CONFIG_FILES([src/lib/mysql/testutils/Makefile])
+AC_CONFIG_FILES([src/lib/mysql/tests/Makefile])
+AC_CONFIG_FILES([src/lib/pgsql/Makefile])
+AC_CONFIG_FILES([src/lib/pgsql/tests/Makefile])
+AC_CONFIG_FILES([src/lib/pgsql/testutils/Makefile])
+AC_CONFIG_FILES([src/lib/cql/Makefile])
+AC_CONFIG_FILES([src/lib/cql/tests/Makefile])
+AC_CONFIG_FILES([src/lib/cql/testutils/Makefile])
+AC_CONFIG_FILES([src/lib/process/Makefile])
+AC_CONFIG_FILES([src/lib/process/tests/Makefile])
+AC_CONFIG_FILES([src/lib/process/testutils/Makefile])
+AC_CONFIG_FILES([src/lib/stats/Makefile])
+AC_CONFIG_FILES([src/lib/stats/tests/Makefile])
+AC_CONFIG_FILES([src/lib/testutils/Makefile])
+AC_CONFIG_FILES([src/lib/testutils/dhcp_test_lib.sh],
+                [chmod +x src/lib/testutils/dhcp_test_lib.sh])
+AC_CONFIG_FILES([src/lib/testutils/xml_reporting_test_lib.sh],
+                [chmod +x src/lib/testutils/xml_reporting_test_lib.sh])
+AC_CONFIG_FILES([src/lib/util/Makefile])
+AC_CONFIG_FILES([src/lib/util/io/Makefile])
+AC_CONFIG_FILES([src/lib/util/python/Makefile])
+AC_CONFIG_FILES([src/lib/util/python/gen_wiredata.py],
+                [chmod +x src/lib/util/python/gen_wiredata.py])
+AC_CONFIG_FILES([src/lib/util/tests/Makefile])
+AC_CONFIG_FILES([src/lib/util/tests/process_spawn_app.sh],
+                [chmod +x src/lib/util/tests/process_spawn_app.sh])
+AC_CONFIG_FILES([src/lib/util/unittests/Makefile])
+AC_CONFIG_FILES([src/lib/yang/Makefile])
+AC_CONFIG_FILES([src/lib/yang/pretests/Makefile])
+AC_CONFIG_FILES([src/lib/yang/tests/Makefile])
+AC_CONFIG_FILES([src/lib/yang/testutils/Makefile])
+AC_CONFIG_FILES([src/share/Makefile])
+AC_CONFIG_FILES([src/share/api/Makefile])
+AC_CONFIG_FILES([src/share/database/Makefile])
+AC_CONFIG_FILES([src/share/database/scripts/Makefile])
+AC_CONFIG_FILES([src/share/database/scripts/cql/Makefile])
+AC_CONFIG_FILES([src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh],
+                [chmod +x src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh],
+                [chmod +x src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/cql/upgrade_3.0_to_4.0.sh],
+                [chmod +x src/share/database/scripts/cql/upgrade_3.0_to_4.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/cql/upgrade_4.0_to_5.0.sh],
+                [chmod +x src/share/database/scripts/cql/upgrade_4.0_to_5.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/cql/wipe_data.sh],
+                [chmod +x src/share/database/scripts/cql/wipe_data.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/Makefile])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_3.0_to_4.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_3.0_to_4.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_8.0_to_8.1.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_8.0_to_8.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_8.1_to_8.2.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_8.1_to_8.2.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_8.2_to_9.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_8.2_to_9.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.0_to_9.1.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_9.0_to_9.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.1_to_9.2.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_9.1_to_9.2.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.2_to_9.3.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_9.2_to_9.3.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.3_to_9.4.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_9.3_to_9.4.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/wipe_data.sh],
+                [chmod +x src/share/database/scripts/mysql/wipe_data.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/Makefile])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_5.0_to_5.1.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_5.0_to_5.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_5.1_to_6.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_5.1_to_6.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_6.0_to_6.1.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_6.0_to_6.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_6.1_to_6.2.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_6.1_to_6.2.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/wipe_data.sh],
+                [chmod +x src/share/database/scripts/pgsql/wipe_data.sh])
+AC_CONFIG_FILES([src/share/yang/Makefile])
+AC_CONFIG_FILES([src/share/yang/modules/Makefile])
+AC_CONFIG_FILES([tools/Makefile])
+AC_CONFIG_FILES([tools/path_replacer.sh],
+                [chmod +x tools/path_replacer.sh])
 AC_OUTPUT
 
 dnl Print the results
