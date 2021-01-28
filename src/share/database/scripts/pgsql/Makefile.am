@@ -18,6 +18,7 @@ sqlscriptsdir = ${datarootdir}/${PACKAGE_NAME}/scripts/pgsql
 sqlscripts_DATA = dhcpdb_create.pgsql
 sqlscripts_DATA += dhcpdb_drop.pgsql
 sqlscripts_DATA += ${UPGRADESCRIPTS}
+sqlscripts_SCRIPTS = ${UPGRADESCRIPTS}
 
 DISTCLEANFILES = ${UPGRADESCRIPTS}
 

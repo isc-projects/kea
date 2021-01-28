@@ -25,6 +25,7 @@ sqlscriptsdir = ${datarootdir}/${PACKAGE_NAME}/scripts/mysql
 sqlscripts_DATA = dhcpdb_create.mysql
 sqlscripts_DATA += dhcpdb_drop.mysql
 sqlscripts_DATA += ${UPGRADESCRIPTS}
+sqlscripts_SCRIPTS = ${UPGRADESCRIPTS}
 
 DISTCLEANFILES = ${UPGRADESCRIPTS}
 
