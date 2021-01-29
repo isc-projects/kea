@@ -75,7 +75,7 @@ public:
     /// @param vars Environment variables for the program to be executed.
     ProcessSpawn(const std::string& executable,
                  const ProcessArgs& args = ProcessArgs(),
-                 const ProcessEnvVars& = ProcessEnvVars());
+                 const ProcessEnvVars& vars = ProcessEnvVars());
 
     /// @brief Destructor.
     ~ProcessSpawn();
