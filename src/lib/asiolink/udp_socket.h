@@ -150,16 +150,22 @@ private:
     // Two variables to hold the socket - a socket and a pointer to it.  This
     // handles the case where a socket is passed to the UDPSocket on
     // construction, or where it is asked to manage its own socket.
-    boost::asio::ip::udp::socket*      socket_ptr_;    ///< Pointer to own socket
-    boost::asio::ip::udp::socket&      socket_;        ///< Socket
-    bool                               isopen_;        ///< true when socket is open
+
+    /// Pointer to own socket
+    std::unique_ptr<boost::asio::ip::udp::socket> socket_ptr_;
+
+    // Socket
+    boost::asio::ip::udp::socket& socket_;
+
+    // True when socket is open
+    bool isopen_;
 };
 
 // Constructor - caller manages socket
 
 template <typename C>
 UDPSocket<C>::UDPSocket(boost::asio::ip::udp::socket& socket) :
-    socket_ptr_(NULL), socket_(socket), isopen_(true)
+    socket_ptr_(), socket_(socket), isopen_(true)
 {
 }
 
@@ -172,12 +178,11 @@ UDPSocket<C>::UDPSocket(IOService& service) :
 {
 }
 
-// Destructor.  Only delete the socket if we are managing it.
+// Destructor.
 
 template <typename C>
 UDPSocket<C>::~UDPSocket()
 {
-    delete socket_ptr_;
 }
 
 // Open the socket.

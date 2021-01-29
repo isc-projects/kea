@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -225,8 +225,12 @@ private:
     // Two variables to hold the socket - a socket and a pointer to it.  This
     // handles the case where a socket is passed to the TCPSocket on
     // construction, or where it is asked to manage its own socket.
-    boost::asio::ip::tcp::socket*      socket_ptr_;    ///< Pointer to own socket
-    boost::asio::ip::tcp::socket&      socket_;        ///< Socket
+
+    // Pointer to own socket
+    std::unique_ptr<boost::asio::ip::tcp::socket> socket_ptr_;
+
+    // Socket
+    boost::asio::ip::tcp::socket& socket_;
 
     // TODO: Remove temporary buffer
     // The current implementation copies the buffer passed to asyncSend() into
@@ -241,14 +245,16 @@ private:
     // The option of sending the data in two operations, the count followed by
     // the data was discounted as that would lead to two callbacks which would
     // cause problems with the stackless coroutine code.
-    isc::util::OutputBufferPtr   send_buffer_;   ///< Send buffer
+
+    // Send buffer
+    isc::util::OutputBufferPtr send_buffer_;
 };
 
 // Constructor - caller manages socket
 
 template <typename C>
 TCPSocket<C>::TCPSocket(boost::asio::ip::tcp::socket& socket) :
-    socket_ptr_(NULL), socket_(socket), send_buffer_()
+    socket_ptr_(), socket_(socket), send_buffer_()
 {
 }
 
@@ -261,12 +267,11 @@ TCPSocket<C>::TCPSocket(IOService& service) :
 {
 }
 
-// Destructor.  Only delete the socket if we are managing it.
+// Destructor.
 
 template <typename C>
 TCPSocket<C>::~TCPSocket()
 {
-    delete socket_ptr_;
 }
 
 // Open the socket.
