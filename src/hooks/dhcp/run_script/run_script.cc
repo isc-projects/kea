@@ -89,11 +89,8 @@ RunScriptImpl::extractHWAddr(isc::util::ProcessEnvVars& vars,
                              const std::string& prefix,
                              const std::string& sufix) {
     if (hwaddr) {
-        RunScriptImpl::extractString(vars, std::string(hwaddr->hwaddr_.begin(),
-                                                       hwaddr->hwaddr_.end()),
-                                     prefix, sufix);
-        RunScriptImpl::extractInteger(vars, hwaddr->htype_,
-                                      prefix + "_TYPE", sufix);
+        RunScriptImpl::extractString(vars, hwaddr->toText(false), prefix, sufix);
+        RunScriptImpl::extractInteger(vars, hwaddr->htype_, prefix + "_TYPE", sufix);
     } else {
         RunScriptImpl::extractString(vars, "", prefix, sufix);
         RunScriptImpl::extractString(vars, "", prefix + "_TYPE", sufix);
@@ -108,9 +105,9 @@ RunScriptImpl::extractDUID(isc::util::ProcessEnvVars& vars,
     std::string data = "";
     if (duid) {
         RunScriptImpl::extractString(vars, duid->toText(),
-                                     prefix + "_CLIENT_ID", sufix);
+                                     prefix + "_ID", sufix);
     } else {
-        RunScriptImpl::extractString(vars, "", prefix + "_CLIENT_ID", sufix);
+        RunScriptImpl::extractString(vars, "", prefix + "_ID", sufix);
     }
 }
 
@@ -336,12 +333,6 @@ RunScriptImpl::extractPkt4(isc::util::ProcessEnvVars& vars,
                                      prefix + "_YIADDR", sufix);
         RunScriptImpl::extractString(vars, pkt4->getGiaddr().toText(),
                                      prefix + "_GIADDR", sufix);
-        RunScriptImpl::extractString(vars, std::string(pkt4->getSname().begin(),
-                                                       pkt4->getSname().end()),
-                                     prefix + "_SNAME", sufix);
-        RunScriptImpl::extractString(vars, std::string(pkt4->getFile().begin(),
-                                                       pkt4->getFile().end()),
-                                     prefix + "_FILE_NAME", sufix);
         RunScriptImpl::extractBoolean(vars, pkt4->isRelayed(),
                                       prefix + "_RELAYED", sufix);
         RunScriptImpl::extractHWAddr(vars, pkt4->getHWAddr(),
@@ -366,8 +357,6 @@ RunScriptImpl::extractPkt4(isc::util::ProcessEnvVars& vars,
         RunScriptImpl::extractString(vars, "", prefix + "_SIADDR", sufix);
         RunScriptImpl::extractString(vars, "", prefix + "_YIADDR", sufix);
         RunScriptImpl::extractString(vars, "", prefix + "_GIADDR", sufix);
-        RunScriptImpl::extractString(vars, "", prefix + "_SNAME", sufix);
-        RunScriptImpl::extractString(vars, "", prefix + "_FILE_NAME", sufix);
         RunScriptImpl::extractString(vars, "", prefix + "_RELAYED", sufix);
         RunScriptImpl::extractHWAddr(vars, HWAddrPtr(),
                                      prefix + "_HWADDR", sufix);
@@ -407,7 +396,6 @@ RunScriptImpl::extractPkt6(isc::util::ProcessEnvVars& vars,
                                      prefix + "_PROTO", sufix);
         RunScriptImpl::extractDUID(vars, pkt6->getClientId(),
                                    prefix + "_CLIENT_ID", sufix);
-
     } else {
         RunScriptImpl::extractString(vars, "", prefix + "_TYPE", sufix);
         RunScriptImpl::extractString(vars, "", prefix + "_TXID", sufix);

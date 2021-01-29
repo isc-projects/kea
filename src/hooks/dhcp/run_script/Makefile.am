@@ -35,6 +35,7 @@ libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

@@ -6,6 +6,650 @@
 
 #include <config.h>
 
+#include <run_script.h>
+
+#include <asiolink/io_address.h>
+#include <dhcp/dhcp6.h>
+
+#include <gtest/gtest.h>
+
+using namespace isc::run_script;
+
+using namespace isc::asiolink;
+using namespace isc::dhcp;
+using namespace isc::util;
+using namespace std;
+
 namespace {
 
+/// @brief This function concatenates all received environment variables and
+/// adds a newline after each one so that a simple compare can be done in the
+/// test.
+///
+/// @param vars The list of environment variables to concatenate.
+/// @return The concatenated environment.
+std::string
+concatenate(const ProcessEnvVars& vars) {
+    std::string result = "";
+    for (auto var : vars) {
+        result += var + "\n";
+    }
+    return (result);
 }
+
+/// @brief Generate a valid HWAddr.
+///
+/// @return The generated HWAddr.
+HWAddrPtr
+generateHWAddr() {
+    return (HWAddrPtr(new HWAddr({0, 1, 2 ,3}, HTYPE_ETHER)));
+}
+
+/// @brief Generate a valid DUID.
+///
+/// @return The generated DUID.
+ClientIdPtr
+generateDUID() {
+    return (ClientIdPtr(new ClientId({0, 1, 2, 3, 4, 5, 6})));
+}
+
+/// @brief Generate a valid Option6IA.
+///
+/// @return The generated Option6IA.
+Option6IAPtr
+generateOptionIA() {
+    OptionBuffer buf;
+    buf.resize(12);
+    buf[0] = 0xa1; // iaid
+    buf[1] = 0xa2;
+    buf[2] = 0xa3;
+    buf[3] = 0xa4;
+    buf[4] = 0x81; // T1
+    buf[5] = 0x02;
+    buf[6] = 0x03;
+    buf[7] = 0x04;
+    buf[8] = 0x84; // T2
+    buf[9] = 0x03;
+    buf[10] = 0x02;
+    buf[11] = 0x01;
+    return (Option6IAPtr(new Option6IA(D6O_IA_NA, buf.begin(), buf.end())));
+}
+
+/// @brief Generate a valid Subnet4.
+///
+/// @return The generated Subnet4.
+Subnet4Ptr
+generateSubnet4() {
+    return (Subnet4Ptr(new Subnet4(IOAddress("182.168.0.1"), 2, 3, 4, 5, 6)));
+}
+
+/// @brief Generate a valid Subnet6.
+///
+/// @return The generated Subnet6.
+Subnet6Ptr
+generateSubnet6() {
+    return (Subnet6Ptr(new Subnet6(IOAddress("2003:db8::1"), 2, 3, 4, 5, 6, 7)));
+}
+
+/// @brief Generate a valid Lease4.
+///
+/// @return The generated Lease4.
+Lease4Ptr
+generateLease4() {
+    HWAddrPtr hwaddr = generateHWAddr();
+    ClientIdPtr clientid = generateDUID();
+    return (Lease4Ptr(new Lease4(IOAddress("192.168.0.1"), hwaddr, clientid,
+                                 2, 3, 4, false, false, "test.hostname")));
+}
+
+/// @brief Generate a valid Lease6.
+///
+/// @return The generated Lease6.
+Lease6Ptr
+generateLease6() {
+    HWAddrPtr hwaddr = generateHWAddr();
+    DuidPtr duid = generateDUID();
+    Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2003:db8::1"), duid, 2,
+                                3, 4, 5, false, false, "test.hostname", hwaddr));
+    lease6->cltt_ = 7;
+    return (lease6);
+}
+
+/// @brief Generate a Pkt4 with all parameters set.
+///
+/// @return The generated Pkt4.
+Pkt4Ptr
+generatePkt4() {
+    // A dummy MAC address, padded with 0s
+    const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0,
+                                     0, 0, 0, 0, 0, 0, 0, 0 };
+
+    // Let's use some creative test content here (128 chars + \0)
+    const uint8_t dummyFile[] = "Lorem ipsum dolor sit amet, consectetur "
+        "adipiscing elit. Proin mollis placerat metus, at "
+        "lacinia orci ornare vitae. Mauris amet.";
+
+    // Yet another type of test content (64 chars + \0)
+    const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
+        "adipiscing elit posuere.";
+
+    // That is only part of the header. It contains all "short" fields,
+    // larger fields are constructed separately.
+    uint8_t hdr[] = {
+        1, 6, 6, 13,            // op, htype, hlen, hops,
+        0x12, 0x34, 0x56, 0x78, // transaction-id
+        0, 42, 0x80, 0x00,      // 42 secs, BROADCAST flags
+        192, 0, 2, 1,           // ciaddr
+        1, 2, 3, 4,             // yiaddr
+        192, 0, 2, 255,         // siaddr
+        192, 0, 2, 50,          // giaddr
+    };
+
+    // Initialize the vector with the header fields defined above.
+    vector<uint8_t> buf(hdr, hdr + sizeof(hdr));
+
+    // Append the large header fields.
+    copy(dummyChaddr, dummyChaddr + Pkt4::MAX_CHADDR_LEN, back_inserter(buf));
+    copy(dummySname, dummySname + Pkt4::MAX_SNAME_LEN, back_inserter(buf));
+    copy(dummyFile, dummyFile + Pkt4::MAX_FILE_LEN, back_inserter(buf));
+
+    // Should now have all the header, so check.  The "static_cast" is used
+    // to get round an odd bug whereby the linker appears not to find the
+    // definition of DHCPV4_PKT_HDR_LEN if it appears within an EXPECT_EQ().
+    EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), buf.size());
+
+    // Add magic cookie
+    buf.push_back(0x63);
+    buf.push_back(0x82);
+    buf.push_back(0x53);
+    buf.push_back(0x63);
+
+    // Add message type DISCOVER
+    buf.push_back(static_cast<uint8_t>(DHO_DHCP_MESSAGE_TYPE));
+    buf.push_back(1); // length (just one byte)
+    buf.push_back(static_cast<uint8_t>(DHCPDISCOVER));
+
+    Pkt4Ptr pkt4(new Pkt4(&buf[0], buf.size()));
+
+    pkt4->setIface("eth1");
+    pkt4->setIndex(2);
+
+    pkt4->setHWAddr(generateHWAddr());
+    pkt4->setLocalHWAddr(generateHWAddr());
+    pkt4->setRemoteHWAddr(generateHWAddr());
+
+    return (pkt4);
+}
+
+/// @brief Generate a Pkt6 with all parameters set.
+///
+/// @return The generated Pkt6.
+Pkt6Ptr
+generatePkt6() {
+    // That is only part of the header. It contains all "short" fields,
+    // larger fields are constructed separately.
+    uint8_t data[98];
+    data[0]  = 1;
+    data[1]  = 1;       data[2]  = 2;     data[3] = 3;      data[4]  = 0;
+    data[5]  = 1;       data[6]  = 0;     data[7] = 14;     data[8]  = 0;
+    data[9]  = 1;       data[10] = 0;     data[11] = 1;     data[12] = 21;
+    data[13] = 158;     data[14] = 60;    data[15] = 22;    data[16] = 0;
+    data[17] = 30;      data[18] = 140;   data[19] = 155;   data[20] = 115;
+    data[21] = 73;      data[22] = 0;     data[23] = 3;     data[24] = 0;
+    data[25] = 40;      data[26] = 0;     data[27] = 0;     data[28] = 0;
+    data[29] = 1;       data[30] = 255;   data[31] = 255;   data[32] = 255;
+    data[33] = 255;     data[34] = 255;   data[35] = 255;   data[36] = 255;
+    data[37] = 255;     data[38] = 0;     data[39] = 5;     data[40] = 0;
+    data[41] = 24;      data[42] = 32;    data[43] = 1;     data[44] = 13;
+    data[45] = 184;     data[46] = 0;     data[47] = 1;     data[48] = 0;
+    data[49] = 0;       data[50] = 0;     data[51] = 0;     data[52] = 0;
+    data[53] = 0;       data[54] = 0;     data[55] = 0;     data[56] = 18;
+    data[57] = 52;      data[58] = 255;   data[59] = 255;   data[60] = 255;
+    data[61] = 255;     data[62] = 255;   data[63] = 255;   data[64] = 255;
+    data[65] = 255;     data[66] = 0;     data[67] = 23;    data[68] = 0;
+    data[69] = 16;      data[70] = 32;    data[71] = 1;     data[72] = 13;
+    data[73] = 184;     data[74] = 0;     data[75] = 1;     data[76] = 0;
+    data[77] = 0;       data[78] = 0;     data[79] = 0;     data[80] = 0;
+    data[81] = 0;       data[82] = 0;     data[83] = 0;     data[84] = 221;
+    data[85] = 221;     data[86] = 0;     data[87] = 8;     data[88] = 0;
+    data[89] = 2;       data[90] = 0;     data[91] = 100;   data[92] = 0;
+    data[93] = 6;       data[94] = 0;     data[95] = 2;     data[96] = 0;
+    data[97] = 23;
+
+    Pkt6Ptr pkt6(new Pkt6(data, sizeof(data)));
+
+    pkt6->setRemotePort(546);
+    pkt6->setRemoteAddr(IOAddress("fe80::21e:8cff:fe9b:7349"));
+    pkt6->setLocalPort(0);
+    pkt6->setLocalAddr(IOAddress("ff02::1:2"));
+
+    pkt6->setIface("eth1");
+    pkt6->setIndex(2);
+
+    pkt6->setRemoteHWAddr(generateHWAddr());
+    pkt6->addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID,
+                              generateDUID()->getDuid())));
+
+    return (pkt6);
+}
+
+/// @brief Tests the RunScript setName and getName functions.
+TEST(RunScript, testSetNameGetName) {
+    RunScriptImpl script;
+    std::string script_name = "test";
+    ASSERT_NO_THROW(script.setName(script_name));
+    EXPECT_EQ(script_name, script.getName());
+}
+
+/// @brief Tests the RunScript setSync and getSync functions.
+TEST(RunScript, testSetSyncGetSync) {
+    RunScriptImpl script;
+    bool sync = true;
+    ASSERT_NO_THROW(script.setSync(sync));
+    EXPECT_EQ(sync, script.getSync());
+}
+
+/// @brief Tests the extractBoolean method works as expected.
+TEST(RunScript, extractBoolean) {
+    ProcessEnvVars vars;
+    bool flag = false;
+    RunScriptImpl::extractBoolean(vars, flag, "FALSE_PREFIX", "_FALSE_SUFIX");
+    ASSERT_EQ(1, vars.size());
+    std::string expected = "FALSE_PREFIX_FALSE_SUFIX=0\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    flag = true;
+    RunScriptImpl::extractBoolean(vars, flag, "TRUE_PREFIX", "_TRUE_SUFIX");
+    ASSERT_EQ(2, vars.size());
+    expected = "FALSE_PREFIX_FALSE_SUFIX=0\n"
+               "TRUE_PREFIX_TRUE_SUFIX=1\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractInteger method works as expected.
+TEST(RunScript, extractInteger) {
+    ProcessEnvVars vars;
+    uint64_t value = 0;
+    RunScriptImpl::extractInteger(vars, value, "ZERO_PREFIX", "_ZERO_SUFIX");
+    ASSERT_EQ(1, vars.size());
+    std::string expected = "ZERO_PREFIX_ZERO_SUFIX=0\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    value = 1;
+    RunScriptImpl::extractInteger(vars, value, "ONE_PREFIX", "_ONE_SUFIX");
+    ASSERT_EQ(2, vars.size());
+    expected = "ZERO_PREFIX_ZERO_SUFIX=0\n"
+               "ONE_PREFIX_ONE_SUFIX=1\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    value = 1000;
+    RunScriptImpl::extractInteger(vars, value, "THOUSAND_PREFIX", "_THOUSAND_SUFIX");
+    ASSERT_EQ(3, vars.size());
+    expected = "ZERO_PREFIX_ZERO_SUFIX=0\n"
+               "ONE_PREFIX_ONE_SUFIX=1\n"
+               "THOUSAND_PREFIX_THOUSAND_SUFIX=1000\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractString method works as expected.
+TEST(RunScript, extractString) {
+    ProcessEnvVars vars;
+    std::string value = "";
+    RunScriptImpl::extractString(vars, value, "EMPTY_PREFIX", "_EMPTY_SUFIX");
+    ASSERT_EQ(1, vars.size());
+    std::string expected = "EMPTY_PREFIX_EMPTY_SUFIX=\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    value = "SOMETHING";
+    RunScriptImpl::extractString(vars, value, "NON_EMPTY_PREFIX", "_NON_EMPTY_SUFIX");
+    ASSERT_EQ(2, vars.size());
+    expected = "EMPTY_PREFIX_EMPTY_SUFIX=\n"
+               "NON_EMPTY_PREFIX_NON_EMPTY_SUFIX=SOMETHING\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractHWAddr method works as expected.
+TEST(RunScript, extractHWAddr) {
+    ProcessEnvVars vars;
+    HWAddrPtr hwaddr;
+    RunScriptImpl::extractHWAddr(vars, hwaddr, "HWADDR_PREFIX", "_HWADDR_SUFIX");
+    ASSERT_EQ(2, vars.size());
+    std::string expected = "HWADDR_PREFIX_HWADDR_SUFIX=\n"
+                           "HWADDR_PREFIX_TYPE_HWADDR_SUFIX=\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    vars.clear();
+    hwaddr = generateHWAddr();
+    RunScriptImpl::extractHWAddr(vars, hwaddr, "HWADDR_PREFIX", "_HWADDR_SUFIX");
+    ASSERT_EQ(2, vars.size());
+    expected = "HWADDR_PREFIX_HWADDR_SUFIX=00:01:02:03\n"
+               "HWADDR_PREFIX_TYPE_HWADDR_SUFIX=1\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractDUID method works as expected.
+TEST(RunScript, extractDUID) {
+    ProcessEnvVars vars;
+    DuidPtr duid;
+    RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFIX");
+    ASSERT_EQ(1, vars.size());
+    std::string expected = "DUID_PREFIX_ID_DUID_SUFIX=\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    vars.clear();
+    duid = generateDUID();
+    RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFIX");
+    ASSERT_EQ(1, vars.size());
+    expected = "DUID_PREFIX_ID_DUID_SUFIX=00:01:02:03:04:05:06\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractOptionIA method works as expected.
+TEST(RunScript, extractOptionIA) {
+    ProcessEnvVars vars;
+    Option6IAPtr optionia;
+    RunScriptImpl::extractOptionIA(vars, optionia, "OPTIONIA_PREFIX", "_OPTIONIA_SUFIX");
+    ASSERT_EQ(4, vars.size());
+    std::string expected = "OPTIONIA_PREFIX_IAID_OPTIONIA_SUFIX=\n"
+                           "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFIX=\n"
+                           "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFIX=\n"
+                           "OPTIONIA_PREFIX_IA_T2_OPTIONIA_SUFIX=\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    vars.clear();
+    optionia = generateOptionIA();
+    RunScriptImpl::extractOptionIA(vars, optionia, "OPTIONIA_PREFIX", "_OPTIONIA_SUFIX");
+    ASSERT_EQ(4, vars.size());
+    expected = "OPTIONIA_PREFIX_IAID_OPTIONIA_SUFIX=2711790500\n"
+               "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFIX=3\n"
+               "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFIX=2164392708\n"
+               "OPTIONIA_PREFIX_IA_T2_OPTIONIA_SUFIX=2214789633\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractSubnet4 method works as expected.
+TEST(RunScript, extractSubnet4) {
+    ProcessEnvVars vars;
+    Subnet4Ptr subnet4;
+    RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4_PREFIX", "_SUBNET4_SUFIX");
+    ASSERT_EQ(4, vars.size());
+    std::string expected = "SUBNET4_PREFIX_ID_SUBNET4_SUFIX=\n"
+                           "SUBNET4_PREFIX_NAME_SUBNET4_SUFIX=\n"
+                           "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFIX=\n"
+                           "SUBNET4_PREFIX_PREFIX_LEN_SUBNET4_SUFIX=\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    vars.clear();
+    subnet4 = generateSubnet4();
+    RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4_PREFIX", "_SUBNET4_SUFIX");
+    ASSERT_EQ(4, vars.size());
+    expected = "SUBNET4_PREFIX_ID_SUBNET4_SUFIX=6\n"
+               "SUBNET4_PREFIX_NAME_SUBNET4_SUFIX=182.168.0.1/2\n"
+               "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFIX=182.168.0.1\n"
+               "SUBNET4_PREFIX_PREFIX_LEN_SUBNET4_SUFIX=2\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractSubnet6 method works as expected.
+TEST(RunScript, extractSubnet6) {
+    ProcessEnvVars vars;
+    Subnet6Ptr subnet6;
+    RunScriptImpl::extractSubnet6(vars, subnet6, "SUBNET6_PREFIX", "_SUBNET6_SUFIX");
+    ASSERT_EQ(4, vars.size());
+    std::string expected = "SUBNET6_PREFIX_ID_SUBNET6_SUFIX=\n"
+                           "SUBNET6_PREFIX_NAME_SUBNET6_SUFIX=\n"
+                           "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFIX=\n"
+                           "SUBNET6_PREFIX_PREFIX_LEN_SUBNET6_SUFIX=\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    vars.clear();
+    subnet6 = generateSubnet6();
+    RunScriptImpl::extractSubnet6(vars, subnet6, "SUBNET6_PREFIX", "_SUBNET6_SUFIX");
+    ASSERT_EQ(4, vars.size());
+    expected = "SUBNET6_PREFIX_ID_SUBNET6_SUFIX=7\n"
+               "SUBNET6_PREFIX_NAME_SUBNET6_SUFIX=2003:db8::1/2\n"
+               "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFIX=2003:db8::1\n"
+               "SUBNET6_PREFIX_PREFIX_LEN_SUBNET6_SUFIX=2\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractLease4 method works as expected.
+TEST(RunScript, extractLease4) {
+    ProcessEnvVars vars;
+    Lease4Ptr lease4;
+    RunScriptImpl::extractLease4(vars, lease4, "LEASE4_PREFIX", "_LEASE4_SUFIX");
+    ASSERT_EQ(9, vars.size());
+    std::string expected = "LEASE4_PREFIX_ADDRESS_LEASE4_SUFIX=\n"
+                           "LEASE4_PREFIX_CLTT_LEASE4_SUFIX=\n"
+                           "LEASE4_PREFIX_HOSTNAME_LEASE4_SUFIX=\n"
+                           "LEASE4_PREFIX_HWADDR_LEASE4_SUFIX=\n"
+                           "LEASE4_PREFIX_HWADDR_TYPE_LEASE4_SUFIX=\n"
+                           "LEASE4_PREFIX_STATE_LEASE4_SUFIX=\n"
+                           "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFIX=\n"
+                           "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFIX=\n"
+                           "LEASE4_PREFIX_CLIENT_ID_ID_LEASE4_SUFIX=\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    vars.clear();
+    lease4 = generateLease4();
+    RunScriptImpl::extractLease4(vars, lease4, "LEASE4_PREFIX", "_LEASE4_SUFIX");
+    ASSERT_EQ(9, vars.size());
+    expected = "LEASE4_PREFIX_ADDRESS_LEASE4_SUFIX=192.168.0.1\n"
+               "LEASE4_PREFIX_CLTT_LEASE4_SUFIX=3\n"
+               "LEASE4_PREFIX_HOSTNAME_LEASE4_SUFIX=test.hostname\n"
+               "LEASE4_PREFIX_HWADDR_LEASE4_SUFIX=00:01:02:03\n"
+               "LEASE4_PREFIX_HWADDR_TYPE_LEASE4_SUFIX=1\n"
+               "LEASE4_PREFIX_STATE_LEASE4_SUFIX=default\n"
+               "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFIX=4\n"
+               "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFIX=2\n"
+               "LEASE4_PREFIX_CLIENT_ID_ID_LEASE4_SUFIX=00:01:02:03:04:05:06\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractLease6 method works as expected.
+TEST(RunScript, extractLease6) {
+    ProcessEnvVars vars;
+    Lease6Ptr lease6;
+    RunScriptImpl::extractLease6(vars, lease6, "LEASE6_PREFIX", "_LEASE6_SUFIX");
+    ASSERT_EQ(13, vars.size());
+    std::string expected = "LEASE6_PREFIX_ADDRESS_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_CLTT_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_HOSTNAME_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_HWADDR_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_HWADDR_TYPE_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_STATE_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_SUBNET_ID_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_VALID_LIFETIME_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_DUID_ID_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_IAID_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_TYPE_LEASE6_SUFIX=\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    vars.clear();
+    lease6 = generateLease6();
+    RunScriptImpl::extractLease6(vars, lease6, "LEASE6_PREFIX", "_LEASE6_SUFIX");
+    ASSERT_EQ(13, vars.size());
+    expected = "LEASE6_PREFIX_ADDRESS_LEASE6_SUFIX=2003:db8::1\n"
+               "LEASE6_PREFIX_CLTT_LEASE6_SUFIX=7\n"
+               "LEASE6_PREFIX_HOSTNAME_LEASE6_SUFIX=test.hostname\n"
+               "LEASE6_PREFIX_HWADDR_LEASE6_SUFIX=00:01:02:03\n"
+               "LEASE6_PREFIX_HWADDR_TYPE_LEASE6_SUFIX=1\n"
+               "LEASE6_PREFIX_STATE_LEASE6_SUFIX=default\n"
+               "LEASE6_PREFIX_SUBNET_ID_LEASE6_SUFIX=5\n"
+               "LEASE6_PREFIX_VALID_LIFETIME_LEASE6_SUFIX=4\n"
+               "LEASE6_PREFIX_DUID_ID_LEASE6_SUFIX=00:01:02:03:04:05:06\n"
+               "LEASE6_PREFIX_IAID_LEASE6_SUFIX=2\n"
+               "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFIX=3\n"
+               "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFIX=128\n"
+               "LEASE6_PREFIX_TYPE_LEASE6_SUFIX=IA_NA\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractLeases4 method works as expected.
+TEST(RunScript, extractLeases4) {
+    ProcessEnvVars vars;
+    Lease4CollectionPtr leases4;
+    RunScriptImpl::extractLeases4(vars, leases4, "LEASES4_PREFIX", "_LEASES4_SUFIX");
+    ASSERT_EQ(1, vars.size());
+    std::string expected = "LEASES4_PREFIX_SIZE_LEASES4_SUFIX=0\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    vars.clear();
+    leases4.reset(new Lease4Collection());
+    leases4->push_back(generateLease4());
+    leases4->push_back(generateLease4());
+    RunScriptImpl::extractLeases4(vars, leases4, "LEASES4_PREFIX", "_LEASES4_SUFIX");
+    ASSERT_EQ(19, vars.size());
+    expected = "LEASES4_PREFIX_SIZE_LEASES4_SUFIX=2\n"
+               "LEASES4_PREFIX_AT0_ADDRESS_LEASES4_SUFIX=192.168.0.1\n"
+               "LEASES4_PREFIX_AT0_CLTT_LEASES4_SUFIX=3\n"
+               "LEASES4_PREFIX_AT0_HOSTNAME_LEASES4_SUFIX=test.hostname\n"
+               "LEASES4_PREFIX_AT0_HWADDR_LEASES4_SUFIX=00:01:02:03\n"
+               "LEASES4_PREFIX_AT0_HWADDR_TYPE_LEASES4_SUFIX=1\n"
+               "LEASES4_PREFIX_AT0_STATE_LEASES4_SUFIX=default\n"
+               "LEASES4_PREFIX_AT0_SUBNET_ID_LEASES4_SUFIX=4\n"
+               "LEASES4_PREFIX_AT0_VALID_LIFETIME_LEASES4_SUFIX=2\n"
+               "LEASES4_PREFIX_AT0_CLIENT_ID_ID_LEASES4_SUFIX=00:01:02:03:04:05:06\n"
+               "LEASES4_PREFIX_AT1_ADDRESS_LEASES4_SUFIX=192.168.0.1\n"
+               "LEASES4_PREFIX_AT1_CLTT_LEASES4_SUFIX=3\n"
+               "LEASES4_PREFIX_AT1_HOSTNAME_LEASES4_SUFIX=test.hostname\n"
+               "LEASES4_PREFIX_AT1_HWADDR_LEASES4_SUFIX=00:01:02:03\n"
+               "LEASES4_PREFIX_AT1_HWADDR_TYPE_LEASES4_SUFIX=1\n"
+               "LEASES4_PREFIX_AT1_STATE_LEASES4_SUFIX=default\n"
+               "LEASES4_PREFIX_AT1_SUBNET_ID_LEASES4_SUFIX=4\n"
+               "LEASES4_PREFIX_AT1_VALID_LIFETIME_LEASES4_SUFIX=2\n"
+               "LEASES4_PREFIX_AT1_CLIENT_ID_ID_LEASES4_SUFIX=00:01:02:03:04:05:06\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractLeases6 method works as expected.
+TEST(RunScript, extractLeases6) {
+    ProcessEnvVars vars;
+    Lease6CollectionPtr leases6;
+    RunScriptImpl::extractLeases6(vars, leases6, "LEASES6_PREFIX", "_LEASES6_SUFIX");
+    ASSERT_EQ(1, vars.size());
+    std::string expected = "LEASES6_PREFIX_SIZE_LEASES6_SUFIX=0\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    vars.clear();
+    leases6.reset(new Lease6Collection());
+    leases6->push_back(generateLease6());
+    leases6->push_back(generateLease6());
+    RunScriptImpl::extractLeases6(vars, leases6, "LEASES6_PREFIX", "_LEASES6_SUFIX");
+    ASSERT_EQ(27, vars.size());
+    expected = "LEASES6_PREFIX_SIZE_LEASES6_SUFIX=2\n"
+               "LEASES6_PREFIX_AT0_ADDRESS_LEASES6_SUFIX=2003:db8::1\n"
+               "LEASES6_PREFIX_AT0_CLTT_LEASES6_SUFIX=7\n"
+               "LEASES6_PREFIX_AT0_HOSTNAME_LEASES6_SUFIX=test.hostname\n"
+               "LEASES6_PREFIX_AT0_HWADDR_LEASES6_SUFIX=00:01:02:03\n"
+               "LEASES6_PREFIX_AT0_HWADDR_TYPE_LEASES6_SUFIX=1\n"
+               "LEASES6_PREFIX_AT0_STATE_LEASES6_SUFIX=default\n"
+               "LEASES6_PREFIX_AT0_SUBNET_ID_LEASES6_SUFIX=5\n"
+               "LEASES6_PREFIX_AT0_VALID_LIFETIME_LEASES6_SUFIX=4\n"
+               "LEASES6_PREFIX_AT0_DUID_ID_LEASES6_SUFIX=00:01:02:03:04:05:06\n"
+               "LEASES6_PREFIX_AT0_IAID_LEASES6_SUFIX=2\n"
+               "LEASES6_PREFIX_AT0_PREFERRED_LIFETIME_LEASES6_SUFIX=3\n"
+               "LEASES6_PREFIX_AT0_PREFIX_LEN_LEASES6_SUFIX=128\n"
+               "LEASES6_PREFIX_AT0_TYPE_LEASES6_SUFIX=IA_NA\n"
+               "LEASES6_PREFIX_AT1_ADDRESS_LEASES6_SUFIX=2003:db8::1\n"
+               "LEASES6_PREFIX_AT1_CLTT_LEASES6_SUFIX=7\n"
+               "LEASES6_PREFIX_AT1_HOSTNAME_LEASES6_SUFIX=test.hostname\n"
+               "LEASES6_PREFIX_AT1_HWADDR_LEASES6_SUFIX=00:01:02:03\n"
+               "LEASES6_PREFIX_AT1_HWADDR_TYPE_LEASES6_SUFIX=1\n"
+               "LEASES6_PREFIX_AT1_STATE_LEASES6_SUFIX=default\n"
+               "LEASES6_PREFIX_AT1_SUBNET_ID_LEASES6_SUFIX=5\n"
+               "LEASES6_PREFIX_AT1_VALID_LIFETIME_LEASES6_SUFIX=4\n"
+               "LEASES6_PREFIX_AT1_DUID_ID_LEASES6_SUFIX=00:01:02:03:04:05:06\n"
+               "LEASES6_PREFIX_AT1_IAID_LEASES6_SUFIX=2\n"
+               "LEASES6_PREFIX_AT1_PREFERRED_LIFETIME_LEASES6_SUFIX=3\n"
+               "LEASES6_PREFIX_AT1_PREFIX_LEN_LEASES6_SUFIX=128\n"
+               "LEASES6_PREFIX_AT1_TYPE_LEASES6_SUFIX=IA_NA\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractPkt4 method works as expected.
+TEST(RunScript, extractPkt4) {
+    ProcessEnvVars vars;
+    Pkt4Ptr pkt4;
+    RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFIX");
+    ASSERT_EQ(22, vars.size());
+    std::string expected = "PKT4_PREFIX_TYPE_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_TXID_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_LOCAL_PORT_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_REMOTE_ADDR_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_REMOTE_PORT_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_IFACE_INDEX_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_IFACE_NAME_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_HOPS_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_SECS_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_FLAGS_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_CIADDR_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_SIADDR_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_YIADDR_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_GIADDR_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_RELAYED_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_HWADDR_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_HWADDR_TYPE_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_LOCAL_HWADDR_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFIX=\n"
+                           "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFIX=\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    vars.clear();
+    pkt4 = generatePkt4();
+    RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFIX");
+    ASSERT_EQ(22, vars.size());
+    expected = "PKT4_PREFIX_TYPE_PKT4_SUFIX=UNKNOWN\n"
+               "PKT4_PREFIX_TXID_PKT4_SUFIX=0\n"
+               "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFIX=0.0.0.0\n"
+               "PKT4_PREFIX_LOCAL_PORT_PKT4_SUFIX=67\n"
+               "PKT4_PREFIX_REMOTE_ADDR_PKT4_SUFIX=0.0.0.0\n"
+               "PKT4_PREFIX_REMOTE_PORT_PKT4_SUFIX=68\n"
+               "PKT4_PREFIX_IFACE_INDEX_PKT4_SUFIX=2\n"
+               "PKT4_PREFIX_IFACE_NAME_PKT4_SUFIX=eth1\n"
+               "PKT4_PREFIX_HOPS_PKT4_SUFIX=0\n"
+               "PKT4_PREFIX_SECS_PKT4_SUFIX=0\n"
+               "PKT4_PREFIX_FLAGS_PKT4_SUFIX=0\n"
+               "PKT4_PREFIX_CIADDR_PKT4_SUFIX=0.0.0.0\n"
+               "PKT4_PREFIX_SIADDR_PKT4_SUFIX=0.0.0.0\n"
+               "PKT4_PREFIX_YIADDR_PKT4_SUFIX=0.0.0.0\n"
+               "PKT4_PREFIX_GIADDR_PKT4_SUFIX=0.0.0.0\n"
+               "PKT4_PREFIX_RELAYED_PKT4_SUFIX=0\n"
+               "PKT4_PREFIX_HWADDR_PKT4_SUFIX=00:01:02:03\n"
+               "PKT4_PREFIX_HWADDR_TYPE_PKT4_SUFIX=1\n"
+               "PKT4_PREFIX_LOCAL_HWADDR_PKT4_SUFIX=00:01:02:03\n"
+               "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFIX=1\n"
+               "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFIX=00:01:02:03\n"
+               "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFIX=1\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+/// @brief Tests the extractPkt6 method works as expected.
+TEST(RunScript, extractPkt6) {
+    ProcessEnvVars vars;
+    Pkt6Ptr pkt6;
+    RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFIX");
+    ASSERT_EQ(12, vars.size());
+    std::string expected = "PKT6_PREFIX_TYPE_PKT6_SUFIX=\n"
+                           "PKT6_PREFIX_TXID_PKT6_SUFIX=\n"
+                           "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFIX=\n"
+                           "PKT6_PREFIX_LOCAL_PORT_PKT6_SUFIX=\n"
+                           "PKT6_PREFIX_REMOTE_ADDR_PKT6_SUFIX=\n"
+                           "PKT6_PREFIX_REMOTE_PORT_PKT6_SUFIX=\n"
+                           "PKT6_PREFIX_IFACE_INDEX_PKT6_SUFIX=\n"
+                           "PKT6_PREFIX_IFACE_NAME_PKT6_SUFIX=\n"
+                           "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFIX=\n"
+                           "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFIX=\n"
+                           "PKT6_PREFIX_PROTO_PKT6_SUFIX=\n"
+                           "PKT6_PREFIX_CLIENT_ID_ID_PKT6_SUFIX=\n";
+    EXPECT_EQ(expected, concatenate(vars));
+    vars.clear();
+    pkt6 = generatePkt6();
+    RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFIX");
+    ASSERT_EQ(12, vars.size());
+    expected = "PKT6_PREFIX_TYPE_PKT6_SUFIX=UNKNOWN\n"
+               "PKT6_PREFIX_TXID_PKT6_SUFIX=0\n"
+               "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFIX=ff02::1:2\n"
+               "PKT6_PREFIX_LOCAL_PORT_PKT6_SUFIX=0\n"
+               "PKT6_PREFIX_REMOTE_ADDR_PKT6_SUFIX=fe80::21e:8cff:fe9b:7349\n"
+               "PKT6_PREFIX_REMOTE_PORT_PKT6_SUFIX=546\n"
+               "PKT6_PREFIX_IFACE_INDEX_PKT6_SUFIX=2\n"
+               "PKT6_PREFIX_IFACE_NAME_PKT6_SUFIX=eth1\n"
+               "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFIX=00:01:02:03\n"
+               "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFIX=1\n"
+               "PKT6_PREFIX_PROTO_PKT6_SUFIX=UDP\n"
+               "PKT6_PREFIX_CLIENT_ID_ID_PKT6_SUFIX=00:01:02:03:04:05:06\n";
+    EXPECT_EQ(expected, concatenate(vars));
+}
+
+} // end of anonymous namespace
