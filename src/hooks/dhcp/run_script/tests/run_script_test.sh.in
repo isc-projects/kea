@@ -10,3 +10,89 @@
 # used.
 set -eu
 
+unknown_handle() {
+}
+
+lease4_renew () {
+}
+
+lease4_expire () {
+}
+
+lease4_recover () {
+}
+
+leases4_committed () {
+}
+
+lease4_release () {
+}
+
+lease4_decline () {
+}
+
+lease6_renew () {
+}
+
+lease6_rebind () {
+}
+
+lease6_expire () {
+}
+
+lease6_recover () {
+}
+
+leases6_committed () {
+}
+
+lease6_release () {
+}
+
+lease6_decline () {
+}
+
+case "$1" in
+    "lease4_renew")
+        lease4_renew
+        ;;
+    "lease4_expire")
+        lease4_expire
+        ;;
+    "lease4_recover")
+        lease4_recover
+        ;;
+    "leases4_committed")
+        leases4_committed
+        ;;
+    "lease4_release")
+        lease4_release
+        ;;
+    "lease4_decline")
+        lease4_decline
+        ;;
+    "lease6_renew")
+        lease6_renew
+        ;;
+    "lease6_rebind")
+        lease6_rebind
+        ;;
+    "lease6_expire")
+        lease6_expire
+        ;;
+    "lease6_recover")
+        lease6_recover
+        ;;
+    "leases6_committed")
+        leases6_committed
+        ;;
+    "lease6_release")
+        lease6_release
+        ;;
+    "lease6_decline")
+        lease6_decline
+        ;;
+    *)
+        unknown_handle
+        ;;
+esac

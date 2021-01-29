@@ -171,9 +171,11 @@ public:
 
     /// @brief Run Script with specified arguments and environment parameters.
     ///
+    /// @param args The arguments for the target script.
     /// @param vars The environment variables made available for the target
     /// script.
-    void runScript(const isc::util::ProcessEnvVars& vars);
+    void runScript(const isc::util::ProcessArgs& args,
+                   const isc::util::ProcessEnvVars& vars);
 
     /// @brief Set name of the target script.
     ///

@@ -41,8 +41,7 @@ RunScriptImpl::configure(LibraryHandle& handle) {
 }
 
 void
-RunScriptImpl::runScript(const ProcessEnvVars& vars) {
-    ProcessArgs args;
+RunScriptImpl::runScript(const ProcessArgs& args, const ProcessEnvVars& vars) {
     ProcessSpawn process(name_, args, vars);
 }
 
