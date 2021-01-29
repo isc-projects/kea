@@ -10,46 +10,77 @@
 # used.
 set -eu
 
+LOG_FILE="@abs_top_builddir@/src/hooks/dhcp/run_script/tests/test.log"
+
+ECHO_TO_FILE() {
+    echo ${@} > ${LOG_FILE}
+}
+
+ASSERT_EQ() {
+    if ! test $EXPECTED = $ACTUAL; then
+        ECHO_TO_FILE "Values differ:\n:
+        ECHO_TO_FILE "\texpected: ${EXPECTED}\n"
+        ECHO_TO_FILE "\tactual: ${ACTUAL}\n"
+        ECHO_TO_FILE "FAILED"
+        exit 123
+    fi
+}
+
 unknown_handle() {
+    ECHO_TO_FILE "Unhandled function call\n"
+    exit 123
 }
 
 lease4_renew () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 lease4_expire () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 lease4_recover () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 leases4_committed () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 lease4_release () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 lease4_decline () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 lease6_renew () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 lease6_rebind () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 lease6_expire () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 lease6_recover () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 leases6_committed () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 lease6_release () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 lease6_decline () {
+    ECHO_TO_FILE "SUCCESS"
 }
 
 case "$1" in
