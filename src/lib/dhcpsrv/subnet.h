@@ -454,9 +454,6 @@ protected:
     /// @note: This map is protected by the mutex.
     std::map<Lease::Type, boost::posix_time::ptime> last_allocated_time_;
 
-    /// @brief Name of the network interface (if connected directly).
-    std::string iface_;
-
     /// @brief Shared network name.
     std::string shared_network_name_;
 

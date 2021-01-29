@@ -64,7 +64,6 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
       last_allocated_ta_(lastAddrInPrefix(prefix, len)),
       last_allocated_pd_(lastAddrInPrefix(prefix, len)),
       last_allocated_time_(),
-      iface_(),
       shared_network_name_(),
       mutex_(new std::mutex) {
     if ((prefix.isV6() && len > 128) ||

@@ -8,6 +8,7 @@
 #define RUN_SCRIPT_H
 
 #include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
@@ -36,8 +37,8 @@ public:
     /// @param sufix The sufix for the name of the environment variable.
     static void extractBoolean(isc::util::ProcessEnvVars& vars,
                                const bool value,
-                               const std::string prefix = "",
-                               const std::string sufix = "");
+                               const std::string& prefix = "",
+                               const std::string& sufix = "");
 
     /// @brief Extract integer data and append to environment.
     ///
@@ -45,9 +46,9 @@ public:
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
     static void extractInteger(isc::util::ProcessEnvVars& vars,
-                               const uint32_t value,
-                               const std::string prefix = "",
-                               const std::string sufix = "");
+                               const uint64_t value,
+                               const std::string& prefix = "",
+                               const std::string& sufix = "");
 
     /// @brief Extract string data and append to environment.
     ///
@@ -55,9 +56,9 @@ public:
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
     static void extractString(isc::util::ProcessEnvVars& vars,
-                              const bool value,
-                              const std::string prefix = "",
-                              const std::string sufix = "");
+                              const std::string& value,
+                              const std::string& prefix = "",
+                              const std::string& sufix = "");
 
     /// @brief Extract HWAddr data and append to environment.
     ///
@@ -66,18 +67,18 @@ public:
     /// @param sufix The sufix for the name of the environment variable.
     static void extractHWAddr(isc::util::ProcessEnvVars& vars,
                               const isc::dhcp::HWAddrPtr& hwaddr,
-                              const std::string prefix = "",
-                              const std::string sufix = "");
+                              const std::string& prefix = "",
+                              const std::string& sufix = "");
 
-    /// @brief Extract ClientId data and append to environment.
+    /// @brief Extract DUID data and append to environment.
     ///
-    /// @param value The clienid to be exported to target script environment.
+    /// @param value The duid to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractClientID(isc::util::ProcessEnvVars& vars,
-                                const isc::dhcp::ClientIdPtr clientid,
-                                const std::string prefix = "",
-                                const std::string sufix = "");
+    static void extractDUID(isc::util::ProcessEnvVars& vars,
+                            const isc::dhcp::DuidPtr duid,
+                            const std::string& prefix = "",
+                            const std::string& sufix = "");
 
     /// @brief Extract Option6IA data and append to environment.
     ///
@@ -86,8 +87,8 @@ public:
     /// @param sufix The sufix for the name of the environment variable.
     static void extractOptionIA(isc::util::ProcessEnvVars& vars,
                                 const isc::dhcp::Option6IAPtr option6IA,
-                                const std::string prefix = "",
-                                const std::string sufix = "");
+                                const std::string& prefix = "",
+                                const std::string& sufix = "");
 
     /// @brief Extract Subnet4 data and append to environment.
     ///
@@ -96,8 +97,8 @@ public:
     /// @param sufix The sufix for the name of the environment variable.
     static void extractSubnet4(isc::util::ProcessEnvVars& vars,
                                const isc::dhcp::Subnet4Ptr subnet4,
-                               const std::string prefix = "",
-                               const std::string sufix = "");
+                               const std::string& prefix = "",
+                               const std::string& sufix = "");
 
     /// @brief Extract Subnet6 data and append to environment.
     ///
@@ -106,8 +107,8 @@ public:
     /// @param sufix The sufix for the name of the environment variable.
     static void extractSubnet6(isc::util::ProcessEnvVars& vars,
                                const isc::dhcp::Subnet6Ptr subnet6,
-                               const std::string prefix = "",
-                               const std::string sufix = "");
+                               const std::string& prefix = "",
+                               const std::string& sufix = "");
 
     /// @brief Extract Lease4 data and append to environment.
     ///
@@ -116,8 +117,8 @@ public:
     /// @param sufix The sufix for the name of the environment variable.
     static void extractLease4(isc::util::ProcessEnvVars& vars,
                               const isc::dhcp::Lease4Ptr& lease4,
-                              const std::string prefix = "",
-                              const std::string sufix = "");
+                              const std::string& prefix = "",
+                              const std::string& sufix = "");
 
     /// @brief Extract Lease6 data and append to environment.
     ///
@@ -126,8 +127,8 @@ public:
     /// @param sufix The sufix for the name of the environment variable.
     static void extractLease6(isc::util::ProcessEnvVars& vars,
                               const isc::dhcp::Lease6Ptr& lease6,
-                              const std::string prefix = "",
-                              const std::string sufix = "");
+                              const std::string& prefix = "",
+                              const std::string& sufix = "");
 
     /// @brief Extract Lease4Collection data and append to environment.
     ///
@@ -136,8 +137,8 @@ public:
     /// @param sufix The sufix for the name of the environment variable.
     static void extractLeases4(isc::util::ProcessEnvVars& vars,
                                const isc::dhcp::Lease4CollectionPtr& leases4,
-                               const std::string prefix = "",
-                               const std::string sufix = "");
+                               const std::string& prefix = "",
+                               const std::string& sufix = "");
 
     /// @brief Extract Lease6Collection data and append to environment.
     ///
@@ -146,8 +147,8 @@ public:
     /// @param sufix The sufix for the name of the environment variable.
     static void extractLeases6(isc::util::ProcessEnvVars& vars,
                                const isc::dhcp::Lease6CollectionPtr& leases6,
-                               const std::string prefix = "",
-                               const std::string sufix = "");
+                               const std::string& prefix = "",
+                               const std::string& sufix = "");
 
     /// @brief Extract Pkt4 data and append to environment.
     ///
@@ -156,8 +157,8 @@ public:
     /// @param sufix The sufix for the name of the environment variable.
     static void extractPkt4(isc::util::ProcessEnvVars& vars,
                             const isc::dhcp::Pkt4Ptr& pkt4,
-                            const std::string prefix = "",
-                            const std::string sufix = "");
+                            const std::string& prefix = "",
+                            const std::string& sufix = "");
 
     /// @brief Extract Pkt6 data and append to environment.
     ///
@@ -166,8 +167,8 @@ public:
     /// @param sufix The sufix for the name of the environment variable.
     static void extractPkt6(isc::util::ProcessEnvVars& vars,
                             const isc::dhcp::Pkt6Ptr& pkt6,
-                            const std::string prefix = "",
-                            const std::string sufix = "");
+                            const std::string& prefix = "",
+                            const std::string& sufix = "");
 
     /// @brief Run Script with specified arguments and environment parameters.
     ///

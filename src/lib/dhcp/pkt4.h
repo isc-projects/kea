@@ -187,7 +187,6 @@ public:
     void
     setCiaddr(const isc::asiolink::IOAddress& ciaddr) { ciaddr_ = ciaddr; };
 
-
     /// @brief Returns siaddr field.
     ///
     /// @return siaddr field

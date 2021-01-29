@@ -76,19 +76,19 @@ int lease4_renew(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Pkt4Ptr pkt4;
     handle.getArgument("query4", pkt4);
-    RunScriptImpl::extractPkt4(vars, pkt4);
+    RunScriptImpl::extractPkt4(vars, pkt4, "QUERY4");
     Subnet4Ptr subnet4;
     handle.getArgument("subnet4", subnet4);
-    RunScriptImpl::extractSubnet4(vars, subnet4);
+    RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4");
     ClientIdPtr clientid;
     handle.getArgument("clientid", clientid);
-    RunScriptImpl::extractClientID(vars, clientid);
+    RunScriptImpl::extractDUID(vars, clientid, "PKT4_CLIENT_ID");
     HWAddrPtr hwaddr;
     handle.getArgument("hwaddr", hwaddr);
-    RunScriptImpl::extractHWAddr(vars, hwaddr);
+    RunScriptImpl::extractHWAddr(vars, hwaddr, "PKT4_HWADDR");
     Lease4Ptr lease4;
     handle.getArgument("lease4", lease4);
-    RunScriptImpl::extractLease4(vars, lease4);
+    RunScriptImpl::extractLease4(vars, lease4, "LEASE4");
     ProcessArgs args;
     args.push_back("lease4_renew");
     impl->runScript(args, vars);
@@ -108,10 +108,10 @@ int lease4_expire(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Lease4Ptr lease4;
     handle.getArgument("lease4", lease4);
-    RunScriptImpl::extractLease4(vars, lease4);
+    RunScriptImpl::extractLease4(vars, lease4, "LEASE4");
     bool remove_lease;
     handle.getArgument("remove_lease", remove_lease);
-    RunScriptImpl::extractBoolean(vars, remove_lease);
+    RunScriptImpl::extractBoolean(vars, remove_lease, "REMOVE_LEASE");
     ProcessArgs args;
     args.push_back("lease4_expire");
     impl->runScript(args, vars);
@@ -131,7 +131,7 @@ int lease4_recover(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Lease4Ptr lease4;
     handle.getArgument("lease4", lease4);
-    RunScriptImpl::extractLease4(vars, lease4);
+    RunScriptImpl::extractLease4(vars, lease4, "LEASE4");
     ProcessArgs args;
     args.push_back("lease4_recover");
     impl->runScript(args, vars);
@@ -151,13 +151,13 @@ int leases4_committed(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Pkt4Ptr pkt4;
     handle.getArgument("query4", pkt4);
-    RunScriptImpl::extractPkt4(vars, pkt4);
+    RunScriptImpl::extractPkt4(vars, pkt4, "QUERY4");
     Lease4CollectionPtr leases4;
     handle.getArgument("leases4", leases4);
-    RunScriptImpl::extractLeases4(vars, leases4);
+    RunScriptImpl::extractLeases4(vars, leases4, "LEASES4");
     Lease4CollectionPtr deleted_leases4;
     handle.getArgument("deleted_leases4", deleted_leases4);
-    RunScriptImpl::extractLeases4(vars, deleted_leases4);
+    RunScriptImpl::extractLeases4(vars, deleted_leases4, "DELETED_LEASES4");
     ProcessArgs args;
     args.push_back("leases4_committed");
     impl->runScript(args, vars);
@@ -177,10 +177,10 @@ int lease4_release(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Pkt4Ptr pkt4;
     handle.getArgument("query4", pkt4);
-    RunScriptImpl::extractPkt4(vars, pkt4);
+    RunScriptImpl::extractPkt4(vars, pkt4, "QUERY4");
     Lease4Ptr lease4;
     handle.getArgument("lease4", lease4);
-    RunScriptImpl::extractLease4(vars, lease4);
+    RunScriptImpl::extractLease4(vars, lease4, "LEASE4");
     ProcessArgs args;
     args.push_back("lease4_release");
     impl->runScript(args, vars);
@@ -200,10 +200,10 @@ int lease4_decline(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Pkt4Ptr pkt4;
     handle.getArgument("query4", pkt4);
-    RunScriptImpl::extractPkt4(vars, pkt4);
+    RunScriptImpl::extractPkt4(vars, pkt4, "QUERY4");
     Lease4Ptr lease4;
     handle.getArgument("lease4", lease4);
-    RunScriptImpl::extractLease4(vars, lease4);
+    RunScriptImpl::extractLease4(vars, lease4, "LEASE4");
     ProcessArgs args;
     args.push_back("lease4_decline");
     impl->runScript(args, vars);
@@ -223,17 +223,17 @@ int lease6_renew(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Pkt6Ptr pkt6;
     handle.getArgument("query6", pkt6);
-    RunScriptImpl::extractPkt6(vars, pkt6);
+    RunScriptImpl::extractPkt6(vars, pkt6, "QUERY6");
     Lease6Ptr lease6;
     handle.getArgument("lease6", lease6);
-    RunScriptImpl::extractLease6(vars, lease6);
+    RunScriptImpl::extractLease6(vars, lease6, "LEASE6");
     Option6IAPtr option6IA;
     if (lease6->type_ == Lease::TYPE_NA) {
         handle.getArgument("ia_na", option6IA);
     } else {
         handle.getArgument("ia_pd", option6IA);
     }
-    RunScriptImpl::extractOptionIA(vars, option6IA);
+    RunScriptImpl::extractOptionIA(vars, option6IA, "PKT6_IA");
     ProcessArgs args;
     args.push_back("lease6_renew");
     impl->runScript(args, vars);
@@ -253,17 +253,17 @@ int lease6_rebind(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Pkt6Ptr pkt6;
     handle.getArgument("query6", pkt6);
-    RunScriptImpl::extractPkt6(vars, pkt6);
+    RunScriptImpl::extractPkt6(vars, pkt6, "QUERY6");
     Lease6Ptr lease6;
     handle.getArgument("lease6", lease6);
-    RunScriptImpl::extractLease6(vars, lease6);
+    RunScriptImpl::extractLease6(vars, lease6, "LEASE6");
     Option6IAPtr option6IA;
     if (lease6->type_ == Lease::TYPE_NA) {
         handle.getArgument("ia_na", option6IA);
     } else {
         handle.getArgument("ia_pd", option6IA);
     }
-    RunScriptImpl::extractOptionIA(vars, option6IA);
+    RunScriptImpl::extractOptionIA(vars, option6IA, "PKT6_IA");
     ProcessArgs args;
     args.push_back("lease6_rbind");
     impl->runScript(args, vars);
@@ -283,10 +283,10 @@ int lease6_expire(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Lease6Ptr lease6;
     handle.getArgument("lease6", lease6);
-    RunScriptImpl::extractLease6(vars, lease6);
+    RunScriptImpl::extractLease6(vars, lease6, "LEASE6");
     bool remove_lease;
     handle.getArgument("remove_lease", remove_lease);
-    RunScriptImpl::extractBoolean(vars, remove_lease);
+    RunScriptImpl::extractBoolean(vars, remove_lease, "REMOVE_LEASE");
     ProcessArgs args;
     args.push_back("lease6_expire");
     impl->runScript(args, vars);
@@ -306,7 +306,7 @@ int lease6_recover(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Lease6Ptr lease6;
     handle.getArgument("lease6", lease6);
-    RunScriptImpl::extractLease6(vars, lease6);
+    RunScriptImpl::extractLease6(vars, lease6, "LEASE6");
     ProcessArgs args;
     args.push_back("lease6_recover");
     impl->runScript(args, vars);
@@ -326,13 +326,13 @@ int leases6_committed(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Pkt6Ptr pkt6;
     handle.getArgument("query6", pkt6);
-    RunScriptImpl::extractPkt6(vars, pkt6);
+    RunScriptImpl::extractPkt6(vars, pkt6, "QUERY6");
     Lease6CollectionPtr leases6;
     handle.getArgument("leases6", leases6);
-    RunScriptImpl::extractLeases6(vars, leases6);
+    RunScriptImpl::extractLeases6(vars, leases6, "LEASES6");
     Lease6CollectionPtr deleted_leases6;
     handle.getArgument("deleted_leases6", deleted_leases6);
-    RunScriptImpl::extractLeases6(vars, deleted_leases6);
+    RunScriptImpl::extractLeases6(vars, deleted_leases6, "DELETED_LEASES6");
     ProcessArgs args;
     args.push_back("leases6_committed");
     impl->runScript(args, vars);
@@ -352,10 +352,10 @@ int lease6_release(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Pkt6Ptr pkt6;
     handle.getArgument("query6", pkt6);
-    RunScriptImpl::extractPkt6(vars, pkt6);
+    RunScriptImpl::extractPkt6(vars, pkt6, "QUERY6");
     Lease6Ptr lease6;
     handle.getArgument("lease6", lease6);
-    RunScriptImpl::extractLease6(vars, lease6);
+    RunScriptImpl::extractLease6(vars, lease6, "LEASE6");
     ProcessArgs args;
     args.push_back("lease6_release");
     impl->runScript(args, vars);
@@ -375,10 +375,10 @@ int lease6_decline(CalloutHandle& handle) {
     ProcessEnvVars vars;
     Pkt6Ptr pkt6;
     handle.getArgument("query6", pkt6);
-    RunScriptImpl::extractPkt6(vars, pkt6);
+    RunScriptImpl::extractPkt6(vars, pkt6, "QUERY6");
     Lease6Ptr lease6;
     handle.getArgument("lease6", lease6);
-    RunScriptImpl::extractLease6(vars, lease6);
+    RunScriptImpl::extractLease6(vars, lease6, "LEASE6");
     ProcessArgs args;
     args.push_back("lease6_decline");
     impl->runScript(args, vars);

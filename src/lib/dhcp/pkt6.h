@@ -146,7 +146,9 @@ public:
     /// @brief Returns protocol of this packet (UDP or TCP).
     ///
     /// @return protocol type
-    DHCPv6Proto getProto();
+    DHCPv6Proto getProto() {
+        return (proto_);
+    }
 
     /// @brief Sets protocol of this packet.
     ///
