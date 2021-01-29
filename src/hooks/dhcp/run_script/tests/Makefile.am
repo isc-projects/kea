@@ -25,7 +25,7 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_script_unittests
 
-run_script_unittests_SOURCES = run_unittests.cc
+run_script_unittests_SOURCES  = run_unittests.cc
 run_script_unittests_SOURCES += run_script_unittests.cc
 
 run_script_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)

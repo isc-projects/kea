@@ -121,13 +121,15 @@ private:
     ///
     /// This method is used to convert arguments specified as an STL container
     /// holding @c std::string objects to an array of C strings, used by the
-    /// @c execvp function in the @c ProcessSpawnImpl::spawn. It allocates a
+    /// @c execvpe function in the @c ProcessSpawnImpl::spawn. It allocates a
     /// new C string and copies the contents of the @c src to it.
+    /// The data is stored in an internal container so that the caller of the
+    /// function can be exception safe.
     ///
     /// @param src A source string.
     ///
     /// @return Allocated C string holding the data from @c src.
-    char* allocateArg(const std::string& src) const;
+    char* allocateInternal(const std::string& src);
 
     /// @brief Signal handler for SIGCHLD.
     ///
@@ -152,6 +154,12 @@ private:
 
     /// @brief An array holding environment variables for the executable.
     boost::shared_ptr<char*[]> vars_;
+
+    /// @breif Typedef for CString pointer.
+    typedef boost::shared_ptr<char[]> CStringPtr;
+
+    /// @brief An storage container for all allocated C strings.
+    std::vector<CStringPtr> storage_;
 };
 
 ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
@@ -170,31 +178,18 @@ ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
     memset(args_.get(), 0, (args.size() + 2) * sizeof(char*));
     memset(vars_.get(), 0, (vars.size() + 1) * sizeof(char*));
     // By convention, the first argument points to an executable name.
-    args_[0] = allocateArg(executable_);
+    args_[0] = allocateInternal(executable_);
     // Copy arguments to the array.
     for (int i = 1; i <= args.size(); ++i) {
-        args_[i] = allocateArg(args[i - 1]);
+        args_[i] = allocateInternal(args[i - 1]);
     }
     // Copy environment variables to the array.
     for (int i = 0; i < vars.size(); ++i) {
-        vars_[i] = allocateArg(vars[i]);
+        vars_[i] = allocateInternal(vars[i]);
     }
 }
 
 ProcessSpawnImpl::~ProcessSpawnImpl() {
-    int i = 0;
-    // Deallocate strings in the array of arguments.
-    while (args_[i] != NULL) {
-        delete[] args_[i];
-        ++i;
-    }
-
-    i = 0;
-    // Deallocate strings in the array of environment variables.
-    while (vars_[i] != NULL) {
-        delete[] vars_[i];
-        ++i;
-    }
 }
 
 std::string
@@ -289,10 +284,11 @@ ProcessSpawnImpl::getExitStatus(const pid_t pid) const {
 }
 
 char*
-ProcessSpawnImpl::allocateArg(const std::string& src) const {
+ProcessSpawnImpl::allocateInternal(const std::string& src) {
     const size_t src_len = src.length();
+    storage_.push_back(CStringPtr(new char[src_len + 1]));
     // Allocate the C-string with one byte more for the null termination.
-    char* dest = new char[src_len + 1];
+    char* dest = storage_[storage_.size() - 1].get();
     // copy doesn't append the null at the end.
     src.copy(dest, src_len);
     // Append null on our own.

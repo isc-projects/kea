@@ -15,6 +15,7 @@ CLEANFILES = *.gcno *.gcda
 noinst_LTLIBRARIES = librun_script.la
 
 librun_script_la_SOURCES  = run_script_callouts.cc
+librun_script_la_SOURCES += run_script.cc run_script.h
 librun_script_la_SOURCES += run_script_log.cc run_script_log.h
 librun_script_la_SOURCES += run_script_messages.cc run_script_messages.h
 librun_script_la_SOURCES += version.cc

@@ -71,4 +71,8 @@ indicate that the action can not be properly performed.
 To fix this, all other libraries which might set the SKIP flag must appear
 in the server configuration after this library.
 
+@section libdhcp_bootpMTCompatibility Multi-Threading Compatibility
+
+The Bootp hooks library is compatible with multi-threading.
+
 */

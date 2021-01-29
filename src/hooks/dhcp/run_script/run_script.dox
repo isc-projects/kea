@@ -38,8 +38,11 @@ configuration:
 "Dhcp4": {
     "hook_libraries": [
         {   "library": "/usr/local/lib/libdhcp_run_script.so",
-            "parameters": { "name": "/path_to/script_name.sh",
-            "sync": false }},
+            "parameters": {
+                "name": "/path_to/script_name.sh",
+                "sync": false
+            }
+        },
         ...
     ]
 }
@@ -58,8 +61,15 @@ bootp_callouts.cc. It checks if the necessary parameter is passed and
 decodes the option configurations. @ref unload() free the configuration.
 
 Kea engine checks if the library has functions that match known hook
-point names. This library has several such functions: @ref pkt4_receive,
-@ref pkt4_send, @ref pkt6_receive, @ref pkt6_send, etc...
-located in run_script_callouts.cc.
+point names. This library has several such functions: @ref lease4_renew,
+@ref lease4_expire, @ref lease4_recover, @ref leases4_committed,
+@ref lease4_release, @ref lease4_decline, @ref lease6_renew,
+@ref lease6_rebind, @ref lease6_expire, @ref lease6_recover,
+@ref leases6_committed, @ref lease6_release, @ref lease6_decline located
+in run_script_callouts.cc.
+
+@section libdhcp_run_scriptMTCompatibility Multi-Threading Compatibility
+
+The Run Script hooks library is compatible with multi-threading.
 
 */

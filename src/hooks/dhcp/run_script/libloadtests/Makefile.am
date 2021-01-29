@@ -27,7 +27,6 @@ TESTS += run_script_unittests
 
 run_script_unittests_SOURCES = run_unittests.cc
 run_script_unittests_SOURCES += load_unload_unittests.cc
-run_script_unittests_SOURCES += close_unittests.cc
 
 run_script_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
