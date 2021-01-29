@@ -3587,8 +3587,10 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(decline);
 
-        // Pass incoming packet as argument
+        // Pass the original packet
         callout_handle->setArgument("query6", decline);
+
+        // Pass the lease to be updated
         callout_handle->setArgument("lease6", lease);
 
         // Call callouts

@@ -146,9 +146,9 @@ int leases4_committed(CalloutHandle& handle) {
     Pkt4Ptr pkt4;
     handle.getArgument("query4", pkt4);
     RunScriptImpl::extractPkt4(vars, pkt4);
-    Lease4Ptr lease4;
-    handle.getArgument("lease4", lease4);
-    RunScriptImpl::extractLease4(vars, lease4);
+    Lease4CollectionPtr leases4;
+    handle.getArgument("leases4", leases4);
+    RunScriptImpl::extractLeases4(vars, leases4);
     Lease4CollectionPtr deleted_leases4;
     handle.getArgument("deleted_leases4", deleted_leases4);
     RunScriptImpl::extractLeases4(vars, deleted_leases4);
@@ -307,9 +307,9 @@ int leases6_committed(CalloutHandle& handle) {
     Pkt6Ptr pkt6;
     handle.getArgument("query6", pkt6);
     RunScriptImpl::extractPkt6(vars, pkt6);
-    Lease6Ptr lease6;
-    handle.getArgument("lease6", lease6);
-    RunScriptImpl::extractLease6(vars, lease6);
+    Lease6CollectionPtr leases6;
+    handle.getArgument("leases6", leases6);
+    RunScriptImpl::extractLeases6(vars, leases6);
     Lease6CollectionPtr deleted_leases6;
     handle.getArgument("deleted_leases6", deleted_leases6);
     RunScriptImpl::extractLeases6(vars, deleted_leases6);
