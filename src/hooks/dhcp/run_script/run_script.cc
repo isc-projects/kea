@@ -414,5 +414,103 @@ RunScriptImpl::extractPkt6(isc::util::ProcessEnvVars& vars,
     }
 }
 
+void
+RunScriptImpl::extractBoolean(isc::util::ProcessEnvVars& vars,
+                              const bool value,
+                              const std::string prefix,
+                              const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractInteger(isc::util::ProcessEnvVars& vars,
+                              const uint32_t value,
+                              const std::string prefix,
+                              const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractString(isc::util::ProcessEnvVars& vars,
+                             const bool value,
+                             const std::string prefix,
+                             const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractHWAddr(isc::util::ProcessEnvVars& vars,
+                             const isc::dhcp::HWAddrPtr& hwaddr,
+                             const std::string prefix,
+                             const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractClientID(isc::util::ProcessEnvVars& vars,
+                               const isc::dhcp::ClientIdPtr clientid,
+                               const std::string prefix,
+                               const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractOptionIA(isc::util::ProcessEnvVars& vars,
+                               const isc::dhcp::Option6IAPtr option6IA,
+                               const std::string prefix,
+                               const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractSubnet4(isc::util::ProcessEnvVars& vars,
+                              const isc::dhcp::Subnet4Ptr subnet4,
+                              const std::string prefix,
+                              const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractSubnet6(isc::util::ProcessEnvVars& vars,
+                              const isc::dhcp::Subnet6Ptr subnet6,
+                              const std::string prefix,
+                              const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractLease4(isc::util::ProcessEnvVars& vars,
+                             const isc::dhcp::Lease4Ptr& lease4,
+                             const std::string prefix,
+                             const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractLease6(isc::util::ProcessEnvVars& vars,
+                             const isc::dhcp::Lease6Ptr& lease6,
+                             const std::string prefix,
+                             const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractLeases4(isc::util::ProcessEnvVars& vars,
+                              const isc::dhcp::Lease4CollectionPtr& leases4,
+                              const std::string prefix,
+                              const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractLeases6(isc::util::ProcessEnvVars& vars,
+                              const isc::dhcp::Lease6CollectionPtr& leases6,
+                              const std::string prefix,
+                              const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractPkt4(isc::util::ProcessEnvVars& vars,
+                           const isc::dhcp::Pkt4Ptr& pkt4,
+                           const std::string prefix,
+                           const std::string sufix) {
+}
+
+void
+RunScriptImpl::extractPkt6(isc::util::ProcessEnvVars& vars,
+                           const isc::dhcp::Pkt6Ptr& pkt6,
+                           const std::string prefix,
+                           const std::string sufix) {
+}
+
 } // end of namespace run_script
 } // end of namespace isc
