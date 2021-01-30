@@ -8,28 +8,60 @@
 
 #include <run_script.h>
 
+#include <cc/data.h>
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
+#include <hooks/callout_manager.h>
+#include <hooks/hooks.h>
+#include <hooks/hooks_manager.h>
+
+#include <cstdio>
+#include <fstream>
 
 #include <gtest/gtest.h>
 
 using namespace isc::run_script;
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::hooks;
 using namespace isc::util;
 using namespace std;
 
+extern "C" {
+extern int lease4_renew(CalloutHandle& handle);
+extern int lease4_expire(CalloutHandle& handle);
+extern int lease4_recover(CalloutHandle& handle);
+extern int leases4_committed(CalloutHandle& handle);
+extern int lease4_release(CalloutHandle& handle);
+extern int lease4_decline(CalloutHandle& handle);
+extern int lease6_renew(CalloutHandle& handle);
+extern int lease6_rebind(CalloutHandle& handle);
+extern int lease6_expire(CalloutHandle& handle);
+extern int lease6_recover(CalloutHandle& handle);
+extern int leases6_committed(CalloutHandle& handle);
+extern int lease6_release(CalloutHandle& handle);
+extern int lease6_decline(CalloutHandle& handle);
+}
+
+namespace isc {
+namespace run_script {
+
+extern RunScriptImplPtr impl;
+
+} // end of namespace run_script
+} // end of namespace isc
+
 namespace {
 
-/// @brief This function concatenates all received environment variables and
-/// adds a newline after each one so that a simple compare can be done in the
-/// test.
+/// @brief This function joins all received environment variables and adds a
+/// newline after each one so that a simple compare can be done in the test.
 ///
-/// @param vars The list of environment variables to concatenate.
-/// @return The concatenated environment.
+/// @param vars The list of environment variables to join.
+/// @return The joined environment.
 std::string
-concatenate(const ProcessEnvVars& vars) {
+join(const ProcessEnvVars& vars) {
     std::string result = "";
     for (auto var : vars) {
         result += var + "\n";
@@ -72,6 +104,7 @@ generateOptionIA() {
     buf[9] = 0x03;
     buf[10] = 0x02;
     buf[11] = 0x01;
+
     return (Option6IAPtr(new Option6IA(D6O_IA_NA, buf.begin(), buf.end())));
 }
 
@@ -98,8 +131,11 @@ Lease4Ptr
 generateLease4() {
     HWAddrPtr hwaddr = generateHWAddr();
     ClientIdPtr clientid = generateDUID();
-    return (Lease4Ptr(new Lease4(IOAddress("192.168.0.1"), hwaddr, clientid,
-                                 2, 3, 4, false, false, "test.hostname")));
+
+    Lease4Ptr lease4(new Lease4(IOAddress("192.168.0.1"), hwaddr, clientid,
+                                2, 3, 4, false, false, "test.hostname"));
+
+    return(lease4);
 }
 
 /// @brief Generate a valid Lease6.
@@ -109,9 +145,13 @@ Lease6Ptr
 generateLease6() {
     HWAddrPtr hwaddr = generateHWAddr();
     DuidPtr duid = generateDUID();
-    Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2003:db8::1"), duid, 2,
-                                3, 4, 5, false, false, "test.hostname", hwaddr));
+
+    Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2003:db8::1"), duid,
+                                2, 3, 4, 5, false, false, "test.hostname",
+                                hwaddr));
+
     lease6->cltt_ = 7;
+
     return (lease6);
 }
 
@@ -256,13 +296,13 @@ TEST(RunScript, extractBoolean) {
     RunScriptImpl::extractBoolean(vars, flag, "FALSE_PREFIX", "_FALSE_SUFIX");
     ASSERT_EQ(1, vars.size());
     std::string expected = "FALSE_PREFIX_FALSE_SUFIX=0\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     flag = true;
     RunScriptImpl::extractBoolean(vars, flag, "TRUE_PREFIX", "_TRUE_SUFIX");
     ASSERT_EQ(2, vars.size());
     expected = "FALSE_PREFIX_FALSE_SUFIX=0\n"
                "TRUE_PREFIX_TRUE_SUFIX=1\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractInteger method works as expected.
@@ -272,20 +312,20 @@ TEST(RunScript, extractInteger) {
     RunScriptImpl::extractInteger(vars, value, "ZERO_PREFIX", "_ZERO_SUFIX");
     ASSERT_EQ(1, vars.size());
     std::string expected = "ZERO_PREFIX_ZERO_SUFIX=0\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     value = 1;
     RunScriptImpl::extractInteger(vars, value, "ONE_PREFIX", "_ONE_SUFIX");
     ASSERT_EQ(2, vars.size());
     expected = "ZERO_PREFIX_ZERO_SUFIX=0\n"
                "ONE_PREFIX_ONE_SUFIX=1\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     value = 1000;
     RunScriptImpl::extractInteger(vars, value, "THOUSAND_PREFIX", "_THOUSAND_SUFIX");
     ASSERT_EQ(3, vars.size());
     expected = "ZERO_PREFIX_ZERO_SUFIX=0\n"
                "ONE_PREFIX_ONE_SUFIX=1\n"
                "THOUSAND_PREFIX_THOUSAND_SUFIX=1000\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractString method works as expected.
@@ -295,13 +335,13 @@ TEST(RunScript, extractString) {
     RunScriptImpl::extractString(vars, value, "EMPTY_PREFIX", "_EMPTY_SUFIX");
     ASSERT_EQ(1, vars.size());
     std::string expected = "EMPTY_PREFIX_EMPTY_SUFIX=\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     value = "SOMETHING";
     RunScriptImpl::extractString(vars, value, "NON_EMPTY_PREFIX", "_NON_EMPTY_SUFIX");
     ASSERT_EQ(2, vars.size());
     expected = "EMPTY_PREFIX_EMPTY_SUFIX=\n"
                "NON_EMPTY_PREFIX_NON_EMPTY_SUFIX=SOMETHING\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractHWAddr method works as expected.
@@ -312,14 +352,14 @@ TEST(RunScript, extractHWAddr) {
     ASSERT_EQ(2, vars.size());
     std::string expected = "HWADDR_PREFIX_HWADDR_SUFIX=\n"
                            "HWADDR_PREFIX_TYPE_HWADDR_SUFIX=\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     vars.clear();
     hwaddr = generateHWAddr();
     RunScriptImpl::extractHWAddr(vars, hwaddr, "HWADDR_PREFIX", "_HWADDR_SUFIX");
     ASSERT_EQ(2, vars.size());
     expected = "HWADDR_PREFIX_HWADDR_SUFIX=00:01:02:03\n"
                "HWADDR_PREFIX_TYPE_HWADDR_SUFIX=1\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractDUID method works as expected.
@@ -329,13 +369,13 @@ TEST(RunScript, extractDUID) {
     RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFIX");
     ASSERT_EQ(1, vars.size());
     std::string expected = "DUID_PREFIX_ID_DUID_SUFIX=\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     vars.clear();
     duid = generateDUID();
     RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFIX");
     ASSERT_EQ(1, vars.size());
     expected = "DUID_PREFIX_ID_DUID_SUFIX=00:01:02:03:04:05:06\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractOptionIA method works as expected.
@@ -348,7 +388,7 @@ TEST(RunScript, extractOptionIA) {
                            "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFIX=\n"
                            "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFIX=\n"
                            "OPTIONIA_PREFIX_IA_T2_OPTIONIA_SUFIX=\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     vars.clear();
     optionia = generateOptionIA();
     RunScriptImpl::extractOptionIA(vars, optionia, "OPTIONIA_PREFIX", "_OPTIONIA_SUFIX");
@@ -357,7 +397,7 @@ TEST(RunScript, extractOptionIA) {
                "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFIX=3\n"
                "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFIX=2164392708\n"
                "OPTIONIA_PREFIX_IA_T2_OPTIONIA_SUFIX=2214789633\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractSubnet4 method works as expected.
@@ -370,7 +410,7 @@ TEST(RunScript, extractSubnet4) {
                            "SUBNET4_PREFIX_NAME_SUBNET4_SUFIX=\n"
                            "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFIX=\n"
                            "SUBNET4_PREFIX_PREFIX_LEN_SUBNET4_SUFIX=\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     vars.clear();
     subnet4 = generateSubnet4();
     RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4_PREFIX", "_SUBNET4_SUFIX");
@@ -379,7 +419,7 @@ TEST(RunScript, extractSubnet4) {
                "SUBNET4_PREFIX_NAME_SUBNET4_SUFIX=182.168.0.1/2\n"
                "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFIX=182.168.0.1\n"
                "SUBNET4_PREFIX_PREFIX_LEN_SUBNET4_SUFIX=2\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractSubnet6 method works as expected.
@@ -392,7 +432,7 @@ TEST(RunScript, extractSubnet6) {
                            "SUBNET6_PREFIX_NAME_SUBNET6_SUFIX=\n"
                            "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFIX=\n"
                            "SUBNET6_PREFIX_PREFIX_LEN_SUBNET6_SUFIX=\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     vars.clear();
     subnet6 = generateSubnet6();
     RunScriptImpl::extractSubnet6(vars, subnet6, "SUBNET6_PREFIX", "_SUBNET6_SUFIX");
@@ -401,7 +441,7 @@ TEST(RunScript, extractSubnet6) {
                "SUBNET6_PREFIX_NAME_SUBNET6_SUFIX=2003:db8::1/2\n"
                "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFIX=2003:db8::1\n"
                "SUBNET6_PREFIX_PREFIX_LEN_SUBNET6_SUFIX=2\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractLease4 method works as expected.
@@ -419,7 +459,7 @@ TEST(RunScript, extractLease4) {
                            "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFIX=\n"
                            "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFIX=\n"
                            "LEASE4_PREFIX_CLIENT_ID_ID_LEASE4_SUFIX=\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     vars.clear();
     lease4 = generateLease4();
     RunScriptImpl::extractLease4(vars, lease4, "LEASE4_PREFIX", "_LEASE4_SUFIX");
@@ -433,7 +473,7 @@ TEST(RunScript, extractLease4) {
                "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFIX=4\n"
                "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFIX=2\n"
                "LEASE4_PREFIX_CLIENT_ID_ID_LEASE4_SUFIX=00:01:02:03:04:05:06\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractLease6 method works as expected.
@@ -455,7 +495,7 @@ TEST(RunScript, extractLease6) {
                            "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFIX=\n"
                            "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFIX=\n"
                            "LEASE6_PREFIX_TYPE_LEASE6_SUFIX=\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     vars.clear();
     lease6 = generateLease6();
     RunScriptImpl::extractLease6(vars, lease6, "LEASE6_PREFIX", "_LEASE6_SUFIX");
@@ -473,7 +513,7 @@ TEST(RunScript, extractLease6) {
                "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFIX=3\n"
                "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFIX=128\n"
                "LEASE6_PREFIX_TYPE_LEASE6_SUFIX=IA_NA\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractLeases4 method works as expected.
@@ -483,7 +523,7 @@ TEST(RunScript, extractLeases4) {
     RunScriptImpl::extractLeases4(vars, leases4, "LEASES4_PREFIX", "_LEASES4_SUFIX");
     ASSERT_EQ(1, vars.size());
     std::string expected = "LEASES4_PREFIX_SIZE_LEASES4_SUFIX=0\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     vars.clear();
     leases4.reset(new Lease4Collection());
     leases4->push_back(generateLease4());
@@ -509,7 +549,7 @@ TEST(RunScript, extractLeases4) {
                "LEASES4_PREFIX_AT1_SUBNET_ID_LEASES4_SUFIX=4\n"
                "LEASES4_PREFIX_AT1_VALID_LIFETIME_LEASES4_SUFIX=2\n"
                "LEASES4_PREFIX_AT1_CLIENT_ID_ID_LEASES4_SUFIX=00:01:02:03:04:05:06\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractLeases6 method works as expected.
@@ -519,7 +559,7 @@ TEST(RunScript, extractLeases6) {
     RunScriptImpl::extractLeases6(vars, leases6, "LEASES6_PREFIX", "_LEASES6_SUFIX");
     ASSERT_EQ(1, vars.size());
     std::string expected = "LEASES6_PREFIX_SIZE_LEASES6_SUFIX=0\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     vars.clear();
     leases6.reset(new Lease6Collection());
     leases6->push_back(generateLease6());
@@ -553,7 +593,7 @@ TEST(RunScript, extractLeases6) {
                "LEASES6_PREFIX_AT1_PREFERRED_LIFETIME_LEASES6_SUFIX=3\n"
                "LEASES6_PREFIX_AT1_PREFIX_LEN_LEASES6_SUFIX=128\n"
                "LEASES6_PREFIX_AT1_TYPE_LEASES6_SUFIX=IA_NA\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractPkt4 method works as expected.
@@ -584,7 +624,7 @@ TEST(RunScript, extractPkt4) {
                            "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFIX=\n"
                            "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFIX=\n"
                            "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFIX=\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     vars.clear();
     pkt4 = generatePkt4();
     RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFIX");
@@ -611,7 +651,7 @@ TEST(RunScript, extractPkt4) {
                "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFIX=1\n"
                "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFIX=00:01:02:03\n"
                "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFIX=1\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
 }
 
 /// @brief Tests the extractPkt6 method works as expected.
@@ -632,7 +672,7 @@ TEST(RunScript, extractPkt6) {
                            "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFIX=\n"
                            "PKT6_PREFIX_PROTO_PKT6_SUFIX=\n"
                            "PKT6_PREFIX_CLIENT_ID_ID_PKT6_SUFIX=\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
     vars.clear();
     pkt6 = generatePkt6();
     RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFIX");
@@ -649,7 +689,254 @@ TEST(RunScript, extractPkt6) {
                "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFIX=1\n"
                "PKT6_PREFIX_PROTO_PKT6_SUFIX=UDP\n"
                "PKT6_PREFIX_CLIENT_ID_ID_PKT6_SUFIX=00:01:02:03:04:05:06\n";
-    EXPECT_EQ(expected, concatenate(vars));
+    EXPECT_EQ(expected, join(vars));
+}
+
+class RunScriptTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor.
+    RunScriptTest() : co_manager_(new CalloutManager(1)) {
+        clearLogFile();
+    }
+
+    /// @brief Destructor.
+    ~RunScriptTest() {
+        clearLogFile();
+    }
+
+    /// @brief Clear the test file if it exists.
+    void clearLogFile() {
+        ::remove(TEST_LOG_FILE);
+    }
+
+    void checkScriptResult() {
+        std::ifstream test_log;
+        std::vector<std::string> extracted_lines;
+        sleep(1);
+        test_log.open(TEST_LOG_FILE);
+        if (!test_log.fail()) {
+            std::string line;
+            while (std::getline(test_log, line)) {
+                extracted_lines.push_back(line) ;
+            }
+            test_log.close();
+        }
+        ASSERT_EQ(join(extracted_lines), "SUCCESS\n");
+    }
+
+    /// @brief Fetches the callout manager instance.
+    boost::shared_ptr<CalloutManager>getCalloutManager() {
+        return(co_manager_);
+    }
+
+private:
+    /// @brief Callout manager accessed by this CalloutHandle.
+    boost::shared_ptr<CalloutManager> co_manager_;
+};
+
+TEST_F(RunScriptTest, lease4Renew) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Pkt4Ptr pkt4 = generatePkt4();
+    handle.setArgument("query4", pkt4);
+    Subnet4Ptr subnet4 = generateSubnet4();
+    handle.setArgument("subnet4", subnet4);
+    ClientIdPtr clientid = generateDUID();
+    handle.setArgument("clientid", clientid);
+    HWAddrPtr hwaddr = generateHWAddr();
+    handle.setArgument("hwaddr", hwaddr);
+    Lease4Ptr lease4 = generateLease4();
+    handle.setArgument("lease4", lease4);
+    int ret;
+    ASSERT_NO_THROW(ret = lease4_renew(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease4Expire) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Lease4Ptr lease4 = generateLease4();
+    handle.setArgument("lease4", lease4);
+    bool remove_lease = true;
+    handle.setArgument("remove_lease", remove_lease);
+    int ret;
+    ASSERT_NO_THROW(ret = lease4_expire(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease4Recover) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Lease4Ptr lease4 = generateLease4();
+    handle.setArgument("lease4", lease4);
+    int ret;
+    ASSERT_NO_THROW(ret = lease4_recover(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease4Committed) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Pkt4Ptr pkt4 = generatePkt4();
+    handle.setArgument("query4", pkt4);
+    Lease4CollectionPtr leases4;
+    leases4.reset(new Lease4Collection());
+    leases4->push_back(Lease4Ptr());
+    leases4->push_back(generateLease4());
+    handle.setArgument("leases4", leases4);
+    Lease4CollectionPtr deleted_leases4;
+    deleted_leases4.reset(new Lease4Collection());
+    deleted_leases4->push_back(generateLease4());
+    deleted_leases4->push_back(Lease4Ptr());
+    handle.setArgument("deleted_leases4", deleted_leases4);
+    int ret;
+    ASSERT_NO_THROW(ret = leases4_committed(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease4Release) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Pkt4Ptr pkt4 = generatePkt4();
+    handle.setArgument("query4", pkt4);
+    Lease4Ptr lease4 = generateLease4();
+    handle.setArgument("lease4", lease4);
+    int ret;
+    ASSERT_NO_THROW(ret = lease4_release(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease4Decline) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Pkt4Ptr pkt4 = generatePkt4();
+    handle.setArgument("query4", pkt4);
+    Lease4Ptr lease4 = generateLease4();
+    handle.setArgument("lease4", lease4);
+    int ret;
+    ASSERT_NO_THROW(ret = lease4_decline(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease6Renew) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Pkt6Ptr pkt6 = generatePkt6();
+    handle.setArgument("query6", pkt6);
+    Lease6Ptr lease6 = generateLease6();
+    handle.setArgument("lease6", lease6);
+    Option6IAPtr option6IA = generateOptionIA();
+    handle.setArgument("ia_na", option6IA);
+    int ret;
+    ASSERT_NO_THROW(ret = lease6_renew(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease6Rebind) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Pkt6Ptr pkt6 = generatePkt6();
+    handle.setArgument("query6", pkt6);
+    Lease6Ptr lease6 = generateLease6();
+    handle.setArgument("lease6", lease6);
+    Option6IAPtr option6IA = generateOptionIA();
+    handle.setArgument("ia_na", option6IA);
+    int ret;
+    ASSERT_NO_THROW(ret = lease6_rebind(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease6Expire) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Lease6Ptr lease6 = generateLease6();
+    handle.setArgument("lease6", lease6);
+    bool remove_lease = true;
+    handle.setArgument("remove_lease", remove_lease);
+    int ret;
+    ASSERT_NO_THROW(ret = lease6_expire(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease6Recover) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Lease6Ptr lease6 = generateLease6();
+    handle.setArgument("lease6", lease6);
+    int ret;
+    ASSERT_NO_THROW(ret = lease6_recover(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease6Committed) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Pkt6Ptr pkt6 = generatePkt6();
+    handle.setArgument("query6", pkt6);
+    Lease6CollectionPtr leases6;
+    leases6.reset(new Lease6Collection());
+    leases6->push_back(Lease6Ptr());
+    leases6->push_back(generateLease6());
+    handle.setArgument("leases6", leases6);
+    Lease6CollectionPtr deleted_leases6;
+    deleted_leases6.reset(new Lease6Collection());
+    deleted_leases6->push_back(generateLease6());
+    deleted_leases6->push_back(Lease6Ptr());
+    handle.setArgument("deleted_leases6", deleted_leases6);
+    int ret;
+    ASSERT_NO_THROW(ret = leases6_committed(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease6Release) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Pkt6Ptr pkt6 = generatePkt6();
+    handle.setArgument("query6", pkt6);
+    Lease6Ptr lease6 = generateLease6();
+    handle.setArgument("lease6", lease6);
+    int ret;
+    ASSERT_NO_THROW(ret = lease6_release(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+TEST_F(RunScriptTest, lease6Decline) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Pkt6Ptr pkt6 = generatePkt6();
+    handle.setArgument("query6", pkt6);
+    Lease6Ptr lease6 = generateLease6();
+    handle.setArgument("lease6", lease6);
+    int ret;
+    ASSERT_NO_THROW(ret = lease6_decline(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
 }
 
 } // end of anonymous namespace

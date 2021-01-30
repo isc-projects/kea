@@ -18,7 +18,7 @@ ECHO_TO_FILE() {
 
 ASSERT_EQ() {
     if ! test $EXPECTED = $ACTUAL; then
-        ECHO_TO_FILE "Values differ:\n:
+        ECHO_TO_FILE "Values differ:\n"
         ECHO_TO_FILE "\texpected: ${EXPECTED}\n"
         ECHO_TO_FILE "\tactual: ${ACTUAL}\n"
         ECHO_TO_FILE "FAILED"

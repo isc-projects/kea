@@ -265,7 +265,7 @@ int lease6_rebind(CalloutHandle& handle) {
     }
     RunScriptImpl::extractOptionIA(vars, option6IA, "PKT6_IA");
     ProcessArgs args;
-    args.push_back("lease6_rbind");
+    args.push_back("lease6_rebind");
     impl->runScript(args, vars);
     return (0);
 }
