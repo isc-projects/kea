@@ -368,13 +368,13 @@ TEST(RunScript, extractDUID) {
     DuidPtr duid;
     RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFIX");
     ASSERT_EQ(1, vars.size());
-    std::string expected = "DUID_PREFIX_ID_DUID_SUFIX=\n";
+    std::string expected = "DUID_PREFIX_DUID_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     duid = generateDUID();
     RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFIX");
     ASSERT_EQ(1, vars.size());
-    expected = "DUID_PREFIX_ID_DUID_SUFIX=00:01:02:03:04:05:06\n";
+    expected = "DUID_PREFIX_DUID_SUFIX=00:01:02:03:04:05:06\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -458,7 +458,7 @@ TEST(RunScript, extractLease4) {
                            "LEASE4_PREFIX_STATE_LEASE4_SUFIX=\n"
                            "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFIX=\n"
                            "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFIX=\n"
-                           "LEASE4_PREFIX_CLIENT_ID_ID_LEASE4_SUFIX=\n";
+                           "LEASE4_PREFIX_CLIENT_ID_LEASE4_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     lease4 = generateLease4();
@@ -472,7 +472,7 @@ TEST(RunScript, extractLease4) {
                "LEASE4_PREFIX_STATE_LEASE4_SUFIX=default\n"
                "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFIX=4\n"
                "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFIX=2\n"
-               "LEASE4_PREFIX_CLIENT_ID_ID_LEASE4_SUFIX=00:01:02:03:04:05:06\n";
+               "LEASE4_PREFIX_CLIENT_ID_LEASE4_SUFIX=00:01:02:03:04:05:06\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -490,7 +490,7 @@ TEST(RunScript, extractLease6) {
                            "LEASE6_PREFIX_STATE_LEASE6_SUFIX=\n"
                            "LEASE6_PREFIX_SUBNET_ID_LEASE6_SUFIX=\n"
                            "LEASE6_PREFIX_VALID_LIFETIME_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_DUID_ID_LEASE6_SUFIX=\n"
+                           "LEASE6_PREFIX_DUID_LEASE6_SUFIX=\n"
                            "LEASE6_PREFIX_IAID_LEASE6_SUFIX=\n"
                            "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFIX=\n"
                            "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFIX=\n"
@@ -508,7 +508,7 @@ TEST(RunScript, extractLease6) {
                "LEASE6_PREFIX_STATE_LEASE6_SUFIX=default\n"
                "LEASE6_PREFIX_SUBNET_ID_LEASE6_SUFIX=5\n"
                "LEASE6_PREFIX_VALID_LIFETIME_LEASE6_SUFIX=4\n"
-               "LEASE6_PREFIX_DUID_ID_LEASE6_SUFIX=00:01:02:03:04:05:06\n"
+               "LEASE6_PREFIX_DUID_LEASE6_SUFIX=00:01:02:03:04:05:06\n"
                "LEASE6_PREFIX_IAID_LEASE6_SUFIX=2\n"
                "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFIX=3\n"
                "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFIX=128\n"
@@ -539,7 +539,7 @@ TEST(RunScript, extractLeases4) {
                "LEASES4_PREFIX_AT0_STATE_LEASES4_SUFIX=default\n"
                "LEASES4_PREFIX_AT0_SUBNET_ID_LEASES4_SUFIX=4\n"
                "LEASES4_PREFIX_AT0_VALID_LIFETIME_LEASES4_SUFIX=2\n"
-               "LEASES4_PREFIX_AT0_CLIENT_ID_ID_LEASES4_SUFIX=00:01:02:03:04:05:06\n"
+               "LEASES4_PREFIX_AT0_CLIENT_ID_LEASES4_SUFIX=00:01:02:03:04:05:06\n"
                "LEASES4_PREFIX_AT1_ADDRESS_LEASES4_SUFIX=192.168.0.1\n"
                "LEASES4_PREFIX_AT1_CLTT_LEASES4_SUFIX=3\n"
                "LEASES4_PREFIX_AT1_HOSTNAME_LEASES4_SUFIX=test.hostname\n"
@@ -548,7 +548,7 @@ TEST(RunScript, extractLeases4) {
                "LEASES4_PREFIX_AT1_STATE_LEASES4_SUFIX=default\n"
                "LEASES4_PREFIX_AT1_SUBNET_ID_LEASES4_SUFIX=4\n"
                "LEASES4_PREFIX_AT1_VALID_LIFETIME_LEASES4_SUFIX=2\n"
-               "LEASES4_PREFIX_AT1_CLIENT_ID_ID_LEASES4_SUFIX=00:01:02:03:04:05:06\n";
+               "LEASES4_PREFIX_AT1_CLIENT_ID_LEASES4_SUFIX=00:01:02:03:04:05:06\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -575,7 +575,7 @@ TEST(RunScript, extractLeases6) {
                "LEASES6_PREFIX_AT0_STATE_LEASES6_SUFIX=default\n"
                "LEASES6_PREFIX_AT0_SUBNET_ID_LEASES6_SUFIX=5\n"
                "LEASES6_PREFIX_AT0_VALID_LIFETIME_LEASES6_SUFIX=4\n"
-               "LEASES6_PREFIX_AT0_DUID_ID_LEASES6_SUFIX=00:01:02:03:04:05:06\n"
+               "LEASES6_PREFIX_AT0_DUID_LEASES6_SUFIX=00:01:02:03:04:05:06\n"
                "LEASES6_PREFIX_AT0_IAID_LEASES6_SUFIX=2\n"
                "LEASES6_PREFIX_AT0_PREFERRED_LIFETIME_LEASES6_SUFIX=3\n"
                "LEASES6_PREFIX_AT0_PREFIX_LEN_LEASES6_SUFIX=128\n"
@@ -588,7 +588,7 @@ TEST(RunScript, extractLeases6) {
                "LEASES6_PREFIX_AT1_STATE_LEASES6_SUFIX=default\n"
                "LEASES6_PREFIX_AT1_SUBNET_ID_LEASES6_SUFIX=5\n"
                "LEASES6_PREFIX_AT1_VALID_LIFETIME_LEASES6_SUFIX=4\n"
-               "LEASES6_PREFIX_AT1_DUID_ID_LEASES6_SUFIX=00:01:02:03:04:05:06\n"
+               "LEASES6_PREFIX_AT1_DUID_LEASES6_SUFIX=00:01:02:03:04:05:06\n"
                "LEASES6_PREFIX_AT1_IAID_LEASES6_SUFIX=2\n"
                "LEASES6_PREFIX_AT1_PREFERRED_LIFETIME_LEASES6_SUFIX=3\n"
                "LEASES6_PREFIX_AT1_PREFIX_LEN_LEASES6_SUFIX=128\n"
@@ -671,7 +671,7 @@ TEST(RunScript, extractPkt6) {
                            "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFIX=\n"
                            "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFIX=\n"
                            "PKT6_PREFIX_PROTO_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_CLIENT_ID_ID_PKT6_SUFIX=\n";
+                           "PKT6_PREFIX_CLIENT_ID_PKT6_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     pkt6 = generatePkt6();
@@ -688,7 +688,7 @@ TEST(RunScript, extractPkt6) {
                "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFIX=00:01:02:03\n"
                "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFIX=1\n"
                "PKT6_PREFIX_PROTO_PKT6_SUFIX=UDP\n"
-               "PKT6_PREFIX_CLIENT_ID_ID_PKT6_SUFIX=00:01:02:03:04:05:06\n";
+               "PKT6_PREFIX_CLIENT_ID_PKT6_SUFIX=00:01:02:03:04:05:06\n";
     EXPECT_EQ(expected, join(vars));
 }
 

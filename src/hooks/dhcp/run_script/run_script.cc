@@ -106,9 +106,9 @@ RunScriptImpl::extractDUID(isc::util::ProcessEnvVars& vars,
     std::string data = "";
     if (duid) {
         RunScriptImpl::extractString(vars, duid->toText(),
-                                     prefix + "_ID", sufix);
+                                     prefix, sufix);
     } else {
-        RunScriptImpl::extractString(vars, "", prefix + "_ID", sufix);
+        RunScriptImpl::extractString(vars, "", prefix, sufix);
     }
 }
 
