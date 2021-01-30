@@ -53,6 +53,8 @@ external script to be called on each hookpoint, and also the 'sync' option
 to be able to wait synchronously for the script to finish execution.
 If the 'sync' parameter is false, then the script will be launched and all
 the OUT parameters of the script will be ignored.
+Currently the functionality underneath 'sync' parameter is not implemented
+and enabling synchronous calls to external script is not supported.
 
 ## Internal operation
 
