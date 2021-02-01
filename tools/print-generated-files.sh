@@ -56,10 +56,10 @@ fi
 # Parse parameters.
 while test ${#} -gt 0; do
   case "${1}" in
-    # [-d|--debug]             enable debug mode, showing every executed command
+    # [-d|--debug]                 enable debug mode, showing every executed command
     '-d'|'--debug') set -vx ;;
 
-    # [-h|--help]              print usage (this text).
+    # [-h|--help]                  print usage (this text)
     '-h'|'--help') print_usage ;;
 
     # [-a|--amend]                 amend .gitattributes
