@@ -62,6 +62,9 @@ public:
         EXPECT_THROW(thread_pool->reset(), InvalidOperation);
         EXPECT_THROW(thread_pool->wait(), InvalidOperation);
         EXPECT_THROW(thread_pool->wait(0), InvalidOperation);
+        sigset_t nsset;
+        pthread_sigmask(SIG_SETMASK, 0, &nsset);
+        EXPECT_EQ(1, sigismember(&nsset, SIGCHLD));
         EXPECT_NO_THROW(runAndWait());
     }
 

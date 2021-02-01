@@ -49,6 +49,9 @@ public:
     ///
     /// @param watch_type type of event that should occur
     void worker(WatchedThread::WatchType watch_type) {
+        sigset_t nsset;
+        pthread_sigmask(SIG_SETMASK, 0, &nsset);
+        EXPECT_EQ(1, sigismember(&nsset, SIGCHLD));
         for (passes_ = 1; passes_ < WORKER_MAX_PASSES; ++passes_) {
 
             // Stop if we're told to do it.

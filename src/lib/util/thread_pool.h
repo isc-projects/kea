@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,8 @@
 #include <mutex>
 #include <queue>
 #include <thread>
+
+#include <signal.h>
 
 namespace isc {
 namespace util {
@@ -174,10 +176,24 @@ private:
     /// @param thread_count specifies the number of threads to be created and
     /// started
     void startInternal(uint32_t thread_count) {
+        // Protect us against SIGCHLD signals
+        sigset_t sset;
+        sigset_t osset;
+        sigemptyset(&sset);
+        sigaddset(&sset, SIGCHLD);
+        pthread_sigmask(SIG_BLOCK, &sset, &osset);
         queue_.enable(thread_count);
-        for (uint32_t i = 0; i < thread_count; ++i) {
-            threads_.push_back(boost::make_shared<std::thread>(&ThreadPool::run, this));
+        try {
+            for (uint32_t i = 0; i < thread_count; ++i) {
+                threads_.push_back(boost::make_shared<std::thread>(&ThreadPool::run, this));
+            }
+        } catch (...) {
+            // Restore signal mask.
+            pthread_sigmask(SIG_SETMASK, &osset, 0);
+            throw;
         }
+        // Restore signal mask.
+        pthread_sigmask(SIG_SETMASK, &osset, 0);
     }
 
     /// @brief stop all the threads

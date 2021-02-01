@@ -1,11 +1,13 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <util/watched_thread.h>
+#include <signal.h>
 
 namespace isc {
 namespace util {
@@ -16,7 +18,21 @@ WatchedThread::start(const std::function<void()>& thread_main) {
     clearReady(READY);
     clearReady(TERMINATE);
     setErrorInternal("no error");
-    thread_.reset(new std::thread(thread_main));
+    // Protect us against SIGCHLD signals
+    sigset_t sset;
+    sigset_t osset;
+    sigemptyset(&sset);
+    sigaddset(&sset, SIGCHLD);
+    pthread_sigmask(SIG_BLOCK, &sset, &osset);
+    try {
+        thread_.reset(new std::thread(thread_main));
+    } catch (...) {
+        // Restore signal mask.
+        pthread_sigmask(SIG_SETMASK, &osset, 0);
+        throw;
+    }
+    // Restore signal mask.
+    pthread_sigmask(SIG_SETMASK, &osset, 0);
 }
 
 int

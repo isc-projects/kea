@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -247,10 +247,6 @@ ProcessSpawnImpl::spawn(bool dismiss) {
     sigemptyset(&sset);
     sigaddset(&sset, SIGCHLD);
     pthread_sigmask(SIG_BLOCK, &sset, &osset);
-    if (sigismember(&osset, SIGCHLD)) {
-        isc_throw(ProcessSpawnError,
-                  "spawn() called from a thread where SIGCHLD is blocked");
-    }
 
     // Create the child
     pid_t pid = fork();
@@ -260,6 +256,7 @@ ProcessSpawnImpl::spawn(bool dismiss) {
 
     } else if (pid == 0) {
         // We're in the child process.
+        // Restore signal mask.
         sigprocmask(SIG_SETMASK, &osset, 0);
         // Run the executable.
         if (execve(executable_.c_str(), args_.get(), vars_.get()) != 0) {
@@ -278,10 +275,12 @@ ProcessSpawnImpl::spawn(bool dismiss) {
             store_ = true;
             process_collection_[this].insert(std::pair<pid_t, ProcessStatePtr>(pid, ProcessStatePtr(new ProcessState())));
         } catch(...) {
+            // Restore signal mask.
             pthread_sigmask(SIG_SETMASK, &osset, 0);
             throw;
         }
     }
+    // Restore signal mask.
     pthread_sigmask(SIG_SETMASK, &osset, 0);
     return (pid);
 }
