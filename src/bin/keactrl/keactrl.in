@@ -20,6 +20,10 @@
 # SC2154: ... is referenced but not assigned.
 # Reason: some variables are taken from keactrl.conf
 
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
 VERSION="@PACKAGE_VERSION@"
 
 # Set the have_netconf flag to know if netconf is available.
@@ -52,9 +56,9 @@ log_info() {
 # is to determine whether the keactrl command belongs to the list of
 # supported commands.
 is_in_list() {
-    local member=${1}  # Value to be checked
-    local list="${2}"  # Comma separated list of items
-    _inlist=0          # Return value: 0 if not in list, 1 otherwise.
+    local member="${1-}"  # Value to be checked
+    local list="${2-}"    # Comma separated list of items
+    _inlist=0             # Return value: 0 if not in list, 1 otherwise.
     if [ -z "${member}" ]; then
         log_error "missing ${member}"
     fi
@@ -260,7 +264,7 @@ print_version() {
 # Check if the Kea configuration file location has been specified in the
 # keactrl configuration file. If not, it is a warning or a fatal error.
 check_kea_conf() {
-    local conf_file=${1} # Kea config file name.
+    local conf_file=${1-} # Kea config file name.
     if [ -z "${conf_file}" ]; then
         log_error "Configuration file for Kea not specified."
         exit 1
@@ -333,12 +337,12 @@ run_conditional() {
 # Note that when the configuration is applied this location may be
 # altered and only the handful of initial messages will be logged
 # to the default file.
-if [ -z "${KEA_LOGGER_DESTINATION}" ]; then
+if [ -z "${KEA_LOGGER_DESTINATION+x}" ]; then
     prefix="@prefix@"
     export KEA_LOGGER_DESTINATION="@localstatedir@/log/kea.log"
 fi
 
-command=${1}
+command=${1-}
 if [ -z "${command}" ]; then
     log_error "missing command"
     usage
@@ -365,14 +369,14 @@ keactrl_conf="@sysconfdir@/@PACKAGE@/keactrl.conf"
 servers="all"
 
 shift
-while [ -n "${1}" ]
+while test ${#} -gt 0
 do
     option=${1}
     case ${option} in
         # Override keactrl configuration file.
         -c|--ctrl-config)
             shift
-            keactrl_conf=${1}
+            keactrl_conf=${1-}
             if [ -z "${keactrl_conf}" ]; then
                 log_error "keactrl-config-file not specified"
                 usage
@@ -383,7 +387,7 @@ do
         # executed.
         -s|--server)
             shift
-            servers=$( printf "%s" "${1}" | tr "," "\n" )
+            servers=$(printf '%s' "${1-}" | tr ',' '\n')
             if [ -z "${servers}" ]; then
                 log_error "servers not specified"
                 usage
@@ -451,7 +455,7 @@ if ${have_netconf}; then
     # shellcheck disable=SC2154
     # SC2154: netconf_srv is referenced but not assigned.
     # reason: it is taken from keactrl.conf
-    if [ -z "${netconf_srv}" ]; then
+    if [ -z "${netconf_srv+x}" ]; then
         log_error "netconf_srv parameter not specified"
         exit 1
     fi

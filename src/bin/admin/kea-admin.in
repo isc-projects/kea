@@ -113,9 +113,9 @@ log_info() {
 # is to determine whether the kea-admin command belongs to the list of
 # supported commands.
 is_in_list() {
-    local member=${1}  # Value to be checked
-    local list="${2}"  # Comma separated list of items
-    _inlist=0          # Return value: 0 if not in list, 1 otherwise.
+    local member="${1-}"  # Value to be checked
+    local list="${2-}"    # Comma separated list of items
+    _inlist=0             # Return value: 0 if not in list, 1 otherwise.
     if [ -z "${member}" ]; then
         log_error "missing member (need to specify a string as first param)"
     fi
@@ -698,7 +698,7 @@ fi
 shift
 
 # Second, check what's the backend
-backend=${1}
+backend=${1-}
 if [ -z "${backend}" ]; then
     log_error "missing backend"
     usage
@@ -719,7 +719,7 @@ do
         # Specify database host
         -h|--host)
             shift
-            db_host=${1}
+            db_host=${1-}
             if [ -z "${db_host}" ]; then
                 log_error "-h or --host requires a parameter"
                 usage
@@ -740,7 +740,7 @@ do
         # Specify database user
         -u|--user)
             shift
-            db_user=${1}
+            db_user=${1-}
             if [ -z "${db_user}" ]; then
                 log_error "-u or --user requires a parameter"
                 usage
@@ -768,7 +768,7 @@ do
         # Specify database name
         -n|--name)
             shift
-            db_name=${1}
+            db_name=${1-}
             if [ -z "${db_name}" ]; then
                 log_error "-n or --name requires a parameter"
                 usage
@@ -777,7 +777,7 @@ do
             ;;
         -d|--directory)
             shift
-            scripts_dir=${1}
+            scripts_dir=${1-}
             if [ -z "${scripts_dir}" ]; then
                 log_error "-d or --directory requires a parameter"
                 usage
@@ -805,7 +805,7 @@ do
         # specify output file, currently only used by lease dump
         -o|--output)
             shift
-            dump_file=${1}
+            dump_file=${1-}
             if [ -z "${dump_file}" ]; then
                 log_error "-o or --output requires a parameter"
                 usage

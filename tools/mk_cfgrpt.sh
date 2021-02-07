@@ -15,10 +15,22 @@
 # used.
 set -eu
 
-report_file="$1"
-dest="$2"
+report_file="${1-}"
+dest="${2-}"
 
 if [ -z "${report_file}" ]
+then
+    echo "ERROR mk_cfgrpt.sh - expected report_file parameter"
+    exit 1
+fi
+
+if [ -z "${dest}" ]
+then
+    echo "ERROR mk_cfgrpt.sh - expected dest parameter"
+    exit 1
+fi
+
+if [ ! -f "${report_file}" ]
 then
     echo "ERROR mk_cfgrpt.sh - input report: $report_file does not exist"
     exit 1

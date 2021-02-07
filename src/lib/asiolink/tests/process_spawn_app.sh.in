@@ -39,7 +39,7 @@ do
             ;;
         -e)
             shift
-            exit_code=${1}
+            exit_code=${1-}
             ;;
         -s)
             shift
@@ -59,7 +59,11 @@ do
             exit 123
             ;;
     esac
-    shift
+    # We've shifted in the loop so we may have run out of parameters in the
+    # meantime. Check again.
+    if test "${#}" -gt 0; then
+      shift
+    fi
 done
 
 # The exit code of 32 is returned when no args specified or
