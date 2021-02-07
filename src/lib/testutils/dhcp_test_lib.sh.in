@@ -440,7 +440,7 @@ get_pid() {
     _GET_PIDS_NUM=0
 
     # If the PID file exists, get the PID and see if the process is alive.
-    pid=$(cat "${abs_pidfile_path}" || true)
+    pid=$(cat "${abs_pidfile_path}" 2> /dev/null || true)
     if test -n "${pid}"; then
         if kill -0 "${pid}" > /dev/null 2>&1; then
             _GET_PID=${pid}
@@ -861,7 +861,7 @@ verify_server_pid() {
     fi
 
     # File exists, does its PID point to a live process?
-    pid=$(cat "${pid_file}")
+    pid=$(cat "${pid_file}" 2> /dev/null || true)
     if ! kill -0 "${pid}"; then
         printf "ERROR: PID file:[%s] exists but PID:[%d] does not\n" \
                "${pid_file}" "${pid}"

@@ -132,11 +132,8 @@ get_pid_from_file() {
     _pid_file="${pid_file_dir}/${conf_name}.${proc_name}.pid"
 
     # Grab the PID if the file exists
-    if [ -e "${_pid_file}" ]; then
-        if ! _pid=$(cat "${_pid_file}"); then
-            log_error "Error reading PID file: ${_pid_file}"
-        fi
-    else
+    _pid=$(cat "${_pid_file}" 2> /dev/null || true)
+    if test -z "${_pid}"; then
         # No file, means no pid
         _pid=0;
     fi
