@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.7.4.
+// A Bison parser, made by GNU Bison 3.7.5.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015, 2018-2020 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018-2021 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -125,7 +125,7 @@
 #else // !D2_PARSER_DEBUG
 
 # define YYCDEBUG if (false) std::cerr
-# define YY_SYMBOL_PRINT(Title, Symbol)  YYUSE (Symbol)
+# define YY_SYMBOL_PRINT(Title, Symbol)  YY_USE (Symbol)
 # define YY_REDUCE_PRINT(Rule)           static_cast<void> (0)
 # define YY_STACK_PRINT()                static_cast<void> (0)
 
@@ -366,7 +366,7 @@ namespace isc { namespace d2 {
   D2Parser::yy_print_ (std::ostream& yyo, const basic_symbol<Base>& yysym) const
   {
     std::ostream& yyoutput = yyo;
-    YYUSE (yyoutput);
+    YY_USE (yyoutput);
     if (yysym.empty ())
       yyo << "empty symbol";
     else
@@ -2265,7 +2265,7 @@ namespace isc { namespace d2 {
   const short
   D2Parser::yydefgoto_[] =
   {
-      -1,    10,    11,    12,    13,    14,    15,    16,    17,    18,
+       0,    10,    11,    12,    13,    14,    15,    16,    17,    18,
       19,    28,    29,    30,    49,   231,    62,    63,    31,    48,
       59,    60,    79,    33,    50,    65,   145,    35,    51,    80,
       81,    82,   147,    83,    84,    85,   150,   228,    86,   151,
