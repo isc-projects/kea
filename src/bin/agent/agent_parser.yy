@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,6 +62,11 @@ using namespace std;
   CLIENTS "clients"
   USER "user"
   PASSWORD "password"
+
+  TRUST_ANCHOR "trust-anchor"
+  CERT_FILE "cert-file"
+  KEY_FILE "key-file"
+  CERT_REQUIRED "cert-required"
 
   CONTROL_SOCKETS "control-sockets"
   DHCP4_SERVER "dhcp4"
@@ -264,6 +269,10 @@ global_params: global_param
 // Dhcp6.
 global_param: http_host
             | http_port
+            | trust_anchor
+            | cert_file
+            | key_file
+            | cert_required
             | authentication
             | control_sockets
             | hooks_libraries
@@ -286,6 +295,39 @@ http_port: HTTP_PORT COLON INTEGER {
     ctx.unique("http-port", ctx.loc2pos(@1));
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("http-port", prf);
+};
+
+trust_anchor: TRUST_ANCHOR {
+    ctx.unique("trust-anchor", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr ca(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("trust-anchor", ca);
+    ctx.leave();
+};
+
+cert_file: CERT_FILE {
+    ctx.unique("cert-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr cert(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("cert-file", cert);
+    ctx.leave();
+};
+
+key_file: KEY_FILE {
+    ctx.unique("key-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr key(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("key-file", key);
+    ctx.leave();
+};
+
+cert_required: CERT_REQUIRED COLON BOOLEAN {
+    ctx.unique("cert-required", ctx.loc2pos(@1));
+    ElementPtr req(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("cert-required", req);
 };
 
 user_context: USER_CONTEXT {

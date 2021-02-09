@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -287,6 +287,42 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return AgentParser::make_PASSWORD(driver.loc_);
     default:
         return AgentParser::make_STRING("password", driver.loc_);
+    }
+}
+
+\"trust-anchor\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+        return AgentParser::make_TRUST_ANCHOR(driver.loc_);
+    default:
+        return AgentParser::make_STRING("trust-anchor", driver.loc_);
+    }
+}
+
+\"cert-file\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+        return AgentParser::make_CERT_FILE(driver.loc_);
+    default:
+        return AgentParser::make_STRING("cert-file", driver.loc_);
+    }
+}
+
+\"key-file\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+        return AgentParser::make_KEY_FILE(driver.loc_);
+    default:
+        return AgentParser::make_STRING("key-file", driver.loc_);
+    }
+}
+
+\"cert-required\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+        return AgentParser::make_CERT_REQUIRED(driver.loc_);
+    default:
+        return AgentParser::make_STRING("cert-required", driver.loc_);
     }
 }
 
