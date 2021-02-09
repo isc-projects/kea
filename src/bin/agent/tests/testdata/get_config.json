@@ -13,6 +13,8 @@
             "realm": "kea-control-agent",
             "type": "basic"
         },
+        "cert-file": "my-cert",
+        "cert-required": true,
         "control-sockets": {
             "d2": {
                 "socket-name": "/tmp/kea-ddns-ctrl-socket",
@@ -42,6 +44,8 @@
             }
         ],
         "http-host": "127.0.0.1",
-        "http-port": 8000
+        "http-port": 8000,
+        "key-file": "my-key",
+        "trust-anchor": "my-ca"
     }
 }

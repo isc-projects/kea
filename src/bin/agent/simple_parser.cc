@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,8 +37,12 @@ namespace agent {
 ///
 /// These are global Control Agent parameters.
 const SimpleDefaults AgentSimpleParser::AGENT_DEFAULTS = {
-    { "http-host",    Element::string,  "127.0.0.1" },
-    { "http-port",    Element::integer, "8000" }
+    { "http-host",      Element::string,   "127.0.0.1" },
+    { "http-port",      Element::integer,  "8000" },
+    { "trust-anchor",   Element::string,   "" },
+    { "cert-file",      Element::string,   "" },
+    { "key-file",       Element::string,   "" },
+    { "cert-required",  Element::boolean,  "true" }
 };
 
 /// @brief This table defines default values for authentication.
@@ -97,6 +101,32 @@ size_t AgentSimpleParser::setAllDefaults(const isc::data::ElementPtr& global) {
 }
 
 void
+AgentSimpleParser::checkTlsSetup(const isc::data::ConstElementPtr& config) {
+    ConstElementPtr ca = config->get("trust-anchor");
+    ConstElementPtr cert = config->get("cert-file");
+    ConstElementPtr key = config->get("key-file");
+    if (ca && !ca->stringValue().empty()) {
+        if (!cert || cert->stringValue().empty()) {
+            isc_throw(ConfigError, "trust-anchor is set but not cert-file:"
+                      " all or none of TLS parameters must be set");
+        }
+        if (!key || key->stringValue().empty()) {
+            isc_throw(ConfigError, "cert-file is set but not key-file:"
+                      " all or none of TLS parameters must be set");
+        }
+    } else {
+        if (cert && !cert->stringValue().empty()) {
+            isc_throw(ConfigError, "cert-file is set but not trust-anchor:"
+                      " all or none of TLS parameters must be set");
+        }
+        if (key && !key->stringValue().empty()) {
+            isc_throw(ConfigError, "key-file is set but not cert-file:"
+                      " all or none of TLS parameters must be set");
+        }
+    }
+}
+
+void
 AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
                          const isc::data::ConstElementPtr& config,
                          bool check_only) {
@@ -105,7 +135,13 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     ctx->setHttpHost(SimpleParser::getString(config, "http-host"));
     ctx->setHttpPort(SimpleParser::getIntType<uint16_t>(config, "http-port"));
 
-    // Control sockets are second.
+    // TLS parameter are second.
+    ctx->setTrustAnchor(SimpleParser::getString(config, "trust-anchor"));
+    ctx->setCertFile(SimpleParser::getString(config, "cert-file"));
+    ctx->setKeyFile(SimpleParser::getString(config, "key-file"));
+    ctx->setCertRequired(SimpleParser::getBoolean(config, "cert-required"));
+
+    // Control sockets are third.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
     if (ctrl_sockets) {
         auto sockets_map = ctrl_sockets->mapValue();
@@ -114,7 +150,7 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
         }
     }
 
-    // Basic HTTP authentications are third.
+    // Basic HTTP authentications are forth.
     ConstElementPtr auth_config = config->get("authentication");
     if (auth_config) {
         using namespace isc::http;

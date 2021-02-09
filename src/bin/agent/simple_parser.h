@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,6 +29,12 @@ public:
     /// @param global scope to be filled in with defaults.
     /// @return number of default values added
     static size_t setAllDefaults(const isc::data::ElementPtr& global);
+
+    /// @brief Check TLS setup consistency i.e. all or none.
+    ///
+    /// @param config - Element tree structure that holds configuration.
+    /// @throw ConfigError when the configuration is not consistent.
+    void checkTlsSetup(const isc::data::ConstElementPtr& config);
 
     /// @brief Parses the control agent configuration
     ///

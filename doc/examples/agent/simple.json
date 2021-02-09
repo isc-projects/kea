@@ -11,6 +11,20 @@
         // Another mandatory parameter is the HTTP port.
         "http-port": 8000,
 
+        // TLS trust anchor aka Certificate Authority. A file name or
+        // with OpenSSL a directory path.
+        "trust-anchor": "my-ca",
+
+        // TLS server certificate file name.
+        "cert-file": "my-cert",
+
+        // TLS server private key file name.
+        "key-file": "my-key",
+
+        // TLS require client certificates flag. Default is true and means
+        // require client certificates. False means they are optional.
+        "file-required": true,
+
         // Optional authentication.
         "authentication":
         {

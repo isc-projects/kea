@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -117,6 +117,65 @@ public:
         return (auth_config_);
     }
 
+    /// @brief Sets trust-anchor parameter
+    ///
+    /// @param ca Trust anchor aka Certificate Authority (can be a file or
+    /// with OpenSSL a directory).
+    void setTrustAnchor(const std::string& ca) {
+        trust_anchor_ = ca;
+    }
+
+    /// @brief Returns trust-anchor parameter
+    ///
+    /// @return Trust anchor aka Certificate Authority
+    std::string getTrustAnchor() const {
+        return (trust_anchor_);
+    }
+
+    /// @brief Sets cert-file parameter
+    ///
+    /// @param cert Server certificate file name
+    void setCertFile(const std::string& cert) {
+        cert_file_ = cert;
+    }
+
+    /// @brief Returns cert-file parameter
+    ///
+    /// @return Server certificate file name
+    std::string getCertFile() const {
+        return (cert_file_);
+    }
+
+    /// @brief Sets key-file parameter
+    ///
+    /// @param key Server private key file name
+    void setKeyFile(const std::string& key) {
+        key_file_ = key;
+    }
+
+    /// @brief Returns key-file parameter
+    ///
+    /// @return Server private key file name
+    std::string getKeyFile() const {
+        return (key_file_);
+    }
+
+    /// @brief Sets cert-required parameter
+    ///
+    /// @param required Client certificates are required when true
+    /// (the default) or optional when false
+    void setCertRequired(bool required) {
+        cert_required_ = required;
+    }
+
+    /// @brief Returns cert-required parameter
+    ///
+    /// @return True when client certificates are required, false when they
+    /// are optional, the default is to required them (true).
+    bool getCertRequired() const {
+        return (cert_required_);
+    }
+
     /// @brief Returns non-const reference to configured hooks libraries.
     ///
     /// @return non-const reference to configured hooks libraries.
@@ -165,6 +224,20 @@ private:
 
     /// TCP port the CA should listen on.
     uint16_t http_port_;
+
+    /// Trust anchor aka Certificate Authority (can be a file or with
+    /// OpenSSL a directory).
+    std::string trust_anchor_;
+
+    /// Server certificate file name.
+    std::string cert_file_;
+
+    /// Server private key file name.
+    std::string key_file_;
+
+    /// Client certificates requirement flag (default is true i.e. to
+    /// require them).
+    bool cert_required_;
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
