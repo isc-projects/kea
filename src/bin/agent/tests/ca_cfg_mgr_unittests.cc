@@ -67,6 +67,25 @@ TEST(CtrlAgentCfgMgr, contextHttpParams) {
     EXPECT_EQ("alnitak", ctx.getHttpHost());
 }
 
+// Tests if context can store and retrieve TLS parameters.
+TEST(CtrlAgentCfgMgr, contextTlsParams) {
+    CtrlAgentCfgContext ctx;
+
+    // Check TLS parameters
+    ctx.setTrustAnchor("my-ca");
+    EXPECT_EQ("my-ca", ctx.getTrustAnchor());
+
+    ctx.setCertFile("my-cert");
+    EXPECT_EQ("my-cert", ctx.getCertFile());
+
+    ctx.setKeyFile("my-key");
+    EXPECT_EQ("my-key", ctx.getKeyFile());
+
+    EXPECT_TRUE(ctx.getCertRequired());
+    ctx.setCertRequired(false);
+    EXPECT_FALSE(ctx.getCertRequired());
+}
+
 // Tests if context can store and retrieve control socket information.
 TEST(CtrlAgentCfgMgr, contextSocketInfo) {
 
@@ -342,6 +361,16 @@ const char* AGENT_CONFIGS[] = {
     "            \"user-context\": { \"version\": 1 }\n"
     "        }\n"
     "    }\n"
+    "}",
+
+    // Configuration 9: https aka http over TLS
+    "{\n"
+    "    \"http-host\": \"betelgeuse\",\n"
+    "    \"http-port\": 8001,\n"
+    "    \"trust-anchor\": \"my-ca\",\n"
+    "    \"cert-file\": \"my-cert\",\n"
+    "    \"key-file\": \"my-key\",\n"
+    "    \"cert-required\": false\n"
     "}"
 };
 
@@ -576,6 +605,18 @@ TEST_F(AgentParserTest, comments) {
     ASSERT_EQ(1, ctx9->size());
     ASSERT_TRUE(ctx9->get("no password"));
     EXPECT_EQ("true", ctx9->get("no password")->str());
+}
+
+// This test checks if a config with TLS parameters is parsed properly.
+TEST_F(AgentParserTest, configParseTls) {
+    configParse(AGENT_CONFIGS[9], 0);
+
+    CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+    EXPECT_EQ("my-ca", ctx->getTrustAnchor());
+    EXPECT_EQ("my-cert", ctx->getCertFile());
+    EXPECT_EQ("my-key", ctx->getKeyFile());
+    EXPECT_FALSE(ctx->getCertRequired());
 }
 
 } // end of anonymous namespace

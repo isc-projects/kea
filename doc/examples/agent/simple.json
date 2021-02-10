@@ -23,7 +23,7 @@
 
         // TLS require client certificates flag. Default is true and means
         // require client certificates. False means they are optional.
-        "file-required": true,
+        "cert-required": true,
 
         // Optional authentication.
         "authentication":
