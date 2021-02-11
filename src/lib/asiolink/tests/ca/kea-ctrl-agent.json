@@ -1,0 +1,59 @@
+// This is a simple example of a configuration for Control-Agent (CA) or simply
+// Agent. This server provides RESTful interface for all Kea servers.
+{
+    "Control-agent":
+    {
+	// We need to specify where the agent should listen to incoming HTTP
+	// queries. Note that agent does not provide SSL or TLS protection
+	// on its own, so limiting the traffic to 127.0.0.1 is a good idea.
+	"http-host": "127.0.0.1",
+
+	// Another mandatory parameter is the HTTP port.
+	"http-port": 8000,
+
+	// This map specifies where control channel of each server is configured
+	// to listen on. See 'control-socket' object in the respective
+	// servers. At this time the only supported socket type is "unix".
+	// Make sure that the Agent and respective servers configuration
+	// matches exactly, otherwise they won't be able to communicate.
+	"control-sockets":
+	{
+	    // This is how the Agent can communicate with the DHCPv4 server.
+	    "dhcp4":
+	    {
+		"socket-type": "unix",
+		"socket-name": "/tmp/kea4-ctrl-socket"
+	    },
+
+	    // Location of the DHCPv6 command channel socket.
+	    "dhcp6":
+	    {
+		"socket-type": "unix",
+		"socket-name": "/tmp/kea6-ctrl-socket"
+	    }
+
+	    // Currently DHCP-DDNS (nicknamed D2) does not support
+	    // command channel yet, but we hope this will change in the
+	    // future.
+	    /*
+	    "d2-server":
+	    {
+		"socket-type": "unix",
+		"socket-name": "/tmp/kea2-socket-d2"
+	    }*/
+	},
+
+	"loggers": [
+	    {
+		"name": "kea-ctrl-agent",
+		"output_options": [
+		    {
+			"output": "/var/log/kea-ctrl-agent.log"
+		    }
+		],
+		"severity": "INFO",
+		"debuglevel": 0
+	    }
+	]
+    }
+}

@@ -1,0 +1,55 @@
+{
+    // Main entry (required and only entry at this level).
+    "ReverseProxy": {
+        // Hostname of the reverse proxy and the control agent.
+        "host": "127.0.0.1",
+        // TCP port where the reverse proxy listen on.
+        "reverse-proxy-port": 4443,
+        // TCP port where the control agent listen on and
+        // the reverse proxy connect to.
+        "control-agent-port": 8000,
+        // Where to find api files.
+        "api-files": "../../share/api",
+        // Role assignment method (mandatory, value issuer or subject).
+        "assign-role-by": "issuer",
+        // Assignment method optional parameter.
+        "assign-role-parameter": {
+            // Map issuer kea-ca into admin role.
+            "kea-ca": "admin"
+        },
+        // Default role (reject everything if empty).
+        "default-role": "user",
+        // Role list.
+        "roles": [
+            {
+                // Role name (mandatory).
+                "name": "admin",
+                // Accept command filter.
+                "accept-commands": "all"
+            },
+            {
+                // Role name (mandatory).
+                "name" : "user",
+                // Accept command filter.
+                "accept-commands": {
+                    // Match access.
+                    "access": "read"
+                },
+                // Filter responses.
+                "response-filters": [
+                    // Remove rejected commands from list-commands response.
+                    "list-commands"
+                ]
+            }
+        ],
+        // Security aka TLS setting.
+        // Trust anchor aka CA (can be a file or a directory).
+        "trust-anchor": "tests/ca/kea-ca.crt",
+        // Server certificate file (please use accepted subjetAltName).
+        "cert-file": "tests/ca/kea-server.crt",
+        // Server key file (not ciphered).
+        "key-file": "tests/ca/kea-server.key",
+        // Client certificates are required or optional.
+        "cert-required": false
+    }
+}
