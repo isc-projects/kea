@@ -1,0 +1,28 @@
+// This is an example of a configuration for Control-Agent (CA) HTTPS i.e.
+// HTTP over TLS.
+{
+    "Control-agent":
+    {
+        // We need to specify where the agent should listen to incoming HTTP
+        // queries. Note that agent does not provide SSL or TLS protection
+        // on its own, so limiting the traffic to localhost is a good idea.
+        "http-host": "127.0.0.1",
+
+        // Another mandatory parameter is the HTTP port.
+        "http-port": 8000,
+
+        // TLS trust anchor (Certificate Authority). This is a file name or
+        // (for OpenSSL only) a directory path.
+        "trust-anchor": "my-ca",
+
+        // TLS server certificate file name.
+        "cert-file": "my-cert",
+
+        // TLS server private key file name.
+        "key-file": "my-key",
+
+        // TLS require client certificates flag. Default is true and means
+        // require client certificates. False means they are optional.
+        "cert-required": true
+    }
+}

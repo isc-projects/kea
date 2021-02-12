@@ -320,6 +320,7 @@ void testFile(const std::string& fname) {
 TEST(ParserTest, file) {
     vector<string> configs;
     configs.push_back("comments.json");
+    configs.push_back("https.json");
     configs.push_back("simple.json");
 
     for (int i = 0; i<configs.size(); i++) {
@@ -758,6 +759,7 @@ TEST(ParserTest, mapEntries) {
     string sample_dir(CFG_EXAMPLES);
     sample_dir += "/";
     ElementPtr sample_json = Element::createList();
+    loadFile(sample_dir + "https.json", sample_json);
     loadFile(sample_dir + "simple.json", sample_json);
     KeywordSet sample_keys;
     // Recursively extract keywords.

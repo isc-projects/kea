@@ -171,7 +171,7 @@ public:
     /// @brief Returns cert-required parameter
     ///
     /// @return True when client certificates are required, false when they
-    /// are optional, the default is to required them (true).
+    /// are optional, the default is to require them (true).
     bool getCertRequired() const {
         return (cert_required_);
     }

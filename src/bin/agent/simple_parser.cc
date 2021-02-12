@@ -105,24 +105,25 @@ AgentSimpleParser::checkTlsSetup(const isc::data::ConstElementPtr& config) {
     ConstElementPtr ca = config->get("trust-anchor");
     ConstElementPtr cert = config->get("cert-file");
     ConstElementPtr key = config->get("key-file");
-    if (ca && !ca->stringValue().empty()) {
-        if (!cert || cert->stringValue().empty()) {
-            isc_throw(ConfigError, "trust-anchor is set but not cert-file:"
-                      " all or none of TLS parameters must be set");
-        }
-        if (!key || key->stringValue().empty()) {
-            isc_throw(ConfigError, "cert-file is set but not key-file:"
-                      " all or none of TLS parameters must be set");
-        }
-    } else {
-        if (cert && !cert->stringValue().empty()) {
-            isc_throw(ConfigError, "cert-file is set but not trust-anchor:"
-                      " all or none of TLS parameters must be set");
-        }
-        if (key && !key->stringValue().empty()) {
-            isc_throw(ConfigError, "key-file is set but not cert-file:"
-                      " all or none of TLS parameters must be set");
-        }
+    bool have_ca = (ca && !ca->stringValue().empty());
+    bool have_cert = (cert && !cert->stringValue().empty());
+    bool have_key = (key && !key->stringValue().empty());
+    if (!have_ca && !have_cert && !have_key) {
+        // No TLS parameter so TLS is not used.
+        return;
+    }
+    // TLS is used: all 3 parameters are required.
+    if (!have_ca) {
+        isc_throw(ConfigError, "trust-anchor parameter is missing or empty:"
+                  " all or none of TLS parameters must be set");
+    }
+    if (!have_cert) {
+        isc_throw(ConfigError, "cert-file parameter is missing or empty:"
+                  " all or none of TLS parameters must be set");
+    }
+    if (!have_key) {
+        isc_throw(ConfigError, "key-file parameter is missing or empty:"
+                  " all or none of TLS parameters must be set");
     }
 }
 

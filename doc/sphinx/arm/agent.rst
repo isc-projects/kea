@@ -50,6 +50,10 @@ The following example demonstrates the basic CA configuration.
        "Control-agent": {
            "http-host": "10.20.30.40",
            "http-port": 8000,
+           "trust-anchor": "/path/to/the/ca-cert.pem",
+           "cert-file": "/path/to/the/agent-cert.pem",
+           "key-file": "/path/to/the/agent-key.pem",
+           "cert-required": true,
            "authentication": {
                "type": "basic",
                "realm": "kea-control-agent",
@@ -95,8 +99,12 @@ The following example demonstrates the basic CA configuration.
 The ``http-host`` and ``http-port`` parameters specify an IP address and
 port to which HTTP service will be bound. In the example configuration
 provided above, the RESTful service will be available under the URL of
-``http://10.20.30.40:8000/``. If these parameters are not specified, the
+``https://10.20.30.40:8000/``. If these parameters are not specified, the
 default URL is ``http://127.0.0.1:8000/``.
+
+The ``trust-anchor``, ``cert-file``, ```key-file`` and ``cert-required``
+parameters specify the TLS setup for HTTP i.e. HTTPS. If these parameters
+are not specified HTTP is used.
 
 As mentioned in :ref:`agent-overview`, the CA can forward
 received commands to the Kea servers for processing. For example,
@@ -179,11 +187,13 @@ the example above.
 
 .. _agent-secure-connection:
 
-Secure Connections
-==================
+Secure Connections (version before 1.9.5)
+=========================================
 
 The Control Agent does not natively support secure HTTP connections like
-SSL or TLS. In order to setup a secure connection, please use one of the
+SSL or TLS before version 1.9.5.
+
+In order to setup a secure connection, please use one of the
 available third-party HTTP servers and configure it to run as a reverse
 proxy to the Control Agent. Kea has been tested with two major HTTP
 server implementations working as a reverse proxy: Apache2 and nginx.
@@ -286,6 +296,50 @@ When you use an HTTP client without TLS support as ``kea-shell``, you
 can use an HTTP/HTTPS translator such as stunnel in client mode. A
 sample configuration is provided in the ``doc/examples/https/shell/``
 directory.
+
+Secure Connections (since version 1.9.5)
+========================================
+
+Since the Kea version 1.9.5 the Control Agent natively supports secure
+HTTP connections using TLS. This allows a protection against users from
+the node where the agent runs, something that a reverse proxy cannot
+provide.
+
+TLS is configured using three string parameters giving file names and
+a boolean parameter:
+
+-  The ``trust-anchor`` specifies the Certificate Authority file name or
+   with OpenSSL backend directory path.
+
+-  The ``cert-file`` specifies the server certificate file name.
+
+-  The ``key-file`` specifies the private key file name. The file must not
+   be encrypted.
+
+-  The ``cert-required`` specifies whether client certificates are required
+   or optional. The default is to require them and to perform mutual
+   authentication.
+
+The file format is PEM. Either all the string parameters are specified and
+HTTP over TLS aka HTTPS is used, or none is specified and plain HTTP is used.
+Configuring only one or two string parameters is an error.
+
+.. note::
+
+   When client certificates are not required only the server side is
+   authenticated i.e. the communication is encrypted with an unknown client.
+   This protects only against passive attacks, active attacks as Man in the
+   Middle is still possible.
+
+.. note::
+
+   No standard HTTP authentication scheme cryptographically bind  its end
+   entity with TLS. This means that the TLS client and server can be
+   mutually authenticated but there is no proof they are the same as
+   the HTTP authentication. To summary a Man in the Middle attack is
+   still possible when both HTTPS and HTTP authentication are used.
+
+Since the Kea version 1.9.5 the ``kea-shell`` tool supports TLS.
 
 .. _agent-launch:
 
