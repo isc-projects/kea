@@ -2771,8 +2771,10 @@ client documentation for specific values.
        ...
              }
 
-If there are multiple classes defined and an incoming packet is matched
-to multiple classes, the class that is evaluated first is used.
+If an incoming packet is matched to multiple classes, then the
+value used for each field will come from the first class that
+specifies the field, in the order the classes are assigned to the
+packet.
 
 .. note::
 
