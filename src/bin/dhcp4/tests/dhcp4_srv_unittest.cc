@@ -136,6 +136,15 @@ const char* CONFIGS[] = {
     "\"valid-lifetime\": 4000 }",
 };
 
+// Convenience function for comparing option buffer to an expected string value
+// @param exp_string expected string value
+// @param buffer OptionBuffer whose contents are to be tested
+void checkStringInBuffer( const std::string& exp_string, const OptionBuffer& buffer) {
+    std::string buffer_string(buffer.begin(), buffer.end());
+    EXPECT_EQ(exp_string, std::string(buffer_string.c_str()));
+}
+
+
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
 // in the received message.
@@ -4387,6 +4396,157 @@ TEST_F(Dhcpv4SrvTest, userContext) {
     ASSERT_TRUE(pools[0]);
     ASSERT_TRUE(pools[0]->getContext());
     EXPECT_EQ("{ \"value\": 42 }", pools[0]->getContext()->str());
+}
+
+// Verify that fixed fields are set from classes in the same order
+// as class options.
+TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    std::string config = R"(
+    {
+        "interfaces-config": { "interfaces": [ "*" ] },
+        "client-classes": [
+        {
+            "name":"one",
+            "server-hostname": "server_one",
+            "next-server": "192.0.2.111",
+            "boot-file-name":"one.boot",
+            "option-data": [
+            {
+                "name": "domain-name",
+                "data": "one.example.com"
+            }]
+        },
+        {
+            "name":"two",
+            "server-hostname": "server_two",
+            "next-server":"192.0.2.222",
+            "boot-file-name":"two.boot",
+            "option-data": [
+            {
+                "name": "domain-name",
+                "data": "two.example.com"
+            }]
+        },
+        {
+            "name":"next-server-only",
+            "next-server":"192.0.2.100"
+        },
+        {
+            "name":"server-hostname-only",
+            "server-hostname": "server_only"
+        },
+        {
+            "name":"bootfile-only",
+            "boot-file-name": "only.boot"
+        }],
+
+        "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            "pools": [ { "pool": "192.0.2.1 - 192.0.2.100" } ],
+            "reservations": [
+            {
+                "hw-address": "08:00:27:25:d3:01",
+                "client-classes": [ "one", "two" ]
+            },
+            {
+                "hw-address": "08:00:27:25:d3:02",
+                "client-classes": [ "two", "one" ]
+            },
+            {
+                "hw-address": "08:00:27:25:d3:03",
+                "client-classes": [ "server-hostname-only", "bootfile-only", "next-server-only" ]
+            }]
+        }]
+    }
+    )";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW_LOG(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    struct Scenario {
+        std::string hw_str_;
+        std::string exp_classes_;
+        std::string exp_server_hostname_;
+        std::string exp_next_server_;
+        std::string exp_bootfile_;
+        std::string exp_domain_name_;
+    };
+
+    const std::vector<Scenario> scenarios = {
+       {
+        "08:00:27:25:d3:01",
+        "ALL, one, two, KNOWN",
+        "server_one",
+        "192.0.2.111",
+        "one.boot",
+        "one.example.com"
+       },
+       {
+        "08:00:27:25:d3:02",
+        "ALL, two, one, KNOWN",
+        "server_two",
+        "192.0.2.222",
+        "two.boot",
+        "two.example.com"
+       },
+       {
+        "08:00:27:25:d3:03",
+        "ALL, server-hostname-only, bootfile-only, next-server-only, KNOWN",
+        "server_only",
+        "192.0.2.100",
+        "only.boot",
+        ""
+       }
+    };
+
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.hw_str_); {
+            // Build a DISCOVER
+            Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+            query->setRemoteAddr(IOAddress("192.0.2.1"));
+            query->setIface("eth1");
+
+            HWAddrPtr hw_addr(new HWAddr(HWAddr::fromText(scenario.hw_str_, 10)));
+            query->setHWAddr(hw_addr);
+
+            // Process it.
+            Pkt4Ptr response = srv.processDiscover(query);
+
+            // Make sure class list is as expected.
+            ASSERT_EQ(scenario.exp_classes_, query->getClasses().toText());
+
+            // Now check the fixed fields.
+            checkStringInBuffer(scenario.exp_server_hostname_, response->getSname());
+            EXPECT_EQ(scenario.exp_next_server_, response->getSiaddr().toText());
+            checkStringInBuffer(scenario.exp_bootfile_, response->getFile());
+
+            // Check domain name option.
+            OptionPtr opt = response->getOption(DHO_DOMAIN_NAME);
+            if (scenario.exp_domain_name_.empty()) {
+                ASSERT_FALSE(opt);
+            } else {
+                ASSERT_TRUE(opt);
+                OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(opt);
+                ASSERT_TRUE(opstr);
+                EXPECT_EQ(scenario.exp_domain_name_,  opstr->getValue());
+            }
+        }
+    }
 }
 
 /// @todo: Implement proper tests for MySQL lease/host database,

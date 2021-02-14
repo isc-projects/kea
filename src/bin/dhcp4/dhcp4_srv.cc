@@ -1678,10 +1678,12 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
             // Skip it
             continue;
         }
+
         if (ccdef->getCfgOption()->empty()) {
             // Skip classes which don't configure options
             continue;
         }
+
         co_list.push_back(ccdef->getCfgOption());
     }
 
@@ -2916,8 +2918,13 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
 
         // Now we need to iterate over the classes assigned to the
         // query packet and find corresponding class definitions for it.
+        // We want the first value found for each field.
+        IOAddress next_server("0.0.0.0");
+        string sname;
+        string filename;
+        size_t found_cnt = 0;
         for (ClientClasses::const_iterator name = classes.cbegin();
-             name != classes.cend(); ++name) {
+             name != classes.cend() && found_cnt < 3; ++name) {
 
             ClientClassDefPtr cl = dict->findClass(*name);
             if (!cl) {
@@ -2928,31 +2935,40 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
                 continue;
             }
 
-            IOAddress next_server = cl->getNextServer();
-            if (!next_server.isV4Zero()) {
-                response->setSiaddr(next_server);
+            if (next_server == IOAddress::IPV4_ZERO_ADDRESS()) {
+                next_server = cl->getNextServer();
+                if (!next_server.isV4Zero()) {
+                    response->setSiaddr(next_server);
+                    found_cnt++;
+                }
             }
 
-            const string& sname = cl->getSname();
-            if (!sname.empty()) {
-                // Converting string to (const uint8_t*, size_t len) format is
-                // tricky. reinterpret_cast is not the most elegant solution,
-                // but it does avoid us making unnecessary copy. We will convert
-                // sname and file fields in Pkt4 to string one day and life
-                // will be easier.
-                response->setSname(reinterpret_cast<const uint8_t*>(sname.c_str()),
-                                   sname.size());
+            if (sname.empty()) {
+                sname = cl->getSname();
+                if (!sname.empty()) {
+                    // Converting string to (const uint8_t*, size_t len) format is
+                    // tricky. reinterpret_cast is not the most elegant solution,
+                    // but it does avoid us making unnecessary copy. We will convert
+                    // sname and file fields in Pkt4 to string one day and life
+                    // will be easier.
+                    response->setSname(reinterpret_cast<const uint8_t*>(sname.c_str()),
+                                       sname.size());
+                    found_cnt++;
+                }
             }
 
-            const string& filename = cl->getFilename();
-            if (!filename.empty()) {
-                // Converting string to (const uint8_t*, size_t len) format is
-                // tricky. reinterpret_cast is not the most elegant solution,
-                // but it does avoid us making unnecessary copy. We will convert
-                // sname and file fields in Pkt4 to string one day and life
-                // will be easier.
-                response->setFile(reinterpret_cast<const uint8_t*>(filename.c_str()),
-                                  filename.size());
+            if (filename.empty()) {
+                filename = cl->getFilename();
+                if (!filename.empty()) {
+                    // Converting string to (const uint8_t*, size_t len) format is
+                    // tricky. reinterpret_cast is not the most elegant solution,
+                    // but it does avoid us making unnecessary copy. We will convert
+                    // sname and file fields in Pkt4 to string one day and life
+                    // will be easier.
+                    response->setFile(reinterpret_cast<const uint8_t*>(filename.c_str()),
+                                     filename.size());
+                    found_cnt++;
+                }
             }
         }
     }
