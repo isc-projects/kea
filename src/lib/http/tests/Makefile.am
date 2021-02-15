@@ -1,7 +1,8 @@
 SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
+AM_CPPFLAGS += -DTEST_CA_DIR=\"$(srcdir)/../../asiolink/tests/ca\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/http/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
@@ -42,7 +43,7 @@ libhttp_unittests_SOURCES += test_http_client.h
 
 libhttp_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libhttp_unittests_CXXFLAGS = $(AM_CXXFLAGS)
-libhttp_unittests_LDFLAGS  = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+libhttp_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 libhttp_unittests_LDADD  = $(top_builddir)/src/lib/http/libkea-http.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
@@ -53,7 +54,7 @@ libhttp_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libhttp_unittests_LDADD += $(LOG4CPLUS_LIBS)
-libhttp_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
+libhttp_unittests_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)

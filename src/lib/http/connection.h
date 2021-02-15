@@ -230,21 +230,26 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service IO service to be used by the connection.
-    /// @param acceptor Reference to the TCP acceptor object used to listen for
+    /// @param acceptor Pointer to the TCP acceptor object used to listen for
     /// new HTTP connections.
+    /////// add a TLS acceptor
+    /// @param context TLS context.
     /// @param connection_pool Connection pool in which this connection is
     /// stored.
     /// @param response_creator Pointer to the response creator object used to
     /// create HTTP response from the HTTP request received.
-    /// @param callback Callback invoked when new connection is accepted.
+    /// @param acceptor_callback Callback invoked when new connection is accepted.
+    /// @param handshake_callback Callback invoked when TLS handshake is performed.
     /// @param request_timeout Configured timeout for a HTTP request.
     /// @param idle_timeout Timeout after which persistent HTTP connection is
     /// closed by the server.
     HttpConnection(asiolink::IOService& io_service,
-                   HttpAcceptor& acceptor,
+                   const HttpAcceptorPtr& acceptor,
+                   const asiolink::TlsContextPtr& context,
                    HttpConnectionPool& connection_pool,
                    const HttpResponseCreatorPtr& response_creator,
-                   const HttpAcceptorCallback& callback,
+                   const HttpAcceptorCallback& acceptor_callback,
+                   const HttpAcceptorCallback& handshake_callback,
                    const long request_timeout,
                    const long idle_timeout);
 
@@ -256,11 +261,18 @@ public:
     /// @brief Asynchronously accepts new connection.
     ///
     /// When the connection is established successfully, the timeout timer is
-    /// setup and the asynchronous read from the socket is started.
+    /// setup and the asynchronous read from the socket or handshake with
+    /// the client is started.
     void asyncAccept();
 
     /// @brief Closes the socket.
     void close();
+
+    /// @brief Asynchronously performs TLS handshake.
+    ///
+    /// When the handshake is performed successfully, the asynchronous read
+    /// from the socket is started.
+    void doHandshake();
 
     /// @brief Starts asynchronous read from the socket.
     ///
@@ -301,10 +313,19 @@ protected:
     ///
     /// It invokes external (supplied via constructor) acceptor callback. If
     /// the acceptor is not opened it returns immediately. If the connection
-    /// is accepted successfully the @ref HttpConnection::doRead is called.
+    /// is accepted successfully the @ref HttpConnection::doRead or
+    /// @ref HttpConnection::doHandshake is called.
     ///
     /// @param ec Error code.
     void acceptorCallback(const boost::system::error_code& ec);
+
+    /// @brief Local callback invoked when TLS handshake is performed.
+    ///
+    /// If the handshake is performed successfully the @ref
+    /// HttpConnection::doRead is called.
+    ///
+    /// @param ec Error code.
+    void handshakeCallback(const boost::system::error_code& ec);
 
     /// @brief Callback invoked when new data is received over the socket.
     ///
@@ -360,6 +381,9 @@ protected:
     /// @brief Configured Request Timeout in milliseconds.
     long request_timeout_;
 
+    /// @brief TLS context.
+    asiolink::TlsContextPtr context_;
+
     /// @brief Timeout after which the persistent HTTP connection is closed
     /// by the server.
     long idle_timeout_;
@@ -367,8 +391,9 @@ protected:
     /// @brief Socket used by this connection.
     asiolink::TCPSocket<SocketCallback> socket_;
 
-    /// @brief Reference to the TCP acceptor used to accept new connections.
-    HttpAcceptor& acceptor_;
+    /// @brief Pointer to the TCP acceptor used to accept new connections.
+    HttpAcceptorPtr acceptor_;
+    /////////////// Add a TLS acceptor.
 
     /// @brief Connection pool holding this connection.
     HttpConnectionPool& connection_pool_;
@@ -379,6 +404,9 @@ protected:
 
     /// @brief External TCP acceptor callback.
     HttpAcceptorCallback acceptor_callback_;
+
+    /// @brief External TLS handshake callback.
+    HttpAcceptorCallback handshake_callback_;
 };
 
 } // end of namespace isc::http

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,9 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
+#include <asiolink/crypto_tls.h>
+#include <asiolink/openssl_tls.h>
+#include <asiolink/botan_tls.h>
 #include <exceptions/exceptions.h>
 #include <http/response_creator_factory.h>
 #include <boost/shared_ptr.hpp>
@@ -30,7 +33,7 @@ class HttpListenerImpl;
 /// @brief HTTP listener.
 ///
 /// This class is an entry point to the use of HTTP services in Kea.
-/// It creates a TCP acceptor service on the specified address and
+/// It creates a transport acceptor service on the specified address and
 /// port and listens to the incoming HTTP connections. The constructor
 /// receives a pointer to the implementation of the
 /// @ref HttpResponseCreatorFactory, which is used by the @ref HttpListener
@@ -84,6 +87,7 @@ public:
     /// @param io_service IO service to be used by the listener.
     /// @param server_address Address on which the HTTP service should run.
     /// @param server_port Port number on which the HTTP service should run.
+    /// @param context TLS context.
     /// @param creator_factory Pointer to the caller-defined
     /// @ref HttpResponseCreatorFactory derivation which should be used to
     /// create @ref HttpResponseCreator instances.
@@ -97,13 +101,14 @@ public:
     HttpListener(asiolink::IOService& io_service,
                  const asiolink::IOAddress& server_address,
                  const unsigned short server_port,
+                 const asiolink::TlsContextPtr& context,
                  const HttpResponseCreatorFactoryPtr& creator_factory,
                  const RequestTimeout& request_timeout,
                  const IdleTimeout& idle_timeout);
 
     /// @brief Destructor.
     ///
-    /// Stops all active connections and closes TCP acceptor service.
+    /// Stops all active connections and closes transport acceptor service.
     ~HttpListener();
 
     /// @brief Returns local address on which server is listening.

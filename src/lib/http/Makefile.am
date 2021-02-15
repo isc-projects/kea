@@ -1,7 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 EXTRA_DIST = http.dox
@@ -54,7 +54,7 @@ libkea_http_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_http_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
+libkea_http_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(CRYPTO_LIBS)
 
 # If we want to get rid of all generated messages files, we need to use
 # make maintainer-clean. The proper way to introduce custom commands for

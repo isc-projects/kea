@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,6 +32,12 @@ This debug message is issued when an HTTP client receives malformed response
 from the server. The first argument specifies an URL of the server. The
 second argument provides a response in the textual format. The request is
 truncated by the logger if it is too large to be printed.
+
+% HTTP_CLIENT_HANDSHAKE_START start TLS handshake with %1 with timeout %2
+This debug message is issued when the server starts the TLS handshake
+with the remote endpoint. The first argument specifies the address
+of the remote endpoint. The second argument specifies request timeout in
+seconds.
 
 % HTTP_CLIENT_REQUEST_AUTHORIZED received HTTP request authorized for '%1'
 This information message is issued when the server receives with a matching
@@ -115,7 +121,7 @@ will be interrupted. New transactions should be conducted normally.
 This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
-seconds.
+seconds.TTTTTTTTTOOOOOOOOOOOODDDDDDDDDDOOOOOOOOO
 
 % HTTP_SERVER_RESPONSE_RECEIVED received HTTP response from %1
 This debug message is issued when the client finished receiving an HTTP

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,8 @@
 #ifndef HTTP_ACCEPTOR_H
 #define HTTP_ACCEPTOR_H
 
-#include <asiolink/tcp_acceptor.h>
+#include <asiolink/tls_acceptor.h>
+#include <boost/shared_ptr.hpp>
 #include <boost/system/system_error.hpp>
 #include <functional>
 
@@ -20,6 +21,9 @@ HttpAcceptorCallback;
 
 /// @brief Type of the TCP acceptor used in this library.
 typedef asiolink::TCPAcceptor<HttpAcceptorCallback> HttpAcceptor;
+
+/// @brief Type of shared pointer to TCP acceptors.
+typedef boost::shared_ptr<HttpAcceptor> HttpAcceptorPtr;
 
 } // end of namespace isc::http
 } // end of namespace isc

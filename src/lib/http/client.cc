@@ -8,7 +8,7 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
-#include <asiolink/tcp_socket.h>
+#include <asiolink/tls_socket.h>
 #include <http/client.h>
 #include <http/http_log.h>
 #include <http/http_messages.h>
@@ -41,11 +41,11 @@ namespace {
 /// The part of the HTTP message beyond this value is truncated.
 constexpr size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
 
-/// @brief TCP socket callback function type.
+/// @brief TCP / TLS socket callback function type.
 typedef std::function<void(boost::system::error_code ec, size_t length)>
 SocketCallbackFunction;
 
-/// @brief Socket callback class required by the TCPSocket API.
+/// @brief Socket callback class required by the TCPSocket and TLSSocket APIs.
 ///
 /// Its function call operator ignores callbacks invoked with "operation aborted"
 /// error codes. Such status codes are generated when the posted IO operations
@@ -99,7 +99,7 @@ typedef boost::shared_ptr<ConnectionPool> ConnectionPoolPtr;
 /// the new request is stored in the FIFO queue. The queued requests to the
 /// particular URL are sent to the server when the current transaction ends.
 ///
-/// The communication over the TCP socket is asynchronous. The caller is
+/// The communication over the transport socket is asynchronous. The caller is
 /// notified about the completion of the transaction via a callback that the
 /// caller supplies when initiating the transaction.
 class Connection : public boost::enable_shared_from_this<Connection> {
@@ -108,10 +108,12 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service IO service to be used for the connection.
+    /// @param context TLS context to be used for the connection.
     /// @param conn_pool Back pointer to the connection pool to which this
     /// connection belongs.
     /// @param url URL associated with this connection.
     explicit Connection(IOService& io_service,
+                        const TlsContextPtr& context,
                         const ConnectionPoolPtr& conn_pool,
                         const Url& url);
 
@@ -132,6 +134,8 @@ public:
     /// transaction completes.
     /// @param connect_callback Pointer to the callback function to be invoked
     /// when the client connects to the server.
+    /// @param handshake_callback Optional callback invoked when the client
+    /// performs the TLS handshake with the server.
     /// @param close_callback Pointer to the callback function to be invoked
     /// when the client closes the socket to the server.
     void doTransaction(const HttpRequestPtr& request,
@@ -139,6 +143,7 @@ public:
                        const long request_timeout,
                        const HttpClient::RequestHandler& callback,
                        const HttpClient::ConnectHandler& connect_callback,
+                       const HttpClient::HandshakeHandler& handshake_callback,
                        const HttpClient::CloseHandler& close_callback);
 
     /// @brief Closes the socket and cancels the request timer.
@@ -191,6 +196,8 @@ private:
     /// transaction completes.
     /// @param connect_callback Pointer to the callback function to be invoked
     /// when the client connects to the server.
+    /// @param handshake_callback Optional callback invoked when the client
+    /// performs the TLS handshake with the server.
     /// @param close_callback Pointer to the callback function to be invoked
     /// when the client closes the socket to the server.
     void doTransactionInternal(const HttpRequestPtr& request,
@@ -198,6 +205,7 @@ private:
                                const long request_timeout,
                                const HttpClient::RequestHandler& callback,
                                const HttpClient::ConnectHandler& connect_callback,
+                               const HttpClient::HandshakeHandler& handshake_callback,
                                const HttpClient::CloseHandler& close_callback);
 
     /// @brief Closes the socket and cancels the request timer.
@@ -281,6 +289,11 @@ private:
     /// @param request_timeout New timer interval in milliseconds.
     void scheduleTimer(const long request_timeout);
 
+    /// @brief Asynchronously performs the TLS handshake.
+    ///
+    /// @param transid Current transaction id.
+    void doHandshake(const uint64_t transid);
+
     /// @brief Asynchronously sends data over the socket.
     ///
     /// The data sent over the socket are stored in the @c buf_.
@@ -298,7 +311,8 @@ private:
     /// @brief Local callback invoked when the connection is established.
     ///
     /// If the connection is successfully established, this callback will start
-    /// to asynchronously send the request over the socket.
+    /// to asynchronously send the request over the socket or perform the
+    /// TLS handshake with the server.
     ///
     /// @param Pointer to the callback to be invoked when client connects to
     /// the server.
@@ -307,6 +321,19 @@ private:
     void connectCallback(HttpClient::ConnectHandler connect_callback,
                          const uint64_t transid,
                          const boost::system::error_code& ec);
+
+    /// @brief Local callback invoked when the handshake is performed.
+    ///
+    /// If the handshake is successfully performed, this callback will start
+    /// to asynchronously send the request over the socket.
+    ///
+    /// @param Pointer to the callback to be invoked when client performs
+    /// the TLS handshake with the server.
+    /// @param transid Current transaction id.
+    /// @param ec Error code being a result of the connection attempt.
+    void handshakeCallback(HttpClient::HandshakeHandler handshake_callback,
+                           const uint64_t transid,
+                           const boost::system::error_code& ec);
 
     /// @brief Local callback invoked when an attempt to send a portion of data
     /// over the socket has ended.
@@ -355,6 +382,7 @@ private:
 
     /// @brief Socket to be used for this connection.
     TCPSocket<SocketCallback> socket_;
+    ////// change this
 
     /// @brief Interval timer used for detecting request timeouts.
     IntervalTimer timer_;
@@ -380,7 +408,10 @@ private:
     /// @brief Identifier of the current transaction.
     uint64_t current_transid_;
 
-    /// @brief User supplied callback.
+    /// @brief User supplied handshake callback.
+    HttpClient::HandshakeHandler handshake_callback_;
+
+    /// @brief User supplied close callback.
     HttpClient::CloseHandler close_callback_;
 
     /// @brief Flag to indicate that a transaction is running.
@@ -436,6 +467,7 @@ public:
     /// in progress for the given URL. Otherwise, the request is queued.
     ///
     /// @param url Destination where the request should be sent.
+    /// @param context TLS context to be used for the connection.
     /// @param request Pointer to the request to be sent to the server.
     /// @param response Pointer to the object into which the response should be
     /// stored.
@@ -445,24 +477,30 @@ public:
     /// transaction ends.
     /// @param connect_callback Pointer to the user callback to be invoked when the
     /// client connects to the server.
+    /// @param handshake_callback Optional callback invoked when the client
+    /// performs the TLS handshake with the server.
     /// @param close_callback Pointer to the user callback to be invoked when the
     /// client closes the connection to the server.
     void queueRequest(const Url& url,
+                      const TlsContextPtr& context,
                       const HttpRequestPtr& request,
                       const HttpResponsePtr& response,
                       const long request_timeout,
                       const HttpClient::RequestHandler& request_callback,
                       const HttpClient::ConnectHandler& connect_callback,
+                      const HttpClient::HandshakeHandler& handshake_callback,
                       const HttpClient::CloseHandler& close_callback) {
         if (MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<std::mutex> lk(mutex_);
-            return (queueRequestInternal(url, request, response,
+            return (queueRequestInternal(url, context, request, response,
                                          request_timeout, request_callback,
-                                         connect_callback, close_callback));
+                                         connect_callback, handshake_callback,
+                                         close_callback));
         } else {
-            return (queueRequestInternal(url, request, response,
+            return (queueRequestInternal(url, context, request, response,
                                          request_timeout, request_callback,
-                                         connect_callback, close_callback));
+                                         connect_callback, handshake_callback,
+                                         close_callback));
         }
     }
 
@@ -528,8 +566,10 @@ private:
                 RequestDescriptor desc = it->second.front();
                 it->second.pop();
                 desc.conn_->doTransaction(desc.request_, desc.response_,
-                                          desc.request_timeout_, desc.callback_,
+                                          desc.request_timeout_,
+                                          desc.callback_,
                                           desc.connect_callback_,
+                                          desc.handshake_callback_,
                                           desc.close_callback_);
             }
         }
@@ -543,6 +583,7 @@ private:
     /// This method should be called in a thread safe context.
     ///
     /// @param url Destination where the request should be sent.
+    /// @param context TLS context to be used for the connection.
     /// @param request Pointer to the request to be sent to the server.
     /// @param response Pointer to the object into which the response should be
     /// stored.
@@ -552,14 +593,18 @@ private:
     /// transaction ends.
     /// @param connect_callback Pointer to the user callback to be invoked when the
     /// client connects to the server.
+    /// @param handshake_callback Optional callback invoked when the client
+    /// performs the TLS handshake with the server.
     /// @param close_callback Pointer to the user callback to be invoked when the
     /// client closes the connection to the server.
     void queueRequestInternal(const Url& url,
+                              const TlsContextPtr& context,
                               const HttpRequestPtr& request,
                               const HttpResponsePtr& response,
                               const long request_timeout,
                               const HttpClient::RequestHandler& request_callback,
                               const HttpClient::ConnectHandler& connect_callback,
+                              const HttpClient::HandshakeHandler& handshake_callback,
                               const HttpClient::CloseHandler& close_callback) {
         auto it = conns_.find(url);
         if (it != conns_.end()) {
@@ -571,20 +616,24 @@ private:
                                                    request_timeout,
                                                    request_callback,
                                                    connect_callback,
+                                                   handshake_callback,
                                                    close_callback));
             } else {
                 // Connection is idle, so we can start the transaction.
                 conn->doTransaction(request, response, request_timeout,
                                     request_callback, connect_callback,
-                                    close_callback);
+                                    handshake_callback, close_callback);
             }
         } else {
             // There is no connection with this destination yet. Let's create
             // it and start the transaction.
-            ConnectionPtr conn(new Connection(io_service_, shared_from_this(),
+            ConnectionPtr conn(new Connection(io_service_,
+                                              context,
+                                              shared_from_this(),
                                               url));
-            conn->doTransaction(request, response, request_timeout, request_callback,
-                                connect_callback, close_callback);
+            conn->doTransaction(request, response, request_timeout,
+                                request_callback, connect_callback,
+                                handshake_callback, close_callback);
             conns_[url] = conn;
         }
     }
@@ -683,6 +732,8 @@ private:
         /// @param callback Pointer to the user callback.
         /// @param connect_callback pointer to the user callback to be invoked
         /// when the client connects to the server.
+        /// @param handshake_callback Optional callback invoked when the client
+        /// performs the TLS handshake with the server.
         /// @param close_callback pointer to the user callback to be invoked
         /// when the client closes the connection to the server.
         RequestDescriptor(const ConnectionPtr& conn,
@@ -691,10 +742,12 @@ private:
                           const long& request_timeout,
                           const HttpClient::RequestHandler& callback,
                           const HttpClient::ConnectHandler& connect_callback,
+                          const HttpClient::HandshakeHandler& handshake_callback,
                           const HttpClient::CloseHandler& close_callback)
             : conn_(conn), request_(request), response_(response),
               request_timeout_(request_timeout), callback_(callback),
               connect_callback_(connect_callback),
+              handshake_callback_(handshake_callback),
               close_callback_(close_callback) {
         }
 
@@ -716,6 +769,9 @@ private:
         /// @brief Holds pointer to the user callback for connect.
         HttpClient::ConnectHandler connect_callback_;
 
+        /// @brief Holds pointer to the user callback for handshake.
+        HttpClient::HandshakeHandler handshake_callback_;
+
         /// @brief Holds pointer to the user callback for close.
         HttpClient::CloseHandler close_callback_;
     };
@@ -728,12 +784,14 @@ private:
 };
 
 Connection::Connection(IOService& io_service,
+                       const TlsContextPtr& context,
                        const ConnectionPoolPtr& conn_pool,
                        const Url& url)
     : conn_pool_(conn_pool), url_(url), socket_(io_service), timer_(io_service),
       current_request_(), current_response_(), parser_(), current_callback_(),
       buf_(), input_buf_(), current_transid_(0), close_callback_(),
       started_(false) {
+    ////// to finish
 }
 
 Connection::~Connection() {
@@ -770,14 +828,17 @@ Connection::doTransaction(const HttpRequestPtr& request,
                           const long request_timeout,
                           const HttpClient::RequestHandler& callback,
                           const HttpClient::ConnectHandler& connect_callback,
+                          const HttpClient::HandshakeHandler& handshake_callback,
                           const HttpClient::CloseHandler& close_callback) {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(mutex_);
         doTransactionInternal(request, response, request_timeout,
-                              callback, connect_callback, close_callback);
+                              callback, connect_callback, handshake_callback,
+                              close_callback);
     } else {
         doTransactionInternal(request, response, request_timeout,
-                              callback, connect_callback, close_callback);
+                              callback, connect_callback, handshake_callback,
+                              close_callback);
     }
 }
 
@@ -787,6 +848,7 @@ Connection::doTransactionInternal(const HttpRequestPtr& request,
                                   const long request_timeout,
                                   const HttpClient::RequestHandler& callback,
                                   const HttpClient::ConnectHandler& connect_callback,
+                                  const HttpClient::HandshakeHandler& handshake_callback,
                                   const HttpClient::CloseHandler& close_callback) {
     try {
         started_ = true;
@@ -795,6 +857,7 @@ Connection::doTransactionInternal(const HttpRequestPtr& request,
         parser_.reset(new HttpResponseParser(*current_response_));
         parser_->initModel();
         current_callback_ = callback;
+        handshake_callback_ = handshake_callback;
         close_callback_ = close_callback;
 
         // Starting new transaction. Generate new transaction id.
@@ -999,6 +1062,21 @@ Connection::scheduleTimer(const long request_timeout) {
 }
 
 void
+Connection::doHandshake(const uint64_t transid) {
+    SocketCallback socket_cb(std::bind(&Connection::handshakeCallback,
+                                       shared_from_this(),
+                                       handshake_callback_,
+                                       transid,
+                                       ph::_1));
+    try {
+        ////////socket_.handshake(false, socket_cb);
+
+    } catch (...) {
+        terminate(boost::asio::error::not_connected);
+    }
+}
+
+void
 Connection::doSend(const uint64_t transid) {
     SocketCallback socket_cb(std::bind(&Connection::sendCallback,
                                        shared_from_this(),
@@ -1057,6 +1135,36 @@ Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
     } else if (ec &&
         (ec.value() != boost::asio::error::in_progress) &&
         (ec.value() != boost::asio::error::already_connected)) {
+        terminate(ec);
+
+    } else {
+        /////////// insert doHandshake(transid); here
+
+        // Start sending the request asynchronously.
+        doSend(transid);
+    }
+}
+
+void
+Connection::handshakeCallback(HttpClient::ConnectHandler connect_callback,
+                              const uint64_t transid,
+                              const boost::system::error_code& ec) {
+    if (checkPrematureTimeout(transid)) {
+        return;
+    }
+
+    // Run user defined handshake callback if specified.
+    if (handshake_callback_) {
+        // If the user defined callback indicates that the connection
+        // should not be continued.
+        if (!handshake_callback_(ec, socket_.getNative())) {
+            return;
+        }
+    }
+
+    if (ec && (ec.value() == boost::asio::error::operation_aborted)) {
+        return;
+    } else if (ec) {
         terminate(ec);
 
     } else {
@@ -1219,11 +1327,14 @@ HttpClient::HttpClient(IOService& io_service)
 }
 
 void
-HttpClient::asyncSendRequest(const Url& url, const HttpRequestPtr& request,
+HttpClient::asyncSendRequest(const Url& url,
+                             const TlsContextPtr& context,
+                             const HttpRequestPtr& request,
                              const HttpResponsePtr& response,
                              const HttpClient::RequestHandler& request_callback,
                              const HttpClient::RequestTimeout& request_timeout,
                              const HttpClient::ConnectHandler& connect_callback,
+                             const HttpClient::HandshakeHandler& handshake_callback,
                              const HttpClient::CloseHandler& close_callback) {
     if (!url.isValid()) {
         isc_throw(HttpClientError, "invalid URL specified for the HTTP client");
@@ -1241,8 +1352,10 @@ HttpClient::asyncSendRequest(const Url& url, const HttpRequestPtr& request,
         isc_throw(HttpClientError, "callback for HTTP transaction must not be null");
     }
 
-    impl_->conn_pool_->queueRequest(url, request, response, request_timeout.value_,
-                                    request_callback, connect_callback, close_callback);
+    impl_->conn_pool_->queueRequest(url, context, request, response,
+                                    request_timeout.value_,
+                                    request_callback, connect_callback,
+                                    handshake_callback, close_callback);
 }
 
 void

@@ -105,7 +105,9 @@ public:
 
     /// @brief Constructor.
     HttpConnectionPoolTest()
-        : io_service_(), acceptor_(io_service_), connection_pool_(),
+        : io_service_(),
+          acceptor_(new HttpAcceptor(io_service_)),
+          connection_pool_(),
           response_creator_(new TestHttpResponseCreator()) {
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -119,15 +121,19 @@ public:
     void startStopTest() {
         // Create two distinct connections.
         HttpConnectionPtr conn1(new HttpConnection(io_service_, acceptor_,
+                                                   TlsContextPtr(),
                                                    connection_pool_,
                                                    response_creator_,
+                                                   HttpAcceptorCallback(),
                                                    HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
 
         HttpConnectionPtr conn2(new HttpConnection(io_service_, acceptor_,
+                                                   TlsContextPtr(),
                                                    connection_pool_,
                                                    response_creator_,
+                                                   HttpAcceptorCallback(),
                                                    HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
@@ -162,15 +168,19 @@ public:
     void stopAllTest() {
         // Create two distinct connections.
         HttpConnectionPtr conn1(new HttpConnection(io_service_, acceptor_,
+                                                   TlsContextPtr(),
                                                    connection_pool_,
                                                    response_creator_,
+                                                   HttpAcceptorCallback(),
                                                    HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
 
         HttpConnectionPtr conn2(new HttpConnection(io_service_, acceptor_,
+                                                   TlsContextPtr(),
                                                    connection_pool_,
                                                    response_creator_,
+                                                   HttpAcceptorCallback(),
                                                    HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
@@ -189,15 +199,19 @@ public:
     /// @brief Verifies that stopping a non-existing connection is no-op.
     void stopInvalidTest() {
         HttpConnectionPtr conn1(new HttpConnection(io_service_, acceptor_,
+                                                   TlsContextPtr(),
                                                    connection_pool_,
                                                    response_creator_,
+                                                   HttpAcceptorCallback(),
                                                    HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
 
         HttpConnectionPtr conn2(new HttpConnection(io_service_, acceptor_,
+                                                   TlsContextPtr(),
                                                    connection_pool_,
                                                    response_creator_,
+                                                   HttpAcceptorCallback(),
                                                    HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
@@ -209,7 +223,7 @@ public:
     }
 
     IOService io_service_;                      ///< IO service.
-    HttpAcceptor acceptor_;                     ///< Test acceptor.
+    HttpAcceptorPtr acceptor_;                  ///< Test acceptor.
     HttpConnectionPool connection_pool_;        ///< Test connection pool.
     HttpResponseCreatorPtr response_creator_;   ///< Test response creator.
 

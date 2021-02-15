@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,10 +19,13 @@ namespace http {
 HttpListenerImpl::HttpListenerImpl(IOService& io_service,
                                    const asiolink::IOAddress& server_address,
                                    const unsigned short server_port,
+                                   const TlsContextPtr& context,
                                    const HttpResponseCreatorFactoryPtr& creator_factory,
                                    const long request_timeout,
                                    const long idle_timeout)
-    : io_service_(io_service), acceptor_(io_service),
+    : io_service_(io_service), context_(context),
+      ///////// move acceptor init below
+      acceptor_(new HttpAcceptor(io_service)),
       endpoint_(), connections_(),
       creator_factory_(creator_factory),
       request_timeout_(request_timeout), idle_timeout_(idle_timeout) {
@@ -62,10 +65,10 @@ HttpListenerImpl::getEndpoint() const {
 void
 HttpListenerImpl::start() {
     try {
-        acceptor_.open(*endpoint_);
-        acceptor_.setOption(HttpAcceptor::ReuseAddress(true));
-        acceptor_.bind(*endpoint_);
-        acceptor_.listen();
+        acceptor_->open(*endpoint_);
+        acceptor_->setOption(HttpAcceptor::ReuseAddress(true));
+        acceptor_->bind(*endpoint_);
+        acceptor_->listen();
 
     } catch (const boost::system::system_error& ex) {
         stop();
@@ -79,7 +82,7 @@ HttpListenerImpl::start() {
 void
 HttpListenerImpl::stop() {
     connections_.stopAll();
-    acceptor_.close();
+    acceptor_->close();
 }
 
 void
@@ -90,8 +93,11 @@ HttpListenerImpl::accept() {
     HttpResponseCreatorPtr response_creator = creator_factory_->create();
     HttpAcceptorCallback acceptor_callback =
         std::bind(&HttpListenerImpl::acceptHandler, this, ph::_1);
+    HttpAcceptorCallback handshake_callback =
+        std::bind(&HttpListenerImpl::handshakeHandler, this, ph::_1);
     HttpConnectionPtr conn = createConnection(response_creator,
-                                              acceptor_callback);
+                                              acceptor_callback,
+                                              handshake_callback);
     // Add this new connection to the pool.
     connections_.start(conn);
 }
@@ -103,12 +109,20 @@ HttpListenerImpl::acceptHandler(const boost::system::error_code&) {
     accept();
 }
 
+void
+HttpListenerImpl::handshakeHandler(const boost::system::error_code&) {
+    // The TLS handshake has been performed.
+    ///////////// DO MORE!!!!!!!!
+}
+
 HttpConnectionPtr
 HttpListenerImpl::createConnection(const HttpResponseCreatorPtr& response_creator,
-                                   const HttpAcceptorCallback& callback) {
+                                   const HttpAcceptorCallback& acceptor_callback,
+                                   const HttpAcceptorCallback& handshake_callback) {
     HttpConnectionPtr
-        conn(new HttpConnection(io_service_, acceptor_, connections_,
-                                response_creator, callback,
+        conn(new HttpConnection(io_service_, acceptor_, context_,
+                                connections_, response_creator,
+                                acceptor_callback, handshake_callback,
                                 request_timeout_, idle_timeout_));
     return (conn);
 }

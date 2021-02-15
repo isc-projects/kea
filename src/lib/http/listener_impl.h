@@ -1,4 +1,4 @@
-// Copyright (C) 2019,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,6 +33,7 @@ public:
     /// @param io_service IO service to be used by the listener.
     /// @param server_address Address on which the HTTP service should run.
     /// @param server_port Port number on which the HTTP service should run.
+    /// @param context TLS context.
     /// @param creator_factory Pointer to the caller-defined
     /// @ref HttpResponseCreatorFactory derivation which should be used to
     /// create @ref HttpResponseCreator instances.
@@ -46,6 +47,7 @@ public:
     HttpListenerImpl(asiolink::IOService& io_service,
                      const asiolink::IOAddress& server_address,
                      const unsigned short server_port,
+                     const asiolink::TlsContextPtr& context,
                      const HttpResponseCreatorFactoryPtr& creator_factory,
                      const long request_timeout,
                      const long idle_timeout);
@@ -87,6 +89,11 @@ protected:
     /// @param ec Error code passed to the handler. This is currently ignored.
     void acceptHandler(const boost::system::error_code& ec);
 
+    /// @brief Callback invoked when the TLS handshake is performed.
+    ///
+    /// @param ec Error code passed to the handler. This is currently ignored.
+    void handshakeHandler(const boost::system::error_code& ec);
+
     /// @brief Creates an instance of the @c HttpConnection.
     ///
     /// This method is virtual so as it can be overridden when customized
@@ -94,17 +101,23 @@ protected:
     ///
     /// @param response_creator Pointer to the response creator object used to
     /// create HTTP response from the HTTP request received.
-    /// @param callback Callback invoked when new connection is accepted.
+    /// @param acceptor_callback Callback invoked when new connection is accepted.
+    /// @param handshake_callback Callback invoked when TLS handshake is performed.
     ///
     /// @return Pointer to the created connection.
     virtual HttpConnectionPtr createConnection(const HttpResponseCreatorPtr& response_creator,
-                                               const HttpAcceptorCallback& callback);
+                                               const HttpAcceptorCallback& acceptor_callback,
+                                               const HttpAcceptorCallback& handshake_callback);
 
     /// @brief Reference to the IO service.
     asiolink::IOService& io_service_;
 
+    /// @brief TLS context.
+    asiolink::TlsContextPtr context_;
+
     /// @brief Acceptor instance.
-    HttpAcceptor acceptor_;
+    HttpAcceptorPtr acceptor_;
+    /////////// Fork it?
 
     /// @brief Pointer to the endpoint representing IP address and port on
     /// which the service is running.
