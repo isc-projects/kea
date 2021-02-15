@@ -1,3 +1,13 @@
+1865.	[func]		razvan
+	Implemented the Run Script hooks library which can be used to
+	run external scripts for specific packet processing hook points.
+	There are several exported environemnt variables available for
+	the script. Currently the implementation is nonblocking and
+	Kea will not wait for the script to finish execution before
+	continuing to the next step. For this reason, the next step
+	provided by the script is ignored.
+	(Gitlab #899)
+
 1864.	[func]		fdupont
 	New parameters to handle TLS support added in Control Agent
 	config: "trust-anchor", "cert-file", "key-file" and
