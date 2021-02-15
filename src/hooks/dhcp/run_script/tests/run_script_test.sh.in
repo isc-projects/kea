@@ -13,8 +13,8 @@ set -eu
 LOG_FILE="@abs_top_builddir@/src/hooks/dhcp/run_script/tests/test.log"
 
 ECHO_TO_FILE() {
-    echo ${@}
-    echo ${@} > ${LOG_FILE}
+    echo "${@}"
+    echo "${@}" > ${LOG_FILE}
 }
 
 ASSERT_EQ() {
