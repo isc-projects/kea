@@ -49,11 +49,6 @@ typedef std::vector<std::string> ProcessEnvVars;
 /// it. The exit code can be retrieved by the caller using the
 /// @c ProcessSpawn::getExitStatus method.
 ///
-/// @warning Only one instance of the @c ProcessSpawn class may exist
-/// at the given time. Creating additional instance would cause an
-/// attempt to register a new SIGCHLD signal handler and, as a
-/// consequence, the new @c ProcessSpawn object will fail to create.
-///
 /// This class is made noncopyable so that we don't have attempts
 /// to make multiple copies of an object.  This avoid problems
 /// with multiple copies of objects for a single global resource

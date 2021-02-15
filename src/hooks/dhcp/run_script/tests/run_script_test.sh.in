@@ -514,6 +514,6 @@ case "$1" in
         lease6_decline
         ;;
     *)
-        unknown_handle
+        unknown_handle "${@}"
         ;;
 esac
