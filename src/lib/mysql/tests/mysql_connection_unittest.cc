@@ -30,11 +30,10 @@ public:
     };
 
     /// @brief Array of tagged MySQL statements.
-    typedef std::array<TaggedStatement, NUM_STATEMENTS>
-    TaggedStatementArray;
+    typedef std::array<TaggedStatement, NUM_STATEMENTS> TaggedStatementArray;
 
     /// @brief Prepared MySQL statements used in the tests.
-    TaggedStatementArray tagged_statements = { {
+    TaggedStatementArray tagged_statements = {{
             { GET_BY_INT_VALUE,
               "SELECT tinyint_value, int_value, bigint_value, string_value,"
               " blob_value, timestamp_value"
@@ -47,9 +46,7 @@ public:
               "INSERT INTO mysql_connection_test (tinyint_value, int_value,"
               "bigint_value, string_value, blob_value, timestamp_value)"
               " VALUES (?, ?, ?, ?, ?, ?)" }
-    }
-    };
-
+    }};
 
     /// @brief Constructor.
     ///
@@ -57,7 +54,7 @@ public:
     /// prepared statements used in tests. Created schema contains a test
     /// table @c mysql_connection_test which includes 6 columns of various
     /// types.
-    MySqlConnectionTest()
+    MySqlConnectionTest(bool const primary_key = false)
         : conn_(DatabaseConnection::parse(validMySQLConnectionString())) {
 
         try {
@@ -65,12 +62,26 @@ public:
             conn_.openDatabase();
 
             // Create mysql_connection_test table.
-            createTestTable();
+            createTestTable(primary_key);
+
+            // In Percona XtraDB cluster, you can't do much on tables with
+            // primary keys. So far the connection and the table creation have
+            // been tested. Continue only if:
+            // * we are in primary key mode
+            // * a MySQL database other than Percona is running
+            // * Percona's pxc_strict_mode is set to "DISABLED" or "PERMISSIVE"
+            // The last two checks are done with inverse logic against the two
+            // modes that restrict this: "ENFORCING" and "MASTER". This check is
+            // to be paired inside the tests without a primary key to disable
+            // those tests.
+            if (!primary_key &&
+                (showPxcStrictMode() == "ENFORCING" || showPxcStrictMode() == "MASTER")) {
+                return;
+            }
 
             // Created prepared statements for basic queries to test table.
             conn_.prepareStatements(tagged_statements.begin(),
                                     tagged_statements.end());
-
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test\n"
                          "*** environment is broken and must be fixed before\n"
@@ -93,7 +104,7 @@ public:
     ///
     /// The new table contains 6 columns of various data types. All of
     /// the columns accept null values.
-    void createTestTable() {
+    void createTestTable(bool const primary_key = false) {
         /// @todo TIMESTAMP value lacks sub second precision because
         /// it is supported since MySQL 5.6.4, which is still not a
         /// default version on some OSes. When the subsecond precision
@@ -101,7 +112,8 @@ public:
         /// column should be turned to TIMESTAMP(6). Until then, it
         /// must remain TIMESTAMP.
         runQuery("CREATE TABLE IF NOT EXISTS mysql_connection_test ("
-                 "tinyint_value TINYINT NULL,"
+                 "tinyint_value TINYINT " +
+                 std::string(primary_key ? "PRIMARY KEY NOT NULL," : "NULL,") +
                  "int_value INT NULL,"
                  "bigint_value BIGINT NULL,"
                  "string_value TEXT NULL,"
@@ -222,167 +234,284 @@ public:
         }
     }
 
+    /// @brief Get pxc_strict_mode global variable from the database.
+    /// For Percona, they can be: DISABLED, PERMISSIVE, ENFORCING, MASTER.
+    std::string showPxcStrictMode() {
+        // Store in a static variable so this only runs once per gtest binary
+        // invocation.
+        static std::string const pxc_strict_mode([&]() -> std::string {
+            // Execute select statement. We expect one row to be returned. For
+            // this returned row the lambda provided as 4th argument should be
+            // executed.
+            std::vector<std::vector<std::string>> const result(
+                conn_.rawStatement("SHOW GLOBAL VARIABLES LIKE 'pxc_strict_mode'"));
+            if (result.size() < 1 || result[0].size() < 2) {
+                // Not Percona
+                return "";
+            }
+
+            return result[0][1];
+        }());
+        return pxc_strict_mode;
+    }
+
+    /// ***          Test definitions start here. Tests are invoked          ***
+    /// ***     multiple times further below in different test fixtures.     ***
+
+    /// @brief Test that non-null values of various types can be inserted and
+    /// retrieved from the dataabse.
+    void select() {
+        std::string blob = "myblob";
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(123),
+            MySqlBinding::createInteger<uint32_t>(1024),
+            MySqlBinding::createInteger<int64_t>(-4096),
+            MySqlBinding::createString("shellfish"),
+            MySqlBinding::createBlob(blob.begin(), blob.end()),
+            /// @todo Change it to microsec_clock once we transition to
+            /// subsecond precision.
+            MySqlBinding::createTimestamp(
+                boost::posix_time::second_clock::local_time()),
+        };
+
+        testInsertSelect(in_bindings);
+    }
+
+    /// @brief Test that null value can be inserted to a column having numeric
+    /// type and retrieved.
+    void selectNullInteger() {
+        std::string blob = "myblob";
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(123),
+            MySqlBinding::createInteger<uint32_t>(1024),
+            MySqlBinding::createNull(),
+            MySqlBinding::createString("shellfish"),
+            MySqlBinding::createBlob(blob.begin(), blob.end()),
+            /// @todo Change it to microsec_clock once we transition to
+            /// subsecond precision.
+            MySqlBinding::createTimestamp(
+                boost::posix_time::second_clock::local_time()),
+        };
+
+        testInsertSelect(in_bindings);
+    }
+
+    /// @brief Test that null value can be inserted to a column having string
+    /// type and retrieved.
+    void selectNullString() {
+        std::string blob = "myblob";
+
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(123),
+            MySqlBinding::createInteger<uint32_t>(1024),
+            MySqlBinding::createInteger<int64_t>(-4096),
+            MySqlBinding::createNull(),
+            MySqlBinding::createBlob(blob.begin(), blob.end()),
+            /// @todo Change it to microsec_clock once we transition to
+            /// subsecond precision.
+            MySqlBinding::createTimestamp(
+                boost::posix_time::second_clock::local_time()),
+        };
+
+        testInsertSelect(in_bindings);
+    }
+
+    /// @brief Test that null value can be inserted to a column having blob type
+    /// and retrieved.
+    void selectNullBlob() {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(123),
+            MySqlBinding::createInteger<uint32_t>(1024),
+            MySqlBinding::createInteger<int64_t>(-4096),
+            MySqlBinding::createString("shellfish"),
+            MySqlBinding::createNull(),
+            /// @todo Change it to microsec_clock once we transition to
+            /// subsecond precision.
+            MySqlBinding::createTimestamp(
+                boost::posix_time::second_clock::local_time()),
+        };
+
+        testInsertSelect(in_bindings);
+    }
+
+    /// @brief Test that null value can be inserted to a column having timestamp
+    /// type and retrieved.
+    void selectNullTimestamp() {
+        std::string blob = "myblob";
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(123),
+            MySqlBinding::createInteger<uint32_t>(1024),
+            MySqlBinding::createInteger<int64_t>(-4096),
+            MySqlBinding::createString("shellfish"),
+            MySqlBinding::createBlob(blob.begin(), blob.end()),
+            MySqlBinding::createNull(),
+        };
+
+        testInsertSelect(in_bindings);
+    }
+
+    /// @brief Test that empty string and empty blob can be inserted to a
+    /// database.
+    void selectEmptyStringBlob() {
+        std::string blob = "";
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(123),
+            MySqlBinding::createInteger<uint32_t>(1024),
+            MySqlBinding::createInteger<int64_t>(-4096),
+            MySqlBinding::createString(""),
+            MySqlBinding::createBlob(blob.begin(), blob.end()),
+            /// @todo Change it to microsec_clock once we transition to
+            /// subsecond precision.
+            MySqlBinding::createTimestamp(
+                boost::posix_time::second_clock::local_time()),
+        };
+
+        testInsertSelect(in_bindings);
+    }
+
+    /// @brief Test that a row can be deleted from the database.
+    void deleteByValue() {
+        // Insert a row with numeric values.
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(123),
+            MySqlBinding::createInteger<uint32_t>(1024),
+            MySqlBinding::createInteger<int64_t>(-4096),
+            MySqlBinding::createNull(),
+            MySqlBinding::createNull(),
+            MySqlBinding::createNull(),
+        };
+
+        ASSERT_NO_THROW(
+            conn_.insertQuery(MySqlConnectionTest::INSERT_VALUE, in_bindings));
+
+        // This variable will be checked to see if the row has been deleted
+        // from the database.
+        bool deleted = false;
+
+        // Execute delete query but use int_value of non existing row.
+        // The row should not be deleted.
+        in_bindings = {MySqlBinding::createInteger<uint32_t>(1)};
+        ASSERT_NO_THROW(
+            deleted = conn_.updateDeleteQuery(
+                MySqlConnectionTest::DELETE_BY_INT_VALUE, in_bindings));
+        ASSERT_FALSE(deleted);
+
+        // This time use the correct value.
+        in_bindings = {MySqlBinding::createInteger<uint32_t>(1024)};
+        ASSERT_NO_THROW(
+            deleted = conn_.updateDeleteQuery(
+                MySqlConnectionTest::DELETE_BY_INT_VALUE, in_bindings));
+        // The row should have been deleted.
+        ASSERT_TRUE(deleted);
+
+        // Let's confirm that it has been deleted by issuing a select query.
+        MySqlBindingCollection out_bindings = {
+            MySqlBinding::createInteger<uint8_t>(),
+            MySqlBinding::createInteger<uint32_t>(),
+            MySqlBinding::createInteger<int64_t>(),
+            MySqlBinding::createString(512),
+            MySqlBinding::createBlob(512),
+            MySqlBinding::createTimestamp(),
+        };
+
+        ASSERT_NO_THROW(conn_.selectQuery(MySqlConnectionTest::GET_BY_INT_VALUE,
+                                          in_bindings, out_bindings,
+                                          [&deleted](MySqlBindingCollection&) {
+                                              // This will be executed if the
+                                              // row is returned as a result of
+                                              // select query. We expect that
+                                              // this is not executed.
+                                              deleted = false;
+                                          }));
+        // Make sure that select query returned nothing.
+        EXPECT_TRUE(deleted);
+    }
+
     /// @brief Test MySQL connection.
     MySqlConnection conn_;
-
 };
 
-// Test that non-null values of various types can be inserted and retrieved
-// from the dataabse.
+struct MySqlConnectionWithPrimaryKeyTest : MySqlConnectionTest {
+    MySqlConnectionWithPrimaryKeyTest()
+        : MySqlConnectionTest(/* primary_key = */ true) {
+    }
+};
+
 TEST_F(MySqlConnectionTest, select) {
-    std::string blob = "myblob";
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createInteger<uint8_t>(123),
-        MySqlBinding::createInteger<uint32_t>(1024),
-        MySqlBinding::createInteger<int64_t>(-4096),
-        MySqlBinding::createString("shellfish"),
-        MySqlBinding::createBlob(blob.begin(), blob.end()),
-        /// @todo Change it to microsec_clock once we transition to subsecond
-        /// precision.
-        MySqlBinding::createTimestamp(boost::posix_time::second_clock::local_time())
-    };
-
-    testInsertSelect(in_bindings);
+    if (showPxcStrictMode() == "ENFORCING" || showPxcStrictMode() == "MASTER") {
+        return;
+    }
+    select();
 }
 
-// Test that null value can be inserted to a column having numeric type and
-// retrieved.
 TEST_F(MySqlConnectionTest, selectNullInteger) {
-    std::string blob = "myblob";
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createNull(),
-        MySqlBinding::createInteger<uint32_t>(1024),
-        MySqlBinding::createInteger<int64_t>(-4096),
-        MySqlBinding::createString("shellfish"),
-        MySqlBinding::createBlob(blob.begin(), blob.end()),
-        /// @todo Change it to microsec_clock once we transition to subsecond
-        /// precision.
-        MySqlBinding::createTimestamp(boost::posix_time::second_clock::local_time())
-    };
-
-    testInsertSelect(in_bindings);
+    if (showPxcStrictMode() == "ENFORCING" || showPxcStrictMode() == "MASTER") {
+        return;
+    }
+    selectNullInteger();
 }
 
-// Test that null value can be inserted to a column having string type and
-// retrieved.
 TEST_F(MySqlConnectionTest, selectNullString) {
-    std::string blob = "myblob";
-
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createInteger<uint8_t>(123),
-        MySqlBinding::createInteger<uint32_t>(1024),
-        MySqlBinding::createInteger<int64_t>(-4096),
-        MySqlBinding::createNull(),
-        MySqlBinding::createBlob(blob.begin(), blob.end()),
-        /// @todo Change it to microsec_clock once we transition to subsecond
-        /// precision.
-        MySqlBinding::createTimestamp(boost::posix_time::second_clock::local_time())
-    };
-
-    testInsertSelect(in_bindings);
+    if (showPxcStrictMode() == "ENFORCING" || showPxcStrictMode() == "MASTER") {
+        return;
+    }
+    selectNullString();
 }
 
-// Test that null value can be inserted to a column having blob type and
-// retrieved.
 TEST_F(MySqlConnectionTest, selectNullBlob) {
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createInteger<uint8_t>(123),
-        MySqlBinding::createInteger<uint32_t>(1024),
-        MySqlBinding::createInteger<int64_t>(-4096),
-        MySqlBinding::createString("shellfish"),
-        MySqlBinding::createNull(),
-        /// @todo Change it to microsec_clock once we transition to subsecond
-        /// precision.
-        MySqlBinding::createTimestamp(boost::posix_time::second_clock::local_time())
-    };
-
-    testInsertSelect(in_bindings);
+    if (showPxcStrictMode() == "ENFORCING" || showPxcStrictMode() == "MASTER") {
+        return;
+    }
+    selectNullBlob();
 }
 
-// Test that null value can be inserted to a column having timestamp type and
-// retrieved.
 TEST_F(MySqlConnectionTest, selectNullTimestamp) {
-    std::string blob = "myblob";
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createInteger<uint8_t>(123),
-        MySqlBinding::createInteger<uint32_t>(1024),
-        MySqlBinding::createInteger<int64_t>(-4096),
-        MySqlBinding::createString("shellfish"),
-        MySqlBinding::createBlob(blob.begin(), blob.end()),
-        MySqlBinding::createNull()
-    };
-
-    testInsertSelect(in_bindings);
+    if (showPxcStrictMode() == "ENFORCING" || showPxcStrictMode() == "MASTER") {
+        return;
+    }
+    selectNullTimestamp();
 }
 
-// Test that empty string and empty blob can be inserted to a database.
 TEST_F(MySqlConnectionTest, selectEmptyStringBlob) {
-    std::string blob = "";
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createInteger<uint8_t>(123),
-        MySqlBinding::createInteger<uint32_t>(1024),
-        MySqlBinding::createInteger<int64_t>(-4096),
-        MySqlBinding::createString(""),
-        MySqlBinding::createBlob(blob.begin(), blob.end()),
-        /// @todo Change it to microsec_clock once we transition to subsecond
-        /// precision.
-        MySqlBinding::createTimestamp(boost::posix_time::second_clock::local_time())
-    };
-
-    testInsertSelect(in_bindings);
+    if (showPxcStrictMode() == "ENFORCING" || showPxcStrictMode() == "MASTER") {
+        return;
+    }
+    selectEmptyStringBlob();
 }
 
-// Test that a row can be deleted from the database.
 TEST_F(MySqlConnectionTest, deleteByValue) {
-    // Insert a row with numeric values.
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createInteger<uint8_t>(123),
-        MySqlBinding::createInteger<uint32_t>(1024),
-        MySqlBinding::createInteger<int64_t>(-4096),
-        MySqlBinding::createNull(),
-        MySqlBinding::createNull(),
-        MySqlBinding::createNull()
-    };
-    ASSERT_NO_THROW(conn_.insertQuery(MySqlConnectionTest::INSERT_VALUE,
-                                      in_bindings));
+    if (showPxcStrictMode() == "ENFORCING" || showPxcStrictMode() == "MASTER") {
+        return;
+    }
+    deleteByValue();
+}
 
-    // This variable will be checked to see if the row has been deleted
-    // from the database.
-    bool deleted = false;
+TEST_F(MySqlConnectionWithPrimaryKeyTest, select) {
+    select();
+}
 
-    // Execute delete query but use int_value of non existing row.
-    // The row should not be deleted.
-    in_bindings = { MySqlBinding::createInteger<uint32_t>(1) };
-    ASSERT_NO_THROW(deleted = conn_.updateDeleteQuery(MySqlConnectionTest::DELETE_BY_INT_VALUE,
-                                                      in_bindings));
-    ASSERT_FALSE(deleted);
+TEST_F(MySqlConnectionWithPrimaryKeyTest, selectNullInteger) {
+    selectNullInteger();
+}
 
-    // This time use the correct value.
-    in_bindings = { MySqlBinding::createInteger<uint32_t>(1024) };
-    ASSERT_NO_THROW(deleted = conn_.updateDeleteQuery(MySqlConnectionTest::DELETE_BY_INT_VALUE,
-                                                      in_bindings));
-    // The row should have been deleted.
-    ASSERT_TRUE(deleted);
+TEST_F(MySqlConnectionWithPrimaryKeyTest, selectNullString) {
+    selectNullString();
+}
 
-    // Let's confirm that it has been deleted by issuing a select query.
-    MySqlBindingCollection out_bindings = {
-        MySqlBinding::createInteger<uint8_t>(),
-        MySqlBinding::createInteger<uint32_t>(),
-        MySqlBinding::createInteger<int64_t>(),
-        MySqlBinding::createString(512),
-        MySqlBinding::createBlob(512),
-        MySqlBinding::createTimestamp()
-    };
+TEST_F(MySqlConnectionWithPrimaryKeyTest, selectNullBlob) {
+    selectNullBlob();
+}
 
-    ASSERT_NO_THROW(conn_.selectQuery(MySqlConnectionTest::GET_BY_INT_VALUE,
-                                      in_bindings, out_bindings,
-                                      [&deleted](MySqlBindingCollection&) {
-        // This will be executed if the row is returned as a result of
-        // select query. We expect that this is not executed.
-        deleted = false;
-    }));
-    // Make sure that select query returned nothing.
-    EXPECT_TRUE(deleted);
+TEST_F(MySqlConnectionWithPrimaryKeyTest, selectNullTimestamp) {
+    selectNullTimestamp();
+}
+
+TEST_F(MySqlConnectionWithPrimaryKeyTest, selectEmptyStringBlob) {
+    selectEmptyStringBlob();
+}
+
+TEST_F(MySqlConnectionWithPrimaryKeyTest, deleteByValue) {
+    deleteByValue();
 }
 
 /// @brief Test fixture class for @c MySqlConnection class methods.
@@ -410,4 +539,4 @@ TEST_F(MySqlSchemaTest, checkVersion) {
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
 }
 
-}
+}  // namespace
