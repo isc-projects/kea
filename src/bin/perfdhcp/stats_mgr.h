@@ -39,6 +39,13 @@ enum class ExchangeType {
     RL   ///< DHCPv6 RELEASE-REPLY
 };
 
+/// \brief Get the DHCP version that fits the exchange type.
+///
+/// \param exchange_type exchange type that will determine the version
+/// \throw isc::BadValue exchange type is unrecognized
+/// \return DHCP version: 4 or 6
+int dhcpVersion(ExchangeType const exchange_type);
+
 /// \brief Return name of the exchange.
 ///
 /// Function returns name of the specified exchange type.
@@ -554,6 +561,19 @@ public:
     std::tuple<PktListIterator, PktListIterator> getSentPackets() {
         return(std::make_tuple(sent_packets_.begin(), sent_packets_.end()));
     }
+
+    /// \brief Return the list of received leases in CSV format as string.
+    ///
+    /// Depending exchange type, it can apply to
+    /// potential leases received in offers and advertisements,
+    /// committed leases received in acknowledgements and replies,
+    /// renewed or released leases.
+    ///
+    /// \return multiline string of received leases in CSV format
+    std::string receivedLeases() const;
+
+    /// \brief Print the list of received leases.
+    void printLeases() const;
 
     static int malformed_pkts_;
 
@@ -1158,6 +1178,9 @@ public:
             std::cout << std::endl;
         }
     }
+
+    /// \brief Delegate to all exchanges to print their leases.
+    void printLeases() const;
 
     /// \brief Print names and values of custom counters.
     ///

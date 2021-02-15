@@ -698,7 +698,7 @@ TestControl::printStats() const {
 
 std::string
 TestControl::vector2Hex(const std::vector<uint8_t>& vec,
-                        const std::string& separator /* ="" */) {
+                        const std::string& separator /* = "" */) {
     std::ostringstream stream;
     for (std::vector<uint8_t>::const_iterator it = vec.begin();
          it != vec.end();

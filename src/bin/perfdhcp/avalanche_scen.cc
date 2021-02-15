@@ -171,6 +171,11 @@ AvalancheScen::run() {
         std::cout << "Interrupted" << std::endl;
     }
 
+    // Print any received leases.
+    if (options_.testDiags('l')) {
+        stats_mgr.printLeases();
+    }
+
     // Calculate total stats.
     int total_sent_pkts = total_resent_; // This holds sent + resent packets counts.
     int total_rcvd_pkts = 0;  // This holds received packets count.
@@ -193,5 +198,5 @@ AvalancheScen::run() {
     return (0);
 }
 
-}
-}
+}  // namespace perfdhcp
+}  // namespace isc

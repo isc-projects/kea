@@ -6,11 +6,45 @@
 
 #include <config.h>
 
+#include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/duid.h>
+#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
+#include <dhcp/pkt4.h>
 #include <perfdhcp/stats_mgr.h>
+#include <perfdhcp/test_control.h>
 
+using isc::dhcp::DHO_DHCP_CLIENT_IDENTIFIER;
+using isc::dhcp::DUID;
+using isc::dhcp::Option6IAAddr;
+using isc::dhcp::Option6IAAddrPtr;
+using isc::dhcp::Option6IAPrefix;
+using isc::dhcp::Option6IAPrefixPtr;
+using isc::dhcp::OptionPtr;
+using isc::dhcp::Pkt4;
+using isc::dhcp::Pkt4Ptr;
+using isc::dhcp::PktPtr;
 
 namespace isc {
 namespace perfdhcp {
+
+int dhcpVersion(ExchangeType const exchange_type) {
+    switch (exchange_type) {
+    case ExchangeType::DO:
+    case ExchangeType::RA:
+    case ExchangeType::RNA:
+        return 4;
+    case ExchangeType::SA:
+    case ExchangeType::RR:
+    case ExchangeType::RN:
+    case ExchangeType::RL:
+        return 6;
+    default:
+        isc_throw(BadValue,
+                  "unrecognized exchange type '" << exchange_type << "'");
+    }
+}
 
 std::ostream& operator<<(std::ostream& os, ExchangeType xchg_type)
 {
@@ -64,8 +98,8 @@ ExchangeStats::ExchangeStats(const ExchangeType xchg_type,
 }
 
 void
-ExchangeStats::updateDelays(const dhcp::PktPtr& sent_packet,
-                            const dhcp::PktPtr& rcvd_packet) {
+ExchangeStats::updateDelays(const PktPtr& sent_packet,
+                            const PktPtr& rcvd_packet) {
     if (!sent_packet) {
         isc_throw(BadValue, "Sent packet is null");
     }
@@ -114,8 +148,8 @@ ExchangeStats::updateDelays(const dhcp::PktPtr& sent_packet,
     sum_delay_squared_ += delta * delta;
 }
 
-dhcp::PktPtr
-ExchangeStats::matchPackets(const dhcp::PktPtr& rcvd_packet) {
+PktPtr
+ExchangeStats::matchPackets(const PktPtr& rcvd_packet) {
     using namespace boost::posix_time;
 
     if (!rcvd_packet) {
@@ -128,7 +162,7 @@ ExchangeStats::matchPackets(const dhcp::PktPtr& rcvd_packet) {
         // that the received packet we got has no corresponding
         // sent packet so orphans counter has to be updated.
         ++orphans_;
-        return(dhcp::PktPtr());
+        return(PktPtr());
     } else if (next_sent_ == sent_packets_.end()) {
         // Even if there are still many unmatched packets on the
         // list we might hit the end of it because of unordered
@@ -246,13 +280,13 @@ ExchangeStats::matchPackets(const dhcp::PktPtr& rcvd_packet) {
         // If we are here, it means that both ordered lookup and
         // unordered lookup failed. Searched packet is not on the list.
         ++orphans_;
-        return(dhcp::PktPtr());
+        return(PktPtr());
     }
 
     // Packet is matched so we count it. We don't count unmatched packets
     // as they are counted as orphans with a separate counter.
     ++rcvd_packets_num_;
-    dhcp::PktPtr sent_packet(*next_sent_);
+    PktPtr sent_packet(*next_sent_);
     // If packet was found, we assume it will be never searched
     // again. We want to delete this packet from the list to
     // improve performance of future searches.
@@ -279,7 +313,7 @@ ExchangeStats::printTimestamps() {
     for (PktListIterator it = rcvd_packets_.begin();
          it != rcvd_packets_.end();
          ++it) {
-        dhcp::PktPtr rcvd_packet = *it;
+        PktPtr rcvd_packet = *it;
         PktListTransidHashIndex& idx =
             archived_packets_.template get<1>();
         std::pair<PktListTransidHashIterator,
@@ -290,7 +324,7 @@ ExchangeStats::printTimestamps() {
              ++it_archived) {
             if ((*it_archived)->getTransid() ==
                 rcvd_packet->getTransid()) {
-                dhcp::PktPtr sent_packet = *it_archived;
+                PktPtr sent_packet = *it_archived;
                 // Get sent and received packet times.
                 ptime sent_time = sent_packet->getTimestamp();
                 ptime rcvd_time = rcvd_packet->getTimestamp();
@@ -322,9 +356,9 @@ StatsMgr::StatsMgr(CommandOptions& options) :
     boot_time_(boost::posix_time::microsec_clock::universal_time())
 {
     // Check if packet archive mode is required. If user
-    // requested diagnostics option -x t we have to enable
+    // requested diagnostics option -x l or -x t we have to enable
     // it so as StatsMgr preserves all packets.
-    archive_enabled_ = options.testDiags('t') ? true : false;
+    archive_enabled_ = options.testDiags('l') || options.testDiags('t');
 
     if (options.getIpVersion() == 4) {
         addExchangeStats(ExchangeType::DO, options.getDropTime()[0]);
@@ -351,7 +385,84 @@ StatsMgr::StatsMgr(CommandOptions& options) :
         addCustomCounter("shortwait", "Short waits for packets");
     }
 }
+
+std::string
+ExchangeStats::receivedLeases() const {
+    // Get DHCP version.
+    int const v(dhcpVersion(xchg_type_));
+
+    std::stringstream result;
+    // Iterate through all received packets.
+    for (PktPtr const& packet : rcvd_packets_) {
+
+        // Get client identifier.
+        if (v == 4) {
+            OptionPtr const& client_id_option(
+                packet->getOption(DHO_DHCP_CLIENT_IDENTIFIER));
+            if (client_id_option) {
+                result << TestControl::vector2Hex(client_id_option->getData());
+            }
+        } else if (v == 6) {
+            OptionPtr const& client_id_option(packet->getOption(D6O_CLIENTID));
+            if (client_id_option) {
+                result << DUID(client_id_option->getData()).toText();
+            }
+        } else {
+            isc_throw(BadValue, "unrecognized DHCP version '" << v << "'");
+        }
+        result << ',';
+
+        // Get address.
+        if (v == 4) {
+            Pkt4Ptr const& packet4(boost::dynamic_pointer_cast<Pkt4>(packet));
+            if (packet4) {
+                result << packet4->getYiaddr().toText();
+            }
+        } else if (v == 6) {
+            OptionPtr const& option(packet->getOption(D6O_IA_NA));
+            if (option) {
+                Option6IAAddrPtr const& iaaddr(
+                    boost::dynamic_pointer_cast<Option6IAAddr>(
+                        option->getOption(D6O_IAADDR)));
+                if (iaaddr) {
+                    result << iaaddr->getAddress().toText();
+                }
+            }
+        }
+        result << ',';
+
+        // Get prefix.
+        OptionPtr const& option(packet->getOption(D6O_IA_PD));
+        if (option) {
+            Option6IAPrefixPtr const& iaprefix(
+                boost::dynamic_pointer_cast<Option6IAPrefix>(
+                    option->getOption(D6O_IAPREFIX)));
+            if (iaprefix) {
+                result << iaprefix->getAddress().toText();
+            }
+        }
+
+        result << std::endl;
+    }
+
+    return result.str();
+}
+
+void
+ExchangeStats::printLeases() const {
+    std::cout << receivedLeases() << std::endl;
+}
+
+void StatsMgr::printLeases() const {
+    for (auto const& exchange : exchanges_) {
+        std::cout << "***Leases for " << exchange.first << "***" << std::endl;
+        std::cout << "client_id,adrress,prefix" << std::endl;
+        exchange.second->printLeases();
+        std::cout << std::endl;
+    }
+}
+
 int ExchangeStats::malformed_pkts_{0};
 
-}
-}
+}  // namespace perfdhcp
+}  // namespace isc

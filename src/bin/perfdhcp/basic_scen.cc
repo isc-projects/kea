@@ -237,12 +237,16 @@ BasicScen::run() {
         tc_.printTemplates();
     }
 
+    // Print any received leases.
+    if (options_.testDiags('l')) {
+        stats_mgr.printLeases();
+    }
+
     int ret_code = 0;
     // Check if any packet drops occurred.
     ret_code = stats_mgr.droppedPackets() ? 3 : 0;
     return (ret_code);
 }
 
-
-}
-}
+}  // namespace perfdhcp
+}  // namespace isc
