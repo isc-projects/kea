@@ -116,6 +116,13 @@ public:
 
 private:
 
+    /// @brief Access the single instance of the SignalSet which registers the
+    /// @ref waitForProcess function as the SIGCHLD signal handler.
+    ///
+    /// @return The single instance of the @ref SignalSet which handles the
+    /// SIGCHLD signal.
+    SignalSetPtr signalSet();
+
     /// @brief Copies the argument specified as a C++ string to the new
     /// C string.
     ///
@@ -165,13 +172,8 @@ private:
 ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
                                    const ProcessArgs& args,
                                    const ProcessEnvVars& vars)
-    : signals_(new SignalSet(SIGCHLD)), process_state_(),
-      executable_(executable), args_(new char*[args.size() + 2]),
-      vars_(new char*[vars.size() + 1]) {
-    // Set the handler which is invoked immediately when the signal
-    // is received.
-    signals_->setOnReceiptHandler(std::bind(&ProcessSpawnImpl::waitForProcess,
-                                            this, ph::_1));
+    : signals_(signalSet()), process_state_(), executable_(executable),
+      args_(new char*[args.size() + 2]), vars_(new char*[vars.size() + 1]) {
     // Conversion of the arguments to the C-style array we start by setting
     // all pointers within an array to NULL to indicate that they haven't
     // been allocated yet.
@@ -190,6 +192,22 @@ ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
 }
 
 ProcessSpawnImpl::~ProcessSpawnImpl() {
+}
+
+SignalSetPtr
+ProcessSpawnImpl::signalSet() {
+    static SignalSetPtr signals(new SignalSet(SIGCHLD));
+    auto registerHandle = [&]() -> bool {
+        // Set the handler which is invoked immediately when the signal
+        // is received.
+        signals->setOnReceiptHandler(std::bind(&ProcessSpawnImpl::waitForProcess,
+                                            this, ph::_1));
+        return (true);
+    };
+    static bool init = registerHandle();
+    (void)init;
+
+    return (signals);
 }
 
 std::string
