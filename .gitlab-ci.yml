@@ -45,6 +45,7 @@ shellcheck:
     - SCRIPTS+="src/lib/testutils/dhcp_test_lib.sh.in "
     - SCRIPTS+="src/lib/testutils/xml_reporting_test_lib.sh.in "
     - SCRIPTS+="src/lib/util/tests/process_spawn_app.sh.in "
+    - SCRIPTS+="src/hooks/dhcp/run_script/tests/run_script_test.sh.in "
     - SCRIPTS+="src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh.in "
     - SCRIPTS+="src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh.in "
     - SCRIPTS+="src/share/database/scripts/cql/upgrade_3.0_to_4.0.sh.in "

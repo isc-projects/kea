@@ -21,8 +21,8 @@ namespace run_script {
 
 RunScriptImplPtr impl;
 
-} // end of namespace run_script
-} // end of namespace isc
+} // namespace run_script
+} // namespace isc
 
 using namespace isc;
 using namespace isc::data;

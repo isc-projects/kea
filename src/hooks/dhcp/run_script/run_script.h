@@ -224,6 +224,6 @@ private:
 /// @brief The type of shared pointers to Run Script implementations.
 typedef boost::shared_ptr<RunScriptImpl> RunScriptImplPtr;
 
-} // end of namespace run_script
-} // end of namespace isc
+} // namespace run_script
+} // namespace isc
 #endif

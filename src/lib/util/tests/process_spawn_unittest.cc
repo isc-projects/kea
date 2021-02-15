@@ -18,6 +18,7 @@ namespace {
 
 using namespace isc;
 using namespace isc::util;
+using namespace std;
 
 /// @brief Returns a location of the test script.
 ///
@@ -25,8 +26,8 @@ using namespace isc::util;
 /// the argument passed to it.
 ///
 /// @return Absolute location of the test script.
-std::string getApp() {
-    std::ostringstream s;
+string getApp() {
+    ostringstream s;
     s << TEST_DATA_TOPBUILDDIR << "/src/lib/util/tests/process_spawn_app.sh";
     return (s.str());
 }
@@ -96,7 +97,7 @@ bool waitForProcessFast(const ProcessSpawn& process, const pid_t pid,
 // already block ProcessSpawnError is thrown (@todo the second error
 // case: fork() failing)
 TEST(ProcessSpawn, sigchldBlocked) {
-    std::vector<std::string> args;
+    vector<string> args;
     ProcessSpawn process(getApp(), args);
     sigset_t sset;
     sigemptyset(&sset);
@@ -110,7 +111,7 @@ TEST(ProcessSpawn, sigchldBlocked) {
 // This test verifies that the external application can be ran with
 // arguments and that the exit code is gathered.
 TEST(ProcessSpawn, spawnWithArgs) {
-    std::vector<std::string> args;
+    vector<string> args;
     args.push_back("-e");
     args.push_back("64");
     ProcessSpawn process(getApp(), args);
@@ -125,8 +126,8 @@ TEST(ProcessSpawn, spawnWithArgs) {
 // This test verifies that the external application can be ran with
 // arguments and environment variables that the exit code is gathered.
 TEST(ProcessSpawn, spawnWithArgsAndEnvVars) {
-    std::vector<std::string> args;
-    std::vector<std::string> vars;
+    vector<string> args;
+    vector<string> vars;
     args.push_back("-v");
     args.push_back("TEST_VARIABLE_NAME");
     args.push_back("TEST_VARIABLE_VALUE");
@@ -146,7 +147,7 @@ TEST(ProcessSpawn, spawnWithArgsAndEnvVars) {
 // It also checks that it is possible to clear the status of the
 // process.
 TEST(ProcessSpawn, spawnTwoProcesses) {
-    std::vector<std::string> args;
+    vector<string> args;
     args.push_back("-p");
     ProcessSpawn process(getApp(), args);
     pid_t pid1 = 0;
@@ -173,7 +174,7 @@ TEST(ProcessSpawn, spawnTwoProcesses) {
 // This test verifies that the external application can be ran without
 // arguments and that the exit code is gathered.
 TEST(ProcessSpawn, spawnNoArgs) {
-    std::vector<std::string> args;
+    vector<string> args;
     ProcessSpawn process(getApp());
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
@@ -226,7 +227,7 @@ TEST(ProcessSpawn, getCommandLine) {
 TEST(ProcessSpawn, isRunning) {
     // Run the process which sleeps for 10 seconds, so as we have
     // enough time to check if it is running.
-    std::vector<std::string> args;
+    vector<string> args;
     args.push_back("-s");
     args.push_back("10");
     ProcessSpawn process(getApp(), args);
@@ -248,7 +249,7 @@ TEST(ProcessSpawn, errnoInvariance) {
     // stumped on.
     errno = 123;
 
-    std::vector<std::string> args;
+    vector<string> args;
     args.push_back("-e");
     args.push_back("64");
     ProcessSpawn process(getApp(), args);

@@ -17,6 +17,6 @@ namespace run_script {
 
 extern isc::log::Logger run_script_logger;
 
-} // end of namespace run_script
-} // end of namespace isc
+} // namespace run_script
+} // namespace isc
 #endif

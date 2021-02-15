@@ -27,11 +27,11 @@ be run on specific hook points.
 ## Configuring the DHCPv4 Module
 
 It must be configured as a hook library for the desired DHCP server
-modules. Note that the bootp library is installed alongside the
+modules. Note that the Run Script library is installed alongside the
 Kea libraries in "<install-dir>/lib" where <install-dir> is determined
 by the --prefix option of the configure script.  It defaults to
 "/usr/local". Assuming the default value then, configuring kea-dhcp4
-to load the bootp library could be done with the following Kea4
+to load the Run Script library could be done with the following Kea4
 configuration:
 
 @code

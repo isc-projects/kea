@@ -50,8 +50,8 @@ namespace run_script {
 
 extern RunScriptImplPtr impl;
 
-} // end of namespace run_script
-} // end of namespace isc
+} // namespace run_script
+} // namespace isc
 
 namespace {
 
@@ -60,9 +60,9 @@ namespace {
 ///
 /// @param vars The list of environment variables to join.
 /// @return The joined environment.
-std::string
+string
 join(const ProcessEnvVars& vars) {
-    std::string result = "";
+    string result;
     for (auto var : vars) {
         result += var + "\n";
     }
@@ -276,7 +276,7 @@ generatePkt6() {
 /// @brief Tests the RunScript setName and getName functions.
 TEST(RunScript, testSetNameGetName) {
     RunScriptImpl script;
-    std::string script_name = "test";
+    string script_name = "test";
     ASSERT_NO_THROW(script.setName(script_name));
     EXPECT_EQ(script_name, script.getName());
 }
@@ -295,7 +295,7 @@ TEST(RunScript, extractBoolean) {
     bool flag = false;
     RunScriptImpl::extractBoolean(vars, flag, "FALSE_PREFIX", "_FALSE_SUFIX");
     ASSERT_EQ(1, vars.size());
-    std::string expected = "FALSE_PREFIX_FALSE_SUFIX=0\n";
+    string expected = "FALSE_PREFIX_FALSE_SUFIX=0\n";
     EXPECT_EQ(expected, join(vars));
     flag = true;
     RunScriptImpl::extractBoolean(vars, flag, "TRUE_PREFIX", "_TRUE_SUFIX");
@@ -311,7 +311,7 @@ TEST(RunScript, extractInteger) {
     uint64_t value = 0;
     RunScriptImpl::extractInteger(vars, value, "ZERO_PREFIX", "_ZERO_SUFIX");
     ASSERT_EQ(1, vars.size());
-    std::string expected = "ZERO_PREFIX_ZERO_SUFIX=0\n";
+    string expected = "ZERO_PREFIX_ZERO_SUFIX=0\n";
     EXPECT_EQ(expected, join(vars));
     value = 1;
     RunScriptImpl::extractInteger(vars, value, "ONE_PREFIX", "_ONE_SUFIX");
@@ -331,10 +331,10 @@ TEST(RunScript, extractInteger) {
 /// @brief Tests the extractString method works as expected.
 TEST(RunScript, extractString) {
     ProcessEnvVars vars;
-    std::string value = "";
+    string value = "";
     RunScriptImpl::extractString(vars, value, "EMPTY_PREFIX", "_EMPTY_SUFIX");
     ASSERT_EQ(1, vars.size());
-    std::string expected = "EMPTY_PREFIX_EMPTY_SUFIX=\n";
+    string expected = "EMPTY_PREFIX_EMPTY_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     value = "SOMETHING";
     RunScriptImpl::extractString(vars, value, "NON_EMPTY_PREFIX", "_NON_EMPTY_SUFIX");
@@ -350,8 +350,8 @@ TEST(RunScript, extractHWAddr) {
     HWAddrPtr hwaddr;
     RunScriptImpl::extractHWAddr(vars, hwaddr, "HWADDR_PREFIX", "_HWADDR_SUFIX");
     ASSERT_EQ(2, vars.size());
-    std::string expected = "HWADDR_PREFIX_HWADDR_SUFIX=\n"
-                           "HWADDR_PREFIX_TYPE_HWADDR_SUFIX=\n";
+    string expected = "HWADDR_PREFIX_HWADDR_SUFIX=\n"
+                      "HWADDR_PREFIX_TYPE_HWADDR_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     hwaddr = generateHWAddr();
@@ -368,7 +368,7 @@ TEST(RunScript, extractDUID) {
     DuidPtr duid;
     RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFIX");
     ASSERT_EQ(1, vars.size());
-    std::string expected = "DUID_PREFIX_DUID_SUFIX=\n";
+    string expected = "DUID_PREFIX_DUID_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     duid = generateDUID();
@@ -384,10 +384,10 @@ TEST(RunScript, extractOptionIA) {
     Option6IAPtr optionia;
     RunScriptImpl::extractOptionIA(vars, optionia, "OPTIONIA_PREFIX", "_OPTIONIA_SUFIX");
     ASSERT_EQ(4, vars.size());
-    std::string expected = "OPTIONIA_PREFIX_IAID_OPTIONIA_SUFIX=\n"
-                           "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFIX=\n"
-                           "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFIX=\n"
-                           "OPTIONIA_PREFIX_IA_T2_OPTIONIA_SUFIX=\n";
+    string expected = "OPTIONIA_PREFIX_IAID_OPTIONIA_SUFIX=\n"
+                      "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFIX=\n"
+                      "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFIX=\n"
+                      "OPTIONIA_PREFIX_IA_T2_OPTIONIA_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     optionia = generateOptionIA();
@@ -406,10 +406,10 @@ TEST(RunScript, extractSubnet4) {
     Subnet4Ptr subnet4;
     RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4_PREFIX", "_SUBNET4_SUFIX");
     ASSERT_EQ(4, vars.size());
-    std::string expected = "SUBNET4_PREFIX_ID_SUBNET4_SUFIX=\n"
-                           "SUBNET4_PREFIX_NAME_SUBNET4_SUFIX=\n"
-                           "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFIX=\n"
-                           "SUBNET4_PREFIX_PREFIX_LEN_SUBNET4_SUFIX=\n";
+    string expected = "SUBNET4_PREFIX_ID_SUBNET4_SUFIX=\n"
+                      "SUBNET4_PREFIX_NAME_SUBNET4_SUFIX=\n"
+                      "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFIX=\n"
+                      "SUBNET4_PREFIX_PREFIX_LEN_SUBNET4_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     subnet4 = generateSubnet4();
@@ -428,10 +428,10 @@ TEST(RunScript, extractSubnet6) {
     Subnet6Ptr subnet6;
     RunScriptImpl::extractSubnet6(vars, subnet6, "SUBNET6_PREFIX", "_SUBNET6_SUFIX");
     ASSERT_EQ(4, vars.size());
-    std::string expected = "SUBNET6_PREFIX_ID_SUBNET6_SUFIX=\n"
-                           "SUBNET6_PREFIX_NAME_SUBNET6_SUFIX=\n"
-                           "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFIX=\n"
-                           "SUBNET6_PREFIX_PREFIX_LEN_SUBNET6_SUFIX=\n";
+    string expected = "SUBNET6_PREFIX_ID_SUBNET6_SUFIX=\n"
+                      "SUBNET6_PREFIX_NAME_SUBNET6_SUFIX=\n"
+                      "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFIX=\n"
+                      "SUBNET6_PREFIX_PREFIX_LEN_SUBNET6_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     subnet6 = generateSubnet6();
@@ -450,15 +450,15 @@ TEST(RunScript, extractLease4) {
     Lease4Ptr lease4;
     RunScriptImpl::extractLease4(vars, lease4, "LEASE4_PREFIX", "_LEASE4_SUFIX");
     ASSERT_EQ(9, vars.size());
-    std::string expected = "LEASE4_PREFIX_ADDRESS_LEASE4_SUFIX=\n"
-                           "LEASE4_PREFIX_CLTT_LEASE4_SUFIX=\n"
-                           "LEASE4_PREFIX_HOSTNAME_LEASE4_SUFIX=\n"
-                           "LEASE4_PREFIX_HWADDR_LEASE4_SUFIX=\n"
-                           "LEASE4_PREFIX_HWADDR_TYPE_LEASE4_SUFIX=\n"
-                           "LEASE4_PREFIX_STATE_LEASE4_SUFIX=\n"
-                           "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFIX=\n"
-                           "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFIX=\n"
-                           "LEASE4_PREFIX_CLIENT_ID_LEASE4_SUFIX=\n";
+    string expected = "LEASE4_PREFIX_ADDRESS_LEASE4_SUFIX=\n"
+                      "LEASE4_PREFIX_CLTT_LEASE4_SUFIX=\n"
+                      "LEASE4_PREFIX_HOSTNAME_LEASE4_SUFIX=\n"
+                      "LEASE4_PREFIX_HWADDR_LEASE4_SUFIX=\n"
+                      "LEASE4_PREFIX_HWADDR_TYPE_LEASE4_SUFIX=\n"
+                      "LEASE4_PREFIX_STATE_LEASE4_SUFIX=\n"
+                      "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFIX=\n"
+                      "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFIX=\n"
+                      "LEASE4_PREFIX_CLIENT_ID_LEASE4_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     lease4 = generateLease4();
@@ -482,19 +482,19 @@ TEST(RunScript, extractLease6) {
     Lease6Ptr lease6;
     RunScriptImpl::extractLease6(vars, lease6, "LEASE6_PREFIX", "_LEASE6_SUFIX");
     ASSERT_EQ(13, vars.size());
-    std::string expected = "LEASE6_PREFIX_ADDRESS_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_CLTT_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_HOSTNAME_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_HWADDR_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_HWADDR_TYPE_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_STATE_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_SUBNET_ID_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_VALID_LIFETIME_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_DUID_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_IAID_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFIX=\n"
-                           "LEASE6_PREFIX_TYPE_LEASE6_SUFIX=\n";
+    string expected = "LEASE6_PREFIX_ADDRESS_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_CLTT_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_HOSTNAME_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_HWADDR_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_HWADDR_TYPE_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_STATE_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_SUBNET_ID_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_VALID_LIFETIME_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_DUID_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_IAID_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFIX=\n"
+                      "LEASE6_PREFIX_TYPE_LEASE6_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     lease6 = generateLease6();
@@ -522,7 +522,7 @@ TEST(RunScript, extractLeases4) {
     Lease4CollectionPtr leases4;
     RunScriptImpl::extractLeases4(vars, leases4, "LEASES4_PREFIX", "_LEASES4_SUFIX");
     ASSERT_EQ(1, vars.size());
-    std::string expected = "LEASES4_PREFIX_SIZE_LEASES4_SUFIX=0\n";
+    string expected = "LEASES4_PREFIX_SIZE_LEASES4_SUFIX=0\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     leases4.reset(new Lease4Collection());
@@ -558,7 +558,7 @@ TEST(RunScript, extractLeases6) {
     Lease6CollectionPtr leases6;
     RunScriptImpl::extractLeases6(vars, leases6, "LEASES6_PREFIX", "_LEASES6_SUFIX");
     ASSERT_EQ(1, vars.size());
-    std::string expected = "LEASES6_PREFIX_SIZE_LEASES6_SUFIX=0\n";
+    string expected = "LEASES6_PREFIX_SIZE_LEASES6_SUFIX=0\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     leases6.reset(new Lease6Collection());
@@ -602,28 +602,28 @@ TEST(RunScript, extractPkt4) {
     Pkt4Ptr pkt4;
     RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFIX");
     ASSERT_EQ(22, vars.size());
-    std::string expected = "PKT4_PREFIX_TYPE_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_TXID_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_LOCAL_PORT_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_REMOTE_ADDR_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_REMOTE_PORT_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_IFACE_INDEX_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_IFACE_NAME_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_HOPS_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_SECS_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_FLAGS_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_CIADDR_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_SIADDR_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_YIADDR_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_GIADDR_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_RELAYED_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_HWADDR_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_HWADDR_TYPE_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_LOCAL_HWADDR_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFIX=\n"
-                           "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFIX=\n";
+    string expected = "PKT4_PREFIX_TYPE_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_TXID_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_LOCAL_PORT_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_REMOTE_ADDR_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_REMOTE_PORT_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_IFACE_INDEX_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_IFACE_NAME_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_HOPS_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_SECS_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_FLAGS_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_CIADDR_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_SIADDR_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_YIADDR_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_GIADDR_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_RELAYED_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_HWADDR_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_HWADDR_TYPE_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_LOCAL_HWADDR_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFIX=\n"
+                      "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     pkt4 = generatePkt4();
@@ -660,18 +660,18 @@ TEST(RunScript, extractPkt6) {
     Pkt6Ptr pkt6;
     RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFIX");
     ASSERT_EQ(12, vars.size());
-    std::string expected = "PKT6_PREFIX_TYPE_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_TXID_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_LOCAL_PORT_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_REMOTE_ADDR_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_REMOTE_PORT_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_IFACE_INDEX_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_IFACE_NAME_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_PROTO_PKT6_SUFIX=\n"
-                           "PKT6_PREFIX_CLIENT_ID_PKT6_SUFIX=\n";
+    string expected = "PKT6_PREFIX_TYPE_PKT6_SUFIX=\n"
+                      "PKT6_PREFIX_TXID_PKT6_SUFIX=\n"
+                      "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFIX=\n"
+                      "PKT6_PREFIX_LOCAL_PORT_PKT6_SUFIX=\n"
+                      "PKT6_PREFIX_REMOTE_ADDR_PKT6_SUFIX=\n"
+                      "PKT6_PREFIX_REMOTE_PORT_PKT6_SUFIX=\n"
+                      "PKT6_PREFIX_IFACE_INDEX_PKT6_SUFIX=\n"
+                      "PKT6_PREFIX_IFACE_NAME_PKT6_SUFIX=\n"
+                      "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFIX=\n"
+                      "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFIX=\n"
+                      "PKT6_PREFIX_PROTO_PKT6_SUFIX=\n"
+                      "PKT6_PREFIX_CLIENT_ID_PKT6_SUFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     pkt6 = generatePkt6();
@@ -711,13 +711,13 @@ public:
     }
 
     void checkScriptResult() {
-        std::ifstream test_log;
-        std::vector<std::string> extracted_lines;
+        ifstream test_log;
+        vector<string> extracted_lines;
         sleep(1);
         test_log.open(TEST_LOG_FILE);
         if (!test_log.fail()) {
-            std::string line;
-            while (std::getline(test_log, line)) {
+            string line;
+            while (getline(test_log, line)) {
                 extracted_lines.push_back(line) ;
             }
             test_log.close();

@@ -31,13 +31,13 @@ ASSERT_EQ() {
 
 TEST_EQ() {
     TEST_VARIABLE=${1}
-    TEST_EXPECTED=${1}"="${2}
-    TEST_ACTUAL=$(env | grep -w "${TEST_VARIABLE}")
+    TEST_EXPECTED="${1}=${2}"
+    TEST_ACTUAL=$(env | grep -E "^${TEST_VARIABLE}=")
     ASSERT_EQ "${TEST_EXPECTED}" "${TEST_ACTUAL}"
 }
 
 unknown_handle() {
-    ECHO_TO_FILE "Unhandled function call"
+    ECHO_TO_FILE "Unhandled function call ${@}"
     exit 123
 }
 

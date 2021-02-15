@@ -13,5 +13,5 @@ namespace run_script {
 
 isc::log::Logger run_script_logger("run-script-hooks");
 
-} // namespace bootp
+} // namespace run_script
 } // namespace isc

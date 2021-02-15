@@ -49,7 +49,7 @@ public:
     ///
     /// @param lib The name of the lib added.
     /// @param params The parameters of the library.
-    void addLib(const std::string& lib, ConstElementPtr params) {
+    void addLib(const string& lib, ConstElementPtr params) {
         libraries_.push_back(make_pair(lib, params));
     }
 
