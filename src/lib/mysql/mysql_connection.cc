@@ -437,5 +437,31 @@ MySqlConnection::rollback() {
     }
 }
 
+std::vector<std::vector<std::string>>
+MySqlConnection::rawStatement(std::string const& statement) const {
+    // Execute a SQL statement.
+    if (mysql_query(mysql_, statement.c_str())) {
+        isc_throw(DbOperationError, statement << ": " << mysql_error(mysql_));
+    }
+
+    // Get a result set.
+    MySqlResult result(mysql_use_result(mysql_));
+
+    // Fetch a result set.
+    std::vector<std::vector<std::string>> output;
+    size_t r(0);
+    MYSQL_ROW row;
+    size_t const column_count(mysql_num_fields(result.result_));
+    while ((row = mysql_fetch_row(result.result_)) != NULL) {
+        output.push_back(std::vector<std::string>());
+        for (size_t i = 0; i < column_count; ++i) {
+            output[r].push_back(row[i]);
+        }
+        ++r;
+    }
+
+    return output;
+}
+
 } // namespace isc::db
 } // namespace isc
