@@ -24,18 +24,36 @@ Developer's Guide</a> and in particular its section about hooks.
 libdhcp_run_script is a hooks library which allows an external script to
 be run on specific hook points.
 
-## Configuring the DHCPv4 Module
+## Configuring the DHCPv4 and DHCPv6 Modules
 
 It must be configured as a hook library for the desired DHCP server
 modules. Note that the Run Script library is installed alongside the
 Kea libraries in "<install-dir>/lib" where <install-dir> is determined
 by the --prefix option of the configure script.  It defaults to
-"/usr/local". Assuming the default value then, configuring kea-dhcp4
-to load the Run Script library could be done with the following Kea4
-configuration:
+"/usr/local".
+
+Configuring kea-dhcp4 to load the Run Script library could be done with
+the following Kea4 configuration:
 
 @code
 "Dhcp4": {
+    "hook_libraries": [
+        {   "library": "/usr/local/lib/libdhcp_run_script.so",
+            "parameters": {
+                "name": "/path_to/script_name.sh",
+                "sync": false
+            }
+        },
+        ...
+    ]
+}
+@endcode
+
+Configuring kea-dhcp6 to load the Run Script library could be done with
+the following Kea6 configuration:
+
+@code
+"Dhcp6": {
     "hook_libraries": [
         {   "library": "/usr/local/lib/libdhcp_run_script.so",
             "parameters": {

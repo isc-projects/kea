@@ -461,6 +461,11 @@ loaded by the correct process per the table below.
    |                 | 1.7.8, DHCPv6 |                                                            |
    |                 | since 1.7.9)  |                                                            |
    +-----------------+---------------+------------------------------------------------------------+
+   | Run Script      | Kea sources   |The Run Script hooks library adds support to run external   |
+   |                 | (since 1.9.5) |scripts for specific packet processing hook points. There   |
+   |                 |               |are several exported environment variables available for    |
+   |                 |               |the script.                                                 |
+   +-----------------+---------------+------------------------------------------------------------+
 
 ISC hopes to see more hooks libraries become available as time
 progresses, developed both internally and externally. Since this list

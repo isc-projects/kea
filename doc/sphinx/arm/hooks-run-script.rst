@@ -3,7 +3,8 @@
 Run Script Support
 ==================
 
-This hooks library adds support for calling an external script with vendor information extensions
+This hooks library adds support for calling an external script for specific
+packet processing hook points.
 
 The library is available since Kea 1.9.5 and can be loaded in a
 similar way as other hook libraries by the ``kea-dhcp4`` and
