@@ -25,6 +25,7 @@ import subprocess
 import multiprocessing
 import grp
 import pwd
+import getpass
 try:
     import urllib.request
 except:
@@ -747,6 +748,7 @@ class VagrantEnv(object):
                                  repository_url=('--repository-url %s' % repository_url) if repository_url else '')
 
         timeout = _calculate_build_timeout(self.features) + 5 * 60
+        # executes hammer.py inside LXC container
         self.execute(bld_cmd, timeout=timeout, log_file_path=log_file_path, quiet=self.quiet)  # timeout: 40 minutes
 
         ssh_cfg_path = self.dump_ssh_config()
@@ -757,15 +759,8 @@ class VagrantEnv(object):
                 execute('rm -rf %s' % pkgs_dir)
             os.makedirs(pkgs_dir)
 
-            if self.system in ['ubuntu', 'debian']:
-                execute('scp -F %s -r default:/home/vagrant/kea-src/isc-kea_* .' % ssh_cfg_path, cwd=pkgs_dir)
-                execute('scp -F %s -r default:/home/vagrant/kea-src/*deb .' % ssh_cfg_path, cwd=pkgs_dir)
-            elif self.system in ['fedora', 'centos', 'rhel']:
-                execute('scp -F %s -r default:/home/vagrant/pkgs/* .' % ssh_cfg_path, cwd=pkgs_dir)
-            elif self.system in ['alpine']:
-                execute('scp -F %s -r default:/home/vagrant/packages/vagrant/x86_64/* .' % ssh_cfg_path, cwd=pkgs_dir)
-            else:
-                raise NotImplementedError('no implementation for %s' % self.system)
+            # copy results of _build_native_pkg
+            execute('scp -F %s -r default:/tmp/pkg/* .' % ssh_cfg_path, cwd=pkgs_dir)
 
             if upload:
                 repo_url = _get_full_repo_url(repository_url, self.system, self.revision, pkg_version)
@@ -955,6 +950,7 @@ def _install_gtest_sources():
         execute(cmd)
         execute('sudo mkdir -p /usr/src')
         execute('sudo tar -C /usr/src -zxf /tmp/gtest.tar.gz')
+        execute('sudo ln -sf /usr/src/googletest-release-1.10.0 /usr/src/googletest')
         os.unlink('/tmp/gtest.tar.gz')
 
 
@@ -987,6 +983,7 @@ def _configure_mysql(system, revision, features):
     cmd += "CREATE USER 'keatest_readonly'@'localhost' IDENTIFIED BY 'keatest';\n"
     cmd += "GRANT ALL ON keatest.* TO 'keatest'@'localhost';\n"
     cmd += "GRANT SELECT ON keatest.* TO 'keatest_readonly'@'localhost';\n"
+    cmd += "SET @@global.log_bin_trust_function_creators = 1;\n"
     cmd += "EOF\n\""
     execute(cmd)
 
@@ -1029,14 +1026,15 @@ def _configure_pgsql(system, features):
     elif system == 'freebsd':
         # pgsql must be enabled before running initdb
         execute('sudo sysrc postgresql_enable="yes"')
-        execute('sudo /usr/local/etc/rc.d/postgresql initdb')
+        execute('[ ! -d /var/db/postgres/data11 ] && sudo /usr/local/etc/rc.d/postgresql initdb || true')
 
     if system == 'freebsd':
         # redirecting output from start script to /dev/null otherwise the postgresql rc.d script hangs
-        execute('sudo service postgresql start > /dev/null')
+        # calling restart instead of start allow hammer.py to pass even if postgresql is already installed
+        execute('sudo service postgresql restart > /dev/null')
     elif system == 'alpine':
         execute('sudo rc-update add postgresql')
-        execute('sudo /etc/init.d/postgresql start')
+        execute('sudo /etc/init.d/postgresql restart')
     else:
         execute('sudo systemctl enable postgresql.service')
         execute('sudo systemctl start postgresql.service')
@@ -1086,10 +1084,10 @@ def _install_cassandra_deb(system, revision, env, check_times):
         # no support for ubuntu 20.10
         return 0
     if not os.path.exists('/usr/sbin/cassandra'):
-        cmd = 'echo "deb http://www.apache.org/dist/cassandra/debian 311x main" '
+        cmd = 'echo "deb https://downloads.apache.org/cassandra/debian 311x main" '
         cmd += '| sudo tee /etc/apt/sources.list.d/cassandra.sources.list'
         execute(cmd, env=env, check_times=check_times)
-        execute('wget -qO- https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -',
+        execute('wget -qO- https://downloads.apache.org/cassandra/KEYS | sudo apt-key add -',
                 env=env, check_times=check_times)
         _apt_update(system, revision, env=env, check_times=check_times)
         # ca-certificates-java needs to be installed first because it fails if installed together with cassandra
@@ -1180,7 +1178,7 @@ def prepare_system_local(features, check_times):
     # prepare fedora
     if system == 'fedora':
         packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel',
-                    'log4cplus-devel', 'boost-devel']
+                    'log4cplus-devel', 'boost-devel', 'libpcap-devel', 'python3-virtualenv']
 
         if 'native-pkg' in features:
             packages.extend(['rpm-build', 'python2-devel', 'python3-devel'])
@@ -1298,7 +1296,7 @@ def prepare_system_local(features, check_times):
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev', 'liblog4cplus-dev',
-                    'libboost-system-dev', 'gnupg']
+                    'libboost-system-dev', 'gnupg', 'libpcap-dev', 'python3-venv']
 
         if 'unittest' in features:
             if revision.startswith('16.'):
@@ -1422,6 +1420,9 @@ def prepare_system_local(features, check_times):
         if 'radius' in features:
             packages.extend(['git'])
 
+        if 'ccache' in features:
+            packages.extend(['ccache'])
+
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
         if 'mysql' in features:
@@ -1433,7 +1434,7 @@ def prepare_system_local(features, check_times):
     elif system == 'alpine':
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'openssl-dev',
-                    'boost-libs', 'boost-dev', 'procps']
+                    'boost-libs', 'boost-dev', 'procps', 'tar']
 
         if 'docs' in features:
             if revision == '3.10':
@@ -1451,6 +1452,7 @@ def prepare_system_local(features, check_times):
 
         if 'pgsql' in features:
             packages.extend(['postgresql-dev', 'postgresql'])
+            packages.extend(['bison', 'flex', 'boost-dev', 'docbook-xsl', 'python3-dev'])
 
         if 'native-pkg' in features:
             packages.extend(['alpine-sdk'])
@@ -1472,6 +1474,15 @@ def prepare_system_local(features, check_times):
             log.info("Can't add 'vagrant' user to 'abuild' group. Vagrant or abuild does not exist.")
         else:
             execute('sudo adduser vagrant abuild')
+
+        try:
+            current_user = getpass.getuser()
+            pwd.getpwnam(current_user)
+            grp.getgrnam('abuild')
+        except KeyError:
+            log.info("Can't add %s user to 'abuild' group. %s or abuild does not exist.", current_user, current_user)
+        else:
+            execute('sudo adduser %s abuild' % current_user)
 
     else:
         raise NotImplementedError('no implementation for %s' % system)
@@ -1569,9 +1580,9 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
     if 'docs' in features and not (system == 'rhel' and revision == '8'):
         cmd += ' --enable-generate-docs'
         if system == 'debian' and revision == '8':
-            cmd += ' --with-sphinx=$HOME/venv/bin/sphinx-build'
+            cmd += ' --with-sphinx=~/venv/bin/sphinx-build'
         elif system == 'centos' and revision in ['7', '8']:
-            cmd += ' --with-sphinx=$HOME/venv/bin/sphinx-build'
+            cmd += ' --with-sphinx=~/venv/bin/sphinx-build'
     if 'radius' in features:
         cmd += ' --with-freeradius=/usr/local'
     if 'shell' in features:
@@ -1729,43 +1740,40 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     os.mkdir('pkgs')
 
     # prepare RPM environment
-    execute('rm -rf rpm-root')
-    os.mkdir('rpm-root')
-    os.mkdir('rpm-root/BUILD')
-    os.mkdir('rpm-root/BUILDROOT')
-    os.mkdir('rpm-root/RPMS')
-    os.mkdir('rpm-root/SOURCES')
-    os.mkdir('rpm-root/SPECS')
-    os.mkdir('rpm-root/SRPMS')
+    rpm_root_path = os.path.expanduser('~/rpm-root')
+    # ensure rm -rf will not wipe out a whole disk
+    if rpm_root_path.endswith("rpm-root"):
+        execute('rm -rf %s' % rpm_root_path)
+    execute('mkdir -p %s/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}' % rpm_root_path)
 
     # get rpm.spec from tarball
     rpm_dir = os.path.join(src_path, 'rpm')
     for f in os.listdir(rpm_dir):
         if f == 'kea.spec':
             continue
-        execute('cp %s rpm-root/SOURCES' % os.path.join(rpm_dir, f), check_times=check_times, dry_run=dry_run)
-    execute('cp %s rpm-root/SPECS' % os.path.join(rpm_dir, 'kea.spec'), check_times=check_times, dry_run=dry_run)
-    execute('cp %s rpm-root/SOURCES' % tarball_path, check_times=check_times, dry_run=dry_run)
+        execute('cp %s %s/SOURCES' % (os.path.join(rpm_dir, f), rpm_root_path), check_times=check_times, dry_run=dry_run)
+    execute('cp %s %s/SPECS' % (os.path.join(rpm_dir, 'kea.spec'), rpm_root_path), check_times=check_times, dry_run=dry_run)
+    execute('cp %s %s/SOURCES' % (tarball_path, rpm_root_path), check_times=check_times, dry_run=dry_run)
 
-    execute('sed -i -e s/{FREERADIUS_CLIENT_VERSION}/%s/g rpm-root/SPECS/kea.spec' % frc_version, check_times=check_times, dry_run=dry_run)
+    execute('sed -i -e s/{FREERADIUS_CLIENT_VERSION}/%s/g %s/SPECS/kea.spec' % (frc_version, rpm_root_path), check_times=check_times, dry_run=dry_run)
 
     # do rpm build
-    cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba rpm-root/SPECS/kea.spec"
-    cmd += " -D'_topdir /home/vagrant/rpm-root'"
+    cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba %s/SPECS/kea.spec"
+    cmd += " -D'_topdir %s'"
     cmd += " --undefine=_debugsource_packages"  # disable creating debugsource package
-    cmd = cmd % (pkg_version, pkg_isc_version)
+    cmd = cmd % (pkg_version, pkg_isc_version, rpm_root_path, rpm_root_path)
     execute(cmd, env=env, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
         # install packages
         execute('rpm -qa | grep isc-kea | xargs sudo rpm -e', check_times=check_times, dry_run=dry_run, raise_error=False)
-        execute('sudo rpm -i rpm-root/RPMS/x86_64/*rpm', check_times=check_times, dry_run=dry_run)
+        execute('sudo rpm -i ~/rpm-root/RPMS/x86_64/*rpm', check_times=check_times, dry_run=dry_run)
 
         # check if kea services can be started
         services_list = ['kea-dhcp4.service', 'kea-dhcp6.service', 'kea-dhcp-ddns.service', 'kea-ctrl-agent.service']
         _check_installed_rpm_or_debs(services_list)
 
-    execute('mv rpm-root/RPMS/x86_64/*rpm pkgs', check_times=check_times, dry_run=dry_run)
+    execute('mv %s/RPMS/x86_64/*rpm pkgs' % rpm_root_path, check_times=check_times, dry_run=dry_run)
 
 
 def _build_deb(system, revision, features, tarball_path, env, check_times, dry_run,
@@ -1838,19 +1846,23 @@ def _build_alpine_apk(system, revision, features, tarball_path, env, check_times
         sys_suffix = ''
     execute('mv kea-%s/alpine%s/* kea-src' % (pkg_version, sys_suffix), check_times=check_times, dry_run=dry_run)
     execute('rm -rf kea-%s' % pkg_version, check_times=check_times, dry_run=dry_run)
-    cmd = 'export kea_chks=`sha512sum kea-%s.tar.gz`; sed -i -e "s/KEA_CHECKSUM/${kea_chks}/" kea-src/APKBUILD' % pkg_version
+    cmd = 'cd /tmp/; export kea_chks=`sha512sum kea-%s.tar.gz`; cd -; sed -i -e "s/KEA_CHECKSUM/${kea_chks}/" kea-src/APKBUILD' % pkg_version
     execute(cmd, check_times=check_times, dry_run=dry_run)
     cmd = 'sed -i -e s/KEA_VERSION/%s/ kea-src/APKBUILD' % pkg_version
     execute(cmd, check_times=check_times, dry_run=dry_run)
     cmd = 'sed -i -e s/KEA_ISC_VERSION/%s/ kea-src/APKBUILD' % pkg_isc_version
     execute(cmd, check_times=check_times, dry_run=dry_run)
-    execute('mv kea-%s.tar.gz kea-src' % pkg_version, check_times=check_times, dry_run=dry_run)
+    log.info('Moving %s to kea-src folder', tarball_path)
+    execute('mv %s kea-src' % tarball_path, check_times=check_times, dry_run=dry_run)
     execute('abuild-keygen -n -a -i', check_times=check_times, dry_run=dry_run)
     execute('abuild -v -r', cwd='kea-src', check_times=check_times, dry_run=dry_run)
+    execute('cp ~/packages/pkg/x86_64/*.apk kea-pkg', check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
         # install packages
-        execute('sudo apk add *.apk', cwd='packages/vagrant/x86_64', check_times=check_times, dry_run=dry_run)
+        # Destination dir for apk files is configured in APKBUILD
+        # ~/packages/pkg/x86_64/
+        execute('sudo apk add *.apk', cwd='kea-pkg', check_times=check_times, dry_run=dry_run)
 
         # check if kea services can be started
         for svc in ['kea-dhcp4', 'kea-dhcp6', 'kea-ctrl-agent', 'kea-dhcp-ddns']:
@@ -1866,7 +1878,7 @@ def _build_alpine_apk(system, revision, features, tarball_path, env, check_times
 
 
 def _build_native_pkg(system, revision, features, tarball_path, env, check_times, dry_run, ccache_dir,
-                      pkg_version, pkg_isc_version, repository_url):
+                      pkg_version, pkg_isc_version, repository_url, pkgs_dir):
     """Build native (RPM or DEB or Alpine APK) packages."""
 
     # enable ccache if requested
@@ -1890,9 +1902,21 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     else:
         raise NotImplementedError('no implementation for %s' % system)
 
+    if system in ['ubuntu', 'debian']:
+        # TODO: /tmp/workspace/kea-dev/pkg/kea-src/
+        execute('mv kea-src/isc-kea_* %s' % pkgs_dir)
+        execute('mv kea-src/*deb %s' % pkgs_dir)
+    elif system in ['fedora', 'centos', 'rhel']:
+        execute('mv pkgs/* %s' % pkgs_dir)
+    elif system in ['alpine']:
+        #execute('mv kea-src/* %s' % pkgs_dir)
+        execute('mv kea-pkg/* %s' % pkgs_dir)
+    else:
+        raise NotImplementedError('no implementation for %s' % self.system)
+
 
 def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir, pkg_version, pkg_isc_version,
-                repository_url):
+                repository_url, pkgs_dir):
     """Prepare local system for Kea development based on requested features.
 
     If tarball_path is provided then instead of Kea sources from current directory
@@ -1904,19 +1928,26 @@ def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir, 
     system, revision = get_system_revision()
     log.info('Building for %s %s', system, revision)
 
-    execute('df -h', dry_run=dry_run)
+    execute('sudo df -h', dry_run=dry_run)
 
-    if tarball_path:
-        tarball_path = os.path.abspath(tarball_path)
+    # NOTE: the old code expects having tarball in tarball_path
+    if not tarball_path:
+        name_ver = 'kea-%s' % pkg_version
+        cmd = 'tar --transform "flags=r;s|^|%s/|" --exclude hammer ' % name_ver
+        cmd += ' --exclude "*~" --exclude .git --exclude .libs '
+        cmd += ' --exclude .deps --exclude \'*.o\'  --exclude \'*.lo\' '
+        cmd += ' -zcf /tmp/%s.tar.gz .' % name_ver
+        execute(cmd)
+        tarball_path = '/tmp/%s.tar.gz' % name_ver
 
     if 'native-pkg' in features:
         _build_native_pkg(system, revision, features, tarball_path, env, check_times, dry_run, ccache_dir,
-                          pkg_version, pkg_isc_version, repository_url)
+                          pkg_version, pkg_isc_version, repository_url, pkgs_dir)
     else:
         _build_binaries_and_run_ut(system, revision, features, tarball_path, env, check_times, jobs,
                                    dry_run, ccache_dir)
 
-    execute('df -h', dry_run=dry_run)
+    execute('sudo df -h', dry_run=dry_run)
 
 
 def build_in_vagrant(provider, system, revision, features, leave_system, tarball_path,
@@ -1986,7 +2017,7 @@ def ssh(provider, system, revision):
     ve.ssh()
 
 
-def _install_vagrant(ver='2.2.4', upgrade=False):
+def _install_vagrant(ver='2.2.14', upgrade=False):
     system, _ = get_system_revision()
     if system in ['fedora', 'centos', 'rhel']:
         if upgrade:
@@ -2020,8 +2051,8 @@ def ensure_hammer_deps():
         m = re.search('Installed Version: ([\d\.]+)', out, re.I)
         ver = m.group(1)
         major, minor, patch = [int(v) for v in ver.split('.')]
-        # if ver < 2.2.3
-        if major < 2 or (major == 2 and (minor < 2 or (minor == 2 and patch < 3))):
+        # if ver < 2.2.14
+        if major < 2 or (major == 2 and (minor < 2 or (minor == 2 and patch < 14))):
             m = re.search('Latest Version: ([\d\.]+)', out, re.I)
             ver = m.group(1)
             _install_vagrant(ver, upgrade=True)
@@ -2030,6 +2061,10 @@ def ensure_hammer_deps():
     exitcode = execute('vagrant plugin list | grep vagrant-lxc', raise_error=False)
     if exitcode != 0:
         execute('vagrant plugin install vagrant-lxc')
+    # install lxc-create on Ubuntu (part of lxc-utils)
+    system, _ = get_system_revision()
+    if system in ['ubuntu']:
+        execute('sudo apt-get -y install lxc-utils')
 
 
 class CollectCommaSeparatedArgsAction(argparse.Action):
@@ -2269,7 +2304,9 @@ def _get_features(args):
         features.add('mysql')
         features.add('pgsql')
         features.add('radius')
-        features.discard('unittest')
+        # NOTE: unittest together with native-pkg caused problems in the past
+        # but let's try to resolve the issues and allow both requirements to be installed
+        # features.discard('unittest')
 
     return features
 
@@ -2358,14 +2395,64 @@ def prepare_system_cmd(args):
                               args.dry_run, args.check_times, args.clean_start,
                               ccache_dir)
 
+def upload_to_repo(args, pkgs_dir):
+   # NOTE: note the differences (if any) system/revision vs args.system/revision
+   system, revision = get_system_revision()
+   repo_url = _get_full_repo_url(args.repository_url, system, revision, args.pkg_version)
+   assert repo_url is not None
+   upload_cmd = 'curl -v --netrc -f'
+   log.info('args.system %s, system = %s', args.system, system)
+
+   file_ext = ''
+   if system in ['ubuntu', 'debian']:
+       upload_cmd += ' -X POST -H "Content-Type: multipart/form-data" --data-binary "@%s" '
+       file_ext = '.deb'
+
+   elif system in ['fedora', 'centos', 'rhel']:
+       upload_cmd += ' --upload-file %s '
+       file_ext = '.rpm'
+
+   elif system == 'alpine':
+       upload_cmd += ' --upload-file %s '
+       file_ext = ''
+       repo_url = urljoin(repo_url, '%s/v%s/x86_64/' % (args.pkg_isc_version, revision))
+
+   upload_cmd += ' ' + repo_url
+
+   # args.system all, system = debian
+   # debug: fn = isc-kea-premium-radius_1.9.4-isc0016620210121003948_amd64.deb
+   # upload cmd: curl -v --netrc -f https://packages.aws.isc.org/repository/kea-1.9-debian-10-ci/
+   # fp: kea-pkg/isc-kea-premium-radius_1.9.4-isc0016620210121003948_amd64.deb
+
+   for fn in os.listdir(pkgs_dir):
+       log.info("debug: fn = %s", fn)
+       # isc-kea-premium-host-cmds-dbgsym_1.9.4-isc0016520210120235224_amd64.deb
+       if file_ext and not fn.endswith(file_ext):
+           log.info('File extension "%s" is not supported by upload_to_repo function', file_ext)
+           continue
+       fp = os.path.join(pkgs_dir, fn)
+       log.info("upload cmd: %s", upload_cmd)
+       log.info("fp: %s", fp)
+       cmd = upload_cmd % fp
+       execute(cmd)
 
 def build_cmd(args):
     """Check command args and run the build command."""
     features = _get_features(args)
     log.info('Enabled features: %s', ' '.join(features))
     if args.provider == 'local':
+        # NOTE: working dir is /tmp/workspace/kea-dev/pkg
+        pkgs_dir = "kea-pkg"
+        if os.path.exists(pkgs_dir):
+            execute('rm -rf %s' % pkgs_dir)
+        os.makedirs(pkgs_dir)
+
         build_local(features, args.from_tarball, args.check_times, int(args.jobs), args.dry_run,
-                    args.ccache_dir, args.pkg_version, args.pkg_isc_version, args.repository_url)
+                    args.ccache_dir, args.pkg_version, args.pkg_isc_version, args.repository_url, pkgs_dir)
+        # NOTE: upload the locally build packages and leave; the rest of the code is vagrant specific
+        if args.upload:
+            upload_to_repo(args,pkgs_dir)
+
         return
 
     _check_system_revision(args.system, args.revision)
