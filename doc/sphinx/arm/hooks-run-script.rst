@@ -39,9 +39,9 @@ similar way as other hook libraries by the ``kea-dhcp4`` and
     }
 
 
-The parameters contain the 'name' which indicates the path and name of the
-external script to be called on each hookpoint, and also the 'sync' option
-to be able to wait synchronously for the script to finish execution.
+The parameters contain the 'name' which indicates the path to the external
+script to be called on each hookpoint, and also the 'sync' option to be able
+to wait synchronously for the script to finish execution.
 If the 'sync' parameter is false, then the script will be launched and Kea
 will not wait for the execution to finish, causing all the OUT parameters of
 the script (including next step) to be ignored.
