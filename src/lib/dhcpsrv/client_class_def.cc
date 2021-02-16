@@ -23,7 +23,7 @@ ClientClassDef::ClientClassDef(const std::string& name,
                                const CfgOptionPtr& cfg_option)
     : name_(name), match_expr_(match_expr), required_(false),
       depend_on_known_(false), cfg_option_(cfg_option),
-      next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
+      next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()), valid_() {
 
     // Name can't be blank
     if (name_.empty()) {
@@ -193,6 +193,21 @@ ClientClassDef:: toElement() const {
     result->set("server-hostname", Element::create(sname_));
     // Set boot-file-name
     result->set("boot-file-name", Element::create(filename_));
+
+    // Set valid-lifetime
+    if (!valid_.unspecified()) {
+        result->set("valid-lifetime",
+                 Element::create(static_cast<long long>(valid_.get())));
+        if (valid_.getMin() < valid_.get()) {
+            result->set("min-valid-lifetime",
+                     Element::create(static_cast<long long>(valid_.getMin())));
+        }
+        if (valid_.getMax() > valid_.get()) {
+            result->set("max-valid-lifetime",
+                     Element::create(static_cast<long long>(valid_.getMax())));
+        }
+    }
+
     return (result);
 }
 
@@ -229,7 +244,8 @@ ClientClassDictionary::addClass(const std::string& name,
                                 ConstElementPtr user_context,
                                 asiolink::IOAddress next_server,
                                 const std::string& sname,
-                                const std::string& filename) {
+                                const std::string& filename,
+                                const Triplet<uint32_t>& valid) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     cclass->setTest(test);
     cclass->setRequired(required);
@@ -239,6 +255,7 @@ ClientClassDictionary::addClass(const std::string& name,
     cclass->setNextServer(next_server);
     cclass->setSname(sname);
     cclass->setFilename(filename);
+    cclass->setValid(valid);
     addClass(cclass);
 }
 

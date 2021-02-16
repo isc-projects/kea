@@ -596,6 +596,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_VALID_LIFETIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("valid-lifetime", driver.loc_);
@@ -607,6 +608,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_MIN_VALID_LIFETIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("min-valid-lifetime", driver.loc_);
@@ -618,6 +620,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_MAX_VALID_LIFETIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("max-valid-lifetime", driver.loc_);

@@ -51,87 +51,6 @@ BaseNetworkParser::moveReservationMode(ElementPtr config) {
     config->remove("reservation-mode");
 }
 
-const Triplet<uint32_t>
-BaseNetworkParser::parseLifetime(const ConstElementPtr& scope,
-                                 const std::string& name) {
-    // Initialize as some compilers complain otherwise.
-    uint32_t value = 0;
-    bool has_value = false;
-    uint32_t min_value = 0;
-    bool has_min = false;
-    uint32_t max_value = 0;
-    bool has_max = false;
-    if (scope->contains(name)) {
-        value = getInteger(scope, name);
-        has_value = true;
-    }
-    if (scope->contains("min-" + name)) {
-        min_value = getInteger(scope, "min-" + name);
-        has_min = true;
-    }
-    if (scope->contains("max-" + name)) {
-        max_value = getInteger(scope, "max-" + name);
-        has_max = true;
-    }
-    if (!has_value && !has_min && !has_max) {
-        return (Triplet<uint32_t>());
-    }
-    if (has_value) {
-        if (!has_min && !has_max) {
-            // default only.
-            min_value = value;
-            max_value = value;
-        } else if (!has_min) {
-            // default and max.
-            min_value = value;
-        } else if (!has_max) {
-            // default and min.
-            max_value = value;
-        }
-    } else if (has_min) {
-        // min only.
-        if (!has_max) {
-            value = min_value;
-            max_value = min_value;
-        } else {
-            // min and max.
-            isc_throw(DhcpConfigError, "have min-" << name << " and max-"
-                      << name << " but no " << name << " (default) in "
-                      << scope->getPosition());
-        }
-    } else {
-        // max only.
-        min_value = max_value;
-        value = max_value;
-    }
-    // Check that min <= max.
-    if (min_value > max_value) {
-        if (has_min && has_max) {
-            isc_throw(DhcpConfigError, "the value of min-" << name << " ("
-                      << min_value << ") is not less than max-" << name << " ("
-                      << max_value << ")");
-        } else if (has_min) {
-            // Only min and default so min > default.
-            isc_throw(DhcpConfigError, "the value of min-" << name << " ("
-                      << min_value << ") is not less than (default) " << name
-                      << " (" << value << ")");
-        } else {
-            // Only default and max so default > max.
-            isc_throw(DhcpConfigError, "the value of (default) " << name
-                      << " (" << value << ") is not less than max-" << name
-                      << " (" << max_value << ")");
-        }
-    }
-    // Check that value is between min and max.
-    if ((value < min_value) || (value > max_value)) {
-        isc_throw(DhcpConfigError, "the value of (default) " << name << " ("
-                  << value << ") is not between min-" << name << " ("
-                  << min_value << ") and max-" << name << " ("
-                  << max_value << ")");
-    }
-    return (Triplet<uint32_t>(min_value, value, max_value));
-}
-
 void
 BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
                                NetworkPtr& network) {
@@ -164,7 +83,7 @@ BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
                   << rebind << ")");
     }
 
-    network->setValid(parseLifetime(network_data, "valid-lifetime"));
+    network->setValid(parseIntTriplet(network_data, "valid-lifetime"));
 
     if (network_data->contains("store-extended-info")) {
         network->setStoreExtendedInfo(getBoolean(network_data,

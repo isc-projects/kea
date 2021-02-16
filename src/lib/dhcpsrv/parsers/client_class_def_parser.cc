@@ -201,6 +201,9 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     }
 
+    // Parse valid lifetime triplet.
+    Triplet<uint32_t> valid_lft = parseIntTriplet(class_def_cfg, "valid-lifetime");
+
     // Sanity checks on built-in classes
     for (auto bn : builtinNames) {
         if (name == bn) {
@@ -231,7 +234,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     try {
         class_dictionary->addClass(name, match_expr, test, required,
                                    depend_on_known, options, defs,
-                                   user_context, next_server, sname, filename);
+                                   user_context, next_server, sname, filename, valid_lft);
     } catch (const std::exception& ex) {
         std::ostringstream s;
         s << "Can't add class: " << ex.what();

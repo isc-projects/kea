@@ -1228,7 +1228,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     }
 
     // Parse preferred lifetime as it is not parsed by the common function.
-    Triplet<uint32_t> pref = parseLifetime(params, "preferred-lifetime");
+    Triplet<uint32_t> pref = parseIntTriplet(params, "preferred-lifetime");
 
     // Create a new subnet.
     Subnet6* subnet6 = new Subnet6(addr, len, Triplet<uint32_t>(),

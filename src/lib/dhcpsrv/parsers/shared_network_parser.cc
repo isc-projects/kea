@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -243,7 +243,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
         parseCommon(mutable_params, network);
 
         // preferred-lifetime
-        shared_network->setPreferred(parseLifetime(shared_network_data,
+        shared_network->setPreferred(parseIntTriplet(shared_network_data,
                                                    "preferred-lifetime"));
 
         // Get interface-id option content. For now we support string

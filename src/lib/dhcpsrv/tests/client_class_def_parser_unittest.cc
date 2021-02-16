@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <asiolink/io_address.h>
 #include <eval/evaluate.h>
+#include <testutils/gtest_utils.h>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <stdint.h>
@@ -1289,6 +1290,60 @@ TEST_F(ClientClassDefListParserTest, dropCheckError) {
         "] \n";
 
     EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+}
+
+// Verify the ability to configure lease lifetime triplet.
+TEST_F(ClientClassDefParserTest, validLifetimeTests) {
+
+    struct Scenario {
+        std::string desc_;
+        std::string cfg_txt_;
+        Triplet<uint32_t> exp_triplet_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+        "unspecified",
+        "",
+        Triplet<uint32_t>()
+        },
+        {
+        "valid only",
+        "\"valid-lifetime\": 100",
+        Triplet<uint32_t>(100)
+        },
+        {
+        "min only",
+        "\"min-valid-lifetime\": 50",
+        Triplet<uint32_t>(50, 50, 50)
+        },
+        {
+        "max only",
+        "\"max-valid-lifetime\": 75",
+        Triplet<uint32_t>(75, 75, 75)
+        },
+        {
+        "all three",
+        "\"min-valid-lifetime\": 25, \"valid-lifetime\": 50, \"max-valid-lifetime\": 75",
+        Triplet<uint32_t>(25, 50, 75)
+        }
+    };
+
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.desc_); {
+            std::stringstream oss;
+            oss <<  "{ \"name\": \"foo\"";
+            if (!scenario.cfg_txt_.empty()) {
+                oss << ",\n" << scenario.cfg_txt_;
+            }
+            oss <<  "\n}\n";
+
+            ClientClassDefPtr class_def;
+            ASSERT_NO_THROW_LOG(class_def = parseClientClassDef(oss.str(), AF_INET));
+            ASSERT_TRUE(class_def);
+            EXPECT_EQ(class_def->getValid(), scenario.exp_triplet_);
+        }
+    }
 }
 
 } // end of anonymous namespace

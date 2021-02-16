@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,17 +28,6 @@ public:
     static void moveReservationMode(isc::data::ElementPtr config);
 
 protected:
-
-    /// @brief Parses DHCP lifetime.
-    ///
-    /// Used here for valid-lifetime but reused for preferred-lifetime.
-    ///
-    /// @param scope Data element holding e.g.  shared network configuration
-    /// to be parsed.
-    /// @param name Base name of the lifetime parameter.
-    /// @return A triplet with the parsed lifetime value.
-    const Triplet<uint32_t> parseLifetime(const data::ConstElementPtr& scope,
-                                          const std::string& name);
 
     /// @brief Parses common parameters
     ///

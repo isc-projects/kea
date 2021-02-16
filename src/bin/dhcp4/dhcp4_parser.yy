@@ -2191,6 +2191,9 @@ client_class_param: client_class_name
                   | user_context
                   | comment
                   | unknown_map_entry
+                  | valid_lifetime
+                  | min_valid_lifetime
+                  | max_valid_lifetime
                   ;
 
 client_class_name: name;

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
+#include <dhcpsrv/triplet.h>
 #include <map>
 #include <vector>
 #include <string>
@@ -317,6 +318,19 @@ public:
     uint8_t getUint8(ConstElementPtr scope, const std::string& name) {
         return (getIntType<uint8_t>(scope, name));
     }
+
+    /// @brief Parses a integer triplet
+    ///
+    /// Parse an integer triplet parameter of the form:
+    ///
+    ///    min-<name>, <name>, max-<name>
+    ///
+    /// @param scope Data element holding e.g.  shared network configuration
+    /// to be parsed.
+    /// @param name Base name of the parameter.
+    /// @return A triplet with the parsed value.
+    const dhcp::Triplet<uint32_t> parseIntTriplet(const data::ConstElementPtr& scope,
+                                          const std::string& name);
 };
 
 };

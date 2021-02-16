@@ -11,6 +11,7 @@
 #include <cc/user_context.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
+#include <dhcpsrv/triplet.h>
 #include <eval/token.h>
 #include <exceptions/exceptions.h>
 
@@ -190,6 +191,18 @@ public:
         return (filename_);
     }
 
+    /// @brief Return valid-lifetime value
+    Triplet<uint32_t> getValid() const {
+        return(valid_);
+    }
+
+    /// @brief Sets new valid lifetime
+    ///
+    /// @param valid New valid lifetime in seconds.
+    void setValid(const Triplet<uint32_t>& valid) {
+        valid_ = valid;
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
@@ -246,6 +259,8 @@ private:
     /// This can be up to 128 octets long.
     std::string filename_;
 
+    /// @brief a Triplet (min/default/max) holding allowed valid lifetime values
+    Triplet<uint32_t> valid_;
 };
 
 /// @brief a pointer to an ClientClassDef
@@ -288,6 +303,7 @@ public:
     /// @param next_server next-server value for this class (optional)
     /// @param sname server-name value for this class (optional)
     /// @param filename boot-file-name value for this class (optional)
+    /// @param valid valid-lifetime triplet (optional)
     ///
     /// @throw DuplicateClientClassDef if class already exists within the
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
@@ -299,7 +315,8 @@ public:
                   isc::data::ConstElementPtr user_context = isc::data::ConstElementPtr(),
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
                   const std::string& sname = std::string(),
-                  const std::string& filename = std::string());
+                  const std::string& filename = std::string(),
+                  const Triplet<uint32_t>&valid = Triplet<uint32_t>());
 
     /// @brief Adds a new class to the list
     ///
