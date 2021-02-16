@@ -38,6 +38,8 @@ libhttp_unittests_SOURCES += response_unittests.cc
 libhttp_unittests_SOURCES += response_json_unittests.cc
 libhttp_unittests_SOURCES += run_unittests.cc
 libhttp_unittests_SOURCES += server_client_unittests.cc
+libhttp_unittests_SOURCES += tls_server_unittests.cc
+libhttp_unittests_SOURCES += tls_client_unittests.cc
 libhttp_unittests_SOURCES += url_unittests.cc
 libhttp_unittests_SOURCES += test_http_client.h
 
