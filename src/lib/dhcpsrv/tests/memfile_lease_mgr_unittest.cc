@@ -212,7 +212,7 @@ public:
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
-    /// @brief Runs @c IfaceMgr::receive6 in a loop for a specified time.
+    /// @brief Runs IOService and stops after a specified time.
     ///
     /// @param ms Duration in milliseconds.
     void setTestTime(const uint32_t ms) {
@@ -682,7 +682,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanupStartFail) {
 
 /// @brief This test checks that the callback function executing the cleanup of the
 /// files doesn't move the current file if the finish file exists
-TEST_F(MemfileLeaseMgrTest, DISABLED_leaseFileFinish) {
+TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     // This string contains the lease file header, which matches
     // the contents of the new file in which no leases have been
     // stored.
@@ -725,7 +725,7 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_leaseFileFinish) {
     EXPECT_EQ(current_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    setTestTime(10000);
+    setTestTime(900);
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -745,7 +745,7 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_leaseFileFinish) {
 
 /// @brief This test checks that the callback function executing the cleanup of the
 /// files doesn't move the current file if the copy file exists
-TEST_F(MemfileLeaseMgrTest, DISABLED_leaseFileCopy) {
+TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     // This string contains the lease file header, which matches
     // the contents of the new file in which no leases have been
     // stored.
@@ -790,7 +790,7 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_leaseFileCopy) {
     EXPECT_EQ(current_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    setTestTime(10000);
+    setTestTime(900);
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())

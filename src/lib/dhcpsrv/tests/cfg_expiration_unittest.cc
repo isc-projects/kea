@@ -318,10 +318,7 @@ public:
         timer_mgr_->setIOService(io_service_);
     }
 
-    /// @brief Runs timers for specified time.
-    ///
-    /// Internally, this method calls @c IfaceMgr::receive6 to run the
-    /// callbacks for the installed timers.
+    /// @brief Runs IOService and stops after a specified time.
     ///
     /// @param timeout_ms Amount of time after which the method returns.
     void runTimersWithTimeout(const long timeout_ms) {
