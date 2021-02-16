@@ -522,7 +522,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     EXPECT_EQ(new_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    setTestTime(2000);
+    setTestTime(100);
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -603,7 +603,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     EXPECT_EQ(new_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    setTestTime(2000);
+    setTestTime(100);
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -725,7 +725,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     EXPECT_EQ(current_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    setTestTime(900);
+    setTestTime(100);
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -790,7 +790,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     EXPECT_EQ(current_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    setTestTime(900);
+    setTestTime(100);
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -1834,7 +1834,7 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade4) {
 
     // Wait for the LFC process to complete and
     // make sure it has returned an exit status of 0.
-    setTestTime(2000);
+    setTestTime(100);
 
     ASSERT_EQ(0, lease_mgr->getLFCExitStatus())
         << "Executing the LFC process failed: make sure that"
@@ -1907,7 +1907,7 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
 
     // Wait for the LFC process to complete and
     // make sure it has returned an exit status of 0.
-    setTestTime(2000);
+    setTestTime(100);
 
     ASSERT_EQ(0, lease_mgr->getLFCExitStatus())
         << "Executing the LFC process failed: make sure that"
