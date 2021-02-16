@@ -1,3 +1,14 @@
+1862.	[build]		andrei
+	Added execution permissions to the upgrade scripts in Kea's
+	installation. Previously kea-admin db-upgrade would fail with a
+	permission denied error. It started manifesting in 1.9.3 and
+	affected 1.9.4 as well. Additionally, now, when running make in
+	the source repository to recreate scripts e.g. kea-admin, after a
+	change to the .in files e.g. kea-admin.in, they maintain the
+	execution permissions granted in the initial build. This makes
+	development more seamless.
+	(Gitlab #1681)
+
 1861.	[bug]*		tmark
 	kea-dhcp4 now uses the value for each fixed field (e.g.
 	next-server, server-hostname, boot-file-name) from the
