@@ -57,7 +57,7 @@ public:
     ///
     /// Stores pointer to a callback function provided by a caller.
     ///
-    //// @param socket_callback Pointer to a callback function.
+    /// @param socket_callback Pointer to a callback function.
     SocketCallback(SocketCallbackFunction socket_callback)
         : callback_(socket_callback) {
     }
@@ -380,9 +380,11 @@ private:
     /// @brief URL for this connection.
     Url url_;
 
-    /// @brief Socket to be used for this connection.
-    TCPSocket<SocketCallback> socket_;
-    ////// change this
+    /// @brief TCP socket to be used for this connection.
+    std::unique_ptr<TCPSocket<SocketCallback> > tcp_socket_;
+
+    /// @brief TLS socket to be used for this connection.
+    std::unique_ptr<TLSSocket<SocketCallback> > tls_socket_;
 
     /// @brief Interval timer used for detecting request timeouts.
     IntervalTimer timer_;
@@ -787,11 +789,16 @@ Connection::Connection(IOService& io_service,
                        const TlsContextPtr& context,
                        const ConnectionPoolPtr& conn_pool,
                        const Url& url)
-    : conn_pool_(conn_pool), url_(url), socket_(io_service), timer_(io_service),
-      current_request_(), current_response_(), parser_(), current_callback_(),
-      buf_(), input_buf_(), current_transid_(0), close_callback_(),
-      started_(false) {
-    ////// to finish
+    : conn_pool_(conn_pool), url_(url), tcp_socket_(), tls_socket_(),
+      timer_(io_service), current_request_(), current_response_(),
+      parser_(), current_callback_(), buf_(), input_buf_(),
+      current_transid_(0), close_callback_(), started_(false) {
+    if (!context) {
+        tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
+    } else {
+        tls_socket_.reset(new asiolink::TLSSocket<SocketCallback>(io_service,
+                                                                  context));
+    }
 }
 
 Connection::~Connection() {
@@ -811,7 +818,14 @@ void
 Connection::closeCallback(const bool clear) {
     if (close_callback_) {
         try {
-            close_callback_(socket_.getNative());
+            if (tcp_socket_) {
+                close_callback_(tcp_socket_->getNative());
+            } else if (tls_socket_) {
+                close_callback_(tls_socket_->getNative());
+            } else {
+                isc_throw(Unexpected,
+                          "internal error: can't find a socket to close");
+            }
         } catch (...) {
             LOG_ERROR(http_logger, HTTP_CONNECTION_CLOSE_CALLBACK_FAILED);
         }
@@ -871,9 +885,21 @@ Connection::doTransactionInternal(const HttpRequestPtr& request,
         // time between checking the socket usability and actually transmitting the
         // data over this socket, when the peer may close the connection. In this
         // case we'll need to re-transmit but we don't handle it here.
-        if (socket_.getASIOSocket().is_open() && !socket_.isUsable()) {
-            closeCallback();
-            socket_.close();
+        if (tcp_socket_) {
+            if (tcp_socket_->getASIOSocket().is_open() &&
+                !tcp_socket_->isUsable()) {
+                closeCallback();
+                tcp_socket_->close();
+            }
+        } else if (tls_socket_) {
+            if (tls_socket_->getASIOSocket().is_open() &&
+                !tls_socket_->isUsable()) {
+                closeCallback();
+                tls_socket_->close();
+            }
+        } else {
+            isc_throw(Unexpected,
+                      "internal error: can't find the sending socket");
         }
 
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
@@ -900,7 +926,18 @@ Connection::doTransactionInternal(const HttpRequestPtr& request,
                                            ph::_1));
 
         // Establish new connection or use existing connection.
-        socket_.open(&endpoint, socket_cb);
+        if (tcp_socket_) {
+            tcp_socket_->open(&endpoint, socket_cb);
+            return;
+        }
+        if (tls_socket_) {
+            tls_socket_->open(&endpoint, socket_cb);
+            return;
+        }
+
+        // Should never reach this point.
+        isc_throw(Unexpected,
+                  "internal error: can't find a socket to open");
 
     } catch (const std::exception& ex) {
         // Re-throw with the expected exception type.
@@ -924,7 +961,12 @@ Connection::closeInternal() {
     closeCallback(true);
 
     timer_.cancel();
-    socket_.close();
+    if (tcp_socket_) {
+        tcp_socket_->close();
+    }
+    if (tls_socket_) {
+        tls_socket_->close();
+    }
 
     resetState();
 }
@@ -936,7 +978,14 @@ Connection::isTransactionOngoing() const {
 
 bool
 Connection::isMySocket(int socket_fd) const {
-    return (socket_.getNative() == socket_fd);
+    if (tcp_socket_) {
+        return (tcp_socket_->getNative() == socket_fd);
+    } else if (tls_socket_) {
+        return (tls_socket_->getNative() == socket_fd);
+    }
+    // Should never reach this point.
+    std::cerr << "internal error: can't find my socket\n";
+    return (false);
 }
 
 bool
@@ -982,7 +1031,12 @@ Connection::terminateInternal(const boost::system::error_code& ec,
     if (isTransactionOngoing()) {
 
         timer_.cancel();
-        socket_.cancel();
+        if (tcp_socket_) {
+            tcp_socket_->cancel();
+        }
+        if (tls_socket_) {
+            tls_socket_->cancel();
+        }
 
         if (!ec && current_response_->isFinalized()) {
             response = current_response_;
@@ -1063,13 +1117,19 @@ Connection::scheduleTimer(const long request_timeout) {
 
 void
 Connection::doHandshake(const uint64_t transid) {
+    // Skip the handshake if the socket is not a TLS one.
+    if (!tls_socket_) {
+        doSend(transid);
+        return;
+    }
+
     SocketCallback socket_cb(std::bind(&Connection::handshakeCallback,
                                        shared_from_this(),
                                        handshake_callback_,
                                        transid,
                                        ph::_1));
     try {
-        ////////socket_.handshake(false, socket_cb);
+       tls_socket_->handshake(socket_cb);
 
     } catch (...) {
         terminate(boost::asio::error::not_connected);
@@ -1084,7 +1144,18 @@ Connection::doSend(const uint64_t transid) {
                                        ph::_1,
                                        ph::_2));
     try {
-        socket_.asyncSend(&buf_[0], buf_.size(), socket_cb);
+        if (tcp_socket_) {
+            tcp_socket_->asyncSend(&buf_[0], buf_.size(), socket_cb);
+            return;
+        }
+        if (tls_socket_) {
+            tls_socket_->asyncSend(&buf_[0], buf_.size(), socket_cb);
+            return;
+        }
+        // Should never reach this point.
+        std::cerr << "internal error: can't find a socket to send to\n";
+        isc_throw(Unexpected,
+                  "internal error: can't find a socket to send to");
 
     } catch (...) {
         terminate(boost::asio::error::not_connected);
@@ -1101,8 +1172,23 @@ Connection::doReceive(const uint64_t transid) {
                                        ph::_2));
 
     try {
-        socket_.asyncReceive(static_cast<void*>(input_buf_.data()), input_buf_.size(), 0,
-                             &endpoint, socket_cb);
+        if (tcp_socket_) {
+            tcp_socket_->asyncReceive(static_cast<void*>(input_buf_.data()),
+                                      input_buf_.size(), 0,
+                                      &endpoint, socket_cb);
+            return;
+        }
+        if (tls_socket_) {
+            tls_socket_->asyncReceive(static_cast<void*>(input_buf_.data()),
+                                      input_buf_.size(), 0,
+                                      &endpoint, socket_cb);
+            return;
+        }
+        // Should never reach this point.
+        std::cerr << "internal error: can't find a socket to receive from\n";
+        isc_throw(Unexpected,
+                  "internal error: can't find a socket to receive from");
+
     } catch (...) {
         terminate(boost::asio::error::not_connected);
     }
@@ -1120,8 +1206,17 @@ Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
     if (connect_callback) {
         // If the user defined callback indicates that the connection
         // should not be continued.
-        if (!connect_callback(ec, socket_.getNative())) {
-            return;
+        if (tcp_socket_) {
+            if (!connect_callback(ec, tcp_socket_->getNative())) {
+                return;
+            }
+        } else if (tls_socket_) {
+            if (!connect_callback(ec, tls_socket_->getNative())) {
+                return;
+            }
+        } else {
+            // Should never reach this point.
+            std::cerr << "internal error: can't find a socket to connect\n";
         }
     }
 
@@ -1138,10 +1233,8 @@ Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
         terminate(ec);
 
     } else {
-        /////////// insert doHandshake(transid); here
-
-        // Start sending the request asynchronously.
-        doSend(transid);
+        // Start the TLS handshake asynchronously.
+        doHandshake(transid);
     }
 }
 
@@ -1157,8 +1250,13 @@ Connection::handshakeCallback(HttpClient::ConnectHandler connect_callback,
     if (handshake_callback_) {
         // If the user defined callback indicates that the connection
         // should not be continued.
-        if (!handshake_callback_(ec, socket_.getNative())) {
-            return;
+        if (tls_socket_) {
+            if (!handshake_callback_(ec, tls_socket_->getNative())) {
+                return;
+            }
+        } else {
+            // Should never reach this point.
+            std::cerr << "internal error: can't find TLS socket\n";
         }
     }
 
