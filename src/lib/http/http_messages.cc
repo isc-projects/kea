@@ -7,10 +7,12 @@
 namespace isc {
 namespace http {
 
+extern const isc::log::MessageID HTTPS_REQUEST_RECEIVE_START = "HTTPS_REQUEST_RECEIVE_START";
 extern const isc::log::MessageID HTTP_BAD_CLIENT_REQUEST_RECEIVED = "HTTP_BAD_CLIENT_REQUEST_RECEIVED";
 extern const isc::log::MessageID HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS = "HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS";
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED = "HTTP_BAD_SERVER_RESPONSE_RECEIVED";
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS = "HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS";
+extern const isc::log::MessageID HTTP_CLIENT_HANDSHAKE_START = "HTTP_CLIENT_HANDSHAKE_START";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_AUTHORIZED = "HTTP_CLIENT_REQUEST_AUTHORIZED";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER = "HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_NOT_AUTHORIZED = "HTTP_CLIENT_REQUEST_NOT_AUTHORIZED";
@@ -38,10 +40,12 @@ extern const isc::log::MessageID HTTP_SERVER_RESPONSE_SEND_DETAILS = "HTTP_SERVE
 namespace {
 
 const char* values[] = {
+    "HTTPS_REQUEST_RECEIVE_START", "start receiving request from %1",
     "HTTP_BAD_CLIENT_REQUEST_RECEIVED", "bad request received from %1: %2",
     "HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS", "detailed information about bad request received from %1:\n%2",
     "HTTP_BAD_SERVER_RESPONSE_RECEIVED", "bad response received when communicating with %1: %2",
     "HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS", "detailed information about bad response received from %1:\n%2",
+    "HTTP_CLIENT_HANDSHAKE_START", "start TLS handshake with %1 with timeout %2",
     "HTTP_CLIENT_REQUEST_AUTHORIZED", "received HTTP request authorized for '%1'",
     "HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER", "received HTTP request with malformed authentication header: %1",
     "HTTP_CLIENT_REQUEST_NOT_AUTHORIZED", "received HTTP request with not matching authentication header",

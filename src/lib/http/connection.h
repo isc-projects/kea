@@ -232,7 +232,6 @@ public:
     /// @param io_service IO service to be used by the connection.
     /// @param acceptor Pointer to the TCP acceptor object used to listen for
     /// new HTTP connections.
-    /////// add a TLS acceptor
     /// @param context TLS context.
     /// @param connection_pool Connection pool in which this connection is
     /// stored.
@@ -261,8 +260,7 @@ public:
     /// @brief Asynchronously accepts new connection.
     ///
     /// When the connection is established successfully, the timeout timer is
-    /// setup and the asynchronous read from the socket or handshake with
-    /// the client is started.
+    /// setup and the asynchronous handshake with client is performed.
     void asyncAccept();
 
     /// @brief Closes the socket.
@@ -270,8 +268,9 @@ public:
 
     /// @brief Asynchronously performs TLS handshake.
     ///
-    /// When the handshake is performed successfully, the asynchronous read
-    /// from the socket is started.
+
+    /// When the handshake is performed successfully or skipped because TLS
+    /// was not enabled, the asynchronous read from the socket is started.
     void doHandshake();
 
     /// @brief Starts asynchronous read from the socket.
@@ -388,12 +387,14 @@ protected:
     /// by the server.
     long idle_timeout_;
 
-    /// @brief Socket used by this connection.
-    asiolink::TCPSocket<SocketCallback> socket_;
+    /// @brief TCP socket used by this connection.
+    std::unique_ptr<asiolink::TCPSocket<SocketCallback> > tcp_socket_;
+
+    /// @brief TLS socket used by this connection.
+    std::unique_ptr<asiolink::TLSSocket<SocketCallback> > tls_socket_;
 
     /// @brief Pointer to the TCP acceptor used to accept new connections.
     HttpAcceptorPtr acceptor_;
-    /////////////// Add a TLS acceptor.
 
     /// @brief Connection pool holding this connection.
     HttpConnectionPool& connection_pool_;

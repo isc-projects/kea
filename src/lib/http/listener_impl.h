@@ -117,7 +117,6 @@ protected:
 
     /// @brief Acceptor instance.
     HttpAcceptorPtr acceptor_;
-    /////////// Fork it?
 
     /// @brief Pointer to the endpoint representing IP address and port on
     /// which the service is running.

@@ -23,12 +23,17 @@ HttpListenerImpl::HttpListenerImpl(IOService& io_service,
                                    const HttpResponseCreatorFactoryPtr& creator_factory,
                                    const long request_timeout,
                                    const long idle_timeout)
-    : io_service_(io_service), context_(context),
-      ///////// move acceptor init below
-      acceptor_(new HttpAcceptor(io_service)),
+    : io_service_(io_service), context_(context), acceptor_(),
       endpoint_(), connections_(),
       creator_factory_(creator_factory),
       request_timeout_(request_timeout), idle_timeout_(idle_timeout) {
+    // Create the TCP or TLS acceptor.
+    if (!context) {
+        acceptor_.reset(new HttpAcceptor(io_service));
+    } else {
+        acceptor_.reset(new HttpsAcceptor(io_service));
+    }
+
     // Try creating an endpoint. This may cause exceptions.
     try {
         endpoint_.reset(new TCPEndpoint(server_address, server_port));

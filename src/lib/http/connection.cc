@@ -73,13 +73,21 @@ HttpConnection::HttpConnection(asiolink::IOService& io_service,
                                const long idle_timeout)
     : request_timer_(io_service),
       request_timeout_(request_timeout),
+      context_(context),
       idle_timeout_(idle_timeout),
-      socket_(io_service),
+      tcp_socket_(),
+      tls_socket_(),
       acceptor_(acceptor),
       connection_pool_(connection_pool),
       response_creator_(response_creator),
       acceptor_callback_(acceptor_callback),
       handshake_callback_(handshake_callback) {
+    if (!context) {
+        tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
+    } else {
+        tls_socket_.reset(new asiolink::TLSSocket<SocketCallback>(io_service,
+                                                                  context));
+    }
 }
 
 HttpConnection::~HttpConnection() {
@@ -89,7 +97,16 @@ HttpConnection::~HttpConnection() {
 void
 HttpConnection::close() {
     request_timer_.cancel();
-    socket_.close();
+    if (tcp_socket_) {
+        tcp_socket_->close();
+        return;
+    }
+    if (tls_socket_) {
+        tls_socket_->close();
+        return;
+    }
+    // Not reachable?
+    isc_throw(Unexpected, "internal error: unable to close the socket");
 }
 
 void
@@ -113,8 +130,19 @@ HttpConnection::asyncAccept() {
                                         shared_from_this(),
                                         ph::_1); // error
     try {
-        acceptor_->asyncAccept(socket_, cb);
-
+        HttpsAcceptorPtr tls_acceptor =
+            boost::dynamic_pointer_cast<HttpsAcceptor>(acceptor_);
+        if (!tls_acceptor) {
+            if (!tcp_socket_) {
+                isc_throw(Unexpected, "internal error: TCP socket is null");
+            }
+            acceptor_->asyncAccept(*tcp_socket_, cb);
+        } else {
+            if (!tls_socket_) {
+                isc_throw(Unexpected, "internal error: TLS socket is null");
+            }
+            tls_acceptor->asyncAccept(*tls_socket_, cb);
+        }
     } catch (const std::exception& ex) {
         isc_throw(HttpConnectionError, "unable to start accepting TCP "
                   "connections: " << ex.what());
@@ -123,6 +151,12 @@ HttpConnection::asyncAccept() {
 
 void
 HttpConnection::doHandshake() {
+    // Skip the handshake if the socket is not a TLS one.
+    if (!tls_socket_) {
+        doRead();
+        return;
+    }
+
     // Create instance of the callback. It is safe to pass the local instance
     // of the callback, because the underlying boost functions make copies
     // as needed.
@@ -130,7 +164,7 @@ HttpConnection::doHandshake() {
                                 shared_from_this(),
                                 ph::_1)); // error
     try {
-        ////////// socket_.handshake(true, cb);
+        tls_socket_->handshake(cb);
 
     } catch (const std::exception& ex) {
         isc_throw(HttpConnectionError, "unable to perform TLS handshake: "
@@ -157,10 +191,18 @@ HttpConnection::doRead(TransactionPtr transaction) {
                                     transaction,
                                     ph::_1,   // error
                                     ph::_2)); //bytes_transferred
-        socket_.asyncReceive(static_cast<void*>(transaction->getInputBufData()),
-                             transaction->getInputBufSize(),
-                             0, &endpoint, cb);
-
+        if (tcp_socket_) {
+            tcp_socket_->asyncReceive(static_cast<void*>(transaction->getInputBufData()),
+                                      transaction->getInputBufSize(),
+                                      0, &endpoint, cb);
+            return;
+        }
+        if (tls_socket_) {
+            tls_socket_->asyncReceive(static_cast<void*>(transaction->getInputBufData()),
+                                      transaction->getInputBufSize(),
+                                      0, &endpoint, cb);
+            return;
+        }
     } catch (...) {
         stopThisConnection();
     }
@@ -178,9 +220,18 @@ HttpConnection::doWrite(HttpConnection::TransactionPtr transaction) {
                                         transaction,
                                         ph::_1,   // error
                                         ph::_2)); // bytes_transferred
-            socket_.asyncSend(transaction->getOutputBufData(),
-                              transaction->getOutputBufSize(),
-                              cb);
+            if (tcp_socket_) {
+                tcp_socket_->asyncSend(transaction->getOutputBufData(),
+                                       transaction->getOutputBufSize(),
+                                       cb);
+                return;
+            }
+            if (tls_socket_) {
+                tls_socket_->asyncSend(transaction->getOutputBufData(),
+                                       transaction->getOutputBufSize(),
+                                       cb);
+                return;
+            }
         } else {
             // The isPersistent() function may throw if the request hasn't
             // been created, i.e. the HTTP headers weren't parsed. We catch
@@ -224,15 +275,20 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
     acceptor_callback_(ec);
 
     if (!ec) {
-        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                  HTTP_REQUEST_RECEIVE_START)
-            //////////// change the message
-            .arg(getRemoteEndpointAddressAsText())
-            .arg(static_cast<unsigned>(request_timeout_/1000));
+        if (!context_) {
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
+                      HTTP_REQUEST_RECEIVE_START)
+                .arg(getRemoteEndpointAddressAsText())
+                .arg(static_cast<unsigned>(request_timeout_/1000));
+        } else {
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
+                      HTTP_CLIENT_HANDSHAKE_START)
+                .arg(getRemoteEndpointAddressAsText())
+                .arg(static_cast<unsigned>(request_timeout_/1000));
+        }
 
         setupRequestTimer();
-        doRead();
-        ////////// or doHandshake();
+        doHandshake();
     }
 }
 
@@ -246,7 +302,7 @@ HttpConnection::handshakeCallback(const boost::system::error_code& ec) {
 
     if (!ec) {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                  HTTP_REQUEST_RECEIVE_START)
+                  HTTPS_REQUEST_RECEIVE_START)
             .arg(getRemoteEndpointAddressAsText());
 
         doRead();
@@ -458,8 +514,14 @@ HttpConnection::idleTimeoutCallback() {
 std::string
 HttpConnection::getRemoteEndpointAddressAsText() const {
     try {
-        if (socket_.getASIOSocket().is_open()) {
-            return (socket_.getASIOSocket().remote_endpoint().address().to_string());
+        if (tcp_socket_) {
+            if (tcp_socket_->getASIOSocket().is_open()) {
+                return (tcp_socket_->getASIOSocket().remote_endpoint().address().to_string());
+            }
+        } else if (tls_socket_) {
+            if (tls_socket_->getASIOSocket().is_open()) {
+                return (tls_socket_->getASIOSocket().remote_endpoint().address().to_string());
+            }
         }
     } catch (...) {
     }

@@ -121,7 +121,7 @@ will be interrupted. New transactions should be conducted normally.
 This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
-seconds.TTTTTTTTTOOOOOOOOOOOODDDDDDDDDDOOOOOOOOO
+seconds.
 
 % HTTP_SERVER_RESPONSE_RECEIVED received HTTP response from %1
 This debug message is issued when the client finished receiving an HTTP
@@ -148,3 +148,8 @@ first argument specifies an address of the remote endpoint to which the
 response is being sent. The second argument provides a response in the
 textual form. The response is truncated by the logger if it is too large
 to be printed.
+
+% HTTPS_REQUEST_RECEIVE_START start receiving request from %1
+This debug message is issued when the server starts receiving new request
+over the established connection. The argument specifies the address
+of the remote endpoint.
