@@ -713,14 +713,19 @@ public:
     void checkScriptResult() {
         ifstream test_log;
         vector<string> extracted_lines;
-        sleep(1);
-        test_log.open(TEST_LOG_FILE);
-        if (!test_log.fail()) {
-            string line;
-            while (getline(test_log, line)) {
-                extracted_lines.push_back(line) ;
+        time_t now(time(NULL));
+        while (true) {
+            test_log.open(TEST_LOG_FILE);
+            if (!test_log.fail()) {
+                string line;
+                while (getline(test_log, line)) {
+                    extracted_lines.push_back(line) ;
+                }
+                test_log.close();
+                break;
             }
-            test_log.close();
+            ASSERT_LT(time(NULL), now + 3) << "timeout";
+            usleep(100000);
         }
         ASSERT_EQ(join(extracted_lines), "SUCCESS\n");
     }
