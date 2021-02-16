@@ -1838,6 +1838,8 @@ AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.3_to_9.4.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_9.3_to_9.4.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.5_to_9.6.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_9.5_to_9.6.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/mysql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/Makefile])
@@ -1870,6 +1872,7 @@ AC_CONFIG_FILES([src/share/yang/modules/Makefile])
 AC_CONFIG_FILES([tools/Makefile])
 AC_CONFIG_FILES([tools/path_replacer.sh],
                 [chmod +x tools/path_replacer.sh])
+
 AC_OUTPUT
 
 dnl Print the results

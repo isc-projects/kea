@@ -3077,6 +3077,16 @@ SET version = '9', minor = '5';
 
 # This line concludes database upgrade to version 9.5.
 
+# Add an auto-increment ID as primary key to support Percona.
+ALTER TABLE logs
+    ADD id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY;
+
+# Update the schema version number
+UPDATE schema_version
+    SET version = '9', minor = '6';
+
+# This line concludes database upgrade to version 9.6.
+
 # Notes:
 #
 # Indexes
