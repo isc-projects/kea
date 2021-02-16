@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -139,6 +139,9 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
         if (http_listeners_.empty() ||
             (http_listeners_.back()->getLocalAddress() != server_address) ||
             (http_listeners_.back()->getLocalPort() != server_port)) {
+            // Create a TLS context.
+            TlsContextPtr tls_context;
+
             // Create response creator factory first. It will be used to
             // generate response creators. Each response creator will be
             // used to generate answer to specific request.
@@ -148,7 +151,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
             // prepared to accept incoming connection.
             HttpListenerPtr http_listener
                 (new HttpListener(*getIoService(), server_address,
-                                  server_port, rcf,
+                                  server_port, tls_context, rcf,
                                   HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                   HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
 

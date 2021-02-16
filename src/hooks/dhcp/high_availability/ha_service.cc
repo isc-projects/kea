@@ -1251,7 +1251,8 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
     boost::weak_ptr<typename QueryPtrType::element_type> weak_query(query);
 
     // Schedule asynchronous HTTP request.
-    client_.asyncSendRequest(config->getUrl(), request, response,
+    client_.asyncSendRequest(config->getUrl(), TlsContextPtr(),
+                             request, response,
         [this, weak_query, parking_lot, config]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
@@ -1346,6 +1347,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
         std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientHandshakeHandler, this, ph::_1),
         std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 
@@ -1552,7 +1554,8 @@ HAService::asyncSendHeartbeat() {
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     // Schedule asynchronous HTTP request.
-    client_.asyncSendRequest(partner_config->getUrl(), request, response,
+    client_.asyncSendRequest(partner_config->getUrl(), TlsContextPtr(),
+                             request, response,
         [this, partner_config]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
@@ -1650,6 +1653,7 @@ HAService::asyncSendHeartbeat() {
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
         std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientHandshakeHandler, this, ph::_1),
         std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 }
@@ -1692,7 +1696,8 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     // Schedule asynchronous HTTP request.
-    http_client.asyncSendRequest(remote_config->getUrl(), request, response,
+    http_client.asyncSendRequest(remote_config->getUrl(), TlsContextPtr(),
+                                 request, response,
         [this, remote_config, post_request_action]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
@@ -1742,6 +1747,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
         std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientHandshakeHandler, this, ph::_1),
         std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 }
@@ -1765,7 +1771,8 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     // Schedule asynchronous HTTP request.
-    http_client.asyncSendRequest(remote_config->getUrl(), request, response,
+    http_client.asyncSendRequest(remote_config->getUrl(), TlsContextPtr(),
+                                 request, response,
         [this, remote_config, post_request_action]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
@@ -1815,6 +1822,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
         std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientHandshakeHandler, this, ph::_1),
         std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 }
@@ -1906,7 +1914,8 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     // Schedule asynchronous HTTP request.
-    http_client.asyncSendRequest(partner_config->getUrl(), request, response,
+    http_client.asyncSendRequest(partner_config->getUrl(), TlsContextPtr(),
+                                 request, response,
         [this, partner_config, post_sync_action, &http_client, server_name,
          max_period, dhcp_disabled]
             (const boost::system::error_code& ec,
@@ -2065,6 +2074,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
         },
         HttpClient::RequestTimeout(config_->getSyncTimeout()),
         std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientHandshakeHandler, this, ph::_1),
         std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 
@@ -2192,7 +2202,8 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
     // to know the type of the expected response.
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
-    http_client.asyncSendRequest(config->getUrl(), request, response,
+    http_client.asyncSendRequest(config->getUrl(), TlsContextPtr(),
+                                 request, response,
         [this, &http_client, config, post_request_action]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
@@ -2291,7 +2302,8 @@ HAService::asyncSendHAReset(HttpClient& http_client,
     // to know the type of the expected response.
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
-    http_client.asyncSendRequest(config->getUrl(), request, response,
+    http_client.asyncSendRequest(config->getUrl(), TlsContextPtr(),
+                                 request, response,
         [this, config, post_request_action]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
@@ -2435,7 +2447,8 @@ HAService::processMaintenanceStart() {
     int captured_rcode = 0;
 
     // Schedule asynchronous HTTP request.
-    client.asyncSendRequest(remote_config->getUrl(), request, response,
+    client.asyncSendRequest(remote_config->getUrl(), TlsContextPtr(),
+                            request, response,
         [this, remote_config, &io_service, &captured_ec, &captured_error_message,
          &captured_rcode]
             (const boost::system::error_code& ec,
@@ -2484,6 +2497,7 @@ HAService::processMaintenanceStart() {
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
         std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientHandshakeHandler, this, ph::_1),
         std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 
@@ -2555,7 +2569,8 @@ HAService::processMaintenanceCancel() {
     std::string error_message;
 
     // Schedule asynchronous HTTP request.
-    client.asyncSendRequest(remote_config->getUrl(), request, response,
+    client.asyncSendRequest(remote_config->getUrl(), TlsContextPtr(),
+                            request, response,
         [this, remote_config, &io_service, &error_message]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
@@ -2593,6 +2608,7 @@ HAService::processMaintenanceCancel() {
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
         std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientHandshakeHandler, this, ph::_1),
         std::bind(&HAService::clientCloseHandler, this, ph::_1)
     );
 

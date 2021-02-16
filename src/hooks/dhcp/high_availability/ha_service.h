@@ -12,7 +12,9 @@
 #include <ha_server_type.h>
 #include <lease_update_backlog.h>
 #include <query_filter.h>
+#include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
+#include <asiolink/tls_socket.h>
 #include <cc/data.h>
 #include <dhcp/pkt4.h>
 #include <http/response.h>
@@ -1015,6 +1017,16 @@ protected:
     /// @return always true. Registeration cannot fail, and if ec indicates a real
     /// error we want Connection logic to process it.
     bool clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd);
+
+    /// @brief HttpClient handshake callback handler
+    ///
+    /// Currently is never called and does nothing.
+    ///
+    /// @param ec Error status of the ASIO connect
+    /// @return always true.
+    bool clientHandshakeHandler(const boost::system::error_code& ec) {
+        return (true);
+    }
 
     /// @brief IfaceMgr external socket ready callback handler
     ///
