@@ -1060,6 +1060,9 @@ testBackendReconfiguration(const std::string& backend_first,
     // reconfiguration.
     raise(SIGHUP);
 
+    // Polling once to be sure that the signal handle has been called.
+    srv->getIOService()->poll();
+
     // The backend should have been created and its type should be
     // correct.
     ASSERT_NO_THROW(static_cast<void>(LeaseMgrFactory::instance()));
