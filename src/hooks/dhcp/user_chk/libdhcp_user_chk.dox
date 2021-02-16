@@ -140,7 +140,7 @@ following Kea4 configuration:
 
 @code
 "Dhcp4": {
-    "hook_libraries": [ "/usr/local/lib/libdhcp_user_chk.so" ],
+    "hooks-libraries": [ "/usr/local/lib/libdhcp_user_chk.so" ],
     ...
 }
 @endcode
@@ -149,7 +149,7 @@ To configure it for kea-dhcp6, the commands are simply as shown below:
 
 @code
 "Dhcp6": {
-    "hook_libraries": [ "/usr/local/lib/libdhcp_user_chk.so" ],
+    "hooks-libraries": [ "/usr/local/lib/libdhcp_user_chk.so" ],
     ...
 }
 @endcode

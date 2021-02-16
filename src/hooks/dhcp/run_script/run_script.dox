@@ -37,7 +37,7 @@ the following Kea4 configuration:
 
 @code
 "Dhcp4": {
-    "hook_libraries": [
+    "hooks-libraries": [
         {   "library": "/usr/local/lib/libdhcp_run_script.so",
             "parameters": {
                 "name": "/path_to/script_name.sh",
@@ -54,7 +54,7 @@ the following Kea6 configuration:
 
 @code
 "Dhcp6": {
-    "hook_libraries": [
+    "hooks-libraries": [
         {   "library": "/usr/local/lib/libdhcp_run_script.so",
             "parameters": {
                 "name": "/path_to/script_name.sh",

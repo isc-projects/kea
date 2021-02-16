@@ -1281,7 +1281,7 @@ expression.
 ::
 
     "Dhcp4": {
-        "hook_libraries": [
+        "hooks-libraries": [
             {   "library": "/usr/local/lib/libdhcp_flex_option.so",
                 "parameters": {
                     "options": [

@@ -13,7 +13,7 @@ similar way as other hook libraries by the ``kea-dhcp4`` and
 ::
 
     "Dhcp4": {
-        "hook_libraries": [
+        "hooks-libraries": [
             {   "library": "/usr/local/lib/libdhcp_run_script.so",
                 "parameters": {
                     "name": "/path_to/script_name.sh",
@@ -27,7 +27,7 @@ similar way as other hook libraries by the ``kea-dhcp4`` and
 ::
 
     "Dhcp6": {
-        "hook_libraries": [
+        "hooks-libraries": [
             {   "library": "/usr/local/lib/libdhcp_run_script.so",
                 "parameters": {
                     "name": "/path_to/script_name.sh",

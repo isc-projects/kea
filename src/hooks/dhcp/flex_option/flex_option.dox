@@ -39,7 +39,7 @@ configuration:
 
 @code
 "Dhcp4": {
-    "hook_libraries": [
+    "hooks-libraries": [
         {   "library": "/usr/local/lib/libdhcp_flex_option.so",
             "parameters": {
                 "options": [
@@ -60,7 +60,7 @@ To configure it for kea-dhcp6, the commands are simply as shown below:
 
 @code
 "Dhcp6": {
-    "hook_libraries": [
+    "hooks-libraries": [
         {   "library": "/usr/local/lib/libdhcp_flex_option.so",
             "parameters": {
                 "options": [

@@ -26,7 +26,7 @@ It takes no parameter.
 ::
 
     "Dhcp4": {
-        "hook_libraries": [
+        "hooks-libraries": [
             {   "library": "/usr/local/lib/libdhcp_bootp.so" },
             ...
         ]
