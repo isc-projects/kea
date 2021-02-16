@@ -179,6 +179,8 @@ ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
     io_signal_set_.reset(new IOSignalSet(io_service,
                                          std::bind(&ProcessSpawnImpl::waitForProcess,
                                                    this, ph::_1)));
+    io_signal_set_->add(SIGCHLD);
+
     // Conversion of the arguments to the C-style array we start by setting
     // all pointers within an array to NULL to indicate that they haven't
     // been allocated yet.
@@ -230,6 +232,7 @@ ProcessSpawnImpl::spawn() {
     // Create the child
     pid_t pid = fork();
     if (pid < 0) {
+        pthread_sigmask(SIG_SETMASK, &osset, 0);
         isc_throw(ProcessSpawnError, "unable to fork current process");
 
     } else if (pid == 0) {
@@ -307,16 +310,7 @@ ProcessSpawnImpl::allocateInternal(const std::string& src) {
 }
 
 bool
-ProcessSpawnImpl::waitForProcess(int signum) {
-    // We're only interested in SIGCHLD.
-    if (signum != SIGCHLD) {
-        return (false);
-    }
-
-    // Need to store current value of errno, so we could restore it
-    // after this signal handler does his work.
-    int errno_value = errno;
-
+ProcessSpawnImpl::waitForProcess(int) {
     lock_guard<std::mutex> lk(*mutex_);
     for (;;) {
         int status = 0;
@@ -333,15 +327,6 @@ ProcessSpawnImpl::waitForProcess(int signum) {
             proc->second.running_ = false;
         }
     }
-
-    // Need to restore previous value of errno. We called waitpid(),
-    // which likely indicated its result by setting errno to ECHILD.
-    // This is a signal handler, which can be called while virtually
-    // any other code being run. If we're unlucky, we could receive a
-    // signal when running a code that is about to check errno. As a
-    // result the code would detect errno=ECHILD in places which are
-    // completely unrelated to child or processes in general.
-    errno = errno_value;
 
     return (true);
 }

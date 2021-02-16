@@ -108,6 +108,7 @@ public:
         timer_mgr_(TimerMgr::instance()) {
 
         timer_mgr_->setIOService(io_service_);
+        LeaseMgr::setIOService(io_service_);
 
         std::ostringstream s;
         s << KEA_LFC_BUILD_DIR << "/kea-lfc";

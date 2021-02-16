@@ -24,8 +24,7 @@ namespace asiolink {
 
 /// @brief Test fixture for testing the use of IO service signals.
 ///
-/// This fixture is exercises io service signaling it is intended to be used in
-/// an application in place of util::SignalSet.
+/// This fixture is exercises IO service signaling.
 class IOSignalTest : public ::testing::Test {
 public:
     /// @brief IOService instance to process IO.
@@ -106,10 +105,6 @@ public:
         FAIL() << "Test Time: " << test_time_ms_ << " expired";
     }
 };
-
-// Used for constructor tests.
-void dummyHandler(int) {
-}
 
 // Test the basic mechanics of IOSignal by handling one signal occurrence.
 TEST_F(IOSignalTest, singleSignalTest) {

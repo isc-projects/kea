@@ -6,6 +6,8 @@
 
 #include <config.h>
 
+#include <asiolink/io_service_signal.h>
+#include <asiolink/interval_timer.h>
 #include <asiolink/process_spawn.h>
 #include <gtest/gtest.h>
 #include <signal.h>
@@ -19,87 +21,80 @@ namespace {
 using namespace isc;
 using namespace isc::asiolink;
 using namespace std;
+namespace ph = std::placeholders;
 
-/// @brief Returns a location of the test script.
+/// @brief Test fixture for testing the use of ProcessSpawn with IO service
+/// signals.
 ///
-/// The test script is no-op and it returns the exit code equal to
-/// the argument passed to it.
-///
-/// @return Absolute location of the test script.
-string getApp() {
-    ostringstream s;
-    s << TEST_DATA_TOPBUILDDIR << "/src/lib/util/tests/process_spawn_app.sh";
-    return (s.str());
-}
+/// This fixture is exercises ProcessSpawn using IO service signaling.
+class ProcessSpawnTest : public ::testing::Test {
+public:
+    /// @brief IOService instance to process IO.
+    asiolink::IOServicePtr io_service_;
 
-/// @brief Waits for the specified process to finish (using sleep)
-///
-/// @param process An object which started the process.
-/// @param pid ID of the spawned process.
-/// @param timeout Timeout in seconds.
-/// @param sleep specifies whether usleep(1ms) should be used or not.
-///
-/// This method uses usleep() to wait between checks. For an alternative,
-/// see waitForProcessFast(). Note: If the signal comes in when the
-/// loop calls usleep(), usleep() will be aborted and errno will be set
-/// to EINTR to indicate that interruption. Therefore this method is not
-/// suitable for tests that want to observe errno value. See
-/// @ref waitForProcessFast as an alternative.
-///
-/// @return true if the process ended, false otherwise
-bool waitForProcess(const ProcessSpawn& process, const pid_t pid,
-                    const uint8_t timeout) {
-    uint32_t iterations = 0;
-    const uint32_t iterations_max = timeout * 1000;
+    /// @brief Failsafe timer to ensure test(s) do not hang.
+    isc::asiolink::IntervalTimer test_timer_;
 
-    int errno_save = errno;
-    while (process.isRunning(pid) && (iterations < iterations_max)) {
-        usleep(1000);
-        ++iterations;
-    }
-    errno = errno_save;
-    return (iterations < iterations_max);
-}
+    /// @brief Maximum time should be allowed to run.
+    int test_time_ms_;
 
-/// @brief Waits for the specified process to finish (using fast loop)
-///
-/// @param process An object which started the process.
-/// @param pid ID of the spawned process.
-/// @param timeout Timeout in seconds.
-/// @param sleep specifies whether usleep(1ms) should be used or not.
-///
-/// This method does not use any sleep() calls, but rather iterates through
-/// the loop very fast. This is not recommended in general, but is necessary
-/// to avoid updating errno by sleep() after receiving a signal.
-///
-/// Note: the timeout is only loosely accurate. Depending on the fraction
-/// of second it was started on, it may terminate later by up to almost
-/// whole second.
-///
-/// @return true if the process ended, false otherwise
-bool waitForProcessFast(const ProcessSpawn& process, const pid_t pid,
-                        const uint8_t timeout) {
-    time_t before = time(NULL);
-    while (process.isRunning(pid)) {
-        time_t now = time(NULL);
+    /// @brief IOSignalSet object.
+    IOSignalSetPtr io_signal_set_;
 
-        // The difference before we started and now is greater than
-        // the timeout, we should give up.
-        if (now - before > timeout) {
-            return (false);
-        }
+    /// @brief Vector to record the signal values received.
+    std::vector<int> processed_signals_;
+
+    /// @brief Constructor.
+    ProcessSpawnTest() :
+        io_service_(new asiolink::IOService()), test_timer_(*io_service_),
+        test_time_ms_(0), io_signal_set_(), processed_signals_() {
+
+        io_signal_set_.reset(new IOSignalSet(io_service_,
+                                             std::bind(&ProcessSpawnTest::processSignal,
+                                                       this, ph::_1)));
+        io_signal_set_->add(SIGCHLD);
     }
 
-    return (true);
-}
+    /// @brief Destructor.
+    ~ProcessSpawnTest() {}
+
+    /// @brief Method used as the IOSignalSet handler.
+    ///
+    /// Records the value of the given signal and checks if the desired
+    /// number of signals have been received.  If so, the IOService is
+    /// stopped which will cause IOService::run() to exit, returning control
+    /// to the test.
+    ///
+    /// @param signum signal number.
+    void processSignal(int signum) {
+        // Remember the signal we got.
+        processed_signals_.push_back(signum);
+    }
+
+    /// @brief Sets the failsafe timer for the test to the given time.
+    ///
+    /// @param  test_time_ms maximum time in milliseconds the test should
+    /// be allowed to run.
+    void setTestTime(int test_time_ms) {
+        // Fail safe shutdown
+        test_time_ms_ = test_time_ms;
+        test_timer_.setup(std::bind(&ProcessSpawnTest::testTimerHandler, this),
+                          test_time_ms_, asiolink::IntervalTimer::ONE_SHOT);
+    }
+
+    /// @brief Failsafe timer expiration handler.
+    void testTimerHandler() {
+        io_service_->stop();
+    }
+};
+
 
 // This test verifies that if the thread calling spawn has SIGCHLD
 // already block ProcessSpawnError is thrown (@todo the second error
 // case: fork() failing)
-TEST(ProcessSpawn, sigchldBlocked) {
+TEST_F(ProcessSpawnTest, sigchldBlocked) {
     vector<string> args;
-    IOServicePtr io_service(new asiolink::IOService());
-    ProcessSpawn process(io_service, getApp(), args);
+    ProcessSpawn process(io_service_, TEST_SCRIPT_SH, args);
     sigset_t sset;
     sigemptyset(&sset);
     sigaddset(&sset, SIGCHLD);
@@ -111,23 +106,37 @@ TEST(ProcessSpawn, sigchldBlocked) {
 
 // This test verifies that the external application can be ran with
 // arguments and that the exit code is gathered.
-TEST(ProcessSpawn, spawnWithArgs) {
+TEST_F(ProcessSpawnTest, spawnWithArgs) {
     vector<string> args;
     args.push_back("-e");
     args.push_back("64");
-    IOServicePtr io_service(new asiolink::IOService());
-    ProcessSpawn process(io_service, getApp(), args);
+
+    ProcessSpawn process(io_service_, TEST_SCRIPT_SH, args);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
-    ASSERT_TRUE(waitForProcess(process, pid, 2));
+    // Set test fail safe.
+    setTestTime(1000);
+
+    // The next handler executed is IOSignal's handler.
+    io_service_->run_one();
+
+    // The first handler executed is the IOSignal's internal timer expire
+    // callback.
+    io_service_->run_one();
+
+    // Polling once to be sure.
+    io_service_->poll();
+
+    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     EXPECT_EQ(64, process.getExitStatus(pid));
 }
 
 // This test verifies that the external application can be ran with
 // arguments and environment variables that the exit code is gathered.
-TEST(ProcessSpawn, spawnWithArgsAndEnvVars) {
+TEST_F(ProcessSpawnTest, spawnWithArgsAndEnvVars) {
     vector<string> args;
     vector<string> vars;
     args.push_back("-v");
@@ -135,12 +144,25 @@ TEST(ProcessSpawn, spawnWithArgsAndEnvVars) {
     args.push_back("TEST_VARIABLE_VALUE");
     vars.push_back("TEST_VARIABLE_NAME=TEST_VARIABLE_VALUE");
 
-    IOServicePtr io_service(new asiolink::IOService());
-    ProcessSpawn process(io_service, getApp(), args, vars);
+    ProcessSpawn process(io_service_, TEST_SCRIPT_SH, args, vars);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
-    ASSERT_TRUE(waitForProcess(process, pid, 2));
+    // Set test fail safe.
+    setTestTime(1000);
+
+    // The next handler executed is IOSignal's handler.
+    io_service_->run_one();
+
+    // The first handler executed is the IOSignal's internal timer expire
+    // callback.
+    io_service_->run_one();
+
+    // Polling once to be sure.
+    io_service_->poll();
+
+    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     EXPECT_EQ(32, process.getExitStatus(pid));
 }
@@ -149,18 +171,46 @@ TEST(ProcessSpawn, spawnWithArgsAndEnvVars) {
 // to start two processes and that their status codes can be gathered.
 // It also checks that it is possible to clear the status of the
 // process.
-TEST(ProcessSpawn, spawnTwoProcesses) {
+TEST_F(ProcessSpawnTest, spawnTwoProcesses) {
     vector<string> args;
     args.push_back("-p");
-    IOServicePtr io_service(new asiolink::IOService());
-    ProcessSpawn process(io_service, getApp(), args);
+
+    ProcessSpawn process(io_service_, TEST_SCRIPT_SH, args);
     pid_t pid1 = 0;
     ASSERT_NO_THROW(pid1 = process.spawn());
-    ASSERT_TRUE(waitForProcess(process, pid1, 2));
+
+    // Set test fail safe.
+    setTestTime(1000);
+
+    // The next handler executed is IOSignal's handler.
+    io_service_->run_one();
+
+    // The first handler executed is the IOSignal's internal timer expire
+    // callback.
+    io_service_->run_one();
+
+    // Polling once to be sure.
+    io_service_->poll();
 
     pid_t pid2 = 0;
     ASSERT_NO_THROW(pid2 = process.spawn());
-    ASSERT_TRUE(waitForProcess(process, pid2, 2));
+
+    // Set test fail safe.
+    setTestTime(1000);
+
+    // The next handler executed is IOSignal's handler.
+    io_service_->run_one();
+
+    // The first handler executed is the IOSignal's internal timer expire
+    // callback.
+    io_service_->run_one();
+
+    // Polling once to be sure.
+    io_service_->poll();
+
+    ASSERT_EQ(2, processed_signals_.size());
+    ASSERT_EQ(SIGCHLD, processed_signals_[0]);
+    ASSERT_EQ(SIGCHLD, processed_signals_[1]);
 
     EXPECT_NE(process.getExitStatus(pid1), process.getExitStatus(pid2));
 
@@ -177,35 +227,59 @@ TEST(ProcessSpawn, spawnTwoProcesses) {
 
 // This test verifies that the external application can be ran without
 // arguments and that the exit code is gathered.
-TEST(ProcessSpawn, spawnNoArgs) {
-    IOServicePtr io_service(new asiolink::IOService());
-    vector<string> args;
-    ProcessSpawn process(io_service, getApp());
+TEST_F(ProcessSpawnTest, spawnNoArgs) {
+    ProcessSpawn process(io_service_, TEST_SCRIPT_SH);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
-    ASSERT_TRUE(waitForProcess(process, pid, 2));
+    // Set test fail safe.
+    setTestTime(1000);
+
+    // The next handler executed is IOSignal's handler.
+    io_service_->run_one();
+
+    // The first handler executed is the IOSignal's internal timer expire
+    // callback.
+    io_service_->run_one();
+
+    // Polling once to be sure.
+    io_service_->poll();
+
+    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     EXPECT_EQ(32, process.getExitStatus(pid));
 }
 
 // This test verifies that the EXIT_FAILURE code is returned when
 // application can't be executed.
-TEST(ProcessSpawn, invalidExecutable) {
-    IOServicePtr io_service(new asiolink::IOService());
-    ProcessSpawn process(io_service, "foo");
+TEST_F(ProcessSpawnTest, invalidExecutable) {
+    ProcessSpawn process(io_service_, "foo");
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
-    ASSERT_TRUE(waitForProcess(process, pid, 2));
+    // Set test fail safe.
+    setTestTime(1000);
+
+    // The next handler executed is IOSignal's handler.
+    io_service_->run_one();
+
+    // The first handler executed is the IOSignal's internal timer expire
+    // callback.
+    io_service_->run_one();
+
+    // Polling once to be sure.
+    io_service_->poll();
+
+    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     EXPECT_EQ(EXIT_FAILURE, process.getExitStatus(pid));
 }
 
 // This test verifies that the full command line for the process is
 // returned.
-TEST(ProcessSpawn, getCommandLine) {
-    IOServicePtr io_service(new asiolink::IOService());
+TEST_F(ProcessSpawnTest, getCommandLine) {
     // Note that cases below are enclosed in separate scopes to make
     // sure that the ProcessSpawn object is destroyed before a new
     // object is created. Current implementation doesn't allow for
@@ -218,60 +292,50 @@ TEST(ProcessSpawn, getCommandLine) {
         args.push_back("-y");
         args.push_back("foo");
         args.push_back("bar");
-        ProcessSpawn process(io_service, "myapp", args);
+        ProcessSpawn process(io_service_, "myapp", args);
         EXPECT_EQ("myapp -x -y foo bar", process.getCommandLine());
     }
 
     {
         // Case 2: no arguments.
-        ProcessSpawn process(io_service, "myapp");
+        ProcessSpawn process(io_service_, "myapp");
         EXPECT_EQ("myapp", process.getCommandLine());
     }
 }
 
 // This test verifies that it is possible to check if the process is
 // running.
-TEST(ProcessSpawn, isRunning) {
-    IOServicePtr io_service(new asiolink::IOService());
+TEST_F(ProcessSpawnTest, isRunning) {
     // Run the process which sleeps for 10 seconds, so as we have
     // enough time to check if it is running.
     vector<string> args;
     args.push_back("-s");
     args.push_back("10");
-    ProcessSpawn process(io_service, getApp(), args);
+
+    ProcessSpawn process(io_service_, TEST_SCRIPT_SH, args);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
+
     EXPECT_TRUE(process.isRunning(pid));
 
     // Kill the process.
     ASSERT_EQ(0, kill(pid, SIGKILL));
-    // And make sure if died.
-    ASSERT_TRUE(waitForProcess(process, pid, 2));
-}
 
-// This test verifies that the signal handler does not modify value of
-// errno.
-TEST(ProcessSpawn, errnoInvariance) {
-    IOServicePtr io_service(new asiolink::IOService());
-    // Set errno to an arbitrary value. We'll later check that it was not
-    // stumped on.
-    errno = 123;
+    // Set test fail safe.
+    setTestTime(1000);
 
-    vector<string> args;
-    args.push_back("-e");
-    args.push_back("64");
-    ProcessSpawn process(io_service, getApp(), args);
-    pid_t pid = 0;
-    ASSERT_NO_THROW(pid = process.spawn());
+    // The next handler executed is IOSignal's handler.
+    io_service_->run_one();
 
-    ASSERT_TRUE(waitForProcessFast(process, pid, 2));
+    // The first handler executed is the IOSignal's internal timer expire
+    // callback.
+    io_service_->run_one();
 
-    EXPECT_EQ(64, process.getExitStatus(pid));
+    // Polling once to be sure.
+    io_service_->poll();
 
-    // errno value should be set to be preserved, despite the SIGCHLD
-    // handler (ProcessSpawnImpl::waitForProcess) calling waitpid(), which
-    // will likely set errno to ECHILD. See trac4000.
-    EXPECT_EQ(123, errno);
+    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 }
 
 } // end of anonymous namespace

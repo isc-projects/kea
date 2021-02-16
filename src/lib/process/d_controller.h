@@ -574,9 +574,8 @@ protected:
     /// @brief Initializes signal handling
     ///
     /// This method configures the controller to catch and handle signals.
-    /// It instantiates an IOSignalQueue, registers @c osSignalHandler() as
-    /// the SignalSet "on-receipt" handler, and lastly instantiates a SignalSet
-    /// which listens for SIGHUP, SIGINT, and SIGTERM.
+    /// It instantiates a IOSignalSet which listens for SIGHUP, SIGINT, and
+    /// SIGTERM.
     void initSignalHandling();
 
     /// @brief Fetches the current process

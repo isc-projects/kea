@@ -60,6 +60,7 @@ int load(LibraryHandle& handle) {
 /// @return always 0.
 int unload() {
     impl.reset();
+    RunScriptImpl::setIOService(IOServicePtr());
     LOG_INFO(run_script_logger, RUN_SCRIPT_UNLOAD);
     return (0);
 }

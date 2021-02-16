@@ -8,8 +8,9 @@
 
 #include <run_script.h>
 
-#include <cc/data.h>
 #include <asiolink/io_address.h>
+#include <asiolink/io_service.h>
+#include <cc/data.h>
 #include <dhcp/dhcp6.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
@@ -696,12 +697,15 @@ class RunScriptTest : public ::testing::Test {
 public:
 
     /// @brief Constructor.
-    RunScriptTest() : co_manager_(new CalloutManager(1)) {
+    RunScriptTest() :
+        co_manager_(new CalloutManager(1)), io_service_(new IOService()) {
+        RunScriptImpl::setIOService(io_service_);
         clearLogFile();
     }
 
     /// @brief Destructor.
     ~RunScriptTest() {
+        RunScriptImpl::setIOService(IOServicePtr());
         clearLogFile();
     }
 
@@ -738,6 +742,9 @@ public:
 private:
     /// @brief Callout manager accessed by this CalloutHandle.
     boost::shared_ptr<CalloutManager> co_manager_;
+
+    /// @brief IOService instance to process IO.
+    isc::asiolink::IOServicePtr io_service_;
 };
 
 TEST_F(RunScriptTest, lease4Renew) {

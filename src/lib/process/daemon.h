@@ -39,11 +39,6 @@ public:
 /// Dhcpv4Srv and Dhcpv6Srv) in tests, without going through the hassles of
 /// implementing stub methods.
 ///
-/// Classes derived from @c Daemon may install custom signal handlers using
-/// @c isc::util::SignalSet class. This base class provides a declaration
-/// of the @c SignalSet object that should be initialized in the derived
-/// classes to install the custom exception handlers.
-///
 /// @note Only one instance of this class is instantiated as it encompasses
 ///       the whole operation of the server.  Nothing, however, enforces the
 ///       singleton status of the object.

@@ -159,15 +159,6 @@ IOSignal's handler invocation code will catch, log ,and then swallow any
 exceptions thrown by an IOSignalHandler.  This is done to protect the integrity
 IOService context.
 
-CPL integrates the use of the two mechanisms by registering the method,
-isc::process::DControllerBase::osSignalHandler(), as the
-isc::util::SignalSet::onreceipt_handler_.  This configures SignalSet's internal
-handler to invoke the method each time a signal arrives.  When invoked, this
-method will call isc::process::IOSignalQueue::pushSignal() to create an
-isc::process::IOSignal, passing in the OS signal received and
-isc::process::DControllerBase::ioSignalHandler() to use as the IOSignal's
-ready event handler
-
 The following sequence diagram depicts the initialization of signal handling
 during startup and the subsequent receipt of a SIGHUP:
 
