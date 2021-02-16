@@ -95,7 +95,7 @@ An example of a script implementing all hook points is presented below.
    #!/bin/bash
 
    unknown_handle() {
-       echo "Unhandled function call ${@}"
+       echo "Unhandled function call ${*}"
        exit 123
    }
 
