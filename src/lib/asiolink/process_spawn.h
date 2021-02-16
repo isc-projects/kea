@@ -7,6 +7,7 @@
 #ifndef PROCESS_SPAWN_H
 #define PROCESS_SPAWN_H
 
+#include <asiolink/io_service.h>
 #include <exceptions/exceptions.h>
 #include <boost/noncopyable.hpp>
 #include <string>
@@ -15,7 +16,7 @@
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
-namespace util {
+namespace asiolink {
 
 /// @brief Exception thrown when error occurs during spawning a process.
 class ProcessSpawnError : public Exception {
@@ -55,20 +56,18 @@ typedef std::vector<std::string> ProcessEnvVars;
 /// such as the SIGCHLD signal handler. In addition making it
 /// noncopyable keeps the static check code from flagging the
 /// lack of a copy constructor as an issue.
-///
-/// @todo The SIGCHLD handling logic should be moved to the @c SignalSet
-/// class so as multiple instances of the @c ProcessSpawn use the same
-/// SIGCHLD signal handler.
 
 class ProcessSpawn : boost::noncopyable {
 public:
 
     /// @brief Constructor.
     ///
+    /// @param io_service The IOService which handles signal handlers.
     /// @param executable A path to the program to be executed.
     /// @param args Arguments for the program to be executed.
     /// @param vars Environment variables for the program to be executed.
-    ProcessSpawn(const std::string& executable,
+    ProcessSpawn(isc::asiolink::IOServicePtr io_service,
+                 const std::string& executable,
                  const ProcessArgs& args = ProcessArgs(),
                  const ProcessEnvVars& vars = ProcessEnvVars());
 
@@ -141,7 +140,7 @@ private:
     ProcessSpawnImplPtr impl_;
 };
 
-}
-}
+} // namespace asiolink
+} // namespace isc
 
 #endif // PROCESS_SPAWN_H

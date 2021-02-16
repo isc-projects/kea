@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <util/process_spawn.h>
+#include <asiolink/process_spawn.h>
 #include <gtest/gtest.h>
 #include <signal.h>
 #include <stdint.h>
@@ -17,7 +17,7 @@
 namespace {
 
 using namespace isc;
-using namespace isc::util;
+using namespace isc::asiolink;
 using namespace std;
 
 /// @brief Returns a location of the test script.
@@ -98,7 +98,8 @@ bool waitForProcessFast(const ProcessSpawn& process, const pid_t pid,
 // case: fork() failing)
 TEST(ProcessSpawn, sigchldBlocked) {
     vector<string> args;
-    ProcessSpawn process(getApp(), args);
+    IOServicePtr io_service(new asiolink::IOService());
+    ProcessSpawn process(io_service, getApp(), args);
     sigset_t sset;
     sigemptyset(&sset);
     sigaddset(&sset, SIGCHLD);
@@ -114,7 +115,8 @@ TEST(ProcessSpawn, spawnWithArgs) {
     vector<string> args;
     args.push_back("-e");
     args.push_back("64");
-    ProcessSpawn process(getApp(), args);
+    IOServicePtr io_service(new asiolink::IOService());
+    ProcessSpawn process(io_service, getApp(), args);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -133,7 +135,8 @@ TEST(ProcessSpawn, spawnWithArgsAndEnvVars) {
     args.push_back("TEST_VARIABLE_VALUE");
     vars.push_back("TEST_VARIABLE_NAME=TEST_VARIABLE_VALUE");
 
-    ProcessSpawn process(getApp(), args, vars);
+    IOServicePtr io_service(new asiolink::IOService());
+    ProcessSpawn process(io_service, getApp(), args, vars);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -149,7 +152,8 @@ TEST(ProcessSpawn, spawnWithArgsAndEnvVars) {
 TEST(ProcessSpawn, spawnTwoProcesses) {
     vector<string> args;
     args.push_back("-p");
-    ProcessSpawn process(getApp(), args);
+    IOServicePtr io_service(new asiolink::IOService());
+    ProcessSpawn process(io_service, getApp(), args);
     pid_t pid1 = 0;
     ASSERT_NO_THROW(pid1 = process.spawn());
     ASSERT_TRUE(waitForProcess(process, pid1, 2));
@@ -174,8 +178,9 @@ TEST(ProcessSpawn, spawnTwoProcesses) {
 // This test verifies that the external application can be ran without
 // arguments and that the exit code is gathered.
 TEST(ProcessSpawn, spawnNoArgs) {
+    IOServicePtr io_service(new asiolink::IOService());
     vector<string> args;
-    ProcessSpawn process(getApp());
+    ProcessSpawn process(io_service, getApp());
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -187,7 +192,8 @@ TEST(ProcessSpawn, spawnNoArgs) {
 // This test verifies that the EXIT_FAILURE code is returned when
 // application can't be executed.
 TEST(ProcessSpawn, invalidExecutable) {
-    ProcessSpawn process("foo");
+    IOServicePtr io_service(new asiolink::IOService());
+    ProcessSpawn process(io_service, "foo");
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -199,6 +205,7 @@ TEST(ProcessSpawn, invalidExecutable) {
 // This test verifies that the full command line for the process is
 // returned.
 TEST(ProcessSpawn, getCommandLine) {
+    IOServicePtr io_service(new asiolink::IOService());
     // Note that cases below are enclosed in separate scopes to make
     // sure that the ProcessSpawn object is destroyed before a new
     // object is created. Current implementation doesn't allow for
@@ -211,13 +218,13 @@ TEST(ProcessSpawn, getCommandLine) {
         args.push_back("-y");
         args.push_back("foo");
         args.push_back("bar");
-        ProcessSpawn process("myapp", args);
+        ProcessSpawn process(io_service, "myapp", args);
         EXPECT_EQ("myapp -x -y foo bar", process.getCommandLine());
     }
 
     {
         // Case 2: no arguments.
-        ProcessSpawn process("myapp");
+        ProcessSpawn process(io_service, "myapp");
         EXPECT_EQ("myapp", process.getCommandLine());
     }
 }
@@ -225,12 +232,13 @@ TEST(ProcessSpawn, getCommandLine) {
 // This test verifies that it is possible to check if the process is
 // running.
 TEST(ProcessSpawn, isRunning) {
+    IOServicePtr io_service(new asiolink::IOService());
     // Run the process which sleeps for 10 seconds, so as we have
     // enough time to check if it is running.
     vector<string> args;
     args.push_back("-s");
     args.push_back("10");
-    ProcessSpawn process(getApp(), args);
+    ProcessSpawn process(io_service, getApp(), args);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
     EXPECT_TRUE(process.isRunning(pid));
@@ -244,7 +252,7 @@ TEST(ProcessSpawn, isRunning) {
 // This test verifies that the signal handler does not modify value of
 // errno.
 TEST(ProcessSpawn, errnoInvariance) {
-
+    IOServicePtr io_service(new asiolink::IOService());
     // Set errno to an arbitrary value. We'll later check that it was not
     // stumped on.
     errno = 123;
@@ -252,7 +260,7 @@ TEST(ProcessSpawn, errnoInvariance) {
     vector<string> args;
     args.push_back("-e");
     args.push_back("64");
-    ProcessSpawn process(getApp(), args);
+    ProcessSpawn process(io_service, getApp(), args);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 

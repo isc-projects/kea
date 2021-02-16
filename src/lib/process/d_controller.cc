@@ -18,7 +18,9 @@
 #include <functional>
 #include <sstream>
 #include <unistd.h>
+#include <signal.h>
 
+using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::config;
 namespace ph = std::placeholders;
@@ -231,8 +233,7 @@ DControllerBase::checkConfigOnly() {
 }
 
 void
-DControllerBase::parseArgs(int argc, char* argv[])
-{
+DControllerBase::parseArgs(int argc, char* argv[]) {
 
     if (argc == 1) {
         isc_throw(InvalidUsage, "");
@@ -312,8 +313,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
 }
 
 bool
-DControllerBase::customOption(int /* option */, char* /*optarg*/)
-{
+DControllerBase::customOption(int /* option */, char* /*optarg*/) {
     // Default implementation returns false.
     return (false);
 }
@@ -783,8 +783,7 @@ DControllerBase::processSignal(int signum) {
 }
 
 void
-DControllerBase::usage(const std::string & text)
-{
+DControllerBase::usage(const std::string & text) {
     if (text != "") {
         std::cerr << "Usage error: " << text << std::endl;
     }

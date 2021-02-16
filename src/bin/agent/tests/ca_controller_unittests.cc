@@ -5,6 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <asiolink/testutils/timed_signal.h>
 #include <agent/ca_controller.h>
 #include <agent/ca_process.h>
 #include <agent/ca_command_mgr.h>
@@ -15,12 +17,13 @@
 #include <sstream>
 #include <unistd.h>
 
-using namespace std;
+using namespace isc::asiolink::test;
 using namespace isc::agent;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::process;
 using namespace boost::posix_time;
+using namespace std;
 
 namespace {
 

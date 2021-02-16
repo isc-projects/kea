@@ -34,7 +34,6 @@ extern const isc::log::MessageID DCTL_RUN_PROCESS;
 extern const isc::log::MessageID DCTL_SESSION_FAIL;
 extern const isc::log::MessageID DCTL_SHUTDOWN;
 extern const isc::log::MessageID DCTL_SHUTDOWN_SIGNAL_RECVD;
-extern const isc::log::MessageID DCTL_SIGNAL_ERROR;
 extern const isc::log::MessageID DCTL_STANDALONE;
 extern const isc::log::MessageID DCTL_STARTING;
 extern const isc::log::MessageID DCTL_UNSUPPORTED_SIGNAL;

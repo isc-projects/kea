@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,13 +8,13 @@
 #define D_CONTROLLER_H
 
 #include <asiolink/io_service.h>
+#include <asiolink/io_service_signal.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <process/daemon.h>
 #include <process/d_log.h>
 #include <process/d_process.h>
-#include <process/io_service_signal.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
@@ -635,10 +635,10 @@ private:
     DProcessBasePtr process_;
 
     /// @brief Shared pointer to an IOService object, used for ASIO operations.
-    asiolink::IOServicePtr io_service_;
+    isc::asiolink::IOServicePtr io_service_;
 
     /// @brief ASIO signal set.
-    IOSignalSetPtr io_signal_set_;
+    isc::asiolink::IOSignalSetPtr io_signal_set_;
 
     /// @brief Singleton instance value.
     static DControllerBasePtr controller_;
@@ -648,7 +648,7 @@ private:
 friend class DControllerTest;
 };
 
-}; // namespace isc::process
-}; // namespace isc
+} // namespace isc::process
+} // namespace isc
 
 #endif

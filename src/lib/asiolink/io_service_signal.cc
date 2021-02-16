@@ -6,8 +6,7 @@
 
 #include <config.h>
 
-#include <process/d_log.h>
-#include <process/io_service_signal.h>
+#include <asiolink/io_service_signal.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/enable_shared_from_this.hpp>
@@ -15,17 +14,15 @@
 #include <boost/asio/signal_set.hpp>
 #include <functional>
 
-using namespace isc::asiolink;
 namespace ph = std::placeholders;
 
 namespace isc {
-namespace process {
+namespace asiolink {
 
 /// @brief Implementation class of IOSignalSet.
 class IOSignalSetImpl :
     public boost::enable_shared_from_this<IOSignalSetImpl>,
-    public boost::noncopyable
-{
+    public boost::noncopyable {
 public:
     /// @brief Constructor.
     ///
@@ -73,10 +70,6 @@ IOSignalSetImpl::callback(const boost::system::error_code& ec, int signum) {
         try {
             handler_(signum);
         } catch (const std::exception& ex) {
-            // We log it and swallow it so we don't undermine IOService::run.
-            LOG_ERROR(dctl_logger, DCTL_SIGNAL_ERROR)
-                .arg(signum)
-                .arg(ex.what());
         }
     }
 }
@@ -98,8 +91,7 @@ IOSignalSetImpl::add(int signum) {
 }
 
 IOSignalSet::IOSignalSet(IOServicePtr io_service, IOSignalHandler handler) :
-    impl_(new IOSignalSetImpl(io_service, handler))
-{
+    impl_(new IOSignalSetImpl(io_service, handler)) {
     // It can throw but the error is fatal...
     impl_->install();
 }
@@ -113,5 +105,5 @@ IOSignalSet::add(int signum) {
     impl_->add(signum);
 }
 
-} // end of isc::process namespace
-} // end of isc namespace
+} // namespace asiolink
+} // namespace isc

@@ -25,6 +25,7 @@ RunScriptImplPtr impl;
 } // namespace isc
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::hooks;
@@ -60,6 +61,40 @@ int load(LibraryHandle& handle) {
 int unload() {
     impl.reset();
     LOG_INFO(run_script_logger, RUN_SCRIPT_UNLOAD);
+    return (0);
+}
+
+/// @brief dhcp4_srv_configured callout implementation.
+///
+/// @param handle callout handle.
+int dhcp4_srv_configured(CalloutHandle& handle) {
+    try {
+        isc::asiolink::IOServicePtr io_service;
+        handle.getArgument("io_context", io_service);
+        RunScriptImpl::setIOService(io_service);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)
+            .arg(ex.what());
+        return (1);
+    }
+    return (0);
+}
+
+/// @brief dhcp6_srv_configured callout implementation.
+///
+/// @param handle callout handle.
+int dhcp6_srv_configured(CalloutHandle& handle) {
+    try {
+        isc::asiolink::IOServicePtr io_service;
+        handle.getArgument("io_context", io_service);
+        RunScriptImpl::setIOService(io_service);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)
+            .arg(ex.what());
+        return (1);
+    }
     return (0);
 }
 

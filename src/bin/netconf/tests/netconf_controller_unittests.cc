@@ -5,6 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <asiolink/testutils/timed_signal.h>
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_process.h>
 #include <cc/data.h>
@@ -12,12 +14,13 @@
 #include <boost/pointer_cast.hpp>
 #include <sstream>
 
-using namespace std;
+using namespace isc::asiolink::test;
 using namespace isc::netconf;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::process;
 using namespace boost::posix_time;
+using namespace std;
 
 namespace {
 

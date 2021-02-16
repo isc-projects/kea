@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <database/database_connection.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
@@ -15,8 +16,6 @@
 #include <exceptions/exceptions.h>
 #include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
-#include <util/process_spawn.h>
-#include <util/signal_set.h>
 #include <cstdio>
 #include <cstring>
 #include <errno.h>
@@ -106,7 +105,7 @@ private:
 
     /// @brief A pointer to the @c ProcessSpawn object used to execute
     /// the LFC.
-    boost::scoped_ptr<util::ProcessSpawn> process_;
+    boost::scoped_ptr<ProcessSpawn> process_;
 
     /// @brief A pointer to the callback function executed by the timer.
     asiolink::IntervalTimer::Callback callback_;
@@ -174,7 +173,7 @@ LFCSetup::setup(const uint32_t lfc_interval,
                                            lease_file6->getFilename();
 
     // Create the other names by appending suffixes to the base name.
-    util::ProcessArgs args;
+    ProcessArgs args;
     // Universe: v4 or v6.
     args.push_back(lease_file4 ? "-4" : "-6");
 
@@ -204,7 +203,7 @@ LFCSetup::setup(const uint32_t lfc_interval,
     args.push_back("ignored-path");
 
     // Create the process (do not start it yet).
-    process_.reset(new util::ProcessSpawn(executable, args));
+    process_.reset(new ProcessSpawn(LeaseMgr::getIOService(), executable, args));
 
     // If we've been told to run it once now, invoke the callback directly.
     if (run_once_now) {
@@ -630,7 +629,7 @@ const int Memfile_LeaseMgr::MAJOR_VERSION;
 const int Memfile_LeaseMgr::MINOR_VERSION;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : LeaseMgr(), lfc_setup_(), conn_(parameters), mutex_() {
+    : LeaseMgr(), lfc_setup_(), conn_(parameters), mutex_(new std::mutex) {
     bool conversion_needed = false;
 
     // Check the universe and use v4 file or v6 file.
@@ -666,8 +665,6 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
         }
         lfcSetup(conversion_needed);
     }
-
-    mutex_.reset(new std::mutex);
 }
 
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {

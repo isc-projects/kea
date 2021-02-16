@@ -12,6 +12,7 @@ if HAVE_GTEST
 noinst_LTLIBRARIES = libasiolinktest.la
 
 libasiolinktest_la_SOURCES  = test_server_unix_socket.cc test_server_unix_socket.h
+libasiolinktest_la_SOURCES += timed_signal.cc timed_signal.h
 
 libasiolinktest_la_CXXFLAGS = $(AM_CXXFLAGS)
 libasiolinktest_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)

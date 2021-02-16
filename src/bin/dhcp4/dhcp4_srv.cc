@@ -990,35 +990,9 @@ Dhcpv4Srv::run_one() {
         // second.
 
     } catch (const SignalInterruptOnSelect&) {
-        // Packet reception interrupted because a signal has been received.
-        // This is not an error because we might have received a SIGTERM,
-        // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
-        // signals that are not handled by the server we rely on the default
-        // behavior of the system.
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
-            .arg(signal_set_->getNext());
     } catch (const std::exception& e) {
         // Log all other errors.
         LOG_ERROR(packet4_logger, DHCP4_BUFFER_RECEIVE_FAIL).arg(e.what());
-    }
-
-    // Handle next signal received by the process. It must be called after
-    // an attempt to receive a packet to properly handle server shut down.
-    // The SIGTERM or SIGINT will be received prior to, or during execution
-    // of select() (select is invoked by receivePacket()). When that
-    // happens, select will be interrupted. The signal handler will be
-    // invoked immediately after select(). The handler will set the
-    // shutdown flag and cause the process to terminate before the next
-    // select() function is called. If the function was called before
-    // receivePacket the process could wait up to the duration of timeout
-    // of select() to terminate.
-    try {
-        handleSignal();
-    } catch (const std::exception& e) {
-        // Standard exception occurred. Let's be on the safe side to
-        // catch std::exception.
-        LOG_ERROR(dhcp4_logger, DHCP4_HANDLE_SIGNAL_EXCEPTION)
-            .arg(e.what());
     }
 
     // Timeout may be reached or signal received, which breaks select()

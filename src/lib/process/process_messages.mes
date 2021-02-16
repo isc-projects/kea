@@ -132,12 +132,6 @@ down. The argument specifies a name of the service.
 This is a debug message indicating the application has received a signal
 instructing it to shutdown.
 
-% DCTL_SIGNAL_ERROR signal handler for signal %1, threw an unexpected exception: %2
-This is an error message indicating that the application encountered an unexpected
-error after receiving a signal.  This is a programmatic error and should be
-reported.  While The application will likely continue to operating, it may be
-unable to respond correctly to signals.
-
 % DCTL_STANDALONE %1 skipping message queue, running standalone
 This is a debug message indicating that the controller is running in the
 application in standalone mode. This means it will not connected to the Kea

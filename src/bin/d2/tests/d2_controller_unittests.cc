@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/testutils/timed_signal.h>
 #include <cc/command_interpreter.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
@@ -18,6 +19,7 @@
 
 #include <sstream>
 
+using namespace isc::asiolink::test;
 using namespace isc::process;
 using namespace boost::posix_time;
 

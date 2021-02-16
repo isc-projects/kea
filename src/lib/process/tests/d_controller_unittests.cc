@@ -7,6 +7,7 @@
 #include <config.h>
 #include <kea_version.h>
 
+#include <asiolink/testutils/timed_signal.h>
 #include <cc/command_interpreter.h>
 #include <process/testutils/d_test_stubs.h>
 
@@ -15,6 +16,7 @@
 
 #include <sstream>
 
+using namespace isc::asiolink::test;
 using namespace boost::posix_time;
 
 namespace isc {

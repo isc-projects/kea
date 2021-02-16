@@ -33,7 +33,6 @@ extern const isc::log::MessageID DCTL_RUN_PROCESS = "DCTL_RUN_PROCESS";
 extern const isc::log::MessageID DCTL_SESSION_FAIL = "DCTL_SESSION_FAIL";
 extern const isc::log::MessageID DCTL_SHUTDOWN = "DCTL_SHUTDOWN";
 extern const isc::log::MessageID DCTL_SHUTDOWN_SIGNAL_RECVD = "DCTL_SHUTDOWN_SIGNAL_RECVD";
-extern const isc::log::MessageID DCTL_SIGNAL_ERROR = "DCTL_SIGNAL_ERROR";
 extern const isc::log::MessageID DCTL_STANDALONE = "DCTL_STANDALONE";
 extern const isc::log::MessageID DCTL_STARTING = "DCTL_STARTING";
 extern const isc::log::MessageID DCTL_UNSUPPORTED_SIGNAL = "DCTL_UNSUPPORTED_SIGNAL";
@@ -70,7 +69,6 @@ const char* values[] = {
     "DCTL_SESSION_FAIL", "%1 controller failed to establish Kea session: %1",
     "DCTL_SHUTDOWN", "%1 has shut down, pid: %2, version: %3",
     "DCTL_SHUTDOWN_SIGNAL_RECVD", "OS signal %1 received, starting shutdown",
-    "DCTL_SIGNAL_ERROR", "signal handler for signal %1, threw an unexpected exception: %2",
     "DCTL_STANDALONE", "%1 skipping message queue, running standalone",
     "DCTL_STARTING", "%1 starting, pid: %2, version: %3 (%4)",
     "DCTL_UNSUPPORTED_SIGNAL", "ignoring reception of unsupported signal: %1",

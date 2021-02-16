@@ -186,8 +186,6 @@ public:
         // stub implementation used in tests.
         cb_control_.reset(new TestCBControlDHCPv4());
     }
-
-    using ControlledDhcpv4Srv::signal_handler_;
 };
 
 /// @brief test class for Kea configuration backend
@@ -1060,7 +1058,7 @@ testBackendReconfiguration(const std::string& backend_first,
 
     // Explicitly calling signal handler for SIGHUP to trigger server
     // reconfiguration.
-    srv->signal_handler_(SIGHUP);
+    raise(SIGHUP);
 
     // The backend should have been created and its type should be
     // correct.

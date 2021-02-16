@@ -7,6 +7,7 @@
 #ifndef RUN_SCRIPT_H
 #define RUN_SCRIPT_H
 
+#include <asiolink/process_spawn.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/option6_ia.h>
@@ -15,7 +16,6 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/library_handle.h>
-#include <util/process_spawn.h>
 #include <string>
 
 namespace isc {
@@ -30,12 +30,19 @@ public:
     /// @brief Destructor.
     ~RunScriptImpl();
 
+    /// @brief Sets IO service to be used by the @ref ProcessSpawn instance.
+    ///
+    /// @param io_service The IOService object, used for all ASIO operations.
+    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
+        io_service_ = io_service;
+    }
+
     /// @brief Extract boolean data and append to environment.
     ///
     /// @param value The value to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractBoolean(isc::util::ProcessEnvVars& vars,
+    static void extractBoolean(isc::asiolink::ProcessEnvVars& vars,
                                const bool value,
                                const std::string& prefix = "",
                                const std::string& sufix = "");
@@ -45,7 +52,7 @@ public:
     /// @param value The value to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractInteger(isc::util::ProcessEnvVars& vars,
+    static void extractInteger(isc::asiolink::ProcessEnvVars& vars,
                                const uint64_t value,
                                const std::string& prefix = "",
                                const std::string& sufix = "");
@@ -55,7 +62,7 @@ public:
     /// @param value The value to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractString(isc::util::ProcessEnvVars& vars,
+    static void extractString(isc::asiolink::ProcessEnvVars& vars,
                               const std::string& value,
                               const std::string& prefix = "",
                               const std::string& sufix = "");
@@ -65,7 +72,7 @@ public:
     /// @param value The hwaddr to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractHWAddr(isc::util::ProcessEnvVars& vars,
+    static void extractHWAddr(isc::asiolink::ProcessEnvVars& vars,
                               const isc::dhcp::HWAddrPtr& hwaddr,
                               const std::string& prefix = "",
                               const std::string& sufix = "");
@@ -75,7 +82,7 @@ public:
     /// @param value The duid to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractDUID(isc::util::ProcessEnvVars& vars,
+    static void extractDUID(isc::asiolink::ProcessEnvVars& vars,
                             const isc::dhcp::DuidPtr duid,
                             const std::string& prefix = "",
                             const std::string& sufix = "");
@@ -85,7 +92,7 @@ public:
     /// @param value The option6IA to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractOptionIA(isc::util::ProcessEnvVars& vars,
+    static void extractOptionIA(isc::asiolink::ProcessEnvVars& vars,
                                 const isc::dhcp::Option6IAPtr option6IA,
                                 const std::string& prefix = "",
                                 const std::string& sufix = "");
@@ -95,7 +102,7 @@ public:
     /// @param value The subnet4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractSubnet4(isc::util::ProcessEnvVars& vars,
+    static void extractSubnet4(isc::asiolink::ProcessEnvVars& vars,
                                const isc::dhcp::Subnet4Ptr subnet4,
                                const std::string& prefix = "",
                                const std::string& sufix = "");
@@ -105,7 +112,7 @@ public:
     /// @param value The subnet6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractSubnet6(isc::util::ProcessEnvVars& vars,
+    static void extractSubnet6(isc::asiolink::ProcessEnvVars& vars,
                                const isc::dhcp::Subnet6Ptr subnet6,
                                const std::string& prefix = "",
                                const std::string& sufix = "");
@@ -115,7 +122,7 @@ public:
     /// @param value The lease4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractLease4(isc::util::ProcessEnvVars& vars,
+    static void extractLease4(isc::asiolink::ProcessEnvVars& vars,
                               const isc::dhcp::Lease4Ptr& lease4,
                               const std::string& prefix = "",
                               const std::string& sufix = "");
@@ -125,7 +132,7 @@ public:
     /// @param value The lease6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractLease6(isc::util::ProcessEnvVars& vars,
+    static void extractLease6(isc::asiolink::ProcessEnvVars& vars,
                               const isc::dhcp::Lease6Ptr& lease6,
                               const std::string& prefix = "",
                               const std::string& sufix = "");
@@ -135,7 +142,7 @@ public:
     /// @param value The leases4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractLeases4(isc::util::ProcessEnvVars& vars,
+    static void extractLeases4(isc::asiolink::ProcessEnvVars& vars,
                                const isc::dhcp::Lease4CollectionPtr& leases4,
                                const std::string& prefix = "",
                                const std::string& sufix = "");
@@ -145,7 +152,7 @@ public:
     /// @param value The leases6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractLeases6(isc::util::ProcessEnvVars& vars,
+    static void extractLeases6(isc::asiolink::ProcessEnvVars& vars,
                                const isc::dhcp::Lease6CollectionPtr& leases6,
                                const std::string& prefix = "",
                                const std::string& sufix = "");
@@ -155,7 +162,7 @@ public:
     /// @param value The pkt4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractPkt4(isc::util::ProcessEnvVars& vars,
+    static void extractPkt4(isc::asiolink::ProcessEnvVars& vars,
                             const isc::dhcp::Pkt4Ptr& pkt4,
                             const std::string& prefix = "",
                             const std::string& sufix = "");
@@ -165,7 +172,7 @@ public:
     /// @param value The pkt6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param sufix The sufix for the name of the environment variable.
-    static void extractPkt6(isc::util::ProcessEnvVars& vars,
+    static void extractPkt6(isc::asiolink::ProcessEnvVars& vars,
                             const isc::dhcp::Pkt6Ptr& pkt6,
                             const std::string& prefix = "",
                             const std::string& sufix = "");
@@ -175,8 +182,8 @@ public:
     /// @param args The arguments for the target script.
     /// @param vars The environment variables made available for the target
     /// script.
-    void runScript(const isc::util::ProcessArgs& args,
-                   const isc::util::ProcessEnvVars& vars);
+    void runScript(const isc::asiolink::ProcessArgs& args,
+                   const isc::asiolink::ProcessEnvVars& vars);
 
     /// @brief Set name of the target script.
     ///
@@ -219,6 +226,9 @@ private:
     /// exits, otherwise the call will return immediately after the script is
     /// started.
     bool sync_;
+
+    /// @brief The IOService object, used for all ASIO operations.
+    static isc::asiolink::IOServicePtr io_service_;
 };
 
 /// @brief The type of shared pointers to Run Script implementations.

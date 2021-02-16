@@ -12,7 +12,7 @@
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
-namespace process {
+namespace asiolink {
 
 /// @brief Defines a handler function for an IOSignal.
 typedef std::function<void(int signum)> IOSignalHandler;
@@ -48,7 +48,7 @@ private:
 /// @brief Defines a pointer to an IOSignalSet.
 typedef boost::shared_ptr<IOSignalSet> IOSignalSetPtr;
 
-}; // end of isc::process namespace
-}; // end of isc namespace
+} // namespace asiolink
+} // namespace isc
 
 #endif // IO_SERVICE_SIGNAL_H

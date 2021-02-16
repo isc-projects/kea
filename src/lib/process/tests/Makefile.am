@@ -28,7 +28,6 @@ libprocess_unittests_SOURCES += config_ctl_info_unittests.cc
 libprocess_unittests_SOURCES += config_ctl_parser_unittests.cc
 libprocess_unittests_SOURCES += d_controller_unittests.cc
 libprocess_unittests_SOURCES += daemon_unittest.cc
-libprocess_unittests_SOURCES += io_service_signal_unittests.cc
 libprocess_unittests_SOURCES += log_parser_unittests.cc
 libprocess_unittests_SOURCES += logging_info_unittests.cc
 libprocess_unittests_SOURCES += run_unittests.cc

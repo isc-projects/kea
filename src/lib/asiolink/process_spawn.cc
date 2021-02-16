@@ -6,22 +6,24 @@
 
 #include <config.h>
 
+#include <asiolink/io_service_signal.h>
+#include <asiolink/process_spawn.h>
 #include <exceptions/exceptions.h>
-#include <util/process_spawn.h>
-#include <util/signal_set.h>
 #include <cstring>
 #include <functional>
 #include <map>
+#include <mutex>
 #include <signal.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
+using namespace std;
 namespace ph = std::placeholders;
 
 namespace isc {
-namespace util {
+namespace asiolink {
 
 /// @brief Type for process state
 struct ProcessState {
@@ -37,11 +39,13 @@ struct ProcessState {
     int status_;
 };
 
+/// @brief ProcessStates container which stores a ProcessState for each process
+/// identified by PID.
 typedef std::map<pid_t, ProcessState> ProcessStates;
 
 /// @brief Implementation of the @c ProcessSpawn class.
 ///
-/// This pimpl idiom is used by the @c ProcessSpawn in this case to
+/// This impl idiom is used by the @c ProcessSpawn in this case to
 /// avoid exposing the internals of the implementation, such as
 /// custom handling of a SIGCHLD signal, and the conversion of the
 /// arguments of the executable from the STL container to the array.
@@ -60,7 +64,8 @@ public:
     /// @param executable A path to the program to be executed.
     /// @param args Arguments for the program to be executed.
     /// @param vars Environment variables for the program to be executed.
-    ProcessSpawnImpl(const std::string& executable,
+    ProcessSpawnImpl(IOServicePtr io_service,
+                     const std::string& executable,
                      const ProcessArgs& args,
                      const ProcessEnvVars& vars);
 
@@ -116,13 +121,6 @@ public:
 
 private:
 
-    /// @brief Access the single instance of the SignalSet which registers the
-    /// @ref waitForProcess function as the SIGCHLD signal handler.
-    ///
-    /// @return The single instance of the @ref SignalSet which handles the
-    /// SIGCHLD signal.
-    SignalSetPtr signalSet();
-
     /// @brief Copies the argument specified as a C++ string to the new
     /// C string.
     ///
@@ -147,8 +145,8 @@ private:
     /// was a different signal.
     bool waitForProcess(int signum);
 
-    /// @brief A signal set installing a handler for SIGCHLD.
-    SignalSetPtr signals_;
+    /// @brief ASIO signal set.
+    IOSignalSetPtr io_signal_set_;
 
     /// @brief A map holding the status codes of executed processes.
     ProcessStates process_state_;
@@ -167,13 +165,20 @@ private:
 
     /// @brief An storage container for all allocated C strings.
     std::vector<CStringPtr> storage_;
+
+    /// @brief Mutex to protect internal state.
+    boost::shared_ptr<std::mutex> mutex_;
 };
 
-ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
+ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
+                                   const std::string& executable,
                                    const ProcessArgs& args,
                                    const ProcessEnvVars& vars)
-    : signals_(signalSet()), process_state_(), executable_(executable),
-      args_(new char*[args.size() + 2]), vars_(new char*[vars.size() + 1]) {
+    : executable_(executable), args_(new char*[args.size() + 2]),
+      vars_(new char*[vars.size() + 1]), mutex_(new std::mutex) {
+    io_signal_set_.reset(new IOSignalSet(io_service,
+                                         std::bind(&ProcessSpawnImpl::waitForProcess,
+                                                   this, ph::_1)));
     // Conversion of the arguments to the C-style array we start by setting
     // all pointers within an array to NULL to indicate that they haven't
     // been allocated yet.
@@ -192,22 +197,6 @@ ProcessSpawnImpl::ProcessSpawnImpl(const std::string& executable,
 }
 
 ProcessSpawnImpl::~ProcessSpawnImpl() {
-}
-
-SignalSetPtr
-ProcessSpawnImpl::signalSet() {
-    static SignalSetPtr signals(new SignalSet(SIGCHLD));
-    auto registerHandle = [&]() -> bool {
-        // Set the handler which is invoked immediately when the signal
-        // is received.
-        signals->setOnReceiptHandler(std::bind(&ProcessSpawnImpl::waitForProcess,
-                                            this, ph::_1));
-        return (true);
-    };
-    static bool init = registerHandle();
-    (void)init;
-
-    return (signals);
 }
 
 std::string
@@ -258,8 +247,8 @@ ProcessSpawnImpl::spawn() {
 
     // We're in the parent process.
     try {
-        process_state_.insert(
-            std::pair<pid_t, ProcessState>(pid, ProcessState()));
+        lock_guard<std::mutex> lk(*mutex_);
+        process_state_.insert(std::pair<pid_t, ProcessState>(pid, ProcessState()));
     } catch(...) {
         pthread_sigmask(SIG_SETMASK, &osset, 0);
         throw;
@@ -270,6 +259,7 @@ ProcessSpawnImpl::spawn() {
 
 bool
 ProcessSpawnImpl::isRunning(const pid_t pid) const {
+    lock_guard<std::mutex> lk(*mutex_);
     ProcessStates::const_iterator proc = process_state_.find(pid);
     if (proc == process_state_.end()) {
         isc_throw(BadValue, "the process with the pid '" << pid
@@ -281,6 +271,7 @@ ProcessSpawnImpl::isRunning(const pid_t pid) const {
 
 bool
 ProcessSpawnImpl::isAnyRunning() const {
+    lock_guard<std::mutex> lk(*mutex_);
     for (ProcessStates::const_iterator proc = process_state_.begin();
          proc != process_state_.end(); ++proc) {
         if (proc->second.running_) {
@@ -292,6 +283,7 @@ ProcessSpawnImpl::isAnyRunning() const {
 
 int
 ProcessSpawnImpl::getExitStatus(const pid_t pid) const {
+    lock_guard<std::mutex> lk(*mutex_);
     ProcessStates::const_iterator proc = process_state_.find(pid);
     if (proc == process_state_.end()) {
         isc_throw(InvalidOperation, "the process with the pid '" << pid
@@ -325,6 +317,7 @@ ProcessSpawnImpl::waitForProcess(int signum) {
     // after this signal handler does his work.
     int errno_value = errno;
 
+    lock_guard<std::mutex> lk(*mutex_);
     for (;;) {
         int status = 0;
         pid_t pid = waitpid(-1, &status, WNOHANG);
@@ -359,13 +352,15 @@ ProcessSpawnImpl::clearState(const pid_t pid) {
         isc_throw(InvalidOperation, "unable to remove the status for the"
                   "process (pid: " << pid << ") which is still running");
     }
+    lock_guard<std::mutex> lk(*mutex_);
     process_state_.erase(pid);
 }
 
-ProcessSpawn::ProcessSpawn(const std::string& executable,
+ProcessSpawn::ProcessSpawn(IOServicePtr io_service,
+                           const std::string& executable,
                            const ProcessArgs& args,
                            const ProcessEnvVars& vars)
-    : impl_(new ProcessSpawnImpl(executable, args, vars)) {
+    : impl_(new ProcessSpawnImpl(io_service, executable, args, vars)) {
 }
 
 ProcessSpawn::~ProcessSpawn() {
@@ -401,5 +396,5 @@ ProcessSpawn::clearState(const pid_t pid) {
     return (impl_->clearState(pid));
 }
 
-}
-}
+} // namespace asiolink
+} // namespace isc

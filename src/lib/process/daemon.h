@@ -10,7 +10,7 @@
 #include <cc/data.h>
 #include <process/config_base.h>
 #include <util/pid_file.h>
-#include <util/signal_set.h>
+#include <asiolink/io_service_signal.h>
 #include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <string>
@@ -36,8 +36,8 @@ public:
 /// implementations should derive from it.
 ///
 /// Methods are not pure virtual, as we need to instantiate basic daemons (e.g.
-/// Dhcpv6Srv) in tests, without going through the hassles of implementing stub
-/// methods.
+/// Dhcpv4Srv and Dhcpv6Srv) in tests, without going through the hassles of
+/// implementing stub methods.
 ///
 /// Classes derived from @c Daemon may install custom signal handlers using
 /// @c isc::util::SignalSet class. This base class provides a declaration
@@ -232,31 +232,12 @@ public:
 
 protected:
 
-    /// @brief Invokes handler for the next received signal.
-    ///
-    /// This function provides a default implementation for the function
-    /// handling next signal received by the process. It checks if a pointer
-    /// to @c isc::util::SignalSet object and the signal handler function
-    /// have been set. If they have been set, the signal handler is invoked for
-    /// the the next signal registered in the @c SignalSet object.
-    ///
-    /// This function should be received in the main loop of the process.
-    virtual void handleSignal();
-
     /// @brief A pointer to the object installing custom signal handlers.
     ///
-    /// This pointer needs to be initialized to point to the @c SignalSet
+    /// This pointer needs to be initialized to point to the @c IOSignalSet
     /// object in the derived classes which need to handle signals received
     /// by the process.
-    isc::util::SignalSetPtr signal_set_;
-
-    /// @brief Pointer to the common signal handler invoked by the handleSignal
-    /// function.
-    ///
-    /// This pointer needs to be initialized to point to the signal handler
-    /// function for signals being handled by the process. If signal handler
-    /// it not initialized, the signals will not be handled.
-    isc::util::SignalHandler signal_handler_;
+    isc::asiolink::IOSignalSetPtr signal_set_;
 
     /// @brief Manufacture the pid file name
     std::string makePIDFileName() const;
@@ -292,7 +273,7 @@ private:
     int exit_value_;
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // namespace process
+} // namespace isc
 
 #endif

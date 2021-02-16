@@ -6,18 +6,21 @@
 
 #include <config.h>
 
-#include <process/io_service_signal.h>
-#include <process/testutils/d_test_stubs.h>
+#include <exceptions/exceptions.h>
+#include <asiolink/interval_timer.h>
+#include <asiolink/io_service_signal.h>
+#include <asiolink/testutils/timed_signal.h>
 
 #include <gtest/gtest.h>
 
 #include <functional>
 #include <queue>
 
+using namespace isc::asiolink::test;
 namespace ph = std::placeholders;
 
 namespace isc {
-namespace process {
+namespace asiolink {
 
 /// @brief Test fixture for testing the use of IO service signals.
 ///
@@ -256,5 +259,5 @@ TEST_F(IOSignalTest, mixedSignals) {
     EXPECT_EQ(sigusr2_cnt, (stop_at_count_/3));
 }
 
-}; // end of isc::process namespace
-}; // end of isc namespace
+} // namespace asiolink
+} // namespace isc

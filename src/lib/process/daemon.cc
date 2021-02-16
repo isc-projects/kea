@@ -36,7 +36,7 @@ std::string Daemon::proc_name_("");
 std::string Daemon::default_logger_name_("kea");
 
 Daemon::Daemon()
-    : signal_set_(), signal_handler_(), config_file_(""),
+    : signal_set_(), config_file_(""),
       pid_file_dir_(DATA_DIR), pid_file_(), am_file_author_(false),
       exit_value_(EXIT_SUCCESS) {
 
@@ -55,16 +55,9 @@ Daemon::~Daemon() {
 }
 
 void Daemon::cleanup() {
-
 }
 
 void Daemon::shutdown() {
-}
-
-void Daemon::handleSignal() {
-    if (signal_set_ && signal_handler_) {
-        signal_set_->handleNext(std::bind(signal_handler_, ph::_1));
-    }
 }
 
 void Daemon::configureLogger(const ConstElementPtr& log_config,

@@ -574,33 +574,8 @@ void Dhcpv6Srv::run_one() {
         // second.
 
     } catch (const SignalInterruptOnSelect&) {
-        // Packet reception interrupted because a signal has been received.
-        // This is not an error because we might have received a SIGTERM,
-        // SIGINT or SIGHUP which are handled by the server. For signals
-        // that are not handled by the server we rely on the default
-        // behavior of the system.
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_SIGNAL)
-            .arg(signal_set_->getNext());
     } catch (const std::exception& e) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
-    }
-
-    // Handle next signal received by the process. It must be called after
-    // an attempt to receive a packet to properly handle server shut down.
-    // The SIGTERM or SIGINT will be received prior to, or during execution
-    // of select() (select is invoked by receivePacket()). When that happens,
-    // select will be interrupted. The signal handler will be invoked
-    // immediately after select(). The handler will set the shutdown flag
-    // and cause the process to terminate before the next select() function
-    // is called. If the function was called before receivePacket the
-    // process could wait up to the duration of timeout of select() to
-    // terminate.
-    try {
-        handleSignal();
-    } catch (const std::exception& e) {
-        // An (a standard or ISC) exception occurred.
-        LOG_ERROR(dhcp6_logger, DHCP6_HANDLE_SIGNAL_EXCEPTION)
-            .arg(e.what());
     }
 
     // Timeout may be reached or signal received, which breaks select()

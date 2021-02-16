@@ -8,6 +8,7 @@
 
 #include <run_script.h>
 
+using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::util;
@@ -16,6 +17,8 @@ using namespace std;
 
 namespace isc {
 namespace run_script {
+
+IOServicePtr RunScriptImpl::io_service_;
 
 RunScriptImpl::RunScriptImpl() : name_(), sync_(false) {
 }
@@ -44,7 +47,7 @@ RunScriptImpl::configure(LibraryHandle& handle) {
 
 void
 RunScriptImpl::runScript(const ProcessArgs& args, const ProcessEnvVars& vars) {
-    ProcessSpawn process(name_, args, vars);
+    ProcessSpawn process(io_service_, name_, args, vars);
     process.spawn();
 }
 
