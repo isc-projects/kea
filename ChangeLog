@@ -1,8 +1,10 @@
-1861	[bug]*		tmark
+1861.	[bug]*		tmark
 	kea-dhcp4 now uses the value for each fixed field (e.g. next-server,
 	server-hostname, boot-file-name) from the first class in query's
 	list of classes that specifies the field. Prior to this it used
-	the value from the last class which specified the field.
+	the value from the last class which specified the field. It may
+	be necessary to revise existing configurations to get the desired
+	values.
 	(Gitlab #1672)
 
 Kea 1.9.4 (development) released on Jan 27, 2021

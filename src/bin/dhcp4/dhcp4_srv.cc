@@ -2918,11 +2918,12 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
 
         // Now we need to iterate over the classes assigned to the
         // query packet and find corresponding class definitions for it.
-        // We want the first value found for each field.
-        IOAddress next_server("0.0.0.0");
+        // We want the first value found for each field.  We track how
+        // many we've found so we can stop if we have all three.
+        IOAddress next_server = IOAddress::IPV4_ZERO_ADDRESS();
         string sname;
         string filename;
-        size_t found_cnt = 0;
+        size_t found_cnt = 0;  // How many fields we have found.
         for (ClientClasses::const_iterator name = classes.cbegin();
              name != classes.cend() && found_cnt < 3; ++name) {
 
