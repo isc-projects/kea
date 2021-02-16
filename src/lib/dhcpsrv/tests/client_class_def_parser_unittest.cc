@@ -1341,7 +1341,14 @@ TEST_F(ClientClassDefParserTest, validLifetimeTests) {
             ClientClassDefPtr class_def;
             ASSERT_NO_THROW_LOG(class_def = parseClientClassDef(oss.str(), AF_INET));
             ASSERT_TRUE(class_def);
-            EXPECT_EQ(class_def->getValid(), scenario.exp_triplet_);
+            if (scenario.exp_triplet_.unspecified()) {
+                EXPECT_TRUE(class_def->getValid().unspecified());
+            } else {
+                EXPECT_EQ(class_def->getValid(), scenario.exp_triplet_);
+                EXPECT_EQ(class_def->getValid().getMin(), scenario.exp_triplet_.getMin());
+                EXPECT_EQ(class_def->getValid().get(), scenario.exp_triplet_.get());
+                EXPECT_EQ(class_def->getValid().getMax(), scenario.exp_triplet_.getMax());
+            }
         }
     }
 }
