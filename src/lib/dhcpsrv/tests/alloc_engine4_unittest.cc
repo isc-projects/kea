@@ -4281,6 +4281,133 @@ TEST_F(AllocEngine4Test, requestCacheHostname4) {
     detailCompareLease(lease, from_mgr);
 }
 
+// Verifies that AllocEngine::getValidLft(ctx4) returns the appropriate
+// lifetime value based on the context content:
+// -# If the query is BOOTP, it returns INFINITY_LFT
+// -# The value from the first class, assigned to the client, which
+// valid-lifetime. Classes are searched in the order they are assigned
+// to the client.
+// -# The value from DHO_DHCP_LEASE_TIME if it was specified in the query
+// -# The value from the subnet assigned to the client (following
+TEST_F(AllocEngine4Test, getValidLft4) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+    // Let's make three classes, two with valid-lifetime and one without,
+    // and add them to the dictionary.
+    ClientClassDictionaryPtr dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+
+    ClientClassDefPtr class_def(new ClientClassDef("valid_one", ExpressionPtr()));
+    Triplet<uint32_t>valid_one(125,150,175);
+    class_def->setValid(valid_one);
+    dictionary->addClass(class_def);
+
+    class_def.reset(new ClientClassDef("valid_two", ExpressionPtr()));
+    Triplet<uint32_t>valid_two(225,250,275);
+    class_def->setValid(valid_two);
+    dictionary->addClass(class_def);
+
+    class_def.reset(new ClientClassDef("valid_unspec", ExpressionPtr()));
+    dictionary->addClass(class_def);
+
+    CfgMgr::instance().commit();
+
+
+    // iterate over various class assignments and verify the correct value is
+    // being used.
+    struct Scenario {
+        std::string desc_;
+        std::vector<std::string> classes_;
+        OptionPtr lease_time_opt_;
+        uint32_t exp_valid_;
+    };
+
+    subnet_->setValid(Triplet<uint32_t>(500,1000,1500));
+    OptionUint32Ptr client_opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 1050));
+    OptionUint32Ptr opt_too_small(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 450));
+    OptionUint32Ptr opt_too_big(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 1550));
+
+    std::vector<Scenario> scenarios = {
+        {
+            "BOOTP",
+            {"BOOTP"},
+            OptionPtr(),
+            Lease::INFINITY_LFT
+        },
+        {
+            "no classes, no option",
+            {},
+            OptionPtr(),
+            subnet_->getValid()
+        },
+        {
+            "no classes, option",
+            {},
+            client_opt,
+            client_opt->getValue()
+        },
+        {
+            "no classes, option too small",
+            {},
+            opt_too_small,
+            subnet_->getValid().getMin()
+        },
+        {
+            "no classes, option too big",
+            {},
+            opt_too_big,
+            subnet_->getValid().getMax()
+        },
+        {
+            "valid_unspec, no option",
+            { "valid_unspec" },
+            OptionPtr(),
+            subnet_->getValid()
+        },
+        {
+            "valid_one, valid_unspec, no option",
+            { "valid_unspec", "valid_one" },
+            OptionPtr(),
+            valid_one.get()
+        },
+        {
+            "valid_one, valid_two, no option",
+            { "valid_one", "valid_two" },
+            OptionPtr(),
+            valid_one.get()
+        },
+        {
+            "valid_two, valid_one, no option",
+            { "valid_two", "valid_one" },
+            OptionPtr(),
+            valid_two.get()
+        }
+    };
+
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.desc_); {
+            // Create a context;
+            AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
+                                            IOAddress("0.0.0.0"), false, false,
+                                            "", false);
+            ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+
+            // Add client classes (if any)
+            for (auto class_name : scenario.classes_) {
+                ctx.query_->addClass(class_name);
+            }
+
+            // Add client option (if one)
+            if (scenario.lease_time_opt_) {
+                ctx.query_->addOption(scenario.lease_time_opt_);
+            }
+
+            Lease4Ptr lease = engine.allocateLease4(ctx);
+            ASSERT_TRUE(lease);
+            EXPECT_EQ(lease->valid_lft_, scenario.exp_valid_);
+        }
+    }
+}
+
 }  // namespace test
 }  // namespace dhcp
 }  // namespace isc

@@ -3840,6 +3840,45 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     return (new_lease);
 }
 
+uint32_t
+AllocEngine::getValidLft(const ClientContext4& ctx) {
+
+    // If it's BOOTP, use infinite valid lifetime.
+    if (ctx.query_->inClass("BOOTP")) {
+        return(Lease::INFINITY_LFT);
+    }
+
+    // If the value is specified in one of our classes use it.
+    // Use the value from the first class that specifies it.
+    const ClientClasses classes = ctx.query_->getClasses();
+    if (!classes.empty()) {
+        // Let's get class definitions
+        const ClientClassDictionaryPtr& dict =
+            CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+
+        // Iterate over the assigned class defintions.
+        for (ClientClasses::const_iterator name = classes.cbegin();
+             name != classes.cend(); ++name) {
+            ClientClassDefPtr cl = dict->findClass(*name);
+            if (cl && (!cl->getValid().unspecified())) {
+                return(cl->getValid());
+            }
+        }
+    }
+
+    // Use the dhcp-lease-time content from the client if it's there.
+    OptionPtr opt = ctx.query_->getOption(DHO_DHCP_LEASE_TIME);
+    if (opt) {
+        OptionUint32Ptr opt_lft = boost::dynamic_pointer_cast<OptionInt<uint32_t> >(opt);
+        if (opt_lft) {
+            return(ctx.subnet_->getValid().get(opt_lft->getValue()));
+        }
+    }
+
+    // Use the value from the subnet (or above).
+    return (ctx.subnet_->getValid());
+}
+
 Lease4Ptr
 AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
                           CalloutHandle::CalloutNextStep& callout_status) {
@@ -3850,23 +3889,8 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
         isc_throw(BadValue, "Can't create a lease without a subnet");
     }
 
-    uint32_t valid_lft;
-    if (ctx.query_->inClass("BOOTP")) {
-        // BOOTP uses infinite valid lifetime.
-        valid_lft = Lease::INFINITY_LFT;
-    } else {
-        // Use the dhcp-lease-time content or the default for lease length.
-        OptionPtr opt = ctx.query_->getOption(DHO_DHCP_LEASE_TIME);
-        OptionUint32Ptr opt_lft;
-        if (opt) {
-            opt_lft = boost::dynamic_pointer_cast<OptionInt<uint32_t> >(opt);
-        }
-        if (opt_lft) {
-            valid_lft = ctx.subnet_->getValid().get(opt_lft->getValue());
-        } else {
-            valid_lft = ctx.subnet_->getValid();
-        }
-    }
+    // Get the context appropriate valid lifetime.
+    uint32_t valid_lft = getValidLft(ctx);
 
     time_t now = time(NULL);
 
@@ -4411,22 +4435,10 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
         lease->client_id_ = ClientIdPtr();
     }
     lease->cltt_ = time(NULL);
-    if (ctx.query_->inClass("BOOTP")) {
-        // BOOTP uses infinite valid lifetime.
-        lease->valid_lft_ = Lease::INFINITY_LFT;
-    } else {
-        // Use the dhcp-lease-time content or the default for lease length.
-        OptionPtr opt = ctx.query_->getOption(DHO_DHCP_LEASE_TIME);
-        OptionUint32Ptr opt_lft;
-        if (opt) {
-            opt_lft = boost::dynamic_pointer_cast<OptionInt<uint32_t> >(opt);
-        }
-        if (opt_lft) {
-            lease->valid_lft_ = ctx.subnet_->getValid().get(opt_lft->getValue());
-        } else {
-            lease->valid_lft_ = ctx.subnet_->getValid();
-        }
-    }
+
+    // Get the context appropriate valid lifetime.
+    lease->valid_lft_ = getValidLft(ctx);
+
     // Reduced valid lifetime is a significant change.
     if (lease->valid_lft_ < lease->current_valid_lft_) {
         changed = true;

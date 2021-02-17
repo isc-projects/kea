@@ -1624,6 +1624,19 @@ public:
     /// @return Pointer to the reservation found, or an empty pointer.
     static ConstHostPtr findGlobalReservation(ClientContext4& ctx);
 
+    /// @brief Returns the valid lifetime based on the v4 context
+    ///
+    /// The value returned is as follows:
+    /// -# If the query is BOOTP, it returns INFINITY_LFT
+    /// -# The value from the first class, assigned to the client, which
+    /// valid-lifetime. Classes are searched in the order they are assigned
+    /// to the client.
+    /// -# The value from DHO_DHCP_LEASE_TIME if it was specified in the query
+    /// -# The value from the subnet assigned to the client (following
+    /// inheritnance upward as necessary).
+    /// @param ctx Client context holding various information about the client.
+    static uint32_t getValidLft(const ClientContext4& ctx);
+
 private:
 
     /// @brief Offers the lease.
