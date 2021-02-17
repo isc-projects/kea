@@ -45,7 +45,7 @@ typedef std::map<pid_t, ProcessState> ProcessStates;
 
 /// @brief Implementation of the @c ProcessSpawn class.
 ///
-/// This impl idiom is used by the @c ProcessSpawn in this case to
+/// This pimpl idiom is used by the @c ProcessSpawn in this case to
 /// avoid exposing the internals of the implementation, such as
 /// custom handling of a SIGCHLD signal, and the conversion of the
 /// arguments of the executable from the STL container to the array.

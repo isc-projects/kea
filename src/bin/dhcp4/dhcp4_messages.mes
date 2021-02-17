@@ -39,12 +39,11 @@ buffer holding the DHCPv4 message. The arguments specify the source and
 destination IPv4 addresses as well as the interface over which the buffer has
 been received.
 
-% DHCP4_BUFFER_WAIT_SIGNAL signal received while waiting for next packet, next waiting signal is %1
+% DHCP4_BUFFER_WAIT_SIGNAL signal received while waiting for next packet
 This debug message is issued when the server was waiting for the
 packet, but the wait has been interrupted by the signal received
 by the process. The signal will be handled before the server starts
-waiting for next packets. The argument specifies the next signal to
-be handled by the server.
+waiting for next packets.
 
 % DHCP4_CB_ON_DEMAND_FETCH_UPDATES_FAIL error on demand attempt to fetch configuration updates from the configuration backend(s): %1
 This error message is issued when the server attempted to fetch
