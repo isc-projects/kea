@@ -45,6 +45,11 @@ extern const isc::log::MessageID ALLOC_ENGINE_V4_REQUEST_USE_HR = "ALLOC_ENGINE_
 extern const isc::log::MessageID ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA = "ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_ERROR = "ALLOC_ENGINE_V6_ALLOC_ERROR";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL = "ALLOC_ENGINE_V6_ALLOC_FAIL";
+extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS = "ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS";
+extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_SHARED_NETWORK = "ALLOC_ENGINE_V6_ALLOC_FAIL_SHARED_NETWORK";
+extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET = "ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET";
+extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET_POOLS_UNAVAIL = "ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET_POOLS_UNAVAIL";
+extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET_TRIED = "ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET_TRIED";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS = "ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_LEASES_HR = "ALLOC_ENGINE_V6_ALLOC_LEASES_HR";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR = "ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR";
@@ -123,7 +128,12 @@ const char* values[] = {
     "ALLOC_ENGINE_V4_REQUEST_USE_HR", "client %1 hasn't requested specific address, using reserved address %2",
     "ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA", "%1: reusing expired lease, updated lease information: %2",
     "ALLOC_ENGINE_V6_ALLOC_ERROR", "%1: error during attempt to allocate an IPv6 address: %2",
-    "ALLOC_ENGINE_V6_ALLOC_FAIL", "%1: failed to allocate an IPv6 address after %2 attempt(s)",
+    "ALLOC_ENGINE_V6_ALLOC_FAIL", "%1: failed to allocate an IPv6 lease after %2 attempt(s)",
+    "ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS", "%1: no pools were available for the lease allocation",
+    "ALLOC_ENGINE_V6_ALLOC_FAIL_SHARED_NETWORK", "%1: failed to allocate an IPv6 lease in the shared network %2",
+    "ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET", "%1: failed to allocate an IPv6 lease in the subnet with id %2",
+    "ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET_POOLS_UNAVAIL", "%1: no suitable pools found in the subnet with id %2",
+    "ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET_TRIED", "%1: no available leases found in the subnet with id %2",
     "ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS", "%1: lease type %2 for reserved address/prefix %3 already exists",
     "ALLOC_ENGINE_V6_ALLOC_LEASES_HR", "leases and static reservations found for client %1",
     "ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR", "no reservations found but leases exist for client %1",

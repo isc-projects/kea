@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,7 +36,7 @@ This message may indicate that your address pool is too small for the
 number of clients you are trying to service and should be expanded.
 Alternatively, if the you know that the number of concurrently active
 clients is less than the addresses you have available, you may want to
-consider reducing the lease lifetime.  In this way, addresses allocated
+consider reducing the lease lifetime. This way, addresses allocated
 to clients that are no longer active on the network will become available
 sooner.
 
@@ -298,21 +298,87 @@ reason for the failure being contained in the message.  The server will
 return a message to the client refusing a lease. The first argument
 includes the client identification information.
 
-% ALLOC_ENGINE_V6_ALLOC_FAIL %1: failed to allocate an IPv6 address after %2 attempt(s)
-The DHCP allocation engine gave up trying to allocate an IPv6 address
-after the specified number of attempts.  This probably means that the
-address pool from which the allocation is being attempted is either
-empty, or very nearly empty.  As a result, the client will have been
-refused a lease. The first argument includes the client identification
-information.
+% ALLOC_ENGINE_V6_ALLOC_FAIL %1: failed to allocate an IPv6 lease after %2 attempt(s)
+This is an old warning message issued when the allocation engine fails to allocate a
+lease for a client. This message includes a number of lease allocation attempts
+that the engine made before giving up. If the number of attempts is 0 because the
+engine was unable to use any of the pools for the particular client, this message
+is not logged. Even though, several more detailed logs precede this message, it was
+left for backward compatibility.
 
-This message may indicate that your address pool is too small for the
-number of clients you are trying to service and should be expanded.
-Alternatively, if the you know that the number of concurrently active
-clients is less than the addresses you have available, you may want to
-consider reducing the lease lifetime.  In this way, addresses allocated
-to clients that are no longer active on the network will become available
+This message may indicate that your pool is too small for the number of clients
+you are trying to service and should be expanded. Alternatively, if the you know
+that the number of concurrently active clients is less than the leases you have
+available, you may want to consider reducing the lease lifetime. This way, leases
+allocated to clients that are no longer active on the network will become available
 sooner.
+
+% ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS %1: no pools were available for the lease allocation
+This warning message is issued when the allocation engine fails to
+allocate a lease because it could not use any configured pools for the
+particular client. It is also possible that all of the subnets from
+which the allocation engine attempted to assign an address lack address
+pools. In this case, it should be considered misconfiguration if an
+operator expects that some clients should be assigned dynamic addresses.
+A subnet may lack any pools only when all clients should be assigned
+reserved leases.
+
+Suppose the subnets connected to a shared network or a single subnet to
+which the client belongs have pools configured. In that case, this
+message is an indication that none of the pools could be used for the
+client because the client does not belong to appropriate client classes.
+
+% ALLOC_ENGINE_V6_ALLOC_FAIL_SHARED_NETWORK %1: failed to allocate an IPv6 lease in the shared network %2
+This warning message is issued when the allocation engine fails to allocate
+a lease for a client connected to a shared network. The first argument
+includes the client identification information. The second argument specifies
+the shared network name. The shared network should contain at least one subnet,
+but typically it aggregates multiple subnets. This log message indicates that
+the allocation engine could not find and allocate any suitable lease in any of
+the subnets within the shared network.
+
+Further log messages print the subnets in this shared network from which the
+allocation engine attempted to assign a lease. The allocation engine does not
+use the subnets in the shared network, which are unavailable to the DHCP client
+due to non-matching client classes. Such subnets are not included in the log
+messages following this message. In the extreme case, the allocation engine
+may use none of the subnets in the shared network for the lease allocation.
+It is the case when the address pools are available to certain client classes,
+but the requesting client does not belong to them. A suitable log message
+informing about the occurrence of this situation is issued after this log
+message.
+
+% ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET %1: failed to allocate an IPv6 lease in the subnet with id %2
+This warning message is issued when the allocation engine fails to allocate
+a lease for a client connected to a subnet that does not belong to a shared
+network. The first argument includes the client identification information.
+The second argument specifies the subnet identifier.
+
+There are many reasons for failing lease allocations. One of them may be the
+pools exhaustion or existing reservations for the free leases. However, in
+some cases, the allocation engine may fail to find a suitable pool for the
+client when the pools are only available to certain client classes, but the
+requesting client does not belong to them. Further log messages provide more
+information to distinguish between these different cases.
+
+% ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET_POOLS_UNAVAIL %1: no suitable pools found in the subnet with id %2
+This warning message is issued when the allocation engine fails to allocate
+a lease for a client connected to a shared network. The engine tried to
+allocate leases from different subnets belonging to this shared network,
+but the pools in some of the subnets were apparently guarded by client classes
+that the client did not belong to. All such subnets are logged with this
+message. The log message includes the client identification information
+and a subnet identifier.
+
+% ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET_TRIED %1: no available leases found in the subnet with id %2
+This warning message is issued when the allocation engine fails to allocate
+a lease for a client connected to a shared network. The engine tried to
+allocate addresses from different subnets belonging to this shared network
+and having a matching client class. This message is logged for each such
+subnet. It is not logged for the subnets from which the engine did not try
+to assign a lease because of the non-matching client classes. The log
+message includes the client identification information and a subnet
+identifier.
 
 % ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS %1: lease type %2 for reserved address/prefix %3 already exists
 This debug message is issued when the allocation engine determines that
