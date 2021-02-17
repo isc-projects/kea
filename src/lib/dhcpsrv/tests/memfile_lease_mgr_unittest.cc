@@ -522,7 +522,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     EXPECT_EQ(new_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    setTestTime(100);
+    setTestTime(500);
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -603,7 +603,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     EXPECT_EQ(new_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    setTestTime(100);
+    setTestTime(500);
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())

@@ -167,7 +167,7 @@ const char* values[] = {
     "DHCP6_ALREADY_RUNNING", "%1 already running? %2",
     "DHCP6_BUFFER_RECEIVED", "received buffer from %1:%2 to %3:%4 over interface %5",
     "DHCP6_BUFFER_UNPACK", "parsing buffer received from %1 to %2 over interface %3",
-    "DHCP6_BUFFER_WAIT_SIGNAL", "signal received while waiting for next packet, next waiting signal is %1",
+    "DHCP6_BUFFER_WAIT_SIGNAL", "signal received while waiting for next packet",
     "DHCP6_CB_ON_DEMAND_FETCH_UPDATES_FAIL", "error on demand attempt to fetch configuration updates from the configuration backend(s): %1",
     "DHCP6_CB_PERIODIC_FETCH_UPDATES_FAIL", "error on periodic attempt to fetch configuration updates from the configuration backend(s): %1",
     "DHCP6_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED", "maximum number of configuration fetch attempts: 10, has been exhausted without success",
