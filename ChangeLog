@@ -76,6 +76,8 @@
 	existing configurations to get the desired values.
 	(Gitlab #1672)
 
+=======
+>>>>>>> [#1635] Fixed trailing whitespace in ChangeLog
 Kea 1.9.4 (development) released on Jan 27, 2021
 
 1860.	[build]		razvan
