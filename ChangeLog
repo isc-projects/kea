@@ -1,11 +1,4 @@
 1864.	[func]		fdupont
-	New parameters to handle upcoming TLS support added in
-	Control Agent config: "trust-anchor", "cert-file",
-	"key-file" and "cert-required". They can be configured,
-	but their values are not used yet. This will be
-	implemented in a future ticket.
-
-1863.	[func]		fdupont
 	New parameters to handle TLS support added in Control Agent
 	config: "trust-anchor", "cert-file", "key-file" and
 	"cert-required". They can be configured, but their values are
