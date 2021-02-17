@@ -1,3 +1,9 @@
+1869.	[func]		tmark
+	Kea-dhcp4 now supports specifying valid-lifetime in client
+	classes.  Prior to this it could only be specified at the
+	global, shared-network, and subnet scopes.
+	(Gitlab #1635)
+
 1868.	[func]		andrei
 	The forensic log hook library has gained an auto-increment
 	primary key column in it's logs table. It is now able to function

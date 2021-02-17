@@ -1626,15 +1626,21 @@ public:
 
     /// @brief Returns the valid lifetime based on the v4 context
     ///
-    /// The value returned is as follows:
-    /// -# If the query is BOOTP, it returns INFINITY_LFT
-    /// -# The value from the first class, assigned to the client, which
-    /// valid-lifetime. Classes are searched in the order they are assigned
-    /// to the client.
-    /// -# The value from DHO_DHCP_LEASE_TIME if it was specified in the query
-    /// -# The value from the subnet assigned to the client (following
-    /// inheritnance upward as necessary).
+    /// If the client query is a BOOTP query, the value returned will
+    /// be Lease::INFINITY_LFT.
+    ///
+    /// Otherwise, a candidate triplet will be selected from the first
+    /// class matched to the query which defines it or from the subnet
+    /// if none do. Classes are searched in the order they are assigned
+    /// to the query.
+    ///
+    /// If the client requested a lifetime value via DHCP option 51, then the
+    /// lifetime value returned will be the requested value bounded by
+    /// the candidate triplet.  If the client did not request a value, then
+    /// it simply returns the candidate triplet's default value.
+    ///
     /// @param ctx Client context holding various information about the client.
+    /// @return unsigned integer value of the valid lifetime to use
     static uint32_t getValidLft(const ClientContext4& ctx);
 
 private:

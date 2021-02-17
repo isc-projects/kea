@@ -4282,13 +4282,7 @@ TEST_F(AllocEngine4Test, requestCacheHostname4) {
 }
 
 // Verifies that AllocEngine::getValidLft(ctx4) returns the appropriate
-// lifetime value based on the context content:
-// -# If the query is BOOTP, it returns INFINITY_LFT
-// -# The value from the first class, assigned to the client, which
-// valid-lifetime. Classes are searched in the order they are assigned
-// to the client.
-// -# The value from DHO_DHCP_LEASE_TIME if it was specified in the query
-// -# The value from the subnet assigned to the client (following
+// lifetime value based on the context content.
 TEST_F(AllocEngine4Test, getValidLft4) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
@@ -4297,92 +4291,103 @@ TEST_F(AllocEngine4Test, getValidLft4) {
     ClientClassDictionaryPtr dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
 
     ClientClassDefPtr class_def(new ClientClassDef("valid_one", ExpressionPtr()));
-    Triplet<uint32_t>valid_one(125,150,175);
+    Triplet<uint32_t>valid_one(50,100,150);
     class_def->setValid(valid_one);
     dictionary->addClass(class_def);
 
     class_def.reset(new ClientClassDef("valid_two", ExpressionPtr()));
-    Triplet<uint32_t>valid_two(225,250,275);
+    Triplet<uint32_t>valid_two(200,250,300);
     class_def->setValid(valid_two);
     dictionary->addClass(class_def);
 
     class_def.reset(new ClientClassDef("valid_unspec", ExpressionPtr()));
     dictionary->addClass(class_def);
 
+    // Commit our class changes.
     CfgMgr::instance().commit();
 
+    // Update the subnet's triplet to something more useful.
+    subnet_->setValid(Triplet<uint32_t>(500,1000,1500));
 
-    // iterate over various class assignments and verify the correct value is
-    // being used.
+    // Describes a test scenario.
     struct Scenario {
-        std::string desc_;
-        std::vector<std::string> classes_;
-        OptionPtr lease_time_opt_;
-        uint32_t exp_valid_;
+        std::string desc_;                  // descriptive text for logging
+        std::vector<std::string> classes_;  // class list of assigned classes
+        uint32_t requested_lft_;            // use as option 51 is > 0
+        uint32_t exp_valid_;                // expected lifetime
     };
 
-    subnet_->setValid(Triplet<uint32_t>(500,1000,1500));
-    OptionUint32Ptr client_opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 1050));
-    OptionUint32Ptr opt_too_small(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 450));
-    OptionUint32Ptr opt_too_big(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 1550));
-
+    // Scenarios to test.
     std::vector<Scenario> scenarios = {
         {
             "BOOTP",
             {"BOOTP"},
-            OptionPtr(),
+            0,
             Lease::INFINITY_LFT
         },
         {
             "no classes, no option",
             {},
-            OptionPtr(),
+            0,
             subnet_->getValid()
         },
         {
             "no classes, option",
             {},
-            client_opt,
-            client_opt->getValue()
+            subnet_->getValid().getMin() + 50,
+            subnet_->getValid().getMin() + 50
         },
         {
             "no classes, option too small",
             {},
-            opt_too_small,
+            subnet_->getValid().getMin() - 50,
             subnet_->getValid().getMin()
         },
         {
             "no classes, option too big",
             {},
-            opt_too_big,
+            subnet_->getValid().getMax() + 50,
             subnet_->getValid().getMax()
         },
         {
-            "valid_unspec, no option",
+            "class unspecified, no option",
             { "valid_unspec" },
-            OptionPtr(),
+            0,
             subnet_->getValid()
         },
         {
-            "valid_one, valid_unspec, no option",
+            "from last class, no option",
             { "valid_unspec", "valid_one" },
-            OptionPtr(),
+            0,
             valid_one.get()
         },
         {
-            "valid_one, valid_two, no option",
-            { "valid_one", "valid_two" },
-            OptionPtr(),
-            valid_one.get()
-        },
-        {
-            "valid_two, valid_one, no option",
+            "from first class, no option",
             { "valid_two", "valid_one" },
-            OptionPtr(),
+            0,
             valid_two.get()
+        },
+        {
+            "class plus option",
+            {"valid_one"},
+            valid_one.getMin() + 25,
+            valid_one.getMin() + 25
+        },
+        {
+            "class plus option too small",
+            {"valid_one"},
+            valid_one.getMin() - 25,
+            valid_one.getMin()
+        },
+        {
+            "class plus option too big",
+            {"valid_one"},
+            valid_one.getMax() + 25,
+            valid_one.getMax()
         }
     };
 
+    // Iterate over the scenarios and verify the correct outcome.
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             // Create a context;
@@ -4397,8 +4402,10 @@ TEST_F(AllocEngine4Test, getValidLft4) {
             }
 
             // Add client option (if one)
-            if (scenario.lease_time_opt_) {
-                ctx.query_->addOption(scenario.lease_time_opt_);
+            if (scenario.requested_lft_) {
+                OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME,
+                                                     scenario.requested_lft_));
+                ctx.query_->addOption(opt);
             }
 
             Lease4Ptr lease = engine.allocateLease4(ctx);

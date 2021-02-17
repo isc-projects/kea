@@ -3848,8 +3848,20 @@ AllocEngine::getValidLft(const ClientContext4& ctx) {
         return(Lease::INFINITY_LFT);
     }
 
-    // If the value is specified in one of our classes use it.
-    // Use the value from the first class that specifies it.
+    // Use the dhcp-lease-time content from the client if it's there.
+    uint32_t requested_lft = 0;
+    OptionPtr opt = ctx.query_->getOption(DHO_DHCP_LEASE_TIME);
+    if (opt) {
+        OptionUint32Ptr opt_lft = boost::dynamic_pointer_cast<OptionInt<uint32_t> >(opt);
+        if (opt_lft) {
+            requested_lft = opt_lft->getValue();
+        }
+    }
+
+
+    // If the triplet is specified in one of our classes use it.
+    // We use the first one we find.
+    Triplet<uint32_t>candidate_lft;
     const ClientClasses classes = ctx.query_->getClasses();
     if (!classes.empty()) {
         // Let's get class definitions
@@ -3861,22 +3873,25 @@ AllocEngine::getValidLft(const ClientContext4& ctx) {
              name != classes.cend(); ++name) {
             ClientClassDefPtr cl = dict->findClass(*name);
             if (cl && (!cl->getValid().unspecified())) {
-                return(cl->getValid());
+                candidate_lft = cl->getValid();
+                break;
             }
         }
     }
 
-    // Use the dhcp-lease-time content from the client if it's there.
-    OptionPtr opt = ctx.query_->getOption(DHO_DHCP_LEASE_TIME);
-    if (opt) {
-        OptionUint32Ptr opt_lft = boost::dynamic_pointer_cast<OptionInt<uint32_t> >(opt);
-        if (opt_lft) {
-            return(ctx.subnet_->getValid().get(opt_lft->getValue()));
-        }
+    // If no classes specified it, get it from the subnet.
+    if (!candidate_lft) {
+        candidate_lft = ctx.subnet_->getValid();
     }
 
-    // Use the value from the subnet (or above).
-    return (ctx.subnet_->getValid());
+    // If client requested a value, use the value bounded by
+    // the candidate triplet.
+    if (requested_lft > 0) {
+        return(candidate_lft.get(requested_lft));
+    }
+
+    // Use the candidate's default value.
+    return (candidate_lft.get());
 }
 
 Lease4Ptr

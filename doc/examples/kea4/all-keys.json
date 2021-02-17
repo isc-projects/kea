@@ -45,7 +45,16 @@
 
                 // Class selection expression. The DHCP packet is assigned to this
                 // class when the given expression evaluates to true.
-                "test": "member('HA_server1')"
+                "test": "member('HA_server1')",
+
+                // Class valid lifetime.
+                "valid-lifetime": 6000,
+
+                // Class min valid lifetime.
+                "min-valid-lifetime": 4000,
+
+                // Class max valid lifetime.
+                "max-valid-lifetime": 8000
             },
             {
                 // Default value of the class specific bootfile name. Empty name
