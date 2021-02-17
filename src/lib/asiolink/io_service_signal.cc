@@ -20,9 +20,8 @@ namespace isc {
 namespace asiolink {
 
 /// @brief Implementation class of IOSignalSet.
-class IOSignalSetImpl :
-    public boost::enable_shared_from_this<IOSignalSetImpl>,
-    public boost::noncopyable {
+class IOSignalSetImpl : public boost::enable_shared_from_this<IOSignalSetImpl>,
+                        public boost::noncopyable {
 public:
     /// @brief Constructor.
     ///
@@ -31,15 +30,20 @@ public:
     IOSignalSetImpl(IOServicePtr io_service, IOSignalHandler handler);
 
     /// @brief Destructor.
-    ~IOSignalSetImpl(){}
+    ~IOSignalSetImpl() = default;
 
     /// @brief Install the callback on the IO service queue.
     void install();
 
-    /// @brief Add a signal in the ASIO signal set.
+    /// @brief Add a signal to the ASIO signal set.
     ///
     /// @param signum the signal number.
     void add(int signum);
+
+    /// @brief Remove a signal from the ASIO signal set.
+    ///
+    /// @param signum the signal number.
+    void remove(int signum);
 
 private:
     /// @brief the ASIO signal set.
@@ -85,8 +89,18 @@ IOSignalSetImpl::add(int signum) {
     try {
         signal_set_.add(signum);
     } catch (const boost::system::system_error& ex) {
-        isc_throw(isc::Unexpected, "Failed to add signal " << signum
-                  << ": " << ex.what());
+        isc_throw(isc::Unexpected,
+                  "Failed to add signal " << signum << ": " << ex.what());
+    }
+}
+
+void
+IOSignalSetImpl::remove(int signum) {
+    try {
+        signal_set_.remove(signum);
+    } catch (const boost::system::system_error& ex) {
+        isc_throw(isc::Unexpected,
+                  "Failed to add signal " << signum << ": " << ex.what());
     }
 }
 
@@ -96,13 +110,14 @@ IOSignalSet::IOSignalSet(IOServicePtr io_service, IOSignalHandler handler) :
     impl_->install();
 }
 
-IOSignalSet::~IOSignalSet() {
-    impl_.reset();
-}
-
 void
 IOSignalSet::add(int signum) {
     impl_->add(signum);
+}
+
+void
+IOSignalSet::remove(int signum) {
+    impl_->remove(signum);
 }
 
 } // namespace asiolink

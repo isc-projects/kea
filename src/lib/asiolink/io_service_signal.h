@@ -32,13 +32,19 @@ public:
     IOSignalSet(asiolink::IOServicePtr io_service, IOSignalHandler handler);
 
     /// @brief Destructor.
-    ~IOSignalSet();
+    ~IOSignalSet() = default;
 
     /// @brief Add a signal to the list of signals to handle.
     ///
     /// @param signum Signal number.
     /// @throw Unexpected on error.
     void add(int signum);
+
+    /// @brief Remove a signal from the list of signals to handle.
+    ///
+    /// @param signum Signal number.
+    /// @throw Unexpected on error.
+    void remove(int signum);
 
 private:
     /// @brief Pointer to the implementation.

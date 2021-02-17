@@ -195,7 +195,7 @@ public:
     /// @brief Get name of the target script.
     ///
     /// @return The name of the target script.
-    std::string getName() {
+    std::string getName() const {
         return (name_);
     }
 
@@ -209,7 +209,7 @@ public:
     /// @brief Get the synchronous call mode for the target script.
     ///
     /// @return The synchronous call mode for the target script.
-    bool getSync() {
+    bool getSync() const {
         return (sync_);
     }
 

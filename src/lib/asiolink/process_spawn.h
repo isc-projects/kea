@@ -87,8 +87,10 @@ public:
     /// or when the executable does not exist. If the process ends successfully
     /// the EXIT_SUCCESS is returned.
     ///
+    /// @param dismiss The flag which indicated if the process status can be
+    /// disregarded.
     /// @throw ProcessSpawnError if forking a current process failed.
-    pid_t spawn();
+    pid_t spawn(bool dismiss = false);
 
     /// @brief Checks if the process is still running.
     ///

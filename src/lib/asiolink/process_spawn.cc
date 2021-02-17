@@ -86,9 +86,11 @@ public:
     /// or when the executable does not exist. If the process ends successfully
     /// the EXIT_SUCCESS is returned.
     ///
+    /// @param dismiss The flag which indicated if the process status can be
+    /// disregarded.
     /// @return PID of the spawned process.
     /// @throw ProcessSpawnError if forking a current process failed.
-    pid_t spawn();
+    pid_t spawn(bool dismiss);
 
     /// @brief Checks if the process is still running.
     ///
@@ -146,9 +148,6 @@ private:
     /// was a different signal.
     bool waitForProcess(int signum);
 
-    /// @brief ASIO signal set.
-    IOSignalSetPtr io_signal_set_;
-
     /// @brief A map holding the status codes of executed processes.
     ProcessStates process_state_;
 
@@ -169,6 +168,9 @@ private:
 
     /// @brief Mutex to protect internal state.
     boost::shared_ptr<std::mutex> mutex_;
+
+    /// @brief ASIO signal set.
+    IOSignalSetPtr io_signal_set_;
 };
 
 ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
@@ -176,10 +178,10 @@ ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
                                    const ProcessArgs& args,
                                    const ProcessEnvVars& vars)
     : executable_(executable), args_(new char*[args.size() + 2]),
-      vars_(new char*[vars.size() + 1]), mutex_(new std::mutex) {
-    io_signal_set_.reset(new IOSignalSet(io_service,
-                                         std::bind(&ProcessSpawnImpl::waitForProcess,
-                                                   this, ph::_1)));
+      vars_(new char*[vars.size() + 1]), mutex_(new std::mutex),
+      io_signal_set_(new IOSignalSet(io_service,
+                                     std::bind(&ProcessSpawnImpl::waitForProcess,
+                                               this, ph::_1))) {
     io_signal_set_->add(SIGCHLD);
 
     // Conversion of the arguments to the C-style array we start by setting
@@ -200,6 +202,7 @@ ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
 }
 
 ProcessSpawnImpl::~ProcessSpawnImpl() {
+    io_signal_set_->remove(SIGCHLD);
 }
 
 std::string
@@ -218,7 +221,7 @@ ProcessSpawnImpl::getCommandLine() const {
 }
 
 pid_t
-ProcessSpawnImpl::spawn() {
+ProcessSpawnImpl::spawn(bool dismiss) {
     // Protect us against SIGCHLD signals
     sigset_t sset;
     sigset_t osset;
@@ -250,12 +253,14 @@ ProcessSpawnImpl::spawn() {
     }
 
     // We're in the parent process.
-    try {
-        lock_guard<std::mutex> lk(*mutex_);
-        process_state_.insert(std::pair<pid_t, ProcessState>(pid, ProcessState()));
-    } catch(...) {
-        pthread_sigmask(SIG_SETMASK, &osset, 0);
-        throw;
+    if (!dismiss) {
+        try {
+            lock_guard<std::mutex> lk(*mutex_);
+            process_state_.insert(std::pair<pid_t, ProcessState>(pid, ProcessState()));
+        } catch(...) {
+            pthread_sigmask(SIG_SETMASK, &osset, 0);
+            throw;
+        }
     }
     pthread_sigmask(SIG_SETMASK, &osset, 0);
     return (pid);
@@ -358,8 +363,8 @@ ProcessSpawn::getCommandLine() const {
 }
 
 pid_t
-ProcessSpawn::spawn() {
-    return (impl_->spawn());
+ProcessSpawn::spawn(bool dismiss) {
+    return (impl_->spawn(dismiss));
 }
 
 bool

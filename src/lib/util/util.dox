@@ -50,7 +50,7 @@ The utilities library (libkea-util) provides generic and Kea utilities:
 
  - read-write mutex (header only).
 
- - signal set: signal handling (please use @c isc::process::IOSignalSet
+ - signal set: signal handling (please use @c isc::asiolink::IOSignalSet
   instead).
 
  - staged values.
