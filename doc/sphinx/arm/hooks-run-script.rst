@@ -10,34 +10,19 @@ The library is available since Kea 1.9.5 and can be loaded in a
 similar way as other hook libraries by the ``kea-dhcp4`` and
 ``kea-dhcp6`` processes.
 
-::
+.. code-block:: json
 
-    "Dhcp4": {
+    {
         "hooks-libraries": [
-            {   "library": "/usr/local/lib/libdhcp_run_script.so",
+            {
+                "library": "/usr/local/lib/libdhcp_run_script.so",
                 "parameters": {
                     "name": "/path_to/script_name.sh",
                     "sync": false
                 }
-            },
-            ...
+            }
         ]
     }
-
-::
-
-    "Dhcp6": {
-        "hooks-libraries": [
-            {   "library": "/usr/local/lib/libdhcp_run_script.so",
-                "parameters": {
-                    "name": "/path_to/script_name.sh",
-                    "sync": false
-                }
-            },
-            ...
-        ]
-    }
-
 
 The parameters contain the 'name' which indicates the path to the external
 script to be called on each hookpoint, and also the 'sync' option to be able
@@ -46,12 +31,10 @@ If the 'sync' parameter is false, then the script will be launched and Kea
 will not wait for the execution to finish, causing all the OUT parameters of
 the script (including next step) to be ignored.
 
-
 .. note::
 
    Currently the functionality underneath 'sync' parameter is not implemented
    and enabling synchronous calls to external script is not supported.
-
 
 .. _hooks-run-script-hook-points:
 
@@ -620,5 +603,3 @@ lease6_decline
    LEASE6_PREFERRED_LIFETIME
    LEASE6_PREFIX_LEN
    LEASE6_TYPE
-
-

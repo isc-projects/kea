@@ -28,7 +28,7 @@ public:
     RunScriptImpl();
 
     /// @brief Destructor.
-    ~RunScriptImpl();
+    ~RunScriptImpl() = default;
 
     /// @brief Sets IO service to be used by the @ref ProcessSpawn instance.
     ///

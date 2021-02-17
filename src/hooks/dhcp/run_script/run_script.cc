@@ -23,9 +23,6 @@ IOServicePtr RunScriptImpl::io_service_;
 RunScriptImpl::RunScriptImpl() : name_(), sync_(false) {
 }
 
-RunScriptImpl::~RunScriptImpl() {
-}
-
 void
 RunScriptImpl::configure(LibraryHandle& handle) {
     ConstElementPtr name = handle.getParameter("name");
