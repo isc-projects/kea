@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <cstring>
 #include <limits>
+#include <list>
 #include <sstream>
 #include <stdint.h>
 #include <string.h>
@@ -4196,8 +4197,19 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     Subnet4Ptr original_subnet = subnet;
 
     uint64_t total_attempts = 0;
-    while (subnet) {
 
+    // subnets_tried tracks the ids of the subnets for which the allocation engine
+    // has made an attempt to allocate a lease. The first value of the pair is a
+    // subnet id. The second value in the pair is a pool capacity provided the
+    // client belongs to certain classes. The value of 0 indicates that no pool
+    // had any addresses available for that client. Other value indicates that
+    // a number of attempts were made but no address could be assigned because
+    // the addresses were either reserved to other clients or there were valid
+    // leases for these addresses. Based on this information we will be able to
+    // produce a meaningful log message to an operator.
+    std::list<std::pair<uint32_t, uint64_t> > subnets_tried;
+
+    while (subnet) {
         ClientIdPtr client_id;
         if (subnet->getMatchClientId()) {
             client_id = ctx.clientid_;
@@ -4211,6 +4223,10 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         if (possible_attempts == 0) {
             max_attempts = 0;
         }
+
+        // Remember an id of the current subnet and how many leases are potentially
+        // available for this client.
+        subnets_tried.push_back(std::make_pair(subnet->getID(), max_attempts));
 
         CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
@@ -4276,10 +4292,56 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         }
     }
 
-    // Unable to allocate an address, return an empty lease.
-    LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL)
-        .arg(ctx.query_->getLabel())
-        .arg(total_attempts);
+    if (network) {
+        // The client is in the shared network. Let's log the high level message
+        // indicating which shared network the client belongs to.
+        LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_SHARED_NETWORK)
+            .arg(ctx.query_->getLabel())
+            .arg(network->getName());
+
+        // The allocation engine could have tried several subnets in this shared
+        // network. We want to log which subnets it tried to use.
+        for (auto subnet_tried : subnets_tried) {
+            // If the allocation engine tried allocate any addresses in this subnet
+            // we want to indicate that the failure was related to a problem with
+            // allocations rather than with access to the address pools. Otherwise,
+            // we want to log that there were zero attempts to allocate a lease,
+            // which is likely because address pools were guarded by the client
+            // classes that the client did not belong to.
+            if (subnet_tried.second > 0) {
+                LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET_TRIED)
+                    .arg(ctx.query_->getLabel())
+                    .arg(subnet_tried.first);
+            } else {
+                LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET_POOLS_UNAVAIL)
+                    .arg(ctx.query_->getLabel())
+                    .arg(subnet_tried.first);
+            }
+        }
+
+    } else {
+        // The client is not connected to a shared network. It is connected
+        // to a subnet. Let's log the ID of that subnet.
+        LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET)
+            .arg(ctx.query_->getLabel())
+            .arg(ctx.subnet_->getID());
+    }
+    if (total_attempts == 0) {
+        // In this case, it seems that none of the pools in the subnets could
+        // be used for that client, both in case the client is connected to
+        // a shared network or to a single subnet. Apparently, the client was
+        // rejected to use the pools because of the client classes' mismatch.
+        LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_NO_POOLS)
+            .arg(ctx.query_->getLabel());
+    } else {
+        // This is an old log message which provides a number of attempts
+        // made by the allocation engine to allocate a lease. The only case
+        // when we don't want to log this message is when the number of
+        // attempts is zero (condition above), because it would look silly.
+        LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL)
+            .arg(ctx.query_->getLabel())
+            .arg(total_attempts);
+    }
 
     const ClientClasses& classes = ctx.query_->getClasses();
     if (!classes.empty()) {
