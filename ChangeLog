@@ -1,3 +1,11 @@
+1863.	[func]		andrei
+	The perfdhcp tool now supports the -x l option that exports the
+	assigned leases to stdout in CSV format. This new capability is
+	very useful for the ongoing DB cluster experiments, where we need
+	to correlate leases between multiple Kea instances sharing the
+	same cluster.
+	(Gitlab #1703)
+
 1862.	[build]		andrei
 	Added execution permissions to the upgrade scripts in Kea's
 	installation. Previously kea-admin db-upgrade would fail with a
