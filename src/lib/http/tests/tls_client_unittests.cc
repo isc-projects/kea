@@ -514,6 +514,9 @@ public:
             io_service_.stop();
             // The server should have returned an IO error.
             EXPECT_TRUE(ec);
+            if (!ec) {
+                ADD_FAILURE() << "asyncSendRequest didn't fail";
+            }
         }));
 
         // Actually trigger the request.
@@ -1129,12 +1132,12 @@ TEST_F(HttpsClientTest, multipleDestinationsMultiThreading) {
 }
 
 // Test that idle connection can be resumed for second request.
-TEST_F(HttpsClientTest, idleConnection) {
+TEST_F(HttpsClientTest, DISABLED_idleConnection) {
     ASSERT_NO_FATAL_FAILURE(testIdleConnection());
 }
 
 // Test that idle connection can be resumed for second request.
-TEST_F(HttpsClientTest, idleConnectionMultiThreading) {
+TEST_F(HttpsClientTest, DISABLED_idleConnectionMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     ASSERT_NO_FATAL_FAILURE(testIdleConnection());
 }
@@ -1181,14 +1184,14 @@ TEST_F(HttpsClientTest, clientRequestTimeoutMultiThreading) {
 // This test verifies the behavior of the HTTP client when the premature
 // (and unexpected) timeout occurs. The premature timeout may be caused
 // by the system clock move.
-TEST_F(HttpsClientTest, clientRequestLateStartNoQueue) {
+TEST_F(HttpsClientTest, DISABLED_clientRequestLateStartNoQueue) {
     testClientRequestLateStart(false);
 }
 
 // This test verifies the behavior of the HTTP client when the premature
 // (and unexpected) timeout occurs. The premature timeout may be caused
 // by the system clock move.
-TEST_F(HttpsClientTest, clientRequestLateStartNoQueueMultiThreading) {
+TEST_F(HttpsClientTest, DISABLED_clientRequestLateStartNoQueueMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     testClientRequestLateStart(false);
 }
