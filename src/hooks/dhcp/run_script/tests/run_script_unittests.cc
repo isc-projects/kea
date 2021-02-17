@@ -294,15 +294,15 @@ TEST(RunScript, testSetSyncGetSync) {
 TEST(RunScript, extractBoolean) {
     ProcessEnvVars vars;
     bool flag = false;
-    RunScriptImpl::extractBoolean(vars, flag, "FALSE_PREFIX", "_FALSE_SUFIX");
+    RunScriptImpl::extractBoolean(vars, flag, "FALSE_PREFIX", "_FALSE_SUFFIX");
     ASSERT_EQ(1, vars.size());
-    string expected = "FALSE_PREFIX_FALSE_SUFIX=0\n";
+    string expected = "FALSE_PREFIX_FALSE_SUFFIX=false\n";
     EXPECT_EQ(expected, join(vars));
     flag = true;
-    RunScriptImpl::extractBoolean(vars, flag, "TRUE_PREFIX", "_TRUE_SUFIX");
+    RunScriptImpl::extractBoolean(vars, flag, "TRUE_PREFIX", "_TRUE_SUFFIX");
     ASSERT_EQ(2, vars.size());
-    expected = "FALSE_PREFIX_FALSE_SUFIX=0\n"
-               "TRUE_PREFIX_TRUE_SUFIX=1\n";
+    expected = "FALSE_PREFIX_FALSE_SUFFIX=false\n"
+               "TRUE_PREFIX_TRUE_SUFFIX=true\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -310,22 +310,22 @@ TEST(RunScript, extractBoolean) {
 TEST(RunScript, extractInteger) {
     ProcessEnvVars vars;
     uint64_t value = 0;
-    RunScriptImpl::extractInteger(vars, value, "ZERO_PREFIX", "_ZERO_SUFIX");
+    RunScriptImpl::extractInteger(vars, value, "ZERO_PREFIX", "_ZERO_SUFFIX");
     ASSERT_EQ(1, vars.size());
-    string expected = "ZERO_PREFIX_ZERO_SUFIX=0\n";
+    string expected = "ZERO_PREFIX_ZERO_SUFFIX=0\n";
     EXPECT_EQ(expected, join(vars));
     value = 1;
-    RunScriptImpl::extractInteger(vars, value, "ONE_PREFIX", "_ONE_SUFIX");
+    RunScriptImpl::extractInteger(vars, value, "ONE_PREFIX", "_ONE_SUFFIX");
     ASSERT_EQ(2, vars.size());
-    expected = "ZERO_PREFIX_ZERO_SUFIX=0\n"
-               "ONE_PREFIX_ONE_SUFIX=1\n";
+    expected = "ZERO_PREFIX_ZERO_SUFFIX=0\n"
+               "ONE_PREFIX_ONE_SUFFIX=1\n";
     EXPECT_EQ(expected, join(vars));
     value = 1000;
-    RunScriptImpl::extractInteger(vars, value, "THOUSAND_PREFIX", "_THOUSAND_SUFIX");
+    RunScriptImpl::extractInteger(vars, value, "THOUSAND_PREFIX", "_THOUSAND_SUFFIX");
     ASSERT_EQ(3, vars.size());
-    expected = "ZERO_PREFIX_ZERO_SUFIX=0\n"
-               "ONE_PREFIX_ONE_SUFIX=1\n"
-               "THOUSAND_PREFIX_THOUSAND_SUFIX=1000\n";
+    expected = "ZERO_PREFIX_ZERO_SUFFIX=0\n"
+               "ONE_PREFIX_ONE_SUFFIX=1\n"
+               "THOUSAND_PREFIX_THOUSAND_SUFFIX=1000\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -333,15 +333,15 @@ TEST(RunScript, extractInteger) {
 TEST(RunScript, extractString) {
     ProcessEnvVars vars;
     string value = "";
-    RunScriptImpl::extractString(vars, value, "EMPTY_PREFIX", "_EMPTY_SUFIX");
+    RunScriptImpl::extractString(vars, value, "EMPTY_PREFIX", "_EMPTY_SUFFIX");
     ASSERT_EQ(1, vars.size());
-    string expected = "EMPTY_PREFIX_EMPTY_SUFIX=\n";
+    string expected = "EMPTY_PREFIX_EMPTY_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     value = "SOMETHING";
-    RunScriptImpl::extractString(vars, value, "NON_EMPTY_PREFIX", "_NON_EMPTY_SUFIX");
+    RunScriptImpl::extractString(vars, value, "NON_EMPTY_PREFIX", "_NON_EMPTY_SUFFIX");
     ASSERT_EQ(2, vars.size());
-    expected = "EMPTY_PREFIX_EMPTY_SUFIX=\n"
-               "NON_EMPTY_PREFIX_NON_EMPTY_SUFIX=SOMETHING\n";
+    expected = "EMPTY_PREFIX_EMPTY_SUFFIX=\n"
+               "NON_EMPTY_PREFIX_NON_EMPTY_SUFFIX=SOMETHING\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -349,17 +349,17 @@ TEST(RunScript, extractString) {
 TEST(RunScript, extractHWAddr) {
     ProcessEnvVars vars;
     HWAddrPtr hwaddr;
-    RunScriptImpl::extractHWAddr(vars, hwaddr, "HWADDR_PREFIX", "_HWADDR_SUFIX");
+    RunScriptImpl::extractHWAddr(vars, hwaddr, "HWADDR_PREFIX", "_HWADDR_SUFFIX");
     ASSERT_EQ(2, vars.size());
-    string expected = "HWADDR_PREFIX_HWADDR_SUFIX=\n"
-                      "HWADDR_PREFIX_TYPE_HWADDR_SUFIX=\n";
+    string expected = "HWADDR_PREFIX_HWADDR_SUFFIX=\n"
+                      "HWADDR_PREFIX_TYPE_HWADDR_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     hwaddr = generateHWAddr();
-    RunScriptImpl::extractHWAddr(vars, hwaddr, "HWADDR_PREFIX", "_HWADDR_SUFIX");
+    RunScriptImpl::extractHWAddr(vars, hwaddr, "HWADDR_PREFIX", "_HWADDR_SUFFIX");
     ASSERT_EQ(2, vars.size());
-    expected = "HWADDR_PREFIX_HWADDR_SUFIX=00:01:02:03\n"
-               "HWADDR_PREFIX_TYPE_HWADDR_SUFIX=1\n";
+    expected = "HWADDR_PREFIX_HWADDR_SUFFIX=00:01:02:03\n"
+               "HWADDR_PREFIX_TYPE_HWADDR_SUFFIX=1\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -367,15 +367,15 @@ TEST(RunScript, extractHWAddr) {
 TEST(RunScript, extractDUID) {
     ProcessEnvVars vars;
     DuidPtr duid;
-    RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFIX");
+    RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFFIX");
     ASSERT_EQ(1, vars.size());
-    string expected = "DUID_PREFIX_DUID_SUFIX=\n";
+    string expected = "DUID_PREFIX_DUID_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     duid = generateDUID();
-    RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFIX");
+    RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFFIX");
     ASSERT_EQ(1, vars.size());
-    expected = "DUID_PREFIX_DUID_SUFIX=00:01:02:03:04:05:06\n";
+    expected = "DUID_PREFIX_DUID_SUFFIX=00:01:02:03:04:05:06\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -383,21 +383,21 @@ TEST(RunScript, extractDUID) {
 TEST(RunScript, extractOptionIA) {
     ProcessEnvVars vars;
     Option6IAPtr optionia;
-    RunScriptImpl::extractOptionIA(vars, optionia, "OPTIONIA_PREFIX", "_OPTIONIA_SUFIX");
+    RunScriptImpl::extractOptionIA(vars, optionia, "OPTIONIA_PREFIX", "_OPTIONIA_SUFFIX");
     ASSERT_EQ(4, vars.size());
-    string expected = "OPTIONIA_PREFIX_IAID_OPTIONIA_SUFIX=\n"
-                      "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFIX=\n"
-                      "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFIX=\n"
-                      "OPTIONIA_PREFIX_IA_T2_OPTIONIA_SUFIX=\n";
+    string expected = "OPTIONIA_PREFIX_IAID_OPTIONIA_SUFFIX=\n"
+                      "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFFIX=\n"
+                      "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFFIX=\n"
+                      "OPTIONIA_PREFIX_IA_T2_OPTIONIA_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     optionia = generateOptionIA();
-    RunScriptImpl::extractOptionIA(vars, optionia, "OPTIONIA_PREFIX", "_OPTIONIA_SUFIX");
+    RunScriptImpl::extractOptionIA(vars, optionia, "OPTIONIA_PREFIX", "_OPTIONIA_SUFFIX");
     ASSERT_EQ(4, vars.size());
-    expected = "OPTIONIA_PREFIX_IAID_OPTIONIA_SUFIX=2711790500\n"
-               "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFIX=3\n"
-               "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFIX=2164392708\n"
-               "OPTIONIA_PREFIX_IA_T2_OPTIONIA_SUFIX=2214789633\n";
+    expected = "OPTIONIA_PREFIX_IAID_OPTIONIA_SUFFIX=2711790500\n"
+               "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFFIX=3\n"
+               "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFFIX=2164392708\n"
+               "OPTIONIA_PREFIX_IA_T2_OPTIONIA_SUFFIX=2214789633\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -405,21 +405,21 @@ TEST(RunScript, extractOptionIA) {
 TEST(RunScript, extractSubnet4) {
     ProcessEnvVars vars;
     Subnet4Ptr subnet4;
-    RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4_PREFIX", "_SUBNET4_SUFIX");
+    RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4_PREFIX", "_SUBNET4_SUFFIX");
     ASSERT_EQ(4, vars.size());
-    string expected = "SUBNET4_PREFIX_ID_SUBNET4_SUFIX=\n"
-                      "SUBNET4_PREFIX_NAME_SUBNET4_SUFIX=\n"
-                      "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFIX=\n"
-                      "SUBNET4_PREFIX_PREFIX_LEN_SUBNET4_SUFIX=\n";
+    string expected = "SUBNET4_PREFIX_ID_SUBNET4_SUFFIX=\n"
+                      "SUBNET4_PREFIX_NAME_SUBNET4_SUFFIX=\n"
+                      "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFFIX=\n"
+                      "SUBNET4_PREFIX_PREFIX_LEN_SUBNET4_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     subnet4 = generateSubnet4();
-    RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4_PREFIX", "_SUBNET4_SUFIX");
+    RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4_PREFIX", "_SUBNET4_SUFFIX");
     ASSERT_EQ(4, vars.size());
-    expected = "SUBNET4_PREFIX_ID_SUBNET4_SUFIX=6\n"
-               "SUBNET4_PREFIX_NAME_SUBNET4_SUFIX=182.168.0.1/2\n"
-               "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFIX=182.168.0.1\n"
-               "SUBNET4_PREFIX_PREFIX_LEN_SUBNET4_SUFIX=2\n";
+    expected = "SUBNET4_PREFIX_ID_SUBNET4_SUFFIX=6\n"
+               "SUBNET4_PREFIX_NAME_SUBNET4_SUFFIX=182.168.0.1/2\n"
+               "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFFIX=182.168.0.1\n"
+               "SUBNET4_PREFIX_PREFIX_LEN_SUBNET4_SUFFIX=2\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -427,21 +427,21 @@ TEST(RunScript, extractSubnet4) {
 TEST(RunScript, extractSubnet6) {
     ProcessEnvVars vars;
     Subnet6Ptr subnet6;
-    RunScriptImpl::extractSubnet6(vars, subnet6, "SUBNET6_PREFIX", "_SUBNET6_SUFIX");
+    RunScriptImpl::extractSubnet6(vars, subnet6, "SUBNET6_PREFIX", "_SUBNET6_SUFFIX");
     ASSERT_EQ(4, vars.size());
-    string expected = "SUBNET6_PREFIX_ID_SUBNET6_SUFIX=\n"
-                      "SUBNET6_PREFIX_NAME_SUBNET6_SUFIX=\n"
-                      "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFIX=\n"
-                      "SUBNET6_PREFIX_PREFIX_LEN_SUBNET6_SUFIX=\n";
+    string expected = "SUBNET6_PREFIX_ID_SUBNET6_SUFFIX=\n"
+                      "SUBNET6_PREFIX_NAME_SUBNET6_SUFFIX=\n"
+                      "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFFIX=\n"
+                      "SUBNET6_PREFIX_PREFIX_LEN_SUBNET6_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     subnet6 = generateSubnet6();
-    RunScriptImpl::extractSubnet6(vars, subnet6, "SUBNET6_PREFIX", "_SUBNET6_SUFIX");
+    RunScriptImpl::extractSubnet6(vars, subnet6, "SUBNET6_PREFIX", "_SUBNET6_SUFFIX");
     ASSERT_EQ(4, vars.size());
-    expected = "SUBNET6_PREFIX_ID_SUBNET6_SUFIX=7\n"
-               "SUBNET6_PREFIX_NAME_SUBNET6_SUFIX=2003:db8::1/2\n"
-               "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFIX=2003:db8::1\n"
-               "SUBNET6_PREFIX_PREFIX_LEN_SUBNET6_SUFIX=2\n";
+    expected = "SUBNET6_PREFIX_ID_SUBNET6_SUFFIX=7\n"
+               "SUBNET6_PREFIX_NAME_SUBNET6_SUFFIX=2003:db8::1/2\n"
+               "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFFIX=2003:db8::1\n"
+               "SUBNET6_PREFIX_PREFIX_LEN_SUBNET6_SUFFIX=2\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -449,31 +449,31 @@ TEST(RunScript, extractSubnet6) {
 TEST(RunScript, extractLease4) {
     ProcessEnvVars vars;
     Lease4Ptr lease4;
-    RunScriptImpl::extractLease4(vars, lease4, "LEASE4_PREFIX", "_LEASE4_SUFIX");
+    RunScriptImpl::extractLease4(vars, lease4, "LEASE4_PREFIX", "_LEASE4_SUFFIX");
     ASSERT_EQ(9, vars.size());
-    string expected = "LEASE4_PREFIX_ADDRESS_LEASE4_SUFIX=\n"
-                      "LEASE4_PREFIX_CLTT_LEASE4_SUFIX=\n"
-                      "LEASE4_PREFIX_HOSTNAME_LEASE4_SUFIX=\n"
-                      "LEASE4_PREFIX_HWADDR_LEASE4_SUFIX=\n"
-                      "LEASE4_PREFIX_HWADDR_TYPE_LEASE4_SUFIX=\n"
-                      "LEASE4_PREFIX_STATE_LEASE4_SUFIX=\n"
-                      "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFIX=\n"
-                      "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFIX=\n"
-                      "LEASE4_PREFIX_CLIENT_ID_LEASE4_SUFIX=\n";
+    string expected = "LEASE4_PREFIX_ADDRESS_LEASE4_SUFFIX=\n"
+                      "LEASE4_PREFIX_CLTT_LEASE4_SUFFIX=\n"
+                      "LEASE4_PREFIX_HOSTNAME_LEASE4_SUFFIX=\n"
+                      "LEASE4_PREFIX_HWADDR_LEASE4_SUFFIX=\n"
+                      "LEASE4_PREFIX_HWADDR_TYPE_LEASE4_SUFFIX=\n"
+                      "LEASE4_PREFIX_STATE_LEASE4_SUFFIX=\n"
+                      "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFFIX=\n"
+                      "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFFIX=\n"
+                      "LEASE4_PREFIX_CLIENT_ID_LEASE4_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     lease4 = generateLease4();
-    RunScriptImpl::extractLease4(vars, lease4, "LEASE4_PREFIX", "_LEASE4_SUFIX");
+    RunScriptImpl::extractLease4(vars, lease4, "LEASE4_PREFIX", "_LEASE4_SUFFIX");
     ASSERT_EQ(9, vars.size());
-    expected = "LEASE4_PREFIX_ADDRESS_LEASE4_SUFIX=192.168.0.1\n"
-               "LEASE4_PREFIX_CLTT_LEASE4_SUFIX=3\n"
-               "LEASE4_PREFIX_HOSTNAME_LEASE4_SUFIX=test.hostname\n"
-               "LEASE4_PREFIX_HWADDR_LEASE4_SUFIX=00:01:02:03\n"
-               "LEASE4_PREFIX_HWADDR_TYPE_LEASE4_SUFIX=1\n"
-               "LEASE4_PREFIX_STATE_LEASE4_SUFIX=default\n"
-               "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFIX=4\n"
-               "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFIX=2\n"
-               "LEASE4_PREFIX_CLIENT_ID_LEASE4_SUFIX=00:01:02:03:04:05:06\n";
+    expected = "LEASE4_PREFIX_ADDRESS_LEASE4_SUFFIX=192.168.0.1\n"
+               "LEASE4_PREFIX_CLTT_LEASE4_SUFFIX=3\n"
+               "LEASE4_PREFIX_HOSTNAME_LEASE4_SUFFIX=test.hostname\n"
+               "LEASE4_PREFIX_HWADDR_LEASE4_SUFFIX=00:01:02:03\n"
+               "LEASE4_PREFIX_HWADDR_TYPE_LEASE4_SUFFIX=1\n"
+               "LEASE4_PREFIX_STATE_LEASE4_SUFFIX=default\n"
+               "LEASE4_PREFIX_SUBNET_ID_LEASE4_SUFFIX=4\n"
+               "LEASE4_PREFIX_VALID_LIFETIME_LEASE4_SUFFIX=2\n"
+               "LEASE4_PREFIX_CLIENT_ID_LEASE4_SUFFIX=00:01:02:03:04:05:06\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -481,39 +481,39 @@ TEST(RunScript, extractLease4) {
 TEST(RunScript, extractLease6) {
     ProcessEnvVars vars;
     Lease6Ptr lease6;
-    RunScriptImpl::extractLease6(vars, lease6, "LEASE6_PREFIX", "_LEASE6_SUFIX");
+    RunScriptImpl::extractLease6(vars, lease6, "LEASE6_PREFIX", "_LEASE6_SUFFIX");
     ASSERT_EQ(13, vars.size());
-    string expected = "LEASE6_PREFIX_ADDRESS_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_CLTT_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_HOSTNAME_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_HWADDR_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_HWADDR_TYPE_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_STATE_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_SUBNET_ID_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_VALID_LIFETIME_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_DUID_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_IAID_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFIX=\n"
-                      "LEASE6_PREFIX_TYPE_LEASE6_SUFIX=\n";
+    string expected = "LEASE6_PREFIX_ADDRESS_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_CLTT_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_HOSTNAME_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_HWADDR_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_HWADDR_TYPE_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_STATE_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_SUBNET_ID_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_VALID_LIFETIME_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_DUID_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_IAID_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFFIX=\n"
+                      "LEASE6_PREFIX_TYPE_LEASE6_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     lease6 = generateLease6();
-    RunScriptImpl::extractLease6(vars, lease6, "LEASE6_PREFIX", "_LEASE6_SUFIX");
+    RunScriptImpl::extractLease6(vars, lease6, "LEASE6_PREFIX", "_LEASE6_SUFFIX");
     ASSERT_EQ(13, vars.size());
-    expected = "LEASE6_PREFIX_ADDRESS_LEASE6_SUFIX=2003:db8::1\n"
-               "LEASE6_PREFIX_CLTT_LEASE6_SUFIX=7\n"
-               "LEASE6_PREFIX_HOSTNAME_LEASE6_SUFIX=test.hostname\n"
-               "LEASE6_PREFIX_HWADDR_LEASE6_SUFIX=00:01:02:03\n"
-               "LEASE6_PREFIX_HWADDR_TYPE_LEASE6_SUFIX=1\n"
-               "LEASE6_PREFIX_STATE_LEASE6_SUFIX=default\n"
-               "LEASE6_PREFIX_SUBNET_ID_LEASE6_SUFIX=5\n"
-               "LEASE6_PREFIX_VALID_LIFETIME_LEASE6_SUFIX=4\n"
-               "LEASE6_PREFIX_DUID_LEASE6_SUFIX=00:01:02:03:04:05:06\n"
-               "LEASE6_PREFIX_IAID_LEASE6_SUFIX=2\n"
-               "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFIX=3\n"
-               "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFIX=128\n"
-               "LEASE6_PREFIX_TYPE_LEASE6_SUFIX=IA_NA\n";
+    expected = "LEASE6_PREFIX_ADDRESS_LEASE6_SUFFIX=2003:db8::1\n"
+               "LEASE6_PREFIX_CLTT_LEASE6_SUFFIX=7\n"
+               "LEASE6_PREFIX_HOSTNAME_LEASE6_SUFFIX=test.hostname\n"
+               "LEASE6_PREFIX_HWADDR_LEASE6_SUFFIX=00:01:02:03\n"
+               "LEASE6_PREFIX_HWADDR_TYPE_LEASE6_SUFFIX=1\n"
+               "LEASE6_PREFIX_STATE_LEASE6_SUFFIX=default\n"
+               "LEASE6_PREFIX_SUBNET_ID_LEASE6_SUFFIX=5\n"
+               "LEASE6_PREFIX_VALID_LIFETIME_LEASE6_SUFFIX=4\n"
+               "LEASE6_PREFIX_DUID_LEASE6_SUFFIX=00:01:02:03:04:05:06\n"
+               "LEASE6_PREFIX_IAID_LEASE6_SUFFIX=2\n"
+               "LEASE6_PREFIX_PREFERRED_LIFETIME_LEASE6_SUFFIX=3\n"
+               "LEASE6_PREFIX_PREFIX_LEN_LEASE6_SUFFIX=128\n"
+               "LEASE6_PREFIX_TYPE_LEASE6_SUFFIX=IA_NA\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -521,35 +521,35 @@ TEST(RunScript, extractLease6) {
 TEST(RunScript, extractLeases4) {
     ProcessEnvVars vars;
     Lease4CollectionPtr leases4;
-    RunScriptImpl::extractLeases4(vars, leases4, "LEASES4_PREFIX", "_LEASES4_SUFIX");
+    RunScriptImpl::extractLeases4(vars, leases4, "LEASES4_PREFIX", "_LEASES4_SUFFIX");
     ASSERT_EQ(1, vars.size());
-    string expected = "LEASES4_PREFIX_SIZE_LEASES4_SUFIX=0\n";
+    string expected = "LEASES4_PREFIX_SIZE_LEASES4_SUFFIX=0\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     leases4.reset(new Lease4Collection());
     leases4->push_back(generateLease4());
     leases4->push_back(generateLease4());
-    RunScriptImpl::extractLeases4(vars, leases4, "LEASES4_PREFIX", "_LEASES4_SUFIX");
+    RunScriptImpl::extractLeases4(vars, leases4, "LEASES4_PREFIX", "_LEASES4_SUFFIX");
     ASSERT_EQ(19, vars.size());
-    expected = "LEASES4_PREFIX_SIZE_LEASES4_SUFIX=2\n"
-               "LEASES4_PREFIX_AT0_ADDRESS_LEASES4_SUFIX=192.168.0.1\n"
-               "LEASES4_PREFIX_AT0_CLTT_LEASES4_SUFIX=3\n"
-               "LEASES4_PREFIX_AT0_HOSTNAME_LEASES4_SUFIX=test.hostname\n"
-               "LEASES4_PREFIX_AT0_HWADDR_LEASES4_SUFIX=00:01:02:03\n"
-               "LEASES4_PREFIX_AT0_HWADDR_TYPE_LEASES4_SUFIX=1\n"
-               "LEASES4_PREFIX_AT0_STATE_LEASES4_SUFIX=default\n"
-               "LEASES4_PREFIX_AT0_SUBNET_ID_LEASES4_SUFIX=4\n"
-               "LEASES4_PREFIX_AT0_VALID_LIFETIME_LEASES4_SUFIX=2\n"
-               "LEASES4_PREFIX_AT0_CLIENT_ID_LEASES4_SUFIX=00:01:02:03:04:05:06\n"
-               "LEASES4_PREFIX_AT1_ADDRESS_LEASES4_SUFIX=192.168.0.1\n"
-               "LEASES4_PREFIX_AT1_CLTT_LEASES4_SUFIX=3\n"
-               "LEASES4_PREFIX_AT1_HOSTNAME_LEASES4_SUFIX=test.hostname\n"
-               "LEASES4_PREFIX_AT1_HWADDR_LEASES4_SUFIX=00:01:02:03\n"
-               "LEASES4_PREFIX_AT1_HWADDR_TYPE_LEASES4_SUFIX=1\n"
-               "LEASES4_PREFIX_AT1_STATE_LEASES4_SUFIX=default\n"
-               "LEASES4_PREFIX_AT1_SUBNET_ID_LEASES4_SUFIX=4\n"
-               "LEASES4_PREFIX_AT1_VALID_LIFETIME_LEASES4_SUFIX=2\n"
-               "LEASES4_PREFIX_AT1_CLIENT_ID_LEASES4_SUFIX=00:01:02:03:04:05:06\n";
+    expected = "LEASES4_PREFIX_SIZE_LEASES4_SUFFIX=2\n"
+               "LEASES4_PREFIX_AT0_ADDRESS_LEASES4_SUFFIX=192.168.0.1\n"
+               "LEASES4_PREFIX_AT0_CLTT_LEASES4_SUFFIX=3\n"
+               "LEASES4_PREFIX_AT0_HOSTNAME_LEASES4_SUFFIX=test.hostname\n"
+               "LEASES4_PREFIX_AT0_HWADDR_LEASES4_SUFFIX=00:01:02:03\n"
+               "LEASES4_PREFIX_AT0_HWADDR_TYPE_LEASES4_SUFFIX=1\n"
+               "LEASES4_PREFIX_AT0_STATE_LEASES4_SUFFIX=default\n"
+               "LEASES4_PREFIX_AT0_SUBNET_ID_LEASES4_SUFFIX=4\n"
+               "LEASES4_PREFIX_AT0_VALID_LIFETIME_LEASES4_SUFFIX=2\n"
+               "LEASES4_PREFIX_AT0_CLIENT_ID_LEASES4_SUFFIX=00:01:02:03:04:05:06\n"
+               "LEASES4_PREFIX_AT1_ADDRESS_LEASES4_SUFFIX=192.168.0.1\n"
+               "LEASES4_PREFIX_AT1_CLTT_LEASES4_SUFFIX=3\n"
+               "LEASES4_PREFIX_AT1_HOSTNAME_LEASES4_SUFFIX=test.hostname\n"
+               "LEASES4_PREFIX_AT1_HWADDR_LEASES4_SUFFIX=00:01:02:03\n"
+               "LEASES4_PREFIX_AT1_HWADDR_TYPE_LEASES4_SUFFIX=1\n"
+               "LEASES4_PREFIX_AT1_STATE_LEASES4_SUFFIX=default\n"
+               "LEASES4_PREFIX_AT1_SUBNET_ID_LEASES4_SUFFIX=4\n"
+               "LEASES4_PREFIX_AT1_VALID_LIFETIME_LEASES4_SUFFIX=2\n"
+               "LEASES4_PREFIX_AT1_CLIENT_ID_LEASES4_SUFFIX=00:01:02:03:04:05:06\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -557,43 +557,43 @@ TEST(RunScript, extractLeases4) {
 TEST(RunScript, extractLeases6) {
     ProcessEnvVars vars;
     Lease6CollectionPtr leases6;
-    RunScriptImpl::extractLeases6(vars, leases6, "LEASES6_PREFIX", "_LEASES6_SUFIX");
+    RunScriptImpl::extractLeases6(vars, leases6, "LEASES6_PREFIX", "_LEASES6_SUFFIX");
     ASSERT_EQ(1, vars.size());
-    string expected = "LEASES6_PREFIX_SIZE_LEASES6_SUFIX=0\n";
+    string expected = "LEASES6_PREFIX_SIZE_LEASES6_SUFFIX=0\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     leases6.reset(new Lease6Collection());
     leases6->push_back(generateLease6());
     leases6->push_back(generateLease6());
-    RunScriptImpl::extractLeases6(vars, leases6, "LEASES6_PREFIX", "_LEASES6_SUFIX");
+    RunScriptImpl::extractLeases6(vars, leases6, "LEASES6_PREFIX", "_LEASES6_SUFFIX");
     ASSERT_EQ(27, vars.size());
-    expected = "LEASES6_PREFIX_SIZE_LEASES6_SUFIX=2\n"
-               "LEASES6_PREFIX_AT0_ADDRESS_LEASES6_SUFIX=2003:db8::1\n"
-               "LEASES6_PREFIX_AT0_CLTT_LEASES6_SUFIX=7\n"
-               "LEASES6_PREFIX_AT0_HOSTNAME_LEASES6_SUFIX=test.hostname\n"
-               "LEASES6_PREFIX_AT0_HWADDR_LEASES6_SUFIX=00:01:02:03\n"
-               "LEASES6_PREFIX_AT0_HWADDR_TYPE_LEASES6_SUFIX=1\n"
-               "LEASES6_PREFIX_AT0_STATE_LEASES6_SUFIX=default\n"
-               "LEASES6_PREFIX_AT0_SUBNET_ID_LEASES6_SUFIX=5\n"
-               "LEASES6_PREFIX_AT0_VALID_LIFETIME_LEASES6_SUFIX=4\n"
-               "LEASES6_PREFIX_AT0_DUID_LEASES6_SUFIX=00:01:02:03:04:05:06\n"
-               "LEASES6_PREFIX_AT0_IAID_LEASES6_SUFIX=2\n"
-               "LEASES6_PREFIX_AT0_PREFERRED_LIFETIME_LEASES6_SUFIX=3\n"
-               "LEASES6_PREFIX_AT0_PREFIX_LEN_LEASES6_SUFIX=128\n"
-               "LEASES6_PREFIX_AT0_TYPE_LEASES6_SUFIX=IA_NA\n"
-               "LEASES6_PREFIX_AT1_ADDRESS_LEASES6_SUFIX=2003:db8::1\n"
-               "LEASES6_PREFIX_AT1_CLTT_LEASES6_SUFIX=7\n"
-               "LEASES6_PREFIX_AT1_HOSTNAME_LEASES6_SUFIX=test.hostname\n"
-               "LEASES6_PREFIX_AT1_HWADDR_LEASES6_SUFIX=00:01:02:03\n"
-               "LEASES6_PREFIX_AT1_HWADDR_TYPE_LEASES6_SUFIX=1\n"
-               "LEASES6_PREFIX_AT1_STATE_LEASES6_SUFIX=default\n"
-               "LEASES6_PREFIX_AT1_SUBNET_ID_LEASES6_SUFIX=5\n"
-               "LEASES6_PREFIX_AT1_VALID_LIFETIME_LEASES6_SUFIX=4\n"
-               "LEASES6_PREFIX_AT1_DUID_LEASES6_SUFIX=00:01:02:03:04:05:06\n"
-               "LEASES6_PREFIX_AT1_IAID_LEASES6_SUFIX=2\n"
-               "LEASES6_PREFIX_AT1_PREFERRED_LIFETIME_LEASES6_SUFIX=3\n"
-               "LEASES6_PREFIX_AT1_PREFIX_LEN_LEASES6_SUFIX=128\n"
-               "LEASES6_PREFIX_AT1_TYPE_LEASES6_SUFIX=IA_NA\n";
+    expected = "LEASES6_PREFIX_SIZE_LEASES6_SUFFIX=2\n"
+               "LEASES6_PREFIX_AT0_ADDRESS_LEASES6_SUFFIX=2003:db8::1\n"
+               "LEASES6_PREFIX_AT0_CLTT_LEASES6_SUFFIX=7\n"
+               "LEASES6_PREFIX_AT0_HOSTNAME_LEASES6_SUFFIX=test.hostname\n"
+               "LEASES6_PREFIX_AT0_HWADDR_LEASES6_SUFFIX=00:01:02:03\n"
+               "LEASES6_PREFIX_AT0_HWADDR_TYPE_LEASES6_SUFFIX=1\n"
+               "LEASES6_PREFIX_AT0_STATE_LEASES6_SUFFIX=default\n"
+               "LEASES6_PREFIX_AT0_SUBNET_ID_LEASES6_SUFFIX=5\n"
+               "LEASES6_PREFIX_AT0_VALID_LIFETIME_LEASES6_SUFFIX=4\n"
+               "LEASES6_PREFIX_AT0_DUID_LEASES6_SUFFIX=00:01:02:03:04:05:06\n"
+               "LEASES6_PREFIX_AT0_IAID_LEASES6_SUFFIX=2\n"
+               "LEASES6_PREFIX_AT0_PREFERRED_LIFETIME_LEASES6_SUFFIX=3\n"
+               "LEASES6_PREFIX_AT0_PREFIX_LEN_LEASES6_SUFFIX=128\n"
+               "LEASES6_PREFIX_AT0_TYPE_LEASES6_SUFFIX=IA_NA\n"
+               "LEASES6_PREFIX_AT1_ADDRESS_LEASES6_SUFFIX=2003:db8::1\n"
+               "LEASES6_PREFIX_AT1_CLTT_LEASES6_SUFFIX=7\n"
+               "LEASES6_PREFIX_AT1_HOSTNAME_LEASES6_SUFFIX=test.hostname\n"
+               "LEASES6_PREFIX_AT1_HWADDR_LEASES6_SUFFIX=00:01:02:03\n"
+               "LEASES6_PREFIX_AT1_HWADDR_TYPE_LEASES6_SUFFIX=1\n"
+               "LEASES6_PREFIX_AT1_STATE_LEASES6_SUFFIX=default\n"
+               "LEASES6_PREFIX_AT1_SUBNET_ID_LEASES6_SUFFIX=5\n"
+               "LEASES6_PREFIX_AT1_VALID_LIFETIME_LEASES6_SUFFIX=4\n"
+               "LEASES6_PREFIX_AT1_DUID_LEASES6_SUFFIX=00:01:02:03:04:05:06\n"
+               "LEASES6_PREFIX_AT1_IAID_LEASES6_SUFFIX=2\n"
+               "LEASES6_PREFIX_AT1_PREFERRED_LIFETIME_LEASES6_SUFFIX=3\n"
+               "LEASES6_PREFIX_AT1_PREFIX_LEN_LEASES6_SUFFIX=128\n"
+               "LEASES6_PREFIX_AT1_TYPE_LEASES6_SUFFIX=IA_NA\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -601,57 +601,57 @@ TEST(RunScript, extractLeases6) {
 TEST(RunScript, extractPkt4) {
     ProcessEnvVars vars;
     Pkt4Ptr pkt4;
-    RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFIX");
+    RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFFIX");
     ASSERT_EQ(22, vars.size());
-    string expected = "PKT4_PREFIX_TYPE_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_TXID_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_LOCAL_PORT_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_REMOTE_ADDR_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_REMOTE_PORT_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_IFACE_INDEX_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_IFACE_NAME_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_HOPS_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_SECS_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_FLAGS_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_CIADDR_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_SIADDR_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_YIADDR_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_GIADDR_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_RELAYED_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_HWADDR_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_HWADDR_TYPE_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_LOCAL_HWADDR_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFIX=\n"
-                      "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFIX=\n";
+    string expected = "PKT4_PREFIX_TYPE_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_TXID_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_LOCAL_PORT_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_REMOTE_ADDR_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_REMOTE_PORT_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_IFACE_INDEX_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_IFACE_NAME_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_HOPS_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_SECS_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_FLAGS_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_CIADDR_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_SIADDR_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_YIADDR_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_GIADDR_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_RELAYED_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_HWADDR_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_HWADDR_TYPE_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_LOCAL_HWADDR_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     pkt4 = generatePkt4();
-    RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFIX");
+    RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFFIX");
     ASSERT_EQ(22, vars.size());
-    expected = "PKT4_PREFIX_TYPE_PKT4_SUFIX=UNKNOWN\n"
-               "PKT4_PREFIX_TXID_PKT4_SUFIX=0\n"
-               "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFIX=0.0.0.0\n"
-               "PKT4_PREFIX_LOCAL_PORT_PKT4_SUFIX=67\n"
-               "PKT4_PREFIX_REMOTE_ADDR_PKT4_SUFIX=0.0.0.0\n"
-               "PKT4_PREFIX_REMOTE_PORT_PKT4_SUFIX=68\n"
-               "PKT4_PREFIX_IFACE_INDEX_PKT4_SUFIX=2\n"
-               "PKT4_PREFIX_IFACE_NAME_PKT4_SUFIX=eth1\n"
-               "PKT4_PREFIX_HOPS_PKT4_SUFIX=0\n"
-               "PKT4_PREFIX_SECS_PKT4_SUFIX=0\n"
-               "PKT4_PREFIX_FLAGS_PKT4_SUFIX=0\n"
-               "PKT4_PREFIX_CIADDR_PKT4_SUFIX=0.0.0.0\n"
-               "PKT4_PREFIX_SIADDR_PKT4_SUFIX=0.0.0.0\n"
-               "PKT4_PREFIX_YIADDR_PKT4_SUFIX=0.0.0.0\n"
-               "PKT4_PREFIX_GIADDR_PKT4_SUFIX=0.0.0.0\n"
-               "PKT4_PREFIX_RELAYED_PKT4_SUFIX=0\n"
-               "PKT4_PREFIX_HWADDR_PKT4_SUFIX=00:01:02:03\n"
-               "PKT4_PREFIX_HWADDR_TYPE_PKT4_SUFIX=1\n"
-               "PKT4_PREFIX_LOCAL_HWADDR_PKT4_SUFIX=00:01:02:03\n"
-               "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFIX=1\n"
-               "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFIX=00:01:02:03\n"
-               "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFIX=1\n";
+    expected = "PKT4_PREFIX_TYPE_PKT4_SUFFIX=UNKNOWN\n"
+               "PKT4_PREFIX_TXID_PKT4_SUFFIX=0\n"
+               "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFFIX=0.0.0.0\n"
+               "PKT4_PREFIX_LOCAL_PORT_PKT4_SUFFIX=67\n"
+               "PKT4_PREFIX_REMOTE_ADDR_PKT4_SUFFIX=0.0.0.0\n"
+               "PKT4_PREFIX_REMOTE_PORT_PKT4_SUFFIX=68\n"
+               "PKT4_PREFIX_IFACE_INDEX_PKT4_SUFFIX=2\n"
+               "PKT4_PREFIX_IFACE_NAME_PKT4_SUFFIX=eth1\n"
+               "PKT4_PREFIX_HOPS_PKT4_SUFFIX=0\n"
+               "PKT4_PREFIX_SECS_PKT4_SUFFIX=0\n"
+               "PKT4_PREFIX_FLAGS_PKT4_SUFFIX=0\n"
+               "PKT4_PREFIX_CIADDR_PKT4_SUFFIX=0.0.0.0\n"
+               "PKT4_PREFIX_SIADDR_PKT4_SUFFIX=0.0.0.0\n"
+               "PKT4_PREFIX_YIADDR_PKT4_SUFFIX=0.0.0.0\n"
+               "PKT4_PREFIX_GIADDR_PKT4_SUFFIX=0.0.0.0\n"
+               "PKT4_PREFIX_RELAYED_PKT4_SUFFIX=false\n"
+               "PKT4_PREFIX_HWADDR_PKT4_SUFFIX=00:01:02:03\n"
+               "PKT4_PREFIX_HWADDR_TYPE_PKT4_SUFFIX=1\n"
+               "PKT4_PREFIX_LOCAL_HWADDR_PKT4_SUFFIX=00:01:02:03\n"
+               "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFFIX=1\n"
+               "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFFIX=00:01:02:03\n"
+               "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFFIX=1\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -659,37 +659,37 @@ TEST(RunScript, extractPkt4) {
 TEST(RunScript, extractPkt6) {
     ProcessEnvVars vars;
     Pkt6Ptr pkt6;
-    RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFIX");
+    RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFFIX");
     ASSERT_EQ(12, vars.size());
-    string expected = "PKT6_PREFIX_TYPE_PKT6_SUFIX=\n"
-                      "PKT6_PREFIX_TXID_PKT6_SUFIX=\n"
-                      "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFIX=\n"
-                      "PKT6_PREFIX_LOCAL_PORT_PKT6_SUFIX=\n"
-                      "PKT6_PREFIX_REMOTE_ADDR_PKT6_SUFIX=\n"
-                      "PKT6_PREFIX_REMOTE_PORT_PKT6_SUFIX=\n"
-                      "PKT6_PREFIX_IFACE_INDEX_PKT6_SUFIX=\n"
-                      "PKT6_PREFIX_IFACE_NAME_PKT6_SUFIX=\n"
-                      "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFIX=\n"
-                      "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFIX=\n"
-                      "PKT6_PREFIX_PROTO_PKT6_SUFIX=\n"
-                      "PKT6_PREFIX_CLIENT_ID_PKT6_SUFIX=\n";
+    string expected = "PKT6_PREFIX_TYPE_PKT6_SUFFIX=\n"
+                      "PKT6_PREFIX_TXID_PKT6_SUFFIX=\n"
+                      "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFFIX=\n"
+                      "PKT6_PREFIX_LOCAL_PORT_PKT6_SUFFIX=\n"
+                      "PKT6_PREFIX_REMOTE_ADDR_PKT6_SUFFIX=\n"
+                      "PKT6_PREFIX_REMOTE_PORT_PKT6_SUFFIX=\n"
+                      "PKT6_PREFIX_IFACE_INDEX_PKT6_SUFFIX=\n"
+                      "PKT6_PREFIX_IFACE_NAME_PKT6_SUFFIX=\n"
+                      "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFFIX=\n"
+                      "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFFIX=\n"
+                      "PKT6_PREFIX_PROTO_PKT6_SUFFIX=\n"
+                      "PKT6_PREFIX_CLIENT_ID_PKT6_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     pkt6 = generatePkt6();
-    RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFIX");
+    RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFFIX");
     ASSERT_EQ(12, vars.size());
-    expected = "PKT6_PREFIX_TYPE_PKT6_SUFIX=UNKNOWN\n"
-               "PKT6_PREFIX_TXID_PKT6_SUFIX=0\n"
-               "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFIX=ff02::1:2\n"
-               "PKT6_PREFIX_LOCAL_PORT_PKT6_SUFIX=0\n"
-               "PKT6_PREFIX_REMOTE_ADDR_PKT6_SUFIX=fe80::21e:8cff:fe9b:7349\n"
-               "PKT6_PREFIX_REMOTE_PORT_PKT6_SUFIX=546\n"
-               "PKT6_PREFIX_IFACE_INDEX_PKT6_SUFIX=2\n"
-               "PKT6_PREFIX_IFACE_NAME_PKT6_SUFIX=eth1\n"
-               "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFIX=00:01:02:03\n"
-               "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFIX=1\n"
-               "PKT6_PREFIX_PROTO_PKT6_SUFIX=UDP\n"
-               "PKT6_PREFIX_CLIENT_ID_PKT6_SUFIX=00:01:02:03:04:05:06\n";
+    expected = "PKT6_PREFIX_TYPE_PKT6_SUFFIX=UNKNOWN\n"
+               "PKT6_PREFIX_TXID_PKT6_SUFFIX=0\n"
+               "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFFIX=ff02::1:2\n"
+               "PKT6_PREFIX_LOCAL_PORT_PKT6_SUFFIX=0\n"
+               "PKT6_PREFIX_REMOTE_ADDR_PKT6_SUFFIX=fe80::21e:8cff:fe9b:7349\n"
+               "PKT6_PREFIX_REMOTE_PORT_PKT6_SUFFIX=546\n"
+               "PKT6_PREFIX_IFACE_INDEX_PKT6_SUFFIX=2\n"
+               "PKT6_PREFIX_IFACE_NAME_PKT6_SUFFIX=eth1\n"
+               "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFFIX=00:01:02:03\n"
+               "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFFIX=1\n"
+               "PKT6_PREFIX_PROTO_PKT6_SUFFIX=UDP\n"
+               "PKT6_PREFIX_CLIENT_ID_PKT6_SUFFIX=00:01:02:03:04:05:06\n";
     EXPECT_EQ(expected, join(vars));
 }
 

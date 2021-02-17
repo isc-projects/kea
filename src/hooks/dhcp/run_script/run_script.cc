@@ -53,9 +53,11 @@ RunScriptImpl::extractBoolean(ProcessEnvVars& vars,
                               const bool value,
                               const string& prefix,
                               const string& suffix) {
-    string data = "0";
+    string data;
     if (value) {
-        data = "1";
+        data = "true";
+    } else {
+        data = "false";
     }
     string exported_data = prefix + suffix + "=" + data;
     vars.push_back(exported_data);
