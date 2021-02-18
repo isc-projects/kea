@@ -72,7 +72,7 @@ public:
                  const ProcessEnvVars& vars = ProcessEnvVars());
 
     /// @brief Destructor.
-    ~ProcessSpawn();
+    ~ProcessSpawn() = default;
 
     /// @brief Returns full command line, including arguments, for the process.
     std::string getCommandLine() const;

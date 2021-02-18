@@ -95,7 +95,7 @@ public:
     void post(const std::function<void ()>& callback);
 
 private:
-    IOServiceImpl* io_impl_;
+    boost::shared_ptr<IOServiceImpl> io_impl_;
 };
 
 /// @brief Defines a smart pointer to an IOService instance.

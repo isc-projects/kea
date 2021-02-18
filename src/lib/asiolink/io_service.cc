@@ -47,8 +47,9 @@ public:
     /// \brief The constructor
     IOServiceImpl() :
         io_service_(),
-        work_(new boost::asio::io_service::work(io_service_))
-    {};
+        work_(new boost::asio::io_service::work(io_service_)) {
+    };
+
     /// \brief The destructor.
     ~IOServiceImpl() {};
     //@}
@@ -109,12 +110,10 @@ private:
     boost::shared_ptr<boost::asio::io_service::work> work_;
 };
 
-IOService::IOService() {
-    io_impl_ = new IOServiceImpl();
+IOService::IOService() : io_impl_(new IOServiceImpl()) {
 }
 
 IOService::~IOService() {
-    delete io_impl_;
 }
 
 void

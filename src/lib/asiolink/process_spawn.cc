@@ -43,6 +43,12 @@ struct ProcessState {
 /// identified by PID.
 typedef std::map<pid_t, ProcessState> ProcessStates;
 
+class ProcessSpawnImpl;
+
+/// @brief ProcessCollection container which stores all ProcessStates for each
+/// instance of @ref ProcessSpawnImpl.
+typedef std::map<const ProcessSpawnImpl*, ProcessStates> ProcessCollection;
+
 /// @brief Implementation of the @c ProcessSpawn class.
 ///
 /// This pimpl idiom is used by the @c ProcessSpawn in this case to
@@ -146,10 +152,10 @@ private:
     ///
     /// @return true if the processed signal was SIGCHLD or false if it
     /// was a different signal.
-    bool waitForProcess(int signum);
+    static bool waitForProcess(int signum);
 
     /// @brief A map holding the status codes of executed processes.
-    ProcessStates process_state_;
+    static ProcessCollection process_collection_;
 
     /// @brief Path to an executable.
     std::string executable_;
@@ -160,28 +166,34 @@ private:
     /// @brief An array holding environment variables for the executable.
     boost::shared_ptr<char*[]> vars_;
 
-    /// @breif Typedef for CString pointer.
+    /// @brief Typedef for CString pointer.
     typedef boost::shared_ptr<char[]> CStringPtr;
 
     /// @brief An storage container for all allocated C strings.
     std::vector<CStringPtr> storage_;
 
+    /// @brief Flag to indicate if process status must be stored.
+    bool store_;
+
     /// @brief Mutex to protect internal state.
-    boost::shared_ptr<std::mutex> mutex_;
+    static std::mutex mutex_;
 
     /// @brief ASIO signal set.
     IOSignalSetPtr io_signal_set_;
 };
+
+ProcessCollection ProcessSpawnImpl::process_collection_;
+std::mutex ProcessSpawnImpl::mutex_;
 
 ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
                                    const std::string& executable,
                                    const ProcessArgs& args,
                                    const ProcessEnvVars& vars)
     : executable_(executable), args_(new char*[args.size() + 2]),
-      vars_(new char*[vars.size() + 1]), mutex_(new std::mutex),
+      vars_(new char*[vars.size() + 1]), store_(false),
       io_signal_set_(new IOSignalSet(io_service,
                                      std::bind(&ProcessSpawnImpl::waitForProcess,
-                                               this, ph::_1))) {
+                                               ph::_1))) {
     io_signal_set_->add(SIGCHLD);
 
     // Conversion of the arguments to the C-style array we start by setting
@@ -203,6 +215,10 @@ ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
 
 ProcessSpawnImpl::~ProcessSpawnImpl() {
     io_signal_set_->remove(SIGCHLD);
+    if (store_) {
+        lock_guard<std::mutex> lk(mutex_);
+        process_collection_.erase(this);
+    }
 }
 
 std::string
@@ -255,8 +271,9 @@ ProcessSpawnImpl::spawn(bool dismiss) {
     // We're in the parent process.
     if (!dismiss) {
         try {
-            lock_guard<std::mutex> lk(*mutex_);
-            process_state_.insert(std::pair<pid_t, ProcessState>(pid, ProcessState()));
+            lock_guard<std::mutex> lk(mutex_);
+            store_ = true;
+            process_collection_[this].insert(std::pair<pid_t, ProcessState>(pid, ProcessState()));
         } catch(...) {
             pthread_sigmask(SIG_SETMASK, &osset, 0);
             throw;
@@ -268,9 +285,10 @@ ProcessSpawnImpl::spawn(bool dismiss) {
 
 bool
 ProcessSpawnImpl::isRunning(const pid_t pid) const {
-    lock_guard<std::mutex> lk(*mutex_);
-    ProcessStates::const_iterator proc = process_state_.find(pid);
-    if (proc == process_state_.end()) {
+    lock_guard<std::mutex> lk(mutex_);
+    ProcessStates::const_iterator proc;
+    if (process_collection_.find(this) == process_collection_.end() ||
+        (proc = process_collection_[this].find(pid)) == process_collection_[this].end()) {
         isc_throw(BadValue, "the process with the pid '" << pid
                   << "' hasn't been spawned and it status cannot be"
                   " returned");
@@ -280,11 +298,12 @@ ProcessSpawnImpl::isRunning(const pid_t pid) const {
 
 bool
 ProcessSpawnImpl::isAnyRunning() const {
-    lock_guard<std::mutex> lk(*mutex_);
-    for (ProcessStates::const_iterator proc = process_state_.begin();
-         proc != process_state_.end(); ++proc) {
-        if (proc->second.running_) {
-            return (true);
+    lock_guard<std::mutex> lk(mutex_);
+    if (process_collection_.find(this) != process_collection_.end()) {
+        for (auto proc : process_collection_[this]) {
+            if (proc.second.running_) {
+                return (true);
+            }
         }
     }
     return (false);
@@ -292,9 +311,10 @@ ProcessSpawnImpl::isAnyRunning() const {
 
 int
 ProcessSpawnImpl::getExitStatus(const pid_t pid) const {
-    lock_guard<std::mutex> lk(*mutex_);
-    ProcessStates::const_iterator proc = process_state_.find(pid);
-    if (proc == process_state_.end()) {
+    lock_guard<std::mutex> lk(mutex_);
+    ProcessStates::const_iterator proc;
+    if (process_collection_.find(this) == process_collection_.end() ||
+        (proc = process_collection_[this].find(pid)) == process_collection_[this].end()) {
         isc_throw(InvalidOperation, "the process with the pid '" << pid
                   << "' hasn't been spawned and it status cannot be"
                   " returned");
@@ -317,20 +337,22 @@ ProcessSpawnImpl::allocateInternal(const std::string& src) {
 
 bool
 ProcessSpawnImpl::waitForProcess(int) {
-    lock_guard<std::mutex> lk(*mutex_);
+    lock_guard<std::mutex> lk(mutex_);
     for (;;) {
         int status = 0;
         pid_t pid = waitpid(-1, &status, WNOHANG);
         if (pid <= 0) {
             break;
         }
-        ProcessStates::iterator proc = process_state_.find(pid);
-        /// Check that the terminating process was started
-        /// by our instance of ProcessSpawn
-        if (proc != process_state_.end()) {
-            // In this order please
-            proc->second.status_ = status;
-            proc->second.running_ = false;
+        for (auto instance : process_collection_) {
+            auto proc = instance.second.find(pid);
+            /// Check that the terminating process was started
+            /// by our instance of ProcessSpawn
+            if (proc != instance.second.end()) {
+                // In this order please
+                proc->second.status_ = status;
+                proc->second.running_ = false;
+            }
         }
     }
 
@@ -343,8 +365,10 @@ ProcessSpawnImpl::clearState(const pid_t pid) {
         isc_throw(InvalidOperation, "unable to remove the status for the"
                   "process (pid: " << pid << ") which is still running");
     }
-    lock_guard<std::mutex> lk(*mutex_);
-    process_state_.erase(pid);
+    lock_guard<std::mutex> lk(mutex_);
+    if (process_collection_.find(this) != process_collection_.end()) {
+        process_collection_[this].erase(pid);
+    }
 }
 
 ProcessSpawn::ProcessSpawn(IOServicePtr io_service,
@@ -352,9 +376,6 @@ ProcessSpawn::ProcessSpawn(IOServicePtr io_service,
                            const ProcessArgs& args,
                            const ProcessEnvVars& vars)
     : impl_(new ProcessSpawnImpl(io_service, executable, args, vars)) {
-}
-
-ProcessSpawn::~ProcessSpawn() {
 }
 
 std::string

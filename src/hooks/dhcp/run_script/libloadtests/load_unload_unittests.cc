@@ -45,7 +45,7 @@ public:
         HooksManager::unloadLibraries();
     }
 
-    /// @breif Add library to the collection of tested libraries.
+    /// @brief Add library to the collection of tested libraries.
     ///
     /// @param lib The name of the lib added.
     /// @param params The parameters of the library.
