@@ -247,6 +247,7 @@ public:
     ///
     /// @param service I/O Service object used to manage the stream.
     /// @param context Pointer to the TLS context.
+    /// @note The caller must not provide a null pointer to the TLS context.
     TlsStream(IOService& service, TlsContextPtr context)
         : TlsStreamImpl(service.get_io_service(), context->getContext()),
           role_(context->role_) {
