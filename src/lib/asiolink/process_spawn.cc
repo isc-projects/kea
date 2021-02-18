@@ -303,7 +303,7 @@ bool
 ProcessSpawnImpl::isAnyRunning() const {
     lock_guard<std::mutex> lk(mutex_);
     if (process_collection_.find(this) != process_collection_.end()) {
-        for (auto& proc : process_collection_[this]) {
+        for (auto const& proc : process_collection_[this]) {
             if (proc.second->running_) {
                 return (true);
             }

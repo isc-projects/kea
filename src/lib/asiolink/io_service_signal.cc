@@ -100,7 +100,7 @@ IOSignalSetImpl::remove(int signum) {
         signal_set_.remove(signum);
     } catch (const boost::system::system_error& ex) {
         isc_throw(isc::Unexpected,
-                  "Failed to add signal " << signum << ": " << ex.what());
+                  "Failed to remove signal " << signum << ": " << ex.what());
     }
 }
 

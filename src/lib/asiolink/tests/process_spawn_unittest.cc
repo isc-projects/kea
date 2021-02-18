@@ -249,6 +249,27 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     EXPECT_EQ(32, process.getExitStatus(pid));
+
+    ASSERT_NO_THROW(pid = process.spawn(true));
+
+    // Set test fail safe.
+    setTestTime(1000);
+
+    // The next handler executed is IOSignal's handler.
+    io_service_->run_one();
+
+    // The first handler executed is the IOSignal's internal timer expire
+    // callback.
+    io_service_->run_one();
+
+    // Polling once to be sure.
+    io_service_->poll();
+
+    ASSERT_EQ(2, processed_signals_.size());
+    ASSERT_EQ(SIGCHLD, processed_signals_[0]);
+    ASSERT_EQ(SIGCHLD, processed_signals_[1]);
+
+    EXPECT_THROW(process.getExitStatus(pid), InvalidOperation);
 }
 
 // This test verifies that the EXIT_FAILURE code is returned when

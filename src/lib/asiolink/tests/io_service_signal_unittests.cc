@@ -132,6 +132,28 @@ TEST_F(IOSignalTest, singleSignalTest) {
 
     // Now check that signal value is correct.
     EXPECT_EQ(SIGINT, processed_signals_[0]);
+
+    // Set test fail safe.
+    setTestTime(1000);
+
+    // Unregister the receive of SIGINT.
+    ASSERT_NO_THROW(io_signal_set_->remove(SIGINT));
+
+    // Use TimedSignal to generate SIGINT 100 ms after we start IOService::run.
+    TimedSignal sig_int_too_late(*io_service_, SIGINT, 100);
+
+    // The first handler executed is the IOSignal's internal timer expire
+    // callback.
+    io_service_->run_one();
+
+    // The next handler executed is IOSignal's handler.
+    io_service_->run_one();
+
+    // Polling once to be sure.
+    io_service_->poll();
+
+    // Verify that we did not process the signal.
+    ASSERT_EQ(1, processed_signals_.size());
 }
 
 // Test verifies that signals can be delivered rapid-fire without falling over.
