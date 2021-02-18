@@ -36,7 +36,6 @@
 #include <algorithm>
 #include <cstring>
 #include <limits>
-#include <list>
 #include <sstream>
 #include <stdint.h>
 #include <string.h>
@@ -1047,16 +1046,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     ctx.subnet_ = subnet = original_subnet;
 
-    // subnets_tried tracks the ids of the subnets for which the allocation engine
-    // has made an attempt to allocate a lease. The first value of the pair is a
-    // subnet id. The second value in the pair is a pool capacity provided the
-    // client belongs to certain classes. The value of 0 indicates that no pool
-    // had any addresses available for that client. Other value indicates that
-    // a number of attempts were made but no leases could be assigned because
-    // the leases were either reserved to other clients or there were handed
-    // out to other clients. Based on this information we will be able to
-    // produce a meaningful log message to an operator.
-    std::list<std::pair<uint32_t, uint64_t> > subnets_tried;
+    // The following counter tracks the number of subnets with matching client
+    // classes from which the allocation engine attempted to assign leases.
+    uint64_t subnets_with_unavail_leases = 0;
+    // The following counter tracks the number of subnets in which there were
+    // no matching pools for the client.
+    uint64_t subnets_with_unavail_pools = 0;
 
     for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
 
@@ -1073,16 +1068,22 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         uint64_t possible_attempts =
             subnet->getPoolCapacity(ctx.currentIA().type_,
                                     ctx.query_->getClasses());
-        uint64_t max_attempts = (attempts_ > 0 ? attempts_  : possible_attempts);
-        // Try next subnet if there is no chance to get something
-        if (possible_attempts == 0) {
-            max_attempts = 0;
-        }
 
-        // Remember an id of the current subnet and how many leases are potentially
-        // available for this client.
-        subnets_tried.push_back(std::make_pair(subnet->getID(), max_attempts));
-        if (max_attempts == 0) {
+        // If the number of tries specified in the allocation engine constructor
+        // is set to 0 (unlimited) or the pools capacity is lower than that number,
+        // let's use the pools capacity as the maximum number of tries. Trying
+        // more than the actual pools capacity is a waste of time. If the specified
+        // number of tries is lower than the pools capacity, use that number.
+        uint64_t max_attempts = ((attempts_ == 0) || (possible_attempts < attempts_)) ? possible_attempts : attempts_;
+
+        if (max_attempts > 0) {
+            // If max_attempts is greater than 0, there are some pools in this subnet
+            // from which we can potentially get a lease.
+            ++subnets_with_unavail_leases;
+        } else {
+            // If max_attempts is 0, it is an indication that there are no pools
+            // in the subnet from which we can get a lease.
+            ++subnets_with_unavail_pools;
             continue;
         }
 
@@ -1203,27 +1204,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // indicating which shared network the client belongs to.
         LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_ALLOC_FAIL_SHARED_NETWORK)
             .arg(ctx.query_->getLabel())
-            .arg(network->getName());
-
-        // The allocation engine could have tried several subnets in this shared
-        // network. We want to log which subnets it tried to use.
-        for (auto subnet_tried : subnets_tried) {
-            // If the allocation engine tried allocate any leases in this subnet
-            // we want to indicate that the failure was related to a problem with
-            // allocations rather than with access to the pools. Otherwise, we
-            // want to log that there were zero attempts to allocate a lease,
-            // which is likely because the pools were guarded by the client
-            // classes that the client did not belong to.
-            if (subnet_tried.second > 0) {
-                LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET_TRIED)
-                    .arg(ctx.query_->getLabel())
-                    .arg(subnet_tried.first);
-            } else {
-                LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET_POOLS_UNAVAIL)
-                    .arg(ctx.query_->getLabel())
-                    .arg(subnet_tried.first);
-            }
-        }
+            .arg(network->getName())
+            .arg(subnets_with_unavail_leases)
+            .arg(subnets_with_unavail_pools);
 
     } else {
         // The client is not connected to a shared network. It is connected
@@ -4263,16 +4246,12 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
 
     uint64_t total_attempts = 0;
 
-    // subnets_tried tracks the ids of the subnets for which the allocation engine
-    // has made an attempt to allocate a lease. The first value of the pair is a
-    // subnet id. The second value in the pair is a pool capacity provided the
-    // client belongs to certain classes. The value of 0 indicates that no pool
-    // had any addresses available for that client. Other value indicates that
-    // a number of attempts were made but no address could be assigned because
-    // the addresses were either reserved to other clients or there were valid
-    // leases for these addresses. Based on this information we will be able to
-    // produce a meaningful log message to an operator.
-    std::list<std::pair<uint32_t, uint64_t> > subnets_tried;
+    // The following counter tracks the number of subnets with matching client
+    // classes from which the allocation engine attempted to assign leases.
+    uint64_t subnets_with_unavail_leases = 0;
+    // The following counter tracks the number of subnets in which there were
+    // no matching pools for the client.
+    uint64_t subnets_with_unavail_pools = 0;
 
     while (subnet) {
         ClientIdPtr client_id;
@@ -4283,15 +4262,23 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         uint64_t possible_attempts =
             subnet->getPoolCapacity(Lease::TYPE_V4,
                                     ctx.query_->getClasses());
-        uint64_t max_attempts = (attempts_ > 0 ? attempts_ : possible_attempts);
-        // Skip trying if there is no chance to get something
-        if (possible_attempts == 0) {
-            max_attempts = 0;
-        }
 
-        // Remember an id of the current subnet and how many leases are potentially
-        // available for this client.
-        subnets_tried.push_back(std::make_pair(subnet->getID(), max_attempts));
+        // If the number of tries specified in the allocation engine constructor
+        // is set to 0 (unlimited) or the pools capacity is lower than that number,
+        // let's use the pools capacity as the maximum number of tries. Trying
+        // more than the actual pools capacity is a waste of time. If the specified
+        // number of tries is lower than the pools capacity, use that number.
+        uint64_t max_attempts = ((attempts_ == 0 || possible_attempts < attempts_) ? possible_attempts : attempts_);
+
+        if (max_attempts > 0) {
+            // If max_attempts is greater than 0, there are some pools in this subnet
+            // from which we can potentially get a lease.
+            ++subnets_with_unavail_leases;
+        } else {
+            // If max_attempts is 0, it is an indication that there are no pools
+            // in the subnet from which we can get a lease.
+            ++subnets_with_unavail_pools;
+        }
 
         CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
@@ -4362,27 +4349,9 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         // indicating which shared network the client belongs to.
         LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_SHARED_NETWORK)
             .arg(ctx.query_->getLabel())
-            .arg(network->getName());
-
-        // The allocation engine could have tried several subnets in this shared
-        // network. We want to log which subnets it tried to use.
-        for (auto subnet_tried : subnets_tried) {
-            // If the allocation engine tried allocate any addresses in this subnet
-            // we want to indicate that the failure was related to a problem with
-            // allocations rather than with access to the address pools. Otherwise,
-            // we want to log that there were zero attempts to allocate a lease,
-            // which is likely because address pools were guarded by the client
-            // classes that the client did not belong to.
-            if (subnet_tried.second > 0) {
-                LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET_TRIED)
-                    .arg(ctx.query_->getLabel())
-                    .arg(subnet_tried.first);
-            } else {
-                LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET_POOLS_UNAVAIL)
-                    .arg(ctx.query_->getLabel())
-                    .arg(subnet_tried.first);
-            }
-        }
+            .arg(network->getName())
+            .arg(subnets_with_unavail_leases)
+            .arg(subnets_with_unavail_pools);
 
     } else {
         // The client is not connected to a shared network. It is connected
