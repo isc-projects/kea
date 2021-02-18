@@ -4,10 +4,10 @@
 	the circumstances in which the failure occurred. In particular,
 	they state whether the client is connected to a shared network
 	or not. If it is, the shared network name is provided. Otherwise,
-	the client's subnet id is logged. The new messages also include
-	a list of subnets from which the server attempted to assign
-	leases. For each subnet, it logs whether any pools were available
-	or not.
+	the client's subnet id is logged. The new messages also inform
+	from how many subnets the server attempted to allocate a lease
+	and how many subnets could not be used because of non-matching
+	client classes.
 	(Gitlab #1701)
 
 1865.	[func]		razvan
