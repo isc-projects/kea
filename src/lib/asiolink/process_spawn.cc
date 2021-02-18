@@ -39,9 +39,12 @@ struct ProcessState {
     int status_;
 };
 
+/// @brief Defines a pointer to a ProcessState.
+typedef boost::shared_ptr<ProcessState> ProcessStatePtr;
+
 /// @brief ProcessStates container which stores a ProcessState for each process
 /// identified by PID.
-typedef std::map<pid_t, ProcessState> ProcessStates;
+typedef std::map<pid_t, ProcessStatePtr> ProcessStates;
 
 class ProcessSpawnImpl;
 
@@ -273,7 +276,7 @@ ProcessSpawnImpl::spawn(bool dismiss) {
         try {
             lock_guard<std::mutex> lk(mutex_);
             store_ = true;
-            process_collection_[this].insert(std::pair<pid_t, ProcessState>(pid, ProcessState()));
+            process_collection_[this].insert(std::pair<pid_t, ProcessStatePtr>(pid, ProcessStatePtr(new ProcessState())));
         } catch(...) {
             pthread_sigmask(SIG_SETMASK, &osset, 0);
             throw;
@@ -293,15 +296,15 @@ ProcessSpawnImpl::isRunning(const pid_t pid) const {
                   << "' hasn't been spawned and it status cannot be"
                   " returned");
     }
-    return (proc->second.running_);
+    return (proc->second->running_);
 }
 
 bool
 ProcessSpawnImpl::isAnyRunning() const {
     lock_guard<std::mutex> lk(mutex_);
     if (process_collection_.find(this) != process_collection_.end()) {
-        for (auto proc : process_collection_[this]) {
-            if (proc.second.running_) {
+        for (auto& proc : process_collection_[this]) {
+            if (proc.second->running_) {
                 return (true);
             }
         }
@@ -319,7 +322,7 @@ ProcessSpawnImpl::getExitStatus(const pid_t pid) const {
                   << "' hasn't been spawned and it status cannot be"
                   " returned");
     }
-    return (WEXITSTATUS(proc->second.status_));
+    return (WEXITSTATUS(proc->second->status_));
 }
 
 char*
@@ -344,14 +347,14 @@ ProcessSpawnImpl::waitForProcess(int) {
         if (pid <= 0) {
             break;
         }
-        for (auto instance : process_collection_) {
-            auto proc = instance.second.find(pid);
+        for (auto const& instance : process_collection_) {
+            auto const& proc = instance.second.find(pid);
             /// Check that the terminating process was started
             /// by our instance of ProcessSpawn
             if (proc != instance.second.end()) {
                 // In this order please
-                proc->second.status_ = status;
-                proc->second.running_ = false;
+                proc->second->status_ = status;
+                proc->second->running_ = false;
             }
         }
     }
