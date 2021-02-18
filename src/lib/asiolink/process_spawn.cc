@@ -358,7 +358,6 @@ ProcessSpawnImpl::waitForProcess(int) {
             }
         }
     }
-
     return (true);
 }
 
