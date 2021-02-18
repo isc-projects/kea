@@ -274,12 +274,73 @@ public:
     /// @brief Return the peer certificate.
     ///
     /// @note The native_handle() method is used so it can't be made const.
+    /// @note Do not forget to free it when no longer used.
     virtual TlsCertificate* getPeerCert() {
         return (::SSL_get_peer_certificate(this->native_handle()));
     }
 
     /// @brief The role i.e. client or server.
     TlsRole role_;
+
+    /// @break Return the commonName part of the subjectName of
+    /// the peer certificate.
+    ///
+    /// First commonName when there are more than one, in UTF-8.
+    ///
+    /// @return The commonName part of the subjectName or the empty string.
+    std::string getSubject() {
+        TlsCertificate* cert = getPeerCert();
+        if (!cert) {
+            return ("");
+        }
+        ::X509_NAME *name = ::X509_get_subject_name(cert);
+        int loc = ::X509_NAME_get_index_by_NID(name, NID_commonName, -1);
+        ::X509_NAME_ENTRY* ne = ::X509_NAME_get_entry(name, loc);
+        if (!ne) {
+            ::X509_free(cert);
+            return ("");
+        }
+        unsigned char* buf = 0;
+        int len = ::ASN1_STRING_to_UTF8(&buf, ::X509_NAME_ENTRY_get_data(ne));
+        if (len < 0) {
+            ::X509_free(cert);
+            return ("");
+        }
+        std::string ret(reinterpret_cast<char*>(buf), static_cast<size_t>(len));
+        ::OPENSSL_free(buf);
+        ::X509_free(cert);
+        return (ret);
+    }
+
+    /// @break Return the commonName part of the issuerName of
+    /// the peer certificate.
+    ///
+    /// First commonName when there are more than one, in UTF-8.
+    ///
+    /// @return The commonName part of the issuerName or the empty string.
+    std::string getIssuer() {
+        TlsCertificate* cert = getPeerCert();
+        if (!cert) {
+            return ("");
+        }
+        ::X509_NAME *name = ::X509_get_issuer_name(cert);
+        int loc = ::X509_NAME_get_index_by_NID(name, NID_commonName, -1);
+        ::X509_NAME_ENTRY* ne = ::X509_NAME_get_entry(name, loc);
+        if (!ne) {
+            ::X509_free(cert);
+            return ("");
+        }
+        unsigned char* buf = 0;
+        int len = ::ASN1_STRING_to_UTF8(&buf, ::X509_NAME_ENTRY_get_data(ne));
+        if (len < 0) {
+            ::X509_free(cert);
+            return ("");
+        }
+        std::string ret(reinterpret_cast<char*>(buf), static_cast<size_t>(len));
+        ::OPENSSL_free(buf);
+        ::X509_free(cert);
+        return (ret);
+    }
 };
 
 } // namespace asiolink
