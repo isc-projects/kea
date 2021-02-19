@@ -255,8 +255,14 @@ public:
     /// @brief Destructor.
     virtual ~TlsStream() { }
 
-    /// @brief Handshake.
+    /// @brief Returns the role.
+    TlsRole getRole() const {
+        return (role_);
+    }
+
+    /// @brief TLS Handshake.
     ///
+    /// @param callback Callback object.
     virtual void handshake(Callback& callback) {
         using namespace boost::asio::ssl;
         if (role_ == SERVER) {
@@ -264,6 +270,13 @@ public:
         } else {
             async_handshake(stream_base::client, callback);
         }
+    }
+
+    /// @brief TLS shutdown.
+    ///
+    /// @param callback Callback object.
+    virtual void shutdown(Callback& callback) {
+        async_shutdown(callback);
     }
 
     /// @brief Clear the SSL object.
