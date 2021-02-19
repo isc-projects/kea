@@ -34,8 +34,7 @@ run_script_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 run_script_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
-run_script_unittests_LDADD  =
-run_script_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+run_script_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 run_script_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 run_script_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 run_script_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
