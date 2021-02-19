@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,9 +38,15 @@ public:
     /// @param connection Pointer to the new connection.
     void start(const HttpConnectionPtr& connection);
 
-    /// @brief Stops a connection and removes it from the pool.
+    /// @brief Removes a connection them from the pool and shutdown it..
     ///
-    /// If the connection is not found in the pool, this method is no-op.
+    /// @note if the TLS connection stalls e.g. the peer does not try I/O
+    /// on it the connection has to be explicitly stopped.
+    ///
+    /// @param connection Pointer to the connection.
+    void shutdown(const HttpConnectionPtr& connection);
+
+    /// @brief Removes a connection them from the pool and stops it.
     ///
     /// @param connection Pointer to the connection.
     void stop(const HttpConnectionPtr& connection);

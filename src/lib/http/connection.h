@@ -263,6 +263,9 @@ public:
     /// setup and the asynchronous handshake with client is performed.
     void asyncAccept();
 
+    /// @brief Shutdown the socket.
+    void shutdown();
+
     /// @brief Closes the socket.
     void close();
 
@@ -350,6 +353,15 @@ protected:
                                      boost::system::error_code ec,
                                      size_t length);
 
+    /// @brief Callback invoked when TLS shutdown is performed.
+    ///
+    /// The TLS socket is unconditionally closed but the callback is called
+    /// only when the peer has answered so the connection should be
+    /// explicitly closed in all cases, i.e. do not rely on this handler.
+    ///
+    /// @param ec Error code (ignored).
+    void shutdownCallback(const boost::system::error_code& ec);
+
     /// @brief Reset timer for detecting request timeouts.
     ///
     /// @param transaction Pointer to the transaction to be guarded by the timeout.
@@ -368,6 +380,9 @@ protected:
 
     void idleTimeoutCallback();
 
+    /// @brief Shuts down current connection.
+    void shutdownThisConnection();
+
     /// @brief Stops current connection.
     void stopThisConnection();
 
@@ -383,8 +398,8 @@ protected:
     /// @brief TLS context.
     asiolink::TlsContextPtr context_;
 
-    /// @brief Timeout after which the persistent HTTP connection is closed
-    /// by the server.
+    /// @brief Timeout after which the persistent HTTP connection is shut
+    /// down by the server.
     long idle_timeout_;
 
     /// @brief TCP socket used by this connection.

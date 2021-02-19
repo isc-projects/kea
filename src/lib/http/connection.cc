@@ -95,6 +95,30 @@ HttpConnection::~HttpConnection() {
 }
 
 void
+HttpConnection::shutdownCallback(const boost::system::error_code&) {
+    tls_socket_->close();
+}
+
+void
+HttpConnection::shutdown() {
+    request_timer_.cancel();
+    if (tcp_socket_) {
+        tcp_socket_->close();
+        return;
+    }
+    if (tls_socket_) {
+        // Create instance of the callback to close the socket.
+        SocketCallback cb(std::bind(&HttpConnection::shutdownCallback,
+                                    shared_from_this(),
+                                    ph::_1)); // error
+        tls_socket_->shutdown(cb);
+        return;
+    }
+    // Not reachable?
+    isc_throw(Unexpected, "internal error: unable to shutdown the socket");
+}
+
+void
 HttpConnection::close() {
     request_timer_.cancel();
     if (tcp_socket_) {
@@ -107,6 +131,18 @@ HttpConnection::close() {
     }
     // Not reachable?
     isc_throw(Unexpected, "internal error: unable to close the socket");
+}
+
+void
+HttpConnection::shutdownThisConnection() {
+    try {
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                  HTTP_CONNECTION_SHUTDOWN)
+            .arg(getRemoteEndpointAddressAsText());
+        connection_pool_.shutdown(shared_from_this());
+    } catch (...) {
+        LOG_ERROR(http_logger, HTTP_CONNECTION_SHUTDOWN_FAILED);
+    }
 }
 
 void

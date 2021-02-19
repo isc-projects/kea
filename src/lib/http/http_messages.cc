@@ -23,6 +23,8 @@ extern const isc::log::MessageID HTTP_CLIENT_REQUEST_SEND = "HTTP_CLIENT_REQUEST
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_SEND_DETAILS = "HTTP_CLIENT_REQUEST_SEND_DETAILS";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_TIMEOUT_OCCURRED = "HTTP_CLIENT_REQUEST_TIMEOUT_OCCURRED";
 extern const isc::log::MessageID HTTP_CONNECTION_CLOSE_CALLBACK_FAILED = "HTTP_CONNECTION_CLOSE_CALLBACK_FAILED";
+extern const isc::log::MessageID HTTP_CONNECTION_SHUTDOWN = "HTTP_CONNECTION_SHUTDOWN";
+extern const isc::log::MessageID HTTP_CONNECTION_SHUTDOWN_FAILED = "HTTP_CONNECTION_SHUTDOWN_FAILED";
 extern const isc::log::MessageID HTTP_CONNECTION_STOP = "HTTP_CONNECTION_STOP";
 extern const isc::log::MessageID HTTP_CONNECTION_STOP_FAILED = "HTTP_CONNECTION_STOP_FAILED";
 extern const isc::log::MessageID HTTP_DATA_RECEIVED = "HTTP_DATA_RECEIVED";
@@ -56,6 +58,8 @@ const char* values[] = {
     "HTTP_CLIENT_REQUEST_SEND_DETAILS", "detailed information about request sent to %1:\n%2",
     "HTTP_CLIENT_REQUEST_TIMEOUT_OCCURRED", "HTTP request timeout occurred when communicating with %1",
     "HTTP_CONNECTION_CLOSE_CALLBACK_FAILED", "Connection close callback threw an exception",
+    "HTTP_CONNECTION_SHUTDOWN", "shutting down HTTP connection from %1",
+    "HTTP_CONNECTION_SHUTDOWN_FAILED", "shutting down HTTP connection failed",
     "HTTP_CONNECTION_STOP", "stopping HTTP connection from %1",
     "HTTP_CONNECTION_STOP_FAILED", "stopping HTTP connection failed",
     "HTTP_DATA_RECEIVED", "received %1 bytes from %2",
