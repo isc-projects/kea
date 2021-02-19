@@ -88,22 +88,6 @@ public:
     }
 };
 
-
-// This test verifies that if the thread calling spawn has SIGCHLD
-// already block ProcessSpawnError is thrown (@todo the second error
-// case: fork() failing)
-TEST_F(ProcessSpawnTest, sigchldBlocked) {
-    vector<string> args;
-    ProcessSpawn process(io_service_, TEST_SCRIPT_SH, args);
-    sigset_t sset;
-    sigemptyset(&sset);
-    sigaddset(&sset, SIGCHLD);
-    sigset_t osset;
-    pthread_sigmask(SIG_BLOCK, &sset, &osset);
-    EXPECT_THROW(process.spawn(), ProcessSpawnError);
-    sigprocmask(SIG_SETMASK, &osset, 0);
-}
-
 // This test verifies that the external application can be ran with
 // arguments and that the exit code is gathered.
 TEST_F(ProcessSpawnTest, spawnWithArgs) {
