@@ -1332,7 +1332,7 @@ TEST_F(ClientClassDefParserTest, validLifetimeTests) {
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             std::stringstream oss;
-            oss <<  "{ \"name\": \"foo\"";
+            oss << "{ \"name\": \"foo\"";
             if (!scenario.cfg_txt_.empty()) {
                 oss << ",\n" << scenario.cfg_txt_;
             }

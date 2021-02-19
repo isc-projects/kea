@@ -4296,7 +4296,7 @@ TEST_F(AllocEngine4Test, getValidLft4) {
     dictionary->addClass(class_def);
 
     class_def.reset(new ClientClassDef("valid_two", ExpressionPtr()));
-    Triplet<uint32_t>valid_two(200,250,300);
+    Triplet<uint32_t>valid_two(200, 250, 300);
     class_def->setValid(valid_two);
     dictionary->addClass(class_def);
 

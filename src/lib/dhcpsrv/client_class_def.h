@@ -192,9 +192,10 @@ public:
     }
 
     /// @brief Return valid-lifetime value
+    ///
     /// @return a triplet containing the valid lifetime.
     Triplet<uint32_t> getValid() const {
-        return(valid_);
+        return (valid_);
     }
 
     /// @brief Sets new valid lifetime

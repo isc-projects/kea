@@ -319,7 +319,7 @@ public:
         return (getIntType<uint8_t>(scope, name));
     }
 
-    /// @brief Parses a integer triplet
+    /// @brief Parses an integer triplet
     ///
     /// Parses an integer triplet parameter of the form:
     ///
