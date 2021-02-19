@@ -1,3 +1,11 @@
+1868.	[func]		andrei
+	The forensic log hook library has gained an auto-increment
+	primary key column in it's logs table. It is now able to function
+	in a MySQL Percona cluster which requires a primary key for all
+	it's tables when configured with pxc_strict_mode = ENFORCING
+	which is also the default value.
+	(Gitlab #1709)
+
 1867.	[bug]		andrei
 	MySQL connection unit tests have been modified to work with
 	Percona cluster. This change doesn't fix all problems, but it
