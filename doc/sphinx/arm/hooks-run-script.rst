@@ -17,14 +17,14 @@ similar way as other hook libraries by the ``kea-dhcp4`` and
             {
                 "library": "/usr/local/lib/libdhcp_run_script.so",
                 "parameters": {
-                    "name": "/path_to/script_name.sh",
+                    "name": "/full_path_to/script_name.sh",
                     "sync": false
                 }
             }
         ]
     }
 
-The parameters contain the 'name' which indicates the path to the external
+The parameters contain the 'name' which indicates the full path to the external
 script to be called on each hookpoint, and also the 'sync' option to be able
 to wait synchronously for the script to finish execution.
 If the 'sync' parameter is false, then the script will be launched and Kea

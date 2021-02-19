@@ -56,14 +56,15 @@ typedef std::vector<std::string> ProcessEnvVars;
 /// such as the SIGCHLD signal handler. In addition making it
 /// noncopyable keeps the static check code from flagging the
 /// lack of a copy constructor as an issue.
-
+///
+/// @note The ProcessSpawn uses full path for the program to execute.
 class ProcessSpawn : boost::noncopyable {
 public:
 
     /// @brief Constructor.
     ///
     /// @param io_service The IOService which handles signal handlers.
-    /// @param executable A path to the program to be executed.
+    /// @param executable A full path to the program to be executed.
     /// @param args Arguments for the program to be executed.
     /// @param vars Environment variables for the program to be executed.
     ProcessSpawn(isc::asiolink::IOServicePtr io_service,

@@ -71,7 +71,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service The IOService which handles signal handlers.
-    /// @param executable A path to the program to be executed.
+    /// @param executable A full path to the program to be executed.
     /// @param args Arguments for the program to be executed.
     /// @param vars Environment variables for the program to be executed.
     ProcessSpawnImpl(IOServicePtr io_service,
