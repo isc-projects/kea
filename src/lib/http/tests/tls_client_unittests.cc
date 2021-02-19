@@ -8,6 +8,7 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/tls_acceptor.h>
+#include <asiolink/testutils/test_tls.h>
 #include <cc/data.h>
 #include <http/client.h>
 #include <http/http_types.h>
@@ -31,8 +32,10 @@
 #include <sstream>
 #include <string>
 
+using namespace boost::asio;
 using namespace boost::asio::ip;
 using namespace isc::asiolink;
+using namespace isc::asiolink::test;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
@@ -259,27 +262,39 @@ public:
 
     /// @brief Constructor.
     HttpsClientTest()
-        : HttpListenerTest(),
-          listener_(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                    TlsContextPtr(), factory_,
-                    HttpListener::RequestTimeout(REQUEST_TIMEOUT),
-                    HttpListener::IdleTimeout(IDLE_TIMEOUT)),
-          listener2_(io_service_, IOAddress(IPV6_SERVER_ADDRESS), SERVER_PORT + 1,
-                     TlsContextPtr(), factory_,
-                     HttpListener::RequestTimeout(REQUEST_TIMEOUT),
-                     HttpListener::IdleTimeout(IDLE_TIMEOUT)),
-          listener3_(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT + 2,
-                     TlsContextPtr(), factory_,
-                     HttpListener::RequestTimeout(REQUEST_TIMEOUT),
-                     HttpListener::IdleTimeout(SHORT_IDLE_TIMEOUT)) {
+        : HttpListenerTest(), listener_(), listener2_(), listener3_(),
+          server_context_(), client_context_() {
+        configServer(server_context_);
+        configClient(client_context_);
+        listener_.reset(new HttpListener(io_service_,
+                                         IOAddress(SERVER_ADDRESS),
+                                         SERVER_PORT,
+                                         server_context_,
+                                         factory_,
+                                         HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                                         HttpListener::IdleTimeout(IDLE_TIMEOUT)));
+        listener2_.reset(new HttpListener(io_service_,
+                                          IOAddress(IPV6_SERVER_ADDRESS),
+                                          SERVER_PORT + 1,
+                                          server_context_,
+                                          factory_,
+                                          HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                                          HttpListener::IdleTimeout(IDLE_TIMEOUT)));
+        listener3_.reset(new HttpListener(io_service_,
+                                          IOAddress(SERVER_ADDRESS),
+                                          SERVER_PORT + 2,
+                                          server_context_,
+                                          factory_,
+                                          HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                                          HttpListener::IdleTimeout(SHORT_IDLE_TIMEOUT)));
         MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Destructor.
     ~HttpsClientTest() {
-        listener_.stop();
-        listener2_.stop();
-        listener3_.stop();
+        listener_->stop();
+        listener2_->stop();
+        listener3_->stop();
         io_service_.poll();
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -318,18 +333,17 @@ public:
     /// @param version HTTP version to be used.
     void testConsecutiveRequests(const HttpVersion& version) {
         // Start the server.
-        ASSERT_NO_THROW(listener_.start());
+        ASSERT_NO_THROW(listener_->start());
 
         // Create a client and specify the URL on which the server can be reached.
         HttpClient client(io_service_);
         Url url("http://127.0.0.1:18123");
 
         // Initiate request to the server.
-        TlsContextPtr context1;
         PostHttpRequestJsonPtr request1 = createRequest("sequence", 1, version);
         HttpResponseJsonPtr response1(new HttpResponseJson());
         unsigned resp_num = 0;
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context1,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request1, response1,
             [this, &resp_num](const boost::system::error_code& ec,
                               const HttpResponsePtr&,
@@ -337,14 +351,15 @@ public:
             if (++resp_num > 1) {
                 io_service_.stop();
             }
-            EXPECT_FALSE(ec);
+            if (ec) {
+                ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+            }
         }));
 
         // Initiate another request to the destination.
-        TlsContextPtr context2;
         PostHttpRequestJsonPtr request2 = createRequest("sequence", 2, version);
         HttpResponseJsonPtr response2(new HttpResponseJson());
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context2,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request2, response2,
             [this, &resp_num](const boost::system::error_code& ec,
                               const HttpResponsePtr&,
@@ -352,7 +367,9 @@ public:
             if (++resp_num > 1) {
                 io_service_.stop();
             }
-            EXPECT_FALSE(ec);
+            if (ec) {
+                ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+            }
         }));
 
         // Actually trigger the requests. The requests should be handlded by the
@@ -377,8 +394,8 @@ public:
     /// destinations simultaneously.
     void testMultipleDestinations() {
         // Start two servers running on different ports.
-        ASSERT_NO_THROW(listener_.start());
-        ASSERT_NO_THROW(listener2_.start());
+        ASSERT_NO_THROW(listener_->start());
+        ASSERT_NO_THROW(listener2_->start());
 
         // Create the client. It will be communicating with the two servers.
         HttpClient client(io_service_);
@@ -388,11 +405,10 @@ public:
         Url url2("http://[::1]:18124");
 
         // Create a request to the first server.
-        TlsContextPtr context1;
         PostHttpRequestJsonPtr request1 = createRequest("sequence", 1);
         HttpResponseJsonPtr response1(new HttpResponseJson());
         unsigned resp_num = 0;
-        ASSERT_NO_THROW(client.asyncSendRequest(url1, context1,
+        ASSERT_NO_THROW(client.asyncSendRequest(url1, client_context_,
                                                 request1, response1,
             [this, &resp_num](const boost::system::error_code& ec,
                               const HttpResponsePtr&,
@@ -400,14 +416,15 @@ public:
             if (++resp_num > 1) {
                 io_service_.stop();
             }
-            EXPECT_FALSE(ec);
+            if (ec) {
+                ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+            }
         }));
 
         // Create a request to the second server.
-        TlsContextPtr context2;
         PostHttpRequestJsonPtr request2 = createRequest("sequence", 2);
         HttpResponseJsonPtr response2(new HttpResponseJson());
-        ASSERT_NO_THROW(client.asyncSendRequest(url2, context2,
+        ASSERT_NO_THROW(client.asyncSendRequest(url2, client_context_,
                                                 request2, response2,
             [this, &resp_num](const boost::system::error_code& ec,
                               const HttpResponsePtr&,
@@ -415,7 +432,9 @@ public:
             if (++resp_num > 1) {
                 io_service_.stop();
             }
-            EXPECT_FALSE(ec);
+            if (ec) {
+                ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+            }
         }));
 
         // Actually trigger the requests.
@@ -437,7 +456,7 @@ public:
     void testIdleConnection() {
         // Start the server that has short idle timeout. It closes the idle
         // connection after 200ms.
-        ASSERT_NO_THROW(listener3_.start());
+        ASSERT_NO_THROW(listener3_->start());
 
         // Create the client that will communicate with this server.
         HttpClient client(io_service_);
@@ -446,15 +465,16 @@ public:
         Url url("http://127.0.0.1:18125");
 
         // Create the first request.
-        TlsContextPtr context1;
         PostHttpRequestJsonPtr request1 = createRequest("sequence", 1);
         HttpResponseJsonPtr response1(new HttpResponseJson());
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context1,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request1, response1,
             [this](const boost::system::error_code& ec, const HttpResponsePtr&,
                    const std::string&) {
             io_service_.stop();
-            EXPECT_FALSE(ec);
+            if (ec) {
+                ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+            }
         }));
 
         // Run the IO service until the response is received.
@@ -470,15 +490,16 @@ public:
         ASSERT_NO_THROW(runIOService(SHORT_IDLE_TIMEOUT * 2));
 
         // Create another request.
-        TlsContextPtr context2;
         PostHttpRequestJsonPtr request2 = createRequest("sequence", 2);
         HttpResponseJsonPtr response2(new HttpResponseJson());
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context2,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request2, response2,
             [this](const boost::system::error_code& ec, const HttpResponsePtr&,
                    const std::string&) {
             io_service_.stop();
-            EXPECT_FALSE(ec);
+            if (ec) {
+                ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+            }
         }));
 
         // Actually trigger the second request.
@@ -503,17 +524,15 @@ public:
         Url url("http://127.0.0.1:18123");
 
         // Create the request.
-        TlsContextPtr context;
         PostHttpRequestJsonPtr request = createRequest("sequence", 1);
         HttpResponseJsonPtr response(new HttpResponseJson());
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request, response,
             [this](const boost::system::error_code& ec,
                    const HttpResponsePtr&,
                    const std::string&) {
             io_service_.stop();
             // The server should have returned an IO error.
-            EXPECT_TRUE(ec);
             if (!ec) {
                 ADD_FAILURE() << "asyncSendRequest didn't fail";
             }
@@ -527,7 +546,7 @@ public:
     /// response is malformed.
     void testMalformedResponse () {
         // Start the server.
-        ASSERT_NO_THROW(listener_.start());
+        ASSERT_NO_THROW(listener_->start());
 
         // Create the client.
         HttpClient client(io_service_);
@@ -535,7 +554,6 @@ public:
         // Specify the URL of the server.
         Url url("http://127.0.0.1:18123");
 
-        TlsContextPtr context;
         // The response is going to be malformed in such a way that it holds
         // an invalid content type. We affect the content type by creating
         // a request that holds a JSON parameter requesting a specific
@@ -543,14 +561,16 @@ public:
         PostHttpRequestJsonPtr request = createRequest("requested-content-type",
                                                        "text/html");
         HttpResponseJsonPtr response(new HttpResponseJson());
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request, response,
             [this](const boost::system::error_code& ec,
                    const HttpResponsePtr& response,
                    const std::string& parsing_error) {
             io_service_.stop();
             // There should be no IO error (answer from the server is received).
-            EXPECT_FALSE(ec);
+            if (ec) {
+                ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+            }
             // The response object is NULL because it couldn't be finalized.
             EXPECT_FALSE(response);
             // The message parsing error should be returned.
@@ -565,7 +585,7 @@ public:
     /// response from the server within a desired time.
     void testClientRequestTimeout() {
         // Start the server.
-        ASSERT_NO_THROW(listener_.start());
+        ASSERT_NO_THROW(listener_->start());
 
         // Create the client.
         HttpClient client(io_service_);
@@ -575,7 +595,6 @@ public:
 
         unsigned cb_num = 0;
 
-        TlsContextPtr context1;
         // Create the request which asks the server to generate a partial
         // (although well formed) response. The client will be waiting for the
         // rest of the response to be provided and will eventually time out.
@@ -584,7 +603,7 @@ public:
         // This value will be set to true if the connection close callback is
         // invoked upon time out.
         auto connection_closed = false;
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context1,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request1, response1,
             [this, &cb_num](const boost::system::error_code& ec,
                             const HttpResponsePtr& response,
@@ -610,10 +629,9 @@ public:
         );
 
         // Create another request after the timeout. It should be handled ok.
-        TlsContextPtr context2;
         PostHttpRequestJsonPtr request2 = createRequest("sequence", 1);
         HttpResponseJsonPtr response2(new HttpResponseJson());
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context2,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request2, response2,
             [this, &cb_num](const boost::system::error_code& /*ec*/,
                             const HttpResponsePtr&,
@@ -632,7 +650,7 @@ public:
     /// @brief Test that client times out when connection takes too long.
     void testClientConnectTimeout() {
         // Start the server.
-        ASSERT_NO_THROW(listener_.start());
+        ASSERT_NO_THROW(listener_->start());
 
         // Create the client.
         HttpClient client(io_service_);
@@ -642,37 +660,36 @@ public:
 
         unsigned cb_num = 0;
 
-        TlsContextPtr context;
         PostHttpRequestJsonPtr request = createRequest("sequence", 1);
         HttpResponseJsonPtr response(new HttpResponseJson());
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request, response,
             [this, &cb_num](const boost::system::error_code& ec,
                             const HttpResponsePtr& response,
                             const std::string&) {
-            if (++cb_num > 1) {
-                io_service_.stop();
-            }
-            // In this particular case we know exactly the type of the
-            // IO error returned, because the client explicitly sets this
-            // error code.
-            EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
-            // There should be no response returned.
-            EXPECT_FALSE(response);
+                if (++cb_num > 1) {
+                    io_service_.stop();
+                }
+                // In this particular case we know exactly the type of the
+                // IO error returned, because the client explicitly sets this
+                // error code.
+                EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
+                // There should be no response returned.
+                EXPECT_FALSE(response);
+            },
+            HttpClient::RequestTimeout(100),
 
-        }, HttpClient::RequestTimeout(100),
-
-           // This callback is invoked upon an attempt to connect to the
-           // server. The false value indicates to the HttpClient to not
-           // try to send a request to the server. This simulates the
-           // case of connect() taking very long and should eventually
-           // cause the transaction to time out.
-           [](const boost::system::error_code& /*ec*/, int) {
-               return (false);
-        }));
+            // This callback is invoked upon an attempt to connect to the
+            // server. The false value indicates to the HttpClient to not
+            // try to send a request to the server. This simulates the
+            // case of connect() taking very long and should eventually
+            // cause the transaction to time out.
+            [](const boost::system::error_code& /*ec*/, int) {
+                return (false);
+            }));
 
         // Create another request after the timeout. It should be handled ok.
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request, response,
             [this, &cb_num](const boost::system::error_code& /*ec*/,
                             const HttpResponsePtr&,
@@ -707,7 +724,7 @@ public:
     /// transaction should be queued (false), or two (true).
     void testClientRequestLateStart(const bool queue_two_requests) {
         // Start the server.
-        ASSERT_NO_THROW(listener_.start());
+        ASSERT_NO_THROW(listener_->start());
 
         // Create the client.
         HttpClient client(io_service_);
@@ -716,13 +733,12 @@ public:
         Url url("http://127.0.0.1:18123");
 
         // Generate first request.
-        TlsContextPtr context1;
         PostHttpRequestJsonPtr request1 = createRequest("sequence", 1);
         HttpResponseJsonPtr response1(new HttpResponseJson());
 
         // Use very short timeout to make sure that it occurs before we actually
         // run the transaction.
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context1,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request1, response1,
             [](const boost::system::error_code& ec,
                const HttpResponsePtr& response,
@@ -734,21 +750,23 @@ public:
             EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
             // There should be no response returned.
             EXPECT_FALSE(response);
-        }, HttpClient::RequestTimeout(1)));
+        },
+        HttpClient::RequestTimeout(1)));
 
         if (queue_two_requests) {
-            TlsContextPtr context2;
             PostHttpRequestJsonPtr request2 = createRequest("sequence", 2);
             HttpResponseJsonPtr response2(new HttpResponseJson());
-            ASSERT_NO_THROW(client.asyncSendRequest(url, context2,
+            ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                     request2, response2,
                 [](const boost::system::error_code& ec,
                    const HttpResponsePtr& response,
                    const std::string&) {
 
-                // This second request should be successful.
-                EXPECT_TRUE(ec.value() == 0);
-                EXPECT_TRUE(response);
+                    // This second request should be successful.
+                    if (ec) {
+                        ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+                    }
+                    EXPECT_TRUE(response);
             }));
         }
 
@@ -764,10 +782,9 @@ public:
 
         // Now try to send another request to make sure that the client
         // is healthy.
-        TlsContextPtr context3;
         PostHttpRequestJsonPtr request3 = createRequest("sequence", 3);
         HttpResponseJsonPtr response3(new HttpResponseJson());
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context3,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request3, response3,
                          [this](const boost::system::error_code& ec,
                                 const HttpResponsePtr&,
@@ -775,7 +792,9 @@ public:
             io_service_.stop();
 
             // Everything should be ok.
-            EXPECT_TRUE(ec.value() == 0);
+            if (ec) {
+                ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+            }
         }));
 
         // Actually trigger the requests.
@@ -790,30 +809,31 @@ public:
     /// @param version HTTP version to be used.
     void testConnectCloseCallbacks(const HttpVersion& version) {
         // Start the server.
-        ASSERT_NO_THROW(listener_.start());
+        ASSERT_NO_THROW(listener_->start());
 
         // Create a client and specify the URL on which the server can be reached.
         HttpClient client(io_service_);
         Url url("http://127.0.0.1:18123");
 
         // Initiate request to the server.
-        TlsContextPtr context1;
         PostHttpRequestJsonPtr request1 = createRequest("sequence", 1, version);
         HttpResponseJsonPtr response1(new HttpResponseJson());
         unsigned resp_num = 0;
         ExternalMonitor monitor;
 
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context1,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request1, response1,
             [this, &resp_num](const boost::system::error_code& ec,
                               const HttpResponsePtr&,
                               const std::string&) {
-            if (++resp_num > 1) {
-                io_service_.stop();
-            }
+                if (++resp_num > 1) {
+                    io_service_.stop();
+                }
 
-            EXPECT_FALSE(ec);
-        },
+                if (ec) {
+                    ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+                }
+            },
             HttpClient::RequestTimeout(10000),
             std::bind(&ExternalMonitor::connectHandler, &monitor, ph::_1, ph::_2),
             std::bind(&ExternalMonitor::handshakeHandler, &monitor, ph::_1, ph::_2),
@@ -821,19 +841,20 @@ public:
         ));
 
         // Initiate another request to the destination.
-        TlsContextPtr context2;
         PostHttpRequestJsonPtr request2 = createRequest("sequence", 2, version);
         HttpResponseJsonPtr response2(new HttpResponseJson());
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context2,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request2, response2,
             [this, &resp_num](const boost::system::error_code& ec,
                               const HttpResponsePtr&,
                               const std::string&) {
-            if (++resp_num > 1) {
-                io_service_.stop();
-            }
-            EXPECT_FALSE(ec);
-        },
+                if (++resp_num > 1) {
+                    io_service_.stop();
+                }
+                if (ec) {
+                    ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+                }
+            },
             HttpClient::RequestTimeout(10000),
             std::bind(&ExternalMonitor::connectHandler, &monitor, ph::_1, ph::_2),
             std::bind(&ExternalMonitor::handshakeHandler, &monitor, ph::_1, ph::_2),
@@ -887,43 +908,49 @@ public:
     /// @param version HTTP version to be used.
     void testCloseIfOutOfBand(const HttpVersion& version) {
         // Start the server.
-        ASSERT_NO_THROW(listener_.start());
+        ASSERT_NO_THROW(listener_->start());
 
         // Create a client and specify the URL on which the server can be reached.
         HttpClient client(io_service_);
         Url url("http://127.0.0.1:18123");
 
         // Initiate request to the server.
-        TlsContextPtr context1;
         PostHttpRequestJsonPtr request1 = createRequest("sequence", 1, version);
         HttpResponseJsonPtr response1(new HttpResponseJson());
         unsigned resp_num = 0;
         ExternalMonitor monitor;
 
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context1,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request1, response1,
             [this, &client, &resp_num, &monitor](const boost::system::error_code& ec,
                               const HttpResponsePtr&,
                               const std::string&) {
-            if (++resp_num == 1) {
-                io_service_.stop();
-            }
+                if (++resp_num == 1) {
+                    io_service_.stop();
+                }
 
-            EXPECT_EQ(1, monitor.connect_cnt_);      // We should have 1 connect.
-            EXPECT_EQ(0, monitor.close_cnt_);        // We should have 0 closes
-            ASSERT_GT(monitor.registered_fd_, -1);   // We should have a valid fd.
-            int orig_fd = monitor.registered_fd_;
+                // We should have 1 connect.
+                EXPECT_EQ(1, monitor.connect_cnt_);
+                // We should have 1 handshake.
+                EXPECT_EQ(1, monitor.handshake_cnt_);
+                // We should have 0 closes
+                EXPECT_EQ(0, monitor.close_cnt_);
+                // We should have a valid fd.
+                ASSERT_GT(monitor.registered_fd_, -1);
+                int orig_fd = monitor.registered_fd_;
 
-            // Test our socket for OOBness.
-            client.closeIfOutOfBand(monitor.registered_fd_);
+                // Test our socket for OOBness.
+                client.closeIfOutOfBand(monitor.registered_fd_);
 
-            // Since we're in a transaction, we should have no closes and
-            // the same valid fd.
-            EXPECT_EQ(0, monitor.close_cnt_);
-            ASSERT_EQ(monitor.registered_fd_, orig_fd);
+                // Since we're in a transaction, we should have no closes and
+                // the same valid fd.
+                EXPECT_EQ(0, monitor.close_cnt_);
+                ASSERT_EQ(monitor.registered_fd_, orig_fd);
 
-            EXPECT_FALSE(ec);
-        },
+                if (ec) {
+                    ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+                }
+            },
             HttpClient::RequestTimeout(10000),
             std::bind(&ExternalMonitor::connectHandler, &monitor, ph::_1, ph::_2),
             std::bind(&ExternalMonitor::handshakeHandler, &monitor, ph::_1, ph::_2),
@@ -957,34 +984,40 @@ public:
 
         // Now let's do another request to the destination to verify that
         // we'll reopen the connection without issue.
-        TlsContextPtr context2;
         PostHttpRequestJsonPtr request2 = createRequest("sequence", 2, version);
         HttpResponseJsonPtr response2(new HttpResponseJson());
         resp_num = 0;
-        ASSERT_NO_THROW(client.asyncSendRequest(url, context2,
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request2, response2,
             [this, &client, &resp_num, &monitor](const boost::system::error_code& ec,
                               const HttpResponsePtr&,
                               const std::string&) {
-            if (++resp_num == 1) {
-                io_service_.stop();
-            }
+                if (++resp_num == 1) {
+                    io_service_.stop();
+                }
 
-            EXPECT_EQ(2, monitor.connect_cnt_);      // We should have 1 connect.
-            EXPECT_EQ(1, monitor.close_cnt_);        // We should have 0 closes
-            ASSERT_GT(monitor.registered_fd_, -1);   // We should have a valid fd.
-            int orig_fd = monitor.registered_fd_;
+                // We should have 1 connect.
+                EXPECT_EQ(2, monitor.connect_cnt_);
+                // We should have 2 handshake.
+                EXPECT_EQ(2, monitor.handshake_cnt_);
+                // We should have 0 closes
+                EXPECT_EQ(1, monitor.close_cnt_);
+                // We should have a valid fd.
+                ASSERT_GT(monitor.registered_fd_, -1);
+                int orig_fd = monitor.registered_fd_;
 
-            // Test our socket for OOBness.
-            client.closeIfOutOfBand(monitor.registered_fd_);
+                // Test our socket for OOBness.
+                client.closeIfOutOfBand(monitor.registered_fd_);
 
-            // Since we're in a transaction, we should have no closes and
-            // the same valid fd.
-            EXPECT_EQ(1, monitor.close_cnt_);
-            ASSERT_EQ(monitor.registered_fd_, orig_fd);
+                // Since we're in a transaction, we should have no closes and
+                // the same valid fd.
+                EXPECT_EQ(1, monitor.close_cnt_);
+                ASSERT_EQ(monitor.registered_fd_, orig_fd);
 
-            EXPECT_FALSE(ec);
-        },
+                if (ec) {
+                    ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+                }
+            },
             HttpClient::RequestTimeout(10000),
             std::bind(&ExternalMonitor::connectHandler, &monitor, ph::_1, ph::_2),
             std::bind(&ExternalMonitor::handshakeHandler, &monitor, ph::_1, ph::_2),
@@ -1077,15 +1110,20 @@ public:
     };
 
     /// @brief Instance of the listener used in the tests.
-    HttpListener listener_;
+    std::unique_ptr<HttpListener> listener_;
 
     /// @brief Instance of the second listener used in the tests.
-    HttpListener listener2_;
+    std::unique_ptr<HttpListener> listener2_;
 
     /// @brief Instance of the third listener used in the tests (with short idle
     /// timeout).
-    HttpListener listener3_;
+    std::unique_ptr<HttpListener> listener3_;
 
+    /// @brief Server TLS context.
+    TlsContextPtr server_context_;
+
+    /// @brief Client TLS context.
+    TlsContextPtr client_context_;
 };
 
 // Test that two consecutive requests can be sent over the same (persistent)
