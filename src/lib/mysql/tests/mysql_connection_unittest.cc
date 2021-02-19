@@ -17,6 +17,19 @@ using namespace isc::db::test;
 
 namespace {
 
+/// @brief RAII wrapper over MYSQL_RES obtained from MySQL library functions like
+/// mysql_use_result().
+struct MySqlResult {
+    MySqlResult(MYSQL_RES* result) : result_(result) {
+    }
+
+    ~MySqlResult() {
+        mysql_free_result(result_);
+    }
+
+    MYSQL_RES* const result_;
+};
+
 /// @brief Test fixture class for @c MySqlConnection class.
 class MySqlConnectionTest : public ::testing::Test {
 public:
@@ -234,6 +247,45 @@ public:
         }
     }
 
+    /// @brief Run a raw, unprepared statement and return the result.
+    ///
+    /// This is useful when running statements that can't be parametrized with a
+    /// question mark in place of a bound variable e.g. "SHOW GLOBAL VARIABLES"
+    /// and thus cannot be prepared beforehand. All the results are string, the
+    /// output should be the same as that which one would see in a mysql command
+    /// line client.
+    ///
+    /// @param statement the statement in string form
+    /// @throw DbOperationError if the statement could not be run
+    /// @return the list of rows, each row consisting of a list of values for
+    ///     each column
+    std::vector<std::vector<std::string>>
+    rawStatement(std::string const& statement) const {
+        // Execute a SQL statement.
+        if (mysql_query(conn_.mysql_, statement.c_str())) {
+            isc_throw(DbOperationError,
+                      statement << ": " << mysql_error(conn_.mysql_));
+        }
+
+        // Get a result set.
+        MySqlResult result(mysql_use_result(conn_.mysql_));
+
+        // Fetch a result set.
+        std::vector<std::vector<std::string>> output;
+        size_t r(0);
+        MYSQL_ROW row;
+        size_t const column_count(mysql_num_fields(result.result_));
+        while ((row = mysql_fetch_row(result.result_)) != NULL) {
+            output.push_back(std::vector<std::string>());
+            for (size_t i = 0; i < column_count; ++i) {
+                output[r].push_back(row[i]);
+            }
+            ++r;
+        }
+
+        return output;
+    }
+
     /// @brief Get pxc_strict_mode global variable from the database.
     /// For Percona, they can be: DISABLED, PERMISSIVE, ENFORCING, MASTER.
     std::string showPxcStrictMode() {
@@ -244,7 +296,7 @@ public:
             // this returned row the lambda provided as 4th argument should be
             // executed.
             std::vector<std::vector<std::string>> const result(
-                conn_.rawStatement("SHOW GLOBAL VARIABLES LIKE 'pxc_strict_mode'"));
+                rawStatement("SHOW GLOBAL VARIABLES LIKE 'pxc_strict_mode'"));
             if (result.size() < 1 || result[0].size() < 2) {
                 // Not Percona
                 return "";

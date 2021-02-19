@@ -67,24 +67,10 @@ private:
     MYSQL_STMT*     statement_;     ///< Statement for which results are freed
 };
 
-/// @brief RAII wrapper oer MYSQL_RES obtained from MySQL library functions like
-/// mysql_use_result().
-struct MySqlResult {
-    MySqlResult(MYSQL_RES* result) : result_(result) {
-    }
-
-    ~MySqlResult() {
-        mysql_free_result(result_);
-    }
-
-    MYSQL_RES* const result_;
-};
-
 /// @brief MySQL Selection Statements
 ///
 /// Each statement is associated with an index, which is used to reference the
 /// associated prepared statement.
-
 struct TaggedStatement {
     uint32_t index;
     const char* text;
@@ -577,21 +563,6 @@ public:
         // Let's return how many rows were affected.
         return (static_cast<uint64_t>(mysql_stmt_affected_rows(statements_[index])));
     }
-
-    /// @brief Run a raw, unprepared statement.
-    ///
-    /// This is useful when running statements that can't be parametrized with a
-    /// question mark in place of a binded variable e.g. "SHOW GLOBAL VARIABLES"
-    /// and thus cannot be prepared beforehand. All the results are string, the
-    /// output should be the same as that which one would see in a mysql command
-    /// line client.
-    ///
-    /// @param statement the statement in string form
-    /// @throw DbOperationError if the statement could not be run
-    /// @return the list of rows, each row consisting of a list of values for
-    ///     each column
-    std::vector<std::vector<std::string>>
-    rawStatement(std::string const& statement) const;
 
     /// @brief Commit Transactions
     ///
