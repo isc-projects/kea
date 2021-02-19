@@ -138,7 +138,7 @@ private:
     ///
     /// This method is used to convert arguments specified as an STL container
     /// holding @c std::string objects to an array of C strings, used by the
-    /// @c execvpe function in the @c ProcessSpawnImpl::spawn. It allocates a
+    /// @c execve function in the @c ProcessSpawnImpl::spawn. It allocates a
     /// new C string and copies the contents of the @c src to it.
     /// The data is stored in an internal container so that the caller of the
     /// function can be exception safe.
@@ -262,8 +262,8 @@ ProcessSpawnImpl::spawn(bool dismiss) {
         // We're in the child process.
         sigprocmask(SIG_SETMASK, &osset, 0);
         // Run the executable.
-        if (execvpe(executable_.c_str(), args_.get(), vars_.get()) != 0) {
-            // We may end up here if the execvpe failed, e.g. as a result
+        if (execve(executable_.c_str(), args_.get(), vars_.get()) != 0) {
+            // We may end up here if the execve failed, e.g. as a result
             // of issue with permissions or invalid executable name.
             _exit(EXIT_FAILURE);
         }

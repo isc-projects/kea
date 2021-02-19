@@ -43,7 +43,7 @@ typedef std::vector<std::string> ProcessEnvVars;
 /// @brief Utility class for spawning new processes.
 ///
 /// This class is used to spawn new process by Kea. It forks the current
-/// process and then uses the @c execvp function to execute the specified
+/// process and then uses the @c execve function to execute the specified
 /// binary with parameters. The @c ProcessSpawn installs the handler for
 /// the SIGCHLD signal, which is executed when the child process ends.
 /// The handler checks the exit code returned by the process and records
