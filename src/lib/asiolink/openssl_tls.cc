@@ -45,7 +45,12 @@ TlsContext::TlsContext(TlsRole role)
 
 boost::asio::ssl::context&
 TlsContext::getContext() {
-    ::SSL_CTX_up_ref(context_.native_handle());
+    auto ctx = context_.native_handle();
+#if defined(LIBRESSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+    ::SSL_CTX_up_ref(ctx);
+#else
+    CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
+#endif
     return (context_);
 }
 
