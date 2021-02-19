@@ -544,6 +544,9 @@ HttpConnection::idleTimeoutCallback() {
     LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
               HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
+    // In theory we should shutdown first and stop/close after but
+    // it is better to put the connection management responsabilty
+    // on the client... so simply drop idle connections.
     stopThisConnection();
 }
 
