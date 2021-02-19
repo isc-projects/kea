@@ -1,3 +1,10 @@
+1867.	[bug]		andrei
+	MySQL connection unit tests have been modified to work with
+	Percona cluster. This change doesn't fix all problems, but it
+	improves the situation sufficiently to be able to run unit tests
+	with positive results on a Percona cluster.
+	(Gitlab #1708)
+
 1866.	[func]		marcin
 	Added new log messages issued when a dynamic lease allocation
 	fails. The new messages provide comprehensive information about
