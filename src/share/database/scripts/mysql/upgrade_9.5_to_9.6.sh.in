@@ -34,22 +34,54 @@ if test "${version}" != "9.5"; then
 fi
 
 mysql "$@" <<EOF
+# Temporary function to check if column exists.
+CREATE FUNCTION columnExists(table_name_parameter TEXT, column_name_parameter TEXT)
+RETURNS INT
+RETURN (
+  SELECT COUNT(column_name)
+  FROM information_schema.columns
+  WHERE table_schema = DATABASE()
+  AND table_name = table_name_parameter
+  AND column_name = column_name_parameter
+);
+
+# Temporary procedure to add column only if it doesn't exist to work around the
+# 1.9.4 leak of cache_threshold and cache_max_age column alters in subnet and
+# shared network tables in schema version 9.5.
+DELIMITER $$
+CREATE PROCEDURE addColumnIfNotExists(
+  IN table_name TEXT,
+  IN column_name TEXT,
+  IN definition TEXT
+)
+BEGIN
+  SET @exists := columnExists(table_name, column_name);
+  IF (@exists = 0) THEN
+    SET @alter = CONCAT('ALTER TABLE ', table_name);
+    SET @alter = CONCAT(@alter, ' ', 'ADD COLUMN') ;
+    SET @alter = CONCAT(@alter, ' ', column_name);
+    SET @alter = CONCAT(@alter, ' ', definition);
+    PREPARE statement FROM @alter;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+  END IF;
+END;
+$$
+DELIMITER ;
+
 # Add new lease cache parameters.
-ALTER TABLE dhcp4_subnet
-    ADD COLUMN cache_threshold FLOAT DEFAULT NULL,
-    ADD COLUMN cache_max_age INT(10) DEFAULT NULL;
+CALL addColumnIfNotExists('dhcp4_subnet', 'cache_threshold', 'FLOAT DEFAULT NULL');
+CALL addColumnIfNotExists('dhcp4_subnet', 'cache_max_age', 'INT(10) DEFAULT NULL');
+CALL addColumnIfNotExists('dhcp4_shared_network', 'cache_threshold', 'FLOAT DEFAULT NULL');
+CALL addColumnIfNotExists('dhcp4_shared_network', 'cache_max_age', 'INT(10) DEFAULT NULL');
+CALL addColumnIfNotExists('dhcp6_subnet', 'cache_threshold', 'FLOAT DEFAULT NULL');
+CALL addColumnIfNotExists('dhcp6_subnet', 'cache_max_age', 'INT(10) DEFAULT NULL');
+CALL addColumnIfNotExists('dhcp6_shared_network', 'cache_threshold', 'FLOAT DEFAULT NULL');
+CALL addColumnIfNotExists('dhcp6_shared_network', 'cache_max_age', 'INT(10) DEFAULT NULL');
 
-ALTER TABLE dhcp4_shared_network
-    ADD COLUMN cache_threshold FLOAT DEFAULT NULL,
-    ADD COLUMN cache_max_age INT(10) DEFAULT NULL;
-
-ALTER TABLE dhcp6_subnet
-    ADD COLUMN cache_threshold FLOAT DEFAULT NULL,
-    ADD COLUMN cache_max_age INT(10) DEFAULT NULL;
-
-ALTER TABLE dhcp6_shared_network
-    ADD COLUMN cache_threshold FLOAT DEFAULT NULL,
-    ADD COLUMN cache_max_age INT(10) DEFAULT NULL;
+# Clean up.
+DROP FUNCTION columnExists;
+DROP PROCEDURE addColumnIfNotExists;
 
 # Add an auto-increment ID as primary key to support Percona.
 ALTER TABLE logs
