@@ -3054,6 +3054,12 @@ ALTER TABLE dhcp4_shared_network DROP COLUMN reservation_mode;
 ALTER TABLE dhcp6_subnet DROP COLUMN reservation_mode;
 ALTER TABLE dhcp6_shared_network DROP COLUMN reservation_mode;
 
+# Update the schema version number
+UPDATE schema_version
+SET version = '9', minor = '5';
+
+# This line concludes database upgrade to version 9.5.
+
 # Add new lease cache parameters.
 ALTER TABLE dhcp4_subnet
     ADD COLUMN cache_threshold FLOAT DEFAULT NULL,
@@ -3071,11 +3077,11 @@ ALTER TABLE dhcp6_shared_network
     ADD COLUMN cache_threshold FLOAT DEFAULT NULL,
     ADD COLUMN cache_max_age INT(10) DEFAULT NULL;
 
-# Update the schema version number
+# Update the schema version number.
 UPDATE schema_version
-SET version = '9', minor = '5';
+    SET version = '9', minor = '6';
 
-# This line concludes database upgrade to version 9.5.
+# This line concludes database upgrade to version 9.6.
 
 # Add an auto-increment ID as primary key to support Percona.
 ALTER TABLE logs

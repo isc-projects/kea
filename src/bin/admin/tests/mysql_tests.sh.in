@@ -809,6 +809,8 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     count=$(echo "${OUTPUT}" | grep -Fci reservation) || true
     assert_eq 0 "${count}" "dhcp6_subnet has still reservation_mode column. (returned count %d, expected %d)"
 
+    # Schema upgrade from 9.5 to 9.6.
+
     # table: dhcp4_shared_network new cache_threshold and cache_max_age columns
     qry="select cache_threshold, cache_max_age from dhcp4_shared_network"
     run_statement "dhcp4_shared_network" "$qry"
@@ -824,8 +826,6 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     # table: dhcp6_subnet new cache_threshold and cache_max_age columns
     qry="select cache_threshold, cache_max_age from dhcp6_subnet"
     run_statement "dhcp6_shared_network" "$qry"
-
-    # Schema upgrade from 9.5 to 9.6.
 
     qry='SELECT id FROM logs';
     run_command \

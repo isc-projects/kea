@@ -27,6 +27,7 @@ mysql_SCRIPTS += upgrade_9.1_to_9.2.sh
 mysql_SCRIPTS += upgrade_9.2_to_9.3.sh
 mysql_SCRIPTS += upgrade_9.3_to_9.4.sh
 mysql_SCRIPTS += upgrade_9.4_to_9.5.sh
+mysql_SCRIPTS += upgrade_9.5_to_9.6.sh
 mysql_SCRIPTS += wipe_data.sh
 
 DISTCLEANFILES = ${mysql_SCRIPTS}
