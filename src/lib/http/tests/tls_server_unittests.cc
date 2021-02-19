@@ -579,12 +579,9 @@ public:
         stream_.lowest_layer().non_blocking(true);
 
         // We need to provide a buffer for a call to read.
-        int fd = stream_.lowest_layer().native_handle();
         char data[2];
-        int err = 0;
-        if (recv(fd, data, sizeof(data), MSG_PEEK) < 0) {
-            err = errno;
-        }
+        boost::system::error_code ec;
+        boost::asio::read(stream_, boost::asio::buffer(data, sizeof(data)), ec);
 
         // Revert the original non_blocking flag on the socket.
         stream_.lowest_layer().non_blocking(non_blocking_orig);
@@ -595,7 +592,8 @@ public:
         // implementations in some situations. Any other error code indicates a
         // problem with the connection so we assume that the connection has been
         // closed.
-        return ((err == 0) || (err == EAGAIN) || (err == EWOULDBLOCK));
+        return (!ec || (ec.value() == boost::asio::error::try_again) ||
+                (ec.value() == boost::asio::error::would_block));
     }
 
     /// @brief Checks if the TCP connection is already closed.
@@ -614,19 +612,17 @@ public:
         stream_.lowest_layer().non_blocking(false);
 
         // We need to provide a buffer for a call to read.
-        int fd = stream_.lowest_layer().native_handle();
         char data[2];
-        int err = 0;
-        int cc = recv(fd, data, sizeof(data), MSG_PEEK);
-        if (cc < 0) {
-            err = errno;
-        }
+        boost::system::error_code ec;
+        boost::asio::read(stream_, boost::asio::buffer(data, sizeof(data)), ec);
 
         // Revert the original non_blocking flag on the socket.
         stream_.lowest_layer().non_blocking(non_blocking_orig);
 
-        // If the connection is closed we'd typically get eof status code.
-        return ((cc == 0) || (err == ECONNRESET));
+        // If the connection is closed we'd typically get eof or
+        // stream_truncated status code.
+        return ((ec.value() == boost::asio::error::eof) ||
+                (ec.value() == boost::asio::ssl::error::stream_truncated));
     }
 
     /// @brief Close connection.
