@@ -6088,7 +6088,6 @@ TEST_F(Dhcp4ParserTest, clientClassValidLifetime) {
     class_def = dictionary->findClass("two");
     ASSERT_TRUE(class_def);
     EXPECT_TRUE(class_def->getValid().unspecified());
-
 }
 
 

@@ -244,7 +244,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
 
         // preferred-lifetime
         shared_network->setPreferred(parseIntTriplet(shared_network_data,
-                                                   "preferred-lifetime"));
+                                                     "preferred-lifetime"));
 
         // Get interface-id option content. For now we support string
         // representation only

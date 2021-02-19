@@ -4291,7 +4291,7 @@ TEST_F(AllocEngine4Test, getValidLft4) {
     ClientClassDictionaryPtr dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
 
     ClientClassDefPtr class_def(new ClientClassDef("valid_one", ExpressionPtr()));
-    Triplet<uint32_t>valid_one(50,100,150);
+    Triplet<uint32_t> valid_one(50, 100, 150);
     class_def->setValid(valid_one);
     dictionary->addClass(class_def);
 
@@ -4307,7 +4307,7 @@ TEST_F(AllocEngine4Test, getValidLft4) {
     CfgMgr::instance().commit();
 
     // Update the subnet's triplet to something more useful.
-    subnet_->setValid(Triplet<uint32_t>(500,1000,1500));
+    subnet_->setValid(Triplet<uint32_t>(500, 1000, 1500));
 
     // Describes a test scenario.
     struct Scenario {
@@ -4321,7 +4321,7 @@ TEST_F(AllocEngine4Test, getValidLft4) {
     std::vector<Scenario> scenarios = {
         {
             "BOOTP",
-            {"BOOTP"},
+            { "BOOTP" },
             0,
             Lease::INFINITY_LFT
         },
@@ -4369,19 +4369,19 @@ TEST_F(AllocEngine4Test, getValidLft4) {
         },
         {
             "class plus option",
-            {"valid_one"},
+            { "valid_one" },
             valid_one.getMin() + 25,
             valid_one.getMin() + 25
         },
         {
             "class plus option too small",
-            {"valid_one"},
+            { "valid_one" },
             valid_one.getMin() - 25,
             valid_one.getMin()
         },
         {
             "class plus option too big",
-            {"valid_one"},
+            { "valid_one" },
             valid_one.getMax() + 25,
             valid_one.getMax()
         }

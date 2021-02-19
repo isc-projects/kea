@@ -1640,7 +1640,7 @@ public:
     /// it simply returns the candidate triplet's default value.
     ///
     /// @param ctx Client context holding various information about the client.
-    /// @return unsigned integer value of the valid lifetime to use
+    /// @return unsigned integer value of the valid lifetime to use.
     static uint32_t getValidLft(const ClientContext4& ctx);
 
 private:

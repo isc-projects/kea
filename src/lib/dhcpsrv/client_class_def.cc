@@ -197,14 +197,16 @@ ClientClassDef:: toElement() const {
     // Set valid-lifetime
     if (!valid_.unspecified()) {
         result->set("valid-lifetime",
-                 Element::create(static_cast<long long>(valid_.get())));
+                    Element::create(static_cast<long long>(valid_.get())));
+
         if (valid_.getMin() < valid_.get()) {
             result->set("min-valid-lifetime",
-                     Element::create(static_cast<long long>(valid_.getMin())));
+                        Element::create(static_cast<long long>(valid_.getMin())));
         }
+
         if (valid_.getMax() > valid_.get()) {
             result->set("max-valid-lifetime",
-                     Element::create(static_cast<long long>(valid_.getMax())));
+                        Element::create(static_cast<long long>(valid_.getMax())));
         }
     }
 
@@ -282,7 +284,7 @@ ClientClassDictionary::findClass(const std::string& name) const {
         return (*it).second;
     }
 
-    return(ClientClassDefPtr());
+    return (ClientClassDefPtr());
 }
 
 void

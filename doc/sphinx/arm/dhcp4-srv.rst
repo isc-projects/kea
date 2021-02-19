@@ -182,33 +182,33 @@ client will begin the renewal and rebind procedures.
 
 .. note::
 
-    Beginning with Kea 1.6.0 the lease valid lifetime is extended from a
-    single value to a triplet with minimum, default and maximum values using
-    ``min-valid-lifetime``, ``valid-lifetime`` and ``max-valid-lifetime``.
-    As of Kea 1.9.5, these values may be specified in client classes. The recipe
-    the server uses to select which lifetime value to use is as follows:
+   Beginning with Kea 1.6.0 the lease valid lifetime is extended from a
+   single value to a triplet with minimum, default and maximum values using
+   ``min-valid-lifetime``, ``valid-lifetime`` and ``max-valid-lifetime``.
+   As of Kea 1.9.5, these values may be specified in client classes. The recipe
+   the server uses to select which lifetime value to use is as follows:
 
-    If the client query is a BOOTP query, the server will always use the
-    infinite lease time (e.g.0xffffffff). Otherwise the server must next
-    determine which configured triplet to use by first searching all
-    classes assigned to the query, and then the subnet selected for
-    the query.
+   If the client query is a BOOTP query, the server will always use the
+   infinite lease time (e.g. 0xffffffff). Otherwise the server must next
+   determine which configured triplet to use by first searching all
+   classes assigned to the query, and then the subnet selected for
+   the query.
 
-    Classes are searched in the order they were assigned to the query. The
-    server will use the triplet from the first class that specifies it.
-    If no classes specify the triplet then the server will use the triplet
-    specified by the subnet selected for the client. If the subnet does not
-    explicitly specify it the server will look next at the subnet's
-    shared-network (if one), then for a global specification, and
-    finally the global default.
+   Classes are searched in the order they were assigned to the query. The
+   server will use the triplet from the first class that specifies it.
+   If no classes specify the triplet then the server will use the triplet
+   specified by the subnet selected for the client. If the subnet does not
+   explicitly specify it the server will look next at the subnet's
+   shared-network (if one), then for a global specification, and
+   finally the global default.
 
-    If the client requested a lifetime value via DHCP option 51, then the
-    lifetime value used will be the requested value bounded by the configured
-    triplet.  In other words, If the requested lifetime is less than the
-    configured minimum the configured minimum will be used; if it is more
-    than the configured maximum the configured maximum will be used.  If
-    the client did not provide a requested value, the lifetime value used
-    is the simple be the triplet default value.
+   If the client requested a lifetime value via DHCP option 51, then the
+   lifetime value used will be the requested value bounded by the configured
+   triplet.  In other words, if the requested lifetime is less than the
+   configured minimum the configured minimum will be used; if it is more
+   than the configured maximum the configured maximum will be used.  If
+   the client did not provide a requested value, the lifetime value used
+   will be the triplet default value.
 
 .. note::
 

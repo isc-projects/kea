@@ -321,16 +321,16 @@ public:
 
     /// @brief Parses a integer triplet
     ///
-    /// Parse an integer triplet parameter of the form:
+    /// Parses an integer triplet parameter of the form:
     ///
     ///    min-<name>, <name>, max-<name>
     ///
-    /// @param scope Data element holding e.g.  shared network configuration
+    /// @param scope Data element holding e.g. shared network configuration
     /// to be parsed.
     /// @param name Base name of the parameter.
     /// @return A triplet with the parsed value.
     const dhcp::Triplet<uint32_t> parseIntTriplet(const data::ConstElementPtr& scope,
-                                          const std::string& name);
+                                                  const std::string& name);
 };
 
 };

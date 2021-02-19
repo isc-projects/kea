@@ -1303,29 +1303,29 @@ TEST_F(ClientClassDefParserTest, validLifetimeTests) {
 
     std::vector<Scenario> scenarios = {
         {
-        "unspecified",
-        "",
-        Triplet<uint32_t>()
+            "unspecified",
+            "",
+            Triplet<uint32_t>()
         },
         {
-        "valid only",
-        "\"valid-lifetime\": 100",
-        Triplet<uint32_t>(100)
+            "valid only",
+            "\"valid-lifetime\": 100",
+            Triplet<uint32_t>(100)
         },
         {
-        "min only",
-        "\"min-valid-lifetime\": 50",
-        Triplet<uint32_t>(50, 50, 50)
+            "min only",
+            "\"min-valid-lifetime\": 50",
+            Triplet<uint32_t>(50, 50, 50)
         },
         {
-        "max only",
-        "\"max-valid-lifetime\": 75",
-        Triplet<uint32_t>(75, 75, 75)
+            "max only",
+            "\"max-valid-lifetime\": 75",
+            Triplet<uint32_t>(75, 75, 75)
         },
         {
-        "all three",
-        "\"min-valid-lifetime\": 25, \"valid-lifetime\": 50, \"max-valid-lifetime\": 75",
-        Triplet<uint32_t>(25, 50, 75)
+            "all three",
+            "\"min-valid-lifetime\": 25, \"valid-lifetime\": 50, \"max-valid-lifetime\": 75",
+            Triplet<uint32_t>(25, 50, 75)
         }
     };
 
@@ -1336,7 +1336,7 @@ TEST_F(ClientClassDefParserTest, validLifetimeTests) {
             if (!scenario.cfg_txt_.empty()) {
                 oss << ",\n" << scenario.cfg_txt_;
             }
-            oss <<  "\n}\n";
+            oss << "\n}\n";
 
             ClientClassDefPtr class_def;
             ASSERT_NO_THROW_LOG(class_def = parseClientClassDef(oss.str(), AF_INET));

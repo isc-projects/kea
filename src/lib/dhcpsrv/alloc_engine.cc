@@ -3845,7 +3845,7 @@ AllocEngine::getValidLft(const ClientContext4& ctx) {
 
     // If it's BOOTP, use infinite valid lifetime.
     if (ctx.query_->inClass("BOOTP")) {
-        return(Lease::INFINITY_LFT);
+        return (Lease::INFINITY_LFT);
     }
 
     // Use the dhcp-lease-time content from the client if it's there.
@@ -3858,10 +3858,9 @@ AllocEngine::getValidLft(const ClientContext4& ctx) {
         }
     }
 
-
     // If the triplet is specified in one of our classes use it.
     // We use the first one we find.
-    Triplet<uint32_t>candidate_lft;
+    Triplet<uint32_t> candidate_lft;
     const ClientClasses classes = ctx.query_->getClasses();
     if (!classes.empty()) {
         // Let's get class definitions
@@ -3887,7 +3886,7 @@ AllocEngine::getValidLft(const ClientContext4& ctx) {
     // If client requested a value, use the value bounded by
     // the candidate triplet.
     if (requested_lft > 0) {
-        return(candidate_lft.get(requested_lft));
+        return (candidate_lft.get(requested_lft));
     }
 
     // Use the candidate's default value.
