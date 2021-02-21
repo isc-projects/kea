@@ -1,3 +1,9 @@
+1870.	[bug]		razvan
+	Fixed a crash when using the Kea Legal Log Hooks Library with
+	multi-threading. This bug was affecting only databse backends.
+	The log file backend was not affected by this bug.
+	(Gitlab #1711)
+
 1869.	[func]		tmark
 	Kea-dhcp4 now supports specifying valid-lifetime in client
 	classes.  Prior to this it could only be specified at the
