@@ -622,8 +622,7 @@ public:
             case CR_SERVER_GONE_ERROR:
             case CR_SERVER_LOST:
             case CR_OUT_OF_MEMORY:
-            case CR_CONNECTION_ERROR:
-            {
+            case CR_CONNECTION_ERROR: {
                 DB_LOG_ERROR(db::MYSQL_FATAL_ERROR)
                     .arg(what)
                     .arg(text_statements_[static_cast<int>(index)])
