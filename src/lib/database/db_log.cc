@@ -42,13 +42,13 @@ const DbLogger::MessageMap db_message_map = {
     { CQL_CONNECTION_ROLLBACK, DATABASE_CQL_CONNECTION_ROLLBACK }
 };
 
-
 isc::log::Logger database_logger("database");
 
 DbLogger db_logger_translator(database_logger, db_message_map);
 
 DbLoggerStack db_logger_stack = { db_logger_translator };
 
+std::mutex db_logger_mutex;
 
 const MessageID&
 DbLogger::translateMessage(const DbMessageID& id) const {

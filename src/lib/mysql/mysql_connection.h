@@ -623,6 +623,7 @@ public:
             case CR_SERVER_LOST:
             case CR_OUT_OF_MEMORY:
             case CR_CONNECTION_ERROR:
+            {
                 DB_LOG_ERROR(db::MYSQL_FATAL_ERROR)
                     .arg(what)
                     .arg(text_statements_[static_cast<int>(index)])
@@ -639,6 +640,7 @@ public:
                 // processing.
                 isc_throw(db::DbConnectionUnusable,
                           "fatal database error or connectivity lost");
+            }
             default:
                 // Connection is ok, so it must be an SQL error
                 isc_throw(db::DbOperationError, what << " for <"

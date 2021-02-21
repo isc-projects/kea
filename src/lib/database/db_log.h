@@ -10,6 +10,7 @@
 #include <log/macros.h>
 
 #include <map>
+#include <mutex>
 #include <list>
 
 /// @file db_log.h
@@ -103,6 +104,9 @@ typedef std::list<DbLogger> DbLoggerStack;
 /// @brief Global database logger stack (initialized to database logger)
 extern DbLoggerStack db_logger_stack;
 
+/// @brief Global mutex to protect logger stack
+extern std::mutex db_logger_mutex;
+
 /// @brief Check database logger stack
 ///
 /// @throw Unexpected if the stack is empty
@@ -112,14 +116,15 @@ void checkDbLoggerStack();
 /// @brief Macros
 
 #define DB_LOG_DEBUG(LEVEL, MESSAGE) \
+    std::lock_guard<std::mutex> lk(isc::db::db_logger_mutex); \
     isc::db::checkDbLoggerStack(); \
     if (!db_logger_stack.back().logger_.isDebugEnabled((LEVEL))) { \
     } else \
         isc::db::db_logger_stack.back().logger_.debug((LEVEL), \
                 isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
 
-
 #define DB_LOG_INFO(MESSAGE) \
+    std::lock_guard<std::mutex> lk(isc::db::db_logger_mutex); \
     isc::db::checkDbLoggerStack(); \
     if (!isc::db::db_logger_stack.back().logger_.isInfoEnabled()) { \
     } else \
@@ -127,6 +132,7 @@ void checkDbLoggerStack();
                 isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
 
 #define DB_LOG_WARN(MESSAGE) \
+    std::lock_guard<std::mutex> lk(isc::db::db_logger_mutex); \
     isc::db::checkDbLoggerStack(); \
     if (!isc::db::db_logger_stack.back().logger_.isWarnEnabled()) { \
     } else \
@@ -134,6 +140,7 @@ void checkDbLoggerStack();
                 isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
 
 #define DB_LOG_ERROR(MESSAGE) \
+    std::lock_guard<std::mutex> lk(isc::db::db_logger_mutex); \
     isc::db::checkDbLoggerStack(); \
     if (!isc::db::db_logger_stack.back().logger_.isErrorEnabled()) { \
     } else \
@@ -141,6 +148,7 @@ void checkDbLoggerStack();
                 isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
 
 #define DB_LOG_FATAL(MESSAGE) \
+    std::lock_guard<std::mutex> lk(isc::db::db_logger_mutex); \
     isc::db::checkDbLoggerStack(); \
     if (!isc::db::db_logger_stack.back().logger_.isFatalEnabled()) { \
     } else \

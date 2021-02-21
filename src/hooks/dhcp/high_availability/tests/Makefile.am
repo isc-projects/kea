@@ -50,6 +50,7 @@ ha_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 ha_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 ha_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 ha_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+ha_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 ha_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 ha_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 ha_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
