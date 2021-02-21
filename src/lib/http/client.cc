@@ -1239,7 +1239,7 @@ Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
 }
 
 void
-Connection::handshakeCallback(HttpClient::ConnectHandler connect_callback,
+Connection::handshakeCallback(HttpClient::ConnectHandler handshake_callback,
                               const uint64_t transid,
                               const boost::system::error_code& ec) {
     if (checkPrematureTimeout(transid)) {
@@ -1247,11 +1247,11 @@ Connection::handshakeCallback(HttpClient::ConnectHandler connect_callback,
     }
 
     // Run user defined handshake callback if specified.
-    if (handshake_callback_) {
+    if (handshake_callback) {
         // If the user defined callback indicates that the connection
         // should not be continued.
         if (tls_socket_) {
-            if (!handshake_callback_(ec, tls_socket_->getNative())) {
+            if (!handshake_callback(ec, tls_socket_->getNative())) {
                 return;
             }
         } else {
