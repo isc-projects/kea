@@ -65,6 +65,9 @@ public:
         sigset_t nsset;
         pthread_sigmask(SIG_SETMASK, 0, &nsset);
         EXPECT_EQ(1, sigismember(&nsset, SIGCHLD));
+        EXPECT_EQ(1, sigismember(&nsset, SIGINT));
+        EXPECT_EQ(1, sigismember(&nsset, SIGHUP));
+        EXPECT_EQ(1, sigismember(&nsset, SIGTERM));
         EXPECT_NO_THROW(runAndWait());
     }
 

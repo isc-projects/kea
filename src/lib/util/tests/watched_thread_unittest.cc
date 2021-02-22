@@ -52,6 +52,9 @@ public:
         sigset_t nsset;
         pthread_sigmask(SIG_SETMASK, 0, &nsset);
         EXPECT_EQ(1, sigismember(&nsset, SIGCHLD));
+        EXPECT_EQ(1, sigismember(&nsset, SIGINT));
+        EXPECT_EQ(1, sigismember(&nsset, SIGHUP));
+        EXPECT_EQ(1, sigismember(&nsset, SIGTERM));
         for (passes_ = 1; passes_ < WORKER_MAX_PASSES; ++passes_) {
 
             // Stop if we're told to do it.

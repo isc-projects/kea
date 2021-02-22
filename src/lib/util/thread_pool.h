@@ -181,6 +181,9 @@ private:
         sigset_t osset;
         sigemptyset(&sset);
         sigaddset(&sset, SIGCHLD);
+        sigaddset(&sset, SIGINT);
+        sigaddset(&sset, SIGHUP);
+        sigaddset(&sset, SIGTERM);
         pthread_sigmask(SIG_BLOCK, &sset, &osset);
         queue_.enable(thread_count);
         try {

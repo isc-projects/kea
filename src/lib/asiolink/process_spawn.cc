@@ -247,7 +247,7 @@ ProcessSpawnImpl::spawn(bool dismiss) {
     sigemptyset(&sset);
     sigaddset(&sset, SIGCHLD);
     pthread_sigmask(SIG_BLOCK, &sset, &osset);
-
+    lock_guard<std::mutex> lk(mutex_);
     // Create the child
     pid_t pid = fork();
     if (pid < 0) {
@@ -271,7 +271,6 @@ ProcessSpawnImpl::spawn(bool dismiss) {
     // We're in the parent process.
     if (!dismiss) {
         try {
-            lock_guard<std::mutex> lk(mutex_);
             store_ = true;
             process_collection_[this].insert(std::pair<pid_t, ProcessStatePtr>(pid, ProcessStatePtr(new ProcessState())));
         } catch(...) {
