@@ -1022,9 +1022,8 @@ protected:
     ///
     /// Currently is never called and does nothing.
     ///
-    /// @param ec Error status of the ASIO connect
     /// @return always true.
-    bool clientHandshakeHandler(const boost::system::error_code& ec) {
+    bool clientHandshakeHandler(const boost::system::error_code&) {
         return (true);
     }
 
