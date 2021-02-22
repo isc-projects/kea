@@ -1,0 +1,61 @@
+// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page libasiolink libkea-asiolink - Kea Boost ASIO Library
+
+@section asiolinkUtilities Boost ASIO Utilities
+
+The asiolink library (libkea-asiolink) encapsulates Boost ASIO tools:
+
+ - addr utilities: prefix (IOAddress and length pair) tools.
+
+ - dummy I/O callback.
+
+ - interval timer.
+
+ - I/O acceptor: asynchronous server ASIO socket (base class).
+
+ - I/O address: ASIO IP address.
+
+ - I/O ASIO socket (derived from I/O socket).
+
+ - I/O endpoint: ASIO IP endpoint (abstraction of a socket address).
+
+ - I/O error: @c isc::asiolink::IOError exception declaration.
+
+ - I/O service: ASIO I/O service (named I/O context in recent versions).
+
+ - I/O socket: ASIO I/O socket base class.
+
+ - TCP acceptor: TCP derivation of I/O acceptor.
+
+ - TCP endpoint: TCP derivation of I/O endpoint.
+
+ - TCP socket: TCP derivation of I/O socket.
+
+ - UDP endpoint: UDP derivation of I/O endpoint.
+
+ - UDP socket: UDP derivation of I/O socket.
+
+ - Unix domain socket: Unix socket (AF_LOCAL) derivation of I/O socket.
+
+ - Unix domain acceptor: Unix socket (AF_LOCAL) derivation of I/O acceptor.
+
+ - Unix domain endpoint: Unix socket (AF_LOCAL) derivation of I/O endpoint.
+
+@section asiolinkMTConsiderations Multi-Threading Consideration for Boost ASIO Utilities
+
+By default Boost ASIO utilities are not thread safe even if Boost ASIO tools
+themselves are. When there is no state and the encapsulation is direct
+the thread safety property is preserved. Exceptions to the by default
+no thread safe are:
+
+ - I/O address (direct encapsulation) is thread safe.
+
+ - interval timer setup and cancel methods are thread safe.
+
+*/
