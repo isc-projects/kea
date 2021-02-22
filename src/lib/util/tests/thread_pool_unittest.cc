@@ -11,6 +11,8 @@
 #include <exceptions/exceptions.h>
 #include <util/thread_pool.h>
 
+#include <signal.h>
+
 using namespace isc;
 using namespace isc::util;
 using namespace std;

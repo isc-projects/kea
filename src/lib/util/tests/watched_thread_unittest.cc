@@ -12,6 +12,7 @@
 
 #include <atomic>
 #include <functional>
+#include <signal.h>
 #include <unistd.h>
 
 using namespace std;
