@@ -1,6 +1,11 @@
+1871.	[build]		razvan
+	Library version numbers bumped for Kea 1.9.5 development
+	version.
+	(Gitlab #1713)
+
 1870.	[bug]		razvan
 	Fixed a crash when using the Kea Legal Log Hooks Library with
-	multi-threading. This bug was affecting only databse backends.
+	multi-threading. This bug was affecting only database backends.
 	The log file backend was not affected by this bug.
 	(Gitlab #1711)
 
