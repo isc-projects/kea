@@ -249,11 +249,10 @@ ProcessSpawnImpl::spawn(bool dismiss) {
 
     } else if (pid == 0) {
         // Run the executable.
-        if (execve(executable_.c_str(), args_.get(), vars_.get()) != 0) {
-            // We may end up here if the execve failed, e.g. as a result
-            // of issue with permissions or invalid executable name.
-            _exit(EXIT_FAILURE);
-        }
+        execve(executable_.c_str(), args_.get(), vars_.get()) != 0);
+        // We may end up here if the execve failed, e.g. as a result
+        // of issue with permissions or invalid executable name.
+        _exit(EXIT_FAILURE);
     }
 
     // We're in the parent process.
