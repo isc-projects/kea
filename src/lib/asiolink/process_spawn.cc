@@ -254,8 +254,6 @@ ProcessSpawnImpl::spawn(bool dismiss) {
             // of issue with permissions or invalid executable name.
             _exit(EXIT_FAILURE);
         }
-        // Process finished, exit the child process.
-        _exit(EXIT_SUCCESS);
     }
 
     // We're in the parent process.
