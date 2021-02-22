@@ -176,7 +176,7 @@ private:
     /// @param thread_count specifies the number of threads to be created and
     /// started
     void startInternal(uint32_t thread_count) {
-        // Protect us against SIGCHLD signals
+        // Protect us against signals
         sigset_t sset;
         sigset_t osset;
         sigemptyset(&sset);

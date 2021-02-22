@@ -18,7 +18,7 @@ WatchedThread::start(const std::function<void()>& thread_main) {
     clearReady(READY);
     clearReady(TERMINATE);
     setErrorInternal("no error");
-    // Protect us against SIGCHLD signals
+    // Protect us against signals
     sigset_t sset;
     sigset_t osset;
     sigemptyset(&sset);

@@ -241,23 +241,13 @@ ProcessSpawnImpl::getCommandLine() const {
 
 pid_t
 ProcessSpawnImpl::spawn(bool dismiss) {
-    // Protect us against SIGCHLD signals
-    sigset_t sset;
-    sigset_t osset;
-    sigemptyset(&sset);
-    sigaddset(&sset, SIGCHLD);
-    pthread_sigmask(SIG_BLOCK, &sset, &osset);
     lock_guard<std::mutex> lk(mutex_);
     // Create the child
     pid_t pid = fork();
     if (pid < 0) {
-        pthread_sigmask(SIG_SETMASK, &osset, 0);
         isc_throw(ProcessSpawnError, "unable to fork current process");
 
     } else if (pid == 0) {
-        // We're in the child process.
-        // Restore signal mask.
-        sigprocmask(SIG_SETMASK, &osset, 0);
         // Run the executable.
         if (execve(executable_.c_str(), args_.get(), vars_.get()) != 0) {
             // We may end up here if the execve failed, e.g. as a result
@@ -270,17 +260,9 @@ ProcessSpawnImpl::spawn(bool dismiss) {
 
     // We're in the parent process.
     if (!dismiss) {
-        try {
-            store_ = true;
-            process_collection_[this].insert(std::pair<pid_t, ProcessStatePtr>(pid, ProcessStatePtr(new ProcessState())));
-        } catch(...) {
-            // Restore signal mask.
-            pthread_sigmask(SIG_SETMASK, &osset, 0);
-            throw;
-        }
+        store_ = true;
+        process_collection_[this].insert(std::pair<pid_t, ProcessStatePtr>(pid, ProcessStatePtr(new ProcessState())));
     }
-    // Restore signal mask.
-    pthread_sigmask(SIG_SETMASK, &osset, 0);
     return (pid);
 }
 

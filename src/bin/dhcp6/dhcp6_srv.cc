@@ -576,8 +576,8 @@ void Dhcpv6Srv::run_one() {
     } catch (const SignalInterruptOnSelect&) {
         // Packet reception interrupted because a signal has been received.
         // This is not an error because we might have received a SIGTERM,
-        // SIGINT or SIGHUP which are handled by the server. For signals
-        // that are not handled by the server we rely on the default
+        // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
+        // signals that are not handled by the server we rely on the default
         // behavior of the system.
         LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_SIGNAL);
     } catch (const std::exception& e) {
