@@ -1078,7 +1078,7 @@ public:
 
         /// @brief Handshake callback handler
         /// @param ec Error status of the ASIO connect
-        bool handshakeHandler(const boost::system::error_code& ec, int) {
+        bool handshakeHandler(const boost::system::error_code&, int) {
             ++handshake_cnt_;
             // ec indicates an error, return true, so that error can be handled
             // by Connection logic.
