@@ -112,49 +112,97 @@ extern std::mutex db_logger_mutex;
 /// @throw Unexpected if the stack is empty
 void checkDbLoggerStack();
 
-///@{
-/// @brief Macros
+/// @brief log type enumerations for use in DB_LOG specializations
+enum log_type_t {
+    fatal,
+    error,
+    warn,
+    info,
+    debug,
+};
 
-#define DB_LOG_DEBUG(LEVEL, MESSAGE) \
-    std::lock_guard<std::mutex> lk(isc::db::db_logger_mutex); \
-    isc::db::checkDbLoggerStack(); \
-    if (!db_logger_stack.back().logger_.isDebugEnabled((LEVEL))) { \
-    } else \
-        isc::db::db_logger_stack.back().logger_.debug((LEVEL), \
-                isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
+/// @brief DB_LOG_* logic
+template <log_type_t log_type>
+struct DB_LOG {
+    /// @brief To preserve the old way of logging, this constructor facilitates
+    /// initiating the DB_LOG_* chain call.
+    DB_LOG(DbMessageID const message_id, int const debug_level = 0) {
+        std::lock_guard<std::mutex> lock(isc::db::db_logger_mutex);
+        isc::db::checkDbLoggerStack();
+        if (isEnabled()) {
+            formatter_ = formatter(message_id, debug_level);
+        }
+    }
 
-#define DB_LOG_INFO(MESSAGE) \
-    std::lock_guard<std::mutex> lk(isc::db::db_logger_mutex); \
-    isc::db::checkDbLoggerStack(); \
-    if (!isc::db::db_logger_stack.back().logger_.isInfoEnabled()) { \
-    } else \
-        isc::db::db_logger_stack.back().logger_.info( \
-                isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
+    /// @brief Pass parameters to replace logger placeholders.
+    ///
+    /// @param first the parameter to be processed now
+    /// @param args the parameters to be processes in recursive calls
+    ///
+    /// @return reference to this object so that these calls may be chained.
+    template <typename T, typename... Args>
+    DB_LOG& arg(T first, Args... args) {
+        formatter_.arg(first);
+        return arg(args...);
+    }
 
-#define DB_LOG_WARN(MESSAGE) \
-    std::lock_guard<std::mutex> lk(isc::db::db_logger_mutex); \
-    isc::db::checkDbLoggerStack(); \
-    if (!isc::db::db_logger_stack.back().logger_.isWarnEnabled()) { \
-    } else \
-        isc::db::db_logger_stack.back().logger_.warn( \
-                isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
+    /// @brief The last invocation of the arg() which is without parameters.
+    ///
+    /// Required when using variadic arguments.
+    ///
+    /// @return reference to this object so that these calls may be chained.
+    DB_LOG& arg() {
+        return *this;
+    }
 
-#define DB_LOG_ERROR(MESSAGE) \
-    std::lock_guard<std::mutex> lk(isc::db::db_logger_mutex); \
-    isc::db::checkDbLoggerStack(); \
-    if (!isc::db::db_logger_stack.back().logger_.isErrorEnabled()) { \
-    } else \
-        isc::db::db_logger_stack.back().logger_.error( \
-                isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
+private:
+    /// @brief Initializes the logging formatter.
+    ///
+    /// @param message_id one of the DbMessageID enums
+    /// @param debug_level one of debug levels specified in log_dbglevels.h
+    ///
+    /// @return the formatter responsible for logging
+    isc::log::Logger::Formatter
+    formatter(DbMessageID const message_id, int const debug_level = 0);
 
-#define DB_LOG_FATAL(MESSAGE) \
-    std::lock_guard<std::mutex> lk(isc::db::db_logger_mutex); \
-    isc::db::checkDbLoggerStack(); \
-    if (!isc::db::db_logger_stack.back().logger_.isFatalEnabled()) { \
-    } else \
-        isc::db::db_logger_stack.back().logger_.fatal( \
-                isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
+    /// @brief Check if the logger is ready to log.
+    ///
+    /// @param debug_level required only for debug log type
+    ///
+    /// @return true if the logger is enabled, false otherwise
+    bool isEnabled(int const debug_level = 0) const;
 
+    /// @brief the formatter responsible for logging
+    isc::log::Logger::Formatter formatter_;
+};
+
+/// @brief all DB_LOG specializations
+/// @{
+struct DB_LOG_FATAL : DB_LOG<fatal> {
+    DB_LOG_FATAL(DbMessageID const message_id) : DB_LOG(message_id) {
+    }
+};
+
+struct DB_LOG_ERROR : DB_LOG<error> {
+    DB_LOG_ERROR(DbMessageID const message_id) : DB_LOG(message_id) {
+    }
+};
+
+struct DB_LOG_WARN : DB_LOG<warn> {
+    DB_LOG_WARN(DbMessageID const message_id) : DB_LOG(message_id) {
+    }
+};
+
+struct DB_LOG_INFO : DB_LOG<info> {
+    DB_LOG_INFO(DbMessageID const message_id) : DB_LOG(message_id) {
+    }
+};
+
+struct DB_LOG_DEBUG : DB_LOG<debug> {
+    DB_LOG_DEBUG(int const debug_level, DbMessageID const message_id)
+        : DB_LOG(message_id, debug_level) {
+    }
+};
 ///@}
 
 /// @brief DHCP server database message map

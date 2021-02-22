@@ -65,5 +65,76 @@ void checkDbLoggerStack() {
     }
 }
 
+template <>
+isc::log::Logger::Formatter
+DB_LOG<fatal>::formatter(DbMessageID const message_id,
+                         int const /* debug_level = 0 */) {
+    return isc::db::db_logger_stack.back().logger_.fatal(
+        isc::db::db_logger_stack.back().translateMessage(message_id));
+}
+
+template <>
+isc::log::Logger::Formatter
+DB_LOG<error>::formatter(DbMessageID const message_id,
+                         int const /* debug_level = 0 */) {
+    return isc::db::db_logger_stack.back().logger_.error(
+        isc::db::db_logger_stack.back().translateMessage(message_id));
+}
+
+template <>
+isc::log::Logger::Formatter
+DB_LOG<warn>::formatter(DbMessageID const message_id,
+                        int const /* debug_level = 0 */) {
+    return isc::db::db_logger_stack.back().logger_.warn(
+        isc::db::db_logger_stack.back().translateMessage(message_id));
+}
+
+template <>
+isc::log::Logger::Formatter
+DB_LOG<info>::formatter(DbMessageID const message_id,
+                        int const /* debug_level = 0 */) {
+    return isc::db::db_logger_stack.back().logger_.info(
+        isc::db::db_logger_stack.back().translateMessage(message_id));
+}
+
+template <>
+isc::log::Logger::Formatter
+DB_LOG<debug>::formatter(DbMessageID const message_id,
+                         int const debug_level /* = 0 */) {
+    return isc::db::db_logger_stack.back().logger_.debug(
+        debug_level,
+        isc::db::db_logger_stack.back().translateMessage(message_id));
+}
+
+template <>
+bool
+DB_LOG<fatal>::isEnabled(int const /* debug_level = 0 */) const {
+    return db_logger_stack.back().logger_.isFatalEnabled();
+}
+
+template <>
+bool
+DB_LOG<error>::isEnabled(int const /* debug_level = 0 */) const {
+    return db_logger_stack.back().logger_.isErrorEnabled();
+}
+
+template <>
+bool
+DB_LOG<warn>::isEnabled(int const /* debug_level = 0 */) const {
+    return db_logger_stack.back().logger_.isWarnEnabled();
+}
+
+template <>
+bool
+DB_LOG<info>::isEnabled(int const /* debug_level = 0 */) const {
+    return db_logger_stack.back().logger_.isInfoEnabled();
+}
+
+template <>
+bool
+DB_LOG<debug>::isEnabled(int const debug_level /* = 0 */) const {
+    return db_logger_stack.back().logger_.isDebugEnabled(debug_level);
+}
+
 } // namespace db
 } // namespace isc
