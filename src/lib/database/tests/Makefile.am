@@ -22,6 +22,7 @@ TESTS += libdatabase_unittests
 libdatabase_unittests_SOURCES  = audit_entry_unittest.cc
 libdatabase_unittests_SOURCES += backend_selector_unittest.cc
 libdatabase_unittests_SOURCES += database_connection_unittest.cc
+libdatabase_unittests_SOURCES += database_log_unittest.cc
 libdatabase_unittests_SOURCES += dbaccess_parser_unittest.cc
 libdatabase_unittests_SOURCES += run_unittests.cc
 libdatabase_unittests_SOURCES += server_unittest.cc
